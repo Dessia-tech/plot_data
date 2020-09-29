@@ -1,6 +1,6 @@
 {
-  "name": "@dessia/plot-data",
-  "version": "1.0.1",
+  "name": "@natsudzn/plot-data",
+  "version": "1.0.2",
   "description": "",
   "main": "lib.js",
   "prepublish": "tsc",

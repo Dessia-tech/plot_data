@@ -1,6 +1,6 @@
 {
   "name": "@natsudzn/plot-data",
-  "version": "1.0.4",
+  "version": "1.0.4.1",
   "description": "",
   "main": "lib/index.js",
   "prepublish": "tsc",
@@ -11,9 +11,17 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json"
   },
-  "keywords": [],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dessia-tech/plot_data.git"
+  },
+  "keywords": ["dessia", "plot-data"],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dessia-tech/plot_data/issues"
+  },
+  "homepage": "http://dessia.tech/",
   "devDependencies": {
     "prettier": "^2.1.2",
     "tslint": "^6.1.3",

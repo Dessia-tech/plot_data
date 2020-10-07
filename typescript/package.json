@@ -1,10 +1,10 @@
 {
   "name": "@natsudzn/plot-data",
-  "version": "1.0.4.1",
+  "version": "1.0.5",
   "description": "",
-  "main": "lib/index.js",
+  "main": "lib/core.js",
   "prepublish": "tsc",
-  "types": "lib/index.d.ts",
+  "types": "lib/core.d.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
@@ -15,7 +15,10 @@
     "type": "git",
     "url": "git+https://github.com/Dessia-tech/plot_data.git"
   },
-  "keywords": ["dessia", "plot-data"],
+  "keywords": [
+    "dessia",
+    "plot-data"
+  ],
   "author": "",
   "license": "ISC",
   "bugs": {

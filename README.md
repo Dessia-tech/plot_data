@@ -16,3 +16,10 @@ npm i @natsudzn/plot-data
 ```
 import * as plotdata from '@natsudzn/plot-data';
 ```
+
+## Develop
+
+```
+npm i
+npm run-script build
+```

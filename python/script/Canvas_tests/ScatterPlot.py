@@ -1,5 +1,6 @@
 import plot_data as vm
 from plot_data import plot_data
+import random
 import numpy as np
 
 # Point test ####
@@ -42,27 +43,33 @@ to_plot_list = ['cx', 'cy']
 
 plot_datas = []
 point_list = []
-for i in range(2000):
-    point = vm.Point2D.random(0, 2, 0, 1)
+window_size = plot_data.WindowSizeSet(width=width, height=height)
+shape_set = plot_data.PointShapeSet(shape=shape)
+point_size = plot_data.PointSizeSet(size=size)
+point_color = plot_data.PointColorSet(color_fill=colorfill,
+                                      color_stroke=colorstroke)
+plot_data_states = [plot_data.PlotDataState(
+        color_surface=plot_data.ColorSurfaceSet(color=surface_color), stroke_width=strokewidth,
+        shape_set=shape_set, point_size=point_size, point_color=point_color)]
+for i in range(50):
+    cx = random.uniform(0, 2)
+    cy = random.uniform(0, 1)
+    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, plot_data_states=plot_data_states)
     point_list += [point]
 
-# point_list += [vm.Point2D([0,0])]
-# point_list += [vm.Point2D([0.2,0])]
-# point_list += [vm.Point2D([1,0])]
-ScatterPlot = vm.ScatterPlot(point_list, colorfill=colorfill, colorstroke=colorstroke, size=size, shape=shape, strokewidth=strokewidth)
-plot_datas += [ScatterPlot.plot_data([plot_data.PlotDataState()])]
+ScatterPlot = plot_data.PlotDataScatter(point_list, plot_data_states=None)
+plot_datas += [ScatterPlot]
 
-axis = vm.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
+axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
                               graduation_color=graduation_color,
                               axis_color=axis_color, arrow_on=arrow_on,
-                              axis_width=axis_width, grid_on=grid_on)
+                              axis_width=axis_width, grid_on=grid_on, plot_data_states=[plot_data.PlotDataState()])
+plot_datas += [axis]
 
-plot_datas += [axis.plot_data([plot_data.PlotDataState()])]
-
-tooltip = vm.Tooltip(colorfill=colorfill, font=font, tp_width=tp_width,
-                     tp_radius=tp_radius, to_plot_list=to_plot_list)
-plot_datas += [tooltip.plot_data([plot_data.PlotDataState()])]
+tooltip = plot_data.PlotDataTooltip(colorfill=colorfill, font=font, tp_width=tp_width,
+                     tp_radius=tp_radius, to_plot_list=to_plot_list, plot_data_states=[plot_data.PlotDataState()])
+plot_datas += [tooltip]
 
 sol = [c.to_dict() for c in plot_datas]
 plot_data.plot_d3(sol)

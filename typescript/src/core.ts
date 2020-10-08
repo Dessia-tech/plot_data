@@ -174,6 +174,25 @@ export class PlotData {
     }
   }
 
+  find_min_dist(d, mvx, mvy, step) {
+    var x0 = this.scaleX*(1000*d.point_list[0].cx + mvx);
+    var y0 = this.scaleY*(1000*d.point_list[0].cy + mvy);
+    var x1 = this.scaleX*(1000*d.point_list[step].cx + mvx);
+    var y1 = this.scaleY*(1000*d.point_list[step].cy + mvy);
+    var min_dist = this.distance([x0,y0],[x1,y1]);
+    for (var i=1; i<d.point_list.length-step; i=i+step) {
+      x0 = this.scaleX*(1000*d.point_list[i].cx + mvx);
+      y0 = this.scaleY*(1000*d.point_list[i].cy + mvy);
+      x1 = this.scaleX*(1000*d.point_list[i+step].cx + mvx);
+      y1 = this.scaleY*(1000*d.point_list[i+step].cy + mvy);
+      var dist = this.distance([x0,y0], [x1,y1]);
+      if (dist<min_dist) {
+        min_dist = dist;
+      }
+    }
+    return min_dist;
+  }
+
   draw_graph2D(d, hidden, mvx, mvy) {
     if ((d['type'] == 'graph2D') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
@@ -191,10 +210,11 @@ export class PlotData {
       this.context.setLineDash([]);
 
       [this.index_first_in, this.nb_points_in, this.index_last_in] = this.get_nb_points_inside_canvas(d.point_list, mvx, mvy);
-
       var step = d.display_step;
-      if (this.nb_points_in<=10) {
-        step = 1;
+      var min_dist = this.find_min_dist(d,mvx,mvy,step);
+      while ((min_dist<20) && (step<d.point_list.length)) {
+        min_dist = this.find_min_dist(d, mvx, mvy, step);
+        step++;
       }
       for (var i=0; i<d.point_list.length; i=i+step) {
         var point = d.point_list[i];
@@ -208,26 +228,19 @@ export class PlotData {
 
   draw_scatterplot(d, hidden, mvx, mvy) {
     if (d['type'] == 'ScatterPlot') {
-      var new_point_list = this.refresh_point_list1(d.point_list,mvx,mvy);
-      for (var i=0; i<new_point_list.length; i++) {
-        var point = new_point_list[i];
+      if ((this.scroll_x%5==0) || (this.scroll_y%5==0)){
+        this.scatter_point_list = this.refresh_point_list(d.point_list,mvx,mvy);
+      }
+      for (var i=0; i<this.scatter_point_list.length; i++) {
+        var point = this.scatter_point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
-      // var to_unselect_list = [];
-      // for (var i=0; i<this.select_on_click.length; i++) {
-      //   if (!this.is_include(this.select_on_click[i],new_point_list)) {
-      //     to_unselect_list.push(this.select_on_click[i]);
-      //   }
-      // }
-      // this.delete_clicked_points(to_unselect_list);
 
-      // var to_delete_tooltip_list = [];
-      // for (var i=0; i<this.tooltip_list.length; i++) {
-      //   if (!this.is_include(this.tooltip_list[i],new_point_list)) {
-      //     to_delete_tooltip_list.push(this.tooltip_list[i]);
-      //   }
-      // }
-      // this.delete_tooltip(to_delete_tooltip_list);
+      for (var i=0; i<this.tooltip_list.length; i++) {
+        if (!this.is_include(this.tooltip_list[i],this.scatter_point_list)) {
+          this.tooltip_list = this.remove_selection(this.tooltip_list[i], this.tooltip_list);
+        }
+      }
     } 
   }
 
@@ -296,6 +309,243 @@ export class PlotData {
     }
   }
 
+  mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
+    mouse1X = e.offsetX;
+    mouse1Y = e.offsetY;
+    mouse2X = e.offsetX;
+    mouse2Y = e.offsetY;
+    isDrawing = true;
+    return [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing];
+  }
+
+  mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e) {
+    if ((isDrawing === true) && !(this.zw_bool||this.select_bool)) {
+      mouse_moving = true;
+      mouse2X = e.offsetX;
+      mouse2Y = e.offsetY;
+      this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
+      this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
+      
+    } else if ((isDrawing === true) && (this.zw_bool||this.select_bool)) {
+      mouse_moving = true;
+      mouse2X = e.offsetX;
+      mouse2Y = e.offsetY;
+      this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+      this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+      this.context_show.beginPath();
+      this.context_show.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
+      this.context_show.stroke();
+      this.context_show.closePath();
+      this.context_hidden.beginPath();
+      this.context_hidden.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
+      this.context_hidden.stroke();
+      this.context_hidden.closePath(); 
+    } else {
+      var mouseX = e.offsetX;
+      var mouseY = e.offsetY;
+      var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
+      var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+      this.select_on_mouse = this.colour_to_plot_data[colKey];
+      this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+      this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+    }
+    return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
+  }
+
+  mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y) {
+    var scale_ceil = 400*this.init_scale;
+    var scale_floor = this.init_scale/3;
+
+    var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
+    var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h);
+    var click_on_zoom_window = Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x, this.zw_y, this.zw_w, this.zw_h);
+    var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
+    var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30);
+    var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x, this.select_y, this.select_w, this.select_h);
+    var click_on_graph = false;
+    for (var i=0; i<this.nb_graph; i++) {
+      var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*(this.graph1_button_w + this.graph_text_spacing), this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
+      click_on_graph = click_on_graph || click_on_graph_i;
+    }
+    var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph;
+
+    if (mouse_moving) {
+        if ((this.zw_bool && is_rect_big_enough)) {
+          var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
+          var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
+          if ((this.scaleX*zoom_coeff_x < scale_ceil) && (this.scaleY*zoom_coeff_y < scale_ceil)) {
+            this.last_mouse1X = this.last_mouse1X - Math.min(mouse1X, mouse2X)/this.scaleX
+            this.last_mouse1Y = this.last_mouse1Y - Math.min(mouse1Y,mouse2Y)/this.scaleY
+            this.scaleX = this.scaleX*zoom_coeff_x;
+            this.scaleY = this.scaleY*zoom_coeff_y;
+            this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+            this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+          }
+          
+        } else if (this.select_bool) {
+          for (var i=0; i<this.plot_datas.length; i++) {
+            var d = this.plot_datas[i];
+            var in_rect = Shape.Is_in_rect(this.scaleX*(1000*d.cx + this.last_mouse1X),this.scaleY*(1000*d.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+            if ((d['type']=="point") && (in_rect === true) && !(this.is_include(d, this.select_on_click))) {
+              this.select_on_click.push(d);
+            } else if (d['type'] == 'graph2D') {
+              for (var j=0; j<d.point_list.length; j++) {
+                var x = this.scaleX*(1000*d.point_list[j].cx + this.last_mouse1X);
+                var y = this.scaleY*(1000*d.point_list[j].cy + this.last_mouse1Y);
+                in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+                if ((in_rect===true) && !(this.is_include(d.point_list[j], this.select_on_click))) {
+                  this.select_on_click.push(d.point_list[j])
+                }
+              }
+            }
+          }
+          this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+          this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+
+        } else {
+          this.last_mouse1X = this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX;
+          this.last_mouse1Y = this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY;
+        }
+
+    } else {
+        var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
+        var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+        var click_plot_data = this.colour_to_plot_data[colKey];
+        if (this.is_include(click_plot_data, this.select_on_click)) {
+          this.select_on_click = this.remove_selection(click_plot_data, this.select_on_click);
+        } else {
+          this.select_on_click.push(click_plot_data);
+        }
+        if (this.tooltip_ON) {
+            if (this.is_include(click_plot_data, this.tooltip_list) && (!this.is_include(click_plot_data, this.select_on_click))) {
+              this.tooltip_list = this.remove_selection(click_plot_data, this.tooltip_list);
+            } else if (!this.is_include(click_plot_data, this.tooltip_list) && this.is_include(click_plot_data, this.select_on_click)){
+              this.tooltip_list.push(click_plot_data);
+            }
+        }
+        
+        if (this.contains_undefined(this.select_on_click) && !click_on_button) {
+          this.select_on_click = [];
+          this.tooltip_list = [];
+        }
+
+        if ((click_on_plus === true) && (this.scaleX*1.2 < scale_ceil) && (this.scaleY*1.2 < scale_ceil)) {
+          var old_scaleX = this.scaleX
+          var old_scaleY = this.scaleY
+          this.scaleX = this.scaleX*1.2;
+          this.scaleY = this.scaleY*1.2;
+          this.last_mouse1X = this.last_mouse1X - (this.width/(2*old_scaleX) - this.width/(2*this.scaleX));
+          this.last_mouse1Y = this.last_mouse1Y - (this.height/(2*old_scaleY) - this.height/(2*this.scaleY));
+          this.scroll_x = 0;
+          this.scroll_y = 0;
+
+        } else if ((click_on_minus === true) && (this.scaleX/1.2 > scale_floor) && (this.scaleY/1.2 > scale_floor)) {
+          var old_scaleX = this.scaleX
+          var old_scaleY = this.scaleY
+          this.scaleX = this.scaleX/1.2;
+          this.scaleY = this.scaleY/1.2;
+          this.last_mouse1X = this.last_mouse1X - (this.width/(2*old_scaleX) - this.width/(2*this.scaleX));
+          this.last_mouse1Y = this.last_mouse1Y - (this.height/(2*old_scaleY) - this.height/(2*this.scaleY));
+          this.scroll_x = 0;
+          this.scroll_y = 0;
+
+        } else if (click_on_zoom_window === true) {
+          this.zw_bool = !this.zw_bool;
+          this.select_bool = false;
+          
+        } else if (click_on_reset === true) {
+          this.scaleX = this.init_scaleX;
+          this.scaleY = this.init_scaleY;
+          this.scale = this.init_scale;
+          this.scroll_x = 0;
+          this.scroll_y = 0;
+          if ((this.axis_ON === true) && (this.graph_ON === false)) {
+            this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
+            this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - this.decalage_axis_y/(2*this.scaleY);
+          } else if ((this.axis_ON === true) && (this.graph_ON === true)) {
+            this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
+            this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(2*this.scaleY);
+          } else {
+            this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
+            this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
+          }
+          
+        } else if (click_on_select === true) {
+          this.zw_bool = false;
+          this.select_bool = !this.select_bool;
+
+        } else if (click_on_graph) {
+          for (var i=0; i<this.nb_graph; i++) {
+            var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*(this.graph1_button_w + this.graph_text_spacing), this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
+            if (click_on_graph_i === true) {
+              this.graph_to_display[i] = !this.graph_to_display[i];
+            }
+          }
+        }
+
+        this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+      }
+    var isDrawing = false;
+    mouse_moving = false;
+    return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
+  }
+
+  wheel_interaction(mouse3X, mouse3Y, e) {
+    var scale_ceil = 400*this.init_scale;
+    var scale_floor = this.init_scale/100;
+    var zoom_coeff = 1.1;
+    var event = -e.deltaY;
+    mouse3X = e.offsetX;
+    mouse3Y = e.offsetY;
+    if ((mouse3Y>=this.height - this.decalage_axis_y) && (mouse3X>this.decalage_axis_x) && this.axis_ON) {
+        var old_scaleX = this.scaleX;
+        if ((event>0) && (this.scaleX*zoom_coeff<scale_ceil)) {
+          this.scaleX = this.scaleX*zoom_coeff;
+          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
+        } else if ((event<0) && this.scaleX/zoom_coeff>scale_floor) {
+          this.scaleX = this.scaleX/zoom_coeff;
+          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
+        }         
+
+    } else if ((mouse3X<=this.decalage_axis_x) && (mouse3Y<this.height - this.decalage_axis_y) && this.axis_ON) {
+        var old_scaleY = this.scaleY;
+        if ((event>0) && (this.scaleY*zoom_coeff<scale_ceil)) {
+          this.scaleY = this.scaleY*zoom_coeff;
+          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
+        } else if ((event<0) && this.scaleY/zoom_coeff>scale_floor) {
+          this.scaleY = this.scaleY/zoom_coeff;
+          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
+        }
+        
+    } else {
+        var old_scaleY = this.scaleY;
+        var old_scaleX = this.scaleX;
+        if ((event>0) && (this.scaleX*zoom_coeff<scale_ceil) && (this.scaleY*zoom_coeff<scale_ceil)) {
+          this.scaleX = this.scaleX*zoom_coeff;
+          this.scaleY = this.scaleY*zoom_coeff;
+          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.last_mouse1X = this.last_mouse1X - (mouse3X/old_scaleX - mouse3X/this.scaleX);
+          this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/old_scaleY - mouse3Y/this.scaleY);
+        } else if ((event<0) && (this.scaleX/zoom_coeff>scale_floor) && (this.scaleY/zoom_coeff>scale_floor)) {
+          this.scaleX = this.scaleX/zoom_coeff;
+          this.scaleY = this.scaleY/zoom_coeff;
+          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.last_mouse1X = this.last_mouse1X - (mouse3X/old_scaleX - mouse3X/this.scaleX);
+          this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/old_scaleY - mouse3Y/this.scaleY);
+        }
+      }
+      console.log(this.select_on_click, this.tooltip_list)
+      this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+      this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY); 
+      return [mouse3X, mouse3Y];
+  }
+
   mouse_interaction() {
     var isDrawing = false;
     var mouse_moving = false;
@@ -309,237 +559,19 @@ export class PlotData {
     var canvas = document.getElementById('canvas');
 
     canvas.addEventListener('mousedown', e => {
-      mouse1X = e.offsetX;
-      mouse1Y = e.offsetY;
-      mouse2X = e.offsetX;
-      mouse2Y = e.offsetY;
-      isDrawing = true;
+      [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
     })
 
     canvas.addEventListener('mousemove', e => {
-      
-      if ((isDrawing === true) && !(this.zw_bool||this.select_bool)) {
-        mouse_moving = true;
-        mouse2X = e.offsetX;
-        mouse2Y = e.offsetY;
-        this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
-        this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY);
-        
-      } else if ((isDrawing === true) && (this.zw_bool||this.select_bool)) {
-        mouse_moving = true;
-        mouse2X = e.offsetX;
-        mouse2Y = e.offsetY;
-        this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-        this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-        this.context_show.beginPath();
-        this.context_show.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
-        this.context_show.stroke();
-        this.context_show.closePath();
-        this.context_hidden.beginPath();
-        this.context_hidden.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
-        this.context_hidden.stroke();
-        this.context_hidden.closePath(); 
-      } else {
-        var mouseX = e.offsetX;
-        var mouseY = e.offsetY;
-        var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
-        var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-        this.select_on_mouse = this.colour_to_plot_data[colKey];
-        this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-        this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-      }
+      [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e);
     })
 
     canvas.addEventListener('mouseup', e => {
-
-      var scale_ceil = 400*this.init_scale;
-      var scale_floor = this.init_scale/3;
-
-      var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
-      var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h);
-      var click_on_zoom_window = Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x, this.zw_y, this.zw_w, this.zw_h);
-      var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
-      var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30);
-      var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x, this.select_y, this.select_w, this.select_h);
-      var click_on_graph = false;
-      for (var i=0; i<this.nb_graph; i++) {
-        var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*(this.graph1_button_w + this.graph_text_spacing), this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
-        click_on_graph = click_on_graph || click_on_graph_i;
-      }
-      var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph;
-
-      if (mouse_moving) {
-          if ((this.zw_bool && is_rect_big_enough)) {
-            var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
-            var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
-            if ((this.scaleX*zoom_coeff_x < scale_ceil) && (this.scaleY*zoom_coeff_y < scale_ceil)) {
-              this.last_mouse1X = this.last_mouse1X - Math.min(mouse1X, mouse2X)/this.scaleX
-              this.last_mouse1Y = this.last_mouse1Y - Math.min(mouse1Y,mouse2Y)/this.scaleY
-              this.scaleX = this.scaleX*zoom_coeff_x;
-              this.scaleY = this.scaleY*zoom_coeff_y;
-              this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-              this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-            }
-            
-          } else if (this.select_bool) {
-            for (var i=0; i<this.plot_datas.length; i++) {
-              var d = this.plot_datas[i];
-              var in_rect = Shape.Is_in_rect(this.scaleX*(1000*d.cx + this.last_mouse1X),this.scaleY*(1000*d.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
-              if ((d['type']=="point") && (in_rect === true) && !(this.is_include(d, this.select_on_click))) {
-                this.select_on_click.push(d);
-              } else if (d['type'] == 'graph2D') {
-                for (var j=0; j<d.point_list.length; j++) {
-                  var x = this.scaleX*(1000*d.point_list[j].cx + this.last_mouse1X);
-                  var y = this.scaleY*(1000*d.point_list[j].cy + this.last_mouse1Y);
-                  in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
-                  if ((in_rect===true) && !(this.is_include(d.point_list[j], this.select_on_click))) {
-                    this.select_on_click.push(d.point_list[j])
-                  }
-                }
-              }
-            }
-            this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-            this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-
-          } else {
-            this.last_mouse1X = this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX;
-            this.last_mouse1Y = this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY;
-          }
-
-      } else {
-          var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
-          var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-          var click_plot_data = this.colour_to_plot_data[colKey];
-          if (this.is_include(click_plot_data, this.select_on_click)) {
-            this.select_on_click = this.remove_selection(click_plot_data, this.select_on_click);
-          } else {
-            this.select_on_click.push(click_plot_data);
-          }
-          if (this.tooltip_ON) {
-              if (this.is_include(click_plot_data, this.tooltip_list) && (!this.is_include(click_plot_data, this.select_on_click))) {
-                this.tooltip_list = this.remove_selection(click_plot_data, this.tooltip_list);
-              } else if (!this.is_include(click_plot_data, this.tooltip_list) && this.is_include(click_plot_data, this.select_on_click)){
-                this.tooltip_list.push(click_plot_data);
-              }
-          }
-          
-          if (this.contains_undefined(this.select_on_click) && !click_on_button) {
-            this.select_on_click = [];
-            this.tooltip_list = [];
-          }
- 
-          if ((click_on_plus === true) && (this.scaleX*1.2 < scale_ceil) && (this.scaleY*1.2 < scale_ceil)) {
-            var old_scaleX = this.scaleX
-            var old_scaleY = this.scaleY
-            this.scaleX = this.scaleX*1.2;
-            this.scaleY = this.scaleY*1.2;
-            this.last_mouse1X = this.last_mouse1X - (this.width/(2*old_scaleX) - this.width/(2*this.scaleX));
-            this.last_mouse1Y = this.last_mouse1Y - (this.height/(2*old_scaleY) - this.height/(2*this.scaleY));
-            this.scroll_x = 0;
-            this.scroll_y = 0;
-
-          } else if ((click_on_minus === true) && (this.scaleX/1.2 > scale_floor) && (this.scaleY/1.2 > scale_floor)) {
-            var old_scaleX = this.scaleX
-            var old_scaleY = this.scaleY
-            this.scaleX = this.scaleX/1.2;
-            this.scaleY = this.scaleY/1.2;
-            this.last_mouse1X = this.last_mouse1X - (this.width/(2*old_scaleX) - this.width/(2*this.scaleX));
-            this.last_mouse1Y = this.last_mouse1Y - (this.height/(2*old_scaleY) - this.height/(2*this.scaleY));
-            this.scroll_x = 0;
-            this.scroll_y = 0;
-
-          } else if (click_on_zoom_window === true) {
-            this.zw_bool = !this.zw_bool;
-            this.select_bool = false;
-            
-          } else if (click_on_reset === true) {
-            this.scaleX = this.init_scaleX;
-            this.scaleY = this.init_scaleY;
-            this.scale = this.init_scale;
-            this.scroll_x = 0;
-            this.scroll_y = 0;
-            if ((this.axis_ON === true) && (this.graph_ON === false)) {
-              this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
-              this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - this.decalage_axis_y/(2*this.scaleY);
-            } else if ((this.axis_ON === true) && (this.graph_ON === true)) {
-              this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
-              this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(2*this.scaleY);
-            } else {
-              this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
-              this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
-            }
-            
-          } else if (click_on_select === true) {
-            this.zw_bool = false;
-            this.select_bool = !this.select_bool;
-
-          } else if (click_on_graph) {
-            for (var i=0; i<this.nb_graph; i++) {
-              var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*(this.graph1_button_w + this.graph_text_spacing), this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
-              if (click_on_graph_i === true) {
-                this.graph_to_display[i] = !this.graph_to_display[i];
-              }
-            }
-          }
-
-          this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-        }
-      isDrawing = false;
-      mouse_moving = false;
+      [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
     })
 
     canvas.addEventListener('wheel', e => {
-      var scale_ceil = 400*this.init_scale;
-      var scale_floor = this.init_scale/100;
-      var zoom_coeff = 1.1;
-      var event = -e.deltaY;
-      mouse3X = e.offsetX;
-      mouse3Y = e.offsetY;
-      if ((mouse3Y>=this.height - this.decalage_axis_y) && (mouse3X>this.decalage_axis_x) && this.axis_ON) {
-          var old_scaleX = this.scaleX;
-          if ((event>0) && (this.scaleX*zoom_coeff<scale_ceil)) {
-            this.scaleX = this.scaleX*zoom_coeff;
-            this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
-            this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
-          } else if ((event<0) && this.scaleX/zoom_coeff>scale_floor) {
-            this.scaleX = this.scaleX/zoom_coeff;
-            this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
-            this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
-          }         
-
-      } else if ((mouse3X<=this.decalage_axis_x) && (mouse3Y<this.height - this.decalage_axis_y) && this.axis_ON) {
-          var old_scaleY = this.scaleY;
-          if ((event>0) && (this.scaleY*zoom_coeff<scale_ceil)) {
-            this.scaleY = this.scaleY*zoom_coeff;
-            this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
-            this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
-          } else if ((event<0) && this.scaleY/zoom_coeff>scale_floor) {
-            this.scaleY = this.scaleY/zoom_coeff;
-            this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
-            this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
-          }
-          
-      } else {
-          var old_scaleY = this.scaleY;
-          var old_scaleX = this.scaleX;
-          if ((event>0) && (this.scaleX*zoom_coeff<scale_ceil) && (this.scaleY*zoom_coeff<scale_ceil)) {
-            this.scaleX = this.scaleX*zoom_coeff;
-            this.scaleY = this.scaleY*zoom_coeff;
-            this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
-            this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
-            this.last_mouse1X = this.last_mouse1X - (mouse3X/old_scaleX - mouse3X/this.scaleX);
-            this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/old_scaleY - mouse3Y/this.scaleY);
-          } else if ((event<0) && (this.scaleX/zoom_coeff>scale_floor) && (this.scaleY/zoom_coeff>scale_floor)) {
-            this.scaleX = this.scaleX/zoom_coeff;
-            this.scaleY = this.scaleY/zoom_coeff;
-            this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
-            this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
-            this.last_mouse1X = this.last_mouse1X - (mouse3X/old_scaleX - mouse3X/this.scaleX);
-            this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/old_scaleY - mouse3Y/this.scaleY);
-          }
-        }
-        this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
-        this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY); 
+      [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
     })
   }
 
@@ -665,7 +697,7 @@ export class PlotData {
     return point_list;
   }
 
-  refresh_point_list1(point_list, mvx, mvy) {
+  refresh_point_list1(point_list, mvx, mvy) { //methode avec hachage
     var new_point_list = this.get_points_inside_canvas(this.copy_list(point_list), mvx, mvy);
     var nb_x = 10;
     var nb_y = 10;
@@ -724,8 +756,8 @@ export class PlotData {
     return this.dehashing_list(dict_point_list);
   }
 
-  refresh_point_list(point_list, mvx, mvy) {
-    var new_point_list = this.get_points_inside_canvas(this.copy_list(point_list), mvx, mvy);
+  refresh_point_list(point_list, mvx, mvy) { //methode recherche naive
+    var new_point_list = this.copy_list(point_list);
     var i = 0;
     var length = new_point_list.length;
     while (i<length) {
@@ -744,7 +776,7 @@ export class PlotData {
           var new_cy = (new_point_list[i].cy + new_point_list[j].cy)/2;
           var copy_plot_data_states = [new_point_list[max_size_index].plot_data_states[0].copy()];
           var point = new PlotDataPoint2D([],new_cx, new_cy, copy_plot_data_states, 'point', '');
-          var size_coeff = 1.3;
+          var size_coeff = 1.15;
           point.size = new_point_list[max_size_index].size*size_coeff;
           var point_i = new_point_list[i];
           var point_j = new_point_list[j];
@@ -858,6 +890,7 @@ export class PlotScatter extends PlotData {
   decalage_axis_x = 50;
   decalage_axis_y = 20;
   last_point_list:any[]=[];
+  scatter_point_list:PlotDataPoint2D[]=[]
 
   constructor(public data:any, 
     public width: number,

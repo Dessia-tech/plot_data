@@ -7,6 +7,7 @@ Created on Tue Feb 28 14:07:37 2017
 """
 
 import math
+import os
 import numpy as npy
 
 npy.seterr(divide='raise')
@@ -24,7 +25,8 @@ import webbrowser
 from dessia_common import DessiaObject
 from typing import TypeVar, List
 
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import Environment, PackageLoader, select_autoescape,\
+    FileSystemLoader
 
 
 class ColorMapSet(DessiaObject):
@@ -118,6 +120,8 @@ class PlotDataLine2D(DessiaObject):
         self.data = data
         self.type = type
         self.plot_data_states = plot_data_states
+        if plot_data_states is None:
+            self.plot_data_states = [PlotDataState()]
         DessiaObject.__init__(self, name=name)
 
 
@@ -157,6 +161,8 @@ class PlotDataAxis(DessiaObject):
         self.graduation_color = graduation_color
         self.axis_color = axis_color
         self.plot_data_states = plot_data_states
+        if plot_data_states is None:
+            self.plot_data_states = [PlotDataState()]
         self.arrow_on = arrow_on
         self.axis_width = axis_width
         self.grid_on = grid_on
@@ -175,35 +181,44 @@ class PlotDataTooltip(DessiaObject):
         self.tp_radius = tp_radius
         self.to_plot_list = to_plot_list
         self.plot_data_states = plot_data_states
+        if plot_data_states is None:
+            self.plot_data_states = [PlotDataState()]
         self.type = type
         DessiaObject.__init__(self, name=name)
 
 
 class PlotDataGraph2D(DessiaObject):
-    def __init__(self, serialized_point_list, dashline: List[float],
-                 graph_colorstroke: str, graph_linewidth: float,
-                 serialized_segments, display_step: float,
+    def __init__(self, point_list, dashline: List[float],
+                 graph_colorstroke: str, graph_linewidth: float, display_step: float,
                  plot_data_states: List[PlotDataState], type: str = 'graph2D',
                  name: str = ''):
-        self.serialized_point_list = serialized_point_list
+        self.serialized_point_list = [p.to_dict() for p in point_list]
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
         self.graph_linewidth = graph_linewidth
-        self.serialized_segments = serialized_segments
+        self.serialized_segments = []
+        for k in range(len(point_list) -1):
+            data = [point_list[k].cx, point_list[k].cy, point_list[k+1].cx, point_list[k+1].cy]
+            segment = PlotDataLine2D(data, [PlotDataState()])
+            self.serialized_segments.append(segment.to_dict())
         self.display_step = display_step
         if display_step is None:
             self.display_step = 1
         self.plot_data_states = plot_data_states
+        if plot_data_states is None:
+            self.plot_data_states = [PlotDataState()]
         self.type = type
         DessiaObject.__init__(self, name)
 
 
 class PlotDataScatter(DessiaObject):
-    def __init__(self, serialized_point_list,
+    def __init__(self, point_list,
                  plot_data_states: List[PlotDataState],
                  type: str = 'ScatterPlot', name: str = ''):
-        self.serialized_point_list = serialized_point_list
+        self.serialized_point_list = [p.to_dict() for p in point_list]
         self.plot_data_states = plot_data_states
+        if plot_data_states is None:
+            self.plot_data_states = [PlotDataState()]
         self.type = type
         DessiaObject.__init__(self, name)
 
@@ -238,17 +253,27 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 
 def plot_d3(plot_datas):
-    env = Environment(loader=PackageLoader('plot_data', 'templates'),
+    template_path = pkg_resources.resource_filename(
+        pkg_resources.Requirement('plot_data'),
+        'plot_data/templates')
+    module_sequence = template_path.split('/')[:-3]
+    module_path = '/'.join(module_sequence)
+    loader = FileSystemLoader(module_path)
+    env = Environment(loader=loader,
                       autoescape=select_autoescape(['html', 'xml']))
-    template = env.get_template('plot_data.html')
+    # env = Environment(loader=PackageLoader('plot_data', 'templates'),
+    #                   autoescape=select_autoescape(['html', 'xml']))
+    template = env.get_template('python/plot_data/templates/plot_data.html')
 
-    # volmdlr_path = pkg_resources.resource_filename(
-    #     pkg_resources.Requirement('volmdlr'),
-    #     'volmdlr/templates')
+    core_path = '/'+os.path.join(*template_path.split('/')[:-3]+['typescript', 'src', 'core.ts'])
+
+    print(core_path)
+    print(template_path)
+
     data = []
     for d in plot_datas:
         data.append(json.dumps(d))
-    s = template.render(D3Data=data)
+    s = template.render(D3Data=data, core_path=core_path, template_path=template_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:

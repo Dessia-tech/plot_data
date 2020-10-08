@@ -3,12 +3,11 @@
             style="border: 1px solid black;">
 </canvas>
 
-<!-- <script type="text/javascript" src="{{volmdlr_path}}/d3/d3-v5.js"></script> -->
 
 <!-- Sets the basepath for the library if not in same directory -->
 <script type="text/typescript">
 	module core {
-		{% include '../../../typescript/core.ts' %}
+		{% include 'typescript/src/core.ts' %}
 	}
 </script>
 
@@ -28,5 +27,5 @@
 
 </script>
 
-<script type="text/javascript" src="{{volmdlr_path}}/js/typescript.min.js"></script>
-<script type="text/javascript" src="{{volmdlr_path}}/js/typescript.compile.min.js"></script>
+<script type="text/javascript" src="{{template_path}}/js/typescript.min.js"></script>
+<script type="text/javascript" src="{{template_path}}/js/typescript.compile.min.js"></script>

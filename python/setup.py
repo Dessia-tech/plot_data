@@ -6,7 +6,7 @@ Setup install script for volmdlr
 
 from setuptools import setup
 #from distutils.core import setup
-from Cython.Build import cythonize
+# from Cython.Build import cythonize
 
 from os.path import dirname, isdir, join
 import re

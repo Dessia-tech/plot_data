@@ -101,10 +101,10 @@ def get_version():
 
 setup(name='plot_data',
       version = get_version(),
-      description=' A volume modeler computation-oriented. Include rendering bindings.',
+      description=' A JSON based language interpreter for drawing in 2D',
       long_description='',
-      keywords='volume, modeler, CAD',
-      url='https://github.com/Dessia-tech/volmdlr',
+      keywords='Dataviz, drawing',
+      url='https://github.com/Dessia-tech/plot_data',
       author='DessiA Technologies',
       author_email='root@dessia.tech',
       license='Creative Commons Attribution-Share Alike license',

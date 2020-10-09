@@ -41,7 +41,7 @@ steps:
   when:
       event: tag
   commands:
-  - npm-version from-git
+  - npm version from-git
   - npm run-script build
 
 

@@ -34,7 +34,7 @@ graph_linewidth = 0.5
 point_colorfill = 'violet'
 point_colorstroke = 'grey'
 point_strokewidth = 0.5
-graph_point_size = 2;
+graph_point_size = 2
 point_shape = 'circle'
 display_step = 3
 shape_set = plot_data.PointShapeSet(shape=point_shape)
@@ -46,7 +46,7 @@ while k < 20 * np.pi:
     point_list.append(point)
     k = k + np.pi/20
 
-graph = plot_data.PlotDataGraph2D(point_list, dashline,graph_colorstroke,graph_linewidth,display_step,plot_data_states)
+graph = plot_data.PlotDataGraph2D(point_list, dashline,graph_colorstroke,graph_linewidth,display_step,plot_data_states,name='Graph 1')
 plot_datas += [graph]
 
 point_list1 = []
@@ -59,7 +59,7 @@ while k < 20 * np.pi:
     point = plot_data.PlotDataPoint2D(k, np.sin(k + np.pi/3), plot_data_states1)
     point_list1.append(point)
     k = k + np.pi/20
-graph1 = plot_data.PlotDataGraph2D(point_list=point_list1, dashline=[10,10], graph_colorstroke='red', graph_linewidth=0.5, display_step=display_step, plot_data_states=[plot_data.PlotDataState()])
+graph1 = plot_data.PlotDataGraph2D(point_list=point_list1, dashline=[10,10], graph_colorstroke='red', graph_linewidth=0.5, display_step=display_step, plot_data_states=[plot_data.PlotDataState()], name='Graph 2')
 plot_datas += [graph1]
 
 
@@ -73,7 +73,7 @@ while k < 20 * np.pi:
     point = plot_data.PlotDataPoint2D(k, np.sin(k + 2*np.pi/3), plot_data_states2)
     point_list2.append(point)
     k = k + np.pi/20
-graph2 = plot_data.PlotDataGraph2D(point_list=point_list2, dashline=[5,3,1,3], graph_colorstroke='blue', graph_linewidth=0.5, display_step=display_step, plot_data_states=[plot_data.PlotDataState()])
+graph2 = plot_data.PlotDataGraph2D(point_list=point_list2, dashline=[5, 3, 1, 3], graph_colorstroke='blue', graph_linewidth=0.5, display_step=display_step, plot_data_states=[plot_data.PlotDataState()], name='Graph 3')
 plot_datas += [graph2]
 
 axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,

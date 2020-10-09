@@ -39,7 +39,7 @@ steps:
 
 - name: upload npm
   image: plugins/npm
- when:
+  when:
       event: tag
   settings:
     username: dessia

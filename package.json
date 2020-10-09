@@ -1,5 +1,5 @@
 {
-  "name": "@dessia/plot-data",
+  "name": "plot-data",
   "version": "0.1.4",
   "description": "",
   "main": "lib/core.js",

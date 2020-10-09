@@ -34,7 +34,7 @@ steps:
   image: node
   commands:
   - npm install
-  - npm version patch
+  - npm version from-git --allow-same-version
   - npm run-script build
 
 - name: upload npm

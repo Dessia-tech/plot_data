@@ -102,7 +102,7 @@ def get_version():
 setup(name='plot_data',
       version = get_version(),
       description=' A volume modeler computation-oriented. Include rendering bindings.',
-      long_description=readme(),
+      long_description='',
       keywords='volume, modeler, CAD',
       url='https://github.com/Dessia-tech/volmdlr',
       author='DessiA Technologies',

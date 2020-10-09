@@ -10,7 +10,7 @@ width = 2
 height = 1
 
 # Shape set (circle, square, crux)
-shape = 'square'
+shape = 'circle'
 
 # Point size (1 to 4)
 size = 2
@@ -34,10 +34,10 @@ arrow_on = False
 grid_on = True
 
 # Tooltip
-colorfill = 'lightblue'
+colorfill = 'black'
+text_color = 'white'
 font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
-tp_width = 90
-tp_radius = 10
+tp_radius = 5
 to_plot_list = ['cx', 'cy']
 
 # link_object
@@ -66,7 +66,7 @@ axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               arrow_on=arrow_on, axis_width=axis_width, grid_on=grid_on)
 plot_datas += [axis]
 
-tooltip = plot_data.PlotDataTooltip(colorfill,font,tp_width,tp_radius,to_plot_list, plot_data_states)
+tooltip = plot_data.PlotDataTooltip(colorfill,text_color=text_color,font=font,tp_radius=tp_radius,to_plot_list=to_plot_list, plot_data_states=plot_data_states)
 plot_datas += [tooltip]
 
 sol = [c.to_dict() for c in plot_datas]

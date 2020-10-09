@@ -17,7 +17,7 @@ shape = 'circle'
 size = 2
 
 # Points' color
-colorfill = 'violet'
+colorfill = 'lightblue'
 colorstroke = 'grey'
 
 # PlotDataState
@@ -35,10 +35,10 @@ arrow_on = False
 grid_on = True
 
 # Tooltip
-colorfill = 'lightblue'
+tp_colorfill = 'black'
+text_color = 'white'
 font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
-tp_width = 90
-tp_radius = 10
+tp_radius = 5
 to_plot_list = ['cx', 'cy']
 
 plot_datas = []
@@ -51,7 +51,7 @@ point_color = plot_data.PointColorSet(color_fill=colorfill,
 plot_data_states = [plot_data.PlotDataState(
         color_surface=plot_data.ColorSurfaceSet(color=surface_color), stroke_width=strokewidth,
         shape_set=shape_set, point_size=point_size, point_color=point_color)]
-for i in range(50):
+for i in range(2000):
     cx = random.uniform(0, 2)
     cy = random.uniform(0, 1)
     point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, plot_data_states=plot_data_states)
@@ -67,7 +67,7 @@ axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_width=axis_width, grid_on=grid_on, plot_data_states=[plot_data.PlotDataState()])
 plot_datas += [axis]
 
-tooltip = plot_data.PlotDataTooltip(colorfill=colorfill, font=font, tp_width=tp_width,
+tooltip = plot_data.PlotDataTooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
                      tp_radius=tp_radius, to_plot_list=to_plot_list, plot_data_states=[plot_data.PlotDataState()])
 plot_datas += [tooltip]
 

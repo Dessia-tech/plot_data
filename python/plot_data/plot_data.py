@@ -171,13 +171,13 @@ class PlotDataAxis(DessiaObject):
 
 
 class PlotDataTooltip(DessiaObject):
-    def __init__(self, colorfill: str, font: str, tp_width: float,
+    def __init__(self, colorfill: str, text_color:str, font: str, tp_width: float,
                  tp_radius: float, to_plot_list: list,
                  plot_data_states: List[PlotDataState], type: str = 'tooltip',
                  name: str = ''):
         self.colorfill = colorfill
+        self.text_color = text_color
         self.font = font
-        self.tp_width = tp_width
         self.tp_radius = tp_radius
         self.to_plot_list = to_plot_list
         self.plot_data_states = plot_data_states

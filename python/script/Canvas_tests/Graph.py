@@ -18,10 +18,10 @@ arrow_on = False
 grid_on = True
 
 # Tooltip
-colorfill = 'lightblue'
+colorfill = 'black'
+text_color = 'white'
 font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
-tp_width = 90
-tp_radius = 10
+tp_radius = 5
 to_plot_list = ['cx', 'cy']
 
 # Graph2D
@@ -83,7 +83,7 @@ axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_width=axis_width, grid_on=grid_on, plot_data_states=[plot_data.PlotDataState()])
 plot_datas += [axis]
 
-tooltip = plot_data.PlotDataTooltip(colorfill=colorfill, font=font, tp_width=tp_width,
+tooltip = plot_data.PlotDataTooltip(colorfill=colorfill,text_color=text_color, font=font,
                      tp_radius=tp_radius, to_plot_list=to_plot_list, plot_data_states=[plot_data.PlotDataState()])
 plot_datas += [tooltip]
 

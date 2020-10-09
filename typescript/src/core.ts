@@ -29,9 +29,51 @@ export class PlotData {
   nb_points_in:number;
   graph_ON:boolean=false;
 
+  plot_datas:any;
+  tooltip_list:any[]=[];
+  zoom_rect_x:number;
+  zoom_rect_y:number;
+  zoom_rect_w:number;
+  zoom_rect_h:number;
+  zw_bool:boolean;
+  zw_x:number;
+  zw_y:number;
+  zw_w:number;
+  zw_h:number;
+  reset_rect_x:number;
+  reset_rect_y:number;
+  reset_rect_w:number;
+  reset_rect_h:number;
+  select_bool:boolean;
+  select_x:number;
+  select_y:number;
+  select_w:number;
+  select_h:number;
+  sort_list_points:any[]=[];
+  graph_to_display:boolean[]=[];
+  graph1_button_x:number;
+  graph1_button_y:number;
+  graph1_button_w:number;
+  graph1_button_h:number;
+  nb_graph:number = 0;
+  graph_colorlist:string[]=[];
+  graph_text_spacing:number;
+  decalage_axis_x = 50;
+  decalage_axis_y = 20;
+  last_point_list:any[]=[];
+  scatter_point_list:PlotDataPoint2D[]=[];
+  refresh_point_list_bool:boolean=true;
 
+  constructor(public data:any, 
+    public width: number,
+    public height: number,
+    public coeff_pixel: number) {}
+
+  
+  draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {}
+  
   define_canvas() {
-    var canvas = document.getElementById('canvas');
+    var canvas : any = document.getElementById('canvas');
     canvas.width = this.width;
 		canvas.height = this.height;
     this.context_show = canvas.getContext("2d");
@@ -228,8 +270,12 @@ export class PlotData {
 
   draw_scatterplot(d, hidden, mvx, mvy) {
     if (d['type'] == 'ScatterPlot') {
-      if ((this.scroll_x%5==0) || (this.scroll_y%5==0)){
+      if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool){
         this.scatter_point_list = this.refresh_point_list(d.point_list,mvx,mvy);
+        this.refresh_point_list_bool = false;
+      }
+      if ((this.scroll_x%5 != 0) && (this.scroll_y%5 != 0)) {
+        this.refresh_point_list_bool = true;
       }
       for (var i=0; i<this.scatter_point_list.length; i++) {
         var point = this.scatter_point_list[i];
@@ -330,16 +376,24 @@ export class PlotData {
       mouse_moving = true;
       mouse2X = e.offsetX;
       mouse2Y = e.offsetY;
+      this.context_show.setLineDash([]);
+      this.context_hidden.setLineDash([]);
       this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
       this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
       this.context_show.beginPath();
+      this.context_show.lineWidth = 1;
+      this.context_show.strokeStyle = 'black';
+      this.context_show.setLineDash([5,5]);
       this.context_show.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
       this.context_show.stroke();
       this.context_show.closePath();
       this.context_hidden.beginPath();
+      this.context_hidden.lineWidth = 1;
+      this.context_hidden.strokeStyle = 'black';
+      this.context_hidden.setLineDash([5,5]);
       this.context_hidden.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
       this.context_hidden.stroke();
-      this.context_hidden.closePath(); 
+      this.context_hidden.closePath();
     } else {
       var mouseX = e.offsetX;
       var mouseY = e.offsetY;
@@ -371,6 +425,8 @@ export class PlotData {
 
     if (mouse_moving) {
         if ((this.zw_bool && is_rect_big_enough)) {
+          this.context_show.setLineDash([]);
+          this.context_hidden.setLineDash([]);
           var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
           var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
           if ((this.scaleX*zoom_coeff_x < scale_ceil) && (this.scaleY*zoom_coeff_y < scale_ceil)) {
@@ -383,6 +439,8 @@ export class PlotData {
           }
           
         } else if (this.select_bool) {
+          this.context_show.setLineDash([]);
+          this.context_hidden.setLineDash([]);
           for (var i=0; i<this.plot_datas.length; i++) {
             var d = this.plot_datas[i];
             var in_rect = Shape.Is_in_rect(this.scaleX*(1000*d.cx + this.last_mouse1X),this.scaleY*(1000*d.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
@@ -485,9 +543,9 @@ export class PlotData {
 
         this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
       }
-    var isDrawing = false;
-    mouse_moving = false;
-    return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
+      var isDrawing = false;
+      mouse_moving = false;
+      return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 
   wheel_interaction(mouse3X, mouse3Y, e) {
@@ -540,7 +598,6 @@ export class PlotData {
           this.last_mouse1Y = this.last_mouse1Y - (mouse3Y/old_scaleY - mouse3Y/this.scaleY);
         }
       }
-      console.log(this.select_on_click, this.tooltip_list)
       this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
       this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY); 
       return [mouse3X, mouse3Y];
@@ -698,7 +755,7 @@ export class PlotData {
   }
 
   refresh_point_list1(point_list, mvx, mvy) { //methode avec hachage
-    var new_point_list = this.get_points_inside_canvas(this.copy_list(point_list), mvx, mvy);
+    var new_point_list = this.copy_list(point_list)
     var nb_x = 10;
     var nb_y = 10;
     var dict_point_list = this.hashing_list(new_point_list, nb_x, nb_y, mvx, mvy);
@@ -831,7 +888,7 @@ export class PlotContour extends PlotData {
                 public width: number,
                 public height: number,
                 public coeff_pixel: number) {
-    super();
+    super(data, width, height, coeff_pixel);
     this.plot_datas = [];
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
@@ -896,7 +953,7 @@ export class PlotScatter extends PlotData {
     public width: number,
     public height: number,
     public coeff_pixel: number) {
-      super();
+      super(data, width, height, coeff_pixel);
       this.zoom_rect_x = this.width - 45;
       this.zoom_rect_y = 10;
       this.zoom_rect_w = 35;
@@ -1026,7 +1083,7 @@ class Shape {
     var b = y + h;
     context.beginPath();
     context.strokeStyle="black";
-    context.lineWidth="3";
+    context.lineWidth="1";
     context.moveTo(x+radius, y);
     context.lineTo(r-radius, y);
     context.quadraticCurveTo(r, y, r, y+radius);
@@ -1275,6 +1332,11 @@ export class PlotDataPoint2D {
           context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),100*this.size, -1000*this.size);
           context.fillStyle = context.strokeStyle;
           context.stroke();
+
+          context_hidden.beginPath()
+          context_hidden.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), 1000*this.size, 0, 2*Math.PI);
+          context_hidden.stroke();
+          context_hidden.closePath();
         } else {
           throw new Error('Invalid shape for point');
         }
@@ -1332,7 +1394,7 @@ export class PlotDataAxis {
     //pour l'axe des x
     var i=0;
     context.textAlign = 'center';
-    var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(x_step)));
+    var x_nb_digits = Math.max(0, 1-Math.floor(log10(x_step)));
     var delta_x = maxX - minX;
     var grad_beg_x = minX - 10*delta_x;
     var grad_end_x = maxX + 10*delta_x;
@@ -1359,7 +1421,7 @@ export class PlotDataAxis {
     var grad_end_y = real_maxY + 10*delta_y;
     context.textAlign = 'end';
     context.textBaseline = 'middle';
-    var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(y_step)));
+    var y_nb_digits = Math.max(0, 1-Math.floor(log10(y_step)));
     while (grad_beg_y + (i-1)*y_step < grad_end_y) {
       if ((scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) > axis_y_start) && (scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) < axis_y_end)) {
         if (this.grid_on === true) {
@@ -1421,7 +1483,7 @@ export class PlotDataAxis {
 }
 
 export class PlotDataTooltip {
-  constructor(public colorfill:string, public font:string, public tp_width:number, public tp_radius:any, public to_plot_list:any, public plot_data_states:PlotDataState[],public type:string, public name:string) {}
+  constructor(public colorfill:string, public text_color: string, public font:string, public tp_radius:any, public to_plot_list:any, public plot_data_states:PlotDataState[],public type:string, public name:string) {}
 
   public static deserialize(serialized) {
     var temp = serialized['plot_data_states']
@@ -1431,8 +1493,8 @@ export class PlotDataTooltip {
         plot_data_states.push(PlotDataState.deserialize(d));
       }
       return new PlotDataTooltip(serialized['colorfill'],
+                                  serialized['text_color'],
                                   serialized['font'],
-                                  serialized['tp_width'],
                                   serialized['tp_radius'],
                                   serialized['to_plot_list'],
                                   plot_data_states,
@@ -1440,16 +1502,24 @@ export class PlotDataTooltip {
                                   serialized['name']);
   }
 
-  draw(context, object, mvx, mvy, scaleX, scaleY, init_scale, canvas_width, canvas_height) {
+  draw(context, object, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height) {
     context.beginPath();
     var textfills = [];
+    var text_max_length = 0;
     for (var i=0; i<this.to_plot_list.length; i++) {
       if (this.to_plot_list[i] == 'cx') {
-        textfills.push('x : ' + MyMath.round(object.cx,4).toString());
+        var text = 'x : ' + MyMath.round(object.cx,4).toString();
+        var text_w = context.measureText(text).width;
       } else if (this.to_plot_list[i] == 'cy') {
-        textfills.push('y : ' + MyMath.round(-object.cy, 4).toString());
+        var text = 'y : ' + MyMath.round(-object.cy, 4).toString();
+        var text_w = context.measureText(text).width;
       } else if (this.to_plot_list[i] == 'shape') {
-        textfills.push('shape : ' + object.plot_data_states[0]['shape_set']['shape']);
+        var text = 'shape : ' + object.plot_data_states[0]['shape_set']['shape'];
+        var text_w = context.measureText(text).width;
+      }
+      textfills.push(text);
+      if (text_w>text_max_length) {
+        text_max_length = text_w;
       }
     }
 
@@ -1461,9 +1531,10 @@ export class PlotDataTooltip {
     var decalage = 2.5*point_size + 5
     var tp_x = scaleX*(1000*cx + mvx) + decalage;
     var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height;
+    var tp_width = text_max_length + 25;
 
-    if (tp_x + this.tp_width  > canvas_width) {
-      tp_x = scaleX*(1000*cx + mvx) - decalage - this.tp_width;
+    if (tp_x + tp_width  > canvas_width) {
+      tp_x = scaleX*(1000*cx + mvx) - decalage - tp_width;
     }
     if (tp_y < 0) {
       tp_y = scaleY*(1000*cy + mvy);
@@ -1472,30 +1543,32 @@ export class PlotDataTooltip {
       tp_y = scaleY*(1000*cy + mvy) - tp_height;
     }
 
-    Shape.roundRect(tp_x, tp_y, this.tp_width, tp_height, this.tp_radius, context);
+    Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tp_radius, context);
     context.strokeStyle = 'black';
+    context.globalAlpha = 0.75;
     context.fillStyle = this.colorfill;
     context.stroke();
     context.fill();
-    context.fillStyle = 'black';
-    context.textAlign = 'center';
+    context.fillStyle = this.text_color;
+    context.textAlign = 'start';
     context.textBaseline = 'Alphabetic';
 
-    var x_middle = tp_x + 1/2*this.tp_width;
+    var x_start = tp_x + 1/10*tp_width;
     context.font = this.font;
 
     var current_y = tp_y + 0.75*font_size;
     for (var i=0; i<textfills.length; i++) {
-      context.fillText(textfills[i], x_middle, current_y);
+      context.fillText(textfills[i], x_start, current_y);
       current_y = current_y + font_size;
     }
     context.closePath();
+    context.globalAlpha = 1;
   }
 
   manage_tooltip(context, mvx, mvy, scaleX, scaleY, init_scale, canvas_width, canvas_height, tooltip_list) {
     for (var i=0; i<tooltip_list.length; i++) {
       if (!(typeof tooltip_list[i] === "undefined")) {
-        this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, init_scale, canvas_width, canvas_height);
+        this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height);
       }
     }
   }
@@ -1873,4 +1946,8 @@ function genColor(){
   }
   var col = "rgb(" + ret.join(',') + ")";
   return col;
+}
+
+function log10(x) {
+  return Math.log(x)/Math.log(10)
 }

@@ -36,7 +36,7 @@ steps:
   - npm install
   - npm run-script build
 
-- name: npm build
+- name: npm build and update tag
   image: node
   when:
       event: tag

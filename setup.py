@@ -16,7 +16,7 @@ tag_re = re.compile(r'\btag: %s([0-9][^,]*)\b')
 version_re = re.compile('^Version: (.+)$', re.M)
 
 def readme():
-    with open('../README.md') as f:
+    with open('README.md') as f:
         return f.read()
     
 def version_from_git_describe(version):
@@ -82,7 +82,7 @@ def get_version():
 
     d = dirname(__file__)
     
-    if isdir(join(d, '../.git')):
+    if isdir(join(d, '.git')):
         cmd = 'git describe --tags'
         try:
             version = check_output(cmd.split()).decode().strip()[:]

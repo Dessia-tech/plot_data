@@ -8,17 +8,17 @@ steps:
   image: python:3.8
   commands:
   - git fetch --tags 
-  - python python/setup.py install
+  - python setup.py install
 
 - name: develop
   image: python:3.8
   commands:
-  - python python/setup.py develop
+  - python setup.py develop
 
 - name: sdist
   image: python:3.8
   commands:
-  - python python/setup.py sdist
+  - python setup.py sdist
 
 - name: upload to pypi
   image: plugins/pypi
@@ -33,9 +33,17 @@ steps:
 - name: npm build
   image: node
   commands:
-  - cd typescript
   - npm install
   - npm run-script build
+
+- name: npm build and update tag
+  image: node
+  when:
+      event: tag
+  commands:
+  - npm version from-git
+  - npm run-script build
+
 
 - name: upload npm
   image: plugins/npm

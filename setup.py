@@ -5,8 +5,6 @@ Setup install script for volmdlr
 """
 
 from setuptools import setup
-#from distutils.core import setup
-# from Cython.Build import cythonize
 
 from os.path import dirname, isdir, join
 import re
@@ -16,7 +14,7 @@ tag_re = re.compile(r'\btag: %s([0-9][^,]*)\b')
 version_re = re.compile('^Version: (.+)$', re.M)
 
 def readme():
-    with open('../README.md') as f:
+    with open('README.md') as f:
         return f.read()
     
 def version_from_git_describe(version):
@@ -82,7 +80,7 @@ def get_version():
 
     d = dirname(__file__)
     
-    if isdir(join(d, '../.git')):
+    if isdir(join(d, '.git')):
         cmd = 'git describe --tags'
         try:
             version = check_output(cmd.split()).decode().strip()[:]
@@ -103,16 +101,15 @@ def get_version():
 
 setup(name='plot_data',
       version = get_version(),
-#      setup_requires=['setuptools_scm'],
-      description=' A volume modeler computation-oriented. Include rendering bindings.',
-      long_description=readme(),
-      keywords='volume, modeler, CAD',
-      url='https://github.com/Dessia-tech/volmdlr',
+      description=' A JSON based language interpreter for drawing in 2D',
+      long_description='',
+      keywords='Dataviz, drawing',
+      url='https://github.com/Dessia-tech/plot_data',
       author='DessiA Technologies',
       author_email='root@dessia.tech',
       license='Creative Commons Attribution-Share Alike license',
-      packages=['plot_data'],#,'volmdlr.primitives2D','volmdlr.primitives3D','volmdlr.geometry'],
+      packages=['plot_data'],
       package_dir={},
       include_package_data = True,
-      install_requires=['matplotlib', 'volmdlr', 'dessia_common', 'jinja2'],
+      install_requires=['matplotlib', 'dessia_common', 'jinja2'],
       classifiers=['Topic :: Scientific/Engineering :: Visualization','Development Status :: 3 - Alpha'])

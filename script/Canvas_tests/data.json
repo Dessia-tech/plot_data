@@ -1,0 +1,2822 @@
+[
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.6358621935629607,
+    "cy": 0.1072960419999015
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.9222429550568716,
+    "cy": 0.9358231635014442
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.2578723423803622,
+    "cy": 0.5064096468823511
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.1416486168894098,
+    "cy": 0.057766891834674094
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.6696441536192927,
+    "cy": 0.8967282550671716
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.4827759562917402,
+    "cy": 0.26523716105028894
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.0073883162115522,
+    "cy": 0.45609560137014493
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.9017344351259806,
+    "cy": 0.3504747029435118
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.9493265410983025,
+    "cy": 0.2855920840108823
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.766833308040204,
+    "cy": 0.11601188835702292
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.5076207373952448,
+    "cy": 0.13309889804326303
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.304874425262278,
+    "cy": 0.41078486027962835
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.4471211436400735,
+    "cy": 0.32940215494020664
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.13408181089511562,
+    "cy": 0.7431569853647458
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.308915257892185,
+    "cy": 0.6240635766038312
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.6494391241346906,
+    "cy": 0.22876560444237604
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.5426894659468096,
+    "cy": 0.8843931665720105
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.4202539214164316,
+    "cy": 0.9616860122928295
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.5403964694641588,
+    "cy": 0.36295200813611417
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.011317543040477496,
+    "cy": 0.7470912197396189
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.7593727740630709,
+    "cy": 0.22053779430301412
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.6092721795585938,
+    "cy": 0.7799313956773116
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.13234800214398867,
+    "cy": 0.7900352133584224
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.782855625791445,
+    "cy": 0.7241501333225164
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.6606232832993495,
+    "cy": 0.303251575342525
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.8187628386837613,
+    "cy": 0.8490544067592665
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.791206176419666,
+    "cy": 0.0744265877833985
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.5244986390176833,
+    "cy": 0.43317926669969076
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.5802779330450125,
+    "cy": 0.2712135950466352
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.3022302508236614,
+    "cy": 0.7281918655780998
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.2710648359308603,
+    "cy": 0.7113025751523238
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.4037637047652911,
+    "cy": 0.3706036680477932
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.684893894804098,
+    "cy": 0.05375959881501713
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.7186412413207608,
+    "cy": 0.32609663660680666
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.6429649652135767,
+    "cy": 0.9607779761428608
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.1275070696903633,
+    "cy": 0.8649746614035806
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.4442981958147258,
+    "cy": 0.18934479252078584
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.0807085490942705,
+    "cy": 0.8816879894786247
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.39332414877051547,
+    "cy": 0.6953766190813544
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.2668981058604114,
+    "cy": 0.8668536051755719
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.7746445900520758,
+    "cy": 0.6604234086209145
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.4012808724281518,
+    "cy": 0.03792602332022699
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.2560923620245938,
+    "cy": 0.015324394379264139
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.6364012685525717,
+    "cy": 0.9908209950269368
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.7854644129241246,
+    "cy": 0.6156848825275044
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.7474282705125885,
+    "cy": 0.7547227279271609
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.6871629857518442,
+    "cy": 0.29225478632405744
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.5309418678935025,
+    "cy": 0.2819017368373061
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 0.5335923032094898,
+    "cy": 0.7331489656840633
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataPoint2D",
+    "type": "point",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "cx": 1.5844739552382558,
+    "cy": 0.9140193934196497
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataAxis",
+    "nb_points_x": 10,
+    "nb_points_y": 10,
+    "font_size": 12,
+    "graduation_color": "grey",
+    "axis_color": "grey",
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "arrow_on": false,
+    "axis_width": 0.5,
+    "grid_on": true,
+    "type": "axis"
+  },
+  {
+    "name": "",
+    "package_version": null,
+    "object_class": "plot_data.plot_data.PlotDataTooltip",
+    "colorfill": "black",
+    "text_color": "white",
+    "font": "12px sans-serif",
+    "tp_radius": 5,
+    "to_plot_list": [
+      "cx",
+      "cy"
+    ],
+    "plot_data_states": [
+      {
+        "name": "",
+        "package_version": null,
+        "object_class": "plot_data.plot_data.PlotDataState",
+        "color_surface": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.ColorSurfaceSet",
+          "color": "black"
+        },
+        "color_map": null,
+        "hatching": null,
+        "opacity": 1,
+        "dash": null,
+        "marker": null,
+        "color_line": "black",
+        "stroke_width": 0.5,
+        "shape_set": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointShapeSet",
+          "shape": "circle"
+        },
+        "point_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointSizeSet",
+          "size": 2
+        },
+        "point_color": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.PointColorSet",
+          "color_fill": "violet",
+          "color_stroke": "grey"
+        },
+        "window_size": {
+          "name": "",
+          "package_version": null,
+          "object_class": "plot_data.plot_data.WindowSizeSet",
+          "width": 2,
+          "height": 1
+        }
+      }
+    ],
+    "type": "tooltip"
+  }
+]

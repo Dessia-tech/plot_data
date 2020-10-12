@@ -51,13 +51,14 @@ export class PlotData {
   select_h:number;
   sort_list_points:any[]=[];
   graph_to_display:boolean[]=[];
-  graph1_button_x:number;
-  graph1_button_y:number;
-  graph1_button_w:number;
-  graph1_button_h:number;
+  graph1_button_x:number=0;
+  graph1_button_y:number=0;
+  graph1_button_w:number=0;
+  graph1_button_h:number=0;
   nb_graph:number = 0;
   graph_colorlist:string[]=[];
-  graph_text_spacing:number;
+  graph_name_list:string[]=[];
+  graph_text_spacing_list:number[]=[];
   decalage_axis_x = 50;
   decalage_axis_y = 20;
   last_point_list:any[]=[];
@@ -343,15 +344,22 @@ export class PlotData {
     }
   }
 
-  graph_buttons(x, y, w, h, police, text_spacing) {
+  graph_buttons(y, w, h, police) {
+    this.context.font = police;
+    this.graph1_button_x = this.width/2;
+    for (var i=0; i<this.graph_name_list.length; i++) {
+      var text_w = this.context.measureText(this.graph_name_list[i]).width;
+      this.graph_text_spacing_list.push(text_w + 10);
+      this.graph1_button_x = this.graph1_button_x - (w + text_w + 10)/2;
+    }
+    var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
-      this.context.font = police;
-      var text = 'Graph ' + (i+1).toString();
       if (this.graph_to_display[i] === true) {
-        Shape.createGraphButton(x + i*(w+text_spacing), y, w, h, this.context, text, police, this.graph_colorlist[i], false);
+        Shape.createGraphButton(this.graph1_button_x + i*w + text_spacing_sum_i, y, w, h, this.context, this.graph_name_list[i], police, this.graph_colorlist[i], false);
       } else {
-        Shape.createGraphButton(x + i*(w+text_spacing), y, w, h, this.context, text, police, this.graph_colorlist[i], true);
+        Shape.createGraphButton(this.graph1_button_x + i*w + text_spacing_sum_i, y, w, h, this.context, this.graph_name_list[i], police, this.graph_colorlist[i], true);
       }
+      text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
   }
 
@@ -444,11 +452,13 @@ export class PlotData {
   }
 
   graph_button_action(mouse1X, mouse1Y) {
+    var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
-      var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*(this.graph1_button_w + this.graph_text_spacing), this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
+      var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*this.graph1_button_w + text_spacing_sum_i, this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
       if (click_on_graph_i === true) {
         this.graph_to_display[i] = !this.graph_to_display[i];
       }
+      text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
   }
 
@@ -514,9 +524,11 @@ export class PlotData {
     var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30);
     var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x, this.select_y, this.select_w, this.select_h);
     var click_on_graph = false;
+    var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
-      var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*(this.graph1_button_w + this.graph_text_spacing), this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
+      var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*this.graph1_button_w + text_spacing_sum_i, this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
       click_on_graph = click_on_graph || click_on_graph_i;
+      text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
     var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph;
 
@@ -947,40 +959,6 @@ export class PlotContour extends PlotData {
 }
 
 export class PlotScatter extends PlotData {
-  plot_datas:any;
-  tooltip_list:any[]=[];
-  zoom_rect_x:number;
-  zoom_rect_y:number;
-  zoom_rect_w:number;
-  zoom_rect_h:number;
-  zw_bool:boolean;
-  zw_x:number;
-  zw_y:number;
-  zw_w:number;
-  zw_h:number;
-  reset_rect_x:number;
-  reset_rect_y:number;
-  reset_rect_w:number;
-  reset_rect_h:number;
-  select_bool:boolean;
-  select_x:number;
-  select_y:number;
-  select_w:number;
-  select_h:number;
-  sort_list_points:any[]=[];
-  graph_to_display:boolean[]=[];
-  graph1_button_x:number;
-  graph1_button_y:number;
-  graph1_button_w:number;
-  graph1_button_h:number;
-  nb_graph:number = 0;
-  graph_colorlist:string[]=[];
-  graph_text_spacing:number;
-  decalage_axis_x = 50;
-  decalage_axis_y = 20;
-  last_point_list:any[]=[];
-  scatter_point_list:PlotDataPoint2D[]=[]
-
   constructor(public data:any, 
     public width: number,
     public height: number,
@@ -1007,7 +985,6 @@ export class PlotScatter extends PlotData {
       this.graph1_button_h = 15;
       this.plot_datas = [];
       var graphID = 0;
-      this.graph_text_spacing = 50;
       for (var i = 0; i < data.length; i++) {
         var d = data[i]; 
         var a;
@@ -1034,6 +1011,7 @@ export class PlotScatter extends PlotData {
           graphID++;
           this.graph_colorlist.push(a.point_list[0].plot_data_states[0].point_color.color_fill);
           this.graph_to_display.push(true);
+          this.graph_name_list.push(a.name)
           for (var j=0; j<a.point_list.length; j++) {
             var point = a.point_list[j];
             if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
@@ -1057,7 +1035,7 @@ export class PlotScatter extends PlotData {
         }
       }
       this.nb_graph = graphID;
-      this.graph1_button_x = width/2 - this.nb_graph*(this.graph1_button_w + this.graph_text_spacing)/2;
+      // this.graph1_button_x = width/2 - this.nb_graph*(this.graph1_button_w + this.graph_text_spacing)/2;
       this.define_canvas();
       this.mouse_interaction();
   }
@@ -1085,7 +1063,7 @@ export class PlotScatter extends PlotData {
       this.selection_button(this.select_x, this.select_y, this.select_w, this.select_h);
 
       //Drawing the enable/disable graph button
-      this.graph_buttons(this.graph1_button_x ,this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this.graph_text_spacing);
+      this.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial');
     
   }
 }

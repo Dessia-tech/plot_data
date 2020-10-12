@@ -1,6 +1,8 @@
 import plot_data
 from plot_data import plot_data
 import numpy as np
+import json
+import os
 
 # PlotDataState
 plot_datas = []
@@ -88,4 +90,9 @@ tooltip = plot_data.PlotDataTooltip(colorfill=colorfill,text_color=text_color, f
 plot_datas += [tooltip]
 
 sol = [c.to_dict() for c in plot_datas]
-plot_data.plot_d3(sol)
+# plot_data.plot_d3(sol)
+
+
+os.remove("data.json")
+with open('data.json', 'w') as fp:
+    json.dump(sol, fp, indent=2)

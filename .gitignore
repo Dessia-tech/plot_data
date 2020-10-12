@@ -1,7 +1,5 @@
 node_modules
 /lib
-# HTML files
-*.html
 
 # CAD files
 *.fcstd

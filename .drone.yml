@@ -56,14 +56,17 @@ steps:
 
 - name: upload to cdn latest
   image: appleboy/drone-scp
+  when:
+      event: push
   settings:
     host: magenta.dessia.tech
     username: drone
     password:
       from_secret: ssh_drone_password
-    target: /var/www/cdn/js/plot-data/latest/
+    target: /var/www/cdn/js/plot-data/sid/
     source: lib/*
     strip_components: 1
+    rm: true
 
 - name: upload to cdn version
   image: appleboy/drone-scp

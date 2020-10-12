@@ -65,13 +65,13 @@ export class PlotData {
   scatter_point_list:PlotDataPoint2D[]=[];
   refresh_point_list_bool:boolean=true;
 
-  constructor(public data:any, 
+  public constructor(public data:any, 
     public width: number,
     public height: number,
     public coeff_pixel: number) {}
 
   
-  draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {}
+  draw(hidden, show_state, mvx, mvy, scaleX, scaleY){};
   
   define_canvas() {
     var canvas : any = document.getElementById('canvas');
@@ -213,7 +213,7 @@ export class PlotData {
   draw_tooltip(d, mvx, mvy) {
     if (d['type'] == 'tooltip') {
       this.tooltip_ON = true;
-      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.init_scale, this.width, this.height, this.tooltip_list)
+      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list)
     }
   }
 
@@ -521,7 +521,7 @@ export class PlotData {
     var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h);
     var click_on_zoom_window = Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x, this.zw_y, this.zw_w, this.zw_h);
     var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
-    var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30);
+    // var is_rect_big_enough = (Math.abs(mouse2X - mouse1X)>40) && (Math.abs(mouse2Y - mouse1Y)>30);
     var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x, this.select_y, this.select_w, this.select_h);
     var click_on_graph = false;
     var text_spacing_sum_i = 0;
@@ -533,9 +533,9 @@ export class PlotData {
     var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph;
 
     if (mouse_moving) {
-        if ((this.zw_bool && is_rect_big_enough)) {
+        if (this.zw_bool) {
           this.zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil);
-
+          
         } else if (this.select_bool) {
           this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y)
 
@@ -928,7 +928,7 @@ export class PlotData {
 
 export class PlotContour extends PlotData {
   plot_datas:any;
-  constructor(public data:any, 
+  public constructor(public data:any, 
                 public width: number,
                 public height: number,
                 public coeff_pixel: number) {
@@ -959,7 +959,7 @@ export class PlotContour extends PlotData {
 }
 
 export class PlotScatter extends PlotData {
-  constructor(public data:any, 
+  public constructor(public data:any, 
     public width: number,
     public height: number,
     public coeff_pixel: number) {
@@ -985,6 +985,7 @@ export class PlotScatter extends PlotData {
       this.graph1_button_h = 15;
       this.plot_datas = [];
       var graphID = 0;
+      console.log(data)
       for (var i = 0; i < data.length; i++) {
         var d = data[i]; 
         var a;
@@ -1065,90 +1066,6 @@ export class PlotScatter extends PlotData {
       //Drawing the enable/disable graph button
       this.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial');
     
-  }
-}
-
-class MyMath {
-  public static round(x:number, n:number) {
-    return Math.round(x*Math.pow(10,n)) / Math.pow(10,n);
-  }
-}
-
-class Shape {
-
-  public static drawLine(context, start, end) {
-    context.moveTo(start[0], start[1]);
-    context.lineTo(end[0], end[1]);
-  }
-
-  public static crux(context:any, cx:number, cy:number, length:number) {
-    this.drawLine(context, [cx, cy], [cx - length, cy]);
-    this.drawLine(context, [cx, cy], [cx + length, cy]);
-    this.drawLine(context, [cx, cy], [cx, cy - length]);
-    this.drawLine(context, [cx, cy], [cx, cy + length]);
-  }
-
-  public static roundRect(x, y, w, h, radius, context) {
-    var r = x + w;
-    var b = y + h;
-    context.beginPath();
-    context.strokeStyle="black";
-    context.lineWidth="1";
-    context.moveTo(x+radius, y);
-    context.lineTo(r-radius, y);
-    context.quadraticCurveTo(r, y, r, y+radius);
-    context.lineTo(r, y+h-radius);
-    context.quadraticCurveTo(r, b, r-radius, b);
-    context.lineTo(x+radius, b);
-    context.quadraticCurveTo(x, b, x, b-radius);
-    context.lineTo(x, y+radius);
-    context.quadraticCurveTo(x, y, x+radius, y);
-    context.stroke();
-    context.closePath();
-  }
-
-  public static Is_in_rect(x, y, rect_x, rect_y, rect_w, rect_h) {
-    return ((x>=rect_x) && (x<= rect_x + rect_w) && (y>=rect_y) && (y<=rect_y + rect_h))
-  }
-
-  public static createButton(x, y, w, h, context, text, police) {
-    context.beginPath();
-    context.fillStyle = 'white';
-    context.lineWidth = "3";
-    context.rect(x,y,w,h);
-    context.stroke();
-    context.fill();
-    context.closePath();
-    context.beginPath();
-    context.fillStyle = "black"
-    context.textAlign = "center";
-    context.font = police;
-    context.fillText(text, x+w/2, y+h/1.8);
-    context.fill();
-    context.closePath();
-  }
-
-  public static createGraphButton(x, y, w, h, context, text, police, colorfill, strikeout) {
-    context.beginPath();
-    context.fillStyle = colorfill;
-    context.rect(x,y,w,h);
-    context.fill();
-    context.closePath();
-    context.beginPath();
-    context.fillStyle = 'grey';
-    context.textAlign = 'start';
-    context.textBaseline = 'middle';
-    context.font = police;
-    context.fillText(text, x+w + 5, y+h/1.8);
-    context.fill();
-    if (strikeout === true) {
-      var text_w = context.measureText(text).width;
-      context.lineWidth = 1.5;
-      context.strokeStyle = 'grey';
-      Shape.drawLine(context, [x+w + 5, y+h/1.8], [x+w+5+text_w, y+h/2]);
-      context.stroke();
-    }
-    context.closePath();
   }
 }
 
@@ -1404,7 +1321,7 @@ export class PlotDataAxis {
     //pour l'axe des x
     var i=0;
     context.textAlign = 'center';
-    var x_nb_digits = Math.max(0, 1-Math.floor(log10(x_step)));
+    var x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(x_step)));
     var delta_x = maxX - minX;
     var grad_beg_x = minX - 10*delta_x;
     var grad_end_x = maxX + 10*delta_x;
@@ -1431,7 +1348,7 @@ export class PlotDataAxis {
     var grad_end_y = real_maxY + 10*delta_y;
     context.textAlign = 'end';
     context.textBaseline = 'middle';
-    var y_nb_digits = Math.max(0, 1-Math.floor(log10(y_step)));
+    var y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(y_step)));
     while (grad_beg_y + (i-1)*y_step < grad_end_y) {
       if ((scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) > axis_y_start) && (scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) < axis_y_end)) {
         if (this.grid_on === true) {
@@ -1575,7 +1492,7 @@ export class PlotDataTooltip {
     context.globalAlpha = 1;
   }
 
-  manage_tooltip(context, mvx, mvy, scaleX, scaleY, init_scale, canvas_width, canvas_height, tooltip_list) {
+  manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list) {
     for (var i=0; i<tooltip_list.length; i++) {
       if (!(typeof tooltip_list[i] === "undefined")) {
         this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height);
@@ -1864,100 +1781,181 @@ export class HatchingSet {
   }
 }
 
-
-function drawLines(ctx, pts) {
-    // ctx.moveTo(pts[0], pts[1]);
-    for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
+export class MyMath {
+  public static round(x:number, n:number) {
+    return Math.round(x*Math.pow(10,n)) / Math.pow(10,n);
+  }
+  public static log10(x) {
+    return Math.log(x)/Math.log(10)
+  }
 }
 
-function getCurvePoints(pts, tension, isClosed, numOfSegments) {
+export class Shape {
+  public static drawLine(context, start, end) {
+    context.moveTo(start[0], start[1]);
+    context.lineTo(end[0], end[1]);
+  }
 
-    // use input value if provided, or use a default value
-    tension = (typeof tension != 'undefined') ? tension : 0.5;
-    isClosed = isClosed ? isClosed : false;
-    numOfSegments = numOfSegments ? numOfSegments : 16;
+  public static crux(context:any, cx:number, cy:number, length:number) {
+    this.drawLine(context, [cx, cy], [cx - length, cy]);
+    this.drawLine(context, [cx, cy], [cx + length, cy]);
+    this.drawLine(context, [cx, cy], [cx, cy - length]);
+    this.drawLine(context, [cx, cy], [cx, cy + length]);
+  }
 
-    var _pts = [], res = [],    // clone array
-        x, y,           // our x,y coords
-        t1x, t2x, t1y, t2y, // tension vectors
-        c1, c2, c3, c4,     // cardinal points
-        st, t, i;       // steps based on num. of segments
+  public static roundRect(x, y, w, h, radius, context) {
+    var r = x + w;
+    var b = y + h;
+    context.beginPath();
+    context.strokeStyle="black";
+    context.lineWidth="1";
+    context.moveTo(x+radius, y);
+    context.lineTo(r-radius, y);
+    context.quadraticCurveTo(r, y, r, y+radius);
+    context.lineTo(r, y+h-radius);
+    context.quadraticCurveTo(r, b, r-radius, b);
+    context.lineTo(x+radius, b);
+    context.quadraticCurveTo(x, b, x, b-radius);
+    context.lineTo(x, y+radius);
+    context.quadraticCurveTo(x, y, x+radius, y);
+    context.stroke();
+    context.closePath();
+  }
 
-    // clone array so we don't change the original
-    //
-    _pts = pts.slice(0);
+  public static Is_in_rect(x, y, rect_x, rect_y, rect_w, rect_h) {
+    return ((x>=rect_x) && (x<= rect_x + rect_w) && (y>=rect_y) && (y<=rect_y + rect_h))
+  }
 
-    // The algorithm require a previous and next point to the actual point array.
-    // Check if we will draw closed or open curve.
-    // If closed, copy end points to beginning and first points to end
-    // If open, duplicate first points to befinning, end points to end
-    if (isClosed) {
-        _pts.unshift(pts[pts.length - 1]);
-        _pts.unshift(pts[pts.length - 2]);
-        _pts.unshift(pts[pts.length - 1]);
-        _pts.unshift(pts[pts.length - 2]);
-        _pts.push(pts[0]);
-        _pts.push(pts[1]);
+  public static createButton(x, y, w, h, context, text, police) {
+    context.beginPath();
+    context.fillStyle = 'white';
+    context.lineWidth = "3";
+    context.rect(x,y,w,h);
+    context.stroke();
+    context.fill();
+    context.closePath();
+    context.beginPath();
+    context.fillStyle = "black"
+    context.textAlign = "center";
+    context.font = police;
+    context.fillText(text, x+w/2, y+h/1.8);
+    context.fill();
+    context.closePath();
+  }
+
+  public static createGraphButton(x, y, w, h, context, text, police, colorfill, strikeout) {
+    context.beginPath();
+    context.fillStyle = colorfill;
+    context.rect(x,y,w,h);
+    context.fill();
+    context.closePath();
+    context.beginPath();
+    context.fillStyle = 'grey';
+    context.textAlign = 'start';
+    context.textBaseline = 'middle';
+    context.font = police;
+    context.fillText(text, x+w + 5, y+h/1.8);
+    context.fill();
+    if (strikeout === true) {
+      var text_w = context.measureText(text).width;
+      context.lineWidth = 1.5;
+      context.strokeStyle = 'grey';
+      Shape.drawLine(context, [x+w + 5, y+h/1.8], [x+w+5+text_w, y+h/2]);
+      context.stroke();
     }
-    else {
-        _pts.unshift(pts[1]);   //copy 1. point and insert at beginning
-        _pts.unshift(pts[0]);
-        _pts.push(pts[pts.length - 2]); //copy last point and append
-        _pts.push(pts[pts.length - 1]);
-    }
+    context.closePath();
+  }
+}
 
-    // ok, lets start..
+export function drawLines(ctx, pts) {
+  // ctx.moveTo(pts[0], pts[1]);
+  for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
+}
 
-    // 1. loop goes through point array
-    // 2. loop goes through each segment between the 2 pts + 1e point before and after
-    for (i=2; i < (_pts.length - 4); i+=2) {
-        for (t=0; t <= numOfSegments; t++) {
+export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
 
-            // calc tension vectors
-            t1x = (_pts[i+2] - _pts[i-2]) * tension;
-            t2x = (_pts[i+4] - _pts[i]) * tension;
+  // use input value if provided, or use a default value
+  tension = (typeof tension != 'undefined') ? tension : 0.5;
+  isClosed = isClosed ? isClosed : false;
+  numOfSegments = numOfSegments ? numOfSegments : 16;
 
-            t1y = (_pts[i+3] - _pts[i-1]) * tension;
-            t2y = (_pts[i+5] - _pts[i+1]) * tension;
+  var _pts = [], res = [],    // clone array
+      x, y,           // our x,y coords
+      t1x, t2x, t1y, t2y, // tension vectors
+      c1, c2, c3, c4,     // cardinal points
+      st, t, i;       // steps based on num. of segments
 
-            // calc step
-            st = t / numOfSegments;
+  // clone array so we don't change the original
+  //
+  _pts = pts.slice(0);
 
-            // calc cardinals
-            c1 =   2 * Math.pow(st, 3)  - 3 * Math.pow(st, 2) + 1;
-            c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2);
-            c3 =       Math.pow(st, 3)  - 2 * Math.pow(st, 2) + st;
-            c4 =       Math.pow(st, 3)  -     Math.pow(st, 2);
+  // The algorithm require a previous and next point to the actual point array.
+  // Check if we will draw closed or open curve.
+  // If closed, copy end points to beginning and first points to end
+  // If open, duplicate first points to befinning, end points to end
+  if (isClosed) {
+      _pts.unshift(pts[pts.length - 1]);
+      _pts.unshift(pts[pts.length - 2]);
+      _pts.unshift(pts[pts.length - 1]);
+      _pts.unshift(pts[pts.length - 2]);
+      _pts.push(pts[0]);
+      _pts.push(pts[1]);
+  }
+  else {
+      _pts.unshift(pts[1]);   //copy 1. point and insert at beginning
+      _pts.unshift(pts[0]);
+      _pts.push(pts[pts.length - 2]); //copy last point and append
+      _pts.push(pts[pts.length - 1]);
+  }
 
-            // calc x and y cords with common control vectors
-            x = c1 * _pts[i]    + c2 * _pts[i+2] + c3 * t1x + c4 * t2x;
-            y = c1 * _pts[i+1]  + c2 * _pts[i+3] + c3 * t1y + c4 * t2y;
+  // ok, lets start..
 
-            //store points in array
-            res.push(x);
-            res.push(y);
+  // 1. loop goes through point array
+  // 2. loop goes through each segment between the 2 pts + 1e point before and after
+  for (i=2; i < (_pts.length - 4); i+=2) {
+      for (t=0; t <= numOfSegments; t++) {
 
-        }
-    }
+          // calc tension vectors
+          t1x = (_pts[i+2] - _pts[i-2]) * tension;
+          t2x = (_pts[i+4] - _pts[i]) * tension;
 
-    return res;
+          t1y = (_pts[i+3] - _pts[i-1]) * tension;
+          t2y = (_pts[i+5] - _pts[i+1]) * tension;
+
+          // calc step
+          st = t / numOfSegments;
+
+          // calc cardinals
+          c1 =   2 * Math.pow(st, 3)  - 3 * Math.pow(st, 2) + 1;
+          c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2);
+          c3 =       Math.pow(st, 3)  - 2 * Math.pow(st, 2) + st;
+          c4 =       Math.pow(st, 3)  -     Math.pow(st, 2);
+
+          // calc x and y cords with common control vectors
+          x = c1 * _pts[i]    + c2 * _pts[i+2] + c3 * t1x + c4 * t2x;
+          y = c1 * _pts[i+1]  + c2 * _pts[i+3] + c3 * t1y + c4 * t2y;
+
+          //store points in array
+          res.push(x);
+          res.push(y);
+
+      }
+  }
+
+  return res;
 }
 
 var nextCol = 1;
-function genColor(){
-  var ret = [];
-  // via http://stackoverflow.com/a/15804183
-  if(nextCol < 16777215){
-    ret.push(nextCol & 0xff); // R
-    ret.push((nextCol & 0xff00) >> 8); // G
-    ret.push((nextCol & 0xff0000) >> 16); // B
+export function genColor(){
+var ret = [];
+// via http://stackoverflow.com/a/15804183
+if(nextCol < 16777215){
+  ret.push(nextCol & 0xff); // R
+  ret.push((nextCol & 0xff00) >> 8); // G
+  ret.push((nextCol & 0xff0000) >> 16); // B
 
-    nextCol += 50;
-  }
-  var col = "rgb(" + ret.join(',') + ")";
-  return col;
+  nextCol += 50;
 }
-
-function log10(x) {
-  return Math.log(x)/Math.log(10)
+var col = "rgb(" + ret.join(',') + ")";
+return col;
 }

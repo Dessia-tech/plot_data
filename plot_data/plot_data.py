@@ -251,6 +251,14 @@ class PlotDataContour2D(DessiaObject):
 
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
+class ParallelPlot(DessiaObject):
+    def __init__(self, data, to_display_type:str, to_display_list, type:str='ParallelPlot', name:str=''):
+        self.data = data
+        self.to_display_type = to_display_type
+        self.to_display_list = to_display_list
+        self.type=type
+        DessiaObject.__init__(self, name=name)
+
 
 def plot_d3(plot_datas):
     template_path = pkg_resources.resource_filename(

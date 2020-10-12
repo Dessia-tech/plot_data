@@ -34,16 +34,8 @@ steps:
   image: node
   commands:
   - npm install
+  - npm version from-git --allow-same-version
   - npm run-script build
-
-- name: npm build and update tag
-  image: node
-  when:
-      event: tag
-  commands:
-  - npm version from-git
-  - npm run-script build
-
 
 - name: upload npm
   image: plugins/npm

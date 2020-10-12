@@ -1,4 +1,3 @@
-import plot_data
 from plot_data import plot_data
 import random
 import json
@@ -25,23 +24,6 @@ color_stroke = 'grey'
 surface_color = 'black'
 stroke_width = 0.5  # Points' stroke width
 
-# Axis
-nb_points_x = 10
-nb_points_y = 10
-font_size = 12
-graduation_color = 'grey'
-axis_color = 'grey'
-axis_width = 0.5
-arrow_on = False
-grid_on = True
-
-# Tooltip
-colorfill = 'black'
-text_color = 'white'
-font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
-tp_radius = 5
-to_plot_list = ['cx', 'cy']
-
 plot_datas = []
 window_size = plot_data.WindowSizeSet(width=width, height=height)
 shape_set = plot_data.PointShapeSet(shape=shape)
@@ -57,19 +39,3 @@ for i in range(50):
     cy = random.uniform(0,window_size.height)
     point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, plot_data_states=plot_data_states)
     plot_datas += [point]
-
-axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
-                              font_size=font_size, graduation_color=graduation_color,
-                              axis_color=axis_color,plot_data_states=plot_data_states,
-                              arrow_on=arrow_on, axis_width=axis_width, grid_on=grid_on)
-plot_datas += [axis]
-
-tooltip = plot_data.PlotDataTooltip(colorfill,text_color=text_color,font=font,tp_radius=tp_radius,to_plot_list=to_plot_list, plot_data_states=plot_data_states)
-plot_datas += [tooltip]
-
-sol = [c.to_dict() for c in plot_datas]
-# plot_data.plot_d3(sol)
-
-os.remove("data.json")
-with open('data.json', 'w') as fp:
-    json.dump(sol, fp, indent=2)

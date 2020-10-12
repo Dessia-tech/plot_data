@@ -34,7 +34,7 @@ steps:
   image: node
   commands:
   - npm install
-  - npm version from-git --allow-same-version --force
+  - npm version from-git --allow-same-version
   - npm run-script build
 
 - name: upload npm
@@ -47,16 +47,30 @@ steps:
       from_secret: npm_password
     email: root@dessia.tech
 
-- name: upload to cdn
+- name: upload to cdn latest
   image: appleboy/drone-scp
   settings:
     host: magenta.dessia.tech
     username: drone
     password:
       from_secret: ssh_drone_password
-    target: /var/www/cdn/js/plot-data/alpha
+    target: /var/www/cdn/js/plot-data/latest/
     source: lib/*
     strip_components: 1
+
+- name: upload to cdn version
+  image: appleboy/drone-scp
+  when:
+      event: tag
+  settings:
+    host: magenta.dessia.tech
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+    target: /var/www/cdn/js/plot-data/{$DRONE_TAG}/
+    source: lib/*
+    strip_components: 1
+
 
 
 

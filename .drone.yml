@@ -64,6 +64,7 @@ steps:
     target: /var/www/cdn/js/plot-data/latest/
     source: lib/*
     strip_components: 1
+    rm: true
 
 - name: upload to cdn version
   image: appleboy/drone-scp

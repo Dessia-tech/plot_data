@@ -27,22 +27,23 @@ stroke_width = 0.5  # Points' stroke width
 plot_datas = []
 elements = []
 to_display_type = 'point'
-window_size = plot_data.WindowSizeSet(width=width, height=height)
-shape_set = plot_data.PointShapeSet(shape=shape)
-point_size = plot_data.PointSizeSet(size=size)
-point_color = plot_data.PointColorSet(color_fill=color_fill,
-                                      color_stroke=color_stroke)
-plot_data_states = [plot_data.PlotDataState(
-        color_surface=plot_data.ColorSurfaceSet(color=surface_color),
-        window_size=window_size, stroke_width=stroke_width,
-        shape_set=shape_set, point_size=point_size, point_color=point_color)]
+
 for i in range(50):
-    cx = random.uniform(0,window_size.width)
-    cy = random.uniform(0,window_size.height)
-    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, color_fill=color_fill, color_stroke=color_stroke, stroke_width=stroke_width)
+    cx = random.uniform(0,2)
+    cy = random.uniform(0,1)
+    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=color_fill, color_stroke=color_stroke, stroke_width=stroke_width)
     elements += [point]
 
-attribute_list = [['cx','float'], ['cy', 'float'], ['cx', 'float']]
+cx = random.uniform(0,2)
+cy = random.uniform(0,1)
+point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill='red', color_stroke=color_stroke, stroke_width=stroke_width)
+elements += [point]
+cx = random.uniform(0,2)
+cy = random.uniform(0,1)
+point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill='blue', color_stroke=color_stroke, stroke_width=stroke_width)
+elements += [point]
+
+attribute_list = [['cx','float'], ['cy', 'float'], ['color_fill', 'string']]
 line_color = 'blue'
 parallel_plot = plot_data.ParallelPlot(elements=elements,to_display_type=to_display_type, attribute_list=attribute_list, line_color=line_color)
 

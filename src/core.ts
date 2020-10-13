@@ -317,7 +317,24 @@ export abstract class PlotData {
         var y_step = (y_end - y_start)/9;
         for (var j=0; j<10; j++) {
           var current_y = y_start + j*y_step;
-          var current_grad = MyMath.round(min + j*grad_step, 3);
+          var current_grad:any = MyMath.round(min + j*grad_step, 3);
+          Shape.drawLine(this.context, [current_x - 3, current_y], [current_x + 3, current_y]);
+          this.context.textAlign = 'end';
+          this.context.textBaseline = 'middle';
+          this.context.fillText(current_grad, current_x - 5, current_y);
+        }
+      } else { //ie string
+        console.log('blla')
+        var nb_attribute = list.length;
+        if (nb_attribute == 1) {
+          y_start = (y_start + y_end)/2;
+          y_step = 1;
+        } else {
+          y_step = (y_end - y_start)/(nb_attribute - 1);
+        }
+        for (var j=0; j<nb_attribute; j++) {
+          var current_y = y_start + j*y_step;
+          var current_grad = list[j];
           Shape.drawLine(this.context, [current_x - 3, current_y], [current_x + 3, current_y]);
           this.context.textAlign = 'end';
           this.context.textBaseline = 'middle';

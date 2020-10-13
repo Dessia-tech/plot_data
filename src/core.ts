@@ -1,4 +1,4 @@
-export class PlotData {
+export abstract class PlotData {
   context_show:any;
   context_hidden:any;
   minX:number;
@@ -65,13 +65,16 @@ export class PlotData {
   scatter_point_list:PlotDataPoint2D[]=[];
   refresh_point_list_bool:boolean=true;
 
+  value_list:any[] = [];
+  to_display_list:any[] = [];
+
   public constructor(public data:any, 
     public width: number,
     public height: number,
     public coeff_pixel: number) {}
 
   
-  draw(hidden, show_state, mvx, mvy, scaleX, scaleY){};
+  abstract draw(hidden, show_state, mvx, mvy, scaleX, scaleY);
   
   define_canvas() {
     var canvas : any = document.getElementById('canvas');
@@ -289,6 +292,43 @@ export class PlotData {
         }
       }
     } 
+  }
+
+  draw_parallel_axis(nb_axis:number) {
+    var x_start = 50;
+    if (nb_axis<=1) {throw new Error("At least 2 axis are required")}
+    var x_step = (this.width - 100)/(nb_axis-1);
+    for (var i=0; i<nb_axis; i++) {
+      var current_x = x_start + i*x_step;
+      var y_start = this.height - 25;
+      var y_end = 50;
+      this.context.beginPath();
+      Shape.drawLine(this.context, [current_x, y_start], [current_x, y_end]);
+      var attribute_name = this.value_list[i][0];
+      this.context.textAlign = 'center';
+      this.context.fillText(attribute_name, current_x, y_end - 20);
+      this.context.stroke();
+      var attribute_type = this.value_list[i][1];
+      var list = this.value_list[i][2];
+      if (attribute_type == 'float') {
+        var min = list[0];
+        var max = list[1];
+        var grad_step = (max - min)/9;
+        var y_step = (y_end - y_start)/9;
+        for (var j=0; j<10; j++) {
+          var current_y = y_start + j*y_step;
+          var current_grad = MyMath.round(min + j*grad_step, 3);
+          Shape.drawLine(this.context, [current_x - 3, current_y], [current_x + 3, current_y]);
+          this.context.textAlign = 'end';
+          this.context.textBaseline = 'middle';
+          this.context.fillText(current_grad, current_x - 5, current_y);
+        }
+      }
+      this.context.stroke();
+      this.context.fill();
+      this.context.closePath();
+    }
+    
   }
 
   zoom_button(x, y, w, h) {
@@ -985,7 +1025,6 @@ export class PlotScatter extends PlotData {
       this.graph1_button_h = 15;
       this.plot_datas = [];
       var graphID = 0;
-      console.log(data)
       for (var i = 0; i < data.length; i++) {
         var d = data[i]; 
         var a;
@@ -1066,6 +1105,73 @@ export class PlotScatter extends PlotData {
       //Drawing the enable/disable graph button
       this.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial');
     
+  }
+}
+
+export class ParallelPlot extends PlotData {
+  constructor(data, width, height, coeff_pixel) {
+    super(data, width, height, coeff_pixel);
+    var data_show = data[0];
+    var elements = data_show['elements'];
+    var to_display_type = data['to_display_type'];
+    var attribute_list = data_show['attribute_list'];
+    for (var i=0; i<attribute_list.length; i++) {
+      var attribute_name = attribute_list[i][0];
+      var type = attribute_list[i][1];
+      var value = [attribute_name, type];
+      if (type == 'float') {
+        var min = elements[0][attribute_name];
+        var max = elements[0][attribute_name];
+        for (var j=0; j<elements.length; j++) {
+          var elt = elements[j][attribute_name];
+          if (elt<min) {
+            min = elt;
+          }
+          if (elt>max) {
+            max = elt;
+          } 
+        }
+        value.push([min, max]);
+      } else { //ie string
+        var list = [];
+        for (var j=0; j<elements.length; j++) {
+          var elt = elements[j][attribute_name];
+          if (!this.is_include(elt, list)) {
+            list.push(elt);
+          }
+        }
+        value.push(list);
+      }
+      this.value_list.push(value);
+    }
+
+    for (var i=0; i<elements.length; i++) {
+      var to_display = [];
+      for (var j=0; j<attribute_list.length; j++) {
+        var attribute_name = attribute_list[j][0];
+        var elt = elements[i][attribute_name];
+        to_display.push(elt);
+      }
+      this.to_display_list.push(to_display);
+    }
+    this.define_canvas();
+  }
+
+  draw_initial() {
+    this.init_scale = 1;
+    this.scale = 1;
+    this.scaleX = 1;
+    this.scaleY = 1;
+    this.last_mouse1X = 0;
+    this.last_mouse1Y = 0;
+    this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+    this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY);
+  }
+
+  draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
+    this.draw_empty_canvas(hidden);
+    var nb_axis = this.value_list.length;
+    this.draw_parallel_axis(nb_axis);
   }
 }
 

@@ -25,7 +25,7 @@ import webbrowser
 from dessia_common import DessiaObject
 from typing import TypeVar, List
 
-from jinja2 import Environment, PackageLoader, select_autoescape,\
+from jinja2 import Environment, PackageLoader, select_autoescape, \
     FileSystemLoader
 
 
@@ -171,7 +171,7 @@ class PlotDataAxis(DessiaObject):
 
 
 class PlotDataTooltip(DessiaObject):
-    def __init__(self, colorfill: str, text_color:str, font: str,
+    def __init__(self, colorfill: str, text_color: str, font: str,
                  tp_radius: float, to_plot_list: list,
                  plot_data_states: List[PlotDataState], type: str = 'tooltip',
                  name: str = ''):
@@ -189,7 +189,8 @@ class PlotDataTooltip(DessiaObject):
 
 class PlotDataGraph2D(DessiaObject):
     def __init__(self, point_list, dashline: List[float],
-                 graph_colorstroke: str, graph_linewidth: float, display_step: float,
+                 graph_colorstroke: str, graph_linewidth: float,
+                 display_step: float,
                  plot_data_states: List[PlotDataState], type: str = 'graph2D',
                  name: str = ''):
         self.serialized_point_list = [p.to_dict() for p in point_list]
@@ -197,8 +198,9 @@ class PlotDataGraph2D(DessiaObject):
         self.graph_colorstroke = graph_colorstroke
         self.graph_linewidth = graph_linewidth
         self.serialized_segments = []
-        for k in range(len(point_list) -1):
-            data = [point_list[k].cx, point_list[k].cy, point_list[k+1].cx, point_list[k+1].cy]
+        for k in range(len(point_list) - 1):
+            data = [point_list[k].cx, point_list[k].cy, point_list[k + 1].cx,
+                    point_list[k + 1].cy]
             segment = PlotDataLine2D(data, [PlotDataState()])
             self.serialized_segments.append(segment.to_dict())
         self.display_step = display_step
@@ -251,12 +253,15 @@ class PlotDataContour2D(DessiaObject):
 
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
+
 class ParallelPlot(DessiaObject):
-    def __init__(self, data, to_display_type:str, to_display_list, type:str='ParallelPlot', name:str=''):
-        self.data = data
+    def __init__(self, elements, to_display_type: str, attribute_list, line_color:str,
+                 type: str = 'ParallelPlot', name: str = ''):
+        self.elements = elements
         self.to_display_type = to_display_type
-        self.to_display_list = to_display_list
-        self.type=type
+        self.attribute_list = attribute_list
+        self.line_color = line_color
+        self.type = type
         DessiaObject.__init__(self, name=name)
 
 
@@ -273,7 +278,8 @@ def plot_d3(plot_datas):
     #                   autoescape=select_autoescape(['html', 'xml']))
     template = env.get_template('python/plot_data/templates/plot_data.html')
 
-    core_path = '/'+os.path.join(*template_path.split('/')[:-3]+['typescript', 'src', 'core.ts'])
+    core_path = '/' + os.path.join(
+        *template_path.split('/')[:-3] + ['typescript', 'src', 'core.ts'])
 
     print(core_path)
     print(template_path)
@@ -281,7 +287,8 @@ def plot_d3(plot_datas):
     data = []
     for d in plot_datas:
         data.append(json.dumps(d))
-    s = template.render(D3Data=data, core_path=core_path, template_path=template_path)
+    s = template.render(D3Data=data, core_path=core_path,
+                        template_path=template_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:
@@ -289,7 +296,6 @@ def plot_d3(plot_datas):
 
     webbrowser.open('file://' + temp_file)
     print('file://' + temp_file)
-
 
 # def plot(plot_datas, ax=None):
 #     if ax is None:

@@ -167,13 +167,13 @@ export abstract class PlotData {
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
       } else {
-        this.context.fillStyle = d.plot_data_states[show_state].point_color.color_fill;
-        this.context.lineWidth = d.plot_data_states[show_state].stroke_width;
-        this.context.strokeStyle = d.plot_data_states[show_state].point_color.color_stroke;
-        var shape = d.plot_data_states[show_state].shape_set.shape;
+        this.context.fillStyle = d.color_fill;
+        this.context.lineWidth = d.stroke_width;
+        this.context.strokeStyle = d.color_stroke;
+        var shape = d.point_shape;
 
         if (shape == 'crux') {
-          this.context.strokeStyle = d.plot_data_states[show_state].point_color.color_fill;
+          this.context.strokeStyle = d.color_fill;
         }
         if (this.select_on_mouse == d) {
           this.context.fillStyle = this.color_surface_on_mouse;
@@ -874,8 +874,12 @@ export abstract class PlotData {
           var copy_point_min_index = dict_point_list[min_size_index][1].copy();
           var new_cx = (copy_point_max_index.cx + copy_point_min_index.cx)/2;
           var new_cy = (copy_point_max_index.cy + copy_point_min_index.cy)/2;
-          var copy_plot_data_states = [copy_point_max_index.plot_data_states[0]];
-          var point = new PlotDataPoint2D([],new_cx, new_cy, copy_plot_data_states, 'point', '');
+          var new_shape = copy_point_max_index.shape;
+          var new_point_size = copy_point_max_index.point_size;
+          var new_color_fill = copy_point_max_index.color_fill;
+          var new_color_stroke = copy_point_max_index.color_stroke;
+          var new_stroke_width = copy_point_max_index.stroke_width;
+          var point = new PlotDataPoint2D(new_cx, new_cy, new_shape, new_point_size, new_color_fill, new_color_stroke, new_stroke_width, 'point', '');
           var size_coeff = 1.15;
           point.size = dict_point_list[max_size_index][1].size*size_coeff;
           var point_i = dict_point_list[i][1];
@@ -915,8 +919,12 @@ export abstract class PlotData {
         if (this.distance([xi,yi], [xj,yj])<1000*(new_point_list[i].size + new_point_list[j].size)) {
           var new_cx = (new_point_list[i].cx + new_point_list[j].cx)/2;
           var new_cy = (new_point_list[i].cy + new_point_list[j].cy)/2;
-          var copy_plot_data_states = [new_point_list[max_size_index].plot_data_states[0].copy()];
-          var point = new PlotDataPoint2D([],new_cx, new_cy, copy_plot_data_states, 'point', '');
+          var new_shape = new_point_list[i].shape;
+          var new_point_size = new_point_list[i].point_size;
+          var new_color_fill = new_point_list[i].color_fill;
+          var new_color_stroke = new_point_list[i].color_stroke;
+          var new_stroke_width = new_point_list[i].stroke_width;
+          var point = new PlotDataPoint2D(new_cx, new_cy, new_shape, new_point_size, new_color_fill, new_color_stroke, new_stroke_width, 'point', '');
           var size_coeff = 1.15;
           point.size = new_point_list[max_size_index].size*size_coeff;
           var point_i = new_point_list[i];
@@ -1049,7 +1057,7 @@ export class PlotScatter extends PlotData {
           a = PlotDataGraph2D.deserialize(d);
           a.id = graphID;
           graphID++;
-          this.graph_colorlist.push(a.point_list[0].plot_data_states[0].point_color.color_fill);
+          this.graph_colorlist.push(a.point_list[0].color_fill);
           this.graph_to_display.push(true);
           this.graph_name_list.push(a.name)
           for (var j=0; j<a.point_list.length; j++) {
@@ -1075,7 +1083,6 @@ export class PlotScatter extends PlotData {
         }
       }
       this.nb_graph = graphID;
-      // this.graph1_button_x = width/2 - this.nb_graph*(this.graph1_button_w + this.graph_text_spacing)/2;
       this.define_canvas();
       this.mouse_interaction();
   }
@@ -1313,15 +1320,15 @@ export class PlotDataPoint2D {
   size:number;
   k:number=1;
 
-  constructor(public data:any,
-              public cx:number,
+  constructor(public cx:number,
               public cy:number,
-              public plot_data_states:PlotDataState[],
+              public shape:string,
+              public point_size:number,
+              public color_fill:string,
+              public color_stroke:string,
+              public stroke_width:number,
               public type:string,
               public name:string) {
-    
-    var plot = plot_data_states[0];
-    var point_size = plot.point_size.size;
     if (point_size<1) {
       throw new Error('Invalid point_size');
     }
@@ -1335,30 +1342,26 @@ export class PlotDataPoint2D {
     }
 
     public static deserialize(serialized) {
-      var temp = serialized['plot_data_states'];
-      var plot_data_states = [];
-      for (var i = 0; i < temp.length; i++) {
-        var d = temp[i];
-        plot_data_states.push(PlotDataState.deserialize(d));
-      }
-      return new PlotDataPoint2D(serialized['data'],
-                                  serialized['cx'],
+      return new PlotDataPoint2D(serialized['cx'],
                                   serialized['cy'],
-                                  plot_data_states,
+                                  serialized['shape'],
+                                  serialized['size'],
+                                  serialized['color_fill'],
+                                  serialized['color_stroke'],
+                                  serialized['stroke_width'],
                                   serialized['type'],
                                   serialized['name']);
     }
 
     draw(context, context_hidden, mvx, mvy, scaleX, scaleY) {
       var show_states = 0;
-        var shape = this.plot_data_states[show_states].shape_set.shape;
-        if (shape == 'circle') {
+        if (this.shape == 'circle') {
           context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), 1000*this.size, 0, 2*Math.PI);
           context.stroke();
-        } else if (shape == 'square') {
+        } else if (this.shape == 'square') {
           context.rect(scaleX*(1000*this.cx + mvx) - 1000*this.size,scaleY*(1000*this.cy + mvy) - 1000*this.size,1000*this.size*2, 1000*this.size*2);
           context.stroke();
-        } else if (shape == 'crux') {
+        } else if (this.shape == 'crux') {
           context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),1000*this.size, 100*this.size);
           context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),-1000*this.size, 100*this.size);
           context.rect(scaleX*(1000*this.cx + mvx), scaleY*(1000*this.cy + mvy),100*this.size, 1000*this.size);
@@ -1377,7 +1380,7 @@ export class PlotDataPoint2D {
     }
 
     copy() {
-      return new PlotDataPoint2D(this.data, this.cx, this.cy, this.plot_data_states, this.type, this.name);
+      return new PlotDataPoint2D(this.cx, this.cy, this.shape, this.point_size, this.color_fill, this.color_stroke, this.stroke_width, this.type, this.name);
     }
 }
 
@@ -1394,22 +1397,9 @@ export class PlotDataAxis {
                      public arrow_on:boolean,
                      public axis_width:string,
                      public grid_on:boolean,
-                     public type:string, 
-                     public plot_data_states:PlotDataState[]) {
-
-    for (var i=0; i<this.plot_data_states.length; i++) {
-      var plot = this.plot_data_states[i];
-      this.colorStroke = plot.color_line;
-    }
-  }
+                     public type:string) {}
 
   public static deserialize(serialized) {
-    var temp = serialized['plot_data_states'];
-    var plot_data_states = [];
-    for (var i = 0; i < temp.length; i++) {
-      var d = temp[i];
-      plot_data_states.push(PlotDataState.deserialize(d));
-    }
     return new PlotDataAxis(serialized['nb_points_x'],
                                   serialized['nb_points_y'],
                                   serialized['font_size'],
@@ -1419,8 +1409,7 @@ export class PlotDataAxis {
                                   serialized['arrow_on'],
                                   serialized['axis_width'],
                                   serialized['grid_on'], 
-                                  serialized['type'],
-                                  plot_data_states);
+                                  serialized['type']);
   }
 
   draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, x_step, y_step, font_size) {
@@ -1516,21 +1505,14 @@ export class PlotDataAxis {
 }
 
 export class PlotDataTooltip {
-  constructor(public colorfill:string, public text_color: string, public font:string, public tp_radius:any, public to_plot_list:any, public plot_data_states:PlotDataState[],public type:string, public name:string) {}
+  constructor(public colorfill:string, public text_color: string, public font:string, public tp_radius:any, public to_plot_list:any,public type:string, public name:string) {}
 
   public static deserialize(serialized) {
-    var temp = serialized['plot_data_states']
-      var plot_data_states = [];
-      for (var i = 0; i < temp.length; i++) {
-        var d = temp[i];
-        plot_data_states.push(PlotDataState.deserialize(d));
-      }
       return new PlotDataTooltip(serialized['colorfill'],
                                   serialized['text_color'],
                                   serialized['font'],
                                   serialized['tp_radius'],
                                   serialized['to_plot_list'],
-                                  plot_data_states,
                                   serialized['type'],
                                   serialized['name']);
   }
@@ -1560,7 +1542,7 @@ export class PlotDataTooltip {
     var tp_height = (textfills.length + 0.25)*font_size ;
     var cx = object.cx;
     var cy = object.cy;
-    var point_size = object.plot_data_states[0].point_size.size;
+    var point_size = object.point_size;
     var decalage = 2.5*point_size + 5
     var tp_x = scaleX*(1000*cx + mvx) + decalage;
     var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height;
@@ -1615,19 +1597,12 @@ export class PlotDataGraph2D {
               public graph_linewidth: number,
               public segments:PlotDataLine2D[],
               public display_step:number,
-              public plot_data_states: PlotDataState[],
               public type: string,
               public name:string) {}
   
   public static deserialize(serialized) {
-    var temp = serialized['plot_data_states'];
-    var plot_data_states = [];
-    for (var i = 0; i < temp.length; i++) {
-      var d = temp[i];
-      plot_data_states.push(PlotDataState.deserialize(d));
-    }
     var point_list = [];
-    temp = serialized['serialized_point_list'];
+    var temp = serialized['serialized_point_list'];
     for (var i=0; i<temp.length; i++) {
       var d = temp[i];
       point_list.push(PlotDataPoint2D.deserialize(d));
@@ -1645,7 +1620,6 @@ export class PlotDataGraph2D {
                            serialized['graph_linewidth'],
                            segments,
                            serialized['display_step'],
-                           plot_data_states,
                            serialized['type'],
                            serialized['name']);
   }
@@ -1653,25 +1627,17 @@ export class PlotDataGraph2D {
 
 export class PlotDataScatter {
   constructor(public point_list:PlotDataPoint2D[],
-              public plot_data_states:PlotDataState[],
               public type:string,
               public name:string) {}
   
   public static deserialize(serialized) {
-    var temp = serialized['plot_data_states'];
-    var plot_data_states = [];
-    for (var i = 0; i < temp.length; i++) {
-      var d = temp[i];
-      plot_data_states.push(PlotDataState.deserialize(d));
-    }
     var point_list = [];
-    temp = serialized['serialized_point_list'];
+    var temp = serialized['serialized_point_list'];
     for (var i=0; i<temp.length; i++) {
       var d = temp[i];
       point_list.push(PlotDataPoint2D.deserialize(d));
     }
     return new PlotDataScatter(point_list,
-                               plot_data_states,
                                serialized['type'],
                                serialized['name']);
   }

@@ -138,20 +138,22 @@ class PlotDataCircle2D(DessiaObject):
 
 
 class PlotDataPoint2D(DessiaObject):
-    def __init__(self, cx: float, cy: float,
-                 plot_data_states: List[PlotDataState], type: str = 'point',
+    def __init__(self, cx: float, cy: float, shape:str, size:float, color_fill:str, color_stroke:str, stroke_width:float, type: str = 'point',
                  name: str = '', ):
         self.type = type
-        self.plot_data_states = plot_data_states
         self.cx = cx
         self.cy = cy
+        self.shape = shape
+        self.size = size
+        self.color_fill = color_fill
+        self.color_stroke = color_stroke
+        self.stroke_width = stroke_width
         DessiaObject.__init__(self, name=name)
 
 
 class PlotDataAxis(DessiaObject):
     def __init__(self, nb_points_x: int, nb_points_y: int, font_size: int,
                  graduation_color: str, axis_color: str,
-                 plot_data_states: List[PlotDataState],
                  arrow_on: bool, axis_width: float, grid_on: bool,
                  name: str = '',
                  type: str = 'axis'):
@@ -160,9 +162,6 @@ class PlotDataAxis(DessiaObject):
         self.font_size = font_size
         self.graduation_color = graduation_color
         self.axis_color = axis_color
-        self.plot_data_states = plot_data_states
-        if plot_data_states is None:
-            self.plot_data_states = [PlotDataState()]
         self.arrow_on = arrow_on
         self.axis_width = axis_width
         self.grid_on = grid_on
@@ -172,17 +171,13 @@ class PlotDataAxis(DessiaObject):
 
 class PlotDataTooltip(DessiaObject):
     def __init__(self, colorfill: str, text_color: str, font: str,
-                 tp_radius: float, to_plot_list: list,
-                 plot_data_states: List[PlotDataState], type: str = 'tooltip',
+                 tp_radius: float, to_plot_list: list, type: str = 'tooltip',
                  name: str = ''):
         self.colorfill = colorfill
         self.text_color = text_color
         self.font = font
         self.tp_radius = tp_radius
         self.to_plot_list = to_plot_list
-        self.plot_data_states = plot_data_states
-        if plot_data_states is None:
-            self.plot_data_states = [PlotDataState()]
         self.type = type
         DessiaObject.__init__(self, name=name)
 
@@ -190,8 +185,7 @@ class PlotDataTooltip(DessiaObject):
 class PlotDataGraph2D(DessiaObject):
     def __init__(self, point_list, dashline: List[float],
                  graph_colorstroke: str, graph_linewidth: float,
-                 display_step: float,
-                 plot_data_states: List[PlotDataState], type: str = 'graph2D',
+                 display_step: float, type: str = 'graph2D',
                  name: str = ''):
         self.serialized_point_list = [p.to_dict() for p in point_list]
         self.dashline = dashline
@@ -206,21 +200,14 @@ class PlotDataGraph2D(DessiaObject):
         self.display_step = display_step
         if display_step is None:
             self.display_step = 1
-        self.plot_data_states = plot_data_states
-        if plot_data_states is None:
-            self.plot_data_states = [PlotDataState()]
         self.type = type
         DessiaObject.__init__(self, name)
 
 
 class PlotDataScatter(DessiaObject):
     def __init__(self, point_list,
-                 plot_data_states: List[PlotDataState],
                  type: str = 'ScatterPlot', name: str = ''):
         self.serialized_point_list = [p.to_dict() for p in point_list]
-        self.plot_data_states = plot_data_states
-        if plot_data_states is None:
-            self.plot_data_states = [PlotDataState()]
         self.type = type
         DessiaObject.__init__(self, name)
 

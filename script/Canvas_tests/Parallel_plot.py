@@ -39,7 +39,7 @@ plot_data_states = [plot_data.PlotDataState(
 for i in range(50):
     cx = random.uniform(0,window_size.width)
     cy = random.uniform(0,window_size.height)
-    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, plot_data_states=plot_data_states)
+    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, color_fill=color_fill, color_stroke=color_stroke, stroke_width=stroke_width)
     elements += [point]
 
 attribute_list = [['cx','float'], ['cy', 'float'], ['cx', 'float']]

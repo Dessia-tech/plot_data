@@ -55,16 +55,15 @@ plot_data_states = [plot_data.PlotDataState(
 for i in range(50):
     cx = random.uniform(0,window_size.width)
     cy = random.uniform(0,window_size.height)
-    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, plot_data_states=plot_data_states)
+    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, shape=shape, size=size, color_fill=color_fill, color_stroke=color_stroke, stroke_width=stroke_width)
     plot_datas += [point]
 
 axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size, graduation_color=graduation_color,
-                              axis_color=axis_color,plot_data_states=plot_data_states,
-                              arrow_on=arrow_on, axis_width=axis_width, grid_on=grid_on)
+                              axis_color=axis_color, arrow_on=arrow_on, axis_width=axis_width, grid_on=grid_on)
 plot_datas += [axis]
 
-tooltip = plot_data.PlotDataTooltip(colorfill,text_color=text_color,font=font,tp_radius=tp_radius,to_plot_list=to_plot_list, plot_data_states=plot_data_states)
+tooltip = plot_data.PlotDataTooltip(colorfill,text_color=text_color,font=font,tp_radius=tp_radius,to_plot_list=to_plot_list)
 plot_datas += [tooltip]
 
 sol = [c.to_dict() for c in plot_datas]

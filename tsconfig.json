@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "module": "commonjs",
     "declaration": true,
-    "outDir": "./lib",
+    "outDir": "./dist/",
     "strict": true,
     "noImplicitAny": false,
     "strictPropertyInitialization": false,
-    "strictNullChecks": false
+    "strictNullChecks": false,
+    "jsx": "react",
+    "allowJs": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/__tests__/*"]

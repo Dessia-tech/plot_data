@@ -67,6 +67,7 @@ export abstract class PlotData {
 
   value_list:any[] = [];
   to_display_list:any[] = [];
+  parallel_plot_lineColor:string;
 
   public constructor(public data:any, 
     public width: number,
@@ -295,6 +296,7 @@ export abstract class PlotData {
   }
 
   draw_parallel_axis(nb_axis:number) {
+    console.log(this.to_display_list, this.value_list)
     var x_start = 50;
     if (nb_axis<=1) {throw new Error("At least 2 axis are required")}
     var x_step = (this.width - 100)/(nb_axis-1);
@@ -306,6 +308,7 @@ export abstract class PlotData {
       Shape.drawLine(this.context, [current_x, y_start], [current_x, y_end]);
       var attribute_name = this.value_list[i][0];
       this.context.textAlign = 'center';
+      this.context.strokeStyle = 'lightgrey';
       this.context.fillText(attribute_name, current_x, y_end - 20);
       this.context.stroke();
       var attribute_type = this.value_list[i][1];
@@ -324,7 +327,6 @@ export abstract class PlotData {
           this.context.fillText(current_grad, current_x - 5, current_y);
         }
       } else { //ie string
-        console.log('blla')
         var nb_attribute = list.length;
         if (nb_attribute == 1) {
           y_start = (y_start + y_end)/2;
@@ -346,6 +348,60 @@ export abstract class PlotData {
       this.context.closePath();
     }
     
+  }
+
+  get_index_of_element(val, list) {
+    if (!this.is_include(val, list)) {throw new Error('cannot get index of element')};
+    for (var i=0; i<list.length; i++) {
+      if (val == list[i]) {
+        return i;
+      }
+    }
+  }
+
+  get_y_on_parallel_plot(attribute_type, current_list, elt, axis_y_start, axis_y_end) {
+    if (attribute_type == 'float') {
+      var min = current_list[0];
+      var max = current_list[1];
+      var delta_y = elt - min;
+      var delta_axis_y = (axis_y_end - axis_y_start) * delta_y/(max - min);
+      var current_axis_y:number = axis_y_start + delta_axis_y; 
+    } else {
+      var color = elt;
+      if (current_list.length == 1) {
+        current_axis_y = (axis_y_start + axis_y_end)/2;
+      } else {
+        var color_index = this.get_index_of_element(color, current_list);
+        var axis_y_step = (axis_y_end - axis_y_start)/(current_list.length - 1);
+        current_axis_y = axis_y_start + color_index*axis_y_step;
+      }
+    }
+    return current_axis_y;
+  }
+
+  draw_parallel_coord_lines(nb_axis) {
+    var x_start = 50;
+    var x_step = (this.width - 100)/(nb_axis-1);
+    for (var i=0; i<this.to_display_list.length; i++) {
+      var to_display_list_i = this.to_display_list[i];
+      for (var j=0; j<nb_axis - 1; j++) {
+        var current_x = x_start + j*x_step;
+        var next_x = x_start + (j+1)*x_step;
+        var axis_y_start = this.height - 25;
+        var axis_y_end = 50;
+        var current_attribute_type = this.value_list[j][1];
+        var current_list = this.value_list[j][2];
+        var current_axis_y = this.get_y_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], axis_y_start, axis_y_end);
+        var next_attribute_type = this.value_list[j+1][1];
+        var next_list = this.value_list[j+1][2];
+        var next_axis_y = this.get_y_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j+1], axis_y_start, axis_y_end);
+        this.context.beginPath();
+        this.context.strokeStyle = this.parallel_plot_lineColor;
+        Shape.drawLine(this.context, [current_x, current_axis_y], [next_x, next_axis_y]);
+        this.context.stroke();
+        this.context.closePath();
+      }
+    }
   }
 
   zoom_button(x, y, w, h) {
@@ -1136,6 +1192,7 @@ export class ParallelPlot extends PlotData {
   constructor(data, width, height, coeff_pixel) {
     super(data, width, height, coeff_pixel);
     var data_show = data[0];
+    this.parallel_plot_lineColor = data_show['line_color'];
     var elements = data_show['elements'];
     var to_display_type = data['to_display_type'];
     var attribute_list = data_show['attribute_list'];
@@ -1196,6 +1253,7 @@ export class ParallelPlot extends PlotData {
     this.draw_empty_canvas(hidden);
     var nb_axis = this.value_list.length;
     this.draw_parallel_axis(nb_axis);
+    this.draw_parallel_coord_lines(nb_axis);
   }
 }
 

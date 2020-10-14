@@ -20,9 +20,10 @@ size = 2
 color_fill = 'violet'
 color_stroke = 'grey'
 
-# PlotDataState
-surface_color = 'black'
-stroke_width = 0.5  # Points' stroke width
+# ParallelPlot
+attribute_list = [['cx','float'], ['cy', 'float'], ['color_fill', 'string'], ['color_stroke', 'string']]
+line_color = 'grey'
+stroke_width = 0.2  # Points' stroke width
 
 plot_datas = []
 elements = []
@@ -36,15 +37,14 @@ for i in range(50):
 
 cx = random.uniform(0,2)
 cy = random.uniform(0,1)
-point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill='red', color_stroke=color_stroke, stroke_width=stroke_width)
+point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill='red', color_stroke='brown', stroke_width=stroke_width)
 elements += [point]
 cx = random.uniform(0,2)
 cy = random.uniform(0,1)
-point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill='blue', color_stroke=color_stroke, stroke_width=stroke_width)
+point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill='blue', color_stroke='green', stroke_width=stroke_width)
 elements += [point]
 
-attribute_list = [['cx','float'], ['cy', 'float'], ['color_fill', 'string']]
-line_color = 'blue'
+
 parallel_plot = plot_data.ParallelPlot(elements=elements,to_display_type=to_display_type, attribute_list=attribute_list, line_color=line_color)
 
 sol = [parallel_plot.to_dict()]

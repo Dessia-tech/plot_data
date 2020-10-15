@@ -778,11 +778,12 @@ export abstract class PlotData {
   mouse_move_interaction_pp(mouse2X, isDrawing, e, click_on_axis_list, nb_axis) {
     mouse2X = e.offsetX;
     isDrawing = true;
+    var mouse_moving = true;
     this.move_index = this.get_index_of_element(true, click_on_axis_list)
     var axis_x = this.x_start + this.move_index*this.x_step;
     this.draw(false, 0, mouse2X - axis_x, 0, this.scaleX, this.scaleY);
     this.draw(true, 0, mouse2X - axis_x, 0, this.scaleX, this.scaleY);
-    return [mouse2X, isDrawing];
+    return [mouse2X, isDrawing, mouse_moving];
   }
 
   initialize_click_on_axis(nb_axis:number, mouse1X:number, mouse1Y:number, click_on_axis) {
@@ -790,7 +791,7 @@ export abstract class PlotData {
     var click_on_axis_list = [];
     for (var i=0; i<nb_axis; i++) {
       var current_x = this.x_start + i*this.x_step;
-      var bool = Shape.Is_in_rect(mouse1X, mouse1Y, current_x - 5, this.axis_y_end, 10, this.axis_y_start - this.axis_y_end)
+      var bool = Shape.Is_in_rect(mouse1X, mouse1Y, current_x - 10, this.axis_y_end, 20, this.axis_y_start - this.axis_y_end)
       click_on_axis = click_on_axis || bool;
       if (bool) {
         click_on_axis_list.push(true);
@@ -814,13 +815,13 @@ export abstract class PlotData {
     var mvx = 0;
     var mvy = 0;
     var isDrawing = false;
+    var mouse_moving = false;
     this.move_index = -1;
     this.refresh_to_display_list(this.elements);
-    console.log(this.to_display_list, this.value_list)
     this.draw(false, 0, mvx, mvy, this.scaleX, this.scaleY);
     this.draw(true, 0, mvx, mvy, this.scaleX, this.scaleY);
     var click_on_axis = false;
-    return [mouse3X, click_on_axis, isDrawing]
+    return [mouse3X, click_on_axis, isDrawing, mouse_moving]
   }
 
   mouse_interaction(parallelplot:boolean) {
@@ -846,8 +847,8 @@ export abstract class PlotData {
 
     canvas.addEventListener('mousemove', e => {
       if (parallelplot) {
-        if (click_on_axis) {
-          [mouse2X, isDrawing] = this.mouse_move_interaction_pp(mouse2X, isDrawing, e, click_on_axis_list, this.value_list.length);
+        if (click_on_axis && isDrawing) {
+          [mouse2X, isDrawing, mouse_moving] = this.mouse_move_interaction_pp(mouse2X, isDrawing, e, click_on_axis_list, this.value_list.length);
         }
       } else {
         [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e);
@@ -856,11 +857,15 @@ export abstract class PlotData {
 
     canvas.addEventListener('mouseup', e => {
       if (parallelplot) {
-        if (click_on_axis) {
-          [mouse3X, click_on_axis, isDrawing] = this.mouse_up_interaction_pp(mouse1X, mouse3X, e);
-        }
-      } else {
+        if (click_on_axis && mouse_moving) {
+          [mouse3X, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_interaction_pp(mouse1X, mouse3X, e);
+        } else if (click_on_axis && !mouse_moving) {
+          isDrawing = false;
+          this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
+          this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
+        } else {
         [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
+        }
       }
     })
 

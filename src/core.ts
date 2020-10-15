@@ -68,6 +68,14 @@ export abstract class PlotData {
   value_list:any[] = [];
   to_display_list:any[] = [];
   parallel_plot_lineColor:string;
+  parallel_plot_linewidth:string;
+  axis_y_start = this.height - 25;
+  axis_y_end = 50;
+  x_start:number=50;
+  x_end:number=this.width - 50;
+  x_step:number=0;
+  move_index:number = -1;
+  elements:any;
 
   public constructor(public data:any, 
     public width: number,
@@ -295,21 +303,19 @@ export abstract class PlotData {
     } 
   }
 
-  draw_parallel_axis(nb_axis:number) {
-    console.log(this.to_display_list, this.value_list)
-    var x_start = 50;
-    if (nb_axis<=1) {throw new Error("At least 2 axis are required")}
-    var x_step = (this.width - 100)/(nb_axis-1);
+  draw_parallel_axis(nb_axis:number, mvx:number) {
     for (var i=0; i<nb_axis; i++) {
-      var current_x = x_start + i*x_step;
-      var y_start = this.height - 25;
-      var y_end = 50;
+      if (i == this.move_index) {
+        var current_x = this.x_start + i*this.x_step + mvx;
+      } else {
+        var current_x = this.x_start + i*this.x_step;
+      }
       this.context.beginPath();
-      Shape.drawLine(this.context, [current_x, y_start], [current_x, y_end]);
+      Shape.drawLine(this.context, [current_x, this.axis_y_start], [current_x, this.axis_y_end]);
       var attribute_name = this.value_list[i][0];
       this.context.textAlign = 'center';
       this.context.strokeStyle = 'lightgrey';
-      this.context.fillText(attribute_name, current_x, y_end - 20);
+      this.context.fillText(attribute_name, current_x, this.axis_y_end - 20);
       this.context.stroke();
       var attribute_type = this.value_list[i][1];
       var list = this.value_list[i][2];
@@ -317,9 +323,9 @@ export abstract class PlotData {
         var min = list[0];
         var max = list[1];
         var grad_step = (max - min)/9;
-        var y_step = (y_end - y_start)/9;
+        var y_step = (this.axis_y_end - this.axis_y_start)/9;
         for (var j=0; j<10; j++) {
-          var current_y = y_start + j*y_step;
+          var current_y = this.axis_y_start + j*y_step;
           var current_grad:any = MyMath.round(min + j*grad_step, 3);
           Shape.drawLine(this.context, [current_x - 3, current_y], [current_x + 3, current_y]);
           this.context.textAlign = 'end';
@@ -329,13 +335,12 @@ export abstract class PlotData {
       } else { //ie string
         var nb_attribute = list.length;
         if (nb_attribute == 1) {
-          y_start = (y_start + y_end)/2;
-          y_step = 1;
+          y_step = (this.axis_y_end - this.axis_y_start)/2;
         } else {
-          y_step = (y_end - y_start)/(nb_attribute - 1);
+          y_step = (this.axis_y_end - this.axis_y_start)/(nb_attribute - 1);
         }
         for (var j=0; j<nb_attribute; j++) {
-          var current_y = y_start + j*y_step;
+          var current_y = this.axis_y_start + j*y_step;
           var current_grad = list[j];
           Shape.drawLine(this.context, [current_x - 3, current_y], [current_x + 3, current_y]);
           this.context.textAlign = 'end';
@@ -381,26 +386,36 @@ export abstract class PlotData {
 
   draw_parallel_coord_lines(nb_axis) {
     var x_start = 50;
-    var x_step = (this.width - 100)/(nb_axis-1);
     for (var i=0; i<this.to_display_list.length; i++) {
       var to_display_list_i = this.to_display_list[i];
       for (var j=0; j<nb_axis - 1; j++) {
-        var current_x = x_start + j*x_step;
-        var next_x = x_start + (j+1)*x_step;
-        var axis_y_start = this.height - 25;
-        var axis_y_end = 50;
+        var current_x = x_start + j*this.x_step;
+        var next_x = x_start + (j+1)*this.x_step;
         var current_attribute_type = this.value_list[j][1];
         var current_list = this.value_list[j][2];
-        var current_axis_y = this.get_y_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], axis_y_start, axis_y_end);
+        var current_axis_y = this.get_y_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], this.axis_y_start, this.axis_y_end);
         var next_attribute_type = this.value_list[j+1][1];
         var next_list = this.value_list[j+1][2];
-        var next_axis_y = this.get_y_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j+1], axis_y_start, axis_y_end);
+        var next_axis_y = this.get_y_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j+1], this.axis_y_start, this.axis_y_end);
         this.context.beginPath();
         this.context.strokeStyle = this.parallel_plot_lineColor;
+        this.context.lineWidth = this.parallel_plot_linewidth;
         Shape.drawLine(this.context, [current_x, current_axis_y], [next_x, next_axis_y]);
         this.context.stroke();
         this.context.closePath();
       }
+    }
+  }
+  refresh_to_display_list(elements) {
+    this.to_display_list = [];
+    for (var i=0; i<elements.length; i++) {
+      var to_display = [];
+      for (var j=0; j<this.value_list.length; j++) {
+        var attribute_name = this.value_list[j][0];
+        var elt = elements[i][attribute_name];
+        to_display.push(elt);
+      }
+      this.to_display_list.push(to_display);
     }
   }
 
@@ -760,7 +775,55 @@ export abstract class PlotData {
       return [mouse3X, mouse3Y];
   }
 
-  mouse_interaction() {
+  mouse_move_interaction_pp(mouse2X, isDrawing, e, click_on_axis_list, nb_axis) {
+    mouse2X = e.offsetX;
+    isDrawing = true;
+    this.move_index = this.get_index_of_element(true, click_on_axis_list)
+    var axis_x = this.x_start + this.move_index*this.x_step;
+    this.draw(false, 0, mouse2X - axis_x, 0, this.scaleX, this.scaleY);
+    this.draw(true, 0, mouse2X - axis_x, 0, this.scaleX, this.scaleY);
+    return [mouse2X, isDrawing];
+  }
+
+  initialize_click_on_axis(nb_axis:number, mouse1X:number, mouse1Y:number, click_on_axis) {
+    click_on_axis = false;
+    var click_on_axis_list = [];
+    for (var i=0; i<nb_axis; i++) {
+      var current_x = this.x_start + i*this.x_step;
+      var bool = Shape.Is_in_rect(mouse1X, mouse1Y, current_x - 5, this.axis_y_end, 10, this.axis_y_start - this.axis_y_end)
+      click_on_axis = click_on_axis || bool;
+      if (bool) {
+        click_on_axis_list.push(true);
+      } else {
+        click_on_axis_list.push(false);
+      }
+    }
+    return [click_on_axis, click_on_axis_list];
+  }
+
+  mouse_up_interaction_pp(mouse1X, mouse3X, e) {
+    mouse3X = e.offsetX;
+    if (mouse3X>mouse1X) {
+      var new_index = Math.floor((mouse3X - this.x_start)/this.x_step);
+    } else {
+      var new_index = Math.ceil((mouse3X - this.x_start)/this.x_step);
+    }
+    var value = this.copy_list(this.value_list[this.move_index]);
+    this.value_list = this.remove_selection(this.value_list[this.move_index], this.value_list);
+    this.value_list.splice(new_index, 0, value);
+    var mvx = 0;
+    var mvy = 0;
+    var isDrawing = false;
+    this.move_index = -1;
+    this.refresh_to_display_list(this.elements);
+    console.log(this.to_display_list, this.value_list)
+    this.draw(false, 0, mvx, mvy, this.scaleX, this.scaleY);
+    this.draw(true, 0, mvx, mvy, this.scaleX, this.scaleY);
+    var click_on_axis = false;
+    return [mouse3X, click_on_axis, isDrawing]
+  }
+
+  mouse_interaction(parallelplot:boolean) {
     var isDrawing = false;
     var mouse_moving = false;
     var mouse1X = 0;
@@ -769,23 +832,42 @@ export abstract class PlotData {
     var mouse2Y = 0;
     var mouse3X = 0;
     var mouse3Y = 0;
+    var click_on_axis:boolean=false;
+    var click_on_axis_list:boolean[]=[];
 
     var canvas = document.getElementById('canvas');
 
     canvas.addEventListener('mousedown', e => {
       [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
+      if (parallelplot) {
+        [click_on_axis, click_on_axis_list] = this.initialize_click_on_axis(this.value_list.length, mouse1X, mouse1Y, click_on_axis);
+      }
     })
 
     canvas.addEventListener('mousemove', e => {
-      [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e);
+      if (parallelplot) {
+        if (click_on_axis) {
+          [mouse2X, isDrawing] = this.mouse_move_interaction_pp(mouse2X, isDrawing, e, click_on_axis_list, this.value_list.length);
+        }
+      } else {
+        [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e);
+      }
     })
 
     canvas.addEventListener('mouseup', e => {
-      [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
+      if (parallelplot) {
+        if (click_on_axis) {
+          [mouse3X, click_on_axis, isDrawing] = this.mouse_up_interaction_pp(mouse1X, mouse3X, e);
+        }
+      } else {
+        [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
+      }
     })
 
     canvas.addEventListener('wheel', e => {
-      [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
+      if (!parallelplot) {
+        [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
+      }
     })
   }
 
@@ -1066,7 +1148,7 @@ export class PlotContour extends PlotData {
       this.plot_datas.push(a);
     }
     this.define_canvas();
-    this.mouse_interaction();
+    this.mouse_interaction(false);
   }
   
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
@@ -1157,7 +1239,7 @@ export class PlotScatter extends PlotData {
       }
       this.nb_graph = graphID;
       this.define_canvas();
-      this.mouse_interaction();
+      this.mouse_interaction(false);
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
@@ -1188,23 +1270,28 @@ export class PlotScatter extends PlotData {
   }
 }
 
+
 export class ParallelPlot extends PlotData {
   constructor(data, width, height, coeff_pixel) {
     super(data, width, height, coeff_pixel);
     var data_show = data[0];
     this.parallel_plot_lineColor = data_show['line_color'];
-    var elements = data_show['elements'];
-    var to_display_type = data['to_display_type'];
-    var attribute_list = data_show['attribute_list'];
+    this.parallel_plot_linewidth = data_show['line_width'];
+    this.elements = data_show['elements'];
+    var serialized_attribute_list = data_show['attribute_list'];
+    var attribute_list:any[] = [];
+    for (var i=0; i<serialized_attribute_list.length; i++){
+      attribute_list.push(Attribute.deserialize(serialized_attribute_list[i]));
+    }
     for (var i=0; i<attribute_list.length; i++) {
-      var attribute_name = attribute_list[i][0];
-      var type = attribute_list[i][1];
+      var attribute_name = attribute_list[i]['name'];
+      var type = attribute_list[i]['type'];
       var value = [attribute_name, type];
       if (type == 'float') {
-        var min = elements[0][attribute_name];
-        var max = elements[0][attribute_name];
-        for (var j=0; j<elements.length; j++) {
-          var elt = elements[j][attribute_name];
+        var min = this.elements[0][attribute_name];
+        var max = this.elements[0][attribute_name];
+        for (var j=0; j<this.elements.length; j++) {
+          var elt = this.elements[j][attribute_name];
           if (elt<min) {
             min = elt;
           }
@@ -1215,8 +1302,8 @@ export class ParallelPlot extends PlotData {
         value.push([min, max]);
       } else { //ie string
         var list = [];
-        for (var j=0; j<elements.length; j++) {
-          var elt = elements[j][attribute_name];
+        for (var j=0; j<this.elements.length; j++) {
+          var elt = this.elements[j][attribute_name];
           if (!this.is_include(elt, list)) {
             list.push(elt);
           }
@@ -1225,17 +1312,12 @@ export class ParallelPlot extends PlotData {
       }
       this.value_list.push(value);
     }
-
-    for (var i=0; i<elements.length; i++) {
-      var to_display = [];
-      for (var j=0; j<attribute_list.length; j++) {
-        var attribute_name = attribute_list[j][0];
-        var elt = elements[i][attribute_name];
-        to_display.push(elt);
-      }
-      this.to_display_list.push(to_display);
-    }
+    var nb_axis = this.value_list.length;
+    if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
+      this.x_step = (this.x_end - this.x_start)/(nb_axis-1);
+    this.refresh_to_display_list(this.elements);
     this.define_canvas();
+    this.mouse_interaction(true);
   }
 
   draw_initial() {
@@ -1252,8 +1334,8 @@ export class ParallelPlot extends PlotData {
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
     this.draw_empty_canvas(hidden);
     var nb_axis = this.value_list.length;
-    this.draw_parallel_axis(nb_axis);
     this.draw_parallel_coord_lines(nb_axis);
+    this.draw_parallel_axis(nb_axis, mvx);
   }
 }
 
@@ -1775,6 +1857,16 @@ export class PlotDataArc2D {
     var isClosed = false;
     var numOfSegments = 16;
     drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments));
+  }
+}
+
+export class Attribute {
+  constructor(public name:string,
+              public type:string) {}
+  
+  public static deserialize(serialized) {
+    return new Attribute(serialized['name'],
+                         serialized['type']);
   }
 }
 

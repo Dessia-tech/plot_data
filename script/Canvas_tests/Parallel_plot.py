@@ -30,11 +30,11 @@ attribute_list = [plot_data.Attribute(name='cx', type='float'),
 # attribute_list = [['cx','float'], ['cy', 'float'], ['color_fill', 'string'], ['color_stroke', 'string']]
 line_color = 'grey'
 line_width = 0.5
-
+disposition = 'vertical'
 plot_datas = []
 elements = []
 
-color_fills = ['violet', 'blue', 'green', 'red']
+color_fills = ['violet', 'blue', 'green', 'red', 'yellow']
 color_strokes = ['black', 'brown', 'green', 'red']
 for i in range(50):
     cx = random.uniform(0,2)
@@ -54,7 +54,7 @@ point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fi
 elements += [point]
 
 
-parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width)
+parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition)
 
 sol = [parallel_plot.to_dict()]
 os.remove("data.json")

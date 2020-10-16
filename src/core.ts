@@ -603,13 +603,18 @@ export abstract class PlotData {
       var in_rect = Shape.Is_in_rect(this.scaleX*(1000*d.cx + this.last_mouse1X),this.scaleY*(1000*d.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
       if ((d['type']=="point") && (in_rect === true) && !(this.is_include(d, this.select_on_click))) {
         this.select_on_click.push(d);
-      } else if (d['type'] == 'graph2D') {
+      } else if ((d['type'] == 'graph2D') || (d['type'] == 'ScatterPlot')) {
         for (var j=0; j<d.point_list.length; j++) {
-          var x = this.scaleX*(1000*d.point_list[j].cx + this.last_mouse1X);
-          var y = this.scaleY*(1000*d.point_list[j].cy + this.last_mouse1Y);
+          if (d['type'] == 'graph2D') {
+            var points = d.point_list;
+          } else {
+            points = this.copy_list(this.scatter_point_list);
+          }
+          var x = this.scaleX*(1000*points[j].cx + this.last_mouse1X);
+          var y = this.scaleY*(1000*points[j].cy + this.last_mouse1Y);
           in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
           if ((in_rect===true) && !(this.is_include(d.point_list[j], this.select_on_click))) {
-            this.select_on_click.push(d.point_list[j])
+            this.select_on_click.push(points[j])
           }
         }
       }
@@ -945,13 +950,11 @@ export abstract class PlotData {
     if (click_on_axis && mouse_moving) {
       [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_axis_interversion(mouse1X, mouse1Y, e);
     } else if (click_on_axis && !mouse_moving) {
-      console.log('blyat')
       isDrawing = false;
       this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
       this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
     }
     if(click_on_disp) {
-      console.log(this.vertical)
       this.vertical = !this.vertical;
       this.refresh_axis(this.value_list.length);
       this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
@@ -1420,7 +1423,6 @@ export class ParallelPlot extends PlotData {
     } else {
       throw new Error('Axis disposition must be vertical of horizontal');
     }
-    console.log('vertical', this.vertical)
     var serialized_attribute_list = data_show['attribute_list'];
     var attribute_list:any[] = [];
     for (var i=0; i<serialized_attribute_list.length; i++){

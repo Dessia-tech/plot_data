@@ -43,7 +43,7 @@ to_plot_list = ['cx', 'cy']
 
 plot_datas = []
 point_list = []
-for i in range(2000):
+for i in range(500):
     cx = random.uniform(0, 2)
     cy = random.uniform(0, 1)
     point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=colorfill, color_stroke=colorstroke, stroke_width=strokewidth)

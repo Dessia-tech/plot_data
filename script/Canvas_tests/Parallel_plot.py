@@ -20,22 +20,44 @@ size = 2
 color_fill = 'violet'
 color_stroke = 'grey'
 
-# PlotDataState
-surface_color = 'black'
-stroke_width = 0.5  # Points' stroke width
+stroke_width = 1  # Points' stroke width
 
+# ParallelPlot
+attribute_list = [plot_data.Attribute(name='cx', type='float'),
+                  plot_data.Attribute(name='color_fill', type='string'),
+                  plot_data.Attribute(name='cy', type='float'),
+                  plot_data.Attribute(name='color_stroke', type='string')]
+# attribute_list = [['cx','float'], ['cy', 'float'], ['color_fill', 'string'], ['color_stroke', 'string']]
+line_color = 'grey'
+line_width = 0.5
+disposition = 'vertical'
 plot_datas = []
-window_size = plot_data.WindowSizeSet(width=width, height=height)
-shape_set = plot_data.PointShapeSet(shape=shape)
-point_size = plot_data.PointSizeSet(size=size)
-point_color = plot_data.PointColorSet(color_fill=color_fill,
-                                      color_stroke=color_stroke)
-plot_data_states = [plot_data.PlotDataState(
-        color_surface=plot_data.ColorSurfaceSet(color=surface_color),
-        window_size=window_size, stroke_width=stroke_width,
-        shape_set=shape_set, point_size=point_size, point_color=point_color)]
+elements = []
+
+color_fills = ['violet', 'blue', 'green', 'red', 'yellow']
+color_strokes = ['black', 'brown', 'green', 'red']
 for i in range(50):
-    cx = random.uniform(0,window_size.width)
-    cy = random.uniform(0,window_size.height)
-    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, plot_data_states=plot_data_states)
-    plot_datas += [point]
+    cx = random.uniform(0,2)
+    cy = random.uniform(0,1)
+    random_color_fill = color_fills[random.randint(0,len(color_fills)-1)]
+    random_color_stroke = color_strokes[random.randint(0,len(color_strokes) - 1)]
+    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=random_color_stroke, stroke_width=stroke_width)
+    elements += [point]
+
+cx = random.uniform(0,2)
+cy = random.uniform(0,1)
+point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill='red', color_stroke='brown', stroke_width=stroke_width)
+elements += [point]
+cx = random.uniform(0,2)
+cy = random.uniform(0,1)
+point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill='blue', color_stroke='green', stroke_width=stroke_width)
+elements += [point]
+
+
+parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition)
+
+sol = [parallel_plot.to_dict()]
+os.remove("data.json")
+with open('data.json', 'w') as fp:
+    json.dump(sol, fp, indent=2)
+

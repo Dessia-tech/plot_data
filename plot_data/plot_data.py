@@ -25,7 +25,7 @@ import webbrowser
 from dessia_common import DessiaObject
 from typing import TypeVar, List
 
-from jinja2 import Environment, PackageLoader, select_autoescape,\
+from jinja2 import Environment, PackageLoader, select_autoescape, \
     FileSystemLoader
 
 
@@ -138,20 +138,22 @@ class PlotDataCircle2D(DessiaObject):
 
 
 class PlotDataPoint2D(DessiaObject):
-    def __init__(self, cx: float, cy: float,
-                 plot_data_states: List[PlotDataState], type: str = 'point',
+    def __init__(self, cx: float, cy: float, shape:str, size:float, color_fill:str, color_stroke:str, stroke_width:float, type: str = 'point',
                  name: str = '', ):
         self.type = type
-        self.plot_data_states = plot_data_states
         self.cx = cx
         self.cy = cy
+        self.shape = shape
+        self.size = size
+        self.color_fill = color_fill
+        self.color_stroke = color_stroke
+        self.stroke_width = stroke_width
         DessiaObject.__init__(self, name=name)
 
 
 class PlotDataAxis(DessiaObject):
     def __init__(self, nb_points_x: int, nb_points_y: int, font_size: int,
                  graduation_color: str, axis_color: str,
-                 plot_data_states: List[PlotDataState],
                  arrow_on: bool, axis_width: float, grid_on: bool,
                  name: str = '',
                  type: str = 'axis'):
@@ -160,9 +162,6 @@ class PlotDataAxis(DessiaObject):
         self.font_size = font_size
         self.graduation_color = graduation_color
         self.axis_color = axis_color
-        self.plot_data_states = plot_data_states
-        if plot_data_states is None:
-            self.plot_data_states = [PlotDataState()]
         self.arrow_on = arrow_on
         self.axis_width = axis_width
         self.grid_on = grid_on
@@ -171,54 +170,44 @@ class PlotDataAxis(DessiaObject):
 
 
 class PlotDataTooltip(DessiaObject):
-    def __init__(self, colorfill: str, text_color:str, font: str,
-                 tp_radius: float, to_plot_list: list,
-                 plot_data_states: List[PlotDataState], type: str = 'tooltip',
+    def __init__(self, colorfill: str, text_color: str, font: str,
+                 tp_radius: float, to_plot_list: list, type: str = 'tooltip',
                  name: str = ''):
         self.colorfill = colorfill
         self.text_color = text_color
         self.font = font
         self.tp_radius = tp_radius
         self.to_plot_list = to_plot_list
-        self.plot_data_states = plot_data_states
-        if plot_data_states is None:
-            self.plot_data_states = [PlotDataState()]
         self.type = type
         DessiaObject.__init__(self, name=name)
 
 
 class PlotDataGraph2D(DessiaObject):
     def __init__(self, point_list, dashline: List[float],
-                 graph_colorstroke: str, graph_linewidth: float, display_step: float,
-                 plot_data_states: List[PlotDataState], type: str = 'graph2D',
+                 graph_colorstroke: str, graph_linewidth: float,
+                 display_step: float, type: str = 'graph2D',
                  name: str = ''):
         self.serialized_point_list = [p.to_dict() for p in point_list]
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
         self.graph_linewidth = graph_linewidth
         self.serialized_segments = []
-        for k in range(len(point_list) -1):
-            data = [point_list[k].cx, point_list[k].cy, point_list[k+1].cx, point_list[k+1].cy]
+        for k in range(len(point_list) - 1):
+            data = [point_list[k].cx, point_list[k].cy, point_list[k + 1].cx,
+                    point_list[k + 1].cy]
             segment = PlotDataLine2D(data, [PlotDataState()])
             self.serialized_segments.append(segment.to_dict())
         self.display_step = display_step
         if display_step is None:
             self.display_step = 1
-        self.plot_data_states = plot_data_states
-        if plot_data_states is None:
-            self.plot_data_states = [PlotDataState()]
         self.type = type
         DessiaObject.__init__(self, name)
 
 
 class PlotDataScatter(DessiaObject):
     def __init__(self, point_list,
-                 plot_data_states: List[PlotDataState],
                  type: str = 'ScatterPlot', name: str = ''):
         self.serialized_point_list = [p.to_dict() for p in point_list]
-        self.plot_data_states = plot_data_states
-        if plot_data_states is None:
-            self.plot_data_states = [PlotDataState()]
         self.type = type
         DessiaObject.__init__(self, name)
 
@@ -251,13 +240,22 @@ class PlotDataContour2D(DessiaObject):
 
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
+
 class ParallelPlot(DessiaObject):
-    def __init__(self, data, to_display_type:str, to_display_list, type:str='ParallelPlot', name:str=''):
-        self.data = data
-        self.to_display_type = to_display_type
-        self.to_display_list = to_display_list
-        self.type=type
+    def __init__(self, elements, attribute_list, line_color:str, line_width:float,
+                 disposition:str, type: str = 'ParallelPlot', name: str = ''):
+        self.elements = elements
+        self.attribute_list = attribute_list
+        self.line_color = line_color
+        self.line_width = line_width
+        self.disposition = disposition
+        self.type = type
         DessiaObject.__init__(self, name=name)
+
+class Attribute(DessiaObject):
+    def __init__(self, name:str, type:str):
+        self.type = type
+        DessiaObject.__init__(self, name)
 
 
 def plot_d3(plot_datas):
@@ -273,7 +271,8 @@ def plot_d3(plot_datas):
     #                   autoescape=select_autoescape(['html', 'xml']))
     template = env.get_template('python/plot_data/templates/plot_data.html')
 
-    core_path = '/'+os.path.join(*template_path.split('/')[:-3]+['typescript', 'src', 'core.ts'])
+    core_path = '/' + os.path.join(
+        *template_path.split('/')[:-3] + ['typescript', 'src', 'core.ts'])
 
     print(core_path)
     print(template_path)
@@ -281,7 +280,8 @@ def plot_d3(plot_datas):
     data = []
     for d in plot_datas:
         data.append(json.dumps(d))
-    s = template.render(D3Data=data, core_path=core_path, template_path=template_path)
+    s = template.render(D3Data=data, core_path=core_path,
+                        template_path=template_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:
@@ -289,7 +289,6 @@ def plot_d3(plot_datas):
 
     webbrowser.open('file://' + temp_file)
     print('file://' + temp_file)
-
 
 # def plot(plot_datas, ax=None):
 #     if ax is None:

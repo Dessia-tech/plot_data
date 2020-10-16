@@ -43,32 +43,24 @@ to_plot_list = ['cx', 'cy']
 
 plot_datas = []
 point_list = []
-window_size = plot_data.WindowSizeSet(width=width, height=height)
-shape_set = plot_data.PointShapeSet(shape=shape)
-point_size = plot_data.PointSizeSet(size=size)
-point_color = plot_data.PointColorSet(color_fill=colorfill,
-                                      color_stroke=colorstroke)
-plot_data_states = [plot_data.PlotDataState(
-        color_surface=plot_data.ColorSurfaceSet(color=surface_color), stroke_width=strokewidth,
-        shape_set=shape_set, point_size=point_size, point_color=point_color)]
-for i in range(2000):
+for i in range(500):
     cx = random.uniform(0, 2)
     cy = random.uniform(0, 1)
-    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, plot_data_states=plot_data_states)
+    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=colorfill, color_stroke=colorstroke, stroke_width=strokewidth)
     point_list += [point]
 
-ScatterPlot = plot_data.PlotDataScatter(point_list, plot_data_states=None)
+ScatterPlot = plot_data.PlotDataScatter(point_list)
 plot_datas += [ScatterPlot]
 
 axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
                               graduation_color=graduation_color,
                               axis_color=axis_color, arrow_on=arrow_on,
-                              axis_width=axis_width, grid_on=grid_on, plot_data_states=[plot_data.PlotDataState()])
+                              axis_width=axis_width, grid_on=grid_on)
 plot_datas += [axis]
 
 tooltip = plot_data.PlotDataTooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
-                     tp_radius=tp_radius, to_plot_list=to_plot_list, plot_data_states=[plot_data.PlotDataState()])
+                     tp_radius=tp_radius, to_plot_list=to_plot_list)
 plot_datas += [tooltip]
 
 sol = [c.to_dict() for c in plot_datas]

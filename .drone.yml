@@ -30,18 +30,12 @@ steps:
     password:
         from_secret: pypi_password
 
-- name: npm update tag from git
-  image: node
-  when:
-      event: tag
-  commands:
-  - npm install
-  - npm version from-git --allow-same-version
-
-- name: npm build
+- name: npm update tag from git, build
   image: node
   commands:
   - npm install
+  - version=`git describe --tags`
+  - npm --no-git-tag-version version $${version#?}
   - npm run-script build
 
 - name: upload npm

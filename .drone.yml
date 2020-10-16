@@ -36,7 +36,8 @@ steps:
       event: tag
   commands:
   - npm install
-  - npm version from-git --allow-same-version
+  - version = `git describe --tags`
+  - npm version ${version#?}
 
 - name: npm build
   image: node

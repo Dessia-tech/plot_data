@@ -603,18 +603,22 @@ export abstract class PlotData {
       var in_rect = Shape.Is_in_rect(this.scaleX*(1000*d.cx + this.last_mouse1X),this.scaleY*(1000*d.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
       if ((d['type']=="point") && (in_rect === true) && !(this.is_include(d, this.select_on_click))) {
         this.select_on_click.push(d);
-      } else if ((d['type'] == 'graph2D') || (d['type'] == 'ScatterPlot')) {
+      } else if (d['type'] == 'graph2D') {
         for (var j=0; j<d.point_list.length; j++) {
-          if (d['type'] == 'graph2D') {
-            var points = d.point_list;
-          } else {
-            points = this.copy_list(this.scatter_point_list);
-          }
-          var x = this.scaleX*(1000*points[j].cx + this.last_mouse1X);
-          var y = this.scaleY*(1000*points[j].cy + this.last_mouse1Y);
+          var x = this.scaleX*(1000*d.point_list[j].cx + this.last_mouse1X);
+          var y = this.scaleY*(1000*d.point_list[j].cy + this.last_mouse1Y);
           in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
           if ((in_rect===true) && !(this.is_include(d.point_list[j], this.select_on_click))) {
-            this.select_on_click.push(points[j])
+            this.select_on_click.push(d.point_list[j]);
+          }
+        }
+      } else if (d['type'] == 'ScatterPlot') {
+        for (var j=0; j<this.scatter_point_list.length; j++) {
+          var x = this.scaleX*(1000*this.scatter_point_list[j].cx + this.last_mouse1X);
+          var y = this.scaleY*(1000*this.scatter_point_list[j].cy + this.last_mouse1Y);
+          in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+          if ((in_rect===true) && !(this.is_include(this.scatter_point_list[j], this.select_on_click))) {
+            this.select_on_click.push(this.scatter_point_list[j]);
           }
         }
       }

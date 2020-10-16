@@ -78,10 +78,10 @@ export abstract class PlotData {
   move_index:number = -1;
   elements:any;
   vertical:boolean=false;
-  disp_x = this.width - 40;
-  disp_y = this.height - 30;
+  disp_x = this.width - 35;
+  disp_y = this.height - 25;
   disp_w = 30;
-  disp_h = 25;
+  disp_h = 20;
 
   public constructor(public data:any, 
     public width: number,
@@ -318,6 +318,7 @@ export abstract class PlotData {
       this.context.beginPath();
       Shape.drawLine(this.context, [current_x, this.axis_y_start], [current_x, this.axis_y_end]);
       var attribute_name = this.value_list[i][0];
+      this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
       this.context.strokeStyle = 'lightgrey';
       this.context.fillText(attribute_name, current_x, this.axis_y_end - 20);
@@ -369,6 +370,7 @@ export abstract class PlotData {
       this.context.beginPath();
       Shape.drawLine(this.context, [this.axis_x_start, current_y], [this.axis_x_end, current_y]);
       var attribute_name = this.value_list[i][0];
+      this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
       this.context.strokeStyle = 'black';
       this.context.fillText(attribute_name, this.axis_x_start, current_y + 15);
@@ -481,7 +483,12 @@ export abstract class PlotData {
       var to_display = [];
       for (var j=0; j<this.value_list.length; j++) {
         var attribute_name = this.value_list[j][0];
-        var elt = elements[i][attribute_name];
+        var type = this.value_list[j][1];
+        if (type == 'color') {
+          var elt = rgb_to_string(elements[i][attribute_name]);
+        } else {
+          elt = elements[i][attribute_name];
+        }
         to_display.push(elt);
       }
       this.to_display_list.push(to_display);
@@ -1452,7 +1459,11 @@ export class ParallelPlot extends PlotData {
       } else { //ie string
         var list = [];
         for (var j=0; j<this.elements.length; j++) {
-          var elt = this.elements[j][attribute_name];
+          if (type == 'color') {
+            var elt:any = rgb_to_string(this.elements[j][attribute_name]);
+          } else {
+            var elt = this.elements[j][attribute_name];
+          }
           if (!this.is_include(elt, list)) {
             list.push(elt);
           }
@@ -1653,8 +1664,8 @@ export class PlotDataPoint2D {
                                   serialized['cy'],
                                   serialized['shape'],
                                   serialized['size'],
-                                  serialized['color_fill'],
-                                  serialized['color_stroke'],
+                                  rgb_to_hex(serialized['color_fill']),
+                                  rgb_to_hex(serialized['color_stroke']),
                                   serialized['stroke_width'],
                                   serialized['type'],
                                   serialized['name']);
@@ -1710,8 +1721,8 @@ export class PlotDataAxis {
     return new PlotDataAxis(serialized['nb_points_x'],
                                   serialized['nb_points_y'],
                                   serialized['font_size'],
-                                  serialized['graduation_color'],
-                                  serialized['axis_color'],
+                                  rgb_to_hex(serialized['graduation_color']),
+                                  rgb_to_hex(serialized['axis_color']),
                                   serialized['name'],
                                   serialized['arrow_on'],
                                   serialized['axis_width'],
@@ -1812,14 +1823,15 @@ export class PlotDataAxis {
 }
 
 export class PlotDataTooltip {
-  constructor(public colorfill:string, public text_color: string, public font:string, public tp_radius:any, public to_plot_list:any,public type:string, public name:string) {}
+  constructor(public colorfill:string, public text_color: string, public font:string, public tp_radius:any, public to_plot_list:any, public opacity:number, public type:string, public name:string) {}
 
   public static deserialize(serialized) {
-      return new PlotDataTooltip(serialized['colorfill'],
-                                  serialized['text_color'],
+      return new PlotDataTooltip(rgb_to_hex(serialized['colorfill']),
+                                  rgb_to_hex(serialized['text_color']),
                                   serialized['font'],
                                   serialized['tp_radius'],
                                   serialized['to_plot_list'],
+                                  serialized['opacity'],
                                   serialized['type'],
                                   serialized['name']);
   }
@@ -1867,7 +1879,7 @@ export class PlotDataTooltip {
 
     Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tp_radius, context);
     context.strokeStyle = 'black';
-    context.globalAlpha = 0.75;
+    context.globalAlpha = this.opacity;
     context.fillStyle = this.colorfill;
     context.stroke();
     context.fill();
@@ -1923,7 +1935,7 @@ export class PlotDataGraph2D {
     }
     return new PlotDataGraph2D(point_list,
                            serialized['dashline'],
-                           serialized['graph_colorstroke'],
+                           rgb_to_hex(serialized['graph_colorstroke']),
                            serialized['graph_linewidth'],
                            segments,
                            serialized['display_step'],
@@ -2347,4 +2359,34 @@ if(nextCol < 16777215){
 }
 var col = "rgb(" + ret.join(',') + ")";
 return col;
+}
+
+export function componentToHex(c) {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+
+export function rgb_to_hex(rgb:string) {
+  var tokens = rgb.slice(4, rgb.length - 1).split(', ');
+  var r = parseInt(tokens[0],10);
+  var g = parseInt(tokens[1],10);
+  var b = parseInt(tokens[2],10);
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
+}
+
+export function hex_to_string(hexa:string) {
+  var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#adb3ff'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
+  ['lightorange', '#ff8700'], ['cyan', '#13f0f0'], ['lightcyan', '#90f7f7'], ['rose', '#FF69B4'], ['lightrose', '#FFC0CB'], ['violet', '#EE82EE'], ['lightviolet', '#eaa5f6'], ['white', '#ffffff'], ['black', '#000000'], ['brown', '#cd8f40'],
+  ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']]
+  for (var i=0 ;i<color_dict.length; i++) {
+    if (hexa.toUpperCase() === color_dict[i][1].toUpperCase()) {
+      return color_dict[i][0];
+    }
+  }
+  throw new Error('Invalid color : not in list');
+}
+
+export function rgb_to_string(rgb:string) {
+  return hex_to_string(rgb_to_hex(rgb));
 }

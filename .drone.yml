@@ -36,7 +36,7 @@ steps:
       event: tag
   commands:
   - npm install
-  - version = `git describe --tags`
+  - version=`git describe --tags`
   - npm version ${version#?}
 
 - name: npm build

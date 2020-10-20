@@ -84,8 +84,10 @@ export abstract class PlotData {
   disp_y:number = 0;
   disp_w:number = 0;
   disp_h:number = 0;
-  selected_axis:string='';
+  selected_axis_name:string='';
   inverted_axis_list:boolean[]=[];
+  drag_ON:boolean=false;
+  rubber_bands:any[]=[];
 
 
   public constructor(public data:any, 
@@ -330,11 +332,12 @@ export abstract class PlotData {
       var attribute_name = this.value_list[i][0];
       this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
-      if (attribute_name == this.selected_axis) {
+      if (attribute_name == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {
         this.context.strokeStyle = 'lightgrey';
       }
+      this.context.fillStyle = 'black';
       this.context.fillText(attribute_name, current_x, this.axis_y_end - 20);
       this.context.stroke();
       var attribute_type = this.value_list[i][1];
@@ -394,11 +397,12 @@ export abstract class PlotData {
       var attribute_name = this.value_list[i][0];
       this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
-      if (attribute_name == this.selected_axis) {
+      if (attribute_name == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {
         this.context.strokeStyle = 'black';
       }
+      this.context.fillStyle = 'black';
       this.context.fillText(attribute_name, this.axis_x_start, current_y + 15);
       this.context.stroke();
       var attribute_type = this.value_list[i][1];
@@ -519,6 +523,34 @@ export abstract class PlotData {
       }
     }
   }
+
+  draw_rubber_bands() {
+    var rect_width = 10;
+    var opacity = 0.5;
+    var colorfill = string_to_hex('lightblue');
+    var colorstroke = string_to_hex('white');
+    var linewidth = 0.1;
+    for (var i=0; i<this.rubber_bands.length; i++) {
+      if (this.rubber_bands[i].length != 0) {
+        if (this.vertical) {
+          var minY = this.rubber_bands[i][0];
+          var maxY = this.rubber_bands[i][1];
+          var real_minY = this.axis_y_end + minY*(this.axis_y_start - this.axis_y_end);
+          var real_maxY = this.axis_y_end + maxY*(this.axis_y_start - this.axis_y_end);
+          var current_x = this.axis_x_start + i*this.x_step;
+          Shape.rect(current_x - rect_width/2, real_minY, rect_width, real_maxY - real_minY, this.context, colorfill, colorstroke, linewidth, opacity);
+        } else {
+          var minX = this.rubber_bands[i][0];
+          var maxX = this.rubber_bands[i][1];
+          var real_minX = this.axis_x_start + minX*(this.axis_x_end - this.axis_x_start);
+          var real_maxX = this.axis_x_start + maxX*(this.axis_x_end - this.axis_x_start);
+          var current_y = this.axis_y_start + i*this.y_step;
+          Shape.rect(real_minX, current_y - rect_width/2, real_maxX - real_minX, rect_width, this.context, colorfill, colorstroke, linewidth, opacity);
+        }
+      }
+    }
+  }
+
   refresh_to_display_list(elements) {
     this.to_display_list = [];
     for (var i=0; i<elements.length; i++) {
@@ -744,6 +776,23 @@ export abstract class PlotData {
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
   }
 
+  create_rubber_band(mouse1X, mouse1Y, selected_band_index, e) {
+    var mouse2X = e.offsetX;
+    var mouse2Y = e.offsetY;
+    if (this.vertical) {
+      var minY = Math.max(Math.min((mouse1Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), (mouse2Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end)), 0);
+      var maxY = Math.min(Math.max((mouse1Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), (mouse2Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end)), 1);
+      this.rubber_bands[selected_band_index] = [minY, maxY];
+    } else {
+      var minX = Math.max(Math.min((mouse1X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), (mouse2X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start)), 0);
+      var maxX = Math.min(Math.max((mouse1X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), (mouse2X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start)), 1);
+      this.rubber_bands[selected_band_index] = [minX, maxX];
+    }
+    this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
+    this.draw(true, 0, 0, 0, this.scaleX, this.scaleY)
+    return [mouse2X, mouse2Y];
+  }
+
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
     mouse1X = e.offsetX;
     mouse1Y = e.offsetY;
@@ -929,10 +978,9 @@ export abstract class PlotData {
       return [mouse3X, mouse3Y];
   }
 
-  mouse_move_interaction_pp(isDrawing, e, click_on_axis_list) {
+  mouse_move_axis_inversion(isDrawing, e, selected_name_index) {
     isDrawing = true;
-    var mouse_moving = true;
-    this.move_index = this.get_index_of_element(true, click_on_axis_list)
+    this.move_index = selected_name_index;
     if (this.vertical === true) {
       var mouse2X = e.offsetX;
       var axis_x = this.axis_x_start + this.move_index*this.x_step;
@@ -945,12 +993,12 @@ export abstract class PlotData {
       this.draw(true, 0, mouse2Y - axis_y, 0, this.scaleX, this.scaleY);
     }
     
-    return [mouse2X, mouse2Y, isDrawing, mouse_moving];
+    return [mouse2X, mouse2Y, isDrawing];
   }
 
   initialize_click_on_axis(nb_axis:number, mouse1X:number, mouse1Y:number, click_on_axis) {
     click_on_axis = false;
-    var click_on_axis_list = [];
+    var selected_axis_index = -1;
     for (var i=0; i<nb_axis; i++) {
       if (this.vertical === true) {
         var current_x = this.axis_x_start + i*this.x_step;
@@ -960,9 +1008,13 @@ export abstract class PlotData {
         var bool = Shape.Is_in_rect(mouse1X, mouse1Y, this.axis_x_start, current_y - 10, this.axis_x_end - this.axis_x_start, 20);
       }
       click_on_axis = click_on_axis || bool;
-      click_on_axis_list.push(bool);
+      if (bool) {
+        click_on_axis = true;
+        selected_axis_index = i;
+        break;
+      }
     }
-    return [click_on_axis, click_on_axis_list];
+    return [click_on_axis, selected_axis_index];
   }
 
   initialize_click_on_name(nb_axis:number, mouse1X:number, mouse1Y:number) {
@@ -982,9 +1034,56 @@ export abstract class PlotData {
       }
       if (click_on_name === true) {
         selected_name_index = i;
+        break;
       }
     }
     return [click_on_name, selected_name_index];
+  }
+
+  initialize_click_on_bands(mouse1X, mouse1Y) {
+    var rect_width = 10;
+    var border_size = 4;
+    var click_on_band:any = false;
+    var click_on_border:any = false;
+    var selected_band_index:any = -1;
+    var selected_border:any = [];
+    for (var i=0; i<this.rubber_bands.length; i++) {
+      if (this.rubber_bands[i].length != 0) {
+        if (this.vertical) {
+          var minY = this.rubber_bands[i][0];
+          var maxY = this.rubber_bands[i][1];
+          var real_minY = this.axis_y_end + minY*(this.axis_y_start - this.axis_y_end);
+          var real_maxY = this.axis_y_end + maxY*(this.axis_y_start - this.axis_y_end);
+          var current_x = this.axis_x_start + i*this.x_step;
+          var is_in_upper_border = Shape.Is_in_rect(mouse1X, mouse1Y, current_x - rect_width/2, real_minY - border_size/2, rect_width, border_size);
+          var is_in_lower_border = Shape.Is_in_rect(mouse1X, mouse1Y, current_x - rect_width/2, real_maxY - border_size/2, rect_width, border_size);
+          var is_in_rubber_band = Shape.Is_in_rect(mouse1X, mouse1Y, current_x - rect_width/2, real_minY, rect_width, real_maxY - real_minY);
+        } else {
+          var minX = this.rubber_bands[i][0];
+          var maxX = this.rubber_bands[i][1];
+          var real_minX = this.axis_x_start + minX*(this.axis_x_end - this.axis_x_start);
+          var real_maxX = this.axis_x_start + maxX*(this.axis_x_end - this.axis_x_start);
+          var current_y = this.axis_y_start + i*this.y_step;
+          is_in_upper_border = Shape.Is_in_rect(mouse1X, mouse1Y, real_minX - border_size/2, current_y - rect_width/2, border_size, rect_width);
+          is_in_lower_border = Shape.Is_in_rect(mouse1X, mouse1Y, real_maxX - border_size/2, current_y - rect_width/2, border_size, rect_width);
+          is_in_rubber_band = Shape.Is_in_rect(mouse1X, mouse1Y, real_minX, current_y - rect_width/2, real_maxX - real_minX, rect_width);
+        }
+      }
+      if (is_in_upper_border) {
+        click_on_border = true;
+        selected_border = [i, 0];
+        break;
+      } else if (is_in_lower_border)  {
+        click_on_border = true;
+        selected_border = [i, 1];
+        break;
+      } else if (is_in_rubber_band && !is_in_upper_border && !is_in_lower_border) {
+        click_on_band = true;
+        selected_band_index = i;
+        break;
+      }
+    }
+    return [click_on_band, click_on_border, selected_band_index, selected_border];
   }
 
   mouse_up_axis_interversion(mouse1X, mouse1Y, e) {
@@ -1009,8 +1108,6 @@ export abstract class PlotData {
       this.value_list = this.remove_selection(this.value_list[this.move_index], this.value_list);
       this.value_list.splice(new_index, 0, value);
     }
-    var isDrawing = false;
-    var mouse_moving = false;
     this.move_index = -1;
     var click_on_axis = false;
     var mvx = 0;
@@ -1018,40 +1115,44 @@ export abstract class PlotData {
     this.refresh_to_display_list(this.elements);
     this.draw(false, 0, mvx, mvy, this.scaleX, this.scaleY);
     this.draw(true, 0, mvx, mvy, this.scaleX, this.scaleY);
-    return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving]
+    return [mouse3X, mouse3Y, click_on_axis]
   }
 
-  select_title_action(mouseX, mouseY, selected_name_index) {
+  select_title_action(selected_name_index) {
     this.inverted_axis_list[selected_name_index] = !this.inverted_axis_list[selected_name_index];
     this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
   }
 
-  mouse_up_interaction_pp(click_on_axis, click_on_axis_list, click_on_name, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
+  select_axis_action(selected_axis_index) {
+      var attribute_name = this.value_list[selected_axis_index][0];
+      if (attribute_name == this.selected_axis_name) {
+        this.selected_axis_name = '';
+      } else {
+        this.selected_axis_name = attribute_name;
+      }
+      this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
+      this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
+  }
+ 
+  mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
     var mouseX = e.offsetX;
     var mouseY = e.offsetY;
     var click_on_disp = Shape.Is_in_rect(mouseX, mouseY, this.disp_x, this.disp_y, this.disp_w, this.disp_h);
     if (click_on_axis && mouse_moving) {
-      [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_axis_interversion(mouse1X, mouse1Y, e);
+      
     } else if (click_on_axis && !mouse_moving) {
-      isDrawing = false;
-      var i = this.get_index_of_element(true, click_on_axis_list);
-      var attribute_name = this.value_list[i][0];
-      if (attribute_name == this.selected_axis) {
-        this.selected_axis = '';
-      } else {
-        this.selected_axis = attribute_name;
-      }
-      this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
-      this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
+      this.select_axis_action(selected_axis_index);
     } else if (click_on_name && mouse_moving) {
-
+      [mouse3X, mouse3Y, click_on_axis] = this.mouse_up_axis_interversion(mouse1X, mouse1Y, e);
     } else if (click_on_name && !mouse_moving) {
-      this.select_title_action(mouseX, mouseY, selected_name_index);
+      this.select_title_action(selected_name_index);
     }
     if(click_on_disp) {
       this.change_disposition_action();
     } 
+    mouse_moving = false;
+    isDrawing = false;
     return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving];
   }
 
@@ -1065,24 +1166,38 @@ export abstract class PlotData {
     var mouse3X = 0;
     var mouse3Y = 0;
     var click_on_axis:boolean=false;
-    var click_on_axis_list:boolean[]=[];
+    var selected_axis_index:number = -1;
     var click_on_name:boolean = false;
     var selected_name_index:number = -1;
+    var click_on_band:boolean = false;
+    var click_on_border:boolean = false;
+    var selected_band_index:number = -1;
+    var selected_border:number[]=[];
 
     var canvas = document.getElementById('canvas');
 
     canvas.addEventListener('mousedown', e => {
       [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
       if (parallelplot) {
-        [click_on_axis, click_on_axis_list] = this.initialize_click_on_axis(this.value_list.length, mouse1X, mouse1Y, click_on_axis);
+        [click_on_axis, selected_axis_index] = this.initialize_click_on_axis(this.value_list.length, mouse1X, mouse1Y, click_on_axis);
         [click_on_name, selected_name_index] = this.initialize_click_on_name(this.value_list.length, mouse1X, mouse1Y);
+        [click_on_band, click_on_border, selected_band_index, selected_border] = this.initialize_click_on_bands(mouse1X, mouse1Y);
       }
     })
 
     canvas.addEventListener('mousemove', e => {
       if (parallelplot) {
-        if (click_on_axis && isDrawing) {
-          [mouse2X, mouse2Y, isDrawing, mouse_moving] = this.mouse_move_interaction_pp(isDrawing, e, click_on_axis_list);
+        if (isDrawing) {
+          mouse_moving = true;
+          if (click_on_name) {
+            [mouse2X, mouse2Y, isDrawing] = this.mouse_move_axis_inversion(isDrawing, e, selected_name_index);
+          } else if (click_on_axis && !click_on_band && !click_on_border) {
+            [mouse2X, mouse2Y] = this.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e);
+          } else if (click_on_band) {
+            //Translation
+          } else if (click_on_border) {
+            //Redimensionnement
+          }
         }
       } else {
         [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e);
@@ -1091,7 +1206,7 @@ export abstract class PlotData {
 
     canvas.addEventListener('mouseup', e => {
       if (parallelplot) {
-        [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_interaction_pp(click_on_axis, click_on_axis_list, click_on_name, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
+        [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
       } else {
         [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
       }
@@ -1534,6 +1649,7 @@ export class ParallelPlot extends PlotData {
     }
     for (var i=0; i<attribute_list.length; i++) {
       this.inverted_axis_list.push(false);
+      this.rubber_bands.push([]);
       var attribute_name = attribute_list[i]['name'];
       var type = attribute_list[i]['type'];
       var value = [attribute_name, type];
@@ -1587,6 +1703,7 @@ export class ParallelPlot extends PlotData {
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
     this.draw_empty_canvas(hidden);
+    this.draw_rubber_bands();
     var nb_axis = this.value_list.length;
     this.draw_parallel_coord_lines(nb_axis);
     this.draw_parallel_axis(nb_axis, mvx);
@@ -2362,6 +2479,19 @@ export class Shape {
     }
     context.closePath();
   }
+
+  public static rect(x, y, w, h, context, colorfill, colorstroke, linewidth, opacity) {
+    context.beginPath();
+    context.fillStyle = colorfill;
+    context.strokeStyle = colorstroke;
+    context.lineWidth = linewidth;
+    context.globalAlpha = opacity;
+    context.rect(x,y,w,h);
+    context.fill();
+    context.stroke();
+    context.closePath();
+    context.globalAlpha = 1;
+  }
 }
 
 export function drawLines(ctx, pts) {
@@ -2485,4 +2615,13 @@ export function hex_to_string(hexa:string) {
 
 export function rgb_to_string(rgb:string) {
   return hex_to_string(rgb_to_hex(rgb));
+}
+
+export function string_to_hex(str:string) {
+  for (var i=0 ;i<color_dict.length; i++) {
+    if (str.toUpperCase() === color_dict[i][0].toUpperCase()) {
+      return color_dict[i][1];
+    }
+  }
+  throw new Error('Invalid color : not in list');
 }

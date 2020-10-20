@@ -66,15 +66,6 @@ for i in range(50):
     point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=random_color_stroke, stroke_width=stroke_width)
     elements += [point]
 
-cx = random.uniform(0,2)
-cy = random.uniform(0,1)
-point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=red, color_stroke=brown, stroke_width=stroke_width)
-elements += [point]
-cx = random.uniform(0,2)
-cy = random.uniform(0,1)
-point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=blue, color_stroke=green, stroke_width=stroke_width)
-elements += [point]
-
 
 parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition)
 

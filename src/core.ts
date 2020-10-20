@@ -31,24 +31,24 @@ export abstract class PlotData {
 
   plot_datas:any;
   tooltip_list:any[]=[];
-  zoom_rect_x:number;
-  zoom_rect_y:number;
-  zoom_rect_w:number;
-  zoom_rect_h:number;
+  zoom_rect_x:number=0;
+  zoom_rect_y:number=0;
+  zoom_rect_w:number=0;
+  zoom_rect_h:number=0;
   zw_bool:boolean;
-  zw_x:number;
-  zw_y:number;
-  zw_w:number;
-  zw_h:number;
-  reset_rect_x:number;
-  reset_rect_y:number;
-  reset_rect_w:number;
-  reset_rect_h:number;
+  zw_x:number=0;
+  zw_y:number=0;
+  zw_w:number=0;
+  zw_h:number=0;
+  reset_rect_x:number=0;
+  reset_rect_y:number=0;
+  reset_rect_w:number=0;
+  reset_rect_h:number=0;
   select_bool:boolean;
-  select_x:number;
-  select_y:number;
-  select_w:number;
-  select_h:number;
+  select_x:number=0;
+  select_y:number=0;
+  select_w:number=0;
+  select_h:number=0;
   sort_list_points:any[]=[];
   graph_to_display:boolean[]=[];
   graph1_button_x:number=0;
@@ -65,6 +65,8 @@ export abstract class PlotData {
   scatter_point_list:PlotDataPoint2D[]=[];
   refresh_point_list_bool:boolean=true;
 
+  buttons_ON:boolean=true; //Pour activer/désactiver les boutons sur le canvas 
+
   value_list:any[] = [];
   to_display_list:any[] = [];
   parallel_plot_lineColor:string;
@@ -78,10 +80,13 @@ export abstract class PlotData {
   move_index:number = -1;
   elements:any;
   vertical:boolean=false;
-  disp_x = this.width - 35;
-  disp_y = this.height - 25;
-  disp_w = 30;
-  disp_h = 20;
+  disp_x:number = 0;
+  disp_y:number = 0;
+  disp_w:number = 0;
+  disp_h:number = 0;
+  selected_axis:string='';
+  inverted_axis_list:boolean[]=[];
+
 
   public constructor(public data:any, 
     public width: number,
@@ -101,6 +106,11 @@ export abstract class PlotData {
 		hiddenCanvas.width = this.width;
 		hiddenCanvas.height = this.height;
     this.context_hidden = hiddenCanvas.getContext("2d");
+  }
+
+  set_canvas_size(height:number, width:number) {
+    this.height = height;
+    this.width = width;
   }
 
   draw_initial() {
@@ -320,7 +330,11 @@ export abstract class PlotData {
       var attribute_name = this.value_list[i][0];
       this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
-      this.context.strokeStyle = 'lightgrey';
+      if (attribute_name == this.selected_axis) {
+        this.context.strokeStyle = 'blue';
+      } else {
+        this.context.strokeStyle = 'lightgrey';
+      }
       this.context.fillText(attribute_name, current_x, this.axis_y_end - 20);
       this.context.stroke();
       var attribute_type = this.value_list[i][1];
@@ -332,7 +346,11 @@ export abstract class PlotData {
         var y_step = (this.axis_y_end - this.axis_y_start)/9;
         for (var j=0; j<10; j++) {
           var current_y = this.axis_y_start + j*y_step;
-          var current_grad:any = MyMath.round(min + j*grad_step, 3);
+          if (this.inverted_axis_list[i] === true) {
+            var current_grad:any = MyMath.round(max - j*grad_step, 3);
+          } else {
+            current_grad = MyMath.round(min + j*grad_step, 3);
+          }
           Shape.drawLine(this.context, [current_x - 3, current_y], [current_x + 3, current_y]);
           this.context.textAlign = 'end';
           this.context.textBaseline = 'middle';
@@ -347,7 +365,11 @@ export abstract class PlotData {
         }
         for (var j=0; j<nb_attribute; j++) {
           var current_y = this.axis_y_start + j*y_step;
-          var current_grad = list[j];
+          if (this.inverted_axis_list[i] === true) {
+            current_grad = list[nb_attribute-j-1].toString();
+          } else {
+            current_grad = list[j].toString();
+          }
           Shape.drawLine(this.context, [current_x - 3, current_y], [current_x + 3, current_y]);
           this.context.textAlign = 'end';
           this.context.textBaseline = 'middle';
@@ -372,7 +394,11 @@ export abstract class PlotData {
       var attribute_name = this.value_list[i][0];
       this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
-      this.context.strokeStyle = 'black';
+      if (attribute_name == this.selected_axis) {
+        this.context.strokeStyle = 'blue';
+      } else {
+        this.context.strokeStyle = 'black';
+      }
       this.context.fillText(attribute_name, this.axis_x_start, current_y + 15);
       this.context.stroke();
       var attribute_type = this.value_list[i][1];
@@ -384,7 +410,11 @@ export abstract class PlotData {
         var x_step = (this.axis_x_end - this.axis_x_start)/9;
         for (var j=0; j<10; j++) {
           var current_x = this.axis_x_start + j*x_step;
-          var current_grad:any = MyMath.round(min + j*grad_step, 3);
+          if (this.inverted_axis_list[i] === true) {
+            var current_grad:any = MyMath.round(max - j*grad_step, 3);
+          } else {
+            current_grad = MyMath.round(min + j*grad_step, 3);
+          }
           Shape.drawLine(this.context, [current_x, current_y - 3], [current_x, current_y + 3]);
           this.context.textAlign = 'center';
           this.context.fillText(current_grad, current_x, current_y - 5);
@@ -398,7 +428,11 @@ export abstract class PlotData {
         }
         for (var j=0; j<nb_attribute; j++) {
           var current_x = this.axis_x_start + j*x_step;
-          var current_grad = list[j];
+          if (this.inverted_axis_list[i] === true) {
+            current_grad = list[nb_attribute-j-1].toString();
+          } else {
+            current_grad = list[j].toString();
+          }
           Shape.drawLine(this.context, [current_x, current_y - 3], [current_x, current_y + 3]);
           this.context.textAlign = 'middle';
           this.context.fillText(current_grad, current_x, current_y - 5);
@@ -428,24 +462,32 @@ export abstract class PlotData {
     }
   }
 
-  get_coord_on_parallel_plot(attribute_type, current_list, elt, axis_coord_start, axis_coord_end) {
+  get_coord_on_parallel_plot(attribute_type, current_list, elt, axis_coord_start, axis_coord_end, inverted) {
     if (attribute_type == 'float') {
       var min = current_list[0];
       var max = current_list[1];
       var delta_y = elt - min;
       var delta_axis_coord = (axis_coord_end - axis_coord_start) * delta_y/(max - min);
-      var current_axis_y:number = axis_coord_start + delta_axis_coord; 
+      if (inverted === true) {
+        var current_axis_coord = axis_coord_end - delta_axis_coord;
+      } else {
+        current_axis_coord = axis_coord_start + delta_axis_coord; 
+      }
     } else {
       var color = elt;
       if (current_list.length == 1) {
-        current_axis_y = (axis_coord_start + axis_coord_end)/2;
+        current_axis_coord = (axis_coord_start + axis_coord_end)/2;
       } else {
         var color_index = this.get_index_of_element(color, current_list);
-        var axis_y_step = (axis_coord_end - axis_coord_start)/(current_list.length - 1);
-        current_axis_y = axis_coord_start + color_index*axis_y_step;
+        var axis_coord_step = (axis_coord_end - axis_coord_start)/(current_list.length - 1);
+        if (inverted === true) {
+          current_axis_coord = axis_coord_end - color_index*axis_coord_step;
+        } else {
+          current_axis_coord = axis_coord_start + color_index*axis_coord_step;
+        }
       }
     }
-    return current_axis_y;
+    return current_axis_coord;
   }
 
 
@@ -460,11 +502,11 @@ export abstract class PlotData {
         if (this.vertical === true) {
           var current_x = this.axis_x_start + j*this.x_step;
           var next_x = this.axis_x_start + (j+1)*this.x_step;
-          var current_axis_y = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], this.axis_y_start, this.axis_y_end);
-          var next_axis_y = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j+1], this.axis_y_start, this.axis_y_end);
+          var current_axis_y = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]);
+          var next_axis_y = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j+1], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j+1]);
         } else {
-          var current_x = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], this.axis_x_start, this.axis_x_end);
-          var next_x = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j+1], this.axis_x_start, this.axis_x_end);
+          var current_x = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[j]);
+          var next_x = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j+1], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[j+1]);
           var current_axis_y = this.axis_y_start + j*this.y_step;
           var next_axis_y = this.axis_y_start + (j+1)*this.y_step;
         }
@@ -695,6 +737,13 @@ export abstract class PlotData {
     }
   }
 
+  change_disposition_action() {
+    this.vertical = !this.vertical;
+    this.refresh_axis(this.value_list.length);
+    this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
+    this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
+  }
+
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
     mouse1X = e.offsetX;
     mouse1Y = e.offsetY;
@@ -908,16 +957,34 @@ export abstract class PlotData {
         var bool = Shape.Is_in_rect(mouse1X, mouse1Y, current_x - 15, this.axis_y_end, 30, this.axis_y_start - this.axis_y_end);
       } else {
         var current_y = this.axis_y_start + i*this.y_step;
-        var bool = Shape.Is_in_rect(mouse1X, mouse1Y, this.axis_x_start, current_y - 15, this.axis_x_end, 30);
+        var bool = Shape.Is_in_rect(mouse1X, mouse1Y, this.axis_x_start, current_y - 10, this.axis_x_end - this.axis_x_start, 20);
       }
       click_on_axis = click_on_axis || bool;
-      if (bool) {
-        click_on_axis_list.push(true);
-      } else {
-        click_on_axis_list.push(false);
-      }
+      click_on_axis_list.push(bool);
     }
     return [click_on_axis, click_on_axis_list];
+  }
+
+  initialize_click_on_name(nb_axis:number, mouse1X:number, mouse1Y:number) {
+    var click_on_name:any = false;
+    var selected_name_index:any = -1;
+    for (var i=0; i<nb_axis; i++) {
+      var attribute_name = this.value_list[i][0];
+      var text_w = this.context.measureText(attribute_name).width;
+      var text_h = parseInt(this.context.font.split('px')[0], 10);
+      if (this.vertical === true) {
+        var current_x = this.axis_x_start + i*this.x_step;
+        click_on_name = click_on_name || Shape.Is_in_rect(mouse1X, mouse1Y, current_x - text_w/2, this.axis_y_end - 20 - text_h/2, text_w, text_h);
+
+      } else {
+        var current_y = this.axis_y_start + i*this.y_step;
+        click_on_name = click_on_name || Shape.Is_in_rect(mouse1X, mouse1Y, this.axis_x_start - text_w/2, current_y + 15 - text_h/2, text_w, text_h);
+      }
+      if (click_on_name === true) {
+        selected_name_index = i;
+      }
+    }
+    return [click_on_name, selected_name_index];
   }
 
   mouse_up_axis_interversion(mouse1X, mouse1Y, e) {
@@ -954,7 +1021,13 @@ export abstract class PlotData {
     return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving]
   }
 
-  mouse_up_interaction_pp(click_on_axis, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
+  select_title_action(mouseX, mouseY, selected_name_index) {
+    this.inverted_axis_list[selected_name_index] = !this.inverted_axis_list[selected_name_index];
+    this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
+    this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
+  }
+
+  mouse_up_interaction_pp(click_on_axis, click_on_axis_list, click_on_name, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
     var mouseX = e.offsetX;
     var mouseY = e.offsetY;
     var click_on_disp = Shape.Is_in_rect(mouseX, mouseY, this.disp_x, this.disp_y, this.disp_w, this.disp_h);
@@ -962,14 +1035,22 @@ export abstract class PlotData {
       [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_axis_interversion(mouse1X, mouse1Y, e);
     } else if (click_on_axis && !mouse_moving) {
       isDrawing = false;
+      var i = this.get_index_of_element(true, click_on_axis_list);
+      var attribute_name = this.value_list[i][0];
+      if (attribute_name == this.selected_axis) {
+        this.selected_axis = '';
+      } else {
+        this.selected_axis = attribute_name;
+      }
       this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
       this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
+    } else if (click_on_name && mouse_moving) {
+
+    } else if (click_on_name && !mouse_moving) {
+      this.select_title_action(mouseX, mouseY, selected_name_index);
     }
     if(click_on_disp) {
-      this.vertical = !this.vertical;
-      this.refresh_axis(this.value_list.length);
-      this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
-      this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
+      this.change_disposition_action();
     } 
     return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving];
   }
@@ -985,6 +1066,8 @@ export abstract class PlotData {
     var mouse3Y = 0;
     var click_on_axis:boolean=false;
     var click_on_axis_list:boolean[]=[];
+    var click_on_name:boolean = false;
+    var selected_name_index:number = -1;
 
     var canvas = document.getElementById('canvas');
 
@@ -992,6 +1075,7 @@ export abstract class PlotData {
       [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
       if (parallelplot) {
         [click_on_axis, click_on_axis_list] = this.initialize_click_on_axis(this.value_list.length, mouse1X, mouse1Y, click_on_axis);
+        [click_on_name, selected_name_index] = this.initialize_click_on_name(this.value_list.length, mouse1X, mouse1Y);
       }
     })
 
@@ -1007,7 +1091,7 @@ export abstract class PlotData {
 
     canvas.addEventListener('mouseup', e => {
       if (parallelplot) {
-        [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_interaction_pp(click_on_axis, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
+        [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_interaction_pp(click_on_axis, click_on_axis_list, click_on_name, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
       } else {
         [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
       }
@@ -1316,25 +1400,27 @@ export class PlotScatter extends PlotData {
     public height: number,
     public coeff_pixel: number) {
       super(data, width, height, coeff_pixel);
-      this.zoom_rect_x = this.width - 45;
-      this.zoom_rect_y = 10;
-      this.zoom_rect_w = 35;
-      this.zoom_rect_h = 25;
-      this.zw_x = this.width - 45;
-      this.zw_y = 70;
-      this.zw_w = 35;
-      this.zw_h = 30;
-      this.reset_rect_x = this.width - 45;
-      this.reset_rect_y = 110;
-      this.reset_rect_w = 35;
-      this.reset_rect_h = 30;
-      this.select_x = this.width - 45;
-      this.select_y = 150;
-      this.select_w = 35;
-      this.select_h = 30;
-      this.graph1_button_y = 10;
-      this.graph1_button_w = 30;
-      this.graph1_button_h = 15;
+      if (this.buttons_ON) {
+        this.zoom_rect_x = this.width - 45;
+        this.zoom_rect_y = 10;
+        this.zoom_rect_w = 35;
+        this.zoom_rect_h = 25;
+        this.zw_x = this.width - 45;
+        this.zw_y = 70;
+        this.zw_w = 35;
+        this.zw_h = 30;
+        this.reset_rect_x = this.width - 45;
+        this.reset_rect_y = 110;
+        this.reset_rect_w = 35;
+        this.reset_rect_h = 30;
+        this.select_x = this.width - 45;
+        this.select_y = 150;
+        this.select_w = 35;
+        this.select_h = 30;
+        this.graph1_button_y = 10;
+        this.graph1_button_w = 30;
+        this.graph1_button_h = 15;
+      }
       this.plot_datas = [];
       var graphID = 0;
       for (var i = 0; i < data.length; i++) {
@@ -1401,6 +1487,7 @@ export class PlotScatter extends PlotData {
       this.draw_axis(mvx, mvy, scaleX, scaleY, d);
       this.draw_tooltip(d, mvx, mvy);
     }
+    if (this.buttons_ON) {
       //Drawing the zooming button 
       this.zoom_button(this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
       
@@ -1415,7 +1502,7 @@ export class PlotScatter extends PlotData {
 
       //Drawing the enable/disable graph button
       this.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial');
-    
+    } 
   }
 }
 
@@ -1423,6 +1510,12 @@ export class PlotScatter extends PlotData {
 export class ParallelPlot extends PlotData {
   constructor(data, width, height, coeff_pixel) {
     super(data, width, height, coeff_pixel);
+    if (this.buttons_ON) {
+      this.disp_x = this.width - 35;
+      this.disp_y = this.height - 25;
+      this.disp_w = 30;
+      this.disp_h = 20;
+    }
     var data_show = data[0];
     this.parallel_plot_lineColor = data_show['line_color'];
     this.parallel_plot_linewidth = data_show['line_width'];
@@ -1440,6 +1533,7 @@ export class ParallelPlot extends PlotData {
       attribute_list.push(Attribute.deserialize(serialized_attribute_list[i]));
     }
     for (var i=0; i<attribute_list.length; i++) {
+      this.inverted_axis_list.push(false);
       var attribute_name = attribute_list[i]['name'];
       var type = attribute_list[i]['type'];
       var value = [attribute_name, type];
@@ -1496,7 +1590,9 @@ export class ParallelPlot extends PlotData {
     var nb_axis = this.value_list.length;
     this.draw_parallel_coord_lines(nb_axis);
     this.draw_parallel_axis(nb_axis, mvx);
-    this.disp_button(this.disp_x, this.disp_y, this.disp_w, this.disp_h, '10px Arial');
+    if (this.buttons_ON) {
+      this.disp_button(this.disp_x, this.disp_y, this.disp_w, this.disp_h, '10px Arial');
+    }
   }
 }
 
@@ -2366,19 +2462,19 @@ export function componentToHex(c) {
   return hex.length == 1 ? "0" + hex : hex;
 }
 
-
 export function rgb_to_hex(rgb:string) {
-  var tokens = rgb.slice(4, rgb.length - 1).split(', ');
+  var tokens = rgb.slice(4, rgb.length - 1).split(',');
   var r = parseInt(tokens[0],10);
   var g = parseInt(tokens[1],10);
   var b = parseInt(tokens[2],10);
   return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-export function hex_to_string(hexa:string) {
-  var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#adb3ff'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
+var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#adb3ff'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
   ['lightorange', '#ff8700'], ['cyan', '#13f0f0'], ['lightcyan', '#90f7f7'], ['rose', '#FF69B4'], ['lightrose', '#FFC0CB'], ['violet', '#EE82EE'], ['lightviolet', '#eaa5f6'], ['white', '#ffffff'], ['black', '#000000'], ['brown', '#cd8f40'],
-  ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']]
+  ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']];
+
+export function hex_to_string(hexa:string) {
   for (var i=0 ;i<color_dict.length; i++) {
     if (hexa.toUpperCase() === color_dict[i][1].toUpperCase()) {
       return color_dict[i][0];

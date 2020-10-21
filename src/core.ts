@@ -330,7 +330,7 @@ export abstract class PlotData {
         var current_x = this.axis_x_start + i*this.x_step;
       }
       this.context.beginPath();
-      Shape.drawLine(this.context, [current_x, this.axis_y_start], [current_x, this.axis_y_end]);
+      Shape.drawLine(this.context, [[current_x, this.axis_y_start], [current_x, this.axis_y_end]]);
       var attribute_name = this.value_list[i][0];
       this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
@@ -356,7 +356,7 @@ export abstract class PlotData {
           } else {
             current_grad = MyMath.round(min + j*grad_step, 3);
           }
-          Shape.drawLine(this.context, [current_x - 3, current_y], [current_x + 3, current_y]);
+          Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
           this.context.textAlign = 'end';
           this.context.textBaseline = 'middle';
           this.context.fillText(current_grad, current_x - 5, current_y);
@@ -375,7 +375,7 @@ export abstract class PlotData {
           } else {
             current_grad = list[j].toString();
           }
-          Shape.drawLine(this.context, [current_x - 3, current_y], [current_x + 3, current_y]);
+          Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
           this.context.textAlign = 'end';
           this.context.textBaseline = 'middle';
           this.context.fillText(current_grad, current_x - 5, current_y);
@@ -395,7 +395,7 @@ export abstract class PlotData {
         var current_y = this.axis_y_start + i*this.y_step;
       }
       this.context.beginPath();
-      Shape.drawLine(this.context, [this.axis_x_start, current_y], [this.axis_x_end, current_y]);
+      Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
       var attribute_name = this.value_list[i][0];
       this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
@@ -421,7 +421,7 @@ export abstract class PlotData {
           } else {
             current_grad = MyMath.round(min + j*grad_step, 3);
           }
-          Shape.drawLine(this.context, [current_x, current_y - 3], [current_x, current_y + 3]);
+          Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
           this.context.textAlign = 'center';
           this.context.fillText(current_grad, current_x, current_y - 5);
         }
@@ -439,7 +439,7 @@ export abstract class PlotData {
           } else {
             current_grad = list[j].toString();
           }
-          Shape.drawLine(this.context, [current_x, current_y - 3], [current_x, current_y + 3]);
+          Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
           this.context.textAlign = 'middle';
           this.context.fillText(current_grad, current_x, current_y - 5);
         }
@@ -496,33 +496,63 @@ export abstract class PlotData {
     return current_axis_coord;
   }
 
+  is_inside_band(real_x, real_y, axis_index) {
+    if (this.rubber_bands[axis_index].length == 0) {
+      return true;
+    }
+    var rubber_min = this.rubber_bands[axis_index][0];
+    var rubber_max = this.rubber_bands[axis_index][1];
+    if (this.vertical === true) {
+      var coord_ax = (real_y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end);
+    } else {
+      coord_ax = (real_x - this.axis_x_start)/(this.axis_x_end - this.axis_x_start);
+    }
+    if ((coord_ax>=rubber_min) && (coord_ax<=rubber_max)) {
+      return true;
+    }
+    return false;
+  }
+
 
   draw_parallel_coord_lines(nb_axis:number) {
     for (var i=0; i<this.to_display_list.length; i++) {
       var to_display_list_i = this.to_display_list[i];
-      for (var j=0; j<nb_axis - 1; j++) {
-        var current_attribute_type = this.value_list[j][1];
-        var current_list = this.value_list[j][2];
-        var next_attribute_type = this.value_list[j+1][1];
-        var next_list = this.value_list[j+1][2];
-        if (this.vertical === true) {
-          var current_x = this.axis_x_start + j*this.x_step;
-          var next_x = this.axis_x_start + (j+1)*this.x_step;
-          var current_axis_y = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]);
-          var next_axis_y = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j+1], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j+1]);
-        } else {
-          var current_x = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[j]);
-          var next_x = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j+1], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[j+1]);
-          var current_axis_y = this.axis_y_start + j*this.y_step;
-          var next_axis_y = this.axis_y_start + (j+1)*this.y_step;
-        }
-        this.context.beginPath();
-        this.context.strokeStyle = this.parallel_plot_lineColor;
-        this.context.lineWidth = this.parallel_plot_linewidth;
-        Shape.drawLine(this.context, [current_x, current_axis_y], [next_x, next_axis_y]);
-        this.context.stroke();
-        this.context.closePath();
+      var current_attribute_type = this.value_list[0][1];
+      var current_list = this.value_list[0][2];
+      var selected:boolean = true;
+      var seg_list = [];
+      if (this.vertical === true) {
+        var current_x = this.axis_x_start
+        var current_axis_y = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[0], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[0]);
+      } else {
+        var current_x = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[0], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[0]);
+        var current_axis_y = this.axis_y_start
       }
+      selected = selected && this.is_inside_band(current_x, current_axis_y, 0);
+      seg_list.push([current_x, current_axis_y]);
+      for (var j=1; j<nb_axis; j++) { 
+        var next_attribute_type = this.value_list[j][1];
+        var next_list = this.value_list[j][2];
+        if (this.vertical === true) {
+          var next_x = this.axis_x_start + j*this.x_step;
+          var next_axis_y = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]);
+        } else {
+          var next_x = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[j]); 
+          var next_axis_y = this.axis_y_start + j*this.y_step;
+        }
+        selected = selected && this.is_inside_band(next_x, next_axis_y, j);
+        seg_list.push([next_x, next_axis_y]);
+      }
+      this.context.beginPath();
+      if (selected === true) {
+        this.context.strokeStyle = this.parallel_plot_lineColor;
+      } else {
+        this.context.strokeStyle = string_to_hex('lightgrey');
+      }
+      this.context.lineWidth = this.parallel_plot_linewidth;
+      Shape.drawLine(this.context, seg_list);
+      this.context.stroke();
+      this.context.closePath();
     }
   }
 
@@ -534,7 +564,6 @@ export abstract class PlotData {
     var linewidth = 0.1;
     for (var i=0; i<this.rubber_bands.length; i++) {
       if (this.rubber_bands[i].length != 0) {
-        var attribute_name = this.value_list[i][0];
         if (this.vertical) {
           var minY = this.rubber_bands[i][0];
           var maxY = this.rubber_bands[i][1];
@@ -1186,25 +1215,28 @@ export abstract class PlotData {
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
   }
 
-  select_axis_action(selected_axis_index) {
+  select_axis_action(selected_axis_index, click_on_band, click_on_border) {
+    if (this.rubber_bands[selected_axis_index].length == 0) {
       var attribute_name = this.value_list[selected_axis_index][0];
       if (attribute_name == this.selected_axis_name) {
         this.selected_axis_name = '';
       } else {
         this.selected_axis_name = attribute_name;
       }
+    } else if ((this.rubber_bands[selected_axis_index].length != 0) && !click_on_band && !click_on_border) {
+      this.rubber_bands[selected_axis_index] = [];
+    }
+      
       this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
       this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
   }
  
-  mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
+  mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
     var mouseX = e.offsetX;
     var mouseY = e.offsetY;
     var click_on_disp = Shape.Is_in_rect(mouseX, mouseY, this.disp_x, this.disp_y, this.disp_w, this.disp_h);
-    if (click_on_axis && mouse_moving) {
-      
-    } else if (click_on_axis && !mouse_moving) {
-      this.select_axis_action(selected_axis_index);
+    if (click_on_axis && !mouse_moving) {
+      this.select_axis_action(selected_axis_index, click_on_band, click_on_border);
     } else if (click_on_name && mouse_moving) {
       [mouse3X, mouse3Y, click_on_axis] = this.mouse_up_axis_interversion(mouse1X, mouse1Y, e);
     } else if (click_on_name && !mouse_moving) {
@@ -1268,7 +1300,7 @@ export abstract class PlotData {
 
     canvas.addEventListener('mouseup', e => {
       if (parallelplot) {
-        [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
+        [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
       } else {
         [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
       }
@@ -2018,9 +2050,9 @@ export class PlotDataAxis {
         
         if (this.grid_on === true) {
           context.strokeStyle = 'lightgrey';
-          Shape.drawLine(context, [scaleX*(1000*(grad_beg_x + i*x_step) + mvx), axis_y_start], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx), axis_y_end + 3]);
+          Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx), axis_y_start], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx), axis_y_end + 3]]);
         } else {
-          Shape.drawLine(context, [scaleX*(1000*(grad_beg_x + i*x_step) + mvx), axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx), axis_y_end + 3]);
+          Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx), axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx), axis_y_end + 3]]);
         }
         context.fillText(MyMath.round(grad_beg_x + i*x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*x_step) + mvx), axis_y_end + font_size );
       } 
@@ -2041,9 +2073,9 @@ export class PlotDataAxis {
       if ((scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) > axis_y_start) && (scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) < axis_y_end)) {
         if (this.grid_on === true) {
           context.strokeStyle = 'lightgrey';
-          Shape.drawLine(context,[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy)], [axis_x_end, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy)]);
+          Shape.drawLine(context,[[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy)], [axis_x_end, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy)]]);
         } else {
-          Shape.drawLine(context, [axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy)], [axis_x_start + 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy)]);
+          Shape.drawLine(context, [[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy)], [axis_x_start + 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy)]]);
         }   
         context.fillText(MyMath.round(grad_beg_y + i*y_step, y_nb_digits), axis_x_start - 5, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy));
       }
@@ -2064,16 +2096,16 @@ export class PlotDataAxis {
     var axis_y_end = height - decalage_axis_y;
     //Flèches
     if (this.arrow_on === true) {
-      Shape.drawLine(context, [axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]);
-      Shape.drawLine(context, [axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]);
+      Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
+      Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
       
-      Shape.drawLine(context, [axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]);
-      Shape.drawLine(context, [axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]);
+      Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
+      Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
     }
     
     //Axes
-    Shape.drawLine(context, [axis_x_start, axis_y_start], [axis_x_start, axis_y_end]);
-    Shape.drawLine(context, [axis_x_start, axis_y_end], [axis_x_end, axis_y_end]);
+    Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
+    Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
 
     context.stroke();
 
@@ -2467,16 +2499,23 @@ export class MyMath {
 }
 
 export class Shape {
-  public static drawLine(context, start, end) {
-    context.moveTo(start[0], start[1]);
-    context.lineTo(end[0], end[1]);
+  // public static drawLine(context, start, end) {
+  //   context.moveTo(start[0], start[1]);
+  //   context.lineTo(end[0], end[1]);
+  // }
+
+  public static drawLine(context, list) {
+    context.moveTo(list[0][0], list[0][1]);
+    for (var i=1; i<list.length; i++) {
+      context.lineTo(list[i][0], list[i][1]);
+    }
   }
 
   public static crux(context:any, cx:number, cy:number, length:number) {
-    this.drawLine(context, [cx, cy], [cx - length, cy]);
-    this.drawLine(context, [cx, cy], [cx + length, cy]);
-    this.drawLine(context, [cx, cy], [cx, cy - length]);
-    this.drawLine(context, [cx, cy], [cx, cy + length]);
+    this.drawLine(context, [[cx, cy], [cx - length, cy]]);
+    this.drawLine(context, [[cx, cy], [cx + length, cy]]);
+    this.drawLine(context, [[cx, cy], [cx, cy - length]]);
+    this.drawLine(context, [[cx, cy], [cx, cy + length]]);
   }
 
   public static roundRect(x, y, w, h, radius, context) {
@@ -2536,7 +2575,7 @@ export class Shape {
       var text_w = context.measureText(text).width;
       context.lineWidth = 1.5;
       context.strokeStyle = 'grey';
-      Shape.drawLine(context, [x+w + 5, y+h/1.8], [x+w+5+text_w, y+h/2]);
+      Shape.drawLine(context, [[x+w + 5, y+h/1.8], [x+w+5+text_w, y+h/2]]);
       context.stroke();
     }
     context.closePath();

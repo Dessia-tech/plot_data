@@ -50,7 +50,7 @@ attribute_list = [plot_data.Attribute(name='cx', type='float'),
                   plot_data.Attribute(name='color_fill', type='color'),
                   plot_data.Attribute(name='cy', type='float'),
                   plot_data.Attribute(name='color_stroke', type='color')]
-line_color = grey
+line_color = black
 line_width = 0.5
 disposition = 'vertical'
 plot_datas = []

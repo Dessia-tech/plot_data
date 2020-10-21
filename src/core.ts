@@ -809,9 +809,29 @@ export abstract class PlotData {
     }
   }
 
+  invert_rubber_bands(index_list) {
+    if (index_list == 'all') {
+      for (var i=0; i<this.rubber_bands.length; i++) {
+        if (this.rubber_bands[i].length != 0) {
+          [this.rubber_bands[i][0], this.rubber_bands[i][1]] = [1-this.rubber_bands[i][1], 1-this.rubber_bands[i][0]];
+        }
+      }
+    } else {
+      for (var i=0; i<index_list.length; i++) {
+        if (this.rubber_bands[index_list[i]].length != 0) {
+          [this.rubber_bands[index_list[i]][0], this.rubber_bands[index_list[i]][1]] = [1-this.rubber_bands[index_list[i]][1], 1-this.rubber_bands[index_list[i]][0]];
+        } else {
+          console.log('invert_rubber_bands() : asking to inverted empty array');
+        }
+      }
+    }
+    
+  }
+
   change_disposition_action() {
     this.vertical = !this.vertical;
     this.refresh_axis(this.value_list.length);
+    this.invert_rubber_bands('all');
     this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
   }
@@ -1216,6 +1236,9 @@ export abstract class PlotData {
 
   select_title_action(selected_name_index) {
     this.inverted_axis_list[selected_name_index] = !this.inverted_axis_list[selected_name_index];
+    if (this.rubber_bands[selected_name_index].length != 0) {
+      this.invert_rubber_bands([selected_name_index]);
+    }
     this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
   }

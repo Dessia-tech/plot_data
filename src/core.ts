@@ -876,9 +876,14 @@ export abstract class PlotData {
         this.rubber_bands[axis_index][1] = new_maxX;
       }
     }
+    if (this.rubber_bands[axis_index][0]>this.rubber_bands[axis_index][1]) {
+      [this.rubber_bands[axis_index][0],this.rubber_bands[axis_index][1]] = [this.rubber_bands[axis_index][1],this.rubber_bands[axis_index][0]];
+      border_number = 1 - border_number;
+      [this.rubber_last_min, this.rubber_last_max] = [this.rubber_last_max, this.rubber_last_min];
+    }
     this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
-    return [mouse2X, mouse2Y];
+    return [border_number, mouse2X, mouse2Y];
   }
 
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
@@ -1290,7 +1295,7 @@ export abstract class PlotData {
           } else if (click_on_band) {
             [mouse2X, mouse2Y] = this.rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e);
           } else if (click_on_border) {
-            [mouse2X, mouse2Y] = this.rubber_band_resize(mouse1X, mouse1Y, selected_border, e);
+            [selected_border[1], mouse2X, mouse2Y] = this.rubber_band_resize(mouse1X, mouse1Y, selected_border, e);
           }
         }
       } else {

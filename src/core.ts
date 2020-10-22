@@ -68,7 +68,7 @@ export abstract class PlotData {
   buttons_ON:boolean=true; //Pour activer/désactiver les boutons sur le canvas 
 
   attribute_list:any[]=[];
-  value_list:any[] = [];
+  axis_list:any[] = [];
   to_display_list:any[] = [];
   parallel_plot_lineColor:string;
   parallel_plot_linewidth:string;
@@ -331,7 +331,7 @@ export abstract class PlotData {
       }
       this.context.beginPath();
       Shape.drawLine(this.context, [[current_x, this.axis_y_start], [current_x, this.axis_y_end]]);
-      var attribute_name = this.value_list[i][0];
+      var attribute_name = this.axis_list[i]['name'];
       this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
       if (attribute_name == this.selected_axis_name) {
@@ -342,8 +342,8 @@ export abstract class PlotData {
       this.context.fillStyle = 'black';
       this.context.fillText(attribute_name, current_x, this.axis_y_end - 20);
       this.context.stroke();
-      var attribute_type = this.value_list[i][1];
-      var list = this.value_list[i][2];
+      var attribute_type = this.axis_list[i]['type'];
+      var list = this.axis_list[i]['list'];
       if (attribute_type == 'float') {
         var min = list[0];
         var max = list[1];
@@ -405,7 +405,7 @@ export abstract class PlotData {
       }
       this.context.beginPath();
       Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
-      var attribute_name = this.value_list[i][0];
+      var attribute_name = this.axis_list[i]['name'];
       this.context.font = '10px sans-serif';
       this.context.textAlign = 'center';
       if (attribute_name == this.selected_axis_name) {
@@ -416,8 +416,8 @@ export abstract class PlotData {
       this.context.fillStyle = 'black';
       this.context.fillText(attribute_name, this.axis_x_start, current_y + 15);
       this.context.stroke();
-      var attribute_type = this.value_list[i][1];
-      var list = this.value_list[i][2];
+      var attribute_type = this.axis_list[i]['type'];
+      var list = this.axis_list[i]['list'];
       if (attribute_type == 'float') {
         var min = list[0];
         var max = list[1];
@@ -538,8 +538,8 @@ export abstract class PlotData {
   draw_parallel_coord_lines(nb_axis:number) {
     for (var i=0; i<this.to_display_list.length; i++) {
       var to_display_list_i = this.to_display_list[i];
-      var current_attribute_type = this.value_list[0][1];
-      var current_list = this.value_list[0][2];
+      var current_attribute_type = this.axis_list[0]['type'];
+      var current_list = this.axis_list[0]['list'];
       var selected:boolean = true;
       var seg_list = [];
       if (this.vertical === true) {
@@ -552,8 +552,8 @@ export abstract class PlotData {
       selected = selected && this.is_inside_band(current_x, current_axis_y, 0);
       seg_list.push([current_x, current_axis_y]);
       for (var j=1; j<nb_axis; j++) { 
-        var next_attribute_type = this.value_list[j][1];
-        var next_list = this.value_list[j][2];
+        var next_attribute_type = this.axis_list[j]['type'];
+        var next_list = this.axis_list[j]['list'];
         if (this.vertical === true) {
           var next_x = this.axis_x_start + j*this.x_step;
           var next_axis_y = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]);
@@ -616,9 +616,9 @@ export abstract class PlotData {
     this.to_display_list = [];
     for (var i=0; i<elements.length; i++) {
       var to_display = [];
-      for (var j=0; j<this.value_list.length; j++) {
-        var attribute_name = this.value_list[j][0];
-        var type = this.value_list[j][1];
+      for (var j=0; j<this.axis_list.length; j++) {
+        var attribute_name = this.axis_list[j]['name'];
+        var type = this.axis_list[j]['type'];
         if (type == 'color') {
           var elt = rgb_to_string(elements[i][attribute_name]);
         } else {
@@ -630,7 +630,7 @@ export abstract class PlotData {
     }
   }
 
-  refresh_axis(nb_axis) {
+  refresh_axis_bounds(nb_axis) {
     if (this.vertical === true) {
       this.axis_x_start = 50;
       this.axis_x_end = this.width - 50;
@@ -646,45 +646,19 @@ export abstract class PlotData {
     }
   }
 
-  add_to_value_list(to_disp_attributes) {
-    for (var i=0; i<to_disp_attributes.length; i++) {
-      var attribute_name = to_disp_attributes[i]['name'];
-      var type = to_disp_attributes[i]['type'];
-      var value = [attribute_name, type];
-      if (type == 'float') {
-        var min = this.elements[0][attribute_name];
-        var max = this.elements[0][attribute_name];
-        for (var j=0; j<this.elements.length; j++) {
-          var elt = this.elements[j][attribute_name];
-          if (elt<min) {
-            min = elt;
-          }
-          if (elt>max) {
-            max = elt;
-          } 
+  add_to_axis_list(to_disp_attributes_names) {
+    for (let i=0; i<to_disp_attributes_names.length; i++) {
+      for (let j=0; j<this.attribute_list.length; j++) {
+        if (to_disp_attributes_names[i] == this.attribute_list[j]['name']) {
+          this.axis_list.push(this.attribute_list[j]);
         }
-        value.push([min, max]);
-      } else { //ie string
-        var list = [];
-        for (var j=0; j<this.elements.length; j++) {
-          if (type == 'color') {
-            var elt:any = rgb_to_string(this.elements[j][attribute_name]);
-          } else {
-            var elt = this.elements[j][attribute_name];
-          }
-          if (!this.is_include(elt, list)) {
-            list.push(elt);
-          }
-        }
-        value.push(list);
       }
-      this.value_list.push(value);
     }
   }
 
   add_axis_to_parallelplot(name:string) {
-    for (let i=0; i<this.value_list.length; i++) {
-      if (name == this.value_list[i][0]) {
+    for (let i=0; i<this.axis_list.length; i++) {
+      if (name == this.axis_list[i]['name']) {
         throw new Error('Cannot add an attribute that is already displayed');
       }
     }
@@ -693,18 +667,18 @@ export abstract class PlotData {
         var attribute_to_add = this.attribute_list[i];
       }
     }
-    this.add_to_value_list([attribute_to_add]);
+    this.add_to_axis_list([attribute_to_add]);
   }
 
   remove_axis_from_parallelplot(name:string) {
-    var is_in_valuelist = false;
-    for (let i=0; i<this.value_list.length; i++) {
-      if (this.value_list[i][0] == name) {
-        is_in_valuelist = true;
-        this.value_list = this.remove_selection(this.value_list[i], this.value_list);
+    var is_in_axislist = false;
+    for (let i=0; i<this.axis_list.length; i++) {
+      if (this.axis_list[i]['name'] == name) {
+        is_in_axislist = true;
+        this.axis_list = this.remove_selection(this.axis_list[i], this.axis_list);
       }
     }
-    if (is_in_valuelist === false) {
+    if (is_in_axislist === false) {
       throw new Error('Cannot remove axis that is not displayed');
     }
   }
@@ -905,7 +879,7 @@ export abstract class PlotData {
         if (this.rubber_bands[index_list[i]].length != 0) {
           [this.rubber_bands[index_list[i]][0], this.rubber_bands[index_list[i]][1]] = [1-this.rubber_bands[index_list[i]][1], 1-this.rubber_bands[index_list[i]][0]];
         } else {
-          console.log('invert_rubber_bands() : asking to inverted empty array');
+          throw new Error('invert_rubber_bands() : asking to inverted empty array');
         }
       }
     }
@@ -913,7 +887,7 @@ export abstract class PlotData {
 
   change_disposition_action() {
     this.vertical = !this.vertical;
-    this.refresh_axis(this.value_list.length);
+    this.refresh_axis_bounds(this.axis_list.length);
     this.invert_rubber_bands('all');
     this.draw(false, 0, 0, 0, this.scaleX, this.scaleY);
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY);
@@ -1218,7 +1192,7 @@ export abstract class PlotData {
     var click_on_name:any = false;
     var selected_name_index:any = -1;
     for (var i=0; i<nb_axis; i++) {
-      var attribute_name = this.value_list[i][0];
+      var attribute_name = this.axis_list[i]['name'];
       var text_w = this.context.measureText(attribute_name).width;
       var text_h = parseInt(this.context.font.split('px')[0], 10);
       if (this.vertical === true) {
@@ -1303,9 +1277,9 @@ export abstract class PlotData {
         var new_index = Math.ceil((mouse3Y - this.axis_y_start)/this.y_step);
       }
     }
-    var value = this.copy_list(this.value_list[this.move_index]);
-    this.value_list = this.remove_selection(this.value_list[this.move_index], this.value_list);
-    this.value_list.splice(new_index, 0, value);
+    var value:Attribute = this.axis_list[this.move_index].copy();
+    this.axis_list = this.remove_selection(this.axis_list[this.move_index], this.axis_list);
+    this.axis_list.splice(new_index, 0, value);
     var rubber_band = this.copy_list(this.rubber_bands[this.move_index]);
     this.rubber_bands = this.remove_selection(this.rubber_bands[this.move_index], this.rubber_bands);
     this.rubber_bands.splice(new_index, 0, rubber_band);
@@ -1330,7 +1304,7 @@ export abstract class PlotData {
 
   select_axis_action(selected_axis_index, click_on_band, click_on_border) {
     if (this.rubber_bands[selected_axis_index].length == 0) {
-      var attribute_name = this.value_list[selected_axis_index][0];
+      var attribute_name = this.axis_list[selected_axis_index]['name'];
       if (attribute_name == this.selected_axis_name) {
         this.selected_axis_name = '';
       } else {
@@ -1400,8 +1374,8 @@ export abstract class PlotData {
     canvas.addEventListener('mousedown', e => {
       [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
       if (parallelplot) {
-        [click_on_axis, selected_axis_index] = this.initialize_click_on_axis(this.value_list.length, mouse1X, mouse1Y, click_on_axis);
-        [click_on_name, selected_name_index] = this.initialize_click_on_name(this.value_list.length, mouse1X, mouse1Y);
+        [click_on_axis, selected_axis_index] = this.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis);
+        [click_on_name, selected_name_index] = this.initialize_click_on_name(this.axis_list.length, mouse1X, mouse1Y);
         [click_on_band, click_on_border, selected_band_index, selected_border] = this.initialize_click_on_bands(mouse1X, mouse1Y);
       }
     });
@@ -1805,22 +1779,50 @@ export class ParallelPlot extends PlotData {
     for (var i=0; i<serialized_attribute_list.length; i++){
       this.attribute_list.push(Attribute.deserialize(serialized_attribute_list[i]));
     }
-    var to_disp_attributes = [];
-    for (let i=0; i<to_disp_attribute_names.length; i++) {
-      for (let j=0; j<this.attribute_list.length; j++) {
-        if (to_disp_attribute_names[i] == this.attribute_list[j]['name']) {
-          to_disp_attributes.push(this.attribute_list[j]);
-        }
-      }
-    } 
-    this.add_to_value_list(to_disp_attributes);
+    this.initialize_attribute_list(this.elements); 
+    this.add_to_axis_list(to_disp_attribute_names);
     this.initialize_data_lists();
-    var nb_axis = this.value_list.length;
+    var nb_axis = this.axis_list.length;
     if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
-    this.refresh_axis(nb_axis);
+    this.refresh_axis_bounds(nb_axis);
     this.refresh_to_display_list(this.elements);
     this.define_canvas();
     this.mouse_interaction(true);
+  }
+
+  initialize_attribute_list(elements) {
+    for (var i=0; i<this.attribute_list.length; i++) {
+      var attribute_name = this.attribute_list[i]['name'];
+      var type = this.attribute_list[i]['type'];
+      var value = [attribute_name, type];
+      if (type == 'float') {
+        var min = this.elements[0][attribute_name];
+        var max = this.elements[0][attribute_name];
+        for (var j=0; j<this.elements.length; j++) {
+          var elt = this.elements[j][attribute_name];
+          if (elt<min) {
+            min = elt;
+          }
+          if (elt>max) {
+            max = elt;
+          } 
+        }
+        this.attribute_list[i]['list'] = [min, max];
+      } else { //ie string
+        var list = [];
+        for (var j=0; j<this.elements.length; j++) {
+          if (type == 'color') {
+            var elt:any = rgb_to_string(this.elements[j][attribute_name]);
+          } else {
+            var elt = this.elements[j][attribute_name];
+          }
+          if (!this.is_include(elt, list)) {
+            list.push(elt);
+          }
+        }
+        this.attribute_list[i]['list'] = list;
+      }
+    }
   }
 
   draw_initial() {
@@ -1837,7 +1839,7 @@ export class ParallelPlot extends PlotData {
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
     this.draw_empty_canvas(hidden);
     this.draw_rubber_bands(mvx);
-    var nb_axis = this.value_list.length;
+    var nb_axis = this.axis_list.length;
     this.draw_parallel_coord_lines(nb_axis);
     this.draw_parallel_axis(nb_axis, mvx);
     if (this.buttons_ON) {
@@ -1846,7 +1848,7 @@ export class ParallelPlot extends PlotData {
   }
 
   initialize_data_lists() {
-    for (let i=0; i<this.value_list.length; i++) {
+    for (let i=0; i<this.axis_list.length; i++) {
       this.inverted_axis_list.push(false);
       this.rubber_bands.push([]);
     }
@@ -2383,6 +2385,12 @@ export class Attribute {
   public static deserialize(serialized) {
     return new Attribute(serialized['name'],
                          serialized['type']);
+  }
+
+  copy() {
+    var attribute_copy = new Attribute(this.name, this.type);
+    attribute_copy['list'] = this.list;
+    return attribute_copy;
   }
 }
 

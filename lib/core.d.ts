@@ -69,7 +69,7 @@ export declare abstract class PlotData {
     refresh_point_list_bool: boolean;
     buttons_ON: boolean;
     attribute_list: any[];
-    value_list: any[];
+    axis_list: any[];
     to_display_list: any[];
     parallel_plot_lineColor: string;
     parallel_plot_linewidth: string;
@@ -113,8 +113,8 @@ export declare abstract class PlotData {
     draw_parallel_coord_lines(nb_axis: number): void;
     draw_rubber_bands(mvx: any): void;
     refresh_to_display_list(elements: any): void;
-    refresh_axis(nb_axis: any): void;
-    add_to_value_list(to_disp_attributes: any): void;
+    refresh_axis_bounds(nb_axis: any): void;
+    add_to_axis_list(to_disp_attributes_names: any): void;
     add_axis_to_parallelplot(name: string): void;
     remove_axis_from_parallelplot(name: string): void;
     zoom_button(x: any, y: any, w: any, h: any): void;
@@ -188,6 +188,7 @@ export declare class ParallelPlot extends PlotData {
     height: any;
     coeff_pixel: any;
     constructor(data: any, width: any, height: any, coeff_pixel: any);
+    initialize_attribute_list(elements: any): void;
     draw_initial(): void;
     draw(hidden: any, show_state: any, mvx: any, mvy: any, scaleX: any, scaleY: any): void;
     initialize_data_lists(): void;
@@ -330,8 +331,10 @@ export declare class PlotDataArc2D {
 export declare class Attribute {
     name: string;
     type: string;
+    list: any[];
     constructor(name: string, type: string);
     static deserialize(serialized: any): Attribute;
+    copy(): Attribute;
 }
 export declare class PlotDataState {
     color_surface: ColorSurfaceSet;

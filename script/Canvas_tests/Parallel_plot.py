@@ -56,8 +56,8 @@ disposition = 'vertical'
 plot_datas = []
 elements = []
 
-color_fills = [violet, blue, green, red, yellow]
-color_strokes = [black, brown, green, red]
+color_fills = [violet, blue, green, red, yellow, cyan, rose]
+color_strokes = [black, brown, green, red, orange, lightblue, grey]
 for i in range(50):
     cx = random.uniform(0,2)
     cy = random.uniform(0,1)

@@ -68,6 +68,7 @@ export declare abstract class PlotData {
     scatter_point_list: PlotDataPoint2D[];
     refresh_point_list_bool: boolean;
     buttons_ON: boolean;
+    attribute_list: any[];
     value_list: any[];
     to_display_list: any[];
     parallel_plot_lineColor: string;
@@ -113,6 +114,9 @@ export declare abstract class PlotData {
     draw_rubber_bands(mvx: any): void;
     refresh_to_display_list(elements: any): void;
     refresh_axis(nb_axis: any): void;
+    add_to_value_list(to_disp_attributes: any): void;
+    add_axis_to_parallelplot(name: string): void;
+    remove_axis_from_parallelplot(name: string): void;
     zoom_button(x: any, y: any, w: any, h: any): void;
     zoom_window_button(x: any, y: any, w: any, h: any): void;
     reset_button(x: any, y: any, w: any, h: any): void;
@@ -179,10 +183,14 @@ export declare class PlotScatter extends PlotData {
     draw(hidden: any, show_state: any, mvx: any, mvy: any, scaleX: any, scaleY: any): void;
 }
 export declare class ParallelPlot extends PlotData {
+    data: any;
+    width: any;
+    height: any;
+    coeff_pixel: any;
     constructor(data: any, width: any, height: any, coeff_pixel: any);
     draw_initial(): void;
     draw(hidden: any, show_state: any, mvx: any, mvy: any, scaleX: any, scaleY: any): void;
-    initialize_data_lists(attribute_list: any): void;
+    initialize_data_lists(): void;
 }
 export declare class PlotDataContour2D {
     plot_data_primitives: any;
@@ -403,5 +411,7 @@ export declare function genColor(): string;
 export declare function componentToHex(c: any): any;
 export declare function rgb_to_hex(rgb: string): string;
 export declare function hex_to_string(hexa: string): string;
-export declare function rgb_to_string(rgb: string): string;
 export declare function string_to_hex(str: string): string;
+export declare function rgb_to_string(rgb: string): string;
+export declare function rgb_interpolation([r1, g1, b1]: [any, any, any], [r2, g2, b2]: [any, any, any], n: number): any[];
+export declare function rgb_interpolations(rgbs: any, nb_pts: number): any[];

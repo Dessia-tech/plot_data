@@ -47,9 +47,12 @@ stroke_width = 1  # Points' stroke width
 
 # ParallelPlot
 attribute_list = [plot_data.Attribute(name='cx', type='float'),
-                  plot_data.Attribute(name='color_fill', type='color'),
                   plot_data.Attribute(name='cy', type='float'),
-                  plot_data.Attribute(name='color_stroke', type='color')]
+                  plot_data.Attribute(name='size', type='float'),
+                  plot_data.Attribute(name='color_fill', type='color'),
+                  plot_data.Attribute(name='color_stroke', type='color'),
+                  plot_data.Attribute(name='stroke_width', type='float')]
+to_disp_attributes = ['cx', 'cy', 'color_fill', 'color_stroke']
 line_color = black
 line_width = 0.5
 disposition = 'vertical'
@@ -67,7 +70,7 @@ for i in range(50):
     elements += [point]
 
 
-parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition)
+parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
 
 sol = [parallel_plot.to_dict()]
 os.remove("data.json")

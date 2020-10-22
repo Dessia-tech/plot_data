@@ -67,6 +67,7 @@ export abstract class PlotData {
 
   buttons_ON:boolean=true; //Pour activer/désactiver les boutons sur le canvas 
 
+  attribute_list:any[]=[];
   value_list:any[] = [];
   to_display_list:any[] = [];
   parallel_plot_lineColor:string;
@@ -346,19 +347,28 @@ export abstract class PlotData {
       if (attribute_type == 'float') {
         var min = list[0];
         var max = list[1];
-        var grad_step = (max - min)/9;
-        var y_step = (this.axis_y_end - this.axis_y_start)/9;
-        for (var j=0; j<10; j++) {
-          var current_y = this.axis_y_start + j*y_step;
-          if (this.inverted_axis_list[i] === true) {
-            var current_grad:any = MyMath.round(max - j*grad_step, 3);
-          } else {
-            current_grad = MyMath.round(min + j*grad_step, 3);
-          }
+        if (min == max) {
+          let current_y = (this.axis_y_start + this.axis_y_end)/2;
           Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
+          let current_grad = MyMath.round(min,3);
           this.context.textAlign = 'end';
           this.context.textBaseline = 'middle';
           this.context.fillText(current_grad, current_x - 5, current_y);
+        } else {
+          var grad_step = (max - min)/9;
+          var y_step = (this.axis_y_end - this.axis_y_start)/9;
+          for (var j=0; j<10; j++) {
+            var current_y = this.axis_y_start + j*y_step;
+            if (this.inverted_axis_list[i] === true) {
+              var current_grad:any = MyMath.round(max - j*grad_step, 3);
+            } else {
+              current_grad = MyMath.round(min + j*grad_step, 3);
+            }
+            Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
+            this.context.textAlign = 'end';
+            this.context.textBaseline = 'middle';
+            this.context.fillText(current_grad, current_x - 5, current_y);
+          }
         }
       } else { //ie string
         var nb_attribute = list.length;
@@ -411,19 +421,27 @@ export abstract class PlotData {
       if (attribute_type == 'float') {
         var min = list[0];
         var max = list[1];
-        var grad_step = (max - min)/9;
-        var x_step = (this.axis_x_end - this.axis_x_start)/9;
-        for (var j=0; j<10; j++) {
-          var current_x = this.axis_x_start + j*x_step;
-          if (this.inverted_axis_list[i] === true) {
-            var current_grad:any = MyMath.round(max - j*grad_step, 3);
-          } else {
-            current_grad = MyMath.round(min + j*grad_step, 3);
-          }
+        if (max == min) {
+          let current_x = (this.axis_x_start + this.axis_x_end)/2;
           Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
-          this.context.textAlign = 'center';
+          let current_grad = min;
           this.context.fillText(current_grad, current_x, current_y - 5);
+        } else {
+          var grad_step = (max - min)/9;
+          var x_step = (this.axis_x_end - this.axis_x_start)/9;
+          for (var j=0; j<10; j++) {
+            var current_x = this.axis_x_start + j*x_step;
+            if (this.inverted_axis_list[i] === true) {
+              var current_grad:any = MyMath.round(max - j*grad_step, 3);
+            } else {
+              current_grad = MyMath.round(min + j*grad_step, 3);
+            }
+            Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
+            this.context.textAlign = 'center';
+            this.context.fillText(current_grad, current_x, current_y - 5);
+          }
         }
+        
       } else {
         var nb_attribute = list.length;
         if (nb_attribute == 1) {
@@ -471,12 +489,16 @@ export abstract class PlotData {
     if (attribute_type == 'float') {
       var min = current_list[0];
       var max = current_list[1];
-      var delta_y = elt - min;
-      var delta_axis_coord = (axis_coord_end - axis_coord_start) * delta_y/(max - min);
-      if (inverted === true) {
-        var current_axis_coord = axis_coord_end - delta_axis_coord;
+      if (min == max) {
+        var current_axis_coord = (axis_coord_start + axis_coord_end)/2;
       } else {
-        current_axis_coord = axis_coord_start + delta_axis_coord; 
+        var delta_y = elt - min;
+        var delta_axis_coord = (axis_coord_end - axis_coord_start) * delta_y/(max - min);
+        if (inverted === true) {
+          var current_axis_coord = axis_coord_end - delta_axis_coord;
+        } else {
+          current_axis_coord = axis_coord_start + delta_axis_coord; 
+        }
       }
     } else {
       var color = elt;
@@ -525,7 +547,7 @@ export abstract class PlotData {
         var current_axis_y = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[0], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[0]);
       } else {
         var current_x = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[0], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[0]);
-        var current_axis_y = this.axis_y_start
+        var current_axis_y = this.axis_y_start;
       }
       selected = selected && this.is_inside_band(current_x, current_axis_y, 0);
       seg_list.push([current_x, current_axis_y]);
@@ -621,6 +643,69 @@ export abstract class PlotData {
       this.axis_y_start = 25;
       this.axis_y_end = this.height - 25;
       this.y_step = (this.axis_y_end - this.axis_y_start)/(nb_axis - 1);
+    }
+  }
+
+  add_to_value_list(to_disp_attributes) {
+    for (var i=0; i<to_disp_attributes.length; i++) {
+      var attribute_name = to_disp_attributes[i]['name'];
+      var type = to_disp_attributes[i]['type'];
+      var value = [attribute_name, type];
+      if (type == 'float') {
+        var min = this.elements[0][attribute_name];
+        var max = this.elements[0][attribute_name];
+        for (var j=0; j<this.elements.length; j++) {
+          var elt = this.elements[j][attribute_name];
+          if (elt<min) {
+            min = elt;
+          }
+          if (elt>max) {
+            max = elt;
+          } 
+        }
+        value.push([min, max]);
+      } else { //ie string
+        var list = [];
+        for (var j=0; j<this.elements.length; j++) {
+          if (type == 'color') {
+            var elt:any = rgb_to_string(this.elements[j][attribute_name]);
+          } else {
+            var elt = this.elements[j][attribute_name];
+          }
+          if (!this.is_include(elt, list)) {
+            list.push(elt);
+          }
+        }
+        value.push(list);
+      }
+      this.value_list.push(value);
+    }
+  }
+
+  add_axis_to_parallelplot(name:string) {
+    for (let i=0; i<this.value_list.length; i++) {
+      if (name == this.value_list[i][0]) {
+        throw new Error('Cannot add an attribute that is already displayed');
+      }
+    }
+    for (let i=0; i<this.attribute_list.length; i++) {
+      if (this.attribute_list[i]['name'] == name) {
+        var attribute_to_add = this.attribute_list[i];
+      }
+    }
+    this.add_to_value_list([attribute_to_add]);
+  }
+
+  remove_axis_from_parallelplot(name:string) {
+    var is_in_valuelist = false;
+    for (let i=0; i<this.value_list.length; i++) {
+      if (this.value_list[i][0] == name) {
+        is_in_valuelist = true;
+        this.value_list = this.remove_selection(this.value_list[i], this.value_list);
+      }
+    }
+    if (is_in_valuelist === false) {
+      throw new Error('Cannot remove axis that is not displayed');
     }
   }
 
@@ -1114,10 +1199,10 @@ export abstract class PlotData {
     for (var i=0; i<nb_axis; i++) {
       if (this.vertical === true) {
         var current_x = this.axis_x_start + i*this.x_step;
-        var bool = Shape.Is_in_rect(mouse1X, mouse1Y, current_x - 15, this.axis_y_end, 30, this.axis_y_start - this.axis_y_end);
+        var bool = Shape.Is_in_rect(mouse1X, mouse1Y, current_x - 5, this.axis_y_end, 10, this.axis_y_start - this.axis_y_end);
       } else {
         var current_y = this.axis_y_start + i*this.y_step;
-        var bool = Shape.Is_in_rect(mouse1X, mouse1Y, this.axis_x_start, current_y - 10, this.axis_x_end - this.axis_x_start, 20);
+        var bool = Shape.Is_in_rect(mouse1X, mouse1Y, this.axis_x_start, current_y - 5, this.axis_x_end - this.axis_x_start, 10);
       }
       click_on_axis = click_on_axis || bool;
       if (bool) {
@@ -1696,7 +1781,7 @@ export class PlotScatter extends PlotData {
 
 
 export class ParallelPlot extends PlotData {
-  constructor(data, width, height, coeff_pixel) {
+  constructor(public data, public width, public height, public coeff_pixel) {
     super(data, width, height, coeff_pixel);
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
@@ -1708,6 +1793,7 @@ export class ParallelPlot extends PlotData {
     this.parallel_plot_lineColor = data_show['line_color'];
     this.parallel_plot_linewidth = data_show['line_width'];
     this.elements = data_show['elements'];
+    var to_disp_attribute_names = data_show['to_disp_attributes'];
     if (data_show['disposition'] == 'vertical') {
       this.vertical = true;
     } else if (data_show['disposition'] == 'horizontal') {
@@ -1716,11 +1802,19 @@ export class ParallelPlot extends PlotData {
       throw new Error('Axis disposition must be vertical or horizontal');
     }
     var serialized_attribute_list = data_show['attribute_list'];
-    var attribute_list:any[] = [];
     for (var i=0; i<serialized_attribute_list.length; i++){
-      attribute_list.push(Attribute.deserialize(serialized_attribute_list[i]));
+      this.attribute_list.push(Attribute.deserialize(serialized_attribute_list[i]));
     }
-    this.initialize_data_lists(attribute_list)
+    var to_disp_attributes = [];
+    for (let i=0; i<to_disp_attribute_names.length; i++) {
+      for (let j=0; j<this.attribute_list.length; j++) {
+        if (to_disp_attribute_names[i] == this.attribute_list[j]['name']) {
+          to_disp_attributes.push(this.attribute_list[j]);
+        }
+      }
+    } 
+    this.add_to_value_list(to_disp_attributes);
+    this.initialize_data_lists();
     var nb_axis = this.value_list.length;
     if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
     this.refresh_axis(nb_axis);
@@ -1751,41 +1845,10 @@ export class ParallelPlot extends PlotData {
     }
   }
 
-  initialize_data_lists(attribute_list) {
-    for (var i=0; i<attribute_list.length; i++) {
+  initialize_data_lists() {
+    for (let i=0; i<this.value_list.length; i++) {
       this.inverted_axis_list.push(false);
       this.rubber_bands.push([]);
-      var attribute_name = attribute_list[i]['name'];
-      var type = attribute_list[i]['type'];
-      var value = [attribute_name, type];
-      if (type == 'float') {
-        var min = this.elements[0][attribute_name];
-        var max = this.elements[0][attribute_name];
-        for (var j=0; j<this.elements.length; j++) {
-          var elt = this.elements[j][attribute_name];
-          if (elt<min) {
-            min = elt;
-          }
-          if (elt>max) {
-            max = elt;
-          } 
-        }
-        value.push([min, max]);
-      } else { //ie string
-        var list = [];
-        for (var j=0; j<this.elements.length; j++) {
-          if (type == 'color') {
-            var elt:any = rgb_to_string(this.elements[j][attribute_name]);
-          } else {
-            var elt = this.elements[j][attribute_name];
-          }
-          if (!this.is_include(elt, list)) {
-            list.push(elt);
-          }
-        }
-        value.push(list);
-      }
-      this.value_list.push(value);
     }
   }
 }
@@ -2313,6 +2376,7 @@ export class PlotDataArc2D {
 }
 
 export class Attribute {
+  list:any[];
   constructor(public name:string,
               public type:string) {}
   
@@ -2717,6 +2781,20 @@ export function rgb_interpolation([r1, g1, b1], [r2, g2, b2], n:number) {
     var g = Math.floor(g1*(1-k/n) + g2*k/n);
     var b = Math.floor(b1*(1-k/n) + b2*k/n);
     color_list.push([r,g,b]);
+  }
+  return color_list;
+}
+
+export function rgb_interpolations(rgbs, nb_pts:number) {
+  var nb_seg = rgbs.length - 1;
+  var arr = [];
+  var color_list = [];
+  for (var i=0; i<nb_seg; i++) {arr.push(0);}
+  for (var i=0; i<nb_pts; i++) {
+    arr[i%nb_seg]++;
+  }
+  for (var i=0; i<nb_seg; i++) {
+    color_list.push(rgb_interpolation(rgbs[i], rgbs[i+1], arr[i]));
   }
   return color_list;
 }

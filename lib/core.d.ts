@@ -91,6 +91,7 @@ export declare abstract class PlotData {
     rubber_bands: any[];
     rubber_last_min: number;
     rubber_last_max: number;
+    points_axis_coord: any[];
     constructor(data: any, width: number, height: number, coeff_pixel: number);
     abstract draw(hidden: any, show_state: any, mvx: any, mvy: any, scaleX: any, scaleY: any): any;
     define_canvas(): void;
@@ -164,6 +165,8 @@ export declare abstract class PlotData {
     refresh_point_list(point_list: any, mvx: any, mvy: any): any[];
     delete_clicked_points(point_list: any): void;
     delete_tooltip(point_list: any): void;
+    is_intersecting(seg1: [[number, number], [number, number]], seg2: [[number, number], [number, number]]): boolean;
+    counting_intersections(segments: any): number;
 }
 export declare class PlotContour extends PlotData {
     data: any;
@@ -409,6 +412,8 @@ export declare class Shape {
     static rect(x: any, y: any, w: any, h: any, context: any, colorfill: any, colorstroke: any, linewidth: any, opacity: any): void;
 }
 export declare function drawLines(ctx: any, pts: any): void;
+export declare function remove_at_index(i: number, list: any[]): any[];
+export declare function move_elements(old_index: any, new_index: any, list: any): any;
 export declare function getCurvePoints(pts: any, tension: any, isClosed: any, numOfSegments: any): any[];
 export declare function genColor(): string;
 export declare function componentToHex(c: any): any;

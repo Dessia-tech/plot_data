@@ -90,6 +90,7 @@ export abstract class PlotData {
   rubber_bands:any[]=[];
   rubber_last_min:number=0;
   rubber_last_max:number=0;
+  points_axis_coord:any[]=[];
 
 
   public constructor(public data:any, 
@@ -322,6 +323,7 @@ export abstract class PlotData {
       }
     } 
   }
+  
   draw_vertical_parallel_axis(nb_axis:number, mvx:number) {
     for (var i=0; i<nb_axis; i++) {
       if (i == this.move_index) {
@@ -965,6 +967,17 @@ export abstract class PlotData {
     return [border_number, mouse2X, mouse2Y, is_resizing];
   }
 
+  // initialize_points_axis_coord() {
+  //   for (let i=0; i<this.to_display_list.length; i++) {
+  //     var 
+  //     for (let j=0; j<this.axis_list.length; j++) {
+  //       if (this.vertical) {
+  //         this.get_coord_on_parallel_plot(this.axis_list[j]['type'], this.axis_list[j]['list'], this.to_display_list[i][j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]);
+  //       }
+  //     }
+  //   }
+  // }
+
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
     mouse1X = e.offsetX;
     mouse1Y = e.offsetY;
@@ -1261,6 +1274,8 @@ export abstract class PlotData {
     return [click_on_band, click_on_border, selected_band_index, selected_border];
   }
 
+
+
   mouse_up_axis_interversion(mouse1X, mouse1Y, e) {
     if (this.vertical === true) {
       var mouse3X = e.offsetX;
@@ -1277,12 +1292,15 @@ export abstract class PlotData {
         var new_index = Math.ceil((mouse3Y - this.axis_y_start)/this.y_step);
       }
     }
-    var value:Attribute = this.axis_list[this.move_index].copy();
-    this.axis_list = this.remove_selection(this.axis_list[this.move_index], this.axis_list);
-    this.axis_list.splice(new_index, 0, value);
-    var rubber_band = this.copy_list(this.rubber_bands[this.move_index]);
-    this.rubber_bands = this.remove_selection(this.rubber_bands[this.move_index], this.rubber_bands);
-    this.rubber_bands.splice(new_index, 0, rubber_band);
+    // var value:Attribute = this.axis_list[this.move_index].copy();
+    // this.axis_list = this.remove_selection(this.axis_list[this.move_index], this.axis_list);
+    // this.axis_list.splice(new_index, 0, value);
+    // var rubber_band = this.copy_list(this.rubber_bands[this.move_index]);
+    // this.rubber_bands = this.remove_selection(this.rubber_bands[this.move_index], this.rubber_bands);
+    // this.rubber_bands.splice(new_index, 0, rubber_band);
+    this.axis_list = move_elements(this.move_index, new_index, this.axis_list);
+    this.rubber_bands = move_elements(this.move_index, new_index, this.rubber_bands);
+    this.inverted_axis_list = move_elements(this.move_index, new_index, this.inverted_axis_list);
     this.move_index = -1;
     var click_on_axis = false;
     var mvx = 0;
@@ -1607,7 +1625,35 @@ export abstract class PlotData {
     }
   }
 
+  is_intersecting(seg1:[[number, number], [number, number]], seg2:[[number, number], [number, number]]) { //ne marche que dans le cas du parallel plot
+    var p0 = seg1[0];
+    var p1 = seg1[1];
+    var q0 = seg2[0];
+    var q1 = seg2[1];
+    if (this.vertical===true && ((p0[1]<q0[1] && p1[1]>q1[1]) || (p0[1]>q0[1] && p1[1]<q1[1]))) {
+      return true;
+    } else if (this.vertical===false && ((p0[0]<q0[0] && p1[0]>q1[0]) || (p0[0]>q0[0] && p1[0]<q1[0]))) {
+      return true;
+    }
+    return false;
+  }
+
+  counting_intersections(segments) {
+    if (segments.length<2) {
+      return 0;
+    }
+    var nb = 0;
+    for (let i=1; i<segments.length; i++) {
+      for (let j=0; j<i; j++) {
+        if (this.is_intersecting(segments[i], segments[j])) {
+          nb++;
+        }
+      }
+    }
+    return nb;
+  }
 }
+
 
 export class PlotContour extends PlotData {
   plot_datas:any;
@@ -2549,15 +2595,11 @@ export class MyMath {
     return Math.round(x*Math.pow(10,n)) / Math.pow(10,n);
   }
   public static log10(x) {
-    return Math.log(x)/Math.log(10)
+    return Math.log(x)/Math.log(10);
   }
 }
 
 export class Shape {
-  // public static drawLine(context, start, end) {
-  //   context.moveTo(start[0], start[1]);
-  //   context.lineTo(end[0], end[1]);
-  // }
 
   public static drawLine(context, list) {
     context.moveTo(list[0][0], list[0][1]);
@@ -2653,6 +2695,22 @@ export class Shape {
 export function drawLines(ctx, pts) {
   // ctx.moveTo(pts[0], pts[1]);
   for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
+}
+
+export function remove_at_index(i:number, list:any[]) {
+  return list.slice(0, i).concat(list.slice(i + 1, list.length));
+}
+
+export function move_elements(old_index, new_index, list) {
+  var elt = list[old_index];
+  if (old_index<new_index) {
+    list.splice(new_index+1, 0, elt);
+    list = remove_at_index(old_index, list);
+  } else {
+    list.splice(new_index, 0, elt);
+    list = remove_at_index(old_index + 1, list);
+  }
+  return list;
 }
 
 export function getCurvePoints(pts, tension, isClosed, numOfSegments) {

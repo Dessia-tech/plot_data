@@ -9,7 +9,7 @@ steps:
   commands:
   - git fetch --tags 
   - version=`git describe --tags`
-  - npm --no-git-tag-version version $${version#?}
+  - npm --no-git-tag-version version $${version}
   - npm install
   - npm run-script build
 

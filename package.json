@@ -1,6 +1,6 @@
 {
   "name": "plot-data",
-  "version": "0.1.7",
+  "version": "0.1.10-24-g9721279",
   "description": "",
   "main": "lib/core.js",
   "prepublish": "tsc",

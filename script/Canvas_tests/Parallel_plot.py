@@ -47,17 +47,20 @@ stroke_width = 1  # Points' stroke width
 
 # ParallelPlot
 attribute_list = [plot_data.Attribute(name='cx', type='float'),
-                  plot_data.Attribute(name='color_fill', type='color'),
                   plot_data.Attribute(name='cy', type='float'),
-                  plot_data.Attribute(name='color_stroke', type='color')]
-line_color = grey
+                  plot_data.Attribute(name='size', type='float'),
+                  plot_data.Attribute(name='color_fill', type='color'),
+                  plot_data.Attribute(name='color_stroke', type='color'),
+                  plot_data.Attribute(name='stroke_width', type='float')]
+to_disp_attributes = ['cx', 'cy', 'color_fill', 'color_stroke']
+line_color = black
 line_width = 0.5
 disposition = 'vertical'
 plot_datas = []
 elements = []
 
-color_fills = [violet, blue, green, red, yellow]
-color_strokes = [black, brown, green, red]
+color_fills = [violet, blue, green, red, yellow, cyan, rose]
+color_strokes = [black, brown, green, red, orange, lightblue, grey]
 for i in range(50):
     cx = random.uniform(0,2)
     cy = random.uniform(0,1)
@@ -66,17 +69,8 @@ for i in range(50):
     point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=random_color_stroke, stroke_width=stroke_width)
     elements += [point]
 
-cx = random.uniform(0,2)
-cy = random.uniform(0,1)
-point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=red, color_stroke=brown, stroke_width=stroke_width)
-elements += [point]
-cx = random.uniform(0,2)
-cy = random.uniform(0,1)
-point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=blue, color_stroke=green, stroke_width=stroke_width)
-elements += [point]
 
-
-parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition)
+parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
 
 sol = [parallel_plot.to_dict()]
 os.remove("data.json")

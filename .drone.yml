@@ -10,7 +10,7 @@ steps:
   - git fetch --tags 
   - npm install
   - version=`git describe --tags`
-  - npm --no-git-tag-version version $${version#?}
+  - npm --no-git-tag-version -f version $${version#?}
   - npm run-script build
 
 - name: upload npm

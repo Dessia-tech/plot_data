@@ -35,7 +35,7 @@ steps:
   commands:
   - npm install
   - version=`git describe --tags`
-  - npm version --no-git-tag-version -f $${version#?}
+  - npm --no-git-tag-version version $${version#?}
   - npm run-script build
 
 - name: upload npm

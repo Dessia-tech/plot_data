@@ -8,9 +8,9 @@ steps:
   image: node
   commands:
   - git fetch --tags 
-  - npm install
   - version=`git describe --tags`
   - npm --no-git-tag-version -f version $${version#?}
+  - npm install
   - npm run-script build
 
 - name: upload npm

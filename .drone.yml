@@ -7,9 +7,10 @@ steps:
 - name: npm update tag from git, build
   image: node
   commands:
-  - git fetch --tags 
+  - git fetch --tags
+  - npm config set git-tag-version=false 
   - version=`git describe --tags`
-  - npm --no-git-tag-version version $${version}
+  - npm version $${version}
   - npm install
   - npm run-script build
 

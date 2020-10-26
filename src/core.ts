@@ -969,12 +969,13 @@ export abstract class PlotData {
 
   // initialize_points_axis_coord() {
   //   for (let i=0; i<this.to_display_list.length; i++) {
-  //     var 
+  //     var points_axis_coord_i = [];
   //     for (let j=0; j<this.axis_list.length; j++) {
   //       if (this.vertical) {
-  //         this.get_coord_on_parallel_plot(this.axis_list[j]['type'], this.axis_list[j]['list'], this.to_display_list[i][j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]);
+  //         points_axis_coord_i.push(this.get_coord_on_parallel_plot(this.axis_list[j]['type'], this.axis_list[j]['list'], this.to_display_list[i][j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]));
   //       }
   //     }
+  //     this.points_axis_coord.push(points_axis_coord_i);
   //   }
   // }
 

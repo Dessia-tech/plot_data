@@ -65,8 +65,6 @@ export abstract class PlotData {
   scatter_point_list:PlotDataPoint2D[]=[];
   refresh_point_list_bool:boolean=true;
 
-  buttons_ON:boolean=true; //Pour activer/désactiver les boutons sur le canvas 
-
   attribute_list:any[]=[];
   axis_list:any[] = [];
   to_display_list:any[] = [];
@@ -90,13 +88,13 @@ export abstract class PlotData {
   rubber_bands:any[]=[];
   rubber_last_min:number=0;
   rubber_last_max:number=0;
-  points_axis_coord:any[]=[];
 
 
   public constructor(public data:any, 
     public width: number,
     public height: number,
-    public coeff_pixel: number) {}
+    public coeff_pixel: number,
+    public buttons_ON: boolean) {}
 
   
   abstract draw(hidden, show_state, mvx, mvy, scaleX, scaleY);
@@ -341,8 +339,9 @@ export abstract class PlotData {
       } else {
         this.context.strokeStyle = 'lightgrey';
       }
+      var attribute_alias = this.axis_list[i]['alias'];
       this.context.fillStyle = 'black';
-      this.context.fillText(attribute_name, current_x, this.axis_y_end - 20);
+      this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20);
       this.context.stroke();
       var attribute_type = this.axis_list[i]['type'];
       var list = this.axis_list[i]['list'];
@@ -416,7 +415,8 @@ export abstract class PlotData {
         this.context.strokeStyle = 'black';
       }
       this.context.fillStyle = 'black';
-      this.context.fillText(attribute_name, this.axis_x_start, current_y + 15);
+      var attribute_alias = this.axis_list[i]['alias'];
+      this.context.fillText(attribute_alias, this.axis_x_start, current_y + 15);
       this.context.stroke();
       var attribute_type = this.axis_list[i]['type'];
       var list = this.axis_list[i]['list'];
@@ -658,37 +658,38 @@ export abstract class PlotData {
     }
   }
 
-  add_axis_to_parallelplot(name:string) {
+  add_axis_to_parallelplot(name:string) { //Ajoute un axe au parallel plot et redessine le canvas
     for (let i=0; i<this.axis_list.length; i++) {
       if (name == this.axis_list[i]['name']) {
         throw new Error('Cannot add an attribute that is already displayed');
       }
     }
-    for (let i=0; i<this.attribute_list.length; i++) {
-      if (this.attribute_list[i]['name'] == name) {
-        var attribute_to_add = this.attribute_list[i];
-      }
-    }
-    this.add_to_axis_list([attribute_to_add]);
+    this.add_to_axis_list([name]);
+    this.refresh_axis_bounds(this.axis_list.length);
+    this.rubber_bands.push([]);
+    this.refresh_to_display_list(this.elements);
+    this.draw(false, 0, 0 ,0 ,0 ,0);
   }
 
-  remove_axis_from_parallelplot(name:string) {
+  remove_axis_from_parallelplot(name:string) { //Supprime un axe existant au parallel plot et redessine le canvas
     var is_in_axislist = false;
-    for (let i=0; i<this.axis_list.length; i++) {
+    for (var i=0; i<this.axis_list.length; i++) {
       if (this.axis_list[i]['name'] == name) {
         is_in_axislist = true;
         this.axis_list = this.remove_selection(this.axis_list[i], this.axis_list);
+        break;
       }
     }
     if (is_in_axislist === false) {
       throw new Error('Cannot remove axis that is not displayed');
     }
+    this.refresh_to_display_list(this.elements);
+    this.rubber_bands = remove_at_index(i, this.rubber_bands);
+    this.refresh_axis_bounds(this.axis_list.length);
+    this.draw(false, 0, 0 ,0 ,0 ,0);
   }
 
   zoom_button(x, y, w, h) {
-    if ((x<0) || (x+h>this.width) || (y<0) || (y+2*h>this.height)) {
-      throw new Error("Invalid x or y, the zoom button is out of the canvas");
-    }
     this.context.strokeStyle = 'black';
     this.context.beginPath();
     this.context.lineWidth = "2";
@@ -706,9 +707,6 @@ export abstract class PlotData {
   }
 
   zoom_window_button(x, y, w, h) {
-    if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
-      throw new Error("Invalid x or y, the zoom window button is out of the canvas");
-    }
     this.context.strokeStyle = 'black';
     if (this.zw_bool) {
       Shape.createButton(x, y, w, h, this.context, "Z ON", "12px Arial");
@@ -719,17 +717,11 @@ export abstract class PlotData {
   }
 
   reset_button(x, y, w, h) {
-    if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
-      throw new Error("Invalid x or y, the reset button is out of the canvas");
-    }
     this.context.strokeStyle = 'black';
     Shape.createButton(x, y, w, h, this.context, "Reset", "12px Arial");
   }
 
   selection_button(x, y, w, h) {
-    if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
-      throw new Error("Invalid x or y, the selection button is out of the canvas");
-    }
     this.context.strokeStyle = 'black';
     if (this.select_bool) {
       Shape.createButton(x, y, w, h, this.context, "S ON", "12px Arial")
@@ -967,17 +959,91 @@ export abstract class PlotData {
     return [border_number, mouse2X, mouse2Y, is_resizing];
   }
 
-  // initialize_points_axis_coord() {
-  //   for (let i=0; i<this.to_display_list.length; i++) {
-  //     var points_axis_coord_i = [];
-  //     for (let j=0; j<this.axis_list.length; j++) {
-  //       if (this.vertical) {
-  //         points_axis_coord_i.push(this.get_coord_on_parallel_plot(this.axis_list[j]['type'], this.axis_list[j]['list'], this.to_display_list[i][j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]));
-  //       }
-  //     }
-  //     this.points_axis_coord.push(points_axis_coord_i);
-  //   }
-  // }
+  get_nb_intersections(attrNum1, attrNum2) { //axis1 et axis2 sont les coordonnées des points sur un axe donné ie égaux à point_axis_coord[:,j fixé]
+    var compareList = [];
+    var firstElts = []
+    for (let i=0; i<this.to_display_list.length; i++) {
+      let elt1 = this.get_coord_on_parallel_plot(this.axis_list[attrNum1]['type'], this.axis_list[attrNum1]['list'], this.to_display_list[i][attrNum1], this.axis_y_start, this.axis_y_end, false);
+      let elt2 = this.get_coord_on_parallel_plot(this.axis_list[attrNum2]['type'], this.axis_list[attrNum2]['list'], this.to_display_list[i][attrNum2], this.axis_y_start, this.axis_y_end, false);
+      let elts = [elt1, elt2]
+      compareList.push(elts);
+      firstElts.push(elt1);
+    }
+    var sort = new Sort();
+    firstElts = sort.MergeSort(firstElts);
+    var sortedCompareList = [];
+    for (let i=0; i<firstElts.length; i++) {
+      var firstElement = firstElts[i];
+      for (let j=0; j<compareList.length; j++) {
+        if (compareList[j][0] == firstElement) {
+          sortedCompareList.push(compareList[j]);
+          compareList = remove_at_index(j, compareList);
+          break;
+        }
+      }
+    }
+    var secondElts = [];
+    for (let i=0; i<sortedCompareList.length; i++) {
+      secondElts.push(sortedCompareList[i][1]);
+    }
+    var sort1 = new Sort();
+    secondElts = sort1.MergeSort(secondElts);
+    return sort1.nbPermutations;
+
+  }
+
+  delete_inverted_list(lists) {
+    var new_list = [];
+    for (let i=0; i<lists.length; i++) {
+      var inverted_list_i = [];
+      for (let j=0; j<lists[i].length; j++) {
+        inverted_list_i.push(lists[i][lists[i].length-j-1]);
+      }
+      if (is_list_include(inverted_list_i, new_list) === false) {
+        new_list.push(lists[i]);
+      }
+    }
+    return new_list;
+  }
+
+  getOptimalAxisDisposition() { //axis_list a été initialisée de manière naïve, l'idée est maintenant d'avoir la configuration optimale. 
+    var list = [];
+    for (let i=0; i<this.axis_list.length; i++) {
+      list.push(i);
+    }
+    var permutations = permutator(list);
+    permutations = this.delete_inverted_list(permutations);
+    var optimal = permutations[0];
+    var optiNbPermu = 0;
+    for (let k=0; k<permutations[0].length - 1; k++) {
+      optiNbPermu = optiNbPermu + this.get_nb_intersections(permutations[0][k], permutations[0][k+1]);
+    }
+
+    for (let i=0; i<permutations.length; i++) {
+      var currentNbPermu = 0;
+      for (let j=0; j<permutations[i].length - 1; j++) {
+        currentNbPermu = currentNbPermu + this.get_nb_intersections(permutations[i][j], permutations[i][j+1]);
+        if (currentNbPermu >= optiNbPermu) {
+          break;
+        }
+      }
+      if (currentNbPermu<optiNbPermu) {
+        optiNbPermu = currentNbPermu;
+        optimal = permutations[i];
+      }
+    }
+    return optimal;
+  }
+
+  OptimizeAxisList() {
+    var optimal = this.getOptimalAxisDisposition();
+    var new_axis_list = [];
+    optimal.forEach(element => {
+      new_axis_list.push(this.axis_list[element]);
+    });
+    this.axis_list = new_axis_list;
+    this.refresh_to_display_list(this.elements);
+  }
 
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
     mouse1X = e.offsetX;
@@ -1293,12 +1359,6 @@ export abstract class PlotData {
         var new_index = Math.ceil((mouse3Y - this.axis_y_start)/this.y_step);
       }
     }
-    // var value:Attribute = this.axis_list[this.move_index].copy();
-    // this.axis_list = this.remove_selection(this.axis_list[this.move_index], this.axis_list);
-    // this.axis_list.splice(new_index, 0, value);
-    // var rubber_band = this.copy_list(this.rubber_bands[this.move_index]);
-    // this.rubber_bands = this.remove_selection(this.rubber_bands[this.move_index], this.rubber_bands);
-    // this.rubber_bands.splice(new_index, 0, rubber_band);
     this.axis_list = move_elements(this.move_index, new_index, this.axis_list);
     this.rubber_bands = move_elements(this.move_index, new_index, this.rubber_bands);
     this.inverted_axis_list = move_elements(this.move_index, new_index, this.inverted_axis_list);
@@ -1448,6 +1508,19 @@ export abstract class PlotData {
       var d = list[i];
       if (val != d) {
         temp.push(d);
+      }
+    }
+    return temp;
+  }
+
+  remove_first_selection(val, list) {
+    var temp = [];
+    var bool = true;
+    for (var i = 0; i < list.length; i++) {
+      var d = list[i];
+      if ((val != d) && bool) {
+        temp.push(d);
+        bool = false;
       }
     }
     return temp;
@@ -1661,8 +1734,9 @@ export class PlotContour extends PlotData {
   public constructor(public data:any, 
                 public width: number,
                 public height: number,
-                public coeff_pixel: number) {
-    super(data, width, height, coeff_pixel);
+                public coeff_pixel: number,
+                public buttons_ON: boolean) {
+    super(data, width, height, coeff_pixel, buttons_ON);
     this.plot_datas = [];
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
@@ -1692,8 +1766,9 @@ export class PlotScatter extends PlotData {
   public constructor(public data:any, 
     public width: number,
     public height: number,
-    public coeff_pixel: number) {
-      super(data, width, height, coeff_pixel);
+    public coeff_pixel: number,
+    public buttons_ON: boolean) {
+      super(data, width, height, coeff_pixel, buttons_ON);
       if (this.buttons_ON) {
         this.zoom_rect_x = this.width - 45;
         this.zoom_rect_y = 10;
@@ -1743,7 +1818,7 @@ export class PlotScatter extends PlotData {
           graphID++;
           this.graph_colorlist.push(a.point_list[0].color_fill);
           this.graph_to_display.push(true);
-          this.graph_name_list.push(a.name)
+          this.graph_name_list.push(a.name);
           for (var j=0; j<a.point_list.length; j++) {
             var point = a.point_list[j];
             if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
@@ -1802,8 +1877,8 @@ export class PlotScatter extends PlotData {
 
 
 export class ParallelPlot extends PlotData {
-  constructor(public data, public width, public height, public coeff_pixel) {
-    super(data, width, height, coeff_pixel);
+  constructor(public data, public width, public height, public coeff_pixel, public buttons_ON) {
+    super(data, width, height, coeff_pixel, buttons_ON);
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
       this.disp_y = this.height - 25;
@@ -1826,22 +1901,23 @@ export class ParallelPlot extends PlotData {
     for (var i=0; i<serialized_attribute_list.length; i++){
       this.attribute_list.push(Attribute.deserialize(serialized_attribute_list[i]));
     }
-    this.initialize_attribute_list(this.elements); 
+    this.initialize_attribute_list(); 
     this.add_to_axis_list(to_disp_attribute_names);
     this.initialize_data_lists();
     var nb_axis = this.axis_list.length;
     if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
     this.refresh_axis_bounds(nb_axis);
     this.refresh_to_display_list(this.elements);
+    this.OptimizeAxisList();
     this.define_canvas();
     this.mouse_interaction(true);
   }
 
-  initialize_attribute_list(elements) {
+  initialize_attribute_list() { //Initialise les attributs 'list' et 'alias' des éléments Attribute de attribute_list
     for (var i=0; i<this.attribute_list.length; i++) {
       var attribute_name = this.attribute_list[i]['name'];
+      this.attribute_list[i]['alias'] = this.attribute_list[i]['name'];
       var type = this.attribute_list[i]['type'];
-      var value = [attribute_name, type];
       if (type == 'float') {
         var min = this.elements[0][attribute_name];
         var max = this.elements[0][attribute_name];
@@ -2426,6 +2502,7 @@ export class PlotDataArc2D {
 
 export class Attribute {
   list:any[];
+  alias:string;
   constructor(public name:string,
               public type:string) {}
   
@@ -2864,4 +2941,100 @@ export function rgb_interpolations(rgbs, nb_pts:number) {
     color_list.push(rgb_interpolation(rgbs[i], rgbs[i+1], arr[i]));
   }
   return color_list;
+}
+
+class Sort {
+  nbPermutations:number = 0;
+  constructor(){};
+
+  MergeSort(items: number[]): number[] {
+    return this.divide(items);
+  }
+
+  divide(items: number[]): number[] {
+    var halfLength = Math.ceil(items.length / 2);
+    var low = items.slice(0, halfLength);
+    var high = items.slice(halfLength);
+    if (halfLength > 1) {
+        low = this.divide(low);
+        high = this.divide(high);
+    }
+    return this.combine(low, high);
+  }
+
+  combine(low: number[], high: number[]): number[] {
+    var indexLow = 0;
+    var indexHigh = 0;
+    var lengthLow = low.length;
+    var lengthHigh = high.length;
+    var combined = [];
+    while (indexLow < lengthLow || indexHigh < lengthHigh) {
+        var lowItem = low[indexLow];
+        var highItem = high[indexHigh];
+        if (lowItem !== undefined) {
+            if (highItem === undefined) {
+                combined.push(lowItem);
+                indexLow++;
+            } else {
+                if (lowItem <= highItem) {
+                    combined.push(lowItem);
+                    indexLow++;
+                } else {
+                    combined.push(highItem);
+                    this.nbPermutations = this.nbPermutations + lengthLow - indexLow;
+                    indexHigh++;
+                }
+            }
+        } else {
+            if (highItem !== undefined) {
+                combined.push(highItem);
+                indexHigh++;
+            }
+        }
+    }
+    return combined;
+  }
+  
+}
+
+export function permutator(inputArr) {
+  var results = [];
+
+  function permute(arr, memo) {
+    var cur, memo = memo || [];
+
+    for (var i = 0; i < arr.length; i++) {
+      cur = arr.splice(i, 1);
+      if (arr.length === 0) {
+        results.push(memo.concat(cur));
+      }
+      permute(arr.slice(), memo.concat(cur));
+      arr.splice(i, 0, cur[0]);
+    }
+
+    return results;
+  }
+
+  return permute(inputArr, undefined);
+}
+
+export function arrayEquals(list1, list2) {
+  if (list1.length != list2.length) {
+    return false;
+  }
+  for (let i=0; i<list1.length; i++) {
+    if (list1[i] != list2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function is_list_include(list, listArray) {
+  for (let i=0; i<listArray.length; i++) {
+      if (arrayEquals(listArray[i], list)) {
+          return true;
+      }
+  }
+  return false;
 }

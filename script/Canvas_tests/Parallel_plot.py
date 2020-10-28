@@ -61,7 +61,7 @@ elements = []
 
 color_fills = [violet, blue, green, red, yellow, cyan, rose]
 color_strokes = [black, brown, green, red, orange, lightblue, grey]
-for i in range(3):
+for i in range(50):
     cx = random.uniform(0,2)
     cy = random.uniform(0,1)
     random_color_fill = color_fills[random.randint(0,len(color_fills)-1)]

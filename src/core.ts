@@ -88,7 +88,6 @@ export abstract class PlotData {
   rubber_bands:any[]=[];
   rubber_last_min:number=0;
   rubber_last_max:number=0;
-  points_axis_coord:any[]=[];
 
 
   public constructor(public data:any, 
@@ -340,8 +339,9 @@ export abstract class PlotData {
       } else {
         this.context.strokeStyle = 'lightgrey';
       }
+      var attribute_alias = this.axis_list[i]['alias'];
       this.context.fillStyle = 'black';
-      this.context.fillText(attribute_name, current_x, this.axis_y_end - 20);
+      this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20);
       this.context.stroke();
       var attribute_type = this.axis_list[i]['type'];
       var list = this.axis_list[i]['list'];
@@ -415,7 +415,8 @@ export abstract class PlotData {
         this.context.strokeStyle = 'black';
       }
       this.context.fillStyle = 'black';
-      this.context.fillText(attribute_name, this.axis_x_start, current_y + 15);
+      var attribute_alias = this.axis_list[i]['alias'];
+      this.context.fillText(attribute_alias, this.axis_x_start, current_y + 15);
       this.context.stroke();
       var attribute_type = this.axis_list[i]['type'];
       var list = this.axis_list[i]['list'];
@@ -657,37 +658,38 @@ export abstract class PlotData {
     }
   }
 
-  add_axis_to_parallelplot(name:string) {
+  add_axis_to_parallelplot(name:string) { //Ajoute un axe au parallel plot et redessine le canvas
     for (let i=0; i<this.axis_list.length; i++) {
       if (name == this.axis_list[i]['name']) {
         throw new Error('Cannot add an attribute that is already displayed');
       }
     }
-    for (let i=0; i<this.attribute_list.length; i++) {
-      if (this.attribute_list[i]['name'] == name) {
-        var attribute_to_add = this.attribute_list[i];
-      }
-    }
-    this.add_to_axis_list([attribute_to_add]);
+    this.add_to_axis_list([name]);
+    this.refresh_axis_bounds(this.axis_list.length);
+    this.rubber_bands.push([]);
+    this.refresh_to_display_list(this.elements);
+    this.draw(false, 0, 0 ,0 ,0 ,0);
   }
 
-  remove_axis_from_parallelplot(name:string) {
+  remove_axis_from_parallelplot(name:string) { //Supprime un axe existant au parallel plot et redessine le canvas
     var is_in_axislist = false;
-    for (let i=0; i<this.axis_list.length; i++) {
+    for (var i=0; i<this.axis_list.length; i++) {
       if (this.axis_list[i]['name'] == name) {
         is_in_axislist = true;
         this.axis_list = this.remove_selection(this.axis_list[i], this.axis_list);
+        break;
       }
     }
     if (is_in_axislist === false) {
       throw new Error('Cannot remove axis that is not displayed');
     }
+    this.refresh_to_display_list(this.elements);
+    this.rubber_bands = remove_at_index(i, this.rubber_bands);
+    this.refresh_axis_bounds(this.axis_list.length);
+    this.draw(false, 0, 0 ,0 ,0 ,0);
   }
 
   zoom_button(x, y, w, h) {
-    if ((x<0) || (x+h>this.width) || (y<0) || (y+2*h>this.height)) {
-      throw new Error("Invalid x or y, the zoom button is out of the canvas");
-    }
     this.context.strokeStyle = 'black';
     this.context.beginPath();
     this.context.lineWidth = "2";
@@ -705,9 +707,6 @@ export abstract class PlotData {
   }
 
   zoom_window_button(x, y, w, h) {
-    if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
-      throw new Error("Invalid x or y, the zoom window button is out of the canvas");
-    }
     this.context.strokeStyle = 'black';
     if (this.zw_bool) {
       Shape.createButton(x, y, w, h, this.context, "Z ON", "12px Arial");
@@ -718,17 +717,11 @@ export abstract class PlotData {
   }
 
   reset_button(x, y, w, h) {
-    if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
-      throw new Error("Invalid x or y, the reset button is out of the canvas");
-    }
     this.context.strokeStyle = 'black';
     Shape.createButton(x, y, w, h, this.context, "Reset", "12px Arial");
   }
 
   selection_button(x, y, w, h) {
-    if ((x<0) || (x+h>this.width) || (y<0) || (y+h>this.height)) {
-      throw new Error("Invalid x or y, the selection button is out of the canvas");
-    }
     this.context.strokeStyle = 'black';
     if (this.select_bool) {
       Shape.createButton(x, y, w, h, this.context, "S ON", "12px Arial")
@@ -966,18 +959,6 @@ export abstract class PlotData {
     return [border_number, mouse2X, mouse2Y, is_resizing];
   }
 
-  initialize_points_axis_coord() {
-    for (let i=0; i<this.axis_list.length; i++) {
-      var points_axis_coord_i = [];
-      for (let j=0; j<this.to_display_list.length; j++) {
-        if (this.vertical) {
-          points_axis_coord_i.push(this.get_coord_on_parallel_plot(this.axis_list[i]['type'], this.axis_list[i]['list'], this.to_display_list[j][i], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[i]));
-        }
-      }
-      this.points_axis_coord.push(points_axis_coord_i);
-    }
-  }
-
   get_nb_intersections(attrNum1, attrNum2) { //axis1 et axis2 sont les coordonnées des points sur un axe donné ie égaux à point_axis_coord[:,j fixé]
     var compareList = [];
     var firstElts = []
@@ -1036,7 +1017,7 @@ export abstract class PlotData {
     var optiNbPermu = 0;
     for (let k=0; k<permutations[0].length - 1; k++) {
       optiNbPermu = optiNbPermu + this.get_nb_intersections(permutations[0][k], permutations[0][k+1]);
-    } 
+    }
 
     for (let i=0; i<permutations.length; i++) {
       var currentNbPermu = 0;
@@ -1055,7 +1036,6 @@ export abstract class PlotData {
   }
 
   OptimizeAxisList() {
-    this.initialize_points_axis_coord();
     var optimal = this.getOptimalAxisDisposition();
     var new_axis_list = [];
     optimal.forEach(element => {
@@ -1933,9 +1913,10 @@ export class ParallelPlot extends PlotData {
     this.mouse_interaction(true);
   }
 
-  initialize_attribute_list() { //Initialise l'attribut 'list' des éléments Attribute de attribute_list
+  initialize_attribute_list() { //Initialise les attributs 'list' et 'alias' des éléments Attribute de attribute_list
     for (var i=0; i<this.attribute_list.length; i++) {
       var attribute_name = this.attribute_list[i]['name'];
+      this.attribute_list[i]['alias'] = this.attribute_list[i]['name'];
       var type = this.attribute_list[i]['type'];
       if (type == 'float') {
         var min = this.elements[0][attribute_name];
@@ -2521,6 +2502,7 @@ export class PlotDataArc2D {
 
 export class Attribute {
   list:any[];
+  alias:string;
   constructor(public name:string,
               public type:string) {}
   

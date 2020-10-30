@@ -1,5 +1,4 @@
 import plot_data
-from plot_data import plot_data
 import random
 import json
 import os
@@ -75,15 +74,15 @@ point_color = plot_data.PointColorSet(color_fill=color_fill,
 for i in range(50):
     cx = random.uniform(0,window_size.width)
     cy = random.uniform(0,window_size.height)
-    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, shape=shape, size=size, color_fill=violet, color_stroke=color_stroke, stroke_width=stroke_width)
+    point = plot_data.Point2D(cx=cx, cy=cy, shape=shape, size=size, color_fill=violet, color_stroke=color_stroke, stroke_width=stroke_width)
     plot_datas += [point]
 
-axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
+axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size, graduation_color=graduation_color,
                               axis_color=axis_color, arrow_on=arrow_on, axis_width=axis_width, grid_on=grid_on)
 plot_datas += [axis]
 
-tooltip = plot_data.PlotDataTooltip(colorfill,text_color=text_color,font=font,tp_radius=tp_radius,to_plot_list=to_plot_list, opacity=opacity)
+tooltip = plot_data.Tooltip(colorfill,text_color=text_color,font=font,tp_radius=tp_radius,to_plot_list=to_plot_list, opacity=opacity)
 plot_datas += [tooltip]
 
 sol = [c.to_dict() for c in plot_datas]

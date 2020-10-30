@@ -5,9 +5,7 @@ Created on Wed Mar 14 15:32:37 2018
 
 @author: Steven Masfaraud masfaraud@dessia.tech
 """
-import volmdlr as vm
-#import volmdlr.primitives2D as primitives2D
-from volmdlr import plot_data
+import plot_data
 import numpy as npy
 import json
 import os

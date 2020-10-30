@@ -73,7 +73,7 @@ class PointColorSet(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class WindowSizeSet(DessiaObject):
+class Window(DessiaObject):
     def __init__(self, width: float, height: float, name: str = ''):
         self.width = width
         self.height = height
@@ -87,7 +87,7 @@ class PlotDataState(DessiaObject):
                  shape_set: PointShapeSet = None,
                  point_size: PointSizeSet = None,
                  point_color: PointColorSet = None,
-                 window_size: WindowSizeSet = None,
+                 window_size: Window = None,
                  stroke_width: float = 1, color_line: str = 'black',
                  marker: str = None,
                  dash: str = None, opacity: float = 1):
@@ -137,7 +137,7 @@ class PlotDataCircle2D(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class PlotDataPoint2D(DessiaObject):
+class Point2D(DessiaObject):
     def __init__(self, cx: float, cy: float, shape:str, size:float, color_fill:str, color_stroke:str, stroke_width:float, type: str = 'point',
                  name: str = '', ):
         self.type = type
@@ -151,7 +151,7 @@ class PlotDataPoint2D(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class PlotDataAxis(DessiaObject):
+class Axis(DessiaObject):
     def __init__(self, nb_points_x: int, nb_points_y: int, font_size: int,
                  graduation_color: str, axis_color: str,
                  arrow_on: bool, axis_width: float, grid_on: bool,
@@ -169,7 +169,7 @@ class PlotDataAxis(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class PlotDataTooltip(DessiaObject):
+class Tooltip(DessiaObject):
     def __init__(self, colorfill: str, text_color: str, font: str,
                  tp_radius: float, to_plot_list: list, opacity:float, type: str = 'tooltip',
                  name: str = ''):
@@ -183,10 +183,10 @@ class PlotDataTooltip(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class PlotDataGraph2D(DessiaObject):
-    def __init__(self, point_list, dashline: List[float],
+class Graph2D(DessiaObject):
+    def __init__(self, dashline: List[float],
                  graph_colorstroke: str, graph_linewidth: float,
-                 display_step: float, type: str = 'graph2D',
+                 display_step: float, axis:Axis, tooltip:Tooltip, point_list=[], type: str = 'graph2D',
                  name: str = ''):
         self.serialized_point_list = [p.to_dict() for p in point_list]
         self.dashline = dashline
@@ -201,14 +201,18 @@ class PlotDataGraph2D(DessiaObject):
         self.display_step = display_step
         if display_step is None:
             self.display_step = 1
+        self.axis = axis
+        self.tooltip = tooltip
         self.type = type
         DessiaObject.__init__(self, name)
 
 
-class PlotDataScatter(DessiaObject):
-    def __init__(self, point_list,
+class Scatter(DessiaObject):
+    def __init__(self, axis:Axis, tooltip:Tooltip, point_list=[],
                  type: str = 'ScatterPlot', name: str = ''):
         self.serialized_point_list = [p.to_dict() for p in point_list]
+        self.axis = axis
+        self.tooltip = tooltip
         self.type = type
         DessiaObject.__init__(self, name)
 
@@ -243,8 +247,8 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 
 class ParallelPlot(DessiaObject):
-    def __init__(self, elements, attribute_list, line_color:str, line_width:float,
-                 disposition:str, to_disp_attributes, type: str = 'ParallelPlot', name: str = ''):
+    def __init__(self, attribute_list, line_color:str, line_width:float,
+                 disposition:str, to_disp_attributes, elements=[], type: str = 'ParallelPlot', name: str = ''):
         self.elements = elements
         self.attribute_list = attribute_list
         self.line_color = line_color
@@ -259,6 +263,13 @@ class Attribute(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name)
 
+class MultiplePlots(DessiaObject):
+    def __init__(self, points, objects, sizes, coords, name:str=''):
+        self.points = points
+        self.objects = objects
+        self.sizes = sizes
+        self.coords = coords
+        DessiaObject.__init__(self, name)
 
 def plot_d3(plot_datas):
     template_path = pkg_resources.resource_filename(

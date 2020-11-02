@@ -10,6 +10,13 @@ export class MultiplePlots {
   sizes:Window[]=[];
   selected_index:number=-1;
   last_index:number=-1;
+  translation_bool:boolean=false;
+  transbutton_x:number=0;
+  transbutton_y:number=0;
+  transbutton_w:number=0;
+  transbutton_h:number=0;
+  initial_object_X:number=0;
+  initial_object_Y:number=0;
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
     var data_show = data[0];
@@ -43,6 +50,26 @@ export class MultiplePlots {
       this.objectList[i].draw_initial();
     }
     this.mouse_interaction();
+
+    if (buttons_ON) {
+      this.initializeButtons();
+      this.draw_translation_button();
+    }
+  }
+
+  initializeButtons() {
+    this.transbutton_x = this.width - 45;
+    this.transbutton_y = 10;
+    this.transbutton_w = 35;
+    this.transbutton_h = 25;
+  }
+
+  draw_translation_button() {
+    if (this.translation_bool === true) {
+      Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, 'True', '12px sans-serif');
+    } else {
+      Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, 'False', '12px sans-serif');
+    }
   }
 
   initializeObjectContext(object) {
@@ -65,7 +92,7 @@ export class MultiplePlots {
   getObjectIndex(x,y) {
     var index = -1;
     for (let i=0; i<this.nbObjects; i++) {
-      let isInObject = Shape.Is_in_rect(x, y, this.coords[i][0], this.coords[i][1], this.sizes[i]['width'], this.sizes[i]['height']);
+      let isInObject = Shape.Is_in_rect(x, y, this.objectList[i].X, this.objectList[i].Y, this.sizes[i]['width'], this.sizes[i]['height']);
       if (isInObject === true) {
         index = i;
       }
@@ -84,7 +111,7 @@ export class MultiplePlots {
     this.context_hidden.closePath();
   }
 
-  RedrawSelectedObject(mouse1X, mouse1Y, mouse2X, mouse2Y) {
+  RedrawMovingObject(mouse1X, mouse1Y, mouse2X, mouse2Y) {
     this.ClearCanvas();
     for (let i=0; i<this.objectList.length; i++) {
       let obj = this.objectList[i];
@@ -96,6 +123,46 @@ export class MultiplePlots {
         obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
       }
     }
+    if (this.buttons_ON) {
+      this.draw_translation_button();
+    }
+  }
+
+  RedrawAllObjects() {
+    this.ClearCanvas();
+    for (let i=0; i<this.objectList.length; i++) {
+      let obj = this.objectList[i];
+      obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+    }
+    if (this.buttons_ON) {
+      this.draw_translation_button();
+    }
+  }
+
+  isZwSelectBoolOn() {
+    for (let i=0; i<this.objectList.length; i++) {
+      if ((this.objectList[i].zw_bool === true) || (this.objectList[i].select_bool === true)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  TranslateSelectedObject(selected_index, tx, ty) {
+    this.objectList[selected_index].X = this.initial_object_X + tx;
+    this.objectList[selected_index].Y = this.initial_object_Y + ty;
+    this.RedrawAllObjects();
+  }
+
+  InitializeObjectXY(selected_index) {
+    this.initial_object_X = this.objectList[selected_index].X;
+    this.initial_object_Y = this.objectList[selected_index].Y;
+  }
+  SetAllInteractionsToOff() {
+    for (let i=0; i<this.objectList.length; i++) {
+      this.objectList[i].interaction_ON = false;
+    }
   }
 
   mouse_interaction() {
@@ -104,7 +171,10 @@ export class MultiplePlots {
     var mouse1Y:number = 0;
     var mouse2X:number = 0;
     var mouse2Y:number = 0;
+    var mouse3X:number = 0;
+    var mouse3Y:number = 0;
     var isDrawing = false;
+    var mouse_moving:boolean = false;
 
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
@@ -114,6 +184,12 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
+      if (this.translation_bool) {
+        this.selected_index = this.getObjectIndex(mouse1X, mouse1Y);
+        if (this.selected_index != -1) {
+          this.InitializeObjectXY(this.selected_index);
+        }
+      }
     });
 
     canvas.addEventListener('mousemove', e => {
@@ -121,7 +197,15 @@ export class MultiplePlots {
       mouse2Y = e.offsetY;
       this.selected_index = this.getObjectIndex(mouse2X, mouse2Y);
       if (isDrawing) {
-        this.RedrawSelectedObject(mouse1X, mouse1Y, mouse2X, mouse2Y);
+        mouse_moving = true;
+        if (this.translation_bool && (this.selected_index != -1)) {
+          this.SetAllInteractionsToOff();
+          let tx = mouse2X - mouse1X;
+          let ty = mouse2Y - mouse1Y;
+          this.TranslateSelectedObject(this.selected_index, tx, ty);
+        } else if (!this.translation_bool && !this.isZwSelectBoolOn()){
+          this.RedrawMovingObject(mouse1X, mouse1Y, mouse2X, mouse2Y);
+        }
       }
       if (this.selected_index != this.last_index) {
         for (let i=0; i<this.objectList.length; i++) {
@@ -136,8 +220,20 @@ export class MultiplePlots {
     });
 
     canvas.addEventListener('mouseup', e => {
+      mouse3X = e.offsetX;
+      mouse3Y = e.offsetY;
+      console.log('mouse_moving', mouse_moving)
+      var click_on_translation_button = Shape.Is_in_rect(mouse3X, mouse3Y, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
+      if (click_on_translation_button) {
+        this.translation_bool = !this.translation_bool;
+      }
+      this.RedrawAllObjects();
       isDrawing = false;
-    }); 
+    });
+    
+    canvas.addEventListener('wheel', e => {
+      this.RedrawAllObjects();
+    })
   }
 }
 
@@ -862,17 +958,19 @@ export abstract class PlotData {
   }
 
   zoom_button(x, y, w, h) {
+    var actualX = x + this.X;
+    var actualY = y + this.Y;
     this.context.strokeStyle = 'black';
     this.context.beginPath();
     this.context.lineWidth = "2";
     this.context.fillStyle = 'white';
-    this.context.rect(x, y, w, h);
-    this.context.rect(x, y+h, w, h);
-    this.context.moveTo(x, y+h);
-    this.context.lineTo(x+w, y+h);
-    Shape.crux(this.context, x+w/2, y+h/2, h/3);
-    this.context.moveTo(x + w/2 - h/3, y + 3*h/2);
-    this.context.lineTo(x + w/2 + h/3, y + 3*h/2);
+    this.context.rect(actualX, actualY, w, h);
+    this.context.rect(actualX, actualY + h, w, h);
+    this.context.moveTo(actualX, actualY+h);
+    this.context.lineTo(actualX+w, actualY+h);
+    Shape.crux(this.context, actualX+w/2, actualY+h/2, h/3);
+    this.context.moveTo(actualX + w/2 - h/3, actualY + 3*h/2);
+    this.context.lineTo(actualX + w/2 + h/3, actualY + 3*h/2);
     this.context.fill();
     this.context.stroke();
     this.context.closePath();
@@ -881,30 +979,30 @@ export abstract class PlotData {
   zoom_window_button(x, y, w, h) {
     this.context.strokeStyle = 'black';
     if (this.zw_bool) {
-      Shape.createButton(x, y, w, h, this.context, "Z ON", "12px Arial");
+      Shape.createButton(x + this.X, y + this.Y, w, h, this.context, "Z ON", "12px Arial");
     } else {
-      Shape.createButton(x, y, w, h, this.context, "Z OFF", "12px Arial");
+      Shape.createButton(x + this.X, y + this.Y, w, h, this.context, "Z OFF", "12px Arial");
     }
     
   }
 
   reset_button(x, y, w, h) {
     this.context.strokeStyle = 'black';
-    Shape.createButton(x, y, w, h, this.context, "Reset", "12px Arial");
+    Shape.createButton(x + this.X, y + this.Y, w, h, this.context, "Reset", "12px Arial");
   }
 
   selection_button(x, y, w, h) {
     this.context.strokeStyle = 'black';
     if (this.select_bool) {
-      Shape.createButton(x, y, w, h, this.context, "S ON", "12px Arial")
+      Shape.createButton(x + this.X, y + this.Y, w, h, this.context, "S ON", "12px Arial")
     } else {
-      Shape.createButton(x, y, w, h, this.context, "S OFF", "12px Arial")
+      Shape.createButton(x + this.X, y + this.Y, w, h, this.context, "S OFF", "12px Arial")
     }
   }
 
   graph_buttons(y, w, h, police) {
     this.context.font = police;
-    this.graph1_button_x = this.width/2 + this.X;
+    this.graph1_button_x = this.width/2;
     for (var i=0; i<this.graph_name_list.length; i++) {
       var text_w = this.context.measureText(this.graph_name_list[i]).width;
       this.graph_text_spacing_list.push(text_w + 10);
@@ -913,9 +1011,9 @@ export abstract class PlotData {
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
       if (this.graph_to_display[i] === true) {
-        Shape.createGraphButton(this.graph1_button_x + i*w + text_spacing_sum_i, y, w, h, this.context, this.graph_name_list[i], police, this.graph_colorlist[i], false);
+        Shape.createGraphButton(this.graph1_button_x + i*w + text_spacing_sum_i + this.X, y + this.Y, w, h, this.context, this.graph_name_list[i], police, this.graph_colorlist[i], false);
       } else {
-        Shape.createGraphButton(this.graph1_button_x + i*w + text_spacing_sum_i, y, w, h, this.context, this.graph_name_list[i], police, this.graph_colorlist[i], true);
+        Shape.createGraphButton(this.graph1_button_x + i*w + text_spacing_sum_i + this.X, y + this.Y, w, h, this.context, this.graph_name_list[i], police, this.graph_colorlist[i], true);
       }
       text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
@@ -950,8 +1048,8 @@ export abstract class PlotData {
         this.select_on_click.push(d);
       } else if (d['type'] == 'graph2D') {
         for (var j=0; j<d.point_list.length; j++) {
-          var x = this.scaleX*(1000*d.point_list[j].cx + this.last_mouse1X);
-          var y = this.scaleY*(1000*d.point_list[j].cy + this.last_mouse1Y);
+          var x = this.scaleX*(1000*d.point_list[j].cx + this.last_mouse1X) + this.X;
+          var y = this.scaleY*(1000*d.point_list[j].cy + this.last_mouse1Y) + this.Y;
           in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
           if ((in_rect===true) && !(this.is_include(d.point_list[j], this.select_on_click))) {
             this.select_on_click.push(d.point_list[j]);
@@ -959,8 +1057,8 @@ export abstract class PlotData {
         }
       } else if (d['type'] == 'ScatterPlot') {
         for (var j=0; j<this.scatter_point_list.length; j++) {
-          var x = this.scaleX*(1000*this.scatter_point_list[j].cx + this.last_mouse1X);
-          var y = this.scaleY*(1000*this.scatter_point_list[j].cy + this.last_mouse1Y);
+          var x = this.scaleX*(1000*this.scatter_point_list[j].cx + this.last_mouse1X) + this.X;
+          var y = this.scaleY*(1000*this.scatter_point_list[j].cy + this.last_mouse1Y) + this.Y;
           in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
           if ((in_rect===true) && !(this.is_include(this.scatter_point_list[j], this.select_on_click))) {
             this.select_on_click.push(this.scatter_point_list[j]);
@@ -1233,7 +1331,6 @@ export abstract class PlotData {
       mouse2Y = e.offsetY;
       this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
       this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
-      console.log('draw')
     } else if ((isDrawing === true) && (this.zw_bool||this.select_bool)) {
       mouse_moving = true;
       mouse2X = e.offsetX;
@@ -1272,11 +1369,11 @@ export abstract class PlotData {
     var scale_ceil = 400*this.init_scale;
     var scale_floor = this.init_scale/3;
 
-    var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h);
-    var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x, this.zoom_rect_y + this.zoom_rect_h, this.zoom_rect_w, this.zoom_rect_h);
-    var click_on_zoom_window = Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x, this.zw_y, this.zw_w, this.zw_h);
-    var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h);
-    var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x, this.select_y, this.select_w, this.select_h);
+    var click_on_plus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x + this.X, this.zoom_rect_y + this.Y, this.zoom_rect_w, this.zoom_rect_h);
+    var click_on_minus = Shape.Is_in_rect(mouse1X, mouse1Y, this.zoom_rect_x + this.X, this.zoom_rect_y + this.zoom_rect_h + this.Y, this.zoom_rect_w, this.zoom_rect_h);
+    var click_on_zoom_window = Shape.Is_in_rect(mouse1X, mouse1Y, this.zw_x + this.X, this.zw_y + this.Y, this.zw_w, this.zw_h);
+    var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x + this.X, this.reset_rect_y + this.Y, this.reset_rect_w, this.reset_rect_h);
+    var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x + this.X, this.select_y + this.Y, this.select_w, this.select_h);
     var click_on_graph = false;
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
@@ -1577,7 +1674,7 @@ export abstract class PlotData {
   mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, isDrawing_rubber_band, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
     var mouseX = e.offsetX;
     var mouseY = e.offsetY;
-    var click_on_disp = Shape.Is_in_rect(mouseX, mouseY, this.disp_x, this.disp_y, this.disp_w, this.disp_h);
+    var click_on_disp = Shape.Is_in_rect(mouseX, mouseY, this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h);
     if (click_on_axis && !mouse_moving) {
       this.select_axis_action(selected_axis_index, click_on_band, click_on_border);
     } else if (click_on_name && mouse_moving) {
@@ -1949,23 +2046,23 @@ export class PlotScatter extends PlotData {
     public Y: number) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y);
       if (this.buttons_ON) {
-        this.zoom_rect_x = this.width - 45 + X;
-        this.zoom_rect_y = 10 + Y;
+        this.zoom_rect_x = this.width - 45;
+        this.zoom_rect_y = 10;
         this.zoom_rect_w = 35;
         this.zoom_rect_h = 25;
-        this.zw_x = this.width - 45 + X;
-        this.zw_y = 70 + Y;
+        this.zw_x = this.width - 45;
+        this.zw_y = 70;
         this.zw_w = 35;
         this.zw_h = 30;
-        this.reset_rect_x = this.width - 45 + X;
-        this.reset_rect_y = 110 + Y;
+        this.reset_rect_x = this.width - 45;
+        this.reset_rect_y = 110;
         this.reset_rect_w = 35;
         this.reset_rect_h = 30;
-        this.select_x = this.width - 45 + X;
-        this.select_y = 150 + Y;
+        this.select_x = this.width - 45;
+        this.select_y = 150;
         this.select_w = 35;
         this.select_h = 30;
-        this.graph1_button_y = 10 + Y;
+        this.graph1_button_y = 10;
         this.graph1_button_w = 30;
         this.graph1_button_h = 15;
       }
@@ -2060,8 +2157,8 @@ export class ParallelPlot extends PlotData {
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y);
     if (this.buttons_ON) {
-      this.disp_x = this.width - 35 + X;
-      this.disp_y = this.height - 25 + Y;
+      this.disp_x = this.width - 35;
+      this.disp_y = this.height - 25;
       this.disp_w = 30;
       this.disp_h = 20;
     }
@@ -2140,13 +2237,14 @@ export class ParallelPlot extends PlotData {
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
+    this.refresh_axis_bounds(this.axis_list.length);
     this.draw_empty_canvas(hidden);
     this.draw_rubber_bands(mvx);
     var nb_axis = this.axis_list.length;
     this.draw_parallel_coord_lines(nb_axis);
     this.draw_parallel_axis(nb_axis, mvx);
     if (this.buttons_ON) {
-      this.disp_button(this.disp_x, this.disp_y, this.disp_w, this.disp_h, '10px Arial');
+      this.disp_button(this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h, '10px Arial');
     }
   }
 

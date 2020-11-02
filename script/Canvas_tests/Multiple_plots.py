@@ -87,7 +87,7 @@ tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=
 ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip)
 objects.append(ScatterPlot)
 
-coords = [[0,0], [50,450]]
+coords = [[0,450], [0,0]]
 sizes = [plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300)]
 

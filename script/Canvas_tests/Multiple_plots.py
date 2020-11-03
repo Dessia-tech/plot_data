@@ -88,8 +88,8 @@ ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip)
 objects.append(ScatterPlot)
 
 coords = [[0,450], [0,0]]
-sizes = [plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300)]
+sizes = [plot_data.Window(width=750, height=400),
+         plot_data.Window(width=750, height=400)]
 
 multipleplots = plot_data.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
 plot_datas.append(multipleplots)

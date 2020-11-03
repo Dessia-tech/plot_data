@@ -167,6 +167,15 @@ export class MultiplePlots {
     }
   }
 
+  ClickOnVertex(mouse1X, mouse1Y) {
+    var object_index = -1;
+    var selected_vertex = '';
+    for (let i=0; i<this.objectList.length; i++) {
+      let obj_i = this.objectList[i];
+      // let upperLeft = Shape.Is_in_rect(mouse1X, mouse1Y, ) 
+    }
+  }
+
   mouse_interaction() {
     var canvas = document.getElementById('canvas');
     var mouse1X:number = 0;
@@ -194,6 +203,8 @@ export class MultiplePlots {
           objectSelected = true;
           this.InitializeObjectXY(this.selected_index);
         }
+      } else {
+        //initialize click on vertex
       }
     });
 
@@ -653,22 +664,28 @@ export abstract class PlotData {
       } else { //ie string
         var nb_attribute = list.length;
         if (nb_attribute == 1) {
-          y_step = (this.axis_y_end - this.axis_y_start)/2;
-        } else {
-          y_step = (this.axis_y_end - this.axis_y_start)/(nb_attribute - 1);
-        }
-        for (var j=0; j<nb_attribute; j++) {
-          var current_y = this.axis_y_start + j*y_step;
-          if (this.inverted_axis_list[i] === true) {
-            current_grad = list[nb_attribute-j-1].toString();
-          } else {
-            current_grad = list[j].toString();
-          }
+          var current_y = (this.axis_y_end + this.axis_y_start)/2;
+          current_grad = list[0].toString();
           Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
           this.context.textAlign = 'end';
           this.context.textBaseline = 'middle';
           this.context.fillText(current_grad, current_x - 5, current_y);
+        } else {
+          y_step = (this.axis_y_end - this.axis_y_start)/(nb_attribute - 1);
+          for (var j=0; j<nb_attribute; j++) {
+            var current_y = this.axis_y_start + j*y_step;
+            if (this.inverted_axis_list[i] === true) {
+              current_grad = list[nb_attribute-j-1].toString();
+            } else {
+              current_grad = list[j].toString();
+            }
+            Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
+            this.context.textAlign = 'end';
+            this.context.textBaseline = 'middle';
+            this.context.fillText(current_grad, current_x - 5, current_y);
+          }
         }
+        
       }
       this.context.stroke();
       this.context.fill();
@@ -728,20 +745,24 @@ export abstract class PlotData {
       } else {
         var nb_attribute = list.length;
         if (nb_attribute == 1) {
-          x_step = (this.axis_x_end - this.axis_x_start)/2;
-        } else {
-          x_step = (this.axis_x_end - this.axis_x_start)/(nb_attribute - 1);
-        }
-        for (var j=0; j<nb_attribute; j++) {
-          var current_x = this.axis_x_start + j*x_step;
-          if (this.inverted_axis_list[i] === true) {
-            current_grad = list[nb_attribute-j-1].toString();
-          } else {
-            current_grad = list[j].toString();
-          }
+          var current_x = (this.axis_x_end + this.axis_x_start)/2;
+          current_grad = list[0].toString();
           Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
           this.context.textAlign = 'middle';
           this.context.fillText(current_grad, current_x, current_y - 5);
+        } else {
+          x_step = (this.axis_x_end - this.axis_x_start)/(nb_attribute - 1);
+          for (var j=0; j<nb_attribute; j++) {
+            var current_x = this.axis_x_start + j*x_step;
+            if (this.inverted_axis_list[i] === true) {
+              current_grad = list[nb_attribute-j-1].toString();
+            } else {
+              current_grad = list[j].toString();
+            }
+            Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
+            this.context.textAlign = 'middle';
+            this.context.fillText(current_grad, current_x, current_y - 5);
+          }
         }
       }
       this.context.stroke();
@@ -1537,7 +1558,6 @@ export abstract class PlotData {
     }
     var is_inside_canvas = (mouse2X>=this.X) && (mouse2X<=this.width + this.X) && (mouse2Y>=this.Y) && (mouse2Y<=this.height + this.Y);
     var mouse_move = true;
-    console.log(is_inside_canvas)
     if (!is_inside_canvas) {
       isDrawing = false;
       mouse_move = false;

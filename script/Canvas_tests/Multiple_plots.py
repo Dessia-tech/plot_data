@@ -3,19 +3,6 @@ import random
 import json
 import os
 
-# Point test ####
-
-# PARAMETERS #
-# Window size
-width = 2
-height = 1
-
-# Shape set (circle, square, crux)
-shape = 'circle'
-
-# Point size (1 to 4)
-size = 2
-
 red = 'rgb(247, 0, 0)'
 lightred = 'rgb(237, 128, 128)'
 blue = 'rgb(0, 19, 254)'
@@ -39,12 +26,9 @@ lightbrown = 'rgb(222, 184, 135)'
 grey = 'rgb(169, 169, 169)'
 lightgrey = 'rgb(211, 211, 211)'
 
-# Points' color
-color_fill = violet
-color_stroke = grey
-
+shape = 'circle'
+size = 2
 stroke_width = 1  # Points' stroke width
-
 # ParallelPlot
 attribute_list = [plot_data.Attribute(name='cx', type='float'),
                   plot_data.Attribute(name='cy', type='float'),
@@ -57,7 +41,8 @@ line_color = black
 line_width = 0.5
 disposition = 'vertical'
 plot_datas = []
-elements = []
+objects = []
+points = []
 
 color_fills = [violet, blue, green, red, yellow, cyan, rose]
 color_strokes = [black, brown, green, red, orange, lightblue, grey]
@@ -67,13 +52,48 @@ for i in range(50):
     random_color_fill = color_fills[random.randint(0,len(color_fills)-1)]
     random_color_stroke = color_strokes[random.randint(0,len(color_strokes) - 1)]
     point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=random_color_stroke, stroke_width=stroke_width)
-    elements += [point]
+    points += [point]
 
+parallel_plot = plot_data.ParallelPlot(attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
+objects.append(parallel_plot)
 
-parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
+#Axis data
+nb_points_x = 10
+nb_points_y = 10
+font_size = 12
+graduation_color = grey
+axis_color = grey
+axis_width = 0.5
+arrow_on = False
+grid_on = True
 
-sol = [parallel_plot.to_dict()]
+# Tooltip
+tp_colorfill = black
+text_color = white
+font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
+tp_radius = 5
+to_plot_list = ['cx', 'cy']
+opacity = 0.75
+
+axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
+                              font_size=font_size,
+                              graduation_color=graduation_color,
+                              axis_color=axis_color, arrow_on=arrow_on,
+                              axis_width=axis_width, grid_on=grid_on)
+
+tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
+                     tp_radius=tp_radius, to_plot_list=to_plot_list, opacity=opacity)
+
+ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip)
+objects.append(ScatterPlot)
+
+coords = [[0,450], [0,0]]
+sizes = [plot_data.Window(width=560, height=300),
+         plot_data.Window(width=560, height=300)]
+
+multipleplots = plot_data.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
+plot_datas.append(multipleplots)
+sol = [multipleplots.to_dict()]
 os.remove("data.json")
 with open('data.json', 'w') as fp:
     json.dump(sol, fp, indent=2)
-

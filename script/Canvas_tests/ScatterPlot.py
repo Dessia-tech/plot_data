@@ -1,4 +1,4 @@
-from plot_data import plot_data
+import plot_data
 import random
 import json
 import os
@@ -62,27 +62,25 @@ tp_radius = 5
 to_plot_list = ['cx', 'cy']
 opacity = 0.75
 
+axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
+                              font_size=font_size,
+                              graduation_color=graduation_color,
+                              axis_color=axis_color, arrow_on=arrow_on,
+                              axis_width=axis_width, grid_on=grid_on)
+
+tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
+                     tp_radius=tp_radius, to_plot_list=to_plot_list, opacity=opacity)
+
 plot_datas = []
 point_list = []
 for i in range(500):
     cx = random.uniform(0, 2)
     cy = random.uniform(0, 1)
-    point = plot_data.PlotDataPoint2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=colorfill, color_stroke=colorstroke, stroke_width=strokewidth)
+    point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=colorfill, color_stroke=colorstroke, stroke_width=strokewidth)
     point_list += [point]
 
-ScatterPlot = plot_data.PlotDataScatter(point_list)
+ScatterPlot = plot_data.Scatter(point_list=point_list, axis=axis, tooltip=tooltip)
 plot_datas += [ScatterPlot]
-
-axis = plot_data.PlotDataAxis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
-                              font_size=font_size,
-                              graduation_color=graduation_color,
-                              axis_color=axis_color, arrow_on=arrow_on,
-                              axis_width=axis_width, grid_on=grid_on)
-plot_datas += [axis]
-
-tooltip = plot_data.PlotDataTooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
-                     tp_radius=tp_radius, to_plot_list=to_plot_list, opacity=opacity)
-plot_datas += [tooltip]
 
 sol = [c.to_dict() for c in plot_datas]
 # plot_data.plot_d3(sol)

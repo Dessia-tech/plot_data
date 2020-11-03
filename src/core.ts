@@ -9,14 +9,19 @@ export class MultiplePlots {
   points:PlotDataPoint2D[]=[];
   sizes:Window[]=[];
   selected_index:number=-1;
+  clickedPlotIndex:number=-1;
   last_index:number=-1;
-  translation_bool:boolean=false;
+  manipulation_bool:boolean=false;
   transbutton_x:number=0;
   transbutton_y:number=0;
   transbutton_w:number=0;
   transbutton_h:number=0;
   initial_object_X:number=0;
   initial_object_Y:number=0;
+  initial_object_width:number=0;
+  initial_object_height:number=0;
+  initial_mouseX:number=0;
+  initial_mouseY:number=0;
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
     var data_show = data[0];
@@ -53,31 +58,31 @@ export class MultiplePlots {
 
     if (buttons_ON) {
       this.initializeButtons();
-      this.draw_translation_button();
+      this.draw_manipulation_button();
     }
   }
 
-  initializeButtons() {
+  initializeButtons():void {
     this.transbutton_x = this.width - 45;
     this.transbutton_y = 10;
     this.transbutton_w = 35;
     this.transbutton_h = 25;
   }
 
-  draw_translation_button() {
-    if (this.translation_bool === true) {
+  draw_manipulation_button():void {
+    if (this.manipulation_bool === true) {
       Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, 'True', '12px sans-serif');
     } else {
       Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, 'False', '12px sans-serif');
     }
   }
 
-  initializeObjectContext(object) {
+  initializeObjectContext(object):void {
     object.context_show = this.context_show;
     object.context_hidden = this.context_hidden;
   }
 
-  define_canvas() {
+  define_canvas():void {
     var canvas : any = document.getElementById('canvas');
     canvas.width = this.width;
 		canvas.height = this.height;
@@ -89,7 +94,7 @@ export class MultiplePlots {
     this.context_hidden = hiddenCanvas.getContext("2d");
   }
 
-  getObjectIndex(x,y) {
+  getObjectIndex(x,y):number {
     var index = -1;
     for (let i=0; i<this.nbObjects; i++) {
       let isInObject = Shape.Is_in_rect(x, y, this.objectList[i].X, this.objectList[i].Y, this.sizes[i]['width'], this.sizes[i]['height']);
@@ -100,7 +105,7 @@ export class MultiplePlots {
     return index;
   }
 
-  ClearCanvas() {
+  ClearCanvas():void {
     this.context_show.beginPath();
     this.context_show.clearRect(0, 0, this.width, this.height);
     this.context_show.stroke();
@@ -111,7 +116,7 @@ export class MultiplePlots {
     this.context_hidden.closePath();
   }
 
-  RedrawMovingObject(mouse1X, mouse1Y, mouse2X, mouse2Y) {
+  RedrawMovingObject(mouse1X, mouse1Y, mouse2X, mouse2Y):void {
     this.ClearCanvas();
     for (let i=0; i<this.objectList.length; i++) {
       let obj = this.objectList[i];
@@ -124,11 +129,11 @@ export class MultiplePlots {
       }
     }
     if (this.buttons_ON) {
-      this.draw_translation_button();
+      this.draw_manipulation_button();
     }
   }
 
-  RedrawAllObjects() {
+  RedrawAllObjects():void {
     this.ClearCanvas();
     for (let i=0; i<this.objectList.length; i++) {
       let obj = this.objectList[i];
@@ -136,11 +141,11 @@ export class MultiplePlots {
       obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
     if (this.buttons_ON) {
-      this.draw_translation_button();
+      this.draw_manipulation_button();
     }
   }
 
-  isZwSelectBoolOn() {
+  isZwSelectBoolOn():boolean {
     for (let i=0; i<this.objectList.length; i++) {
       if ((this.objectList[i].zw_bool === true) || (this.objectList[i].select_bool === true)) {
         return true;
@@ -149,7 +154,7 @@ export class MultiplePlots {
     return false;
   }
 
-  TranslateSelectedObject(selected_index, tx, ty) {
+  TranslateSelectedObject(selected_index, tx, ty):void {
     var obj = this.objectList[selected_index]
     obj.X = this.initial_object_X + tx;
     obj.Y = this.initial_object_Y + ty;
@@ -157,23 +162,87 @@ export class MultiplePlots {
     // Shape.rect(obj.X, obj.Y, obj.width, obj.height, this.context_show, string_to_hex('lightblue'), 'white', 1, 0.5);
   }
 
-  InitializeObjectXY(selected_index) {
+  InitializeObjectXY(selected_index):void {
     this.initial_object_X = this.objectList[selected_index].X;
     this.initial_object_Y = this.objectList[selected_index].Y;
   }
-  SetAllInteractionsToOff() {
+  SetAllInteractionsToOff():void {
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].interaction_ON = false;
     }
   }
 
-  ClickOnVertex(mouse1X, mouse1Y) {
-    var object_index = -1;
-    var selected_vertex = '';
+  Initialize_ClickOnVertex(mouse1X, mouse1Y):[number, string, boolean] {
+    var rect_w = 6;
+    var rect_h = 6;
     for (let i=0; i<this.objectList.length; i++) {
       let obj_i = this.objectList[i];
-      // let upperLeft = Shape.Is_in_rect(mouse1X, mouse1Y, ) 
+      let upperLeft = Shape.Is_in_rect(mouse1X, mouse1Y, obj_i.X - rect_w/2, obj_i.Y - rect_h/2, rect_w, rect_h);
+      let upperRight = Shape.Is_in_rect(mouse1X, mouse1Y, obj_i.X + obj_i.width - rect_w/2, obj_i.Y - rect_h/2, rect_w, rect_h); 
+      let lowerLeft = Shape.Is_in_rect(mouse1X, mouse1Y, obj_i.X, obj_i.Y + obj_i.height - 1, 2, 2);
+      let lowerRight = Shape.Is_in_rect(mouse1X, mouse1Y, obj_i.X + obj_i.width - rect_w/2, obj_i.Y + obj_i.height - rect_h/2, rect_w, rect_h);
+      if (upperLeft === true) {
+        return [i, 'upperLeft', true];
+      } else if (upperRight === true) {
+        return [i, 'upperRight', true];
+      } else if (lowerLeft === true) {
+        return [i, 'lowerLeft', true];
+      } else if (lowerRight === true) {
+        return [i, 'lowerRight', true];
+      }
     }
+    return [-1, '', false]; //[vertex_object, index, selected_vertex, clickOnVertex];
+  }
+
+  initializeMouseXY(mouse1X, mouse1Y):void {
+    this.initial_mouseX = mouse1X;
+    this.initial_mouseY = mouse1Y;
+  }
+
+  initialize_object_hw(selected_index) {
+    this.initial_object_width = this.objectList[selected_index].width;
+    this.initial_object_height = this.objectList[selected_index].height;
+  } 
+
+  ResizeObject(vertex_object_index, selected_vertex, mouse2X, mouse2Y):void {
+    var obj:PlotData = this.objectList[vertex_object_index];
+    var deltaX = mouse2X - this.initial_mouseX;
+    var deltaY = mouse2Y - this.initial_mouseY;
+    if (selected_vertex == 'upperLeft') {
+      if (this.initial_object_width - deltaX>100) {
+        obj.X = this.initial_object_X + deltaX;
+        obj.width = this.initial_object_width - deltaX;
+      } else {
+        obj.width = 100;
+      }
+      if (this.initial_object_height - deltaY>100) {
+        obj.Y = this.initial_object_Y + deltaY;
+        obj.height = this.initial_object_height - deltaY;
+      } else {
+        obj.height = 100;
+      }
+    } else if (selected_vertex == 'upperRight') {
+      if (this.initial_object_width + deltaX>100) {obj.width = this.initial_object_width + deltaX;} else {obj.width = 100;}
+      if (this.initial_object_height - deltaY>100) {
+        obj.Y = this.initial_object_Y + deltaY;
+        obj.height = this.initial_object_height - deltaY;
+      } else {
+        obj.height = 100;
+      }
+    } else if (selected_vertex == 'lowerLeft') {
+      if (this.initial_object_width - deltaX>100) {
+        obj.X = this.initial_object_X + deltaX;
+        obj.width = this.initial_object_width - deltaX;
+      } else {
+        obj.width = 100;
+      }
+      if (this.initial_object_height + deltaY>100) {obj.height = this.initial_object_height + deltaY;} else {obj.height = 100;}    
+    } else {
+      obj.width = Math.max(this.initial_object_width + deltaX, 100);
+      obj.height = Math.max(this.initial_object_height + deltaY, 100);
+    }
+    
+    this.RedrawAllObjects();
   }
 
   mouse_interaction() {
@@ -187,6 +256,9 @@ export class MultiplePlots {
     var isDrawing = false;
     var mouse_moving:boolean = false;
     var objectSelected:boolean = false;
+    var vertex_object_index:number = -1;
+    var selected_vertex:string = '';
+    var clickOnVertex:boolean = false;
 
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
@@ -196,22 +268,38 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
-      if (this.translation_bool) {
+      if (this.manipulation_bool) {
         this.selected_index = this.getObjectIndex(mouse1X, mouse1Y);
         this.SetAllInteractionsToOff();
         if (this.selected_index != -1) {
           objectSelected = true;
           this.InitializeObjectXY(this.selected_index);
         }
-      } else {
-        //initialize click on vertex
+        [vertex_object_index, selected_vertex, clickOnVertex] = this.Initialize_ClickOnVertex(mouse1X, mouse1Y);
+        if (clickOnVertex) {
+          this.initializeMouseXY(mouse1X, mouse1Y);
+          this.InitializeObjectXY(vertex_object_index);
+          this.initialize_object_hw(vertex_object_index);
+        }
       }
     });
 
     canvas.addEventListener('mousemove', e => {
       mouse2X = e.offsetX;
       mouse2Y = e.offsetY;
-      if (!this.translation_bool) {
+      if (this.manipulation_bool) {
+        if (isDrawing) {
+          mouse_moving = true;
+          if ((this.selected_index != -1) && !(clickOnVertex)) {
+            this.SetAllInteractionsToOff();
+            let tx = mouse2X - mouse1X;
+            let ty = mouse2Y - mouse1Y;
+            this.TranslateSelectedObject(this.selected_index, tx, ty);
+          } else if (clickOnVertex) {
+            this.ResizeObject(vertex_object_index, selected_vertex, mouse2X, mouse2Y);
+          }
+        }
+      } else {
         this.selected_index = this.getObjectIndex(mouse2X, mouse2Y);
         if (this.selected_index != this.last_index) {
           for (let i=0; i<this.objectList.length; i++) {
@@ -223,19 +311,7 @@ export class MultiplePlots {
           }
           this.last_index = this.selected_index;
         }
-      }
-
-      if (isDrawing) {
-        mouse_moving = true;
-        if (this.translation_bool && (this.selected_index != -1)) {
-          this.SetAllInteractionsToOff();
-          let tx = mouse2X - mouse1X;
-          let ty = mouse2Y - mouse1Y;
-          this.TranslateSelectedObject(this.selected_index, tx, ty);
-        } else if (!this.translation_bool && !this.isZwSelectBoolOn()){
-          this.RedrawMovingObject(mouse1X, mouse1Y, mouse2X, mouse2Y);
-        }
-      }
+      } 
     });
 
     canvas.addEventListener('mouseup', e => {
@@ -243,7 +319,10 @@ export class MultiplePlots {
       mouse3Y = e.offsetY;
       var click_on_translation_button = Shape.Is_in_rect(mouse3X, mouse3Y, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
       if (click_on_translation_button) {
-        this.translation_bool = !this.translation_bool;
+        this.manipulation_bool = !this.manipulation_bool;
+      }
+      if (mouse_moving === false) {
+        this.clickedPlotIndex = this.getObjectIndex(mouse3X, mouse3Y);
       }
       this.RedrawAllObjects();
       isDrawing = false;

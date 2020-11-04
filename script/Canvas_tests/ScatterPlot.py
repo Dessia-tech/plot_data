@@ -73,13 +73,17 @@ tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=
 
 plot_datas = []
 point_list = []
+color_fills = [violet, blue, green, red, yellow, cyan, rose]
 for i in range(500):
     cx = random.uniform(0, 2)
     cy = random.uniform(0, 1)
-    point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=colorfill, color_stroke=colorstroke, stroke_width=strokewidth)
+    random_color_fill = color_fills[random.randint(0, len(color_fills) - 1)]
+    point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=colorstroke, stroke_width=strokewidth)
     point_list += [point]
 
-ScatterPlot = plot_data.Scatter(point_list=point_list, axis=axis, tooltip=tooltip)
+to_display_att_names = ['color_fill', 'cy']
+
+ScatterPlot = plot_data.Scatter(elements=point_list, axis=axis, tooltip=tooltip, to_display_att_names=to_display_att_names, point_shape=shape, point_size=size, color_fill=colorfill, color_stroke=colorstroke, stroke_width=strokewidth)
 plot_datas += [ScatterPlot]
 
 sol = [c.to_dict() for c in plot_datas]

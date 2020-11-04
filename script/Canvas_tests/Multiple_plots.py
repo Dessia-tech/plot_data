@@ -75,6 +75,11 @@ tp_radius = 5
 to_plot_list = ['cx', 'cy']
 opacity = 0.75
 
+#Scatter
+sc_color_fill = lightblue
+sc_color_stroke = grey
+sc_stroke_width = 0.5
+
 axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
                               graduation_color=graduation_color,
@@ -83,8 +88,8 @@ axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
 
 tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
                      tp_radius=tp_radius, to_plot_list=to_plot_list, opacity=opacity)
-
-ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip)
+to_disp_att_names = ['cx', 'cy']
+ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=to_disp_att_names, point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot)
 
 coords = [[0,450], [0,0]]

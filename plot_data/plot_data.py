@@ -208,9 +208,15 @@ class Graph2D(DessiaObject):
 
 
 class Scatter(DessiaObject):
-    def __init__(self, axis:Axis, tooltip:Tooltip, point_list=[],
+    def __init__(self, axis:Axis, tooltip:Tooltip, to_display_att_names, point_shape:str, point_size:float, color_fill:str, color_stroke:str, stroke_width:float, elements=[],
                  type: str = 'ScatterPlot', name: str = ''):
-        self.serialized_point_list = [p.to_dict() for p in point_list]
+        self.elements = elements
+        self.to_display_att_names = to_display_att_names
+        self.point_shape = point_shape
+        self.point_size = point_size
+        self.color_fill = color_fill
+        self.color_stroke = color_stroke
+        self.stroke_width = stroke_width
         self.axis = axis
         self.tooltip = tooltip
         self.type = type

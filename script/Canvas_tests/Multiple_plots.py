@@ -30,12 +30,6 @@ shape = 'circle'
 size = 2
 stroke_width = 1  # Points' stroke width
 # ParallelPlot
-attribute_list = [plot_data.Attribute(name='cx', type='float'),
-                  plot_data.Attribute(name='cy', type='float'),
-                  plot_data.Attribute(name='size', type='float'),
-                  plot_data.Attribute(name='color_fill', type='color'),
-                  plot_data.Attribute(name='color_stroke', type='color'),
-                  plot_data.Attribute(name='stroke_width', type='float')]
 to_disp_attributes = ['cx', 'cy', 'color_fill', 'color_stroke']
 line_color = black
 line_width = 0.5
@@ -54,7 +48,7 @@ for i in range(50):
     point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=random_color_stroke, stroke_width=stroke_width)
     points += [point]
 
-parallel_plot = plot_data.ParallelPlot(attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
+parallel_plot = plot_data.ParallelPlot(line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
 objects.append(parallel_plot)
 
 #Axis data
@@ -72,7 +66,6 @@ tp_colorfill = black
 text_color = white
 font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
 tp_radius = 5
-to_plot_list = ['cx', 'cy']
 opacity = 0.75
 
 #Scatter
@@ -86,9 +79,10 @@ axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
 
-tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
-                     tp_radius=tp_radius, to_plot_list=to_plot_list, opacity=opacity)
 to_disp_att_names = ['cx', 'cy']
+tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
+                     tp_radius=tp_radius, to_plot_list=to_disp_att_names, opacity=opacity)
+
 ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=to_disp_att_names, point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot)
 

@@ -59,7 +59,7 @@ tp_colorfill = black
 text_color = white
 font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
 tp_radius = 5
-to_plot_list = ['cx', 'cy']
+to_display_att_names = ['color_fill', 'cy']
 opacity = 0.75
 
 axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
@@ -69,7 +69,7 @@ axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_width=axis_width, grid_on=grid_on)
 
 tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
-                     tp_radius=tp_radius, to_plot_list=to_plot_list, opacity=opacity)
+                     tp_radius=tp_radius, to_plot_list=to_display_att_names, opacity=opacity)
 
 plot_datas = []
 point_list = []
@@ -80,8 +80,6 @@ for i in range(500):
     random_color_fill = color_fills[random.randint(0, len(color_fills) - 1)]
     point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=colorstroke, stroke_width=strokewidth)
     point_list += [point]
-
-to_display_att_names = ['color_fill', 'cy']
 
 ScatterPlot = plot_data.Scatter(elements=point_list, axis=axis, tooltip=tooltip, to_display_att_names=to_display_att_names, point_shape=shape, point_size=size, color_fill=colorfill, color_stroke=colorstroke, stroke_width=strokewidth)
 plot_datas += [ScatterPlot]

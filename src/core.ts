@@ -159,7 +159,6 @@ export class MultiplePlots {
     obj.X = this.initial_object_X + tx;
     obj.Y = this.initial_object_Y + ty;
     this.RedrawAllObjects();
-    // Shape.rect(obj.X, obj.Y, obj.width, obj.height, this.context_show, string_to_hex('lightblue'), 'white', 1, 0.5);
   }
 
   InitializeObjectXY(selected_index):void {
@@ -169,6 +168,13 @@ export class MultiplePlots {
   SetAllInteractionsToOff():void {
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].interaction_ON = false;
+    }
+  }
+
+  manipulable_bool_action() {
+    this.manipulation_bool = !this.manipulation_bool;
+    for (let i=0; i<this.objectList.length; i++) {
+      this.objectList[i].manipulable_ON = this.manipulation_bool;
     }
   }
 
@@ -313,7 +319,7 @@ export class MultiplePlots {
       mouse3Y = e.offsetY;
       var click_on_translation_button = Shape.Is_in_rect(mouse3X, mouse3Y, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
       if (click_on_translation_button) {
-        this.manipulation_bool = !this.manipulation_bool;
+        this.manipulable_bool_action();
       }
       if (mouse_moving === false) {
         this.clickedPlotIndex = this.getObjectIndex(mouse3X, mouse3Y);
@@ -370,6 +376,7 @@ export abstract class PlotData {
   interaction_ON:boolean = true;
   x_nb_digits:number = 0;
   y_nb_digits:number = 0;
+  manipulable_ON:boolean=false;
 
   plot_datas:any;
   tooltip_list:any[]=[];
@@ -398,6 +405,11 @@ export abstract class PlotData {
   graph1_button_w:number=0;
   graph1_button_h:number=0;
   nb_graph:number = 0;
+  mergeON:boolean=false;
+  merge_x:number=0;
+  merge_y:number=0;
+  merge_w:number=0;
+  merge_h:number=0;
   graph_colorlist:string[]=[];
   graph_name_list:string[]=[];
   graph_text_spacing_list:number[]=[];
@@ -405,10 +417,10 @@ export abstract class PlotData {
   decalage_axis_y = 20;
   last_point_list:any[]=[];
   scatter_point_list:PlotDataPoint2D[]=[];
+  scatter_init_points:PlotDataPoint2D[]=[];
   refresh_point_list_bool:boolean=true;
 
   displayable_attributes:Attribute[]=[];
-  hidden_axis:Attribute[]=[]
   axis_list:Attribute[]=[];
   to_display_list:any[]=[];
   parallel_plot_lineColor:string;
@@ -500,7 +512,9 @@ export abstract class PlotData {
   }
 
   draw_rect() {
-    Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', string_to_hex('black'), 1, 1);
+    if (this.manipulable_ON === false) {
+      Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', string_to_hex('grey'), 0.2, 1, []);
+    }
   }
 
   draw_empty_canvas(hidden) {
@@ -509,7 +523,11 @@ export abstract class PlotData {
     } else {
       this.context = this.context_show;
     }
-    this.context.clearRect(this.X, this.Y, this.width + 10, this.height + 10);
+    this.context.clearRect(this.X - 1, this.Y - 1, this.width + 2, this.height + 2);
+  }
+
+  draw_manipulable_rect() {
+    Shape.rect(this.X, this.Y, this.width, this.height, this.context, string_to_hex('lightblue'), string_to_hex('black'), 1, 0.3, [15,15]);
   }
 
   draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
@@ -611,10 +629,10 @@ export abstract class PlotData {
     this.context.fill();
   }
 
-  draw_tooltip(d, mvx, mvy) {
+  draw_tooltip(d, mvx, mvy, point_list, elements, mergeON) {
     if (d['type'] == 'tooltip') {
       this.tooltip_ON = true;
-      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, this.X, this.Y, this.x_nb_digits, this.y_nb_digits);
+      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, elements, mergeON);
     }
   }
 
@@ -665,20 +683,24 @@ export abstract class PlotData {
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
       this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
-      this.draw_tooltip(d.tooltip, mvx, mvy);
+      this.draw_tooltip(d.tooltip, mvx, mvy, d.point_list, d.point_list, false);
     } else if ((d['type'] == 'graph2D') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
       this.delete_tooltip(d.point_list);
       this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
-      this.draw_tooltip(d.tooltip, mvx, mvy);
+      this.draw_tooltip(d.tooltip, mvx, mvy, d.point_list, d.point_list, false);
     }
   }
 
   draw_scatterplot(d, hidden, mvx, mvy) {
     if (d['type'] == 'ScatterPlot') {
-      if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool){
+      if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         this.scatter_point_list = this.refresh_point_list(d.point_list,mvx,mvy);
         this.refresh_point_list_bool = false;
+      } else if (this.mergeON === false) {
+        if (!arrayEquals(this.scatter_point_list, d.point_list)) {
+          this.scatter_point_list = d.point_list;
+        }
       }
       if ((this.scroll_x%5 != 0) && (this.scroll_y%5 != 0)) {
         this.refresh_point_list_bool = true;
@@ -694,7 +716,7 @@ export abstract class PlotData {
         }
       }
       this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.toDisplayAttributes);
-      this.draw_tooltip(d.tooltip, mvx, mvy);
+      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_point_list, d.elements, this.mergeON);
     } 
   }
   
@@ -972,9 +994,9 @@ export abstract class PlotData {
           var real_maxY = this.axis_y_end + maxY*(this.axis_y_start - this.axis_y_end);
           var current_x = this.axis_x_start + i*this.x_step;
           if (i == this.move_index) {
-            Shape.rect(current_x - this.bandWidth/2 + mvx, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity);
+            Shape.rect(current_x - this.bandWidth/2 + mvx, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity, []);
           } else {
-            Shape.rect(current_x - this.bandWidth/2, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity);
+            Shape.rect(current_x - this.bandWidth/2, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity, []);
           }
         } else {
           var minX = this.rubber_bands[i][0];
@@ -983,9 +1005,9 @@ export abstract class PlotData {
           var real_maxX = this.axis_x_start + maxX*(this.axis_x_end - this.axis_x_start) + this.X;
           var current_y = this.axis_y_start + i*this.y_step;
           if (i == this.move_index) {
-            Shape.rect(real_minX, current_y - this.bandWidth/2 + mvx, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity);
+            Shape.rect(real_minX, current_y - this.bandWidth/2 + mvx, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity, []);
           } else {
-            Shape.rect(real_minX, current_y - this.bandWidth/2, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity);
+            Shape.rect(real_minX, current_y - this.bandWidth/2, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity, []);
           }
         }
       }
@@ -1026,16 +1048,6 @@ export abstract class PlotData {
     }
   }
 
-  refresh_hidden_axis() {
-    this.hidden_axis = [];
-    for (let i=0; i<this.displayable_attributes.length; i++) {
-      var attribute_i = this.displayable_attributes[i];
-      if (!is_include(attribute_i, this.axis_list)) {
-        this.hidden_axis.push(attribute_i);
-      }
-    }
-  }
-
   refresh_buttons_coords() {
     this.zoom_rect_x = this.width - 45;
     this.zoom_rect_y = 10;
@@ -1044,18 +1056,35 @@ export abstract class PlotData {
     this.zw_x = this.width - 45;
     this.zw_y = 70;
     this.zw_w = 35;
-    this.zw_h = 30;
+    this.zw_h = 20;
     this.reset_rect_x = this.width - 45;
-    this.reset_rect_y = 110;
+    this.reset_rect_y = 100;
     this.reset_rect_w = 35;
-    this.reset_rect_h = 30;
+    this.reset_rect_h = 20;
     this.select_x = this.width - 45;
-    this.select_y = 150;
+    this.select_y = 130;
     this.select_w = 35;
-    this.select_h = 30;
+    this.select_h = 20;
     this.graph1_button_y = 10;
     this.graph1_button_w = 30;
     this.graph1_button_h = 15;
+    this.merge_x = this.width - 50;
+    this.merge_y = 160;
+    this.merge_w = 45;
+    this.merge_h = 20;
+  }
+
+  refresh_AttributeDisplayed() {
+    for (let i=0; i<this.displayable_attributes.length; i++) {
+      let isDisplayed = false;
+      for (let j=0; j<this.axis_list.length; j++) {
+        if (this.displayable_attributes[i].name == this.axis_list[j].name) {
+          isDisplayed = true;
+          break;
+        }
+      }
+      this.displayable_attributes[i].displayed = isDisplayed;
+    }
   }
 
   add_to_axis_list(to_disp_attributes_names) {
@@ -1075,7 +1104,6 @@ export abstract class PlotData {
       }
     }
     this.add_to_axis_list([name]);
-    this.refresh_hidden_axis();
     this.refresh_axis_bounds(this.axis_list.length);
     this.rubber_bands.push([]);
     this.refresh_to_display_list(this.elements);
@@ -1095,7 +1123,6 @@ export abstract class PlotData {
       throw new Error('Cannot remove axis that is not displayed');
     }
     this.refresh_to_display_list(this.elements);
-    this.refresh_hidden_axis();
     this.rubber_bands = remove_at_index(i, this.rubber_bands);
     this.refresh_axis_bounds(this.axis_list.length);
     this.draw(false, 0, 0 ,0 ,0 ,0, this.X, this.Y);
@@ -1165,6 +1192,14 @@ export abstract class PlotData {
 
   disp_button(x, y, w, h, police) {
     Shape.createButton(x, y, w, h, this.context, 'Disp', police);
+  }
+
+  merge_button(x, y, w, h, police) {
+    if (this.mergeON) {
+      Shape.createButton(x + this.X, y + this.Y, w, h, this.context, 'mergeON', police);
+    } else {
+      Shape.createButton(x + this.X, y + this.Y, w, h, this.context, 'mergeOFF', police);
+    }
   }
 
   zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil) {
@@ -1241,8 +1276,20 @@ export abstract class PlotData {
     this.select_bool = false;
   }
 
+  reset_scatter_point_list() {
+    if (this.mergeON) {
+      this.scatter_point_list = this.refresh_point_list(this.scatter_init_points, this.last_mouse1X, this.last_mouse1Y);
+    }
+  }
+  reset_scroll() {
+    this.scroll_x = 0;
+    this.scroll_y = 0;
+  }
+
   click_on_reset_action() {
     this.Reset_scales();
+    this.reset_scroll();
+    this.reset_scatter_point_list();
   }
 
   click_on_selection_button_action() {
@@ -1259,6 +1306,10 @@ export abstract class PlotData {
       }
       text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
+  }
+
+  click_on_merge_action() {
+    this.mergeON = !this.mergeON;
   }
 
   invert_rubber_bands(index_list) {
@@ -1510,13 +1561,14 @@ export abstract class PlotData {
     var click_on_reset = Shape.Is_in_rect(mouse1X, mouse1Y, this.reset_rect_x + this.X, this.reset_rect_y + this.Y, this.reset_rect_w, this.reset_rect_h);
     var click_on_select = Shape.Is_in_rect(mouse1X, mouse1Y, this.select_x + this.X, this.select_y + this.Y, this.select_w, this.select_h);
     var click_on_graph = false;
+    var click_on_merge = Shape.Is_in_rect(mouse1X, mouse1Y, this.merge_x + this.X, this.merge_y + this.Y, this.merge_w, this.merge_h);
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
       var click_on_graph_i = Shape.Is_in_rect(mouse1X, mouse1Y, this.graph1_button_x + i*this.graph1_button_w + text_spacing_sum_i, this.graph1_button_y, this.graph1_button_w, this.graph1_button_h);
       click_on_graph = click_on_graph || click_on_graph_i;
       text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
-    var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph;
+    var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph || click_on_merge;
 
     if (mouse_moving) {
         if (this.zw_bool) {
@@ -1569,6 +1621,9 @@ export abstract class PlotData {
 
         } else if (click_on_graph) {
           this.graph_button_action(mouse1X, mouse1Y);
+
+        } else if (click_on_merge) {
+          this.click_on_merge_action();
         }
 
         this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -2183,7 +2238,7 @@ export class PlotScatter extends PlotData {
       var graphID = 0;
       for (var i = 0; i < data.length; i++) {
         var d = data[i]; 
-        var a;
+        var a:any;
         if (d['type'] == 'point') {
           a = PlotDataPoint2D.deserialize(d)
           if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
@@ -2220,7 +2275,9 @@ export class PlotScatter extends PlotData {
           this.plot_datas.push(a);
         } else if (d['type'] == 'ScatterPlot') {
           this.axis_ON = true;
+          this.mergeON = true;
           a = PlotDataScatter.deserialize(d);
+          this.scatter_init_points = a.point_list;
           for (var j=0; j<a.point_list.length; j++) {
             var point = a.point_list[j];
             if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
@@ -2245,7 +2302,6 @@ export class PlotScatter extends PlotData {
       this.draw_scatterplot(d, hidden, mvx, mvy);
       this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
       this.draw_axis(mvx, mvy, scaleX, scaleY, d);
-      this.draw_tooltip(d, mvx, mvy);
     }
     if (this.buttons_ON) {
       this.refresh_buttons_coords();
@@ -2263,7 +2319,14 @@ export class PlotScatter extends PlotData {
 
       //Drawing the enable/disable graph button
       this.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial');
-    } 
+
+      if (d.type == 'ScatterPlot') {
+        this.merge_button(this.merge_x, this.merge_y, this.merge_w, this.merge_h, '10px Arial');
+      }
+    }
+    if (this.manipulable_ON) {
+      this.draw_manipulable_rect();
+    }
   }
 }
 
@@ -2289,14 +2352,9 @@ export class ParallelPlot extends PlotData {
     } else {
       throw new Error('Axis disposition must be vertical or horizontal');
     }
-    // var serialized_displayable_attributes = data_show['displayable_attributes'];
-    // for (var i=0; i<serialized_displayable_attributes.length; i++){
-    //   this.displayable_attributes.push(Attribute.deserialize(serialized_displayable_attributes[i]));
-    // }
     this.initialize_displayable_attributes();
     this.initialize_attributes_list(); 
     this.add_to_axis_list(to_disp_attribute_names);
-    this.refresh_hidden_axis();
     this.initialize_data_lists();
     var nb_axis = this.axis_list.length;
     if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
@@ -2379,6 +2437,9 @@ export class ParallelPlot extends PlotData {
     if (this.buttons_ON) {
       this.refresh_pp_buttons_coords();
       this.disp_button(this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h, '10px Arial');
+    }
+    if (this.manipulable_ON) {
+      this.draw_manipulable_rect();
     }
   }
 
@@ -2589,6 +2650,21 @@ export class PlotDataPoint2D {
 
     copy() {
       return new PlotDataPoint2D(this.cx, this.cy, this.shape, this.point_size, this.color_fill, this.color_stroke, this.stroke_width, this.type, this.name);
+    }
+
+    equals(point:PlotDataPoint2D): boolean {
+      return (this.cx == point.cx) && (this.cy == point.cy) && (this.shape == point.shape)
+              && (this.size == point.size) && (this.color_fill == point.color_fill) && (this.color_stroke == point.color_stroke)
+              && (this.stroke_width == point.stroke_width);
+    }
+
+    getPointIndex(point:PlotDataPoint2D, point_list:PlotDataPoint2D[]) {
+      for (let i=0; i<point_list.length; i++) {
+        if (point.equals(point_list[i])) {
+          return i;
+        }
+      }
+      throw new Error('getPointIndex : not in list');
     }
 }
 
@@ -2840,80 +2916,114 @@ export class PlotDataTooltip {
                                   serialized['name']);
   }
 
-  isTooltipInsideCanvas(object, mvx, mvy, scaleX, scaleY, canvasWidth, canvasHeight) {
-    var x = scaleX*(1000*object.cx + mvx);
-    var y = scaleY*(1000*object.cy + mvy); 
-    var length = 100*object.size;
+  isTooltipInsideCanvas(point, mvx, mvy, scaleX, scaleY, canvasWidth, canvasHeight) {
+    var x = scaleX*(1000*point.cx + mvx);
+    var y = scaleY*(1000*point.cy + mvy); 
+    var length = 100*point.size;
     return (x+length>=0) && (x-length<=canvasWidth) && (y+length>=0) && (y-length<=canvasHeight);
   }
 
-  draw(context, object, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits) {
-    context.beginPath();
+  initialize_text_mergeOFF(context, x_nb_digits, elt): [string[], number] {
+    var textfills = [];
+    var text_max_length = 0;
+    for (let i=0; i<this.to_plot_list.length; i++) {
+      let attribute_name = this.to_plot_list[i];
+      let attribute_type = TypeOf(elt[attribute_name]);
+      if (attribute_type == 'float') {
+        var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], x_nb_digits);
+      } else if (attribute_type == 'color') {
+        text = attribute_name + ' : ' + rgb_to_string(elt[attribute_name]);
+      } else {
+        text = attribute_name + ' : ' + elt[attribute_name];
+      }
+      var text_w = context.measureText(text).width;
+      textfills.push(text);
+      if (text_w > text_max_length) {
+        text_max_length = text_w;
+      }
+    }
+    return [textfills, text_max_length];
+  }
+
+  initialize_text_mergeON(context, point, x_nb_digits, y_nb_digits): [string[], number] {
     var textfills = [];
     var text_max_length = 0;
     for (var i=0; i<this.to_plot_list.length; i++) {
       if (this.to_plot_list[i] == 'cx') {
-        var text = 'x : ' + MyMath.round(object.cx, x_nb_digits).toString();
-        var text_w = context.measureText(text).width;
+        var text = 'cx : ' + MyMath.round(point.cx, x_nb_digits).toString();
       } else if (this.to_plot_list[i] == 'cy') {
-        var text = 'y : ' + MyMath.round(-object.cy, y_nb_digits).toString();
-        var text_w = context.measureText(text).width;
-      } else if (this.to_plot_list[i] == 'shape') {
-        var text = 'shape : ' + object.plot_data_states[0]['shape_set']['shape'];
-        var text_w = context.measureText(text).width;
+        var text = 'cy : ' + MyMath.round(-point.cy, y_nb_digits).toString();
       }
+      var text_w = context.measureText(text).width;
       textfills.push(text);
-      if (text_w>text_max_length) {
+      if (text_w > text_max_length) {
         text_max_length = text_w;
       }
     }
-
-    var font_size = Number(this.font.split('px')[0]);
-    var tp_height = (textfills.length + 0.25)*font_size ;
-    var cx = object.cx;
-    var cy = object.cy;
-    var point_size = object.point_size;
-    var decalage = 2.5*point_size + 5
-    var tp_x = scaleX*(1000*cx + mvx) + decalage + X;
-    var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height + Y;
-    var tp_width = text_max_length + 25;
-
-    if (tp_x + tp_width  > canvas_width + X) {
-      tp_x = scaleX*(1000*cx + mvx) - decalage - tp_width + X;
-    }
-    if (tp_y < Y) {
-      tp_y = scaleY*(1000*cy + mvy) + Y;
-    }
-    if (tp_y + tp_height > canvas_height + Y) {
-      tp_y = scaleY*(1000*cy + mvy) - tp_height + Y;
-    }
-
-    Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tp_radius, context);
-    context.strokeStyle = 'black';
-    context.globalAlpha = this.opacity;
-    context.fillStyle = this.colorfill;
-    context.stroke();
-    context.fill();
-    context.fillStyle = this.text_color;
-    context.textAlign = 'start';
-    context.textBaseline = 'Alphabetic';
-
-    var x_start = tp_x + 1/10*tp_width;
-    context.font = this.font;
-
-    var current_y = tp_y + 0.75*font_size;
-    for (var i=0; i<textfills.length; i++) {
-      context.fillText(textfills[i], x_start, current_y);
-      current_y = current_y + font_size;
-    }
-    context.closePath();
-    context.globalAlpha = 1;
+    return [textfills, text_max_length];
   }
 
-  manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, X, Y, x_nb_digits, y_nb_digits) {
+  draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON) {
+    var textfills = [];
+    var text_max_length = 0;
+    if (mergeON === true) {
+      [textfills, text_max_length] = this.initialize_text_mergeON(context, point, x_nb_digits, y_nb_digits);
+    } else {
+      var index = point.getPointIndex(point, point_list);
+      var elt = elements[index];
+      [textfills, text_max_length] = this.initialize_text_mergeOFF(context, x_nb_digits, elt);
+    }
+    
+    if (textfills.length > 0) {
+      context.beginPath();
+      var font_size = Number(this.font.split('px')[0]);
+      var tp_height = (textfills.length + 0.25)*font_size ;
+      var cx = point.cx;
+      var cy = point.cy;
+      var point_size = point.point_size;
+      var decalage = 2.5*point_size + 5
+      var tp_x = scaleX*(1000*cx + mvx) + decalage + X;
+      var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height + Y;
+      var tp_width = text_max_length + 25;
+
+      if (tp_x + tp_width  > canvas_width + X) {
+        tp_x = scaleX*(1000*cx + mvx) - decalage - tp_width + X;
+      }
+      if (tp_y < Y) {
+        tp_y = scaleY*(1000*cy + mvy) + Y;
+      }
+      if (tp_y + tp_height > canvas_height + Y) {
+        tp_y = scaleY*(1000*cy + mvy) - tp_height + Y;
+      }
+
+      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tp_radius, context);
+      context.strokeStyle = 'black';
+      context.globalAlpha = this.opacity;
+      context.fillStyle = this.colorfill;
+      context.stroke();
+      context.fill();
+      context.fillStyle = this.text_color;
+      context.textAlign = 'start';
+      context.textBaseline = 'Alphabetic';
+
+      var x_start = tp_x + 1/10*tp_width;
+      context.font = this.font;
+
+      var current_y = tp_y + 0.75*font_size;
+      for (var i=0; i<textfills.length; i++) {
+        context.fillText(textfills[i], x_start, current_y);
+        current_y = current_y + font_size;
+      }
+      context.closePath();
+      context.globalAlpha = 1;
+    }
+    
+  }
+
+  manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON) {
     for (var i=0; i<tooltip_list.length; i++) {
       if (!(typeof tooltip_list[i] === "undefined") && this.isTooltipInsideCanvas(tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height)) {
-        this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits);
+        this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON);
       }
     }
   }
@@ -2962,6 +3072,7 @@ export class PlotDataGraph2D {
 }
 
 export class PlotDataScatter {
+
   point_list:PlotDataPoint2D[]=[];
   displayableAttributes:Attribute[]=[];
   lists:any[]=[];
@@ -3145,6 +3256,7 @@ export class PlotDataArc2D {
 export class Attribute {
   list:any[];
   alias:string;
+  displayed:boolean;
   constructor(public name:string,
               public type:string) {}
   
@@ -3398,8 +3510,9 @@ export class Shape {
     context.closePath();
   }
 
-  public static rect(x, y, w, h, context, colorfill, colorstroke, linewidth, opacity) {
+  public static rect(x, y, w, h, context, colorfill, colorstroke, linewidth, opacity, dashline) {
     context.beginPath();
+    context.setLineDash(dashline);
     context.fillStyle = colorfill;
     context.strokeStyle = colorstroke;
     context.lineWidth = linewidth;
@@ -3409,6 +3522,7 @@ export class Shape {
     context.stroke();
     context.closePath();
     context.globalAlpha = 1;
+    context.setLineDash([]);
   }
 }
 

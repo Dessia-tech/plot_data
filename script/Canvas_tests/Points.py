@@ -66,12 +66,12 @@ to_plot_list = ['cx', 'cy']
 opacity = 0.75
 
 plot_datas = []
-window_size = plot_data.WindowSizeSet(width=width, height=height)
+window_size = plot_data.Window(width=width, height=height)
 shape_set = plot_data.PointShapeSet(shape=shape)
 point_size = plot_data.PointSizeSet(size=size)
 point_color = plot_data.PointColorSet(color_fill=color_fill,
                                       color_stroke=color_stroke)
-for i in range(50):
+for i in range(500):
     cx = random.uniform(0,window_size.width)
     cy = random.uniform(0,window_size.height)
     point = plot_data.Point2D(cx=cx, cy=cy, shape=shape, size=size, color_fill=violet, color_stroke=color_stroke, stroke_width=stroke_width)

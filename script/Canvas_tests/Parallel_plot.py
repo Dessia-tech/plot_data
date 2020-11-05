@@ -70,7 +70,7 @@ for i in range(50):
     elements += [point]
 
 
-parallel_plot = plot_data.ParallelPlot(elements=elements, attribute_list=attribute_list, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
+parallel_plot = plot_data.ParallelPlot(elements=elements, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
 
 sol = [parallel_plot.to_dict()]
 os.remove("data.json")

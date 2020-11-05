@@ -22,6 +22,14 @@ export class MultiplePlots {
   initial_object_height:number=0;
   initial_mouseX:number=0;
   initial_mouseY:number=0;
+  initRectColorStroke:string=string_to_hex('grey');
+  initRectLinewidth:number=0.2;
+  initRectDashline:number[]=[];
+  manipRectColorfill:string=string_to_hex('lightblue');
+  manipRectColorstroke:string=string_to_hex('black');
+  manipRectLinewidth:number=1;
+  manipRectOpacity:number=0.3;
+  manipRectDashline:number[]=[15,15];
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
     var data_show = data[0];
@@ -52,6 +60,9 @@ export class MultiplePlots {
       } else {
         throw new Error('Invalid object type');
       }
+    }
+    this.refresh_manipulable_rect();
+    for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].draw_initial();
     }
     this.mouse_interaction();
@@ -80,6 +91,19 @@ export class MultiplePlots {
   initializeObjectContext(object):void {
     object.context_show = this.context_show;
     object.context_hidden = this.context_hidden;
+  }
+
+  refresh_manipulable_rect() {
+    for (let i=0; i<this.objectList.length; i++) {
+      this.objectList[i].initRectColorStroke = this.initRectColorStroke;
+      this.objectList[i].initRectLinewidth = this.initRectLinewidth;
+      this.objectList[i].initRectDashline = this.initRectDashline;
+      this.objectList[i].manipRectColorfill = this.manipRectColorfill;
+      this.objectList[i].manipRectColorstroke = this.manipRectColorstroke;
+      this.objectList[i].manipRectLinewidth = this.manipRectLinewidth;
+      this.objectList[i].manipRectOpacity = this.manipRectOpacity;
+      this.objectList[i].manipRectDashline = this.manipRectDashline;
+    }
   }
 
   define_canvas():void {
@@ -193,6 +217,34 @@ export class MultiplePlots {
     return [-1, false, false, false, false, false]; 
   }
 
+  setCursorStyle(mouse2X, mouse2Y, canvas) {
+    var thickness = 15;
+    var up = false;
+    var down = false;
+    var left = false;
+    var right = false;
+    for (let i=0; i<this.objectList.length; i++) {
+      let obj_i = this.objectList[i];
+      up = Shape.Is_in_rect(mouse2X, mouse2Y, obj_i.X - thickness/2, obj_i.Y - thickness/2, obj_i.width + thickness, thickness);
+      down = Shape.Is_in_rect(mouse2X, mouse2Y, obj_i.X - thickness/2, obj_i.Y + obj_i.height - thickness/2, obj_i.width + thickness, thickness); 
+      left = Shape.Is_in_rect(mouse2X, mouse2Y, obj_i.X - thickness/2, obj_i.Y - thickness/2, thickness, obj_i.height + thickness);
+      right = Shape.Is_in_rect(mouse2X, mouse2Y, obj_i.X + obj_i.width - thickness/2, obj_i.Y - thickness/2, thickness, obj_i.height + thickness);
+      if (up || down || left || right) {
+        break;
+      }
+    }
+    var resize_style = '';
+    if (up) {resize_style = resize_style + 'n';}
+    if (down) {resize_style = resize_style + 's';}
+    if (left) {resize_style = resize_style + 'w';}
+    if (right) {resize_style = resize_style + 'e';}
+    if (resize_style == '') {
+      canvas.style.cursor = 'default';
+    } else {
+      canvas.style.cursor = resize_style + '-resize';
+    }
+  }
+
   initializeMouseXY(mouse1X, mouse1Y):void {
     this.initial_mouseX = mouse1X;
     this.initial_mouseY = mouse1Y;
@@ -252,12 +304,11 @@ export class MultiplePlots {
     var mouse3Y:number = 0;
     var isDrawing = false;
     var mouse_moving:boolean = false;
-    var objectSelected:boolean = false;
     var vertex_object_index:number = -1;
-    var up:boolean = false;
-    var down:boolean = false;
-    var left:boolean = false;
-    var right:boolean = false;
+    var clickUp:boolean = false;
+    var clickDown:boolean = false;
+    var clickLeft:boolean = false;
+    var clickRight:boolean = false;
     var clickOnVertex:boolean = false;
 
     for (let i=0; i<this.objectList.length; i++) {
@@ -272,10 +323,9 @@ export class MultiplePlots {
         this.selected_index = this.getObjectIndex(mouse1X, mouse1Y);
         this.SetAllInteractionsToOff();
         if (this.selected_index != -1) {
-          objectSelected = true;
           this.InitializeObjectXY(this.selected_index);
         }
-        [vertex_object_index, clickOnVertex, up, down, left, right] = this.Initialize_ClickOnVertex(mouse1X, mouse1Y);
+        [vertex_object_index, clickOnVertex, clickUp, clickDown, clickLeft, clickRight] = this.Initialize_ClickOnVertex(mouse1X, mouse1Y);
         if (clickOnVertex) {
           this.initializeMouseXY(mouse1X, mouse1Y);
           this.InitializeObjectXY(vertex_object_index);
@@ -294,10 +344,13 @@ export class MultiplePlots {
             this.SetAllInteractionsToOff();
             let tx = mouse2X - mouse1X;
             let ty = mouse2Y - mouse1Y;
+            canvas.style.cursor = 'move';
             this.TranslateSelectedObject(this.selected_index, tx, ty);
           } else if (clickOnVertex) {
-            this.ResizeObject(vertex_object_index, up, down, left, right, mouse2X, mouse2Y);
+            this.ResizeObject(vertex_object_index, clickUp, clickDown, clickLeft, clickRight, mouse2X, mouse2Y);
           }
+        } else {
+          this.setCursorStyle(mouse2X, mouse2Y, canvas);
         }
       } else {
         this.selected_index = this.getObjectIndex(mouse2X, mouse2Y);
@@ -327,7 +380,6 @@ export class MultiplePlots {
       this.RedrawAllObjects();
       isDrawing = false;
       mouse_moving = false;
-      objectSelected = false;
     });
     
     canvas.addEventListener('wheel', e => {
@@ -450,6 +502,15 @@ export abstract class PlotData {
   gradSize:number=10;
   axisNbGrad:number=10;
 
+  initRectColorStroke:string;
+  initRectLinewidth:number;
+  initRectDashline:number[];
+  manipRectColorfill:string;
+  manipRectColorstroke:string;
+  manipRectLinewidth:number;
+  manipRectOpacity:number;
+  manipRectDashline:number[];
+
 
   public constructor(public data:any, 
     public width: number,
@@ -513,7 +574,7 @@ export abstract class PlotData {
 
   draw_rect() {
     if (this.manipulable_ON === false) {
-      Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', string_to_hex('grey'), 0.2, 1, []);
+      Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', this.initRectColorStroke, this.initRectLinewidth, 1, this.initRectDashline);
     }
   }
 
@@ -527,7 +588,7 @@ export abstract class PlotData {
   }
 
   draw_manipulable_rect() {
-    Shape.rect(this.X, this.Y, this.width, this.height, this.context, string_to_hex('lightblue'), string_to_hex('black'), 1, 0.3, [15,15]);
+    Shape.rect(this.X, this.Y, this.width, this.height, this.context, this.manipRectColorfill, this.manipRectColorstroke, this.manipRectLinewidth, this.manipRectOpacity, this.manipRectDashline);
   }
 
   draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
@@ -1256,8 +1317,7 @@ export abstract class PlotData {
     this.scaleY = this.scaleY*1.2;
     this.last_mouse1X = this.last_mouse1X - (this.width/(2*old_scaleX) - this.width/(2*this.scaleX));
     this.last_mouse1Y = this.last_mouse1Y - (this.height/(2*old_scaleY) - this.height/(2*this.scaleY));
-    this.scroll_x = 0;
-    this.scroll_y = 0;
+    this.reset_scroll();
   }
 
   zoom_out_button_action() {
@@ -1267,8 +1327,7 @@ export abstract class PlotData {
     this.scaleY = this.scaleY/1.2;
     this.last_mouse1X = this.last_mouse1X - (this.width/(2*old_scaleX) - this.width/(2*this.scaleX));
     this.last_mouse1Y = this.last_mouse1Y - (this.height/(2*old_scaleY) - this.height/(2*this.scaleY));
-    this.scroll_x = 0;
-    this.scroll_y = 0;
+    this.reset_scroll();
   }
 
   click_on_zoom_window_action() {
@@ -1284,6 +1343,7 @@ export abstract class PlotData {
   reset_scroll() {
     this.scroll_x = 0;
     this.scroll_y = 0;
+    this.refresh_point_list_bool = true;
   }
 
   click_on_reset_action() {
@@ -1505,36 +1565,45 @@ export abstract class PlotData {
     return [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing];
   }
 
-  mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e) {
-    if ((isDrawing === true) && !(this.zw_bool||this.select_bool)) {
-      mouse_moving = true;
-      mouse2X = e.offsetX;
-      mouse2Y = e.offsetY;
-      this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
-      this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
-    } else if ((isDrawing === true) && (this.zw_bool||this.select_bool)) {
-      mouse_moving = true;
-      mouse2X = e.offsetX;
-      mouse2Y = e.offsetY;
-      this.context_show.setLineDash([]);
-      this.context_hidden.setLineDash([]);
-      this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-      this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-      this.context_show.beginPath();
-      this.context_show.lineWidth = 1;
-      this.context_show.strokeStyle = 'black';
-      this.context_show.setLineDash([5,5]);
-      this.context_show.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
-      this.context_show.stroke();
-      this.context_show.closePath();
-      this.context_hidden.beginPath();
-      this.context_hidden.lineWidth = 1;
-      this.context_hidden.strokeStyle = 'black';
-      this.context_hidden.setLineDash([5,5]);
-      this.context_hidden.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
-      this.context_hidden.stroke();
-      this.context_hidden.closePath();
+  mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas) {
+    if (isDrawing === true) {
+      if (!(this.zw_bool||this.select_bool)) {
+        canvas.style.cursor = 'move';
+        mouse_moving = true;
+        mouse2X = e.offsetX;
+        mouse2Y = e.offsetY;
+        this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
+      } else {
+        canvas.style.cursor = 'crosshair';
+        mouse_moving = true;
+        mouse2X = e.offsetX;
+        mouse2Y = e.offsetY;
+        this.context_show.setLineDash([]);
+        this.context_hidden.setLineDash([]);
+        this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.context_show.beginPath();
+        this.context_show.lineWidth = 1;
+        this.context_show.strokeStyle = 'black';
+        this.context_show.setLineDash([5,5]);
+        this.context_show.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
+        this.context_show.stroke();
+        this.context_show.closePath();
+        this.context_hidden.beginPath();
+        this.context_hidden.lineWidth = 1;
+        this.context_hidden.strokeStyle = 'black';
+        this.context_hidden.setLineDash([5,5]);
+        this.context_hidden.rect(mouse1X, mouse1Y, mouse2X - mouse1X, mouse2Y - mouse1Y);
+        this.context_hidden.stroke();
+        this.context_hidden.closePath();
+      }
     } else {
+      if (this.zw_bool||this.select_bool) {
+        canvas.style.cursor = 'crosshair';
+      } else {
+        canvas.style.cursor = 'default';
+      }
       var mouseX = e.offsetX;
       var mouseY = e.offsetY;
       var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
@@ -1547,6 +1616,7 @@ export abstract class PlotData {
     if (!is_inside_canvas) {
       isDrawing = false;
       mouse_moving = false;
+      canvas.style.cursor = 'default';
     }
     return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
@@ -1918,7 +1988,7 @@ export abstract class PlotData {
             [click_on_axis, selected_axis_index] = this.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis);
             [click_on_name, selected_name_index] = this.initialize_click_on_name(this.axis_list.length, mouse1X, mouse1Y);
             [click_on_band, click_on_border, selected_band_index, selected_border] = this.initialize_click_on_bands(mouse1X, mouse1Y);
-        }
+          }
         }
       });
 
@@ -1938,7 +2008,7 @@ export abstract class PlotData {
               }
             }
           } else {
-            [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e);
+            [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas);
           }
         }
       });

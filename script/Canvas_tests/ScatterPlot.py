@@ -38,6 +38,7 @@ brown = 'rgb(205, 143, 64)'
 lightbrown = 'rgb(222, 184, 135)'
 grey = 'rgb(169, 169, 169)'
 lightgrey = 'rgb(211, 211, 211)'
+lightskyblue = 'rgb(135,206,250)'
 
 # Points' color
 colorfill = lightblue

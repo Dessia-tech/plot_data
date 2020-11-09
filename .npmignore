@@ -1,1 +1,11 @@
 “files”: [“lib/**/*”]
+/plot_data
+/script
+/src
+.drone.yml
+.prettierrc
+CHANGELOG.md
+ISSUE_TEMPLATE.md
+setup.py
+tsconfig.json
+tslint.json

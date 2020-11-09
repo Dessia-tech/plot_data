@@ -16,6 +16,11 @@ export class MultiplePlots {
   transbutton_y:number=0;
   transbutton_w:number=0;
   transbutton_h:number=0;
+  selectDependency_bool:boolean=false;
+  selectDep_x:number=0;
+  selectDep_y:number=0;
+  selectDep_w:number=0;
+  selectDep_h:number=0;
   initial_object_X:number=0;
   initial_object_Y:number=0;
   initial_object_width:number=0;
@@ -62,6 +67,7 @@ export class MultiplePlots {
     if (buttons_ON) {
       this.initializeButtons();
       this.draw_manipulation_button();
+      this.draw_selection_dependency_button();
     }
   }
 
@@ -70,6 +76,10 @@ export class MultiplePlots {
     this.transbutton_y = 10;
     this.transbutton_w = 35;
     this.transbutton_h = 25;
+    this.selectDep_x = this.width - 50;
+    this.selectDep_y = 40;
+    this.selectDep_w = 40;
+    this.selectDep_h = 20;
   }
 
   draw_manipulation_button():void {
@@ -77,6 +87,14 @@ export class MultiplePlots {
       Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, 'True', '12px sans-serif');
     } else {
       Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, 'False', '12px sans-serif');
+    }
+  }
+
+  draw_selection_dependency_button():void {
+    if (this.selectDependency_bool === true) {
+      Shape.createButton(this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h, this.context_show, "Dep ON", '10px sans-serif');
+    } else {
+      Shape.createButton(this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h, this.context_show, "Dep OFF", '10px sans-serif');
     }
   }
 
@@ -119,23 +137,6 @@ export class MultiplePlots {
     this.context_hidden.closePath();
   }
 
-  RedrawMovingObject(mouse1X, mouse1Y, mouse2X, mouse2Y):void {
-    this.ClearCanvas();
-    for (let i=0; i<this.objectList.length; i++) {
-      let obj = this.objectList[i];
-      if (i == this.selected_index) {
-        obj.draw(false, 0, obj.last_mouse1X + mouse2X/obj.scaleX - mouse1X/obj.scaleX, obj.last_mouse1Y + mouse2Y/obj.scaleY - mouse1Y/obj.scaleY, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        obj.draw(false, 0, obj.last_mouse1X + mouse2X/obj.scaleX - mouse1X/obj.scaleX, obj.last_mouse1Y + mouse2Y/obj.scaleY - mouse1Y/obj.scaleY, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      } else {
-        obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      }
-    }
-    if (this.buttons_ON) {
-      this.draw_manipulation_button();
-    }
-  }
-
   RedrawAllObjects():void {
     this.ClearCanvas();
     for (let i=0; i<this.objectList.length; i++) {
@@ -145,6 +146,7 @@ export class MultiplePlots {
     }
     if (this.buttons_ON) {
       this.draw_manipulation_button();
+      this.draw_selection_dependency_button();
     }
   }
 
@@ -179,6 +181,7 @@ export class MultiplePlots {
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].manipulable_ON = this.manipulation_bool;
     }
+    this.selectDependency_bool = false;
   }
 
   Initialize_ClickOnVertex(mouse1X, mouse1Y):[number, boolean, boolean, boolean, boolean, boolean] { //[vertex_object_index, clickOnVertex, up, down, left, right]
@@ -273,6 +276,83 @@ export class MultiplePlots {
     this.RedrawAllObjects();
   }
 
+  selectDep_action():void {
+    this.selectDependency_bool = !this.selectDependency_bool;
+    this.manipulation_bool = false;
+    for (let i=0; i<this.objectList.length; i++) {
+      this.objectList[i].manipulable_ON = this.manipulation_bool;
+    }
+  }
+
+  getSelectionONObject():number {
+    for (let i=0; i<this.objectList.length; i++) {
+      if (this.objectList[i].isSelecting === true) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  Dependency_rubberbands_draw(selection_coords:[number, number][], toDisplayAttributes:Attribute[]):void {
+    for (let i=0; i<selection_coords.length; i++) {
+      for (let j=0; j<this.nbObjects; j++) {
+        if (this.objectList[j]['type'] == 'ParallelPlot') {
+          let obj = this.objectList[j];
+          for (let k=0; k<obj.axis_list.length; k++) {
+            if (toDisplayAttributes[i]['name'] == obj.axis_list[k]['name']) {
+              obj.add_to_rubberbands(selection_coords[i], toDisplayAttributes[i], k);
+              obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+              obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
+    this.selected_index = this.getObjectIndex(mouse2X, mouse2Y);
+    if (this.selected_index != this.last_index) {
+      for (let i=0; i<this.objectList.length; i++) {
+        if (i == this.selected_index) {
+          this.objectList[i].interaction_ON = true;
+        } else {
+          this.objectList[i].interaction_ON = false;
+        }
+      }
+      this.last_index = this.selected_index;
+    }
+  }
+
+  get_drawing_rubberbands_obj_index():number {
+    for (let i=0; i<this.nbObjects; i++) {
+      if (this.objectList[i].isDrawing_rubber_band === true) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  Dependency_scatter_selection(rubberbands_dep:[string, [number, number]][]) {
+    for (let i=0; i<this.nbObjects; i++) {
+      var obj:PlotData = this.objectList[i];
+      var axis_numbers:number[] = [];
+      if (obj.type == 'ScatterPlot') {
+        var to_select:[string, [number, number]][] = [];
+        for (let j=0; j<rubberbands_dep.length; j++) {
+          for (let k=0; k<obj.plotObject.toDisplayAttributes.length; k++) {
+            if (rubberbands_dep[j][0] == obj.plotObject.toDisplayAttributes[k]['name']) {
+              to_select.push(rubberbands_dep[j]);
+              axis_numbers.push(k);
+            }
+          }
+        }
+        obj.dep_scatter_selection(to_select, axis_numbers);
+      }
+      
+    }
+  }
+
   mouse_interaction() {
     var canvas = document.getElementById('canvas');
     var mouse1X:number = 0;
@@ -332,16 +412,22 @@ export class MultiplePlots {
           this.setCursorStyle(mouse2X, mouse2Y, canvas);
         }
       } else {
-        this.selected_index = this.getObjectIndex(mouse2X, mouse2Y);
-        if (this.selected_index != this.last_index) {
-          for (let i=0; i<this.objectList.length; i++) {
-            if (i == this.selected_index) {
-              this.objectList[i].interaction_ON = true;
-            } else {
-              this.objectList[i].interaction_ON = false;
-            }
+        this.manage_mouse_interactions(mouse2X, mouse2Y);
+        if ((this.selectDependency_bool) && (isDrawing)) {
+          let isSelectingObjIndex = this.getSelectionONObject();
+          if (isSelectingObjIndex != -1) {
+            let isSelectingScatter = this.objectList[isSelectingObjIndex];
+            let selection_coords = isSelectingScatter.selection_coords;
+            let toDisplayAttributes:Attribute[] = isSelectingScatter.plotObject.toDisplayAttributes;
+            this.Dependency_rubberbands_draw(selection_coords, toDisplayAttributes);
           }
-          this.last_index = this.selected_index;
+
+           let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index();
+           if (isDrawingRubberObjIndex != -1) {
+             let isDrawingPP = this.objectList[isDrawingRubberObjIndex];
+             let rubberbands_dep = isDrawingPP.rubberbands_dep;
+             this.Dependency_scatter_selection(rubberbands_dep);
+           }
         }
       } 
     });
@@ -350,8 +436,11 @@ export class MultiplePlots {
       mouse3X = e.offsetX;
       mouse3Y = e.offsetY;
       var click_on_translation_button = Shape.Is_in_rect(mouse3X, mouse3Y, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
+      var click_on_selectDep_button = Shape.Is_in_rect(mouse3X, mouse3Y, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
       if (click_on_translation_button) {
         this.manipulable_bool_action();
+      } else if (click_on_selectDep_button) {
+        this.selectDep_action();
       }
       if (mouse_moving === false) {
         this.clickedPlotIndex = this.getObjectIndex(mouse3X, mouse3Y);
@@ -373,6 +462,7 @@ export class MultiplePlots {
 }
 
 export abstract class PlotData {
+  type:string;
   context_show:any;
   context_hidden:any;
   context:any;
@@ -410,7 +500,7 @@ export abstract class PlotData {
   manipulable_ON:boolean=false;
   fusion_coeff:number=1.2;
 
-  plot_datas:any;
+  plotObject:any;
   tooltip_list:any[]=[];
   zoom_rect_x:number=0;
   zoom_rect_y:number=0;
@@ -492,6 +582,10 @@ export abstract class PlotData {
   manipRectOpacity:number=0.3;
   manipRectDashline:number[]=[15,15];
 
+  isSelecting:boolean=false;
+  selection_coords:[number, number][]=[];
+  isDrawing_rubber_band:boolean=false;
+  rubberbands_dep:[string, [number, number]][]=[];
 
   public constructor(public data:any, 
     public width: number,
@@ -528,7 +622,22 @@ export abstract class PlotData {
 
   }
 
-  Reset_scales(){
+  refresh_MinMax():void {
+    this.minX = this.plotObject.point_list[0].minX;
+    this.maxX = this.plotObject.point_list[0].maxX;
+    this.minY = this.plotObject.point_list[0].minY;
+    this.maxY = this.plotObject.point_list[0].maxY;
+    for (var j=0; j<this.plotObject.point_list.length; j++) {
+      var point = this.plotObject.point_list[j];
+      this.minX = Math.min(this.minX, point.minX);
+      this.maxX = Math.max(this.maxX, point.maxX);
+      this.minY = Math.min(this.minY, point.minY);
+      this.maxY = Math.max(this.maxY, point.maxY);
+      this.colour_to_plot_data[point.mouse_selection_color] = point;
+    }
+  }
+
+  Reset_scales() {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
     if ((this.axis_ON) && !(this.graph_ON)) {
@@ -929,6 +1038,24 @@ export abstract class PlotData {
     } else {
       this.draw_horizontal_parallel_axis(nb_axis, mv);
     }
+  }
+
+  add_to_rubberbands(coordinates:[number, number], attribute, index):void {
+    var attribute_type = attribute['type'];
+    if (this.vertical) {
+      var real_min = this.get_coord_on_parallel_plot(attribute_type, this.axis_list[index]['list'], coordinates[0], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[index]);
+      var real_max = this.get_coord_on_parallel_plot(attribute_type, this.axis_list[index]['list'], coordinates[1], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[index]);
+      var ext1 = Math.min(Math.max((real_max - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), 0), 1);
+      var ext2 = Math.min(Math.max((real_min - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), 0), 1);
+    } else {
+      var real_min = this.get_coord_on_parallel_plot(attribute_type, this.axis_list[index]['list'], coordinates[0], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[index]);
+      var real_max = this.get_coord_on_parallel_plot(attribute_type, this.axis_list[index]['list'], coordinates[1], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[index]);
+      var ext1 = Math.min(Math.max((real_min - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), 0), 1);
+      var ext2 = Math.min(Math.max((real_max - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), 0), 1);
+    }
+    var min = Math.min(ext1, ext2);
+    var max = Math.max(ext1, ext2);
+    this.rubber_bands[index] = [min, max];
     
   }
 
@@ -1056,6 +1183,52 @@ export abstract class PlotData {
     }
   }
 
+  dep_scatter_selection(to_select:[string, [number, number]][], axis_numbers:number[]):void {
+    var new_select_on_click = [];
+    if (to_select.length == 1) {
+      var to_select_name = to_select[0][0];
+      var min = to_select[0][1][0];
+      var max = to_select[0][1][1];
+      for (let i=0; i<this.scatter_point_list.length; i++) {
+        if (axis_numbers[0] == 0) {
+          var bool = (this.scatter_point_list[i][to_select_name] >= min) && (this.scatter_point_list[i][to_select_name] <= max);
+        } else {
+          var bool = (-this.scatter_point_list[i][to_select_name] >= min) && (-this.scatter_point_list[i][to_select_name] <= max)
+        }
+        if (bool === true) {
+          new_select_on_click.push(this.scatter_point_list[i]);
+        }
+      }
+      this.select_on_click = new_select_on_click;
+    } else if (to_select.length == 2) {
+      var to_select_name1 = to_select[0][0];
+      var to_select_name2 = to_select[1][0];
+      var min1 = to_select[0][1][0];
+      var max1 = to_select[0][1][1];
+      var min2 = to_select[1][1][0];
+      var max2 = to_select[1][1][1];
+      for (let i=0; i<this.scatter_point_list.length; i++) {
+        let point = this.scatter_point_list[i];
+        if (axis_numbers[0] == 0) {
+          var bool1 = (point[to_select_name1] >= min1) && (point[to_select_name1] <= max1);
+        } else {
+          var bool1 = (-point[to_select_name1] >= min1) && (-point[to_select_name1] <= max1);
+        }
+        if (axis_numbers[1] == 0) {
+          var bool2 = (point[to_select_name2] >= min2) && (point[to_select_name2] <= max2);
+        } else {
+          var bool2 = (-point[to_select_name2] >= min2) && (-point[to_select_name2] <= max2);
+        }
+        if (bool1 && bool2) {
+          new_select_on_click.push(point);
+        } 
+      }
+      this.select_on_click = new_select_on_click;
+    }
+    this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  }
+
   refresh_to_display_list(elements) {
     this.to_display_list = [];
     for (var i=0; i<elements.length; i++) {
@@ -1130,7 +1303,23 @@ export abstract class PlotData {
     }
   }
 
-  add_to_axis_list(to_disp_attributes_names) {
+  refresh_displayable_attributes():void {
+    var new_displayable_attributes:Attribute[] = [];
+    for (let i=0; i<this.axis_list.length; i++) {
+      for (let j=0; j<this.displayable_attributes.length; j++) {
+        if (this.axis_list[i].name == this.displayable_attributes[j].name) {
+          new_displayable_attributes.push(this.displayable_attributes[j]);
+          this.displayable_attributes = remove_at_index(j, this.displayable_attributes);
+        }
+      }
+    }
+    for (let i=0; i<this.displayable_attributes.length; i++) {
+      new_displayable_attributes.push(this.displayable_attributes[i]);
+    }
+    this.displayable_attributes = new_displayable_attributes;
+  }
+
+  add_to_axis_list(to_disp_attributes_names:string[]) {
     for (let i=0; i<to_disp_attributes_names.length; i++) {
       for (let j=0; j<this.displayable_attributes.length; j++) {
         if (to_disp_attributes_names[i] == this.displayable_attributes[j]['name']) {
@@ -1140,7 +1329,7 @@ export abstract class PlotData {
     }
   }
 
-  add_axis_to_parallelplot(name:string) { //Adding a new axis to the plot and redraw the canvas
+  add_axis_to_parallelplot(name:string):void { //Adding a new axis to the plot and redraw the canvas
     for (let i=0; i<this.axis_list.length; i++) {
       if (name == this.axis_list[i]['name']) {
         throw new Error('Cannot add an attribute that is already displayed');
@@ -1148,13 +1337,14 @@ export abstract class PlotData {
     }
     this.add_to_axis_list([name]);
     this.refresh_axis_bounds(this.axis_list.length);
+    this.refresh_displayable_attributes();
     this.refresh_attribute_booleans();
     this.rubber_bands.push([]);
     this.refresh_to_display_list(this.elements);
     this.draw(false, 0, 0 ,0 ,0 ,0, this.X, this.Y);
   }
 
-  remove_axis_from_parallelplot(name:string) { //Remove an existing axis and redraw the canvas
+  remove_axis_from_parallelplot(name:string) { //Remove an existing axis and redraw the whole canvas
     var is_in_axislist = false;
     for (var i=0; i<this.axis_list.length; i++) {
       if (this.axis_list[i]['name'] == name) {
@@ -1170,7 +1360,61 @@ export abstract class PlotData {
     this.refresh_to_display_list(this.elements);
     this.rubber_bands = remove_at_index(i, this.rubber_bands);
     this.refresh_axis_bounds(this.axis_list.length);
+    this.refresh_displayable_attributes();
+    this.refresh_attribute_booleans();
     this.draw(false, 0, 0 ,0 ,0 ,0, this.X, this.Y);
+  }
+
+  get_scatterplot_displayed_axis():Attribute[] {
+    return this.plotObject.toDisplayAttributes;
+  }
+
+  get_scatterplot_displayable_axis():Attribute[] {
+    return this.plotObject.displayableAttributes;
+  }
+
+  set_scatterplot_x_axis(attribute_name:string):void {
+    var isAttributeInList:boolean = false;
+    var attribute:Attribute;
+    for (let i=0; i<this.plotObject.displayableAttributes.length; i++) {
+      if (this.plotObject.displayableAttributes[i].name == attribute_name) {
+        isAttributeInList = true;
+        attribute = this.plotObject.displayableAttributes[i];
+      }
+    }
+    if (isAttributeInList === false) {
+      throw new Error('Attribute not found');
+    }
+    this.plotObject.toDisplayAttributes[0] = attribute;
+    this.plotObject.initialize_lists();
+    this.plotObject.initialize_point_list();
+    this.refresh_MinMax();
+    this.Reset_scales();
+    if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
+    this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  }
+
+  set_scatterplot_y_axis(attribute_name:string):void {
+    var isAttributeInList:boolean = false;
+    var attribute:Attribute;
+    for (let i=0; i<this.plotObject.displayableAttributes.length; i++) {
+      if (this.plotObject.displayableAttributes[i].name == attribute_name) {
+        isAttributeInList = true;
+        attribute = this.plotObject.displayableAttributes[i];
+      }
+    }
+    if (isAttributeInList === false) {
+      throw new Error('Attribute not found');
+    }
+    this.plotObject.toDisplayAttributes[1] = attribute;
+    this.plotObject.initialize_lists();
+    this.plotObject.initialize_point_list();
+    this.refresh_MinMax();
+    this.Reset_scales();
+    if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
+    this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
   zoom_button(x, y, w, h) {
@@ -1265,31 +1509,29 @@ export abstract class PlotData {
   selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y) {
     this.context_show.setLineDash([]);
     this.context_hidden.setLineDash([]);
-    for (var i=0; i<this.plot_datas.length; i++) {
-      var d = this.plot_datas[i];
-      var in_rect = Shape.Is_in_rect(this.scaleX*(1000*d.cx + this.last_mouse1X),this.scaleY*(1000*d.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
-      if ((d['type']=="point") && (in_rect === true) && !(is_include(d, this.select_on_click))) {
-        this.select_on_click.push(d);
-      } else if (d['type'] == 'graph2D') {
-        for (var j=0; j<d.point_list.length; j++) {
-          var x = this.scaleX*(1000*d.point_list[j].cx + this.last_mouse1X) + this.X;
-          var y = this.scaleY*(1000*d.point_list[j].cy + this.last_mouse1Y) + this.Y;
-          in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
-          if ((in_rect===true) && !(is_include(d.point_list[j], this.select_on_click))) {
-            this.select_on_click.push(d.point_list[j]);
-          }
+    var in_rect = Shape.Is_in_rect(this.scaleX*(1000*this.plotObject.cx + this.last_mouse1X),this.scaleY*(1000*this.plotObject.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+    if ((this.plotObject['type']=="point") && (in_rect === true) && !(is_include(this.plotObject, this.select_on_click))) {
+      this.select_on_click.push(this.plotObject);
+    } else if (this.plotObject['type'] == 'graph2D') {
+      for (var j=0; j<this.plotObject.point_list.length; j++) {
+        var x = this.scaleX*(1000*this.plotObject.point_list[j].cx + this.last_mouse1X) + this.X;
+        var y = this.scaleY*(1000*this.plotObject.point_list[j].cy + this.last_mouse1Y) + this.Y;
+        in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+        if ((in_rect===true) && !(is_include(this.plotObject.point_list[j], this.select_on_click))) {
+          this.select_on_click.push(this.plotObject.point_list[j]);
         }
-      } else if (d['type'] == 'ScatterPlot') {
-        for (var j=0; j<this.scatter_point_list.length; j++) {
-          var x = this.scaleX*(1000*this.scatter_point_list[j].cx + this.last_mouse1X) + this.X;
-          var y = this.scaleY*(1000*this.scatter_point_list[j].cy + this.last_mouse1Y) + this.Y;
-          in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
-          if ((in_rect===true) && !(is_include(this.scatter_point_list[j], this.select_on_click))) {
-            this.select_on_click.push(this.scatter_point_list[j]);
-          }
+      }
+    } else if (this.plotObject['type'] == 'ScatterPlot') {
+      for (var j=0; j<this.scatter_point_list.length; j++) {
+        var x = this.scaleX*(1000*this.scatter_point_list[j].cx + this.last_mouse1X) + this.X;
+        var y = this.scaleY*(1000*this.scatter_point_list[j].cy + this.last_mouse1Y) + this.Y;
+        in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+        if ((in_rect===true) && !(is_include(this.scatter_point_list[j], this.select_on_click))) {
+          this.select_on_click.push(this.scatter_point_list[j]);
         }
       }
     }
+    
     this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
@@ -1374,6 +1616,13 @@ export abstract class PlotData {
     }
   }
 
+  convert_axis_to_real_coords(x:number, real_min:number, real_max:number):number {
+    if ((x<0) || (x>1)) {
+      throw new Error('convert_axis_to_real_coords() : x must be a number between 0 and 1');
+    }
+    return (1-x)*real_max + x*real_min;
+  }
+
   change_disposition_action() {
     this.vertical = !this.vertical;
     this.refresh_axis_bounds(this.axis_list.length);
@@ -1382,23 +1631,37 @@ export abstract class PlotData {
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
+  add_to_rubberbands_dep(selection:[string, [number, number]]):void {
+    for (let i=0; i<this.rubberbands_dep.length; i++) {
+      if (this.rubberbands_dep[i][0] == selection[0]) {
+        this.rubberbands_dep[i] = selection;
+        return;
+      }
+    }
+    this.rubberbands_dep.push(selection);
+  }
+
   create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e) {
     var mouse2X = e.offsetX;
     var mouse2Y = e.offsetY;
-    var isDrawing_rubber_band = true;
+    this.isDrawing_rubber_band = true;
     if (this.vertical) {
-      var minY = Math.max(Math.min((mouse1Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), (mouse2Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end)), 0);
-      var maxY = Math.min(Math.max((mouse1Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), (mouse2Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end)), 1);
-      this.rubber_bands[selected_axis_index] = [minY, maxY];
+      var min = Math.max(Math.min((mouse1Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), (mouse2Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end)), 0);
+      var max = Math.min(Math.max((mouse1Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), (mouse2Y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end)), 1);
     } else {
-      var minX = Math.max(Math.min((mouse1X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), (mouse2X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start)), 0);
-      var maxX = Math.min(Math.max((mouse1X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), (mouse2X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start)), 1);
-      this.rubber_bands[selected_axis_index] = [minX, maxX];
-      console.log(minX, maxX)
+      var min = Math.max(Math.min((mouse1X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), (mouse2X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start)), 0);
+      var max = Math.min(Math.max((mouse1X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), (mouse2X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start)), 1);
     }
+    this.rubber_bands[selected_axis_index] = [min, max];
+    var realCoord_min = this.convert_axis_to_real_coords(min, this.axis_list[selected_axis_index]['list'][0], this.axis_list[selected_axis_index]['list'][1]);
+    var realCoord_max = this.convert_axis_to_real_coords(max, this.axis_list[selected_axis_index]['list'][0], this.axis_list[selected_axis_index]['list'][1]);
+    var real_min = Math.min(realCoord_min, realCoord_max);
+    var real_max = Math.max(realCoord_min, realCoord_max);
+    
+    this.add_to_rubberbands_dep([this.axis_list[selected_axis_index]['name'], [real_min, real_max]]);
     this.draw(false, 0, 0, 0, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY, this.X, this.Y);
-    return [isDrawing_rubber_band, mouse2X, mouse2Y];
+    return [mouse2X, mouse2Y];
   }
 
   rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e) {
@@ -1560,6 +1823,14 @@ export abstract class PlotData {
         this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
         this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
       } else {
+        if (this.select_bool) {
+          this.isSelecting = true;
+          let abs_min = 1/1000 * ((Math.min(mouse1X, mouse2X) - this.X)/this.scaleX - this.last_mouse1X);
+          let abs_max = 1/1000 * ((Math.max(mouse1X, mouse2X) - this.X)/this.scaleX - this.last_mouse1X);
+          let ord_min = -1/1000 * ((Math.max(mouse1Y, mouse2Y) - this.Y)/this.scaleY - this.last_mouse1Y);
+          let ord_max = -1/1000 * ((Math.min(mouse1Y, mouse2Y) - this.Y)/this.scaleY - this.last_mouse1Y);
+          this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
+        }
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
         mouse2X = e.offsetX;
@@ -1685,6 +1956,7 @@ export abstract class PlotData {
       }
       var isDrawing = false;
       mouse_moving = false;
+      this.isSelecting = false;
       return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 
@@ -1882,6 +2154,7 @@ export abstract class PlotData {
     var mvx = 0;
     var mvy = 0;
     this.refresh_to_display_list(this.elements);
+    this.refresh_displayable_attributes(); //No need to refresh attribute_booleans as inverting axis doesn't affect its values
     this.draw(false, 0, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(true, 0, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
     return [mouse3X, mouse3Y, click_on_axis]
@@ -1906,6 +2179,11 @@ export abstract class PlotData {
       }
     } else if ((this.rubber_bands[selected_axis_index].length != 0) && !click_on_band && !click_on_border) {
       this.rubber_bands[selected_axis_index] = [];
+      for (let i=0; i<this.rubberbands_dep.length; i++) {
+        if (this.rubberbands_dep[i][0] == this.axis_list[selected_axis_index]['name']) {
+          this.rubberbands_dep = remove_at_index(i, this.rubberbands_dep);
+        }
+      }
     }
       this.draw(false, 0, 0, 0, this.scaleX, this.scaleY, this.X, this.Y);
       this.draw(true, 0, 0, 0, this.scaleX, this.scaleY, this.X, this.Y);
@@ -1917,12 +2195,11 @@ export abstract class PlotData {
     }
     this.draw(false, 0, 0, 0, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(true, 0, 0, 0, this.scaleX, this.scaleY, this.X, this.Y);
-    var isDrawing_rubber_band = false;
     var is_resizing = false;
-    return [isDrawing_rubber_band, is_resizing];
+    return is_resizing;
   }
  
-  mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, isDrawing_rubber_band, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
+  mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
     var mouseX = e.offsetX;
     var mouseY = e.offsetY;
     var click_on_disp = Shape.Is_in_rect(mouseX, mouseY, this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h);
@@ -1932,15 +2209,16 @@ export abstract class PlotData {
       [mouse3X, mouse3Y, click_on_axis] = this.mouse_up_axis_interversion(mouse1X, mouse1Y, e);
     } else if (click_on_name && !mouse_moving) {
       this.select_title_action(selected_name_index);
-    } else if (isDrawing_rubber_band || is_resizing) {
-      [isDrawing_rubber_band, is_resizing] = this.rubber_band_size_check(selected_axis_index);
+    } else if (this.isDrawing_rubber_band || is_resizing) {
+      is_resizing = this.rubber_band_size_check(selected_axis_index);
     }
     if(click_on_disp) {
       this.change_disposition_action();
     } 
+    this.isDrawing_rubber_band = false;
     mouse_moving = false;
     isDrawing = false;
-    return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, isDrawing_rubber_band, is_resizing];
+    return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing];
   }
 
   mouse_interaction(parallelplot:boolean) {
@@ -1961,7 +2239,6 @@ export abstract class PlotData {
       var click_on_border:boolean = false;
       var selected_band_index:number = -1;
       var selected_border:number[]=[];
-      var isDrawing_rubber_band:boolean=false;
       var is_resizing:boolean=false;
 
       var canvas = document.getElementById('canvas');
@@ -1985,7 +2262,7 @@ export abstract class PlotData {
               if (click_on_name) {
                 [mouse2X, mouse2Y, isDrawing, mouse_moving] = this.mouse_move_axis_inversion(isDrawing, e, selected_name_index);
               } else if (click_on_axis && !click_on_band && !click_on_border) {
-                [isDrawing_rubber_band, mouse2X, mouse2Y] = this.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e);
+                [mouse2X, mouse2Y] = this.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e);
               } else if (click_on_band) {
                 [mouse2X, mouse2Y] = this.rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e);
               } else if (click_on_border) {
@@ -2001,7 +2278,7 @@ export abstract class PlotData {
       canvas.addEventListener('mouseup', e => {
         if (this.interaction_ON) {
           if (parallelplot) {
-            [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, isDrawing_rubber_band, is_resizing] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, isDrawing_rubber_band, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
+            [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
           } else {
             [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
           }
@@ -2289,59 +2566,57 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
-      this.plot_datas = [];
       var graphID = 0;
       for (var i = 0; i < data.length; i++) {
         var d = data[i]; 
-        var a:any;
         if (d['type'] == 'point') {
-          a = PlotDataPoint2D.deserialize(d)
-          if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
-          if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
-          if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
-          if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
-          this.colour_to_plot_data[a.mouse_selection_color] = a;
-          this.plot_datas.push(a);
+          this.type = 'point';
+          this.plotObject = PlotDataPoint2D.deserialize(d)
+          if (isNaN(this.minX)) {this.minX = this.plotObject.minX} else {this.minX = Math.min(this.minX, this.plotObject.minX)};
+          if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX)};
+          if (isNaN(this.minY)) {this.minY = this.plotObject.minY} else {this.minY = Math.min(this.minY, this.plotObject.minY)};
+          if (isNaN(this.maxY)) {this.maxY = this.plotObject.maxY} else {this.maxY = Math.max(this.maxY, this.plotObject.maxY)};
+          this.colour_to_plot_data[this.plotObject.mouse_selection_color] = this.plotObject;
         
         } else if (d['type'] == 'axis') {
+          this.type = 'axis';
           this.axis_ON = true;
-          a = PlotDataAxis.deserialize(d);
-          this.plot_datas.push(a);
+          this.plotObject = PlotDataAxis.deserialize(d);
         } else if (d['type'] == 'tooltip') {
-          a = PlotDataTooltip.deserialize(d);
-          this.plot_datas.push(a);
+          this.type = 'tooltip';
+          this.plotObject = PlotDataTooltip.deserialize(d);
         } else if (d['type'] == 'graph2D') {
+          this.type = 'graph2D';
           this.graph_ON = true;
           this.axis_ON = true;
-          a = PlotDataGraph2D.deserialize(d);
-          a.id = graphID;
+          this.plotObject = PlotDataGraph2D.deserialize(d);
+          this.plotObject.id = graphID;
           graphID++;
-          this.graph_colorlist.push(a.point_list[0].color_fill);
+          this.graph_colorlist.push(this.plotObject.point_list[0].color_fill);
           this.graph_to_display.push(true);
-          this.graph_name_list.push(a.name);
-          for (var j=0; j<a.point_list.length; j++) {
-            var point = a.point_list[j];
+          this.graph_name_list.push(this.plotObject.name);
+          for (var j=0; j<this.plotObject.point_list.length; j++) {
+            var point = this.plotObject.point_list[j];
             if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
             if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
             if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
             if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
             this.colour_to_plot_data[point.mouse_selection_color] = point;
           }
-          this.plot_datas.push(a);
         } else if (d['type'] == 'ScatterPlot') {
+          this.type = 'ScatterPlot';
           this.axis_ON = true;
           this.mergeON = true;
-          a = PlotDataScatter.deserialize(d);
-          this.scatter_init_points = a.point_list;
-          for (var j=0; j<a.point_list.length; j++) {
-            var point = a.point_list[j];
+          this.plotObject = PlotDataScatter.deserialize(d);
+          this.scatter_init_points = this.plotObject.point_list;
+          for (var j=0; j<this.plotObject.point_list.length; j++) {
+            var point = this.plotObject.point_list[j];
             if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
             if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
             if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
             if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
             this.colour_to_plot_data[point.mouse_selection_color] = point;
           }
-          this.plot_datas.push(a);
         }
       }
       this.nb_graph = graphID;
@@ -2351,13 +2626,11 @@ export class PlotScatter extends PlotData {
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
     this.draw_empty_canvas(hidden);
     this.draw_rect();
-    for (var i = 0; i < this.plot_datas.length; i++) {
-      var d = this.plot_datas[i];
-      this.draw_graph2D(d, hidden, mvx, mvy);
-      this.draw_scatterplot(d, hidden, mvx, mvy);
-      this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
-      this.draw_axis(mvx, mvy, scaleX, scaleY, d);
-    }
+    this.draw_graph2D(this.plotObject, hidden, mvx, mvy);
+    this.draw_scatterplot(this.plotObject, hidden, mvx, mvy);
+    this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, this.plotObject);
+    this.draw_axis(mvx, mvy, scaleX, scaleY, this.plotObject);
+    
     if (this.buttons_ON) {
       this.refresh_buttons_coords();
       //Drawing the zooming button 
@@ -2375,7 +2648,7 @@ export class PlotScatter extends PlotData {
       //Drawing the enable/disable graph button
       this.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial');
 
-      if (d.type == 'ScatterPlot') {
+      if (this.plotObject.type == 'ScatterPlot') {
         this.merge_button(this.merge_x, this.merge_y, this.merge_w, this.merge_h, '10px Arial');
       }
     }
@@ -2387,8 +2660,10 @@ export class PlotScatter extends PlotData {
 
 
 export class ParallelPlot extends PlotData {
+
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y);
+    this.type = 'ParallelPlot';
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
       this.disp_y = this.height - 25;
@@ -2396,7 +2671,7 @@ export class ParallelPlot extends PlotData {
       this.disp_h = 20;
     }
     var data_show = data[0];
-    this.parallel_plot_lineColor = data_show['line_color'];
+    this.parallel_plot_lineColor = rgb_to_hex(data_show['line_color']);
     this.parallel_plot_linewidth = data_show['line_width'];
     this.elements = data_show['elements'];
     var to_disp_attribute_names = data_show['to_disp_attributes'];
@@ -2863,13 +3138,23 @@ export class PlotDataAxis {
     //Axis
     Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
     Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
+    
+    context.fillStyle = this.graduation_color;
+    context.strokeStyle = this.axis_color;
+    context.font = 'bold 20px Arial';
+    context.textAlign = 'end';
+    context.fillText(toDisplayAttributes[0]['name'], axis_x_end - 5, axis_y_end - 10);
+    context.textAlign = 'start';
+    context.fillText(toDisplayAttributes[1]['name'], axis_x_start + 5, axis_y_start + 10)
 
     context.stroke();
 
+    //Axis name
+
+
     //Graduations
     context.font = this.font_size.toString() + 'px Arial';
-    context.fillStyle = this.graduation_color;
-    context.strokeStyle = this.axis_color;
+    
     this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[0], toDisplayAttributes[0], scroll_x, X);
     this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[1], toDisplayAttributes[1], scroll_y, Y);
     context.stroke();
@@ -3204,6 +3489,7 @@ export class PlotDataScatter {
   }
 
   initialize_lists() {
+    this.lists = [];
     for (let i=0; i<this.toDisplayAttributes.length; i++) {
       var value = [];
       var name = this.toDisplayAttributes[i].name;
@@ -3242,9 +3528,10 @@ export class PlotDataScatter {
   }
 
   initialize_point_list() {
+    this.point_list = [];
     for (let i=0; i<this.elements.length; i++) {
-      var elt0 = this.elements[i][this.toDispAttNames[0]];
-      var elt1 = this.elements[i][this.toDispAttNames[1]];
+      var elt0 = this.elements[i][this.toDisplayAttributes[0]['name']];
+      var elt1 = this.elements[i][this.toDisplayAttributes[1]['name']];
       if (this.toDisplayAttributes[0]['type'] == 'float') {
         var cx = elt0;
       } else if (this.toDisplayAttributes[0]['type'] == 'color') {
@@ -3889,7 +4176,7 @@ export function getExtremum(list:number[]):[number, number] {
   return [min, max];
 }
 
-export function get_index_of_element(val, list) {
+export function get_index_of_element(val:any, list:any[]):number {
   if (!is_include(val, list)) {throw new Error('cannot get index of element')};
   for (var i=0; i<list.length; i++) {
     if (val == list[i]) {

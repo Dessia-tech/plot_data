@@ -501,6 +501,7 @@ export abstract class PlotData {
   fusion_coeff:number=1.2;
 
   plotObject:any;
+  plot_datas:object={};
   tooltip_list:any[]=[];
   zoom_rect_x:number=0;
   zoom_rect_y:number=0;
@@ -1502,17 +1503,17 @@ export abstract class PlotData {
 
   zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil) {
     this.context_show.setLineDash([]);
-          this.context_hidden.setLineDash([]);
-          var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
-          var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
-          if ((this.scaleX*zoom_coeff_x < scale_ceil) && (this.scaleY*zoom_coeff_y < scale_ceil)) {
-            this.last_mouse1X = this.last_mouse1X - Math.min(mouse1X - this.X, mouse2X - this.X)/this.scaleX;
-            this.last_mouse1Y = this.last_mouse1Y - Math.min(mouse1Y - this.Y,mouse2Y - this.Y)/this.scaleY;
-            this.scaleX = this.scaleX*zoom_coeff_x;
-            this.scaleY = this.scaleY*zoom_coeff_y;
-            this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-            this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-          }
+    this.context_hidden.setLineDash([]);
+    var zoom_coeff_x = this.width/Math.abs(mouse2X - mouse1X);
+    var zoom_coeff_y = this.height/Math.abs(mouse2Y - mouse1Y);
+    if ((this.scaleX*zoom_coeff_x < scale_ceil) && (this.scaleY*zoom_coeff_y < scale_ceil)) {
+      this.last_mouse1X = this.last_mouse1X - Math.min(mouse1X - this.X, mouse2X - this.X)/this.scaleX;
+      this.last_mouse1Y = this.last_mouse1Y - Math.min(mouse1Y - this.Y,mouse2Y - this.Y)/this.scaleY;
+      this.scaleX = this.scaleX*zoom_coeff_x;
+      this.scaleY = this.scaleY*zoom_coeff_y;
+      this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+      this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    }
   }
 
   selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y) {
@@ -2584,13 +2585,12 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
-      var graphID = 0;
       for (var i = 0; i < data.length; i++) {
         var d = data[i]; 
-        console.log(d)
         if (d['type'] == 'point') {
           this.type = 'point';
-          this.plotObject = PlotDataPoint2D.deserialize(d)
+          this.plotObject = PlotDataPoint2D.deserialize(d);
+          this.plot_datas['value'] = [this.plotObject];
           if (isNaN(this.minX)) {this.minX = this.plotObject.minX} else {this.minX = Math.min(this.minX, this.plotObject.minX)};
           if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX)};
           if (isNaN(this.minY)) {this.minY = this.plotObject.minY} else {this.minY = Math.min(this.minY, this.plotObject.minY)};
@@ -2609,6 +2609,7 @@ export class PlotScatter extends PlotData {
           this.graph_ON = true;
           this.axis_ON = true;
           this.plotObject = Graphs2D.deserialize(d);
+          this.plot_datas['value'] = this.plotObject.graphs;
           for (let i=0; i<this.plotObject.graphs.length; i++) {
             let graph = this.plotObject.graphs[i];
             this.graph_colorlist.push(graph.point_list[0].color_fill);
@@ -2630,6 +2631,7 @@ export class PlotScatter extends PlotData {
           this.axis_ON = true;
           this.mergeON = true;
           this.plotObject = PlotDataScatter.deserialize(d);
+          this.plot_datas['value'] = [this.plotObject];
           this.scatter_init_points = this.plotObject.point_list;
           for (var j=0; j<this.plotObject.point_list.length; j++) {
             var point = this.plotObject.point_list[j];
@@ -2706,13 +2708,13 @@ export class ParallelPlot extends PlotData {
     this.initialize_displayable_attributes();
     this.initialize_attributes_list(); 
     this.add_to_axis_list(to_disp_attribute_names);
-    this.refresh_attribute_booleans();
     this.initialize_data_lists();
     var nb_axis = this.axis_list.length;
     if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
     this.refresh_axis_bounds(nb_axis);
     this.refresh_to_display_list(this.elements);
     this.refresh_displayable_attributes();
+    this.refresh_attribute_booleans();
     this.isParallelPlot = true;
   }
 

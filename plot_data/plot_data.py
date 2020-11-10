@@ -182,6 +182,11 @@ class Tooltip(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name=name)
 
+class Graphs2D(DessiaObject):
+    def __init__(self, graphs, type: str = 'graphs2D', name: str = ''):
+        self.graphs = graphs
+        self.type = type
+        DessiaObject.__init__(self, name=name)
 
 class Graph2D(DessiaObject):
     def __init__(self, dashline: List[float],
@@ -192,12 +197,6 @@ class Graph2D(DessiaObject):
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
         self.graph_linewidth = graph_linewidth
-        self.serialized_segments = []
-        for k in range(len(point_list) - 1):
-            data = [point_list[k].cx, point_list[k].cy, point_list[k + 1].cx,
-                    point_list[k + 1].cy]
-            segment = PlotDataLine2D(data, [PlotDataState()])
-            self.serialized_segments.append(segment.to_dict())
         self.display_step = display_step
         if display_step is None:
             self.display_step = 1

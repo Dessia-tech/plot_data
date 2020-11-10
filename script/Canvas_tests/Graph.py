@@ -28,7 +28,7 @@ lightgrey = 'rgb(211, 211, 211)'
 lightskyblue = 'rgb(135,206,250)'
 
 # PlotDataState
-plot_datas = []
+graphs = []
 surface_color = black
 stroke_width = 0.5  # Points' stroke width
 
@@ -79,7 +79,7 @@ while k < 20 * np.pi:
     k = k + np.pi/20
 
 graph = plot_data.Graph2D(point_list=point_list, dashline=dashline, graph_colorstroke=graph_colorstroke, graph_linewidth=graph_linewidth, display_step=display_step, axis=axis, tooltip=tooltip, name='Graph 1')
-plot_datas += [graph]
+graphs += [graph]
 
 point_list1 = []
 k = 0
@@ -89,7 +89,7 @@ while k < 20 * np.pi:
     point_list1.append(point)
     k = k + np.pi/20
 graph1 = plot_data.Graph2D(point_list=point_list1, dashline=[10,10], graph_colorstroke=red, graph_linewidth=0.5, display_step=display_step, axis=axis, tooltip=tooltip, name='Graph 2')
-plot_datas += [graph1]
+graphs += [graph1]
 
 
 point_list2 = []
@@ -100,9 +100,11 @@ while k < 20 * np.pi:
     point_list2.append(point)
     k = k + np.pi/20
 graph2 = plot_data.Graph2D(point_list=point_list2, dashline=[5, 3, 1, 3], graph_colorstroke=blue, graph_linewidth=0.5, display_step=display_step, axis=axis, tooltip=tooltip, name='Graph 3')
-plot_datas += [graph2]
+graphs += [graph2]
 
-sol = [c.to_dict() for c in plot_datas]
+graphs2D = plot_data.Graphs2D(graphs=graphs)
+
+sol = [graphs2D.to_dict()]
 # plot_data.plot_d3(sol)
 
 

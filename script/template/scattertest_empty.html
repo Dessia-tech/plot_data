@@ -17,8 +17,10 @@
   	var D3Data = 
 	var number_plot_data = D3Data.length
 
-	var plot_data = new PlotScatter(D3Data, width, height, 1000);
+	var plot_data = new PlotScatter(D3Data, width, height, 1000, true, 0, 0);
+	plot_data.define_canvas();
 	plot_data.draw_initial();
+	plot_data.mouse_interaction(plot_data.isParallelPlot); //true if parallel plot, false otherwise
 
 
 </script>

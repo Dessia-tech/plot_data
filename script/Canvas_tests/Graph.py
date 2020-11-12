@@ -45,7 +45,8 @@ grid_on = True
 # Tooltip
 colorfill = black
 text_color = white
-font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
+tl_fontsize = 12  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
+tl_fontstyle = 'sans-serif'
 tp_radius = 5
 to_plot_list = ['cx', 'cy']
 opacity = 0.75
@@ -70,7 +71,7 @@ axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
 
-tooltip = plot_data.Tooltip(colorfill=colorfill,text_color=text_color, font=font,
+tooltip = plot_data.Tooltip(colorfill=colorfill,text_color=text_color, fontsize=tl_fontsize, fontstyle=tl_fontstyle,
                      tp_radius=tp_radius, to_plot_list=to_plot_list, opacity=opacity)
 
 while k < 20 * np.pi:
@@ -78,7 +79,7 @@ while k < 20 * np.pi:
     point_list.append(point)
     k = k + np.pi/20
 
-graph = plot_data.Graph2D(point_list=point_list, dashline=dashline, graph_colorstroke=graph_colorstroke, graph_linewidth=graph_linewidth, display_step=display_step, axis=axis, tooltip=tooltip, name='Graph 1')
+graph = plot_data.Graph2D(point_list=point_list, dashline=dashline, graph_colorstroke=graph_colorstroke, graph_linewidth=graph_linewidth, display_step=display_step, tooltip=tooltip, name='Graph 1')
 graphs += [graph]
 
 point_list1 = []
@@ -88,7 +89,7 @@ while k < 20 * np.pi:
     point = plot_data.Point2D(k, np.sin(k + np.pi/3), size=graph_point_size, shape='square', color_fill=green, color_stroke=orange, stroke_width=point_strokewidth)
     point_list1.append(point)
     k = k + np.pi/20
-graph1 = plot_data.Graph2D(point_list=point_list1, dashline=[10,10], graph_colorstroke=red, graph_linewidth=0.5, display_step=display_step, axis=axis, tooltip=tooltip, name='Graph 2')
+graph1 = plot_data.Graph2D(point_list=point_list1, dashline=[10,10], graph_colorstroke=red, graph_linewidth=0.5, display_step=display_step, tooltip=tooltip, name='Graph 2')
 graphs += [graph1]
 
 
@@ -99,10 +100,10 @@ while k < 20 * np.pi:
     point = plot_data.Point2D(k, np.sin(k + 2*np.pi/3), size=graph_point_size, shape='crux', color_fill=brown, color_stroke=black, stroke_width=point_strokewidth)
     point_list2.append(point)
     k = k + np.pi/20
-graph2 = plot_data.Graph2D(point_list=point_list2, dashline=[5, 3, 1, 3], graph_colorstroke=blue, graph_linewidth=0.5, display_step=display_step, axis=axis, tooltip=tooltip, name='Graph 3')
+graph2 = plot_data.Graph2D(point_list=point_list2, dashline=[5, 3, 1, 3], graph_colorstroke=blue, graph_linewidth=0.5, display_step=display_step, tooltip=tooltip, name='Graph 3')
 graphs += [graph2]
 
-graphs2D = plot_data.Graphs2D(graphs=graphs)
+graphs2D = plot_data.Graphs2D(graphs=graphs, axis=axis)
 
 sol = [graphs2D.to_dict()]
 # plot_data.plot_d3(sol)

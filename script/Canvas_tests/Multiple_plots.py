@@ -65,7 +65,8 @@ grid_on = True
 # Tooltip
 tp_colorfill = black
 text_color = white
-font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
+tl_fontsize = 12  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
+tl_fontstyle = 'sans-serif'
 tp_radius = 5
 opacity = 0.75
 
@@ -81,18 +82,21 @@ axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_width=axis_width, grid_on=grid_on)
 
 to_disp_att_names = ['cx', 'cy']
-tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
+tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontstyle=tl_fontstyle, fontsize=tl_fontsize,
                      tp_radius=tp_radius, to_plot_list=to_disp_att_names, opacity=opacity)
 
 ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=to_disp_att_names, point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot)
 
-coords = [[0,450], [0,0]]
-sizes = [plot_data.Window(width=750, height=400),
-         plot_data.Window(width=750, height=400)]
+ScatterPlot1 = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=['cx', 'color_fill'], point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
+objects.append(ScatterPlot1)
+
+coords = [[0,450], [0,0], [300, 200]]
+sizes = [plot_data.Window(width=560, height=300),
+         plot_data.Window(width=560, height=300),
+         plot_data.Window(width=560, height=300)]
 
 multipleplots = plot_data.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
-plot_datas.append(multipleplots)
 sol = [multipleplots.to_dict()]
 os.remove("data.json")
 with open('data.json', 'w') as fp:

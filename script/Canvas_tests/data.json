@@ -5214,27 +5214,14 @@
         "graph_colorstroke": "rgb(0, 0, 0)",
         "graph_linewidth": 0.5,
         "display_step": 3,
-        "axis": {
-          "name": "",
-          "package_version": null,
-          "object_class": "plot_data.plot_data.Axis",
-          "nb_points_x": 10,
-          "nb_points_y": 10,
-          "font_size": 12,
-          "graduation_color": "rgb(169, 169, 169)",
-          "axis_color": "rgb(169, 169, 169)",
-          "arrow_on": false,
-          "axis_width": 0.5,
-          "grid_on": true,
-          "type": "axis"
-        },
         "tooltip": {
           "name": "",
           "package_version": null,
           "object_class": "plot_data.plot_data.Tooltip",
           "colorfill": "rgb(0, 0, 0)",
           "text_color": "rgb(255, 255, 255)",
-          "font": "12px sans-serif",
+          "fontsize": 12,
+          "fontstyle": "sans-serif",
           "tp_radius": 5,
           "to_plot_list": [
             "cx",
@@ -10458,27 +10445,14 @@
         "graph_colorstroke": "rgb(247, 0, 0)",
         "graph_linewidth": 0.5,
         "display_step": 3,
-        "axis": {
-          "name": "",
-          "package_version": null,
-          "object_class": "plot_data.plot_data.Axis",
-          "nb_points_x": 10,
-          "nb_points_y": 10,
-          "font_size": 12,
-          "graduation_color": "rgb(169, 169, 169)",
-          "axis_color": "rgb(169, 169, 169)",
-          "arrow_on": false,
-          "axis_width": 0.5,
-          "grid_on": true,
-          "type": "axis"
-        },
         "tooltip": {
           "name": "",
           "package_version": null,
           "object_class": "plot_data.plot_data.Tooltip",
           "colorfill": "rgb(0, 0, 0)",
           "text_color": "rgb(255, 255, 255)",
-          "font": "12px sans-serif",
+          "fontsize": 12,
+          "fontstyle": "sans-serif",
           "tp_radius": 5,
           "to_plot_list": [
             "cx",
@@ -15704,27 +15678,14 @@
         "graph_colorstroke": "rgb(0, 19, 254)",
         "graph_linewidth": 0.5,
         "display_step": 3,
-        "axis": {
-          "name": "",
-          "package_version": null,
-          "object_class": "plot_data.plot_data.Axis",
-          "nb_points_x": 10,
-          "nb_points_y": 10,
-          "font_size": 12,
-          "graduation_color": "rgb(169, 169, 169)",
-          "axis_color": "rgb(169, 169, 169)",
-          "arrow_on": false,
-          "axis_width": 0.5,
-          "grid_on": true,
-          "type": "axis"
-        },
         "tooltip": {
           "name": "",
           "package_version": null,
           "object_class": "plot_data.plot_data.Tooltip",
           "colorfill": "rgb(0, 0, 0)",
           "text_color": "rgb(255, 255, 255)",
-          "font": "12px sans-serif",
+          "fontsize": 12,
+          "fontstyle": "sans-serif",
           "tp_radius": 5,
           "to_plot_list": [
             "cx",
@@ -15736,6 +15697,20 @@
         "type": "graph2D"
       }
     ],
+    "axis": {
+      "name": "",
+      "package_version": null,
+      "object_class": "plot_data.plot_data.Axis",
+      "nb_points_x": 10,
+      "nb_points_y": 10,
+      "font_size": 12,
+      "graduation_color": "rgb(169, 169, 169)",
+      "axis_color": "rgb(169, 169, 169)",
+      "arrow_on": false,
+      "axis_width": 0.5,
+      "grid_on": true,
+      "type": "axis"
+    },
     "type": "graphs2D"
   }
 ]

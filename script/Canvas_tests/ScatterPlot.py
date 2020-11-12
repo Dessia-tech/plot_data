@@ -58,7 +58,8 @@ grid_on = True
 # Tooltip
 tp_colorfill = black
 text_color = white
-font = '12px sans-serif'  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
+tl_fontsize = 12  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
+tl_fontstyle = 'sans-serif'
 tp_radius = 5
 to_display_att_names = ['color_fill', 'cy']
 opacity = 0.75
@@ -69,7 +70,7 @@ axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
 
-tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, font=font,
+tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontsize=tl_fontsize, fontstyle=tl_fontstyle,
                      tp_radius=tp_radius, to_plot_list=to_display_att_names, opacity=opacity)
 
 plot_datas = []

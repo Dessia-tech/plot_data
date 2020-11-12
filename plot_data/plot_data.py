@@ -170,12 +170,13 @@ class Axis(DessiaObject):
 
 
 class Tooltip(DessiaObject):
-    def __init__(self, colorfill: str, text_color: str, font: str,
+    def __init__(self, colorfill: str, text_color: str, fontsize: float, fontstyle:str,
                  tp_radius: float, to_plot_list: list, opacity:float, type: str = 'tooltip',
                  name: str = ''):
         self.colorfill = colorfill
         self.text_color = text_color
-        self.font = font
+        self.fontsize = fontsize
+        self.fontstyle = fontstyle
         self.tp_radius = tp_radius
         self.to_plot_list = to_plot_list
         self.opacity = opacity

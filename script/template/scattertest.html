@@ -5230,27 +5230,14 @@
         "graph_colorstroke": "rgb(0, 0, 0)",
         "graph_linewidth": 0.5,
         "display_step": 3,
-        "axis": {
-          "name": "",
-          "package_version": null,
-          "object_class": "plot_data.plot_data.Axis",
-          "nb_points_x": 10,
-          "nb_points_y": 10,
-          "font_size": 12,
-          "graduation_color": "rgb(169, 169, 169)",
-          "axis_color": "rgb(169, 169, 169)",
-          "arrow_on": false,
-          "axis_width": 0.5,
-          "grid_on": true,
-          "type": "axis"
-        },
         "tooltip": {
           "name": "",
           "package_version": null,
           "object_class": "plot_data.plot_data.Tooltip",
           "colorfill": "rgb(0, 0, 0)",
           "text_color": "rgb(255, 255, 255)",
-          "font": "12px sans-serif",
+          "fontsize": 12,
+          "fontstyle": "sans-serif",
           "tp_radius": 5,
           "to_plot_list": [
             "cx",
@@ -10474,27 +10461,14 @@
         "graph_colorstroke": "rgb(247, 0, 0)",
         "graph_linewidth": 0.5,
         "display_step": 3,
-        "axis": {
-          "name": "",
-          "package_version": null,
-          "object_class": "plot_data.plot_data.Axis",
-          "nb_points_x": 10,
-          "nb_points_y": 10,
-          "font_size": 12,
-          "graduation_color": "rgb(169, 169, 169)",
-          "axis_color": "rgb(169, 169, 169)",
-          "arrow_on": false,
-          "axis_width": 0.5,
-          "grid_on": true,
-          "type": "axis"
-        },
         "tooltip": {
           "name": "",
           "package_version": null,
           "object_class": "plot_data.plot_data.Tooltip",
           "colorfill": "rgb(0, 0, 0)",
           "text_color": "rgb(255, 255, 255)",
-          "font": "12px sans-serif",
+          "fontsize": 12,
+          "fontstyle": "sans-serif",
           "tp_radius": 5,
           "to_plot_list": [
             "cx",
@@ -15720,27 +15694,14 @@
         "graph_colorstroke": "rgb(0, 19, 254)",
         "graph_linewidth": 0.5,
         "display_step": 3,
-        "axis": {
-          "name": "",
-          "package_version": null,
-          "object_class": "plot_data.plot_data.Axis",
-          "nb_points_x": 10,
-          "nb_points_y": 10,
-          "font_size": 12,
-          "graduation_color": "rgb(169, 169, 169)",
-          "axis_color": "rgb(169, 169, 169)",
-          "arrow_on": false,
-          "axis_width": 0.5,
-          "grid_on": true,
-          "type": "axis"
-        },
         "tooltip": {
           "name": "",
           "package_version": null,
           "object_class": "plot_data.plot_data.Tooltip",
           "colorfill": "rgb(0, 0, 0)",
           "text_color": "rgb(255, 255, 255)",
-          "font": "12px sans-serif",
+          "fontsize": 12,
+          "fontstyle": "sans-serif",
           "tp_radius": 5,
           "to_plot_list": [
             "cx",
@@ -15752,6 +15713,20 @@
         "type": "graph2D"
       }
     ],
+    "axis": {
+      "name": "",
+      "package_version": null,
+      "object_class": "plot_data.plot_data.Axis",
+      "nb_points_x": 10,
+      "nb_points_y": 10,
+      "font_size": 12,
+      "graduation_color": "rgb(169, 169, 169)",
+      "axis_color": "rgb(169, 169, 169)",
+      "arrow_on": false,
+      "axis_width": 0.5,
+      "grid_on": true,
+      "type": "axis"
+    },
     "type": "graphs2D"
   }
 ]
@@ -15761,7 +15736,7 @@
 	plot_data.define_canvas();
 	plot_data.draw_initial();
 	plot_data.mouse_interaction(plot_data.isParallelPlot); //true if parallel plot, false otherwise
-	plot_data.plot_datas['value'][0]['dashline'] = [10,10];
+	plot_data.remove_from_tooltip(plot_data.plot_datas['value'][0].tooltip, 'cx');
 	plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
 	plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
 

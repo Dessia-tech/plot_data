@@ -404,11 +404,7 @@ export class MultiplePlots {
       mouse1Y = e.offsetY;
       clicked_obj_index = this.getObjectIndex(mouse1X, mouse1Y);
       if (this.manipulation_bool) {
-        // this.selected_index = this.getObjectIndex(mouse1X, mouse1Y);
         this.SetAllInteractionsToOff();
-        // if (this.selected_index != -1) {
-        //   this.InitializeObjectXY(this.selected_index);
-        // }
         if (clicked_obj_index != -1) {
           this.InitializeObjectXY(clicked_obj_index);
           [clickOnVertex, clickUp, clickDown, clickLeft, clickRight] = this.Initialize_ClickOnVertex(mouse1X, mouse1Y, clicked_obj_index);
@@ -868,21 +864,22 @@ export abstract class PlotData {
         var point = d.point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
-      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
-      this.draw_tooltip(d.tooltip, mvx, mvy, d.point_list, d.point_list, false);
     } else if ((d['type'] == 'graph2D') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
       this.delete_tooltip(d.point_list);
-      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
-      this.draw_tooltip(d.tooltip, mvx, mvy, d.point_list, d.point_list, false);
     }
   }
 
   draw_graphs2D(d, hidden, mvx, mvy) {
     if (d['type'] == 'graphs2D') {
       for (let i=0; i<d.graphs.length; i++) {
-        var graph = d.graphs[i];
+        let graph = d.graphs[i];
         this.draw_graph2D(graph, hidden, mvx, mvy);
+      }
+      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
+      for (let i=0; i<d.graphs.length; i++) {
+        let graph = d.graphs[i];
+        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, false);
       }
     }
   }
@@ -1459,6 +1456,16 @@ export abstract class PlotData {
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
+  add_to_tooltip(tooltip:PlotDataTooltip, str:string): PlotDataTooltip {
+    tooltip.to_plot_list.push(str);
+    return tooltip;
+  }
+
+  remove_from_tooltip(tooltip:PlotDataTooltip, str:string): PlotDataTooltip {
+    tooltip.to_plot_list = this.remove_selection(str, tooltip.to_plot_list);
+    return tooltip;
+  }
+
   zoom_button(x, y, w, h) {
     var actualX = x + this.X;
     var actualY = y + this.Y;
@@ -1663,8 +1670,15 @@ export abstract class PlotData {
     }
   }
 
-  convert_axis_to_real_coords(x:number, real_min:number, real_max:number):number {
-    return (1-x)*real_max + x*real_min; //x must be between 0 and 1
+  convert_axis_to_real_coords(x:number, type:string,  list):number {
+    if (type == 'float') {
+      let real_min = list[0];
+      let real_max = list[1];
+      return (1-x)*real_max + x*real_min; //x must be between 0 and 1
+    } else {
+      let nb_values = list.length;
+      return (1-x)*nb_values;
+    }
   }
 
   change_disposition_action() {
@@ -1697,8 +1711,8 @@ export abstract class PlotData {
       var max = Math.min(Math.max((mouse1X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), (mouse2X - this.axis_x_start)/(this.axis_x_end - this.axis_x_start)), 1);
     }
     this.rubber_bands[selected_axis_index] = [min, max];
-    var realCoord_min = this.convert_axis_to_real_coords(min, this.axis_list[selected_axis_index]['list'][0], this.axis_list[selected_axis_index]['list'][1]);
-    var realCoord_max = this.convert_axis_to_real_coords(max, this.axis_list[selected_axis_index]['list'][0], this.axis_list[selected_axis_index]['list'][1]);
+    var realCoord_min = this.convert_axis_to_real_coords(min, this.axis_list[selected_axis_index]['type'], this.axis_list[selected_axis_index]['list']);
+    var realCoord_max = this.convert_axis_to_real_coords(max, this.axis_list[selected_axis_index]['type'], this.axis_list[selected_axis_index]['list']);
     var real_min = Math.min(realCoord_min, realCoord_max);
     var real_max = Math.max(realCoord_min, realCoord_max);
     
@@ -1722,8 +1736,8 @@ export abstract class PlotData {
       var new_max = Math.min(this.rubber_last_max + deltaX, 1);
     }
     this.rubber_bands[selected_band_index] = [new_min, new_max];
-    let real_new_min = this.convert_axis_to_real_coords(new_min, this.axis_list[selected_band_index]['list'][0], this.axis_list[selected_band_index]['list'][1]);
-    let real_new_max = this.convert_axis_to_real_coords(new_max, this.axis_list[selected_band_index]['list'][0], this.axis_list[selected_band_index]['list'][1]);
+    let real_new_min = this.convert_axis_to_real_coords(new_min, this.axis_list[selected_band_index]['type'], this.axis_list[selected_band_index]['list']);
+    let real_new_max = this.convert_axis_to_real_coords(new_max, this.axis_list[selected_band_index]['type'], this.axis_list[selected_band_index]['list']);
     let to_add_min = Math.min(real_new_min, real_new_max);
     let to_add_max = Math.max(real_new_min, real_new_max);
     this.add_to_rubberbands_dep([this.axis_list[selected_band_index]['name'], [to_add_min, to_add_max]]);
@@ -1763,8 +1777,8 @@ export abstract class PlotData {
       [this.rubber_last_min, this.rubber_last_max] = [this.rubber_last_max, this.rubber_last_min];
     }
 
-    var real_new_min = this.convert_axis_to_real_coords(this.rubber_bands[axis_index][0], this.axis_list[axis_index]['list'][0], this.axis_list[axis_index]['list'][1]);
-    var real_new_max = this.convert_axis_to_real_coords(this.rubber_bands[axis_index][1], this.axis_list[axis_index]['list'][0], this.axis_list[axis_index]['list'][1]);
+    var real_new_min = this.convert_axis_to_real_coords(this.rubber_bands[axis_index][0], this.axis_list[axis_index]['type'], this.axis_list[axis_index]['list']);
+    var real_new_max = this.convert_axis_to_real_coords(this.rubber_bands[axis_index][1], this.axis_list[axis_index]['type'][0], this.axis_list[axis_index]['list']);
     var to_add_min = Math.min(real_new_min, real_new_max);
     var to_add_max = Math.max(real_new_min, real_new_max);
     this.add_to_rubberbands_dep([this.axis_list[axis_index]['name'], [to_add_min, to_add_max]]);
@@ -3047,13 +3061,22 @@ export class PlotDataPoint2D {
               && (this.stroke_width == point.stroke_width);
     }
 
-    getPointIndex(point:PlotDataPoint2D, point_list:PlotDataPoint2D[]) {
+    getPointIndex(point_list:PlotDataPoint2D[]) {
       for (let i=0; i<point_list.length; i++) {
-        if (point.equals(point_list[i])) {
+        if (this.equals(point_list[i])) {
           return i;
         }
       }
       throw new Error('getPointIndex : not in list');
+    }
+
+    isPointInList(point_list:PlotDataPoint2D[]) {
+      for (let i=0; i<point_list.length; i++) {
+        if (this.equals(point_list[i])) {
+          return true;
+        }
+      }
+      return false;
     }
 }
 
@@ -3341,7 +3364,7 @@ export class PlotDataTooltip {
       if (attribute_type == 'float') {
         var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digit évidemment pas définie lorsque l'axe des x est un string...
       } else if (attribute_type == 'color') {
-        text = attribute_name + ' : ' + rgb_to_string(elt[attribute_name]);
+        text = attribute_name + ' : ' + hex_to_string(elt[attribute_name]);
       } else {
         text = attribute_name + ' : ' + elt[attribute_name];
       }
@@ -3378,12 +3401,14 @@ export class PlotDataTooltip {
     var textfills = [];
     var text_max_length = 0;
     [x_nb_digits, y_nb_digits] = this.refresh_nb_digits(x_nb_digits, y_nb_digits);
-    var index = point.getPointIndex(point, point_list);
-    var elt = elements[index];
-    if (mergeON === true) {
-      [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt);
-    } else {
-      [textfills, text_max_length] = this.initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt);
+    if (point.isPointInList(point_list)) {
+      var index = point.getPointIndex(point_list);
+      var elt = elements[index];
+      if (mergeON === true) {
+        [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt);
+      } else {
+        [textfills, text_max_length] = this.initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt);
+      }
     }
     
     if (textfills.length > 0) {
@@ -3448,7 +3473,6 @@ export class PlotDataGraph2D {
               public graph_linewidth: number,
               public segments:PlotDataLine2D[],
               public display_step:number,
-              public axis:PlotDataAxis,
               public tooltip:PlotDataTooltip,
               public type: string,
               public name:string) {}
@@ -3468,7 +3492,6 @@ export class PlotDataGraph2D {
       let data = [current_point.cx, current_point.cy, next_point.cx, next_point.cy];
       segments.push(new PlotDataLine2D(data, [], '', ''));
     }
-    var axis = PlotDataAxis.deserialize(serialized['axis']);
     var tooltip = PlotDataTooltip.deserialize(serialized['tooltip']);
     return new PlotDataGraph2D(point_list,
                            serialized['dashline'],
@@ -3476,7 +3499,6 @@ export class PlotDataGraph2D {
                            serialized['graph_linewidth'],
                            segments,
                            serialized['display_step'],
-                           axis,
                            tooltip,
                            serialized['type'],
                            serialized['name']);
@@ -3485,6 +3507,7 @@ export class PlotDataGraph2D {
 
 export class Graphs2D {
   constructor(public graphs: PlotDataGraph2D[],
+              public axis: PlotDataAxis,
               public type: string,
               public name: string) {}
   
@@ -3493,7 +3516,10 @@ export class Graphs2D {
     for (let i=0; i<serialized['graphs'].length; i++) {
       graphs.push(PlotDataGraph2D.deserialize(serialized['graphs'][i]));
     }
+    var axis = PlotDataAxis.deserialize(serialized['axis']);
+
     return new Graphs2D(graphs,
+                        axis,
                         serialized['type'],
                         serialized['name']);
   }

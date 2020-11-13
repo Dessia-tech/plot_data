@@ -575,6 +575,8 @@ export abstract class PlotData {
   perm_window_y:number=0;
   perm_window_w:number=0;
   perm_window_h:number=0;
+  initial_permW:number=0;
+  initial_permH:number=0;
   graph_colorlist:string[]=[];
   graph_name_list:string[]=[];
   graph_text_spacing_list:number[]=[];
@@ -1962,6 +1964,15 @@ export abstract class PlotData {
     this.draw_selection_rectangle();
   }
 
+  selection_window_resize(mouse2X, mouse2Y, up, down, left, right) {
+
+    if (up) {
+      this.perm_window_y = mouse2Y;
+
+    }
+    // if ()
+  }
+
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
     mouse1X = e.offsetX;
     mouse1Y = e.offsetY;
@@ -1971,22 +1982,28 @@ export abstract class PlotData {
     var click_on_selectw_border = false; var up=false; var down=false; var left=false; var right=false;
     if (this.permanent_window) {
       [click_on_selectw_border, up, down, left, right] = this.initialize_select_win_bool(mouse1X, mouse1Y);
+      this.initialize_permWH(mouse1X, mouse1Y);
     }
     return [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right];
   }
 
   mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right) {
     if (isDrawing === true) {
+      mouse2X = e.offsetX;
+      mouse2Y = e.offsetY;
       if (!(this.zw_bool||this.select_bool)) {
         canvas.style.cursor = 'move';
         mouse_moving = true;
-        mouse2X = e.offsetX;
-        mouse2Y = e.offsetY;
         this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
         this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
       } else {
         if (this.select_bool) {
           this.isSelecting = true;
+          if (click_on_selectw_border) {
+            //resize function()
+          } else {
+            this.mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
+          } 
           let abs_min = 1/1000 * ((this.perm_window_x - this.X)/this.scaleX - this.last_mouse1X);
           let abs_max = 1/1000 * ((Math.max(mouse1X, mouse2X) - this.X)/this.scaleX - this.last_mouse1X);
           let ord_min = -1/1000 * ((Math.max(mouse1Y, mouse2Y) - this.Y)/this.scaleY - this.last_mouse1Y);
@@ -1995,9 +2012,6 @@ export abstract class PlotData {
         }
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
-        mouse2X = e.offsetX;
-        mouse2Y = e.offsetY;
-        this.mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
       }
     } else {
       if (this.zw_bool||this.select_bool) {
@@ -2175,6 +2189,7 @@ export abstract class PlotData {
       this.draw(true, 0, mouse2X - axis_x, 0, this.scaleX, this.scaleY, this.X, this.Y);
     } else {
       var axis_y = this.axis_y_start + this.move_index*this.y_step;
+      console.log(this.axis_y_start + this.move_index*this.y_step, mouse2Y)
       this.draw(false, 0, mouse2Y - axis_y, 0, this.scaleX, this.scaleY, this.X, this.Y);
       this.draw(true, 0, mouse2Y - axis_y, 0, this.scaleX, this.scaleY, this.X, this.Y);
     }
@@ -2281,6 +2296,12 @@ export abstract class PlotData {
     this.axis_list = move_elements(old_index, new_index, this.axis_list);
     this.rubber_bands = move_elements(old_index, new_index, this.rubber_bands);
     this.inverted_axis_list = move_elements(old_index, new_index, this.inverted_axis_list);
+    this.refresh_to_display_list(this.elements);
+    this.refresh_displayable_attributes(); //No need to refresh attribute_booleans as inverting axis doesn't affect its values
+    var mvx = 0;
+    var mvy = 0;
+    this.draw(false, 0, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(true, 0, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
   mouse_up_axis_interversion(mouse1X, mouse1Y, e) {
@@ -2302,12 +2323,6 @@ export abstract class PlotData {
     this.move_axis(this.move_index, new_index);
     this.move_index = -1;
     var click_on_axis = false;
-    var mvx = 0;
-    var mvy = 0;
-    this.refresh_to_display_list(this.elements);
-    this.refresh_displayable_attributes(); //No need to refresh attribute_booleans as inverting axis doesn't affect its values
-    this.draw(false, 0, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(true, 0, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
     return [mouse3X, mouse3Y, click_on_axis]
   }
 
@@ -2380,6 +2395,11 @@ export abstract class PlotData {
     var right:boolean = Shape.Is_in_rect(mouseX, mouseY, this.perm_window_x + this.perm_window_w - thickness/2, this.perm_window_y - thickness/2, thickness, this.perm_window_h + thickness);
     var mouse_on_border = up || down || left || right;
     return [mouse_on_border, up, down, left, right];
+  }
+
+  initialize_permWH(mouse1X, mouse1Y) {
+    this.initial_permW = this.perm_window_w;
+    this.initial_permH = this.perm_window_h;
   }
 
   mouse_interaction(parallelplot:boolean) {

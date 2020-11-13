@@ -160,24 +160,6 @@ export class MultiplePlots {
     }
   }
 
-  RedrawMovingObjects(selected_index, mouse1X, mouse1Y, mouse2X, mouse2Y):void {
-    this.ClearCanvas();
-    for (let i=0; i<this.objectList.length; i++) {
-      let obj = this.objectList[i];
-      if (i == selected_index) {
-        obj.draw(false, 0, obj.last_mouse1X + (mouse2X - mouse1X)/obj.scaleX, obj.last_mouse1Y + (mouse2Y - mouse1Y)/obj.scaleY, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        obj.draw(true, 0, obj.last_mouse1X + (mouse2X - mouse1X)/obj.scaleX, obj.last_mouse1Y + (mouse2Y - mouse1Y)/obj.scaleY, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      } else {
-        obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      }
-    }
-    if (this.buttons_ON) {
-      this.draw_manipulation_button();
-      this.draw_selection_dependency_button();
-    }
-  }
-
   isZwSelectBoolOn():boolean {
     for (let i=0; i<this.objectList.length; i++) {
       if ((this.objectList[i].zw_bool === true) || (this.objectList[i].select_bool === true)) {
@@ -456,7 +438,7 @@ export class MultiplePlots {
              }
           }
           if ((clicked_obj_index != -1)  && (this.objectList[clicked_obj_index].isSelecting === false)) {
-            this.RedrawMovingObjects(clicked_obj_index, mouse1X, mouse1Y, mouse2X, mouse2Y);
+            this.RedrawAllObjects();
           }
         } else {
           this.RedrawAllObjects();
@@ -510,6 +492,8 @@ export abstract class PlotData {
   scaleY:number;
   scroll_x:number=0;
   scroll_y:number=0;
+  initial_last_mouse1X:number=0;
+  initial_last_mouse1Y:number=0;
   last_mouse1X:number;
   last_mouse1Y:number;
   colour_to_plot_data:any={};
@@ -655,9 +639,9 @@ export abstract class PlotData {
     this.context_hidden = hiddenCanvas.getContext("2d");
   }
 
-  set_canvas_size(height:number, width:number) {
-    this.height = height;
+  set_canvas_size(width:number, height:number) {
     this.width = width;
+    this.height = height;
   }
 
   draw_initial() {
@@ -1526,7 +1510,6 @@ export abstract class PlotData {
     } else {
       Shape.createButton(x + this.X, y + this.Y, w, h, this.context, "Z OFF", "12px Arial");
     }
-    
   }
 
   reset_button(x, y, w, h) {
@@ -1598,6 +1581,15 @@ export abstract class PlotData {
   }
 
   selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y) {
+    this.select_on_click = [];
+    if (this.perm_window_w<0) {
+      this.perm_window_x = this.perm_window_x + this.perm_window_w;
+      this.perm_window_w = -this.perm_window_w;
+    }
+    if (this.perm_window_h<0) {
+      this.perm_window_y = this.perm_window_y + this.perm_window_h;
+      this.perm_window_h = -this.perm_window_h;
+    }
     this.context_show.setLineDash([]);
     this.context_hidden.setLineDash([]);
     var in_rect = Shape.Is_in_rect(this.scaleX*(1000*this.plotObject.cx + this.last_mouse1X),this.scaleY*(1000*this.plotObject.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
@@ -1618,10 +1610,15 @@ export abstract class PlotData {
       }
       
     } else if (this.plotObject['type'] == 'ScatterPlot') {
+      this.select_on_click = [];
       for (var j=0; j<this.scatter_point_list.length; j++) {
         var x = this.scaleX*(1000*this.scatter_point_list[j].cx + this.last_mouse1X) + this.X;
         var y = this.scaleY*(1000*this.scatter_point_list[j].cy + this.last_mouse1Y) + this.Y;
-        in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+        if (this.permanent_window) {
+          in_rect = Shape.Is_in_rect(x, y, this.perm_window_x, this.perm_window_y, this.perm_window_w, this.perm_window_h);
+        } else {
+          in_rect = Shape.Is_in_rect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+        }
         if ((in_rect===true) && !(is_include(this.scatter_point_list[j], this.select_on_click))) {
           this.select_on_click.push(this.scatter_point_list[j]);
         }
@@ -1964,13 +1961,26 @@ export abstract class PlotData {
     this.draw_selection_rectangle();
   }
 
-  selection_window_resize(mouse2X, mouse2Y, up, down, left, right) {
-
+  selection_window_resize(mouse1X, mouse1Y, mouse2X, mouse2Y, up, down, left, right) {
+    var deltaX = mouse2X - mouse1X
+    var deltaY = mouse2Y - mouse1Y;
     if (up) {
       this.perm_window_y = mouse2Y;
-
+      this.perm_window_h = this.initial_permH - deltaY;
     }
-    // if ()
+    if (down) {
+      this.perm_window_h = this.initial_permH + deltaY;
+    }
+    if (left) {
+      this.perm_window_x = mouse2X;
+      this.perm_window_w = this.initial_permW - deltaX;
+    }
+    if (right) {
+      this.perm_window_w = this.initial_permW + deltaX;
+    }
+    this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+
   }
 
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
@@ -1979,6 +1989,8 @@ export abstract class PlotData {
     mouse2X = e.offsetX;
     mouse2Y = e.offsetY;
     isDrawing = true;
+    this.initial_last_mouse1X = this.last_mouse1X;
+    this.initial_last_mouse1Y = this.last_mouse1Y;
     var click_on_selectw_border = false; var up=false; var down=false; var left=false; var right=false;
     if (this.permanent_window) {
       [click_on_selectw_border, up, down, left, right] = this.initialize_select_win_bool(mouse1X, mouse1Y);
@@ -1994,13 +2006,16 @@ export abstract class PlotData {
       if (!(this.zw_bool||this.select_bool)) {
         canvas.style.cursor = 'move';
         mouse_moving = true;
-        this.draw(false, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
-        this.draw(true, 0, this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX, this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY, this.scaleX, this.scaleY, this.X, this.Y);
+
+        this.last_mouse1X = this.initial_last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX;
+        this.last_mouse1Y = this.initial_last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY;
+        this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
       } else {
         if (this.select_bool) {
           this.isSelecting = true;
           if (click_on_selectw_border) {
-            //resize function()
+            this.selection_window_resize(mouse1X, mouse1Y, mouse2X, mouse2Y, up, down, left, right);
           } else {
             this.mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
           } 
@@ -2065,11 +2080,7 @@ export abstract class PlotData {
           this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
           this.refresh_selected_point_index();
 
-        } else {
-          this.last_mouse1X = this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX;
-          this.last_mouse1Y = this.last_mouse1Y + mouse2Y/this.scaleY - mouse1Y/this.scaleY;
-        }
-
+        } 
     } else {
         var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
         var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
@@ -2185,13 +2196,14 @@ export abstract class PlotData {
     var mouse2Y = e.offsetY;
     if (this.vertical === true) {
       var axis_x = this.axis_x_start + this.move_index*this.x_step;
-      this.draw(false, 0, mouse2X - axis_x, 0, this.scaleX, this.scaleY, this.X, this.Y);
-      this.draw(true, 0, mouse2X - axis_x, 0, this.scaleX, this.scaleY, this.X, this.Y);
+      this.last_mouse1X = mouse2X - axis_x
+      this.draw(false, 0, this.last_mouse1X, 0, this.scaleX, this.scaleY, this.X, this.Y);
+      this.draw(true, 0, this.last_mouse1X, 0, this.scaleX, this.scaleY, this.X, this.Y);
     } else {
       var axis_y = this.axis_y_start + this.move_index*this.y_step;
-      console.log(this.axis_y_start + this.move_index*this.y_step, mouse2Y)
-      this.draw(false, 0, mouse2Y - axis_y, 0, this.scaleX, this.scaleY, this.X, this.Y);
-      this.draw(true, 0, mouse2Y - axis_y, 0, this.scaleX, this.scaleY, this.X, this.Y);
+      this.last_mouse1X = mouse2Y - axis_y;
+      this.draw(false, 0, this.last_mouse1X, 0, this.scaleX, this.scaleY, this.X, this.Y);
+      this.draw(true, 0, this.last_mouse1X, 0, this.scaleX, this.scaleY, this.X, this.Y);
     }
     var is_inside_canvas = (mouse2X>=this.X) && (mouse2X<=this.width + this.X) && (mouse2Y>=this.Y) && (mouse2Y<=this.height + this.Y);
     var mouse_move = true;
@@ -2384,6 +2396,7 @@ export abstract class PlotData {
     this.isDrawing_rubber_band = false;
     mouse_moving = false;
     isDrawing = false;
+    this.last_mouse1X = 0;
     return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing];
   }
 

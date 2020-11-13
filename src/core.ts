@@ -2277,7 +2277,11 @@ export abstract class PlotData {
     return [click_on_band, click_on_border, selected_band_index, selected_border];
   }
 
-
+  move_axis(old_index, new_index) {
+    this.axis_list = move_elements(old_index, new_index, this.axis_list);
+    this.rubber_bands = move_elements(old_index, new_index, this.rubber_bands);
+    this.inverted_axis_list = move_elements(old_index, new_index, this.inverted_axis_list);
+  }
 
   mouse_up_axis_interversion(mouse1X, mouse1Y, e) {
     var mouse3X = e.offsetX;
@@ -2295,9 +2299,7 @@ export abstract class PlotData {
         var new_index = Math.ceil((mouse3Y - this.axis_y_start)/this.y_step);
       }
     }
-    this.axis_list = move_elements(this.move_index, new_index, this.axis_list);
-    this.rubber_bands = move_elements(this.move_index, new_index, this.rubber_bands);
-    this.inverted_axis_list = move_elements(this.move_index, new_index, this.inverted_axis_list);
+    this.move_axis(this.move_index, new_index);
     this.move_index = -1;
     var click_on_axis = false;
     var mvx = 0;

@@ -386,7 +386,6 @@ export class MultiplePlots {
     var mouse3Y:number = 0;
     var isDrawing = false;
     var mouse_moving:boolean = false;
-    var vertex_object_index:number = -1;
     var clickUp:boolean = false;
     var clickDown:boolean = false;
     var clickLeft:boolean = false;
@@ -397,6 +396,7 @@ export class MultiplePlots {
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
     }
+    this.SetAllInteractionsToOff();
 
     canvas.addEventListener('mousedown', e => {
       isDrawing = true;
@@ -455,7 +455,9 @@ export class MultiplePlots {
                this.Dependency_scatter_selection(rubberbands_dep);
              }
           }
-          this.RedrawMovingObjects(clicked_obj_index, mouse1X, mouse1Y, mouse2X, mouse2Y);
+          if ((clicked_obj_index != -1)  && (this.objectList[clicked_obj_index].isSelecting === false)) {
+            this.RedrawMovingObjects(clicked_obj_index, mouse1X, mouse1Y, mouse2X, mouse2Y);
+          }
         } else {
           this.RedrawAllObjects();
         }
@@ -513,6 +515,7 @@ export abstract class PlotData {
   colour_to_plot_data:any={};
   select_on_mouse:any;
   select_on_click:any[]=[];
+  selected_point_index:any[]=[];
   color_surface_on_mouse:string=string_to_hex('lightskyblue');
   color_surface_on_click:string=string_to_hex('blue');
   pointLength:number=0;
@@ -1083,21 +1086,37 @@ export abstract class PlotData {
 
   add_to_rubberbands(coordinates:[number, number], attribute, index):void {
     var attribute_type = attribute['type'];
-    if (this.vertical) {
-      var real_min = this.get_coord_on_parallel_plot(attribute_type, this.axis_list[index]['list'], coordinates[0], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[index]);
-      var real_max = this.get_coord_on_parallel_plot(attribute_type, this.axis_list[index]['list'], coordinates[1], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[index]);
-      var ext1 = Math.min(Math.max((real_max - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), 0), 1);
-      var ext2 = Math.min(Math.max((real_min - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), 0), 1);
-    } else {
-      var real_min = this.get_coord_on_parallel_plot(attribute_type, this.axis_list[index]['list'], coordinates[0], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[index]);
-      var real_max = this.get_coord_on_parallel_plot(attribute_type, this.axis_list[index]['list'], coordinates[1], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[index]);
-      var ext1 = Math.min(Math.max((real_min - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), 0), 1);
-      var ext2 = Math.min(Math.max((real_max - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), 0), 1);
-    }
-    var min = Math.min(ext1, ext2);
-    var max = Math.max(ext1, ext2);
+    var real_min = this.convert_real_to_axis_coord(coordinates[0], attribute_type, this.axis_list[index]['list'], this.inverted_axis_list[index]);
+    var real_max = this.convert_real_to_axis_coord(coordinates[1], attribute_type, this.axis_list[index]['list'], this.inverted_axis_list[index]);
+    var min = Math.min(real_min, real_max);
+    var max = Math.max(real_min, real_max);
     this.rubber_bands[index] = [min, max];
-    
+  }
+
+  convert_real_to_axis_coord(real_coord, type, list, inverted) {
+    if (type == 'float') {
+      if (this.vertical) {
+        var axis_coord_start = this.axis_y_start;
+        var axis_coord_end = this.axis_y_end;
+      } else {
+        var axis_coord_start = this.axis_x_start;
+        var axis_coord_end = this.axis_x_end;
+      }
+      let pp_coord = this.get_coord_on_parallel_plot(type, list, real_coord, axis_coord_start, axis_coord_end, inverted);
+      let axis_coord = Math.min(Math.max((pp_coord - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), 0), 1);
+      return axis_coord;
+    } else {
+      var nb_values = list.length;
+      if (nb_values == 1) {
+        return 0.5;
+      } else {
+        if (inverted) {
+          return real_coord/(nb_values-1);
+        } else {
+          return 1 - real_coord/(nb_values-1);
+        }
+      }
+    }
   }
 
   get_coord_on_parallel_plot(attribute_type, current_list, elt, axis_coord_start, axis_coord_end, inverted) {
@@ -1874,6 +1893,25 @@ export abstract class PlotData {
     this.refresh_to_display_list(this.elements);
   }
 
+  refresh_selected_point_index() {
+    this.selected_point_index = [];
+    if (this.mergeON === false) {
+      for (let i=0; i<this.select_on_click.length; i++) {
+        if (!(this.select_on_click[i] === undefined)) {
+          if (this.plotObject['type'] == 'ScatterPlot') {
+            this.selected_point_index.push(get_index_of_element(this.select_on_click[i], this.plotObject.point_list));
+          } else if (this.plotObject['type'] == 'Graphs2D') {
+            for (let j=0; j<this.plotObject.graphs.length; j++) {
+              if (is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) {
+                this.selected_point_index.push([get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
     mouse1X = e.offsetX;
     mouse1Y = e.offsetY;
@@ -1971,7 +2009,8 @@ export abstract class PlotData {
           this.zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil);
           
         } else if (this.select_bool) {
-          this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y)
+          this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
+          this.refresh_selected_point_index();
 
         } else {
           this.last_mouse1X = this.last_mouse1X + mouse2X/this.scaleX - mouse1X/this.scaleX;
@@ -1999,6 +2038,7 @@ export abstract class PlotData {
           this.select_on_click = [];
           this.tooltip_list = [];
         }
+        this.refresh_selected_point_index();
 
         if ((click_on_plus === true) && (this.scaleX*1.2 < scale_ceil) && (this.scaleY*1.2 < scale_ceil)) {
           this.zoom_in_button_action();

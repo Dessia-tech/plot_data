@@ -279,17 +279,19 @@ def plot_d3(plot_datas):
     template_path = pkg_resources.resource_filename(
         pkg_resources.Requirement('plot_data'),
         'plot_data/templates')
-    module_sequence = template_path.split('/')[:-3]
+    module_sequence = template_path.split('/')[:-2]
     module_path = '/'.join(module_sequence)
     loader = FileSystemLoader(module_path)
+    print(loader, template_path)
+    print(module_sequence, module_path)
     env = Environment(loader=loader,
                       autoescape=select_autoescape(['html', 'xml']))
     # env = Environment(loader=PackageLoader('plot_data', 'templates'),
     #                   autoescape=select_autoescape(['html', 'xml']))
-    template = env.get_template('python/plot_data/templates/plot_data.html')
+    template = env.get_template('plot_data/templates/plot_data.html')
 
     core_path = '/' + os.path.join(
-        *template_path.split('/')[:-3] + ['typescript', 'src', 'core.ts'])
+        *template_path.split('/')[:-2] + ['lib', 'core.js'])
 
     print(core_path)
     print(template_path)

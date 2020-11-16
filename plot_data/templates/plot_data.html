@@ -1,5 +1,5 @@
 <div id="app"></div>
-<canvas id="canvas" width="490" height="490"
+<canvas id="canvas" width="2000" height="490"
             style="border: 1px solid black;">
 </canvas>
 
@@ -17,7 +17,7 @@
   {% endfor %}];
 	var number_plot_data = D3Data.length;
 
-	var plot_data = new PlotContour(D3Data, width, height, 1000, true, 0, 0);
+	var plot_data = new PlotContour(D3Data, width, height, 1000, false, 0, 0);
 	plot_data.define_canvas();
 	plot_data.draw_initial();
 

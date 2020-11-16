@@ -47,18 +47,18 @@ os.remove("data.json")
 with open('data.json', 'w') as fp:
     json.dump(sol, fp, indent=2)
 
-# hatching = plot_data.HatchingSet(1)
-# plot_data_state = plot_data.PlotDataState(name='name', hatching=hatching, stroke_width=1)
-#
-# size = 1
-# pt1 = vm.Point2D(0, 0)
-# pt2 = vm.Point2D(0, size)
-# pt3 = vm.Point2D(size, size)
-# pt4 = vm.Point2D(size, 0)
-# c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
-#                    vm.edges.LineSegment2D(pt2, pt3),
-#                    vm.edges.LineSegment2D(pt3, pt4),
-#                    vm.edges.LineSegment2D(pt4, pt1)])
-#
-# d = c1.plot_data(plot_data_states=[plot_data_state])
-# plot_data.plot_d3([d.to_dict()])
+hatching = plot_data.HatchingSet(1)
+plot_data_state = plot_data.PlotDataState(name='name', hatching=hatching, stroke_width=1)
+
+size = 1
+pt1 = vm.Point2D(0, 0)
+pt2 = vm.Point2D(0, size)
+pt3 = vm.Point2D(size, size)
+pt4 = vm.Point2D(size, 0)
+c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
+                   vm.edges.LineSegment2D(pt2, pt3),
+                   vm.edges.LineSegment2D(pt3, pt4),
+                   vm.edges.LineSegment2D(pt4, pt1)])
+
+d = c1.plot_data(plot_data_states=[plot_data_state])
+plot_data.plot_d3([d.to_dict()])

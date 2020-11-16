@@ -425,7 +425,8 @@ export class MultiplePlots {
             let isSelectingObjIndex = this.getSelectionONObject();
             if (isSelectingObjIndex != -1) {
               let isSelectingScatter = this.objectList[isSelectingObjIndex];
-              let selection_coords = isSelectingScatter.selection_coords;
+              let selection_coords = isSelectingScatter.selection_coords; 
+              console.log(selection_coords);
               let toDisplayAttributes:Attribute[] = isSelectingScatter.plotObject.toDisplayAttributes;
               this.Dependency_rubberbands_draw(selection_coords, toDisplayAttributes);
             }
@@ -1584,14 +1585,6 @@ export abstract class PlotData {
 
   selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y) {
     this.select_on_click = [];
-    if (this.perm_window_w<0) {
-      this.perm_window_x = this.perm_window_x + this.perm_window_w;
-      this.perm_window_w = -this.perm_window_w;
-    }
-    if (this.perm_window_h<0) {
-      this.perm_window_y = this.perm_window_y + this.perm_window_h;
-      this.perm_window_h = -this.perm_window_h;
-    }
     this.context_show.setLineDash([]);
     this.context_hidden.setLineDash([]);
     var in_rect = Shape.Is_in_rect(this.scaleX*(1000*this.plotObject.cx + this.last_mouse1X),this.scaleY*(1000*this.plotObject.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
@@ -1934,7 +1927,7 @@ export abstract class PlotData {
     this.refresh_attribute_booleans();
   }
 
-  refresh_selected_point_index() {
+  refresh_selected_point_index() {  //selected_point_index : index of selected points in the initial point list
     this.selected_point_index = [];
     if (this.mergeON === false) {
       for (let i=0; i<this.select_on_click.length; i++) {
@@ -1985,6 +1978,17 @@ export abstract class PlotData {
 
   }
 
+  refresh_permanent_rect() {
+    if (this.perm_window_w < 0) {
+      this.perm_window_x = this.perm_window_x + this.perm_window_w;
+      this.perm_window_w = -this.perm_window_w;
+    }
+    if (this.perm_window_h < 0) {
+      this.perm_window_y = this.perm_window_y + this.perm_window_h;
+      this.perm_window_h = -this.perm_window_h;
+    }
+  }
+
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
     mouse1X = e.offsetX;
     mouse1Y = e.offsetY;
@@ -2021,15 +2025,15 @@ export abstract class PlotData {
           this.isSelecting = true;
           if (click_on_selectw_border) {
             this.selection_window_resize(mouse1X, mouse1Y, mouse2X, mouse2Y, up, down, left, right);
-            this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
           } else {
             this.mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
-            this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
           }
-          let abs_min = 1/1000 * ((this.perm_window_x - this.X)/this.scaleX - this.last_mouse1X);
-          let abs_max = 1/1000 * ((Math.max(mouse1X, mouse2X) - this.X)/this.scaleX - this.last_mouse1X);
-          let ord_min = -1/1000 * ((Math.max(mouse1Y, mouse2Y) - this.Y)/this.scaleY - this.last_mouse1Y);
-          let ord_max = -1/1000 * ((Math.min(mouse1Y, mouse2Y) - this.Y)/this.scaleY - this.last_mouse1Y);
+          this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
+          this.refresh_selected_point_index
+          let abs_min = 1/1000 * ((Math.min(this.perm_window_x, this.perm_window_x + this.perm_window_w) - this.X)/this.scaleX - this.last_mouse1X);
+          let abs_max = 1/1000 * ((Math.max(this.perm_window_x, this.perm_window_x + this.perm_window_w) - this.X)/this.scaleX - this.last_mouse1X);
+          let ord_min = -1/1000 * ((Math.max(this.perm_window_y, this.perm_window_y + this.perm_window_h) - this.Y)/this.scaleY - this.last_mouse1Y);
+          let ord_max = -1/1000 * ((Math.min(this.perm_window_y, this.perm_window_y + this.perm_window_h) - this.Y)/this.scaleY - this.last_mouse1Y);
           this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
         }
         canvas.style.cursor = 'crosshair';
@@ -2083,11 +2087,9 @@ export abstract class PlotData {
         if (this.zw_bool) {
           this.zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil);
 
-        } 
-        // else if (this.select_bool) {
-        //   this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
-        //   this.refresh_selected_point_index();
-        // }
+        } else if ((this.select_bool) && (this.permanent_window)) {
+          this.refresh_permanent_rect();
+        }
     } else {
         var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
         var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
@@ -2753,7 +2755,10 @@ export class PlotContour extends PlotData {
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
     this.draw_empty_canvas(hidden);
-      this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, this.plotObject);
+    for (let i=0; i<this.plot_datas.length; i++) {
+      let d = this.plot_datas[i];
+      this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
+    }
   }
 }
 
@@ -4061,7 +4066,15 @@ export class Shape {
   }
 
   public static Is_in_rect(x, y, rect_x, rect_y, rect_w, rect_h) {
-    return ((x>=rect_x) && (x<= rect_x + rect_w) && (y>=rect_y) && (y<=rect_y + rect_h))
+    if (rect_w>=0 && rect_h>=0) {
+      return ((x>=rect_x) && (x<= rect_x + rect_w) && (y>=rect_y) && (y<=rect_y + rect_h));
+    } else if (rect_w<0 && rect_h>0) {
+      return ((x >= rect_x + rect_w) && (x <= rect_x) && (y >= rect_y) && (y <= rect_y + rect_h));
+    } else if (rect_w>0 && rect_h<0) {
+      return ((x>=rect_x) && (x<=rect_x + rect_w) && (y>=rect_y + rect_h) && (y<=rect_y));
+    } else {
+      return ((x>=rect_x + rect_w) && (x<=rect_x) && (y>=rect_y + rect_h) && (y<=rect_y));
+    }
   }
 
   public static createButton(x, y, w, h, context, text, police) {

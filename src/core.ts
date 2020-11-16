@@ -686,6 +686,8 @@ export abstract class PlotData {
     } else {
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
+      this.init_scaleX = this.init_scale;
+      this.init_scaleY = this.init_scale;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
       this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
     }
@@ -1623,7 +1625,7 @@ export abstract class PlotData {
           this.select_on_click.push(this.scatter_point_list[j]);
         }
       }
-    }
+    } 
 
     this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -1992,9 +1994,12 @@ export abstract class PlotData {
     this.initial_last_mouse1X = this.last_mouse1X;
     this.initial_last_mouse1Y = this.last_mouse1Y;
     var click_on_selectw_border = false; var up=false; var down=false; var left=false; var right=false;
-    if (this.permanent_window) {
-      [click_on_selectw_border, up, down, left, right] = this.initialize_select_win_bool(mouse1X, mouse1Y);
-      this.initialize_permWH(mouse1X, mouse1Y);
+    if (this.select_bool) {
+      this.select_on_click = [];
+      if (this.permanent_window) {
+        [click_on_selectw_border, up, down, left, right] = this.initialize_select_win_bool(mouse1X, mouse1Y);
+        this.initialize_permWH(mouse1X, mouse1Y);
+      }
     }
     return [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right];
   }
@@ -2016,8 +2021,10 @@ export abstract class PlotData {
           this.isSelecting = true;
           if (click_on_selectw_border) {
             this.selection_window_resize(mouse1X, mouse1Y, mouse2X, mouse2Y, up, down, left, right);
+            this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
           } else {
             this.mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
+            this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
           }
           let abs_min = 1/1000 * ((this.perm_window_x - this.X)/this.scaleX - this.last_mouse1X);
           let abs_max = 1/1000 * ((Math.max(mouse1X, mouse2X) - this.X)/this.scaleX - this.last_mouse1X);
@@ -2076,11 +2083,11 @@ export abstract class PlotData {
         if (this.zw_bool) {
           this.zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil);
 
-        } else if (this.select_bool) {
-          this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
-          this.refresh_selected_point_index();
-
-        }
+        } 
+        // else if (this.select_bool) {
+        //   this.selection_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y);
+        //   this.refresh_selected_point_index();
+        // }
     } else {
         var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
         var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
@@ -2738,6 +2745,7 @@ export class PlotContour extends PlotData {
       this.colour_to_plot_data[a.mouse_selection_color] = a;
       this.plot_datas.push(a);
     }
+    this.plotObject = this.plot_datas[0];
     this.isParallelPlot = false;
     this.interaction_ON = true;
     this.mouse_interaction(this.isParallelPlot);
@@ -2745,11 +2753,7 @@ export class PlotContour extends PlotData {
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
     this.draw_empty_canvas(hidden);
-
-    for (var i = 0; i < this.plot_datas.length; i++) {
-      var d = this.plot_datas[i];
-      this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
-    }
+      this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, this.plotObject);
   }
 }
 

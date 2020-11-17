@@ -91,7 +91,7 @@ objects.append(ScatterPlot)
 ScatterPlot1 = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=['cx', 'color_fill'], point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot1)
 
-coords = [[0,450], [0,0], [300, 200]]
+coords = [[0,600], [0,0], [300, 300]]
 sizes = [plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300)]

@@ -74,7 +74,6 @@ for i in range(50):
 parallel_plot = plot_data.ParallelPlot(elements=elements, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
 
 sol = [parallel_plot.to_dict()]
-os.remove("data.json")
-with open('data.json', 'w') as fp:
-    json.dump(sol, fp, indent=2)
+
+plot_data.plot_d3(sol, 'Parallel')
 

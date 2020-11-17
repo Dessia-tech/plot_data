@@ -9,6 +9,7 @@ Created on Tue Feb 28 14:07:37 2017
 import math
 import os
 import numpy as npy
+import csv
 
 npy.seterr(divide='raise')
 import volmdlr as vm
@@ -138,7 +139,9 @@ class PlotDataCircle2D(DessiaObject):
 
 
 class Point2D(DessiaObject):
-    def __init__(self, cx: float, cy: float, shape:str, size:float, color_fill:str, color_stroke:str, stroke_width:float, type: str = 'point',
+    def __init__(self, cx: float, cy: float, shape: str, size: float,
+                 color_fill: str, color_stroke: str, stroke_width: float,
+                 type: str = 'point',
                  name: str = '', ):
         self.type = type
         self.cx = cx
@@ -170,8 +173,10 @@ class Axis(DessiaObject):
 
 
 class Tooltip(DessiaObject):
-    def __init__(self, colorfill: str, text_color: str, fontsize: float, fontstyle:str,
-                 tp_radius: float, to_plot_list: list, opacity:float, type: str = 'tooltip',
+    def __init__(self, colorfill: str, text_color: str, fontsize: float,
+                 fontstyle: str,
+                 tp_radius: float, to_plot_list: list, opacity: float,
+                 type: str = 'tooltip',
                  name: str = ''):
         self.colorfill = colorfill
         self.text_color = text_color
@@ -183,6 +188,7 @@ class Tooltip(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name=name)
 
+
 class Graphs2D(DessiaObject):
     def __init__(self, graphs, axis, type: str = 'graphs2D', name: str = ''):
         self.graphs = graphs
@@ -190,10 +196,12 @@ class Graphs2D(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name=name)
 
+
 class Graph2D(DessiaObject):
     def __init__(self, dashline: List[float],
                  graph_colorstroke: str, graph_linewidth: float,
-                 display_step: float, tooltip:Tooltip, point_list=[], type: str = 'graph2D',
+                 display_step: float, tooltip: Tooltip, point_list=[],
+                 type: str = 'graph2D',
                  name: str = ''):
         self.serialized_point_list = [p.to_dict() for p in point_list]
         self.dashline = dashline
@@ -208,7 +216,9 @@ class Graph2D(DessiaObject):
 
 
 class Scatter(DessiaObject):
-    def __init__(self, axis:Axis, tooltip:Tooltip, to_display_att_names, point_shape:str, point_size:float, color_fill:str, color_stroke:str, stroke_width:float, elements=[],
+    def __init__(self, axis: Axis, tooltip: Tooltip, to_display_att_names,
+                 point_shape: str, point_size: float, color_fill: str,
+                 color_stroke: str, stroke_width: float, elements=[],
                  type: str = 'ScatterPlot', name: str = ''):
         self.elements = elements
         self.to_display_att_names = to_display_att_names
@@ -253,7 +263,9 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 
 class ParallelPlot(DessiaObject):
-    def __init__(self, line_color:str, line_width:float, disposition:str, to_disp_attributes, elements=[], type: str = 'ParallelPlot', name: str = ''):
+    def __init__(self, line_color: str, line_width: float, disposition: str,
+                 to_disp_attributes, elements=[], type: str = 'ParallelPlot',
+                 name: str = ''):
         self.elements = elements
         self.line_color = line_color
         self.line_width = line_width
@@ -262,23 +274,27 @@ class ParallelPlot(DessiaObject):
         self.type = type
         DessiaObject.__init__(self, name=name)
 
+
 class Attribute(DessiaObject):
-    def __init__(self, name:str, type:str):
+    def __init__(self, name: str, type: str):
         self.type = type
         DessiaObject.__init__(self, name)
 
+
 class MultiplePlots(DessiaObject):
-    def __init__(self, points, objects, sizes, coords, name:str=''):
+    def __init__(self, points, objects, sizes, coords, name: str = ''):
         self.points = points
         self.objects = objects
         self.sizes = sizes
         self.coords = coords
         DessiaObject.__init__(self, name)
 
-def plot_d3(plot_datas):
+
+def plot_d3(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
+    global template
     template_path = pkg_resources.resource_filename(
         pkg_resources.Requirement('plot_data'),
-        'plot_data/templates')
+        'script/template')  # 'plot_data/templates'
     module_sequence = template_path.split('/')[:-2]
     module_path = '/'.join(module_sequence)
     loader = FileSystemLoader(module_path)
@@ -288,7 +304,14 @@ def plot_d3(plot_datas):
                       autoescape=select_autoescape(['html', 'xml']))
     # env = Environment(loader=PackageLoader('plot_data', 'templates'),
     #                   autoescape=select_autoescape(['html', 'xml']))
-    template = env.get_template('plot_data/templates/plot_data.html')
+    if type == 'Contour':
+        template = env.get_template('script/template/ContourTest.html')  # 'plot_data/templates/plot_data.html'
+    elif type == 'Scatter':
+        template = env.get_template('script/template/scattertest.html')
+    elif type == 'Parallel':
+        template = env.get_template('script/template/ParallelPlotTest.html')
+    elif type == 'Multiplot':
+        template = env.get_template('script/template/MultiplePlotsTest.html')
 
     core_path = '/' + os.path.join(
         *template_path.split('/')[:-2] + ['lib', 'core.js'])
@@ -308,6 +331,36 @@ def plot_d3(plot_datas):
 
     webbrowser.open('file://' + temp_file)
     print('file://' + temp_file)
+
+
+def getCSV_vectors(filename):
+    with open(filename, 'r') as csvfile:
+        csv_reader = csv.reader(csvfile, delimiter=',')
+        for line in csv_reader:
+            attribute_names = line
+            nbColumns = len(line)
+            break
+        elements = [[] for k in range(nbColumns)]
+        for line in csv_reader:
+            for k in range(nbColumns):
+                try:
+                    value = float(line[k])
+                except ValueError:
+                    value = line[k]
+                elements[k].append(value)
+
+    class ManipulableObject(DessiaObject):
+        pass
+
+    nbAttributes = nbColumns
+    nbPoints = len(elements[0])
+    points = []
+    for i in range(nbPoints):
+        obj = ManipulableObject()
+        for j in range(nbAttributes):
+            obj.__setattr__(attribute_names[j], elements[j][i])
+        points.append(obj)
+    return points
 
 # def plot(plot_datas, ax=None):
 #     if ax is None:

@@ -87,8 +87,5 @@ ScatterPlot = plot_data.Scatter(elements=point_list, axis=axis, tooltip=tooltip,
 plot_datas += [ScatterPlot]
 
 sol = [c.to_dict() for c in plot_datas]
-# plot_data.plot_d3(sol)
 
-os.remove("data.json")
-with open('data.json', 'w') as fp:
-    json.dump(sol, fp, indent=2)
+plot_data.plot_d3(sol, 'Scatter')

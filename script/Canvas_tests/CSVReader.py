@@ -28,31 +28,6 @@ grey = 'rgb(169, 169, 169)'
 lightgrey = 'rgb(211, 211, 211)'
 lightskyblue = 'rgb(135,206,250)'
 
-with open('data.csv', newline='') as csvfile:
-    spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|')
-    mylist = []
-    for row in spamreader:
-        strData = row[0][:len(row[0])-1]
-        mylist.append(strData)
-
-attribute_names = mylist[0].split(',')
-elements = [[] for k in range(len(attribute_names)-1)]
-for i in range(1, len(mylist)):
-    txt = mylist[i].split(',')
-    for j in range(len(txt) - 1):
-        elements[j].append(float(txt[j]))
-
-
-class ManipulableObject(DessiaObject):
-    pass
-
-points = []
-for i in range(len(elements[0])):
-    obj = ManipulableObject()
-    for j in range(len(attribute_names)-1):
-        obj.__setattr__(attribute_names[j], elements[j][i])
-    points.append(obj)
-
 #Axis data
 nb_points_x = 10
 nb_points_y = 10
@@ -73,7 +48,7 @@ opacity = 0.75
 
 objects = []
 #ParallelPlot
-to_disp_attributes = ['batterie_x', 'bocal_x', 'calculateur_x', 'compresseur_x', 'filtre_air_x', 'filtre_air_y', 'price']
+to_disp_attributes = ['airline', 'avail_seat_km_per_week', 'fatal_accidents_00_14']
 line_color = black
 line_width = 0.5
 disposition = 'vertical'
@@ -93,7 +68,7 @@ axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
 
-to_disp_att_names = ['compresseur_x', 'price']
+to_disp_att_names = ['airline', 'avail_seat_km_per_week']
 tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontsize=tl_fontsize, fontstyle=tl_fontstyle,
                      tp_radius=tp_radius, to_plot_list=to_disp_att_names, opacity=opacity)
 
@@ -104,6 +79,7 @@ coords = [[0,450], [0,0]]
 sizes = [plot_data.Window(width=750, height=400),
          plot_data.Window(width=750, height=400)]
 
+points = plot_data.getCSV_vectors('airline-safety.csv')
 multipleplots = plot_data.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
 sol = [multipleplots.to_dict()]
 os.remove("data.json")

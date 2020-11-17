@@ -98,6 +98,5 @@ sizes = [plot_data.Window(width=560, height=300),
 
 multipleplots = plot_data.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
 sol = [multipleplots.to_dict()]
-os.remove("data.json")
-with open('data.json', 'w') as fp:
-    json.dump(sol, fp, indent=2)
+
+plot_data.plot_d3(sol, 'Multiplot')

@@ -106,9 +106,5 @@ graphs += [graph2]
 graphs2D = plot_data.Graphs2D(graphs=graphs, axis=axis)
 
 sol = [graphs2D.to_dict()]
-# plot_data.plot_d3(sol)
 
-
-os.remove("data.json")
-with open('data.json', 'w') as fp:
-    json.dump(sol, fp, indent=2)
+plot_data.plot_d3(sol, 'Scatter')

@@ -48,11 +48,11 @@ opacity = 0.75
 
 objects = []
 #ParallelPlot
-to_disp_attributes = ['airline', 'avail_seat_km_per_week', 'fatal_accidents_00_14']
+pp_to_disp_attributes = ['airline', 'avail_seat_km_per_week', 'fatal_accidents_00_14']
 line_color = black
 line_width = 0.5
 disposition = 'vertical'
-parallel_plot = plot_data.ParallelPlot(line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
+parallel_plot = plot_data.ParallelPlot(line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=pp_to_disp_attributes)
 objects.append(parallel_plot)
 
 #Scatter
@@ -68,11 +68,11 @@ axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
 
-to_disp_att_names = ['airline', 'avail_seat_km_per_week']
+sc_to_disp_att_names = ['airline', 'avail_seat_km_per_week']
 tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontsize=tl_fontsize, fontstyle=tl_fontstyle,
-                     tp_radius=tp_radius, to_plot_list=to_disp_att_names, opacity=opacity)
+                     tp_radius=tp_radius, to_plot_list=sc_to_disp_att_names, opacity=opacity)
 
-ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=to_disp_att_names, point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
+ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=sc_to_disp_att_names, point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot)
 
 coords = [[0,450], [0,0]]

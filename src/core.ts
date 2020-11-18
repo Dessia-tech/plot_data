@@ -601,6 +601,9 @@ export abstract class PlotData {
   axisNameSize:number=12;
   gradSize:number=10;
   axisNbGrad:number=10;
+  interpolation_colors:string[]=[];
+  rgbs:[number, number, number][]=[];
+  hexs:string[];
 
   initRectColorStroke:string=string_to_hex('grey');
   initRectLinewidth:number=0.2;
@@ -1171,8 +1174,50 @@ export abstract class PlotData {
     return false;
   }
 
+  sort_to_display_list() {
+    for (var i=0; i<this.axis_list.length; i++) {
+      if (this.axis_list[i].name == this.selected_axis_name) {
+        break;
+      }
+    }
+    var attribute = this.axis_list[i];
+    for (let j=0; j<this.to_display_list.length - 1; j++) {
+      let current_minElt = this.get_coord_on_parallel_plot(attribute['type'], attribute['list'], this.to_display_list[j][i], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[i]);
+      let current_min = j;
+      for (let k=j+1; k<this.to_display_list.length; k++) {
+        let current_eltCoord = this.get_coord_on_parallel_plot(attribute['type'], attribute['list'], this.to_display_list[k][i], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[i]);
+        if (current_eltCoord < current_minElt) {
+          current_minElt = current_eltCoord;
+          current_min = k;
+        }
+      }
+      if (current_min != j) {
+        this.to_display_list = List.move_elements(current_min, j, this.to_display_list);
+      }
+    } 
+  }
+
+  pp_color_management(selected:boolean, index:number) {
+    if (this.selected_axis_name == '') {
+      if (selected === true) {
+        this.context.strokeStyle = this.parallel_plot_lineColor;
+      } else {
+        this.context.strokeStyle = string_to_hex('lightgrey');
+      }
+    } else {
+      if (selected === true) {
+        this.context.strokeStyle = this.interpolation_colors[index];
+      } else {
+        this.context.strokeStyle = tint_rgb(this.interpolation_colors[index], 0.8);
+      }
+    }
+  }
+
 
   draw_parallel_coord_lines(nb_axis:number) {
+    if (this.selected_axis_name != '') {
+      this.sort_to_display_list();
+    }
     for (var i=0; i<this.to_display_list.length; i++) {
       var to_display_list_i = this.to_display_list[i];
       var current_attribute_type = this.axis_list[0]['type'];
@@ -1202,17 +1247,14 @@ export abstract class PlotData {
         seg_list.push([next_x, next_axis_y]);
       }
       this.context.beginPath();
-      if (selected === true) {
-        this.context.strokeStyle = this.parallel_plot_lineColor;
-      } else {
-        this.context.strokeStyle = string_to_hex('lightgrey');
-      }
+      this.pp_color_management(selected, i);
       this.context.lineWidth = this.parallel_plot_linewidth;
       Shape.drawLine(this.context, seg_list);
       this.context.stroke();
       this.context.closePath();
     }
   }
+
 
   draw_rubber_bands(mvx) {
     var colorstroke = string_to_hex('white');
@@ -1244,6 +1286,23 @@ export abstract class PlotData {
         }
       }
     }
+  }
+
+  refresh_interpolation_colors(): void {
+    this.interpolation_colors = [];
+    this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
+  }
+
+  add_to_hexs(hex:string): void {
+    this.hexs.push(hex);
+    this.rgbs.push(rgb_strToVector(hex_to_rgb(hex)));
+    this.refresh_interpolation_colors();
+  }
+
+  remove_from_hexs(index:number): void {
+    this.hexs = List.remove_at_index(index, this.hexs);
+    this.rgbs = List.remove_at_index(index, this.rgbs);
+    this.refresh_interpolation_colors();
   }
 
   dep_scatter_selection(to_select:[string, [number, number]][], axis_numbers:number[]):void {
@@ -1617,7 +1676,15 @@ export abstract class PlotData {
           let point = graph.point_list[j];
           var x = this.scaleX*(1000*point.cx + this.last_mouse1X) + this.X;
           var y = this.scaleY*(1000*point.cy + this.last_mouse1Y) + this.Y;
-          in_rect = Shape.isInRect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+          if (this.permanent_window) {
+            var sc_perm_window_x = this.real_to_scatter_coords(this.perm_window_x, 'x');
+            var sc_perm_window_y = this.real_to_scatter_coords(this.perm_window_y, 'y');
+            var sc_perm_window_w = this.real_to_scatter_length(this.perm_window_w, 'x');
+            var sc_perm_window_h = this.real_to_scatter_length(this.perm_window_h, 'y');
+            in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
+          } else {
+            in_rect = Shape.isInRect(x, y, Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
+          }
           if ((in_rect===true) && !(List.is_include(point, this.select_on_click))) {
             this.select_on_click.push(point);
           }
@@ -1717,6 +1784,9 @@ export abstract class PlotData {
 
   click_on_merge_action() {
     this.mergeON = !this.mergeON;
+    this.refresh_point_list_bool = true;
+    this.reset_scroll();
+    this.select_on_click = [];
   }
 
   reset_permanent_window() {
@@ -1995,16 +2065,17 @@ export abstract class PlotData {
 
   refresh_selected_point_index() {  //selected_point_index : index of selected points in the initial point list
     this.selected_point_index = [];
-    if (this.mergeON === false) {
-      for (let i=0; i<this.select_on_click.length; i++) {
-        if (!(this.select_on_click[i] === undefined)) {
-          if (this.plotObject['type'] == 'ScatterPlot') {
-            this.selected_point_index.push(List.get_index_of_element(this.select_on_click[i], this.plotObject.point_list));
-          } else if (this.plotObject['type'] == 'Graphs2D') {
-            for (let j=0; j<this.plotObject.graphs.length; j++) {
-              if (List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) {
-                this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
-              }
+    for (let i=0; i<this.select_on_click.length; i++) {
+      if (!(this.select_on_click[i] === undefined)) {
+        if (this.plotObject['type'] == 'ScatterPlot') {
+          let clicked_points = this.select_on_click[i].points_inside;
+          for (let j=0; j<clicked_points.length; j++) {
+            this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
+          }
+        } else if (this.plotObject['type'] == 'Graphs2D') {
+          for (let j=0; j<this.plotObject.graphs.length; j++) {
+            if (List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) {
+              this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
             }
           }
         }
@@ -2653,39 +2724,40 @@ export abstract class PlotData {
     return point_list;
   }
 
-  refresh_point_list(point_list, mvx, mvy) { //Naive search method
-    var new_point_list = List.copy_list(point_list);
+  refresh_point_list(point_list:PlotDataPoint2D[], mvx:number, mvy:number): PlotDataPoint2D[] { //Naive search method
+    var point_list_copy:PlotDataPoint2D[] = List.copy_list(point_list);
     var i = 0;
-    var length = new_point_list.length;
+    var length = point_list_copy.length;
     while (i<length) {
-      var size_i = new_point_list[i].size;
-      var xi = this.scaleX*(1000*new_point_list[i].cx + mvx);
-      var yi = this.scaleY*(1000*new_point_list[i].cy + mvy);
+      var size_i = point_list_copy[i].size;
+      var xi = this.scaleX*(1000*point_list_copy[i].cx + mvx);
+      var yi = this.scaleY*(1000*point_list_copy[i].cy + mvy);
       var bool = false;
       var j = i+1;
       while (j<length) {
-        var size_j = new_point_list[j].size;
-        if (size_i>=size_j) {var max_size_index = i} else {var max_size_index = j}
-        var xj = this.scaleX*(1000*new_point_list[j].cx + mvx);
-        var yj = this.scaleY*(1000*new_point_list[j].cy + mvy);
-        if (this.distance([xi,yi], [xj,yj])<1000*(new_point_list[i].size + new_point_list[j].size)) {
-          var new_cx = (new_point_list[i].cx + new_point_list[j].cx)/2;
-          var new_cy = (new_point_list[i].cy + new_point_list[j].cy)/2;
-          var new_shape = new_point_list[i].shape;
-          var new_point_size = new_point_list[i].point_size;
-          var new_color_fill = new_point_list[i].color_fill;
-          var new_color_stroke = new_point_list[i].color_stroke;
-          var new_stroke_width = new_point_list[i].stroke_width;
+        var size_j = point_list_copy[j].size;
+        if (size_i>=size_j) {var max_size_index = i;} else {var max_size_index = j;}
+        var xj = this.scaleX*(1000*point_list_copy[j].cx + mvx);
+        var yj = this.scaleY*(1000*point_list_copy[j].cy + mvy);
+        if (this.distance([xi,yi], [xj,yj])<1000*(point_list_copy[i].size + point_list_copy[j].size)) {
+          var new_cx = (point_list_copy[i].cx + point_list_copy[j].cx)/2;
+          var new_cy = (point_list_copy[i].cy + point_list_copy[j].cy)/2;
+          var new_shape = point_list_copy[i].shape;
+          var new_point_size = point_list_copy[i].point_size;
+          var new_color_fill = point_list_copy[i].color_fill;
+          var new_color_stroke = point_list_copy[i].color_stroke;
+          var new_stroke_width = point_list_copy[i].stroke_width;
           var point = new PlotDataPoint2D(new_cx, new_cy, new_shape, new_point_size, new_color_fill, new_color_stroke, new_stroke_width, 'point', '');
+          point.points_inside = point_list_copy[i].points_inside.concat(point_list_copy[j].points_inside);
           var size_coeff = 1.15;
-          point.size = new_point_list[max_size_index].size*size_coeff;
-          var point_i = new_point_list[i];
-          var point_j = new_point_list[j];
+          point.size = point_list_copy[max_size_index].size*size_coeff;
+          var point_i = point_list_copy[i];
+          var point_j = point_list_copy[j];
           this.delete_clicked_points([point_i, point_j]);
           this.delete_tooltip([point_i, point_j]);
-          new_point_list = List.remove_selection(new_point_list[i], new_point_list);
-          new_point_list = List.remove_selection(new_point_list[j-1], new_point_list);
-          new_point_list.push(point);
+          point_list_copy = List.remove_selection(point_list_copy[i], point_list_copy);
+          point_list_copy = List.remove_selection(point_list_copy[j-1], point_list_copy);
+          point_list_copy.push(point);
           this.colour_to_plot_data[point.mouse_selection_color] = point;
           bool = true;
           break;
@@ -2699,7 +2771,7 @@ export abstract class PlotData {
         i++;
       }
     }
-    return new_point_list;
+    return point_list_copy;
   }
 
   delete_clicked_points(point_list) {
@@ -2931,6 +3003,10 @@ export class ParallelPlot extends PlotData {
     this.refresh_displayable_attributes();
     this.refresh_attribute_booleans();
     this.isParallelPlot = true;
+    this.rgbs = [[192, 11, 11]];
+    // this.rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]];
+    this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
+    this.initialize_hexs();
   }
 
   refresh_pp_buttons_coords() {
@@ -3020,6 +3096,14 @@ export class ParallelPlot extends PlotData {
       this.inverted_axis_list.push(false);
       this.rubber_bands.push([]);
     }
+  }
+
+  initialize_hexs() {
+    this.hexs = [];
+    this.rgbs.forEach(rgb_vector => {
+      let rgb = rgb_vectorToStr(rgb_vector[0], rgb_vector[1], rgb_vector[2]);
+      this.hexs.push(rgb_to_hex(rgb));
+    });
   }
 }
 
@@ -3161,6 +3245,7 @@ export class PlotDataPoint2D {
   mouse_selection_color:any;
   size:number;
   k:number=1;
+  points_inside:PlotDataPoint2D[] = [this];
 
   constructor(public cx:number,
               public cy:number,
@@ -4261,7 +4346,7 @@ export function componentToHex(c) {
   return hex.length == 1 ? "0" + hex : hex;
 }
 
-export function rgb_to_hex(rgb:string) {
+export function rgb_to_hex(rgb:string): string {
   var tokens = rgb.slice(4, rgb.length - 1).split(',');
   var r = parseInt(tokens[0],10);
   var g = parseInt(tokens[1],10);
@@ -4273,7 +4358,7 @@ var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe
   ['lightorange', '#ff8700'], ['cyan', '#13f0f0'], ['lightcyan', '#90f7f7'], ['rose', '#FF69B4'], ['lightrose', '#FFC0CB'], ['violet', '#EE82EE'], ['lightviolet', '#eaa5f6'], ['white', '#ffffff'], ['black', '#000000'], ['brown', '#cd8f40'],
   ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']];
 
-export function hex_to_string(hexa:string) {
+export function hex_to_string(hexa:string): string {
   for (var i=0 ;i<color_dict.length; i++) {
     if (hexa.toUpperCase() === color_dict[i][1].toUpperCase()) {
       return color_dict[i][0];
@@ -4282,7 +4367,24 @@ export function hex_to_string(hexa:string) {
   throw new Error('hex_to_string -> Invalid color : ' + hexa + ' not in list');
 }
 
-export function string_to_hex(str:string) {
+export function hexToRgbObj(hex):Object {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+export function hex_to_rgb(hex:string): string {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  var r = parseInt(result[1], 16);
+  var g = parseInt(result[2], 16);
+  var b = parseInt(result[3], 16);
+  return rgb_vectorToStr(r, g, b);
+}
+
+export function string_to_hex(str:string): string {
   for (var i=0 ;i<color_dict.length; i++) {
     if (str.toUpperCase() === color_dict[i][0].toUpperCase()) {
       return color_dict[i][1];
@@ -4291,22 +4393,22 @@ export function string_to_hex(str:string) {
   throw new Error('string_to_hex -> Invalid color : ' + str + ' not in list');
 }
 
-export function rgb_to_string(rgb:string) {
+export function rgb_to_string(rgb:string): string {
   return hex_to_string(rgb_to_hex(rgb));
 }
 
-export function rgb_interpolation([r1, g1, b1], [r2, g2, b2], n:number) {
+export function rgb_interpolation([r1, g1, b1], [r2, g2, b2], n:number): string[] {
   var color_list = [];
   for (var k=0; k<n; k++) {
     var r = Math.floor(r1*(1-k/n) + r2*k/n);
     var g = Math.floor(g1*(1-k/n) + g2*k/n);
     var b = Math.floor(b1*(1-k/n) + b2*k/n);
-    color_list.push([r,g,b]);
+    color_list.push(rgb_vectorToStr(r,g,b));
   }
   return color_list;
 }
 
-export function rgb_interpolations(rgbs, nb_pts:number) {
+export function rgb_interpolations(rgbs:[number, number, number][], nb_pts:number): string[] {
   var nb_seg = rgbs.length - 1;
   var arr = [];
   var color_list = [];
@@ -4314,10 +4416,33 @@ export function rgb_interpolations(rgbs, nb_pts:number) {
   for (var i=0; i<nb_pts; i++) {
     arr[i%nb_seg]++;
   }
-  for (var i=0; i<nb_seg; i++) {
-    color_list.push(rgb_interpolation(rgbs[i], rgbs[i+1], arr[i]));
+  for (let i=0; i<nb_seg; i++) {
+    var interpolation_colors = rgb_interpolation(rgbs[i], rgbs[i+1], arr[i]);
+    for (let j=0; j<interpolation_colors.length; j++) {
+      color_list.push(interpolation_colors[j]);
+    }
   }
   return color_list;
+}
+
+export function rgb_strToVector(rgb:string): [number, number, number] {
+  var tokens = rgb.slice(4, rgb.length - 1).split(',');
+  var r = parseInt(tokens[0],10);
+  var g = parseInt(tokens[1],10);
+  var b = parseInt(tokens[2],10);
+  return [r,g,b];
+}
+
+export function rgb_vectorToStr(r:number, g:number, b:number): string {
+  return 'rgb(' + r.toString() + ',' + g.toString() + ',' + b.toString() + ')';
+}
+
+export function tint_rgb(rgb:string, coeff:number): string { //coeff must be between 0 and 1. The higher coeff, the lighter the color
+  var result = rgb_strToVector(rgb);
+  var r = result[0] + (255 - result[0])*coeff;
+  var g = result[1] + (255 - result[1])*coeff;
+  var b = result[2] + (255 - result[2])*coeff;
+  return rgb_vectorToStr(r,g,b);
 }
 
 class Sort {
@@ -4415,8 +4540,6 @@ export function isHex(str:string):boolean {
   return str.substring(0,1) == '#';
 }
 
-
-
 export class List {
   public static contains_undefined(list:any[]):boolean {
     for (var i=0; i<list.length; i++) {
@@ -4494,7 +4617,7 @@ export class List {
 
   public static get_index_of_element(val:any, list:any[]):number {
     for (var i=0; i<list.length; i++) {
-      if (val == list[i]) {
+      if (equals(val, list[i])) {
         return i;
       }
     }

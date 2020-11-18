@@ -3003,8 +3003,7 @@ export class ParallelPlot extends PlotData {
     this.refresh_displayable_attributes();
     this.refresh_attribute_booleans();
     this.isParallelPlot = true;
-    this.rgbs = [[192, 11, 11]];
-    // this.rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]];
+    this.rgbs = data_show['rgbs']
     this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
     this.initialize_hexs();
   }

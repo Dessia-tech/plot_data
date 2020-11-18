@@ -264,13 +264,14 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 class ParallelPlot(DessiaObject):
     def __init__(self, line_color: str, line_width: float, disposition: str,
-                 to_disp_attributes, elements=[], type: str = 'ParallelPlot',
+                 to_disp_attributes, rgbs, elements=[], type: str = 'ParallelPlot',
                  name: str = ''):
         self.elements = elements
         self.line_color = line_color
         self.line_width = line_width
         self.disposition = disposition
         self.to_disp_attributes = to_disp_attributes
+        self.rgbs = rgbs
         self.type = type
         DessiaObject.__init__(self, name=name)
 

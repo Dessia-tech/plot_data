@@ -70,8 +70,8 @@ for i in range(50):
     point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=random_color_stroke, stroke_width=stroke_width)
     elements += [point]
 
-
-parallel_plot = plot_data.ParallelPlot(elements=elements, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes)
+rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
+parallel_plot = plot_data.ParallelPlot(elements=elements, line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes, rgbs=rgbs)
 
 sol = [parallel_plot.to_dict()]
 

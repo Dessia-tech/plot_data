@@ -1,4 +1,4 @@
-import plot_data
+import plot_data.core as core
 import random
 import json
 import os
@@ -61,16 +61,16 @@ text_color = white
 tl_fontsize = 12  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
 tl_fontstyle = 'sans-serif'
 tp_radius = 5
-to_display_att_names = ['color_fill', 'cy']
+to_display_att_names = ['cx', 'cy']
 opacity = 0.75
 
-axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
+axis = core.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
                               graduation_color=graduation_color,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
 
-tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontsize=tl_fontsize, fontstyle=tl_fontstyle,
+tooltip = core.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontsize=tl_fontsize, fontstyle=tl_fontstyle,
                      tp_radius=tp_radius, to_plot_list=to_display_att_names, opacity=opacity)
 
 plot_datas = []
@@ -80,12 +80,12 @@ for i in range(500):
     cx = random.uniform(0, 2)
     cy = random.uniform(0, 1)
     random_color_fill = color_fills[random.randint(0, len(color_fills) - 1)]
-    point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=colorstroke, stroke_width=strokewidth)
+    point = core.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=colorstroke, stroke_width=strokewidth)
     point_list += [point]
 
-ScatterPlot = plot_data.Scatter(elements=point_list, axis=axis, tooltip=tooltip, to_display_att_names=to_display_att_names, point_shape=shape, point_size=size, color_fill=colorfill, color_stroke=colorstroke, stroke_width=strokewidth)
+ScatterPlot = core.Scatter(elements=point_list, axis=axis, tooltip=tooltip, to_display_att_names=to_display_att_names, point_shape=shape, point_size=size, color_fill=colorfill, color_stroke=colorstroke, stroke_width=strokewidth)
 plot_datas += [ScatterPlot]
 
 sol = [c.to_dict() for c in plot_datas]
 
-plot_data.plot_d3(sol, 'Scatter')
+core.plot_canvas(sol, 'scatter')

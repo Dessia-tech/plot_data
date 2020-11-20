@@ -1,4 +1,4 @@
-import plot_data
+import plot_data.core as core
 import random
 import json
 import os
@@ -46,11 +46,11 @@ for i in range(50):
     cy = random.uniform(0,1)
     random_color_fill = color_fills[random.randint(0,len(color_fills)-1)]
     random_color_stroke = color_strokes[random.randint(0,len(color_strokes) - 1)]
-    point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=random_color_stroke, stroke_width=stroke_width)
+    point = core.Point2D(cx=cx, cy=cy, size=size, shape=shape, color_fill=random_color_fill, color_stroke=random_color_stroke, stroke_width=stroke_width)
     points += [point]
 
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
-parallel_plot = plot_data.ParallelPlot(line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes, rgbs=rgbs)
+parallel_plot = core.ParallelPlot(line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes, rgbs=rgbs)
 objects.append(parallel_plot)
 
 #Axis data
@@ -76,28 +76,28 @@ sc_color_fill = lightblue
 sc_color_stroke = grey
 sc_stroke_width = 0.5
 
-axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
+axis = core.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
                               graduation_color=graduation_color,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
 
 to_disp_att_names = ['cx', 'cy']
-tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontstyle=tl_fontstyle, fontsize=tl_fontsize,
+tooltip = core.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontstyle=tl_fontstyle, fontsize=tl_fontsize,
                      tp_radius=tp_radius, to_plot_list=to_disp_att_names, opacity=opacity)
 
-ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=to_disp_att_names, point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
+ScatterPlot = core.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=to_disp_att_names, point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot)
 
-ScatterPlot1 = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=['cx', 'color_fill'], point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
+ScatterPlot1 = core.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=['cx', 'color_fill'], point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot1)
 
 coords = [[0,600], [0,0], [300, 300]]
-sizes = [plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300)]
+sizes = [core.Window(width=560, height=300),
+         core.Window(width=560, height=300),
+         core.Window(width=560, height=300)]
 
-multipleplots = plot_data.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
+multipleplots = core.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
 sol = [multipleplots.to_dict()]
 
-plot_data.plot_d3(sol, 'Multiplot')
+core.plot_canvas(sol, 'multiplot')

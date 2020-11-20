@@ -81,7 +81,7 @@ class Window(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class PlotDataState(DessiaObject):
+class Settings(DessiaObject):
     def __init__(self, name: str = '', color_map: ColorMapSet = None,
                  hatching: HatchingSet = None,
                  color_surface: ColorSurfaceSet = None,
@@ -114,21 +114,21 @@ class PlotDataState(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class PlotDataLine2D(DessiaObject):
+class Line2D(DessiaObject):
     def __init__(self, data: List[float],
-                 plot_data_states: List[PlotDataState],
+                 plot_data_states: List[Settings],
                  type: str = 'line', name: str = '', ):
         self.data = data
         self.type = type
         self.plot_data_states = plot_data_states
         if plot_data_states is None:
-            self.plot_data_states = [PlotDataState()]
+            self.plot_data_states = [Settings()]
         DessiaObject.__init__(self, name=name)
 
 
-class PlotDataCircle2D(DessiaObject):
+class Circle2D(DessiaObject):
     def __init__(self, cx: float, cy: float, r: float,
-                 plot_data_states: List[PlotDataState],
+                 plot_data_states: List[Settings],
                  type: str = 'circle', name: str = '', ):
         self.type = type
         self.plot_data_states = plot_data_states
@@ -219,7 +219,7 @@ class Scatter(DessiaObject):
     def __init__(self, axis: Axis, tooltip: Tooltip, to_display_att_names,
                  point_shape: str, point_size: float, color_fill: str,
                  color_stroke: str, stroke_width: float, elements=[],
-                 type: str = 'ScatterPlot', name: str = ''):
+                 type: str = 'scatterplot', name: str = ''):
         self.elements = elements
         self.to_display_att_names = to_display_att_names
         self.point_shape = point_shape
@@ -233,10 +233,10 @@ class Scatter(DessiaObject):
         DessiaObject.__init__(self, name)
 
 
-class PlotDataArc2D(DessiaObject):
+class Arc2D(DessiaObject):
     def __init__(self, cx: float, cy: float, r: float,
                  data: List[float], angle1: float, angle2: float,
-                 plot_data_states: List[PlotDataState],
+                 plot_data_states: List[Settings],
                  type: str = 'arc', name: str = '', ):
         self.angle2 = angle2
         self.angle1 = angle1
@@ -249,9 +249,9 @@ class PlotDataArc2D(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class PlotDataContour2D(DessiaObject):
+class Contour2D(DessiaObject):
     def __init__(self, plot_data_primitives: List[float],
-                 plot_data_states: List[PlotDataState],
+                 plot_data_states: List[Settings],
                  type: str = 'contour', name: str = '', ):
         self.plot_data_primitives = plot_data_primitives
         self.type = type
@@ -264,7 +264,7 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 class ParallelPlot(DessiaObject):
     def __init__(self, line_color: str, line_width: float, disposition: str,
-                 to_disp_attributes, rgbs, elements=[], type: str = 'ParallelPlot',
+                 to_disp_attributes, rgbs, elements=[],
                  name: str = ''):
         self.elements = elements
         self.line_color = line_color
@@ -272,7 +272,7 @@ class ParallelPlot(DessiaObject):
         self.disposition = disposition
         self.to_disp_attributes = to_disp_attributes
         self.rgbs = rgbs
-        self.type = type
+        self.type = 'parallelplot'
         DessiaObject.__init__(self, name=name)
 
 
@@ -288,10 +288,11 @@ class MultiplePlots(DessiaObject):
         self.objects = objects
         self.sizes = sizes
         self.coords = coords
+        self.type = 'multiplot'
         DessiaObject.__init__(self, name)
 
 
-def plot_d3(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
+def plot_canvas(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
     global template
     template_path = pkg_resources.resource_filename(
         pkg_resources.Requirement('plot_data'),
@@ -305,13 +306,13 @@ def plot_d3(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
                       autoescape=select_autoescape(['html', 'xml']))
     # env = Environment(loader=PackageLoader('plot_data', 'templates'),
     #                   autoescape=select_autoescape(['html', 'xml']))
-    if type == 'Contour':
+    if type == 'contour':
         template = env.get_template('script/template/ContourTest.html')  # 'plot_data/templates/plot_data.html'
-    elif type == 'Scatter':
+    elif type == 'scatter':
         template = env.get_template('script/template/scattertest.html')
-    elif type == 'Parallel':
+    elif type == 'parallelplot':
         template = env.get_template('script/template/ParallelPlotTest.html')
-    elif type == 'Multiplot':
+    elif type == 'multiplot':
         template = env.get_template('script/template/MultiplePlotsTest.html')
 
     core_path = '/' + os.path.join(

@@ -1,5 +1,5 @@
 import csv
-import plot_data
+import plot_data.core as core
 from dessia_common import DessiaObject
 import json
 import os
@@ -52,7 +52,8 @@ pp_to_disp_attributes = ['airline', 'avail_seat_km_per_week', 'fatal_accidents_0
 line_color = black
 line_width = 0.5
 disposition = 'vertical'
-parallel_plot = plot_data.ParallelPlot(line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=pp_to_disp_attributes)
+rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
+parallel_plot = core.ParallelPlot(line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=pp_to_disp_attributes, rgbs=rgbs)
 objects.append(parallel_plot)
 
 #Scatter
@@ -62,26 +63,28 @@ sc_color_fill = lightblue
 sc_color_stroke = grey
 sc_stroke_width = 0.5
 
-axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
+axis = core.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               font_size=font_size,
                               graduation_color=graduation_color,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
 
 sc_to_disp_att_names = ['airline', 'avail_seat_km_per_week']
-tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontsize=tl_fontsize, fontstyle=tl_fontstyle,
+tooltip = core.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontsize=tl_fontsize, fontstyle=tl_fontstyle,
                      tp_radius=tp_radius, to_plot_list=sc_to_disp_att_names, opacity=opacity)
 
-ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=sc_to_disp_att_names, point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
+ScatterPlot = core.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=sc_to_disp_att_names, point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot)
 
 coords = [[0,450], [0,0]]
-sizes = [plot_data.Window(width=750, height=400),
-         plot_data.Window(width=750, height=400)]
+sizes = [core.Window(width=750, height=400),
+         core.Window(width=750, height=400)]
 
-points = plot_data.getCSV_vectors('airline-safety.csv')
-multipleplots = plot_data.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
+points = core.getCSV_vectors('airline-safety.csv')
+multipleplots = core.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
 sol = [multipleplots.to_dict()]
-os.remove("data.json")
-with open('data.json', 'w') as fp:
-    json.dump(sol, fp, indent=2)
+# os.remove("data.json")
+# with open('data.json', 'w') as fp:
+#     json.dump(sol, fp, indent=2)
+
+core.plot_canvas(sol, 'multiplot')

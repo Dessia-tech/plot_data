@@ -1,8 +1,4 @@
-import csv
 import plot_data.core as core
-from dessia_common import DessiaObject
-import json
-import os
 
 red = 'rgb(247, 0, 0)'
 lightred = 'rgb(237, 128, 128)'

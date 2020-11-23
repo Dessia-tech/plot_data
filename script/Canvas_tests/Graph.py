@@ -1,7 +1,5 @@
 import plot_data.core as core
 import numpy as np
-import json
-import os
 
 red = 'rgb(247, 0, 0)'
 lightred = 'rgb(237, 128, 128)'

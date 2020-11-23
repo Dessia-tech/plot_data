@@ -6,18 +6,14 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
-import math
 import os
 import numpy as npy
 import csv
 
 npy.seterr(divide='raise')
-import volmdlr as vm
 # from itertools import permutations
-import jsonschema
 import json
 
-import matplotlib.pyplot as plt
 from matplotlib.patches import Arc, FancyArrow
 from mpl_toolkits.mplot3d import Axes3D
 import pkg_resources
@@ -26,8 +22,12 @@ import webbrowser
 from dessia_common import DessiaObject
 from typing import TypeVar, List
 
+import plot_data.templates as templates
+
 from jinja2 import Environment, PackageLoader, select_autoescape, \
     FileSystemLoader
+
+from string import Template
 
 
 class ColorMapSet(DessiaObject):
@@ -292,40 +292,55 @@ class MultiplePlots(DessiaObject):
         DessiaObject.__init__(self, name)
 
 
-def plot_canvas(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
-    global template
-    template_path = pkg_resources.resource_filename(
-        pkg_resources.Requirement('plot_data'),
-        'script/template')  # 'plot_data/templates'
-    module_sequence = template_path.split('/')[:-2]
-    module_path = '/'.join(module_sequence)
-    loader = FileSystemLoader(module_path)
-    print(loader, template_path)
-    print(module_sequence, module_path)
-    env = Environment(loader=loader,
-                      autoescape=select_autoescape(['html', 'xml']))
-    # env = Environment(loader=PackageLoader('plot_data', 'templates'),
-    #                   autoescape=select_autoescape(['html', 'xml']))
-    if type == 'contour':
-        template = env.get_template('script/template/ContourTest.html')  # 'plot_data/templates/plot_data.html'
-    elif type == 'scatter':
-        template = env.get_template('script/template/scattertest.html')
-    elif type == 'parallelplot':
-        template = env.get_template('script/template/ParallelPlotTest.html')
-    elif type == 'multiplot':
-        template = env.get_template('script/template/MultiplePlotsTest.html')
+# def plot_canvas(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
+#     global template
+#     template_path = pkg_resources.resource_filename(
+#         pkg_resources.Requirement('plot_data'),
+#         'script/templates')  # 'plot_data/templates'
+#     module_sequence = template_path.split('/')[:-2]
+#     module_path = '/'.join(module_sequence)
+#     loader = FileSystemLoader(module_path)
+#     print(loader, template_path)
+#     print(module_sequence, module_path)
+#     env = Environment(loader=loader,
+#                       autoescape=select_autoescape(['html', 'xml']))
+#     # env = Environment(loader=PackageLoader('plot_data', 'templates'),
+#     #                   autoescape=select_autoescape(['html', 'xml']))
+#     if type == 'contour':
+#         template = env.get_template('script/templates/Contour.html')  # 'plot_data/templates/plot_data.html'
+#     elif type == 'scatter':
+#         template = env.get_template('script/templates/Scatter.html')
+#     elif type == 'parallelplot':
+#         template = env.get_template('script/templates/ParallelPlot.html')
+#     elif type == 'multiplot':
+#         template = env.get_template('script/templates/MultiplePlots.html')
+#
+#     core_path = '/' + os.path.join(
+#         *template_path.split('/')[:-2] + ['lib', 'core.js'])
+#
+#     data = []
+#     for d in plot_datas:
+#         data.append(json.dumps(d))
+#     s = template.render(D3Data=data, core_path=core_path,
+#                         template_path=template_path)
+#     temp_file = tempfile.mkstemp(suffix='.html')[1]
+#
+#     with open(temp_file, 'wb') as file:
+#         file.write(s.encode('utf-8'))
+#
+#     webbrowser.open('file://' + temp_file)
+#     print('file://' + temp_file)
 
-    core_path = '/' + os.path.join(
-        *template_path.split('/')[:-2] + ['lib', 'core.js'])
-
-    print(core_path)
-    print(template_path)
-
-    data = []
-    for d in plot_datas:
-        data.append(json.dumps(d))
-    s = template.render(D3Data=data, core_path=core_path,
-                        template_path=template_path)
+def plot_canvas(plot_datas, plot_type):
+    if plot_type == 'contour':
+        template = templates.contour_template
+    elif plot_type == 'scatter':
+        template = templates.scatter_template
+    elif plot_type == 'parallelplot':
+        template = templates.parallelplot_template
+    else:
+        template = templates.multiplot_template
+    s = template.substitute(data=json.dumps(plot_datas))
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:

@@ -32,9 +32,12 @@ export class MultiplePlots {
   initial_mouseX:number=0;
   initial_mouseY:number=0;
 
+  burst_coeff:number=0;
+
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
     var data_show = data[0];
+    console.log(data)
     this.coords = data_show['coords'];
     this.dataObjects = data_show['objects'];
     var points = data_show['points'];
@@ -482,8 +485,8 @@ export class MultiplePlots {
     return [xc - obj.width/2, yc - obj.height/2];
   }
 
-  burst_elements(x, y, event) {
-    if (event > 0) {var burst_coeff = 1.1} else {var burst_coeff = 1/1.1}
+  burst_elements(x:number, y:number, event:number): void {
+    if (event > 0) {var burst_coeff = 1.15} else {var burst_coeff = 1/1.15}
     for (let i=0; i<this.nbObjects; i++) {
       let xc = 0;
       let yc = 0;
@@ -622,7 +625,7 @@ export class MultiplePlots {
     canvas.addEventListener('mouseleave', e => {
       isDrawing = false;
       mouse_moving = false;
-    })
+    });
   }
 }
 

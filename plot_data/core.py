@@ -35,6 +35,7 @@ class PlotDataObject(DessiaObject):
 
     def to_dict(self):
         dict_ = DessiaObject.to_dict(self)
+        del dict_['object_class']
         return dict_
 
 

@@ -16,7 +16,8 @@ import pkg_resources
 import tempfile
 import webbrowser
 from dessia_common import DessiaObject
-from typing import List
+from dessia_common.typings import Subclass
+from typing import List, Tuple
 
 from jinja2 import Environment, select_autoescape, \
     FileSystemLoader
@@ -29,13 +30,14 @@ class PlotDataObject(DessiaObject):
     Abstract interface for DessiaObject implementing in module
     """
     def __init__(self, type_: str, name: str = '', **kwargs):
-        self.type = type_
+        self.type_ = type_
         DessiaObject.__init__(name=name, **kwargs)
 
     def to_dict(self):
         dict_ = DessiaObject.to_dict(self)
         print(dict_)
         return dict_
+
 
 class ColorMapSet(DessiaObject):
     def __init__(self, value: float = None, tooltip: bool = False,
@@ -95,9 +97,8 @@ class Settings(DessiaObject):
                  shape_set: PointShapeSet = None,
                  point_size: PointSizeSet = None,
                  point_color: PointColorSet = None,
-                 window_size: Window = None,
-                 stroke_width: float = 1, color_line: str = 'black',
-                 marker: str = None,
+                 window_size: Window = None, stroke_width: float = 1,
+                 color_line: str = 'black', marker: str = None,
                  dash: str = None, opacity: float = 1):
         self.color_surface = color_surface
         self.color_map = color_map
@@ -189,19 +190,14 @@ class Tooltip(PlotDataObject):
         PlotDataObject.__init__(self, type_='tooltip', name=name)
 
 
-class Graphs2D(PlotDataObject):
-    def __init__(self, graphs, axis, name: str = ''):
-        self.graphs = graphs
-        self.axis = axis
-        self.type = type
-        PlotDataObject.__init__(self, type_='graphs2D', name=name)
-
-
 class Graph2D(PlotDataObject):
     def __init__(self, dashline: List[float], graph_colorstroke: str,
                  graph_linewidth: float, display_step: float, tooltip: Tooltip,
-                 point_list=[], name: str = ''):
-        self.serialized_point_list = [p.to_dict() for p in point_list]
+                 point_list: List[Point2D] = None, name: str = ''):
+        if point_list is None:
+            self.serialized_point_list = []
+        else:
+            self.serialized_point_list = [p.to_dict() for p in point_list]
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
         self.graph_linewidth = graph_linewidth
@@ -213,12 +209,24 @@ class Graph2D(PlotDataObject):
         PlotDataObject.__init__(self, type_='graph2D', name=name)
 
 
+class Graphs2D(PlotDataObject):
+    def __init__(self, graphs: List[Graph2D], axis: Axis, name: str = ''):
+        self.graphs = graphs
+        self.axis = axis
+        self.type = type
+        PlotDataObject.__init__(self, type_='graphs2D', name=name)
+
+
 class Scatter(PlotDataObject):
-    def __init__(self, axis: Axis, tooltip: Tooltip, to_display_att_names,
-                 point_shape: str, point_size: float, color_fill: str,
-                 color_stroke: str, stroke_width: float, elements=[],
+    def __init__(self, axis: Axis, tooltip: Tooltip,
+                 to_display_att_names: List[str], point_shape: str,
+                 point_size: float, color_fill: str, color_stroke: str,
+                 stroke_width: float, elements: List[Point2D] = None,
                  name: str = ''):
-        self.elements = elements
+        if elements is None:
+            self.elements = []
+        else:
+            self.elements = elements
         self.to_display_att_names = to_display_att_names
         self.point_shape = point_shape
         self.point_size = point_size
@@ -233,7 +241,7 @@ class Scatter(PlotDataObject):
 class Arc2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, r: float,
                  data: List[float], angle1: float, angle2: float,
-                 plot_data_states: List[Settings], name: str = '', ):
+                 plot_data_states: List[Settings], name: str = ''):
         self.angle2 = angle2
         self.angle1 = angle1
         self.data = data
@@ -257,7 +265,7 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 class ParallelPlot(PlotDataObject):
     def __init__(self, line_color: str, line_width: float, disposition: str,
-                 to_disp_attributes, rgbs, elements=None,
+                 to_disp_attributes: List[str], rgbs, elements=None,
                  name: str = ''):
         self.elements = elements
         self.line_color = line_color
@@ -269,12 +277,15 @@ class ParallelPlot(PlotDataObject):
 
 
 class Attribute(PlotDataObject):
-    def __init__(self, name: str):
-        PlotDataObject.__init__(self, type_='attribute', name=name)
+    def __init__(self, type_: str = '', name: str = ''):
+        PlotDataObject.__init__(self, type_=type_, name=name)
 
 
 class MultiplePlots(PlotDataObject):
-    def __init__(self, points, objects, sizes, coords, name: str = ''):
+    def __init__(self, points: List[Point2D],
+                 objects: List[Subclass[PlotDataObject]],
+                 sizes: List[Window], coords: List[Tuple[float, float]],
+                 name: str = ''):
         self.points = points
         self.objects = objects
         self.sizes = sizes

@@ -94,8 +94,12 @@ objects.append(ScatterPlot)
 ScatterPlot1 = core.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=['cx', 'color_fill'], point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot1)
 
-coords = [[0,600], [300, 0], [0,0], [300, 300]]
+ScatterPlot2 = core.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=['cy', 'color_stroke'], point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
+objects.append(ScatterPlot2)
+
+coords = [[0,600], [300, 0], [0,0], [300, 300], [500,500]]
 sizes = [core.Window(width=560, height=300),
+         core.Window(width=560, height=300),
          core.Window(width=560, height=300),
          core.Window(width=560, height=300),
          core.Window(width=560, height=300)]

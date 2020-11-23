@@ -21,6 +21,10 @@ export class MultiplePlots {
   selectDep_y:number=0;
   selectDep_w:number=0;
   selectDep_h:number=0;
+  view_button_x:number=0;
+  view_button_y:number=0;
+  view_button_w:number=0;
+  view_button_h:number=0;
   initial_object_X:number=0;
   initial_object_Y:number=0;
   initial_object_width:number=0;
@@ -63,8 +67,7 @@ export class MultiplePlots {
 
     if (buttons_ON) {
       this.initializeButtons();
-      this.draw_manipulation_button();
-      this.draw_selection_dependency_button();
+      this.draw_buttons();
     }
   }
 
@@ -90,6 +93,10 @@ export class MultiplePlots {
     this.selectDep_y = 40;
     this.selectDep_w = 40;
     this.selectDep_h = 20;
+    this.view_button_x = this.width - 45;
+    this.view_button_y = 65;
+    this.view_button_w = 35;
+    this.view_button_h = 20;
   }
 
   draw_manipulation_button():void {
@@ -106,6 +113,16 @@ export class MultiplePlots {
     } else {
       Shape.createButton(this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h, this.context_show, "Dep OFF", '10px sans-serif');
     }
+  }
+  
+  draw_clean_view_button() {
+    Shape.createButton(this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h, this.context_show, 'View', '10px sans-serif');
+  }
+
+  draw_buttons() {
+    this.draw_manipulation_button();
+    this.draw_selection_dependency_button();
+    this.draw_clean_view_button();
   }
 
   initializeObjectContext(object):void {
@@ -155,8 +172,7 @@ export class MultiplePlots {
       obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
     if (this.buttons_ON) {
-      this.draw_manipulation_button();
-      this.draw_selection_dependency_button();
+      this.draw_buttons();
     }
   }
 
@@ -248,7 +264,7 @@ export class MultiplePlots {
     this.initial_object_height = this.objectList[selected_index].height;
   }
 
-  resetAllObjects() {
+  resetAllScatters() {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.objectList[i].type == 'scatterplot') {
         this.objectList[i].click_on_reset_action();
@@ -257,40 +273,42 @@ export class MultiplePlots {
   }
 
   clean_view() {
-    if (this.width >= this.height) {var disposition = 'landscape';} else {var disposition = 'portrait';}
+    var big_coord = 'X';
+    var small_coord = 'Y';
+    var big_length = 'width';
+    var small_length = 'height';
+    if (this.width < this.height) {
+      [big_coord, small_coord, big_length, small_length] = [small_coord, big_coord, small_length, big_length];
+    }
     var pp_index_list = [];
     var sc_index_list = [];
     for (let i=0; i<this.nbObjects; i++) {
-      if (this.objectList[i].type == 'parallelplot') {pp_index_list.push(i);} else {sc_index_list.push(i); }
+      if (this.objectList[i].type == 'parallelplot') {pp_index_list.push(i);} else {sc_index_list.push(i);}
     }
     var sorted_list = sc_index_list.concat(pp_index_list);
-    if (disposition == 'landscape') {
-      let height_nbObjects = Math.min(Math.ceil(this.nbObjects/2),2);
-      let width_nbObjects = Math.ceil(this.nbObjects/height_nbObjects);
-      let w_step = this.width/width_nbObjects;
-      let h_step = this.height/height_nbObjects;
-      for (let i=0; i<width_nbObjects - 1; i++) {
-        for (let j=0; j<height_nbObjects; j++) {
-          var current_index = i*height_nbObjects + j; //current_index in sorted_list
-          this.objectList[sorted_list[current_index]].X = i*w_step;
-          this.objectList[sorted_list[current_index]].Y = j*h_step;
-          this.objectList[sorted_list[current_index]].width = w_step;
-          this.objectList[sorted_list[current_index]].height = h_step;
-        }
+    let small_length_nbObjects = Math.min(Math.ceil(this.nbObjects/2), 2);
+    let big_length_nbObjects = Math.ceil(this.nbObjects/small_length_nbObjects);
+    let big_length_step = this[big_length]/big_length_nbObjects;
+    let small_length_step = this[small_length]/small_length_nbObjects;
+    for (let i=0; i<big_length_nbObjects - 1; i++) {
+      for (let j=0; j<small_length_nbObjects; j++) {
+        var current_index = i*small_length_nbObjects + j; //current_index in sorted_list
+        this.objectList[sorted_list[current_index]][big_coord] = i*big_length_step;
+        this.objectList[sorted_list[current_index]][small_coord] = j*small_length_step;
+        this.objectList[sorted_list[current_index]][big_length] = big_length_step;
+        this.objectList[sorted_list[current_index]][small_length] = small_length_step;
       }
-      let last_index = current_index + 1;
-      let remaining_obj = this.nbObjects - last_index;
-      let last_h_step = this.height/remaining_obj;
-      for (let j=0; j<remaining_obj; j++) {
-        this.objectList[sorted_list[last_index + j]].X = (width_nbObjects - 1)*w_step;
-        this.objectList[sorted_list[last_index + j]].Y = j*last_h_step;
-        this.objectList[sorted_list[last_index + j]].width = w_step;
-        this.objectList[sorted_list[last_index + j]].height = last_h_step;
-      }
-    } else {
-      
     }
-    this.resetAllObjects();
+    let last_index = current_index + 1;
+    let remaining_obj = this.nbObjects - last_index;
+    let last_small_length_step = this[small_length]/remaining_obj;
+    for (let j=0; j<remaining_obj; j++) {
+      this.objectList[sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step;
+      this.objectList[sorted_list[last_index + j]][small_coord] = j*last_small_length_step;
+      this.objectList[sorted_list[last_index + j]][big_length] = big_length_step;
+      this.objectList[sorted_list[last_index + j]][small_length] = last_small_length_step;
+    }
+    this.resetAllScatters();
     this.redrawAllObjects();
   }
 
@@ -543,10 +561,13 @@ export class MultiplePlots {
       mouse3Y = e.offsetY;
       var click_on_translation_button = Shape.isInRect(mouse3X, mouse3Y, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
       var click_on_selectDep_button = Shape.isInRect(mouse3X, mouse3Y, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
+      var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
       if (click_on_translation_button) {
         this.manipulable_bool_action();
       } else if (click_on_selectDep_button) {
         this.selectDep_action();
+      } else if (click_on_view) {
+        this.clean_view();
       }
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {

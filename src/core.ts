@@ -115,11 +115,11 @@ export class MultiplePlots {
     }
   }
   
-  draw_clean_view_button() {
+  draw_clean_view_button():void {
     Shape.createButton(this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h, this.context_show, 'View', '10px sans-serif');
   }
 
-  draw_buttons() {
+  draw_buttons():void {
     this.draw_manipulation_button();
     this.draw_selection_dependency_button();
     this.draw_clean_view_button();
@@ -208,7 +208,7 @@ export class MultiplePlots {
     }
   }
 
-  manipulable_bool_action() {
+  manipulable_bool_action():void {
     this.manipulation_bool = !this.manipulation_bool;
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].manipulable_ON = this.manipulation_bool;
@@ -227,7 +227,7 @@ export class MultiplePlots {
     return [clickOnVertex, up, down, left, right];
   }
 
-  setCursorStyle(mouse2X, mouse2Y, canvas) {
+  setCursorStyle(mouse2X, mouse2Y, canvas):void {
     if (this.selected_index != -1) {
       var thickness = 15;
       var up = false;
@@ -259,12 +259,12 @@ export class MultiplePlots {
     this.initial_mouseY = mouse1Y;
   }
 
-  initialize_object_hw(selected_index) {
+  initialize_object_hw(selected_index):void {
     this.initial_object_width = this.objectList[selected_index].width;
     this.initial_object_height = this.objectList[selected_index].height;
   }
 
-  resetAllScatters() {
+  resetAllScatters():void {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.objectList[i].type == 'scatterplot') {
         this.objectList[i].click_on_reset_action();
@@ -272,7 +272,7 @@ export class MultiplePlots {
     }
   }
 
-  clean_view() {
+  clean_view():void {
     var big_coord = 'X';
     var small_coord = 'Y';
     var big_length = 'width';
@@ -387,7 +387,7 @@ export class MultiplePlots {
     }
   }
   
-  dependency_scatter_selection(rubberbands_dep:[string, [number, number]][]) {
+  dependency_scatter_selection(rubberbands_dep:[string, [number, number]][]):void {
     for (let i=0; i<this.nbObjects; i++) {
       var obj:PlotData = this.objectList[i];
       var axis_numbers:number[] = [];
@@ -406,7 +406,7 @@ export class MultiplePlots {
     }
   }
 
-  dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]) {
+  dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]):void {
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
       if (obj.type == 'scatterplot') {
@@ -474,7 +474,27 @@ export class MultiplePlots {
     return [selected_axis_name, vertical, inverted, hexs];
   }
 
-  mouse_interaction() {
+  getCenterFromXY(obj:PlotData): [number, number] {
+    return [obj.X + obj.width/2, obj.Y + obj.height/2];
+  }
+
+  getXYfromCenter(xc:number, yc:number, obj:PlotData): [number, number] {
+    return [xc - obj.width/2, yc - obj.height/2];
+  }
+
+  burst_elements(x, y, event) {
+    if (event > 0) {var burst_coeff = 1.1} else {var burst_coeff = 1/1.1}
+    for (let i=0; i<this.nbObjects; i++) {
+      let xc = 0;
+      let yc = 0;
+      [xc, yc] = this.getCenterFromXY(this.objectList[i]);
+      let new_xc = x + burst_coeff*(xc - x);
+      let new_yc = y + burst_coeff*(yc - y);
+      [this.objectList[i].X, this.objectList[i].Y] = this.getXYfromCenter(new_xc, new_yc, this.objectList[i]);
+    }
+  }
+
+  mouse_interaction(): void {
     var canvas = document.getElementById('canvas');
     var mouse1X:number = 0;
     var mouse1Y:number = 0;
@@ -590,6 +610,12 @@ export class MultiplePlots {
     });
 
     canvas.addEventListener('wheel', e => {
+      var mouse3X = e.offsetX;
+      var mouse3Y = e.offsetY;
+      var event = -e.deltaY/Math.abs(e.deltaY);
+      if (this.manipulation_bool) {
+        this.burst_elements(mouse3X, mouse3Y, event);
+      }
       this.redrawAllObjects();
     });
 

@@ -31,11 +31,10 @@ class PlotDataObject(DessiaObject):
     """
     def __init__(self, type_: str, name: str = '', **kwargs):
         self.type_ = type_
-        DessiaObject.__init__(name=name, **kwargs)
+        DessiaObject.__init__(self, name=name, **kwargs)
 
     def to_dict(self):
         dict_ = DessiaObject.to_dict(self)
-        print(dict_)
         return dict_
 
 
@@ -126,7 +125,6 @@ class Line2D(PlotDataObject):
     def __init__(self, data: List[float], plot_data_states: List[Settings],
                  name: str = ''):
         self.data = data
-        self.type = type
         self.plot_data_states = plot_data_states
         if plot_data_states is None:
             self.plot_data_states = [Settings()]
@@ -136,7 +134,6 @@ class Line2D(PlotDataObject):
 class Circle2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, r: float,
                  plot_data_states: List[Settings], name: str = ''):
-        self.type = type
         self.plot_data_states = plot_data_states
         self.r = r
         self.cy = cy
@@ -148,7 +145,6 @@ class Point2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, shape: str, size: float,
                  color_fill: str, color_stroke: str, stroke_width: float,
                  name: str = ''):
-        self.type = type
         self.cx = cx
         self.cy = cy
         self.shape = shape
@@ -171,7 +167,6 @@ class Axis(PlotDataObject):
         self.arrow_on = arrow_on
         self.axis_width = axis_width
         self.grid_on = grid_on
-        self.type = type
         PlotDataObject.__init__(self, type_='axis', name=name)
 
 
@@ -186,7 +181,6 @@ class Tooltip(PlotDataObject):
         self.tp_radius = tp_radius
         self.to_plot_list = to_plot_list
         self.opacity = opacity
-        self.type = type
         PlotDataObject.__init__(self, type_='tooltip', name=name)
 
 
@@ -205,7 +199,6 @@ class Graph2D(PlotDataObject):
         if display_step is None:
             self.display_step = 1
         self.tooltip = tooltip
-        self.type = type
         PlotDataObject.__init__(self, type_='graph2D', name=name)
 
 
@@ -213,7 +206,6 @@ class Graphs2D(PlotDataObject):
     def __init__(self, graphs: List[Graph2D], axis: Axis, name: str = ''):
         self.graphs = graphs
         self.axis = axis
-        self.type = type
         PlotDataObject.__init__(self, type_='graphs2D', name=name)
 
 

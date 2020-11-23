@@ -52,6 +52,8 @@ for i in range(50):
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
 parallel_plot = core.ParallelPlot(line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=to_disp_attributes, rgbs=rgbs)
 objects.append(parallel_plot)
+parallel_plot1 = core.ParallelPlot(line_color=line_color, line_width=line_width, disposition=disposition, to_disp_attributes=['color_fill', 'cx'], rgbs=rgbs)
+objects.append(parallel_plot1)
 
 #Axis data
 nb_points_x = 10
@@ -92,8 +94,9 @@ objects.append(ScatterPlot)
 ScatterPlot1 = core.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=['cx', 'color_fill'], point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot1)
 
-coords = [[0,600], [0,0], [300, 300]]
+coords = [[0,600], [300, 0], [0,0], [300, 300]]
 sizes = [core.Window(width=560, height=300),
+         core.Window(width=560, height=300),
          core.Window(width=560, height=300),
          core.Window(width=560, height=300)]
 

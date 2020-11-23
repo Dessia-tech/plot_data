@@ -41,7 +41,7 @@ hatching = core.HatchingSet(0.5, 3)
 color_surface = core.ColorSurfaceSet(color='white')
 plot_data_state = core.Settings(name='be_sup', hatching=hatching,
                                 stroke_width=1)
-plot_datas = [c.plot_data()]
+plot_datas = [c.plot_data(plot_data_states=[plot_data_state])]
 sol = [plt.to_dict() for plt in plot_datas]
 os.remove("data.json")
 with open('data.json', 'w') as fp:
@@ -60,5 +60,5 @@ c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
                          vm.edges.LineSegment2D(pt3, pt4),
                          vm.edges.LineSegment2D(pt4, pt1)])
 
-d = c1.plot_data()
-core.plot_canvas([d.to_dict()], 'Contour')
+d = c1.plot_data(plot_data_states=[plot_data_state])
+core.plot_canvas([d.to_dict()], 'contour')

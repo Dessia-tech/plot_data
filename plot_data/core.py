@@ -6,29 +6,22 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
-import math
 import os
 import numpy as npy
 import csv
 
-npy.seterr(divide='raise')
-import volmdlr as vm
-# from itertools import permutations
-import jsonschema
 import json
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import Arc, FancyArrow
-from mpl_toolkits.mplot3d import Axes3D
 import pkg_resources
 import tempfile
 import webbrowser
 from dessia_common import DessiaObject
-from typing import TypeVar, List
+from typing import List
 
-from jinja2 import Environment, PackageLoader, select_autoescape, \
+from jinja2 import Environment, select_autoescape, \
     FileSystemLoader
 
+npy.seterr(divide='raise')
 
 class ColorMapSet(DessiaObject):
     def __init__(self, value: float = None, tooltip: bool = False,

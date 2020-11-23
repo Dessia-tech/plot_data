@@ -18,7 +18,7 @@ contour_template = Template('''<div id="app"></div>
   	var data = $data;
 	var number_plot_data = data.length;
 
-	var plot_data = new PlotContour(D3Data, width, height, 1000, false, 0, 0);
+	var plot_data = new PlotContour(data, width, height, 1000, false, 0, 0);
 	plot_data.define_canvas();
 	plot_data.draw_initial();
 

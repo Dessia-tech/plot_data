@@ -17,7 +17,7 @@ import tempfile
 import webbrowser
 from dessia_common import DessiaObject
 from dessia_common.typings import Subclass
-from typing import List, Tuple
+from typing import List, Tuple, Any
 
 from jinja2 import Environment, select_autoescape, \
     FileSystemLoader
@@ -37,6 +37,14 @@ class PlotDataObject(DessiaObject):
         dict_ = DessiaObject.to_dict(self)
         del dict_['object_class']
         return dict_
+
+    @classmethod
+    def dict_to_object(cls, dict_):
+        type_ = dict_['type_']
+        object_class = TYPE_TO_CLASS[type_]
+
+        dict_['object_class'] = object_class
+        return DessiaObject.dict_to_object(dict_=dict_)
 
 
 class ColorMapSet(DessiaObject):
@@ -214,7 +222,7 @@ class Scatter(PlotDataObject):
     def __init__(self, axis: Axis, tooltip: Tooltip,
                  to_display_att_names: List[str], point_shape: str,
                  point_size: float, color_fill: str, color_stroke: str,
-                 stroke_width: float, elements: List[Point2D] = None,
+                 stroke_width: float, elements: List[Any] = None,
                  name: str = ''):
         if elements is None:
             self.elements = []
@@ -357,6 +365,13 @@ def getCSV_vectors(filename):
             obj.__setattr__(attribute_names[j], elements[j][i])
         points.append(obj)
     return points
+
+
+TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
+                 'contour': Contour2D, 'graph2D': Graph2D,
+                 'graphs2D': Graphs2D,  'line': Line2D,
+                 'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
+                 'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip}
 
 # def plot(plot_datas, ax=None):
 #     if ax is None:

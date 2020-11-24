@@ -37,7 +37,6 @@ export class MultiplePlots {
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
     var data_show = data[0];
-    console.log(data)
     this.coords = data_show['coords'];
     this.dataObjects = data_show['objects'];
     var points = data_show['points'];
@@ -275,6 +274,23 @@ export class MultiplePlots {
     }
   }
 
+  getSortedList(big_coord, small_coord) {
+    var sort = new Sort();
+    var sortedObjectList = sort.sortObjsByAttribute(List.copy_list(this.objectList), big_coord);
+    var sorted_list = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      sorted_list.push(List.get_index_of_element(sortedObjectList[i], this.objectList));
+    }
+    var j = 0;
+    while (j<this.nbObjects - 1) {
+      if (sortedObjectList[j+1][small_coord] < sortedObjectList[j][small_coord]) {
+        sorted_list = List.move_elements(j, j+1, sorted_list);
+      }
+      j = j+2;
+    }
+    return sorted_list;
+  }
+
   clean_view():void {
     var big_coord = 'X';
     var small_coord = 'Y';
@@ -283,12 +299,7 @@ export class MultiplePlots {
     if (this.width < this.height) {
       [big_coord, small_coord, big_length, small_length] = [small_coord, big_coord, small_length, big_length];
     }
-    var pp_index_list = [];
-    var sc_index_list = [];
-    for (let i=0; i<this.nbObjects; i++) {
-      if (this.objectList[i].type == 'parallelplot') {pp_index_list.push(i);} else {sc_index_list.push(i);}
-    }
-    var sorted_list = sc_index_list.concat(pp_index_list);
+    var sorted_list = this.getSortedList(big_coord, small_coord);
     let small_length_nbObjects = Math.min(Math.ceil(this.nbObjects/2), 2);
     let big_length_nbObjects = Math.ceil(this.nbObjects/small_length_nbObjects);
     let big_length_step = this[big_length]/big_length_nbObjects;
@@ -4851,7 +4862,7 @@ export class List {
 
   public static get_index_of_element(val:any, list:any[]):number {
     for (var i=0; i<list.length; i++) {
-      if (equals(val, list[i])) {
+      if (val === list[i]) {
         return i;
       }
     }
@@ -4890,7 +4901,7 @@ export function equals(obj1:any, obj2:any): boolean { //Works on any kind of obj
   var attribute_names = Object.getOwnPropertyNames(obj1);
   for (let i=0; i<attribute_names.length; i++) {
     let attr_name = attribute_names[i];
-    if (obj1[attr_name] != obj2[attr_name]) {
+    if (obj1[attr_name] !== obj2[attr_name]) {
       return false;
     }
   }

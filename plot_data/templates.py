@@ -7,7 +7,7 @@ contour_template = Template('''<div id="app"></div>
 
 <script>var exports = {};</script>
 <!-- Sets the basepath for the library if not in same directory -->
-<script type="text/javascript" src=https://cdn.dessia.tech/js/plot-data/sid/core.js ></script>
+<script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
     var width = 750,
@@ -18,7 +18,7 @@ contour_template = Template('''<div id="app"></div>
   	var data = $data;
 	var number_plot_data = data.length;
 
-	var plot_data = new PlotContour(D3Data, width, height, 1000, false, 0, 0);
+	var plot_data = new PlotContour(data, width, height, 1000, false, 0, 0);
 	plot_data.define_canvas();
 	plot_data.draw_initial();
 
@@ -35,8 +35,7 @@ scatter_template = Template('''<div id="app"></div>
 
 <script>var exports = {};</script>
 <!-- Sets the basepath for the library if not in same directory -->
-<!-- <script type="text/javascript" src="../../lib/core.js"></script> -->
-<script type="text/javascript" src=https://cdn.dessia.tech/js/plot-data/sid/core.js ></script>
+<script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
 	var width = 750,
@@ -66,8 +65,7 @@ parallelplot_template = Template('''<div id="app"></div>
 
 <script>var exports = {};</script>
 <!-- Sets the basepath for the library if not in same directory -->
-<!-- <script type="text/javascript" src="../../lib/core.js"></script> -->
-<script type="text/javascript" src=https://cdn.dessia.tech/js/plot-data/sid/core.js ></script>
+<script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
 	var width = 750,
@@ -98,8 +96,7 @@ multiplot_template = Template('''<div id="app"></div>
 
 <script>var exports = {};</script>
 <!-- Sets the basepath for the library if not in same directory -->
-
-<script type="text/javascript" src='https://cdn.dessia.tech/js/plot-data/sid/core.js' ></script>
+<script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
 	var width = 750,

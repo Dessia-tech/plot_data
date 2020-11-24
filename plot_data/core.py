@@ -340,7 +340,11 @@ def plot_canvas(plot_datas, plot_type):
         template = templates.parallelplot_template
     else:
         template = templates.multiplot_template
-    s = template.substitute(data=json.dumps(plot_datas))
+
+    core_path = '/home/chheang/Github/plot_data/lib/core.js'
+    # https://cdn.dessia.tech/js/plot-data/sid/core.js
+
+    s = template.substitute(data=json.dumps(plot_datas), core_path=core_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:

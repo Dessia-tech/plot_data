@@ -13,13 +13,11 @@
 	var width = 750,
 			height = 400;
 	var show_state = 1
-	var coeff_pixel = 1000
+	var coeff_pixel = 1000;
+	var data = {{D3Data | safe}}
+	var number_plot_data = data.length
 
-  	var D3Data = [{% for d in D3Data %} {{ d | safe }} ,
-  {% endfor %}];
-	var number_plot_data = D3Data.length
-
-	var plot_data = new PlotScatter(D3Data, width, height, 1000, true, 0, 0);
+	var plot_data = new PlotScatter(data, width, height, 1000, true, 0, 0);
 	plot_data.define_canvas();
 	plot_data.draw_initial();
 	plot_data.mouse_interaction(plot_data.isParallelPlot); //true if parallel plot, false otherwise

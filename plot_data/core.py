@@ -294,27 +294,25 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
+def plot_canvas(plot_data):  # Contour, Scatter, Parallel or Multiplot
     global template
     template_path = pkg_resources.resource_filename(
         pkg_resources.Requirement('plot_data'),
-        'script/template')  # 'plot_data/templates'
+        'script/template')
     module_sequence = template_path.split('/')[:-2]
     module_path = '/'.join(module_sequence)
     loader = FileSystemLoader(module_path)
-    print(loader, template_path)
-    print(module_sequence, module_path)
     env = Environment(loader=loader,
                       autoescape=select_autoescape(['html', 'xml']))
-    # env = Environment(loader=PackageLoader('plot_data', 'templates'),
-    #                   autoescape=select_autoescape(['html', 'xml']))
-    if type == 'contour':
+
+    type_ = plot_data['type_']
+    if type_ == 'contour':
         template = env.get_template('script/template/ContourTest.html')  # 'plot_data/templates/plot_data.html'
-    elif type == 'scatter':
+    elif type_ == 'scatterplot':
         template = env.get_template('script/template/scattertest.html')
-    elif type == 'parallelplot':
+    elif type_ == 'parallelplot':
         template = env.get_template('script/template/ParallelPlotTest.html')
-    elif type == 'multiplot':
+    elif type_ == 'multiplot':
         template = env.get_template('script/template/MultiplePlotsTest.html')
 
     core_path = '/' + os.path.join(
@@ -323,10 +321,7 @@ def plot_canvas(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
     print(core_path)
     print(template_path)
 
-    data = []
-    for d in plot_datas:
-        data.append(json.dumps(d))
-    s = template.render(D3Data=data, core_path=core_path,
+    s = template.render(D3Data=json.dumps(plot_data), core_path=core_path,
                         template_path=template_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 

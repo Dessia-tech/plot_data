@@ -6,21 +6,18 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
-import os
 import numpy as npy
 import csv
 
 import json
-
-import pkg_resources
 import tempfile
 import webbrowser
-from dessia_common import DessiaObject
+from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
-from typing import List, Tuple, Any
 
-from jinja2 import Environment, select_autoescape, \
-    FileSystemLoader
+import plot_data.templates as templates
+
+from typing import List, Tuple, Any
 
 npy.seterr(divide='raise')
 
@@ -43,7 +40,7 @@ class PlotDataObject(DessiaObject):
         type_ = dict_['type_']
         object_class = TYPE_TO_CLASS[type_]
 
-        dict_['object_class'] = object_class
+        dict_['object_class'] = full_classname(object_class)
         return DessiaObject.dict_to_object(dict_=dict_)
 
 
@@ -294,40 +291,19 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
-    global template
-    template_path = pkg_resources.resource_filename(
-        pkg_resources.Requirement('plot_data'),
-        'script/template')  # 'plot_data/templates'
-    module_sequence = template_path.split('/')[:-2]
-    module_path = '/'.join(module_sequence)
-    loader = FileSystemLoader(module_path)
-    print(loader, template_path)
-    print(module_sequence, module_path)
-    env = Environment(loader=loader,
-                      autoescape=select_autoescape(['html', 'xml']))
-    # env = Environment(loader=PackageLoader('plot_data', 'templates'),
-    #                   autoescape=select_autoescape(['html', 'xml']))
-    if type == 'contour':
-        template = env.get_template('script/template/ContourTest.html')  # 'plot_data/templates/plot_data.html'
-    elif type == 'scatter':
-        template = env.get_template('script/template/scattertest.html')
-    elif type == 'parallelplot':
-        template = env.get_template('script/template/ParallelPlotTest.html')
-    elif type == 'multiplot':
-        template = env.get_template('script/template/MultiplePlotsTest.html')
+def plot_canvas(plot_datas, plot_type):
+    if plot_type == 'contour':
+        template = templates.contour_template
+    elif plot_type == 'scatter':
+        template = templates.scatter_template
+    elif plot_type == 'parallelplot':
+        template = templates.parallelplot_template
+    else:
+        template = templates.multiplot_template
 
-    core_path = '/' + os.path.join(
-        *template_path.split('/')[:-2] + ['lib', 'core.js'])
+    core_path = '/home/chheang/Github/plot_data/lib/core.js'
 
-    print(core_path)
-    print(template_path)
-
-    data = []
-    for d in plot_datas:
-        data.append(json.dumps(d))
-    s = template.render(D3Data=data, core_path=core_path,
-                        template_path=template_path)
+    s = template.substitute(data=json.dumps(plot_datas), core_path=core_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:
@@ -372,67 +348,3 @@ TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'graphs2D': Graphs2D,  'line': Line2D,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip}
-
-# def plot(plot_datas, ax=None):
-#     if ax is None:
-#         fig, ax = plt.subplots()
-#         ax.set_aspect('equal')
-#     else:
-#         fig = None
-#
-#     for plot_data in plot_datas:
-#         if plot_data['type'] == 'line':
-#             style = ''
-#             if plot_data['dash']:
-#                 style += '--'
-#             else:
-#                 style += '-'
-#             style += color[plot_data['color']]
-#             p1, p2 = plot_data['data'][0: 2], plot_data['data'][2:]
-#             if plot_data['arrow']:
-#                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
-#                 length = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5
-#                 if width is None:
-#                     width = length / 1000.
-#                     head_length = length / 20.
-#                     head_width = head_length / 2.
-#                 else:
-#                     head_width = 2 * width
-#                     head_length = head_width
-#                 ax.arrow(p1[0], p1[1],
-#                          (p2[0] - p1[0]) / length * (length - head_length),
-#                          (p2[1] - p1[1]) / length * (length - head_length),
-#                          head_width=head_width, fc='b', linewidth=0,
-#                          head_length=head_length, width=width, alpha=0.3)
-#             else:
-#                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style,
-#                         linewidth=plot_data['size'])
-#
-#         elif plot_data['type'] == 'point':
-#             p1 = plot_data['data']
-#             style = ''
-#             style += color[plot_data['color']]
-#             style += plot_data['marker']
-#             ax.plot(p1[0], p1[1], style, linewidth=plot_data['size'])
-#
-#         elif plot_data['type'] == 'contour':
-#             plot(plot_data['plot_data'], ax)
-#
-#         elif plot_data['type'] == 'arc':
-#             pc = vm.Point2D((plot_data['cx'], plot_data['cy']))
-#             ax.add_patch(
-#                 Arc(pc, 2 * plot_data['r'], 2 * plot_data['r'], angle=0,
-#                     theta1=plot_data['angle1'] * 0.5 / math.pi * 360,
-#                     theta2=plot_data['angle2'] * 0.5 / math.pi * 360,
-#                     color=color[plot_data['color']],
-#                     linewidth=plot_data['size']))
-#
-#         elif plot_data['type'] == 'circle':
-#             pc = vm.Point2D((plot_data['cx'], plot_data['cy']))
-#             ax.add_patch(
-#                 Arc(pc, 2 * plot_data['r'], 2 * plot_data['r'], angle=0,
-#                     theta1=0,
-#                     theta2=360,
-#                     color=color[plot_data['color']],
-#                     linewidth=plot_data['size']))
-#     return fig, ax

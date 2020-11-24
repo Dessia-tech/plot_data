@@ -1,7 +1,5 @@
 import plot_data.core as core
 import random
-import json
-import os
 
 # Point test ####
 

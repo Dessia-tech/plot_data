@@ -292,46 +292,7 @@ class MultiplePlots(DessiaObject):
         DessiaObject.__init__(self, name)
 
 
-# def plot_canvas(plot_datas, type):  # Contour, Scatter, Parallel or Multiplot
-#     global template
-#     template_path = pkg_resources.resource_filename(
-#         pkg_resources.Requirement('plot_data'),
-#         'script/templates')  # 'plot_data/templates'
-#     module_sequence = template_path.split('/')[:-2]
-#     module_path = '/'.join(module_sequence)
-#     loader = FileSystemLoader(module_path)
-#     print(loader, template_path)
-#     print(module_sequence, module_path)
-#     env = Environment(loader=loader,
-#                       autoescape=select_autoescape(['html', 'xml']))
-#     # env = Environment(loader=PackageLoader('plot_data', 'templates'),
-#     #                   autoescape=select_autoescape(['html', 'xml']))
-#     if type == 'contour':
-#         template = env.get_template('script/templates/Contour.html')  # 'plot_data/templates/plot_data.html'
-#     elif type == 'scatter':
-#         template = env.get_template('script/templates/Scatter.html')
-#     elif type == 'parallelplot':
-#         template = env.get_template('script/templates/ParallelPlot.html')
-#     elif type == 'multiplot':
-#         template = env.get_template('script/templates/MultiplePlots.html')
-#
-#     core_path = '/' + os.path.join(
-#         *template_path.split('/')[:-2] + ['lib', 'core.js'])
-#
-#     data = []
-#     for d in plot_datas:
-#         data.append(json.dumps(d))
-#     s = template.render(D3Data=data, core_path=core_path,
-#                         template_path=template_path)
-#     temp_file = tempfile.mkstemp(suffix='.html')[1]
-#
-#     with open(temp_file, 'wb') as file:
-#         file.write(s.encode('utf-8'))
-#
-#     webbrowser.open('file://' + temp_file)
-#     print('file://' + temp_file)
-
-def plot_canvas(plot_datas, plot_type):
+def plot_canvas(plot_datas, plot_type, debug_mode=False):
     if plot_type == 'contour':
         template = templates.contour_template
     elif plot_type == 'scatter':
@@ -341,8 +302,9 @@ def plot_canvas(plot_datas, plot_type):
     else:
         template = templates.multiplot_template
 
-    core_path = '/home/chheang/Github/plot_data/lib/core.js'
-    # https://cdn.dessia.tech/js/plot-data/sid/core.js
+    core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
+    if debug_mode:
+        core_path = '/home/chheang/Github/plot_data/lib/core.js'
 
     s = template.substitute(data=json.dumps(plot_datas), core_path=core_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]

@@ -86,4 +86,4 @@ plot_datas += [ScatterPlot]
 
 sol = [c.to_dict() for c in plot_datas]
 
-core.plot_canvas(sol, 'scatter')
+core.plot_canvas(sol, 'scatter', debug_mode=True)

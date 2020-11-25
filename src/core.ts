@@ -3202,57 +3202,55 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
-      for (var i = 0; i < data.length; i++) {
-        var d = data[i];
-        if (d['type_'] == 'point') {
-          this.type_ = 'point';
-          this.plotObject = Point2D.deserialize(d);
-          this.plot_datas['value'] = [this.plotObject];
-          if (isNaN(this.minX)) {this.minX = this.plotObject.minX} else {this.minX = Math.min(this.minX, this.plotObject.minX)};
-          if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX)};
-          if (isNaN(this.minY)) {this.minY = this.plotObject.minY} else {this.minY = Math.min(this.minY, this.plotObject.minY)};
-          if (isNaN(this.maxY)) {this.maxY = this.plotObject.maxY} else {this.maxY = Math.max(this.maxY, this.plotObject.maxY)};
-          this.colour_to_plot_data[this.plotObject.mouse_selection_color] = this.plotObject;
+      console.log(data);
+      if (data['type_'] == 'point') {
+        this.type_ = 'point';
+        this.plotObject = Point2D.deserialize(data);
+        this.plot_datas['value'] = [this.plotObject];
+        if (isNaN(this.minX)) {this.minX = this.plotObject.minX} else {this.minX = Math.min(this.minX, this.plotObject.minX)};
+        if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX)};
+        if (isNaN(this.minY)) {this.minY = this.plotObject.minY} else {this.minY = Math.min(this.minY, this.plotObject.minY)};
+        if (isNaN(this.maxY)) {this.maxY = this.plotObject.maxY} else {this.maxY = Math.max(this.maxY, this.plotObject.maxY)};
+        this.colour_to_plot_data[this.plotObject.mouse_selection_color] = this.plotObject;
 
-        } else if (d['type_'] == 'axis') {
-          this.type_ = 'axis';
-          this.axis_ON = true;
-          this.plotObject = Axis.deserialize(d);
-        } else if (d['type_'] == 'tooltip') {
-          this.type_ = 'tooltip';
-          this.plotObject = Tooltip.deserialize(d);
-        } else if (d['type_'] == 'graphs2D') {
-          this.type_ = 'graphs2D';
-          this.graph_ON = true;
-          this.axis_ON = true;
-          this.plotObject = Graphs2D.deserialize(d);
-          this.plot_datas['value'] = this.plotObject.graphs;
-          for (let i=0; i<this.plotObject.graphs.length; i++) {
-            let graph = this.plotObject.graphs[i];
-            this.graph_colorlist.push(graph.point_list[0].color_fill);
-            this.graph_to_display.push(true);
-            this.graph_name_list.push(graph.name);
-            graph.id = i;
-            for (let j=0; j<graph.point_list.length; j++) {
-              var point = graph.point_list[j];
-              if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
-              if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
-              if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
-              if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
-              this.colour_to_plot_data[point.mouse_selection_color] = point;
-            }
+      } else if (data['type_'] == 'axis') {
+        this.type_ = 'axis';
+        this.axis_ON = true;
+        this.plotObject = Axis.deserialize(data);
+      } else if (data['type_'] == 'tooltip') {
+        this.type_ = 'tooltip';
+        this.plotObject = Tooltip.deserialize(data);
+      } else if (data['type_'] == 'graphs2D') {
+        this.type_ = 'graphs2D';
+        this.graph_ON = true;
+        this.axis_ON = true;
+        this.plotObject = Graphs2D.deserialize(data);
+        this.plot_datas['value'] = this.plotObject.graphs;
+        for (let i=0; i<this.plotObject.graphs.length; i++) {
+          let graph = this.plotObject.graphs[i];
+          this.graph_colorlist.push(graph.point_list[0].color_fill);
+          this.graph_to_display.push(true);
+          this.graph_name_list.push(graph.name);
+          graph.id = i;
+          for (let j=0; j<graph.point_list.length; j++) {
+            var point = graph.point_list[j];
+            if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
+            if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
+            if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
+            if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
+            this.colour_to_plot_data[point.mouse_selection_color] = point;
           }
-          this.nb_graph = this.plotObject.graphs.length;
-        } else if (d['type_'] == 'scatterplot') {
-          this.type_ = 'scatterplot';
-          this.axis_ON = true;
-          this.mergeON = true;
-          this.plotObject = PlotDataScatter.deserialize(d);
-          this.plot_datas['value'] = [this.plotObject];
-          this.pointLength = 1000*this.plotObject.point_list[0].size;
-          this.scatter_init_points = this.plotObject.point_list;
-          this.refresh_MinMax(this.plotObject.point_list);
         }
+        this.nb_graph = this.plotObject.graphs.length;
+      } else if (data['type_'] == 'scatterplot') {
+        this.type_ = 'scatterplot';
+        this.axis_ON = true;
+        this.mergeON = true;
+        this.plotObject = PlotDataScatter.deserialize(data);
+        this.plot_datas['value'] = [this.plotObject];
+        this.pointLength = 1000*this.plotObject.point_list[0].size;
+        this.scatter_init_points = this.plotObject.point_list;
+        this.refresh_MinMax(this.plotObject.point_list);
       }
       this.isParallelPlot = false;
   }

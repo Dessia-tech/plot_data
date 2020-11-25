@@ -411,8 +411,6 @@ export class MultiplePlots {
     return -1;
   }
 
-
-
   scatter_communication(selection_coords:[number, number][], toDisplayAttributes:Attribute[], isSelectingObjIndex:number):void { //process received data from a scatterplot and send it to the other objects
     for (let i=0; i<selection_coords.length; i++) {
       for (let j=0; j<this.nbObjects; j++) {
@@ -431,7 +429,6 @@ export class MultiplePlots {
 
     for (let i=0; i<this.nbObjects; i++) {
       if ((this.objectList[i]['type'] == 'scatterplot') && (i != isSelectingObjIndex)) {
-        // console.log(toDisplayAttributes, toDisplayAttributes[0], toDisplayAttributes[1])
         this.objectList[i].sc_to_sc_communication(selection_coords, toDisplayAttributes);
         let obj = this.objectList[i];
         this.objectList[i].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
@@ -454,9 +451,12 @@ export class MultiplePlots {
             }
           }
         }
-        obj.dep_scatter_selection(to_select, axis_numbers);
+        this.objectList[i].dep_scatter_selection(to_select, axis_numbers);
+      } else { //ie type == 'parallelplot'
+        this.objectList[i].pp_to_pp_communication(rubberbands_dep);
       }
     }
+    this.redrawAllObjects();
   }
 
   dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]):void {
@@ -1365,6 +1365,24 @@ export abstract class PlotData {
       }
     }
     this.selection_window_action();
+  }
+
+  pp_to_pp_communication(rubberbands_dep:[string, [number, number]][]) {
+    for (let i=0; i<rubberbands_dep.length; i++) {
+      let received_rubber = rubberbands_dep[i];
+      let received_name = received_rubber[0];
+      for (let j=0; j<this.axis_list.length; j++) {
+        if (received_name == this.axis_list[j]['name']) {
+          let received_real_min = received_rubber[1][0];
+          let received_real_max = received_rubber[1][1];
+          let temp_received_axis_min = this.real_to_axis_coord(received_real_min, this.axis_list[j]['type'], this.axis_list[j]['list'], this.inverted_axis_list[j]);
+          let temp_received_axis_max = this.real_to_axis_coord(received_real_max, this.axis_list[j]['type'], this.axis_list[j]['list'], this.inverted_axis_list[j]);
+          let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
+          let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
+          this.rubber_bands[j] = [received_axis_min, received_axis_max];
+        }
+      }
+    }
   }
 
   real_to_axis_coord(real_coord, type, list, inverted) {

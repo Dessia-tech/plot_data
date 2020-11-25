@@ -3046,6 +3046,7 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
+      console.log(data);
       if (data['type_'] == 'point') {
         this.type_ = 'point';
         this.plotObject = Point2D.deserialize(data);

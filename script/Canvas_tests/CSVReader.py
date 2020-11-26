@@ -69,4 +69,4 @@ multipleplots = plot_data.MultiplePlots(points=points, objects=objects,
                                         sizes=sizes, coords=coords)
 sol = [multipleplots.to_dict()]
 
-plot_data.plot_canvas(sol, 'multiplot')
+plot_data.plot_canvas(sol, 'multiplot', debug_mode=True)

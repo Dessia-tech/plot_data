@@ -291,8 +291,7 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_data,
-                core_path='/home/chheang/Github/plot_data/lib/core.js'):
+def plot_canvas(plot_data, debug_mode=False):
     """
     Plot input data in web browser
 
@@ -309,6 +308,10 @@ def plot_canvas(plot_data,
         template = templates.multiplot_template
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
+
+    core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
+    if debug_mode:
+        core_path = '/home/chheang/Github/plot_data/lib/core.js'
 
     s = template.substitute(data=json.dumps(plot_data), core_path=core_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]

@@ -1,29 +1,6 @@
 import plot_data.core as core
 import numpy as np
-
-red = 'rgb(247, 0, 0)'
-lightred = 'rgb(237, 128, 128)'
-blue = 'rgb(0, 19, 254)'
-lightblue = 'rgb(173, 179, 255)'
-green = 'rgb(0, 193, 18)'
-lightgreen = 'rgb(137, 232, 146)'
-yellow = 'rgb(244, 255, 0)'
-lightyellow = 'rgb(249, 255, 123)'
-orange = 'rgb(255, 135, 0)'
-lightorange = 'rgb(255, 175, 96)'
-cyan = 'rgb(19, 240, 240)'
-lightcyan = 'rgb(144, 247, 247)'
-rose = 'rgb(255, 105, 180)'
-lightrose = 'rgb(255, 192, 203)'
-violet = 'rgb(238, 130, 238)'
-lightviolet = 'rgb(234, 165, 246)'
-white = 'rgb(255, 255, 255)'
-black = 'rgb(0, 0, 0)'
-brown = 'rgb(205, 143, 64)'
-lightbrown = 'rgb(222, 184, 135)'
-grey = 'rgb(169, 169, 169)'
-lightgrey = 'rgb(211, 211, 211)'
-lightskyblue = 'rgb(135,206,250)'
+from script.Canvas_tests.colors import *
 
 # PlotDataState
 graphs = []
@@ -105,4 +82,4 @@ graphs2D = core.Graphs2D(graphs=graphs, axis=axis)
 
 sol = [graphs2D.to_dict()]
 
-core.plot_canvas(sol, 'scatter')
+core.plot_canvas(sol, 'scatter', debug_mode=True)

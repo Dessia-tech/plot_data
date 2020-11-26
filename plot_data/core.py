@@ -304,7 +304,7 @@ def plot_canvas(plot_datas, plot_type, debug_mode=False):
 
     core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
-        core_path = '/home/chheang/Github/plot_data/lib/core.js'
+        core_path = '/'.join(os.path.abspath('').split('/')[:-2] + ['lib', 'core.js'])
 
     s = template.substitute(data=json.dumps(plot_datas), core_path=core_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]

@@ -64,9 +64,12 @@ coords = [(0, 450), (0, 0)]
 sizes = [plot_data.Window(width=750, height=400),
          plot_data.Window(width=750, height=400)]
 
-points = plot_data.getCSV_vectors('data.csv')
+catalog = plot_data.get_csv_vectors('./Canvas_tests/data.csv')
+points = [{var: catalog.get_value_by_name(line, var)
+           for var in pp_to_disp_attributes}
+          for line in catalog.array]
+
 multipleplots = plot_data.MultiplePlots(points=points, objects=objects,
                                         sizes=sizes, coords=coords)
-sol = [multipleplots.to_dict()]
 
-plot_data.plot_canvas(sol, 'multiplot', debug_mode=True)
+plot_data.plot_canvas(plot_data=multipleplots.to_dict(), debug_mode=True)

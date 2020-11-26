@@ -36,12 +36,11 @@ export class MultiplePlots {
   burst_coeff:number=0;
 
 
-  constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
-    var data_show = data[0];
-    this.coords = data_show['coords'];
-    this.dataObjects = data_show['objects'];
-    var points = data_show['points'];
-    var temp_sizes = data_show['sizes'];
+  constructor(public data: any, public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
+    this.coords = data['coords'];
+    this.dataObjects = data['objects'];
+    var points = data['points'];
+    var temp_sizes = data['sizes'];
     for (let i=0; i<temp_sizes.length; i++) {
       this.sizes.push(Window.deserialize(temp_sizes[i]));
     }
@@ -117,19 +116,13 @@ export class MultiplePlots {
       Shape.createButton(this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h, this.context_show, "Dep OFF", '10px sans-serif');
     }
   }
-<<<<<<< HEAD
 
-  draw_clean_view_button() {
-    Shape.createButton(this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h, this.context_show, 'View', '10px sans-serif');
-=======
-  
   draw_clean_view_button():void {
     if (this.view_bool) {
       Shape.createButton(this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h, this.context_show, 'ViewON', '10px sans-serif');
     } else {
       Shape.createButton(this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h, this.context_show, 'ViewOFF', '10px sans-serif');
     }
->>>>>>> dev
   }
 
   draw_buttons():void {
@@ -334,16 +327,7 @@ export class MultiplePlots {
     if (this.width < this.height) {
       [big_coord, small_coord, big_length, small_length] = [small_coord, big_coord, small_length, big_length];
     }
-<<<<<<< HEAD
-    var pp_index_list = [];
-    var sc_index_list = [];
-    for (let i=0; i<this.nbObjects; i++) {
-      if (this.objectList[i].type_ == 'parallelplot') {pp_index_list.push(i);} else {sc_index_list.push(i);}
-    }
-    var sorted_list = sc_index_list.concat(pp_index_list);
-=======
     this.sorted_list = this.getSortedList();
->>>>>>> dev
     let small_length_nbObjects = Math.min(Math.ceil(this.nbObjects/2), 2);
     let big_length_nbObjects = Math.ceil(this.nbObjects/small_length_nbObjects);
     let big_length_step = this[big_length]/big_length_nbObjects;
@@ -445,7 +429,7 @@ export class MultiplePlots {
     }
 
     for (let i=0; i<this.nbObjects; i++) {
-      if ((this.objectList[i]['type'] == 'scatterplot') && (i != isSelectingObjIndex)) {
+      if ((this.objectList[i]['type_'] == 'scatterplot') && (i != isSelectingObjIndex)) {
         // console.log(toDisplayAttributes, toDisplayAttributes[0], toDisplayAttributes[1])
         this.objectList[i].sc_to_sc_communication(selection_coords, toDisplayAttributes);
         let obj = this.objectList[i];
@@ -454,13 +438,8 @@ export class MultiplePlots {
       }
     }
   }
-<<<<<<< HEAD
 
-  dependency_scatter_selection(rubberbands_dep:[string, [number, number]][]) {
-=======
-  
   pp_communication(rubberbands_dep:[string, [number, number]][]):void { //process received data from a parallelplot and send it to the other objects
->>>>>>> dev
     for (let i=0; i<this.nbObjects; i++) {
       var obj:PlotData = this.objectList[i];
       var axis_numbers:number[] = [];
@@ -1335,13 +1314,8 @@ export abstract class PlotData {
     return true;
   }
 
-<<<<<<< HEAD
-  add_to_rubberbands(coordinates:[number, number], attribute, index):void {
-    var attribute_type = attribute['type_'];
-=======
   sc_to_pp_communication(coordinates:[number, number], attribute, index):void {
-    var attribute_type = attribute['type'];
->>>>>>> dev
+    var attribute_type = attribute['type_'];
     var axis_coord0 = this.real_to_axis_coord(coordinates[0], attribute_type, this.axis_list[index]['list'], this.inverted_axis_list[index]);
     var axis_coord1 = this.real_to_axis_coord(coordinates[1], attribute_type, this.axis_list[index]['list'], this.inverted_axis_list[index]);
     var axis_min = Math.min(axis_coord0, axis_coord1);
@@ -1352,10 +1326,6 @@ export abstract class PlotData {
     this.add_to_rubberbands_dep([attribute['name'], [coordinates[0], coordinates[1]]]);
   }
 
-<<<<<<< HEAD
-  real_to_axis_coord(real_coord, type_, list, inverted) {
-    if (type_ == 'float') {
-=======
   sc_to_sc_communication(selection_coords:[number, number][], toDisplayAttributes:Attribute[]) {
     let obj_toDispAttrs = this.plotObject.toDisplayAttributes;
     if (equals(obj_toDispAttrs, toDisplayAttributes) || equals(obj_toDispAttrs, List.reverse(toDisplayAttributes))) {
@@ -1396,9 +1366,8 @@ export abstract class PlotData {
     this.selection_window_action();
   }
 
-  real_to_axis_coord(real_coord, type, list, inverted) {
-    if (type == 'float') {
->>>>>>> dev
+  real_to_axis_coord(real_coord, type_, list, inverted) {
+    if (type_ == 'float') {
       if (this.vertical) {
         var axis_coord_start = this.axis_y_start;
         var axis_coord_end = this.axis_y_end;
@@ -1986,14 +1955,7 @@ export abstract class PlotData {
     this.select_on_click = [];
     this.context_show.setLineDash([]);
     this.context_hidden.setLineDash([]);
-<<<<<<< HEAD
-    var in_rect = Shape.isInRect(this.scaleX*(1000*this.plotObject.cx + this.last_mouse1X),this.scaleY*(1000*this.plotObject.cy + this.last_mouse1Y), Math.min(mouse1X, mouse2X), Math.min(mouse1Y, mouse2Y), Math.abs(mouse2X - mouse1X), Math.abs(mouse2Y - mouse1Y));
-    if ((this.plotObject['type_']=="point") && (in_rect === true) && !(List.is_include(this.plotObject, this.select_on_click))) {
-      this.select_on_click.push(this.plotObject);
-    } else if (this.plotObject['type_'] == 'graphs2D') {
-=======
-    if (this.plotObject['type'] == 'graphs2D') {
->>>>>>> dev
+    if (this.plotObject['type_'] == 'graphs2D') {
       for (let i=0; i<this.plotObject.graphs.length; i++) {
         let graph = this.plotObject.graphs[i];
         for (let j=0; j<graph.point_list.length; j++) {
@@ -3308,14 +3270,13 @@ export class ParallelPlot extends PlotData {
       this.disp_w = 30;
       this.disp_h = 20;
     }
-    var data_show = data[0];
-    this.parallel_plot_lineColor = rgb_to_hex(data_show['line_color']);
-    this.parallel_plot_linewidth = data_show['line_width'];
-    this.elements = data_show['elements'];
-    var to_disp_attribute_names = data_show['to_disp_attributes'];
-    if (data_show['disposition'] == 'vertical') {
+    this.parallel_plot_lineColor = rgb_to_hex(data['line_color']);
+    this.parallel_plot_linewidth = data['line_width'];
+    this.elements = data['elements'];
+    var to_disp_attribute_names = data['to_disp_attributes'];
+    if (data['disposition'] == 'vertical') {
       this.vertical = true;
-    } else if (data_show['disposition'] == 'horizontal') {
+    } else if (data['disposition'] == 'horizontal') {
       this.vertical = false;
     } else {
       throw new Error('Axis disposition must be vertical or horizontal');
@@ -3331,7 +3292,7 @@ export class ParallelPlot extends PlotData {
     this.refresh_displayable_attributes();
     this.refresh_attribute_booleans();
     this.isParallelPlot = true;
-    this.rgbs = data_show['rgbs'];
+    this.rgbs = data['rgbs'];
     this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
     this.initialize_hexs();
   }

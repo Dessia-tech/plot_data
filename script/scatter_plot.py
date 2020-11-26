@@ -72,4 +72,4 @@ scatter_plot = plot_data.Scatter(elements=point_list, axis=axis,
                                  color_stroke=colorstroke,
                                  stroke_width=strokewidth)
 
-plot_data.plot_canvas(plot_data=scatter_plot.to_dict())
+plot_data.plot_canvas(plot_data=scatter_plot.to_dict(), debug_mode=True)

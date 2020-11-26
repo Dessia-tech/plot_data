@@ -6,28 +6,43 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
-import os
 import numpy as npy
 import csv
 
-npy.seterr(divide='raise')
-# from itertools import permutations
 import json
-
-from matplotlib.patches import Arc, FancyArrow
-from mpl_toolkits.mplot3d import Axes3D
-import pkg_resources
 import tempfile
 import webbrowser
-from dessia_common import DessiaObject
-from typing import TypeVar, List
+from dessia_common import DessiaObject, full_classname
+from dessia_common.typings import Subclass
+from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 
 import plot_data.templates as templates
 
-from jinja2 import Environment, PackageLoader, select_autoescape, \
-    FileSystemLoader
+from typing import List, Tuple, Any
 
-from string import Template
+npy.seterr(divide='raise')
+
+
+class PlotDataObject(DessiaObject):
+    """
+    Abstract interface for DessiaObject implementing in module
+    """
+    def __init__(self, type_: str, name: str = '', **kwargs):
+        self.type_ = type_
+        DessiaObject.__init__(self, name=name, **kwargs)
+
+    def to_dict(self):
+        dict_ = DessiaObject.to_dict(self)
+        del dict_['object_class']
+        return dict_
+
+    @classmethod
+    def dict_to_object(cls, dict_):
+        type_ = dict_['type_']
+        object_class = TYPE_TO_CLASS[type_]
+
+        dict_['object_class'] = full_classname(object_class)
+        return DessiaObject.dict_to_object(dict_=dict_)
 
 
 class ColorMapSet(DessiaObject):
@@ -88,9 +103,8 @@ class Settings(DessiaObject):
                  shape_set: PointShapeSet = None,
                  point_size: PointSizeSet = None,
                  point_color: PointColorSet = None,
-                 window_size: Window = None,
-                 stroke_width: float = 1, color_line: str = 'black',
-                 marker: str = None,
+                 window_size: Window = None, stroke_width: float = 1,
+                 color_line: str = 'black', marker: str = None,
                  dash: str = None, opacity: float = 1):
         self.color_surface = color_surface
         self.color_map = color_map
@@ -114,36 +128,30 @@ class Settings(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class Line2D(DessiaObject):
-    def __init__(self, data: List[float],
-                 plot_data_states: List[Settings],
-                 type: str = 'line', name: str = '', ):
+class Line2D(PlotDataObject):
+    def __init__(self, data: List[float], plot_data_states: List[Settings],
+                 name: str = ''):
         self.data = data
-        self.type = type
         self.plot_data_states = plot_data_states
         if plot_data_states is None:
             self.plot_data_states = [Settings()]
-        DessiaObject.__init__(self, name=name)
+        PlotDataObject.__init__(self, type_='line', name=name)
 
 
-class Circle2D(DessiaObject):
+class Circle2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, r: float,
-                 plot_data_states: List[Settings],
-                 type: str = 'circle', name: str = '', ):
-        self.type = type
+                 plot_data_states: List[Settings], name: str = ''):
         self.plot_data_states = plot_data_states
         self.r = r
         self.cy = cy
         self.cx = cx
-        DessiaObject.__init__(self, name=name)
+        PlotDataObject.__init__(self, type_='circle', name=name)
 
 
-class Point2D(DessiaObject):
+class Point2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, shape: str, size: float,
                  color_fill: str, color_stroke: str, stroke_width: float,
-                 type: str = 'point',
-                 name: str = '', ):
-        self.type = type
+                 name: str = ''):
         self.cx = cx
         self.cy = cy
         self.shape = shape
@@ -151,15 +159,13 @@ class Point2D(DessiaObject):
         self.color_fill = color_fill
         self.color_stroke = color_stroke
         self.stroke_width = stroke_width
-        DessiaObject.__init__(self, name=name)
+        PlotDataObject.__init__(self, type_='point', name=name)
 
 
-class Axis(DessiaObject):
+class Axis(PlotDataObject):
     def __init__(self, nb_points_x: int, nb_points_y: int, font_size: int,
-                 graduation_color: str, axis_color: str,
-                 arrow_on: bool, axis_width: float, grid_on: bool,
-                 name: str = '',
-                 type: str = 'axis'):
+                 graduation_color: str, axis_color: str, arrow_on: bool,
+                 axis_width: float, grid_on: bool, name: str = ''):
         self.nb_points_x = nb_points_x
         self.nb_points_y = nb_points_y
         self.font_size = font_size
@@ -168,16 +174,13 @@ class Axis(DessiaObject):
         self.arrow_on = arrow_on
         self.axis_width = axis_width
         self.grid_on = grid_on
-        self.type = type
-        DessiaObject.__init__(self, name=name)
+        PlotDataObject.__init__(self, type_='axis', name=name)
 
 
-class Tooltip(DessiaObject):
+class Tooltip(PlotDataObject):
     def __init__(self, colorfill: str, text_color: str, fontsize: float,
-                 fontstyle: str,
-                 tp_radius: float, to_plot_list: list, opacity: float,
-                 type: str = 'tooltip',
-                 name: str = ''):
+                 fontstyle: str, tp_radius: float, to_plot_list: list,
+                 opacity: float, name: str = ''):
         self.colorfill = colorfill
         self.text_color = text_color
         self.fontsize = fontsize
@@ -185,25 +188,17 @@ class Tooltip(DessiaObject):
         self.tp_radius = tp_radius
         self.to_plot_list = to_plot_list
         self.opacity = opacity
-        self.type = type
-        DessiaObject.__init__(self, name=name)
+        PlotDataObject.__init__(self, type_='tooltip', name=name)
 
 
-class Graphs2D(DessiaObject):
-    def __init__(self, graphs, axis, type: str = 'graphs2D', name: str = ''):
-        self.graphs = graphs
-        self.axis = axis
-        self.type = type
-        DessiaObject.__init__(self, name=name)
-
-
-class Graph2D(DessiaObject):
-    def __init__(self, dashline: List[float],
-                 graph_colorstroke: str, graph_linewidth: float,
-                 display_step: float, tooltip: Tooltip, point_list=[],
-                 type: str = 'graph2D',
-                 name: str = ''):
-        self.serialized_point_list = [p.to_dict() for p in point_list]
+class Graph2D(PlotDataObject):
+    def __init__(self, dashline: List[float], graph_colorstroke: str,
+                 graph_linewidth: float, display_step: float, tooltip: Tooltip,
+                 point_list: List[Point2D] = None, name: str = ''):
+        if point_list is None:
+            self.serialized_point_list = []
+        else:
+            self.serialized_point_list = [p.to_dict() for p in point_list]
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
         self.graph_linewidth = graph_linewidth
@@ -211,16 +206,26 @@ class Graph2D(DessiaObject):
         if display_step is None:
             self.display_step = 1
         self.tooltip = tooltip
-        self.type = type
-        DessiaObject.__init__(self, name)
+        PlotDataObject.__init__(self, type_='graph2D', name=name)
 
 
-class Scatter(DessiaObject):
-    def __init__(self, axis: Axis, tooltip: Tooltip, to_display_att_names,
-                 point_shape: str, point_size: float, color_fill: str,
-                 color_stroke: str, stroke_width: float, elements=[],
-                 type: str = 'scatterplot', name: str = ''):
-        self.elements = elements
+class Graphs2D(PlotDataObject):
+    def __init__(self, graphs: List[Graph2D], axis: Axis, name: str = ''):
+        self.graphs = graphs
+        self.axis = axis
+        PlotDataObject.__init__(self, type_='graphs2D', name=name)
+
+
+class Scatter(PlotDataObject):
+    def __init__(self, axis: Axis, tooltip: Tooltip,
+                 to_display_att_names: List[str], point_shape: str,
+                 point_size: float, color_fill: str, color_stroke: str,
+                 stroke_width: float, elements: List[Any] = None,
+                 name: str = ''):
+        if elements is None:
+            self.elements = []
+        else:
+            self.elements = elements
         self.to_display_att_names = to_display_att_names
         self.point_shape = point_shape
         self.point_size = point_size
@@ -229,42 +234,37 @@ class Scatter(DessiaObject):
         self.stroke_width = stroke_width
         self.axis = axis
         self.tooltip = tooltip
-        self.type = type
-        DessiaObject.__init__(self, name)
+        PlotDataObject.__init__(self, type_='scatterplot', name=name)
 
 
-class Arc2D(DessiaObject):
+class Arc2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, r: float,
                  data: List[float], angle1: float, angle2: float,
-                 plot_data_states: List[Settings],
-                 type: str = 'arc', name: str = '', ):
+                 plot_data_states: List[Settings], name: str = ''):
         self.angle2 = angle2
         self.angle1 = angle1
         self.data = data
-        self.type = type
         self.plot_data_states = plot_data_states
         self.r = r
         self.cy = cy
         self.cx = cx
-        DessiaObject.__init__(self, name=name)
+        PlotDataObject.__init__(self, type_='arc', name=name)
 
 
-class Contour2D(DessiaObject):
+class Contour2D(PlotDataObject):
     def __init__(self, plot_data_primitives: List[float],
-                 plot_data_states: List[Settings],
-                 type: str = 'contour', name: str = '', ):
+                 plot_data_states: List[Settings], name: str = '', ):
         self.plot_data_primitives = plot_data_primitives
-        self.type = type
         self.plot_data_states = plot_data_states
-        DessiaObject.__init__(self, name=name)
+        PlotDataObject.__init__(self, type_='contour', name=name)
 
 
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 
-class ParallelPlot(DessiaObject):
+class ParallelPlot(PlotDataObject):
     def __init__(self, line_color: str, line_width: float, disposition: str,
-                 to_disp_attributes, rgbs, elements=[],
+                 to_disp_attributes: List[str], rgbs, elements=None,
                  name: str = ''):
         self.elements = elements
         self.line_color = line_color
@@ -272,41 +272,49 @@ class ParallelPlot(DessiaObject):
         self.disposition = disposition
         self.to_disp_attributes = to_disp_attributes
         self.rgbs = rgbs
-        self.type = 'parallelplot'
-        DessiaObject.__init__(self, name=name)
+        PlotDataObject.__init__(self, type_='parallelplot', name=name)
 
 
-class Attribute(DessiaObject):
-    def __init__(self, name: str, type: str):
-        self.type = type
-        DessiaObject.__init__(self, name)
+class Attribute(PlotDataObject):
+    def __init__(self, type_: str = '', name: str = ''):
+        PlotDataObject.__init__(self, type_=type_, name=name)
 
 
-class MultiplePlots(DessiaObject):
-    def __init__(self, points, objects, sizes, coords, name: str = ''):
+class MultiplePlots(PlotDataObject):
+    def __init__(self, points: List[Point2D],
+                 objects: List[Subclass[PlotDataObject]],
+                 sizes: List[Window], coords: List[Tuple[float, float]],
+                 name: str = ''):
         self.points = points
         self.objects = objects
         self.sizes = sizes
         self.coords = coords
-        self.type = 'multiplot'
-        DessiaObject.__init__(self, name)
+        PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_datas, plot_type, debug_mode=False):
+def plot_canvas(plot_data, debug_mode=False):
+    """
+    Plot input data in web browser
+
+    TODO : core_path input must be removed and set to relative to find core.js
+    """
+    plot_type = plot_data['type_']
     if plot_type == 'contour':
         template = templates.contour_template
-    elif plot_type == 'scatter':
+    elif plot_type == 'scatterplot':
         template = templates.scatter_template
     elif plot_type == 'parallelplot':
         template = templates.parallelplot_template
-    else:
+    elif plot_type == 'multiplot':
         template = templates.multiplot_template
+    else:
+        raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
     core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
-        core_path = '/home/chheang/Github/plot_data/lib/core.js'
+        core_path = '/home/jezequel/Documents/Dessia/git/plot_data/lib/core.js'
 
-    s = template.substitute(data=json.dumps(plot_datas), core_path=core_path)
+    s = template.substitute(data=json.dumps(plot_data), core_path=core_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:
@@ -316,95 +324,15 @@ def plot_canvas(plot_datas, plot_type, debug_mode=False):
     print('file://' + temp_file)
 
 
-def getCSV_vectors(filename):
-    with open(filename, 'r') as csvfile:
-        csv_reader = csv.reader(csvfile, delimiter=',')
-        for line in csv_reader:
-            attribute_names = line
-            nbColumns = len(line)
-            break
-        elements = [[] for k in range(nbColumns)]
-        for line in csv_reader:
-            for k in range(nbColumns):
-                try:
-                    value = float(line[k])
-                except ValueError:
-                    value = line[k]
-                elements[k].append(value)
+def get_csv_vectors(filename):
+    lines, variables = from_csv(filename=filename)
+    catalog = Catalog(array=lines, variables=variables,
+                      pareto_settings=ParetoSettings({}, enabled=False))
+    return catalog
 
-    class ManipulableObject(DessiaObject):
-        pass
 
-    nbAttributes = nbColumns
-    nbPoints = len(elements[0])
-    points = []
-    for i in range(nbPoints):
-        obj = ManipulableObject()
-        for j in range(nbAttributes):
-            obj.__setattr__(attribute_names[j], elements[j][i])
-        points.append(obj)
-    return points
-
-# def plot(plot_datas, ax=None):
-#     if ax is None:
-#         fig, ax = plt.subplots()
-#         ax.set_aspect('equal')
-#     else:
-#         fig = None
-#
-#     for plot_data in plot_datas:
-#         if plot_data['type'] == 'line':
-#             style = ''
-#             if plot_data['dash']:
-#                 style += '--'
-#             else:
-#                 style += '-'
-#             style += color[plot_data['color']]
-#             p1, p2 = plot_data['data'][0: 2], plot_data['data'][2:]
-#             if plot_data['arrow']:
-#                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style)
-#                 length = ((p1[0] - p2[0]) ** 2 + (p1[1] - p2[1]) ** 2) ** 0.5
-#                 if width is None:
-#                     width = length / 1000.
-#                     head_length = length / 20.
-#                     head_width = head_length / 2.
-#                 else:
-#                     head_width = 2 * width
-#                     head_length = head_width
-#                 ax.arrow(p1[0], p1[1],
-#                          (p2[0] - p1[0]) / length * (length - head_length),
-#                          (p2[1] - p1[1]) / length * (length - head_length),
-#                          head_width=head_width, fc='b', linewidth=0,
-#                          head_length=head_length, width=width, alpha=0.3)
-#             else:
-#                 ax.plot([p1[0], p2[0]], [p1[1], p2[1]], style,
-#                         linewidth=plot_data['size'])
-#
-#         elif plot_data['type'] == 'point':
-#             p1 = plot_data['data']
-#             style = ''
-#             style += color[plot_data['color']]
-#             style += plot_data['marker']
-#             ax.plot(p1[0], p1[1], style, linewidth=plot_data['size'])
-#
-#         elif plot_data['type'] == 'contour':
-#             plot(plot_data['plot_data'], ax)
-#
-#         elif plot_data['type'] == 'arc':
-#             pc = vm.Point2D((plot_data['cx'], plot_data['cy']))
-#             ax.add_patch(
-#                 Arc(pc, 2 * plot_data['r'], 2 * plot_data['r'], angle=0,
-#                     theta1=plot_data['angle1'] * 0.5 / math.pi * 360,
-#                     theta2=plot_data['angle2'] * 0.5 / math.pi * 360,
-#                     color=color[plot_data['color']],
-#                     linewidth=plot_data['size']))
-#
-#         elif plot_data['type'] == 'circle':
-#             pc = vm.Point2D((plot_data['cx'], plot_data['cy']))
-#             ax.add_patch(
-#                 Arc(pc, 2 * plot_data['r'], 2 * plot_data['r'], angle=0,
-#                     theta1=0,
-#                     theta2=360,
-#                     color=color[plot_data['color']],
-#                     linewidth=plot_data['size']))
-#     return fig, ax
+TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
+                 'contour': Contour2D, 'graph2D': Graph2D,
+                 'graphs2D': Graphs2D,  'line': Line2D,
+                 'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
+                 'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip}

@@ -50,12 +50,12 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.dataObjects[i]['type_'] == 'scatterplot') {
         this.dataObjects[i]['elements'] = points;
-        let newObject = new PlotScatter([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.coords[i][0], this.coords[i][1]);
+        let newObject = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.coords[i][0], this.coords[i][1]);
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       } else if (this.dataObjects[i]['type_'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
-        let newObject = new ParallelPlot([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.coords[i][0], this.coords[i][1]);
+        let newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.coords[i][0], this.coords[i][1]);
         this.initializeObjectContext(newObject)
         this.objectList.push(newObject);
       } else {
@@ -2707,6 +2707,8 @@ export class ParallelPlot extends PlotData {
       this.disp_w = 30;
       this.disp_h = 20;
     }
+    console.log(data)
+    console.log(data['line_color'])
     this.parallel_plot_lineColor = rgb_to_hex(data['line_color']);
     this.parallel_plot_linewidth = data['line_width'];
     this.elements = data['elements'];

@@ -14,6 +14,7 @@ import tempfile
 import webbrowser
 from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
+from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 
 import plot_data.templates as templates
 
@@ -311,7 +312,7 @@ def plot_canvas(plot_data, debug_mode=False):
 
     core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
-        core_path = '/home/chheang/Github/plot_data/lib/core.js'
+        core_path = '/home/jezequel/Documents/Dessia/git/plot_data/lib/core.js'
 
     s = template.substitute(data=json.dumps(plot_data), core_path=core_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
@@ -323,34 +324,11 @@ def plot_canvas(plot_data, debug_mode=False):
     print('file://' + temp_file)
 
 
-def getCSV_vectors(filename):
-    with open(filename, 'r') as csvfile:
-        csv_reader = csv.reader(csvfile, delimiter=',')
-        for line in csv_reader:
-            attribute_names = line
-            nbColumns = len(line)
-            break
-        elements = [[] for k in range(nbColumns)]
-        for line in csv_reader:
-            for k in range(nbColumns):
-                try:
-                    value = float(line[k])
-                except ValueError:
-                    value = line[k]
-                elements[k].append(value)
-
-    class ManipulableObject(DessiaObject):
-        pass
-
-    nbAttributes = nbColumns
-    nbPoints = len(elements[0])
-    points = []
-    for i in range(nbPoints):
-        obj = ManipulableObject()
-        for j in range(nbAttributes):
-            obj.__setattr__(attribute_names[j], elements[j][i])
-        points.append(obj)
-    return points
+def get_csv_vectors(filename):
+    lines, variables = from_csv(filename=filename)
+    catalog = Catalog(array=lines, variables=variables,
+                      pareto_settings=ParetoSettings({}, enabled=False))
+    return catalog
 
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute

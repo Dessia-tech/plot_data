@@ -291,19 +291,26 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_datas, plot_type):
+def plot_canvas(plot_data,
+                core_path='/home/chheang/Github/plot_data/lib/core.js'):
+    """
+    Plot input data in web browser
+
+    TODO : core_path input must be removed and set to relative to find core.js
+    """
+    plot_type = plot_data['type_']
     if plot_type == 'contour':
         template = templates.contour_template
-    elif plot_type == 'scatter':
+    elif plot_type == 'scatterplot':
         template = templates.scatter_template
     elif plot_type == 'parallelplot':
         template = templates.parallelplot_template
-    else:
+    elif plot_type == 'multiplot':
         template = templates.multiplot_template
+    else:
+        raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
-    core_path = '/home/chheang/Github/plot_data/lib/core.js'
-
-    s = template.substitute(data=json.dumps(plot_datas), core_path=core_path)
+    s = template.substitute(data=json.dumps(plot_data), core_path=core_path)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:

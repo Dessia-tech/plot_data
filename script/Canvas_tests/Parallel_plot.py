@@ -46,5 +46,5 @@ parallel_plot = core.ParallelPlot(elements=elements, line_color=line_color, line
 
 sol = [parallel_plot.to_dict()]
 
-core.plot_canvas(sol, 'parallelplot', debug_mode=True)
+core.plot_canvas(sol, 'parallelplot', 'canvas', debug_mode=True)
 

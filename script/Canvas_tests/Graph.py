@@ -82,4 +82,4 @@ graphs2D = core.Graphs2D(graphs=graphs, axis=axis)
 
 sol = [graphs2D.to_dict()]
 
-core.plot_canvas(sol, 'scatter', debug_mode=True)
+core.plot_canvas(sol, 'scatter', 'canvas', debug_mode=True)

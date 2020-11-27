@@ -60,4 +60,4 @@ sol = [multipleplots.to_dict()]
 # with open('data.json', 'w') as fp:
 #     json.dump(sol, fp, indent=2)
 
-core.plot_canvas(sol, 'multiplot', debug_mode=True)
+core.plot_canvas(sol, 'multiplot', 'canvas', debug_mode=True)

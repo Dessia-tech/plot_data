@@ -35,7 +35,7 @@ export class MultiplePlots {
   sorted_list:number[]=[];
 
 
-  constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
+  constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
     var data_show = data[0];
     this.initial_coords = data_show['coords'];
     this.dataObjects = data_show['objects'];
@@ -46,7 +46,7 @@ export class MultiplePlots {
     }
 
     this.nbObjects = this.dataObjects.length;
-    this.define_canvas();
+    this.define_canvas(canvas_id);
     for (let i=0; i<this.nbObjects; i++) {
       if (this.dataObjects[i]['type'] == 'scatterplot') {
         this.dataObjects[i]['elements'] = points;
@@ -82,7 +82,7 @@ export class MultiplePlots {
       this.objectList[i].X = this.objectList[i].X * ratio;
       this.objectList[i].Y = this.objectList[i].Y * ratio;
     }
-    this.define_canvas();
+    this.define_canvas(this.canvas_id);
     this.redrawAllObjects();
   }
 
@@ -156,13 +156,13 @@ export class MultiplePlots {
     object.context_hidden = this.context_hidden;
   }
 
-  define_canvas():void {
-    var canvas:any = document.getElementById('canvas');
+  define_canvas(canvas_id: string):void {
+    var canvas:any = document.getElementById(canvas_id);
     canvas.width = this.width;
 		canvas.height = this.height;
     this.context_show = canvas.getContext("2d");
 
-    var hiddenCanvas = document.createElement("canvas");
+    var hiddenCanvas:any = document.createElement(canvas_id);
 		hiddenCanvas.width = this.width;
 		hiddenCanvas.height = this.height;
     this.context_hidden = hiddenCanvas.getContext("2d");
@@ -857,13 +857,13 @@ export abstract class PlotData {
 
   abstract draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y);
 
-  define_canvas(): void {
-    var canvas : any = document.getElementById('canvas');
+  define_canvas(canvas_id:string): void {
+    var canvas : any = document.getElementById(canvas_id);
     canvas.width = this.width;
 		canvas.height = this.height;
     this.context_show = canvas.getContext("2d");
 
-    var hiddenCanvas = document.createElement("canvas");
+    var hiddenCanvas:any = document.createElement(canvas_id);
 		hiddenCanvas.width = this.width;
 		hiddenCanvas.height = this.height;
     this.context_hidden = hiddenCanvas.getContext("2d");
@@ -1176,13 +1176,7 @@ export abstract class PlotData {
       }
       var attribute_alias = this.axis_list[i]['alias'];
       this.context.fillStyle = 'black';
-      if (i==0) {
-        this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20, 2*this.axis_x_start);
-      } else if (i == nb_axis - 1) {
-        this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20, 2*(this.width - this.axis_x_end));
-      } else {
-        this.context.fillText(attribute_alias, current_x, this.axis_x_end - 20);
-      }
+      this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20);
       this.context.stroke();
       var attribute_type = this.axis_list[i]['type'];
       var list = this.axis_list[i]['list'];
@@ -2677,10 +2671,10 @@ export class ParallelPlot extends PlotData {
     this.initialize_data_lists();
     var nb_axis = this.axis_list.length;
     if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
-    this.refresh_axis_bounds(nb_axis);
     this.refresh_to_display_list(this.elements);
     this.refresh_displayable_attributes();
     this.refresh_attribute_booleans();
+    this.refresh_axis_bounds(nb_axis);
     this.isParallelPlot = true;
     this.rgbs = data_show['rgbs'];
     this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);

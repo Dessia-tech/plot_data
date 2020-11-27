@@ -82,4 +82,4 @@ sizes = [core.Window(width=560, height=300),
 multipleplots = core.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
 sol = [multipleplots.to_dict()]
 
-core.plot_canvas(sol, 'multiplot', debug_mode=True)
+core.plot_canvas(sol, 'multiplot', 'canvas', debug_mode=True)

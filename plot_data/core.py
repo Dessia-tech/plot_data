@@ -7,7 +7,6 @@ Created on Tue Feb 28 14:07:37 2017
 """
 
 import numpy as npy
-import csv
 
 import json
 import tempfile
@@ -292,7 +291,8 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_data, debug_mode=False):
+def plot_canvas(plot_data, debug_mode: bool = False,
+                display_id: str = 'canvas'):
     """
     Plot input data in web browser
 
@@ -314,7 +314,8 @@ def plot_canvas(plot_data, debug_mode=False):
     if debug_mode:
         core_path = '/home/jezequel/Documents/Dessia/git/plot_data/lib/core.js'
 
-    s = template.substitute(data=json.dumps(plot_data), core_path=core_path)
+    s = template.substitute(data=json.dumps(plot_data), core_path=core_path,
+                            display_id=display_id)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:

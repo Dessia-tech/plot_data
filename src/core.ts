@@ -36,7 +36,7 @@ export class MultiplePlots {
   burst_coeff:number=0;
 
 
-  constructor(public data: any, public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
+  constructor(public data: any, public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, display_id: string) {
     this.coords = data['coords'];
     this.dataObjects = data['objects'];
     var points = data['points'];
@@ -46,7 +46,7 @@ export class MultiplePlots {
     }
 
     this.nbObjects = this.dataObjects.length;
-    this.define_canvas();
+    this.define_canvas(display_id);
     for (let i=0; i<this.nbObjects; i++) {
       if (this.dataObjects[i]['type_'] == 'scatterplot') {
         this.dataObjects[i]['elements'] = points;
@@ -82,7 +82,7 @@ export class MultiplePlots {
       this.objectList[i].X = this.objectList[i].X * ratio;
       this.objectList[i].Y = this.objectList[i].Y * ratio;
     }
-    this.define_canvas();
+    this.define_canvas(this.display_id);
     this.redrawAllObjects();
   }
 
@@ -154,13 +154,13 @@ export class MultiplePlots {
     object.context_hidden = this.context_hidden;
   }
 
-  define_canvas():void {
-    var canvas:any = document.getElementById('canvas');
+  define_canvas(display_id: string):void {
+    var canvas: any = document.getElementById(display_id);
     canvas.width = this.width;
 		canvas.height = this.height;
     this.context_show = canvas.getContext("2d");
 
-    var hiddenCanvas = document.createElement("canvas");
+    var hiddenCanvas = document.createElement(display_id+'_hidden');
 		hiddenCanvas.width = this.width;
 		hiddenCanvas.height = this.height;
     this.context_hidden = hiddenCanvas.getContext("2d");
@@ -841,24 +841,26 @@ export abstract class PlotData {
   isDrawing_rubber_band:boolean=false;
   rubberbands_dep:[string, [number, number]][]=[];
 
-  public constructor(public data:any,
+  public constructor(
+    public data:any,
     public width: number,
     public height: number,
     public coeff_pixel: number,
     public buttons_ON: boolean,
     public X: number,
-    public Y: number) {}
+    public Y: number
+  ) {}
 
 
   abstract draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y);
 
-  define_canvas(): void {
-    var canvas : any = document.getElementById('canvas');
+  define_canvas(display_id: string = 'canvas'): void {
+    var canvas : any = document.getElementById(display_id);
     canvas.width = this.width;
 		canvas.height = this.height;
     this.context_show = canvas.getContext("2d");
 
-    var hiddenCanvas = document.createElement("canvas");
+    var hiddenCanvas = document.createElement(display_id+'_hidden');
 		hiddenCanvas.width = this.width;
 		hiddenCanvas.height = this.height;
     this.context_hidden = hiddenCanvas.getContext("2d");

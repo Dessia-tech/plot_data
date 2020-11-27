@@ -2548,7 +2548,6 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
-      console.log(data);
       if (data['type_'] == 'point') {
         this.type_ = 'point';
         this.plotObject = Point2D.deserialize(data);
@@ -2655,8 +2654,6 @@ export class ParallelPlot extends PlotData {
       this.disp_w = 30;
       this.disp_h = 20;
     }
-    console.log(data)
-    console.log(data['line_color'])
     this.parallel_plot_lineColor = rgb_to_hex(data['line_color']);
     this.parallel_plot_linewidth = data['line_width'];
     this.elements = data['elements'];

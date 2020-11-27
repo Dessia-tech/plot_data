@@ -18,7 +18,7 @@ contour_template = Template('''<div id="app"></div>
   	var data = $data;
 	var number_plot_data = data.length;
 
-	var plot_data = new PlotContour(data, width, height, 1000, false, 0, 0);
+	var plot_data = new PlotContour(data, width, height, 1000, false, 0, 0, $canvas_id.id);
 	plot_data.define_canvas($canvas_id.id);
 	plot_data.draw_initial();
 
@@ -46,7 +46,7 @@ scatter_template = Template('''<div id="app"></div>
   	var data = $data;
 	var number_plot_data = data.length
 
-	var plot_data = new PlotScatter(data, width, height, 1000, true, 0, 0);
+	var plot_data = new PlotScatter(data, width, height, 1000, true, 0, 0, $canvas_id.id);
 	plot_data.define_canvas($canvas_id.id);
 	plot_data.draw_initial();
 	plot_data.mouse_interaction(plot_data.isParallelPlot); //true if parallel plot, false otherwise
@@ -76,7 +76,7 @@ parallelplot_template = Template('''<div id="app"></div>
 	  var data = $data;
 	var number_plot_data = data.length
 
-	var plot_data = new ParallelPlot(data, width, height, 1000, true, 0, 0);
+	var plot_data = new ParallelPlot(data, width, height, 1000, true, 0, 0, $canvas_id.id);
 	plot_data.define_canvas($canvas_id.id);
 	plot_data.draw_initial();
 	plot_data.mouse_interaction(plot_data.isParallelPlot); //true if parallel plot, false otherwise

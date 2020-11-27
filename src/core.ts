@@ -50,12 +50,12 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.dataObjects[i]['type'] == 'scatterplot') {
         this.dataObjects[i]['elements'] = points;
-        var newObject = new PlotScatter([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
+        var newObject = new PlotScatter([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else if (this.dataObjects[i]['type'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
-        newObject = new ParallelPlot([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
+        newObject = new ParallelPlot([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else if (this.dataObjects[i]['type'] == 'contour') {
-        newObject = new PlotContour([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
+        newObject = new PlotContour([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else {
         throw new Error('MultiplePlots constructor : invalid object type');
       }
@@ -154,7 +154,6 @@ export class MultiplePlots {
   initializeObjectContext(object:PlotData):void {
     object.context_show = this.context_show;
     object.context_hidden = this.context_hidden;
-    object.canvas_id = this.canvas_id;
   }
 
   define_canvas(canvas_id: string):void {
@@ -832,7 +831,6 @@ export abstract class PlotData {
   interpolation_colors:string[]=[];
   rgbs:[number, number, number][]=[];
   hexs:string[];
-  canvas_id:string;
 
   initRectColorStroke:string=string_to_hex('grey');
   initRectLinewidth:number=0.2;
@@ -854,7 +852,8 @@ export abstract class PlotData {
     public coeff_pixel: number,
     public buttons_ON: boolean,
     public X: number,
-    public Y: number) {}
+    public Y: number,
+    public canvas_id: string) {}
 
 
   abstract draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y);
@@ -2501,8 +2500,9 @@ export class PlotContour extends PlotData {
                 public coeff_pixel: number,
                 public buttons_ON: boolean,
                 public X: number,
-                public Y: number) {
-    super(data, width, height, coeff_pixel, buttons_ON, 0, 0);
+                public Y: number,
+                public canvas_id: string) {
+    super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     this.plot_datas = [];
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
@@ -2542,8 +2542,9 @@ export class PlotScatter extends PlotData {
     public coeff_pixel: number,
     public buttons_ON: boolean,
     public X: number,
-    public Y: number) {
-      super(data, width, height, coeff_pixel, buttons_ON, X, Y);
+    public Y: number,
+    public canvas_id: string) {
+      super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
@@ -2646,8 +2647,8 @@ export class PlotScatter extends PlotData {
 
 export class ParallelPlot extends PlotData {
 
-  constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y) {
-    super(data, width, height, coeff_pixel, buttons_ON, X, Y);
+  constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
+    super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
     this.type = 'parallelplot';
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
@@ -2670,7 +2671,6 @@ export class ParallelPlot extends PlotData {
     this.initialize_displayable_attributes();
     this.initialize_attributes_list();
     this.add_to_axis_list(to_disp_attribute_names);
-    console.log(this.elements)
     this.initialize_data_lists();
     var nb_axis = this.axis_list.length;
     if (nb_axis<=1) {throw new Error('At least 2 axis are required')};

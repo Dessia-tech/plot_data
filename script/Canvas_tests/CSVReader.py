@@ -21,7 +21,7 @@ opacity = 0.75
 
 objects = []
 #ParallelPlot
-pp_to_disp_attributes = ['airline', 'avail_seat_km_per_week', 'fatal_accidents_00_14']
+pp_to_disp_attributes = ['Country', 'Level of development', 'European Union Membership', 'Currency', 'Women Entrepreneurship Index', 'Entrepreneurship Index', 'Inflation rate', 'Female Labor Force Participation Rate']
 line_color = black
 line_width = 0.5
 disposition = 'vertical'
@@ -42,7 +42,7 @@ axis = core.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
                               axis_color=axis_color, arrow_on=arrow_on,
                               axis_width=axis_width, grid_on=grid_on)
 
-sc_to_disp_att_names = ['airline', 'avail_seat_km_per_week']
+sc_to_disp_att_names = ['Women Entrepreneurship Index', 'Inflation rate']
 tooltip = core.Tooltip(colorfill=tp_colorfill, text_color=text_color, fontsize=tl_fontsize, fontstyle=tl_fontstyle,
                      tp_radius=tp_radius, to_plot_list=sc_to_disp_att_names, opacity=opacity)
 
@@ -53,7 +53,7 @@ coords = [[0,450], [0,0]]
 sizes = [core.Window(width=750, height=400),
          core.Window(width=750, height=400)]
 
-points = core.getCSV_vectors('airline-safety.csv')
+points = core.getCSV_vectors('women_entrepreneurship.csv')
 multipleplots = core.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
 sol = [multipleplots.to_dict()]
 # os.remove("data.json")

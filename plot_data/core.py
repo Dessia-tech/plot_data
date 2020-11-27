@@ -318,13 +318,14 @@ def plot_canvas(plot_datas, plot_type, debug_mode=False):
 
 def getCSV_vectors(filename):
     with open(filename, 'r') as csvfile:
-        csv_reader = csv.reader(csvfile, delimiter=',')
+        csv_reader = csv.reader(csvfile, delimiter=';')
         for line in csv_reader:
             attribute_names = line
             nbColumns = len(line)
             break
         elements = [[] for k in range(nbColumns)]
         for line in csv_reader:
+            print(line)
             for k in range(nbColumns):
                 try:
                     value = float(line[k])

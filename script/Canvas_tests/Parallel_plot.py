@@ -24,12 +24,6 @@ color_stroke = grey
 stroke_width = 1  # Points' stroke width
 
 # ParallelPlot
-attribute_list = [core.Attribute(name='cx', type='float'),
-                  core.Attribute(name='cy', type='float'),
-                  core.Attribute(name='size', type='float'),
-                  core.Attribute(name='color_fill', type='color'),
-                  core.Attribute(name='color_stroke', type='color'),
-                  core.Attribute(name='stroke_width', type='float')]
 to_disp_attributes = ['cx', 'cy', 'color_fill', 'color_stroke']
 line_color = black
 line_width = 0.5

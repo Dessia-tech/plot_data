@@ -5,7 +5,7 @@ export class MultiplePlots {
   objectList:PlotData[]=[];
   dataObjects:any[]=[]
   nbObjects:number=0;
-  coords:[number, number][];
+  initial_coords:[number, number][];
   points:Point2D[]=[];
   sizes:Window[]=[];
   selected_index:number=-1;
@@ -33,12 +33,11 @@ export class MultiplePlots {
   initial_mouseX:number=0;
   initial_mouseY:number=0;
   sorted_list:number[]=[];
-  burst_coeff:number=0;
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean) {
     var data_show = data[0];
-    this.coords = data_show['coords'];
+    this.initial_coords = data_show['coords'];
     this.dataObjects = data_show['objects'];
     var points = data_show['points'];
     var temp_sizes = data_show['sizes'];
@@ -51,16 +50,16 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.dataObjects[i]['type'] == 'scatterplot') {
         this.dataObjects[i]['elements'] = points;
-        let newObject = new PlotScatter([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.coords[i][0], this.coords[i][1]);
+        let newObject = new PlotScatter([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       } else if (this.dataObjects[i]['type'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
-        let newObject = new ParallelPlot([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.coords[i][0], this.coords[i][1]);
+        let newObject = new ParallelPlot([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
         this.initializeObjectContext(newObject)
         this.objectList.push(newObject);
       } else {
-        throw new Error('MultiplePlots constructor : Invalid object type');
+        throw new Error('MultiplePlots constructor : invalid object type');
       }
     }
     for (let i=0; i<this.nbObjects; i++) {
@@ -253,6 +252,7 @@ export class MultiplePlots {
   selectDep_action():void {
     this.selectDependency_bool = !this.selectDependency_bool;
     this.manipulation_bool = false;
+    this.view_bool = false;
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].manipulable_ON = this.manipulation_bool;
     }
@@ -1173,7 +1173,13 @@ export abstract class PlotData {
       }
       var attribute_alias = this.axis_list[i]['alias'];
       this.context.fillStyle = 'black';
-      this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20);
+      if (i==0) {
+        this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20, 2*this.axis_x_start);
+      } else if (i == nb_axis - 1) {
+        this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20, 2*(this.width - this.axis_x_end));
+      } else {
+        this.context.fillText(attribute_alias, current_x, this.axis_x_end - 20);
+      }
       this.context.stroke();
       var attribute_type = this.axis_list[i]['type'];
       var list = this.axis_list[i]['list'];
@@ -2501,10 +2507,10 @@ export class PlotContour extends PlotData {
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
       var a = Contour2D.deserialize(d);
-      if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
-      if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
-      if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
-      if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
+      if (isNaN(this.minX)) {this.minX = a.minX;} else {this.minX = Math.min(this.minX, a.minX);}
+      if (isNaN(this.maxX)) {this.maxX = a.maxX;} else {this.maxX = Math.max(this.maxX, a.maxX);}
+      if (isNaN(this.minY)) {this.minY = a.minY;} else {this.minY = Math.min(this.minY, a.minY);}
+      if (isNaN(this.maxY)) {this.maxY = a.maxY;} else {this.maxY = Math.max(this.maxY, a.maxY);}
       this.colour_to_plot_data[a.mouse_selection_color] = a;
       this.plot_datas.push(a);
     }
@@ -2541,10 +2547,10 @@ export class PlotScatter extends PlotData {
           this.type = 'point';
           this.plotObject = Point2D.deserialize(d);
           this.plot_datas['value'] = [this.plotObject];
-          if (isNaN(this.minX)) {this.minX = this.plotObject.minX} else {this.minX = Math.min(this.minX, this.plotObject.minX)};
-          if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX)};
-          if (isNaN(this.minY)) {this.minY = this.plotObject.minY} else {this.minY = Math.min(this.minY, this.plotObject.minY)};
-          if (isNaN(this.maxY)) {this.maxY = this.plotObject.maxY} else {this.maxY = Math.max(this.maxY, this.plotObject.maxY)};
+          if (isNaN(this.minX)) {this.minX = this.plotObject.minX;} else {this.minX = Math.min(this.minX, this.plotObject.minX);}
+          if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX;} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX);}
+          if (isNaN(this.minY)) {this.minY = this.plotObject.minY;} else {this.minY = Math.min(this.minY, this.plotObject.minY);}
+          if (isNaN(this.maxY)) {this.maxY = this.plotObject.maxY;} else {this.maxY = Math.max(this.maxY, this.plotObject.maxY);}
           this.colour_to_plot_data[this.plotObject.mouse_selection_color] = this.plotObject;
 
         } else if (d['type'] == 'axis') {
@@ -2568,10 +2574,10 @@ export class PlotScatter extends PlotData {
             graph.id = i;
             for (let j=0; j<graph.point_list.length; j++) {
               var point = graph.point_list[j];
-              if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
-              if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
-              if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
-              if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
+              if (isNaN(this.minX)) {this.minX = point.minX;} else {this.minX = Math.min(this.minX, point.minX);}
+              if (isNaN(this.maxX)) {this.maxX = point.maxX;} else {this.maxX = Math.max(this.maxX, point.maxX);}
+              if (isNaN(this.minY)) {this.minY = point.minY;} else {this.minY = Math.min(this.minY, point.minY);}
+              if (isNaN(this.maxY)) {this.maxY = point.maxY;} else {this.maxY = Math.max(this.maxY, point.maxY);}
               this.colour_to_plot_data[point.mouse_selection_color] = point;
             }
           }
@@ -2658,6 +2664,7 @@ export class ParallelPlot extends PlotData {
     this.initialize_displayable_attributes();
     this.initialize_attributes_list();
     this.add_to_axis_list(to_disp_attribute_names);
+    console.log(this.elements)
     this.initialize_data_lists();
     var nb_axis = this.axis_list.length;
     if (nb_axis<=1) {throw new Error('At least 2 axis are required')};

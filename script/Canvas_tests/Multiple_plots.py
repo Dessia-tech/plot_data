@@ -1,5 +1,8 @@
 import plot_data.core as core
 import random
+import volmdlr as vm
+import volmdlr.wires
+import volmdlr.edges
 from script.Canvas_tests.colors import *
 
 shape = 'circle'
@@ -72,6 +75,23 @@ objects.append(ScatterPlot1)
 ScatterPlot2 = core.Scatter(axis=axis, tooltip=tooltip, to_display_att_names=['cy', 'color_stroke'], point_shape=shape, point_size=size, color_fill=sc_color_fill, color_stroke=sc_color_stroke, stroke_width=0.5)
 objects.append(ScatterPlot2)
 
+# hatching = core.HatchingSet(1)
+# plot_data_state = core.Settings(name='name', hatching=hatching, stroke_width=1)
+
+# Contour
+# size = 1
+# pt1 = vm.Point2D(0, 0)
+# pt2 = vm.Point2D(0, size)
+# pt3 = vm.Point2D(size, size)
+# pt4 = vm.Point2D(size, 0)
+# contour = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
+#                          vm.edges.LineSegment2D(pt2, pt3),
+#                          vm.edges.LineSegment2D(pt3, pt4),
+#                          vm.edges.LineSegment2D(pt4, pt1)])
+# objects.append(contour)
+
+# d = c1.plot_data(plot_data_states=[plot_data_state])
+
 coords = [[0, 600], [300, 0], [0,0], [300, 300], [500, 500]]
 sizes = [core.Window(width=560, height=300),
          core.Window(width=560, height=300),
@@ -80,6 +100,8 @@ sizes = [core.Window(width=560, height=300),
          core.Window(width=560, height=300)]
 
 multipleplots = core.MultiplePlots(points=points, objects=objects, sizes=sizes, coords=coords)
+
+
 sol = [multipleplots.to_dict()]
 
 core.plot_canvas(sol, 'multiplot', 'canvas', debug_mode=True)

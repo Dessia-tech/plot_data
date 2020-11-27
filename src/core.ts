@@ -50,17 +50,17 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.dataObjects[i]['type'] == 'scatterplot') {
         this.dataObjects[i]['elements'] = points;
-        let newObject = new PlotScatter([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
-        this.initializeObjectContext(newObject);
-        this.objectList.push(newObject);
+        var newObject = new PlotScatter([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
       } else if (this.dataObjects[i]['type'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
-        let newObject = new ParallelPlot([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
-        this.initializeObjectContext(newObject)
-        this.objectList.push(newObject);
+        newObject = new ParallelPlot([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
+      } else if (this.dataObjects[i]['type'] == 'contour') {
+        newObject = new PlotContour([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1]);
       } else {
         throw new Error('MultiplePlots constructor : invalid object type');
       }
+      this.initializeObjectContext(newObject);
+      this.objectList.push(newObject);
     }
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].draw_initial();
@@ -154,6 +154,7 @@ export class MultiplePlots {
   initializeObjectContext(object:PlotData):void {
     object.context_show = this.context_show;
     object.context_hidden = this.context_hidden;
+    object.canvas_id = this.canvas_id;
   }
 
   define_canvas(canvas_id: string):void {
@@ -161,8 +162,8 @@ export class MultiplePlots {
     canvas.width = this.width;
 		canvas.height = this.height;
     this.context_show = canvas.getContext("2d");
-
-    var hiddenCanvas:any = document.createElement(canvas_id);
+    var hiddenCanvas:any = document.createElement("canvas", { is : canvas_id });
+    hiddenCanvas.id = canvas_id + '_hidden';
 		hiddenCanvas.width = this.width;
 		hiddenCanvas.height = this.height;
     this.context_hidden = hiddenCanvas.getContext("2d");
@@ -551,7 +552,7 @@ export class MultiplePlots {
   }
 
   mouse_interaction(): void {
-    var canvas = document.getElementById('canvas');
+    var canvas = document.getElementById(this.canvas_id);
     var mouse1X:number = 0;
     var mouse1Y:number = 0;
     var mouse2X:number = 0;
@@ -831,6 +832,7 @@ export abstract class PlotData {
   interpolation_colors:string[]=[];
   rgbs:[number, number, number][]=[];
   hexs:string[];
+  canvas_id:string;
 
   initRectColorStroke:string=string_to_hex('grey');
   initRectLinewidth:number=0.2;
@@ -857,13 +859,13 @@ export abstract class PlotData {
 
   abstract draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y);
 
-  define_canvas(canvas_id:string): void {
-    var canvas : any = document.getElementById(canvas_id);
+  define_canvas(canvas_id: string):void {
+    var canvas:any = document.getElementById(canvas_id);
     canvas.width = this.width;
 		canvas.height = this.height;
     this.context_show = canvas.getContext("2d");
-
-    var hiddenCanvas:any = document.createElement(canvas_id);
+    var hiddenCanvas:any = document.createElement("canvas", { is : canvas_id });
+    hiddenCanvas.id = canvas_id + '_hidden';
 		hiddenCanvas.width = this.width;
 		hiddenCanvas.height = this.height;
     this.context_hidden = hiddenCanvas.getContext("2d");
@@ -976,9 +978,8 @@ export abstract class PlotData {
       this.context.stroke();
       this.context.closePath();
 
-    }
-    if (d['type'] == 'text') {
-      d.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+    } else if (d['type'] == 'text') {
+      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y) ;
     }
   }
 
@@ -2251,7 +2252,7 @@ export abstract class PlotData {
       var left:boolean = false;
       var right:boolean = false;
 
-      var canvas = document.getElementById('canvas');
+      var canvas = document.getElementById(this.canvas_id);
 
       canvas.addEventListener('mousedown', e => {
         if (this.interaction_ON) {
@@ -2498,7 +2499,9 @@ export class PlotContour extends PlotData {
                 public width: number,
                 public height: number,
                 public coeff_pixel: number,
-                public buttons_ON: boolean) {
+                public buttons_ON: boolean,
+                public X: number,
+                public Y: number) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0);
     this.plot_datas = [];
     for (var i = 0; i < data.length; i++) {
@@ -2523,7 +2526,7 @@ export class PlotContour extends PlotData {
     this.mouse_interaction(this.isParallelPlot);
   }
 
-  draw(hidden, show_state, mvx, mvy, scaleX, scaleY) {
+  draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
     this.draw_empty_canvas(hidden);
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
@@ -3539,10 +3542,10 @@ export class Text {
                     serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
+  draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
     context.font = "regular 100px Arial";
     context.fillStyle = "black";
-    context.fillText(this.comment, scaleX*(1000*this.position_x+ mvx), scaleY*(1000*this.position_y+ mvy));
+    context.fillText(this.comment, scaleX*(1000*this.position_x+ mvx) + X, scaleY*(1000*this.position_y+ mvy) + Y);
   }
 }
 

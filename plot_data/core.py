@@ -140,7 +140,6 @@ class Text(PlotDataObject):
             self.plot_data_states = [Settings()]
         else:
             self.plot_data_states = plot_data_states
-        self.type = type
         self.comment = comment
         self.position_x = position_x
         self.position_y = position_y
@@ -148,10 +147,9 @@ class Text(PlotDataObject):
 
 
 class Line2D(PlotDataObject):
-    def __init__(self, data: List[float],
-                 plot_data_states: List[Settings], name: str = ''):
+    def __init__(self, data: List[float], plot_data_states: List[Settings],
+                 name: str = ''):
         self.data = data
-        self.type = type
         if plot_data_states is None:
             self.plot_data_states = [Settings()]
         else:
@@ -159,8 +157,10 @@ class Line2D(PlotDataObject):
         PlotDataObject.__init__(self, type_='line', name=name)
 
     def bounding_box(self):
-        return min(self.data[0], self.data[2]), max(self.data[0], self.data[2]), min(self.data[1], self.data[3]), max(
-            self.data[1], self.data[3])
+        return (min(self.data[0], self.data[2]),
+                max(self.data[0], self.data[2]),
+                min(self.data[1], self.data[3]),
+                max(self.data[1], self.data[3]))
 
 
 class Circle2D(PlotDataObject):
@@ -356,7 +356,7 @@ def plot_canvas(plot_data, debug_mode: bool = False,
 
     core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
-        core_path = '/'.join(os.path.abspath('').split('/')[:-2] + ['lib', 'core.js'])
+        core_path = '/'.join(os.path.abspath('').split('/')[:-1] + ['lib', 'core.js'])
 
     s = template.substitute(data=json.dumps(plot_data), core_path=core_path,
                             canvas_id=canvas_id)

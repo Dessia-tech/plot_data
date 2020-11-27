@@ -10,8 +10,8 @@ contour_template = Template('''<div id="app"></div>
 <script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
-    var width = 750,
-			height = 400;
+    var width = 2000,
+			height = 2000;
 	var show_state = 1
 	var coeff_pixel = 1000
 

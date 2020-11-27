@@ -973,6 +973,9 @@ export abstract class PlotData {
       this.context.closePath();
 
     }
+    if (d['type'] == 'text') {
+      d.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+    }
   }
 
   draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
@@ -2565,13 +2568,20 @@ export class PlotContour extends PlotData {
     this.plot_datas = [];
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
-      var a = Contour2D.deserialize(d);
-      if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
-      if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
-      if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
-      if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
-      this.colour_to_plot_data[a.mouse_selection_color] = a;
-      this.plot_datas.push(a);
+      if (d['type'] == 'contour') {
+        var a = Contour2D.deserialize(d);
+        if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
+        if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
+        if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
+        if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
+        this.colour_to_plot_data[a.mouse_selection_color] = a;
+        this.plot_datas.push(a);
+      }
+      if (d['type'] == 'text') {
+        var b = Text.deserialize(d);
+        this.plot_datas.push(b);
+      }
+
     }
     this.plotObject = this.plot_datas[0];
     this.isParallelPlot = false;
@@ -3484,6 +3494,46 @@ export class Contour2D {
                                    plot_data_states,
                                    serialized['type'],
                                    serialized['name']);
+  }
+}
+
+export class Text {
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
+
+  constructor(public comment:any,
+              public position_x:any,
+              public position_y:any,
+              public plot_data_states:any,
+              public type:string,
+              public name:string) {
+    this.minX = position_x;
+    this.maxX = position_x;
+    this.minY = position_y;
+    this.maxY = position_y;
+  }
+
+  public static deserialize(serialized) {
+    var temp = serialized['plot_data_states'];
+    var plot_data_states = [];
+    for (var i = 0; i < temp.length; i++) {
+      var d = temp[i];
+      plot_data_states.push(PlotDataState.deserialize(d));
+    }
+    return new Text(serialized['comment'],
+                    serialized['position_x'],
+                    serialized['position_y'],
+                    plot_data_states,
+                    serialized['type'],
+                    serialized['name']);
+  }
+
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
+    context.font = "regular 100px Arial";
+    context.fillStyle = "black";
+    context.fillText(this.comment, scaleX*(1000*this.position_x+ mvx), scaleY*(1000*this.position_y+ mvy));
   }
 }
 

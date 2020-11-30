@@ -179,7 +179,7 @@ export class MultiplePlots {
     return index;
   }
 
-  clearCanvas():void {
+  clearAll():void {
     this.context_show.beginPath();
     this.context_show.clearRect(0, 0, this.width, this.height);
     this.context_show.stroke();
@@ -190,12 +190,43 @@ export class MultiplePlots {
     this.context_hidden.closePath();
   }
 
+  clearAllExceptOne(index:number, context:any): void {
+    var obj = this.objectList[index];
+    context.beginPath();
+    context.clearRect(0, obj.X, 0, this.height);
+    context.clearRect(obj.X, obj.X + obj.width, 0, obj.Y);
+    context.clearRect(obj.X + obj.width, this.width, 0, this.height);
+    context.clearRect(obj.X, obj.X + obj.width, obj.Y + obj.height, this.height);
+    context.stroke();
+    context.closePath();
+  }
+
+  clearAllExceptContour(contour_index:number) {
+    this.clearAllExceptOne(contour_index, this.context_show);
+    this.clearAllExceptOne(contour_index, this.context_hidden);
+  }
+
   redrawAllObjects():void {
-    this.clearCanvas();
-    for (let i=0; i<this.objectList.length; i++) {
-      let obj = this.objectList[i];
+    if (false) { //(this.selected_index != -1) && (this.objectList[this.selected_index].type == 'contour')
+      let obj = this.objectList[this.selected_index];
       obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
       obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      this.clearAllExceptContour(this.selected_index);
+      for (let i=0; i<this.objectList.length; i++) {
+        if (i != this.selected_index) {
+          let obj = this.objectList[i];
+          obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+          obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+        }
+      }
+
+    } else {
+      this.clearAll();
+      for (let i=0; i<this.objectList.length; i++) {
+        let obj = this.objectList[i];
+        obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+        obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      }
     }
     if (this.buttons_ON) {
       this.draw_buttons();
@@ -476,9 +507,6 @@ export class MultiplePlots {
         obj.dep_color_propagation(attribute_index, vertical, inverted, hexs, selected_axis_name);
         obj.sc_interpolation_ON = true;
       } 
-      // else { // ie type == 'parallelplot'
-      //   this.objectList[i].selected_axis_name = selected_axis_name;
-      // }
     }
   }
 
@@ -639,7 +667,8 @@ export class MultiplePlots {
               this.pp_communication(rubberbands_dep);
             }
           }
-        } 
+        }
+        this.redrawAllObjects(); 
       }
     });
 
@@ -977,6 +1006,24 @@ export abstract class PlotData {
       this.context.stroke();
       this.context.closePath();
 
+      // var imgData = this.context_show.getImageData(this.real_to_scatter_coords(this.minX, 'x'), this.real_to_scatter_coords(this.minY, 'y'), 
+      //                                         this.real_to_scatter_coords(this.maxX, 'x') - this.real_to_scatter_coords(this.minX, 'x'),
+      //                                         this.real_to_scatter_coords(this.maxY, 'y') - this.real_to_scatter_coords(this.minY, 'y'));
+      // for (let i=0; i<imgData.height; i++) {
+      //   for (let j=0; j<imgData.width; j++) {
+      //     let pixel_x = this.real_to_scatter_coords(this.minX, 'x') + j;
+      //     let pixel_y = this.real_to_scatter_coords(this.minY, 'y') + i;
+      //     let is_inside_canvas = (pixel_x>=this.X) && (pixel_x<=this.width + this.X) && (pixel_y>=this.Y) && (pixel_y<=this.height + this.Y);
+      //     if (!is_inside_canvas) {
+      //       imgData.data[4*(i*imgData.width + j)] = 255;
+      //       imgData.data[4*(i*imgData.width + j) + 1] = 255;
+      //       imgData.data[4*(i*imgData.width + j) + 2] = 255;
+      //       imgData.data[4*(i*imgData.width + j) + 3] = 0; //+3 <=> opacity
+      //     }
+      //   }
+      // }
+      // console.log(imgData)
+      // this.context.putImageData(imgData, this.real_to_scatter_coords(this.minX, 'x'), this.real_to_scatter_coords(this.minY, 'y'));
     } else if (d['type'] == 'text') {
       d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y) ;
     }
@@ -1008,11 +1055,12 @@ export abstract class PlotData {
             if (shape == 'crux') {
               this.context.strokeStyle = this.color_surface_on_click;
             } else {
-              if (this.sc_interpolation_ON) {
-                this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(this.context.fillStyle), 0.6));
-              } else {
-                this.context.fillStyle = this.color_surface_on_click;
-              }
+              // if (this.sc_interpolation_ON) {
+              //   this.context.fillStyle = rgb_to_hex(darken_rgb(hex_to_rgb(this.context.fillStyle), 0.3));
+              // } else {
+              //   this.context.fillStyle = this.color_surface_on_click;
+              // }
+              this.context.fillStyle = this.color_surface_on_click;
             }
           }
         }
@@ -2504,6 +2552,7 @@ export class PlotContour extends PlotData {
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     this.plot_datas = [];
+    this.type = 'contour';
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
       if (d['type'] == 'contour') {
@@ -2523,14 +2572,17 @@ export class PlotContour extends PlotData {
     this.plotObject = this.plot_datas[0];
     this.isParallelPlot = false;
     this.interaction_ON = true;
-    this.mouse_interaction(this.isParallelPlot);
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
     this.draw_empty_canvas(hidden);
+    this.draw_rect();
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
       this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
+    }
+    if (this.manipulable_ON) {
+      this.draw_manipulable_rect();
     }
   }
 }
@@ -3578,11 +3630,11 @@ export class Line2D {
                                serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
     if (first_elem) {
-      context.moveTo(scaleX*(1000*this.data[0]+ mvx), scaleY*(1000*this.data[1]+ mvy));
+      context.moveTo(scaleX*(1000*this.data[0]+ mvx) + X, scaleY*(1000*this.data[1]+ mvy) + Y);
     }
-    context.lineTo(scaleX*(1000*this.data[2]+ mvx), scaleY*(1000*this.data[3]+ mvy));
+    context.lineTo(scaleX*(1000*this.data[2]+ mvx) + X, scaleY*(1000*this.data[3]+ mvy) + Y);
   }
 }
 
@@ -3621,8 +3673,8 @@ export class PlotDataCircle2D {
                                   serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
-    context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), scaleX*1000*this.r, 0, 2*Math.PI);
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
+    context.arc(scaleX*(1000*this.cx+ mvx) + X, scaleY*(1000*this.cy+ mvy) + Y, scaleX*1000*this.r, 0, 2*Math.PI);
   }
 
 }
@@ -4343,11 +4395,11 @@ export class PlotDataArc2D {
                                   serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
     var ptsa = [];
     for (var l = 0; l < this.data.length; l++) {
-      ptsa.push(scaleX*(1000*this.data[l]['x']+ mvx));
-      ptsa.push(scaleY*(1000*this.data[l]['y']+ mvy));
+      ptsa.push(scaleX*(1000*this.data[l]['x']+ mvx) + X);
+      ptsa.push(scaleY*(1000*this.data[l]['y']+ mvy) + Y);
     }
     var tension = 0.4;
     var isClosed = false;
@@ -4854,6 +4906,14 @@ export function tint_rgb(rgb:string, coeff:number): string { //coeff must be bet
   var b = result[2] + (255 - result[2])*coeff;
   return rgb_vectorToStr(r,g,b);
 }
+
+export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 0 ans 1. The higher the coeff, the darker the color
+  var result = rgb_strToVector(rgb);
+  var r = result[0]*(1 - coeff);
+  var g = result[1]*(1 - coeff);
+  var b = result[2]*(1 - coeff);
+  return rgb_vectorToStr(r,g,b);
+} 
 
 class Sort {
   nbPermutations:number = 0;

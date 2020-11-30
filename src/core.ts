@@ -36,11 +36,10 @@ export class MultiplePlots {
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
-    var data_show = data[0];
-    this.initial_coords = data_show['coords'];
-    this.dataObjects = data_show['objects'];
-    var points = data_show['points'];
-    var temp_sizes = data_show['sizes'];
+    this.initial_coords = data['coords'];
+    this.dataObjects = data['objects'];
+    var points = data['points'];
+    var temp_sizes = data['sizes'];
     for (let i=0; i<temp_sizes.length; i++) {
       this.sizes.push(Window.deserialize(temp_sizes[i]));
     }
@@ -48,14 +47,14 @@ export class MultiplePlots {
     this.nbObjects = this.dataObjects.length;
     this.define_canvas(canvas_id);
     for (let i=0; i<this.nbObjects; i++) {
-      if (this.dataObjects[i]['type'] == 'scatterplot') {
+      if (this.dataObjects[i]['type_'] == 'scatterplot') {
         this.dataObjects[i]['elements'] = points;
-        var newObject = new PlotScatter([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
-      } else if (this.dataObjects[i]['type'] == 'parallelplot') {
+        var newObject = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+      } else if (this.dataObjects[i]['type_'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
-        newObject = new ParallelPlot([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
-      } else if (this.dataObjects[i]['type'] == 'contour') {
-        newObject = new PlotContour([this.dataObjects[i]], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+        newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+      } else if (this.dataObjects[i]['type_'] == 'contour') {
+        newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else {
         throw new Error('MultiplePlots constructor : invalid object type');
       }
@@ -116,7 +115,7 @@ export class MultiplePlots {
       Shape.createButton(this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h, this.context_show, "Dep OFF", '10px sans-serif');
     }
   }
-  
+
   draw_clean_view_button():void {
     if (this.view_bool) {
       Shape.createButton(this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h, this.context_show, 'ViewON', '10px sans-serif');
@@ -207,7 +206,7 @@ export class MultiplePlots {
   }
 
   redrawAllObjects():void {
-    if (false) { //(this.selected_index != -1) && (this.objectList[this.selected_index].type == 'contour')
+    if (false) { //(this.selected_index != -1) && (this.objectList[this.selected_index].type_ == 'contour')
       let obj = this.objectList[this.selected_index];
       obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
       obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
@@ -254,7 +253,7 @@ export class MultiplePlots {
     this.initial_objectsY = [];
     for (let i=0; i<this.nbObjects; i++) {
       this.initial_objectsX.push(this.objectList[i].X);
-      this.initial_objectsY.push(this.objectList[i].Y); 
+      this.initial_objectsY.push(this.objectList[i].Y);
     }
   }
   setAllInteractionsToOff():void {
@@ -336,7 +335,7 @@ export class MultiplePlots {
 
   resetAllScatters():void {
     for (let i=0; i<this.nbObjects; i++) {
-      if (this.objectList[i].type == 'scatterplot') {
+      if (this.objectList[i].type_ == 'scatterplot') {
         Interactions.click_on_reset_action(this.objectList[i]);
       }
     }
@@ -448,7 +447,7 @@ export class MultiplePlots {
   scatter_communication(selection_coords:[number, number][], toDisplayAttributes:Attribute[], isSelectingObjIndex:number):void { //process received data from a scatterplot and send it to the other objects
     for (let i=0; i<selection_coords.length; i++) {
       for (let j=0; j<this.nbObjects; j++) {
-        if (this.objectList[j]['type'] == 'parallelplot') {
+        if (this.objectList[j]['type_'] == 'parallelplot') {
           let obj = this.objectList[j];
           for (let k=0; k<obj.axis_list.length; k++) {
             if (toDisplayAttributes[i]['name'] == obj.axis_list[k]['name']) {
@@ -462,7 +461,7 @@ export class MultiplePlots {
     }
 
     for (let i=0; i<this.nbObjects; i++) {
-      if ((this.objectList[i]['type'] == 'scatterplot') && (i != isSelectingObjIndex)) {
+      if ((this.objectList[i]['type_'] == 'scatterplot') && (i != isSelectingObjIndex)) {
         MultiplotCom.sc_to_sc_communication(selection_coords, toDisplayAttributes, this.objectList[i]);
         let obj = this.objectList[i];
         this.objectList[i].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
@@ -470,12 +469,12 @@ export class MultiplePlots {
       }
     }
   }
-  
+
   pp_communication(rubberbands_dep:[string, [number, number]][]):void { //process received data from a parallelplot and send it to the other objects
     for (let i=0; i<this.nbObjects; i++) {
       var obj:PlotData = this.objectList[i];
       var axis_numbers:number[] = [];
-      if (obj.type == 'scatterplot') {
+      if (obj.type_ == 'scatterplot') {
         var to_select:[string, [number, number]][] = [];
         for (let j=0; j<rubberbands_dep.length; j++) {
           for (let k=0; k<obj.plotObject.toDisplayAttributes.length; k++) {
@@ -486,7 +485,7 @@ export class MultiplePlots {
           }
         }
         MultiplotCom.pp_to_sc_communication(to_select, axis_numbers, this.objectList[i]);
-      } else { //ie type == 'parallelplot'
+      } else { //ie type_ == 'parallelplot'
         MultiplotCom.pp_to_pp_communication(rubberbands_dep, this.objectList[i]);
       }
     }
@@ -496,7 +495,7 @@ export class MultiplePlots {
   dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]):void {
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
-      if (obj.type == 'scatterplot') {
+      if (obj.type_ == 'scatterplot') {
         let toDisplayAttributes = obj.plotObject.toDisplayAttributes;
         let attribute_index = -1;
         for (let j=0; j<toDisplayAttributes.length; j++) {
@@ -541,7 +540,7 @@ export class MultiplePlots {
     var hexs = [];
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
-      if ((obj.type == 'parallelplot') && (obj.isSelectingppAxis)) {
+      if ((obj.type_ == 'parallelplot') && (obj.isSelectingppAxis)) {
         isSelectingppAxis = true;
         selected_axis_name = obj.selected_axis_name;
         let att_index = 0;
@@ -656,7 +655,7 @@ export class MultiplePlots {
             let isSelectingObjIndex = this.getSelectionONObject();
             if (isSelectingObjIndex != -1) {
               let isSelectingScatter = this.objectList[isSelectingObjIndex];
-              let selection_coords = isSelectingScatter.selection_coords; 
+              let selection_coords = isSelectingScatter.selection_coords;
               let toDisplayAttributes:Attribute[] = isSelectingScatter.plotObject.toDisplayAttributes;
               this.scatter_communication(selection_coords, toDisplayAttributes, isSelectingObjIndex);
             }
@@ -691,7 +690,7 @@ export class MultiplePlots {
           [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
           if (isSelectingppAxis) {
             for (let i=0; i<this.objectList.length; i++) {
-              if (this.objectList[i].type == 'parallelplot') {
+              if (this.objectList[i].type_ == 'parallelplot') {
                 this.objectList[i].selected_axis_name = selected_axis_name;
               }
             }
@@ -706,7 +705,7 @@ export class MultiplePlots {
         if (this.view_bool) {
           this.clean_view();
         }
-      } 
+      }
       this.redrawAllObjects();
       isDrawing = false;
       mouse_moving = false;
@@ -730,7 +729,7 @@ export class MultiplePlots {
 }
 
 export abstract class PlotData {
-  type:string;
+  type_:string;
   context_show:any;
   context_hidden:any;
   context:any;
@@ -875,7 +874,8 @@ export abstract class PlotData {
   isDrawing_rubber_band:boolean=false;
   rubberbands_dep:[string, [number, number]][]=[];
 
-  public constructor(public data:any,
+  public constructor(
+    public data:any,
     public width: number,
     public height: number,
     public coeff_pixel: number,
@@ -973,7 +973,7 @@ export abstract class PlotData {
   }
 
   draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
-    if (d['type'] == 'contour') {
+    if (d['type_'] == 'contour') {
       this.context.beginPath();
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
@@ -1024,17 +1024,17 @@ export abstract class PlotData {
       // }
       // console.log(imgData)
       // this.context.putImageData(imgData, this.real_to_scatter_coords(this.minX, 'x'), this.real_to_scatter_coords(this.minY, 'y'));
-    } else if (d['type'] == 'text') {
+    } else if (d['type_'] == 'text') {
       d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y) ;
     }
   }
 
   draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
-    if (d['type'] == 'point') {
+    if (d['type_'] == 'point') {
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
       } else {
-        if ((this.plotObject.type == 'scatterplot') && !this.sc_interpolation_ON) {
+        if ((this.plotObject.type_ == 'scatterplot') && !this.sc_interpolation_ON) {
           this.context.fillStyle = this.plotObject.color_fill;
         } else {
           this.context.fillStyle = d.color_fill;
@@ -1081,7 +1081,7 @@ export abstract class PlotData {
   }
 
   draw_axis(mvx, mvy, scaleX, scaleY, d) {
-    if (d['type'] == 'axis'){
+    if (d['type_'] == 'axis'){
       this.context.beginPath();
       d.draw(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, this.minX, this.maxX, this.minY, this.maxY, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
       this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
@@ -1100,7 +1100,7 @@ export abstract class PlotData {
   }
 
   draw_tooltip(d, mvx, mvy, point_list, elements, mergeON) {
-    if (d['type'] == 'tooltip') {
+    if (d['type_'] == 'tooltip') {
       this.tooltip_ON = true;
       d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, elements, mergeON);
     }
@@ -1126,7 +1126,7 @@ export abstract class PlotData {
   }
 
   draw_graph2D(d, hidden, mvx, mvy) {
-    if ((d['type'] == 'graph2D') && (this.graph_to_display[d.id] === true)) {
+    if ((d['type_'] == 'graph2D') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
       this.context.setLineDash(d.dashline);
       this.context.strokeStyle = d.graph_colorstroke;
@@ -1152,14 +1152,14 @@ export abstract class PlotData {
         var point = d.point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
-    } else if ((d['type'] == 'graph2D') && (this.graph_to_display[d.id] === false)) {
+    } else if ((d['type_'] == 'graph2D') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
       this.delete_tooltip(d.point_list);
     }
   }
 
   draw_graphs2D(d, hidden, mvx, mvy) {
-    if (d['type'] == 'graphs2D') {
+    if (d['type_'] == 'graphs2D') {
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
         this.draw_graph2D(graph, hidden, mvx, mvy);
@@ -1173,7 +1173,7 @@ export abstract class PlotData {
   }
 
   draw_scatterplot(d, hidden, mvx, mvy) {
-    if (d['type'] == 'scatterplot') {
+    if (d['type_'] == 'scatterplot') {
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
         if (!this.point_list_equals(refreshed_points, this.scatter_point_list)) {
@@ -1226,7 +1226,7 @@ export abstract class PlotData {
       this.context.fillStyle = 'black';
       this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20);
       this.context.stroke();
-      var attribute_type = this.axis_list[i]['type'];
+      var attribute_type = this.axis_list[i]['type_'];
       var list = this.axis_list[i]['list'];
       this.context.font = this.gradSize.toString() + 'px sans-serif';
       if (attribute_type == 'float') {
@@ -1309,7 +1309,7 @@ export abstract class PlotData {
       var attribute_alias = this.axis_list[i]['alias'];
       this.context.fillText(attribute_alias, this.axis_x_start, current_y + 15);
       this.context.stroke();
-      var attribute_type = this.axis_list[i]['type'];
+      var attribute_type = this.axis_list[i]['type_'];
       var list = this.axis_list[i]['list'];
       this.context.font = this.gradSize.toString() + 'px sans-serif';
       if (attribute_type == 'float') {
@@ -1385,8 +1385,8 @@ export abstract class PlotData {
     return true;
   }
 
-  real_to_axis_coord(real_coord, type, list, inverted) {
-    if (type == 'float') {
+  real_to_axis_coord(real_coord, type_, list, inverted) {
+    if (type_ == 'float') {
       if (this.vertical) {
         var axis_coord_start = this.axis_y_start;
         var axis_coord_end = this.axis_y_end;
@@ -1394,7 +1394,7 @@ export abstract class PlotData {
         var axis_coord_start = this.axis_x_start;
         var axis_coord_end = this.axis_x_end;
       }
-      let pp_coord = this.get_coord_on_parallel_plot(type, list, real_coord, axis_coord_start, axis_coord_end, inverted);
+      let pp_coord = this.get_coord_on_parallel_plot(type_, list, real_coord, axis_coord_start, axis_coord_end, inverted);
       if (this.vertical) {
         var axis_coord = Math.min(Math.max((pp_coord - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), 0), 1);
       } else {
@@ -1473,10 +1473,10 @@ export abstract class PlotData {
       }
       var attribute = this.axis_list[i];
       for (let j=0; j<this.to_display_list.length - 1; j++) {
-        let current_minElt = this.get_coord_on_parallel_plot(attribute['type'], attribute['list'], this.to_display_list[j][i], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[i]);
+        let current_minElt = this.get_coord_on_parallel_plot(attribute['type_'], attribute['list'], this.to_display_list[j][i], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[i]);
         let current_min = j;
         for (let k=j+1; k<this.to_display_list.length; k++) {
-          let current_eltCoord = this.get_coord_on_parallel_plot(attribute['type'], attribute['list'], this.to_display_list[k][i], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[i]);
+          let current_eltCoord = this.get_coord_on_parallel_plot(attribute['type_'], attribute['list'], this.to_display_list[k][i], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[i]);
           if (current_eltCoord < current_minElt) {
             current_minElt = current_eltCoord;
             current_min = k;
@@ -1516,7 +1516,7 @@ export abstract class PlotData {
     }
     for (var i=0; i<this.to_display_list.length; i++) {
       var to_display_list_i = this.to_display_list[i];
-      var current_attribute_type = this.axis_list[0]['type'];
+      var current_attribute_type = this.axis_list[0]['type_'];
       var current_list = this.axis_list[0]['list'];
       var selected:boolean = true;
       var seg_list = [];
@@ -1530,7 +1530,7 @@ export abstract class PlotData {
       selected = selected && this.is_inside_band(current_x, current_axis_y, 0);
       seg_list.push([current_x, current_axis_y]);
       for (var j=1; j<nb_axis; j++) {
-        var next_attribute_type = this.axis_list[j]['type'];
+        var next_attribute_type = this.axis_list[j]['type_'];
         var next_list = this.axis_list[j]['list'];
         if (this.vertical === true) {
           var next_x = this.axis_x_start + j*this.x_step;
@@ -1628,8 +1628,8 @@ export abstract class PlotData {
       var to_display = [];
       for (var j=0; j<this.axis_list.length; j++) {
         var attribute_name = this.axis_list[j]['name'];
-        var type = this.axis_list[j]['type'];
-        if (type == 'color') {
+        var type_ = this.axis_list[j]['type_'];
+        if (type_ == 'color') {
           var elt = rgb_to_string(elements[i][attribute_name]);
         } else {
           elt = elements[i][attribute_name];
@@ -1902,8 +1902,8 @@ export abstract class PlotData {
     }
   }
 
-  axis_to_real_coords(x:number, type:string,  list, inverted):number { //from parallel plot axis coord (between 0 and 1) to real coord (between min_coord and max_coord)
-    if (type == 'float') {
+  axis_to_real_coords(x:number, type_:string,  list, inverted):number { //from parallel plot axis coord (between 0 and 1) to real coord (between min_coord and max_coord)
+    if (type_ == 'float') {
       let real_min = list[0];
       let real_max = list[1];
       if ((this.vertical && !inverted) || (!this.vertical && inverted)) {
@@ -1936,8 +1936,8 @@ export abstract class PlotData {
     var compareList = [];
     var firstElts = []
     for (let i=0; i<this.to_display_list.length; i++) {
-      let elt1 = this.get_coord_on_parallel_plot(this.axis_list[attrNum1]['type'], this.axis_list[attrNum1]['list'], this.to_display_list[i][attrNum1], this.axis_y_start, this.axis_y_end, false);
-      let elt2 = this.get_coord_on_parallel_plot(this.axis_list[attrNum2]['type'], this.axis_list[attrNum2]['list'], this.to_display_list[i][attrNum2], this.axis_y_start, this.axis_y_end, false);
+      let elt1 = this.get_coord_on_parallel_plot(this.axis_list[attrNum1]['type_'], this.axis_list[attrNum1]['list'], this.to_display_list[i][attrNum1], this.axis_y_start, this.axis_y_end, false);
+      let elt2 = this.get_coord_on_parallel_plot(this.axis_list[attrNum2]['type_'], this.axis_list[attrNum2]['list'], this.to_display_list[i][attrNum2], this.axis_y_start, this.axis_y_end, false);
       let elts = [elt1, elt2]
       compareList.push(elts);
       firstElts.push(elt1);
@@ -2024,12 +2024,12 @@ export abstract class PlotData {
     this.selected_point_index = [];
     for (let i=0; i<this.select_on_click.length; i++) {
       if (!(this.select_on_click[i] === undefined)) {
-        if (this.plotObject['type'] == 'scatterplot') {
+        if (this.plotObject['type_'] == 'scatterplot') {
           let clicked_points = this.select_on_click[i].points_inside;
           for (let j=0; j<clicked_points.length; j++) {
             this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
           }
-        } else if (this.plotObject['type'] == 'graphs2D') {
+        } else if (this.plotObject['type_'] == 'graphs2D') {
           for (let j=0; j<this.plotObject.graphs.length; j++) {
             if (List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) {
               this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
@@ -2552,10 +2552,10 @@ export class PlotContour extends PlotData {
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     this.plot_datas = [];
-    this.type = 'contour';
+    this.type_ = 'contour';
     for (var i = 0; i < data.length; i++) {
       var d = this.data[i];
-      if (d['type'] == 'contour') {
+      if (d['type_'] == 'contour') {
         var a = Contour2D.deserialize(d);
         if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
         if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
@@ -2564,7 +2564,7 @@ export class PlotContour extends PlotData {
         this.colour_to_plot_data[a.mouse_selection_color] = a;
         this.plot_datas.push(a);
       }
-      if (d['type'] == 'text') {
+      if (d['type_'] == 'text') {
         var b = Text.deserialize(d);
         this.plot_datas.push(b);
       }
@@ -2600,57 +2600,54 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
-      for (var i = 0; i < data.length; i++) {
-        var d = data[i];
-        if (d['type'] == 'point') {
-          this.type = 'point';
-          this.plotObject = Point2D.deserialize(d);
-          this.plot_datas['value'] = [this.plotObject];
-          if (isNaN(this.minX)) {this.minX = this.plotObject.minX;} else {this.minX = Math.min(this.minX, this.plotObject.minX);}
-          if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX;} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX);}
-          if (isNaN(this.minY)) {this.minY = this.plotObject.minY;} else {this.minY = Math.min(this.minY, this.plotObject.minY);}
-          if (isNaN(this.maxY)) {this.maxY = this.plotObject.maxY;} else {this.maxY = Math.max(this.maxY, this.plotObject.maxY);}
-          this.colour_to_plot_data[this.plotObject.mouse_selection_color] = this.plotObject;
+      if (data['type_'] == 'point') {
+        this.type_ = 'point';
+        this.plotObject = Point2D.deserialize(data);
+        this.plot_datas['value'] = [this.plotObject];
+        if (isNaN(this.minX)) {this.minX = this.plotObject.minX} else {this.minX = Math.min(this.minX, this.plotObject.minX)};
+        if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX)};
+        if (isNaN(this.minY)) {this.minY = this.plotObject.minY} else {this.minY = Math.min(this.minY, this.plotObject.minY)};
+        if (isNaN(this.maxY)) {this.maxY = this.plotObject.maxY} else {this.maxY = Math.max(this.maxY, this.plotObject.maxY)};
+        this.colour_to_plot_data[this.plotObject.mouse_selection_color] = this.plotObject;
 
-        } else if (d['type'] == 'axis') {
-          this.type = 'axis';
-          this.axis_ON = true;
-          this.plotObject = Axis.deserialize(d);
-        } else if (d['type'] == 'tooltip') {
-          this.type = 'tooltip';
-          this.plotObject = Tooltip.deserialize(d);
-        } else if (d['type'] == 'graphs2D') {
-          this.type = 'graphs2D';
-          this.graph_ON = true;
-          this.axis_ON = true;
-          this.plotObject = Graphs2D.deserialize(d);
-          this.plot_datas['value'] = this.plotObject.graphs;
-          for (let i=0; i<this.plotObject.graphs.length; i++) {
-            let graph = this.plotObject.graphs[i];
-            this.graph_colorlist.push(graph.point_list[0].color_fill);
-            this.graph_to_display.push(true);
-            this.graph_name_list.push(graph.name);
-            graph.id = i;
-            for (let j=0; j<graph.point_list.length; j++) {
-              var point = graph.point_list[j];
-              if (isNaN(this.minX)) {this.minX = point.minX;} else {this.minX = Math.min(this.minX, point.minX);}
-              if (isNaN(this.maxX)) {this.maxX = point.maxX;} else {this.maxX = Math.max(this.maxX, point.maxX);}
-              if (isNaN(this.minY)) {this.minY = point.minY;} else {this.minY = Math.min(this.minY, point.minY);}
-              if (isNaN(this.maxY)) {this.maxY = point.maxY;} else {this.maxY = Math.max(this.maxY, point.maxY);}
-              this.colour_to_plot_data[point.mouse_selection_color] = point;
-            }
+      } else if (data['type_'] == 'axis') {
+        this.type_ = 'axis';
+        this.axis_ON = true;
+        this.plotObject = Axis.deserialize(data);
+      } else if (data['type_'] == 'tooltip') {
+        this.type_ = 'tooltip';
+        this.plotObject = Tooltip.deserialize(data);
+      } else if (data['type_'] == 'graphs2D') {
+        this.type_ = 'graphs2D';
+        this.graph_ON = true;
+        this.axis_ON = true;
+        this.plotObject = Graphs2D.deserialize(data);
+        this.plot_datas['value'] = this.plotObject.graphs;
+        for (let i=0; i<this.plotObject.graphs.length; i++) {
+          let graph = this.plotObject.graphs[i];
+          this.graph_colorlist.push(graph.point_list[0].color_fill);
+          this.graph_to_display.push(true);
+          this.graph_name_list.push(graph.name);
+          graph.id = i;
+          for (let j=0; j<graph.point_list.length; j++) {
+            var point = graph.point_list[j];
+            if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
+            if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
+            if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
+            if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
+            this.colour_to_plot_data[point.mouse_selection_color] = point;
           }
-          this.nb_graph = this.plotObject.graphs.length;
-        } else if (d['type'] == 'scatterplot') {
-          this.type = 'scatterplot';
-          this.axis_ON = true;
-          this.mergeON = true;
-          this.plotObject = PlotDataScatter.deserialize(d);
-          this.plot_datas['value'] = [this.plotObject];
-          this.pointLength = 1000*this.plotObject.point_list[0].size;
-          this.scatter_init_points = this.plotObject.point_list;
-          this.refresh_MinMax(this.plotObject.point_list);
         }
+        this.nb_graph = this.plotObject.graphs.length;
+      } else if (data['type_'] == 'scatterplot') {
+        this.type_ = 'scatterplot';
+        this.axis_ON = true;
+        this.mergeON = true;
+        this.plotObject = PlotDataScatter.deserialize(data);
+        this.plot_datas['value'] = [this.plotObject];
+        this.pointLength = 1000*this.plotObject.point_list[0].size;
+        this.scatter_init_points = this.plotObject.point_list;
+        this.refresh_MinMax(this.plotObject.point_list);
       }
       this.isParallelPlot = false;
   }
@@ -2683,7 +2680,8 @@ export class PlotScatter extends PlotData {
       //Drawing the enable/disable graph button
       Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
 
-      if (this.plotObject.type == 'scatterplot') {
+      if (this.plotObject.type_ == 'scatterplot') {
+        // TODO To check, this in args is weird
         Buttons.merge_button(this.merge_x, this.merge_y, this.merge_w, this.merge_h, '10px Arial', this);
       }
 
@@ -2701,21 +2699,20 @@ export class ParallelPlot extends PlotData {
 
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    this.type = 'parallelplot';
+    this.type_ = 'parallelplot';
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
       this.disp_y = this.height - 25;
       this.disp_w = 30;
       this.disp_h = 20;
     }
-    var data_show = data[0];
-    this.parallel_plot_lineColor = rgb_to_hex(data_show['line_color']);
-    this.parallel_plot_linewidth = data_show['line_width'];
-    this.elements = data_show['elements'];
-    var to_disp_attribute_names = data_show['to_disp_attributes'];
-    if (data_show['disposition'] == 'vertical') {
+    this.parallel_plot_lineColor = rgb_to_hex(data['line_color']);
+    this.parallel_plot_linewidth = data['line_width'];
+    this.elements = data['elements'];
+    var to_disp_attribute_names = data['to_disp_attributes'];
+    if (data['disposition'] == 'vertical') {
       this.vertical = true;
-    } else if (data_show['disposition'] == 'horizontal') {
+    } else if (data['disposition'] == 'horizontal') {
       this.vertical = false;
     } else {
       throw new Error('Axis disposition must be vertical or horizontal');
@@ -2731,7 +2728,7 @@ export class ParallelPlot extends PlotData {
     this.refresh_attribute_booleans();
     this.refresh_axis_bounds(nb_axis);
     this.isParallelPlot = true;
-    this.rgbs = data_show['rgbs'];
+    this.rgbs = data['rgbs'];
     this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
     this.initialize_hexs();
   }
@@ -2749,8 +2746,8 @@ export class ParallelPlot extends PlotData {
     for (let i=0; i<attribute_names.length; i++) {
       if (!(List.is_include(attribute_names[i], exceptions))) {
         let name = attribute_names[i];
-        let type = TypeOf(this.elements[0][name]);
-        this.displayable_attributes.push(new Attribute(name, type));
+        let type_ = TypeOf(this.elements[0][name]);
+        this.displayable_attributes.push(new Attribute(name, type_));
       }
     }
   }
@@ -2759,8 +2756,8 @@ export class ParallelPlot extends PlotData {
     for (var i=0; i<this.displayable_attributes.length; i++) {
       var attribute_name = this.displayable_attributes[i]['name'];
       this.displayable_attributes[i]['alias'] = this.displayable_attributes[i]['name'];
-      var type = this.displayable_attributes[i]['type'];
-      if (type == 'float') {
+      var type_ = this.displayable_attributes[i]['type_'];
+      if (type_ == 'float') {
         var min = this.elements[0][attribute_name];
         var max = this.elements[0][attribute_name];
         for (var j=0; j<this.elements.length; j++) {
@@ -2776,7 +2773,7 @@ export class ParallelPlot extends PlotData {
       } else { //ie string
         var list = [];
         for (var j=0; j<this.elements.length; j++) {
-          if (type == 'color') {
+          if (type_ == 'color') {
             var elt:any = rgb_to_string(this.elements[j][attribute_name]);
           } else {
             var elt = this.elements[j][attribute_name];
@@ -2888,7 +2885,7 @@ export class Interactions {
     plot_data.select_on_click = [];
     plot_data.context_show.setLineDash([]);
     plot_data.context_hidden.setLineDash([]);
-    if (plot_data.plotObject['type'] == 'graphs2D') {
+    if (plot_data.plotObject['type_'] == 'graphs2D') {
       for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
         let graph = plot_data.plotObject.graphs[i];
         for (let j=0; j<graph.point_list.length; j++) {
@@ -2906,7 +2903,7 @@ export class Interactions {
         }
       }
 
-    } else if (plot_data.plotObject['type'] == 'scatterplot') {
+    } else if (plot_data.plotObject['type_'] == 'scatterplot') {
       plot_data.select_on_click = [];
       for (var j=0; j<plot_data.scatter_point_list.length; j++) {
         var x = plot_data.scaleX*(1000*plot_data.scatter_point_list[j].cx + plot_data.last_mouse1X) + plot_data.X;
@@ -2920,7 +2917,7 @@ export class Interactions {
           plot_data.select_on_click.push(plot_data.scatter_point_list[j]);
         }
       }
-    } 
+    }
     plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw_selection_rectangle();
@@ -3050,8 +3047,8 @@ export class Interactions {
       var max = Math.min(Math.max((mouse1X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start), (mouse2X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start)), 1);
     }
     plot_data.rubber_bands[selected_axis_index] = [min, max];
-    var realCoord_min = plot_data.axis_to_real_coords(min, plot_data.axis_list[selected_axis_index]['type'], plot_data.axis_list[selected_axis_index]['list'], plot_data.inverted_axis_list[selected_axis_index]);
-    var realCoord_max = plot_data.axis_to_real_coords(max, plot_data.axis_list[selected_axis_index]['type'], plot_data.axis_list[selected_axis_index]['list'], plot_data.inverted_axis_list[selected_axis_index]);
+    var realCoord_min = plot_data.axis_to_real_coords(min, plot_data.axis_list[selected_axis_index]['type_'], plot_data.axis_list[selected_axis_index]['list'], plot_data.inverted_axis_list[selected_axis_index]);
+    var realCoord_max = plot_data.axis_to_real_coords(max, plot_data.axis_list[selected_axis_index]['type_'], plot_data.axis_list[selected_axis_index]['list'], plot_data.inverted_axis_list[selected_axis_index]);
     var real_min = Math.min(realCoord_min, realCoord_max);
     var real_max = Math.max(realCoord_min, realCoord_max);
 
@@ -3075,8 +3072,8 @@ export class Interactions {
       var new_max = Math.min(plot_data.rubber_last_max + deltaX, 1);
     }
     plot_data.rubber_bands[selected_band_index] = [new_min, new_max];
-    let real_new_min = plot_data.axis_to_real_coords(new_min, plot_data.axis_list[selected_band_index]['type'], plot_data.axis_list[selected_band_index]['list'], plot_data.inverted_axis_list[selected_band_index]);
-    let real_new_max = plot_data.axis_to_real_coords(new_max, plot_data.axis_list[selected_band_index]['type'], plot_data.axis_list[selected_band_index]['list'], plot_data.inverted_axis_list[selected_band_index]);
+    let real_new_min = plot_data.axis_to_real_coords(new_min, plot_data.axis_list[selected_band_index]['type_'], plot_data.axis_list[selected_band_index]['list'], plot_data.inverted_axis_list[selected_band_index]);
+    let real_new_max = plot_data.axis_to_real_coords(new_max, plot_data.axis_list[selected_band_index]['type_'], plot_data.axis_list[selected_band_index]['list'], plot_data.inverted_axis_list[selected_band_index]);
     let to_add_min = Math.min(real_new_min, real_new_max);
     let to_add_max = Math.max(real_new_min, real_new_max);
     plot_data.add_to_rubberbands_dep([plot_data.axis_list[selected_band_index]['name'], [to_add_min, to_add_max]]);
@@ -3115,8 +3112,8 @@ export class Interactions {
       border_number = 1 - border_number;
       [plot_data.rubber_last_min, plot_data.rubber_last_max] = [plot_data.rubber_last_max, plot_data.rubber_last_min];
     }
-    var real_new_min = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][0], plot_data.axis_list[axis_index]['type'], plot_data.axis_list[axis_index]['list'], plot_data.inverted_axis_list[axis_index]);
-    var real_new_max = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][1], plot_data.axis_list[axis_index]['type'], plot_data.axis_list[axis_index]['list'], plot_data.inverted_axis_list[axis_index]);
+    var real_new_min = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][0], plot_data.axis_list[axis_index]['type_'], plot_data.axis_list[axis_index]['list'], plot_data.inverted_axis_list[axis_index]);
+    var real_new_max = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][1], plot_data.axis_list[axis_index]['type_'], plot_data.axis_list[axis_index]['list'], plot_data.inverted_axis_list[axis_index]);
     var to_add_min = Math.min(real_new_min, real_new_max);
     var to_add_max = Math.max(real_new_min, real_new_max);
     plot_data.add_to_rubberbands_dep([plot_data.axis_list[axis_index]['name'], [to_add_min, to_add_max]]);
@@ -3305,7 +3302,7 @@ export class Interactions {
 
 export class MultiplotCom {
   public static sc_to_pp_communication(coordinates:[number, number], attribute, index, plot_data:PlotData):void {
-    var attribute_type = attribute['type'];
+    var attribute_type = attribute['type_'];
     var axis_coord0 = plot_data.real_to_axis_coord(coordinates[0], attribute_type, plot_data.axis_list[index]['list'], plot_data.inverted_axis_list[index]);
     var axis_coord1 = plot_data.real_to_axis_coord(coordinates[1], attribute_type, plot_data.axis_list[index]['list'], plot_data.inverted_axis_list[index]);
     var axis_min = Math.min(axis_coord0, axis_coord1);
@@ -3371,8 +3368,8 @@ export class MultiplotCom {
         } else {
           plot_data.perm_window_x = plot_data.minX;
           plot_data.perm_window_w = plot_data.maxX - plot_data.perm_window_x;
-          plot_data.perm_window_y = max; 
-          plot_data.perm_window_h = max - min; 
+          plot_data.perm_window_y = max;
+          plot_data.perm_window_h = max - min;
           var bool = (-plot_data.scatter_point_list[i].cy >= min) && (-plot_data.scatter_point_list[i].cy <= max);
         }
         if (bool === true) {
@@ -3392,8 +3389,8 @@ export class MultiplotCom {
           plot_data.perm_window_w = Math.min(max1, plot_data.maxX) - plot_data.perm_window_x;
           var bool1 = (point.cx >= min1) && (point.cx <= max1);
         } else {
-          plot_data.perm_window_y = max1; 
-          plot_data.perm_window_h = max1 - min1; 
+          plot_data.perm_window_y = max1;
+          plot_data.perm_window_h = max1 - min1;
           var bool1 = (-point.cy >= min1) && (-point.cy <= max1);
         }
         if (axis_numbers[1] == 0) {
@@ -3401,8 +3398,8 @@ export class MultiplotCom {
           plot_data.perm_window_w = Math.min(max2, plot_data.maxX) - plot_data.perm_window_x;
           var bool2 = (point.cx >= min2) && (point.cx <= max2);
         } else {
-          plot_data.perm_window_y = max2; 
-          plot_data.perm_window_h = max2 - min2; 
+          plot_data.perm_window_y = max2;
+          plot_data.perm_window_h = max2 - min2;
           var bool2 = (-point.cy >= min2) && (-point.cy <= max2);
         }
         if (bool1 && bool2) {
@@ -3423,8 +3420,8 @@ export class MultiplotCom {
         if (received_name == plot_data.axis_list[j]['name']) {
           let received_real_min = received_rubber[1][0];
           let received_real_max = received_rubber[1][1];
-          let temp_received_axis_min = plot_data.real_to_axis_coord(received_real_min, plot_data.axis_list[j]['type'], plot_data.axis_list[j]['list'], plot_data.inverted_axis_list[j]);
-          let temp_received_axis_max = plot_data.real_to_axis_coord(received_real_max, plot_data.axis_list[j]['type'], plot_data.axis_list[j]['list'], plot_data.inverted_axis_list[j]);
+          let temp_received_axis_min = plot_data.real_to_axis_coord(received_real_min, plot_data.axis_list[j]['type_'], plot_data.axis_list[j]['list'], plot_data.inverted_axis_list[j]);
+          let temp_received_axis_max = plot_data.real_to_axis_coord(received_real_max, plot_data.axis_list[j]['type_'], plot_data.axis_list[j]['list'], plot_data.inverted_axis_list[j]);
           let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
           let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
           plot_data.rubber_bands[j] = [received_axis_min, received_axis_max];
@@ -3526,7 +3523,7 @@ export class Contour2D {
 
   constructor(public plot_data_primitives:any,
               public plot_data_states:any,
-              public type:string,
+              public type_:string,
               public name:string) {
       for (var i = 0; i < this.plot_data_primitives.length; i++) {
         var d = plot_data_primitives[i]
@@ -3551,20 +3548,20 @@ export class Contour2D {
 
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
-        if (d['type'] == 'line') {
+        if (d['type_'] == 'line') {
           plot_data_primitives.push(Line2D.deserialize(d));
         }
-        if (d['type'] == 'circle') {
+        if (d['type_'] == 'circle') {
           plot_data_primitives.push(PlotDataCircle2D.deserialize(d));
         }
-        if (d['type'] == 'arc') {
+        if (d['type_'] == 'arc') {
           plot_data_primitives.push(PlotDataArc2D.deserialize(d));
         }
 
       }
       return new Contour2D(plot_data_primitives,
                                    plot_data_states,
-                                   serialized['type'],
+                                   serialized['type_'],
                                    serialized['name']);
   }
 }
@@ -3575,7 +3572,7 @@ export class Text {
               public position_x:any,
               public position_y:any,
               public plot_data_states:any,
-              public type:string,
+              public type_:string,
               public name:string) {
   }
 
@@ -3590,7 +3587,7 @@ export class Text {
                     serialized['position_x'],
                     serialized['position_y'],
                     plot_data_states,
-                    serialized['type'],
+                    serialized['type_'],
                     serialized['name']);
   }
 
@@ -3609,7 +3606,7 @@ export class Line2D {
 
   constructor(public data:any,
               public plot_data_states:any,
-              public type:string,
+              public type_:string,
               public name:string) {
       this.minX = Math.min(this.data[0], this.data[2]);
       this.maxX = Math.max(this.data[0], this.data[2]);
@@ -3626,7 +3623,7 @@ export class Line2D {
       }
       return new Line2D(serialized['data'],
                                plot_data_states,
-                               serialized['type'],
+                               serialized['type_'],
                                serialized['name']);
   }
 
@@ -3649,7 +3646,7 @@ export class PlotDataCircle2D {
               public cy:number,
               public r:number,
               public plot_data_states:PlotDataState[],
-              public type:string,
+              public type_:string,
               public name:string) {
       this.minX = this.cx - this.r;
       this.maxX = this.cx + this.r;
@@ -3669,7 +3666,7 @@ export class PlotDataCircle2D {
                                   serialized['cy'],
                                   serialized['r'],
                                   plot_data_states,
-                                  serialized['type'],
+                                  serialized['type_'],
                                   serialized['name']);
   }
 
@@ -3696,7 +3693,7 @@ export class Point2D {
               public color_fill:string,
               public color_stroke:string,
               public stroke_width:number,
-              public type:string,
+              public type_:string,
               public name:string) {
       if (point_size<1) {
         throw new Error('Invalid point_size');
@@ -3718,7 +3715,7 @@ export class Point2D {
                                   rgb_to_hex(serialized['color_fill']),
                                   rgb_to_hex(serialized['color_stroke']),
                                   serialized['stroke_width'],
-                                  serialized['type'],
+                                  serialized['type_'],
                                   serialized['name']);
     }
 
@@ -3743,7 +3740,7 @@ export class Point2D {
     }
 
     copy() {
-      return new Point2D(this.cx, this.cy, this.shape, this.point_size, this.color_fill, this.color_stroke, this.stroke_width, this.type, this.name);
+      return new Point2D(this.cx, this.cy, this.shape, this.point_size, this.color_fill, this.color_stroke, this.stroke_width, this.type_, this.name);
     }
 
     equals(point:Point2D): boolean {
@@ -3784,7 +3781,7 @@ export class Axis {
               public arrow_on:boolean,
               public axis_width:string,
               public grid_on:boolean,
-              public type:string) {}
+              public type_:string) {}
 
   public static deserialize(serialized) {
     return new Axis(serialized['nb_points_x'],
@@ -3796,7 +3793,7 @@ export class Axis {
                     serialized['arrow_on'],
                     serialized['axis_width'],
                     serialized['grid_on'],
-                    serialized['type']);
+                    serialized['type_']);
   }
 
   draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, x_step, y_step, font_size, X, Y) {
@@ -3934,7 +3931,7 @@ export class Axis {
 
   draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_x, X) {
     context.textAlign = 'center';
-    if (attribute['type'] == 'float') {
+    if (attribute['type_'] == 'float') {
       var minX = list[0];
       var maxX = list[1];
       if (scroll_x % 5 == 0) {
@@ -3974,7 +3971,7 @@ export class Axis {
   draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_y, Y) {
     context.textAlign = 'end';
     context.textBaseline = 'middle';
-    if (attribute['type'] == 'float') {
+    if (attribute['type_'] == 'float') {
       var minY = list[0];
       var maxY = list[1];
       if (scroll_y % 5 == 0) {
@@ -4013,14 +4010,14 @@ export class Axis {
 }
 
 export class Tooltip {
-  constructor(public colorfill:string, 
-              public text_color: string, 
-              public font_size:number, 
-              public font_style:string, 
-              public tp_radius:any, 
-              public to_plot_list:any, 
-              public opacity:number, 
-              public type:string, 
+  constructor(public colorfill:string,
+              public text_color: string,
+              public font_size:number,
+              public font_style:string,
+              public tp_radius:any,
+              public to_plot_list:any,
+              public opacity:number,
+              public type_:string,
               public name:string) {}
 
   public static deserialize(serialized) {
@@ -4031,7 +4028,7 @@ export class Tooltip {
                          serialized['tp_radius'],
                          serialized['to_plot_list'],
                          serialized['opacity'],
-                         serialized['type'],
+                         serialized['type_'],
                          serialized['name']);
   }
 
@@ -4173,7 +4170,7 @@ export class PlotDataGraph2D {
               public segments:Line2D[],
               public display_step:number,
               public tooltip:Tooltip,
-              public type: string,
+              public type_: string,
               public name:string) {}
 
   public static deserialize(serialized) {
@@ -4199,7 +4196,7 @@ export class PlotDataGraph2D {
                            segments,
                            serialized['display_step'],
                            tooltip,
-                           serialized['type'],
+                           serialized['type_'],
                            serialized['name']);
   }
 }
@@ -4207,7 +4204,7 @@ export class PlotDataGraph2D {
 export class Graphs2D {
   constructor(public graphs: PlotDataGraph2D[],
               public axis: Axis,
-              public type: string,
+              public type_: string,
               public name: string) {}
 
   public static deserialize(serialized) {
@@ -4219,7 +4216,7 @@ export class Graphs2D {
 
     return new Graphs2D(graphs,
                         axis,
-                        serialized['type'],
+                        serialized['type_'],
                         serialized['name']);
   }
 }
@@ -4240,7 +4237,7 @@ export class PlotDataScatter {
               public color_fill:string,
               public color_stroke:string,
               public stroke_width:number,
-              public type:string,
+              public type_:string,
               public name:string) {
     this.initialize_displayableAttributes();
     this.initialize_toDisplayAttributes();
@@ -4260,7 +4257,7 @@ export class PlotDataScatter {
                                rgb_to_hex(serialized['color_fill']),
                                rgb_to_hex(serialized['color_stroke']),
                                serialized['stroke_width'],
-                               serialized['type'],
+                               serialized['type_'],
                                serialized['name']);
   }
 
@@ -4268,8 +4265,8 @@ export class PlotDataScatter {
     var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
     for (let i=0; i<attribute_names.length; i++) {
       let name = attribute_names[i];
-      let type = TypeOf(this.elements[0][name]);
-      this.displayableAttributes.push(new Attribute(name, type));
+      let type_ = TypeOf(this.elements[0][name]);
+      this.displayableAttributes.push(new Attribute(name, type_));
     }
   }
 
@@ -4290,8 +4287,8 @@ export class PlotDataScatter {
     for (let i=0; i<this.toDisplayAttributes.length; i++) {
       var value = [];
       var name = this.toDisplayAttributes[i].name;
-      let type = this.toDisplayAttributes[i].type;
-      if (type == 'float') {
+      let type_ = this.toDisplayAttributes[i].type_;
+      if (type_ == 'float') {
         let min = this.elements[0][name];
         let max = this.elements[0][name];
         for (let j=0; j<this.elements.length; j++) {
@@ -4304,7 +4301,7 @@ export class PlotDataScatter {
           }
         }
         this.lists.push([min, max]);
-      } else if (type == 'color') {
+      } else if (type_ == 'color') {
         for (let j=0; j<this.elements.length; j++) {
           let elt_color = rgb_to_string(this.elements[j][name]);
           if (!List.is_include(elt_color, value)) {
@@ -4329,16 +4326,16 @@ export class PlotDataScatter {
     for (let i=0; i<this.elements.length; i++) {
       var elt0 = elements[i][this.toDisplayAttributes[0]['name']];
       var elt1 = elements[i][this.toDisplayAttributes[1]['name']];
-      if (this.toDisplayAttributes[0]['type'] == 'float') {
+      if (this.toDisplayAttributes[0]['type_'] == 'float') {
         var cx = elt0;
-      } else if (this.toDisplayAttributes[0]['type'] == 'color') {
+      } else if (this.toDisplayAttributes[0]['type_'] == 'color') {
         cx = List.get_index_of_element(rgb_to_string(elt0), this.lists[0]);
       } else {
         cx = List.get_index_of_element(elt0.toString(), this.lists[0]);
       }
-      if (this.toDisplayAttributes[1]['type'] == 'float') {
+      if (this.toDisplayAttributes[1]['type_'] == 'float') {
         var cy = -elt1;
-      } else if (this.toDisplayAttributes[1]['type'] == 'color') {
+      } else if (this.toDisplayAttributes[1]['type_'] == 'color') {
         cy = - List.get_index_of_element(rgb_to_string(elt1), this.lists[1]);
       } else {
         cy = - List.get_index_of_element(elt1.toString(), this.lists[1]);
@@ -4361,7 +4358,7 @@ export class PlotDataArc2D {
               public angle1:number,
               public angle2:number,
               public plot_data_states:PlotDataState[],
-              public type:string,
+              public type_:string,
               public name:string) {
       if((this.cx - this.r) < this.minX){
         this.minX = this.cx - this.r;
@@ -4391,7 +4388,7 @@ export class PlotDataArc2D {
                                   serialized['angle1'],
                                   serialized['angle2'],
                                   plot_data_states,
-                                  serialized['type'],
+                                  serialized['type_'],
                                   serialized['name']);
   }
 
@@ -4412,15 +4409,15 @@ export class Attribute {
   list:any[];
   alias:string;
   constructor(public name:string,
-              public type:string) {}
+              public type_:string) {}
 
   public static deserialize(serialized) {
     return new Attribute(serialized['name'],
-                         serialized['type']);
+                         serialized['type_']);
   }
 
   copy() {
-    var attribute_copy = new Attribute(this.name, this.type);
+    var attribute_copy = new Attribute(this.name, this.type_);
     attribute_copy['list'] = this.list;
     return attribute_copy;
   }
@@ -5032,10 +5029,10 @@ export function permutator(inputArr) {
 }
 
 export function TypeOf(element:any):string {
-  var type = typeof element;
-  if (type == 'number') {
+  var type_ = typeof element;
+  if (type_ == 'number') {
     return 'float';
-  } else if (type == 'string') {
+  } else if (type_ == 'string') {
     if (isHex(element) || isRGB(element)) {
       return 'color';
     }
@@ -5082,7 +5079,7 @@ export class List {
     return temp;
   }
 
-  public static remove_selection(val:any, list:any[]): any[] { //remove every element=val from list 
+  public static remove_selection(val:any, list:any[]): any[] { //remove every element=val from list
     var temp = [];
     for (var i = 0; i < list.length; i++) {
       var d = list[i];

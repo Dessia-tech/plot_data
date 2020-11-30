@@ -925,6 +925,8 @@ export abstract class PlotData {
   draw_rect() {
     if (this.manipulable_ON === false) {
       Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', this.initRectColorStroke, this.initRectLinewidth, 1, this.initRectDashline);
+    } else {
+      Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', 'white', this.initRectLinewidth, 1, this.initRectDashline);
     }
   }
 

@@ -64,7 +64,7 @@ coords = [(0, 450), (0, 0)]
 sizes = [plot_data.Window(width=750, height=400),
          plot_data.Window(width=750, height=400)]
 
-catalog = plot_data.get_csv_vectors('./Canvas_tests/data.csv')
+catalog = plot_data.get_csv_vectors('../plot_data/data/data.csv')
 points = [{var: catalog.get_value_by_name(line, var)
            for var in pp_to_disp_attributes}
           for line in catalog.array]

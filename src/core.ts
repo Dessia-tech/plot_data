@@ -189,43 +189,12 @@ export class MultiplePlots {
     this.context_hidden.closePath();
   }
 
-  clearAllExceptOne(index:number, context:any): void {
-    var obj = this.objectList[index];
-    context.beginPath();
-    context.clearRect(0, obj.X, 0, this.height);
-    context.clearRect(obj.X, obj.X + obj.width, 0, obj.Y);
-    context.clearRect(obj.X + obj.width, this.width, 0, this.height);
-    context.clearRect(obj.X, obj.X + obj.width, obj.Y + obj.height, this.height);
-    context.stroke();
-    context.closePath();
-  }
-
-  clearAllExceptContour(contour_index:number) {
-    this.clearAllExceptOne(contour_index, this.context_show);
-    this.clearAllExceptOne(contour_index, this.context_hidden);
-  }
-
   redrawAllObjects():void {
-    if (false) { //(this.selected_index != -1) && (this.objectList[this.selected_index].type_ == 'contour')
-      let obj = this.objectList[this.selected_index];
-      obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      this.clearAllExceptContour(this.selected_index);
-      for (let i=0; i<this.objectList.length; i++) {
-        if (i != this.selected_index) {
-          let obj = this.objectList[i];
-          obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-          obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        }
-      }
-
-    } else {
-      this.clearAll();
-      for (let i=0; i<this.objectList.length; i++) {
-        let obj = this.objectList[i];
-        obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      }
+    this.clearAll();
+    for (let i=0; i<this.objectList.length; i++) {
+      let obj = this.objectList[i];
+      this.objectList[i].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      this.objectList[i].draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
     if (this.buttons_ON) {
       this.draw_buttons();
@@ -959,12 +928,15 @@ export abstract class PlotData {
     }
   }
 
-  draw_empty_canvas(hidden) {
+  define_context(hidden) {
     if (hidden) {
       this.context = this.context_hidden;
     } else {
       this.context = this.context_show;
     }
+  }
+
+  draw_empty_canvas() {
     this.context.clearRect(this.X - 1, this.Y - 1, this.width + 2, this.height + 2);
   }
 
@@ -1005,25 +977,6 @@ export abstract class PlotData {
       this.context.fill();
       this.context.stroke();
       this.context.closePath();
-
-      // var imgData = this.context_show.getImageData(this.real_to_scatter_coords(this.minX, 'x'), this.real_to_scatter_coords(this.minY, 'y'), 
-      //                                         this.real_to_scatter_coords(this.maxX, 'x') - this.real_to_scatter_coords(this.minX, 'x'),
-      //                                         this.real_to_scatter_coords(this.maxY, 'y') - this.real_to_scatter_coords(this.minY, 'y'));
-      // for (let i=0; i<imgData.height; i++) {
-      //   for (let j=0; j<imgData.width; j++) {
-      //     let pixel_x = this.real_to_scatter_coords(this.minX, 'x') + j;
-      //     let pixel_y = this.real_to_scatter_coords(this.minY, 'y') + i;
-      //     let is_inside_canvas = (pixel_x>=this.X) && (pixel_x<=this.width + this.X) && (pixel_y>=this.Y) && (pixel_y<=this.height + this.Y);
-      //     if (!is_inside_canvas) {
-      //       imgData.data[4*(i*imgData.width + j)] = 255;
-      //       imgData.data[4*(i*imgData.width + j) + 1] = 255;
-      //       imgData.data[4*(i*imgData.width + j) + 2] = 255;
-      //       imgData.data[4*(i*imgData.width + j) + 3] = 0; //+3 <=> opacity
-      //     }
-      //   }
-      // }
-      // console.log(imgData)
-      // this.context.putImageData(imgData, this.real_to_scatter_coords(this.minX, 'x'), this.real_to_scatter_coords(this.minY, 'y'));
     } else if (d['type_'] == 'text') {
       d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y) ;
     }
@@ -2553,30 +2506,32 @@ export class PlotContour extends PlotData {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     this.plot_datas = [];
     this.type_ = 'contour';
-    for (var i = 0; i < data.length; i++) {
-      var d = this.data[i];
-      if (d['type_'] == 'contour') {
-        var a = Contour2D.deserialize(d);
-        if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
-        if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
-        if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
-        if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
-        this.colour_to_plot_data[a.mouse_selection_color] = a;
-        this.plot_datas.push(a);
-      }
-      if (d['type_'] == 'text') {
-        var b = Text.deserialize(d);
-        this.plot_datas.push(b);
-      }
+    var d = this.data;
+    if (d['type_'] == 'contour') {
+      var a = Contour2D.deserialize(d);
+      if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
+      if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
+      if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
+      if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
+      this.colour_to_plot_data[a.mouse_selection_color] = a;
+      this.plot_datas.push(a);
     }
+    if (d['type_'] == 'text') {
+      var b = Text.deserialize(d);
+      this.plot_datas.push(b);
+    }
+    
     this.plotObject = this.plot_datas[0];
     this.isParallelPlot = false;
     this.interaction_ON = true;
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
-    this.draw_empty_canvas(hidden);
+    this.define_context(hidden);
+    this.context.save();
+    this.draw_empty_canvas();
     this.draw_rect();
+    this.context.clip();
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
       this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
@@ -2584,6 +2539,7 @@ export class PlotContour extends PlotData {
     if (this.manipulable_ON) {
       this.draw_manipulable_rect();
     }
+    this.context.restore();
   }
 }
 
@@ -2653,7 +2609,8 @@ export class PlotScatter extends PlotData {
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
-    this.draw_empty_canvas(hidden);
+    this.define_context(hidden);
+    this.draw_empty_canvas();
     this.draw_rect();
     this.draw_graphs2D(this.plotObject, hidden, mvx, mvy);
     this.draw_scatterplot(this.plotObject, hidden, mvx, mvy);
@@ -2800,7 +2757,8 @@ export class ParallelPlot extends PlotData {
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
     this.refresh_axis_bounds(this.axis_list.length);
-    this.draw_empty_canvas(hidden);
+    this.define_context(hidden);
+    this.draw_empty_canvas();
     this.draw_rect();
     this.draw_rubber_bands(mvx);
     var nb_axis = this.axis_list.length;

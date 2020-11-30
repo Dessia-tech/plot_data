@@ -2556,24 +2556,7 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
-      if (data['type_'] == 'point') {
-        this.type_ = 'point';
-        this.plotObject = Point2D.deserialize(data);
-        this.plot_datas['value'] = [this.plotObject];
-        if (isNaN(this.minX)) {this.minX = this.plotObject.minX} else {this.minX = Math.min(this.minX, this.plotObject.minX)};
-        if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX)};
-        if (isNaN(this.minY)) {this.minY = this.plotObject.minY} else {this.minY = Math.min(this.minY, this.plotObject.minY)};
-        if (isNaN(this.maxY)) {this.maxY = this.plotObject.maxY} else {this.maxY = Math.max(this.maxY, this.plotObject.maxY)};
-        this.colour_to_plot_data[this.plotObject.mouse_selection_color] = this.plotObject;
-
-      } else if (data['type_'] == 'axis') {
-        this.type_ = 'axis';
-        this.axis_ON = true;
-        this.plotObject = Axis.deserialize(data);
-      } else if (data['type_'] == 'tooltip') {
-        this.type_ = 'tooltip';
-        this.plotObject = Tooltip.deserialize(data);
-      } else if (data['type_'] == 'graphs2D') {
+      if (data['type_'] == 'graphs2D') {
         this.type_ = 'graphs2D';
         this.graph_ON = true;
         this.axis_ON = true;

@@ -6,8 +6,9 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
+import os
 import numpy as npy
-import csv
+import math
 
 import json
 import tempfile
@@ -105,7 +106,11 @@ class Settings(DessiaObject):
                  point_color: PointColorSet = None,
                  window_size: Window = None, stroke_width: float = 1,
                  color_line: str = 'black', marker: str = None,
-                 dash: str = None, opacity: float = 1):
+                 dash: str = None, opacity: float = 1, font: str = 'Arial',
+                 text_size: str = '30px', text_color: str = 'black'):
+        self.text_color = text_color
+        self.text_size = text_size
+        self.font = font
         self.color_surface = color_surface
         self.color_map = color_map
         self.hatching = hatching
@@ -128,14 +133,34 @@ class Settings(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
+class Text(PlotDataObject):
+    def __init__(self, comment: str, position_x: float, position_y: float,
+                 plot_data_states: List[Settings] = None, name: str = ''):
+        if plot_data_states is None:
+            self.plot_data_states = [Settings()]
+        else:
+            self.plot_data_states = plot_data_states
+        self.comment = comment
+        self.position_x = position_x
+        self.position_y = position_y
+        PlotDataObject.__init__(self, type_='text', name=name)
+
+
 class Line2D(PlotDataObject):
     def __init__(self, data: List[float], plot_data_states: List[Settings],
                  name: str = ''):
         self.data = data
-        self.plot_data_states = plot_data_states
         if plot_data_states is None:
             self.plot_data_states = [Settings()]
+        else:
+            self.plot_data_states = plot_data_states
         PlotDataObject.__init__(self, type_='line', name=name)
+
+    def bounding_box(self):
+        return (min(self.data[0], self.data[2]),
+                max(self.data[0], self.data[2]),
+                min(self.data[1], self.data[3]),
+                max(self.data[1], self.data[3]))
 
 
 class Circle2D(PlotDataObject):
@@ -146,6 +171,9 @@ class Circle2D(PlotDataObject):
         self.cy = cy
         self.cx = cx
         PlotDataObject.__init__(self, type_='circle', name=name)
+
+    def bounding_box(self):
+        return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
 
 
 class Point2D(PlotDataObject):
@@ -160,6 +188,9 @@ class Point2D(PlotDataObject):
         self.color_stroke = color_stroke
         self.stroke_width = stroke_width
         PlotDataObject.__init__(self, type_='point', name=name)
+
+    def bounding_box(self):
+        return self.cx, self.cx, self.cy, self.cy
 
 
 class Axis(PlotDataObject):
@@ -250,6 +281,9 @@ class Arc2D(PlotDataObject):
         self.cx = cx
         PlotDataObject.__init__(self, type_='arc', name=name)
 
+    def bounding_box(self):
+        return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
+
 
 class Contour2D(PlotDataObject):
     def __init__(self, plot_data_primitives: List[float],
@@ -257,6 +291,15 @@ class Contour2D(PlotDataObject):
         self.plot_data_primitives = plot_data_primitives
         self.plot_data_states = plot_data_states
         PlotDataObject.__init__(self, type_='contour', name=name)
+
+    def bounding_box(self):
+        xmin, xmax, ymin, ymax = math.inf, -math.inf, math.inf, -math.inf
+        for plot_data_primitive in self.plot_data_primitives:
+            if hasattr(plot_data_primitive, 'bounding_box'):
+                bb = plot_data_primitive.bounding_box()
+                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax, bb[1]), min(ymin, bb[2]), max(ymax, bb[3])
+
+        return xmin, xmax, ymin, ymax
 
 
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
@@ -292,7 +335,8 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_data, debug_mode=False):
+def plot_canvas(plot_data, debug_mode: bool = False,
+                canvas_id: str = 'canvas'):
     """
     Plot input data in web browser
 
@@ -312,9 +356,10 @@ def plot_canvas(plot_data, debug_mode=False):
 
     core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
-        core_path = '/home/jezequel/Documents/Dessia/git/plot_data/lib/core.js'
+        core_path = '/'.join(os.path.abspath('').split('/')[:-1] + ['lib', 'core.js'])
 
-    s = template.substitute(data=json.dumps(plot_data), core_path=core_path)
+    s = template.substitute(data=json.dumps(plot_data), core_path=core_path,
+                            canvas_id=canvas_id)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:
@@ -336,3 +381,15 @@ TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'graphs2D': Graphs2D,  'line': Line2D,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip}
+
+
+def bounding_box(plot_datas):
+    xmin, xmax, ymin, ymax = math.inf, -math.inf, math.inf, -math.inf
+    for plot_data in plot_datas:
+        if hasattr(plot_data, 'bounding_box'):
+            bb = plot_data.bounding_box()
+            xmin, xmax = min(xmin, bb[0]), max(xmax, bb[1])
+            ymin, ymax = min(ymin, bb[2]), max(ymax, bb[3])
+
+    return xmin, xmax, ymin, ymax
+

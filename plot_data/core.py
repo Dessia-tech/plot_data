@@ -225,11 +225,11 @@ class Tooltip(PlotDataObject):
 class Graph2D(PlotDataObject):
     def __init__(self, dashline: List[float], graph_colorstroke: str,
                  graph_linewidth: float, display_step: float, tooltip: Tooltip,
-                 point_list: List[Point2D] = None, name: str = ''):
-        if point_list is None:
-            self.serialized_point_list = []
+                 points: List[Point2D] = None, name: str = ''):
+        if points is None:
+            self.points = []
         else:
-            self.serialized_point_list = [p.to_dict() for p in point_list]
+            self.points = points
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
         self.graph_linewidth = graph_linewidth
@@ -237,14 +237,14 @@ class Graph2D(PlotDataObject):
         if display_step is None:
             self.display_step = 1
         self.tooltip = tooltip
-        PlotDataObject.__init__(self, type_='graph2D', name=name)
+        PlotDataObject.__init__(self, type_='graph2d', name=name)
 
 
 class Graphs2D(PlotDataObject):
     def __init__(self, graphs: List[Graph2D], axis: Axis, name: str = ''):
         self.graphs = graphs
         self.axis = axis
-        PlotDataObject.__init__(self, type_='graphs2D', name=name)
+        PlotDataObject.__init__(self, type_='graphs2d', name=name)
 
 
 class Scatter(PlotDataObject):
@@ -345,7 +345,7 @@ def plot_canvas(plot_data, debug_mode: bool = False,
     plot_type = plot_data['type_']
     if plot_type == 'contour':
         template = templates.contour_template
-    elif plot_type == 'scatterplot':
+    elif plot_type == 'scatterplot' or plot_type == 'graphs2d':
         template = templates.scatter_template
     elif plot_type == 'parallelplot':
         template = templates.parallelplot_template

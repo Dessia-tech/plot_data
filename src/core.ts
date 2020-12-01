@@ -33,6 +33,7 @@ export class MultiplePlots {
   initial_mouseX:number=0;
   initial_mouseY:number=0;
   sorted_list:number[]=[];
+  display_order:number[]=[];
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
@@ -63,6 +64,7 @@ export class MultiplePlots {
     }
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].draw_initial();
+      this.display_order.push(i);
     }
     this.mouse_interaction();
 
@@ -170,11 +172,13 @@ export class MultiplePlots {
   getObjectIndex(x,y):number {
     var index = -1;
     for (let i=0; i<this.nbObjects; i++) {
-      let isInObject = Shape.isInRect(x, y, this.objectList[i].X, this.objectList[i].Y, this.objectList[i].width, this.objectList[i].height);
+      let display_index = this.display_order[i];
+      let isInObject = Shape.isInRect(x, y, this.objectList[display_index].X, this.objectList[display_index].Y, this.objectList[display_index].width, this.objectList[display_index].height);
       if (isInObject === true) {
-        index = i;
+        index = display_index;
       }
     }
+    console.log(index)
     return index;
   }
 
@@ -191,10 +195,15 @@ export class MultiplePlots {
 
   redrawAllObjects():void {
     this.clearAll();
-    for (let i=0; i<this.objectList.length; i++) {
-      let obj = this.objectList[i];
-      this.objectList[i].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      this.objectList[i].draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+    if (this.clickedPlotIndex != -1) {
+      let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
+      this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
+    }
+    for (let i=0; i<this.nbObjects; i++) {
+        let display_index = this.display_order[i]; 
+        let obj = this.objectList[display_index];
+        this.objectList[display_index].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+        this.objectList[display_index].draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
     if (this.buttons_ON) {
       this.draw_buttons();
@@ -561,7 +570,6 @@ export class MultiplePlots {
     var clickLeft:boolean = false;
     var clickRight:boolean = false;
     var clickOnVertex:boolean = false;
-    var clicked_obj_index = -1;
 
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
@@ -572,19 +580,19 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
-      clicked_obj_index = this.getObjectIndex(mouse1X, mouse1Y);
+      this.clickedPlotIndex = this.getObjectIndex(mouse1X, mouse1Y);
       if (this.manipulation_bool) {
         this.setAllInteractionsToOff();
-        if (clicked_obj_index != -1) {
+        if (this.clickedPlotIndex != -1) {
           this.initializeObjectXY();
-          [clickOnVertex, clickUp, clickDown, clickLeft, clickRight] = this.initialize_ClickOnVertex(mouse1X, mouse1Y, clicked_obj_index);
+          [clickOnVertex, clickUp, clickDown, clickLeft, clickRight] = this.initialize_ClickOnVertex(mouse1X, mouse1Y, this.clickedPlotIndex);
         } else {
           clickOnVertex = false;
         }
         this.initializeObjectXY();
         if (clickOnVertex) {
           this.initializeMouseXY(mouse1X, mouse1Y);
-          this.initialize_object_hw(clicked_obj_index);
+          this.initialize_object_hw(this.clickedPlotIndex);
         }
       }
     });
@@ -595,16 +603,16 @@ export class MultiplePlots {
       if (this.manipulation_bool) {
         if (isDrawing) {
           mouse_moving = true;
-          if ((clicked_obj_index != -1) && !(clickOnVertex)) {
+          if ((this.clickedPlotIndex != -1) && !(clickOnVertex)) {
             this.setAllInteractionsToOff();
             let tx = mouse2X - mouse1X;
             let ty = mouse2Y - mouse1Y;
             canvas.style.cursor = 'move';
-            this.translateSelectedObject(clicked_obj_index, tx, ty);
-          } else if (clicked_obj_index == -1) {
+            this.translateSelectedObject(this.clickedPlotIndex, tx, ty);
+          } else if (this.clickedPlotIndex == -1) {
             this.translateAllObjects(mouse1X, mouse1Y, mouse2X, mouse2Y);
           } else if (clickOnVertex) {
-            this.resizeObject(clicked_obj_index, clickUp, clickDown, clickLeft, clickRight, mouse2X, mouse2Y);
+            this.resizeObject(this.clickedPlotIndex, clickUp, clickDown, clickLeft, clickRight, mouse2X, mouse2Y);
           }
           if (this.view_bool === true) {
             let refreshed_sorted_list = this.getSortedList();
@@ -653,7 +661,6 @@ export class MultiplePlots {
 
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
-          this.clickedPlotIndex = this.getObjectIndex(mouse3X, mouse3Y);
           var selected_axis_name: string; var vertical: boolean;  var inverted: boolean;
           var hexs: string[]; var isSelectingppAxis: boolean;
           [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
@@ -925,8 +932,6 @@ export abstract class PlotData {
   draw_rect() {
     if (this.manipulable_ON === false) {
       Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', this.initRectColorStroke, this.initRectLinewidth, 1, this.initRectDashline);
-    } else {
-      Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', 'white', this.initRectLinewidth, 1, this.initRectDashline);
     }
   }
 
@@ -1024,7 +1029,7 @@ export abstract class PlotData {
       var y = scaleY*(1000*d.cy + mvy);
       this.pointLength = 1000*d.size;
 
-      var is_inside_canvas = ((x - this.pointLength>=0) && (x + this.pointLength <= this.width) && (y - this.pointLength >= 0) && (y + this.pointLength <= this.height));
+      var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
       if (is_inside_canvas === true) {
         this.context.beginPath();
         d.draw(this.context, this.context_hidden, mvx, mvy, scaleX, scaleY, this.X, this.Y);
@@ -1081,7 +1086,7 @@ export abstract class PlotData {
   }
 
   draw_graph2D(d, hidden, mvx, mvy) {
-    if ((d['type_'] == 'graph2D') && (this.graph_to_display[d.id] === true)) {
+    if ((d['type_'] == 'graph2d') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
       this.context.setLineDash(d.dashline);
       this.context.strokeStyle = d.graph_colorstroke;
@@ -1107,14 +1112,14 @@ export abstract class PlotData {
         var point = d.point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
-    } else if ((d['type_'] == 'graph2D') && (this.graph_to_display[d.id] === false)) {
+    } else if ((d['type_'] == 'graph2d') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
       this.delete_tooltip(d.point_list);
     }
   }
 
   draw_graphs2D(d, hidden, mvx, mvy) {
-    if (d['type_'] == 'graphs2D') {
+    if (d['type_'] == 'graphs2d') {
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
         this.draw_graph2D(graph, hidden, mvx, mvy);
@@ -2533,6 +2538,7 @@ export class PlotContour extends PlotData {
     this.context.save();
     this.draw_empty_canvas();
     this.draw_rect();
+    this.context.rect(X-1, Y-1, this.width+2, this.height+2);
     this.context.clip();
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
@@ -2558,8 +2564,8 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
-      if (data['type_'] == 'graphs2D') {
-        this.type_ = 'graphs2D';
+      if (data['type_'] == 'graphs2d') {
+        this.type_ = 'graphs2d';
         this.graph_ON = true;
         this.axis_ON = true;
         this.plotObject = Graphs2D.deserialize(data);
@@ -2595,8 +2601,11 @@ export class PlotScatter extends PlotData {
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
     this.define_context(hidden);
+    this.context.save();
     this.draw_empty_canvas();
     this.draw_rect();
+    this.context.rect(X-1, Y-1, this.width+2, this.height+2);
+    this.context.clip();
     this.draw_graphs2D(this.plotObject, hidden, mvx, mvy);
     this.draw_scatterplot(this.plotObject, hidden, mvx, mvy);
     this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, this.plotObject);
@@ -2633,6 +2642,7 @@ export class PlotScatter extends PlotData {
     if (this.manipulable_ON) {
       this.draw_manipulable_rect();
     }
+    this.context.restore();
   }
 }
 
@@ -2743,8 +2753,11 @@ export class ParallelPlot extends PlotData {
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
     this.refresh_axis_bounds(this.axis_list.length);
     this.define_context(hidden);
+    this.context.save();
     this.draw_empty_canvas();
     this.draw_rect();
+    this.context.rect(X-1, Y-1, this.width+2, this.height + 2);
+    this.context.clip();
     this.draw_rubber_bands(mvx);
     var nb_axis = this.axis_list.length;
     this.draw_parallel_coord_lines(nb_axis);
@@ -2756,6 +2769,7 @@ export class ParallelPlot extends PlotData {
     if (this.manipulable_ON) {
       this.draw_manipulable_rect();
     }
+    this.context.restore();
   }
 
   initialize_data_lists() {
@@ -2828,7 +2842,7 @@ export class Interactions {
     plot_data.select_on_click = [];
     plot_data.context_show.setLineDash([]);
     plot_data.context_hidden.setLineDash([]);
-    if (plot_data.plotObject['type_'] == 'graphs2D') {
+    if (plot_data.plotObject['type_'] == 'graphs2d') {
       for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
         let graph = plot_data.plotObject.graphs[i];
         for (let j=0; j<graph.point_list.length; j++) {
@@ -4118,7 +4132,7 @@ export class PlotDataGraph2D {
 
   public static deserialize(serialized) {
     var point_list = [];
-    var temp = serialized['serialized_point_list'];
+    var temp = serialized['points'];
     for (var i=0; i<temp.length; i++) {
       var d = temp[i];
       point_list.push(Point2D.deserialize(d));

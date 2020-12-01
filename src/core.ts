@@ -178,7 +178,6 @@ export class MultiplePlots {
         index = display_index;
       }
     }
-    console.log(index)
     return index;
   }
 
@@ -200,10 +199,10 @@ export class MultiplePlots {
       this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
     }
     for (let i=0; i<this.nbObjects; i++) {
-        let display_index = this.display_order[i]; 
-        let obj = this.objectList[display_index];
-        this.objectList[display_index].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        this.objectList[display_index].draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      let display_index = this.display_order[i]; 
+      let obj = this.objectList[display_index];
+      this.objectList[display_index].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      this.objectList[display_index].draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
     if (this.buttons_ON) {
       this.draw_buttons();
@@ -266,7 +265,7 @@ export class MultiplePlots {
     }
   }
 
-  initialize_ClickOnVertex(mouse1X, mouse1Y, clicked_obj_index):[boolean, boolean, boolean, boolean, boolean] { //[vertex_object_index, clickOnVertex, up, down, left, right]
+  initialize_clickOnVertex(mouse1X, mouse1Y, clicked_obj_index):[boolean, boolean, boolean, boolean, boolean] { //[vertex_object_index, clickOnVertex, up, down, left, right]
     var thickness = 15;
     let obj:PlotData = this.objectList[clicked_obj_index];
     let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, obj.width + thickness, thickness);
@@ -311,10 +310,12 @@ export class MultiplePlots {
     this.initial_object_height = this.objectList[selected_index].height;
   }
 
-  resetAllScatters():void {
+  resetAllObjects():void {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.objectList[i].type_ == 'scatterplot') {
         Interactions.click_on_reset_action(this.objectList[i]);
+      } else if (this.objectList[i].type_ == 'contour') {
+        this.objectList[i].reset_scales();
       }
     }
   }
@@ -370,7 +371,7 @@ export class MultiplePlots {
       this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
     }
-    this.resetAllScatters();
+    this.resetAllObjects();
     this.redrawAllObjects();
   }
 
@@ -544,7 +545,7 @@ export class MultiplePlots {
       this.objectList[i].width = this.objectList[i].width*zoom_coeff;
       this.objectList[i].height = this.objectList[i].height*zoom_coeff;
     }
-    this.resetAllScatters();
+    this.resetAllObjects();
   }
 
   translateAllObjects(mouse1X:number, mouse1Y:number, mouse2X:number, mouse2Y:number) {
@@ -585,7 +586,7 @@ export class MultiplePlots {
         this.setAllInteractionsToOff();
         if (this.clickedPlotIndex != -1) {
           this.initializeObjectXY();
-          [clickOnVertex, clickUp, clickDown, clickLeft, clickRight] = this.initialize_ClickOnVertex(mouse1X, mouse1Y, this.clickedPlotIndex);
+          [clickOnVertex, clickUp, clickDown, clickLeft, clickRight] = this.initialize_clickOnVertex(mouse1X, mouse1Y, this.clickedPlotIndex);
         } else {
           clickOnVertex = false;
         }
@@ -881,7 +882,7 @@ export abstract class PlotData {
   }
 
   draw_initial(): void {
-    this.Reset_scales();
+    this.reset_scales();
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
 
@@ -902,7 +903,7 @@ export abstract class PlotData {
     }
   }
 
-  Reset_scales(): void {
+  reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
     if ((this.axis_ON) && !(this.graph_ON)) {
@@ -1746,7 +1747,7 @@ export abstract class PlotData {
     this.plotObject.initialize_lists();
     this.plotObject.initialize_point_list();
     this.refresh_MinMax(this.plotObject.point_list);
-    this.Reset_scales();
+    this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
     this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -1768,7 +1769,7 @@ export abstract class PlotData {
     this.plotObject.initialize_lists();
     this.plotObject.initialize_point_list();
     this.refresh_MinMax(this.plotObject.point_list);
-    this.Reset_scales();
+    this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
     this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -3252,7 +3253,7 @@ export class Interactions {
   }
 
   public static click_on_reset_action(plot_data:PlotData) {
-    plot_data.Reset_scales();
+    plot_data.reset_scales();
     plot_data.reset_scroll();
   }
 }
@@ -4765,7 +4766,7 @@ export function hex_to_string(hexa:string): string {
   throw new Error('hex_to_string -> Invalid color : ' + hexa + ' not in list');
 }
 
-export function hexToRgbObj(hex):Object {
+export function hexToRgbObj(hex):Object { // Returns an object {r: ..., g: ..., b: ...}
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? {
     r: parseInt(result[1], 16),

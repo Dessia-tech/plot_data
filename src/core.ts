@@ -54,7 +54,7 @@ export class MultiplePlots {
       } else if (this.dataObjects[i]['type_'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
         newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
-      } else if (this.dataObjects[i]['type_'] == 'contour') {
+      } else if (this.dataObjects[i]['type_'] == 'contourgroup') {
         newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else {
         throw new Error('MultiplePlots constructor : invalid object type');
@@ -952,6 +952,14 @@ export abstract class PlotData {
     Shape.rect(this.X, this.Y, this.width, this.height, this.context, this.manipRectColorfill, this.manipRectColorstroke, this.manipRectLinewidth, this.manipRectOpacity, this.manipRectDashline);
   }
 
+  draw_contourgroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
+    if (d['type_'] == 'contourgroup') {
+      for (let i=0; i<d.contours.length; i++) {
+        this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d.contours[i]);
+      }
+    }
+  }
+
   draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
     if (d['type_'] == 'contour') {
       this.context.beginPath();
@@ -1086,8 +1094,8 @@ export abstract class PlotData {
     return min_dist;
   }
 
-  draw_graph2D(d, hidden, mvx, mvy) {
-    if ((d['type_'] == 'graph2d') && (this.graph_to_display[d.id] === true)) {
+  draw_dataset(d, hidden, mvx, mvy) {
+    if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
       this.context.setLineDash(d.dashline);
       this.context.strokeStyle = d.graph_colorstroke;
@@ -1113,17 +1121,17 @@ export abstract class PlotData {
         var point = d.point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
-    } else if ((d['type_'] == 'graph2d') && (this.graph_to_display[d.id] === false)) {
+    } else if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
       this.delete_tooltip(d.point_list);
     }
   }
 
-  draw_graphs2D(d, hidden, mvx, mvy) {
-    if (d['type_'] == 'graphs2d') {
+  draw_graph2D(d, hidden, mvx, mvy) {
+    if (d['type_'] == 'graph2d') {
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
-        this.draw_graph2D(graph, hidden, mvx, mvy);
+        this.draw_dataset(graph, hidden, mvx, mvy);
       }
       this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
       for (let i=0; i<d.graphs.length; i++) {
@@ -1990,7 +1998,7 @@ export abstract class PlotData {
           for (let j=0; j<clicked_points.length; j++) {
             this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
           }
-        } else if (this.plotObject['type_'] == 'graphs2D') {
+        } else if (this.plotObject['type_'] == 'graph2D') {
           for (let j=0; j<this.plotObject.graphs.length; j++) {
             if (List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) {
               this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
@@ -2513,16 +2521,19 @@ export class PlotContour extends PlotData {
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     this.plot_datas = [];
-    this.type_ = 'contour';
+    this.type_ = 'contourgroup';
     var d = this.data;
-    if (d['type_'] == 'contour') {
-      var a = Contour2D.deserialize(d);
-      if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
-      if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
-      if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
-      if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
-      this.colour_to_plot_data[a.mouse_selection_color] = a;
-      this.plot_datas.push(a);
+    if (d['type_'] == 'contourgroup') {
+      var a = ContourGroup.deserialize(d);
+      for (let i=0; i<a.contours.length; i++) {
+        let contour = a.contours[i];
+        if (isNaN(this.minX)) {this.minX = contour.minX} else {this.minX = Math.min(this.minX, contour.minX)};
+        if (isNaN(this.maxX)) {this.maxX = contour.maxX} else {this.maxX = Math.max(this.maxX, contour.maxX)};
+        if (isNaN(this.minY)) {this.minY = contour.minY} else {this.minY = Math.min(this.minY, contour.minY)};
+        if (isNaN(this.maxY)) {this.maxY = contour.maxY} else {this.maxY = Math.max(this.maxY, contour.maxY)};
+        this.colour_to_plot_data[contour.mouse_selection_color] = contour;
+        this.plot_datas.push(a);
+      }
     }
     if (d['type_'] == 'text') {
       var b = Text.deserialize(d);
@@ -2543,7 +2554,7 @@ export class PlotContour extends PlotData {
     this.context.clip();
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
-      this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
+      this.draw_contourgroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
     }
     if (this.manipulable_ON) {
       this.draw_manipulable_rect();
@@ -2565,11 +2576,11 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
-      if (data['type_'] == 'graphs2d') {
-        this.type_ = 'graphs2d';
+      if (data['type_'] == 'graph2d') {
+        this.type_ = 'graph2d';
         this.graph_ON = true;
         this.axis_ON = true;
-        this.plotObject = Graphs2D.deserialize(data);
+        this.plotObject = Graph2D.deserialize(data);
         this.plot_datas['value'] = this.plotObject.graphs;
         for (let i=0; i<this.plotObject.graphs.length; i++) {
           let graph = this.plotObject.graphs[i];
@@ -2607,7 +2618,7 @@ export class PlotScatter extends PlotData {
     this.draw_rect();
     this.context.rect(X-1, Y-1, this.width+2, this.height+2);
     this.context.clip();
-    this.draw_graphs2D(this.plotObject, hidden, mvx, mvy);
+    this.draw_graph2D(this.plotObject, hidden, mvx, mvy);
     this.draw_scatterplot(this.plotObject, hidden, mvx, mvy);
     this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, this.plotObject);
     this.draw_axis(mvx, mvy, scaleX, scaleY, this.plotObject);
@@ -2843,7 +2854,7 @@ export class Interactions {
     plot_data.select_on_click = [];
     plot_data.context_show.setLineDash([]);
     plot_data.context_hidden.setLineDash([]);
-    if (plot_data.plotObject['type_'] == 'graphs2d') {
+    if (plot_data.plotObject['type_'] == 'graph2d') {
       for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
         let graph = plot_data.plotObject.graphs[i];
         for (let j=0; j<graph.point_list.length; j++) {
@@ -3469,6 +3480,23 @@ export class Buttons {
     } else {
       Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, 'PermOFF', police);
     }
+  }
+}
+
+export class ContourGroup {
+  constructor(public contours: Contour2D[],
+              public type_: string,
+              public name:string) {}
+  
+  public static deserialize(serialized) {
+    var contours:Contour2D[] = []; 
+    var temp = serialized['contours'];
+    for (let i=0; i<temp.length; i++) {
+      contours.push(Contour2D.deserialize(temp[i]));
+    }
+    return new ContourGroup(contours,
+                            serialized['type_'],
+                            serialized['name']);
   }
 }
 
@@ -4119,7 +4147,7 @@ export class Tooltip {
   }
 }
 
-export class PlotDataGraph2D {
+export class Dataset {
   id:number=0;
   constructor(public point_list:Point2D[],
               public dashline: number[],
@@ -4147,7 +4175,7 @@ export class PlotDataGraph2D {
       segments.push(new Line2D(data, [], '', ''));
     }
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    return new PlotDataGraph2D(point_list,
+    return new Dataset(point_list,
                            serialized['dashline'],
                            rgb_to_hex(serialized['graph_colorstroke']),
                            serialized['graph_linewidth'],
@@ -4159,20 +4187,20 @@ export class PlotDataGraph2D {
   }
 }
 
-export class Graphs2D {
-  constructor(public graphs: PlotDataGraph2D[],
+export class Graph2D {
+  constructor(public graphs: Dataset[],
               public axis: Axis,
               public type_: string,
               public name: string) {}
 
   public static deserialize(serialized) {
-    var graphs:PlotDataGraph2D[] = [];
+    var graphs:Dataset[] = [];
     for (let i=0; i<serialized['graphs'].length; i++) {
-      graphs.push(PlotDataGraph2D.deserialize(serialized['graphs'][i]));
+      graphs.push(Dataset.deserialize(serialized['graphs'][i]));
     }
     var axis = Axis.deserialize(serialized['axis']);
 
-    return new Graphs2D(graphs,
+    return new Graph2D(graphs,
                         axis,
                         serialized['type_'],
                         serialized['name']);

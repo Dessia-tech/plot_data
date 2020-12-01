@@ -58,7 +58,7 @@ while k < 20 * np.pi:
     points.append(point)
     k = k + np.pi/20
 
-graph = plot_data.Graph2D(points=points, dashline=dashline,
+graph = plot_data.Dataset(points=points, dashline=dashline,
                           graph_colorstroke=graph_colorstroke,
                           graph_linewidth=graph_linewidth,
                           display_step=display_step,
@@ -75,7 +75,7 @@ while k < 20 * np.pi:
                               stroke_width=point_strokewidth)
     points1.append(point)
     k = k + np.pi/20
-graph1 = plot_data.Graph2D(points=points1, dashline=[10, 10],
+graph1 = plot_data.Dataset(points=points1, dashline=[10, 10],
                            graph_colorstroke=RED, graph_linewidth=0.5,
                            display_step=display_step,
                            tooltip=tooltip, name='Graph 2')
@@ -92,13 +92,13 @@ while k < 20 * np.pi:
                               stroke_width=point_strokewidth)
     points2.append(point)
     k = k + np.pi/20
-graph2 = plot_data.Graph2D(points=points2, dashline=[5, 3, 1, 3],
+graph2 = plot_data.Dataset(points=points2, dashline=[5, 3, 1, 3],
                            graph_colorstroke=BLUE, graph_linewidth=0.5,
                            display_step=display_step,
                            tooltip=tooltip, name='Graph 3')
 graphs += [graph2]
 
-graphs2d = plot_data.Graphs2D(graphs=graphs, axis=axis)
+graphs2d = plot_data.Graph2D(graphs=graphs, axis=axis)
 
 plot_data.plot_canvas(plot_data=graphs2d.to_dict(), canvas_id='canvas',
                       debug_mode=True)

@@ -2602,7 +2602,7 @@ export class PlotScatter extends PlotData {
         this.type_ = 'scatterplot';
         this.axis_ON = true;
         this.mergeON = true;
-        this.plotObject = PlotDataScatter.deserialize(data);
+        this.plotObject = Scatter.deserialize(data);
         this.plot_datas['value'] = [this.plotObject];
         this.pointLength = 1000*this.plotObject.point_list[0].size;
         this.scatter_init_points = this.plotObject.point_list;
@@ -3527,7 +3527,7 @@ export class Contour2D {
       var plot_data_states = [];
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
-        plot_data_states.push(PlotDataState.deserialize(d));
+        plot_data_states.push(Settings.deserialize(d));
       }
       var temp = serialized['plot_data_primitives'];
       var plot_data_primitives = [];
@@ -3538,10 +3538,10 @@ export class Contour2D {
           plot_data_primitives.push(Line2D.deserialize(d));
         }
         if (d['type_'] == 'circle') {
-          plot_data_primitives.push(PlotDataCircle2D.deserialize(d));
+          plot_data_primitives.push(Circle2D.deserialize(d));
         }
         if (d['type_'] == 'arc') {
-          plot_data_primitives.push(PlotDataArc2D.deserialize(d));
+          plot_data_primitives.push(Arc2D.deserialize(d));
         }
 
       }
@@ -3567,7 +3567,7 @@ export class Text {
     var plot_data_states = [];
     for (var i = 0; i < temp.length; i++) {
       var d = temp[i];
-      plot_data_states.push(PlotDataState.deserialize(d));
+      plot_data_states.push(Settings.deserialize(d));
     }
     return new Text(serialized['comment'],
                     serialized['position_x'],
@@ -3605,7 +3605,7 @@ export class Line2D {
       var plot_data_states = [];
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
-        plot_data_states.push(PlotDataState.deserialize(d));
+        plot_data_states.push(Settings.deserialize(d));
       }
       return new Line2D(serialized['data'],
                                plot_data_states,
@@ -3621,7 +3621,7 @@ export class Line2D {
   }
 }
 
-export class PlotDataCircle2D {
+export class Circle2D {
   minX:number=0;
   maxX:number=0;
   minY:number=0;
@@ -3631,7 +3631,7 @@ export class PlotDataCircle2D {
               public cx:number,
               public cy:number,
               public r:number,
-              public plot_data_states:PlotDataState[],
+              public plot_data_states:Settings[],
               public type_:string,
               public name:string) {
       this.minX = this.cx - this.r;
@@ -3645,9 +3645,9 @@ export class PlotDataCircle2D {
       var plot_data_states = []
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i]
-        plot_data_states.push(PlotDataState.deserialize(d))
+        plot_data_states.push(Settings.deserialize(d))
       }
-      return new PlotDataCircle2D(serialized['data'],
+      return new Circle2D(serialized['data'],
                                   serialized['cx'],
                                   serialized['cy'],
                                   serialized['r'],
@@ -4207,7 +4207,7 @@ export class Graph2D {
   }
 }
 
-export class PlotDataScatter {
+export class Scatter {
 
   point_list:Point2D[]=[];
   displayableAttributes:Attribute[]=[];
@@ -4234,7 +4234,7 @@ export class PlotDataScatter {
   public static deserialize(serialized) {
     var axis = Axis.deserialize(serialized['axis']);
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    return new PlotDataScatter(serialized['elements'],
+    return new Scatter(serialized['elements'],
                                axis,
                                tooltip,
                                serialized['to_display_att_names'],
@@ -4331,7 +4331,7 @@ export class PlotDataScatter {
   }
 }
 
-export class PlotDataArc2D {
+export class Arc2D {
   minX:number=0;
   maxX:number=0;
   minY:number=0;
@@ -4343,7 +4343,7 @@ export class PlotDataArc2D {
               public data:any,
               public angle1:number,
               public angle2:number,
-              public plot_data_states:PlotDataState[],
+              public plot_data_states:Settings[],
               public type_:string,
               public name:string) {
       if((this.cx - this.r) < this.minX){
@@ -4365,9 +4365,9 @@ export class PlotDataArc2D {
       var plot_data_states = [];
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
-        plot_data_states.push(PlotDataState.deserialize(d));
+        plot_data_states.push(Settings.deserialize(d));
       }
-      return new PlotDataArc2D(serialized['cx'],
+      return new Arc2D(serialized['cx'],
                                   serialized['cy'],
                                   serialized['r'],
                                   serialized['data'],
@@ -4409,7 +4409,7 @@ export class Attribute {
   }
 }
 
-export class PlotDataState {
+export class Settings {
 
   constructor(public color_surface:ColorSurfaceSet,
               public color_map:any,
@@ -4450,7 +4450,7 @@ export class PlotDataState {
       if (serialized['point_color'] != null) {
         point_color = PointColorSet.deserialize(serialized['point_color']);
       }
-      return new PlotDataState(color_surface,
+      return new Settings(color_surface,
                                serialized['color_map'],
                                hatching,
                                serialized['opacity'],
@@ -4465,7 +4465,7 @@ export class PlotDataState {
                                serialized['name']);
   }
   copy() {
-    return new PlotDataState(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.shape_set, this.point_size, this.point_color, this.window_size, this.stroke_width, this.name);
+    return new Settings(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.shape_set, this.point_size, this.point_color, this.window_size, this.stroke_width, this.name);
   }
 }
 

@@ -11,12 +11,13 @@ import volmdlr as vm
 import volmdlr.wires
 import volmdlr.edges
 
+contours = []
 triangle_points = [vm.Point2D(*npy.random.random(2)) for i in range(3)]
 triangle = vm.wires.ClosedPolygon2D(triangle_points)
 
 cog_triangle = triangle.center_of_mass()
 
-print(triangle.area())
+# print(triangle.area())
 
 p0 = vm.Point2D(-1, 0)
 p1 = vm.Point2D(-npy.cos(npy.pi / 4), npy.sin(npy.pi / 4))
@@ -32,8 +33,7 @@ hatching = plot_data.HatchingSet(0.5, 3)
 color_surface = plot_data.ColorSurfaceSet(color='white')
 plot_data_state = plot_data.Settings(name='be_sup', hatching=hatching,
                                      stroke_width=1)
-plot_datas = [c.plot_data(plot_data_states=[plot_data_state])]
-sol = [plt.to_dict() for plt in plot_datas]
+contours.append(c.plot_data(plot_data_states=[plot_data_state]))
 
 hatching = plot_data.HatchingSet(1)
 plot_data_state = plot_data.Settings(name='name', hatching=hatching,
@@ -50,5 +50,8 @@ c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
                          vm.edges.LineSegment2D(pt4, pt1)])
 
 d = c1.plot_data(plot_data_states=[plot_data_state])
-plot_data.plot_canvas(plot_data=d.to_dict(), canvas_id='canvas',
+contours.append(d)
+contour_group = plot_data.ContourGroup(contours=contours)
+
+plot_data.plot_canvas(plot_data=contour_group.to_dict(), canvas_id='canvas',
                       debug_mode=True)

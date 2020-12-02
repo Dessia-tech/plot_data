@@ -1,6 +1,9 @@
 import plot_data
 from plot_data.colors import *
 import random
+import volmdlr as vm
+import volmdlr.wires
+import volmdlr.edges
 
 shape = 'circle'
 size = 2
@@ -13,6 +16,25 @@ disposition = 'vertical'
 plot_datas = []
 objects = []
 points = []
+
+# Defining the contour
+hatching = plot_data.HatchingSet(1)
+plot_data_state = plot_data.Settings(name='name', hatching=hatching, stroke_width=1)
+
+contour_size = 1
+pt1 = vm.Point2D(0, 0)
+pt2 = vm.Point2D(0, contour_size)
+pt3 = vm.Point2D(contour_size, contour_size)
+pt4 = vm.Point2D(contour_size, 0)
+c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
+                         vm.edges.LineSegment2D(pt2, pt3),
+                         vm.edges.LineSegment2D(pt3, pt4),
+                         vm.edges.LineSegment2D(pt4, pt1)])
+
+d = c1.plot_data(plot_data_states=[plot_data_state])
+contour_group = plot_data.ContourGroup(contours=[d])
+objects.append(contour_group)
+# End contour
 
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
 color_strokes = [BLACK, BROWN, GREEN, RED, ORANGE, LIGHTBLUE, GREY]
@@ -100,8 +122,9 @@ ScatterPlot2 = plot_data.Scatter(axis=axis, tooltip=tooltip,
                                  stroke_width=0.5)
 objects.append(ScatterPlot2)
 
-coords = [(0, 600), (300, 0), (0, 0), (300, 300), (500, 500)]
+coords = [(0, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]
 sizes = [plot_data.Window(width=560, height=300),
+         plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300),

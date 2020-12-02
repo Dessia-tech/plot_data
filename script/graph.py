@@ -27,7 +27,7 @@ to_plot_list = ['cx', 'cy']
 opacity = 0.75
 
 # Graph2D
-point_list = []
+points = []
 k = 0
 
 dashline=[]
@@ -55,17 +55,17 @@ while k < 20 * np.pi:
                               shape=point_shape, color_fill=point_colorfill,
                               color_stroke=point_colorstroke,
                               stroke_width=point_strokewidth)
-    point_list.append(point)
+    points.append(point)
     k = k + np.pi/20
 
-graph = plot_data.Graph2D(point_list=point_list, dashline=dashline,
+graph = plot_data.Dataset(points=points, dashline=dashline,
                           graph_colorstroke=graph_colorstroke,
                           graph_linewidth=graph_linewidth,
                           display_step=display_step,
                           tooltip=tooltip, name='Graph 1')
 graphs += [graph]
 
-point_list1 = []
+points1 = []
 k = 0
 
 while k < 20 * np.pi:
@@ -73,16 +73,16 @@ while k < 20 * np.pi:
                               shape='square', color_fill=GREEN,
                               color_stroke=ORANGE,
                               stroke_width=point_strokewidth)
-    point_list1.append(point)
+    points1.append(point)
     k = k + np.pi/20
-graph1 = plot_data.Graph2D(point_list=point_list1, dashline=[10, 10],
+graph1 = plot_data.Dataset(points=points1, dashline=[10, 10],
                            graph_colorstroke=RED, graph_linewidth=0.5,
                            display_step=display_step,
                            tooltip=tooltip, name='Graph 2')
 graphs += [graph1]
 
 
-point_list2 = []
+points2 = []
 k = 0
 
 while k < 20 * np.pi:
@@ -90,15 +90,15 @@ while k < 20 * np.pi:
                               shape='crux', color_fill=BROWN,
                               color_stroke=BLACK,
                               stroke_width=point_strokewidth)
-    point_list2.append(point)
+    points2.append(point)
     k = k + np.pi/20
-graph2 = plot_data.Graph2D(point_list=point_list2, dashline=[5, 3, 1, 3],
+graph2 = plot_data.Dataset(points=points2, dashline=[5, 3, 1, 3],
                            graph_colorstroke=BLUE, graph_linewidth=0.5,
                            display_step=display_step,
                            tooltip=tooltip, name='Graph 3')
 graphs += [graph2]
 
-graphs2d = plot_data.Graphs2D(graphs=graphs, axis=axis)
+graphs2d = plot_data.Graph2D(graphs=graphs, axis=axis)
 
 plot_data.plot_canvas(plot_data=graphs2d.to_dict(), canvas_id='canvas',
                       debug_mode=True)

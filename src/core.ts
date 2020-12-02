@@ -333,7 +333,7 @@ export class MultiplePlots {
     var j = 0;
     while (j<this.nbObjects - 1) {
       if (sortedObjectList[j+1][small_coord] < sortedObjectList[j][small_coord]) {
-        sorted_list = List.move_elements(j, j+1, sorted_list);
+        List.switchElements(sorted_list, j, j+1);
       }
       j = j+2;
     }
@@ -2550,8 +2550,10 @@ export class PlotContour extends PlotData {
     this.context.save();
     this.draw_empty_canvas();
     this.draw_rect();
+    this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height+2);
     this.context.clip();
+    this.context.closePath();
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
       this.draw_contourgroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
@@ -5141,6 +5143,10 @@ export class List {
       list = this.remove_at_index(old_index + 1, list);
     }
     return list;
+  }
+
+  public static switchElements(list:any[], index1:number, index2:number): void {
+    [list[index1], list[index2]] = [list[index2], list[index1]];
   }
 
   public static reverse(list:any[]): any[] {

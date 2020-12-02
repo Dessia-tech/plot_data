@@ -802,6 +802,10 @@ export abstract class PlotData {
   refresh_point_list_bool:boolean=true;
   sc_interpolation_ON: boolean=false;
   isSelectingppAxis:boolean=false;
+  zoom_box_x:number=0;
+  zoom_box_y:number=0;
+  zoom_box_w:number=0;
+  zoom_box_h:number=0;
 
   displayable_attributes:Attribute[]=[];
   attribute_booleans:boolean[]=[];
@@ -1804,19 +1808,13 @@ export abstract class PlotData {
       if (this.real_to_scatter_coords(this.perm_window_y, 'y') < this.Y) {
         sc_perm_window_h = Math.min(Math.max(this.real_to_scatter_length(this.perm_window_h, 'y') + this.real_to_scatter_length(this.scatter_to_real_coords(this.Y, 'y') - this.perm_window_y, 'y'), 0), this.height);
       }
-      console.log(this.perm_window_y, this.perm_window_h)
-      // console.log(sc_perm_window_y, sc_perm_window_h, this.Y)
       Shape.rect(sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h, this.context_show, 'No', 'black', 1, 1, [5,5]);
       Shape.rect(sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h, this.context_hidden, 'No', 'black', 1, 1, [5,5]);
   }
 
-  draw_zoom_rectangle(mouse1X, mouse1Y, mouse2X, mouse2Y) {
-    let x = Math.min(mouse1X, mouse2X);
-    let y = Math.min(mouse1Y, mouse2Y);
-    let w = Math.abs(mouse2X - mouse1X);
-    let h = Math.abs(mouse2Y - mouse1Y);
-    Shape.rect(x, y, w, h, this.context_show, 'No', 'black', 1, 1, [5,5]);
-    Shape.rect(x, y, w, h, this.context_hidden, 'No', 'black', 1, 1, [5,5]);
+  draw_zoom_rectangle() {
+    Shape.rect(this.zoom_box_x, this.zoom_box_y, this.zoom_box_w, this.zoom_box_h, this.context_show, 'No', 'black', 1, 1, [5,5]);
+    Shape.rect(this.zoom_box_x, this.zoom_box_y, this.zoom_box_w, this.zoom_box_h, this.context_hidden, 'No', 'black', 1, 1, [5,5]);
   }
 
   reset_scroll() {
@@ -2057,9 +2055,12 @@ export abstract class PlotData {
           let ord_max = this.scatter_to_real_coords(Math.min(this.real_to_scatter_coords(this.perm_window_y, 'y'), this.real_to_scatter_coords(this.perm_window_y, 'y') + this.real_to_scatter_length(this.perm_window_h, 'y')), 'y');
           this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
         } else { // ie zw_bool === true
+          this.zoom_box_x = Math.min(mouse1X, mouse2X);
+          this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
+          this.zoom_box_w = Math.abs(mouse2X - mouse1X);
+          this.zoom_box_h = Math.abs(mouse2Y - mouse1Y);
           this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
           this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-          this.draw_zoom_rectangle(mouse1X, mouse1Y, mouse2X, mouse2Y);
         }
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
@@ -2168,6 +2169,7 @@ export abstract class PlotData {
       mouse_moving = false;
       this.isSelecting = false;
       this.isDrawing_rubber_band = false;
+      Interactions.reset_zoom_box(this);
       return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 
@@ -2631,6 +2633,9 @@ export class PlotScatter extends PlotData {
     if (this.permanent_window) {
       this.draw_selection_rectangle();
     }
+    if (this.zw_bool) {
+      this.draw_zoom_rectangle();
+    }
 
     if (this.buttons_ON) {
       this.refresh_buttons_coords();
@@ -2952,6 +2957,13 @@ export class Interactions {
     plot_data.refresh_point_list_bool = true;
     plot_data.reset_scroll();
     plot_data.select_on_click = [];
+  }
+
+  public static reset_zoom_box(plot_data: PlotData) {
+    plot_data.zoom_box_x = 0;
+    plot_data.zoom_box_y = 0;
+    plot_data.zoom_box_w = 0;
+    plot_data.zoom_box_h = 0;
   }
 
   public static reset_permanent_window(plot_data:PlotData) {

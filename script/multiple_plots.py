@@ -33,7 +33,7 @@ c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
 
 d = c1.plot_data(plot_data_states=[plot_data_state])
 contour_group = plot_data.ContourGroup(contours=[d])
-# objects.append(contour_group)
+objects.append(contour_group)
 # End contour
 
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
@@ -57,13 +57,13 @@ parallel_plot = plot_data.ParallelPlot(line_color=line_color,
                                        disposition=disposition,
                                        to_disp_attributes=to_disp_attributes,
                                        rgbs=rgbs)
-# objects.append(parallel_plot)
+objects.append(parallel_plot)
 parallel_plot1 = plot_data.ParallelPlot(line_color=line_color,
                                         line_width=line_width,
                                         disposition=disposition,
                                         to_disp_attributes=['color_fill', 'cx'],
                                         rgbs=rgbs)
-# objects.append(parallel_plot1)
+objects.append(parallel_plot1)
 
 # Axis data
 nb_points_x = 10
@@ -120,7 +120,7 @@ ScatterPlot2 = plot_data.Scatter(axis=axis, tooltip=tooltip,
                                  color_fill=sc_color_fill,
                                  color_stroke=sc_color_stroke,
                                  stroke_width=0.5)
-# objects.append(ScatterPlot2)
+objects.append(ScatterPlot2)
 
 coords = [(0, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]
 sizes = [plot_data.Window(width=560, height=300),

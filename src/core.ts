@@ -1804,6 +1804,8 @@ export abstract class PlotData {
       if (this.real_to_scatter_coords(this.perm_window_y, 'y') < this.Y) {
         sc_perm_window_h = Math.min(Math.max(this.real_to_scatter_length(this.perm_window_h, 'y') + this.real_to_scatter_length(this.scatter_to_real_coords(this.Y, 'y') - this.perm_window_y, 'y'), 0), this.height);
       }
+      console.log(this.perm_window_y, this.perm_window_h)
+      // console.log(sc_perm_window_y, sc_perm_window_h, this.Y)
       Shape.rect(sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h, this.context_show, 'No', 'black', 1, 1, [5,5]);
       Shape.rect(sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h, this.context_hidden, 'No', 'black', 1, 1, [5,5]);
   }
@@ -2618,8 +2620,10 @@ export class PlotScatter extends PlotData {
     this.context.save();
     this.draw_empty_canvas();
     this.draw_rect();
+    this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height+2);
     this.context.clip();
+    this.context.closePath();
     this.draw_graph2D(this.plotObject, hidden, mvx, mvy);
     this.draw_scatterplot(this.plotObject, hidden, mvx, mvy);
     this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, this.plotObject);
@@ -2770,8 +2774,10 @@ export class ParallelPlot extends PlotData {
     this.context.save();
     this.draw_empty_canvas();
     this.draw_rect();
+    this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height + 2);
     this.context.clip();
+    this.context.closePath();
     this.draw_rubber_bands(mvx);
     var nb_axis = this.axis_list.length;
     this.draw_parallel_coord_lines(nb_axis);
@@ -2889,9 +2895,9 @@ export class Interactions {
         }
       }
     }
+    this.refresh_permanent_rect(plot_data);
     plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw_selection_rectangle();
   }
 
   public static zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, plot_data:PlotData) {

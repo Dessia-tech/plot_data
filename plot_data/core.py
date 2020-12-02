@@ -6,7 +6,6 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
-import os
 import numpy as npy
 import math
 import sys
@@ -349,7 +348,6 @@ def plot_canvas(plot_data, debug_mode: bool = False,
     """
     Plot input data in web browser
 
-    TODO : core_path input must be removed and set to relative to find core.js
     """
     plot_type = plot_data['type_']
     if plot_type == 'contourgroup':

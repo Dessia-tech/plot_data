@@ -9,7 +9,7 @@ Created on Tue Feb 28 14:07:37 2017
 import os
 import numpy as npy
 import math
-
+import sys
 import json
 import tempfile
 import webbrowser
@@ -366,7 +366,7 @@ def plot_canvas(plot_data, debug_mode: bool = False,
     core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
         core_path = '/'.join(
-            os.path.abspath('').split('/')[:-1] + ['lib', 'core.js'])
+            sys.modules[__name__].__file__.split('/')[:-2] + ['lib', 'core.js'])
 
     s = template.substitute(data=json.dumps(plot_data), core_path=core_path,
                             canvas_id=canvas_id)

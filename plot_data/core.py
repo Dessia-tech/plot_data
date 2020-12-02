@@ -335,14 +335,14 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_data, debug_mode: bool = False,
+def plot_canvas(data, debug_mode: bool = False,
                 canvas_id: str = 'canvas'):
     """
     Plot input data in web browser
 
     TODO : core_path input must be removed and set to relative to find core.js
     """
-    plot_type = plot_data['type_']
+    plot_type = data['type_']
     if plot_type == 'contour':
         template = templates.contour_template
     elif plot_type == 'scatterplot':
@@ -358,7 +358,7 @@ def plot_canvas(plot_data, debug_mode: bool = False,
     if debug_mode:
         core_path = '/'.join(os.path.abspath('').split('/')[:-1] + ['lib', 'core.js'])
 
-    s = template.substitute(data=json.dumps(plot_data), core_path=core_path,
+    s = template.substitute(data=json.dumps(data), core_path=core_path,
                             canvas_id=canvas_id)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 

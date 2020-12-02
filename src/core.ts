@@ -9,6 +9,7 @@ export class MultiplePlots {
   points:Point2D[]=[];
   sizes:Window[]=[];
   selected_index:number=-1;
+  clicked_index_list:number[]=[];
   clickedPlotIndex:number=-1;
   last_index:number=-1;
   manipulation_bool:boolean=false;
@@ -28,8 +29,8 @@ export class MultiplePlots {
   view_button_h:number=0;
   initial_objectsX:number[]=[];
   initial_objectsY:number[]=[];
-  initial_object_width:number=0;
-  initial_object_height:number=0;
+  initial_object_width:number[]=[];
+  initial_object_height:number[]=[];
   initial_mouseX:number=0;
   initial_mouseY:number=0;
   sorted_list:number[]=[];
@@ -169,7 +170,20 @@ export class MultiplePlots {
     this.context_hidden = hiddenCanvas.getContext("2d");
   }
 
-  getObjectIndex(x,y):number {
+  getObjectIndex(x, y): number[] {
+    var index_list = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      let display_index = this.display_order[i];
+      let isInObject = Shape.isInRect(x, y, this.objectList[display_index].X, this.objectList[display_index].Y, this.objectList[display_index].width, this.objectList[display_index].height);
+      if (isInObject === true) {
+        index_list.push(display_index);
+      }
+    }
+
+    return index_list;
+  }
+
+  getLastObjectIndex(x,y):number { // if several plots are selected, returns the last one's index
     var index = -1;
     for (let i=0; i<this.nbObjects; i++) {
       let display_index = this.display_order[i];
@@ -225,14 +239,6 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  initializeObjectXY():void {
-    this.initial_objectsX = [];
-    this.initial_objectsY = [];
-    for (let i=0; i<this.nbObjects; i++) {
-      this.initial_objectsX.push(this.objectList[i].X);
-      this.initial_objectsY.push(this.objectList[i].Y);
-    }
-  }
   setAllInteractionsToOff():void {
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].interaction_ON = false;
@@ -265,15 +271,25 @@ export class MultiplePlots {
     }
   }
 
-  initialize_clickOnVertex(mouse1X, mouse1Y, clicked_obj_index):[boolean, boolean, boolean, boolean, boolean] { //[vertex_object_index, clickOnVertex, up, down, left, right]
+  initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] { 
     var thickness = 15;
-    let obj:PlotData = this.objectList[clicked_obj_index];
-    let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, obj.width + thickness, thickness);
-    let down = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y + obj.height - thickness/2, obj.width + thickness, thickness);
-    let left = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
-    let right = Shape.isInRect(mouse1X, mouse1Y, obj.X + obj.width - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
-    let clickOnVertex = up || down || left || right;
-    return [clickOnVertex, up, down, left, right];
+    var vertex_infos = [];
+    var clickOnVertex = false;
+    for (let i=0; i<this.nbObjects; i++) {
+      let obj:PlotData = this.objectList[i];
+      let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, obj.width + thickness, thickness);
+      let down = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y + obj.height - thickness/2, obj.width + thickness, thickness);
+      let left = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
+      let right = Shape.isInRect(mouse1X, mouse1Y, obj.X + obj.width - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
+      var clickOnVertex_i = up || down || left || right;
+      if (clickOnVertex_i) {
+        vertex_infos.push({'index': i, 'up': up, 'down': down, 'left':left, 'right': right});
+      }
+      if (!clickOnVertex) {
+        clickOnVertex = up || down || left || right;
+      }
+    }
+    return [clickOnVertex, vertex_infos];
   }
 
   setCursorStyle(mouse2X, mouse2Y, canvas):void {
@@ -305,9 +321,22 @@ export class MultiplePlots {
     this.initial_mouseY = mouse1Y;
   }
 
-  initialize_object_hw(selected_index):void {
-    this.initial_object_width = this.objectList[selected_index].width;
-    this.initial_object_height = this.objectList[selected_index].height;
+  initializeObjectXY():void {
+    this.initial_objectsX = [];
+    this.initial_objectsY = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      this.initial_objectsX.push(this.objectList[i].X);
+      this.initial_objectsY.push(this.objectList[i].Y);
+    }
+  }
+
+  initialize_objects_hw():void {
+    this.initial_object_width = [];
+    this.initial_object_height = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      this.initial_object_width[i] = this.objectList[i].width;
+      this.initial_object_height[i] = this.objectList[i].height;
+    }
   }
 
   resetAllObjects():void {
@@ -375,40 +404,43 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  resizeObject(vertex_object_index, up, down, left, right, mouse2X, mouse2Y):void {
+  resizeObject(vertex_infos, mouse2X, mouse2Y):void {
     var widthSizeLimit = 100;
     var heightSizeLimit = 100;
-    var obj:PlotData = this.objectList[vertex_object_index];
     var deltaX = mouse2X - this.initial_mouseX;
     var deltaY = mouse2Y - this.initial_mouseY;
-    if (up === true) {
-      if (this.initial_object_height - deltaY > heightSizeLimit) {
-        obj.Y = this.initial_objectsY[vertex_object_index] + deltaY;
-        obj.height = this.initial_object_height - deltaY;
-      } else {
-        obj.height = heightSizeLimit;
+    for (let i=0; i<vertex_infos.length; i++) {
+      let vertex_object_index = vertex_infos[i].index;
+      var obj:PlotData = this.objectList[vertex_object_index];
+      if (vertex_infos[i].up === true) {
+        if (this.initial_object_height[vertex_object_index] - deltaY > heightSizeLimit) {
+          this.objectList[vertex_object_index].Y = this.initial_objectsY[vertex_object_index] + deltaY;
+          this.objectList[vertex_object_index].height = this.initial_object_height[vertex_object_index] - deltaY;
+        } else {
+          this.objectList[vertex_object_index].height = heightSizeLimit;
+        }
       }
-    }
-    if (down === true) {
-      if (this.initial_object_height + deltaY > heightSizeLimit) {
-        obj.height = this.initial_object_height + deltaY;
-      } else {
-        obj.height = heightSizeLimit;
+      if (vertex_infos[i].down === true) {
+        if (this.initial_object_height[vertex_object_index] + deltaY > heightSizeLimit) {
+          this.objectList[vertex_object_index].height = this.initial_object_height[vertex_object_index] + deltaY;
+        } else {
+          this.objectList[vertex_object_index].height = heightSizeLimit;
+        }
       }
-    }
-    if (left === true) {
-      if (this.initial_object_width - deltaX > widthSizeLimit) {
-        obj.X = this.initial_objectsX[vertex_object_index] + deltaX;
-        obj.width = this.initial_object_width - deltaX;
-      } else {
-        obj.width = widthSizeLimit;
+      if (vertex_infos[i].left === true) {
+        if (this.initial_object_width[vertex_object_index] - deltaX > widthSizeLimit) {
+          this.objectList[vertex_object_index].X = this.initial_objectsX[vertex_object_index] + deltaX;
+          this.objectList[vertex_object_index].width = this.initial_object_width[vertex_object_index] - deltaX;
+        } else {
+          this.objectList[vertex_object_index].width = widthSizeLimit;
+        }
       }
-    }
-    if (right === true) {
-      if (this.initial_object_width + deltaX > widthSizeLimit) {
-        obj.width = this.initial_object_width + deltaX;
-      } else {
-        obj.width = widthSizeLimit;
+      if (vertex_infos[i].right === true) {
+        if (this.initial_object_width[vertex_object_index] + deltaX > widthSizeLimit) {
+          this.objectList[vertex_object_index].width = this.initial_object_width[vertex_object_index] + deltaX;
+        } else {
+          this.objectList[vertex_object_index].width = widthSizeLimit;
+        }
       }
     }
     this.redrawAllObjects();
@@ -489,7 +521,7 @@ export class MultiplePlots {
   }
 
   manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
-    this.selected_index = this.getObjectIndex(mouse2X, mouse2Y);
+    this.selected_index = this.getLastObjectIndex(mouse2X, mouse2Y);
     if (this.selected_index != this.last_index) {
       for (let i=0; i<this.objectList.length; i++) {
         if (i == this.selected_index) {
@@ -566,10 +598,7 @@ export class MultiplePlots {
     var mouse3Y:number = 0;
     var isDrawing = false;
     var mouse_moving:boolean = false;
-    var clickUp:boolean = false;
-    var clickDown:boolean = false;
-    var clickLeft:boolean = false;
-    var clickRight:boolean = false;
+    var vertex_infos:Object;
     var clickOnVertex:boolean = false;
 
     for (let i=0; i<this.objectList.length; i++) {
@@ -581,19 +610,20 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
-      this.clickedPlotIndex = this.getObjectIndex(mouse1X, mouse1Y);
+      this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
+      this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
       if (this.manipulation_bool) {
         this.setAllInteractionsToOff();
         if (this.clickedPlotIndex != -1) {
           this.initializeObjectXY();
-          [clickOnVertex, clickUp, clickDown, clickLeft, clickRight] = this.initialize_clickOnVertex(mouse1X, mouse1Y, this.clickedPlotIndex);
+          [clickOnVertex, vertex_infos] = this.initialize_clickOnVertex(mouse1X, mouse1Y);
         } else {
           clickOnVertex = false;
         }
         this.initializeObjectXY();
         if (clickOnVertex) {
           this.initializeMouseXY(mouse1X, mouse1Y);
-          this.initialize_object_hw(this.clickedPlotIndex);
+          this.initialize_objects_hw();
         }
       }
     });
@@ -613,7 +643,7 @@ export class MultiplePlots {
           } else if (this.clickedPlotIndex == -1) {
             this.translateAllObjects(mouse1X, mouse1Y, mouse2X, mouse2Y);
           } else if (clickOnVertex) {
-            this.resizeObject(this.clickedPlotIndex, clickUp, clickDown, clickLeft, clickRight, mouse2X, mouse2Y);
+            this.resizeObject(vertex_infos, mouse2X, mouse2Y);
           }
           if (this.view_bool === true) {
             let refreshed_sorted_list = this.getSortedList();
@@ -622,7 +652,7 @@ export class MultiplePlots {
             }
           }
         } else {
-          this.selected_index = this.getObjectIndex(mouse2X, mouse2Y);
+          this.selected_index = this.getLastObjectIndex(mouse2X, mouse2Y);
           this.setCursorStyle(mouse2X, mouse2Y, canvas);
         }
       } else {
@@ -692,7 +722,7 @@ export class MultiplePlots {
       var mouse3X = e.offsetX;
       var mouse3Y = e.offsetY;
       var event = -e.deltaY/Math.abs(e.deltaY);
-      if (this.manipulation_bool) {
+      if (this.manipulation_bool && !this.view_bool) {
         this.zoom_elements(mouse3X, mouse3Y, event);
       }
       this.redrawAllObjects();

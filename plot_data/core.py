@@ -349,6 +349,8 @@ def plot_canvas(plot_data, debug_mode: bool = False,
     Plot input data in web browser
 
     """
+    first_letter = canvas_id[0]
+
     plot_type = plot_data['type_']
     if plot_type == 'contourgroup':
         template = templates.contour_template

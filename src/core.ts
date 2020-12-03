@@ -271,19 +271,30 @@ export class MultiplePlots {
     }
   }
 
+  delete_unwanted_vertex(vertex_infos) {
+    for (let i=0; i<vertex_infos.length - 1; i++) {
+      let to_delete = false;
+      if (this.clickedPlotIndex != vertex_infos[i].index) {
+        for (let j=i+1; j<vertex_infos.length; j++) {
+
+        }
+      }
+    }
+  }
+
   initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] { 
     var thickness = 15;
     var vertex_infos = [];
     var clickOnVertex = false;
     for (let i=0; i<this.nbObjects; i++) {
-      let obj:PlotData = this.objectList[i];
+      let obj:PlotData = this.objectList[this.display_order[i]];
       let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, obj.width + thickness, thickness);
       let down = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y + obj.height - thickness/2, obj.width + thickness, thickness);
       let left = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
       let right = Shape.isInRect(mouse1X, mouse1Y, obj.X + obj.width - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
       var clickOnVertex_i = up || down || left || right;
       if (clickOnVertex_i) {
-        vertex_infos.push({'index': i, 'up': up, 'down': down, 'left':left, 'right': right});
+        vertex_infos.push({'index': this.display_order[i], 'up': up, 'down': down, 'left':left, 'right': right});
       }
       if (!clickOnVertex) {
         clickOnVertex = up || down || left || right;

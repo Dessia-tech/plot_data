@@ -6,10 +6,9 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
-import os
 import numpy as npy
 import math
-
+import sys
 import json
 import tempfile
 import webbrowser
@@ -28,6 +27,7 @@ class PlotDataObject(DessiaObject):
     """
     Abstract interface for DessiaObject implementing in module
     """
+
     def __init__(self, type_: str, name: str = '', **kwargs):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
@@ -222,14 +222,14 @@ class Tooltip(PlotDataObject):
         PlotDataObject.__init__(self, type_='tooltip', name=name)
 
 
-class Graph2D(PlotDataObject):
+class Dataset(PlotDataObject):
     def __init__(self, dashline: List[float], graph_colorstroke: str,
                  graph_linewidth: float, display_step: float, tooltip: Tooltip,
-                 point_list: List[Point2D] = None, name: str = ''):
-        if point_list is None:
-            self.serialized_point_list = []
+                 points: List[Point2D] = None, name: str = ''):
+        if points is None:
+            self.points = []
         else:
-            self.serialized_point_list = [p.to_dict() for p in point_list]
+            self.points = points
         self.dashline = dashline
         self.graph_colorstroke = graph_colorstroke
         self.graph_linewidth = graph_linewidth
@@ -237,14 +237,14 @@ class Graph2D(PlotDataObject):
         if display_step is None:
             self.display_step = 1
         self.tooltip = tooltip
-        PlotDataObject.__init__(self, type_='graph2D', name=name)
+        PlotDataObject.__init__(self, type_='dataset', name=name)
 
 
-class Graphs2D(PlotDataObject):
-    def __init__(self, graphs: List[Graph2D], axis: Axis, name: str = ''):
+class Graph2D(PlotDataObject):
+    def __init__(self, graphs: List[Dataset], axis: Axis, name: str = ''):
         self.graphs = graphs
         self.axis = axis
-        PlotDataObject.__init__(self, type_='graphs2D', name=name)
+        PlotDataObject.__init__(self, type_='graph2d', name=name)
 
 
 class Scatter(PlotDataObject):
@@ -297,9 +297,17 @@ class Contour2D(PlotDataObject):
         for plot_data_primitive in self.plot_data_primitives:
             if hasattr(plot_data_primitive, 'bounding_box'):
                 bb = plot_data_primitive.bounding_box()
-                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax, bb[1]), min(ymin, bb[2]), max(ymax, bb[3])
+                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax,
+                                                               bb[1]), min(
+                    ymin, bb[2]), max(ymax, bb[3])
 
         return xmin, xmax, ymin, ymax
+
+
+class ContourGroup(PlotDataObject):
+    def __init__(self, contours: List[Contour2D], name: str = ''):
+        self.contours = contours
+        PlotDataObject.__init__(self, type_='contourgroup', name=name)
 
 
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
@@ -340,12 +348,13 @@ def plot_canvas(plot_data, debug_mode: bool = False,
     """
     Plot input data in web browser
 
-    TODO : core_path input must be removed and set to relative to find core.js
     """
+    first_letter = canvas_id[0]
+
     plot_type = plot_data['type_']
-    if plot_type == 'contour':
+    if plot_type == 'contourgroup':
         template = templates.contour_template
-    elif plot_type == 'scatterplot':
+    elif plot_type == 'scatterplot' or plot_type == 'graph2d':
         template = templates.scatter_template
     elif plot_type == 'parallelplot':
         template = templates.parallelplot_template
@@ -356,7 +365,8 @@ def plot_canvas(plot_data, debug_mode: bool = False,
 
     core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
-        core_path = '/'.join(os.path.abspath('').split('/')[:-1] + ['lib', 'core.js'])
+        core_path = '/'.join(
+            sys.modules[__name__].__file__.split('/')[:-2] + ['lib', 'core.js'])
 
     s = template.substitute(data=json.dumps(plot_data), core_path=core_path,
                             canvas_id=canvas_id)
@@ -377,8 +387,8 @@ def get_csv_vectors(filename):
 
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
-                 'contour': Contour2D, 'graph2D': Graph2D,
-                 'graphs2D': Graphs2D,  'line': Line2D,
+                 'contour': Contour2D, 'graph2D': Dataset,
+                 'graphs2D': Graph2D, 'line': Line2D,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip}
 
@@ -392,4 +402,3 @@ def bounding_box(plot_datas):
             ymin, ymax = min(ymin, bb[2]), max(ymax, bb[3])
 
     return xmin, xmax, ymin, ymax
-

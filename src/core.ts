@@ -9,6 +9,7 @@ export class MultiplePlots {
   points:Point2D[]=[];
   sizes:Window[]=[];
   selected_index:number=-1;
+  clicked_index_list:number[]=[];
   clickedPlotIndex:number=-1;
   last_index:number=-1;
   manipulation_bool:boolean=false;
@@ -28,11 +29,12 @@ export class MultiplePlots {
   view_button_h:number=0;
   initial_objectsX:number[]=[];
   initial_objectsY:number[]=[];
-  initial_object_width:number=0;
-  initial_object_height:number=0;
+  initial_object_width:number[]=[];
+  initial_object_height:number[]=[];
   initial_mouseX:number=0;
   initial_mouseY:number=0;
   sorted_list:number[]=[];
+  display_order:number[]=[];
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
@@ -53,7 +55,7 @@ export class MultiplePlots {
       } else if (this.dataObjects[i]['type_'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
         newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
-      } else if (this.dataObjects[i]['type_'] == 'contour') {
+      } else if (this.dataObjects[i]['type_'] == 'contourgroup') {
         newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else {
         throw new Error('MultiplePlots constructor : invalid object type');
@@ -63,6 +65,7 @@ export class MultiplePlots {
     }
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].draw_initial();
+      this.display_order.push(i);
     }
     this.mouse_interaction();
 
@@ -167,18 +170,32 @@ export class MultiplePlots {
     this.context_hidden = hiddenCanvas.getContext("2d");
   }
 
-  getObjectIndex(x,y):number {
+  getObjectIndex(x, y): number[] {
+    var index_list = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      let display_index = this.display_order[i];
+      let isInObject = Shape.isInRect(x, y, this.objectList[display_index].X, this.objectList[display_index].Y, this.objectList[display_index].width, this.objectList[display_index].height);
+      if (isInObject === true) {
+        index_list.push(display_index);
+      }
+    }
+
+    return index_list;
+  }
+
+  getLastObjectIndex(x,y):number { // if several plots are selected, returns the last one's index
     var index = -1;
     for (let i=0; i<this.nbObjects; i++) {
-      let isInObject = Shape.isInRect(x, y, this.objectList[i].X, this.objectList[i].Y, this.objectList[i].width, this.objectList[i].height);
+      let display_index = this.display_order[i];
+      let isInObject = Shape.isInRect(x, y, this.objectList[display_index].X, this.objectList[display_index].Y, this.objectList[display_index].width, this.objectList[display_index].height);
       if (isInObject === true) {
-        index = i;
+        index = display_index;
       }
     }
     return index;
   }
 
-  clearCanvas():void {
+  clearAll():void {
     this.context_show.beginPath();
     this.context_show.clearRect(0, 0, this.width, this.height);
     this.context_show.stroke();
@@ -190,11 +207,16 @@ export class MultiplePlots {
   }
 
   redrawAllObjects():void {
-    this.clearCanvas();
-    for (let i=0; i<this.objectList.length; i++) {
-      let obj = this.objectList[i];
-      obj.draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      obj.draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+    this.clearAll();
+    if (this.clickedPlotIndex != -1) {
+      let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
+      this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
+    }
+    for (let i=0; i<this.nbObjects; i++) {
+      let display_index = this.display_order[i]; 
+      let obj = this.objectList[display_index];
+      this.objectList[display_index].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      this.objectList[display_index].draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
     if (this.buttons_ON) {
       this.draw_buttons();
@@ -217,14 +239,6 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  initializeObjectXY():void {
-    this.initial_objectsX = [];
-    this.initial_objectsY = [];
-    for (let i=0; i<this.nbObjects; i++) {
-      this.initial_objectsX.push(this.objectList[i].X);
-      this.initial_objectsY.push(this.objectList[i].Y);
-    }
-  }
   setAllInteractionsToOff():void {
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].interaction_ON = false;
@@ -257,15 +271,49 @@ export class MultiplePlots {
     }
   }
 
-  initialize_ClickOnVertex(mouse1X, mouse1Y, clicked_obj_index):[boolean, boolean, boolean, boolean, boolean] { //[vertex_object_index, clickOnVertex, up, down, left, right]
+  delete_unwanted_vertex(vertex_infos) {
+    var i = 0;
+    while (i < vertex_infos.length) {
+      let to_delete = false;
+      if (this.clickedPlotIndex != vertex_infos[i].index) {
+        console.log('fhk')
+        let j = 0;
+        let cpi_vertex = false;
+        while (j<vertex_infos.length) {
+          if ((vertex_infos[j].index == this.clickedPlotIndex)) {
+            cpi_vertex = true;
+            break;
+          }
+          j++;
+        }
+        to_delete = !cpi_vertex;
+      }
+      if (to_delete) {
+        vertex_infos = List.remove_at_index(i, vertex_infos);
+      } else {
+        i++;
+      }
+    }
+    return vertex_infos;
+  }
+
+  initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] { 
     var thickness = 15;
-    let obj:PlotData = this.objectList[clicked_obj_index];
-    let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, obj.width + thickness, thickness);
-    let down = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y + obj.height - thickness/2, obj.width + thickness, thickness);
-    let left = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
-    let right = Shape.isInRect(mouse1X, mouse1Y, obj.X + obj.width - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
-    let clickOnVertex = up || down || left || right;
-    return [clickOnVertex, up, down, left, right];
+    var vertex_infos = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      let obj:PlotData = this.objectList[this.display_order[i]];
+      let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, obj.width + thickness*2/3, thickness);
+      let down = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
+      let left = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+      let right = Shape.isInRect(mouse1X, mouse1Y, obj.X + obj.width - thickness*2/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+      var clickOnVertex_i = up || down || left || right;
+      if (clickOnVertex_i) {
+        vertex_infos.push({'index': this.display_order[i], 'up': up, 'down': down, 'left':left, 'right': right});
+      }
+    }
+    vertex_infos = this.delete_unwanted_vertex(vertex_infos);
+    var clickOnVertex = !(vertex_infos.length == 0);
+    return [clickOnVertex, vertex_infos];
   }
 
   setCursorStyle(mouse2X, mouse2Y, canvas):void {
@@ -297,15 +345,30 @@ export class MultiplePlots {
     this.initial_mouseY = mouse1Y;
   }
 
-  initialize_object_hw(selected_index):void {
-    this.initial_object_width = this.objectList[selected_index].width;
-    this.initial_object_height = this.objectList[selected_index].height;
+  initializeObjectXY():void {
+    this.initial_objectsX = [];
+    this.initial_objectsY = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      this.initial_objectsX.push(this.objectList[i].X);
+      this.initial_objectsY.push(this.objectList[i].Y);
+    }
   }
 
-  resetAllScatters():void {
+  initialize_objects_hw():void {
+    this.initial_object_width = [];
+    this.initial_object_height = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      this.initial_object_width[i] = this.objectList[i].width;
+      this.initial_object_height[i] = this.objectList[i].height;
+    }
+  }
+
+  resetAllObjects():void {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.objectList[i].type_ == 'scatterplot') {
         Interactions.click_on_reset_action(this.objectList[i]);
+      } else if (this.objectList[i].type_ == 'contour') {
+        this.objectList[i].reset_scales();
       }
     }
   }
@@ -323,7 +386,7 @@ export class MultiplePlots {
     var j = 0;
     while (j<this.nbObjects - 1) {
       if (sortedObjectList[j+1][small_coord] < sortedObjectList[j][small_coord]) {
-        sorted_list = List.move_elements(j, j+1, sorted_list);
+        List.switchElements(sorted_list, j, j+1);
       }
       j = j+2;
     }
@@ -361,44 +424,47 @@ export class MultiplePlots {
       this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
     }
-    this.resetAllScatters();
+    this.resetAllObjects();
     this.redrawAllObjects();
   }
 
-  resizeObject(vertex_object_index, up, down, left, right, mouse2X, mouse2Y):void {
+  resizeObject(vertex_infos, mouse2X, mouse2Y):void {
     var widthSizeLimit = 100;
     var heightSizeLimit = 100;
-    var obj:PlotData = this.objectList[vertex_object_index];
     var deltaX = mouse2X - this.initial_mouseX;
     var deltaY = mouse2Y - this.initial_mouseY;
-    if (up === true) {
-      if (this.initial_object_height - deltaY > heightSizeLimit) {
-        obj.Y = this.initial_objectsY[vertex_object_index] + deltaY;
-        obj.height = this.initial_object_height - deltaY;
-      } else {
-        obj.height = heightSizeLimit;
+    for (let i=0; i<vertex_infos.length; i++) {
+      let vertex_object_index = vertex_infos[i].index;
+      var obj:PlotData = this.objectList[vertex_object_index];
+      if (vertex_infos[i].up === true) {
+        if (this.initial_object_height[vertex_object_index] - deltaY > heightSizeLimit) {
+          this.objectList[vertex_object_index].Y = this.initial_objectsY[vertex_object_index] + deltaY;
+          this.objectList[vertex_object_index].height = this.initial_object_height[vertex_object_index] - deltaY;
+        } else {
+          this.objectList[vertex_object_index].height = heightSizeLimit;
+        }
       }
-    }
-    if (down === true) {
-      if (this.initial_object_height + deltaY > heightSizeLimit) {
-        obj.height = this.initial_object_height + deltaY;
-      } else {
-        obj.height = heightSizeLimit;
+      if (vertex_infos[i].down === true) {
+        if (this.initial_object_height[vertex_object_index] + deltaY > heightSizeLimit) {
+          this.objectList[vertex_object_index].height = this.initial_object_height[vertex_object_index] + deltaY;
+        } else {
+          this.objectList[vertex_object_index].height = heightSizeLimit;
+        }
       }
-    }
-    if (left === true) {
-      if (this.initial_object_width - deltaX > widthSizeLimit) {
-        obj.X = this.initial_objectsX[vertex_object_index] + deltaX;
-        obj.width = this.initial_object_width - deltaX;
-      } else {
-        obj.width = widthSizeLimit;
+      if (vertex_infos[i].left === true) {
+        if (this.initial_object_width[vertex_object_index] - deltaX > widthSizeLimit) {
+          this.objectList[vertex_object_index].X = this.initial_objectsX[vertex_object_index] + deltaX;
+          this.objectList[vertex_object_index].width = this.initial_object_width[vertex_object_index] - deltaX;
+        } else {
+          this.objectList[vertex_object_index].width = widthSizeLimit;
+        }
       }
-    }
-    if (right === true) {
-      if (this.initial_object_width + deltaX > widthSizeLimit) {
-        obj.width = this.initial_object_width + deltaX;
-      } else {
-        obj.width = widthSizeLimit;
+      if (vertex_infos[i].right === true) {
+        if (this.initial_object_width[vertex_object_index] + deltaX > widthSizeLimit) {
+          this.objectList[vertex_object_index].width = this.initial_object_width[vertex_object_index] + deltaX;
+        } else {
+          this.objectList[vertex_object_index].width = widthSizeLimit;
+        }
       }
     }
     this.redrawAllObjects();
@@ -474,15 +540,12 @@ export class MultiplePlots {
         }
         obj.dep_color_propagation(attribute_index, vertical, inverted, hexs, selected_axis_name);
         obj.sc_interpolation_ON = true;
-      }
-      // else { // ie type_ == 'parallelplot'
-      //   this.objectList[i].selected_axis_name = selected_axis_name;
-      // }
+      } 
     }
   }
 
   manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
-    this.selected_index = this.getObjectIndex(mouse2X, mouse2Y);
+    this.selected_index = this.getLastObjectIndex(mouse2X, mouse2Y);
     if (this.selected_index != this.last_index) {
       for (let i=0; i<this.objectList.length; i++) {
         if (i == this.selected_index) {
@@ -538,7 +601,7 @@ export class MultiplePlots {
       this.objectList[i].width = this.objectList[i].width*zoom_coeff;
       this.objectList[i].height = this.objectList[i].height*zoom_coeff;
     }
-    this.resetAllScatters();
+    this.resetAllObjects();
   }
 
   translateAllObjects(mouse1X:number, mouse1Y:number, mouse2X:number, mouse2Y:number) {
@@ -559,12 +622,8 @@ export class MultiplePlots {
     var mouse3Y:number = 0;
     var isDrawing = false;
     var mouse_moving:boolean = false;
-    var clickUp:boolean = false;
-    var clickDown:boolean = false;
-    var clickLeft:boolean = false;
-    var clickRight:boolean = false;
+    var vertex_infos:Object;
     var clickOnVertex:boolean = false;
-    var clicked_obj_index = -1;
 
     for (let i=0; i<this.objectList.length; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
@@ -575,19 +634,20 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
-      clicked_obj_index = this.getObjectIndex(mouse1X, mouse1Y);
+      this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
+      this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
       if (this.manipulation_bool) {
         this.setAllInteractionsToOff();
-        if (clicked_obj_index != -1) {
+        if (this.clickedPlotIndex != -1) {
           this.initializeObjectXY();
-          [clickOnVertex, clickUp, clickDown, clickLeft, clickRight] = this.initialize_ClickOnVertex(mouse1X, mouse1Y, clicked_obj_index);
+          [clickOnVertex, vertex_infos] = this.initialize_clickOnVertex(mouse1X, mouse1Y);
         } else {
           clickOnVertex = false;
         }
         this.initializeObjectXY();
         if (clickOnVertex) {
           this.initializeMouseXY(mouse1X, mouse1Y);
-          this.initialize_object_hw(clicked_obj_index);
+          this.initialize_objects_hw();
         }
       }
     });
@@ -598,16 +658,16 @@ export class MultiplePlots {
       if (this.manipulation_bool) {
         if (isDrawing) {
           mouse_moving = true;
-          if ((clicked_obj_index != -1) && !(clickOnVertex)) {
+          if ((this.clickedPlotIndex != -1) && !(clickOnVertex)) {
             this.setAllInteractionsToOff();
             let tx = mouse2X - mouse1X;
             let ty = mouse2Y - mouse1Y;
             canvas.style.cursor = 'move';
-            this.translateSelectedObject(clicked_obj_index, tx, ty);
-          } else if (clicked_obj_index == -1) {
+            this.translateSelectedObject(this.clickedPlotIndex, tx, ty);
+          } else if (this.clickedPlotIndex == -1) {
             this.translateAllObjects(mouse1X, mouse1Y, mouse2X, mouse2Y);
           } else if (clickOnVertex) {
-            this.resizeObject(clicked_obj_index, clickUp, clickDown, clickLeft, clickRight, mouse2X, mouse2Y);
+            this.resizeObject(vertex_infos, mouse2X, mouse2Y);
           }
           if (this.view_bool === true) {
             let refreshed_sorted_list = this.getSortedList();
@@ -616,7 +676,7 @@ export class MultiplePlots {
             }
           }
         } else {
-          this.selected_index = this.getObjectIndex(mouse2X, mouse2Y);
+          this.selected_index = this.getLastObjectIndex(mouse2X, mouse2Y);
           this.setCursorStyle(mouse2X, mouse2Y, canvas);
         }
       } else {
@@ -639,6 +699,7 @@ export class MultiplePlots {
             }
           }
         }
+        this.redrawAllObjects(); 
       }
     });
 
@@ -655,7 +716,6 @@ export class MultiplePlots {
 
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
-          this.clickedPlotIndex = this.getObjectIndex(mouse3X, mouse3Y);
           var selected_axis_name: string; var vertical: boolean;  var inverted: boolean;
           var hexs: string[]; var isSelectingppAxis: boolean;
           [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
@@ -686,7 +746,7 @@ export class MultiplePlots {
       var mouse3X = e.offsetX;
       var mouse3Y = e.offsetY;
       var event = -e.deltaY/Math.abs(e.deltaY);
-      if (this.manipulation_bool) {
+      if (this.manipulation_bool && !this.view_bool) {
         this.zoom_elements(mouse3X, mouse3Y, event);
       }
       this.redrawAllObjects();
@@ -796,6 +856,10 @@ export abstract class PlotData {
   refresh_point_list_bool:boolean=true;
   sc_interpolation_ON: boolean=false;
   isSelectingppAxis:boolean=false;
+  zoom_box_x:number=0;
+  zoom_box_y:number=0;
+  zoom_box_w:number=0;
+  zoom_box_h:number=0;
 
   displayable_attributes:Attribute[]=[];
   attribute_booleans:boolean[]=[];
@@ -876,7 +940,7 @@ export abstract class PlotData {
   }
 
   draw_initial(): void {
-    this.Reset_scales();
+    this.reset_scales();
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
 
@@ -897,7 +961,7 @@ export abstract class PlotData {
     }
   }
 
-  Reset_scales(): void {
+  reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
     if ((this.axis_ON) && !(this.graph_ON)) {
@@ -930,17 +994,28 @@ export abstract class PlotData {
     }
   }
 
-  draw_empty_canvas(hidden) {
+  define_context(hidden) {
     if (hidden) {
       this.context = this.context_hidden;
     } else {
       this.context = this.context_show;
     }
+  }
+
+  draw_empty_canvas() {
     this.context.clearRect(this.X - 1, this.Y - 1, this.width + 2, this.height + 2);
   }
 
   draw_manipulable_rect() {
     Shape.rect(this.X, this.Y, this.width, this.height, this.context, this.manipRectColorfill, this.manipRectColorstroke, this.manipRectLinewidth, this.manipRectOpacity, this.manipRectDashline);
+  }
+
+  draw_contourgroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
+    if (d['type_'] == 'contourgroup') {
+      for (let i=0; i<d.contours.length; i++) {
+        this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d.contours[i]);
+      }
+    }
   }
 
   draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
@@ -976,7 +1051,6 @@ export abstract class PlotData {
       this.context.fill();
       this.context.stroke();
       this.context.closePath();
-
     } else if (d['type_'] == 'text') {
       d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y) ;
     }
@@ -1008,11 +1082,12 @@ export abstract class PlotData {
             if (shape == 'crux') {
               this.context.strokeStyle = this.color_surface_on_click;
             } else {
-              if (this.sc_interpolation_ON) {
-                this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(this.context.fillStyle), 0.6));
-              } else {
-                this.context.fillStyle = this.color_surface_on_click;
-              }
+              // if (this.sc_interpolation_ON) {
+              //   this.context.fillStyle = rgb_to_hex(darken_rgb(hex_to_rgb(this.context.fillStyle), 0.3));
+              // } else {
+              //   this.context.fillStyle = this.color_surface_on_click;
+              // }
+              this.context.fillStyle = this.color_surface_on_click;
             }
           }
         }
@@ -1021,7 +1096,7 @@ export abstract class PlotData {
       var y = scaleY*(1000*d.cy + mvy);
       this.pointLength = 1000*d.size;
 
-      var is_inside_canvas = ((x - this.pointLength>=0) && (x + this.pointLength <= this.width) && (y - this.pointLength >= 0) && (y + this.pointLength <= this.height));
+      var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
       if (is_inside_canvas === true) {
         this.context.beginPath();
         d.draw(this.context, this.context_hidden, mvx, mvy, scaleX, scaleY, this.X, this.Y);
@@ -1077,8 +1152,8 @@ export abstract class PlotData {
     return min_dist;
   }
 
-  draw_graph2D(d, hidden, mvx, mvy) {
-    if ((d['type_'] == 'graph2D') && (this.graph_to_display[d.id] === true)) {
+  draw_dataset(d, hidden, mvx, mvy) {
+    if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
       this.context.setLineDash(d.dashline);
       this.context.strokeStyle = d.graph_colorstroke;
@@ -1104,17 +1179,17 @@ export abstract class PlotData {
         var point = d.point_list[i];
         this.draw_point(hidden, 0, mvx, mvy, this.scaleX, this.scaleY, point);
       }
-    } else if ((d['type_'] == 'graph2D') && (this.graph_to_display[d.id] === false)) {
+    } else if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
       this.delete_tooltip(d.point_list);
     }
   }
 
-  draw_graphs2D(d, hidden, mvx, mvy) {
-    if (d['type_'] == 'graphs2D') {
+  draw_graph2D(d, hidden, mvx, mvy) {
+    if (d['type_'] == 'graph2d') {
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
-        this.draw_graph2D(graph, hidden, mvx, mvy);
+        this.draw_dataset(graph, hidden, mvx, mvy);
       }
       this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
       for (let i=0; i<d.graphs.length; i++) {
@@ -1738,7 +1813,7 @@ export abstract class PlotData {
     this.plotObject.initialize_lists();
     this.plotObject.initialize_point_list();
     this.refresh_MinMax(this.plotObject.point_list);
-    this.Reset_scales();
+    this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
     this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -1760,7 +1835,7 @@ export abstract class PlotData {
     this.plotObject.initialize_lists();
     this.plotObject.initialize_point_list();
     this.refresh_MinMax(this.plotObject.point_list);
-    this.Reset_scales();
+    this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
     this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -1791,13 +1866,9 @@ export abstract class PlotData {
       Shape.rect(sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h, this.context_hidden, 'No', 'black', 1, 1, [5,5]);
   }
 
-  draw_zoom_rectangle(mouse1X, mouse1Y, mouse2X, mouse2Y) {
-    let x = Math.min(mouse1X, mouse2X);
-    let y = Math.min(mouse1Y, mouse2Y);
-    let w = Math.abs(mouse2X - mouse1X);
-    let h = Math.abs(mouse2Y - mouse1Y);
-    Shape.rect(x, y, w, h, this.context_show, 'No', 'black', 1, 1, [5,5]);
-    Shape.rect(x, y, w, h, this.context_hidden, 'No', 'black', 1, 1, [5,5]);
+  draw_zoom_rectangle() {
+    Shape.rect(this.zoom_box_x, this.zoom_box_y, this.zoom_box_w, this.zoom_box_h, this.context_show, 'No', 'black', 1, 1, [5,5]);
+    Shape.rect(this.zoom_box_x, this.zoom_box_y, this.zoom_box_w, this.zoom_box_h, this.context_hidden, 'No', 'black', 1, 1, [5,5]);
   }
 
   reset_scroll() {
@@ -1981,7 +2052,7 @@ export abstract class PlotData {
           for (let j=0; j<clicked_points.length; j++) {
             this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
           }
-        } else if (this.plotObject['type_'] == 'graphs2D') {
+        } else if (this.plotObject['type_'] == 'graph2D') {
           for (let j=0; j<this.plotObject.graphs.length; j++) {
             if (List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) {
               this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
@@ -2038,9 +2109,12 @@ export abstract class PlotData {
           let ord_max = this.scatter_to_real_coords(Math.min(this.real_to_scatter_coords(this.perm_window_y, 'y'), this.real_to_scatter_coords(this.perm_window_y, 'y') + this.real_to_scatter_length(this.perm_window_h, 'y')), 'y');
           this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
         } else { // ie zw_bool === true
+          this.zoom_box_x = Math.min(mouse1X, mouse2X);
+          this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
+          this.zoom_box_w = Math.abs(mouse2X - mouse1X);
+          this.zoom_box_h = Math.abs(mouse2Y - mouse1Y);
           this.draw(false, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
           this.draw(true, 0, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-          this.draw_zoom_rectangle(mouse1X, mouse1Y, mouse2X, mouse2Y);
         }
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
@@ -2149,6 +2223,7 @@ export abstract class PlotData {
       mouse_moving = false;
       this.isSelecting = false;
       this.isDrawing_rubber_band = false;
+      Interactions.reset_zoom_box(this);
       return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 
@@ -2504,34 +2579,47 @@ export class PlotContour extends PlotData {
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     this.plot_datas = [];
-    for (var i = 0; i < data.length; i++) {
-      var d = this.data[i];
-      if (d['type_'] == 'contour') {
-        var a = Contour2D.deserialize(d);
-        if (isNaN(this.minX)) {this.minX = a.minX} else {this.minX = Math.min(this.minX, a.minX)};
-        if (isNaN(this.maxX)) {this.maxX = a.maxX} else {this.maxX = Math.max(this.maxX, a.maxX)};
-        if (isNaN(this.minY)) {this.minY = a.minY} else {this.minY = Math.min(this.minY, a.minY)};
-        if (isNaN(this.maxY)) {this.maxY = a.maxY} else {this.maxY = Math.max(this.maxY, a.maxY)};
-        this.colour_to_plot_data[a.mouse_selection_color] = a;
+    this.type_ = 'contourgroup';
+    var d = this.data;
+    if (d['type_'] == 'contourgroup') {
+      var a = ContourGroup.deserialize(d);
+      for (let i=0; i<a.contours.length; i++) {
+        let contour = a.contours[i];
+        if (isNaN(this.minX)) {this.minX = contour.minX} else {this.minX = Math.min(this.minX, contour.minX)};
+        if (isNaN(this.maxX)) {this.maxX = contour.maxX} else {this.maxX = Math.max(this.maxX, contour.maxX)};
+        if (isNaN(this.minY)) {this.minY = contour.minY} else {this.minY = Math.min(this.minY, contour.minY)};
+        if (isNaN(this.maxY)) {this.maxY = contour.maxY} else {this.maxY = Math.max(this.maxY, contour.maxY)};
+        this.colour_to_plot_data[contour.mouse_selection_color] = contour;
         this.plot_datas.push(a);
       }
-      if (d['type_'] == 'text') {
-        var b = Text.deserialize(d);
-        this.plot_datas.push(b);
-      }
     }
+    if (d['type_'] == 'text') {
+      var b = Text.deserialize(d);
+      this.plot_datas.push(b);
+    }
+    
     this.plotObject = this.plot_datas[0];
     this.isParallelPlot = false;
     this.interaction_ON = true;
-    this.mouse_interaction(this.isParallelPlot);
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
-    this.draw_empty_canvas(hidden);
+    this.define_context(hidden);
+    this.context.save();
+    this.draw_empty_canvas();
+    this.draw_rect();
+    this.context.beginPath();
+    this.context.rect(X-1, Y-1, this.width+2, this.height+2);
+    this.context.clip();
+    this.context.closePath();
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
-      this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
+      this.draw_contourgroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
     }
+    if (this.manipulable_ON) {
+      this.draw_manipulable_rect();
+    }
+    this.context.restore();
   }
 }
 
@@ -2548,28 +2636,11 @@ export class PlotScatter extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
-      if (data['type_'] == 'point') {
-        this.type_ = 'point';
-        this.plotObject = Point2D.deserialize(data);
-        this.plot_datas['value'] = [this.plotObject];
-        if (isNaN(this.minX)) {this.minX = this.plotObject.minX} else {this.minX = Math.min(this.minX, this.plotObject.minX)};
-        if (isNaN(this.maxX)) {this.maxX = this.plotObject.maxX} else {this.maxX = Math.max(this.maxX, this.plotObject.maxX)};
-        if (isNaN(this.minY)) {this.minY = this.plotObject.minY} else {this.minY = Math.min(this.minY, this.plotObject.minY)};
-        if (isNaN(this.maxY)) {this.maxY = this.plotObject.maxY} else {this.maxY = Math.max(this.maxY, this.plotObject.maxY)};
-        this.colour_to_plot_data[this.plotObject.mouse_selection_color] = this.plotObject;
-
-      } else if (data['type_'] == 'axis') {
-        this.type_ = 'axis';
-        this.axis_ON = true;
-        this.plotObject = Axis.deserialize(data);
-      } else if (data['type_'] == 'tooltip') {
-        this.type_ = 'tooltip';
-        this.plotObject = Tooltip.deserialize(data);
-      } else if (data['type_'] == 'graphs2D') {
-        this.type_ = 'graphs2D';
+      if (data['type_'] == 'graph2d') {
+        this.type_ = 'graph2d';
         this.graph_ON = true;
         this.axis_ON = true;
-        this.plotObject = Graphs2D.deserialize(data);
+        this.plotObject = Graph2D.deserialize(data);
         this.plot_datas['value'] = this.plotObject.graphs;
         for (let i=0; i<this.plotObject.graphs.length; i++) {
           let graph = this.plotObject.graphs[i];
@@ -2591,7 +2662,7 @@ export class PlotScatter extends PlotData {
         this.type_ = 'scatterplot';
         this.axis_ON = true;
         this.mergeON = true;
-        this.plotObject = PlotDataScatter.deserialize(data);
+        this.plotObject = Scatter.deserialize(data);
         this.plot_datas['value'] = [this.plotObject];
         this.pointLength = 1000*this.plotObject.point_list[0].size;
         this.scatter_init_points = this.plotObject.point_list;
@@ -2601,14 +2672,23 @@ export class PlotScatter extends PlotData {
   }
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
-    this.draw_empty_canvas(hidden);
+    this.define_context(hidden);
+    this.context.save();
+    this.draw_empty_canvas();
     this.draw_rect();
-    this.draw_graphs2D(this.plotObject, hidden, mvx, mvy);
+    this.context.beginPath();
+    this.context.rect(X-1, Y-1, this.width+2, this.height+2);
+    this.context.clip();
+    this.context.closePath();
+    this.draw_graph2D(this.plotObject, hidden, mvx, mvy);
     this.draw_scatterplot(this.plotObject, hidden, mvx, mvy);
     this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, this.plotObject);
     this.draw_axis(mvx, mvy, scaleX, scaleY, this.plotObject);
     if (this.permanent_window) {
       this.draw_selection_rectangle();
+    }
+    if (this.zw_bool) {
+      this.draw_zoom_rectangle();
     }
 
     if (this.buttons_ON) {
@@ -2639,6 +2719,7 @@ export class PlotScatter extends PlotData {
     if (this.manipulable_ON) {
       this.draw_manipulable_rect();
     }
+    this.context.restore();
   }
 }
 
@@ -2748,8 +2829,14 @@ export class ParallelPlot extends PlotData {
 
   draw(hidden, show_state, mvx, mvy, scaleX, scaleY, X, Y) {
     this.refresh_axis_bounds(this.axis_list.length);
-    this.draw_empty_canvas(hidden);
+    this.define_context(hidden);
+    this.context.save();
+    this.draw_empty_canvas();
     this.draw_rect();
+    this.context.beginPath();
+    this.context.rect(X-1, Y-1, this.width+2, this.height + 2);
+    this.context.clip();
+    this.context.closePath();
     this.draw_rubber_bands(mvx);
     var nb_axis = this.axis_list.length;
     this.draw_parallel_coord_lines(nb_axis);
@@ -2761,6 +2848,7 @@ export class ParallelPlot extends PlotData {
     if (this.manipulable_ON) {
       this.draw_manipulable_rect();
     }
+    this.context.restore();
   }
 
   initialize_data_lists() {
@@ -2833,7 +2921,7 @@ export class Interactions {
     plot_data.select_on_click = [];
     plot_data.context_show.setLineDash([]);
     plot_data.context_hidden.setLineDash([]);
-    if (plot_data.plotObject['type_'] == 'graphs2D') {
+    if (plot_data.plotObject['type_'] == 'graph2d') {
       for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
         let graph = plot_data.plotObject.graphs[i];
         for (let j=0; j<graph.point_list.length; j++) {
@@ -2866,9 +2954,9 @@ export class Interactions {
         }
       }
     }
+    this.refresh_permanent_rect(plot_data);
     plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw_selection_rectangle();
   }
 
   public static zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, plot_data:PlotData) {
@@ -2923,6 +3011,13 @@ export class Interactions {
     plot_data.refresh_point_list_bool = true;
     plot_data.reset_scroll();
     plot_data.select_on_click = [];
+  }
+
+  public static reset_zoom_box(plot_data: PlotData) {
+    plot_data.zoom_box_x = 0;
+    plot_data.zoom_box_y = 0;
+    plot_data.zoom_box_w = 0;
+    plot_data.zoom_box_h = 0;
   }
 
   public static reset_permanent_window(plot_data:PlotData) {
@@ -3243,7 +3338,7 @@ export class Interactions {
   }
 
   public static click_on_reset_action(plot_data:PlotData) {
-    plot_data.Reset_scales();
+    plot_data.reset_scales();
     plot_data.reset_scroll();
   }
 }
@@ -3462,6 +3557,23 @@ export class Buttons {
   }
 }
 
+export class ContourGroup {
+  constructor(public contours: Contour2D[],
+              public type_: string,
+              public name:string) {}
+  
+  public static deserialize(serialized) {
+    var contours:Contour2D[] = []; 
+    var temp = serialized['contours'];
+    for (let i=0; i<temp.length; i++) {
+      contours.push(Contour2D.deserialize(temp[i]));
+    }
+    return new ContourGroup(contours,
+                            serialized['type_'],
+                            serialized['name']);
+  }
+}
+
 export class Contour2D {
   minX:number=0;
   maxX:number=0;
@@ -3489,7 +3601,7 @@ export class Contour2D {
       var plot_data_states = [];
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
-        plot_data_states.push(PlotDataState.deserialize(d));
+        plot_data_states.push(Settings.deserialize(d));
       }
       var temp = serialized['plot_data_primitives'];
       var plot_data_primitives = [];
@@ -3500,10 +3612,10 @@ export class Contour2D {
           plot_data_primitives.push(Line2D.deserialize(d));
         }
         if (d['type_'] == 'circle') {
-          plot_data_primitives.push(PlotDataCircle2D.deserialize(d));
+          plot_data_primitives.push(Circle2D.deserialize(d));
         }
         if (d['type_'] == 'arc') {
-          plot_data_primitives.push(PlotDataArc2D.deserialize(d));
+          plot_data_primitives.push(Arc2D.deserialize(d));
         }
 
       }
@@ -3529,7 +3641,7 @@ export class Text {
     var plot_data_states = [];
     for (var i = 0; i < temp.length; i++) {
       var d = temp[i];
-      plot_data_states.push(PlotDataState.deserialize(d));
+      plot_data_states.push(Settings.deserialize(d));
     }
     return new Text(serialized['comment'],
                     serialized['position_x'],
@@ -3567,7 +3679,7 @@ export class Line2D {
       var plot_data_states = [];
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
-        plot_data_states.push(PlotDataState.deserialize(d));
+        plot_data_states.push(Settings.deserialize(d));
       }
       return new Line2D(serialized['data'],
                                plot_data_states,
@@ -3575,15 +3687,15 @@ export class Line2D {
                                serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
     if (first_elem) {
-      context.moveTo(scaleX*(1000*this.data[0]+ mvx), scaleY*(1000*this.data[1]+ mvy));
+      context.moveTo(scaleX*(1000*this.data[0]+ mvx) + X, scaleY*(1000*this.data[1]+ mvy) + Y);
     }
-    context.lineTo(scaleX*(1000*this.data[2]+ mvx), scaleY*(1000*this.data[3]+ mvy));
+    context.lineTo(scaleX*(1000*this.data[2]+ mvx) + X, scaleY*(1000*this.data[3]+ mvy) + Y);
   }
 }
 
-export class PlotDataCircle2D {
+export class Circle2D {
   minX:number=0;
   maxX:number=0;
   minY:number=0;
@@ -3593,7 +3705,7 @@ export class PlotDataCircle2D {
               public cx:number,
               public cy:number,
               public r:number,
-              public plot_data_states:PlotDataState[],
+              public plot_data_states:Settings[],
               public type_:string,
               public name:string) {
       this.minX = this.cx - this.r;
@@ -3607,9 +3719,9 @@ export class PlotDataCircle2D {
       var plot_data_states = []
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i]
-        plot_data_states.push(PlotDataState.deserialize(d))
+        plot_data_states.push(Settings.deserialize(d))
       }
-      return new PlotDataCircle2D(serialized['data'],
+      return new Circle2D(serialized['data'],
                                   serialized['cx'],
                                   serialized['cy'],
                                   serialized['r'],
@@ -3618,8 +3730,8 @@ export class PlotDataCircle2D {
                                   serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
-    context.arc(scaleX*(1000*this.cx+ mvx), scaleY*(1000*this.cy+ mvy), scaleX*1000*this.r, 0, 2*Math.PI);
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
+    context.arc(scaleX*(1000*this.cx+ mvx) + X, scaleY*(1000*this.cy+ mvy) + Y, scaleX*1000*this.r, 0, 2*Math.PI);
   }
 
 }
@@ -4109,7 +4221,7 @@ export class Tooltip {
   }
 }
 
-export class PlotDataGraph2D {
+export class Dataset {
   id:number=0;
   constructor(public point_list:Point2D[],
               public dashline: number[],
@@ -4123,7 +4235,7 @@ export class PlotDataGraph2D {
 
   public static deserialize(serialized) {
     var point_list = [];
-    var temp = serialized['serialized_point_list'];
+    var temp = serialized['points'];
     for (var i=0; i<temp.length; i++) {
       var d = temp[i];
       point_list.push(Point2D.deserialize(d));
@@ -4137,7 +4249,7 @@ export class PlotDataGraph2D {
       segments.push(new Line2D(data, [], '', ''));
     }
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    return new PlotDataGraph2D(point_list,
+    return new Dataset(point_list,
                            serialized['dashline'],
                            rgb_to_hex(serialized['graph_colorstroke']),
                            serialized['graph_linewidth'],
@@ -4149,27 +4261,27 @@ export class PlotDataGraph2D {
   }
 }
 
-export class Graphs2D {
-  constructor(public graphs: PlotDataGraph2D[],
+export class Graph2D {
+  constructor(public graphs: Dataset[],
               public axis: Axis,
               public type_: string,
               public name: string) {}
 
   public static deserialize(serialized) {
-    var graphs:PlotDataGraph2D[] = [];
+    var graphs:Dataset[] = [];
     for (let i=0; i<serialized['graphs'].length; i++) {
-      graphs.push(PlotDataGraph2D.deserialize(serialized['graphs'][i]));
+      graphs.push(Dataset.deserialize(serialized['graphs'][i]));
     }
     var axis = Axis.deserialize(serialized['axis']);
 
-    return new Graphs2D(graphs,
+    return new Graph2D(graphs,
                         axis,
                         serialized['type_'],
                         serialized['name']);
   }
 }
 
-export class PlotDataScatter {
+export class Scatter {
 
   point_list:Point2D[]=[];
   displayableAttributes:Attribute[]=[];
@@ -4196,7 +4308,7 @@ export class PlotDataScatter {
   public static deserialize(serialized) {
     var axis = Axis.deserialize(serialized['axis']);
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    return new PlotDataScatter(serialized['elements'],
+    return new Scatter(serialized['elements'],
                                axis,
                                tooltip,
                                serialized['to_display_att_names'],
@@ -4293,7 +4405,7 @@ export class PlotDataScatter {
   }
 }
 
-export class PlotDataArc2D {
+export class Arc2D {
   minX:number=0;
   maxX:number=0;
   minY:number=0;
@@ -4305,7 +4417,7 @@ export class PlotDataArc2D {
               public data:any,
               public angle1:number,
               public angle2:number,
-              public plot_data_states:PlotDataState[],
+              public plot_data_states:Settings[],
               public type_:string,
               public name:string) {
       if((this.cx - this.r) < this.minX){
@@ -4327,9 +4439,9 @@ export class PlotDataArc2D {
       var plot_data_states = [];
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
-        plot_data_states.push(PlotDataState.deserialize(d));
+        plot_data_states.push(Settings.deserialize(d));
       }
-      return new PlotDataArc2D(serialized['cx'],
+      return new Arc2D(serialized['cx'],
                                   serialized['cy'],
                                   serialized['r'],
                                   serialized['data'],
@@ -4340,11 +4452,11 @@ export class PlotDataArc2D {
                                   serialized['name']);
   }
 
-  draw(context, first_elem, mvx, mvy, scaleX, scaleY) {
+  draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
     var ptsa = [];
     for (var l = 0; l < this.data.length; l++) {
-      ptsa.push(scaleX*(1000*this.data[l]['x']+ mvx));
-      ptsa.push(scaleY*(1000*this.data[l]['y']+ mvy));
+      ptsa.push(scaleX*(1000*this.data[l]['x']+ mvx) + X);
+      ptsa.push(scaleY*(1000*this.data[l]['y']+ mvy) + Y);
     }
     var tension = 0.4;
     var isClosed = false;
@@ -4371,7 +4483,7 @@ export class Attribute {
   }
 }
 
-export class PlotDataState {
+export class Settings {
 
   constructor(public color_surface:ColorSurfaceSet,
               public color_map:any,
@@ -4412,7 +4524,7 @@ export class PlotDataState {
       if (serialized['point_color'] != null) {
         point_color = PointColorSet.deserialize(serialized['point_color']);
       }
-      return new PlotDataState(color_surface,
+      return new Settings(color_surface,
                                serialized['color_map'],
                                hatching,
                                serialized['opacity'],
@@ -4427,7 +4539,7 @@ export class PlotDataState {
                                serialized['name']);
   }
   copy() {
-    return new PlotDataState(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.shape_set, this.point_size, this.point_color, this.window_size, this.stroke_width, this.name);
+    return new Settings(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.shape_set, this.point_size, this.point_color, this.window_size, this.stroke_width, this.name);
   }
 }
 
@@ -4756,7 +4868,7 @@ export function hex_to_string(hexa:string): string {
   throw new Error('hex_to_string -> Invalid color : ' + hexa + ' not in list');
 }
 
-export function hexToRgbObj(hex):Object {
+export function hexToRgbObj(hex):Object { // Returns an object {r: ..., g: ..., b: ...}
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? {
     r: parseInt(result[1], 16),
@@ -4851,6 +4963,14 @@ export function tint_rgb(rgb:string, coeff:number): string { //coeff must be bet
   var b = result[2] + (255 - result[2])*coeff;
   return rgb_vectorToStr(r,g,b);
 }
+
+export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 0 ans 1. The higher the coeff, the darker the color
+  var result = rgb_strToVector(rgb);
+  var r = result[0]*(1 - coeff);
+  var g = result[1]*(1 - coeff);
+  var b = result[2]*(1 - coeff);
+  return rgb_vectorToStr(r,g,b);
+} 
 
 class Sort {
   nbPermutations:number = 0;
@@ -5095,6 +5215,10 @@ export class List {
       list = this.remove_at_index(old_index + 1, list);
     }
     return list;
+  }
+
+  public static switchElements(list:any[], index1:number, index2:number): void {
+    [list[index1], list[index2]] = [list[index2], list[index1]];
   }
 
   public static reverse(list:any[]): any[] {

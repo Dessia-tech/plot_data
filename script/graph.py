@@ -7,16 +7,6 @@ graphs = []
 surface_color = BLACK
 stroke_width = 0.5  # Points' stroke width
 
-# Scatter plot
-nb_points_x = 10
-nb_points_y = 10
-font_size = 12
-graduation_color = GREY
-axis_color = GREY
-axis_width = 0.5
-arrow_on = False
-grid_on = True
-
 # Tooltip
 colorfill = BLACK
 text_color = WHITE
@@ -98,7 +88,7 @@ graph2 = plot_data.Dataset(points=points2, dashline=[5, 3, 1, 3],
                            tooltip=tooltip, name='Graph 3')
 graphs += [graph2]
 
-graphs2d = plot_data.Graph2D(graphs=graphs, axis=axis)
+graphs2d = plot_data.Graph2D(graphs=graphs)
 
 plot_data.plot_canvas(plot_data=graphs2d.to_dict(), canvas_id='canvas',
                       debug_mode=True)

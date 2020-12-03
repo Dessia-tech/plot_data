@@ -33,7 +33,7 @@ hatching = plot_data.HatchingSet(0.5, 3)
 color_surface = plot_data.ColorSurfaceSet(color='white')
 plot_data_state = plot_data.Settings(name='be_sup', hatching=hatching,
                                      stroke_width=1)
-contours.append(c.plot_data(plot_data_states=[plot_data_state]))
+# contours.append(c.plot_data(plot_data_states=[plot_data_state]))
 
 hatching = plot_data.HatchingSet(1)
 plot_data_state = plot_data.Settings(name='name', hatching=hatching,

@@ -89,16 +89,16 @@ export class MultiplePlots {
   }
 
   initializeButtons():void {
-    this.transbutton_x = this.width - 45;
-    this.transbutton_y = 10;
+    this.transbutton_x = 5;
+    this.transbutton_y = this.height - 25;
     this.transbutton_w = 35;
-    this.transbutton_h = 25;
-    this.selectDep_x = this.width - 50;
-    this.selectDep_y = 40;
+    this.transbutton_h = 20;
+    this.selectDep_x = 45;
+    this.selectDep_y = this.height - 25;
     this.selectDep_w = 40;
     this.selectDep_h = 20;
-    this.view_button_x = this.width - 45;
-    this.view_button_y = 65;
+    this.view_button_x = 90;
+    this.view_button_y = this.height - 25;
     this.view_button_w = 35;
     this.view_button_h = 20;
   }
@@ -3620,8 +3620,8 @@ export class Contour2D {
 
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
-        if (d['type_'] == 'line') {
-          plot_data_primitives.push(Line2D.deserialize(d));
+        if (d['type_'] == 'linesegment') {
+          plot_data_primitives.push(LineSegment.deserialize(d));
         }
         if (d['type_'] == 'circle') {
           plot_data_primitives.push(Circle2D.deserialize(d));
@@ -3670,7 +3670,7 @@ export class Text {
   }
 }
 
-export class Line2D {
+export class LineSegment {
   minX:number=0;
   maxX:number=0;
   minY:number=0;
@@ -3693,7 +3693,7 @@ export class Line2D {
         var d = temp[i];
         plot_data_states.push(Settings.deserialize(d));
       }
-      return new Line2D(serialized['data'],
+      return new LineSegment(serialized['data'],
                                plot_data_states,
                                serialized['type_'],
                                serialized['name']);
@@ -4239,7 +4239,7 @@ export class Dataset {
               public dashline: number[],
               public graph_colorstroke: string,
               public graph_linewidth: number,
-              public segments:Line2D[],
+              public segments:LineSegment[],
               public display_step:number,
               public tooltip:Tooltip,
               public type_: string,
@@ -4258,7 +4258,7 @@ export class Dataset {
       let current_point = point_list[i];
       let next_point = point_list[i+1];
       let data = [current_point.cx, current_point.cy, next_point.cx, next_point.cy];
-      segments.push(new Line2D(data, [], '', ''));
+      segments.push(new LineSegment(data, [], '', ''));
     }
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
     return new Dataset(point_list,
@@ -4335,10 +4335,13 @@ export class Scatter {
 
   initialize_displayableAttributes() {
     var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
+    var exceptions = ['name', 'package_version', 'object_class'];
     for (let i=0; i<attribute_names.length; i++) {
       let name = attribute_names[i];
-      let type_ = TypeOf(this.elements[0][name]);
-      this.displayableAttributes.push(new Attribute(name, type_));
+      if (!List.is_include(name, exceptions)) {
+        let type_ = TypeOf(this.elements[0][name]);
+        this.displayableAttributes.push(new Attribute(name, type_)); 
+      }
     }
   }
 

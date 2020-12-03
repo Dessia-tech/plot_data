@@ -272,20 +272,34 @@ export class MultiplePlots {
   }
 
   delete_unwanted_vertex(vertex_infos) {
-    for (let i=0; i<vertex_infos.length - 1; i++) {
+    var i = 0;
+    while (i < vertex_infos.length) {
       let to_delete = false;
       if (this.clickedPlotIndex != vertex_infos[i].index) {
-        for (let j=i+1; j<vertex_infos.length; j++) {
-
+        console.log('fhk')
+        let j = 0;
+        let cpi_vertex = false;
+        while (j<vertex_infos.length) {
+          if ((vertex_infos[j].index == this.clickedPlotIndex)) {
+            cpi_vertex = true;
+            break;
+          }
+          j++;
         }
+        to_delete = !cpi_vertex;
+      }
+      if (to_delete) {
+        vertex_infos = List.remove_at_index(i, vertex_infos);
+      } else {
+        i++;
       }
     }
+    return vertex_infos;
   }
 
   initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] { 
     var thickness = 15;
     var vertex_infos = [];
-    var clickOnVertex = false;
     for (let i=0; i<this.nbObjects; i++) {
       let obj:PlotData = this.objectList[this.display_order[i]];
       let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness/2, obj.Y - thickness/2, obj.width + thickness, thickness);
@@ -296,10 +310,9 @@ export class MultiplePlots {
       if (clickOnVertex_i) {
         vertex_infos.push({'index': this.display_order[i], 'up': up, 'down': down, 'left':left, 'right': right});
       }
-      if (!clickOnVertex) {
-        clickOnVertex = up || down || left || right;
-      }
     }
+    vertex_infos = this.delete_unwanted_vertex(vertex_infos);
+    var clickOnVertex = !(vertex_infos.length == 0);
     return [clickOnVertex, vertex_infos];
   }
 

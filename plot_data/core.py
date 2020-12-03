@@ -18,7 +18,7 @@ from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 
 import plot_data.templates as templates
 
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Type
 
 npy.seterr(divide='raise')
 
@@ -343,14 +343,15 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(data, debug_mode: bool = False,
-                canvas_id: str = 'canvas'):
+def plot_canvas(plot_data_object: Subclass[PlotDataObject],
+                debug_mode: bool = False, canvas_id: str = 'canvas'):
     """
     Plot input data in web browser
 
     """
     first_letter = canvas_id[0]
 
+    data = plot_data_object.to_dict()
     plot_type = data['type_']
     if plot_type == 'contourgroup':
         template = templates.contour_template

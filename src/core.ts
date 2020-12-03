@@ -1076,7 +1076,11 @@ export abstract class PlotData {
         if ((this.plotObject.type_ == 'scatterplot') && !this.sc_interpolation_ON) {
           this.context.fillStyle = this.plotObject.color_fill;
         } else {
-          this.context.fillStyle = d.color_fill;
+          if ((this.select_on_click.length == 0) || List.contains_undefined(this.select_on_click)) {
+            this.context.fillStyle = d.color_fill;
+          } else {
+            this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
+          }
         }
         this.context.lineWidth = d.stroke_width;
         this.context.strokeStyle = d.color_stroke;
@@ -1094,12 +1098,11 @@ export abstract class PlotData {
             if (shape == 'crux') {
               this.context.strokeStyle = this.color_surface_on_click;
             } else {
-              // if (this.sc_interpolation_ON) {
-              //   this.context.fillStyle = rgb_to_hex(darken_rgb(hex_to_rgb(this.context.fillStyle), 0.3));
-              // } else {
-              //   this.context.fillStyle = this.color_surface_on_click;
-              // }
-              this.context.fillStyle = this.color_surface_on_click;
+              if (this.sc_interpolation_ON) {
+                this.context.fillStyle = d.color_fill;
+              } else {
+                this.context.fillStyle = this.color_surface_on_click;
+              }
             }
           }
         }

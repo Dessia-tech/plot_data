@@ -10,8 +10,7 @@ steps:
   - git fetch --tags
   - npm config set git-tag-version=false 
   - version=`git describe --tags --abbrev=0`
-  - version="$${version:1}"
-  - npm version $${version}
+  - npm version $${version:1}
   - npm install
   - npm run-script build
 

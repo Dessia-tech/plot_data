@@ -6,10 +6,9 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
-import os
 import numpy as npy
 import math
-
+import sys
 import json
 import tempfile
 import webbrowser
@@ -349,8 +348,9 @@ def plot_canvas(data, debug_mode: bool = False,
     """
     Plot input data in web browser
 
-    TODO : core_path input must be removed and set to relative to find core.js
     """
+    first_letter = canvas_id[0]
+
     plot_type = data['type_']
     if plot_type == 'contourgroup':
         template = templates.contour_template
@@ -366,7 +366,7 @@ def plot_canvas(data, debug_mode: bool = False,
     core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
         core_path = '/'.join(
-            os.path.abspath('').split('/')[:-1] + ['lib', 'core.js'])
+            sys.modules[__name__].__file__.split('/')[:-2] + ['lib', 'core.js'])
 
     s = template.substitute(data=json.dumps(data), core_path=core_path,
                             canvas_id=canvas_id)

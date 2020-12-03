@@ -276,7 +276,6 @@ export class MultiplePlots {
     while (i < vertex_infos.length) {
       let to_delete = false;
       if (this.clickedPlotIndex != vertex_infos[i].index) {
-        console.log('fhk')
         let j = 0;
         let cpi_vertex = false;
         while (j<vertex_infos.length) {
@@ -317,7 +316,7 @@ export class MultiplePlots {
   }
 
   reorder_resize_style(resize_style) {
-    var resize_dict = ['n', 'ne', 'nwse', 'nw', 'e', 'ew', 's', 'se', 'sw', 'w'];
+    var resize_dict = ['n', 'ns', 'ne', 'nwse', 'nw', 'e', 'ew', 's', 'se', 'sw', 'w'];
     for (let i=0; i<resize_dict.length; i++) {
       if (equals(resize_style.split('').sort(), resize_dict[i].split('').sort())) {
         resize_style = resize_dict[i];
@@ -1824,7 +1823,7 @@ export abstract class PlotData {
     }
     this.plotObject.toDisplayAttributes[0] = attribute;
     this.plotObject.initialize_lists();
-    this.plotObject.initialize_point_list();
+    this.plotObject.initialize_point_list(this.plotObject.elements);
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
@@ -1846,7 +1845,7 @@ export abstract class PlotData {
     }
     this.plotObject.toDisplayAttributes[1] = attribute;
     this.plotObject.initialize_lists();
-    this.plotObject.initialize_point_list();
+    this.plotObject.initialize_point_list(this.plotObject.elements);
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}

@@ -276,7 +276,6 @@ export class MultiplePlots {
     while (i < vertex_infos.length) {
       let to_delete = false;
       if (this.clickedPlotIndex != vertex_infos[i].index) {
-        console.log('fhk')
         let j = 0;
         let cpi_vertex = false;
         while (j<vertex_infos.length) {
@@ -316,23 +315,36 @@ export class MultiplePlots {
     return [clickOnVertex, vertex_infos];
   }
 
+  reorder_resize_style(resize_style) {
+    var resize_dict = ['n', 'ns', 'ne', 'nwse', 'nw', 'e', 'ew', 's', 'se', 'sw', 'w'];
+    for (let i=0; i<resize_dict.length; i++) {
+      if (equals(resize_style.split('').sort(), resize_dict[i].split('').sort())) {
+        resize_style = resize_dict[i];
+        break;
+      }
+    }
+    return resize_style;
+  }
+
   setCursorStyle(mouse2X, mouse2Y, canvas):void {
     if (this.selected_index != -1) {
       var thickness = 15;
-      var up = false; var down = false; var left = false; var right = false;
-      let obj:PlotData = this.objectList[this.selected_index];
-      up = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness/2, obj.Y - thickness/2, obj.width + thickness, thickness);
-      down = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness/2, obj.Y + obj.height - thickness/2, obj.width + thickness, thickness);
-      left = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
-      right = Shape.isInRect(mouse2X, mouse2Y, obj.X + obj.width - thickness/2, obj.Y - thickness/2, thickness, obj.height + thickness);
-      var resize_style = '';
-      if (up) {resize_style = resize_style + 'n';}
-      if (down) {resize_style = resize_style + 's';}
-      if (left) {resize_style = resize_style + 'w';}
-      if (right) {resize_style = resize_style + 'e';}
+      var resize_style:any = '';
+      for (let i=0; i<this.nbObjects; i++) {
+        let obj:PlotData = this.objectList[i];
+        let up = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, obj.width + thickness*2/3, thickness);
+        let down = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
+        let left = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+        let right = Shape.isInRect(mouse2X, mouse2Y, obj.X + obj.width - thickness*2/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+        if (up && !resize_style.includes('n')) {resize_style = resize_style + 'n';}
+        if (down && !resize_style.includes('s')) {resize_style = resize_style + 's';}
+        if (left && !resize_style.includes('w')) {resize_style = resize_style + 'w';}
+        if (right && !resize_style.includes('e')) {resize_style = resize_style + 'e';}
+      }
       if (resize_style == '') {
         canvas.style.cursor = 'default';
       } else {
+        resize_style = this.reorder_resize_style(resize_style);
         canvas.style.cursor = resize_style + '-resize';
       }
     } else {
@@ -1811,7 +1823,7 @@ export abstract class PlotData {
     }
     this.plotObject.toDisplayAttributes[0] = attribute;
     this.plotObject.initialize_lists();
-    this.plotObject.initialize_point_list();
+    this.plotObject.initialize_point_list(this.plotObject.elements);
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
@@ -1833,7 +1845,7 @@ export abstract class PlotData {
     }
     this.plotObject.toDisplayAttributes[1] = attribute;
     this.plotObject.initialize_lists();
-    this.plotObject.initialize_point_list();
+    this.plotObject.initialize_point_list(this.plotObject.elements);
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}

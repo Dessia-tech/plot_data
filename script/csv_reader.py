@@ -52,7 +52,7 @@ tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color,
                             tp_radius=tp_radius,
                             to_plot_list=sc_to_disp_att_names, opacity=opacity)
 
-ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip,
+ScatterPlot = plot_data.Scatter(axis=plot_data.DEFAULT_AXIS, tooltip=tooltip,
                                 to_display_att_names=sc_to_disp_att_names,
                                 point_shape=shape, point_size=size,
                                 color_fill=sc_color_fill,
@@ -64,7 +64,7 @@ coords = [(0, 450), (0, 0)]
 sizes = [plot_data.Window(width=750, height=400),
          plot_data.Window(width=750, height=400)]
 
-catalog = plot_data.get_csv_vectors('./Canvas_tests/data.csv')
+catalog = plot_data.get_csv_vectors('../plot_data/data/data.csv')
 points = [{var: catalog.get_value_by_name(line, var)
            for var in pp_to_disp_attributes}
           for line in catalog.array]

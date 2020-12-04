@@ -111,5 +111,5 @@ setup(name='plot_data',
       packages=['plot_data'],
       package_dir={},
       include_package_data = True,
-      install_requires=['matplotlib', 'dessia_common', 'jinja2==2.11.1'],
+      install_requires=['matplotlib', 'dessia_common'],
       classifiers=['Topic :: Scientific/Engineering :: Visualization','Development Status :: 3 - Alpha'])

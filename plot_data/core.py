@@ -344,13 +344,13 @@ class MultiplePlots(PlotDataObject):
 
 
 def plot_canvas(plot_data, debug_mode: bool = False,
-                canvas_id: str = 'canvas'):
+                canvas_id: str = 'canvas', width: int = 750, height: int = 400):
     """
     Plot input data in web browser
 
     """
     first_letter = canvas_id[0]
-
+    print(plot_data)
     plot_type = plot_data['type_']
     if plot_type == 'contourgroup':
         template = templates.contour_template
@@ -369,7 +369,7 @@ def plot_canvas(plot_data, debug_mode: bool = False,
             sys.modules[__name__].__file__.split('/')[:-2] + ['lib', 'core.js'])
 
     s = template.substitute(data=json.dumps(plot_data), core_path=core_path,
-                            canvas_id=canvas_id)
+                            canvas_id=canvas_id, width=width, height=height)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:

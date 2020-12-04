@@ -32,8 +32,8 @@ c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
                          vm.edges.LineSegment2D(pt4, pt1)])
 
 d = c1.plot_data(plot_data_states=[plot_data_state])
-contour_group = plot_data.ContourGroup(contours=[d])
-objects.append(contour_group)
+primitive_group = plot_data.PrimitiveGroup(contours=[d])
+objects.append(primitive_group)
 # End contour
 
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
@@ -65,16 +65,6 @@ parallel_plot1 = plot_data.ParallelPlot(line_color=line_color,
                                         rgbs=rgbs)
 objects.append(parallel_plot1)
 
-# Axis data
-nb_points_x = 10
-nb_points_y = 10
-font_size = 12
-graduation_color = GREY
-axis_color = GREY
-axis_width = 0.5
-arrow_on = False
-grid_on = True
-
 # Tooltip
 tp_colorfill = BLACK
 text_color = WHITE
@@ -88,41 +78,33 @@ sc_color_fill = LIGHTBLUE
 sc_color_stroke = GREY
 sc_stroke_width = 0.5
 
-axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
-                      font_size=font_size, graduation_color=graduation_color,
-                      axis_color=axis_color, arrow_on=arrow_on,
-                      axis_width=axis_width, grid_on=grid_on)
-
 to_disp_att_names = ['cx', 'cy']
-tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color,
-                            fontstyle=tl_fontstyle, fontsize=tl_fontsize,
-                            tp_radius=tp_radius, to_plot_list=to_disp_att_names,
-                            opacity=opacity)
+tooltip = plot_data.Tooltip(to_plot_list=to_disp_att_names)
 
-ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip,
+scatterPlot = plot_data.Scatter(tooltip=tooltip,
                                 to_display_att_names=to_disp_att_names,
                                 point_shape=shape, point_size=size,
                                 color_fill=sc_color_fill,
                                 color_stroke=sc_color_stroke, stroke_width=0.5)
-objects.append(ScatterPlot)
+objects.append(scatterPlot)
 
-ScatterPlot1 = plot_data.Scatter(axis=axis, tooltip=tooltip,
+scatterPlot1 = plot_data.Scatter(tooltip=tooltip,
                                  to_display_att_names=['cx', 'color_fill'],
                                  point_shape=shape, point_size=size,
                                  color_fill=sc_color_fill,
                                  color_stroke=sc_color_stroke,
                                  stroke_width=0.5)
-objects.append(ScatterPlot1)
+objects.append(scatterPlot1)
 
-ScatterPlot2 = plot_data.Scatter(axis=axis, tooltip=tooltip,
+scatterPlot2 = plot_data.Scatter(tooltip=tooltip,
                                  to_display_att_names=['cy', 'color_stroke'],
                                  point_shape=shape, point_size=size,
                                  color_fill=sc_color_fill,
                                  color_stroke=sc_color_stroke,
                                  stroke_width=0.5)
-objects.append(ScatterPlot2)
+objects.append(scatterPlot2)
 
-coords = [(0, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]
+coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]
 sizes = [plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300),

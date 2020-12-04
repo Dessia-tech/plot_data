@@ -35,12 +35,14 @@ export class MultiplePlots {
   initial_mouseY:number=0;
   sorted_list:number[]=[];
   display_order:number[]=[];
+  displayable_attributes:Attribute[]=[];
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
     this.initial_coords = data['coords'];
     this.dataObjects = data['objects'];
     var points = data['points'];
+    this.initialize_displayable_attributes();
     var temp_sizes = data['sizes'];
     for (let i=0; i<temp_sizes.length; i++) {
       this.sizes.push(Window.deserialize(temp_sizes[i]));
@@ -51,7 +53,7 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.dataObjects[i]['type_'] == 'scatterplot') {
         this.dataObjects[i]['elements'] = points;
-        var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+        var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else if (this.dataObjects[i]['type_'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
         newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
@@ -72,6 +74,19 @@ export class MultiplePlots {
     if (buttons_ON) {
       this.initializeButtons();
       this.draw_buttons();
+    }
+  }
+
+  initialize_displayable_attributes() {
+    this.displayable_attributes = [];
+    var attribute_names = Object.getOwnPropertyNames(this.data['points'][0]);
+    var exceptions = ['name', 'package_version', 'object_class'];
+    for (let i=0; i<attribute_names.length; i++) {
+      if (!(List.is_include(attribute_names[i], exceptions))) {
+        let name = attribute_names[i];
+        let type_ = TypeOf(this.data['points'][0][name]);
+        this.displayable_attributes.push(new Attribute(name, type_));
+      }
     }
   }
 
@@ -180,10 +195,11 @@ export class MultiplePlots {
     var to_disp_attr_name = [attr_x.name, attr_y.name];
     var DEFAULT_AXIS = new Axis(10, 10, 12, string_to_hex('grey'), string_to_hex('grey'), '', false, 0.5, true, 'axis');
     var DEFAULT_TOOLTIP = new Tooltip(string_to_hex('black'), string_to_hex('white'), 12, 'sans-serif', 5, to_disp_attr_name, 0.75, 'tooltip', '');
-    var new_scatter = new Scatter(this.data['points'], DEFAULT_AXIS, DEFAULT_TOOLTIP, to_disp_attr_name, 'circle', 2, string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 'scatterplot', '');
+    var new_scatter = {elements: this.data['points'], axis: DEFAULT_AXIS, tooltip: DEFAULT_TOOLTIP, to_display_att_names: to_disp_attr_name, point_shape: 'circle', point_size: 2, 
+                        color_fill: string_to_rgb('lightblue'), color_stroke: string_to_rgb('grey'), stroke_width: 0.5, type_: 'scatterplot', name: ''};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
-    var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id, false);
+    var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id);
     this.initialize_new_plot_data(new_plot_data);
   }
 
@@ -2672,8 +2688,7 @@ export class PlotScatter extends PlotData {
     public buttons_ON: boolean,
     public X: number,
     public Y: number,
-    public canvas_id: string,
-    public from_python: boolean) {
+    public canvas_id: string) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
@@ -2704,7 +2719,7 @@ export class PlotScatter extends PlotData {
         this.type_ = 'scatterplot';
         this.axis_ON = true;
         this.mergeON = true;
-        if (from_python) {this.plotObject = Scatter.deserialize(data);} else {this.plotObject = data;}
+        this.plotObject = Scatter.deserialize(data);
         this.plot_datas['value'] = [this.plotObject];
         this.pointLength = 1000*this.plotObject.point_list[0].size;
         this.scatter_init_points = this.plotObject.point_list;

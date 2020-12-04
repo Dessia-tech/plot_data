@@ -23,10 +23,10 @@ p0 = vm.Point2D(-1, 0)
 p1 = vm.Point2D(-npy.cos(npy.pi / 4), npy.sin(npy.pi / 4))
 p2 = vm.Point2D(0, 1)
 
-a = vm.edges.Arc2D(p2, p1, p0)
-l = vm.edges.LineSegment2D(p2, a.center)
+arc = vm.edges.Arc2D(p2, p1, p0)
+l = vm.edges.LineSegment2D(p2, arc.center)
 
-c = vm.wires.Contour2D([a, l])
+c = vm.wires.Contour2D([arc, l])
 c2 = vm.core.CompositePrimitive2D([c])
 
 hatching = plot_data.HatchingSet(0.5, 3)
@@ -51,8 +51,8 @@ contour1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
 
 plot_data_line = vm.edges.LineSegment2D(vm.Point2D(2,2), vm.Point2D(3,3)).plot_data([plot_data_state])
 primitives.append(plot_data_line)
+primitives.append(arc.plot_data([plot_data_state]))
 
-plot_data_arc = plot_data.arc(cx=3, cy=0, r=2, )
 
 plot_data_contour = contour1.plot_data(plot_data_states=[plot_data_state])
 primitives.append(plot_data_contour)

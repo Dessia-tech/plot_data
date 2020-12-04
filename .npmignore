@@ -9,3 +9,4 @@ ISSUE_TEMPLATE.md
 setup.py
 tsconfig.json
 tslint.json
+commitlint.config.js

@@ -311,10 +311,10 @@ class Contour2D(PlotDataObject):
         return xmin, xmax, ymin, ymax
 
 
-class ContourGroup(PlotDataObject):
+class PrimitiveGroup(PlotDataObject):
     def __init__(self, contours: List[Contour2D], name: str = ''):
         self.contours = contours
-        PlotDataObject.__init__(self, type_='contourgroup', name=name)
+        PlotDataObject.__init__(self, type_='primitivegroup', name=name)
 
 
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
@@ -357,9 +357,13 @@ def plot_canvas(plot_data, debug_mode: bool = False,
 
     """
     first_letter = canvas_id[0]
-    print(plot_data)
+    try:
+        int(first_letter)
+        raise NameError('canvas_id argument must not start with a number')
+    except ValueError:
+        print('canvas_id : ' + canvas_id)
     plot_type = plot_data['type_']
-    if plot_type == 'contourgroup':
+    if plot_type == 'primitivegroup':
         template = templates.contour_template
     elif plot_type == 'scatterplot' or plot_type == 'graph2d':
         template = templates.scatter_template
@@ -397,7 +401,8 @@ TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'contour': Contour2D, 'graph2D': Dataset,
                  'graphs2D': Graph2D, 'line': LineSegment,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
-                 'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip}
+                 'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
+                 'primitivegroup': PrimitiveGroup}
 
 
 def bounding_box(plot_datas):

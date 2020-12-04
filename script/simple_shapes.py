@@ -51,7 +51,7 @@ c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
 
 d = c1.plot_data(plot_data_states=[plot_data_state])
 contours.append(d)
-contour_group = plot_data.ContourGroup(contours=contours)
+contour_group = plot_data.PrimitiveGroup(contours=contours)
 
 plot_data.plot_canvas(plot_data=contour_group.to_dict(), canvas_id='canvas',
                       debug_mode=True)

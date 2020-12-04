@@ -55,7 +55,7 @@ export class MultiplePlots {
       } else if (this.dataObjects[i]['type_'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
         newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
-      } else if (this.dataObjects[i]['type_'] == 'contourgroup') {
+      } else if (this.dataObjects[i]['type_'] == 'primitivegroup') {
         newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else {
         throw new Error('MultiplePlots constructor : invalid object type');
@@ -1052,8 +1052,8 @@ export abstract class PlotData {
     Shape.rect(this.X, this.Y, this.width, this.height, this.context, this.manipRectColorfill, this.manipRectColorstroke, this.manipRectLinewidth, this.manipRectOpacity, this.manipRectDashline);
   }
 
-  draw_contourgroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
-    if (d['type_'] == 'contourgroup') {
+  draw_primitivegroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
+    if (d['type_'] == 'primitivegroup') {
       for (let i=0; i<d.contours.length; i++) {
         this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d.contours[i]);
       }
@@ -2624,10 +2624,10 @@ export class PlotContour extends PlotData {
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     this.plot_datas = [];
-    this.type_ = 'contourgroup';
+    this.type_ = 'primitivegroup';
     var d = this.data;
-    if (d['type_'] == 'contourgroup') {
-      var a = ContourGroup.deserialize(d);
+    if (d['type_'] == 'primitivegroup') {
+      var a = PrimitiveGroup.deserialize(d);
       this.plot_datas.push(a);
       for (let i=0; i<a.contours.length; i++) {
         let contour = a.contours[i];
@@ -2655,7 +2655,7 @@ export class PlotContour extends PlotData {
     this.context.closePath();
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
-      this.draw_contourgroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
+      this.draw_primitivegroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d);
     }
     if (this.manipulable_ON) {
       this.draw_manipulable_rect();
@@ -3599,7 +3599,7 @@ export class Buttons {
   }
 }
 
-export class ContourGroup {
+export class PrimitiveGroup {
   constructor(public contours: any[],
               public type_: string,
               public name:string) {}
@@ -3617,7 +3617,7 @@ export class ContourGroup {
         contours.push(c);
       }
     }
-    return new ContourGroup(contours,
+    return new PrimitiveGroup(contours,
                             serialized['type_'],
                             serialized['name']);
   }
@@ -5308,6 +5308,3 @@ export function equals(obj1:any, obj2:any): boolean { //Works on any kind of obj
   }
   return true;
 }
-
-var attr_x = new Attribute('cx', 'float');
-var attr_y = new Attribute('cy', 'float');

@@ -32,8 +32,8 @@ c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
                          vm.edges.LineSegment2D(pt4, pt1)])
 
 d = c1.plot_data(plot_data_states=[plot_data_state])
-contour_group = plot_data.ContourGroup(contours=[d])
-objects.append(contour_group)
+primitive_group = plot_data.PrimitiveGroup(contours=[d])
+objects.append(primitive_group)
 # End contour
 
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]

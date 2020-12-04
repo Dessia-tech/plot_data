@@ -11,7 +11,7 @@ import volmdlr as vm
 import volmdlr.wires
 import volmdlr.edges
 
-contours = []
+primitives = []
 triangle_points = [vm.Point2D(*npy.random.random(2)) for i in range(3)]
 triangle = vm.wires.ClosedPolygon2D(triangle_points)
 
@@ -33,7 +33,7 @@ hatching = plot_data.HatchingSet(0.5, 3)
 color_surface = plot_data.ColorSurfaceSet(color='white')
 plot_data_state = plot_data.Settings(name='be_sup', hatching=hatching,
                                      stroke_width=1)
-# contours.append(c.plot_data(plot_data_states=[plot_data_state]))
+# primitives.append(c.plot_data(plot_data_states=[plot_data_state]))
 
 hatching = plot_data.HatchingSet(1)
 plot_data_state = plot_data.Settings(name='name', hatching=hatching,
@@ -44,14 +44,19 @@ pt1 = vm.Point2D(0, 0)
 pt2 = vm.Point2D(0, size)
 pt3 = vm.Point2D(size, size)
 pt4 = vm.Point2D(size, 0)
-c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
+contour1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
                          vm.edges.LineSegment2D(pt2, pt3),
                          vm.edges.LineSegment2D(pt3, pt4),
                          vm.edges.LineSegment2D(pt4, pt1)])
 
-d = c1.plot_data(plot_data_states=[plot_data_state])
-contours.append(d)
-contour_group = plot_data.PrimitiveGroup(contours=contours)
+plot_data_line = vm.edges.LineSegment2D(vm.Point2D(2,2), vm.Point2D(3,3)).plot_data([plot_data_state])
+primitives.append(plot_data_line)
+
+plot_data_arc = plot_data.arc(cx=3, cy=0, r=2, )
+
+plot_data_contour = contour1.plot_data(plot_data_states=[plot_data_state])
+primitives.append(plot_data_contour)
+contour_group = plot_data.PrimitiveGroup(primitives=primitives)
 
 plot_data.plot_canvas(plot_data=contour_group.to_dict(), canvas_id='canvas',
                       debug_mode=True)

@@ -166,6 +166,16 @@ export class MultiplePlots {
     this.context_hidden = hiddenCanvas.getContext("2d");
   }
 
+  initialize_new_plot_data(new_plot_data:PlotData) {
+    this.initializeObjectContext(new_plot_data);
+    this.objectList.push(new_plot_data);
+    this.nbObjects++;
+    this.display_order.push(this.nbObjects-1);
+    new_plot_data.draw_initial();
+    new_plot_data.mouse_interaction(false);
+    new_plot_data.interaction_ON = false;
+  }
+
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
     var to_disp_attr_name = [attr_x.name, attr_y.name];
     var DEFAULT_AXIS = new Axis(10, 10, 12, string_to_hex('grey'), string_to_hex('grey'), '', false, 0.5, true, 'axis');
@@ -174,13 +184,20 @@ export class MultiplePlots {
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
     var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id, false);
-    this.initializeObjectContext(new_plot_data);
-    this.objectList.push(new_plot_data);
-    this.nbObjects++;
-    this.display_order.push(this.nbObjects-1);
-    new_plot_data.draw_initial();
-    new_plot_data.mouse_interaction(false);
-    new_plot_data.interaction_ON = false;
+    this.initialize_new_plot_data(new_plot_data);
+  }
+
+  add_parallelplot(attributes:Attribute[]) {
+    var to_disp_attr_names = [];
+    for (let i=0; i<attributes.length; i++) {
+      to_disp_attr_names.push(attributes[i].name);
+    }
+    var pp_data = {elements : this.data['points'], line_color: string_to_rgb('black'), line_width: 0.5, disposition: 'vertical',
+                   to_disp_attributes: to_disp_attr_names, rgbs: [[192, 11, 11], [14, 192, 11], [11, 11, 192]]};
+    var DEFAULT_WIDTH = 560;
+    var DEFAULT_HEIGHT = 300;
+    var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id);
+    this.initialize_new_plot_data(new_plot_data);
   }
 
   getObjectIndex(x, y): number[] {
@@ -735,7 +752,6 @@ export class MultiplePlots {
       var click_on_selectDep_button = Shape.isInRect(mouse3X, mouse3Y, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
       var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
       var click_on_button = click_on_manip_button || click_on_selectDep_button || click_on_view;
-      console.log(click_on_manip_button, click_on_selectDep_button, click_on_view)
       if (click_on_button) {
         this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view);
       }
@@ -3601,7 +3617,6 @@ export class ContourGroup {
         contours.push(c);
       }
     }
-    console.log(contours.length)
     return new ContourGroup(contours,
                             serialized['type_'],
                             serialized['name']);
@@ -4938,6 +4953,10 @@ export function string_to_hex(str:string): string {
 
 export function rgb_to_string(rgb:string): string {
   return hex_to_string(rgb_to_hex(rgb));
+}
+
+export function string_to_rgb(str:string) {
+  return hex_to_rgb(string_to_hex(str));
 }
 
 export function color_to_string(color:string): string {

@@ -19,6 +19,7 @@ from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 import plot_data.templates as templates
 
 from typing import List, Tuple, Any
+from plot_data.colors import *
 
 npy.seterr(divide='raise')
 
@@ -146,7 +147,7 @@ class Text(PlotDataObject):
         PlotDataObject.__init__(self, type_='text', name=name)
 
 
-class Line2D(PlotDataObject):
+class LineSegment(PlotDataObject):
     def __init__(self, data: List[float], plot_data_states: List[Settings],
                  name: str = ''):
         self.data = data
@@ -154,7 +155,7 @@ class Line2D(PlotDataObject):
             self.plot_data_states = [Settings()]
         else:
             self.plot_data_states = plot_data_states
-        PlotDataObject.__init__(self, type_='line', name=name)
+        PlotDataObject.__init__(self, type_='linesegment', name=name)
 
     def bounding_box(self):
         return (min(self.data[0], self.data[2]),
@@ -209,9 +210,9 @@ class Axis(PlotDataObject):
 
 
 class Tooltip(PlotDataObject):
-    def __init__(self, colorfill: str, text_color: str, fontsize: float,
-                 fontstyle: str, tp_radius: float, to_plot_list: list,
-                 opacity: float, name: str = ''):
+    def __init__(self, to_plot_list: list, colorfill: str=BLACK, text_color: str=WHITE,
+                 fontsize: float=12, fontstyle: str='sans-serif', tp_radius: float=5,
+                 opacity: float=0.75, name: str = ''):
         self.colorfill = colorfill
         self.text_color = text_color
         self.fontsize = fontsize
@@ -241,17 +242,20 @@ class Dataset(PlotDataObject):
 
 
 class Graph2D(PlotDataObject):
-    def __init__(self, graphs: List[Dataset], axis: Axis, name: str = ''):
+    def __init__(self, graphs: List[Dataset], axis: Axis=None, name: str = ''):
         self.graphs = graphs
-        self.axis = axis
+        if axis is None:
+            self.axis = DEFAULT_AXIS
+        else:
+            self.axis = axis
         PlotDataObject.__init__(self, type_='graph2d', name=name)
 
 
 class Scatter(PlotDataObject):
-    def __init__(self, axis: Axis, tooltip: Tooltip,
+    def __init__(self, tooltip: Tooltip,
                  to_display_att_names: List[str], point_shape: str,
                  point_size: float, color_fill: str, color_stroke: str,
-                 stroke_width: float, elements: List[Any] = None,
+                 stroke_width: float, elements: List[Any] = None, axis: Axis=None,
                  name: str = ''):
         if elements is None:
             self.elements = []
@@ -263,7 +267,10 @@ class Scatter(PlotDataObject):
         self.color_fill = color_fill
         self.color_stroke = color_stroke
         self.stroke_width = stroke_width
-        self.axis = axis
+        if axis is None:
+            self.axis = DEFAULT_AXIS
+        else:
+            self.axis = axis
         self.tooltip = tooltip
         PlotDataObject.__init__(self, type_='scatterplot', name=name)
 
@@ -304,10 +311,10 @@ class Contour2D(PlotDataObject):
         return xmin, xmax, ymin, ymax
 
 
-class ContourGroup(PlotDataObject):
+class PrimitiveGroup(PlotDataObject):
     def __init__(self, contours: List[Contour2D], name: str = ''):
         self.contours = contours
-        PlotDataObject.__init__(self, type_='contourgroup', name=name)
+        PlotDataObject.__init__(self, type_='primitivegroup', name=name)
 
 
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
@@ -344,15 +351,19 @@ class MultiplePlots(PlotDataObject):
 
 
 def plot_canvas(plot_data, debug_mode: bool = False,
-                canvas_id: str = 'canvas'):
+                canvas_id: str = 'canvas', width: int = 750, height: int = 400):
     """
     Plot input data in web browser
 
     """
     first_letter = canvas_id[0]
-
+    try:
+        int(first_letter)
+        raise NameError('canvas_id argument must not start with a number')
+    except ValueError:
+        print('canvas_id : ' + canvas_id)
     plot_type = plot_data['type_']
-    if plot_type == 'contourgroup':
+    if plot_type == 'primitivegroup':
         template = templates.contour_template
     elif plot_type == 'scatterplot' or plot_type == 'graph2d':
         template = templates.scatter_template
@@ -369,7 +380,7 @@ def plot_canvas(plot_data, debug_mode: bool = False,
             sys.modules[__name__].__file__.split('/')[:-2] + ['lib', 'core.js'])
 
     s = template.substitute(data=json.dumps(plot_data), core_path=core_path,
-                            canvas_id=canvas_id)
+                            canvas_id=canvas_id, width=width, height=height)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
     with open(temp_file, 'wb') as file:
@@ -388,9 +399,10 @@ def get_csv_vectors(filename):
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'contour': Contour2D, 'graph2D': Dataset,
-                 'graphs2D': Graph2D, 'line': Line2D,
+                 'graphs2D': Graph2D, 'line': LineSegment,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
-                 'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip}
+                 'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
+                 'primitivegroup': PrimitiveGroup}
 
 
 def bounding_box(plot_datas):
@@ -402,3 +414,6 @@ def bounding_box(plot_datas):
             ymin, ymax = min(ymin, bb[2]), max(ymax, bb[3])
 
     return xmin, xmax, ymin, ymax
+
+DEFAULT_AXIS = Axis(nb_points_x=10, nb_points_y=10, font_size=12, graduation_color=GREY,
+                    axis_color=GREY, arrow_on=False, axis_width=0.5, grid_on=True)

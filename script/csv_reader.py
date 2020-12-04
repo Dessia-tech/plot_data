@@ -52,7 +52,7 @@ tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color,
                             tp_radius=tp_radius,
                             to_plot_list=sc_to_disp_att_names, opacity=opacity)
 
-ScatterPlot = plot_data.Scatter(axis=axis, tooltip=tooltip,
+ScatterPlot = plot_data.Scatter(axis=plot_data.DEFAULT_AXIS, tooltip=tooltip,
                                 to_display_att_names=sc_to_disp_att_names,
                                 point_shape=shape, point_size=size,
                                 color_fill=sc_color_fill,

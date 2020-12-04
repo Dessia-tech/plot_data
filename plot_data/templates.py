@@ -46,7 +46,7 @@ scatter_template = Template('''<div id="app"></div>
   	var data = $data;
 	var number_plot_data = data.length
 
-	var plot_data = new PlotScatter(data, width, height, 1000, true, 0, 0, $canvas_id.id);
+	var plot_data = new PlotScatter(data, width, height, 1000, true, 0, 0, $canvas_id.id, true);
 	plot_data.define_canvas($canvas_id.id);
 	plot_data.draw_initial();
 	plot_data.mouse_interaction(plot_data.isParallelPlot); //true if parallel plot, false otherwise
@@ -109,7 +109,8 @@ multiplot_template = Template('''<div id="app"></div>
 
 	globalWidth = 1500;
 	globalHeight = 800;
-	var plot_data = new MultiplePlots(data, globalWidth, globalHeight, 1000, true, $canvas_id.id);
+	var multiplot = new MultiplePlots(data, globalWidth, globalHeight, 1000, true, $canvas_id.id);
+	multiplot.add_scatterplot(attr_x, attr_y);
 
 
 </script> 

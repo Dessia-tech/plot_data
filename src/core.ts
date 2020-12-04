@@ -51,7 +51,7 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       if (this.dataObjects[i]['type_'] == 'scatterplot') {
         this.dataObjects[i]['elements'] = points;
-        var newObject = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+        var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
       } else if (this.dataObjects[i]['type_'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = points;
         newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
@@ -80,7 +80,7 @@ export class MultiplePlots {
     this.width = new_width;
     var ratio = new_width/old_width;
     this.height = new_height;
-    for (let i=0; i<this.objectList.length; i++) {
+    for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].X = this.objectList[i].X * ratio;
       this.objectList[i].Y = this.objectList[i].Y * ratio;
     }
@@ -104,11 +104,7 @@ export class MultiplePlots {
   }
 
   draw_manipulation_button():void {
-    if (this.manipulation_bool === true) {
-      Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, 'True', '12px sans-serif');
-    } else {
-      Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, 'False', '12px sans-serif');
-    }
+      Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, this.manipulation_bool.toString(), '12px sans-serif');
   }
 
   draw_selection_dependency_button():void {
@@ -170,6 +166,23 @@ export class MultiplePlots {
     this.context_hidden = hiddenCanvas.getContext("2d");
   }
 
+  add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
+    var to_disp_attr_name = [attr_x.name, attr_y.name];
+    var DEFAULT_AXIS = new Axis(10, 10, 12, string_to_hex('grey'), string_to_hex('grey'), '', false, 0.5, true, 'axis');
+    var DEFAULT_TOOLTIP = new Tooltip(string_to_hex('black'), string_to_hex('white'), 12, 'sans-serif', 5, to_disp_attr_name, 0.75, 'tooltip', '');
+    var new_scatter = new Scatter(this.data['points'], DEFAULT_AXIS, DEFAULT_TOOLTIP, to_disp_attr_name, 'circle', 2, string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 'scatterplot', '');
+    var DEFAULT_WIDTH = 560;
+    var DEFAULT_HEIGHT = 300;
+    var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id, false);
+    this.initializeObjectContext(new_plot_data);
+    this.objectList.push(new_plot_data);
+    this.nbObjects++;
+    this.display_order.push(this.nbObjects-1);
+    new_plot_data.draw_initial();
+    new_plot_data.mouse_interaction(false);
+    new_plot_data.interaction_ON = false;
+  }
+
   getObjectIndex(x, y): number[] {
     var index_list = [];
     for (let i=0; i<this.nbObjects; i++) {
@@ -224,7 +237,7 @@ export class MultiplePlots {
   }
 
   isZwSelectBoolOn():boolean {
-    for (let i=0; i<this.objectList.length; i++) {
+    for (let i=0; i<this.nbObjects; i++) {
       if ((this.objectList[i].zw_bool === true) || (this.objectList[i].select_bool === true)) {
         return true;
       }
@@ -240,20 +253,20 @@ export class MultiplePlots {
   }
 
   setAllInteractionsToOff():void {
-    for (let i=0; i<this.objectList.length; i++) {
+    for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].interaction_ON = false;
     }
   }
 
   setAllInterpolationToOFF(): void {
-    for (let i=0; i<this.objectList.length; i++) {
+    for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].sc_interpolation_ON = false;
     }
   }
 
   manipulation_bool_action():void {
     this.manipulation_bool = !this.manipulation_bool;
-    for (let i=0; i<this.objectList.length; i++) {
+    for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].manipulable_ON = this.manipulation_bool;
     }
     this.selectDependency_bool = false;
@@ -266,7 +279,7 @@ export class MultiplePlots {
     this.selectDependency_bool = !this.selectDependency_bool;
     this.manipulation_bool = false;
     this.view_bool = false;
-    for (let i=0; i<this.objectList.length; i++) {
+    for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].manipulable_ON = this.manipulation_bool;
     }
   }
@@ -483,7 +496,7 @@ export class MultiplePlots {
   }
 
   getSelectionONObject():number {
-    for (let i=0; i<this.objectList.length; i++) {
+    for (let i=0; i<this.nbObjects; i++) {
       if (this.objectList[i].isSelecting === true) {
         return i;
       }
@@ -559,7 +572,7 @@ export class MultiplePlots {
   manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
     this.selected_index = this.getLastObjectIndex(mouse2X, mouse2Y);
     if (this.selected_index != this.last_index) {
-      for (let i=0; i<this.objectList.length; i++) {
+      for (let i=0; i<this.nbObjects; i++) {
         if (i == this.selected_index) {
           this.objectList[i].interaction_ON = true;
         } else {
@@ -637,7 +650,7 @@ export class MultiplePlots {
     var vertex_infos:Object;
     var clickOnVertex:boolean = false;
 
-    for (let i=0; i<this.objectList.length; i++) {
+    for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
     }
     this.setAllInteractionsToOff();
@@ -722,6 +735,7 @@ export class MultiplePlots {
       var click_on_selectDep_button = Shape.isInRect(mouse3X, mouse3Y, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
       var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
       var click_on_button = click_on_manip_button || click_on_selectDep_button || click_on_view;
+      console.log(click_on_manip_button, click_on_selectDep_button, click_on_view)
       if (click_on_button) {
         this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view);
       }
@@ -732,7 +746,7 @@ export class MultiplePlots {
           var hexs: string[]; var isSelectingppAxis: boolean;
           [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
           if (isSelectingppAxis) {
-            for (let i=0; i<this.objectList.length; i++) {
+            for (let i=0; i<this.nbObjects; i++) {
               if (this.objectList[i].type_ == 'parallelplot') {
                 this.objectList[i].selected_axis_name = selected_axis_name;
               }
@@ -2646,7 +2660,8 @@ export class PlotScatter extends PlotData {
     public buttons_ON: boolean,
     public X: number,
     public Y: number,
-    public canvas_id: string) {
+    public canvas_id: string,
+    public from_python: boolean) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
@@ -2677,7 +2692,7 @@ export class PlotScatter extends PlotData {
         this.type_ = 'scatterplot';
         this.axis_ON = true;
         this.mergeON = true;
-        this.plotObject = Scatter.deserialize(data);
+        if (from_python) {this.plotObject = Scatter.deserialize(data);} else {this.plotObject = data;}
         this.plot_datas['value'] = [this.plotObject];
         this.pointLength = 1000*this.plotObject.point_list[0].size;
         this.scatter_init_points = this.plotObject.point_list;
@@ -3854,7 +3869,7 @@ export class Axis {
               public axis_color:string,
               public name:string,
               public arrow_on:boolean,
-              public axis_width:string,
+              public axis_width:number,
               public grid_on:boolean,
               public type_:string) {}
 
@@ -5265,3 +5280,6 @@ export function equals(obj1:any, obj2:any): boolean { //Works on any kind of obj
   }
   return true;
 }
+
+var attr_x = new Attribute('cx', 'float');
+var attr_y = new Attribute('cy', 'float');

@@ -81,30 +81,30 @@ sc_stroke_width = 0.5
 to_disp_att_names = ['cx', 'cy']
 tooltip = plot_data.Tooltip(to_plot_list=to_disp_att_names)
 
-ScatterPlot = plot_data.Scatter(tooltip=tooltip,
+scatterPlot = plot_data.Scatter(tooltip=tooltip,
                                 to_display_att_names=to_disp_att_names,
                                 point_shape=shape, point_size=size,
                                 color_fill=sc_color_fill,
                                 color_stroke=sc_color_stroke, stroke_width=0.5)
-objects.append(ScatterPlot)
+objects.append(scatterPlot)
 
-ScatterPlot1 = plot_data.Scatter(tooltip=tooltip,
+scatterPlot1 = plot_data.Scatter(tooltip=tooltip,
                                  to_display_att_names=['cx', 'color_fill'],
                                  point_shape=shape, point_size=size,
                                  color_fill=sc_color_fill,
                                  color_stroke=sc_color_stroke,
                                  stroke_width=0.5)
-objects.append(ScatterPlot1)
+objects.append(scatterPlot1)
 
-ScatterPlot2 = plot_data.Scatter(tooltip=tooltip,
+scatterPlot2 = plot_data.Scatter(tooltip=tooltip,
                                  to_display_att_names=['cy', 'color_stroke'],
                                  point_shape=shape, point_size=size,
                                  color_fill=sc_color_fill,
                                  color_stroke=sc_color_stroke,
                                  stroke_width=0.5)
-objects.append(ScatterPlot2)
+objects.append(scatterPlot2)
 
-coords = [(0, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]
+coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]
 sizes = [plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300),

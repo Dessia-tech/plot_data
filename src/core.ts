@@ -2612,6 +2612,7 @@ export class PlotContour extends PlotData {
     var d = this.data;
     if (d['type_'] == 'contourgroup') {
       var a = ContourGroup.deserialize(d);
+      this.plot_datas.push(a);
       for (let i=0; i<a.contours.length; i++) {
         let contour = a.contours[i];
         if (isNaN(this.minX)) {this.minX = contour.minX} else {this.minX = Math.min(this.minX, contour.minX)};
@@ -2619,12 +2620,7 @@ export class PlotContour extends PlotData {
         if (isNaN(this.minY)) {this.minY = contour.minY} else {this.minY = Math.min(this.minY, contour.minY)};
         if (isNaN(this.maxY)) {this.maxY = contour.maxY} else {this.maxY = Math.max(this.maxY, contour.maxY)};
         this.colour_to_plot_data[contour.mouse_selection_color] = contour;
-        this.plot_datas.push(a);
       }
-    }
-    if (d['type_'] == 'text') {
-      var b = Text.deserialize(d);
-      this.plot_datas.push(b);
     }
     
     this.plotObject = this.plot_datas[0];
@@ -3588,16 +3584,24 @@ export class Buttons {
 }
 
 export class ContourGroup {
-  constructor(public contours: Contour2D[],
+  constructor(public contours: any[],
               public type_: string,
               public name:string) {}
   
   public static deserialize(serialized) {
-    var contours:Contour2D[] = []; 
+    var contours:any[] = [];
     var temp = serialized['contours'];
     for (let i=0; i<temp.length; i++) {
-      contours.push(Contour2D.deserialize(temp[i]));
+      if (temp[i]['type_'] == 'contour') {
+        var b = Contour2D.deserialize(temp[i]);
+        contours.push(b);
+      }
+      if (temp[i]['type_'] == 'text') {
+        var c = Text.deserialize(temp[i]);
+        contours.push(c);
+      }
     }
+    console.log(contours.length)
     return new ContourGroup(contours,
                             serialized['type_'],
                             serialized['name']);
@@ -3657,6 +3661,11 @@ export class Contour2D {
 }
 
 export class Text {
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
+  mouse_selection_color:any;
 
   constructor(public comment:any,
               public position_x:any,

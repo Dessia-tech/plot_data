@@ -53,5 +53,5 @@ d = c1.plot_data(plot_data_states=[plot_data_state])
 contours.append(d)
 contour_group = plot_data.PrimitiveGroup(contours=contours)
 
-plot_data.plot_canvas(plot_data=contour_group.to_dict(), canvas_id='canvas',
+plot_data.plot_canvas(plot_data_object=contour_group, canvas_id='canvas',
                       debug_mode=True)

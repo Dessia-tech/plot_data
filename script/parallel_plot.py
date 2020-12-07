@@ -51,5 +51,5 @@ parallel_plot = plot_data.ParallelPlot(elements=elements,
                                        to_disp_attributes=to_disp_attributes,
                                        rgbs=rgbs)
 
-plot_data.plot_canvas(plot_data=parallel_plot.to_dict(), debug_mode=True)
+plot_data.plot_canvas(plot_data_object=parallel_plot, debug_mode=True)
 

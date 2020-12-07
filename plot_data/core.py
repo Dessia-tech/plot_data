@@ -18,7 +18,7 @@ from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 
 import plot_data.templates as templates
 
-from typing import List, Tuple, Any
+from typing import List, Tuple, Any, Type
 from plot_data.colors import *
 
 npy.seterr(divide='raise')
@@ -350,19 +350,18 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_data, debug_mode: bool = False,
-                canvas_id: str = 'canvas', width: int = 750, height: int = 400):
+def plot_canvas(plot_data_object: Subclass[PlotDataObject],
+                debug_mode: bool = False, canvas_id: str = 'canvas',
+                width: int = 750, height: int = 400):
     """
     Plot input data in web browser
 
     """
     first_letter = canvas_id[0]
-    try:
-        int(first_letter)
-        raise NameError('canvas_id argument must not start with a number')
-    except ValueError:
-        print('canvas_id : ' + canvas_id)
-    plot_type = plot_data['type_']
+    if not isinstance(first_letter, str):
+        raise ValueError('canvas_id argument must not start with a number')
+    data = plot_data_object.to_dict()
+    plot_type = data['type_']
     if plot_type == 'primitivegroup':
         template = templates.contour_template
     elif plot_type == 'scatterplot' or plot_type == 'graph2d':
@@ -379,7 +378,7 @@ def plot_canvas(plot_data, debug_mode: bool = False,
         core_path = '/'.join(
             sys.modules[__name__].__file__.split('/')[:-2] + ['lib', 'core.js'])
 
-    s = template.substitute(data=json.dumps(plot_data), core_path=core_path,
+    s = template.substitute(data=json.dumps(data), core_path=core_path,
                             canvas_id=canvas_id, width=width, height=height)
     temp_file = tempfile.mkstemp(suffix='.html')[1]
 
@@ -415,5 +414,7 @@ def bounding_box(plot_datas):
 
     return xmin, xmax, ymin, ymax
 
-DEFAULT_AXIS = Axis(nb_points_x=10, nb_points_y=10, font_size=12, graduation_color=GREY,
-                    axis_color=GREY, arrow_on=False, axis_width=0.5, grid_on=True)
+
+DEFAULT_AXIS = Axis(nb_points_x=10, nb_points_y=10, font_size=12,
+                    graduation_color=GREY, axis_color=GREY, arrow_on=False,
+                    axis_width=0.5, grid_on=True)

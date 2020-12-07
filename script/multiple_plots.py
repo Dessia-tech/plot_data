@@ -115,4 +115,4 @@ sizes = [plot_data.Window(width=560, height=300),
 multipleplots = plot_data.MultiplePlots(points=points, objects=objects,
                                         sizes=sizes, coords=coords)
 
-plot_data.plot_canvas(plot_data=multipleplots.to_dict(), debug_mode=True)
+plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)

@@ -36,6 +36,7 @@ export class MultiplePlots {
   sorted_list:number[]=[];
   display_order:number[]=[];
   displayable_attributes:Attribute[]=[];
+  selected_point_index:number[]=[];
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
@@ -431,6 +432,23 @@ export class MultiplePlots {
     }
   }
 
+  refresh_selected_point_index() {
+    this.selected_point_index = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      if (this.objectList[i].type_ == "scatterplot") {
+        let selected_point_index_i = this.objectList[i].selected_point_index;
+        for (let j=0; j<selected_point_index_i.length; j++) {
+          if (!List.is_include(selected_point_index_i[j], this.selected_point_index)) {
+            this.selected_point_index.push(selected_point_index_i[j]);
+          }
+        }
+      }
+    }
+    var sort = new Sort();
+    this.selected_point_index = sort.MergeSort(this.selected_point_index);
+    console.log(this.selected_point_index)
+  }
+
   getSortedList() {
     var big_coord = 'X';
     var small_coord = 'Y';
@@ -756,6 +774,7 @@ export class MultiplePlots {
               this.pp_communication(rubberbands_dep);
             }
           }
+          this.refresh_selected_point_index();
         }
         this.redrawAllObjects(); 
       }
@@ -795,11 +814,12 @@ export class MultiplePlots {
           this.clean_view();
         }
       }
+      this.refresh_selected_point_index();
       this.redrawAllObjects();
       isDrawing = false;
       mouse_moving = false;
     });
-
+    
     canvas.addEventListener('wheel', e => {
       var mouse3X = e.offsetX;
       var mouse3Y = e.offsetY;
@@ -3012,6 +3032,7 @@ export class Interactions {
       }
     }
     this.refresh_permanent_rect(plot_data);
+    plot_data.refresh_selected_point_index();
     plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
@@ -3508,6 +3529,7 @@ export class MultiplotCom {
       }
       plot_data.select_on_click = new_select_on_click;
     }
+    plot_data.refresh_selected_point_index();
     plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }

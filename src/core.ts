@@ -37,6 +37,7 @@ export class MultiplePlots {
   display_order:number[]=[];
   displayable_attributes:Attribute[]=[];
   selected_point_index:number[]=[];
+  dep_selected_points_index:any[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
@@ -210,7 +211,7 @@ export class MultiplePlots {
       to_disp_attr_names.push(attributes[i].name);
     }
     var pp_data = {elements : this.data['points'], line_color: string_to_rgb('black'), line_width: 0.5, disposition: 'vertical',
-                   to_disp_attributes: to_disp_attr_names, rgbs: [[192, 11, 11], [14, 192, 11], [11, 11, 192]]};
+                   to_disp_attributes: to_disp_attr_names, rgbs: [[192, 11, 11], [14, 192, 11], [11, 11, 192]], type_: 'parallelplot', name: ''};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
     var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id);
@@ -399,6 +400,27 @@ export class MultiplePlots {
     }
   }
 
+  refresh_dep_selected_points_index() {
+    var all_index = [];
+    this.dep_selected_points_index = [];
+    for (let i=0; i<this.data['points'].length; i++) {
+      all_index.push(i);
+      this.dep_selected_points_index.push(i);
+    }
+    for (let i=0; i<this.nbObjects; i++) {
+      let obj = this.objectList[i];
+      if ((obj.type_ == 'scatterplot') && !equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
+        this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
+      } else if ((obj.type_ == 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
+        this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
+      }
+
+    }
+    if (equals(all_index, this.dep_selected_points_index)) {
+      this.dep_selected_points_index = [];
+    }
+  }
+
   initializeMouseXY(mouse1X, mouse1Y):void {
     this.initial_mouseX = mouse1X;
     this.initial_mouseY = mouse1Y;
@@ -432,6 +454,28 @@ export class MultiplePlots {
     }
   }
 
+  reset_all_selected_points() {
+    this.dep_selected_points_index = [];
+    this.selected_point_index = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      let obj = this.objectList[i];
+      if (obj.type_ == 'scatterplot') {
+        this.objectList[i].select_on_click = [];
+        this.objectList[i].selected_point_index = [];
+        Interactions.reset_permanent_window(this.objectList[i]);
+      } else if (obj.type_ == 'parallelplot') {
+        this.objectList[i].pp_selected = [];
+        this.objectList[i].pp_selected_index = [];
+        this.objectList[i].rubber_bands = [];
+        this.objectList[i].rubberbands_dep = [];
+        for (let j=0; j<obj.axis_list.length; j++) {
+          this.objectList[i].rubber_bands.push([]);
+        }
+      }
+    }
+  }
+
+
   refresh_selected_point_index() {
     this.selected_point_index = [];
     for (let i=0; i<this.nbObjects; i++) {
@@ -446,7 +490,6 @@ export class MultiplePlots {
     }
     var sort = new Sort();
     this.selected_point_index = sort.MergeSort(this.selected_point_index);
-    console.log(this.selected_point_index)
   }
 
   getSortedList() {
@@ -579,6 +622,8 @@ export class MultiplePlots {
         this.objectList[i].draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
       }
     }
+    this.refresh_dep_selected_points_index();
+    this.refresh_selected_object_from_index();
   }
 
   pp_communication(rubberbands_dep:[string, [number, number]][]):void { //process received data from a parallelplot and send it to the other objects
@@ -600,6 +645,8 @@ export class MultiplePlots {
         MultiplotCom.pp_to_pp_communication(rubberbands_dep, this.objectList[i]);
       }
     }
+    this.refresh_dep_selected_points_index();
+    this.refresh_selected_object_from_index();
     this.redrawAllObjects();
   }
 
@@ -619,6 +666,41 @@ export class MultiplePlots {
       } 
     }
   }
+
+  refresh_selected_object_from_index(): void {
+    for (let i=0; i<this.nbObjects; i++) {
+      var obj = this.objectList[i];
+      if (obj.type_ == 'scatterplot') {
+        let temp_select_on_click = List.getListEltFromIndex(this.dep_selected_points_index, obj.plotObject.point_list);
+        this.objectList[i].select_on_click = [];
+        for (let j=0; j<obj.scatter_point_list.length; j++) {
+          for (let k=0; k<obj.scatter_point_list[j].points_inside.length; k++) {
+            if (List.is_include(obj.scatter_point_list[j].points_inside[k], temp_select_on_click) && !List.is_include(obj.scatter_point_list[j], this.objectList[i].select_on_click)) {
+              this.objectList[i].select_on_click.push(obj.scatter_point_list[j]);
+              break;
+            }
+          }
+        }
+      } else if (obj.type_ == 'parallelplot') {
+        this.objectList[i].pp_selected = [];
+        for (let j=0; j<this.dep_selected_points_index.length; j++) {
+          var to_display = [];
+          for (let k=0; k<obj.axis_list.length; k++) {
+            let attribute_name = obj.axis_list[k].name;
+            let type_ = obj.axis_list[k].type_;
+            if (type_ == 'color') {
+              var elt = rgb_to_string(obj.elements[this.dep_selected_points_index[j]][attribute_name]);
+            } else {
+              elt = obj.elements[this.dep_selected_points_index[j]][attribute_name];
+            }
+            to_display.push(elt);
+          }
+          this.objectList[i].pp_selected.push(to_display);
+        }
+      }
+    }
+  }
+
 
   manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
     this.selected_index = this.getLastObjectIndex(mouse2X, mouse2Y);
@@ -687,6 +769,8 @@ export class MultiplePlots {
     }
     this.redrawAllObjects();
   }
+
+
 
   mouse_interaction(): void {
     var canvas = document.getElementById(this.canvas_id);
@@ -775,6 +859,7 @@ export class MultiplePlots {
             }
           }
           this.refresh_selected_point_index();
+          // this.refresh_dep_selected_points_index();
         }
         this.redrawAllObjects(); 
       }
@@ -786,8 +871,9 @@ export class MultiplePlots {
       var click_on_manip_button = Shape.isInRect(mouse3X, mouse3Y, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
       var click_on_selectDep_button = Shape.isInRect(mouse3X, mouse3Y, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
       var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
-      var click_on_button = click_on_manip_button || click_on_selectDep_button || click_on_view;
-      if (click_on_button) {
+      var click_on_multi_button = click_on_manip_button || click_on_selectDep_button || click_on_view;
+      var click_on_button = false;
+      if (click_on_multi_button) {
         this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view);
       }
 
@@ -807,14 +893,15 @@ export class MultiplePlots {
             } else {
               this.setAllInterpolationToOFF();
             }
-          }
+          } 
         }
+        this.refresh_selected_point_index();
+        // this.refresh_dep_selected_points_index();
       } else {
         if (this.view_bool) {
           this.clean_view();
         }
       }
-      this.refresh_selected_point_index();
       this.redrawAllObjects();
       isDrawing = false;
       mouse_moving = false;
@@ -833,6 +920,10 @@ export class MultiplePlots {
     canvas.addEventListener('mouseleave', e => {
       isDrawing = false;
       mouse_moving = false;
+    });
+
+    canvas.addEventListener('dblclick', e => {
+      this.reset_all_selected_points();
     });
   }
 }
@@ -972,6 +1063,9 @@ export abstract class PlotData {
   interpolation_colors:string[]=[];
   rgbs:[number, number, number][]=[];
   hexs:string[];
+  pp_selected:any[]=[];
+  pp_selected_index:number[]=[];
+  click_on_button:boolean=false;
 
   initRectColorStroke:string=string_to_hex('grey');
   initRectLinewidth:number=0.2;
@@ -1601,7 +1695,11 @@ export abstract class PlotData {
     }
   }
 
-  pp_color_management(selected:boolean, index:number) {
+  pp_color_management(index:number) {
+    var selected = List.is_include(this.to_display_list[index], this.pp_selected);
+    if (List.isListOfEmptyList(this.rubber_bands)) {
+      selected = true;
+    }
     if (this.selected_axis_name == '') {
       if (selected === true) {
         this.context.strokeStyle = this.parallel_plot_lineColor;
@@ -1626,7 +1724,6 @@ export abstract class PlotData {
       var to_display_list_i = this.to_display_list[i];
       var current_attribute_type = this.axis_list[0]['type_'];
       var current_list = this.axis_list[0]['list'];
-      var selected:boolean = true;
       var seg_list = [];
       if (this.vertical === true) {
         var current_x = this.axis_x_start;
@@ -1635,7 +1732,6 @@ export abstract class PlotData {
         var current_x = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[0], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[0]);
         var current_axis_y = this.axis_y_start;
       }
-      selected = selected && this.is_inside_band(current_x, current_axis_y, 0);
       seg_list.push([current_x, current_axis_y]);
       for (var j=1; j<nb_axis; j++) {
         var next_attribute_type = this.axis_list[j]['type_'];
@@ -1647,16 +1743,75 @@ export abstract class PlotData {
           var next_x = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[j]);
           var next_axis_y = this.axis_y_start + j*this.y_step;
         }
-        selected = selected && this.is_inside_band(next_x, next_axis_y, j);
         seg_list.push([next_x, next_axis_y]);
       }
       this.context.beginPath();
-      this.pp_color_management(selected, i);
+      this.pp_color_management(i);
       this.context.lineWidth = this.parallel_plot_linewidth;
       Shape.drawLine(this.context, seg_list);
       this.context.stroke();
       this.context.closePath();
     }
+  }
+
+  refresh_pp_selected() {
+    this.pp_selected = [];
+    this.pp_selected_index = [];
+    for (var i=0; i<this.to_display_list.length; i++) {
+      var to_display_list_i = this.to_display_list[i];
+      var current_attribute_type = this.axis_list[0]['type_'];
+      var current_list = this.axis_list[0]['list'];
+      var selected:boolean = true;
+      if (this.vertical === true) {
+        var current_x = this.axis_x_start;
+        var current_axis_y = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[0], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[0]);
+      } else {
+        var current_x = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[0], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[0]);
+        var current_axis_y = this.axis_y_start;
+      }
+      selected = selected && this.is_inside_band(current_x, current_axis_y, 0);
+      for (var j=1; j<this.axis_list.length; j++) {
+        var next_attribute_type = this.axis_list[j]['type_'];
+        var next_list = this.axis_list[j]['list'];
+        if (this.vertical === true) {
+          var next_x = this.axis_x_start + j*this.x_step;
+          var next_axis_y = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]);
+        } else {
+          var next_x = this.get_coord_on_parallel_plot(next_attribute_type, next_list, to_display_list_i[j], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[j]);
+          var next_axis_y = this.axis_y_start + j*this.y_step;
+        }
+        selected = selected && this.is_inside_band(next_x, next_axis_y, j);
+      }
+      if (selected) {
+        this.pp_selected.push(to_display_list_i);
+        this.pp_selected_index.push(this.from_to_display_list_to_elements(to_display_list_i, this.elements));
+      }
+    }
+  }
+
+  from_to_display_list_to_elements(to_display_list_i, elements) {
+    for (let i=0; i<elements.length; i++) {
+      let isTheRightElt = true;
+      for (let j=0; j<to_display_list_i.length; j++) {
+        let attr_name = this.axis_list[j].name;
+        let attr_type = this.axis_list[j].type_;
+        if (attr_type == 'color') {
+          if (!(color_to_string(elements[i][attr_name]) == color_to_string(to_display_list_i[j]))) {
+            isTheRightElt = false;
+            break;
+          }
+        } else {
+          if (!(elements[i][attr_name] == to_display_list_i[j])) {
+            isTheRightElt = false;
+            break;
+          }
+        }
+      }
+      if (isTheRightElt) {
+        return i;
+      }
+    }
+    throw new Error('from_to_display_list_to_elements() : cannot get index in elements');
   }
 
 
@@ -2242,7 +2397,8 @@ export abstract class PlotData {
       click_on_graph = click_on_graph || click_on_graph_i;
       text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
-    var click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph || click_on_merge || click_on_perm;
+    this.click_on_button = false;
+    this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph || click_on_merge || click_on_perm;
 
     if (mouse_moving) {
         if (this.zw_bool) {
@@ -2268,7 +2424,7 @@ export abstract class PlotData {
             }
         }
 
-        if (List.contains_undefined(this.select_on_click) && !click_on_button) {
+        if (List.contains_undefined(this.select_on_click) && !this.click_on_button) {
           this.select_on_click = [];
           this.tooltip_list = [];
           Interactions.reset_permanent_window(this);
@@ -2435,6 +2591,7 @@ export abstract class PlotData {
               } else if (click_on_border) {
                 [selected_border[1], mouse2X, mouse2Y, is_resizing] = Interactions.rubber_band_resize(mouse1X, mouse1Y, selected_border, e, this);
               }
+              this.refresh_pp_selected();
             }
           } else {
             [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
@@ -2837,6 +2994,7 @@ export class ParallelPlot extends PlotData {
     this.rgbs = data['rgbs'];
     this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
     this.initialize_hexs();
+    this.refresh_pp_selected();
   }
 
   refresh_pp_buttons_coords() {
@@ -3432,6 +3590,7 @@ export class MultiplotCom {
     var max = Math.min(axis_max, 1);
     plot_data.rubber_bands[index] = [min, max];
     plot_data.add_to_rubberbands_dep([attribute['name'], [coordinates[0], coordinates[1]]]);
+    plot_data.refresh_pp_selected();
   }
 
   public static sc_to_sc_communication(selection_coords:[number, number][], toDisplayAttributes:Attribute[], plot_data:PlotData) {
@@ -3530,8 +3689,6 @@ export class MultiplotCom {
       plot_data.select_on_click = new_select_on_click;
     }
     plot_data.refresh_selected_point_index();
-    plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
 
   public static pp_to_pp_communication(rubberbands_dep:[string, [number, number]][], plot_data:PlotData) {
@@ -3550,6 +3707,7 @@ export class MultiplotCom {
         }
       }
     }
+    plot_data.refresh_pp_selected();
   }
 }
 
@@ -4953,6 +5111,15 @@ var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe
   ['lightorange', '#ff8700'], ['cyan', '#13f0f0'], ['lightcyan', '#90f7f7'], ['rose', '#FF69B4'], ['lightrose', '#FFC0CB'], ['violet', '#EE82EE'], ['lightviolet', '#eaa5f6'], ['white', '#ffffff'], ['black', '#000000'], ['brown', '#cd8f40'],
   ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']];
 
+export function isColorInDict(str:string): boolean {
+  for (let i=0; i<color_dict.length; i++) {
+    if (str == color_dict[i][0]) {
+      return true;
+    }
+  }
+  return false;
+ }
+
 export function hex_to_string(hexa:string): string {
   for (var i=0 ;i<color_dict.length; i++) {
     if (hexa.toUpperCase() === color_dict[i][1].toUpperCase()) {
@@ -5001,6 +5168,8 @@ export function color_to_string(color:string): string {
     return hex_to_string(color);
   } else if (isRGB(color)) {
     return rgb_to_string(color);
+  } else if (isColorInDict(color)) {
+    return color;
   }
   throw new Error('color_to_string : ' + color + ' is not in hex neither in rgb');
 }
@@ -5321,6 +5490,33 @@ export class List {
 
   public static reverse(list:any[]): any[] {
     return List.copy(list).reverse();
+  }
+
+  public static isListOfEmptyList(list:any[]): boolean { //check if list === [[], [], ..., []]
+    for (let i=0; i<list.length; i++) {
+      if (!equals(list[i], [])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static listIntersection(list1:any[], list2:any[]): any[] {
+    var intersection = [];
+    for (let i=0; i<list1.length; i++) {
+      if (this.is_include(list1[i], list2)) {
+        intersection.push(list1[i]);
+      }
+    }
+    return intersection;
+  }
+
+  public static getListEltFromIndex(list_index:number[], list:any[]): any[] {
+    var new_list = [];
+    for (let i=0; i<list_index.length; i++) {
+      new_list.push(list[list_index[i]]);
+    }
+    return new_list;
   }
 } //end class List
 

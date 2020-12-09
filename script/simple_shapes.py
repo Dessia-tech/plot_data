@@ -24,10 +24,10 @@ p1 = vm.Point2D(-npy.cos(npy.pi / 4), npy.sin(npy.pi / 4))
 p2 = vm.Point2D(0, 1)
 
 a = vm.edges.Arc2D(p2, p1, p0)
-l = vm.edges.LineSegment2D(p2, a.center)
+l1 = vm.edges.LineSegment2D(p0, a.center)
+l2 = vm.edges.LineSegment2D(a.center, p2)
 
-c = vm.wires.Contour2D([a, l])
-c2 = vm.core.CompositePrimitive2D([c])
+c = vm.wires.Contour2D([a, l1, l2])
 
 hatching = plot_data.HatchingSet(0.5, 3)
 color_surface = plot_data.ColorSurfaceSet(color='white')
@@ -50,8 +50,12 @@ c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
                          vm.edges.LineSegment2D(pt4, pt1)])
 
 d = c1.plot_data(plot_data_states=[plot_data_state])
+d2 = c.plot_data(plot_data_states=[plot_data_state])
 contours.append(d)
+contours.append(d2)
+text=plot_data.Text('this is a tex(s)t', p0.x, p1.y)
+contours.append(text)
 contour_group = plot_data.PrimitiveGroup(contours=contours)
-
+contour_group.mpl_plot()
 plot_data.plot_canvas(plot_data_object=contour_group, canvas_id='canvas',
                       debug_mode=True)

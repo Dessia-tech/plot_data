@@ -12,6 +12,8 @@ import sys
 import json
 import tempfile
 import webbrowser
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
 from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
@@ -45,7 +47,6 @@ class PlotDataObject(DessiaObject):
 
         dict_['object_class'] = full_classname(object_class)
         return DessiaObject.dict_to_object(dict_=dict_)
-
 
 class ColorMapSet(DessiaObject):
     def __init__(self, value: float = None, tooltip: bool = False,
@@ -146,6 +147,15 @@ class Text(PlotDataObject):
         self.position_y = position_y
         PlotDataObject.__init__(self, type_='text', name=name)
 
+    def mpl_plot(self, ax=None, color='k', alpha=1.):
+        if not ax:
+            _, ax = plt.subplots()
+        ax.text(self.position_x, self.position_y,
+                self.comment,
+                color=color,
+                alpha=alpha)
+
+        return ax
 
 class LineSegment(PlotDataObject):
     def __init__(self, data: List[float], plot_data_states: List[Settings],
@@ -163,6 +173,13 @@ class LineSegment(PlotDataObject):
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
 
+    def mpl_plot(self, ax=None, color='k', alpha=1.):
+        if not ax:
+            _, ax = plt.subplots()
+        ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
+                color=color,
+                alpha=alpha)
+        return ax
 
 class Circle2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, r: float,
@@ -176,6 +193,11 @@ class Circle2D(PlotDataObject):
     def bounding_box(self):
         return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
 
+    def mpl_plot(self, ax=None, color='k', alpha=1.):
+        if not ax:
+            _, ax = plt.subplots()
+        ax.add_patch(patches.Circle((self.cx, self.cy), self.r))
+        return ax
 
 class Point2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, shape: str, size: float,
@@ -291,6 +313,16 @@ class Arc2D(PlotDataObject):
     def bounding_box(self):
         return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
 
+    def mpl_plot(self, ax=None, color='k', alpha=1.):
+        if not ax:
+            _, ax = plt.subplots()
+        ax.add_patch(patches.Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
+                                 theta1=self.angle1 * 0.5 / math.pi * 360,
+                                 theta2=self.angle2 * 0.5 / math.pi * 360,
+                                 color=color,
+                                 alpha=alpha))
+
+        return ax
 
 class Contour2D(PlotDataObject):
     def __init__(self, plot_data_primitives: List[float],
@@ -310,12 +342,22 @@ class Contour2D(PlotDataObject):
 
         return xmin, xmax, ymin, ymax
 
+    def mpl_plot(self, ax=None, color='k', alpha=1.):
+        for primitive in self.plot_data_primitives:
+            ax = primitive.mpl_plot(ax=ax, color=color, alpha=alpha)
+        return ax
 
 class PrimitiveGroup(PlotDataObject):
     def __init__(self, contours: List[Contour2D], name: str = ''):
         self.contours = contours
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)
 
+    def mpl_plot(self, ax=None, equal_aspect=True):
+        ax = self.contours[0].mpl_plot(ax=ax)
+        for contour in self.contours[1:]:
+            contour.mpl_plot(ax=ax)
+        ax.set_aspect('equal')
+        return ax
 
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 

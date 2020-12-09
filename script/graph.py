@@ -90,5 +90,5 @@ graphs += [graph2]
 
 graphs2d = plot_data.Graph2D(graphs=graphs)
 
-plot_data.plot_canvas(plot_data=graphs2d.to_dict(), canvas_id='canvas',
+plot_data.plot_canvas(plot_data_object=graphs2d, canvas_id='canvas',
                       debug_mode=True)

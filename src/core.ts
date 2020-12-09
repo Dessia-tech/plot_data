@@ -446,7 +446,6 @@ export class MultiplePlots {
     }
     var sort = new Sort();
     this.selected_point_index = sort.MergeSort(this.selected_point_index);
-    console.log(this.selected_point_index)
   }
 
   getSortedList() {
@@ -1094,7 +1093,6 @@ export abstract class PlotData {
         if (d.primitives[i].type_ == 'contour') {
           this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d.primitives[i]);
         } else if ((d.primitives[i].type_ == 'linesegment') || (d.primitives[i].type_ == 'arc')) {
-          console.log(d.primitives[i].type_, d.primitives[i].plot_data_states, this.context.lineWidth)
           this.context.beginPath();
           d.primitives[i].draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();

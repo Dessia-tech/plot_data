@@ -2334,6 +2334,7 @@ export abstract class PlotData {
           this.isSelecting = true;
           if (click_on_selectw_border) {
             Interactions.selection_window_resize(mouse1X, mouse1Y, mouse2X, mouse2Y, up, down, left, right, this);
+            
           } else {
             Interactions.mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y, this);
           }
@@ -3189,7 +3190,7 @@ export class Interactions {
         }
       }
     }
-    this.refresh_permanent_rect(plot_data);
+    // this.refresh_permanent_rect(plot_data);
     plot_data.refresh_selected_point_index();
     plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);

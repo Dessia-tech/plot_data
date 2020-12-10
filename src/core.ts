@@ -1182,8 +1182,16 @@ export abstract class PlotData {
 
   draw_primitivegroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
     if (d['type_'] == 'primitivegroup') {
-      for (let i=0; i<d.contours.length; i++) {
-        this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d.contours[i]);
+      for (let i=0; i<d.primitives.length; i++) {
+        if (d.primitives[i].type_ == 'contour') {
+          this.draw_contour(hidden, show_state, mvx, mvy, scaleX, scaleY, d.primitives[i]);
+        } else if ((d.primitives[i].type_ == 'linesegment') || (d.primitives[i].type_ == 'arc')) {
+          this.context.beginPath();
+          d.primitives[i].draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+          this.context.stroke();
+          this.context.fill();
+          this.context.closePath();
+        }
       }
     }
   }
@@ -2817,8 +2825,8 @@ export class PlotContour extends PlotData {
     if (d['type_'] == 'primitivegroup') {
       var a = PrimitiveGroup.deserialize(d);
       this.plot_datas.push(a);
-      for (let i=0; i<a.contours.length; i++) {
-        let contour = a.contours[i];
+      for (let i=0; i<a.primitives.length; i++) {
+        let contour = a.primitives[i];
         if (isNaN(this.minX)) {this.minX = contour.minX} else {this.minX = Math.min(this.minX, contour.minX)};
         if (isNaN(this.maxX)) {this.maxX = contour.maxX} else {this.maxX = Math.max(this.maxX, contour.maxX)};
         if (isNaN(this.minY)) {this.minY = contour.minY} else {this.minY = Math.min(this.minY, contour.minY)};
@@ -3789,24 +3797,25 @@ export class Buttons {
 }
 
 export class PrimitiveGroup {
-  constructor(public contours: any[],
+  constructor(public primitives: any[],
               public type_: string,
               public name:string) {}
   
   public static deserialize(serialized) {
-    var contours:any[] = [];
-    var temp = serialized['contours'];
+    var primitives:any[] = [];
+    var temp = serialized['primitives'];
     for (let i=0; i<temp.length; i++) {
       if (temp[i]['type_'] == 'contour') {
-        var b = Contour2D.deserialize(temp[i]);
-        contours.push(b);
-      }
-      if (temp[i]['type_'] == 'text') {
-        var c = Text.deserialize(temp[i]);
-        contours.push(c);
+        primitives.push(Contour2D.deserialize(temp[i]));
+      } else if (temp[i]['type_'] == 'text') {
+        primitives.push(Text.deserialize(temp[i]));
+      } else if (temp[i]['type_'] == 'linesegment') {
+        primitives.push(LineSegment.deserialize(temp[i]));
+      } else if (temp[i]['type_'] == 'arc') {
+        primitives.push(Arc2D.deserialize(temp[i]));
       }
     }
-    return new PrimitiveGroup(contours,
+    return new PrimitiveGroup(primitives,
                             serialized['type_'],
                             serialized['name']);
   }
@@ -3931,6 +3940,8 @@ export class LineSegment {
   }
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
+    context.lineWidth = this.plot_data_states[0].stroke_width;
+    context.strokeStyle = this.plot_data_states[0].color_line;
     if (first_elem) {
       context.moveTo(scaleX*(1000*this.data[0]+ mvx) + X, scaleY*(1000*this.data[1]+ mvy) + Y);
     }

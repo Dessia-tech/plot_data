@@ -312,8 +312,8 @@ class Contour2D(PlotDataObject):
 
 
 class PrimitiveGroup(PlotDataObject):
-    def __init__(self, contours: List[Contour2D], name: str = ''):
-        self.contours = contours
+    def __init__(self, primitives, name: str = ''):
+        self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)
 
 
@@ -352,7 +352,7 @@ class MultiplePlots(PlotDataObject):
 
 def plot_canvas(plot_data_object: Subclass[PlotDataObject],
                 debug_mode: bool = False, canvas_id: str = 'canvas',
-                width: int = 750, height: int = 400):
+                width: int = 750, height: int = 400, page_name=None):
     """
     Plot input data in web browser
 
@@ -380,13 +380,21 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
 
     s = template.substitute(data=json.dumps(data), core_path=core_path,
                             canvas_id=canvas_id, width=width, height=height)
-    temp_file = tempfile.mkstemp(suffix='.html')[1]
+    if page_name is None:
+        temp_file = tempfile.mkstemp(suffix='.html')[1]
 
-    with open(temp_file, 'wb') as file:
-        file.write(s.encode('utf-8'))
+        with open(temp_file, 'wb') as file:
+            file.write(s.encode('utf-8'))
 
-    webbrowser.open('file://' + temp_file)
-    print('file://' + temp_file)
+        webbrowser.open('file://' + temp_file)
+        print('file://' + temp_file)
+    else:
+        with open(page_name+'.html', 'wb') as file:
+            file.write(s.encode('utf-8'))
+
+        # webbrowser.open('file://'+page_name+'.html')
+        webbrowser.open('file://' + os.path.realpath(page_name+'.html'))
+        print(page_name+'.html')
 
 
 def get_csv_vectors(filename):
@@ -398,7 +406,7 @@ def get_csv_vectors(filename):
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'contour': Contour2D, 'graph2D': Dataset,
-                 'graphs2D': Graph2D, 'line': LineSegment,
+                 'graphs2D': Graph2D, 'linesegment': LineSegment,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
                  'primitivegroup': PrimitiveGroup}

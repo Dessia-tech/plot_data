@@ -1382,6 +1382,7 @@ export abstract class PlotData {
 
   draw_scatterplot(d, hidden, mvx, mvy) {
     if (d['type_'] == 'scatterplot') {
+      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.toDisplayAttributes);
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
         if (!this.point_list_equals(refreshed_points, this.scatter_point_list)) {
@@ -1407,7 +1408,6 @@ export abstract class PlotData {
           this.tooltip_list = List.remove_selection(this.tooltip_list[i], this.tooltip_list);
         }
       }
-      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.toDisplayAttributes);
       this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_point_list, d.elements, this.mergeON);
     }
   }

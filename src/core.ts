@@ -227,7 +227,6 @@ export class MultiplePlots {
         index_list.push(display_index);
       }
     }
-
     return index_list;
   }
 
@@ -641,7 +640,7 @@ export class MultiplePlots {
           }
         }
         MultiplotCom.pp_to_sc_communication(to_select, axis_numbers, this.objectList[i]);
-      } else { //ie type_ == 'parallelplot'
+      } else if (obj.type_ == 'parallelplot') { 
         MultiplotCom.pp_to_pp_communication(rubberbands_dep, this.objectList[i]);
       }
     }
@@ -896,7 +895,6 @@ export class MultiplePlots {
           } 
         }
         this.refresh_selected_point_index();
-        // this.refresh_dep_selected_points_index();
       } else {
         if (this.view_bool) {
           this.clean_view();
@@ -1864,26 +1862,22 @@ export abstract class PlotData {
     this.refresh_interpolation_colors();
   }
 
+
   dep_color_propagation(attribute_index:number, vertical:boolean, inverted:boolean, hexs:string[], attribute_name:string): void {
     var sort: Sort = new Sort();
-    if (attribute_index == 0) {
-      this.plotObject.point_list = sort.sortObjsByAttribute(this.plotObject.point_list, 'cx');
-    } else if (attribute_index == 1) {
-      this.plotObject.point_list = sort.sortObjsByAttribute(this.plotObject.point_list, 'cy').reverse();
-    } else { //ie attribute_index = -1
-      var elements = sort.sortObjsByAttribute(List.copy(this.plotObject.elements), attribute_name);
-      this.plotObject.initialize_point_list(elements);
-    }
+    var sorted_elements = sort.sortObjsByAttribute(List.copy(this.plotObject.elements), attribute_name);
     var nb_points = this.plotObject.point_list.length;
     for (let i=0; i<nb_points; i++) {
+      let j = List.get_index_of_element(sorted_elements[i], this.plotObject.elements);
       if ((vertical && inverted) || (!vertical && !inverted)) {
-        this.plotObject.point_list[i].color_fill = hexs[i];
+        this.plotObject.point_list[j].color_fill = hexs[i];
       } else {
-        this.plotObject.point_list[i].color_fill = hexs[nb_points - 1 - i];
+        this.plotObject.point_list[j].color_fill = hexs[nb_points - 1 - i];
       }
     }
     this.refresh_point_list_bool = true;
   }
+
 
   refresh_to_display_list(elements) {
     this.to_display_list = [];
@@ -3190,7 +3184,6 @@ export class Interactions {
         }
       }
     }
-    // this.refresh_permanent_rect(plot_data);
     plot_data.refresh_selected_point_index();
     plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
@@ -4656,6 +4649,7 @@ export class Scatter {
       this.point_list.push(new Point2D(cx, cy, this.point_shape, this.point_size, this.color_fill, this.color_stroke, this.stroke_width, 'point', ''));
     }
   }
+
 }
 
 export class Arc2D {

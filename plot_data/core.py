@@ -312,8 +312,8 @@ class Contour2D(PlotDataObject):
 
 
 class PrimitiveGroup(PlotDataObject):
-    def __init__(self, contours: List[Contour2D], name: str = ''):
-        self.contours = contours
+    def __init__(self, primitives, name: str = ''):
+        self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)
 
 
@@ -406,7 +406,7 @@ def get_csv_vectors(filename):
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'contour': Contour2D, 'graph2D': Dataset,
-                 'graphs2D': Graph2D, 'line': LineSegment,
+                 'graphs2D': Graph2D, 'linesegment': LineSegment,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
                  'primitivegroup': PrimitiveGroup}

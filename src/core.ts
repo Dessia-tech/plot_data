@@ -189,14 +189,14 @@ export class MultiplePlots {
     this.nbObjects++;
     this.display_order.push(this.nbObjects-1);
     new_plot_data.draw_initial();
-    new_plot_data.mouse_interaction(false);
+    new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
     new_plot_data.interaction_ON = false;
   }
 
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
     var to_disp_attr_name = [attr_x.name, attr_y.name];
-    var DEFAULT_AXIS = new Axis(10, 10, 12, string_to_hex('grey'), string_to_hex('grey'), '', false, 0.5, true, 'axis');
-    var DEFAULT_TOOLTIP = new Tooltip(string_to_hex('black'), string_to_hex('white'), 12, 'sans-serif', 5, to_disp_attr_name, 0.75, 'tooltip', '');
+    var DEFAULT_AXIS = new Axis(10, 10, 12, string_to_rgb('grey'), string_to_rgb('grey'), '', false, 0.5, true, 'axis');
+    var DEFAULT_TOOLTIP = new Tooltip(string_to_rgb('black'), string_to_rgb('white'), 12, 'sans-serif', 5, to_disp_attr_name, 0.75, 'tooltip', '');
     var new_scatter = {elements: this.data['points'], axis: DEFAULT_AXIS, tooltip: DEFAULT_TOOLTIP, to_display_att_names: to_disp_attr_name, point_shape: 'circle', point_size: 2, 
                         color_fill: string_to_rgb('lightblue'), color_stroke: string_to_rgb('grey'), stroke_width: 0.5, type_: 'scatterplot', name: ''};
     var DEFAULT_WIDTH = 560;
@@ -227,7 +227,6 @@ export class MultiplePlots {
         index_list.push(display_index);
       }
     }
-
     return index_list;
   }
 
@@ -641,7 +640,7 @@ export class MultiplePlots {
           }
         }
         MultiplotCom.pp_to_sc_communication(to_select, axis_numbers, this.objectList[i]);
-      } else { //ie type_ == 'parallelplot'
+      } else if (obj.type_ == 'parallelplot') { 
         MultiplotCom.pp_to_pp_communication(rubberbands_dep, this.objectList[i]);
       }
     }
@@ -859,7 +858,6 @@ export class MultiplePlots {
             }
           }
           this.refresh_selected_point_index();
-          // this.refresh_dep_selected_points_index();
         }
         this.redrawAllObjects(); 
       }
@@ -872,7 +870,6 @@ export class MultiplePlots {
       var click_on_selectDep_button = Shape.isInRect(mouse3X, mouse3Y, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
       var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
       var click_on_multi_button = click_on_manip_button || click_on_selectDep_button || click_on_view;
-      var click_on_button = false;
       if (click_on_multi_button) {
         this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view);
       }
@@ -896,7 +893,6 @@ export class MultiplePlots {
           } 
         }
         this.refresh_selected_point_index();
-        // this.refresh_dep_selected_points_index();
       } else {
         if (this.view_bool) {
           this.clean_view();
@@ -1244,7 +1240,7 @@ export abstract class PlotData {
         if ((this.plotObject.type_ == 'scatterplot') && !this.sc_interpolation_ON) {
           this.context.fillStyle = this.plotObject.color_fill;
         } else {
-          if ((this.select_on_click.length == 0) || List.contains_undefined(this.select_on_click)) {
+          if ((this.select_on_click.length == 0) || List.contains_undefined(this.select_on_click) || (this.plotObject.type_ == 'graph2d')) {
             this.context.fillStyle = d.color_fill;
           } else {
             this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
@@ -1290,10 +1286,12 @@ export abstract class PlotData {
     }
   }
 
-  draw_axis(mvx, mvy, scaleX, scaleY, d) {
+  draw_axis(mvx, mvy, scaleX, scaleY, d) { // Only used by graph2D
     if (d['type_'] == 'axis'){
       this.context.beginPath();
-      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, this.minX, this.maxX, this.minY, this.maxY, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, this.minX, 
+             this.maxX, this.minY, this.maxY, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, 
+             this.Y, this.plotObject['toDispAttNames']);
       this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
       this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
       this.context.closePath();
@@ -1339,8 +1337,8 @@ export abstract class PlotData {
     if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
       this.context.setLineDash(d.dashline);
-      this.context.strokeStyle = d.graph_colorstroke;
-      this.context.lineWidth = d.graph_linewidth;
+      this.context.strokeStyle = d.seg_colorstroke;
+      this.context.lineWidth = d.seg_linewidth;
       for (var i=0; i<d.segments.length; i++) {
         if (i==0) {
           d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
@@ -1370,11 +1368,11 @@ export abstract class PlotData {
 
   draw_graph2D(d, hidden, mvx, mvy) {
     if (d['type_'] == 'graph2d') {
+      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
         this.draw_dataset(graph, hidden, mvx, mvy);
       }
-      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
         this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, false);
@@ -1384,6 +1382,7 @@ export abstract class PlotData {
 
   draw_scatterplot(d, hidden, mvx, mvy) {
     if (d['type_'] == 'scatterplot') {
+      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.toDisplayAttributes);
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
         if (!this.point_list_equals(refreshed_points, this.scatter_point_list)) {
@@ -1409,7 +1408,6 @@ export abstract class PlotData {
           this.tooltip_list = List.remove_selection(this.tooltip_list[i], this.tooltip_list);
         }
       }
-      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.toDisplayAttributes);
       this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_point_list, d.elements, this.mergeON);
     }
   }
@@ -1872,26 +1870,22 @@ export abstract class PlotData {
     this.refresh_interpolation_colors();
   }
 
+
   dep_color_propagation(attribute_index:number, vertical:boolean, inverted:boolean, hexs:string[], attribute_name:string): void {
     var sort: Sort = new Sort();
-    if (attribute_index == 0) {
-      this.plotObject.point_list = sort.sortObjsByAttribute(this.plotObject.point_list, 'cx');
-    } else if (attribute_index == 1) {
-      this.plotObject.point_list = sort.sortObjsByAttribute(this.plotObject.point_list, 'cy').reverse();
-    } else { //ie attribute_index = -1
-      var elements = sort.sortObjsByAttribute(List.copy(this.plotObject.elements), attribute_name);
-      this.plotObject.initialize_point_list(elements);
-    }
+    var sorted_elements = sort.sortObjsByAttribute(List.copy(this.plotObject.elements), attribute_name);
     var nb_points = this.plotObject.point_list.length;
     for (let i=0; i<nb_points; i++) {
+      let j = List.get_index_of_element(sorted_elements[i], this.plotObject.elements);
       if ((vertical && inverted) || (!vertical && !inverted)) {
-        this.plotObject.point_list[i].color_fill = hexs[i];
+        this.plotObject.point_list[j].color_fill = hexs[i];
       } else {
-        this.plotObject.point_list[i].color_fill = hexs[nb_points - 1 - i];
+        this.plotObject.point_list[j].color_fill = hexs[nb_points - 1 - i];
       }
     }
     this.refresh_point_list_bool = true;
   }
+
 
   refresh_to_display_list(elements) {
     this.to_display_list = [];
@@ -2093,6 +2087,10 @@ export abstract class PlotData {
   remove_from_tooltip(tooltip:Tooltip, str:string): Tooltip {
     tooltip.to_plot_list = List.remove_selection(str, tooltip.to_plot_list);
     return tooltip;
+  }
+
+  add_to_rubberband_manual(index:number, min:number, max:number): void {
+    this.rubber_bands[index] = [min, max];
   }
 
   draw_selection_rectangle() {
@@ -3198,7 +3196,6 @@ export class Interactions {
         }
       }
     }
-    // this.refresh_permanent_rect(plot_data);
     plot_data.refresh_selected_point_index();
     plot_data.draw(false, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, 0, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
@@ -3947,8 +3944,10 @@ export class LineSegment {
   }
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
-    context.lineWidth = this.plot_data_states[0].stroke_width;
-    context.strokeStyle = this.plot_data_states[0].color_line;
+    if (!(this.plot_data_states[0] === undefined)) {
+      context.lineWidth = this.plot_data_states[0].stroke_width;
+      context.strokeStyle = this.plot_data_states[0].color_line;
+    }
     if (first_elem) {
       context.moveTo(scaleX*(1000*this.data[0]+ mvx) + X, scaleY*(1000*this.data[1]+ mvy) + Y);
     }
@@ -4164,7 +4163,7 @@ export class Axis {
     context.stroke();
   }
 
-  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
+  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, toDispAttNames) {
     // Drawing the coordinate system
     context.beginPath();
     context.strokeStyle = this.axis_color;
@@ -4198,10 +4197,17 @@ export class Axis {
       this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
     }
 
-    context.font = this.font_size.toString() + 'px Arial';
     context.fillStyle = this.graduation_color;
     context.strokeStyle = this.axis_color;
 
+    context.font = 'bold 20px Arial';
+    context.textAlign = 'end';
+    context.fillText(toDispAttNames[0], axis_x_end - 5, axis_y_end - 10);
+    context.textAlign = 'start';
+    context.fillText(toDispAttNames[1], axis_x_start + 5, axis_y_start + 20);
+    context.stroke();
+
+    context.font = this.font_size.toString() + 'px Arial';
     this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.font_size, X, Y);
     context.closePath();
 
@@ -4235,7 +4241,7 @@ export class Axis {
     context.textAlign = 'end';
     context.fillText(toDisplayAttributes[0]['name'], axis_x_end - 5, axis_y_end - 10);
     context.textAlign = 'start';
-    context.fillText(toDisplayAttributes[1]['name'], axis_x_start + 5, axis_y_start + 10)
+    context.fillText(toDisplayAttributes[1]['name'], axis_x_start + 5, axis_y_start + 20)
 
     context.stroke();
 
@@ -4339,13 +4345,14 @@ export class Tooltip {
               public to_plot_list:any,
               public opacity:number,
               public type_:string,
-              public name:string) {}
+              public name:string) {
+              }
 
   public static deserialize(serialized) {
       return new Tooltip(rgb_to_hex(serialized['colorfill']),
                          rgb_to_hex(serialized['text_color']),
-                         serialized['fontsize'],
-                         serialized['fontstyle'],
+                         serialized['font_size'],
+                         serialized['font_style'],
                          serialized['tp_radius'],
                          serialized['to_plot_list'],
                          serialized['opacity'],
@@ -4484,46 +4491,69 @@ export class Tooltip {
 
 export class Dataset {
   id:number=0;
-  constructor(public point_list:Point2D[],
-              public dashline: number[],
-              public graph_colorstroke: string,
-              public graph_linewidth: number,
-              public segments:LineSegment[],
-              public display_step:number,
+  point_list:Point2D[]=[];
+  segments:LineSegment[];
+  constructor( public dashline: number[],
+              public seg_colorstroke: string,
+              public seg_linewidth: number,
               public tooltip:Tooltip,
+              public toDispAttNames:string[],
+              public pt_colorfill:string,
+              public pt_colorstroke:string,
+              public pt_strokewidth:number,
+              public point_shape:string,
+              public point_size:number,  
+              public elements:any[],
+              public display_step:number,          
               public type_: string,
-              public name:string) {}
+              public name:string) {
+    this.initialize_point_list();
+    this.initialize_segments();
+  }
+
+  initialize_point_list() {
+    this.point_list = [];
+    for (let i=0; i<this.elements.length; i++) {
+      let coord = [];
+      for (let j=0; j<2; j++) {
+        coord.push(Math.pow(-1, j)*this.elements[i][this.toDispAttNames[j]]);
+      }
+      this.point_list.push(new Point2D(coord[0], coord[1], this.point_shape, this.point_size, this.pt_colorfill, this.pt_colorstroke, this.pt_strokewidth, 'point', ''));
+    } 
+  }
+
+  initialize_segments() {
+    this.segments = [];
+    for (let i=0; i<this.point_list.length - 1; i++) {
+      let current_point = this.point_list[i];
+      let next_point = this.point_list[i+1];
+      let data = [current_point.cx, current_point.cy, next_point.cx, next_point.cy];
+      this.segments.push(new LineSegment(data, [], '', ''));
+    }
+  }
 
   public static deserialize(serialized) {
-    var point_list = [];
-    var temp = serialized['points'];
-    for (var i=0; i<temp.length; i++) {
-      var d = temp[i];
-      point_list.push(Point2D.deserialize(d));
-    }
-
-    var segments = [];
-    for (let i=0; i<point_list.length - 1; i++) {
-      let current_point = point_list[i];
-      let next_point = point_list[i+1];
-      let data = [current_point.cx, current_point.cy, next_point.cx, next_point.cy];
-      segments.push(new LineSegment(data, [], '', ''));
-    }
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    return new Dataset(point_list,
-                           serialized['dashline'],
-                           rgb_to_hex(serialized['graph_colorstroke']),
-                           serialized['graph_linewidth'],
-                           segments,
-                           serialized['display_step'],
-                           tooltip,
-                           serialized['type_'],
-                           serialized['name']);
+    return new Dataset(serialized['dashline'],
+                       serialized['seg_colorstroke'],
+                       serialized['seg_linewidth'],
+                       tooltip,
+                       serialized['to_disp_att_names'],
+                       serialized['pt_colorfill'],
+                       serialized['pt_colorstroke'],
+                       serialized['pt_strokewidth'],
+                       serialized['point_shape'],
+                       serialized['point_size'],
+                       serialized['elements'],
+                       serialized['display_step'],
+                       serialized['type_'],
+                       serialized['name']);
   }
 }
 
 export class Graph2D {
   constructor(public graphs: Dataset[],
+              public toDispAttNames:string[],
               public axis: Axis,
               public type_: string,
               public name: string) {}
@@ -4531,14 +4561,16 @@ export class Graph2D {
   public static deserialize(serialized) {
     var graphs:Dataset[] = [];
     for (let i=0; i<serialized['graphs'].length; i++) {
+      serialized['graphs'][i]['to_disp_att_names'] = serialized['to_disp_att_names'];
       graphs.push(Dataset.deserialize(serialized['graphs'][i]));
     }
     var axis = Axis.deserialize(serialized['axis']);
 
     return new Graph2D(graphs,
-                        axis,
-                        serialized['type_'],
-                        serialized['name']);
+                       serialized['to_disp_att_names'],
+                       axis,
+                       serialized['type_'],
+                       serialized['name']);
   }
 }
 
@@ -4564,6 +4596,7 @@ export class Scatter {
     this.initialize_toDisplayAttributes();
     this.initialize_lists();
     this.initialize_point_list(elements);
+
   }
 
   public static deserialize(serialized) {
@@ -4667,6 +4700,7 @@ export class Scatter {
       this.point_list.push(new Point2D(cx, cy, this.point_shape, this.point_size, this.color_fill, this.color_stroke, this.stroke_width, 'point', ''));
     }
   }
+
 }
 
 export class Arc2D {

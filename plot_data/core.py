@@ -211,12 +211,12 @@ class Axis(PlotDataObject):
 
 class Tooltip(PlotDataObject):
     def __init__(self, to_plot_list: list, colorfill: str=BLACK, text_color: str=WHITE,
-                 fontsize: float=12, fontstyle: str='sans-serif', tp_radius: float=5,
+                 font_size: float=12, font_style: str='sans-serif', tp_radius: float=5,
                  opacity: float=0.75, name: str = ''):
         self.colorfill = colorfill
         self.text_color = text_color
-        self.fontsize = fontsize
-        self.fontstyle = fontstyle
+        self.font_size = font_size
+        self.font_style = font_style
         self.tp_radius = tp_radius
         self.to_plot_list = to_plot_list
         self.opacity = opacity
@@ -224,26 +224,34 @@ class Tooltip(PlotDataObject):
 
 
 class Dataset(PlotDataObject):
-    def __init__(self, dashline: List[float], graph_colorstroke: str,
-                 graph_linewidth: float, display_step: float, tooltip: Tooltip,
-                 points: List[Point2D] = None, name: str = ''):
-        if points is None:
-            self.points = []
-        else:
-            self.points = points
+    to_disp_att_names = None
+
+    def __init__(self, dashline: List[float], seg_colorstroke: str,
+                 seg_linewidth: float, tooltip: Tooltip, pt_colorfill:str,
+                 pt_colorstroke:str, pt_strokewidth:float=0.2,
+                 point_shape:str='circle', point_size:float=2,
+                 elements = None, display_step: float=1, name: str = ''):
         self.dashline = dashline
-        self.graph_colorstroke = graph_colorstroke
-        self.graph_linewidth = graph_linewidth
-        self.display_step = display_step
-        if display_step is None:
-            self.display_step = 1
+        self.seg_colorstroke = seg_colorstroke
+        self.seg_linewidth = seg_linewidth
         self.tooltip = tooltip
+        self.display_step = display_step
+        self.pt_colorfill = pt_colorfill
+        self.pt_colorstroke = pt_colorstroke
+        self.pt_strokewidth = pt_strokewidth
+        self.point_shape = point_shape
+        self.point_size = point_size
+        if elements is None:
+            self.elements = []
+        else:
+            self.elements = elements
         PlotDataObject.__init__(self, type_='dataset', name=name)
 
 
 class Graph2D(PlotDataObject):
-    def __init__(self, graphs: List[Dataset], axis: Axis=None, name: str = ''):
+    def __init__(self, graphs: List[Dataset], to_disp_att_names, axis: Axis=None, name: str = ''):
         self.graphs = graphs
+        self.to_disp_att_names = to_disp_att_names
         if axis is None:
             self.axis = DEFAULT_AXIS
         else:

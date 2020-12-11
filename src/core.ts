@@ -597,6 +597,29 @@ export class MultiplePlots {
     return -1;
   }
 
+  add_to_rubberbands_manual(obj_index, rubber_index:number, min:number, max:number): void {
+    var obj = this.objectList[obj_index];
+    this.objectList[obj_index].rubber_bands[rubber_index] = [min, max];
+    var realCoord_min = obj.axis_to_real_coords(min, obj.axis_list[rubber_index]['type'], obj.axis_list[rubber_index]['list'], obj.inverted_axis_list[rubber_index]);
+    var realCoord_max = obj.axis_to_real_coords(max, obj.axis_list[rubber_index]['type'], obj.axis_list[rubber_index]['list'], obj.inverted_axis_list[rubber_index]);
+    var real_min = Math.min(realCoord_min, realCoord_max);
+    var real_max = Math.max(realCoord_min, realCoord_max);
+    this.objectList[obj_index].add_to_rubberbands_dep([obj.axis_list[rubber_index]['name'], [real_min, real_max]]);
+    this.objectList[obj_index].isDrawing_rubber_band = true;
+    this.mouse_move_pp_communication();
+    this.objectList[obj_index].isDrawing_rubber_band = false;
+  }
+
+  mouse_move_scatter_communication() {
+    let isSelectingObjIndex = this.getSelectionONObject();
+    if (isSelectingObjIndex != -1) {
+      let isSelectingScatter = this.objectList[isSelectingObjIndex];
+      let selection_coords = isSelectingScatter.selection_coords;
+      let toDisplayAttributes:Attribute[] = isSelectingScatter.plotObject.toDisplayAttributes;
+      this.scatter_communication(selection_coords, toDisplayAttributes, isSelectingObjIndex);
+    }
+  }
+
   scatter_communication(selection_coords:[number, number][], toDisplayAttributes:Attribute[], isSelectingObjIndex:number):void { //process received data from a scatterplot and send it to the other objects
     for (let i=0; i<selection_coords.length; i++) {
       for (let j=0; j<this.nbObjects; j++) {
@@ -623,6 +646,16 @@ export class MultiplePlots {
     }
     this.refresh_dep_selected_points_index();
     this.refresh_selected_object_from_index();
+  }
+
+
+  mouse_move_pp_communication() {
+    let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index();
+    if (isDrawingRubberObjIndex != -1) {
+      let isDrawingPP = this.objectList[isDrawingRubberObjIndex];
+      let rubberbands_dep = isDrawingPP.rubberbands_dep;
+      this.pp_communication(rubberbands_dep);
+    }
   }
 
   pp_communication(rubberbands_dep:[string, [number, number]][]):void { //process received data from a parallelplot and send it to the other objects
@@ -843,19 +876,8 @@ export class MultiplePlots {
         if (isDrawing) {
           mouse_moving = true;
           if (this.selectDependency_bool) {
-            let isSelectingObjIndex = this.getSelectionONObject();
-            if (isSelectingObjIndex != -1) {
-              let isSelectingScatter = this.objectList[isSelectingObjIndex];
-              let selection_coords = isSelectingScatter.selection_coords;
-              let toDisplayAttributes:Attribute[] = isSelectingScatter.plotObject.toDisplayAttributes;
-              this.scatter_communication(selection_coords, toDisplayAttributes, isSelectingObjIndex);
-            }
-            let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index();
-            if (isDrawingRubberObjIndex != -1) {
-              let isDrawingPP = this.objectList[isDrawingRubberObjIndex];
-              let rubberbands_dep = isDrawingPP.rubberbands_dep;
-              this.pp_communication(rubberbands_dep);
-            }
+            this.mouse_move_scatter_communication();
+            this.mouse_move_pp_communication();
           }
           this.refresh_selected_point_index();
         }
@@ -2087,10 +2109,6 @@ export abstract class PlotData {
   remove_from_tooltip(tooltip:Tooltip, str:string): Tooltip {
     tooltip.to_plot_list = List.remove_selection(str, tooltip.to_plot_list);
     return tooltip;
-  }
-
-  add_to_rubberband_manual(index:number, min:number, max:number): void {
-    this.rubber_bands[index] = [min, max];
   }
 
   draw_selection_rectangle() {
@@ -5587,3 +5605,6 @@ export function equals(obj1:any, obj2:any): boolean { //Works on any kind of obj
   }
   return true;
 }
+
+var att_x = new Attribute('cx', 'float');
+var att_y = new Attribute('cy', 'float')

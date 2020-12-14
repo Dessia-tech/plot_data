@@ -43,7 +43,7 @@ export class MultiplePlots {
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
     this.initial_coords = data['coords'];
     this.dataObjects = data['objects'];
-    var points = data['points'];
+    var points = data['elements'];
     this.initialize_displayable_attributes();
     var temp_sizes = data['sizes'];
     for (let i=0; i<temp_sizes.length; i++) {
@@ -81,12 +81,12 @@ export class MultiplePlots {
 
   initialize_displayable_attributes() {
     this.displayable_attributes = [];
-    var attribute_names = Object.getOwnPropertyNames(this.data['points'][0]);
+    var attribute_names = Object.getOwnPropertyNames(this.data['elements'][0]);
     var exceptions = ['name', 'package_version', 'object_class'];
     for (let i=0; i<attribute_names.length; i++) {
       if (!(List.is_include(attribute_names[i], exceptions))) {
         let name = attribute_names[i];
-        let type_ = TypeOf(this.data['points'][0][name]);
+        let type_ = TypeOf(this.data['elements'][0][name]);
         this.displayable_attributes.push(new Attribute(name, type_));
       }
     }
@@ -148,11 +148,10 @@ export class MultiplePlots {
 
   click_on_view_action() {
     this.view_bool = !this.view_bool;
+    this.manipulation_bool = this.view_bool;
+    this.refreshAllManipulableBool();
     if (this.view_bool) {
       this.clean_view();
-      if (this.manipulation_bool === false) {
-        this.manipulation_bool_action();
-      }
     }
   }
 
@@ -194,11 +193,15 @@ export class MultiplePlots {
   }
 
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-    var to_disp_attr_name = [attr_x.name, attr_y.name];
-    var DEFAULT_AXIS = new Axis(10, 10, 12, string_to_rgb('grey'), string_to_rgb('grey'), '', false, 0.5, true, 'axis');
-    var DEFAULT_TOOLTIP = new Tooltip(string_to_rgb('black'), string_to_rgb('white'), 12, 'sans-serif', 5, to_disp_attr_name, 0.75, 'tooltip', '');
-    var new_scatter = {elements: this.data['points'], axis: DEFAULT_AXIS, tooltip: DEFAULT_TOOLTIP, to_display_att_names: to_disp_attr_name, point_shape: 'circle', point_size: 2, 
-                        color_fill: string_to_rgb('lightblue'), color_stroke: string_to_rgb('grey'), stroke_width: 0.5, type_: 'scatterplot', name: ''};
+    var graduation_settings = new TextSettings(string_to_hex('grey'), 12, 'sans-serif', ''); 
+    var axis_settings = new LineSettings(0.5, string_to_hex('grey'), [], '');
+    var DEFAULT_AXIS = new Axis(10, 10, graduation_settings, axis_settings, false, true, 'axis', '');
+    var surface_settings = new SurfaceSettings(string_to_hex('black'), 0.75, undefined);
+    var text_settings = new TextSettings(string_to_hex('black'), 12, 'sans-serif', '');
+    var DEFAULT_TOOLTIP = new Tooltip([attr_x.name, attr_y.name], surface_settings, text_settings, 5, 'tooltip', '');
+    var point_settings = new PointSettings(string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 2, 'circle', '');
+    var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_settings: point_settings,
+                       elements:this.data['elements'], axis:DEFAULT_AXIS, name:''};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
     var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id);
@@ -206,12 +209,13 @@ export class MultiplePlots {
   }
 
   add_parallelplot(attributes:Attribute[]) {
-    var to_disp_attr_names = [];
+    var to_disp_attribute_names = [];
     for (let i=0; i<attributes.length; i++) {
-      to_disp_attr_names.push(attributes[i].name);
+      to_disp_attribute_names.push(attributes[i].name);
     }
-    var pp_data = {elements : this.data['points'], line_color: string_to_rgb('black'), line_width: 0.5, disposition: 'vertical',
-                   to_disp_attributes: to_disp_attr_names, rgbs: [[192, 11, 11], [14, 192, 11], [11, 11, 192]], type_: 'parallelplot', name: ''};
+    var line_settings = new LineSettings(0.5, string_to_hex('black'), [], '');
+    var pp_data = {line_settings:line_settings, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
+                  rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:''};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
     var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id);
@@ -298,11 +302,15 @@ export class MultiplePlots {
     }
   }
 
-  manipulation_bool_action():void {
-    this.manipulation_bool = !this.manipulation_bool;
+  refreshAllManipulableBool() {
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].manipulable_ON = this.manipulation_bool;
     }
+  }
+
+  manipulation_bool_action():void {
+    this.manipulation_bool = !this.manipulation_bool;
+    this.refreshAllManipulableBool();
     this.selectDependency_bool = false;
     if (this.manipulation_bool === false) {
       this.view_bool = false;
@@ -402,7 +410,7 @@ export class MultiplePlots {
   refresh_dep_selected_points_index() {
     var all_index = [];
     this.dep_selected_points_index = [];
-    for (let i=0; i<this.data['points'].length; i++) {
+    for (let i=0; i<this.data['elements'].length; i++) {
       all_index.push(i);
       this.dep_selected_points_index.push(i);
     }
@@ -615,19 +623,19 @@ export class MultiplePlots {
     if (isSelectingObjIndex != -1) {
       let isSelectingScatter = this.objectList[isSelectingObjIndex];
       let selection_coords = isSelectingScatter.selection_coords;
-      let toDisplayAttributes:Attribute[] = isSelectingScatter.plotObject.toDisplayAttributes;
-      this.scatter_communication(selection_coords, toDisplayAttributes, isSelectingObjIndex);
+      let to_display_attributes:Attribute[] = isSelectingScatter.plotObject.to_display_attributes;
+      this.scatter_communication(selection_coords, to_display_attributes, isSelectingObjIndex);
     }
   }
 
-  scatter_communication(selection_coords:[number, number][], toDisplayAttributes:Attribute[], isSelectingObjIndex:number):void { //process received data from a scatterplot and send it to the other objects
+  scatter_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], isSelectingObjIndex:number):void { //process received data from a scatterplot and send it to the other objects
     for (let i=0; i<selection_coords.length; i++) {
       for (let j=0; j<this.nbObjects; j++) {
         if (this.objectList[j]['type_'] == 'parallelplot') {
           let obj = this.objectList[j];
           for (let k=0; k<obj.axis_list.length; k++) {
-            if (toDisplayAttributes[i]['name'] == obj.axis_list[k]['name']) {
-              MultiplotCom.sc_to_pp_communication(selection_coords[i], toDisplayAttributes[i], k, this.objectList[j]);
+            if (to_display_attributes[i]['name'] == obj.axis_list[k]['name']) {
+              MultiplotCom.sc_to_pp_communication(selection_coords[i], to_display_attributes[i], k, this.objectList[j]);
               this.objectList[j].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
               this.objectList[j].draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
             }
@@ -638,7 +646,7 @@ export class MultiplePlots {
 
     for (let i=0; i<this.nbObjects; i++) {
       if ((this.objectList[i]['type_'] == 'scatterplot') && (i != isSelectingObjIndex)) {
-        MultiplotCom.sc_to_sc_communication(selection_coords, toDisplayAttributes, this.objectList[i]);
+        MultiplotCom.sc_to_sc_communication(selection_coords, to_display_attributes, this.objectList[i]);
         let obj = this.objectList[i];
         this.objectList[i].draw(false, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
         this.objectList[i].draw(true, 0, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
@@ -665,8 +673,8 @@ export class MultiplePlots {
       if (obj.type_ == 'scatterplot') {
         var to_select:[string, [number, number]][] = [];
         for (let j=0; j<rubberbands_dep.length; j++) {
-          for (let k=0; k<obj.plotObject.toDisplayAttributes.length; k++) {
-            if (rubberbands_dep[j][0] == obj.plotObject.toDisplayAttributes[k]['name']) {
+          for (let k=0; k<obj.plotObject.to_display_attributes.length; k++) {
+            if (rubberbands_dep[j][0] == obj.plotObject.to_display_attributes[k]['name']) {
               to_select.push(rubberbands_dep[j]);
               axis_numbers.push(k);
             }
@@ -686,10 +694,10 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
       if (obj.type_ == 'scatterplot') {
-        let toDisplayAttributes = obj.plotObject.toDisplayAttributes;
+        let to_display_attributes = obj.plotObject.to_display_attributes;
         let attribute_index = -1;
-        for (let j=0; j<toDisplayAttributes.length; j++) {
-          if (toDisplayAttributes[j].name == selected_axis_name) {
+        for (let j=0; j<to_display_attributes.length; j++) {
+          if (to_display_attributes[j].name == selected_axis_name) {
             attribute_index = j;
           }
         }
@@ -1052,8 +1060,6 @@ export abstract class PlotData {
   attribute_booleans:boolean[]=[];
   axis_list:Attribute[]=[];
   to_display_list:any[]=[];
-  parallel_plot_lineColor:string;
-  parallel_plot_linewidth:string;
   axis_y_start = 0
   axis_y_end = 0
   y_step:number=0;
@@ -1072,6 +1078,7 @@ export abstract class PlotData {
   rubber_bands:any[]=[];
   rubber_last_min:number=0;
   rubber_last_max:number=0;
+  line_settings:LineSettings;
   bandWidth:number=30;
   bandColor:string=string_to_hex('lightblue');
   bandOpacity:number=0.5;
@@ -1085,14 +1092,14 @@ export abstract class PlotData {
   pp_selected_index:number[]=[];
   click_on_button:boolean=false;
 
-  initRectColorStroke:string=string_to_hex('grey');
-  initRectLinewidth:number=0.2;
-  initRectDashline:number[]=[];
-  manipRectColorfill:string=string_to_hex('lightblue');
-  manipRectColorstroke:string=string_to_hex('black');
-  manipRectLinewidth:number=1;
-  manipRectOpacity:number=0.3;
-  manipRectDashline:number[]=[15,15];
+  initial_rect_color_stroke:string=string_to_hex('grey');
+  initial_rect_line_width:number=0.2;
+  initial_rect_dashline:number[]=[];
+  manipulation_rect_color_fill:string=string_to_hex('lightblue');
+  manipulation_rect_color_stroke:string=string_to_hex('black');
+  manipulation_rect_line_width:number=1;
+  manipulation_rect_opacity:number=0.3;
+  manipulation_rect_dashline:number[]=[15,15];
 
   isSelecting:boolean=false;
   selection_coords:[number, number][]=[];
@@ -1180,7 +1187,7 @@ export abstract class PlotData {
 
   draw_rect() {
     if (this.manipulable_ON === false) {
-      Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', this.initRectColorStroke, this.initRectLinewidth, 1, this.initRectDashline);
+      Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', this.initial_rect_color_stroke, this.initial_rect_line_width, 1, this.initial_rect_dashline);
     }
   }
 
@@ -1197,7 +1204,8 @@ export abstract class PlotData {
   }
 
   draw_manipulable_rect() {
-    Shape.rect(this.X, this.Y, this.width, this.height, this.context, this.manipRectColorfill, this.manipRectColorstroke, this.manipRectLinewidth, this.manipRectOpacity, this.manipRectDashline);
+    Shape.rect(this.X, this.Y, this.width, this.height, this.context, this.manipulation_rect_color_fill, this.manipulation_rect_color_stroke, 
+      this.manipulation_rect_line_width, this.manipulation_rect_opacity, this.manipulation_rect_dashline);
   }
 
   draw_primitivegroup(hidden, show_state, mvx, mvy, scaleX, scaleY, d) {
@@ -1259,14 +1267,19 @@ export abstract class PlotData {
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
       } else {
-        if ((this.plotObject.type_ == 'scatterplot') && !this.sc_interpolation_ON) {
-          this.context.fillStyle = this.plotObject.color_fill;
-        } else {
-          if ((this.select_on_click.length == 0) || List.contains_undefined(this.select_on_click) || (this.plotObject.type_ == 'graph2d')) {
-            this.context.fillStyle = d.color_fill;
+        if (this.plotObject.type_ == 'scatterplot') {
+          if (this.sc_interpolation_ON) {
+            if ((!equals([this.perm_window_x, this.perm_window_y, this.perm_window_w, this.perm_window_h], [0,0,0,0])) 
+                || (this.select_on_click.length != 0) || (List.contains_undefined(this.select_on_click))) {
+              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
+            } else {
+              this.context.fillStyle = d.color_fill;
+            }
           } else {
-            this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
+            this.context.fillStyle = this.plotObject.point_settings.color_fill;
           }
+        } else { // graph2d
+          this.context.fillStyle = d.color_fill;
         }
         this.context.lineWidth = d.stroke_width;
         this.context.strokeStyle = d.color_stroke;
@@ -1313,7 +1326,7 @@ export abstract class PlotData {
       this.context.beginPath();
       d.draw(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, this.minX, 
              this.maxX, this.minY, this.maxY, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, 
-             this.Y, this.plotObject['toDispAttNames']);
+             this.Y, this.plotObject['to_disp_attribute_names']);
       this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
       this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
       this.context.closePath();
@@ -1321,8 +1334,8 @@ export abstract class PlotData {
     }
   }
 
-  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d, lists, toDisplayAttributes) {
-    d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, toDisplayAttributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d, lists, to_display_attributes) {
+    d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
     this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
     this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
     this.context.closePath();
@@ -1355,12 +1368,12 @@ export abstract class PlotData {
     return min_dist;
   }
 
-  draw_dataset(d, hidden, mvx, mvy) {
+  draw_dataset(d:Dataset, hidden, mvx, mvy) {
     if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
-      this.context.setLineDash(d.dashline);
-      this.context.strokeStyle = d.seg_colorstroke;
-      this.context.lineWidth = d.seg_linewidth;
+      this.context.setLineDash(d.line_settings.dashline);
+      this.context.strokeStyle = d.line_settings.color_stroke;
+      this.context.lineWidth = d.line_settings.line_width;
       for (var i=0; i<d.segments.length; i++) {
         if (i==0) {
           d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
@@ -1397,14 +1410,14 @@ export abstract class PlotData {
       }
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
-        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, false);
+        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.elements, false);
       }
     }
   }
 
-  draw_scatterplot(d, hidden, mvx, mvy) {
+  draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
     if (d['type_'] == 'scatterplot') {
-      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.toDisplayAttributes);
+      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.to_display_attributes);
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
         if (!this.point_list_equals(refreshed_points, this.scatter_point_list)) {
@@ -1509,7 +1522,6 @@ export abstract class PlotData {
             this.context.fillText(current_grad, current_x - 5, current_y);
           }
         }
-
       }
       this.context.stroke();
       this.context.fill();
@@ -1730,7 +1742,7 @@ export abstract class PlotData {
     }
     if (this.selected_axis_name == '') {
       if (selected === true) {
-        this.context.strokeStyle = this.parallel_plot_lineColor;
+        this.context.strokeStyle = this.line_settings.color_stroke;
       } else {
         this.context.strokeStyle = string_to_hex('lightgrey');
       }
@@ -1775,7 +1787,7 @@ export abstract class PlotData {
       }
       this.context.beginPath();
       this.pp_color_management(i);
-      this.context.lineWidth = this.parallel_plot_linewidth;
+      this.context.lineWidth = this.line_settings.line_width;
       Shape.drawLine(this.context, seg_list);
       this.context.stroke();
       this.context.closePath();
@@ -1844,8 +1856,8 @@ export abstract class PlotData {
 
 
   draw_rubber_bands(mvx) {
-    var colorstroke = string_to_hex('white');
-    var linewidth = 0.1;
+    var color_stroke = string_to_hex('white');
+    var line_width = 0.1;
     for (var i=0; i<this.rubber_bands.length; i++) {
       if (this.rubber_bands[i].length != 0) {
         if (this.vertical) {
@@ -1855,9 +1867,9 @@ export abstract class PlotData {
           var real_maxY = this.axis_y_end + maxY*(this.axis_y_start - this.axis_y_end);
           var current_x = this.axis_x_start + i*this.x_step;
           if (i == this.move_index) {
-            Shape.rect(current_x - this.bandWidth/2 + mvx, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity, []);
+            Shape.rect(current_x - this.bandWidth/2 + mvx, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
           } else {
-            Shape.rect(current_x - this.bandWidth/2, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity, []);
+            Shape.rect(current_x - this.bandWidth/2, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
           }
         } else {
           var minX = this.rubber_bands[i][0];
@@ -1866,9 +1878,9 @@ export abstract class PlotData {
           var real_maxX = this.axis_x_start + maxX*(this.axis_x_end - this.axis_x_start);
           var current_y = this.axis_y_start + i*this.y_step;
           if (i == this.move_index) {
-            Shape.rect(real_minX, current_y - this.bandWidth/2 + mvx, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity, []);
+            Shape.rect(real_minX, current_y - this.bandWidth/2 + mvx, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
           } else {
-            Shape.rect(real_minX, current_y - this.bandWidth/2, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, colorstroke, linewidth, this.bandOpacity, []);
+            Shape.rect(real_minX, current_y - this.bandWidth/2, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
           }
         }
       }
@@ -2003,10 +2015,10 @@ export abstract class PlotData {
     this.displayable_attributes = new_displayable_attributes;
   }
 
-  add_to_axis_list(to_disp_attributes_names:string[]) {
-    for (let i=0; i<to_disp_attributes_names.length; i++) {
+  add_to_axis_list(to_disp_attribute_names:string[]) {
+    for (let i=0; i<to_disp_attribute_names.length; i++) {
       for (let j=0; j<this.displayable_attributes.length; j++) {
-        if (to_disp_attributes_names[i] == this.displayable_attributes[j]['name']) {
+        if (to_disp_attribute_names[i] == this.displayable_attributes[j]['name']) {
           this.axis_list.push(this.displayable_attributes[j]);
         }
       }
@@ -2050,26 +2062,26 @@ export abstract class PlotData {
   }
 
   get_scatterplot_displayed_axis():Attribute[] {
-    return this.plotObject.toDisplayAttributes;
+    return this.plotObject.to_display_attributes;
   }
 
   get_scatterplot_displayable_axis():Attribute[] {
-    return this.plotObject.displayableAttributes;
+    return this.plotObject.displayable_attributes;
   }
 
   set_scatterplot_x_axis(attribute_name:string):void {
     var isAttributeInList:boolean = false;
     var attribute:Attribute;
-    for (let i=0; i<this.plotObject.displayableAttributes.length; i++) {
-      if (this.plotObject.displayableAttributes[i].name == attribute_name) {
+    for (let i=0; i<this.plotObject.displayable_attributes.length; i++) {
+      if (this.plotObject.displayable_attributes[i].name == attribute_name) {
         isAttributeInList = true;
-        attribute = this.plotObject.displayableAttributes[i];
+        attribute = this.plotObject.displayable_attributes[i];
       }
     }
     if (isAttributeInList === false) {
       throw new Error('Attribute not found');
     }
-    this.plotObject.toDisplayAttributes[0] = attribute;
+    this.plotObject.to_display_attributes[0] = attribute;
     this.plotObject.initialize_lists();
     this.plotObject.initialize_point_list(this.plotObject.elements);
     this.refresh_MinMax(this.plotObject.point_list);
@@ -2082,16 +2094,16 @@ export abstract class PlotData {
   set_scatterplot_y_axis(attribute_name:string):void {
     var isAttributeInList:boolean = false;
     var attribute:Attribute;
-    for (let i=0; i<this.plotObject.displayableAttributes.length; i++) {
-      if (this.plotObject.displayableAttributes[i].name == attribute_name) {
+    for (let i=0; i<this.plotObject.displayable_attributes.length; i++) {
+      if (this.plotObject.displayable_attributes[i].name == attribute_name) {
         isAttributeInList = true;
-        attribute = this.plotObject.displayableAttributes[i];
+        attribute = this.plotObject.displayable_attributes[i];
       }
     }
     if (isAttributeInList === false) {
       throw new Error('Attribute not found');
     }
-    this.plotObject.toDisplayAttributes[1] = attribute;
+    this.plotObject.to_display_attributes[1] = attribute;
     this.plotObject.initialize_lists();
     this.plotObject.initialize_point_list(this.plotObject.elements);
     this.refresh_MinMax(this.plotObject.point_list);
@@ -2102,12 +2114,12 @@ export abstract class PlotData {
   }
 
   add_to_tooltip(tooltip:Tooltip, str:string): Tooltip {
-    tooltip.to_plot_list.push(str);
+    tooltip.to_disp_attribute_names.push(str);
     return tooltip;
   }
 
   remove_from_tooltip(tooltip:Tooltip, str:string): Tooltip {
-    tooltip.to_plot_list = List.remove_selection(str, tooltip.to_plot_list);
+    tooltip.to_disp_attribute_names = List.remove_selection(str, tooltip.to_disp_attribute_names);
     return tooltip;
   }
 
@@ -2941,8 +2953,6 @@ export class PlotScatter extends PlotData {
     this.context.closePath();
     this.draw_graph2D(this.plotObject, hidden, mvx, mvy);
     this.draw_scatterplot(this.plotObject, hidden, mvx, mvy);
-    this.draw_point(hidden, show_state, mvx, mvy, scaleX, scaleY, this.plotObject);
-    this.draw_axis(mvx, mvy, scaleX, scaleY, this.plotObject);
     if (this.permanent_window) {
       this.draw_selection_rectangle();
     }
@@ -2994,10 +3004,9 @@ export class ParallelPlot extends PlotData {
       this.disp_w = 30;
       this.disp_h = 20;
     }
-    this.parallel_plot_lineColor = rgb_to_hex(data['line_color']);
-    this.parallel_plot_linewidth = data['line_width'];
     this.elements = data['elements'];
-    var to_disp_attribute_names = data['to_disp_attributes'];
+    this.line_settings = LineSettings.deserialize(data['line_settings']);
+    var to_disp_attribute_names = data['to_disp_attribute_names'];
     if (data['disposition'] == 'vertical') {
       this.vertical = true;
     } else if (data['disposition'] == 'horizontal') {
@@ -3617,10 +3626,10 @@ export class MultiplotCom {
     plot_data.refresh_pp_selected();
   }
 
-  public static sc_to_sc_communication(selection_coords:[number, number][], toDisplayAttributes:Attribute[], plot_data:PlotData) {
-    let obj_toDispAttrs = plot_data.plotObject.toDisplayAttributes;
-    if (equals(obj_toDispAttrs, toDisplayAttributes) || equals(obj_toDispAttrs, List.reverse(toDisplayAttributes))) {
-      if (equals(obj_toDispAttrs, List.reverse(toDisplayAttributes))) {
+  public static sc_to_sc_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], plot_data:PlotData) {
+    let obj_to_display_attributes = plot_data.plotObject.to_display_attributes;
+    if (equals(obj_to_display_attributes, to_display_attributes) || equals(obj_to_display_attributes, List.reverse(to_display_attributes))) {
+      if (equals(obj_to_display_attributes, List.reverse(to_display_attributes))) {
         selection_coords = selection_coords.reverse();
       }
       var abs_min = selection_coords[0][0];
@@ -3632,9 +3641,9 @@ export class MultiplotCom {
       plot_data.perm_window_y = ord_min;
       plot_data.perm_window_h = ord_min - ord_max;
     } else {
-      for (let i=0; i<toDisplayAttributes.length; i++) {
-        for (let j=0; j<obj_toDispAttrs.length; j++) {
-          if (toDisplayAttributes[i]['name'] == obj_toDispAttrs[j]['name']) {
+      for (let i=0; i<to_display_attributes.length; i++) {
+        for (let j=0; j<obj_to_display_attributes.length; j++) {
+          if (to_display_attributes[i]['name'] == obj_to_display_attributes[j]['name']) {
             if (j == 0) {
               var abs_min = selection_coords[i][0];
               var abs_max = selection_coords[i][1];
@@ -3868,10 +3877,7 @@ export class Contour2D {
   public static deserialize(serialized) {
       var temp = serialized['plot_data_states'];
       var plot_data_states = [];
-      for (var i = 0; i < temp.length; i++) {
-        var d = temp[i];
-        plot_data_states.push(Settings.deserialize(d));
-      }
+      plot_data_states.push(ContourSettings.deserialize(temp));
       var temp = serialized['plot_data_primitives'];
       var plot_data_primitives = [];
 
@@ -3902,32 +3908,28 @@ export class Text {
   maxY:number=0;
   mouse_selection_color:any;
 
-  constructor(public comment:any,
-              public position_x:any,
-              public position_y:any,
-              public plot_data_states:any,
+  constructor(public comment:string,
+              public position_x:number,
+              public position_y:number,
+              public text_settings:TextSettings,
               public type_:string,
               public name:string) {
   }
 
   public static deserialize(serialized) {
     var temp = serialized['plot_data_states'];
-    var plot_data_states = [];
-    for (var i = 0; i < temp.length; i++) {
-      var d = temp[i];
-      plot_data_states.push(Settings.deserialize(d));
-    }
+    var text_settings = TextSettings.deserialize(serialized['text_settings']);
     return new Text(serialized['comment'],
                     serialized['position_x'],
                     serialized['position_y'],
-                    plot_data_states,
+                    text_settings,
                     serialized['type_'],
                     serialized['name']);
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    context.font = "regular 100px Arial";
-    context.fillStyle = "black";
+    context.font = this.text_settings.font;
+    context.fillStyle = this.text_settings.text_color;
     context.fillText(this.comment, scaleX*(1000*this.position_x+ mvx) + X, scaleY*(1000*this.position_y+ mvy) + Y);
   }
 }
@@ -3939,7 +3941,7 @@ export class LineSegment {
   maxY:number=0;
 
   constructor(public data:any,
-              public plot_data_states:any,
+              public plot_data_states:LineSettings,
               public type_:string,
               public name:string) {
       this.minX = Math.min(this.data[0], this.data[2]);
@@ -3949,12 +3951,7 @@ export class LineSegment {
   }
 
   public static deserialize(serialized) {
-      var temp = serialized['plot_data_states'];
-      var plot_data_states = [];
-      for (var i = 0; i < temp.length; i++) {
-        var d = temp[i];
-        plot_data_states.push(Settings.deserialize(d));
-      }
+      var plot_data_states = LineSettings.deserialize(serialized['plot_data_states']);
       return new LineSegment(serialized['data'],
                                plot_data_states,
                                serialized['type_'],
@@ -3962,9 +3959,9 @@ export class LineSegment {
   }
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
-    if (!(this.plot_data_states[0] === undefined)) {
-      context.lineWidth = this.plot_data_states[0].stroke_width;
-      context.strokeStyle = this.plot_data_states[0].color_line;
+    if (!(this.plot_data_states === undefined)) {
+      context.lineWidth = this.plot_data_states.line_width;
+      context.strokeStyle = this.plot_data_states.color_stroke;
     }
     if (first_elem) {
       context.moveTo(scaleX*(1000*this.data[0]+ mvx) + X, scaleY*(1000*this.data[1]+ mvy) + Y);
@@ -3983,7 +3980,7 @@ export class Circle2D {
               public cx:number,
               public cy:number,
               public r:number,
-              public plot_data_states:Settings[],
+              public plot_data_states:PointSettings,
               public type_:string,
               public name:string) {
       this.minX = this.cx - this.r;
@@ -3993,12 +3990,7 @@ export class Circle2D {
               }
 
   public static deserialize(serialized) {
-      var temp = serialized['plot_data_states']
-      var plot_data_states = []
-      for (var i = 0; i < temp.length; i++) {
-        var d = temp[i]
-        plot_data_states.push(Settings.deserialize(d))
-      }
+      var plot_data_states = PointSettings.deserialize(serialized['plot_data_states'])
       return new Circle2D(serialized['data'],
                                   serialized['cx'],
                                   serialized['cy'],
@@ -4107,31 +4099,30 @@ export class Point2D {
 }
 
 export class Axis {
-  colorStroke:any;
+  color_stroke:any;
   x_step:number;
   y_step:number;
+
   constructor(public nb_points_x:number,
               public nb_points_y:number,
-              public font_size:number,
-              public graduation_color:string,
-              public axis_color:string,
-              public name:string,
+              public graduation_settings:TextSettings,
+              public axis_settings:LineSettings,
               public arrow_on:boolean,
-              public axis_width:number,
               public grid_on:boolean,
-              public type_:string) {}
+              public type_:string,
+              public name) {}
 
   public static deserialize(serialized) {
+    var graduation_settings = TextSettings.deserialize(serialized['graduation_settings']);
+    var axis_settings = LineSettings.deserialize(serialized['axis_settings']);
     return new Axis(serialized['nb_points_x'],
                     serialized['nb_points_y'],
-                    serialized['font_size'],
-                    rgb_to_hex(serialized['graduation_color']),
-                    rgb_to_hex(serialized['axis_color']),
-                    serialized['name'],
+                    graduation_settings,
+                    axis_settings,
                     serialized['arrow_on'],
-                    serialized['axis_width'],
                     serialized['grid_on'],
-                    serialized['type_']);
+                    serialized['type_'],
+                    serialized['name']);
   }
 
   draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, x_step, y_step, font_size, X, Y) {
@@ -4181,11 +4172,11 @@ export class Axis {
     context.stroke();
   }
 
-  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, toDispAttNames) {
+  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_names) {
     // Drawing the coordinate system
     context.beginPath();
-    context.strokeStyle = this.axis_color;
-    context.lineWidth = this.axis_width;
+    context.strokeStyle = this.axis_settings.color_stroke;
+    context.lineWidth = this.axis_settings.line_width;
     var axis_x_start = decalage_axis_x + X;
     var axis_x_end = width + X;
     var axis_y_start = Y;
@@ -4215,27 +4206,27 @@ export class Axis {
       this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
     }
 
-    context.fillStyle = this.graduation_color;
-    context.strokeStyle = this.axis_color;
+    context.fillStyle = this.graduation_settings.text_color;
+    context.strokeStyle = this.axis_settings.color_stroke;
 
     context.font = 'bold 20px Arial';
     context.textAlign = 'end';
-    context.fillText(toDispAttNames[0], axis_x_end - 5, axis_y_end - 10);
+    context.fillText(to_disp_attribute_names[0], axis_x_end - 5, axis_y_end - 10);
     context.textAlign = 'start';
-    context.fillText(toDispAttNames[1], axis_x_start + 5, axis_y_start + 20);
+    context.fillText(to_disp_attribute_names[1], axis_x_start + 5, axis_y_start + 20);
     context.stroke();
 
-    context.font = this.font_size.toString() + 'px Arial';
-    this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.font_size, X, Y);
+    context.font = this.graduation_settings.font_size.toString() + 'px Arial';
+    this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.graduation_settings.font_size, X, Y);
     context.closePath();
 
   }
 
-  draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, toDisplayAttributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
+  draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
     // Drawing the coordinate system
     context.beginPath();
-    context.strokeStyle = this.axis_color;
-    context.lineWidth = this.axis_width;
+    context.strokeStyle = this.axis_settings.color_stroke;
+    context.lineWidth = this.axis_settings.line_width;
     var axis_x_start = decalage_axis_x + X;
     var axis_x_end = width + X;
     var axis_y_start = Y;
@@ -4253,21 +4244,20 @@ export class Axis {
     Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
     Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
 
-    context.fillStyle = this.graduation_color;
-    context.strokeStyle = this.axis_color;
-    context.font = 'bold 20px Arial';
+    context.fillStyle = this.graduation_settings.text_color;
+    context.strokeStyle = this.axis_settings.color_stroke;    context.font = 'bold 20px Arial';
     context.textAlign = 'end';
-    context.fillText(toDisplayAttributes[0]['name'], axis_x_end - 5, axis_y_end - 10);
+    context.fillText(to_display_attributes[0]['name'], axis_x_end - 5, axis_y_end - 10);
     context.textAlign = 'start';
-    context.fillText(toDisplayAttributes[1]['name'], axis_x_start + 5, axis_y_start + 20)
+    context.fillText(to_display_attributes[1]['name'], axis_x_start + 5, axis_y_start + 20)
 
     context.stroke();
 
     //Graduations
-    context.font = this.font_size.toString() + 'px Arial';
+    context.font = this.graduation_settings.font_size.toString() + 'px Arial';
 
-    this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[0], toDisplayAttributes[0], scroll_x, X);
-    this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[1], toDisplayAttributes[1], scroll_y, Y);
+    this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[0], to_display_attributes[0], scroll_x, X);
+    this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[1], to_display_attributes[1], scroll_y, Y);
     context.stroke();
     context.fill();
     context.closePath();
@@ -4295,7 +4285,7 @@ export class Axis {
           } else {
             Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + 3]]);
           }
-          context.fillText(MyMath.round(grad_beg_x + i*this.x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + this.font_size);
+          context.fillText(MyMath.round(grad_beg_x + i*this.x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + this.graduation_settings.font_size);
         }
         i++
       }
@@ -4307,7 +4297,7 @@ export class Axis {
           } else {
             Shape.drawLine(context, [[scaleX*(1000*i + mvx) + X, axis_y_end - 3], [scaleX*(1000*i + mvx) + X, axis_y_end + 3]]);
           }
-          context.fillText(list[i], scaleX*(1000*i + mvx) + X, axis_y_end + this.font_size);
+          context.fillText(list[i], scaleX*(1000*i + mvx) + X, axis_y_end + this.graduation_settings.font_size);
         }
       }
     }
@@ -4355,27 +4345,23 @@ export class Axis {
 }
 
 export class Tooltip {
-  constructor(public colorfill:string,
-              public text_color: string,
-              public font_size:number,
-              public font_style:string,
-              public tp_radius:any,
-              public to_plot_list:any,
-              public opacity:number,
+  constructor(public to_disp_attribute_names:string[],
+              public surface_settings:SurfaceSettings,
+              public text_settings:TextSettings,
+              public tooltip_radius:number,
               public type_:string,
               public name:string) {
               }
 
   public static deserialize(serialized) {
-      return new Tooltip(rgb_to_hex(serialized['colorfill']),
-                         rgb_to_hex(serialized['text_color']),
-                         serialized['font_size'],
-                         serialized['font_style'],
-                         serialized['tp_radius'],
-                         serialized['to_plot_list'],
-                         serialized['opacity'],
-                         serialized['type_'],
-                         serialized['name']);
+    var surface_settings = SurfaceSettings.deserialize(serialized['surface_settings']);
+    var text_settings = TextSettings.deserialize(serialized['text_settings']);
+    return new Tooltip(serialized['to_disp_attribute_names'],
+                       surface_settings,
+                       text_settings,
+                       serialized['tooltip_radius'],
+                       serialized['type_'],
+                       serialized['name']);
   }
 
   isTooltipInsideCanvas(point, mvx, mvy, scaleX, scaleY, canvasWidth, canvasHeight) {
@@ -4400,8 +4386,8 @@ export class Tooltip {
   initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt): [string[], number] {
     var textfills = [];
     var text_max_length = 0;
-    for (let i=0; i<this.to_plot_list.length; i++) {
-      let attribute_name = this.to_plot_list[i];
+    for (let i=0; i<this.to_disp_attribute_names.length; i++) {
+      let attribute_name = this.to_disp_attribute_names[i];
       let attribute_type = TypeOf(elt[attribute_name]);
       if (attribute_type == 'float') {
         var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digit évidemment pas définie lorsque l'axe des x est un string...
@@ -4419,23 +4405,25 @@ export class Tooltip {
     return [textfills, text_max_length];
   }
 
-  initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point): [string[], number] {
+  initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt, point): [string[], number] {
     var textfills = [];
     var text_max_length = 0;
-    var text = 'cx : ' + MyMath.round(point.cx, x_nb_digits).toString();
-    var text_w = context.measureText(text).width;
-    textfills.push(text);
-    if (text_w > text_max_length) {
-      text_max_length = text_w;
+    for (let i=0; i<this.to_disp_attribute_names.length; i++) {
+      let attribute_name = this.to_disp_attribute_names[i];
+      let attribute_type = TypeOf(elt[attribute_name]);
+      if (attribute_type == 'float') {
+        if (i==0) {
+          var text = attribute_name + ' : ' + MyMath.round(point.cx, Math.max(x_nb_digits, y_nb_digits,2));
+        } else {
+          var text = attribute_name + ' : ' + MyMath.round(-point.cy, Math.max(x_nb_digits, y_nb_digits,2));
+        }
+      }
+      var text_w = context.measureText(text).width;
+      textfills.push(text);
+      if (text_w > text_max_length) {
+        text_max_length = text_w;
+      }
     }
-
-    var text = 'cy : ' + MyMath.round(-point.cy, y_nb_digits).toString();
-    var text_w = context.measureText(text).width;
-    textfills.push(text);
-    if (text_w > text_max_length) {
-      text_max_length = text_w;
-    }
-
     return [textfills, text_max_length];
   }
 
@@ -4447,15 +4435,14 @@ export class Tooltip {
       var index = point.getPointIndex(point_list);
       var elt = elements[index];
       if (mergeON === true) {
-        [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point);
+        [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt, point);
       } else {
         [textfills, text_max_length] = this.initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt);
       }
     }
 
     if (textfills.length > 0) {
-      context.beginPath();
-      var tp_height = (textfills.length + 0.25)*this.font_size ;
+      var tp_height = (textfills.length + 0.25)*this.text_settings.font_size ;
       var cx = point.cx;
       var cy = point.cy;
       var point_size = point.point_size;
@@ -4473,27 +4460,29 @@ export class Tooltip {
       if (tp_y + tp_height > canvas_height + Y) {
         tp_y = scaleY*(1000*cy + mvy) - tp_height + Y;
       }
-
-      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tp_radius, context);
-      context.strokeStyle = 'black';
-      context.globalAlpha = this.opacity;
-      context.fillStyle = this.colorfill;
+      context.beginPath();
+      context.strokeStyle = string_to_hex('black');
+      context.globalAlpha = this.surface_settings.opacity;
+      context.fillStyle = this.surface_settings.color_fill;
+      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context);
       context.stroke();
       context.fill();
-      context.fillStyle = this.text_color;
+      context.fillStyle = this.text_settings.text_color;
       context.textAlign = 'start';
       context.textBaseline = 'Alphabetic';
 
       var x_start = tp_x + 1/10*tp_width;
-      context.font = this.font_size.toString() + 'px ' + this.font_style;
+      context.font = this.text_settings.font_size.toString() + 'px ' + this.text_settings.font_style;
 
-      var current_y = tp_y + 0.75*this.font_size;
+      var current_y = tp_y + 0.75*this.text_settings.font_size;
       for (var i=0; i<textfills.length; i++) {
         context.fillText(textfills[i], x_start, current_y);
-        current_y = current_y + this.font_size;
+        current_y = current_y + this.text_settings.font_size;
       }
-      context.closePath();
+
       context.globalAlpha = 1;
+      context.stroke();
+      context.closePath();
     }
 
   }
@@ -4511,19 +4500,14 @@ export class Dataset {
   id:number=0;
   point_list:Point2D[]=[];
   segments:LineSegment[];
-  constructor( public dashline: number[],
-              public seg_colorstroke: string,
-              public seg_linewidth: number,
+
+  constructor(public to_disp_attribute_names:string[],
+              public line_settings:LineSettings,
               public tooltip:Tooltip,
-              public toDispAttNames:string[],
-              public pt_colorfill:string,
-              public pt_colorstroke:string,
-              public pt_strokewidth:number,
-              public point_shape:string,
-              public point_size:number,  
+              public point_settings:PointSettings,
               public elements:any[],
-              public display_step:number,          
-              public type_: string,
+              public display_step:number,
+              public type_:string,
               public name:string) {
     this.initialize_point_list();
     this.initialize_segments();
@@ -4534,9 +4518,11 @@ export class Dataset {
     for (let i=0; i<this.elements.length; i++) {
       let coord = [];
       for (let j=0; j<2; j++) {
-        coord.push(Math.pow(-1, j)*this.elements[i][this.toDispAttNames[j]]);
+        coord.push(Math.pow(-1, j)*this.elements[i][this.to_disp_attribute_names[j]]);
       }
-      this.point_list.push(new Point2D(coord[0], coord[1], this.point_shape, this.point_size, this.pt_colorfill, this.pt_colorstroke, this.pt_strokewidth, 'point', ''));
+      this.point_list.push(new Point2D(coord[0], coord[1], this.point_settings.shape, this.point_settings.size,
+                           this.point_settings.color_fill, this.point_settings.color_stroke, 
+                           this.point_settings.stroke_width, 'point', ''));
     } 
   }
 
@@ -4546,22 +4532,18 @@ export class Dataset {
       let current_point = this.point_list[i];
       let next_point = this.point_list[i+1];
       let data = [current_point.cx, current_point.cy, next_point.cx, next_point.cy];
-      this.segments.push(new LineSegment(data, [], '', ''));
+      this.segments.push(new LineSegment(data, this.line_settings, 'line', ''));
     }
   }
 
   public static deserialize(serialized) {
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    return new Dataset(serialized['dashline'],
-                       serialized['seg_colorstroke'],
-                       serialized['seg_linewidth'],
+    var line_settings = LineSettings.deserialize(serialized['line_settings']);
+    var point_settings = PointSettings.deserialize(serialized['point_settings']);
+    return new Dataset(serialized['to_disp_attribute_names'],
+                       line_settings,
                        tooltip,
-                       serialized['to_disp_att_names'],
-                       serialized['pt_colorfill'],
-                       serialized['pt_colorstroke'],
-                       serialized['pt_strokewidth'],
-                       serialized['point_shape'],
-                       serialized['point_size'],
+                       point_settings,
                        serialized['elements'],
                        serialized['display_step'],
                        serialized['type_'],
@@ -4571,7 +4553,7 @@ export class Dataset {
 
 export class Graph2D {
   constructor(public graphs: Dataset[],
-              public toDispAttNames:string[],
+              public to_disp_attribute_names:string[],
               public axis: Axis,
               public type_: string,
               public name: string) {}
@@ -4579,13 +4561,13 @@ export class Graph2D {
   public static deserialize(serialized) {
     var graphs:Dataset[] = [];
     for (let i=0; i<serialized['graphs'].length; i++) {
-      serialized['graphs'][i]['to_disp_att_names'] = serialized['to_disp_att_names'];
+      serialized['graphs'][i]['to_disp_attribute_names'] = serialized['to_disp_attribute_names'];
       graphs.push(Dataset.deserialize(serialized['graphs'][i]));
     }
     var axis = Axis.deserialize(serialized['axis']);
 
     return new Graph2D(graphs,
-                       serialized['to_disp_att_names'],
+                       serialized['to_disp_attribute_names'],
                        axis,
                        serialized['type_'],
                        serialized['name']);
@@ -4595,23 +4577,19 @@ export class Graph2D {
 export class Scatter {
 
   point_list:Point2D[]=[];
-  displayableAttributes:Attribute[]=[];
+  displayable_attributes:Attribute[]=[];
   lists:any[]=[];
-  toDisplayAttributes:Attribute[]=[];
+  to_display_attributes:Attribute[]=[];
 
-  constructor(public elements:Object[],
+  constructor(public tooltip:Tooltip,
+              public to_disp_attribute_names:string[],
+              public point_settings:PointSettings,
+              public elements: any[],
               public axis:Axis,
-              public tooltip:Tooltip,
-              public toDispAttNames:string[],
-              public point_shape:string,
-              public point_size:number,
-              public color_fill:string,
-              public color_stroke:string,
-              public stroke_width:number,
               public type_:string,
               public name:string) {
-    this.initialize_displayableAttributes();
-    this.initialize_toDisplayAttributes();
+    this.initialize_displayable_attributes();
+    this.initialize_to_display_attributes();
     this.initialize_lists();
     this.initialize_point_list(elements);
 
@@ -4620,37 +4598,34 @@ export class Scatter {
   public static deserialize(serialized) {
     var axis = Axis.deserialize(serialized['axis']);
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    return new Scatter(serialized['elements'],
-                               axis,
-                               tooltip,
-                               serialized['to_display_att_names'],
-                               serialized['point_shape'],
-                               serialized['point_size'],
-                               rgb_to_hex(serialized['color_fill']),
-                               rgb_to_hex(serialized['color_stroke']),
-                               serialized['stroke_width'],
-                               serialized['type_'],
-                               serialized['name']);
+    var point_settings = PointSettings.deserialize(serialized['point_settings']);
+    return new Scatter(tooltip,
+                       serialized['to_disp_attribute_names'],
+                       point_settings,
+                       serialized['elements'],
+                       axis,
+                       serialized['type_'],
+                       serialized['name']);
   }
 
-  initialize_displayableAttributes() {
+  initialize_displayable_attributes() {
     var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
     var exceptions = ['name', 'package_version', 'object_class'];
     for (let i=0; i<attribute_names.length; i++) {
       let name = attribute_names[i];
       if (!List.is_include(name, exceptions)) {
         let type_ = TypeOf(this.elements[0][name]);
-        this.displayableAttributes.push(new Attribute(name, type_)); 
+        this.displayable_attributes.push(new Attribute(name, type_)); 
       }
     }
   }
 
-  initialize_toDisplayAttributes() {
-    for (let i=0; i<this.toDispAttNames.length; i++) {
-      var name = this.toDispAttNames[i];
-      for (let j=0; j<this.displayableAttributes.length; j++) {
-        if (name == this.displayableAttributes[j]['name']) {
-          this.toDisplayAttributes.push(this.displayableAttributes[j]);
+  initialize_to_display_attributes() {
+    for (let i=0; i<this.to_disp_attribute_names.length; i++) {
+      var name = this.to_disp_attribute_names[i];
+      for (let j=0; j<this.displayable_attributes.length; j++) {
+        if (name == this.displayable_attributes[j]['name']) {
+          this.to_display_attributes.push(this.displayable_attributes[j]);
           break;
         }
       }
@@ -4659,10 +4634,10 @@ export class Scatter {
 
   initialize_lists() {
     this.lists = [];
-    for (let i=0; i<this.toDisplayAttributes.length; i++) {
+    for (let i=0; i<this.to_display_attributes.length; i++) {
       var value = [];
-      var name = this.toDisplayAttributes[i].name;
-      let type_ = this.toDisplayAttributes[i].type_;
+      var name = this.to_display_attributes[i].name;
+      let type_ = this.to_display_attributes[i].type_;
       if (type_ == 'float') {
         let min = this.elements[0][name];
         let max = this.elements[0][name];
@@ -4699,23 +4674,25 @@ export class Scatter {
   initialize_point_list(elements) {
     this.point_list = [];
     for (let i=0; i<this.elements.length; i++) {
-      var elt0 = elements[i][this.toDisplayAttributes[0]['name']];
-      var elt1 = elements[i][this.toDisplayAttributes[1]['name']];
-      if (this.toDisplayAttributes[0]['type_'] == 'float') {
+      var elt0 = elements[i][this.to_display_attributes[0]['name']];
+      var elt1 = elements[i][this.to_display_attributes[1]['name']];
+      if (this.to_display_attributes[0]['type_'] == 'float') {
         var cx = elt0;
-      } else if (this.toDisplayAttributes[0]['type_'] == 'color') {
+      } else if (this.to_display_attributes[0]['type_'] == 'color') {
         cx = List.get_index_of_element(rgb_to_string(elt0), this.lists[0]);
       } else {
         cx = List.get_index_of_element(elt0.toString(), this.lists[0]);
       }
-      if (this.toDisplayAttributes[1]['type_'] == 'float') {
+      if (this.to_display_attributes[1]['type_'] == 'float') {
         var cy = -elt1;
-      } else if (this.toDisplayAttributes[1]['type_'] == 'color') {
+      } else if (this.to_display_attributes[1]['type_'] == 'color') {
         cy = - List.get_index_of_element(rgb_to_string(elt1), this.lists[1]);
       } else {
         cy = - List.get_index_of_element(elt1.toString(), this.lists[1]);
       }
-      this.point_list.push(new Point2D(cx, cy, this.point_shape, this.point_size, this.color_fill, this.color_stroke, this.stroke_width, 'point', ''));
+      this.point_list.push(new Point2D(cx, cy, this.point_settings.shape, this.point_settings.size, 
+                           this.point_settings.color_fill, this.point_settings.color_stroke,
+                           this.point_settings.stroke_width, 'point', ''));
     }
   }
 
@@ -4733,7 +4710,7 @@ export class Arc2D {
               public data:any,
               public angle1:number,
               public angle2:number,
-              public plot_data_states:Settings[],
+              public plot_data_states:LineSettings,
               public type_:string,
               public name:string) {
       if((this.cx - this.r) < this.minX){
@@ -4751,12 +4728,7 @@ export class Arc2D {
   }
 
   public static deserialize(serialized) {
-      var temp = serialized['plot_data_states']
-      var plot_data_states = [];
-      for (var i = 0; i < temp.length; i++) {
-        var d = temp[i];
-        plot_data_states.push(Settings.deserialize(d));
-      }
+      var plot_data_states = LineSettings.deserialize(serialized['plot_data_states'])
       return new Arc2D(serialized['cx'],
                                   serialized['cy'],
                                   serialized['r'],
@@ -4799,7 +4771,7 @@ export class Attribute {
   }
 }
 
-export class Settings {
+export class ContourSettings {
 
   constructor(public color_surface:ColorSurfaceSet,
               public color_map:any,
@@ -4808,9 +4780,6 @@ export class Settings {
               public dash:any,
               public marker:any,
               public color_line:any,
-              public shape_set:PointShapeSet,
-              public point_size:PointSizeSet,
-              public point_color:PointColorSet,
               public window_size:Window,
               public stroke_width:any,
               public name:any,) {}
@@ -4824,40 +4793,87 @@ export class Settings {
       if (serialized['hatching'] != null) {
         hatching = HatchingSet.deserialize(serialized['hatching']);
       }
-      var shape_set = null;
-      if (serialized['shape_set'] != null) {
-        shape_set = PointShapeSet.deserialize(serialized['shape_set']);
-      }
       var window_size = null;
       if(serialized['window_size'] != null) {
         window_size = Window.deserialize(serialized['window_size']);
       }
-      var point_size = null;
-      if (serialized['point_size'] != null) {
-        point_size = PointSizeSet.deserialize(serialized['point_size']);
-      }
-      var point_color = null;
-      if (serialized['point_color'] != null) {
-        point_color = PointColorSet.deserialize(serialized['point_color']);
-      }
-      return new Settings(color_surface,
+      return new ContourSettings(color_surface,
                                serialized['color_map'],
                                hatching,
                                serialized['opacity'],
                                serialized['dash'],
                                serialized['marker'],
                                serialized['color_line'],
-                               shape_set,
-                               point_size,
-                               point_color,
                                window_size,
                                serialized['stroke_width'],
                                serialized['name']);
   }
   copy() {
-    return new Settings(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.shape_set, this.point_size, this.point_color, this.window_size, this.stroke_width, this.name);
+    return new ContourSettings(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.window_size, this.stroke_width, this.name);
   }
 }
+
+export class LineSettings {
+  constructor(public line_width:number,
+              public color_stroke:string,
+              public dashline:number[],
+              public name: string) {}
+  
+  public static deserialize(serialized) {
+    return new LineSettings(serialized['line_width'],
+                            rgb_to_hex(serialized['color_stroke']),
+                            serialized['dashline'],
+                            serialized['name']);
+  }
+}
+
+export class PointSettings {
+  constructor(public color_fill: string,
+              public color_stroke: string, 
+              public stroke_width: number,
+              public size: number,
+              public shape: string,
+              public name: string) {}
+
+  public static deserialize(serialized) {
+    return new PointSettings(rgb_to_hex(serialized['color_fill']),
+                             rgb_to_hex(serialized['color_stroke']),
+                             serialized['stroke_width'],
+                             serialized['size'],
+                             serialized['shape'],
+                             serialized['name']);
+  }
+}
+
+export class TextSettings {
+  font:string
+  constructor(public text_color:string,
+              public font_size:number,
+              public font_style:string,
+              public name:string) {
+    this.font = font_size.toString() + ' ' + font_style;
+  }
+
+  public static deserialize(serialized) {
+    return new TextSettings(rgb_to_hex(serialized['text_color']),
+                            serialized['font_size'],
+                            serialized['font_style'],
+                            serialized['name']);
+  }
+}
+
+export class SurfaceSettings {
+  constructor(public color_fill:string,
+              public opacity:number,
+              public hatching:HatchingSet) {}
+            
+  public static deserialize(serialized) {
+    return new SurfaceSettings(rgb_to_hex(serialized['color_fill']),
+                               serialized['opacity'],
+                               serialized['hatching']);
+  }
+}
+
 
 export class ColorSurfaceSet {
 
@@ -4866,35 +4882,7 @@ export class ColorSurfaceSet {
 
   public static deserialize(serialized) {
       return new ColorSurfaceSet(serialized['name'],
-                               serialized['color']);
-  }
-}
-
-export class PointShapeSet {
-  constructor(public name:string, public shape:any){}
-
-  public static deserialize(serialized) {
-    return new PointShapeSet(serialized['name'],
-                             serialized['shape']);
-  }
-}
-
-export class PointSizeSet {
-  constructor(public name:string, public size:number) {}
-
-  public static deserialize(serialized) {
-    return new PointSizeSet(serialized['name'],
-                            serialized['size'])
-  }
-}
-
-export class PointColorSet {
-  constructor(public name:string, public color_fill:string, public color_stroke:string) {}
-
-  public static deserialize(serialized) {
-    return new PointColorSet(serialized['name'],
-                             serialized['color_fill'],
-                             serialized['color_stroke'])
+                                 rgb_to_hex(serialized['color']));
   }
 }
 
@@ -4977,9 +4965,6 @@ export class Shape {
   public static roundRect(x, y, w, h, radius, context) {
     var r = x + w;
     var b = y + h;
-    context.beginPath();
-    context.strokeStyle="black";
-    context.lineWidth="1";
     context.moveTo(x+radius, y);
     context.lineTo(r-radius, y);
     context.quadraticCurveTo(r, y, r, y+radius);
@@ -4989,8 +4974,6 @@ export class Shape {
     context.quadraticCurveTo(x, b, x, b-radius);
     context.lineTo(x, y+radius);
     context.quadraticCurveTo(x, y, x+radius, y);
-    context.stroke();
-    context.closePath();
   }
 
   public static isInRect(x, y, rect_x, rect_y, rect_w, rect_h) {
@@ -5022,9 +5005,9 @@ export class Shape {
     context.closePath();
   }
 
-  public static createGraphButton(x, y, w, h, context, text, police, colorfill, strikeout) {
+  public static createGraphButton(x, y, w, h, context, text, police, color_fill, strikeout) {
     context.beginPath();
-    context.fillStyle = colorfill;
+    context.fillStyle = color_fill;
     context.rect(x,y,w,h);
     context.fill();
     context.closePath();
@@ -5045,18 +5028,18 @@ export class Shape {
     context.closePath();
   }
 
-  public static rect(x, y, w, h, context, colorfill, colorstroke, linewidth, opacity, dashline) {
+  public static rect(x, y, w, h, context, color_fill, color_stroke, line_width, opacity, dashline) {
     context.beginPath();
     context.setLineDash(dashline);
-    context.fillStyle = colorfill;
-    context.strokeStyle = colorstroke;
-    context.lineWidth = linewidth;
+    context.fillStyle = color_fill;
+    context.strokeStyle = color_stroke;
+    context.lineWidth = line_width;
     context.globalAlpha = opacity;
     context.rect(x,y,w,h);
-    if (colorfill != 'No') {
+    if (color_fill != 'No') {
       context.fill();
     }
-    if (colorstroke != 'No') {
+    if (color_stroke != 'No') {
       context.stroke();
     }
     context.closePath();
@@ -5171,7 +5154,7 @@ export function rgb_to_hex(rgb:string): string {
   return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#adb3ff'], ['lightskyblue', '#87CEFA'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
+var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#c3e6fc'], ['lightskyblue', '#87CEFA'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
   ['lightorange', '#ff8700'], ['cyan', '#13f0f0'], ['lightcyan', '#90f7f7'], ['rose', '#FF69B4'], ['lightrose', '#FFC0CB'], ['violet', '#EE82EE'], ['lightviolet', '#eaa5f6'], ['white', '#ffffff'], ['black', '#000000'], ['brown', '#cd8f40'],
   ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']];
 

@@ -1,7 +1,7 @@
 RED = 'rgb(247, 0, 0)'
 LIGHTRED = 'rgb(237, 128, 128)'
 BLUE = 'rgb(0, 19, 254)'
-LIGHTBLUE = 'rgb(173, 179, 255)'
+LIGHTBLUE = 'rgb(195,230,252)'
 GREEN = 'rgb(0, 193, 18)'
 LIGHTGREEN = 'rgb(137, 232, 146)'
 YELLOW = 'rgb(244, 255, 0)'

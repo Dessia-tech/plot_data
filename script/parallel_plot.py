@@ -21,7 +21,7 @@ color_stroke = GREY
 stroke_width = 1  # Points' stroke width
 
 # ParallelPlot
-to_disp_attributes = ['cx', 'cy', 'color_fill', 'color_stroke']
+to_disp_attribute_names = ['cx', 'cy', 'color_fill', 'color_stroke']
 line_color = BLACK
 line_width = 0.5
 disposition = 'vertical'
@@ -44,11 +44,11 @@ for i in range(50):
     elements += [point]
 
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
+line_settings = plot_data.LineSettings()
 parallel_plot = plot_data.ParallelPlot(elements=elements,
-                                       line_color=line_color,
-                                       line_width=line_width,
+                                       line_settings=line_settings,
                                        disposition=disposition,
-                                       to_disp_attributes=to_disp_attributes,
+                                       to_disp_attribute_names=to_disp_attribute_names,
                                        rgbs=rgbs)
 
 plot_data.plot_canvas(plot_data_object=parallel_plot, debug_mode=True)

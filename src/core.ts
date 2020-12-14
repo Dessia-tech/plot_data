@@ -193,14 +193,14 @@ export class MultiplePlots {
   }
 
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-    var graduation_settings = new TextSettings(string_to_hex('grey'), 12, 'sans-serif', ''); 
-    var axis_settings = new LineSettings(0.5, string_to_hex('grey'), [], '');
-    var DEFAULT_AXIS = new Axis(10, 10, graduation_settings, axis_settings, false, true, 'axis', '');
-    var surface_settings = new SurfaceSettings(string_to_hex('black'), 0.75, undefined);
-    var text_settings = new TextSettings(string_to_hex('black'), 12, 'sans-serif', '');
-    var DEFAULT_TOOLTIP = new Tooltip([attr_x.name, attr_y.name], surface_settings, text_settings, 5, 'tooltip', '');
-    var point_settings = new PointSettings(string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 2, 'circle', '');
-    var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_settings: point_settings,
+    var graduation_style = new TextStyle(string_to_hex('grey'), 12, 'sans-serif', ''); 
+    var axis_style = new LineStyle(0.5, string_to_hex('grey'), [], '');
+    var DEFAULT_AXIS = new Axis(10, 10, graduation_style, axis_style, false, true, 'axis', '');
+    var surface_style = new SurfaceStyle(string_to_hex('black'), 0.75, undefined);
+    var text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', '');
+    var DEFAULT_TOOLTIP = new Tooltip([attr_x.name, attr_y.name], surface_style, text_style, 5, 'tooltip', '');
+    var point_style = new PointStyle(string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 2, 'circle', '');
+    var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
                        elements:this.data['elements'], axis:DEFAULT_AXIS, name:''};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
@@ -213,8 +213,8 @@ export class MultiplePlots {
     for (let i=0; i<attributes.length; i++) {
       to_disp_attribute_names.push(attributes[i].name);
     }
-    var line_settings = new LineSettings(0.5, string_to_hex('black'), [], '');
-    var pp_data = {line_settings:line_settings, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
+    var line_style = new LineStyle(0.5, string_to_hex('black'), [], '');
+    var pp_data = {line_style:line_style, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
                   rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:''};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
@@ -1078,7 +1078,7 @@ export abstract class PlotData {
   rubber_bands:any[]=[];
   rubber_last_min:number=0;
   rubber_last_max:number=0;
-  line_settings:LineSettings;
+  line_style:LineStyle;
   bandWidth:number=30;
   bandColor:string=string_to_hex('lightblue');
   bandOpacity:number=0.5;
@@ -1276,7 +1276,7 @@ export abstract class PlotData {
               this.context.fillStyle = d.color_fill;
             }
           } else {
-            this.context.fillStyle = this.plotObject.point_settings.color_fill;
+            this.context.fillStyle = this.plotObject.point_style.color_fill;
           }
         } else { // graph2d
           this.context.fillStyle = d.color_fill;
@@ -1371,9 +1371,9 @@ export abstract class PlotData {
   draw_dataset(d:Dataset, hidden, mvx, mvy) {
     if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
-      this.context.setLineDash(d.line_settings.dashline);
-      this.context.strokeStyle = d.line_settings.color_stroke;
-      this.context.lineWidth = d.line_settings.line_width;
+      this.context.setLineDash(d.line_style.dashline);
+      this.context.strokeStyle = d.line_style.color_stroke;
+      this.context.lineWidth = d.line_style.line_width;
       for (var i=0; i<d.segments.length; i++) {
         if (i==0) {
           d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
@@ -1742,7 +1742,7 @@ export abstract class PlotData {
     }
     if (this.selected_axis_name == '') {
       if (selected === true) {
-        this.context.strokeStyle = this.line_settings.color_stroke;
+        this.context.strokeStyle = this.line_style.color_stroke;
       } else {
         this.context.strokeStyle = string_to_hex('lightgrey');
       }
@@ -1787,7 +1787,7 @@ export abstract class PlotData {
       }
       this.context.beginPath();
       this.pp_color_management(i);
-      this.context.lineWidth = this.line_settings.line_width;
+      this.context.lineWidth = this.line_style.line_width;
       Shape.drawLine(this.context, seg_list);
       this.context.stroke();
       this.context.closePath();
@@ -3005,7 +3005,7 @@ export class ParallelPlot extends PlotData {
       this.disp_h = 20;
     }
     this.elements = data['elements'];
-    this.line_settings = LineSettings.deserialize(data['line_settings']);
+    this.line_style = LineStyle.deserialize(data['line_style']);
     var to_disp_attribute_names = data['to_disp_attribute_names'];
     if (data['disposition'] == 'vertical') {
       this.vertical = true;
@@ -3877,7 +3877,7 @@ export class Contour2D {
   public static deserialize(serialized) {
       var temp = serialized['plot_data_states'];
       var plot_data_states = [];
-      plot_data_states.push(ContourSettings.deserialize(temp));
+      plot_data_states.push(ContourStyle.deserialize(temp));
       var temp = serialized['plot_data_primitives'];
       var plot_data_primitives = [];
 
@@ -3911,25 +3911,25 @@ export class Text {
   constructor(public comment:string,
               public position_x:number,
               public position_y:number,
-              public text_settings:TextSettings,
+              public text_style:TextStyle,
               public type_:string,
               public name:string) {
   }
 
   public static deserialize(serialized) {
     var temp = serialized['plot_data_states'];
-    var text_settings = TextSettings.deserialize(serialized['text_settings']);
+    var text_style = TextStyle.deserialize(serialized['text_style']);
     return new Text(serialized['comment'],
                     serialized['position_x'],
                     serialized['position_y'],
-                    text_settings,
+                    text_style,
                     serialized['type_'],
                     serialized['name']);
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    context.font = this.text_settings.font;
-    context.fillStyle = this.text_settings.text_color;
+    context.font = this.text_style.font;
+    context.fillStyle = this.text_style.text_color;
     context.fillText(this.comment, scaleX*(1000*this.position_x+ mvx) + X, scaleY*(1000*this.position_y+ mvy) + Y);
   }
 }
@@ -3941,7 +3941,7 @@ export class LineSegment {
   maxY:number=0;
 
   constructor(public data:any,
-              public plot_data_states:LineSettings,
+              public plot_data_states:LineStyle,
               public type_:string,
               public name:string) {
       this.minX = Math.min(this.data[0], this.data[2]);
@@ -3951,7 +3951,7 @@ export class LineSegment {
   }
 
   public static deserialize(serialized) {
-      var plot_data_states = LineSettings.deserialize(serialized['plot_data_states']);
+      var plot_data_states = LineStyle.deserialize(serialized['plot_data_states']);
       return new LineSegment(serialized['data'],
                                plot_data_states,
                                serialized['type_'],
@@ -3980,7 +3980,7 @@ export class Circle2D {
               public cx:number,
               public cy:number,
               public r:number,
-              public plot_data_states:PointSettings,
+              public plot_data_states:PointStyle,
               public type_:string,
               public name:string) {
       this.minX = this.cx - this.r;
@@ -3990,7 +3990,7 @@ export class Circle2D {
               }
 
   public static deserialize(serialized) {
-      var plot_data_states = PointSettings.deserialize(serialized['plot_data_states'])
+      var plot_data_states = PointStyle.deserialize(serialized['plot_data_states'])
       return new Circle2D(serialized['data'],
                                   serialized['cx'],
                                   serialized['cy'],
@@ -4105,20 +4105,20 @@ export class Axis {
 
   constructor(public nb_points_x:number,
               public nb_points_y:number,
-              public graduation_settings:TextSettings,
-              public axis_settings:LineSettings,
+              public graduation_style:TextStyle,
+              public axis_style:LineStyle,
               public arrow_on:boolean,
               public grid_on:boolean,
               public type_:string,
               public name) {}
 
   public static deserialize(serialized) {
-    var graduation_settings = TextSettings.deserialize(serialized['graduation_settings']);
-    var axis_settings = LineSettings.deserialize(serialized['axis_settings']);
+    var graduation_style = TextStyle.deserialize(serialized['graduation_style']);
+    var axis_style = LineStyle.deserialize(serialized['axis_style']);
     return new Axis(serialized['nb_points_x'],
                     serialized['nb_points_y'],
-                    graduation_settings,
-                    axis_settings,
+                    graduation_style,
+                    axis_style,
                     serialized['arrow_on'],
                     serialized['grid_on'],
                     serialized['type_'],
@@ -4175,8 +4175,8 @@ export class Axis {
   draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_names) {
     // Drawing the coordinate system
     context.beginPath();
-    context.strokeStyle = this.axis_settings.color_stroke;
-    context.lineWidth = this.axis_settings.line_width;
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
     var axis_x_start = decalage_axis_x + X;
     var axis_x_end = width + X;
     var axis_y_start = Y;
@@ -4206,8 +4206,8 @@ export class Axis {
       this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
     }
 
-    context.fillStyle = this.graduation_settings.text_color;
-    context.strokeStyle = this.axis_settings.color_stroke;
+    context.fillStyle = this.graduation_style.text_color;
+    context.strokeStyle = this.axis_style.color_stroke;
 
     context.font = 'bold 20px Arial';
     context.textAlign = 'end';
@@ -4216,8 +4216,8 @@ export class Axis {
     context.fillText(to_disp_attribute_names[1], axis_x_start + 5, axis_y_start + 20);
     context.stroke();
 
-    context.font = this.graduation_settings.font_size.toString() + 'px Arial';
-    this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.graduation_settings.font_size, X, Y);
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.graduation_style.font_size, X, Y);
     context.closePath();
 
   }
@@ -4225,8 +4225,8 @@ export class Axis {
   draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
     // Drawing the coordinate system
     context.beginPath();
-    context.strokeStyle = this.axis_settings.color_stroke;
-    context.lineWidth = this.axis_settings.line_width;
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
     var axis_x_start = decalage_axis_x + X;
     var axis_x_end = width + X;
     var axis_y_start = Y;
@@ -4244,8 +4244,8 @@ export class Axis {
     Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
     Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
 
-    context.fillStyle = this.graduation_settings.text_color;
-    context.strokeStyle = this.axis_settings.color_stroke;    context.font = 'bold 20px Arial';
+    context.fillStyle = this.graduation_style.text_color;
+    context.strokeStyle = this.axis_style.color_stroke;    context.font = 'bold 20px Arial';
     context.textAlign = 'end';
     context.fillText(to_display_attributes[0]['name'], axis_x_end - 5, axis_y_end - 10);
     context.textAlign = 'start';
@@ -4254,7 +4254,7 @@ export class Axis {
     context.stroke();
 
     //Graduations
-    context.font = this.graduation_settings.font_size.toString() + 'px Arial';
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
 
     this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[0], to_display_attributes[0], scroll_x, X);
     this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[1], to_display_attributes[1], scroll_y, Y);
@@ -4285,7 +4285,7 @@ export class Axis {
           } else {
             Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + 3]]);
           }
-          context.fillText(MyMath.round(grad_beg_x + i*this.x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + this.graduation_settings.font_size);
+          context.fillText(MyMath.round(grad_beg_x + i*this.x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + this.graduation_style.font_size);
         }
         i++
       }
@@ -4297,7 +4297,7 @@ export class Axis {
           } else {
             Shape.drawLine(context, [[scaleX*(1000*i + mvx) + X, axis_y_end - 3], [scaleX*(1000*i + mvx) + X, axis_y_end + 3]]);
           }
-          context.fillText(list[i], scaleX*(1000*i + mvx) + X, axis_y_end + this.graduation_settings.font_size);
+          context.fillText(list[i], scaleX*(1000*i + mvx) + X, axis_y_end + this.graduation_style.font_size);
         }
       }
     }
@@ -4346,19 +4346,19 @@ export class Axis {
 
 export class Tooltip {
   constructor(public to_disp_attribute_names:string[],
-              public surface_settings:SurfaceSettings,
-              public text_settings:TextSettings,
+              public surface_style:SurfaceStyle,
+              public text_style:TextStyle,
               public tooltip_radius:number,
               public type_:string,
               public name:string) {
               }
 
   public static deserialize(serialized) {
-    var surface_settings = SurfaceSettings.deserialize(serialized['surface_settings']);
-    var text_settings = TextSettings.deserialize(serialized['text_settings']);
+    var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
+    var text_style = TextStyle.deserialize(serialized['text_style']);
     return new Tooltip(serialized['to_disp_attribute_names'],
-                       surface_settings,
-                       text_settings,
+                       surface_style,
+                       text_style,
                        serialized['tooltip_radius'],
                        serialized['type_'],
                        serialized['name']);
@@ -4442,7 +4442,7 @@ export class Tooltip {
     }
 
     if (textfills.length > 0) {
-      var tp_height = (textfills.length + 0.25)*this.text_settings.font_size ;
+      var tp_height = (textfills.length + 0.25)*this.text_style.font_size ;
       var cx = point.cx;
       var cy = point.cy;
       var point_size = point.point_size;
@@ -4462,22 +4462,22 @@ export class Tooltip {
       }
       context.beginPath();
       context.strokeStyle = string_to_hex('black');
-      context.globalAlpha = this.surface_settings.opacity;
-      context.fillStyle = this.surface_settings.color_fill;
+      context.globalAlpha = this.surface_style.opacity;
+      context.fillStyle = this.surface_style.color_fill;
       Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context);
       context.stroke();
       context.fill();
-      context.fillStyle = this.text_settings.text_color;
+      context.fillStyle = this.text_style.text_color;
       context.textAlign = 'start';
       context.textBaseline = 'Alphabetic';
 
       var x_start = tp_x + 1/10*tp_width;
-      context.font = this.text_settings.font_size.toString() + 'px ' + this.text_settings.font_style;
+      context.font = this.text_style.font_size.toString() + 'px ' + this.text_style.font_style;
 
-      var current_y = tp_y + 0.75*this.text_settings.font_size;
+      var current_y = tp_y + 0.75*this.text_style.font_size;
       for (var i=0; i<textfills.length; i++) {
         context.fillText(textfills[i], x_start, current_y);
-        current_y = current_y + this.text_settings.font_size;
+        current_y = current_y + this.text_style.font_size;
       }
 
       context.globalAlpha = 1;
@@ -4502,9 +4502,9 @@ export class Dataset {
   segments:LineSegment[];
 
   constructor(public to_disp_attribute_names:string[],
-              public line_settings:LineSettings,
+              public line_style:LineStyle,
               public tooltip:Tooltip,
-              public point_settings:PointSettings,
+              public point_style:PointStyle,
               public elements:any[],
               public display_step:number,
               public type_:string,
@@ -4520,9 +4520,9 @@ export class Dataset {
       for (let j=0; j<2; j++) {
         coord.push(Math.pow(-1, j)*this.elements[i][this.to_disp_attribute_names[j]]);
       }
-      this.point_list.push(new Point2D(coord[0], coord[1], this.point_settings.shape, this.point_settings.size,
-                           this.point_settings.color_fill, this.point_settings.color_stroke, 
-                           this.point_settings.stroke_width, 'point', ''));
+      this.point_list.push(new Point2D(coord[0], coord[1], this.point_style.shape, this.point_style.size,
+                           this.point_style.color_fill, this.point_style.color_stroke, 
+                           this.point_style.stroke_width, 'point', ''));
     } 
   }
 
@@ -4532,18 +4532,18 @@ export class Dataset {
       let current_point = this.point_list[i];
       let next_point = this.point_list[i+1];
       let data = [current_point.cx, current_point.cy, next_point.cx, next_point.cy];
-      this.segments.push(new LineSegment(data, this.line_settings, 'line', ''));
+      this.segments.push(new LineSegment(data, this.line_style, 'line', ''));
     }
   }
 
   public static deserialize(serialized) {
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    var line_settings = LineSettings.deserialize(serialized['line_settings']);
-    var point_settings = PointSettings.deserialize(serialized['point_settings']);
+    var line_style = LineStyle.deserialize(serialized['line_style']);
+    var point_style = PointStyle.deserialize(serialized['point_style']);
     return new Dataset(serialized['to_disp_attribute_names'],
-                       line_settings,
+                       line_style,
                        tooltip,
-                       point_settings,
+                       point_style,
                        serialized['elements'],
                        serialized['display_step'],
                        serialized['type_'],
@@ -4583,7 +4583,7 @@ export class Scatter {
 
   constructor(public tooltip:Tooltip,
               public to_disp_attribute_names:string[],
-              public point_settings:PointSettings,
+              public point_style:PointStyle,
               public elements: any[],
               public axis:Axis,
               public type_:string,
@@ -4598,10 +4598,10 @@ export class Scatter {
   public static deserialize(serialized) {
     var axis = Axis.deserialize(serialized['axis']);
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    var point_settings = PointSettings.deserialize(serialized['point_settings']);
+    var point_style = PointStyle.deserialize(serialized['point_style']);
     return new Scatter(tooltip,
                        serialized['to_disp_attribute_names'],
-                       point_settings,
+                       point_style,
                        serialized['elements'],
                        axis,
                        serialized['type_'],
@@ -4690,9 +4690,9 @@ export class Scatter {
       } else {
         cy = - List.get_index_of_element(elt1.toString(), this.lists[1]);
       }
-      this.point_list.push(new Point2D(cx, cy, this.point_settings.shape, this.point_settings.size, 
-                           this.point_settings.color_fill, this.point_settings.color_stroke,
-                           this.point_settings.stroke_width, 'point', ''));
+      this.point_list.push(new Point2D(cx, cy, this.point_style.shape, this.point_style.size, 
+                           this.point_style.color_fill, this.point_style.color_stroke,
+                           this.point_style.stroke_width, 'point', ''));
     }
   }
 
@@ -4710,7 +4710,7 @@ export class Arc2D {
               public data:any,
               public angle1:number,
               public angle2:number,
-              public plot_data_states:LineSettings,
+              public plot_data_states:LineStyle,
               public type_:string,
               public name:string) {
       if((this.cx - this.r) < this.minX){
@@ -4728,7 +4728,7 @@ export class Arc2D {
   }
 
   public static deserialize(serialized) {
-      var plot_data_states = LineSettings.deserialize(serialized['plot_data_states'])
+      var plot_data_states = LineStyle.deserialize(serialized['plot_data_states'])
       return new Arc2D(serialized['cx'],
                                   serialized['cy'],
                                   serialized['r'],
@@ -4771,7 +4771,7 @@ export class Attribute {
   }
 }
 
-export class ContourSettings {
+export class ContourStyle {
 
   constructor(public color_surface:ColorSurfaceSet,
               public color_map:any,
@@ -4797,7 +4797,7 @@ export class ContourSettings {
       if(serialized['window_size'] != null) {
         window_size = Window.deserialize(serialized['window_size']);
       }
-      return new ContourSettings(color_surface,
+      return new ContourStyle(color_surface,
                                serialized['color_map'],
                                hatching,
                                serialized['opacity'],
@@ -4809,25 +4809,25 @@ export class ContourSettings {
                                serialized['name']);
   }
   copy() {
-    return new ContourSettings(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.window_size, this.stroke_width, this.name);
+    return new ContourStyle(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.window_size, this.stroke_width, this.name);
   }
 }
 
-export class LineSettings {
+export class LineStyle {
   constructor(public line_width:number,
               public color_stroke:string,
               public dashline:number[],
               public name: string) {}
   
   public static deserialize(serialized) {
-    return new LineSettings(serialized['line_width'],
+    return new LineStyle(serialized['line_width'],
                             rgb_to_hex(serialized['color_stroke']),
                             serialized['dashline'],
                             serialized['name']);
   }
 }
 
-export class PointSettings {
+export class PointStyle {
   constructor(public color_fill: string,
               public color_stroke: string, 
               public stroke_width: number,
@@ -4836,7 +4836,7 @@ export class PointSettings {
               public name: string) {}
 
   public static deserialize(serialized) {
-    return new PointSettings(rgb_to_hex(serialized['color_fill']),
+    return new PointStyle(rgb_to_hex(serialized['color_fill']),
                              rgb_to_hex(serialized['color_stroke']),
                              serialized['stroke_width'],
                              serialized['size'],
@@ -4845,7 +4845,7 @@ export class PointSettings {
   }
 }
 
-export class TextSettings {
+export class TextStyle {
   font:string
   constructor(public text_color:string,
               public font_size:number,
@@ -4855,20 +4855,20 @@ export class TextSettings {
   }
 
   public static deserialize(serialized) {
-    return new TextSettings(rgb_to_hex(serialized['text_color']),
+    return new TextStyle(rgb_to_hex(serialized['text_color']),
                             serialized['font_size'],
                             serialized['font_style'],
                             serialized['name']);
   }
 }
 
-export class SurfaceSettings {
+export class SurfaceStyle {
   constructor(public color_fill:string,
               public opacity:number,
               public hatching:HatchingSet) {}
             
   public static deserialize(serialized) {
-    return new SurfaceSettings(rgb_to_hex(serialized['color_fill']),
+    return new SurfaceStyle(rgb_to_hex(serialized['color_fill']),
                                serialized['opacity'],
                                serialized['hatching']);
   }

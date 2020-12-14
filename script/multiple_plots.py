@@ -1,9 +1,9 @@
 import plot_data
 from plot_data.colors import *
 import random
-import volmdlr as vm
-import volmdlr.wires
-import volmdlr.edges
+# import volmdlr as vm
+# import volmdlr.wires
+# import volmdlr.edges
 
 shape = 'circle'
 size = 2
@@ -19,7 +19,7 @@ elements = []
 
 # Defining the contour
 # hatching = plot_data.HatchingSet(1)
-# plot_data_state = plot_data.ContourSettings(name='name', hatching=hatching,
+# plot_data_state = plot_data.ContourStyle(name='name', hatching=hatching,
 #                                             stroke_width=1)
 #
 # contour_size = 1
@@ -53,13 +53,13 @@ for i in range(50):
     elements += [point]
 
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
-pp_line_settings = plot_data.LineSettings(line_width=0.5, color_stroke=BLACK)
-parallel_plot = plot_data.ParallelPlot(line_settings=pp_line_settings,
+pp_line_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=BLACK)
+parallel_plot = plot_data.ParallelPlot(line_style=pp_line_style,
                                        disposition=disposition,
                                        to_disp_attribute_names=to_disp_attributes,
                                        rgbs=rgbs)
 objects.append(parallel_plot)
-parallel_plot1 = plot_data.ParallelPlot(line_settings=pp_line_settings,
+parallel_plot1 = plot_data.ParallelPlot(line_style=pp_line_style,
                                         disposition=disposition,
                                         to_disp_attribute_names=['color_fill',
                                                                  'cx'],
@@ -70,22 +70,22 @@ objects.append(parallel_plot1)
 
 to_disp_attribute_names = ['cx', 'cy']
 tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names)
-point_settings = plot_data.PointSettings(color_fill=LIGHTBLUE,
+point_style = plot_data.PointStyle(color_fill=LIGHTBLUE,
                                          color_stroke=GREY)
 scatterPlot = plot_data.Scatter(tooltip=tooltip,
                                 to_disp_attribute_names=to_disp_attribute_names,
-                                point_settings=point_settings)
+                                point_style=point_style)
 objects.append(scatterPlot)
 
 scatterPlot1 = plot_data.Scatter(tooltip=tooltip,
                                  to_disp_attribute_names=['cx', 'color_fill'],
-                                 point_settings=point_settings)
+                                 point_style=point_style)
 objects.append(scatterPlot1)
 
 scatterPlot2 = plot_data.Scatter(tooltip=tooltip,
                                  to_disp_attribute_names=['cy',
                                                           'color_stroke'],
-                                 point_settings=point_settings)
+                                 point_style=point_style)
 objects.append(scatterPlot2)
 
 coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]

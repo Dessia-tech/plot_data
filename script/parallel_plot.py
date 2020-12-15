@@ -44,9 +44,9 @@ for i in range(50):
     elements += [point]
 
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
-line_settings = plot_data.LineSettings()
+edge_style = plot_data.EdgeStyle()
 parallel_plot = plot_data.ParallelPlot(elements=elements,
-                                       line_settings=line_settings,
+                                       edge_style=edge_style,
                                        disposition=disposition,
                                        to_disp_attribute_names=to_disp_attribute_names,
                                        rgbs=rgbs)

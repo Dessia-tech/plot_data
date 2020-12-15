@@ -53,13 +53,13 @@ for i in range(50):
     elements += [point]
 
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
-pp_line_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=BLACK)
-parallel_plot = plot_data.ParallelPlot(line_style=pp_line_style,
+pp_edge_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=BLACK)
+parallel_plot = plot_data.ParallelPlot(edge_style=pp_edge_style,
                                        disposition=disposition,
                                        to_disp_attribute_names=to_disp_attributes,
                                        rgbs=rgbs)
 objects.append(parallel_plot)
-parallel_plot1 = plot_data.ParallelPlot(line_style=pp_line_style,
+parallel_plot1 = plot_data.ParallelPlot(edge_style=pp_edge_style,
                                         disposition=disposition,
                                         to_disp_attribute_names=['color_fill',
                                                                  'cx'],

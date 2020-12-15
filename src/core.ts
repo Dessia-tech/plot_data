@@ -194,7 +194,7 @@ export class MultiplePlots {
 
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
     var graduation_style = new TextStyle(string_to_hex('grey'), 12, 'sans-serif', ''); 
-    var axis_style = new LineStyle(0.5, string_to_hex('grey'), [], '');
+    var axis_style = new EdgeStyle(0.5, string_to_hex('grey'), [], '');
     var DEFAULT_AXIS = new Axis(10, 10, graduation_style, axis_style, false, true, 'axis', '');
     var surface_style = new SurfaceStyle(string_to_hex('black'), 0.75, undefined);
     var text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', '');
@@ -213,8 +213,8 @@ export class MultiplePlots {
     for (let i=0; i<attributes.length; i++) {
       to_disp_attribute_names.push(attributes[i].name);
     }
-    var line_style = new LineStyle(0.5, string_to_hex('black'), [], '');
-    var pp_data = {line_style:line_style, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
+    var edge_style = new EdgeStyle(0.5, string_to_hex('black'), [], '');
+    var pp_data = {edge_style:edge_style, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
                   rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:''};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
@@ -1078,7 +1078,7 @@ export abstract class PlotData {
   rubber_bands:any[]=[];
   rubber_last_min:number=0;
   rubber_last_max:number=0;
-  line_style:LineStyle;
+  edge_style:EdgeStyle;
   bandWidth:number=30;
   bandColor:string=string_to_hex('lightblue');
   bandOpacity:number=0.5;
@@ -1230,14 +1230,14 @@ export abstract class PlotData {
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
       } else {
-        this.context.strokeStyle = d.plot_data_states[show_state].color_line;
-        this.context.lineWidth = d.plot_data_states[show_state].stroke_width;
+        this.context.strokeStyle = d.edge_style.color_line;
+        this.context.lineWidth = d.edge_style.stroke_width;
         this.context.fillStyle = 'white';
-        if (d.plot_data_states[show_state].hatching != null) {
-          this.context.fillStyle = this.context.createPattern(d.plot_data_states[show_state].hatching.canvas_hatching,'repeat');
+        if (d.surface_style.hatching != null) {
+          this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
         }
-        if (d.plot_data_states[show_state].color_surface != null) {
-          this.context.fillStyle = d.plot_data_states[show_state].color_surface.color;
+        if (d.surface_style.color_fill != null) {
+          this.context.fillStyle = d.surface_style.color_fill;
         }
         if (this.select_on_mouse == d) {
           this.context.fillStyle = this.color_surface_on_mouse;
@@ -1371,9 +1371,9 @@ export abstract class PlotData {
   draw_dataset(d:Dataset, hidden, mvx, mvy) {
     if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
-      this.context.setLineDash(d.line_style.dashline);
-      this.context.strokeStyle = d.line_style.color_stroke;
-      this.context.lineWidth = d.line_style.line_width;
+      this.context.setLineDash(d.edge_style.dashline);
+      this.context.strokeStyle = d.edge_style.color_stroke;
+      this.context.lineWidth = d.edge_style.line_width;
       for (var i=0; i<d.segments.length; i++) {
         if (i==0) {
           d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
@@ -1742,7 +1742,7 @@ export abstract class PlotData {
     }
     if (this.selected_axis_name == '') {
       if (selected === true) {
-        this.context.strokeStyle = this.line_style.color_stroke;
+        this.context.strokeStyle = this.edge_style.color_stroke;
       } else {
         this.context.strokeStyle = string_to_hex('lightgrey');
       }
@@ -1787,7 +1787,7 @@ export abstract class PlotData {
       }
       this.context.beginPath();
       this.pp_color_management(i);
-      this.context.lineWidth = this.line_style.line_width;
+      this.context.lineWidth = this.edge_style.line_width;
       Shape.drawLine(this.context, seg_list);
       this.context.stroke();
       this.context.closePath();
@@ -3004,8 +3004,11 @@ export class ParallelPlot extends PlotData {
       this.disp_w = 30;
       this.disp_h = 20;
     }
+    let default_edge_style = {color_stroke:string_to_rgb('black'), dahsline:[], line_width:0.5, name:''};
+    let default_dict_ = {edge_style:default_edge_style, disposition: 'vertical', rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]]};
+    data = set_default_values(data, default_dict_);
     this.elements = data['elements'];
-    this.line_style = LineStyle.deserialize(data['line_style']);
+    this.edge_style = EdgeStyle.deserialize(data['edge_style']);
     var to_disp_attribute_names = data['to_disp_attribute_names'];
     if (data['disposition'] == 'vertical') {
       this.vertical = true;
@@ -3860,7 +3863,8 @@ export class Contour2D {
   mouse_selection_color:any;
 
   constructor(public plot_data_primitives:any,
-              public plot_data_states:any,
+              public edge_style:EdgeStyle,
+              public surface_style:SurfaceStyle,
               public type_:string,
               public name:string) {
       for (var i = 0; i < this.plot_data_primitives.length; i++) {
@@ -3875,27 +3879,34 @@ export class Contour2D {
   }
 
   public static deserialize(serialized) {
-      var temp = serialized['plot_data_states'];
-      var plot_data_states = [];
-      plot_data_states.push(ContourStyle.deserialize(temp));
+      var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
+      var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
       var temp = serialized['plot_data_primitives'];
       var plot_data_primitives = [];
 
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
         if (d['type_'] == 'linesegment') {
-          plot_data_primitives.push(LineSegment.deserialize(d));
+          let new_line = LineSegment.deserialize(d);
+          new_line.edge_style = edge_style;
+          plot_data_primitives.push(new_line);
         }
         if (d['type_'] == 'circle') {
-          plot_data_primitives.push(Circle2D.deserialize(d));
+          let new_circle = Circle2D.deserialize(d);
+          new_circle.edge_style = edge_style;
+          new_circle.surface_style = surface_style;
+          plot_data_primitives.push(new_circle);
         }
         if (d['type_'] == 'arc') {
-          plot_data_primitives.push(Arc2D.deserialize(d));
+          let new_arc = Arc2D.deserialize(d);
+          new_arc.edge_style = edge_style;
+          plot_data_primitives.push(new_arc);
         }
 
       }
       return new Contour2D(plot_data_primitives,
-                                   plot_data_states,
+                                   edge_style,
+                                   surface_style,
                                    serialized['type_'],
                                    serialized['name']);
   }
@@ -3917,7 +3928,6 @@ export class Text {
   }
 
   public static deserialize(serialized) {
-    var temp = serialized['plot_data_states'];
     var text_style = TextStyle.deserialize(serialized['text_style']);
     return new Text(serialized['comment'],
                     serialized['position_x'],
@@ -3941,7 +3951,7 @@ export class LineSegment {
   maxY:number=0;
 
   constructor(public data:any,
-              public plot_data_states:LineStyle,
+              public edge_style:EdgeStyle,
               public type_:string,
               public name:string) {
       this.minX = Math.min(this.data[0], this.data[2]);
@@ -3951,18 +3961,16 @@ export class LineSegment {
   }
 
   public static deserialize(serialized) {
-      var plot_data_states = LineStyle.deserialize(serialized['plot_data_states']);
+      var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
       return new LineSegment(serialized['data'],
-                               plot_data_states,
+                               edge_style,
                                serialized['type_'],
                                serialized['name']);
   }
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
-    if (!(this.plot_data_states === undefined)) {
-      context.lineWidth = this.plot_data_states.line_width;
-      context.strokeStyle = this.plot_data_states.color_stroke;
-    }
+    context.lineWidth = this.edge_style.line_width;
+    context.strokeStyle = this.edge_style.color_stroke;
     if (first_elem) {
       context.moveTo(scaleX*(1000*this.data[0]+ mvx) + X, scaleY*(1000*this.data[1]+ mvy) + Y);
     }
@@ -3980,7 +3988,8 @@ export class Circle2D {
               public cx:number,
               public cy:number,
               public r:number,
-              public plot_data_states:PointStyle,
+              public edge_style:EdgeStyle,
+              public surface_style:SurfaceStyle,
               public type_:string,
               public name:string) {
       this.minX = this.cx - this.r;
@@ -3990,17 +3999,22 @@ export class Circle2D {
               }
 
   public static deserialize(serialized) {
-      var plot_data_states = PointStyle.deserialize(serialized['plot_data_states'])
+      var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
+      var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
       return new Circle2D(serialized['data'],
                                   serialized['cx'],
                                   serialized['cy'],
                                   serialized['r'],
-                                  plot_data_states,
+                                  edge_style,
+                                  surface_style,
                                   serialized['type_'],
                                   serialized['name']);
   }
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
+    context.lineWidth = this.edge_style.line_width;
+    context.strokeStyle = this.edge_style.color_stroke;
+    context.fillStyle = this.surface_style.color_fill;
     context.arc(scaleX*(1000*this.cx+ mvx) + X, scaleY*(1000*this.cy+ mvy) + Y, scaleX*1000*this.r, 0, 2*Math.PI);
   }
 
@@ -4106,15 +4120,21 @@ export class Axis {
   constructor(public nb_points_x:number,
               public nb_points_y:number,
               public graduation_style:TextStyle,
-              public axis_style:LineStyle,
+              public axis_style:EdgeStyle,
               public arrow_on:boolean,
               public grid_on:boolean,
               public type_:string,
-              public name) {}
+              public name) {
+  }
 
   public static deserialize(serialized) {
+    let default_axis_style = new EdgeStyle(0.5, string_to_hex('lightgrey'), [], '');
+    let default_graduation_style = new TextStyle(string_to_hex('lightgrey'), 12, 'sans-serif', '');
+    let default_dict_ = {nb_points_x:10, nb_points_y:10, graduation_style:default_graduation_style, 
+                        axis_style:default_axis_style, arrow_on:false, grid_on:true, name:''};
+    serialized = set_default_values(serialized, default_dict_);
     var graduation_style = TextStyle.deserialize(serialized['graduation_style']);
-    var axis_style = LineStyle.deserialize(serialized['axis_style']);
+    var axis_style = EdgeStyle.deserialize(serialized['axis_style']);
     return new Axis(serialized['nb_points_x'],
                     serialized['nb_points_y'],
                     graduation_style,
@@ -4354,6 +4374,10 @@ export class Tooltip {
               }
 
   public static deserialize(serialized) {
+    let default_surface_style = new SurfaceStyle(string_to_hex('lightblue'), 0.75, undefined);
+    let default_text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', '');
+    let default_dict_ = {surface_style:default_surface_style, text_style:default_text_style, tooltip_radius:5};
+    serialized = set_default_values(serialized, default_dict_);
     var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
     var text_style = TextStyle.deserialize(serialized['text_style']);
     return new Tooltip(serialized['to_disp_attribute_names'],
@@ -4472,7 +4496,7 @@ export class Tooltip {
       context.textBaseline = 'Alphabetic';
 
       var x_start = tp_x + 1/10*tp_width;
-      context.font = this.text_style.font_size.toString() + 'px ' + this.text_style.font_style;
+      context.font = this.text_style.font;
 
       var current_y = tp_y + 0.75*this.text_style.font_size;
       for (var i=0; i<textfills.length; i++) {
@@ -4502,7 +4526,7 @@ export class Dataset {
   segments:LineSegment[];
 
   constructor(public to_disp_attribute_names:string[],
-              public line_style:LineStyle,
+              public edge_style:EdgeStyle,
               public tooltip:Tooltip,
               public point_style:PointStyle,
               public elements:any[],
@@ -4532,16 +4556,22 @@ export class Dataset {
       let current_point = this.point_list[i];
       let next_point = this.point_list[i+1];
       let data = [current_point.cx, current_point.cy, next_point.cx, next_point.cy];
-      this.segments.push(new LineSegment(data, this.line_style, 'line', ''));
+      this.segments.push(new LineSegment(data, this.edge_style, 'line', ''));
     }
   }
 
   public static deserialize(serialized) {
+    var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
+    var default_point_style = {color_fill:string_to_rgb('lightviolet'), color_stroke:string_to_rgb('grey'),
+                               shape:'circle', size:2, name:''};
+    var default_dict_ = {tooltip:{}, edge_style:default_edge_style, point_style:default_point_style,
+                          display_step:1};
+    serialized = set_default_values(serialized, default_dict_)
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    var line_style = LineStyle.deserialize(serialized['line_style']);
+    var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
     var point_style = PointStyle.deserialize(serialized['point_style']);
     return new Dataset(serialized['to_disp_attribute_names'],
-                       line_style,
+                       edge_style,
                        tooltip,
                        point_style,
                        serialized['elements'],
@@ -4559,6 +4589,8 @@ export class Graph2D {
               public name: string) {}
 
   public static deserialize(serialized) {
+    var default_dict_ = {axis:{}};
+    serialized = set_default_values(serialized, default_dict_);
     var graphs:Dataset[] = [];
     for (let i=0; i<serialized['graphs'].length; i++) {
       serialized['graphs'][i]['to_disp_attribute_names'] = serialized['to_disp_attribute_names'];
@@ -4596,6 +4628,10 @@ export class Scatter {
   }
 
   public static deserialize(serialized) {
+    let default_point_style = new PointStyle(string_to_rgb('lightviolet'), string_to_rgb('lightgrey'), 
+                              0.5, 2, 'circle', '');
+    var default_dict_ = {point_style:default_point_style}
+    serialized = set_default_values(serialized, default_dict_);
     var axis = Axis.deserialize(serialized['axis']);
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
     var point_style = PointStyle.deserialize(serialized['point_style']);
@@ -4710,7 +4746,7 @@ export class Arc2D {
               public data:any,
               public angle1:number,
               public angle2:number,
-              public plot_data_states:LineStyle,
+              public edge_style:EdgeStyle,
               public type_:string,
               public name:string) {
       if((this.cx - this.r) < this.minX){
@@ -4728,19 +4764,21 @@ export class Arc2D {
   }
 
   public static deserialize(serialized) {
-      var plot_data_states = LineStyle.deserialize(serialized['plot_data_states'])
+      var edge_style = EdgeStyle.deserialize(serialized['edge_style'])
       return new Arc2D(serialized['cx'],
                                   serialized['cy'],
                                   serialized['r'],
                                   serialized['data'],
                                   serialized['angle1'],
                                   serialized['angle2'],
-                                  plot_data_states,
+                                  edge_style,
                                   serialized['type_'],
                                   serialized['name']);
   }
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
+    context.lineWidth = this.edge_style.line_width;
+    context.strokeStyle = this.edge_style.color_stroke;
     var ptsa = [];
     for (var l = 0; l < this.data.length; l++) {
       ptsa.push(scaleX*(1000*this.data[l]['x']+ mvx) + X);
@@ -4771,56 +4809,27 @@ export class Attribute {
   }
 }
 
-export class ContourStyle {
-
-  constructor(public color_surface:ColorSurfaceSet,
-              public color_map:any,
-              public hatching:HatchingSet,
-              public opacity:number,
-              public dash:any,
-              public marker:any,
-              public color_line:any,
-              public window_size:Window,
-              public stroke_width:any,
-              public name:any,) {}
-
-  public static deserialize(serialized) {
-      var color_surface = null
-      if (serialized['color_surface'] != null) {
-        color_surface = ColorSurfaceSet.deserialize(serialized['color_surface']);
-      }
-      var hatching = null;
-      if (serialized['hatching'] != null) {
-        hatching = HatchingSet.deserialize(serialized['hatching']);
-      }
-      var window_size = null;
-      if(serialized['window_size'] != null) {
-        window_size = Window.deserialize(serialized['window_size']);
-      }
-      return new ContourStyle(color_surface,
-                               serialized['color_map'],
-                               hatching,
-                               serialized['opacity'],
-                               serialized['dash'],
-                               serialized['marker'],
-                               serialized['color_line'],
-                               window_size,
-                               serialized['stroke_width'],
-                               serialized['name']);
-  }
-  copy() {
-    return new ContourStyle(this.color_surface, this.color_map, this.hatching, this.opacity, this.dash, this.marker, this.color_line, this.window_size, this.stroke_width, this.name);
-  }
-}
-
-export class LineStyle {
+export class EdgeStyle {
   constructor(public line_width:number,
               public color_stroke:string,
               public dashline:number[],
-              public name: string) {}
+              public name: string) {
+    if (line_width === undefined) {
+      line_width = 0.5;
+    }
+    if (color_stroke === undefined) {
+      color_stroke = string_to_hex('black');
+    }
+    if (dashline === undefined) {
+      dashline = [];
+    }
+  }
   
   public static deserialize(serialized) {
-    return new LineStyle(serialized['line_width'],
+    var default_dict_ = {line_width: 0.5, color_stroke:string_to_rgb('black'), dashline:[],
+                          name:''};
+    serialized = set_default_values(serialized, default_dict_);
+    return new EdgeStyle(serialized['line_width'],
                             rgb_to_hex(serialized['color_stroke']),
                             serialized['dashline'],
                             serialized['name']);
@@ -4833,9 +4842,28 @@ export class PointStyle {
               public stroke_width: number,
               public size: number,
               public shape: string,
-              public name: string) {}
+              public name: string) {
+    if ((color_fill === undefined) || (color_fill === null)) {
+      color_fill = string_to_hex('rose');
+    }
+    if ((color_stroke === undefined)) {
+      color_stroke = string_to_hex('black');
+    }
+    if (stroke_width === undefined) {
+      stroke_width = 0.5;
+    }
+    if (size === undefined) {
+      size = 2;
+    }
+    if (shape === undefined) {
+      shape = 'circle';
+    }
+   }
 
   public static deserialize(serialized) {
+    let default_dict_ = {color_fill:string_to_hex('lightviolet'), color_stroke:string_to_hex('lightgrey'),
+                               stroke_width:0.5, size:2, shape:'circle', name:''};
+    serialized = set_default_values(serialized, default_dict_);
     return new PointStyle(rgb_to_hex(serialized['color_fill']),
                              rgb_to_hex(serialized['color_stroke']),
                              serialized['stroke_width'],
@@ -4851,10 +4879,22 @@ export class TextStyle {
               public font_size:number,
               public font_style:string,
               public name:string) {
-    this.font = font_size.toString() + ' ' + font_style;
+    if (text_color === undefined) {
+      text_color = string_to_hex('black');
+    }
+    if (font_size === undefined) {
+      font_size = 12;
+    }
+    if (font_style === undefined) {
+      font_style = 'sans-serif';
+    }
+    this.font = font_size.toString() + 'px ' + font_style;
   }
 
   public static deserialize(serialized) {
+    let default_dict_ = {text_color:string_to_hex('black'), font_size:12, 
+                         font_style:'sans-serif', name:''};
+    serialized = set_default_values(serialized,default_dict_);
     return new TextStyle(rgb_to_hex(serialized['text_color']),
                             serialized['font_size'],
                             serialized['font_style'],
@@ -4865,9 +4905,18 @@ export class TextStyle {
 export class SurfaceStyle {
   constructor(public color_fill:string,
               public opacity:number,
-              public hatching:HatchingSet) {}
+              public hatching:HatchingSet) {
+    if (color_fill === undefined) {
+      color_fill = string_to_hex('black');
+    } 
+    if (opacity === undefined) {
+      opacity = 1;
+    }
+  }
             
   public static deserialize(serialized) {
+    let default_dict_ = {color_fill:'grey', opacity:1, hatching:undefined};
+    serialized = set_default_values(serialized, default_dict_);
     return new SurfaceStyle(rgb_to_hex(serialized['color_fill']),
                                serialized['opacity'],
                                serialized['hatching']);
@@ -5589,5 +5638,17 @@ export function equals(obj1:any, obj2:any): boolean { //Works on any kind of obj
   return true;
 }
 
-var att_x = new Attribute('cx', 'float');
-var att_y = new Attribute('cy', 'float')
+export function set_default_values(dict_, default_dict_) {
+  if (dict_ === undefined) {
+    dict_ = {};
+  }
+  var properties_names = Object.getOwnPropertyNames(default_dict_);
+  var entries = Object.entries(dict_);
+  for (let i=0; i<properties_names.length; i++) {
+    let property = properties_names[i];
+    if (!dict_.hasOwnProperty(property)) {
+      entries.push([property, default_dict_[property]]);
+    }
+  }
+  return Object.fromEntries(entries);
+}

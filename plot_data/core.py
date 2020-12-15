@@ -48,10 +48,6 @@ class PlotDataObject(DessiaObject):
         dict_ = DessiaObject.to_dict(self)
         del dict_['object_class']
         new_dict_ = delete_none_from_dict(dict_)
-        print('dict')
-        print(dict_)
-        print('new_dict')
-        print(new_dict_)
         return new_dict_
 
     @classmethod
@@ -376,7 +372,6 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     if not isinstance(first_letter, str):
         raise ValueError('canvas_id argument must not start with a number')
     data = plot_data_object.to_dict()
-    print(data)
     plot_type = data['type_']
     if plot_type == 'primitivegroup':
         template = templates.contour_template

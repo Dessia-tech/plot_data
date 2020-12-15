@@ -10,6 +10,7 @@ import numpy as npy
 import volmdlr as vm
 import volmdlr.wires
 import volmdlr.edges
+from plot_data.colors import *
 
 primitives = []
 triangle_points = [vm.Point2D(*npy.random.random(2)) for i in range(3)]
@@ -30,14 +31,8 @@ c = vm.wires.Contour2D([arc, l])
 c2 = vm.core.CompositePrimitive2D([c])
 
 hatching = plot_data.HatchingSet(0.5, 3)
-color_surface = plot_data.ColorSurfaceSet(color='white')
-plot_data_state = plot_data.ContourStyle(name='be_sup', hatching=hatching,
-                                     stroke_width=1)
-# primitives.append(c.plot_data(plot_data_states=[plot_data_state]))
-
-hatching = plot_data.HatchingSet(1)
-plot_data_state = plot_data.ContourStyle(name='name', hatching=hatching,
-                                     stroke_width=1)
+edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=BLUE, dashline=[])
+surface_style = plot_data.SurfaceStyle(color_fill=WHITE, opacity=1, hatching=hatching)
 
 size = 1
 pt1 = vm.Point2D(0, 0)
@@ -49,13 +44,18 @@ contour1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
                          vm.edges.LineSegment2D(pt3, pt4),
                          vm.edges.LineSegment2D(pt4, pt1)])
 
-plot_data_line = vm.edges.LineSegment2D(vm.Point2D(2,2), vm.Point2D(3,3)).plot_data([plot_data_state])
+plot_data_line = vm.edges.LineSegment2D(vm.Point2D(2,2), vm.Point2D(3,3)).plot_data(edge_style)
 primitives.append(plot_data_line)
-primitives.append(arc.plot_data([plot_data_state]))
+primitives.append(arc.plot_data(edge_style=edge_style))
 
 
-plot_data_contour = contour1.plot_data(plot_data_states=[plot_data_state])
+plot_data_contour = contour1.plot_data(edge_style=edge_style, surface_style=surface_style)
 primitives.append(plot_data_contour)
+
+circle_edge_style = plot_data.EdgeStyle(1,RED)
+circle_surface_style = plot_data.SurfaceStyle(color_fill=YELLOW, opacity=0.5, hatching=plot_data.HatchingSet())
+circle = vm.wires.Circle2D(vm.Point2D(6,9), 5).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
+primitives.append(circle)
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 
 plot_data.plot_canvas(plot_data_object=primitive_group, canvas_id='canvas',

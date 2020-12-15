@@ -1219,6 +1219,8 @@ export abstract class PlotData {
           this.context.stroke();
           this.context.fill();
           this.context.closePath();
+        } else if (d.primitives[i].type_ == 'circle') {
+          this.draw_circle(hidden, show_state, mvx, mvy, scaleX, scaleY, d.primitives[i]);
         }
       }
     }
@@ -1230,14 +1232,11 @@ export abstract class PlotData {
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
       } else {
-        this.context.strokeStyle = d.edge_style.color_line;
-        this.context.lineWidth = d.edge_style.stroke_width;
-        this.context.fillStyle = 'white';
+        this.context.strokeStyle = d.edge_style.color_stroke;
+        this.context.lineWidth = d.edge_style.line_width;
+        this.context.fillStyle = d.surface_style.color_fill;
         if (d.surface_style.hatching != null) {
           this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
-        }
-        if (d.surface_style.color_fill != null) {
-          this.context.fillStyle = d.surface_style.color_fill;
         }
         if (this.select_on_mouse == d) {
           this.context.fillStyle = this.color_surface_on_mouse;
@@ -1257,8 +1256,38 @@ export abstract class PlotData {
       this.context.fill();
       this.context.stroke();
       this.context.closePath();
-    } else if (d['type_'] == 'text') {
-      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y) ;
+    }
+  }
+
+  draw_circle(hidden, show_state, mvx, mvy, scaleX, scaleY, d:Circle2D) {
+    if (d['type_'] == 'circle') {
+      this.context.beginPath();
+      if (hidden) {
+        this.context.fillStyle = d.mouse_selection_color;
+        d.draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+      } else {
+        d.draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+        this.context.strokeStyle = d.edge_style.color_stroke;
+        this.context.lineWidth = d.edge_style.line_width;
+        this.context.fillStyle = d.surface_style.color_fill;
+        this.context.fill();
+        if (d.surface_style.hatching != null) {
+          this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
+          this.context.fill();
+        }
+        if (this.select_on_mouse == d) {
+          this.context.fillStyle = this.color_surface_on_mouse;
+        }
+        for (var j = 0; j < this.select_on_click.length; j++) {
+          var z = this.select_on_click[j];
+          if (z == d) {
+            this.context.fillStyle = this.color_surface_on_click;
+          }
+        }
+      }
+      this.context.fill();
+      this.context.stroke();
+      this.context.closePath();
     }
   }
 
@@ -2860,12 +2889,14 @@ export class PlotContour extends PlotData {
       var a = PrimitiveGroup.deserialize(d);
       this.plot_datas.push(a);
       for (let i=0; i<a.primitives.length; i++) {
-        let contour = a.primitives[i];
-        if (isNaN(this.minX)) {this.minX = contour.minX} else {this.minX = Math.min(this.minX, contour.minX)};
-        if (isNaN(this.maxX)) {this.maxX = contour.maxX} else {this.maxX = Math.max(this.maxX, contour.maxX)};
-        if (isNaN(this.minY)) {this.minY = contour.minY} else {this.minY = Math.min(this.minY, contour.minY)};
-        if (isNaN(this.maxY)) {this.maxY = contour.maxY} else {this.maxY = Math.max(this.maxY, contour.maxY)};
-        this.colour_to_plot_data[contour.mouse_selection_color] = contour;
+        let primitive = a.primitives[i];
+        if (isNaN(this.minX)) {this.minX = primitive.minX} else {this.minX = Math.min(this.minX, primitive.minX)};
+        if (isNaN(this.maxX)) {this.maxX = primitive.maxX} else {this.maxX = Math.max(this.maxX, primitive.maxX)};
+        if (isNaN(this.minY)) {this.minY = primitive.minY} else {this.minY = Math.min(this.minY, primitive.minY)};
+        if (isNaN(this.maxY)) {this.maxY = primitive.maxY} else {this.maxY = Math.max(this.maxY, primitive.maxY)};
+        if ((primitive.type_ == 'contour') || (primitive.type_ == 'circle')) {
+          this.colour_to_plot_data[primitive.mouse_selection_color] = primitive;
+        }
       }
     }
     
@@ -3847,6 +3878,8 @@ export class PrimitiveGroup {
         primitives.push(LineSegment.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'arc') {
         primitives.push(Arc2D.deserialize(temp[i]));
+      } else if (temp[i]['type_'] == 'circle') {
+        primitives.push(Circle2D.deserialize(temp[i]));
       }
     }
     return new PrimitiveGroup(primitives,
@@ -3883,7 +3916,6 @@ export class Contour2D {
       var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
       var temp = serialized['plot_data_primitives'];
       var plot_data_primitives = [];
-
       for (var i = 0; i < temp.length; i++) {
         var d = temp[i];
         if (d['type_'] == 'linesegment') {
@@ -3983,6 +4015,7 @@ export class Circle2D {
   maxX:number=0;
   minY:number=0;
   maxY:number=0;
+  mouse_selection_color:any;
 
   constructor(public data:any,
               public cx:number,
@@ -3996,7 +4029,9 @@ export class Circle2D {
       this.maxX = this.cx + this.r;
       this.minY = this.cy - this.r;
       this.maxY = this.cy + this.r;
-              }
+
+    this.mouse_selection_color = genColor();
+  }
 
   public static deserialize(serialized) {
       var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
@@ -4012,9 +4047,6 @@ export class Circle2D {
   }
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
-    context.lineWidth = this.edge_style.line_width;
-    context.strokeStyle = this.edge_style.color_stroke;
-    context.fillStyle = this.surface_style.color_fill;
     context.arc(scaleX*(1000*this.cx+ mvx) + X, scaleY*(1000*this.cy+ mvy) + Y, scaleX*1000*this.r, 0, 2*Math.PI);
   }
 
@@ -4917,9 +4949,10 @@ export class SurfaceStyle {
   public static deserialize(serialized) {
     let default_dict_ = {color_fill:'grey', opacity:1, hatching:undefined};
     serialized = set_default_values(serialized, default_dict_);
+    let hatching = HatchingSet.deserialize(serialized['hatching']);
     return new SurfaceStyle(rgb_to_hex(serialized['color_fill']),
                                serialized['opacity'],
-                               serialized['hatching']);
+                               hatching);
   }
 }
 
@@ -4952,7 +4985,7 @@ export class HatchingSet {
   constructor(public name:string,
               public stroke_width:number,
               public hatch_spacing:number) {
-      this.canvas_hatching = this.generate_canvas()
+      this.canvas_hatching = this.generate_canvas();
   }
 
   public static deserialize(serialized) {

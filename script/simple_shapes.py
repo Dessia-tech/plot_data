@@ -56,6 +56,9 @@ circle_edge_style = plot_data.EdgeStyle(1,RED)
 circle_surface_style = plot_data.SurfaceStyle(color_fill=YELLOW, opacity=0.5, hatching=plot_data.HatchingSet())
 circle = vm.wires.Circle2D(vm.Point2D(6,9), 5).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
 primitives.append(circle)
+
+text = plot_data.Text(comment='Hello', position_x=5, position_y=5, text_style=plot_data.TextStyle(text_color=RED, font_size=20, font_style='sans-serif'))
+primitives.append(text)
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 
 plot_data.plot_canvas(plot_data_object=primitive_group, canvas_id='canvas',

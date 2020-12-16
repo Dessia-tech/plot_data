@@ -129,10 +129,7 @@ class SurfaceStyle(DessiaObject):
 class Text(PlotDataObject):
     def __init__(self, comment: str, position_x: float, position_y: float,
                  text_style: TextStyle = None, name: str = ''):
-        if text_style is None:
-            self.text_style = TextStyle()
-        else:
-            self.text_style = text_style
+        self.text_style = text_style
         self.comment = comment
         self.position_x = position_x
         self.position_y = position_y

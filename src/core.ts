@@ -318,6 +318,56 @@ export class MultiplePlots {
     }
   }
 
+  add_point_family(point_family:PointFamily): void {
+    this.point_families.push(point_family);
+    var point_index = point_family.point_index;
+    for (let i=0; i<this.nbObjects; i++) {
+      if (this.objectList[i].type_ == 'scatterplot') {
+        for (let j=0; j<point_index.length; j++) {
+          this.objectList[i].plotObject.point_list[point_index[j]].point_families.push(point_family);
+        }
+      }
+    }
+    this.redrawAllObjects();
+  }
+
+  remove_point_family(index:number): void {
+    for (let i=0; i<this.nbObjects; i++) {
+      let obj = this.objectList[i];
+      if (obj.type_ == 'scatterplot') {
+        for (let j=0; j<obj.plotObject.point_list.length; j++) {
+          if (List.is_include(this.point_families[index], obj.plotObject.point_list[j].point_families)) {
+            this.objectList[i].plotObject.point_list[j].point_families = List.remove_selection(this.point_families[index],
+                                                        this.objectList[i].plotObject.point_list[j].point_families);
+          }
+        } 
+      }
+    }
+    this.point_families = List.remove_at_index(index, this.point_families);
+    this.redrawAllObjects();
+  }
+
+  add_point_to_family(point_index:number, family_index:number): void {
+    this.point_families[family_index].point_index.push(point_index);
+    for (let i=0; i<this.nbObjects; i++) {
+      if (this.objectList[i].type_ == 'scatterplot') {
+        this.objectList[i].plotObject.point_list[point_index].point_families.push(this.point_families[family_index]);
+      }
+    }
+    this.redrawAllObjects();
+  }
+
+  remove_point_from_family(point_index:number, family_index:number): void {
+    for (let i=0; i<this.nbObjects; i++) {
+      if (this.objectList[i].type_ == 'scatterplot') {
+        this.objectList[i].plotObject.point_list[point_index].point_families = List.remove_selection(this.point_families[family_index],
+          this.objectList[i].plotObject.point_list[point_index].point_families);
+      }
+    }
+    this.point_families = List.remove_at_index(family_index, this.point_families);
+    this.redrawAllObjects();
+  }
+
   selectDep_action():void {
     this.selectDependency_bool = !this.selectDependency_bool;
     this.manipulation_bool = false;
@@ -1325,6 +1375,9 @@ export abstract class PlotData {
 
         if (shape == 'crux') {
           this.context.strokeStyle = d.color_fill;
+        }
+        if (d.point_families.length != 0) {
+          this.context.fillStyle = d.point_families[d.point_families.length - 1].color;
         }
         if (this.select_on_mouse == d) {
           this.context.fillStyle = this.color_surface_on_mouse;
@@ -2373,6 +2426,7 @@ export abstract class PlotData {
     }
   }
 
+
   mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e) {
     mouse1X = e.offsetX;
     mouse1Y = e.offsetY;
@@ -2802,6 +2856,7 @@ export abstract class PlotData {
           var new_stroke_width = point_list_copy[i].stroke_width;
           var point = new Point2D(new_cx, new_cy, new_shape, new_point_size, new_color_fill, new_color_stroke, new_stroke_width, 'point', '');
           point.points_inside = point_list_copy[i].points_inside.concat(point_list_copy[j].points_inside);
+          point.point_families = List.union(point_list_copy[i].point_families, point_list_copy[j].point_families);
           var size_coeff = 1.15;
           point.size = point_list_copy[max_size_index].size*size_coeff;
           var point_i = point_list_copy[i];
@@ -5684,6 +5739,16 @@ export class List {
     }
     return new_list;
   }
+
+  public static union(list1:any[], list2:any[]): any[] {
+    var union_list = this.copy(list1);
+    for (let i=0; i<list2.length; i++) {
+      if (!this.is_include(list2[i], union_list)) {
+        union_list.push(list2[i]);
+      }
+    }
+    return union_list;
+  } 
 } //end class List
 
 export function equals(obj1:any, obj2:any): boolean { //Works on any kind of objects, including strings and arrays. Also works on numbers

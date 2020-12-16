@@ -4001,8 +4001,8 @@ export class LineSegment {
               public name:string) {
       this.minX = Math.min(this.data[0], this.data[2]);
       this.maxX = Math.max(this.data[0], this.data[2]);
-      this.minY = Math.min(this.data[1], this.data[3]);
-      this.maxY = Math.max(this.data[1], this.data[3]);
+      this.minY = Math.min(-this.data[1], -this.data[3]);
+      this.maxY = Math.max(-this.data[1], -this.data[3]);
   }
 
   public static deserialize(serialized) {
@@ -4020,9 +4020,9 @@ export class LineSegment {
     context.lineWidth = this.edge_style.line_width;
     context.strokeStyle = this.edge_style.color_stroke;
     if (first_elem) {
-      context.moveTo(scaleX*(1000*this.data[0]+ mvx) + X, scaleY*(1000*this.data[1]+ mvy) + Y);
+      context.moveTo(scaleX*(1000*this.data[0]+ mvx) + X, scaleY*(-1000*this.data[1]+ mvy) + Y);
     }
-    context.lineTo(scaleX*(1000*this.data[2]+ mvx) + X, scaleY*(1000*this.data[3]+ mvy) + Y);
+    context.lineTo(scaleX*(1000*this.data[2]+ mvx) + X, scaleY*(-1000*this.data[3]+ mvy) + Y);
   }
 }
 
@@ -4058,7 +4058,7 @@ export class Circle2D {
       var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
       return new Circle2D(serialized['data'],
                                   serialized['cx'],
-                                  serialized['cy'],
+                                  -serialized['cy'],
                                   serialized['r'],
                                   edge_style,
                                   surface_style,
@@ -4821,7 +4821,7 @@ export class Arc2D {
     serialized = set_default_values(serialized, default_dict_);
     var edge_style = EdgeStyle.deserialize(serialized['edge_style'])
     return new Arc2D(serialized['cx'],
-                                serialized['cy'],
+                                -serialized['cy'],
                                 serialized['r'],
                                 serialized['data'],
                                 serialized['angle1'],

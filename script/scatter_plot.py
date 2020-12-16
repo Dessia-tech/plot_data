@@ -16,43 +16,17 @@ shape = 'circle'
 size = 2
 
 # Points' color
-colorfill = LIGHTBLUE
-colorstroke = GREY
+color_fill = LIGHTBLUE
+color_stroke = GREY
+stroke_width = 0.5
 
-strokewidth = 0.5
 # Scatter plot
-nb_points_x = 10
-nb_points_y = 10
-font_size = 12
-graduation_color = GREY
-axis_color = GREY
-axis_width = 0.5
-arrow_on = False
-grid_on = True
-
-# Tooltip
-tp_colorfill = GREY
-text_color = WHITE
-# Font family : Arial, Helvetica, serif, sans-serif,
-# Verdana, Times New Roman, Courier New
-tl_fontsize = 12
-tl_fontstyle = 'sans-serif'
-tp_radius = 5
-to_display_att_names = ['cx', 'cy']
-opacity = 0.75
-
-axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
-                      font_size=font_size, graduation_color=graduation_color,
-                      axis_color=axis_color, arrow_on=arrow_on,
-                      axis_width=axis_width, grid_on=grid_on)
-
-tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color,
-                            fontsize=tl_fontsize, fontstyle=tl_fontstyle,
-                            tp_radius=tp_radius,
-                            to_plot_list=to_display_att_names, opacity=opacity)
+axis = plot_data.Axis()
+to_disp_attribute_names = ['cx', 'cy']
+tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names)
 
 plot_datas = []
-point_list = []
+elements = []
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
 for i in range(500):
     cx = random.uniform(0, 2)
@@ -60,16 +34,12 @@ for i in range(500):
     random_color_fill = color_fills[random.randint(0, len(color_fills) - 1)]
     point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape,
                               color_fill=random_color_fill,
-                              color_stroke=colorstroke,
-                              stroke_width=strokewidth)
-    point_list += [point]
+                              color_stroke=color_stroke,
+                              stroke_width=stroke_width)
+    elements += [point]
+point_style = plot_data.PointStyle(color_fill=color_fill, color_stroke=color_stroke)
+scatter_plot = plot_data.Scatter(tooltip=tooltip, to_disp_attribute_names=to_disp_attribute_names, point_style=point_style,
+                                  elements=elements, axis=axis)
 
-scatter_plot = plot_data.Scatter(elements=point_list, axis=axis,
-                                 tooltip=tooltip,
-                                 to_display_att_names=to_display_att_names,
-                                 point_shape=shape, point_size=size,
-                                 color_fill=colorfill,
-                                 color_stroke=colorstroke,
-                                 stroke_width=strokewidth)
 
 plot_data.plot_canvas(plot_data_object=scatter_plot, debug_mode=True)

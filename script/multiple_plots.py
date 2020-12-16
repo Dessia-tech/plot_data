@@ -15,32 +15,30 @@ line_width = 0.5
 disposition = 'vertical'
 plot_datas = []
 objects = []
-points = []
+elements = []
 
-# Defining the contour
-hatching = plot_data.HatchingSet(1)
-plot_data_state = plot_data.Settings(name='name', hatching=hatching, stroke_width=1)
-
-contour_size = 1
-pt1 = vm.Point2D(0, 0)
-pt2 = vm.Point2D(0, contour_size)
-pt3 = vm.Point2D(contour_size, contour_size)
-pt4 = vm.Point2D(contour_size, 0)
-c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
-                         vm.edges.LineSegment2D(pt2, pt3),
-                         vm.edges.LineSegment2D(pt3, pt4),
-                         vm.edges.LineSegment2D(pt4, pt1)])
-
-d = c1.plot_data(plot_data_states=[plot_data_state])
-primitive_group = plot_data.PrimitiveGroup(primitives=[d])
+pt1 = vm.Point2D(3,0)
+pt2 = vm.Point2D(1,1)
+pt3 = vm.Point2D(2,1)
+line_edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=ORANGE, dashline=[10,5])
+line1 = vm.edges.LineSegment2D(pt1, pt2).plot_data(edge_style=line_edge_style)
+line2 = vm.edges.LineSegment2D(pt2, pt3).plot_data(edge_style=line_edge_style)
+circle_edge_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=RED)
+circle_surface_style = plot_data.SurfaceStyle(color_fill=LIGHTROSE, opacity=1)
+circle11 = vm.wires.Circle2D(pt1, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
+circle2 = vm.wires.Circle2D(pt2, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
+circle3 = vm.wires.Circle2D(pt3, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
+text_style = plot_data.TextStyle(text_color=BLACK, font_size=12, font_style='sans-serif')
+text = plot_data.Text(comment='Hello Dessia', position_x=3, position_y=0.2, text_style=text_style)
+primitives = [line1, line2, circle11, circle2, circle3, text]
+primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 objects.append(primitive_group)
-# End contour
 
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
 color_strokes = [BLACK, BROWN, GREEN, RED, ORANGE, LIGHTBLUE, GREY]
 for i in range(50):
-    cx = random.uniform(0,2)
-    cy = random.uniform(0,1)
+    cx = random.uniform(0, 2)
+    cy = random.uniform(0, 1)
     fills_index = random.randint(0, len(color_fills) - 1)
     strokes_index = random.randint(0, len(color_strokes) - 1)
     random_color_fill = color_fills[fills_index]
@@ -49,59 +47,42 @@ for i in range(50):
                               color_fill=random_color_fill,
                               color_stroke=random_color_stroke,
                               stroke_width=stroke_width)
-    points += [point]
+    elements += [point]
 
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
-parallel_plot = plot_data.ParallelPlot(line_color=line_color,
-                                       line_width=line_width,
+pp_edge_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=BLACK)
+parallel_plot = plot_data.ParallelPlot(edge_style=pp_edge_style,
                                        disposition=disposition,
-                                       to_disp_attributes=to_disp_attributes,
+                                       to_disp_attribute_names=to_disp_attributes,
                                        rgbs=rgbs)
 objects.append(parallel_plot)
-parallel_plot1 = plot_data.ParallelPlot(line_color=line_color,
-                                        line_width=line_width,
+parallel_plot1 = plot_data.ParallelPlot(edge_style=pp_edge_style,
                                         disposition=disposition,
-                                        to_disp_attributes=['color_fill', 'cx'],
+                                        to_disp_attribute_names=['color_fill',
+                                                                 'cx'],
                                         rgbs=rgbs)
 objects.append(parallel_plot1)
 
-# Tooltip
-tp_colorfill = BLACK
-text_color = WHITE
-tl_fontsize = 12  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
-tl_fontstyle = 'sans-serif'
-tp_radius = 5
-opacity = 0.75
-
 # Scatter
-sc_color_fill = LIGHTBLUE
-sc_color_stroke = GREY
-sc_stroke_width = 0.5
 
-to_disp_att_names = ['cx', 'cy']
-tooltip = plot_data.Tooltip(to_plot_list=to_disp_att_names)
-
+to_disp_attribute_names = ['cx', 'cy']
+tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names)
+point_style = plot_data.PointStyle(color_fill=LIGHTBLUE,
+                                         color_stroke=GREY)
 scatterPlot = plot_data.Scatter(tooltip=tooltip,
-                                to_display_att_names=to_disp_att_names,
-                                point_shape=shape, point_size=size,
-                                color_fill=sc_color_fill,
-                                color_stroke=sc_color_stroke, stroke_width=0.5)
+                                to_disp_attribute_names=to_disp_attribute_names,
+                                point_style=point_style)
 objects.append(scatterPlot)
 
 scatterPlot1 = plot_data.Scatter(tooltip=tooltip,
-                                 to_display_att_names=['cx', 'color_fill'],
-                                 point_shape=shape, point_size=size,
-                                 color_fill=sc_color_fill,
-                                 color_stroke=sc_color_stroke,
-                                 stroke_width=0.5)
+                                 to_disp_attribute_names=['cx', 'color_fill'],
+                                 point_style=point_style)
 objects.append(scatterPlot1)
 
 scatterPlot2 = plot_data.Scatter(tooltip=tooltip,
-                                 to_display_att_names=['cy', 'color_stroke'],
-                                 point_shape=shape, point_size=size,
-                                 color_fill=sc_color_fill,
-                                 color_stroke=sc_color_stroke,
-                                 stroke_width=0.5)
+                                 to_disp_attribute_names=['cy',
+                                                          'color_stroke'],
+                                 point_style=point_style)
 objects.append(scatterPlot2)
 
 coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]
@@ -112,7 +93,7 @@ sizes = [plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300),
          plot_data.Window(width=560, height=300)]
 
-multipleplots = plot_data.MultiplePlots(points=points, objects=objects,
+multipleplots = plot_data.MultiplePlots(elements=elements, objects=objects,
                                         sizes=sizes, coords=coords)
 
 plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)

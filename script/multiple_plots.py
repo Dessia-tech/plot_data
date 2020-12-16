@@ -25,12 +25,12 @@ line1 = vm.edges.LineSegment2D(pt1, pt2).plot_data(edge_style=line_edge_style)
 line2 = vm.edges.LineSegment2D(pt2, pt3).plot_data(edge_style=line_edge_style)
 circle_edge_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=RED)
 circle_surface_style = plot_data.SurfaceStyle(color_fill=LIGHTROSE, opacity=1)
-circle11 = vm.wires.Circle2D(pt1, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
+circle1 = vm.wires.Circle2D(pt1, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
 circle2 = vm.wires.Circle2D(pt2, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
 circle3 = vm.wires.Circle2D(pt3, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
 text_style = plot_data.TextStyle(text_color=BLACK, font_size=12, font_style='sans-serif')
 text = plot_data.Text(comment='Hello Dessia', position_x=3, position_y=0.2, text_style=text_style)
-primitives = [line1, line2, circle11, circle2, circle3, text]
+primitives = [line1, line2, circle1, circle2, circle3, text]
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 objects.append(primitive_group)
 

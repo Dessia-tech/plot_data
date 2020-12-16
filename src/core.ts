@@ -37,7 +37,8 @@ export class MultiplePlots {
   display_order:number[]=[];
   displayable_attributes:Attribute[]=[];
   selected_point_index:number[]=[];
-  dep_selected_points_index:any[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
+  dep_selected_points_index:number[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
+  point_families:PointFamily[]=[];
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
@@ -1227,6 +1228,7 @@ export abstract class PlotData {
           this.context.stroke();
           this.context.fill();
           this.context.closePath();
+          this.context.setLineDash([]);
         }
       }
     }
@@ -1262,6 +1264,7 @@ export abstract class PlotData {
       this.context.fill();
       this.context.stroke();
       this.context.closePath();
+      this.context.setLineDash([]);
     }
   }
 
@@ -4019,6 +4022,7 @@ export class LineSegment {
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
     context.lineWidth = this.edge_style.line_width;
     context.strokeStyle = this.edge_style.color_stroke;
+    context.setLineDash(this.edge_style.dashline);
     if (first_elem) {
       context.moveTo(scaleX*(1000*this.data[0]+ mvx) + X, scaleY*(-1000*this.data[1]+ mvy) + Y);
     }
@@ -4081,6 +4085,7 @@ export class Point2D {
   size:number;
   k:number=1;
   points_inside:Point2D[] = [this];
+  point_families:PointFamily[]=[];
 
   constructor(public cx:number,
               public cy:number,
@@ -5041,6 +5046,13 @@ export class HatchingSet {
     }
     pctx.stroke();
     return p_hatch;
+  }
+}
+
+export class PointFamily {
+  constructor (public color: string,
+               public point_index: number[]) {
+    point_index = [];
   }
 }
 

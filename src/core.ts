@@ -264,7 +264,7 @@ export class MultiplePlots {
       this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
     }
     for (let i=0; i<this.nbObjects; i++) {
-      let display_index = this.display_order[i]; 
+      let display_index = this.display_order[i];
       let obj = this.objectList[display_index];
       this.objectList[display_index].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
       this.objectList[display_index].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
@@ -351,7 +351,7 @@ export class MultiplePlots {
     return vertex_infos;
   }
 
-  initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] { 
+  initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] {
     var thickness = 15;
     var vertex_infos = [];
     for (let i=0; i<this.nbObjects; i++) {
@@ -681,7 +681,7 @@ export class MultiplePlots {
           }
         }
         MultiplotCom.pp_to_sc_communication(to_select, axis_numbers, this.objectList[i]);
-      } else if (obj.type_ == 'parallelplot') { 
+      } else if (obj.type_ == 'parallelplot') {
         MultiplotCom.pp_to_pp_communication(rubberbands_dep, this.objectList[i]);
       }
     }
@@ -703,7 +703,7 @@ export class MultiplePlots {
         }
         obj.dep_color_propagation(attribute_index, vertical, inverted, hexs, selected_axis_name);
         obj.sc_interpolation_ON = true;
-      } 
+      }
     }
   }
 
@@ -889,7 +889,7 @@ export class MultiplePlots {
           }
           this.refresh_selected_point_index();
         }
-        this.redrawAllObjects(); 
+        this.redrawAllObjects();
       }
     });
 
@@ -920,7 +920,7 @@ export class MultiplePlots {
             } else {
               this.setAllInterpolationToOFF();
             }
-          } 
+          }
         }
         this.refresh_selected_point_index();
       } else {
@@ -932,7 +932,7 @@ export class MultiplePlots {
       isDrawing = false;
       mouse_moving = false;
     });
-    
+
     canvas.addEventListener('wheel', e => {
       var mouse3X = e.offsetX;
       var mouse3Y = e.offsetY;
@@ -2405,7 +2405,7 @@ export abstract class PlotData {
           this.isSelecting = true;
           if (click_on_selectw_border) {
             Interactions.selection_window_resize(mouse1X, mouse1Y, mouse2X, mouse2Y, up, down, left, right, this);
-            
+
           } else {
             Interactions.mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y, this);
           }
@@ -2905,7 +2905,7 @@ export class PlotContour extends PlotData {
         }
       }
     }
-    
+
     this.plotObject = this.plot_datas[0];
     this.isParallelPlot = false;
     this.interaction_ON = true;
@@ -3871,7 +3871,7 @@ export class PrimitiveGroup {
   constructor(public primitives: any[],
               public type_: string,
               public name:string) {}
-  
+
   public static deserialize(serialized) {
     var primitives:any[] = [];
     var temp = serialized['primitives'];
@@ -5391,7 +5391,7 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
   var g = result[1]*(1 - coeff);
   var b = result[2]*(1 - coeff);
   return rgb_vectorToStr(r,g,b);
-} 
+}
 
 class Sort {
   nbPermutations:number = 0;

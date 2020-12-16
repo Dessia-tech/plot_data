@@ -1,9 +1,9 @@
 import plot_data
 from plot_data.colors import *
 import random
-# import volmdlr as vm
-# import volmdlr.wires
-# import volmdlr.edges
+import volmdlr as vm
+import volmdlr.wires
+import volmdlr.edges
 
 shape = 'circle'
 size = 2
@@ -17,25 +17,22 @@ plot_datas = []
 objects = []
 elements = []
 
-# Defining the contour
-# hatching = plot_data.HatchingSet(1)
-# plot_data_state = plot_data.ContourStyle(name='name', hatching=hatching,
-#                                             stroke_width=1)
-#
-# contour_size = 1
-# pt1 = vm.Point2D(0, 0)
-# pt2 = vm.Point2D(0, contour_size)
-# pt3 = vm.Point2D(contour_size, contour_size)
-# pt4 = vm.Point2D(contour_size, 0)
-# c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
-#                          vm.edges.LineSegment2D(pt2, pt3),
-#                          vm.edges.LineSegment2D(pt3, pt4),
-#                          vm.edges.LineSegment2D(pt4, pt1)])
-#
-# d = c1.plot_data(plot_data_states=[plot_data_state])
-# primitive_group = plot_data.PrimitiveGroup(primitives=[d])
-# objects.append(primitive_group)
-# End contour
+pt1 = vm.Point2D(3,0)
+pt2 = vm.Point2D(1,1)
+pt3 = vm.Point2D(2,1)
+line_edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=ORANGE, dashline=[10,5])
+line1 = vm.edges.LineSegment2D(pt1, pt2).plot_data(edge_style=line_edge_style)
+line2 = vm.edges.LineSegment2D(pt2, pt3).plot_data(edge_style=line_edge_style)
+circle_edge_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=RED)
+circle_surface_style = plot_data.SurfaceStyle(color_fill=LIGHTROSE, opacity=1)
+circle11 = vm.wires.Circle2D(pt1, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
+circle2 = vm.wires.Circle2D(pt2, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
+circle3 = vm.wires.Circle2D(pt3, 0.1).plot_data(edge_style=circle_edge_style, surface_style=circle_surface_style)
+text_style = plot_data.TextStyle(text_color=BLACK, font_size=12, font_style='sans-serif')
+text = plot_data.Text(comment='Hello Dessia', position_x=3, position_y=0.2, text_style=text_style)
+primitives = [line1, line2, circle11, circle2, circle3, text]
+primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
+objects.append(primitive_group)
 
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
 color_strokes = [BLACK, BROWN, GREEN, RED, ORANGE, LIGHTBLUE, GREY]

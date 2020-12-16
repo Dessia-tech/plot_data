@@ -30,7 +30,7 @@ def delete_none_from_dict(dict1):
         if type(value) == dict:
             dict2[key] = delete_none_from_dict(value)
         else:
-            if value:
+            if value is not None:
                 dict2[key] = value
     return dict2
 
@@ -91,27 +91,6 @@ class Window(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-# class ContourStyle(DessiaObject):
-#     def __init__(self, name: str = '', color_map: ColorMapSet = None,
-#                  hatching: HatchingSet = None,
-#                  color_surface: ColorSurfaceSet = None, stroke_width: float = 1,
-#                  color_line: str = 'black', marker: str = None,
-#                  dash: str = None, opacity: float = 1, font: str = 'Arial',
-#                  text_size: str = '30px', text_color: str = 'black'):
-#         self.text_color = text_color
-#         self.text_size = text_size
-#         self.font = font
-#         self.color_surface = color_surface
-#         self.color_map = color_map
-#         self.hatching = hatching
-#         self.opacity = opacity
-#         self.dash = dash
-#         self.marker = marker
-#         self.color_line = color_line
-#         self.stroke_width = stroke_width
-#         DessiaObject.__init__(self, name=name)
-
-
 class EdgeStyle(DessiaObject):
     def __init__(self, line_width:float=None, color_stroke:str=None, dashline=None, name:str=''):
         self.line_width = line_width
@@ -126,7 +105,7 @@ class PointStyle(DessiaObject):
         self.color_fill = color_fill
         self.color_stroke = color_stroke
         self.stroke_width = stroke_width
-        self.size = size
+        self.size = size # 1, 2, 3 or 4
         self.shape = shape
         DessiaObject.__init__(self, name=name)
 

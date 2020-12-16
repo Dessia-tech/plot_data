@@ -3918,35 +3918,39 @@ export class Contour2D {
   }
 
   public static deserialize(serialized) {
-      var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
-      var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
-      var temp = serialized['plot_data_primitives'];
-      var plot_data_primitives = [];
-      for (var i = 0; i < temp.length; i++) {
-        var d = temp[i];
-        if (d['type_'] == 'linesegment') {
-          let new_line = LineSegment.deserialize(d);
-          new_line.edge_style = edge_style;
-          plot_data_primitives.push(new_line);
-        }
-        if (d['type_'] == 'circle') {
-          let new_circle = Circle2D.deserialize(d);
-          new_circle.edge_style = edge_style;
-          new_circle.surface_style = surface_style;
-          plot_data_primitives.push(new_circle);
-        }
-        if (d['type_'] == 'arc') {
-          let new_arc = Arc2D.deserialize(d);
-          new_arc.edge_style = edge_style;
-          plot_data_primitives.push(new_arc);
-        }
-
+    var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5};
+    var default_surface_style = {color_fill:string_to_rgb('white'), hatching:null, opacity:1};
+    var default_dict_ = {edge_style:default_edge_style, surface_style:default_surface_style};
+    serialized = set_default_values(serialized, default_dict_);
+    var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
+    var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
+    var temp = serialized['plot_data_primitives'];
+    var plot_data_primitives = [];
+    for (var i = 0; i < temp.length; i++) {
+      var d = temp[i];
+      if (d['type_'] == 'linesegment') {
+        let new_line = LineSegment.deserialize(d);
+        new_line.edge_style = edge_style;
+        plot_data_primitives.push(new_line);
       }
-      return new Contour2D(plot_data_primitives,
-                                   edge_style,
-                                   surface_style,
-                                   serialized['type_'],
-                                   serialized['name']);
+      if (d['type_'] == 'circle') {
+        let new_circle = Circle2D.deserialize(d);
+        new_circle.edge_style = edge_style;
+        new_circle.surface_style = surface_style;
+        plot_data_primitives.push(new_circle);
+      }
+      if (d['type_'] == 'arc') {
+        let new_arc = Arc2D.deserialize(d);
+        new_arc.edge_style = edge_style;
+        plot_data_primitives.push(new_arc);
+      }
+
+    }
+    return new Contour2D(plot_data_primitives,
+                                  edge_style,
+                                  surface_style,
+                                  serialized['type_'],
+                                  serialized['name']);
   }
 }
 
@@ -3966,6 +3970,9 @@ export class Text {
   }
 
   public static deserialize(serialized) {
+    var default_text_style = {font_size:12, font_style:'sans-serif', text_color:string_to_rgb('black'), name:''};
+    var default_dict_ = {text_style:default_text_style};
+    serialized = set_default_values(serialized, default_dict_);
     var text_style = TextStyle.deserialize(serialized['text_style']);
     return new Text(serialized['comment'],
                     serialized['position_x'],
@@ -3999,7 +4006,10 @@ export class LineSegment {
   }
 
   public static deserialize(serialized) {
-      var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
+    var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
+    var default_dict_ = {edge_style:default_edge_style};
+    serialized = set_default_values(serialized, default_dict_);
+    var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
       return new LineSegment(serialized['data'],
                                edge_style,
                                serialized['type_'],
@@ -4040,6 +4050,10 @@ export class Circle2D {
   }
 
   public static deserialize(serialized) {
+      var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:0.5, name:''};
+      var default_surface_style = {color_fill:string_to_rgb('violet'), hatching:null, opacity:1};
+      var default_dict_ = {edge_style:default_edge_style, surface_style:default_surface_style};
+      serialized = set_default_values(serialized, default_dict_);
       var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
       var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
       return new Circle2D(serialized['data'],
@@ -4166,8 +4180,8 @@ export class Axis {
   }
 
   public static deserialize(serialized) {
-    let default_axis_style = new EdgeStyle(0.5, string_to_hex('lightgrey'), [], '');
-    let default_graduation_style = new TextStyle(string_to_hex('lightgrey'), 12, 'sans-serif', '');
+    let default_axis_style = {line_width:0.5, color_stroke:string_to_rgb('grey'), dashline:[], name:''};
+    let default_graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', name:''};
     let default_dict_ = {nb_points_x:10, nb_points_y:10, graduation_style:default_graduation_style, 
                         axis_style:default_axis_style, arrow_on:false, grid_on:true, name:''};
     serialized = set_default_values(serialized, default_dict_);
@@ -4802,16 +4816,19 @@ export class Arc2D {
   }
 
   public static deserialize(serialized) {
-      var edge_style = EdgeStyle.deserialize(serialized['edge_style'])
-      return new Arc2D(serialized['cx'],
-                                  serialized['cy'],
-                                  serialized['r'],
-                                  serialized['data'],
-                                  serialized['angle1'],
-                                  serialized['angle2'],
-                                  edge_style,
-                                  serialized['type_'],
-                                  serialized['name']);
+    var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
+    var default_dict_ = {edge_style:default_edge_style};
+    serialized = set_default_values(serialized, default_dict_);
+    var edge_style = EdgeStyle.deserialize(serialized['edge_style'])
+    return new Arc2D(serialized['cx'],
+                                serialized['cy'],
+                                serialized['r'],
+                                serialized['data'],
+                                serialized['angle1'],
+                                serialized['angle2'],
+                                edge_style,
+                                serialized['type_'],
+                                serialized['name']);
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
@@ -4953,9 +4970,11 @@ export class SurfaceStyle {
   }
             
   public static deserialize(serialized) {
-    let default_dict_ = {color_fill:'grey', opacity:1, hatching:undefined};
+    let default_dict_ = {color_fill:'grey', opacity:1, hatching:null};
     serialized = set_default_values(serialized, default_dict_);
-    let hatching = HatchingSet.deserialize(serialized['hatching']);
+    if (serialized['hatching'] != null) {
+      var hatching = HatchingSet.deserialize(serialized['hatching']);
+    }
     return new SurfaceStyle(rgb_to_hex(serialized['color_fill']),
                                serialized['opacity'],
                                hatching);

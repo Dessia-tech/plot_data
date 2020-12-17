@@ -1157,6 +1157,9 @@ export abstract class PlotData {
   isDrawing_rubber_band:boolean=false;
   rubberbands_dep:[string, [number, number]][]=[];
 
+  latest_selected_points:Point2D[]=[];
+  latest_selected_points_index:number[]=[];
+
   public constructor(
     public data:any,
     public width: number,
@@ -2423,6 +2426,15 @@ export abstract class PlotData {
           }
         }
       }
+    }
+  }
+
+
+  refresh_latest_selected_points_index() {
+    this.latest_selected_points_index = [];
+    for (let i=0; i<this.latest_selected_points.length; i++) {
+      let point_index = List.get_index_of_element(this.latest_selected_points[i], this.plotObject.point_list);
+      this.latest_selected_points_index.push(point_index);
     }
   }
 

@@ -23,7 +23,7 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
             pos1, pos2 = pos[node1], pos[node2]
             line = plot_data.LineSegment(
                 [pos1[0], pos1[1], pos2[0], pos2[1]],
-                plot_data_states=[plot_data.Settings()])
+                edge_style=plot_data.EdgeStyle())
             primitives.append(line)
 
         for node, data in self.graph.nodes(data=True):
@@ -32,19 +32,23 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
             x, y = position[0], position[1]
             if shape == 'o':
                 prim = plot_data.Circle2D(
-                        x, y, r, plot_data_states=[plot_data.Settings()])
+                        x, y, r,
+                        edge_style=plot_data.EdgeStyle(),
+                        surface_style=plot_data.SurfaceStyle())
             elif shape == 's':
                 # TODO: changer Circle2D par un carré
                 prim = plot_data.Circle2D(
-                        x, y, r*2, plot_data_states=[plot_data.Settings()])
+                        x, y, r*2, edge_style=plot_data.EdgeStyle(),
+                        surface_style=plot_data.SurfaceStyle())
             else:
                 raise NotImplementedError
 
+            edge_style = plot_data.EdgeStyle(color_stroke=color)
+            surface_style = plot_data.SurfaceStyle(color_fill=color)
             contour = plot_data.Contour2D(
                 [prim],
-                [plot_data.Settings(
-                    color_surface=plot_data.ColorSurfaceSet(color),
-                    color_line=color)])
+                edge_style=edge_style,
+                surface_style=surface_style,)
             primitives.append(contour)
 
         return primitives

@@ -92,7 +92,8 @@ class Window(DessiaObject):
 
 
 class EdgeStyle(DessiaObject):
-    def __init__(self, line_width:float=None, color_stroke:str=None, dashline=None, name:str=''):
+    def __init__(self, line_width: float = None, color_stroke: str = None,
+                 dashline: List[int] = None, name: str = ''):
         self.line_width = line_width
         self.color_stroke = color_stroke
         self.dashline = dashline
@@ -111,7 +112,8 @@ class PointStyle(DessiaObject):
 
 
 class TextStyle(DessiaObject):
-    def __init__(self, text_color:str=None, font_size:float=None, font_style:str=None, name:str=''):
+    def __init__(self, text_color: str = None, font_size: float = None,
+                 font_style: str = None, name: str = ''):
         self.text_color = text_color
         self.font_size = font_size
         self.font_style = font_style
@@ -119,7 +121,8 @@ class TextStyle(DessiaObject):
 
 
 class SurfaceStyle(DessiaObject):
-    def __init__(self, color_fill:str=None, opacity:float=None, hatching:HatchingSet=None, name:str=''):
+    def __init__(self, color_fill: str = None, opacity: float = None,
+                 hatching: HatchingSet = None, name: str = ''):
         self.color_fill = color_fill
         self.opacity = opacity
         self.hatching = hatching
@@ -158,7 +161,8 @@ class LineSegment(PlotDataObject):
 
 class Circle2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, r: float,
-                 edge_style: EdgeStyle, surface_style:SurfaceStyle, name: str = ''):
+                 edge_style: EdgeStyle, surface_style: SurfaceStyle,
+                 name: str = ''):
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.r = r

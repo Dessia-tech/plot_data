@@ -28,27 +28,26 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
 
         for node, data in self.graph.nodes(data=True):
             position = pos[node]
-            color, shape = data['color'], data['shape']
+            color, shape, name = data['color'], data['shape'], data['name']
             x, y = position[0], position[1]
+            edge_style = plot_data.EdgeStyle(color_stroke=color)
+            surface_style = plot_data.SurfaceStyle(color_fill=color)
             if shape == 'o':
                 prim = plot_data.Circle2D(
                         x, y, r,
-                        edge_style=plot_data.EdgeStyle(),
-                        surface_style=plot_data.SurfaceStyle())
+                        edge_style=edge_style,
+                        surface_style=surface_style)
             elif shape == 's':
                 # TODO: changer Circle2D par un carré
                 prim = plot_data.Circle2D(
-                        x, y, r*2, edge_style=plot_data.EdgeStyle(),
-                        surface_style=plot_data.SurfaceStyle())
+                        x, y, r*2, edge_style=edge_style,
+                        surface_style=surface_style)
             else:
                 raise NotImplementedError
+            primitives.append(prim)
 
-            edge_style = plot_data.EdgeStyle(color_stroke=color)
-            surface_style = plot_data.SurfaceStyle(color_fill=color)
-            contour = plot_data.Contour2D(
-                [prim],
-                edge_style=edge_style,
-                surface_style=surface_style,)
-            primitives.append(contour)
+            text_style = plot_data.TextStyle(text_color='rgb(0,0,0)')
+            text = plot_data.Text(name, x, y, text_style=text_style)
+            primitives.append(text)
 
         return primitives

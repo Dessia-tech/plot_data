@@ -111,10 +111,13 @@ class PointStyle(DessiaObject):
 
 
 class TextStyle(DessiaObject):
-    def __init__(self, text_color:str=None, font_size:float=None, font_style:str=None, name:str=''):
+    def __init__(self, text_color:str=None, font_size:float=None, font_style:str=None,
+                 text_align_x:str=None, text_align_y:str=None, name:str=''):
         self.text_color = text_color
         self.font_size = font_size
         self.font_style = font_style
+        self.text_align_x = text_align_x  # "left", "right", "center", "start" or "end"
+        self.text_align_y = text_align_y  # "top", "hanging", "middle", "alphabetic", "ideographic" or "bottom"
         DessiaObject.__init__(self, name=name)
 
 

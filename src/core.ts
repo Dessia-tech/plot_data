@@ -194,11 +194,11 @@ export class MultiplePlots {
   }
 
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-    var graduation_style = new TextStyle(string_to_hex('grey'), 12, 'sans-serif', ''); 
+    var graduation_style = new TextStyle(string_to_hex('grey'), 12, 'sans-serif', 'middle', 'alphabetic', ''); 
     var axis_style = new EdgeStyle(0.5, string_to_hex('grey'), [], '');
     var DEFAULT_AXIS = new Axis(10, 10, graduation_style, axis_style, false, true, 'axis', '');
     var surface_style = new SurfaceStyle(string_to_hex('black'), 0.75, undefined);
-    var text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', '');
+    var text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', 'middle', 'alphabetic', '');
     var DEFAULT_TOOLTIP = new Tooltip([attr_x.name, attr_y.name], surface_style, text_style, 5, 'tooltip', '');
     var point_style = new PointStyle(string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 2, 'circle', '');
     var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
@@ -4040,7 +4040,8 @@ export class Text {
   }
 
   public static deserialize(serialized) {
-    var default_text_style = {font_size:12, font_style:'sans-serif', text_color:string_to_rgb('black'), name:''};
+    var default_text_style = {font_size:12, font_style:'sans-serif', text_color:string_to_rgb('black'),
+                              text_align_x:'start', text_align_y:'alphabetic', name:''};
     var default_dict_ = {text_style:default_text_style};
     serialized = set_default_values(serialized, default_dict_);
     var text_style = TextStyle.deserialize(serialized['text_style']);
@@ -4055,6 +4056,8 @@ export class Text {
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
     context.font = this.text_style.font;
     context.fillStyle = this.text_style.text_color;
+    context.textAlign = this.text_style.text_align_x,
+    context.textBaseline = this.text_style.text_align_y;
     context.fillText(this.comment, scaleX*(1000*this.position_x+ mvx) + X, scaleY*(1000*this.position_y+ mvy) + Y);
   }
 }
@@ -4498,8 +4501,9 @@ export class Tooltip {
               }
 
   public static deserialize(serialized) {
-    let default_surface_style = new SurfaceStyle(string_to_hex('lightblue'), 0.75, undefined);
-    let default_text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', '');
+    let default_surface_style = {color_fill:string_to_rgb('lightblue'), opacity:0.75, hatching:undefined};
+    let default_text_style = {text_color:string_to_rgb('black'), font_size:12, font_style:'sans-serif', 
+                              text_align_x:'start', text_align_y:'alphabetic', name:''};
     let default_dict_ = {surface_style:default_surface_style, text_style:default_text_style, tooltip_radius:5};
     serialized = set_default_values(serialized, default_dict_);
     var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
@@ -5005,6 +5009,8 @@ export class TextStyle {
   constructor(public text_color:string,
               public font_size:number,
               public font_style:string,
+              public text_align_x:string,
+              public text_align_y:string,
               public name:string) {
     if (text_color === undefined) {
       text_color = string_to_hex('black');
@@ -5020,11 +5026,14 @@ export class TextStyle {
 
   public static deserialize(serialized) {
     let default_dict_ = {text_color:string_to_hex('black'), font_size:12, 
-                         font_style:'sans-serif', name:''};
+                         font_style:'sans-serif', text_align_x:'start',
+                         text_align_y: 'alphabetic', name:''};
     serialized = set_default_values(serialized,default_dict_);
     return new TextStyle(rgb_to_hex(serialized['text_color']),
                             serialized['font_size'],
                             serialized['font_style'],
+                            serialized['text_align_x'],
+                            serialized['text_align_y'],
                             serialized['name']);
   }
 }

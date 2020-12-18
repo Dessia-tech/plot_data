@@ -194,11 +194,11 @@ export class MultiplePlots {
   }
 
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-    var graduation_style = new TextStyle(string_to_hex('grey'), 12, 'sans-serif', 'middle', 'alphabetic', ''); 
+    var graduation_style = new TextStyle(string_to_hex('grey'), 12, 'sans-serif', 'center', 'alphabetic', ''); 
     var axis_style = new EdgeStyle(0.5, string_to_hex('grey'), [], '');
     var DEFAULT_AXIS = new Axis(10, 10, graduation_style, axis_style, false, true, 'axis', '');
     var surface_style = new SurfaceStyle(string_to_hex('black'), 0.75, undefined);
-    var text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', 'middle', 'alphabetic', '');
+    var text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', 'start', 'alphabetic', '');
     var DEFAULT_TOOLTIP = new Tooltip([attr_x.name, attr_y.name], surface_style, text_style, 5, 'tooltip', '');
     var point_style = new PointStyle(string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 2, 'circle', '');
     var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_style: point_style,

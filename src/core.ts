@@ -44,7 +44,7 @@ export class MultiplePlots {
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
     this.initial_coords = data['coords'];
     this.dataObjects = data['objects'];
-    var points = data['elements'];
+    var elements = data['elements'];
     this.initialize_displayable_attributes();
     var temp_sizes = data['sizes'];
     for (let i=0; i<temp_sizes.length; i++) {
@@ -54,11 +54,11 @@ export class MultiplePlots {
     this.nbObjects = this.dataObjects.length;
     this.define_canvas(canvas_id);
     for (let i=0; i<this.nbObjects; i++) {
-      if (this.dataObjects[i]['type_'] == 'scatterplot') {
-        this.dataObjects[i]['elements'] = points;
+      if ((this.dataObjects[i]['type_'] == 'scatterplot') || (this.dataObjects[i]['type_'] == 'graph2d')) {
+        this.dataObjects[i]['elements'] = elements;
         var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else if (this.dataObjects[i]['type_'] == 'parallelplot') {
-        this.dataObjects[i]['elements'] = points;
+        this.dataObjects[i]['elements'] = elements;
         newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else if (this.dataObjects[i]['type_'] == 'primitivegroup') {
         newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);

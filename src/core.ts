@@ -4683,7 +4683,7 @@ export class Dataset {
     for (let i=0; i<this.point_list.length - 1; i++) {
       let current_point = this.point_list[i];
       let next_point = this.point_list[i+1];
-      let data = [current_point.cx, current_point.cy, next_point.cx, next_point.cy];
+      let data = [current_point.cx, -current_point.cy, next_point.cx, -next_point.cy];
       this.segments.push(new LineSegment(data, this.edge_style, 'line', ''));
     }
   }

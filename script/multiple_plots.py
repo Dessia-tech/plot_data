@@ -34,21 +34,6 @@ primitives = [line1, line2, circle1, circle2, circle3, text]
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 objects.append(primitive_group)
 
-# GRAPH TEST
-to_disp_attribute_names = ['time', 'electric current']
-tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names)
-t = [k for k in range(20)]
-I = [k**2 for k in range(20)]
-point_style = plot_data.PointStyle(color_fill=RED, color_stroke=BLACK)
-edge_style = plot_data.EdgeStyle(color_stroke=BLUE, dashline=[10, 5])
-for k in range(len(I)):
-    elements.append({'time':t[k], 'electric current':I[k]})
-dataset = plot_data.Dataset(elements=elements, name='I = f(t)', tooltip=tooltip, point_style=point_style,
-                            edge_style=edge_style)
-graphs2d = plot_data.Graph2D(graphs=[dataset], to_disp_attribute_names=to_disp_attribute_names)
-objects.append(graphs2d)
-# GRAPH TEST END
-
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
 color_strokes = [BLACK, BROWN, GREEN, RED, ORANGE, LIGHTBLUE, GREY]
 for i in range(50):
@@ -100,13 +85,24 @@ scatterPlot2 = plot_data.Scatter(tooltip=tooltip,
                                  point_style=point_style)
 objects.append(scatterPlot2)
 
-coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]
-sizes = [plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300)]
+# GRAPH TEST
+graph_to_disp_attribute_names = ['time', 'electric current']
+tooltip = plot_data.Tooltip(to_disp_attribute_names=graph_to_disp_attribute_names)
+t = [k for k in range(20)]
+I = [k**2 for k in range(20)]
+point_style = plot_data.PointStyle(color_fill=RED, color_stroke=BLACK)
+edge_style = plot_data.EdgeStyle(color_stroke=BLUE, dashline=[10, 5])
+graph_elements = []
+for k in range(len(I)):
+    graph_elements.append({'time':t[k], 'electric current':I[k]})
+dataset = plot_data.Dataset(elements=graph_elements, name='I = f(t)', tooltip=tooltip, point_style=point_style,
+                            edge_style=edge_style)
+graph2d = plot_data.Graph2D(graphs=[dataset], to_disp_attribute_names=graph_to_disp_attribute_names)
+objects.append(graph2d)
+# GRAPH TEST END
+
+coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0), (300, 500)]
+sizes = [plot_data.Window(width=560, height=300) for k in range(len(objects))]
 
 multipleplots = plot_data.MultiplePlots(elements=elements, objects=objects,
                                         sizes=sizes, coords=coords)

@@ -90,7 +90,7 @@ graph_to_disp_attribute_names = ['time', 'electric current']
 tooltip = plot_data.Tooltip(to_disp_attribute_names=graph_to_disp_attribute_names)
 t = [k for k in range(20)]
 I = [k**2 for k in range(20)]
-point_style = plot_data.PointStyle(color_fill=RED, color_stroke=BLACK)
+point_style = plot_data.PointStyle(color_fill=ROSE, color_stroke=BLACK)
 edge_style = plot_data.EdgeStyle(color_stroke=BLUE, dashline=[10, 5])
 graph_elements = []
 for k in range(len(I)):
@@ -104,7 +104,9 @@ objects.append(graph2d)
 coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0), (300, 500)]
 sizes = [plot_data.Window(width=560, height=300) for k in range(len(objects))]
 
+point_family = plot_data.PointFamily(point_color=GREEN, point_index=[1,2,3,4], name='Test1')
+
 multipleplots = plot_data.MultiplePlots(elements=elements, objects=objects,
-                                        sizes=sizes, coords=coords)
+                                        sizes=sizes, coords=coords, point_families=[point_family])
 
 plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)

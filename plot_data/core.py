@@ -332,12 +332,20 @@ class MultiplePlots(PlotDataObject):
     def __init__(self, elements: List[any],
                  objects: List[Subclass[PlotDataObject]],
                  sizes: List[Window], coords: List[Tuple[float, float]],
-                 name: str = ''):
+                 point_families:List[any]=[], name: str = ''):
         self.elements = elements
         self.objects = objects
         self.sizes = sizes
         self.coords = coords
+        self.point_families = point_families
         PlotDataObject.__init__(self, type_='multiplot', name=name)
+
+
+class PointFamily(PlotDataObject):
+    def __init__(self, point_color: str, point_index: List[int], name: str=''):
+        self.color = point_color
+        self.point_index = point_index
+        PlotDataObject.__init__(self, type_=None, name=name)
 
 
 def plot_canvas(plot_data_object: Subclass[PlotDataObject],

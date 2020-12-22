@@ -293,6 +293,7 @@ export class MultiplePlots {
     }
     this.to_display_plots.push(index);
     this.redrawAllObjects();
+    console.log('aaa')
   }
 
   hide_plot(index:number) {
@@ -304,6 +305,7 @@ export class MultiplePlots {
   }
 
   redrawAllObjects():void {
+    console.log(this.to_display_plots)
     this.clearAll();
     if (this.clickedPlotIndex != -1) {
       let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);

@@ -111,10 +111,13 @@ class PointStyle(DessiaObject):
 
 
 class TextStyle(DessiaObject):
-    def __init__(self, text_color:str=None, font_size:float=None, font_style:str=None, name:str=''):
+    def __init__(self, text_color:str=None, font_size:float=None, font_style:str=None,
+                 text_align_x:str=None, text_align_y:str=None, name:str=''):
         self.text_color = text_color
         self.font_size = font_size
         self.font_style = font_style
+        self.text_align_x = text_align_x  # "left", "right", "center", "start" or "end"
+        self.text_align_y = text_align_y  # "top", "hanging", "middle", "alphabetic", "ideographic" or "bottom"
         DessiaObject.__init__(self, name=name)
 
 
@@ -129,10 +132,7 @@ class SurfaceStyle(DessiaObject):
 class Text(PlotDataObject):
     def __init__(self, comment: str, position_x: float, position_y: float,
                  text_style: TextStyle = None, name: str = ''):
-        if text_style is None:
-            self.text_style = TextStyle()
-        else:
-            self.text_style = text_style
+        self.text_style = text_style
         self.comment = comment
         self.position_x = position_x
         self.position_y = position_y
@@ -332,12 +332,20 @@ class MultiplePlots(PlotDataObject):
     def __init__(self, elements: List[any],
                  objects: List[Subclass[PlotDataObject]],
                  sizes: List[Window], coords: List[Tuple[float, float]],
-                 name: str = ''):
+                 point_families:List[any]=[], name: str = ''):
         self.elements = elements
         self.objects = objects
         self.sizes = sizes
         self.coords = coords
+        self.point_families = point_families
         PlotDataObject.__init__(self, type_='multiplot', name=name)
+
+
+class PointFamily(PlotDataObject):
+    def __init__(self, point_color: str, point_index: List[int], name: str=''):
+        self.color = point_color
+        self.point_index = point_index
+        PlotDataObject.__init__(self, type_=None, name=name)
 
 
 def plot_canvas(plot_data_object: Subclass[PlotDataObject],

@@ -227,7 +227,7 @@ export class MultiplePlots {
     var DEFAULT_TOOLTIP = new Tooltip([attr_x.name, attr_y.name], surface_style, text_style, 5, 'tooltip', '');
     var point_style = new PointStyle(string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 2, 'circle', '');
     var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
-                       elements:this.data['elements'], axis:DEFAULT_AXIS, name:''};
+                       elements:this.data['elements'], axis:DEFAULT_AXIS, type_:'scatterplot', name:''};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
     var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id);
@@ -343,24 +343,29 @@ export class MultiplePlots {
     }
   }
 
+  refresh_objects_point_families() {
+    for (let i=0; i<this.nbObjects; i++) {
+      this.objectList[i].point_families = this.point_families;
+    }
+  }
+
   add_point_family(point_family:PointFamily): void {
     this.point_families.push(point_family);
     var point_index = point_family.point_index;
     for (let i=0; i<this.nbObjects; i++) {
-      this.objectList[i].point_families = this.point_families;
       if (this.objectList[i].type_ == 'scatterplot') {
         for (let j=0; j<point_index.length; j++) {
           this.objectList[i].plotObject.point_list[point_index[j]].point_families.push(point_family);
         }
       }
     }
+    this.refresh_objects_point_families();
     this.redrawAllObjects();
   }
 
   remove_point_family(index:number): void {
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
-      this.objectList[i].point_families = this.point_families;
       if (obj.type_ == 'scatterplot') {
         for (let j=0; j<obj.plotObject.point_list.length; j++) {
           if (List.is_include(this.point_families[index], obj.plotObject.point_list[j].point_families)) {
@@ -371,26 +376,36 @@ export class MultiplePlots {
       }
     }
     this.point_families = List.remove_at_index(index, this.point_families);
+    this.refresh_objects_point_families();
     this.redrawAllObjects();
   }
 
-  add_point_to_family(point_index:number, family_index:number): void {
-    this.point_families[family_index].point_index.push(point_index);
-    for (let i=0; i<this.nbObjects; i++) {
-      this.objectList[i].point_families = this.point_families;
-      if (this.objectList[i].type_ == 'scatterplot') {
-        this.objectList[i].plotObject.point_list[point_index].point_families.push(this.point_families[family_index]);
+  add_points_to_family(points_index_to_add:number[], family_index:number): void {
+    for (let i=0; i<points_index_to_add.length; i++) {
+      this.point_families[family_index].point_index.push(points_index_to_add[i]);
+      for (let j=0; j<this.nbObjects; j++) {
+        if (this.objectList[j].type_ == 'scatterplot') {
+          if (!(List.is_include(this.point_families[family_index], 
+            this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families))) {
+              this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families.push(this.point_families[family_index]);
+            }
+        }
       }
     }
+    this.refresh_objects_point_families();
     this.redrawAllObjects();
   }
 
-  remove_point_from_family(point_index:number, family_index:number): void {
-    for (let i=0; i<this.nbObjects; i++) {
-      this.objectList[i].point_families = this.point_families;
-      if (this.objectList[i].type_ == 'scatterplot') {
-        this.objectList[i].plotObject.point_list[point_index].point_families = List.remove_element(this.point_families[family_index],
-          this.objectList[i].plotObject.point_list[point_index].point_families);
+  remove_points_from_family(points_index_to_remove:number[], family_index:number): void {
+    for (let i=0; i<points_index_to_remove.length; i++) {
+      for (let j=0; j<this.nbObjects; j++) {
+        this.objectList[j].point_families = this.point_families;
+        if (this.objectList[j].type_ == 'scatterplot') {
+          if (List.is_include(this.point_families[family_index], this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families)) {
+            this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families = List.remove_element(this.point_families[family_index],
+              this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families);
+          }
+        }
       }
     }
     this.point_families = List.remove_at_index(family_index, this.point_families);
@@ -2490,9 +2505,43 @@ export abstract class PlotData {
   refresh_latest_selected_points_index() {
     this.latest_selected_points_index = [];
     for (let i=0; i<this.latest_selected_points.length; i++) {
-      let point_index = List.get_index_of_element(this.latest_selected_points[i], this.plotObject.point_list);
-      this.latest_selected_points_index.push(point_index);
+      let selected_point = this.latest_selected_points[i];
+      if (selected_point != undefined) {
+        for (let j=0; j<selected_point.points_inside.length; j++) {
+          let point_index = List.get_index_of_element(selected_point.points_inside[j], this.plotObject.point_list);
+          this.latest_selected_points_index.push(point_index); 
+        }
+      }
     }
+  }
+
+  selecting_point_action(mouse1X, mouse1Y) {
+    var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
+    var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+    var click_plot_data = this.colour_to_plot_data[colKey];
+    if (List.is_include(click_plot_data, this.select_on_click)) {
+      this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
+      this.latest_selected_points = [];
+    } else {
+      this.select_on_click.push(click_plot_data);
+      this.latest_selected_points.push(click_plot_data);
+    }
+    if (this.tooltip_ON) {
+        if (List.is_include(click_plot_data, this.tooltip_list) && (!List.is_include(click_plot_data, this.select_on_click))) {
+          this.tooltip_list = List.remove_element(click_plot_data, this.tooltip_list);
+        } else if (!List.is_include(click_plot_data, this.tooltip_list) && List.is_include(click_plot_data, this.select_on_click)){
+          this.tooltip_list.push(click_plot_data);
+        }
+    }
+
+    if (List.contains_undefined(this.select_on_click) && !this.click_on_button) {
+      this.select_on_click = [];
+      this.tooltip_list = [];
+      this.latest_selected_points = [];
+      Interactions.reset_permanent_window(this);
+    }
+    this.refresh_selected_point_index();
+    this.refresh_latest_selected_points_index();
   }
 
 
@@ -2591,7 +2640,6 @@ export abstract class PlotData {
 
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
-      console.log(this.X, this.Y, this.graph1_button_x + i*this.graph1_button_w + text_spacing_sum_i + this.X, this.graph1_button_y + this.Y)
       var click_on_graph_i = Shape.isInRect(mouse1X, mouse1Y, this.graph1_button_x + i*this.graph1_button_w + text_spacing_sum_i + this.X, this.graph1_button_y + this.Y, this.graph1_button_w, this.graph1_button_h);
       click_on_graph = click_on_graph || click_on_graph_i;
       text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
@@ -2607,28 +2655,8 @@ export abstract class PlotData {
           Interactions.refresh_permanent_rect(this);
         }
     } else {
-        var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
-        var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-        var click_plot_data = this.colour_to_plot_data[colKey];
-        if (List.is_include(click_plot_data, this.select_on_click)) {
-          this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
-        } else {
-          this.select_on_click.push(click_plot_data);
-        }
-        if (this.tooltip_ON) {
-            if (List.is_include(click_plot_data, this.tooltip_list) && (!List.is_include(click_plot_data, this.select_on_click))) {
-              this.tooltip_list = List.remove_element(click_plot_data, this.tooltip_list);
-            } else if (!List.is_include(click_plot_data, this.tooltip_list) && List.is_include(click_plot_data, this.select_on_click)){
-              this.tooltip_list.push(click_plot_data);
-            }
-        }
+        this.selecting_point_action(mouse1X, mouse1Y);
 
-        if (List.contains_undefined(this.select_on_click) && !this.click_on_button) {
-          this.select_on_click = [];
-          this.tooltip_list = [];
-          Interactions.reset_permanent_window(this);
-        }
-        this.refresh_selected_point_index();
         if ((click_on_plus === true) && (this.scaleX*1.2 < scale_ceil) && (this.scaleY*1.2 < scale_ceil)) {
           Interactions.zoom_in_button_action(this);
 
@@ -3355,6 +3383,7 @@ export class Interactions {
 
 
   public static selection_window_action(plot_data:PlotData) {
+    plot_data.latest_selected_points = [];
     plot_data.select_on_click = [];
     plot_data.context_show.setLineDash([]);
     plot_data.context_hidden.setLineDash([]);
@@ -3372,12 +3401,12 @@ export class Interactions {
             var in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
           if ((in_rect===true) && !(List.is_include(point, plot_data.select_on_click))) {
             plot_data.select_on_click.push(point);
+            plot_data.latest_selected_points.push(point);
           }
         }
       }
 
     } else if (plot_data.plotObject['type_'] == 'scatterplot') {
-      plot_data.select_on_click = [];
       for (var j=0; j<plot_data.scatter_point_list.length; j++) {
         var x = plot_data.scaleX*(1000*plot_data.scatter_point_list[j].cx + plot_data.last_mouse1X) + plot_data.X;
         var y = plot_data.scaleY*(1000*plot_data.scatter_point_list[j].cy + plot_data.last_mouse1Y) + plot_data.Y;
@@ -3388,10 +3417,12 @@ export class Interactions {
         in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
         if ((in_rect===true) && !(List.is_include(plot_data.scatter_point_list[j], plot_data.select_on_click))) {
           plot_data.select_on_click.push(plot_data.scatter_point_list[j]);
+          plot_data.latest_selected_points.push(plot_data.scatter_point_list[j]);
         }
       }
     }
     plot_data.refresh_selected_point_index();
+    plot_data.refresh_latest_selected_points_index();
     plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
@@ -5881,3 +5912,5 @@ export function set_default_values(dict_, default_dict_) {
   }
   return Object.fromEntries(entries);
 }
+
+

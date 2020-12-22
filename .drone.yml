@@ -27,6 +27,7 @@ steps:
 - name: upload to cdn latest
   image: appleboy/drone-scp
   when:
+      branch: master
       event: push
   settings:
     host: magenta.dessia.tech

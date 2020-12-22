@@ -39,6 +39,7 @@ export class MultiplePlots {
   selected_point_index:number[]=[];
   dep_selected_points_index:number[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
   point_families:PointFamily[]=[];
+  to_display_plots:number[]=[];
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
@@ -72,6 +73,7 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].draw_initial();
       this.display_order.push(i);
+      this.to_display_plots.push(i);
     }
     this.initialize_point_families();
     this.mouse_interaction();
@@ -264,9 +266,11 @@ export class MultiplePlots {
     var index = -1;
     for (let i=0; i<this.nbObjects; i++) {
       let display_index = this.display_order[i];
-      let isInObject = Shape.isInRect(x, y, this.objectList[display_index].X, this.objectList[display_index].Y, this.objectList[display_index].width, this.objectList[display_index].height);
-      if (isInObject === true) {
-        index = display_index;
+      if (List.is_include(display_index, this.to_display_plots)) {
+        let isInObject = Shape.isInRect(x, y, this.objectList[display_index].X, this.objectList[display_index].Y, this.objectList[display_index].width, this.objectList[display_index].height);
+        if (isInObject === true) {
+          index = display_index;
+        }
       }
     }
     return index;
@@ -283,6 +287,22 @@ export class MultiplePlots {
     this.context_hidden.closePath();
   }
 
+  show_plot(index:number) {
+    if (List.is_include(index, this.to_display_plots)) {
+      throw new Error('Plot n°' + index.toString() + ' already shown');
+    }
+    this.to_display_plots.push(index);
+    this.redrawAllObjects();
+  }
+
+  hide_plot(index:number) {
+    if (!(List.is_include(index, this.to_display_plots))) {
+      throw new Error('Plot n°' + index.toString() + ' already hidden');
+    }
+    this.to_display_plots = List.remove_element(index, this.to_display_plots);
+    this.redrawAllObjects();
+  }
+
   redrawAllObjects():void {
     this.clearAll();
     if (this.clickedPlotIndex != -1) {
@@ -291,9 +311,11 @@ export class MultiplePlots {
     }
     for (let i=0; i<this.nbObjects; i++) {
       let display_index = this.display_order[i];
-      let obj = this.objectList[display_index];
-      this.objectList[display_index].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      this.objectList[display_index].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      if (List.is_include(display_index, this.to_display_plots)) {
+        let obj = this.objectList[display_index];
+        this.objectList[display_index].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+        this.objectList[display_index].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      }
     }
     if (this.buttons_ON) {
       this.draw_buttons();
@@ -602,11 +624,18 @@ export class MultiplePlots {
     var sortedObjectList = sort.sortObjsByAttribute(this.objectList, big_coord);
     var sorted_list = [];
     for (let i=0; i<this.nbObjects; i++) {
-      sorted_list.push(List.get_index_of_element(sortedObjectList[i], this.objectList));
+      let sorted_index = List.get_index_of_element(sortedObjectList[i], this.objectList);
+      if (List.is_include(sorted_index, this.to_display_plots)) {
+        sorted_list.push(sorted_index);
+      }
+    }
+    var sortedDisplayedObjectList = [];
+    for (let i=0; i<sorted_list.length; i++) {
+      sortedDisplayedObjectList.push(this.objectList[sorted_list[i]]);
     }
     var j = 0;
-    while (j<this.nbObjects - 1) {
-      if (sortedObjectList[j+1][small_coord] < sortedObjectList[j][small_coord]) {
+    while (j<sorted_list.length - 1) {
+      if (sortedDisplayedObjectList[j+1][small_coord] < sortedDisplayedObjectList[j][small_coord]) {
         List.switchElements(sorted_list, j, j+1);
       }
       j = j+2;
@@ -623,8 +652,9 @@ export class MultiplePlots {
       [big_coord, small_coord, big_length, small_length] = [small_coord, big_coord, small_length, big_length];
     }
     this.sorted_list = this.getSortedList();
-    let small_length_nbObjects = Math.min(Math.ceil(this.nbObjects/2), 2);
-    let big_length_nbObjects = Math.ceil(this.nbObjects/small_length_nbObjects);
+    var nbObjectsDisplayed = this.to_display_plots.length;
+    let small_length_nbObjects = Math.min(Math.ceil(nbObjectsDisplayed/2), 2);
+    let big_length_nbObjects = Math.ceil(nbObjectsDisplayed/small_length_nbObjects);
     let big_length_step = this[big_length]/big_length_nbObjects;
     let small_length_step = this[small_length]/small_length_nbObjects;
     for (let i=0; i<big_length_nbObjects - 1; i++) {
@@ -637,7 +667,7 @@ export class MultiplePlots {
       }
     }
     let last_index = current_index + 1;
-    let remaining_obj = this.nbObjects - last_index;
+    let remaining_obj = nbObjectsDisplayed - last_index;
     let last_small_length_step = this[small_length]/remaining_obj;
     for (let j=0; j<remaining_obj; j++) {
       this.objectList[this.sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step;

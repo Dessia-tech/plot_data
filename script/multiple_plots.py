@@ -119,6 +119,7 @@ point_family = plot_data.PointFamily(point_color=GREEN,
 
 multipleplots = plot_data.MultiplePlots(elements=elements, objects=objects,
                                         sizes=sizes, coords=coords,
-                                        point_families=[point_family])
+                                        point_families=[point_family],
+                                        initial_view_on=True)
 
 plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)

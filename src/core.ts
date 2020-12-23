@@ -82,6 +82,9 @@ export class MultiplePlots {
       this.initializeButtons();
       this.draw_buttons();
     }
+    if (data['initial_view_on']) {
+      this.clean_view();
+    }
   }
 
   initialize_displayable_attributes() {
@@ -215,19 +218,20 @@ export class MultiplePlots {
     this.objectList.push(new_plot_data);
     this.nbObjects++;
     this.display_order.push(this.nbObjects-1);
+    this.to_display_plots.push(this.nbObjects-1);
     new_plot_data.draw_initial();
     new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
     new_plot_data.interaction_ON = false;
   }
 
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-    var graduation_style = new TextStyle(string_to_hex('grey'), 12, 'sans-serif', 'center', 'alphabetic', ''); 
-    var axis_style = new EdgeStyle(0.5, string_to_hex('grey'), [], '');
-    var DEFAULT_AXIS = new Axis(10, 10, graduation_style, axis_style, false, true, 'axis', '');
-    var surface_style = new SurfaceStyle(string_to_hex('black'), 0.75, undefined);
-    var text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', 'start', 'alphabetic', '');
-    var DEFAULT_TOOLTIP = new Tooltip([attr_x.name, attr_y.name], surface_style, text_style, 5, 'tooltip', '');
-    var point_style = new PointStyle(string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 2, 'circle', '');
+    var graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', text_align_x:'center', text_align_y:'alphabetic', name:''}; 
+    var axis_style = {line_width:0.5, color_stroke:string_to_rgb('grey'), dashline:[], name:''};
+    var DEFAULT_AXIS = {nb_points_x:10, nb_points_y:10, graduation_style: graduation_style, axis_style: axis_style, arrow_on: false, grid_on: true, type_:'axis', name:''};
+    var surface_style = {color_fill: string_to_rgb('lightblue'), opacity:0.75, hatching:undefined};
+    var text_style = {text_color: string_to_rgb('black'), font_size:10, font_style:'sans-serif', text_align_x:'start', text_align_y:'alphabetic', name:''};
+    var DEFAULT_TOOLTIP = {to_disp_attribute_names:[attr_x.name, attr_y.name], surface_style:surface_style, text_style:text_style, tooltip_radius:5, type_:'tooltip', name:''};
+    var point_style = {color_fill:string_to_rgb('lightblue'), color_stroke:string_to_rgb('grey'), stroke_width:0.5, size:2, shape:'circle', name:''};
     var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
                        elements:this.data['elements'], axis:DEFAULT_AXIS, type_:'scatterplot', name:''};
     var DEFAULT_WIDTH = 560;
@@ -241,7 +245,7 @@ export class MultiplePlots {
     for (let i=0; i<attributes.length; i++) {
       to_disp_attribute_names.push(attributes[i].name);
     }
-    var edge_style = new EdgeStyle(0.5, string_to_hex('black'), [], '');
+    var edge_style = {line_width:0.5, color_stroke:string_to_rgb('black'), dahsline:[], name:''};
     var pp_data = {edge_style:edge_style, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
                   rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:''};
     var DEFAULT_WIDTH = 560;
@@ -293,7 +297,6 @@ export class MultiplePlots {
     }
     this.to_display_plots.push(index);
     this.redrawAllObjects();
-    console.log('aaa')
   }
 
   hide_plot(index:number) {
@@ -305,7 +308,6 @@ export class MultiplePlots {
   }
 
   redrawAllObjects():void {
-    console.log(this.to_display_plots)
     this.clearAll();
     if (this.clickedPlotIndex != -1) {
       let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
@@ -1445,6 +1447,9 @@ export abstract class PlotData {
             }
           } else {
             this.context.fillStyle = this.plotObject.point_style.color_fill;
+            if (d.point_families.length != 0) {
+              this.context.fillStyle = d.point_families[d.point_families.length - 1].color;
+            }
           }
         } else { // graph2d
           this.context.fillStyle = d.color_fill;
@@ -1455,9 +1460,6 @@ export abstract class PlotData {
 
         if (shape == 'crux') {
           this.context.strokeStyle = d.color_fill;
-        }
-        if (d.point_families.length != 0) {
-          this.context.fillStyle = d.point_families[d.point_families.length - 1].color;
         }
         if (this.select_on_mouse == d) {
           this.context.fillStyle = this.color_surface_on_mouse;
@@ -2573,7 +2575,7 @@ export abstract class PlotData {
       Interactions.reset_permanent_window(this);
     }
     this.refresh_selected_point_index();
-    this.refresh_latest_selected_points_index();
+    if (this.type_ == 'scatterplot') {this.refresh_latest_selected_points_index();}
   }
 
 
@@ -3454,7 +3456,7 @@ export class Interactions {
       }
     }
     plot_data.refresh_selected_point_index();
-    plot_data.refresh_latest_selected_points_index();
+    if (plot_data.type_ == 'scatterplot') {plot_data.refresh_latest_selected_points_index();}
     plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
@@ -5945,4 +5947,5 @@ export function set_default_values(dict_, default_dict_) {
   return Object.fromEntries(entries);
 }
 
-
+var attr_x = new Attribute('cx', 'float');
+var attr_y = new Attribute('cy', 'float')

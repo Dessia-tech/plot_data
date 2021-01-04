@@ -17,7 +17,7 @@ export class MultiplePlots {
   transbutton_y:number=0;
   transbutton_w:number=0;
   transbutton_h:number=0;
-  selectDependency_bool:boolean=false;
+  selectDependency_bool:boolean=true;
   selectDep_x:number=0;
   selectDep_y:number=0;
   selectDep_w:number=0;
@@ -650,6 +650,32 @@ export class MultiplePlots {
       j = j+2;
     }
     return sorted_list;
+  }
+
+  
+  select_points_manually(index_list:number[], object_index:number): void {
+    if (this.objectList[object_index].type_ != 'scatterplot') {throw new Error('selected object must be a scatterplot');}
+    for (let index of index_list) {
+      if (index >= this.data['elements'].length) {throw new Error('Point index out of range');}
+      if (this.selectDependency_bool) {
+        for (let i=0; i<this.nbObjects; i++) {
+          if (this.objectList[i].type_ == 'scatterplot') {
+            if (!List.is_include(index, this.objectList[i].selected_point_index)) {
+              this.objectList[i].select_on_click.push(this.objectList[i].plotObject.point_list[index]);
+              this.objectList[i].selected_point_index.push(index);
+              this.objectList[i].latest_selected_points_index.push(index);
+            }
+          }
+        }
+      } else {
+        if (!List.is_include(index, this.objectList[object_index].selected_point_index)) {
+          this.objectList[object_index].select_on_click.push(this.objectList[object_index].plotObject.point_list[index]);
+          this.objectList[object_index].selected_point_index.push(index);
+          this.objectList[object_index].latest_selected_points_index.push(index);
+        }
+      }
+    }
+    this.redrawAllObjects();
   }
 
   clean_view():void {

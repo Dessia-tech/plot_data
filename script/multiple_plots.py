@@ -114,12 +114,11 @@ coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0),
           (300, 500)]
 sizes = [plot_data.Window(width=560, height=300) for k in range(len(objects))]
 
-point_family = plot_data.PointFamily(point_color=GREEN,
-                                     point_index=[1, 2, 3, 4], name='Test1')
+# point_family = plot_data.PointFamily(point_color=GREEN,
+#                                      point_index=[1, 2, 3, 4], name='Test1')
 
 multipleplots = plot_data.MultiplePlots(elements=elements, objects=objects,
                                         sizes=sizes, coords=coords,
-                                        point_families=[point_family],
                                         initial_view_on=True)
 
 plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)

@@ -107,10 +107,11 @@ export class MultiplePlots {
     }
     let new_point_family = new PointFamily(string_to_hex('red'), point_index, 'Initial family');
     this.add_point_family(new_point_family);
-
-    for (let i=0; i<this.data['point_families'].length; i++) {
-      let new_point_family = PointFamily.deserialize(this.data['point_families'][i]);
-      this.add_point_family(new_point_family);
+    if (this.data['point_families'] != undefined) {
+      for (let i=0; i<this.data['point_families'].length; i++) {
+        let new_point_family = PointFamily.deserialize(this.data['point_families'][i]);
+        this.add_point_family(new_point_family);
+      }
     }
   }
 
@@ -245,7 +246,7 @@ export class MultiplePlots {
     for (let i=0; i<attributes.length; i++) {
       to_disp_attribute_names.push(attributes[i].name);
     }
-    var edge_style = {line_width:0.5, color_stroke:string_to_rgb('black'), dahsline:[], name:''};
+    var edge_style = {line_width:0.5, color_stroke:string_to_rgb('black'), dashline:[], name:''};
     var pp_data = {edge_style:edge_style, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
                   rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:''};
     var DEFAULT_WIDTH = 560;
@@ -408,13 +409,15 @@ export class MultiplePlots {
 
   add_points_to_family(points_index_to_add:number[], family_index:number): void {
     for (let i=0; i<points_index_to_add.length; i++) {
-      this.point_families[family_index].point_index.push(points_index_to_add[i]);
-      for (let j=0; j<this.nbObjects; j++) {
-        if (this.objectList[j].type_ == 'scatterplot') {
-          if (!(List.is_include(this.point_families[family_index], 
-            this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families))) {
-              this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families.push(this.point_families[family_index]);
-            }
+      if (points_index_to_add[i] !== undefined) {
+        this.point_families[family_index].point_index.push(points_index_to_add[i]);
+        for (let j=0; j<this.nbObjects; j++) {
+          if (this.objectList[j].type_ == 'scatterplot') {
+            if (!(List.is_include(this.point_families[family_index], 
+              this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families))) {
+                this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families.push(this.point_families[family_index]);
+              }
+          }
         }
       }
     }
@@ -424,12 +427,14 @@ export class MultiplePlots {
 
   remove_points_from_family(points_index_to_remove:number[], family_index:number): void {
     for (let i=0; i<points_index_to_remove.length; i++) {
-      for (let j=0; j<this.nbObjects; j++) {
-        this.objectList[j].point_families = this.point_families;
-        if (this.objectList[j].type_ == 'scatterplot') {
-          if (List.is_include(this.point_families[family_index], this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families)) {
-            this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families = List.remove_element(this.point_families[family_index],
-              this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families);
+      if (points_index_to_remove[i] !== undefined) {
+        for (let j=0; j<this.nbObjects; j++) {
+          this.objectList[j].point_families = this.point_families;
+          if (this.objectList[j].type_ == 'scatterplot') {
+            if (List.is_include(this.point_families[family_index], this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families)) {
+              this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families = List.remove_element(this.point_families[family_index],
+                this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families);
+            }
           }
         }
       }
@@ -2225,6 +2230,22 @@ export abstract class PlotData {
     }
   }
 
+  add_points_to_selection(index_list:number[]) {
+    for (let index of index_list) {
+      let point = this.plotObject.point_list[index];
+      for (let i=0; i<this.scatter_point_list.length; i++) {
+        if (List.is_include(point, this.scatter_point_list[i].points_inside) && !List.is_include(point, this.select_on_click)) {
+          this.select_on_click.push(point);
+          this.latest_selected_points.push(point);
+        }
+      }
+    }
+    this.refresh_selected_point_index();
+    this.refresh_latest_selected_points_index();
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  }
+
   add_axis_to_parallelplot(name:string):void { //Adding a new axis to the plot and redraw the canvas
     for (let i=0; i<this.axis_list.length; i++) {
       if (name == this.axis_list[i]['name']) {
@@ -3231,7 +3252,7 @@ export class ParallelPlot extends PlotData {
       this.disp_w = 30;
       this.disp_h = 20;
     }
-    let default_edge_style = {color_stroke:string_to_rgb('black'), dahsline:[], line_width:0.5, name:''};
+    let default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:0.5, name:''};
     let default_dict_ = {edge_style:default_edge_style, disposition: 'vertical', rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]]};
     data = set_default_values(data, default_dict_);
     this.elements = data['elements'];
@@ -5831,6 +5852,10 @@ export class List {
     return [min, max];
   }
 
+  public static insert(value:any, index:number, list:any[]): void {
+    list.splice(index, 0, value);
+  }
+
   public static get_index_of_element(val:any, list:any[]):number {
     for (var i=0; i<list.length; i++) {
       if (val === list[i]) {
@@ -5947,5 +5972,4 @@ export function set_default_values(dict_, default_dict_) {
   return Object.fromEntries(entries);
 }
 
-var attr_x = new Attribute('cx', 'float');
-var attr_y = new Attribute('cy', 'float')
+var family1 = new PointFamily(string_to_hex('green'), [1,2,3,4,5], 'Hello');

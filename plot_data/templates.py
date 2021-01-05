@@ -51,7 +51,6 @@ scatter_template = Template('''<div id="app"></div>
 	plot_data.draw_initial();
 	plot_data.mouse_interaction(plot_data.isParallelPlot); //true if parallel plot, false otherwise
 
-
 </script>
 ''')
 

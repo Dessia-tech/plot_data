@@ -6,6 +6,7 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
+import os
 import numpy as npy
 import math
 import sys
@@ -26,7 +27,7 @@ npy.seterr(divide='raise')
 
 def delete_none_from_dict(dict1):
     dict2 = {}
-    for key,value in dict1.items():
+    for key, value in dict1.items():
         if type(value) == dict:
             dict2[key] = delete_none_from_dict(value)
         else:
@@ -101,22 +102,27 @@ class EdgeStyle(DessiaObject):
 
 
 class PointStyle(DessiaObject):
-    def __init__(self, color_fill:str=None, color_stroke:str=None, stroke_width:str=None,
-                 size:float=None, shape:str=None, name:str=''):
+    def __init__(self, color_fill: str = None, color_stroke: str = None,
+                 stroke_width: str = None,
+                 size: float = None, shape: str = None, name: str = ''):
         self.color_fill = color_fill
         self.color_stroke = color_stroke
         self.stroke_width = stroke_width
-        self.size = size # 1, 2, 3 or 4
+        self.size = size  # 1, 2, 3 or 4
         self.shape = shape
         DessiaObject.__init__(self, name=name)
 
 
 class TextStyle(DessiaObject):
     def __init__(self, text_color: str = None, font_size: float = None,
-                 font_style: str = None, name: str = ''):
+                 font_style: str = None,
+                 text_align_x: str = None, text_align_y: str = None,
+                 name: str = ''):
         self.text_color = text_color
         self.font_size = font_size
         self.font_style = font_style
+        self.text_align_x = text_align_x  # "left", "right", "center", "start" or "end"
+        self.text_align_y = text_align_y  # "top", "hanging", "middle", "alphabetic", "ideographic" or "bottom"
         DessiaObject.__init__(self, name=name)
 
 
@@ -132,10 +138,7 @@ class SurfaceStyle(DessiaObject):
 class Text(PlotDataObject):
     def __init__(self, comment: str, position_x: float, position_y: float,
                  text_style: TextStyle = None, name: str = ''):
-        if text_style is None:
-            self.text_style = TextStyle()
-        else:
-            self.text_style = text_style
+        self.text_style = text_style
         self.comment = comment
         self.position_x = position_x
         self.position_y = position_y
@@ -175,8 +178,10 @@ class Circle2D(PlotDataObject):
 
 
 class Point2D(PlotDataObject):
-    def __init__(self, cx: float, cy: float, shape: str='circle', size: float=2,
-                 color_fill: str=LIGHTBLUE, color_stroke: str=BLACK, stroke_width: float=0.5,
+    def __init__(self, cx: float, cy: float, shape: str = 'circle',
+                 size: float = 2,
+                 color_fill: str = LIGHTBLUE, color_stroke: str = BLACK,
+                 stroke_width: float = 0.5,
                  name: str = ''):
         self.cx = cx
         self.cy = cy
@@ -192,8 +197,10 @@ class Point2D(PlotDataObject):
 
 
 class Axis(PlotDataObject):
-    def __init__(self, nb_points_x: int = 10, nb_points_y: int = 10, graduation_style:TextStyle = None,
-                 axis_style:EdgeStyle = None, arrow_on: bool = False, grid_on: bool = True, name: str = ''):
+    def __init__(self, nb_points_x: int = 10, nb_points_y: int = 10,
+                 graduation_style: TextStyle = None,
+                 axis_style: EdgeStyle = None, arrow_on: bool = False,
+                 grid_on: bool = True, name: str = ''):
         self.nb_points_x = nb_points_x
         self.nb_points_y = nb_points_y
         self.graduation_style = graduation_style
@@ -208,12 +215,15 @@ class Axis(PlotDataObject):
 
 
 class Tooltip(PlotDataObject):
-    def __init__(self, to_disp_attribute_names: List[str], surface_style:SurfaceStyle=None,
-                 text_style:TextStyle=None, tooltip_radius: float=5, name: str = ''):
+    def __init__(self, to_disp_attribute_names: List[str],
+                 surface_style: SurfaceStyle = None,
+                 text_style: TextStyle = None, tooltip_radius: float = 5,
+                 name: str = ''):
         self.to_disp_attribute_names = to_disp_attribute_names
         self.surface_style = surface_style
         if surface_style is None:
-            self.surface_style = SurfaceStyle(color_fill=LIGHTBLUE, opacity=0.75)
+            self.surface_style = SurfaceStyle(color_fill=LIGHTBLUE,
+                                              opacity=0.75)
         self.text_style = text_style
         if text_style is None:
             self.text_style = TextStyle(text_color=BLACK, font_size=10)
@@ -224,7 +234,8 @@ class Tooltip(PlotDataObject):
 class Dataset(PlotDataObject):
     to_disp_attribute_names = None
 
-    def __init__(self, edge_style:EdgeStyle=None, tooltip: Tooltip=None, point_style: PointStyle=None,
+    def __init__(self, edge_style: EdgeStyle = None, tooltip: Tooltip = None,
+                 point_style: PointStyle = None,
                  elements=None, display_step: float = 1, name: str = ''):
 
         self.edge_style = edge_style
@@ -239,7 +250,8 @@ class Dataset(PlotDataObject):
 
 
 class Graph2D(PlotDataObject):
-    def __init__(self, graphs: List[Dataset], to_disp_attribute_names, axis: Axis=None, name: str = ''):
+    def __init__(self, graphs: List[Dataset], to_disp_attribute_names,
+                 axis: Axis = None, name: str = ''):
         self.graphs = graphs
         self.to_disp_attribute_names = to_disp_attribute_names
         if axis is None:
@@ -251,8 +263,9 @@ class Graph2D(PlotDataObject):
 
 class Scatter(PlotDataObject):
     def __init__(self, tooltip: Tooltip,
-                 to_disp_attribute_names: List[str], point_style:PointStyle=None,
-                 elements: List[Any] = None, axis: Axis=None,
+                 to_disp_attribute_names: List[str],
+                 point_style: PointStyle = None,
+                 elements: List[Any] = None, axis: Axis = None,
                  name: str = ''):
         self.tooltip = tooltip
         self.to_disp_attribute_names = to_disp_attribute_names
@@ -287,8 +300,9 @@ class Arc2D(PlotDataObject):
 
 
 class Contour2D(PlotDataObject):
-    def __init__(self, plot_data_primitives: List[float], edge_style:EdgeStyle,
-                 surface_style:SurfaceStyle, name: str = ''):
+    def __init__(self, plot_data_primitives: List[float],
+                 edge_style: EdgeStyle,
+                 surface_style: SurfaceStyle, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
@@ -316,8 +330,9 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 
 class ParallelPlot(PlotDataObject):
-    def __init__(self, edge_style:EdgeStyle=None, disposition: str=None,
-                 to_disp_attribute_names: List[str]=None, rgbs=None, elements=None,
+    def __init__(self, edge_style: EdgeStyle = None, disposition: str = None,
+                 to_disp_attribute_names: List[str] = None, rgbs=None,
+                 elements=None,
                  name: str = ''):
         self.elements = elements
         self.edge_style = edge_style
@@ -336,12 +351,23 @@ class MultiplePlots(PlotDataObject):
     def __init__(self, elements: List[any],
                  objects: List[Subclass[PlotDataObject]],
                  sizes: List[Window], coords: List[Tuple[float, float]],
+                 point_families: List[any] = None, initial_view_on: bool = None,
                  name: str = ''):
         self.elements = elements
         self.objects = objects
         self.sizes = sizes
         self.coords = coords
+        self.point_families = point_families
+        self.initial_view_on = initial_view_on
         PlotDataObject.__init__(self, type_='multiplot', name=name)
+
+
+class PointFamily(PlotDataObject):
+    def __init__(self, point_color: str, point_index: List[int],
+                 name: str = ''):
+        self.color = point_color
+        self.point_index = point_index
+        PlotDataObject.__init__(self, type_=None, name=name)
 
 
 def plot_canvas(plot_data_object: Subclass[PlotDataObject],
@@ -370,7 +396,8 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
         core_path = '/'.join(
-            sys.modules[__name__].__file__.split('/')[:-2] + ['lib', 'core.js'])
+            sys.modules[__name__].__file__.split('/')[:-2] + ['lib',
+                                                              'core.js'])
 
     s = template.substitute(data=json.dumps(data), core_path=core_path,
                             canvas_id=canvas_id, width=width, height=height)
@@ -383,12 +410,12 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         webbrowser.open('file://' + temp_file)
         print('file://' + temp_file)
     else:
-        with open(page_name+'.html', 'wb') as file:
+        with open(page_name + '.html', 'wb') as file:
             file.write(s.encode('utf-8'))
 
         # webbrowser.open('file://'+page_name+'.html')
-        webbrowser.open('file://' + os.path.realpath(page_name+'.html'))
-        print(page_name+'.html')
+        webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
+        print(page_name + '.html')
 
 
 def get_csv_vectors(filename):

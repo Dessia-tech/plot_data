@@ -17,7 +17,7 @@ export class MultiplePlots {
   transbutton_y:number=0;
   transbutton_w:number=0;
   transbutton_h:number=0;
-  selectDependency_bool:boolean=true;
+  selectDependency_bool:boolean=false;
   selectDep_x:number=0;
   selectDep_y:number=0;
   selectDep_w:number=0;

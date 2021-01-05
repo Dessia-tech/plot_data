@@ -82,6 +82,9 @@ export class MultiplePlots {
       this.initializeButtons();
       this.draw_buttons();
     }
+    if (data['initial_view_on']) {
+      this.clean_view();
+    }
   }
 
   initialize_displayable_attributes() {
@@ -104,10 +107,11 @@ export class MultiplePlots {
     }
     let new_point_family = new PointFamily(string_to_hex('red'), point_index, 'Initial family');
     this.add_point_family(new_point_family);
-
-    for (let i=0; i<this.data['point_families'].length; i++) {
-      let new_point_family = PointFamily.deserialize(this.data['point_families'][i]);
-      this.add_point_family(new_point_family);
+    if (this.data['point_families'] != undefined) {
+      for (let i=0; i<this.data['point_families'].length; i++) {
+        let new_point_family = PointFamily.deserialize(this.data['point_families'][i]);
+        this.add_point_family(new_point_family);
+      }
     }
   }
 
@@ -215,19 +219,20 @@ export class MultiplePlots {
     this.objectList.push(new_plot_data);
     this.nbObjects++;
     this.display_order.push(this.nbObjects-1);
+    this.to_display_plots.push(this.nbObjects-1);
     new_plot_data.draw_initial();
     new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
     new_plot_data.interaction_ON = false;
   }
 
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-    var graduation_style = new TextStyle(string_to_hex('grey'), 12, 'sans-serif', 'center', 'alphabetic', ''); 
-    var axis_style = new EdgeStyle(0.5, string_to_hex('grey'), [], '');
-    var DEFAULT_AXIS = new Axis(10, 10, graduation_style, axis_style, false, true, 'axis', '');
-    var surface_style = new SurfaceStyle(string_to_hex('black'), 0.75, undefined);
-    var text_style = new TextStyle(string_to_hex('black'), 12, 'sans-serif', 'start', 'alphabetic', '');
-    var DEFAULT_TOOLTIP = new Tooltip([attr_x.name, attr_y.name], surface_style, text_style, 5, 'tooltip', '');
-    var point_style = new PointStyle(string_to_hex('lightblue'), string_to_hex('grey'), 0.5, 2, 'circle', '');
+    var graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', text_align_x:'center', text_align_y:'alphabetic', name:''}; 
+    var axis_style = {line_width:0.5, color_stroke:string_to_rgb('grey'), dashline:[], name:''};
+    var DEFAULT_AXIS = {nb_points_x:10, nb_points_y:10, graduation_style: graduation_style, axis_style: axis_style, arrow_on: false, grid_on: true, type_:'axis', name:''};
+    var surface_style = {color_fill: string_to_rgb('lightblue'), opacity:0.75, hatching:undefined};
+    var text_style = {text_color: string_to_rgb('black'), font_size:10, font_style:'sans-serif', text_align_x:'start', text_align_y:'alphabetic', name:''};
+    var DEFAULT_TOOLTIP = {to_disp_attribute_names:[attr_x.name, attr_y.name], surface_style:surface_style, text_style:text_style, tooltip_radius:5, type_:'tooltip', name:''};
+    var point_style = {color_fill:string_to_rgb('lightblue'), color_stroke:string_to_rgb('grey'), stroke_width:0.5, size:2, shape:'circle', name:''};
     var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
                        elements:this.data['elements'], axis:DEFAULT_AXIS, type_:'scatterplot', name:''};
     var DEFAULT_WIDTH = 560;
@@ -241,7 +246,7 @@ export class MultiplePlots {
     for (let i=0; i<attributes.length; i++) {
       to_disp_attribute_names.push(attributes[i].name);
     }
-    var edge_style = new EdgeStyle(0.5, string_to_hex('black'), [], '');
+    var edge_style = {line_width:0.5, color_stroke:string_to_rgb('black'), dashline:[], name:''};
     var pp_data = {edge_style:edge_style, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
                   rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:''};
     var DEFAULT_WIDTH = 560;
@@ -404,13 +409,15 @@ export class MultiplePlots {
 
   add_points_to_family(points_index_to_add:number[], family_index:number): void {
     for (let i=0; i<points_index_to_add.length; i++) {
-      this.point_families[family_index].point_index.push(points_index_to_add[i]);
-      for (let j=0; j<this.nbObjects; j++) {
-        if (this.objectList[j].type_ == 'scatterplot') {
-          if (!(List.is_include(this.point_families[family_index], 
-            this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families))) {
-              this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families.push(this.point_families[family_index]);
-            }
+      if (points_index_to_add[i] !== undefined) {
+        this.point_families[family_index].point_index.push(points_index_to_add[i]);
+        for (let j=0; j<this.nbObjects; j++) {
+          if (this.objectList[j].type_ == 'scatterplot') {
+            if (!(List.is_include(this.point_families[family_index], 
+              this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families))) {
+                this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families.push(this.point_families[family_index]);
+              }
+          }
         }
       }
     }
@@ -420,12 +427,14 @@ export class MultiplePlots {
 
   remove_points_from_family(points_index_to_remove:number[], family_index:number): void {
     for (let i=0; i<points_index_to_remove.length; i++) {
-      for (let j=0; j<this.nbObjects; j++) {
-        this.objectList[j].point_families = this.point_families;
-        if (this.objectList[j].type_ == 'scatterplot') {
-          if (List.is_include(this.point_families[family_index], this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families)) {
-            this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families = List.remove_element(this.point_families[family_index],
-              this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families);
+      if (points_index_to_remove[i] !== undefined) {
+        for (let j=0; j<this.nbObjects; j++) {
+          this.objectList[j].point_families = this.point_families;
+          if (this.objectList[j].type_ == 'scatterplot') {
+            if (List.is_include(this.point_families[family_index], this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families)) {
+              this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families = List.remove_element(this.point_families[family_index],
+                this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families);
+            }
           }
         }
       }
@@ -641,6 +650,32 @@ export class MultiplePlots {
       j = j+2;
     }
     return sorted_list;
+  }
+
+  
+  select_points_manually(index_list:number[], object_index:number): void {
+    if (this.objectList[object_index].type_ != 'scatterplot') {throw new Error('selected object must be a scatterplot');}
+    for (let index of index_list) {
+      if (index >= this.data['elements'].length) {throw new Error('Point index out of range');}
+      if (this.selectDependency_bool) {
+        for (let i=0; i<this.nbObjects; i++) {
+          if (this.objectList[i].type_ == 'scatterplot') {
+            if (!List.is_include(index, this.objectList[i].selected_point_index)) {
+              this.objectList[i].select_on_click.push(this.objectList[i].plotObject.point_list[index]);
+              this.objectList[i].selected_point_index.push(index);
+              this.objectList[i].latest_selected_points_index.push(index);
+            }
+          }
+        }
+      } else {
+        if (!List.is_include(index, this.objectList[object_index].selected_point_index)) {
+          this.objectList[object_index].select_on_click.push(this.objectList[object_index].plotObject.point_list[index]);
+          this.objectList[object_index].selected_point_index.push(index);
+          this.objectList[object_index].latest_selected_points_index.push(index);
+        }
+      }
+    }
+    this.redrawAllObjects();
   }
 
   clean_view():void {
@@ -1443,6 +1478,9 @@ export abstract class PlotData {
             }
           } else {
             this.context.fillStyle = this.plotObject.point_style.color_fill;
+            if (d.point_families.length != 0) {
+              this.context.fillStyle = d.point_families[d.point_families.length - 1].color;
+            }
           }
         } else { // graph2d
           this.context.fillStyle = d.color_fill;
@@ -1453,9 +1491,6 @@ export abstract class PlotData {
 
         if (shape == 'crux') {
           this.context.strokeStyle = d.color_fill;
-        }
-        if (d.point_families.length != 0) {
-          this.context.fillStyle = d.point_families[d.point_families.length - 1].color;
         }
         if (this.select_on_mouse == d) {
           this.context.fillStyle = this.color_surface_on_mouse;
@@ -2221,6 +2256,22 @@ export abstract class PlotData {
     }
   }
 
+  add_points_to_selection(index_list:number[]) {
+    for (let index of index_list) {
+      let point = this.plotObject.point_list[index];
+      for (let i=0; i<this.scatter_point_list.length; i++) {
+        if (List.is_include(point, this.scatter_point_list[i].points_inside) && !List.is_include(point, this.select_on_click)) {
+          this.select_on_click.push(point);
+          this.latest_selected_points.push(point);
+        }
+      }
+    }
+    this.refresh_selected_point_index();
+    this.refresh_latest_selected_points_index();
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  }
+
   add_axis_to_parallelplot(name:string):void { //Adding a new axis to the plot and redraw the canvas
     for (let i=0; i<this.axis_list.length; i++) {
       if (name == this.axis_list[i]['name']) {
@@ -2571,7 +2622,7 @@ export abstract class PlotData {
       Interactions.reset_permanent_window(this);
     }
     this.refresh_selected_point_index();
-    this.refresh_latest_selected_points_index();
+    if (this.type_ == 'scatterplot') {this.refresh_latest_selected_points_index();}
   }
 
 
@@ -3227,7 +3278,7 @@ export class ParallelPlot extends PlotData {
       this.disp_w = 30;
       this.disp_h = 20;
     }
-    let default_edge_style = {color_stroke:string_to_rgb('black'), dahsline:[], line_width:0.5, name:''};
+    let default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:0.5, name:''};
     let default_dict_ = {edge_style:default_edge_style, disposition: 'vertical', rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]]};
     data = set_default_values(data, default_dict_);
     this.elements = data['elements'];
@@ -3452,7 +3503,7 @@ export class Interactions {
       }
     }
     plot_data.refresh_selected_point_index();
-    plot_data.refresh_latest_selected_points_index();
+    if (plot_data.type_ == 'scatterplot') {plot_data.refresh_latest_selected_points_index();}
     plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
@@ -5827,6 +5878,10 @@ export class List {
     return [min, max];
   }
 
+  public static insert(value:any, index:number, list:any[]): void {
+    list.splice(index, 0, value);
+  }
+
   public static get_index_of_element(val:any, list:any[]):number {
     for (var i=0; i<list.length; i++) {
       if (val === list[i]) {
@@ -5943,4 +5998,4 @@ export function set_default_values(dict_, default_dict_) {
   return Object.fromEntries(entries);
 }
 
-
+var family1 = new PointFamily(string_to_hex('green'), [1,2,3,4,5], 'Hello');

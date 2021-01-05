@@ -51,7 +51,6 @@ scatter_template = Template('''<div id="app"></div>
 	plot_data.draw_initial();
 	plot_data.mouse_interaction(plot_data.isParallelPlot); //true if parallel plot, false otherwise
 
-
 </script>
 ''')
 
@@ -110,7 +109,6 @@ multiplot_template = Template('''<div id="app"></div>
 	globalWidth = 1500;
 	globalHeight = 800;
 	var multiplot = new MultiplePlots(data, globalWidth, globalHeight, 1000, true, $canvas_id.id);
-	multiplot.hide_plot(6);
 </script> 
 ''')
 

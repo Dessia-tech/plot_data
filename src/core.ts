@@ -652,9 +652,26 @@ export class MultiplePlots {
     return sorted_list;
   }
 
+  clear_objects_selected_points(object_index:number) {
+    if (this.selectDependency_bool) {
+      for (let i=0; i<this.nbObjects; i++) {
+        if (this.objectList[i].type_ == 'scatterplot') {
+          this.objectList[i].select_on_click = [];
+          this.objectList[i].selected_point_index = [];
+          this.objectList[i].latest_selected_points_index = [];
+        }
+      }
+    } else {
+      this.objectList[object_index].select_on_click = [];
+      this.objectList[object_index].selected_point_index = [];
+      this.objectList[object_index].latest_selected_points_index = [];
+    }
+  }
+
   
   select_points_manually(index_list:number[], object_index:number): void {
     if (this.objectList[object_index].type_ != 'scatterplot') {throw new Error('selected object must be a scatterplot');}
+    this.clear_objects_selected_points(object_index);
     for (let index of index_list) {
       if (index >= this.data['elements'].length) {throw new Error('Point index out of range');}
       if (this.selectDependency_bool) {
@@ -5997,5 +6014,3 @@ export function set_default_values(dict_, default_dict_) {
   }
   return Object.fromEntries(entries);
 }
-
-var family1 = new PointFamily(string_to_hex('green'), [1,2,3,4,5], 'Hello');

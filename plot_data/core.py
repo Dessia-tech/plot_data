@@ -120,8 +120,10 @@ class TextStyle(DessiaObject):
         self.text_color = text_color
         self.font_size = font_size
         self.font_style = font_style
-        self.text_align_x = text_align_x  # "left", "right", "center", "start" or "end"
-        self.text_align_y = text_align_y  # "top", "hanging", "middle", "alphabetic", "ideographic" or "bottom"
+        self.text_align_x = text_align_x  # options : "left", "right", "center", "start" or "end"
+        # see more about text_align_x's options: https://www.w3schools.com/tags/canvas_textalign.asp
+        self.text_align_y = text_align_y  # options : "top", "hanging", "middle", "alphabetic", "ideographic" or "bottom"
+        # see more about text_align_y's options: https://www.w3schools.com/tags/canvas_textbaseline.asp
         DessiaObject.__init__(self, name=name)
 
 
@@ -350,7 +352,8 @@ class MultiplePlots(PlotDataObject):
     def __init__(self, elements: List[any],
                  objects: List[Subclass[PlotDataObject]],
                  sizes: List[Window], coords: List[Tuple[float, float]],
-                 point_families: List[any] = None, initial_view_on: bool = None,
+                 point_families: List[any] = None,
+                 initial_view_on: bool = None,
                  name: str = ''):
         self.elements = elements
         self.objects = objects

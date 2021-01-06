@@ -2333,6 +2333,22 @@ export abstract class PlotData {
     return this.plotObject.displayable_attributes;
   }
 
+  reset_scatter_point_families() {
+    for (let i=0; i<this.plotObject.point_list.length; i++) {
+      this.plotObject.point_list[i].point_families = [];
+    }
+  }
+
+  refresh_scatter_point_family() {
+    this.reset_scatter_point_families();
+    for (let i=0; i<this.point_families.length; i++) {
+      let point_index = this.point_families[i].point_index;
+      for (let index of point_index) {
+        this.plotObject.point_list[index].point_families.push(this.point_families[i]);
+      }
+    }
+  }
+
   set_scatterplot_x_axis(attribute_name:string):void {
     var isAttributeInList:boolean = false;
     var attribute:Attribute;
@@ -2348,6 +2364,7 @@ export abstract class PlotData {
     this.plotObject.to_display_attributes[0] = attribute;
     this.plotObject.initialize_lists();
     this.plotObject.initialize_point_list(this.plotObject.elements);
+    this.refresh_scatter_point_family();
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
@@ -2370,6 +2387,7 @@ export abstract class PlotData {
     this.plotObject.to_display_attributes[1] = attribute;
     this.plotObject.initialize_lists();
     this.plotObject.initialize_point_list(this.plotObject.elements);
+    this.refresh_scatter_point_family();
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
@@ -4235,7 +4253,7 @@ export class Text {
     var text_style = TextStyle.deserialize(serialized['text_style']);
     return new Text(serialized['comment'],
                     serialized['position_x'],
-                    serialized['position_y'],
+                    -serialized['position_y'],
                     text_style,
                     serialized['type_'],
                     serialized['name']);

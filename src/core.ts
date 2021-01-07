@@ -987,7 +987,14 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-
+  manage_settings_on(object_index:number): void {
+    for (let i=0; i<this.nbObjects; i++) {
+      if (i != object_index) {
+        this.objectList[i].settings_on = false;
+      }
+    }
+    this.objectList[object_index].settings_on = !this.objectList[object_index].settings_on;
+  }
 
   mouse_interaction(): void {
     var canvas = document.getElementById(this.canvas_id);
@@ -1126,7 +1133,9 @@ export class MultiplePlots {
     });
 
     canvas.addEventListener('dblclick', e => {
-      this.reset_all_selected_points();
+      // this.reset_all_selected_points();
+      this.manage_settings_on(this.clickedPlotIndex);
+      this.redrawAllObjects();
     });
   }
 }
@@ -1152,6 +1161,7 @@ export abstract class PlotData {
   initial_last_mouse1Y:number=0;
   last_mouse1X:number;
   last_mouse1Y:number;
+  settings_on:boolean=false;
   colour_to_plot_data:any={};
   select_on_mouse:any;
   select_on_click:any[]=[];
@@ -1364,6 +1374,10 @@ export abstract class PlotData {
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX;
       this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY;
     }
+  }
+
+  draw_settings_rect() {
+    Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', string_to_hex('blue'), 1, 1, [10,10]);
   }
 
   draw_rect() {
@@ -3163,7 +3177,7 @@ export class PlotContour extends PlotData {
     this.plot_datas = [];
     this.type_ = 'primitivegroup';
     var d = this.data;
-    if (d['type_'] == 'primitivegroup') {
+    if (d['type_'] == 'primitivegroup') { 
       var a = PrimitiveGroup.deserialize(d);
       this.plot_datas.push(a);
       for (let i=0; i<a.primitives.length; i++) {
@@ -3187,7 +3201,7 @@ export class PlotContour extends PlotData {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas();
-    this.draw_rect();
+    if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height+2);
     this.context.clip();
@@ -3255,7 +3269,8 @@ export class PlotScatter extends PlotData {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas();
-    this.draw_rect();
+    console.log(this.settings_on)
+    if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height+2);
     this.context.clip();
@@ -3413,7 +3428,7 @@ export class ParallelPlot extends PlotData {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas();
-    this.draw_rect();
+    if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height + 2);
     this.context.clip();

@@ -301,7 +301,7 @@ class Arc2D(PlotDataObject):
 
 
 class Contour2D(PlotDataObject):
-    def __init__(self, plot_data_primitives: List[float],
+    def __init__(self, plot_data_primitives: List[float],  # plot_data_primitives: arc2D or line2D
                  edge_style: EdgeStyle,
                  surface_style: SurfaceStyle, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
@@ -322,7 +322,7 @@ class Contour2D(PlotDataObject):
 
 
 class PrimitiveGroup(PlotDataObject):
-    def __init__(self, primitives, name: str = ''):
+    def __init__(self, primitives, name: str = ''):  # primitives: contour2D, arc2D, line2D or circle2D. A contour isn't needed for circle2D anymore
         self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)
 

@@ -1118,6 +1118,7 @@ export class MultiplePlots {
     });
 
     canvas.addEventListener('wheel', e => {
+      e.preventDefault();
       var mouse3X = e.offsetX;
       var mouse3Y = e.offsetY;
       var event = -e.deltaY/Math.abs(e.deltaY);
@@ -2822,6 +2823,7 @@ export abstract class PlotData {
   }
 
   wheel_interaction(mouse3X, mouse3Y, e) {
+    e.preventDefault();
     var scale_ceil = 100*Math.max(this.init_scaleX, this.init_scaleY);
     var scale_floor = Math.min(this.init_scaleX, this.init_scaleY)/100;
     this.fusion_coeff = 1.2;

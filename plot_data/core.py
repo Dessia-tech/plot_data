@@ -6,6 +6,7 @@ Created on Tue Feb 28 14:07:37 2017
 @author: steven
 """
 
+import os
 import numpy as npy
 import math
 import sys
@@ -93,7 +94,7 @@ class Window(DessiaObject):
 
 class EdgeStyle(DessiaObject):
     def __init__(self, line_width: float = None, color_stroke: str = None,
-                 dashline=None, name: str = ''):
+                 dashline: List[int] = None, name: str = ''):
         self.line_width = line_width
         self.color_stroke = color_stroke
         self.dashline = dashline

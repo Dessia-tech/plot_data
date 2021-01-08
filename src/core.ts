@@ -426,6 +426,7 @@ export class MultiplePlots {
   }
 
   remove_points_from_family(points_index_to_remove:number[], family_index:number): void {
+    this.point_families[family_index].point_index = List.remove_selection(points_index_to_remove, this.point_families[family_index].point_index);
     for (let i=0; i<points_index_to_remove.length; i++) {
       if (points_index_to_remove[i] !== undefined) {
         for (let j=0; j<this.nbObjects; j++) {
@@ -439,7 +440,6 @@ export class MultiplePlots {
         }
       }
     }
-    this.point_families = List.remove_at_index(family_index, this.point_families);
     this.redrawAllObjects();
   }
 
@@ -3269,7 +3269,6 @@ export class PlotScatter extends PlotData {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas();
-    console.log(this.settings_on)
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height+2);

@@ -1018,6 +1018,7 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
+      if (e.ctrlKey) {this.reset_all_selected_points();}
       this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
       this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
       if (this.manipulation_bool) {
@@ -1134,8 +1135,7 @@ export class MultiplePlots {
     });
 
     canvas.addEventListener('dblclick', e => {
-      // this.reset_all_selected_points();
-      this.manage_settings_on(this.clickedPlotIndex);
+      // this.manage_settings_on(this.clickedPlotIndex);
       this.redrawAllObjects();
     });
   }
@@ -2722,14 +2722,14 @@ export abstract class PlotData {
           let ord_min = this.scatter_to_real_coords(Math.max(this.real_to_scatter_coords(this.perm_window_y, 'y'), this.real_to_scatter_coords(this.perm_window_y, 'y') + this.real_to_scatter_length(this.perm_window_h, 'y')), 'y');
           let ord_max = this.scatter_to_real_coords(Math.min(this.real_to_scatter_coords(this.perm_window_y, 'y'), this.real_to_scatter_coords(this.perm_window_y, 'y') + this.real_to_scatter_length(this.perm_window_h, 'y')), 'y');
           this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
-        } else { // ie zw_bool === true
-          this.zoom_box_x = Math.min(mouse1X, mouse2X);
-          this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
-          this.zoom_box_w = Math.abs(mouse2X - mouse1X);
-          this.zoom_box_h = Math.abs(mouse2Y - mouse1Y);
-          this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-          this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-        }
+        } 
+        this.zoom_box_x = Math.min(mouse1X, mouse2X);
+        this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
+        this.zoom_box_w = Math.abs(mouse2X - mouse1X);
+        this.zoom_box_h = Math.abs(mouse2Y - mouse1Y);
+        this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
       }
@@ -3281,7 +3281,7 @@ export class PlotScatter extends PlotData {
     if (this.permanent_window) {
       this.draw_selection_rectangle();
     }
-    if (this.zw_bool) {
+    if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
       this.draw_zoom_rectangle();
     }
 

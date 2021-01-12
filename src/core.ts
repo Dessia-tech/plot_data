@@ -1074,7 +1074,7 @@ export class MultiplePlots {
           }
           this.refresh_selected_point_index();
         }
-        this.redrawAllObjects();
+        // this.redrawAllObjects();
       }
     });
 
@@ -1404,27 +1404,35 @@ export abstract class PlotData {
       this.manipulation_rect_line_width, this.manipulation_rect_opacity, this.manipulation_rect_dashline);
   }
 
-  draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d) {
+  draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d:PrimitiveGroup) {
     if (d['type_'] == 'primitivegroup') {
       for (let i=0; i<d.primitives.length; i++) {
-        if (d.primitives[i].type_ == 'contour') {
+        this.context.beginPath();
+        // let pr_x=this.scale*1000*d.primitives[i].minX + mvx; let pr_y=this.scale*1000*d.primitives[i].minY + mvy;
+        // let pr_w=this.scale*1000*(d.primitives[i].maxX - d.primitives[i].minX);
+        // let pr_h=this.scale*1000*(d.primitives[i].maxY - d.primitives[i].minY);
+        // let is_inside_canvas = (pr_x+pr_w>=0) && (pr_x<=this.width) &&
+        //   (pr_y+pr_h>=0) && (pr_y<=this.height);
+        let is_inside_canvas = true;
+        if ((d.primitives[i].type_ == 'contour') && is_inside_canvas) {
           this.draw_contour(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if ((d.primitives[i].type_ == 'arc') || (d.primitives[i].type_ == 'text')) {
-          this.context.beginPath();
+        } else if ((d.primitives[i].type_ == 'arc') && is_inside_canvas) {
+          d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+          this.context.stroke();
+        } else if (d.primitives[i].type_ == 'text') {
+          d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
           this.context.fill();
-          this.context.closePath();
-        } else if (d.primitives[i].type_ == 'circle') {
+        } else if ((d.primitives[i].type_ == 'circle') && is_inside_canvas) {
           this.draw_circle(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if (d.primitives[i].type_ == 'linesegment') {
-          this.context.beginPath();
+        } else if ((d.primitives[i].type_ == 'linesegment') && is_inside_canvas) {
           d.primitives[i].draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
           this.context.fill();
-          this.context.closePath();
           this.context.setLineDash([]);
         }
+        this.context.closePath();
       }
     }
   }
@@ -1465,7 +1473,6 @@ export abstract class PlotData {
 
   draw_circle(hidden, mvx, mvy, scaleX, scaleY, d:Circle2D) {
     if (d['type_'] == 'circle') {
-      this.context.beginPath();
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
         d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
@@ -1491,7 +1498,6 @@ export abstract class PlotData {
       }
       this.context.fill();
       this.context.stroke();
-      this.context.closePath();
     }
   }
 
@@ -2824,48 +2830,46 @@ export abstract class PlotData {
 
   wheel_interaction(mouse3X, mouse3Y, e) {
     e.preventDefault();
-    var scale_ceil = 100*Math.max(this.init_scaleX, this.init_scaleY);
-    var scale_floor = Math.min(this.init_scaleX, this.init_scaleY)/100;
     this.fusion_coeff = 1.2;
-    var event = -e.deltaY;
+    var event = -e.deltaY/Math.abs(e.deltaY);
     mouse3X = e.offsetX;
     mouse3Y = e.offsetY;
     if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
         var old_scaleX = this.scaleX;
-        if ((event>0) && (this.scaleX*this.fusion_coeff<scale_ceil)) {
+        if (event>0) {
           this.scaleX = this.scaleX*this.fusion_coeff;
-          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_x++;
           this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
-        } else if ((event<0) && this.scaleX/this.fusion_coeff>scale_floor) {
+        } else if (event<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
-          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_x--;
           this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
         }
 
     } else if ((mouse3X<=this.decalage_axis_x + this.X) && (mouse3Y<this.height - this.decalage_axis_y + this.Y) && this.axis_ON) {
         var old_scaleY = this.scaleY;
-        if ((event>0) && (this.scaleY*this.fusion_coeff<scale_ceil)) {
+        if (event>0) {
           this.scaleY = this.scaleY*this.fusion_coeff;
-          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_y++;
           this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
-        } else if ((event<0) && this.scaleY/this.fusion_coeff>scale_floor) {
+        } else if (event<0) {
           this.scaleY = this.scaleY/this.fusion_coeff;
-          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_y--;
           this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
         }
 
     } else {
         var old_scaleY = this.scaleY;
         var old_scaleX = this.scaleX;
-        if ((event>0) && (this.scaleX*this.fusion_coeff<scale_ceil) && (this.scaleY*this.fusion_coeff<scale_ceil)) {
+        if (event>0) {
           this.scaleX = this.scaleX*this.fusion_coeff;
           this.scaleY = this.scaleY*this.fusion_coeff;
-        } else if ((event<0) && (this.scaleX/this.fusion_coeff>scale_floor) && (this.scaleY/this.fusion_coeff>scale_floor)) {
+        } else if (event<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
           this.scaleY = this.scaleY/this.fusion_coeff;
         }
-        this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
-        this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+        this.scroll_x = this.scroll_x + event;
+        this.scroll_y = this.scroll_y + event;
         this.last_mouse1X = this.last_mouse1X - ((mouse3X - this.X)/old_scaleX - (mouse3X - this.X)/this.scaleX);
         this.last_mouse1Y = this.last_mouse1Y - ((mouse3Y - this.Y)/old_scaleY - (mouse3Y - this.Y)/this.scaleY);
       }
@@ -3284,7 +3288,6 @@ export class PlotScatter extends PlotData {
     if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
       this.draw_zoom_rectangle();
     }
-
     if (this.buttons_ON) {
       this.refresh_buttons_coords();
       //Drawing the zooming button
@@ -4252,6 +4255,7 @@ export class Text {
   minY:number=0;
   maxY:number=0;
   mouse_selection_color:any;
+  init_scale:number=0;
 
   constructor(public comment:string,
               public position_x:number,
@@ -4276,7 +4280,9 @@ export class Text {
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    context.font = this.text_style.font;
+    var font_size = this.text_style.font_size * scaleX/this.init_scale;
+    context.font = font_size.toString() + 'px ' + this.text_style.font_style;
+    // context.font = this.text_style.font;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;
@@ -5577,7 +5583,7 @@ export function rgb_to_hex(rgb:string): string {
   return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#c3e6fc'], ['lightskyblue', '#87CEFA'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
+export var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#c3e6fc'], ['lightskyblue', '#87CEFA'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
   ['lightorange', '#ff8700'], ['cyan', '#13f0f0'], ['lightcyan', '#90f7f7'], ['rose', '#FF69B4'], ['lightrose', '#FFC0CB'], ['violet', '#EE82EE'], ['lightviolet', '#eaa5f6'], ['white', '#ffffff'], ['black', '#000000'], ['brown', '#cd8f40'],
   ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']];
 
@@ -5973,6 +5979,15 @@ export class List {
       }
     }
     return true;
+  }
+
+    public static list_sum(list1:number[], list2:number[]) {
+    if (list1.length !== list2.length) {throw new Error("list1 and list2 must have the same size");}
+    var sum = [];
+    for (let i=0; i<list1.length; i++) {
+      sum.push(list1[i] + list2[i]);
+    }
+    return sum;
   }
 
   public static listIntersection(list1:any[], list2:any[]): any[] {

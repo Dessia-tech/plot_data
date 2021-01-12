@@ -63,3 +63,18 @@ primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 
 plot_data.plot_canvas(plot_data_object=primitive_group, canvas_id='canvas',
                       debug_mode=True)
+
+# primitives= []
+# edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=BLUE)
+# surface_style = plot_data.SurfaceStyle(color_fill=LIGHTRED, opacity=0.5)
+# for i in range(100):
+#     for j in range(100):
+#         if (j%2 == 0):
+#             surface_style = plot_data.SurfaceStyle(color_fill=LIGHTRED,
+#                                                    opacity=0.5)
+#         else:
+#             surface_style = plot_data.SurfaceStyle(color_fill=GREEN,
+#                                                    opacity=0.5)
+#         primitives.append(plot_data.Circle2D(2*i, 2*j, 1, edge_style, surface_style))
+# primitive_group = plot_data.PrimitiveGroup(primitives)
+# plot_data.plot_canvas(primitive_group)

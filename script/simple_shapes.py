@@ -18,7 +18,7 @@ triangle = vm.wires.ClosedPolygon2D(triangle_points)
 
 cog_triangle = triangle.center_of_mass()
 
-# print(triangle.area())
+print(triangle.area())
 
 p0 = vm.Point2D(-1, 0)
 p1 = vm.Point2D(-npy.cos(npy.pi / 4), npy.sin(npy.pi / 4))

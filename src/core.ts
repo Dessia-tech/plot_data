@@ -1332,7 +1332,6 @@ export abstract class PlotData {
     this.reset_scales();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-
   }
 
   refresh_MinMax(point_list):void {
@@ -2959,7 +2958,7 @@ export abstract class PlotData {
           } else {
             [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
           }
-        }
+        }   
       });
 
       canvas.addEventListener('mouseup', e => {
@@ -3219,7 +3218,25 @@ export class PlotContour extends PlotData {
     if (this.manipulable_ON) {
       this.draw_manipulable_rect();
     }
+    if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+      this.draw_zoom_rectangle();
+    }
     this.context.restore();
+
+    if (this.buttons_ON) {
+      this.refresh_buttons_coords();
+      //Drawing the zooming button
+      Buttons.zoom_button(this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h, this);
+
+      //Drawing the button for zooming window selection
+      Buttons.zoom_window_button(this.zw_x,this.zw_y,this.zw_w,this.zw_h, this);
+
+      //Drawing the reset button
+      Buttons.reset_button(this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h, this);
+
+      //Drawing the selection button
+      Buttons.selection_button(this.select_x, this.select_y, this.select_w, this.select_h, this);
+    }
   }
 }
 
@@ -3503,8 +3520,6 @@ export class Interactions {
     if (right) {
       plot_data.perm_window_w = plot_data.initial_permW + deltaX;
     }
-    plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
 
   public static mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y, plot_data:PlotData) {
@@ -3512,8 +3527,6 @@ export class Interactions {
     plot_data.perm_window_y = plot_data.scatter_to_real_coords(Math.min(mouse1Y, mouse2Y), 'y');
     plot_data.perm_window_w = plot_data.scatter_to_real_length(Math.abs(mouse2X - mouse1X), 'x');
     plot_data.perm_window_h = plot_data.scatter_to_real_length(Math.abs(mouse2Y - mouse1Y), 'y');
-    plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
 
 
@@ -3558,8 +3571,6 @@ export class Interactions {
     }
     plot_data.refresh_selected_point_index();
     if (plot_data.type_ == 'scatterplot') {plot_data.refresh_latest_selected_points_index();}
-    plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
 
   public static zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, plot_data:PlotData) {
@@ -3572,8 +3583,6 @@ export class Interactions {
       plot_data.last_mouse1Y = plot_data.last_mouse1Y - Math.min(mouse1Y - plot_data.Y,mouse2Y - plot_data.Y)/plot_data.scaleY;
       plot_data.scaleX = plot_data.scaleX*zoom_coeff_x;
       plot_data.scaleY = plot_data.scaleY*zoom_coeff_y;
-      plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-      plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     }
   }
 
@@ -5597,7 +5606,7 @@ export function isColorInDict(str:string): boolean {
  }
 
 export function hex_to_string(hexa:string): string {
-  for (var i=0 ;i<color_dict.length; i++) {
+  for (var i=0; i<color_dict.length; i++) {
     if (hexa.toUpperCase() === color_dict[i][1].toUpperCase()) {
       return color_dict[i][0];
     }

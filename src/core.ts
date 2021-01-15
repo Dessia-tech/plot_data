@@ -2976,11 +2976,19 @@ export abstract class PlotData {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
         }
       });
+
+      canvas.addEventListener('touchstart', e => {
+        console.log('touchestart', e.touches);
+      });
+
+      canvas.addEventListener('touchmove', e => {
+        console.log('touchmove', e.changedTouches);
+      });
     }
 
   }
 
-  get_nb_points_inside_canvas(list_points, mvx, mvy) { //given the fact that list_point ([[x0,y0],...,[xn,yn]) x is in an increasing order
+  get_nb_points_inside_canvas(list_points, mvx, mvy) { //given the fact that list_point ([[x0,y0],...,[xn,yn]]) x is in an increasing order
     var bool = true;
     var k = 0;
     var index_first_in = -1;
@@ -3234,8 +3242,6 @@ export class PlotContour extends PlotData {
       //Drawing the reset button
       Buttons.reset_button(this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h, this);
 
-      //Drawing the selection button
-      Buttons.selection_button(this.select_x, this.select_y, this.select_w, this.select_h, this);
     }
   }
 }

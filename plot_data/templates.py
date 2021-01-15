@@ -18,7 +18,7 @@ contour_template = Template('''<div id="app"></div>
   	var data = $data;
 	var number_plot_data = data.length;
 
-	var plot_data = new PlotContour(data, width, height, 1000, false, 0, 0, $canvas_id.id);
+	var plot_data = new PlotContour(data, width, height, 1000, true, 0, 0, $canvas_id.id);
 	plot_data.define_canvas($canvas_id.id);
 	plot_data.draw_initial();
     plot_data.mouse_interaction(plot_data.isParallelPlot);

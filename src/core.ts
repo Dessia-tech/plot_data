@@ -1018,6 +1018,7 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
+      if (e.ctrlKey) {this.reset_all_selected_points();}
       this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
       this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
       if (this.manipulation_bool) {
@@ -1073,7 +1074,7 @@ export class MultiplePlots {
           }
           this.refresh_selected_point_index();
         }
-        this.redrawAllObjects();
+        // this.redrawAllObjects();
       }
     });
 
@@ -1118,6 +1119,7 @@ export class MultiplePlots {
     });
 
     canvas.addEventListener('wheel', e => {
+      e.preventDefault();
       var mouse3X = e.offsetX;
       var mouse3Y = e.offsetY;
       var event = -e.deltaY/Math.abs(e.deltaY);
@@ -1133,8 +1135,7 @@ export class MultiplePlots {
     });
 
     canvas.addEventListener('dblclick', e => {
-      // this.reset_all_selected_points();
-      this.manage_settings_on(this.clickedPlotIndex);
+      // this.manage_settings_on(this.clickedPlotIndex);
       this.redrawAllObjects();
     });
   }
@@ -1331,7 +1332,6 @@ export abstract class PlotData {
     this.reset_scales();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-
   }
 
   refresh_MinMax(point_list):void {
@@ -1403,27 +1403,35 @@ export abstract class PlotData {
       this.manipulation_rect_line_width, this.manipulation_rect_opacity, this.manipulation_rect_dashline);
   }
 
-  draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d) {
+  draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d:PrimitiveGroup) {
     if (d['type_'] == 'primitivegroup') {
       for (let i=0; i<d.primitives.length; i++) {
-        if (d.primitives[i].type_ == 'contour') {
+        this.context.beginPath();
+        // let pr_x=this.scale*1000*d.primitives[i].minX + mvx; let pr_y=this.scale*1000*d.primitives[i].minY + mvy;
+        // let pr_w=this.scale*1000*(d.primitives[i].maxX - d.primitives[i].minX);
+        // let pr_h=this.scale*1000*(d.primitives[i].maxY - d.primitives[i].minY);
+        // let is_inside_canvas = (pr_x+pr_w>=0) && (pr_x<=this.width) &&
+        //   (pr_y+pr_h>=0) && (pr_y<=this.height);
+        let is_inside_canvas = true;
+        if ((d.primitives[i].type_ == 'contour') && is_inside_canvas) {
           this.draw_contour(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if ((d.primitives[i].type_ == 'arc') || (d.primitives[i].type_ == 'text')) {
-          this.context.beginPath();
+        } else if ((d.primitives[i].type_ == 'arc') && is_inside_canvas) {
+          d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+          this.context.stroke();
+        } else if (d.primitives[i].type_ == 'text') {
+          d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
           this.context.fill();
-          this.context.closePath();
-        } else if (d.primitives[i].type_ == 'circle') {
+        } else if ((d.primitives[i].type_ == 'circle') && is_inside_canvas) {
           this.draw_circle(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if (d.primitives[i].type_ == 'linesegment') {
-          this.context.beginPath();
+        } else if ((d.primitives[i].type_ == 'linesegment') && is_inside_canvas) {
           d.primitives[i].draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
           this.context.fill();
-          this.context.closePath();
           this.context.setLineDash([]);
         }
+        this.context.closePath();
       }
     }
   }
@@ -1464,7 +1472,6 @@ export abstract class PlotData {
 
   draw_circle(hidden, mvx, mvy, scaleX, scaleY, d:Circle2D) {
     if (d['type_'] == 'circle') {
-      this.context.beginPath();
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
         d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
@@ -1490,7 +1497,6 @@ export abstract class PlotData {
       }
       this.context.fill();
       this.context.stroke();
-      this.context.closePath();
     }
   }
 
@@ -2721,14 +2727,14 @@ export abstract class PlotData {
           let ord_min = this.scatter_to_real_coords(Math.max(this.real_to_scatter_coords(this.perm_window_y, 'y'), this.real_to_scatter_coords(this.perm_window_y, 'y') + this.real_to_scatter_length(this.perm_window_h, 'y')), 'y');
           let ord_max = this.scatter_to_real_coords(Math.min(this.real_to_scatter_coords(this.perm_window_y, 'y'), this.real_to_scatter_coords(this.perm_window_y, 'y') + this.real_to_scatter_length(this.perm_window_h, 'y')), 'y');
           this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
-        } else { // ie zw_bool === true
-          this.zoom_box_x = Math.min(mouse1X, mouse2X);
-          this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
-          this.zoom_box_w = Math.abs(mouse2X - mouse1X);
-          this.zoom_box_h = Math.abs(mouse2Y - mouse1Y);
-          this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-          this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-        }
+        } 
+        this.zoom_box_x = Math.min(mouse1X, mouse2X);
+        this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
+        this.zoom_box_w = Math.abs(mouse2X - mouse1X);
+        this.zoom_box_h = Math.abs(mouse2Y - mouse1Y);
+        this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
       }
@@ -2822,48 +2828,47 @@ export abstract class PlotData {
   }
 
   wheel_interaction(mouse3X, mouse3Y, e) {
-    var scale_ceil = 100*Math.max(this.init_scaleX, this.init_scaleY);
-    var scale_floor = Math.min(this.init_scaleX, this.init_scaleY)/100;
+    e.preventDefault();
     this.fusion_coeff = 1.2;
-    var event = -e.deltaY;
+    var event = -e.deltaY/Math.abs(e.deltaY);
     mouse3X = e.offsetX;
     mouse3Y = e.offsetY;
     if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
         var old_scaleX = this.scaleX;
-        if ((event>0) && (this.scaleX*this.fusion_coeff<scale_ceil)) {
+        if (event>0) {
           this.scaleX = this.scaleX*this.fusion_coeff;
-          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_x++;
           this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
-        } else if ((event<0) && this.scaleX/this.fusion_coeff>scale_floor) {
+        } else if (event<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
-          this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_x--;
           this.last_mouse1X = this.last_mouse1X - ((this.width/2)/old_scaleX - (this.width/2)/this.scaleX);
         }
 
     } else if ((mouse3X<=this.decalage_axis_x + this.X) && (mouse3Y<this.height - this.decalage_axis_y + this.Y) && this.axis_ON) {
         var old_scaleY = this.scaleY;
-        if ((event>0) && (this.scaleY*this.fusion_coeff<scale_ceil)) {
+        if (event>0) {
           this.scaleY = this.scaleY*this.fusion_coeff;
-          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_y++;
           this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
-        } else if ((event<0) && this.scaleY/this.fusion_coeff>scale_floor) {
+        } else if (event<0) {
           this.scaleY = this.scaleY/this.fusion_coeff;
-          this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+          this.scroll_y--;
           this.last_mouse1Y = this.last_mouse1Y - ((this.height/2)/old_scaleY - (this.height/2)/this.scaleY);
         }
 
     } else {
         var old_scaleY = this.scaleY;
         var old_scaleX = this.scaleX;
-        if ((event>0) && (this.scaleX*this.fusion_coeff<scale_ceil) && (this.scaleY*this.fusion_coeff<scale_ceil)) {
+        if (event>0) {
           this.scaleX = this.scaleX*this.fusion_coeff;
           this.scaleY = this.scaleY*this.fusion_coeff;
-        } else if ((event<0) && (this.scaleX/this.fusion_coeff>scale_floor) && (this.scaleY/this.fusion_coeff>scale_floor)) {
+        } else if (event<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
           this.scaleY = this.scaleY/this.fusion_coeff;
         }
-        this.scroll_x = this.scroll_x - e.deltaY/Math.abs(e.deltaY);
-        this.scroll_y = this.scroll_y - e.deltaY/Math.abs(e.deltaY);
+        this.scroll_x = this.scroll_x + event;
+        this.scroll_y = this.scroll_y + event;
         this.last_mouse1X = this.last_mouse1X - ((mouse3X - this.X)/old_scaleX - (mouse3X - this.X)/this.scaleX);
         this.last_mouse1Y = this.last_mouse1Y - ((mouse3Y - this.Y)/old_scaleY - (mouse3Y - this.Y)/this.scaleY);
       }
@@ -2953,7 +2958,7 @@ export abstract class PlotData {
           } else {
             [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
           }
-        }
+        }   
       });
 
       canvas.addEventListener('mouseup', e => {
@@ -2971,11 +2976,19 @@ export abstract class PlotData {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
         }
       });
+
+      canvas.addEventListener('touchstart', e => {
+        console.log('touchestart', e.touches);
+      });
+
+      canvas.addEventListener('touchmove', e => {
+        console.log('touchmove', e.changedTouches);
+      });
     }
 
   }
 
-  get_nb_points_inside_canvas(list_points, mvx, mvy) { //given the fact that list_point ([[x0,y0],...,[xn,yn]) x is in an increasing order
+  get_nb_points_inside_canvas(list_points, mvx, mvy) { //given the fact that list_point ([[x0,y0],...,[xn,yn]]) x is in an increasing order
     var bool = true;
     var k = 0;
     var index_first_in = -1;
@@ -3213,7 +3226,23 @@ export class PlotContour extends PlotData {
     if (this.manipulable_ON) {
       this.draw_manipulable_rect();
     }
+    if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+      this.draw_zoom_rectangle();
+    }
     this.context.restore();
+
+    if (this.buttons_ON) {
+      this.refresh_buttons_coords();
+      //Drawing the zooming button
+      Buttons.zoom_button(this.zoom_rect_x, this.zoom_rect_y, this.zoom_rect_w, this.zoom_rect_h, this);
+
+      //Drawing the button for zooming window selection
+      Buttons.zoom_window_button(this.zw_x,this.zw_y,this.zw_w,this.zw_h, this);
+
+      //Drawing the reset button
+      Buttons.reset_button(this.reset_rect_x, this.reset_rect_y, this.reset_rect_w, this.reset_rect_h, this);
+
+    }
   }
 }
 
@@ -3279,10 +3308,9 @@ export class PlotScatter extends PlotData {
     if (this.permanent_window) {
       this.draw_selection_rectangle();
     }
-    if (this.zw_bool) {
+    if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
       this.draw_zoom_rectangle();
     }
-
     if (this.buttons_ON) {
       this.refresh_buttons_coords();
       //Drawing the zooming button
@@ -3498,8 +3526,6 @@ export class Interactions {
     if (right) {
       plot_data.perm_window_w = plot_data.initial_permW + deltaX;
     }
-    plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
 
   public static mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y, plot_data:PlotData) {
@@ -3507,8 +3533,6 @@ export class Interactions {
     plot_data.perm_window_y = plot_data.scatter_to_real_coords(Math.min(mouse1Y, mouse2Y), 'y');
     plot_data.perm_window_w = plot_data.scatter_to_real_length(Math.abs(mouse2X - mouse1X), 'x');
     plot_data.perm_window_h = plot_data.scatter_to_real_length(Math.abs(mouse2Y - mouse1Y), 'y');
-    plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
 
 
@@ -3553,8 +3577,6 @@ export class Interactions {
     }
     plot_data.refresh_selected_point_index();
     if (plot_data.type_ == 'scatterplot') {plot_data.refresh_latest_selected_points_index();}
-    plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
   }
 
   public static zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, plot_data:PlotData) {
@@ -3567,8 +3589,6 @@ export class Interactions {
       plot_data.last_mouse1Y = plot_data.last_mouse1Y - Math.min(mouse1Y - plot_data.Y,mouse2Y - plot_data.Y)/plot_data.scaleY;
       plot_data.scaleX = plot_data.scaleX*zoom_coeff_x;
       plot_data.scaleY = plot_data.scaleY*zoom_coeff_y;
-      plot_data.draw(false, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-      plot_data.draw(true, plot_data.last_mouse1X, plot_data.last_mouse1Y, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
     }
   }
 
@@ -4250,6 +4270,7 @@ export class Text {
   minY:number=0;
   maxY:number=0;
   mouse_selection_color:any;
+  init_scale:number=0;
 
   constructor(public comment:string,
               public position_x:number,
@@ -4274,7 +4295,9 @@ export class Text {
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    context.font = this.text_style.font;
+    var font_size = this.text_style.font_size * scaleX/this.init_scale;
+    context.font = font_size.toString() + 'px ' + this.text_style.font_style;
+    // context.font = this.text_style.font;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;
@@ -5575,7 +5598,7 @@ export function rgb_to_hex(rgb:string): string {
   return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#c3e6fc'], ['lightskyblue', '#87CEFA'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
+export var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#c3e6fc'], ['lightskyblue', '#87CEFA'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
   ['lightorange', '#ff8700'], ['cyan', '#13f0f0'], ['lightcyan', '#90f7f7'], ['rose', '#FF69B4'], ['lightrose', '#FFC0CB'], ['violet', '#EE82EE'], ['lightviolet', '#eaa5f6'], ['white', '#ffffff'], ['black', '#000000'], ['brown', '#cd8f40'],
   ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']];
 
@@ -5589,7 +5612,7 @@ export function isColorInDict(str:string): boolean {
  }
 
 export function hex_to_string(hexa:string): string {
-  for (var i=0 ;i<color_dict.length; i++) {
+  for (var i=0; i<color_dict.length; i++) {
     if (hexa.toUpperCase() === color_dict[i][1].toUpperCase()) {
       return color_dict[i][0];
     }
@@ -5971,6 +5994,15 @@ export class List {
       }
     }
     return true;
+  }
+
+    public static list_sum(list1:number[], list2:number[]) {
+    if (list1.length !== list2.length) {throw new Error("list1 and list2 must have the same size");}
+    var sum = [];
+    for (let i=0; i<list1.length; i++) {
+      sum.push(list1[i] + list2[i]);
+    }
+    return sum;
   }
 
   public static listIntersection(list1:any[], list2:any[]): any[] {

@@ -40,18 +40,16 @@ export class MultiplePlots {
   dep_selected_points_index:number[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
   point_families:PointFamily[]=[];
   to_display_plots:number[]=[];
+  primitive_dict={};
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
+    check_package_version(data['package_version'], '0.4.3');
     this.initial_coords = data['coords'];
     this.dataObjects = data['objects'];
     var elements = data['elements'];
-    this.initialize_displayable_attributes();
-    var temp_sizes = data['sizes'];
-    for (let i=0; i<temp_sizes.length; i++) {
-      this.sizes.push(Window.deserialize(temp_sizes[i]));
-    }
-
+    if (elements) {this.initialize_displayable_attributes();}
+    this.initialize_sizes();
     this.nbObjects = this.dataObjects.length;
     this.define_canvas(canvas_id);
     for (let i=0; i<this.nbObjects; i++) {
@@ -75,7 +73,7 @@ export class MultiplePlots {
       this.display_order.push(i);
       this.to_display_plots.push(i);
     }
-    this.initialize_point_families();
+    if (elements) {this.initialize_point_families();}
     this.mouse_interaction();
 
     if (buttons_ON) {
@@ -84,6 +82,19 @@ export class MultiplePlots {
     }
     if (data['initial_view_on']) {
       this.clean_view();
+    }
+  }
+
+  initialize_sizes() {
+    var temp_sizes = this.data['sizes'];
+    if (temp_sizes) {
+      for (let i=0; i<temp_sizes.length; i++) {
+        this.sizes.push(Window.deserialize(temp_sizes[i]));
+      }
+    } else {
+      for (let i=0; i<temp_sizes.length; i++) {
+        this.sizes.push(new Window(300, 560));
+      }
     }
   }
 
@@ -253,6 +264,12 @@ export class MultiplePlots {
     var DEFAULT_HEIGHT = 300;
     var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id);
     this.initialize_new_plot_data(new_plot_data);
+  }
+
+  add_primitivegroup(serialized, point_index) {
+    var plot_data = new PlotContour(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
+    this.primitive_dict[point_index.toString()] = plot_data;
+    this.initialize_new_plot_data(plot_data);
   }
 
   getObjectIndex(x, y): number[] {
@@ -2976,14 +2993,6 @@ export abstract class PlotData {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
         }
       });
-
-      canvas.addEventListener('touchstart', e => {
-        console.log('touchestart', e.touches);
-      });
-
-      canvas.addEventListener('touchmove', e => {
-        console.log('touchmove', e.changedTouches);
-      });
     }
 
   }
@@ -3256,6 +3265,7 @@ export class PlotScatter extends PlotData {
     public Y: number,
     public canvas_id: string) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
+      check_package_version(data['package_version'], '0.4.0');
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
@@ -4487,12 +4497,12 @@ export class Axis {
   x_step:number;
   y_step:number;
 
-  constructor(public nb_points_x:number,
-              public nb_points_y:number,
+  constructor(public nb_points_x:number=10,
+              public nb_points_y:number=10,
               public graduation_style:TextStyle,
               public axis_style:EdgeStyle,
               public arrow_on:boolean,
-              public grid_on:boolean,
+              public grid_on:boolean=true,
               public type_:string,
               public name) {
   }
@@ -5318,13 +5328,13 @@ export class ColorSurfaceSet {
 }
 
 export class Window {
-  constructor(public name:string, public height:number,public width:number){
+  constructor(public height:number,public width:number, public name?:string){
   }
 
   public static deserialize(serialized) {
-    return new Window(serialized['name'],
-                             serialized['height'],
-                             serialized['width']);
+    return new Window(serialized['height'],
+                      serialized['width'],
+                      serialized['name']);
   }
 }
 
@@ -5730,7 +5740,7 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
   return rgb_vectorToStr(r,g,b);
 }
 
-class Sort {
+ export class Sort {
   nbPermutations:number = 0;
   constructor(){};
 
@@ -5787,8 +5797,8 @@ class Sort {
       throw new Error('sortObjsByAttribute : ' + attribute_name + ' is not a property of the object')
     }
     var attribute_type = TypeOf(list[0][attribute_name]);
+    var list_copy = List.copy(list);
     if (attribute_type == 'float') {
-      var list_copy = List.copy(list);
       for (let i=0; i<list_copy.length-1; i++) {
         let min = i;
         let min_value = list_copy[i][attribute_name];
@@ -5806,16 +5816,16 @@ class Sort {
       return list_copy;
     } else { // ie color or string
       let strings = [];
-      for (let i=0; i<list.length; i++) {
-        if (!List.is_include(list[i][attribute_name], strings)) {
-          strings.push(list[i][attribute_name]);
+      for (let i=0; i<list_copy.length; i++) {
+        if (!List.is_include(list_copy[i][attribute_name], strings)) {
+          strings.push(list_copy[i][attribute_name]);
         }
       }
       let sorted_list = [];
       for (let i=0; i<strings.length; i++) {
-        for (let j=0; j<list.length; j++) {
-          if (strings[i] === list[j][attribute_name]) {
-            sorted_list.push(list[j]);
+        for (let j=0; j<list_copy.length; j++) {
+          if (strings[i] === list_copy[j][attribute_name]) {
+            sorted_list.push(list_copy[j]);
           }
         }
       }
@@ -6064,7 +6074,9 @@ export function equals(obj1:any, obj2:any): boolean { //Works on any kind of obj
   return true;
 }
 
-export function set_default_values(dict_, default_dict_) {
+export function set_default_values(dict_, default_dict_) { // returns a dictionary containing dict_ + every default_dict_'s keys that dict_ doesn't have
+  // ex: dict_ = {color: red}; default_dict_ = {color: blue, shape: circle}
+  // set_default_values(dict_, default_dict_) = {color: red, shape: circle} 
   if (dict_ === undefined) {
     dict_ = {};
   }
@@ -6078,3 +6090,16 @@ export function set_default_values(dict_, default_dict_) {
   }
   return Object.fromEntries(entries);
 }
+
+export function check_package_version(package_version:string, requirement:string) {
+  var version_array = package_version.split('.');
+  var requirement_array = requirement.split('.');
+  var package_version_num = Number(version_array[0])*Math.pow(10, 4) + Number(version_array[1])*Math.pow(10,2) +
+    Number(version_array[2].split('dev')[0]);
+  var requirement_num = Number(requirement_array[0])*Math.pow(10, 4) + Number(requirement_array[1])*Math.pow(10,2) +
+  Number(requirement_array[2]);
+  if (package_version_num < requirement_num) {
+    throw new Error("plot_data's version must be upgraded. Current version: " + package_version + ", minimum requirement: " + requirement);
+  }
+}
+

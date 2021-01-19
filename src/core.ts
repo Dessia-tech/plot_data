@@ -357,7 +357,7 @@ export class MultiplePlots {
     var obj:PlotData = this.objectList[selected_index]
     obj.X = this.initial_objectsX[selected_index] + tx;
     obj.Y = this.initial_objectsY[selected_index] + ty;
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
   setAllInteractionsToOff():void {
@@ -745,7 +745,7 @@ export class MultiplePlots {
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
     }
     this.resetAllObjects();
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
   resizeObject(vertex_infos, mouse2X, mouse2Y):void {
@@ -787,7 +787,7 @@ export class MultiplePlots {
         }
       }
     }
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
   getSelectionONObject():number {
@@ -881,7 +881,7 @@ export class MultiplePlots {
     }
     this.refresh_dep_selected_points_index();
     this.refresh_selected_object_from_index();
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
   dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]):void {
@@ -1001,26 +1001,40 @@ export class MultiplePlots {
       this.objectList[i].X = this.initial_objectsX[i] + mouse2X - mouse1X;
       this.objectList[i].Y = this.initial_objectsY[i] + mouse2Y - mouse1Y;
     }
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
-  manage_settings_on(object_index:number): void {
+  get_settings_on_object() {
+    var obj_settings_on = -1;
     for (let i=0; i<this.nbObjects; i++) {
-      if (i != object_index) {
-        this.objectList[i].settings_on = false;
+      if (this.objectList[i].settings_on) {
+        obj_settings_on = i;
+        break;
       }
     }
-    this.objectList[object_index].settings_on = !this.objectList[object_index].settings_on;
+    return obj_settings_on;
+  }
+
+  dbl_click_manage_settings_on(object_index:number): void {
+    var obj_settings_on = this.get_settings_on_object();
+    if (obj_settings_on == -1) {
+      this.objectList[object_index].settings_on = true;
+    } else if (obj_settings_on == object_index) {
+      this.objectList[object_index].settings_on = false;
+    }
+  }
+
+  single_click_manage_settings_on(object_index:number): void {
+    var obj_settings_on = this.get_settings_on_object();
+    if ((obj_settings_on !== -1) && (obj_settings_on !== object_index)) {
+      this.objectList[obj_settings_on].settings_on = false;
+      this.objectList[object_index].settings_on = true;
+    }
   }
 
   mouse_interaction(): void {
     var canvas = document.getElementById(this.canvas_id);
-    var mouse1X:number = 0;
-    var mouse1Y:number = 0;
-    var mouse2X:number = 0;
-    var mouse2Y:number = 0;
-    var mouse3X:number = 0;
-    var mouse3Y:number = 0;
+    var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
     var isDrawing = false;
     var mouse_moving:boolean = false;
     var vertex_infos:Object;
@@ -1091,8 +1105,8 @@ export class MultiplePlots {
           }
           this.refresh_selected_point_index();
         }
-        // this.redrawAllObjects();
       }
+      this.redrawAllObjects();
     });
 
     canvas.addEventListener('mouseup', e => {
@@ -1152,9 +1166,18 @@ export class MultiplePlots {
     });
 
     canvas.addEventListener('dblclick', e => {
-      // this.manage_settings_on(this.clickedPlotIndex);
-      this.redrawAllObjects();
+      if (this.clickedPlotIndex !== -1) {
+        this.dbl_click_manage_settings_on(this.clickedPlotIndex);
+        this.redrawAllObjects();
+      }
     });
+
+    canvas.addEventListener('click', e => {
+      if (this.clickedPlotIndex !== -1) {
+        this.single_click_manage_settings_on(this.clickedPlotIndex);
+        this.redrawAllObjects();
+      }
+    })
   }
 }
 
@@ -2921,12 +2944,7 @@ export abstract class PlotData {
     if (this.interaction_ON === true) {
       var isDrawing = false;
       var mouse_moving = false;
-      var mouse1X = 0;
-      var mouse1Y = 0;
-      var mouse2X = 0;
-      var mouse2Y = 0;
-      var mouse3X = 0;
-      var mouse3Y = 0;
+      var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
       var click_on_axis:boolean=false;
       var selected_axis_index:number = -1;
       var click_on_name:boolean = false;
@@ -2937,10 +2955,7 @@ export abstract class PlotData {
       var selected_border:number[]=[];
       var is_resizing:boolean=false;
       var click_on_selectw_border:boolean = false;
-      var up:boolean = false;
-      var down:boolean = false;
-      var left:boolean = false;
-      var right:boolean = false;
+      var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
 
       var canvas = document.getElementById(this.canvas_id);
 
@@ -6097,9 +6112,9 @@ export function check_package_version(package_version:string, requirement:string
   var package_version_num = Number(version_array[0])*Math.pow(10, 4) + Number(version_array[1])*Math.pow(10,2) +
     Number(version_array[2].split('dev')[0]);
   var requirement_num = Number(requirement_array[0])*Math.pow(10, 4) + Number(requirement_array[1])*Math.pow(10,2) +
-  Number(requirement_array[2]);
+    Number(requirement_array[2]);
   if (package_version_num < requirement_num) {
-    throw new Error("plot_data's version must be upgraded. Current version: " + package_version + ", minimum requirement: " + requirement);
+    throw new Error("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
   }
 }
 

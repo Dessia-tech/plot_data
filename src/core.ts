@@ -13,20 +13,11 @@ export class MultiplePlots {
   clickedPlotIndex:number=-1;
   last_index:number=-1;
   manipulation_bool:boolean=false;
-  transbutton_x:number=0;
-  transbutton_y:number=0;
-  transbutton_w:number=0;
-  transbutton_h:number=0;
+  transbutton_x:number=0; transbutton_y:number=0; transbutton_w:number=0; transbutton_h:number=0;
   selectDependency_bool:boolean=false;
-  selectDep_x:number=0;
-  selectDep_y:number=0;
-  selectDep_w:number=0;
-  selectDep_h:number=0;
+  selectDep_x:number=0; selectDep_y:number=0; selectDep_w:number=0; selectDep_h:number=0;
   view_bool:boolean=false;
-  view_button_x:number=0;
-  view_button_y:number=0;
-  view_button_w:number=0;
-  view_button_h:number=0;
+  view_button_x:number=0; view_button_y:number=0; view_button_w:number=0; view_button_h:number=0;
   initial_objectsX:number[]=[];
   initial_objectsY:number[]=[];
   initial_object_width:number[]=[];
@@ -3211,6 +3202,7 @@ export class PlotContour extends PlotData {
                 public Y: number,
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
+    check_package_version(data['package_version'], '0.4.0');
     this.plot_datas = [];
     this.type_ = 'primitivegroup';
     var d = this.data;
@@ -3373,6 +3365,7 @@ export class ParallelPlot extends PlotData {
 
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
+    check_package_version(data['package_version'], '0.4.0');
     this.type_ = 'parallelplot';
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;

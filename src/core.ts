@@ -13,20 +13,11 @@ export class MultiplePlots {
   clickedPlotIndex:number=-1;
   last_index:number=-1;
   manipulation_bool:boolean=false;
-  transbutton_x:number=0;
-  transbutton_y:number=0;
-  transbutton_w:number=0;
-  transbutton_h:number=0;
+  transbutton_x:number=0; transbutton_y:number=0; transbutton_w:number=0; transbutton_h:number=0;
   selectDependency_bool:boolean=false;
-  selectDep_x:number=0;
-  selectDep_y:number=0;
-  selectDep_w:number=0;
-  selectDep_h:number=0;
+  selectDep_x:number=0; selectDep_y:number=0; selectDep_w:number=0; selectDep_h:number=0;
   view_bool:boolean=false;
-  view_button_x:number=0;
-  view_button_y:number=0;
-  view_button_w:number=0;
-  view_button_h:number=0;
+  view_button_x:number=0; view_button_y:number=0; view_button_w:number=0; view_button_h:number=0;
   initial_objectsX:number[]=[];
   initial_objectsY:number[]=[];
   initial_object_width:number[]=[];
@@ -40,18 +31,16 @@ export class MultiplePlots {
   dep_selected_points_index:number[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
   point_families:PointFamily[]=[];
   to_display_plots:number[]=[];
+  primitive_dict={};
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
+    check_package_version(data['package_version'], '0.4.3');
     this.initial_coords = data['coords'];
     this.dataObjects = data['objects'];
     var elements = data['elements'];
-    this.initialize_displayable_attributes();
-    var temp_sizes = data['sizes'];
-    for (let i=0; i<temp_sizes.length; i++) {
-      this.sizes.push(Window.deserialize(temp_sizes[i]));
-    }
-
+    if (elements) {this.initialize_displayable_attributes();}
+    this.initialize_sizes();
     this.nbObjects = this.dataObjects.length;
     this.define_canvas(canvas_id);
     for (let i=0; i<this.nbObjects; i++) {
@@ -75,7 +64,7 @@ export class MultiplePlots {
       this.display_order.push(i);
       this.to_display_plots.push(i);
     }
-    this.initialize_point_families();
+    if (elements) {this.initialize_point_families();}
     this.mouse_interaction();
 
     if (buttons_ON) {
@@ -84,6 +73,19 @@ export class MultiplePlots {
     }
     if (data['initial_view_on']) {
       this.clean_view();
+    }
+  }
+
+  initialize_sizes() {
+    var temp_sizes = this.data['sizes'];
+    if (temp_sizes) {
+      for (let i=0; i<temp_sizes.length; i++) {
+        this.sizes.push(Window.deserialize(temp_sizes[i]));
+      }
+    } else {
+      for (let i=0; i<temp_sizes.length; i++) {
+        this.sizes.push(new Window(300, 560));
+      }
     }
   }
 
@@ -255,6 +257,42 @@ export class MultiplePlots {
     this.initialize_new_plot_data(new_plot_data);
   }
 
+  add_primitivegroup(serialized, point_index) {
+    var plot_data = new PlotContour(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
+    this.primitive_dict[point_index.toString()] = this.nbObjects;
+    this.initialize_new_plot_data(plot_data);
+  }
+
+  remove_primitivegroup(point_index) {
+    var keys = Object.getOwnPropertyNames(this.primitive_dict);
+    if (!List.is_include(point_index.toString(), keys)) { throw new Error('remove_primitivegroup() : input point is not associated with any primitive group');}
+    var primitive_index = this.primitive_dict[point_index.toString()];
+    this.remove_plot(primitive_index);
+    this.primitive_dict = MyObject.removeEntries([point_index.toString()], this.primitive_dict);
+    for (let key of keys) {
+      if (this.primitive_dict[key]>primitive_index) {
+        this.primitive_dict[key]--;
+      }
+    }
+  }
+
+  remove_plot(index) {
+    this.objectList = List.remove_at_index(index, this.objectList);
+    this.nbObjects--;
+    this.display_order = List.remove_element(index, this.display_order);
+    for (let i=0; i<this.display_order.length; i++) {
+      if (this.display_order[i]>index) {
+        this.display_order[i]--;
+      }
+    }
+    if (List.is_include(index, this.to_display_plots)) { this.to_display_plots = List.remove_element(index, this.to_display_plots); }
+    for (let i=0; i<this.to_display_plots.length; i++) {
+      if (this.to_display_plots[i]>index) {
+        this.to_display_plots[i]--;
+      }
+    }
+  }
+
   getObjectIndex(x, y): number[] {
     var index_list = [];
     for (let i=0; i<this.nbObjects; i++) {
@@ -340,7 +378,7 @@ export class MultiplePlots {
     var obj:PlotData = this.objectList[selected_index]
     obj.X = this.initial_objectsX[selected_index] + tx;
     obj.Y = this.initial_objectsY[selected_index] + ty;
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
   setAllInteractionsToOff():void {
@@ -728,7 +766,7 @@ export class MultiplePlots {
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
     }
     this.resetAllObjects();
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
   resizeObject(vertex_infos, mouse2X, mouse2Y):void {
@@ -770,7 +808,7 @@ export class MultiplePlots {
         }
       }
     }
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
   getSelectionONObject():number {
@@ -864,7 +902,7 @@ export class MultiplePlots {
     }
     this.refresh_dep_selected_points_index();
     this.refresh_selected_object_from_index();
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
   dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]):void {
@@ -984,26 +1022,40 @@ export class MultiplePlots {
       this.objectList[i].X = this.initial_objectsX[i] + mouse2X - mouse1X;
       this.objectList[i].Y = this.initial_objectsY[i] + mouse2Y - mouse1Y;
     }
-    this.redrawAllObjects();
+    // this.redrawAllObjects();
   }
 
-  manage_settings_on(object_index:number): void {
+  get_settings_on_object() {
+    var obj_settings_on = -1;
     for (let i=0; i<this.nbObjects; i++) {
-      if (i != object_index) {
-        this.objectList[i].settings_on = false;
+      if (this.objectList[i].settings_on) {
+        obj_settings_on = i;
+        break;
       }
     }
-    this.objectList[object_index].settings_on = !this.objectList[object_index].settings_on;
+    return obj_settings_on;
+  }
+
+  dbl_click_manage_settings_on(object_index:number): void {
+    var obj_settings_on = this.get_settings_on_object();
+    if (obj_settings_on == -1) {
+      this.objectList[object_index].settings_on = true;
+    } else if (obj_settings_on == object_index) {
+      this.objectList[object_index].settings_on = false;
+    }
+  }
+
+  single_click_manage_settings_on(object_index:number): void {
+    var obj_settings_on = this.get_settings_on_object();
+    if ((obj_settings_on !== -1) && (obj_settings_on !== object_index)) {
+      this.objectList[obj_settings_on].settings_on = false;
+      this.objectList[object_index].settings_on = true;
+    }
   }
 
   mouse_interaction(): void {
     var canvas = document.getElementById(this.canvas_id);
-    var mouse1X:number = 0;
-    var mouse1Y:number = 0;
-    var mouse2X:number = 0;
-    var mouse2Y:number = 0;
-    var mouse3X:number = 0;
-    var mouse3Y:number = 0;
+    var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
     var isDrawing = false;
     var mouse_moving:boolean = false;
     var vertex_infos:Object;
@@ -1074,8 +1126,8 @@ export class MultiplePlots {
           }
           this.refresh_selected_point_index();
         }
-        // this.redrawAllObjects();
       }
+      this.redrawAllObjects();
     });
 
     canvas.addEventListener('mouseup', e => {
@@ -1135,9 +1187,18 @@ export class MultiplePlots {
     });
 
     canvas.addEventListener('dblclick', e => {
-      // this.manage_settings_on(this.clickedPlotIndex);
-      this.redrawAllObjects();
+      if (this.clickedPlotIndex !== -1) {
+        this.dbl_click_manage_settings_on(this.clickedPlotIndex);
+        this.redrawAllObjects();
+      }
     });
+
+    canvas.addEventListener('click', e => {
+      if (this.clickedPlotIndex !== -1) {
+        this.single_click_manage_settings_on(this.clickedPlotIndex);
+        this.redrawAllObjects();
+      }
+    })
   }
 }
 
@@ -2904,12 +2965,7 @@ export abstract class PlotData {
     if (this.interaction_ON === true) {
       var isDrawing = false;
       var mouse_moving = false;
-      var mouse1X = 0;
-      var mouse1Y = 0;
-      var mouse2X = 0;
-      var mouse2Y = 0;
-      var mouse3X = 0;
-      var mouse3Y = 0;
+      var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
       var click_on_axis:boolean=false;
       var selected_axis_index:number = -1;
       var click_on_name:boolean = false;
@@ -2920,10 +2976,7 @@ export abstract class PlotData {
       var selected_border:number[]=[];
       var is_resizing:boolean=false;
       var click_on_selectw_border:boolean = false;
-      var up:boolean = false;
-      var down:boolean = false;
-      var left:boolean = false;
-      var right:boolean = false;
+      var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
 
       var canvas = document.getElementById(this.canvas_id);
 
@@ -2975,14 +3028,6 @@ export abstract class PlotData {
         if (!parallelplot && this.interaction_ON) {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
         }
-      });
-
-      canvas.addEventListener('touchstart', e => {
-        console.log('touchestart', e.touches);
-      });
-
-      canvas.addEventListener('touchmove', e => {
-        console.log('touchmove', e.changedTouches);
       });
     }
 
@@ -3187,6 +3232,7 @@ export class PlotContour extends PlotData {
                 public Y: number,
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
+    check_package_version(data['package_version'], '0.4.0');
     this.plot_datas = [];
     this.type_ = 'primitivegroup';
     var d = this.data;
@@ -3256,6 +3302,7 @@ export class PlotScatter extends PlotData {
     public Y: number,
     public canvas_id: string) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
+      check_package_version(data['package_version'], '0.4.0');
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
@@ -3348,6 +3395,7 @@ export class ParallelPlot extends PlotData {
 
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
+    check_package_version(data['package_version'], '0.4.0');
     this.type_ = 'parallelplot';
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
@@ -4487,12 +4535,12 @@ export class Axis {
   x_step:number;
   y_step:number;
 
-  constructor(public nb_points_x:number,
-              public nb_points_y:number,
+  constructor(public nb_points_x:number=10,
+              public nb_points_y:number=10,
               public graduation_style:TextStyle,
               public axis_style:EdgeStyle,
               public arrow_on:boolean,
-              public grid_on:boolean,
+              public grid_on:boolean=true,
               public type_:string,
               public name) {
   }
@@ -5318,13 +5366,13 @@ export class ColorSurfaceSet {
 }
 
 export class Window {
-  constructor(public name:string, public height:number,public width:number){
+  constructor(public height:number,public width:number, public name?:string){
   }
 
   public static deserialize(serialized) {
-    return new Window(serialized['name'],
-                             serialized['height'],
-                             serialized['width']);
+    return new Window(serialized['height'],
+                      serialized['width'],
+                      serialized['name']);
   }
 }
 
@@ -5730,7 +5778,7 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
   return rgb_vectorToStr(r,g,b);
 }
 
-class Sort {
+ export class Sort {
   nbPermutations:number = 0;
   constructor(){};
 
@@ -5787,8 +5835,8 @@ class Sort {
       throw new Error('sortObjsByAttribute : ' + attribute_name + ' is not a property of the object')
     }
     var attribute_type = TypeOf(list[0][attribute_name]);
+    var list_copy = List.copy(list);
     if (attribute_type == 'float') {
-      var list_copy = List.copy(list);
       for (let i=0; i<list_copy.length-1; i++) {
         let min = i;
         let min_value = list_copy[i][attribute_name];
@@ -5806,16 +5854,16 @@ class Sort {
       return list_copy;
     } else { // ie color or string
       let strings = [];
-      for (let i=0; i<list.length; i++) {
-        if (!List.is_include(list[i][attribute_name], strings)) {
-          strings.push(list[i][attribute_name]);
+      for (let i=0; i<list_copy.length; i++) {
+        if (!List.is_include(list_copy[i][attribute_name], strings)) {
+          strings.push(list_copy[i][attribute_name]);
         }
       }
       let sorted_list = [];
       for (let i=0; i<strings.length; i++) {
-        for (let j=0; j<list.length; j++) {
-          if (strings[i] === list[j][attribute_name]) {
-            sorted_list.push(list[j]);
+        for (let j=0; j<list_copy.length; j++) {
+          if (strings[i] === list_copy[j][attribute_name]) {
+            sorted_list.push(list_copy[j]);
           }
         }
       }
@@ -6064,7 +6112,9 @@ export function equals(obj1:any, obj2:any): boolean { //Works on any kind of obj
   return true;
 }
 
-export function set_default_values(dict_, default_dict_) {
+export function set_default_values(dict_, default_dict_) { // returns a dictionary containing dict_ + every default_dict_'s keys that dict_ doesn't have
+  // ex: dict_ = {color: red}; default_dict_ = {color: blue, shape: circle}
+  // set_default_values(dict_, default_dict_) = {color: red, shape: circle} 
   if (dict_ === undefined) {
     dict_ = {};
   }
@@ -6078,3 +6128,31 @@ export function set_default_values(dict_, default_dict_) {
   }
   return Object.fromEntries(entries);
 }
+
+export function check_package_version(package_version:string, requirement:string) {
+  var version_array = package_version.split('.');
+  var requirement_array = requirement.split('.');
+  var package_version_num = Number(version_array[0])*Math.pow(10, 4) + Number(version_array[1])*Math.pow(10,2) +
+    Number(version_array[2].split('dev')[0]);
+  var requirement_num = Number(requirement_array[0])*Math.pow(10, 4) + Number(requirement_array[1])*Math.pow(10,2) +
+    Number(requirement_array[2]);
+  if (package_version_num < requirement_num) {
+    throw new Error("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
+  }
+}
+
+export class MyObject {
+  public static removeEntries(keys:string[], dict_) {
+    var entries = Object.entries(dict_);
+    var i=0;
+    while (i<entries.length) {
+      if (List.is_include(entries[i][0], keys)) {
+        entries = List.remove_at_index(i, entries);
+      } else {
+        i++;
+      }
+    }
+    return Object.fromEntries(entries);
+  }
+}
+

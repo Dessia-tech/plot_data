@@ -264,9 +264,16 @@ export class MultiplePlots {
   }
 
   remove_primitivegroup(point_index) {
+    var keys = Object.getOwnPropertyNames(this.primitive_dict);
+    if (!List.is_include(point_index.toString(), keys)) { throw new Error('remove_primitivegroup() : input point is not associated with any primitive group');}
     var primitive_index = this.primitive_dict[point_index.toString()];
     this.remove_plot(primitive_index);
     this.primitive_dict = MyObject.removeEntries([point_index.toString()], this.primitive_dict);
+    for (let key of keys) {
+      if (this.primitive_dict[key]>primitive_index) {
+        this.primitive_dict[key]--;
+      }
+    }
   }
 
   remove_plot(index) {
@@ -6148,3 +6155,4 @@ export class MyObject {
     return Object.fromEntries(entries);
   }
 }
+

@@ -225,6 +225,7 @@ export class MultiplePlots {
     new_plot_data.draw_initial();
     new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
     new_plot_data.interaction_ON = false;
+    this.redrawAllObjects();
   }
 
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
@@ -274,7 +275,17 @@ export class MultiplePlots {
         this.primitive_dict[key]--;
       }
     }
+    this.redrawAllObjects();
   }
+
+  remove_all_primitivegroups() {
+    var points_index:string[] = Object.getOwnPropertyNames(this.primitive_dict);
+    for (let index of points_index) {
+      this.remove_primitivegroup(index);
+    }
+  }
+
+
 
   remove_plot(index) {
     this.objectList = List.remove_at_index(index, this.objectList);
@@ -6155,4 +6166,3 @@ export class MyObject {
     return Object.fromEntries(entries);
   }
 }
-

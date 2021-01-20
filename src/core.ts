@@ -259,8 +259,31 @@ export class MultiplePlots {
 
   add_primitivegroup(serialized, point_index) {
     var plot_data = new PlotContour(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
-    this.primitive_dict[point_index.toString()] = plot_data;
+    this.primitive_dict[point_index.toString()] = this.nbObjects;
     this.initialize_new_plot_data(plot_data);
+  }
+
+  remove_primitivegroup(point_index) {
+    var primitive_index = this.primitive_dict[point_index.toString()];
+    this.remove_plot(primitive_index);
+    this.primitive_dict = MyObject.removeEntries([point_index.toString()], this.primitive_dict);
+  }
+
+  remove_plot(index) {
+    this.objectList = List.remove_at_index(index, this.objectList);
+    this.nbObjects--;
+    this.display_order = List.remove_element(index, this.display_order);
+    for (let i=0; i<this.display_order.length; i++) {
+      if (this.display_order[i]>index) {
+        this.display_order[i]--;
+      }
+    }
+    if (List.is_include(index, this.to_display_plots)) { this.to_display_plots = List.remove_element(index, this.to_display_plots); }
+    for (let i=0; i<this.to_display_plots.length; i++) {
+      if (this.to_display_plots[i]>index) {
+        this.to_display_plots[i]--;
+      }
+    }
   }
 
   getObjectIndex(x, y): number[] {
@@ -6111,3 +6134,17 @@ export function check_package_version(package_version:string, requirement:string
   }
 }
 
+export class MyObject {
+  public static removeEntries(keys:string[], dict_) {
+    var entries = Object.entries(dict_);
+    var i=0;
+    while (i<entries.length) {
+      if (List.is_include(entries[i][0], keys)) {
+        entries = List.remove_at_index(i, entries);
+      } else {
+        i++;
+      }
+    }
+    return Object.fromEntries(entries);
+  }
+}

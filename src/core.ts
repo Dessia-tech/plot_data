@@ -258,13 +258,13 @@ export class MultiplePlots {
     this.initialize_new_plot_data(new_plot_data);
   }
 
-  add_primitivegroup(serialized, point_index) {
+  add_primitivegroup(serialized:string, point_index:number): void {
     var plot_data = new PlotContour(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
     this.primitive_dict[point_index.toString()] = this.nbObjects;
     this.initialize_new_plot_data(plot_data);
   }
 
-  remove_primitivegroup(point_index) {
+  remove_primitivegroup(point_index): void { // point_index can be a number as well as a string (ex: 1 or '1') since it is converted into string anyway
     var keys = Object.getOwnPropertyNames(this.primitive_dict);
     if (!List.is_include(point_index.toString(), keys)) { throw new Error('remove_primitivegroup() : input point is not associated with any primitive group');}
     var primitive_index = this.primitive_dict[point_index.toString()];
@@ -278,13 +278,13 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
+
   remove_all_primitivegroups() {
     var points_index:string[] = Object.getOwnPropertyNames(this.primitive_dict);
     for (let index of points_index) {
       this.remove_primitivegroup(index);
     }
   }
-
 
 
   remove_plot(index) {
@@ -777,7 +777,7 @@ export class MultiplePlots {
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
     }
     this.resetAllObjects();
-    // this.redrawAllObjects();
+    this.redrawAllObjects();
   }
 
   resizeObject(vertex_infos, mouse2X, mouse2Y):void {
@@ -1064,6 +1064,13 @@ export class MultiplePlots {
     }
   }
 
+  manage_selected_point_index_changes(old_selected_index:number[], canvas) {
+    if (!equals(old_selected_index, this.selected_index)) {
+      var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.selected_point_index } });
+      canvas.dispatchEvent(evt);
+    }
+  }
+
   mouse_interaction(): void {
     var canvas = document.getElementById(this.canvas_id);
     var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
@@ -1151,6 +1158,7 @@ export class MultiplePlots {
       if (click_on_multi_button) {
         this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view);
       }
+      var old_selected_index = this.selected_point_index;
 
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
@@ -1176,6 +1184,7 @@ export class MultiplePlots {
           this.clean_view();
         }
       }
+      this.manage_selected_point_index_changes(old_selected_index, canvas);
       this.redrawAllObjects();
       isDrawing = false;
       mouse_moving = false;
@@ -1209,7 +1218,10 @@ export class MultiplePlots {
         this.single_click_manage_settings_on(this.clickedPlotIndex);
         this.redrawAllObjects();
       }
-    })
+    });
+
+    canvas.addEventListener('selectionchange', (e:any) => {
+    });
   }
 }
 
@@ -3030,6 +3042,7 @@ export abstract class PlotData {
           if (parallelplot) {
             [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
           } else {
+            var old_select_on_click = List.copy(this.select_on_click);
             [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
           }
         }
@@ -3040,6 +3053,7 @@ export abstract class PlotData {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
         }
       });
+
     }
 
   }
@@ -4915,12 +4929,8 @@ export class Tooltip {
         tp_y = scaleY*(1000*cy + mvy) - tp_height + Y;
       }
       context.beginPath();
-      context.strokeStyle = string_to_hex('black');
-      context.globalAlpha = this.surface_style.opacity;
-      context.fillStyle = this.surface_style.color_fill;
-      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context);
-      context.stroke();
-      context.fill();
+      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('black'), 0.5,
+      this.surface_style.opacity, []);
       context.fillStyle = this.text_style.text_color;
       context.textAlign = 'start';
       context.textBaseline = 'Alphabetic';
@@ -5465,9 +5475,14 @@ export class Shape {
     this.drawLine(context, [[cx, cy], [cx, cy + length]]);
   }
 
-  public static roundRect(x, y, w, h, radius, context) {
+  public static roundRect(x, y, w, h, radius, context, color_fill, color_stroke, line_width, opacity, dashline) {
     var r = x + w;
     var b = y + h;
+    context.setLineDash(dashline);
+    context.fillStyle = color_fill;
+    context.strokeStyle = color_stroke;
+    context.lineWidth = line_width;
+
     context.moveTo(x+radius, y);
     context.lineTo(r-radius, y);
     context.quadraticCurveTo(r, y, r, y+radius);
@@ -5477,6 +5492,11 @@ export class Shape {
     context.quadraticCurveTo(x, b, x, b-radius);
     context.lineTo(x, y+radius);
     context.quadraticCurveTo(x, y, x+radius, y);
+
+    if (color_fill != 'No') { context.fill(); }
+    if (color_stroke != 'No') { context.stroke(); }
+    context.globalAlpha = 1;
+    context.setLineDash([]);
   }
 
   public static isInRect(x, y, rect_x, rect_y, rect_w, rect_h) {
@@ -5539,12 +5559,8 @@ export class Shape {
     context.lineWidth = line_width;
     context.globalAlpha = opacity;
     context.rect(x,y,w,h);
-    if (color_fill != 'No') {
-      context.fill();
-    }
-    if (color_stroke != 'No') {
-      context.stroke();
-    }
+    if (color_fill != 'No') { context.fill(); }
+    if (color_stroke != 'No') { context.stroke(); }
     context.closePath();
     context.globalAlpha = 1;
     context.setLineDash([]);
@@ -6166,3 +6182,9 @@ export class MyObject {
     return Object.fromEntries(entries);
   }
 }
+
+
+var primitive_group1 ={'name': '', 'package_version': '0.4.6.dev6', 'primitives': [{'name': '', 'package_version': '0.4.6.dev6', 'data': [2.0, 2.0, 3.0, 3.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6', 'line_width': 1, 'color_stroke': 'rgb(0, 19, 254)', 'dashline': []}, 'type_': 'linesegment'}, {'name': '', 'package_version': '0.4.6.dev6', 'angle2': 3.141592653589793, 'angle1': 1.5707963267948966, 'data': [{'x': 0.0, 'y': 1.0}, {'x': -0.0980171403295606, 'y': 0.9951847266721969}, {'x': -0.19509032201612825, 'y': 0.9807852804032304}, {'x': -0.29028467725446233, 'y': 0.9569403357322088}, {'x': -0.3826834323650898, 'y': 0.9238795325112867}, {'x': -0.47139673682599764, 'y': 0.881921264348355}, {'x': -0.5555702330196022, 'y': 0.8314696123025452}, {'x': -0.6343932841636455, 'y': 0.773010453362737}, {'x': -0.7071067811865475, 'y': 0.7071067811865476}, {'x': -0.773010453362737, 'y': 0.6343932841636455}, {'x': -0.8314696123025452, 'y': 0.5555702330196023}, {'x': -0.8819212643483549, 'y': 0.4713967368259978}, {'x': -0.9238795325112867, 'y': 0.38268343236508984}, {'x': -0.9569403357322089, 'y': 0.29028467725446233}, {'x': -0.9807852804032304, 'y': 0.19509032201612833}, {'x': -0.9951847266721968, 'y': 0.09801714032956077}, {'x': -1.0, 'y': 6.123233995736766e-17}], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6', 'line_width': 1, 'color_stroke': 'rgb(0, 19, 254)', 'dashline': []}, 'r': 1.0, 'cy': 0.0, 'cx': 0.0, 'type_': 'arc'}, {'name': '', 'package_version': '0.4.6.dev6', 'plot_data_primitives': [{'name': '', 'package_version': '0.4.6.dev6', 'data': [0.0, 0.0, 0.0, 1.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6'}, 'type_': 'linesegment'}, {'name': '', 'package_version': '0.4.6.dev6', 'data': [0.0, 1.0, 1.0, 1.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6'}, 'type_': 'linesegment'}, {'name': '', 'package_version': '0.4.6.dev6', 'data': [1.0, 1.0, 1.0, 0.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6'}, 'type_': 'linesegment'}, {'name': '', 'package_version': '0.4.6.dev6', 'data': [1.0, 0.0, 0.0, 0.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6'}, 'type_': 'linesegment'}], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6', 'line_width': 1, 'color_stroke': 'rgb(0, 19, 254)', 'dashline': []}, 'surface_style': {'name': '', 'object_class': 'plot_data.core.SurfaceStyle', 'package_version': '0.4.6.dev6', 'color_fill': 'rgb(255, 255, 255)', 'opacity': 1, 'hatching': {'name': '', 'object_class': 'plot_data.core.HatchingSet', 'package_version': '0.4.6.dev6', 'stroke_width': 0.5, 'hatch_spacing': 3}}, 'type_': 'contour'}, {'name': '', 'package_version': '0.4.6.dev6', 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6', 'line_width': 1, 'color_stroke': 'rgb(247, 0, 0)'}, 'surface_style': {'name': '', 'object_class': 'plot_data.core.SurfaceStyle', 'package_version': '0.4.6.dev6', 'color_fill': 'rgb(244, 255, 0)', 'opacity': 0.5, 'hatching': {'name': '', 'object_class': 'plot_data.core.HatchingSet', 'package_version': '0.4.6.dev6', 'stroke_width': 1, 'hatch_spacing': 10}}, 'r': 5, 'cy': 9.0, 'cx': 6.0, 'type_': 'circle'}, {'name': '', 'package_version': '0.4.6.dev6', 'text_style': {'name': '', 'object_class': 'plot_data.core.TextStyle', 'package_version': '0.4.6.dev6', 'text_color': 'rgb(247, 0, 0)', 'font_size': 20, 'font_style': 'sans-serif'}, 'comment': 'Hello', 'position_x': 5, 'position_y': 5, 'type_': 'text'}], 'type_': 'primitivegroup'}
+;
+
+var primitive_group2 = {'name': '', 'package_version': '0.4.6.dev6', 'primitives': [{'name': '', 'package_version': '0.4.6.dev6', 'data': [2.0, 2.0, 3.0, 3.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6', 'line_width': 1, 'color_stroke': 'rgb(0, 19, 254)', 'dashline': []}, 'type_': 'linesegment'}, {'name': '', 'package_version': '0.4.6.dev6', 'angle2': 3.141592653589793, 'angle1': 1.5707963267948966, 'data': [{'x': 0.0, 'y': 1.0}, {'x': -0.0980171403295606, 'y': 0.9951847266721969}, {'x': -0.19509032201612825, 'y': 0.9807852804032304}, {'x': -0.29028467725446233, 'y': 0.9569403357322088}, {'x': -0.3826834323650898, 'y': 0.9238795325112867}, {'x': -0.47139673682599764, 'y': 0.881921264348355}, {'x': -0.5555702330196022, 'y': 0.8314696123025452}, {'x': -0.6343932841636455, 'y': 0.773010453362737}, {'x': -0.7071067811865475, 'y': 0.7071067811865476}, {'x': -0.773010453362737, 'y': 0.6343932841636455}, {'x': -0.8314696123025452, 'y': 0.5555702330196023}, {'x': -0.8819212643483549, 'y': 0.4713967368259978}, {'x': -0.9238795325112867, 'y': 0.38268343236508984}, {'x': -0.9569403357322089, 'y': 0.29028467725446233}, {'x': -0.9807852804032304, 'y': 0.19509032201612833}, {'x': -0.9951847266721968, 'y': 0.09801714032956077}, {'x': -1.0, 'y': 6.123233995736766e-17}], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6', 'line_width': 1, 'color_stroke': 'rgb(0, 19, 254)', 'dashline': []}, 'r': 1.0, 'cy': 0.0, 'cx': 0.0, 'type_': 'arc'}, {'name': '', 'package_version': '0.4.6.dev6', 'plot_data_primitives': [{'name': '', 'package_version': '0.4.6.dev6', 'data': [0.0, 0.0, 0.0, 1.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6'}, 'type_': 'linesegment'}, {'name': '', 'package_version': '0.4.6.dev6', 'data': [0.0, 1.0, 1.0, 1.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6'}, 'type_': 'linesegment'}, {'name': '', 'package_version': '0.4.6.dev6', 'data': [1.0, 1.0, 1.0, 0.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6'}, 'type_': 'linesegment'}, {'name': '', 'package_version': '0.4.6.dev6', 'data': [1.0, 0.0, 0.0, 0.0], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6'}, 'type_': 'linesegment'}], 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6', 'line_width': 1, 'color_stroke': 'rgb(0, 19, 254)', 'dashline': []}, 'surface_style': {'name': '', 'object_class': 'plot_data.core.SurfaceStyle', 'package_version': '0.4.6.dev6', 'color_fill': 'rgb(255, 255, 255)', 'opacity': 1, 'hatching': {'name': '', 'object_class': 'plot_data.core.HatchingSet', 'package_version': '0.4.6.dev6', 'stroke_width': 0.5, 'hatch_spacing': 3}}, 'type_': 'contour'}, {'name': '', 'package_version': '0.4.6.dev6', 'edge_style': {'name': '', 'object_class': 'plot_data.core.EdgeStyle', 'package_version': '0.4.6.dev6', 'line_width': 1, 'color_stroke': 'rgb(247, 0, 0)'}, 'surface_style': {'name': '', 'object_class': 'plot_data.core.SurfaceStyle', 'package_version': '0.4.6.dev6', 'color_fill': 'rgb(244, 255, 0)', 'opacity': 0.5, 'hatching': {'name': '', 'object_class': 'plot_data.core.HatchingSet', 'package_version': '0.4.6.dev6', 'stroke_width': 1, 'hatch_spacing': 10}}, 'r': 5, 'cy': 9.0, 'cx': 6.0, 'type_': 'circle'}, {'name': '', 'package_version': '0.4.6.dev6', 'text_style': {'name': '', 'object_class': 'plot_data.core.TextStyle', 'package_version': '0.4.6.dev6', 'text_color': 'rgb(247, 0, 0)', 'font_size': 20, 'font_style': 'sans-serif'}, 'comment': 'Hello', 'position_x': 5, 'position_y': 5, 'type_': 'text'}], 'type_': 'primitivegroup'}

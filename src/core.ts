@@ -8,7 +8,7 @@ export class MultiplePlots {
   initial_coords:[number, number][];
   points:Point2D[]=[];
   sizes:Window[]=[];
-  selected_index:number=-1;
+  move_plot_index:number=-1;
   clicked_index_list:number[]=[];
   clickedPlotIndex:number=-1;
   last_index:number=-1;
@@ -286,7 +286,6 @@ export class MultiplePlots {
     }
   }
 
-
   remove_plot(index) {
     this.objectList = List.remove_at_index(index, this.objectList);
     this.nbObjects--;
@@ -385,10 +384,10 @@ export class MultiplePlots {
     return false;
   }
 
-  translateSelectedObject(selected_index, tx, ty):void {
-    var obj:PlotData = this.objectList[selected_index]
-    obj.X = this.initial_objectsX[selected_index] + tx;
-    obj.Y = this.initial_objectsY[selected_index] + ty;
+  translateSelectedObject(move_plot_index, tx, ty):void {
+    var obj:PlotData = this.objectList[move_plot_index]
+    obj.X = this.initial_objectsX[move_plot_index] + tx;
+    obj.Y = this.initial_objectsY[move_plot_index] + ty;
     // this.redrawAllObjects();
   }
 
@@ -557,7 +556,7 @@ export class MultiplePlots {
   }
 
   setCursorStyle(mouse2X, mouse2Y, canvas):void {
-    if (this.selected_index != -1) {
+    if (this.move_plot_index != -1) {
       var thickness = 15;
       var resize_style:any = '';
       for (let i=0; i<this.nbObjects; i++) {
@@ -819,7 +818,6 @@ export class MultiplePlots {
         }
       }
     }
-    // this.redrawAllObjects();
   }
 
   getSelectionONObject():number {
@@ -913,7 +911,6 @@ export class MultiplePlots {
     }
     this.refresh_dep_selected_points_index();
     this.refresh_selected_object_from_index();
-    // this.redrawAllObjects();
   }
 
   dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]):void {
@@ -969,16 +966,16 @@ export class MultiplePlots {
 
 
   manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
-    this.selected_index = this.getLastObjectIndex(mouse2X, mouse2Y);
-    if (this.selected_index != this.last_index) {
+    this.move_plot_index = this.getLastObjectIndex(mouse2X, mouse2Y);
+    if (this.move_plot_index != this.last_index) {
       for (let i=0; i<this.nbObjects; i++) {
-        if (i == this.selected_index) {
+        if (i == this.move_plot_index) {
           this.objectList[i].interaction_ON = true;
         } else {
           this.objectList[i].interaction_ON = false;
         }
       }
-      this.last_index = this.selected_index;
+      this.last_index = this.move_plot_index;
     }
   }
 
@@ -1033,7 +1030,6 @@ export class MultiplePlots {
       this.objectList[i].X = this.initial_objectsX[i] + mouse2X - mouse1X;
       this.objectList[i].Y = this.initial_objectsY[i] + mouse2Y - mouse1Y;
     }
-    // this.redrawAllObjects();
   }
 
   get_settings_on_object() {
@@ -1065,7 +1061,9 @@ export class MultiplePlots {
   }
 
   manage_selected_point_index_changes(old_selected_index:number[], canvas) {
-    if (!equals(old_selected_index, this.selected_index)) {
+    if (!equals(old_selected_index, this.selected_point_index)) {
+      console.log(old_selected_index, this.selected_point_index)
+      console.log(2)
       var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.selected_point_index } });
       canvas.dispatchEvent(evt);
     }
@@ -1131,7 +1129,7 @@ export class MultiplePlots {
             }
           }
         } else {
-          this.selected_index = this.getLastObjectIndex(mouse2X, mouse2Y);
+          this.move_plot_index = this.getLastObjectIndex(mouse2X, mouse2Y);
           this.setCursorStyle(mouse2X, mouse2Y, canvas);
         }
       } else {
@@ -4349,6 +4347,7 @@ export class Text {
               public position_x:number,
               public position_y:number,
               public text_style:TextStyle,
+              public scaling_text:boolean=true,
               public type_:string,
               public name:string) {
   }
@@ -4363,12 +4362,17 @@ export class Text {
                     serialized['position_x'],
                     -serialized['position_y'],
                     text_style,
+                    serialized['scaling_text'],
                     serialized['type_'],
                     serialized['name']);
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    var font_size = this.text_style.font_size * scaleX/this.init_scale;
+    if (this.scaling_text) {
+      var font_size = this.text_style.font_size * scaleX/this.init_scale;
+    } else {
+      font_size = this.text_style.font_size;
+    }
     context.font = font_size.toString() + 'px ' + this.text_style.font_style;
     // context.font = this.text_style.font;
     context.fillStyle = this.text_style.text_color;
@@ -6182,3 +6186,128 @@ export class MyObject {
     return Object.fromEntries(entries);
   }
 }
+
+var primitive_group = {'name': '',
+'package_version': '0.4.7.dev5',
+'primitives': [{'name': '',
+  'package_version': '0.4.7.dev5',
+  'data': [2.0, 2.0, 3.0, 3.0],
+  'edge_style': {'name': '',
+   'object_class': 'plot_data.core.EdgeStyle',
+   'package_version': '0.4.7.dev5',
+   'line_width': 1,
+   'color_stroke': 'rgb(0, 19, 254)',
+   'dashline': []},
+  'type_': 'linesegment'},
+ {'name': '',
+  'package_version': '0.4.7.dev5',
+  'angle2': 3.141592653589793,
+  'angle1': 1.5707963267948966,
+  'data': [{'x': 0.0, 'y': 1.0},
+   {'x': -0.0980171403295606, 'y': 0.9951847266721969},
+   {'x': -0.19509032201612825, 'y': 0.9807852804032304},
+   {'x': -0.29028467725446233, 'y': 0.9569403357322088},
+   {'x': -0.3826834323650898, 'y': 0.9238795325112867},
+   {'x': -0.47139673682599764, 'y': 0.881921264348355},
+   {'x': -0.5555702330196022, 'y': 0.8314696123025452},
+   {'x': -0.6343932841636455, 'y': 0.773010453362737},
+   {'x': -0.7071067811865475, 'y': 0.7071067811865476},
+   {'x': -0.773010453362737, 'y': 0.6343932841636455},
+   {'x': -0.8314696123025452, 'y': 0.5555702330196023},
+   {'x': -0.8819212643483549, 'y': 0.4713967368259978},
+   {'x': -0.9238795325112867, 'y': 0.38268343236508984},
+   {'x': -0.9569403357322089, 'y': 0.29028467725446233},
+   {'x': -0.9807852804032304, 'y': 0.19509032201612833},
+   {'x': -0.9951847266721968, 'y': 0.09801714032956077},
+   {'x': -1.0, 'y': 6.123233995736766e-17}],
+  'edge_style': {'name': '',
+   'object_class': 'plot_data.core.EdgeStyle',
+   'package_version': '0.4.7.dev5',
+   'line_width': 1,
+   'color_stroke': 'rgb(0, 19, 254)',
+   'dashline': []},
+  'r': 1.0,
+  'cy': 0.0,
+  'cx': 0.0,
+  'type_': 'arc'},
+ {'name': '',
+  'package_version': '0.4.7.dev5',
+  'plot_data_primitives': [{'name': '',
+    'package_version': '0.4.7.dev5',
+    'data': [0.0, 0.0, 0.0, 1.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.4.7.dev5'},
+    'type_': 'linesegment'},
+   {'name': '',
+    'package_version': '0.4.7.dev5',
+    'data': [0.0, 1.0, 1.0, 1.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.4.7.dev5'},
+    'type_': 'linesegment'},
+   {'name': '',
+    'package_version': '0.4.7.dev5',
+    'data': [1.0, 1.0, 1.0, 0.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.4.7.dev5'},
+    'type_': 'linesegment'},
+   {'name': '',
+    'package_version': '0.4.7.dev5',
+    'data': [1.0, 0.0, 0.0, 0.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.4.7.dev5'},
+    'type_': 'linesegment'}],
+  'edge_style': {'name': '',
+   'object_class': 'plot_data.core.EdgeStyle',
+   'package_version': '0.4.7.dev5',
+   'line_width': 1,
+   'color_stroke': 'rgb(0, 19, 254)',
+   'dashline': []},
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.4.7.dev5',
+   'color_fill': 'rgb(255, 255, 255)',
+   'opacity': 1,
+   'hatching': {'name': '',
+    'object_class': 'plot_data.core.HatchingSet',
+    'package_version': '0.4.7.dev5',
+    'stroke_width': 0.5,
+    'hatch_spacing': 3}},
+  'type_': 'contour'},
+ {'name': '',
+  'package_version': '0.4.7.dev5',
+  'edge_style': {'name': '',
+   'object_class': 'plot_data.core.EdgeStyle',
+   'package_version': '0.4.7.dev5',
+   'line_width': 1,
+   'color_stroke': 'rgb(247, 0, 0)'},
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.4.7.dev5',
+   'color_fill': 'rgb(244, 255, 0)',
+   'opacity': 0.5,
+   'hatching': {'name': '',
+    'object_class': 'plot_data.core.HatchingSet',
+    'package_version': '0.4.7.dev5',
+    'stroke_width': 1,
+    'hatch_spacing': 10}},
+  'r': 5,
+  'cy': 9.0,
+  'cx': 6.0,
+  'type_': 'circle'},
+ {'name': '',
+  'package_version': '0.4.7.dev5',
+  'text_style': {'name': '',
+   'object_class': 'plot_data.core.TextStyle',
+   'package_version': '0.4.7.dev5',
+   'text_color': 'rgb(247, 0, 0)',
+   'font_size': 20,
+   'font_style': 'sans-serif'},
+  'comment': 'Hello',
+  'position_x': 5,
+  'position_y': 5,
+  'type_': 'text'}],
+'type_': 'primitivegroup'};

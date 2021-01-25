@@ -139,16 +139,17 @@ class SurfaceStyle(DessiaObject):
 
 class Text(PlotDataObject):
     def __init__(self, comment: str, position_x: float, position_y: float,
-                 text_style: TextStyle = None, name: str = ''):
+                 text_style: TextStyle = None, scaling_text: bool = None, name: str = ''):
         self.text_style = text_style
         self.comment = comment
         self.position_x = position_x
         self.position_y = position_y
+        self.scaling_text = scaling_text
         PlotDataObject.__init__(self, type_='text', name=name)
 
 
 class LineSegment(PlotDataObject):
-    def __init__(self, data: List[float], edge_style: EdgeStyle,
+    def __init__(self, data: List[float], edge_style: EdgeStyle = None,
                  name: str = ''):
         self.data = data
         if edge_style is None:
@@ -166,7 +167,7 @@ class LineSegment(PlotDataObject):
 
 class Circle2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, r: float,
-                 edge_style: EdgeStyle, surface_style: SurfaceStyle,
+                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None,
                  name: str = ''):
         self.edge_style = edge_style
         self.surface_style = surface_style
@@ -287,7 +288,7 @@ class Scatter(PlotDataObject):
 class Arc2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, r: float,
                  data: List[float], angle1: float, angle2: float,
-                 edge_style: EdgeStyle, name: str = ''):
+                 edge_style: EdgeStyle = None, name: str = ''):
         self.angle2 = angle2
         self.angle1 = angle1
         self.data = data
@@ -303,8 +304,8 @@ class Arc2D(PlotDataObject):
 
 class Contour2D(PlotDataObject):
     def __init__(self, plot_data_primitives: List[float],  # plot_data_primitives: arc2D or line2D
-                 edge_style: EdgeStyle,
-                 surface_style: SurfaceStyle, name: str = ''):
+                 edge_style: EdgeStyle = None,
+                 surface_style: SurfaceStyle = None, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style

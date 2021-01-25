@@ -48,7 +48,8 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
-    target: /var/www/cdn/js/plot-data/{$DRONE_TAG}/
+    target: /var/www/cdn/js/plot-data/latest/
+    target: /var/www/cdn/js/plot-data/${DRONE_TAG}/
     source: lib/*
     strip_components: 1
 

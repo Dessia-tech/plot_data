@@ -139,12 +139,12 @@ class SurfaceStyle(DessiaObject):
 
 class Text(PlotDataObject):
     def __init__(self, comment: str, position_x: float, position_y: float,
-                 text_style: TextStyle = None, scaling_text: bool = None, name: str = ''):
+                 text_style: TextStyle = None, text_scaling: bool = None, name: str = ''):
         self.text_style = text_style
         self.comment = comment
         self.position_x = position_x
         self.position_y = position_y
-        self.scaling_text = scaling_text
+        self.text_scaling = text_scaling
         PlotDataObject.__init__(self, type_='text', name=name)
 
 

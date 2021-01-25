@@ -4347,7 +4347,7 @@ export class Text {
               public position_x:number,
               public position_y:number,
               public text_style:TextStyle,
-              public scaling_text:boolean=true,
+              public text_scaling:boolean=true,
               public type_:string,
               public name:string) {
   }
@@ -4362,13 +4362,13 @@ export class Text {
                     serialized['position_x'],
                     -serialized['position_y'],
                     text_style,
-                    serialized['scaling_text'],
+                    serialized['text_scaling'],
                     serialized['type_'],
                     serialized['name']);
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    if (this.scaling_text) {
+    if (this.text_scaling) {
       var font_size = this.text_style.font_size * scaleX/this.init_scale;
     } else {
       font_size = this.text_style.font_size;

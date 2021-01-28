@@ -558,7 +558,7 @@ export class MultiplePlots {
   reorder_resize_style(resize_style) {
     var resize_dict = ['n', 'ns', 'ne', 'nwse', 'nw', 'e', 'ew', 's', 'se', 'sw', 'w'];
     for (let i=0; i<resize_dict.length; i++) {
-      if (equals(resize_style.split('').sort(), resize_dict[i].split('').sort())) {
+      if (resize_style.split('').sort() === resize_dict[i].split('').sort()) {
         resize_style = resize_dict[i];
         break;
       }
@@ -601,13 +601,13 @@ export class MultiplePlots {
     }
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
-      if ((obj.type_ == 'scatterplot') && !equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
+      if ((obj.type_ == 'scatterplot') && List.equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
       } else if ((obj.type_ == 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
       }
     }
-    if (equals(all_index, this.dep_selected_points_index)) {
+    if (List.equals(all_index, this.dep_selected_points_index)) {
       this.dep_selected_points_index = [];
     }
   }
@@ -1066,7 +1066,7 @@ export class MultiplePlots {
   }
 
   manage_selected_point_index_changes(old_selected_index:number[], canvas) {
-    if (!equals(old_selected_index, this.selected_point_index)) {
+    if (!List.equals(old_selected_index, this.selected_point_index)) {
       var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.selected_point_index } });
       canvas.dispatchEvent(evt);
     }
@@ -1127,7 +1127,7 @@ export class MultiplePlots {
           }
           if (this.view_bool === true) {
             let refreshed_sorted_list = this.getSortedList();
-            if (!equals(this.sorted_list, refreshed_sorted_list)) {
+            if (!List.equals(this.sorted_list, refreshed_sorted_list)) {
               this.clean_view();
             }
           }
@@ -1598,7 +1598,7 @@ export abstract class PlotData {
       } else {
         if (this.plotObject.type_ == 'scatterplot') {
           if (this.sc_interpolation_ON) {
-            if ((!equals([this.perm_window_x, this.perm_window_y, this.perm_window_w, this.perm_window_h], [0,0,0,0])) 
+            if ((!List.equals([this.perm_window_x, this.perm_window_y, this.perm_window_w, this.perm_window_h], [0,0,0,0])) 
                 || (this.select_on_click.length != 0) || (List.contains_undefined(this.select_on_click))) {
               this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
             } else {
@@ -1759,7 +1759,7 @@ export abstract class PlotData {
 
         this.refresh_point_list_bool = false;
       } else if (this.mergeON === false) {
-        if (!equals(this.scatter_point_list, d.point_list)) {
+        if (!this.point_list_equals(this.scatter_point_list, d.point_list)) {
           this.scatter_point_list = d.point_list;
         }
       }
@@ -6021,6 +6021,16 @@ export class List {
     return temp;
   }
 
+  public static equals(list1, list2) {
+    if (list1.length != list2.length) { return false; }
+    for (let i=0; i<list1.length; i++) {
+      if (list1[i] !== list2[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   public static remove_element(val:any, list:any[]): any[] { //remove every element=val from list
     // var temp = [];
     // for (var i = 0; i < list.length; i++) {
@@ -6046,7 +6056,7 @@ export class List {
 
   public static is_list_include(list:any[], listArray:any[][]) { //check if a list is inside a list of lists
     for (let i=0; i<listArray.length; i++) {
-        if (equals(listArray[i], list)) {
+        if (this.equals(listArray[i], list)) {
             return true;
         }
     }
@@ -6114,7 +6124,7 @@ export class List {
 
   public static isListOfEmptyList(list:any[]): boolean { //check if list === [[], [], ..., []]
     for (let i=0; i<list.length; i++) {
-      if (!equals(list[i], [])) {
+      if (!this.equals(list[i], [])) {
         return false;
       }
     }

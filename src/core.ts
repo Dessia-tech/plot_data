@@ -1,3 +1,4 @@
+import * as deepEquals from 'fast-deep-equal';
 
 export class MultiplePlots {
   context_show:any;
@@ -3377,6 +3378,7 @@ export class PlotScatter extends PlotData {
         this.scatter_init_points = this.plotObject.point_list;
         this.refresh_MinMax(this.plotObject.point_list);
       }
+      console.log(deepEquals(1,1));
       this.isParallelPlot = false;
   }
 

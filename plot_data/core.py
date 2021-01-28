@@ -350,11 +350,19 @@ class Attribute(PlotDataObject):
         PlotDataObject.__init__(self, type_=type_, name=name)
 
 
+class PointFamily(PlotDataObject):
+    def __init__(self, point_color: str, point_index: List[int],
+                 name: str = ''):
+        self.color = point_color
+        self.point_index = point_index
+        PlotDataObject.__init__(self, type_=None, name=name)
+
+
 class MultiplePlots(PlotDataObject):
     def __init__(self, elements: List[any],
                  objects: List[Subclass[PlotDataObject]],
                  sizes: List[Window], coords: List[Tuple[float, float]],
-                 point_families: List[any] = None,
+                 point_families: List[PointFamily] = None,
                  initial_view_on: bool = None,
                  name: str = ''):
         self.elements = elements
@@ -364,14 +372,6 @@ class MultiplePlots(PlotDataObject):
         self.point_families = point_families
         self.initial_view_on = initial_view_on
         PlotDataObject.__init__(self, type_='multiplot', name=name)
-
-
-class PointFamily(PlotDataObject):
-    def __init__(self, point_color: str, point_index: List[int],
-                 name: str = ''):
-        self.color = point_color
-        self.point_index = point_index
-        PlotDataObject.__init__(self, type_=None, name=name)
 
 
 def plot_canvas(plot_data_object: Subclass[PlotDataObject],

@@ -673,13 +673,11 @@ export class MultiplePlots {
       if (this.objectList[i].type_ == "scatterplot") {
         let selected_point_index_i = this.objectList[i].selected_point_index;
         for (let j=0; j<selected_point_index_i.length; j++) {
-          if (!List.is_include(selected_point_index_i[j], this.selected_point_index)) {
-            this.selected_point_index.push(selected_point_index_i[j]);
-          }
+          this.selected_point_index.push(selected_point_index_i[j]);
         }
       }
     }
-    this.selected_point_index.sort();
+    this.selected_point_index = List.sort_without_duplicates(this.selected_point_index);
   }
 
   getSortedList() {
@@ -945,7 +943,7 @@ export class MultiplePlots {
         for (let j=0; j<obj.scatter_point_list.length; j++) {
           let scatter_point_list_j = obj.scatter_point_list[j]
           for (let k=0; k<scatter_point_list_j.points_inside.length; k++) {
-            if (List.is_include(scatter_point_list_j.points_inside[k], temp_select_on_click) && !List.is_include(scatter_point_list_j, this.objectList[i].select_on_click)) {
+            if (List.is_include(scatter_point_list_j.points_inside[k], temp_select_on_click) && !scatter_point_list_j.selected) {
               this.objectList[i].select_on_click.push(obj.scatter_point_list[j]);
               this.objectList[i].scatter_point_list[j].selected = true;
               break;
@@ -1626,20 +1624,6 @@ export abstract class PlotData {
         if (this.select_on_mouse == d) {
           this.context.fillStyle = this.color_surface_on_mouse;
         }
-        // for (var j = 0; j < this.select_on_click.length; j++) {
-        //   var z = this.select_on_click[j];
-        //   if (z == d) {
-        //     if (shape == 'crux') {
-        //       this.context.strokeStyle = this.color_surface_on_click;
-        //     } else {
-        //       if (this.sc_interpolation_ON) {
-        //         this.context.fillStyle = d.color_fill;
-        //       } else {
-        //         this.context.fillStyle = this.color_surface_on_click;
-        //       }
-        //     }
-        //   }
-        // }
         if (d.selected) {
           if (shape == 'crux') {
             this.context.strokeStyle = this.color_surface_on_click;
@@ -1797,7 +1781,9 @@ export abstract class PlotData {
       }
 
       for (var i=0; i<this.tooltip_list.length; i++) {
-        this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
+        if (!List.is_include(this.tooltip_list[i],this.scatter_point_list)) {
+          this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
+        }
       }
       this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_point_list, d.elements, this.mergeON);
     }
@@ -2771,21 +2757,27 @@ export abstract class PlotData {
     var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
     var click_plot_data = this.colour_to_plot_data[colKey];
-    if (click_plot_data && click_plot_data.selected) {
-      this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
-      click_plot_data.selected = false;
-      this.latest_selected_points = [];
-    } else {
+    if (click_plot_data) {
+      if (click_plot_data.selected) {
+        this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
+        click_plot_data.selected = false;
+        this.latest_selected_points = [];
+      } else {
+        this.select_on_click.push(click_plot_data);
+        click_plot_data.selected = true;
+        this.latest_selected_points.push(click_plot_data);
+      }
+    } else { 
       this.select_on_click.push(click_plot_data);
-      if (click_plot_data) { click_plot_data.selected = true; }
       this.latest_selected_points.push(click_plot_data);
     }
-    if (this.tooltip_ON) {
-        if (List.is_include(click_plot_data, this.tooltip_list) && (!List.is_include(click_plot_data, this.select_on_click))) {
-          this.tooltip_list = List.remove_element(click_plot_data, this.tooltip_list);
-        } else if (!List.is_include(click_plot_data, this.tooltip_list) && List.is_include(click_plot_data, this.select_on_click)){
-          this.tooltip_list.push(click_plot_data);
-        }
+    if (this.tooltip_ON && click_plot_data) {
+      let is_in_tooltip_list = List.is_include(click_plot_data, this.tooltip_list);
+      if (is_in_tooltip_list && !click_plot_data.selected) {
+        this.tooltip_list = List.remove_element(click_plot_data, this.tooltip_list);
+      } else if (!is_in_tooltip_list && click_plot_data.selected) {
+        this.tooltip_list.push(click_plot_data);
+      }
     }
 
     if (List.contains_undefined(this.select_on_click) && !this.click_on_button) {
@@ -2800,8 +2792,11 @@ export abstract class PlotData {
 
   reset_select_on_click() {
     this.select_on_click = [];
-    for (let i=0; i<this.plotObject.point_list.length; i++) {
-      this.plotObject.point_list[i].selected = false;
+    if (this.plotObject.point_list) {
+      for (let i=0; i<this.plotObject.point_list.length; i++) {
+        this.plotObject.point_list[i].selected = false;
+        if (this.scatter_point_list[i]) {this.scatter_point_list[i].selected = false;}
+      }
     }
   }
 
@@ -3207,6 +3202,7 @@ export abstract class PlotData {
           var point = new Point2D(new_cx, new_cy, new_shape, new_point_size, new_color_fill, new_color_stroke, new_stroke_width, 'point', '');
           point.points_inside = point_list_copy[i].points_inside.concat(point_list_copy[j].points_inside);
           point.point_families = List.union(point_list_copy[i].point_families, point_list_copy[j].point_families);
+          point.selected = point_list_copy[i].selected || point_list_copy[j].selected;
           var size_coeff = 1.15;
           point.size = point_list_copy[max_size_index].size*size_coeff;
           var point_i = point_list_copy[i];
@@ -4108,6 +4104,7 @@ export class MultiplotCom {
 
   public static sc_to_sc_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], plot_data:PlotData) {
     let obj_to_display_attributes = plot_data.plotObject.to_display_attributes;
+    console.log(to_display_attributes)
     if (equals(obj_to_display_attributes, to_display_attributes) || equals(obj_to_display_attributes, List.reverse(to_display_attributes))) {
       if (equals(obj_to_display_attributes, List.reverse(to_display_attributes))) {
         selection_coords = selection_coords.reverse();
@@ -6028,6 +6025,19 @@ export function isHex(str:string):boolean {
 }
 
 export class List {
+  public static sort_without_duplicates(list:number[]) {
+    var sorted = list.sort();
+    var no_duplicates = [list[0]];
+    var current_elt = sorted[0];
+    for (let val of sorted) {
+      if (val>current_elt) {
+        current_elt = val;
+        no_duplicates.push(val);
+      }
+    }
+    return no_duplicates
+  }
+
   public static contains_undefined(list:any[]):boolean {
     for (var i=0; i<list.length; i++) {
       if (typeof list[i] === "undefined") {

@@ -37,8 +37,8 @@ export class MultiplePlots {
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
     check_package_version(data['package_version'], '0.4.3');
-    this.initial_coords = data['coords'];
     this.dataObjects = data['objects'];
+    this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
     var elements = data['elements'];
     if (elements) {this.initialize_displayable_attributes();}
     this.initialize_sizes();
@@ -6269,7 +6269,7 @@ export function check_package_version(package_version:string, requirement:string
   var version_array = package_version.split('.');
   var requirement_array = requirement.split('.');
   var package_version_num = Number(version_array[0])*Math.pow(10, 4) + Number(version_array[1])*Math.pow(10,2) +
-    Number(version_array[2].split('dev')[0]);
+    Number(version_array[2]);
   var requirement_num = Number(requirement_array[0])*Math.pow(10, 4) + Number(requirement_array[1])*Math.pow(10,2) +
     Number(requirement_array[2]);
   if (package_version_num < requirement_num) {

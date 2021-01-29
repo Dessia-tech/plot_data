@@ -361,7 +361,7 @@ class PointFamily(PlotDataObject):
 class MultiplePlots(PlotDataObject):
     def __init__(self, elements: List[any],
                  objects: List[Subclass[PlotDataObject]],
-                 sizes: List[Window], coords: List[Tuple[float, float]],
+                 sizes: List[Window], coords: List[Tuple[float, float]] = None,
                  point_families: List[PointFamily] = None,
                  initial_view_on: bool = None,
                  name: str = ''):

@@ -3607,6 +3607,22 @@ export class ParallelPlot extends PlotData {
   }
 }
 
+export class PrimitiveGroupContainer extends PlotData {
+  constructor(public data:any,
+    public width: number,
+    public height: number,
+    public coeff_pixel: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string) {
+      super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
+      
+    }
+
+    draw() {}
+}
+
 export class Interactions {
   public static initialize_select_win_bool(mouseX, mouseY, plot_data:PlotScatter): [boolean, boolean, boolean, boolean, boolean] {
     var thickness = 15;

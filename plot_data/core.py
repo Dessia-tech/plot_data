@@ -332,6 +332,12 @@ class PrimitiveGroup(PlotDataObject):
 color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 
+class PrimitiveGroupsContainer(PlotDataObject):
+    def __init__(self, primitive_groups: List[PrimitiveGroup], axis_names: List[str] = None):  # axis_names=None if the contained primitive_groups don't have to be
+        self.primitive_groups = primitive_groups              # laid out on axis. Otherwise, len(axis_names)=1 or 2 whether one or two axis are needed
+        self.axis_names = axis_names
+
+
 class ParallelPlot(PlotDataObject):
     def __init__(self, edge_style: EdgeStyle = None, disposition: str = None,
                  to_disp_attribute_names: List[str] = None, rgbs=None,

@@ -134,6 +134,7 @@ primitive_group_container_template = Template('''<div id="app"></div>
 	primitive_group_container.define_canvas($canvas_id.id);
 	primitive_group_container.draw_initial();
 	primitive_group_container.mouse_interaction(primitive_group_container.isParallelPlot);
+	primitive_group_container.regular_layout();
 </script> 
 ''')
 

@@ -810,7 +810,7 @@ export class MultiplePlots {
     }
     this.sorted_list = this.getSortedList();
     var nbObjectsDisplayed = this.to_display_plots.length;
-    let small_length_nbObjects = Math.min(Math.ceil(nbObjectsDisplayed/2), 2);
+    let small_length_nbObjects = Math.min(Math.ceil(nbObjectsDisplayed/2), Math.floor(Math.sqrt(nbObjectsDisplayed)));
     let big_length_nbObjects = Math.ceil(nbObjectsDisplayed/small_length_nbObjects);
     let big_length_step = this[big_length]/big_length_nbObjects;
     let small_length_step = this[small_length]/small_length_nbObjects;
@@ -843,7 +843,6 @@ export class MultiplePlots {
     var deltaY = mouse2Y - this.initial_mouseY;
     for (let i=0; i<vertex_infos.length; i++) {
       let vertex_object_index = vertex_infos[i].index;
-      var obj:PlotData = this.objectList[vertex_object_index];
       if (vertex_infos[i].up === true) {
         if (this.initial_object_height[vertex_object_index] - deltaY > heightSizeLimit) {
           this.objectList[vertex_object_index].Y = this.initial_objectsY[vertex_object_index] + deltaY;
@@ -3749,6 +3748,70 @@ export class PrimitiveGroupContainer extends PlotData {
       }
     }
     return -1;
+  }
+
+  regular_layout():void {
+    var big_coord = 'X';
+    var small_coord = 'Y';
+    var big_length = 'width';
+    var small_length = 'height';
+    if (this.width < this.height) {
+      [big_coord, small_coord, big_length, small_length] = [small_coord, big_coord, small_length, big_length];
+    }
+    var sorted_list = this.getSortedList();
+    var nb_primitives = this.primitive_groups.length;
+    let small_length_nbObjects = Math.min(Math.ceil(nb_primitives/2), Math.floor(Math.sqrt(nb_primitives)));
+    let big_length_nbObjects = Math.ceil(nb_primitives/small_length_nbObjects);
+    let big_length_step = this[big_length]/big_length_nbObjects;
+    let small_length_step = this[small_length]/small_length_nbObjects;
+    for (let i=0; i<big_length_nbObjects - 1; i++) {
+      for (let j=0; j<small_length_nbObjects; j++) {
+        var current_index = i*small_length_nbObjects + j; //current_index in sorted_list
+        this.primitive_groups[sorted_list[current_index]][big_coord] = i*big_length_step;
+        this.primitive_groups[sorted_list[current_index]][small_coord] = j*small_length_step;
+        this.primitive_groups[sorted_list[current_index]][big_length] = big_length_step;
+        this.primitive_groups[sorted_list[current_index]][small_length] = small_length_step;
+      }
+    }
+    let last_index = current_index + 1;
+    let remaining_obj = nb_primitives - last_index;
+    let last_small_length_step = this[small_length]/remaining_obj;
+    for (let j=0; j<remaining_obj; j++) {
+      this.primitive_groups[sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step;
+      this.primitive_groups[sorted_list[last_index + j]][small_coord] = j*last_small_length_step;
+      this.primitive_groups[sorted_list[last_index + j]][big_length] = big_length_step;
+      this.primitive_groups[sorted_list[last_index + j]][small_length] = last_small_length_step;
+    }
+    // this.resetAllObjects();
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    
+  }
+
+  getSortedList() {
+    var big_coord = 'X';
+    var small_coord = 'Y';
+    if (this.width < this.height) {[big_coord, small_coord] = [small_coord, big_coord];}
+    var sort = new Sort();
+    var sortedObjectList = sort.sortObjsByAttribute(this.primitive_groups, big_coord);
+    var sorted_list = [];
+    var nb_primitives = this.primitive_groups.length;
+    for (let i=0; i<nb_primitives; i++) {
+      let sorted_index = List.get_index_of_element(sortedObjectList[i], this.primitive_groups);
+      sorted_list.push(sorted_index); 
+    }
+    var sortedDisplayedObjectList = [];
+    for (let i=0; i<sorted_list.length; i++) {
+      sortedDisplayedObjectList.push(this.primitive_groups[sorted_list[i]]);
+    }
+    var j = 0;
+    while (j<sorted_list.length - 1) {
+      if (sortedDisplayedObjectList[j+1][small_coord] < sortedDisplayedObjectList[j][small_coord]) {
+        List.switchElements(sorted_list, j, j+1);
+      }
+      j = j+2;
+    }
+    return sorted_list;
   }
 
   mouse_interaction() {

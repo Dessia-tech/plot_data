@@ -27,7 +27,7 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 
 multiplot = plot_data.MultiplePlots(objects=[primitive_group_container], initial_view_on=True)
 
-plot_data.plot_canvas(plot_data_object=primitive_group_container, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
 
 
 

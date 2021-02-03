@@ -334,8 +334,9 @@ color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
 
 class PrimitiveGroupsContainer(PlotDataObject):
     def __init__(self, primitive_groups: List[PrimitiveGroup], sizes: List[Tuple[float, float]] = None,
-                coords: List[Tuple[float, float]] = None, axis_names: List[str] = None, name: str = ''):  # axis_names=None if the contained primitive_groups don't have to be
-        self.primitive_groups = primitive_groups              # laid out on axis. Otherwise, len(axis_names)=1 or 2 whether one or two axis are needed
+                 coords: List[Tuple[float, float]] = None,
+                 axis_names: List[str] = None, name: str = ''):  # axis_names=None if the contained primitive_groups don't have to be
+        self.primitive_groups = primitive_groups                 # laid out on axis. Otherwise, len(axis_names)=1 or 2 whether one or two axis are needed
         self.axis_names = axis_names
         self.sizes = sizes
         self.coords = coords

@@ -109,6 +109,7 @@ multiplot_template = Template('''<div id="app"></div>
 </script> 
 ''')
 
+
 primitive_group_container_template = Template('''<div id="app"></div>
 <canvas id="$canvas_id" width="490" height="490"
             style="border: 1px solid black;">

@@ -250,7 +250,7 @@ export class MultiplePlots {
     var DEFAULT_TOOLTIP = {to_disp_attribute_names:[attr_x.name, attr_y.name], surface_style:surface_style, text_style:text_style, tooltip_radius:5, type_:'tooltip', name:''};
     var point_style = {color_fill:string_to_rgb('lightblue'), color_stroke:string_to_rgb('grey'), stroke_width:0.5, size:2, shape:'circle', name:''};
     var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
-                       elements:this.data['elements'], axis:DEFAULT_AXIS, type_:'scatterplot', name:''};
+                       elements:this.data['elements'], axis:DEFAULT_AXIS, type_:'scatterplot', name:'', package_version: this.data['package_version']};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
     var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id);
@@ -264,7 +264,7 @@ export class MultiplePlots {
     }
     var edge_style = {line_width:0.5, color_stroke:string_to_rgb('black'), dashline:[], name:''};
     var pp_data = {edge_style:edge_style, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
-                  rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:''};
+                  rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:'', package_version:this.data['package_version']};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
     var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, 1000, this.buttons_ON, 0, 0, this.canvas_id);
@@ -288,7 +288,7 @@ export class MultiplePlots {
         this.primitive_dict[key]--;
       }
     }
-    // this.redrawAllObjects();
+    this.redrawAllObjects();
   }
 
 
@@ -297,7 +297,32 @@ export class MultiplePlots {
     for (let index of points_index) {
       this.remove_primitivegroup(index);
     }
+    this.redrawAllObjects();
   }
+
+  add_primitive_group_container(serialized, associated_points:number[], layout:any='regular') { // layout options : 'regular', [<attribute_name>] or [<attribute_name1>, <attribute_name2>]
+    var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
+    var entries = [];
+    for (let i=0; i<associated_points.length; i++) {
+      entries.push([associated_points[i], i]);
+    }
+    new_plot_data.primitive_dict = Object.fromEntries(entries);
+    this.initialize_new_plot_data(new_plot_data);
+    if (layout == 'regular') {
+      new_plot_data.regular_layout();
+    } // TODO: one and two axis layout conditions
+  }
+
+  add_primitive_group_to_container(serialized, container_index, point_index) {
+    let obj:any = this.objectList[container_index];
+    obj.add_primitive_group(serialized, point_index);
+  }
+
+  remove_primitive_group_from_container(point_index, container_index) {
+    let obj:any = this.objectList[container_index];
+    obj.remove_primitive_group(point_index);
+  }
+
 
   remove_plot(index) {
     this.objectList = List.remove_at_index(index, this.objectList);
@@ -435,6 +460,13 @@ export class MultiplePlots {
         obj['primitive_groups'][i].Y = obj['primitive_groups'][i].Y + ty;
       }
     }
+  }
+
+  translateAllObjects(tx, ty) {
+    for (let i=0; i<this.nbObjects; i++) {
+      this.translateSelectedObject(i, tx, ty);
+    }
+    this.redrawAllObjects();
   }
 
   setAllInteractionsToOff():void {
@@ -681,6 +713,9 @@ export class MultiplePlots {
         Interactions.click_on_reset_action(this.objectList[i]);
       } else if (this.objectList[i].type_ == 'contour') {
         this.objectList[i].reset_scales();
+      } else if (this.objectList[i].type_ == 'primitivegroupcontainer') {
+        let obj:any = this.objectList[i];
+        obj.regular_layout();
       }
     }
   }
@@ -691,9 +726,8 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
       if (obj.type_ == 'scatterplot') {
-        this.objectList[i].select_on_click = [];
-        this.objectList[i].selected_point_index = [];
-        Interactions.reset_permanent_window(this.objectList[i]);
+        this.objectList[i].reset_select_on_click();
+        Interactions.reset_permanent_window(this.objectList[i])
       } else if (obj.type_ == 'parallelplot') {
         this.objectList[i].reset_pp_selected();
         this.objectList[i].rubber_bands = [];
@@ -1018,6 +1052,10 @@ export class MultiplePlots {
           this.objectList[i].interaction_ON = true;
         } else {
           this.objectList[i].interaction_ON = false;
+          if (this.objectList[i].type_ == 'primitivegroupcontainer') {
+            let obj:any = this.objectList[i];
+            obj.setAllInteractionsToOff();
+          }
         }
       }
       this.last_index = this.move_plot_index;
@@ -1072,14 +1110,6 @@ export class MultiplePlots {
       }
     }
     this.resetAllObjects();
-  }
-
-  translateAllObjects(mouse1X:number, mouse1Y:number, mouse2X:number, mouse2Y:number) {
-    for (let i=0; i<this.nbObjects; i++) {
-      this.objectList[i].X = this.initial_objectsX[i] + mouse2X - mouse1X;
-      this.objectList[i].Y = this.initial_objectsY[i] + mouse2Y - mouse1Y;
-    }
-    this.redrawAllObjects();
   }
 
   get_settings_on_object() {
@@ -1162,13 +1192,11 @@ export class MultiplePlots {
           mouse_moving = true;
           if ((this.clickedPlotIndex != -1) && !(clickOnVertex)) {
             this.setAllInteractionsToOff();
-            let tx = mouse2X - old_mouse2X;
-            let ty = mouse2Y - old_mouse2Y;
             canvas.style.cursor = 'move';
-            this.translateSelectedObject(this.clickedPlotIndex, tx, ty);
+            this.translateSelectedObject(this.clickedPlotIndex, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
             this.redrawAllObjects();
           } else if (this.clickedPlotIndex == -1) {
-            this.translateAllObjects(mouse1X, mouse1Y, mouse2X, mouse2Y);
+            this.translateAllObjects(mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
           } else if (clickOnVertex) {
             this.resizeObject(vertex_infos, mouse2X, mouse2Y);
           }
@@ -1283,22 +1311,22 @@ export abstract class PlotData {
   context_show:any;
   context_hidden:any;
   context:any;
-  minX:number;
-  maxX:number;
-  minY:number;
-  maxY:number;
-  init_scale:number;
-  init_scaleX:number;
-  init_scaleY:number;
-  scale:number;
-  scaleX:number;
-  scaleY:number;
+  minX:number=Infinity;
+  maxX:number=-Infinity;
+  minY:number=Infinity;
+  maxY:number=-Infinity;
+  init_scale:number=1;
+  init_scaleX:number=1;
+  init_scaleY:number=1;
+  scale:number=1;
+  scaleX:number=1;
+  scaleY:number=1;
   scroll_x:number=0;
   scroll_y:number=0;
   initial_last_mouse1X:number=0;
   initial_last_mouse1Y:number=0;
-  last_mouse1X:number;
-  last_mouse1Y:number;
+  last_mouse1X:number=0;
+  last_mouse1Y:number=0;
   settings_on:boolean=false;
   colour_to_plot_data:any={};
   select_on_mouse:any;
@@ -1448,6 +1476,7 @@ export abstract class PlotData {
   shown_datas:any[]=[];
   hidden_datas:any[]=[];
   clickedPlotIndex:number=-1;
+  primitive_dict:any={};
 
   public constructor(
     public data:any,
@@ -1486,10 +1515,7 @@ export abstract class PlotData {
   }
 
   refresh_MinMax(point_list):void {
-    this.minX = point_list[0].minX;
-    this.maxX = point_list[0].maxX;
-    this.minY = point_list[0].minY;
-    this.maxY = point_list[0].maxY;
+    this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
     for (var j=0; j<point_list.length; j++) {
       var point = point_list[j];
       this.minX = Math.min(this.minX, point.minX);
@@ -1710,16 +1736,14 @@ export abstract class PlotData {
     }
   }
 
-  draw_axis(mvx, mvy, scaleX, scaleY, d) { // Only used by graph2D
+  draw_axis(mvx, mvy, scaleX, scaleY, d:Axis) { // Only used by graph2D
     if (d['type_'] == 'axis'){
-      this.context.beginPath();
-      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, this.minX, 
-             this.maxX, this.minY, this.maxY, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, 
-             this.Y, this.plotObject['to_disp_attribute_names']);
+      d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0]);
+      d.draw_vertical_axis(this.context, mvx, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1]);
       this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
       this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
-      this.context.closePath();
-      this.context.fill();
     }
   }
 
@@ -3697,6 +3721,13 @@ export class PrimitiveGroupContainer extends PlotData {
     this.initialize_primitive_groups_contexts();
   }
 
+  initialize_primitive_groups_contexts() {
+    for (let i=0; i<this.primitive_groups.length; i++) {
+      this.primitive_groups[i].context_hidden = this.context_hidden;
+      this.primitive_groups[i].context_show = this.context_show;
+    }
+  }
+
   refresh_buttons_coords() {
     this.button_w = 40;
     this.button_h = 20;
@@ -3739,12 +3770,31 @@ export class PrimitiveGroupContainer extends PlotData {
     }
   }
 
-  initialize_primitive_groups_contexts() {
-    for (let i=0; i<this.primitive_groups.length; i++) {
-      this.primitive_groups[i].context_hidden = this.context_hidden;
-      this.primitive_groups[i].context_show = this.context_show;
+  draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
+    if (this.clickedPlotIndex != -1) {
+      let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
+      this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
     }
+    this.define_context(hidden);
+    this.context.save();
+    this.draw_empty_canvas();
+    this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
+    for (let index of this.display_order) {
+      let prim = this.primitive_groups[index];
+      this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
+    }
+
+    if (this.multiplot_manipulation) { 
+      this.draw_manipulable_rect(); 
+    } else { 
+      this.context.strokeStyle = this.initial_rect_color_stroke;
+      this.context.lineWidth = this.initial_rect_line_width;
+      this.context.strokeRect(X, Y, this.width, this.height); 
+    }
+    if (this.buttons_ON) { this.draw_buttons(); }
+    this.context.restore();
   }
+
 
   redraw_object() {
     this.store_datas();
@@ -3771,29 +3821,41 @@ export class PrimitiveGroupContainer extends PlotData {
     }
   }
 
-  draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
-    if (this.clickedPlotIndex != -1) {
-      let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
-      this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
-    }
-    this.define_context(hidden);
-    this.context.save();
-    this.draw_empty_canvas();
-    this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
-    for (let index of this.display_order) {
-      let prim = this.primitive_groups[index];
-      this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
-    }
+  add_primitive_group(serialized, point_index) {
+    var new_plot_data = new PlotContour(serialized, 560, 300, 1000, this.buttons_ON, this.X, this.Y, this.canvas_id);
+    new_plot_data.context_hidden = this.context_hidden;
+    new_plot_data.context_show = this.context_show;
+    this.primitive_groups.push(new_plot_data);
+    this.display_order.push(this.primitive_groups.length - 1);
+    new_plot_data.draw_initial();
+    new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
+    new_plot_data.interaction_ON = false;
+    this.primitive_dict[point_index.toString()] = this.primitive_groups.length - 1;
+    this.regular_layout();
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  } 
 
-    if (this.multiplot_manipulation) { 
-      this.draw_manipulable_rect(); 
-    } else { 
-      this.context.strokeStyle = this.initial_rect_color_stroke;
-      this.context.lineWidth = this.initial_rect_line_width;
-      this.context.strokeRect(X, Y, this.width, this.height); 
+  
+  remove_primitive_group(point_index) {
+    var primitive_index = this.primitive_dict[point_index.toString()];
+    this.primitive_groups = List.remove_at_index(primitive_index, this.primitive_groups);
+    this.display_order = List.remove_element(primitive_index, this.display_order);
+    this.primitive_dict = MyObject.removeEntries([point_index.toString()], this.primitive_dict);
+    var keys = Object.keys(this.primitive_dict);
+    for (let key of keys) {
+      if (this.primitive_dict[key] > primitive_index) {
+        this.primitive_dict[key]--;
+      }
     }
-    if (this.buttons_ON) { this.draw_buttons(); }
-    this.context.restore();
+    for (let i=0; i<this.display_order.length; i++) {
+      if (this.display_order[i] > primitive_index) {
+        this.display_order[i]--;
+      }
+    }
+    this.regular_layout();
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
   setAllInteractionsToOff() {
@@ -3840,8 +3902,8 @@ export class PrimitiveGroupContainer extends PlotData {
     for (let i=0; i<big_length_nbObjects - 1; i++) {
       for (let j=0; j<small_length_nbObjects; j++) {
         var current_index = i*small_length_nbObjects + j; //current_index in sorted_list
-        this.primitive_groups[sorted_list[current_index]][big_coord] = i*big_length_step;
-        this.primitive_groups[sorted_list[current_index]][small_coord] = j*small_length_step;
+        this.primitive_groups[sorted_list[current_index]][big_coord] = i*big_length_step + this[big_coord];
+        this.primitive_groups[sorted_list[current_index]][small_coord] = j*small_length_step + this[small_coord];
         this.primitive_groups[sorted_list[current_index]][big_length] = big_length_step;
         this.primitive_groups[sorted_list[current_index]][small_length] = small_length_step;
       }
@@ -3850,12 +3912,12 @@ export class PrimitiveGroupContainer extends PlotData {
     let remaining_obj = nb_primitives - last_index;
     let last_small_length_step = this[small_length]/remaining_obj;
     for (let j=0; j<remaining_obj; j++) {
-      this.primitive_groups[sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step;
-      this.primitive_groups[sorted_list[last_index + j]][small_coord] = j*last_small_length_step;
+      this.primitive_groups[sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step + this[big_coord];
+      this.primitive_groups[sorted_list[last_index + j]][small_coord] = j*last_small_length_step + this[small_coord];
       this.primitive_groups[sorted_list[last_index + j]][big_length] = big_length_step;
       this.primitive_groups[sorted_list[last_index + j]][small_length] = last_small_length_step;
     }
-    // this.resetAllObjects();
+    this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     
@@ -3885,6 +3947,10 @@ export class PrimitiveGroupContainer extends PlotData {
       j = j+2;
     }
     return sorted_list;
+  }
+
+  one_axis_layout() {
+
   }
 
   translatePrimitive(index, tx, ty) {
@@ -4106,19 +4172,28 @@ export class PrimitiveGroupContainer extends PlotData {
     });
 
     canvas.addEventListener('mouseup', e => {
-      isDrawing = false;
-      this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-      this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+      if (this.interaction_ON) {
+        isDrawing = false;
+        this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+      }
     });
 
     canvas.addEventListener('wheel', e => {
-      e.preventDefault();
-      mouse3X = e.offsetX; mouse3Y = e.offsetY;
-      if (this.manipulation_bool) {
-        var event = -e.deltaY/Math.abs(e.deltaY);
-        this.zoom_elements(mouse3X, mouse3Y, event);
+      if (this.interaction_ON) {
+        e.preventDefault();
+        mouse3X = e.offsetX; mouse3Y = e.offsetY;
+        if (this.manipulation_bool) {
+          var event = -e.deltaY/Math.abs(e.deltaY);
+          this.zoom_elements(mouse3X, mouse3Y, event);
+        }
       }
     });
+
+    canvas.addEventListener('mouseleave', e => {
+      this.clickedPlotIndex = -1;
+      this.setAllInteractionsToOff();
+    })
   }
 }
 
@@ -5168,8 +5243,54 @@ export class Axis {
                     serialized['name']);
   }
 
-  draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, x_step, y_step, font_size, X, Y) {
-    //x axis graduations
+  // draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, x_step, y_step, font_size, X, Y) {
+  //   //x axis graduations
+  //   var i=0;
+  //   context.textAlign = 'center';
+  //   var x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(x_step)));
+  //   var delta_x = maxX - minX;
+  //   var grad_beg_x = minX - 10*delta_x;
+  //   var grad_end_x = maxX + 10*delta_x;
+  //   while(grad_beg_x + i*x_step < grad_end_x) {
+  //     if ((scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X > axis_x_start) && (scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X < axis_x_end - 9)) {
+  //       if (this.grid_on === true) {
+  //         context.strokeStyle = 'lightgrey';
+  //         Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_start], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
+  //       } else {
+  //         Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
+  //       }
+  //       context.fillText(MyMath.round(grad_beg_x + i*x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + font_size );
+  //     }
+  //     i++
+  //   }
+
+  //     //y axis graduations
+  //   i=0;
+  //   var real_minY = -maxY;
+  //   var real_maxY = -minY;
+  //   var delta_y = maxY - minY;
+  //   var grad_beg_y = real_minY - 10*delta_y;
+  //   var grad_end_y = real_maxY + 10*delta_y;
+  //   context.textAlign = 'end';
+  //   context.textBaseline = 'middle';
+  //   var y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(y_step)));
+  //   while (grad_beg_y + (i-1)*y_step < grad_end_y) {
+  //     if ((scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y > axis_y_start + 5) && (scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y < axis_y_end)) {
+  //       if (this.grid_on === true) {
+  //         context.strokeStyle = 'lightgrey';
+  //         Shape.drawLine(context,[[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y], [axis_x_end, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y]]);
+  //       } else {
+  //         Shape.drawLine(context, [[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y], [axis_x_start + 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y]]);
+  //       }
+  //       context.fillText(MyMath.round(grad_beg_y + i*y_step, y_nb_digits), axis_x_start - 5, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y);
+  //     }
+  //     i++;
+  //   }
+
+  //   context.stroke();
+  // }
+
+  draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, x_step, font_size, X) {
     var i=0;
     context.textAlign = 'center';
     var x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(x_step)));
@@ -5188,9 +5309,11 @@ export class Axis {
       }
       i++
     }
+    context.stroke();
+  }
 
-      //y axis graduations
-    i=0
+  draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minY, maxY, y_step, Y) {
+    var i=0;
     var real_minY = -maxY;
     var real_maxY = -minY;
     var delta_y = maxY - minY;
@@ -5215,8 +5338,87 @@ export class Axis {
     context.stroke();
   }
 
-  draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_names) {
-    // Drawing the coordinate system
+  // draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_names) {
+  //   // Drawing the coordinate system
+  //   context.beginPath();
+  //   context.strokeStyle = this.axis_style.color_stroke;
+  //   context.lineWidth = this.axis_style.line_width;
+  //   var axis_x_start = decalage_axis_x + X;
+  //   var axis_x_end = width + X;
+  //   var axis_y_start = Y;
+  //   var axis_y_end = height - decalage_axis_y + Y;
+  //   //Arrows
+  //   if (this.arrow_on === true) {
+  //     Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
+  //     Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
+
+  //     Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
+  //     Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
+  //   }
+
+  //   //Axis
+  //   Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
+  //   Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
+
+  //   context.stroke();
+
+  //   //Graduations
+  //   if (scroll_x % 5 == 0) {
+  //     var kx = 1.1*scaleX/init_scaleX;
+  //     this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+  //   }
+  //   if (scroll_y % 5 == 0) {
+  //     var ky = 1.1*scaleY/init_scaleY;
+  //     this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
+  //   }
+
+  //   context.fillStyle = this.graduation_style.text_color;
+  //   context.strokeStyle = this.axis_style.color_stroke;
+
+  //   context.font = 'bold 20px Arial';
+  //   context.textAlign = 'end';
+  //   context.fillText(to_disp_attribute_names[0], axis_x_end - 5, axis_y_end - 10);
+  //   context.textAlign = 'start';
+  //   context.fillText(to_disp_attribute_names[1], axis_x_start + 5, axis_y_start + 20);
+  //   context.stroke();
+
+  //   context.font = this.graduation_style.font_size.toString() + 'px Arial';
+  //   this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.graduation_style.font_size, X, Y);
+  //   context.closePath();
+  // }
+
+  draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name) {
+    context.beginPath();
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
+    var axis_x_start = decalage_axis_x + X;
+    var axis_x_end = width + X;
+    var axis_y_start = Y;
+    var axis_y_end = height - decalage_axis_y + Y;
+    //Arrow
+    if (this.arrow_on) {
+      Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
+      Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
+    }
+    //Axis
+    Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
+    //Graduations
+    if (scroll_x % 5 == 0) {
+      var kx = 1.1*scaleX/init_scaleX;
+      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+    }
+    context.font = 'bold 20px Arial';
+    context.textAlign = 'end';
+    context.fillStyle = this.graduation_style.text_color;
+    context.fillText(to_disp_attribute_name, axis_x_end - 5, axis_y_end - 10);
+    // draw_horizontal_graduations
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, this.x_step, this.graduation_style.font_size, X);
+    context.closePath();
+  }
+
+
+  draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name) {
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
     context.lineWidth = this.axis_style.line_width;
@@ -5228,41 +5430,22 @@ export class Axis {
     if (this.arrow_on === true) {
       Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
       Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
-
-      Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
-      Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
     }
-
     //Axis
     Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
-    Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
-
-    context.stroke();
-
-    //Graduations
-    if (scroll_x % 5 == 0) {
-      var kx = 1.1*scaleX/init_scaleX;
-      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
-    }
+    // Graduations
     if (scroll_y % 5 == 0) {
       var ky = 1.1*scaleY/init_scaleY;
       this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
     }
-
-    context.fillStyle = this.graduation_style.text_color;
-    context.strokeStyle = this.axis_style.color_stroke;
-
     context.font = 'bold 20px Arial';
-    context.textAlign = 'end';
-    context.fillText(to_disp_attribute_names[0], axis_x_end - 5, axis_y_end - 10);
     context.textAlign = 'start';
-    context.fillText(to_disp_attribute_names[1], axis_x_start + 5, axis_y_start + 20);
-    context.stroke();
-
+    context.fillStyle = this.graduation_style.text_color;
+    context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
+    //draw vertical graduations
     context.font = this.graduation_style.font_size.toString() + 'px Arial';
-    this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.graduation_style.font_size, X, Y);
+    this.draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minY, maxY, this.y_step, Y);
     context.closePath();
-
   }
 
   draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
@@ -6847,3 +7030,77 @@ export function equals(a, b) {
   // true if both NaN, false otherwise
   return a!==a && b!==b;
 };
+
+var primitive_groups = {primitive_groups:[{'name': '',
+'package_version': '0.4.10.dev11',
+'primitives': [{'name': '',
+  'package_version': '0.4.10.dev11',
+  'r': 10,
+  'cy': 0.0,
+  'cx': 0.0,
+  'type_': 'circle'}],
+'type_': 'primitivegroup'},
+{'name': '',
+'package_version': '0.4.10.dev11',
+'primitives': [{'name': '',
+  'package_version': '0.4.10.dev11',
+  'plot_data_primitives': [{'name': '',
+    'package_version': '0.4.10.dev11',
+    'data': [1.0, 1.0, 1.0, 2.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.4.10.dev11'},
+    'type_': 'linesegment'},
+   {'name': '',
+    'package_version': '0.4.10.dev11',
+    'data': [1.0, 2.0, 2.0, 2.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.4.10.dev11'},
+    'type_': 'linesegment'},
+   {'name': '',
+    'package_version': '0.4.10.dev11',
+    'data': [2.0, 2.0, 2.0, 1.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.4.10.dev11'},
+    'type_': 'linesegment'},
+   {'name': '',
+    'package_version': '0.4.10.dev11',
+    'data': [2.0, 1.0, 1.0, 1.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.4.10.dev11'},
+    'type_': 'linesegment'}],
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.4.10.dev11',
+   'color_fill': 'rgb(255,175,96)'},
+  'type_': 'contour'}],
+'type_': 'primitivegroup'},
+{'name': '',
+'package_version': '0.4.10.dev11',
+'primitives': [{'name': '',
+  'package_version': '0.4.10.dev11',
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.4.10.dev11',
+   'color_fill': 'rgb(247,0,0)'},
+  'r': 5,
+  'cy': 1.0,
+  'cx': 1.0,
+  'type_': 'circle'}],
+'type_': 'primitivegroup'},
+{'name': '',
+'package_version': '0.4.10.dev11',
+'primitives': [{'name': '',
+  'package_version': '0.4.10.dev11',
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.4.10.dev11',
+   'color_fill': 'rgb(222,184,135)'},
+  'r': 5,
+  'cy': 1.0,
+  'cx': 1.0,
+  'type_': 'circle'}],
+'type_': 'primitivegroup'}]};

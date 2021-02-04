@@ -314,9 +314,9 @@ export class MultiplePlots {
     if (layout == 'regular') {
       new_plot_data.regular_layout();
     } else if (layout.length == 1) {
-      new_plot_data.one_axis_layout(layout[0]);
+      new_plot_data.multiplot_one_axis_layout(layout[0]);
     } else if (layout.length == 2) {
-      new_plot_data.two_axis_layout(layout);
+      new_plot_data.multiplot_two_axis_layout(layout);
     }
   }
 
@@ -723,7 +723,7 @@ export class MultiplePlots {
         this.objectList[i].reset_scales();
       } else if (this.objectList[i].type_ == 'primitivegroupcontainer') {
         let obj:any = this.objectList[i];
-        obj.regular_layout();
+        obj.click_on_reset_action();
       }
     }
   }
@@ -1464,6 +1464,7 @@ export abstract class PlotData {
   manipulation_bool:boolean=false;
   button_y:number=0;
   manip_button_x:number=0;
+  reset_button_x:number=0;
   display_order:number[]=[];
   shown_datas:any[]=[];
   hidden_datas:any[]=[];
@@ -3729,11 +3730,13 @@ export class PrimitiveGroupContainer extends PlotData {
     this.button_h = 20;
     this.button_y = this.height - 5 - this.button_h + this.Y;
     this.manip_button_x = 5 + this.X;
+    this.reset_button_x = this.manip_button_x + this.button_w + 5;
   }
 
   draw_buttons() {
     this.refresh_buttons_coords();
     this.draw_manipulation_button();
+    this.draw_reset_button();
   }
 
 
@@ -3745,9 +3748,15 @@ export class PrimitiveGroupContainer extends PlotData {
     }
   }
 
+  draw_reset_button() {
+    Shape.createButton(this.reset_button_x, this.button_y, this.button_w, this.button_h, this.context, 'reset', '10px sans-serif');
+  }
+
   click_on_button_check(mouse1X, mouse1Y) {
     if (Shape.isInRect(mouse1X, mouse1Y, this.manip_button_x, this.button_y, this.button_w, this.button_h)) {
       this.click_on_manipulation_action();
+    } else if (Shape.isInRect(mouse1X, mouse1Y, this.reset_button_x, this.button_y, this.button_w, this.button_h)) {
+      this.click_on_reset_action();
     }
   }
 
@@ -3758,6 +3767,14 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     if (this.manipulation_bool) {
       this.setAllInteractionsToOff();
+    }
+  }
+
+  click_on_reset_action() {
+    if (this.layout_mode == 'regular') {
+      this.regular_layout();
+    } else {
+      this.reset_scales();
     }
   }
 
@@ -3799,15 +3816,17 @@ export class PrimitiveGroupContainer extends PlotData {
       } 
     }
     count = 0;
-    if (this.maxY - this.minY > this.height) {
-      while ((this.maxY - this.minY > this.height - this.decalage_axis_y) && (count < 50)) {
-        this.y_zoom_elements(-1);
-        this.refresh_MinMax();
-      } 
-    } else {
-      while ((this.maxY - this.minY < (this.height - this.decalage_axis_y)/1.1) && (count < 50)) {
-        this.y_zoom_elements(1);
-        this.refresh_MinMax();
+    if (this.layout_mode == 'two_axis') {
+      if (this.maxY - this.minY > this.height) {
+        while ((this.maxY - this.minY > this.height - this.decalage_axis_y) && (count < 50)) {
+          this.y_zoom_elements(-1);
+          this.refresh_MinMax();
+        } 
+      } else {
+        while ((this.maxY - this.minY < (this.height - this.decalage_axis_y)/1.1) && (count < 50)) {
+          this.y_zoom_elements(1);
+          this.refresh_MinMax();
+        }
       }
     }
     if (count == 50) {
@@ -3816,7 +3835,11 @@ export class PrimitiveGroupContainer extends PlotData {
   }
 
   translate_inside_canvas() {
-    this.translateAllPrimitives(this.decalage_axis_x-this.minX, -this.minY);
+    if (this.layout_mode == 'one_axis') {
+      this.translateAllPrimitives(-this.minX, this.height/2 - this.minY);
+    } else if (this.layout_mode == 'two_axis') {
+      this.translateAllPrimitives(this.decalage_axis_x - this.minX, -this.minY);
+    }
   }
 
   reset_scales() {
@@ -4097,39 +4120,59 @@ export class PrimitiveGroupContainer extends PlotData {
     } 
   }
 
-  one_axis_layout(attribute:Attribute) {
+  multiplot_one_axis_layout(attribute:Attribute) {
+    this.refresh_one_axis_layout_list(attribute);
+    this.one_axis_layout();
+  }
+
+  refresh_one_axis_layout_list(attribute:Attribute) {
     this.layout_mode = 'one_axis';
     attribute.list = this.initialize_list(attribute);
     this.layout_attributes = [attribute];
+  }
+
+  one_axis_layout() {
     var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic', '');
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
     var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
     this.layout_axis = Axis.deserialize(serialized_axis);
     
     var nb_primitive_groups = this.primitive_groups.length;
-    var name = attribute.name;
+    var name = this.layout_attributes[0].name;
     for (let i=0; i<nb_primitive_groups; i++) {
       this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
       this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
-      if (attribute.type_ == 'float') {
+      if (this.layout_attributes[0].type_ == 'float') {
         var real_x = this.elements_dict[i.toString()][name];
+      } else if (this.layout_attributes[0].type_ == 'color') {
+        real_x = List.get_index_of_element(rgb_to_string(this.elements_dict[i.toString()][name]), this.layout_attributes[0].list);
       } else {
-        real_x = List.get_index_of_element(this.elements_dict[i.toString()][name], attribute.list);
+        real_x = List.get_index_of_element(this.elements_dict[i.toString()][name], this.layout_attributes[0].list);
       }
       var center_x = this.scaleX*1000*real_x + this.last_mouse1X;
-      this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width;
-      this.primitive_groups[i].Y = this.Y + this.height - this.decalage_axis_y - 50 - this.primitive_groups[i].height;
+      this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
+      this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
     }
+    this.reset_scales();
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
-  two_axis_layout(attributes:Attribute[]) {
+  refresh_two_axis_layout_list(attributes:Attribute[]) {
     this.layout_mode = 'two_axis';
     attributes[0].list = this.initialize_list(attributes[0]);
     attributes[1].list = this.initialize_list(attributes[1]);
     this.layout_attributes = attributes;
+  }
+
+  multiplot_two_axis_layout(attributes:Attribute[]) {
+    this.refresh_two_axis_layout_list(attributes);
+    this.two_axis_layout();
+  }
+
+
+  two_axis_layout() {
     var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic', '');
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
     var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
@@ -4138,18 +4181,24 @@ export class PrimitiveGroupContainer extends PlotData {
     for (let i=0; i<nb_primitive_groups; i++) {
       this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
       this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
-      if (attributes[0].type_ == 'float') {
-        var real_x = this.elements_dict[i.toString()][attributes[0].name];
+      if (this.layout_attributes[0].type_ == 'float') {
+        var real_x = this.elements_dict[i.toString()][this.layout_attributes[0].name];
+      } else if (this.layout_attributes[0].type_ == 'color') {
+        let value = rgb_to_string(this.elements_dict[i.toString()][this.layout_attributes[0].name]);
+        real_x = List.get_index_of_element(value, this.layout_attributes[0].list);
       } else {
-        real_x = List.get_index_of_element(this.elements_dict[i.toString()][attributes[0].name], attributes[0].list);
+        real_x = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[0].name], this.layout_attributes[0].list);
       }
       var center_x = this.scaleX*1000*real_x + this.last_mouse1X;
       this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
 
-      if (attributes[1].type_ == 'float') {
-        var real_y = this.elements_dict[i.toString()][attributes[1].name];
+      if (this.layout_attributes[1].type_ == 'float') {
+        var real_y = this.elements_dict[i.toString()][this.layout_attributes[1].name];
+      } else if (this.layout_attributes[1].type_ == 'color') {
+        let value = rgb_to_string(this.elements_dict[i.toString()][this.layout_attributes[1].name]);
+        real_y = List.get_index_of_element(value, this.layout_attributes[1].list);
       } else {
-        real_x = List.get_index_of_element(this.elements_dict[i.toString()][attributes[1].name], attributes[1].list);
+        real_y = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[1].name], this.layout_attributes[1].list);
       }
       var center_y = -this.scaleX*1000*real_y + this.last_mouse1Y;
       this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height/2;
@@ -4424,7 +4473,7 @@ export class PrimitiveGroupContainer extends PlotData {
         selected_primitive = this.get_selected_primitive(mouse2X, mouse2Y);
         if (this.manipulation_bool) {
           if (isDrawing) {
-            if (this.clickedPlotIndex == -1) {
+            if ((this.clickedPlotIndex == -1) || (this.layout_mode !== 'regular')) {
               this.translateAllPrimitives(mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
             } else {
               if (clickOnVertex) {
@@ -4436,7 +4485,9 @@ export class PrimitiveGroupContainer extends PlotData {
               }
             }
           } else {
-            this.setCursorStyle(mouse2X, mouse2Y, canvas, selected_primitive);
+            if (this.layout_mode === 'regular') {
+              this.setCursorStyle(mouse2X, mouse2Y, canvas, selected_primitive);
+            }
 
           }
         } else {
@@ -7447,3 +7498,4 @@ var primitive_groups = {primitive_groups:[{'name': '',
 
 var attribute1 = new Attribute('cx', 'float');
 var attribute2 = new Attribute('cy', 'float');
+var attribute3 = new Attribute('color_fill', 'color');

@@ -3761,9 +3761,69 @@ export class PrimitiveGroupContainer extends PlotData {
     }
   }
 
+  reset_sizes() {
+    var nb_primitives = this.primitive_groups.length;
+    var primitive_width = this.width/(1.2*nb_primitives);
+    var primitive_height = this.height/(1.2*nb_primitives);
+    for (let i=0; i<nb_primitives; i++) {
+      let center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
+      let center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
+      this.primitive_groups[i].width = primitive_width;
+      this.primitive_groups[i].height = primitive_height;
+      this.primitive_groups[i].X = center_x - primitive_width/2;
+      this.primitive_groups[i].Y = center_y - primitive_height/2;
+    }
+  }
+
+  refresh_MinMax() {
+    this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
+    for (let primitive of this.primitive_groups) {
+      this.minX = Math.min(this.minX, primitive.X);
+      this.maxX = Math.max(this.maxX, primitive.X + primitive.width);
+      this.minY = Math.min(this.minY, primitive.Y);
+      this.maxY = Math.max(this.maxY, primitive.Y + primitive.height);
+    }
+  }
+
+  refresh_spacing() {
+    var count = 0;
+    if (this.maxX - this.minX > this.width) {
+      while ((this.maxX - this.minX > this.width - this.decalage_axis_x) && (count < 50)) {
+        this.x_zoom_elements(-1);
+        this.refresh_MinMax();
+      } 
+    } else {
+      while ((this.maxX - this.minX < (this.width - this.decalage_axis_x)/1.1) && (count < 50)) {
+        this.x_zoom_elements(1);
+        this.refresh_MinMax();
+      } 
+    }
+    count = 0;
+    if (this.maxY - this.minY > this.height) {
+      while ((this.maxY - this.minY > this.height - this.decalage_axis_y) && (count < 50)) {
+        this.y_zoom_elements(-1);
+        this.refresh_MinMax();
+      } 
+    } else {
+      while ((this.maxY - this.minY < (this.height - this.decalage_axis_y)/1.1) && (count < 50)) {
+        this.y_zoom_elements(1);
+        this.refresh_MinMax();
+      }
+    }
+    if (count == 50) {
+      throw new Error('Primitive_group_container, refresh_spacing(): max count reached');
+    }
+  }
+
+  translate_inside_canvas() {
+    this.translateAllPrimitives(this.decalage_axis_x-this.minX, -this.minY);
+  }
+
   reset_scales() {
-    var minX = Infinity; var maxX = -Infinity; var minY = Infinity; var maxY = -Infinity;
-    // TODO
+    this.reset_sizes();
+    this.refresh_MinMax();
+    this.refresh_spacing();
+    this.translate_inside_canvas();
   }
 
   draw_initial() {
@@ -4068,8 +4128,7 @@ export class PrimitiveGroupContainer extends PlotData {
   two_axis_layout(attributes:Attribute[]) {
     this.layout_mode = 'two_axis';
     attributes[0].list = this.initialize_list(attributes[0]);
-    var list = this.initialize_list(attributes[1]);
-    attributes[1].list = [-list[1], -list[0]];
+    attributes[1].list = this.initialize_list(attributes[1]);
     this.layout_attributes = attributes;
     var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic', '');
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
@@ -4095,6 +4154,7 @@ export class PrimitiveGroupContainer extends PlotData {
       var center_y = -this.scaleX*1000*real_y + this.last_mouse1Y;
       this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height/2;
     }
+    this.reset_scales();
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -4169,7 +4229,9 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     var container_center_x = this.X + this.width/2;
     for (let i=0; i<this.primitive_groups.length; i++) {
-      this.primitive_groups[i].X = container_center_x + zoom_coeff*(this.primitive_groups[i].X - container_center_x);
+      let primitive_center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
+      primitive_center_x = container_center_x + zoom_coeff*(primitive_center_x - container_center_x);
+      this.primitive_groups[i].X = primitive_center_x - this.primitive_groups[i].width/2;
     }
     this.resetAllObjects();
     var old_scaleX = this.scaleX;
@@ -4189,7 +4251,9 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     var container_center_y = this.Y + this.height/2;
     for (let i=0; i<this.primitive_groups.length; i++) {
-      this.primitive_groups[i].Y = container_center_y + zoom_coeff*(this.primitive_groups[i].Y - container_center_y);
+      let primitive_center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
+      primitive_center_y = container_center_y + zoom_coeff*(primitive_center_y - container_center_y);
+      this.primitive_groups[i].Y = primitive_center_y - this.primitive_groups[i].height/2;
     }
     this.resetAllObjects();
     var old_scaleY = this.scaleY;

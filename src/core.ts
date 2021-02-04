@@ -231,6 +231,12 @@ export class MultiplePlots {
 
   initialize_new_plot_data(new_plot_data:PlotData) {
     this.initializeObjectContext(new_plot_data);
+    new_plot_data.point_families.push(this.point_families[0]);
+    if (new_plot_data.type_ == 'scatterplot') {
+      for (let i=0; i<new_plot_data.plotObject.point_list.length; i++) {
+        new_plot_data.plotObject.point_list[i].point_families.push(this.point_families[0]);
+      }
+    }
     this.objectList.push(new_plot_data);
     this.nbObjects++;
     this.display_order.push(this.nbObjects-1);
@@ -3836,10 +3842,12 @@ export class PrimitiveGroupContainer extends PlotData {
 
   translate_inside_canvas() {
     if (this.layout_mode == 'one_axis') {
-      this.translateAllPrimitives(-this.minX, this.height/2 - this.minY);
+      this.translateAllPrimitives(-this.minX + this.X, this.height/2 - this.minY + this.Y);
     } else if (this.layout_mode == 'two_axis') {
-      this.translateAllPrimitives(this.decalage_axis_x - this.minX, -this.minY);
+      this.translateAllPrimitives(this.decalage_axis_x - this.minX + this.X, -this.minY + this.Y);
     }
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
   reset_scales() {
@@ -3922,7 +3930,7 @@ export class PrimitiveGroupContainer extends PlotData {
       for (let primitive of this.primitive_groups) {
         let x = primitive.X + primitive.width/2;
         let y = primitive.Y + primitive.height/2;
-        Shape.drawLine(this.context, [[this.decalage_axis_x, y], [x, y], [x, this.height - this.decalage_axis_y]]);
+        Shape.drawLine(this.context, [[this.decalage_axis_x + this.X, y], [x, y], [x, this.height - this.decalage_axis_y + this.Y]]);
       }
     }
     this.context.stroke();
@@ -4220,8 +4228,6 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     this.last_mouse1X = this.last_mouse1X + tx/this.scaleX;
     this.last_mouse1Y = this.last_mouse1Y + ty/this.scaleY;
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
 
@@ -4435,6 +4441,7 @@ export class PrimitiveGroupContainer extends PlotData {
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
+
   mouse_interaction(isParallelPlot:boolean=false) {
     var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
     var nbObjects:number = this.primitive_groups.length;
@@ -4475,6 +4482,8 @@ export class PrimitiveGroupContainer extends PlotData {
           if (isDrawing) {
             if ((this.clickedPlotIndex == -1) || (this.layout_mode !== 'regular')) {
               this.translateAllPrimitives(mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
+              this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+              this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
             } else {
               if (clickOnVertex) {
                 this.resizeObject(vertex_infos, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
@@ -4488,7 +4497,6 @@ export class PrimitiveGroupContainer extends PlotData {
             if (this.layout_mode === 'regular') {
               this.setCursorStyle(mouse2X, mouse2Y, canvas, selected_primitive);
             }
-
           }
         } else {
           if (selected_primitive !== last_selected_primitive) {
@@ -4496,6 +4504,8 @@ export class PrimitiveGroupContainer extends PlotData {
           }
           last_selected_primitive = selected_primitive;
         }
+      } else {
+        isDrawing = false;
       }
     });
 

@@ -908,6 +908,7 @@ export class MultiplePlots {
         }
       }
     }
+    this.redrawAllObjects();
   }
 
   getSelectionONObject():number {
@@ -1229,9 +1230,9 @@ export class MultiplePlots {
             this.redrawAllObjects();
           }
           this.refresh_selected_point_index();
+          this.redraw_object();
         }
       }
-      this.redraw_object();
     });
 
     canvas.addEventListener('mouseup', e => {
@@ -1740,7 +1741,8 @@ export abstract class PlotData {
   }
 
   draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d, lists, to_display_attributes) {
-    d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+    d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, 
+      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
     this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
     this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
     this.context.closePath();
@@ -3413,8 +3415,8 @@ export class PlotContour extends PlotData {
     }
     this.context.restore();
 
-    if (this.buttons_ON) {
-      this.refresh_buttons_coords();
+    this.refresh_buttons_coords();
+    if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
       //Drawing the zooming button
       Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
 
@@ -3494,8 +3496,10 @@ export class PlotScatter extends PlotData {
     if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
       this.draw_zoom_rectangle();
     }
-    if (this.buttons_ON) {
-      this.refresh_buttons_coords();
+
+    this.refresh_buttons_coords();
+
+    if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
       //Drawing the zooming button
       Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
 
@@ -3732,6 +3736,7 @@ export class PrimitiveGroupContainer extends PlotData {
     this.draw_manipulation_button();
   }
 
+
   draw_manipulation_button() {
     if (this.manipulation_bool) {
       Shape.createButton(this.manip_button_x, this.button_y, this.button_w, this.button_h, this.context, 'ON', '10px sans-serif');
@@ -3757,10 +3762,8 @@ export class PrimitiveGroupContainer extends PlotData {
   }
 
   reset_scales() {
-    this.scaleX = 1;
-    this.scaleY = 1;
-    this.last_mouse1X = 0;
-    this.last_mouse1Y = 0;
+    var minX = Infinity; var maxX = -Infinity; var minY = Infinity; var maxY = -Infinity;
+    // TODO
   }
 
   draw_initial() {
@@ -3777,8 +3780,9 @@ export class PrimitiveGroupContainer extends PlotData {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas();
-    this.draw_layout_axis();
     this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
+    this.draw_layout_axis();
+    this.draw_coordinate_lines();
     for (let index of this.display_order) {
       let prim = this.primitive_groups[index];
       this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
@@ -3819,6 +3823,27 @@ export class PrimitiveGroupContainer extends PlotData {
       this.shown_datas.push(this.context_show.getImageData(obj.X, obj.Y, obj.width, obj.height));
       this.hidden_datas.push(this.context_hidden.getImageData(obj.X, obj.Y, obj.width, obj.height));
     }
+  }
+
+  draw_coordinate_lines() {
+    this.context.lineWidth = 0.5;
+    this.context.setLineDash([5,5]);
+    this.context.strokeStyle = string_to_hex('grey');
+    if (this.layout_mode == 'one_axis') {
+      for (let primitive of this.primitive_groups) {
+        let x = primitive.X + primitive.width/2;
+        let y = primitive.Y + primitive.height;
+        Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y]]);
+      }
+    } else if (this.layout_mode == 'two_axis') {
+      for (let primitive of this.primitive_groups) {
+        let x = primitive.X + primitive.width/2;
+        let y = primitive.Y + primitive.height/2;
+        Shape.drawLine(this.context, [[this.decalage_axis_x, y], [x, y], [x, this.height - this.decalage_axis_y]]);
+      }
+    }
+    this.context.stroke();
+    this.context.setLineDash([]);
   }
 
   add_primitive_group(serialized, point_index) {
@@ -4035,12 +4060,16 @@ export class PrimitiveGroupContainer extends PlotData {
       this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width;
       this.primitive_groups[i].Y = this.Y + this.height - this.decalage_axis_y - 50 - this.primitive_groups[i].height;
     }
+    this.resetAllObjects();
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
   two_axis_layout(attributes:Attribute[]) {
     this.layout_mode = 'two_axis';
     attributes[0].list = this.initialize_list(attributes[0]);
-    attributes[1].list = this.initialize_list(attributes[1]);
+    var list = this.initialize_list(attributes[1]);
+    attributes[1].list = [-list[1], -list[0]];
     this.layout_attributes = attributes;
     var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic', '');
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
@@ -4056,17 +4085,19 @@ export class PrimitiveGroupContainer extends PlotData {
         real_x = List.get_index_of_element(this.elements_dict[i.toString()][attributes[0].name], attributes[0].list);
       }
       var center_x = this.scaleX*1000*real_x + this.last_mouse1X;
-      this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width;
+      this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
 
       if (attributes[1].type_ == 'float') {
         var real_y = this.elements_dict[i.toString()][attributes[1].name];
       } else {
         real_x = List.get_index_of_element(this.elements_dict[i.toString()][attributes[1].name], attributes[1].list);
       }
-      var center_y = this.scaleX*1000*real_y + this.last_mouse1Y;
-      this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height;
+      var center_y = -this.scaleX*1000*real_y + this.last_mouse1Y;
+      this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height/2;
     }
-
+    this.resetAllObjects();
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
   translatePrimitive(index, tx, ty) {
@@ -4078,8 +4109,8 @@ export class PrimitiveGroupContainer extends PlotData {
     for (let i=0; i<this.primitive_groups.length; i++) {
       this.translatePrimitive(i, tx, ty);
     }
-    this.last_mouse1X = this.last_mouse1X + tx;
-    this.last_mouse1Y = this.last_mouse1Y + ty;
+    this.last_mouse1X = this.last_mouse1X + tx/this.scaleX;
+    this.last_mouse1Y = this.last_mouse1Y + ty/this.scaleY;
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
@@ -4092,6 +4123,18 @@ export class PrimitiveGroupContainer extends PlotData {
   }
 
   zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
+    if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
+      this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
+        this.x_zoom_elements(event);
+    } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.X, this.Y, this.decalage_axis_x,
+      this.height - this.decalage_axis_y))) {
+        this.y_zoom_elements(event);
+    } else {
+      this.regular_zoom_elements(mouse3X, mouse3Y, event);
+    }
+  }
+
+  regular_zoom_elements(mouse3X, mouse3Y, event) {
     if (event > 0) {
       var zoom_coeff = 1.1;
       this.scroll_x++;
@@ -4112,6 +4155,46 @@ export class PrimitiveGroupContainer extends PlotData {
     this.scaleX = this.scaleX*zoom_coeff; this.scaleY = this.scaleY*zoom_coeff;
     this.last_mouse1X = this.last_mouse1X - ((mouse3X - this.X)/old_scaleX - (mouse3X - this.X)/this.scaleX);
     this.last_mouse1Y = this.last_mouse1Y - ((mouse3Y - this.Y)/old_scaleY - (mouse3Y - this.Y)/this.scaleY);
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  }
+
+  x_zoom_elements(event) {
+    if (event > 0) {
+      var zoom_coeff = 1.1;
+      this.scroll_x++;
+    } else {
+      zoom_coeff = 1/1.1;
+      this.scroll_x--;
+    }
+    var container_center_x = this.X + this.width/2;
+    for (let i=0; i<this.primitive_groups.length; i++) {
+      this.primitive_groups[i].X = container_center_x + zoom_coeff*(this.primitive_groups[i].X - container_center_x);
+    }
+    this.resetAllObjects();
+    var old_scaleX = this.scaleX;
+    this.scaleX = this.scaleX*zoom_coeff;
+    this.last_mouse1X = this.last_mouse1X - ((container_center_x - this.X)/old_scaleX - (container_center_x - this.X)/this.scaleX);
+    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  }
+
+  y_zoom_elements(event) {
+    if (event > 0) {
+      var zoom_coeff = 1.1;
+      this.scroll_y++;
+    } else {
+      zoom_coeff = 1/1.1;
+      this.scroll_y--;
+    }
+    var container_center_y = this.Y + this.height/2;
+    for (let i=0; i<this.primitive_groups.length; i++) {
+      this.primitive_groups[i].Y = container_center_y + zoom_coeff*(this.primitive_groups[i].Y - container_center_y);
+    }
+    this.resetAllObjects();
+    var old_scaleY = this.scaleY;
+    this.scaleY = this.scaleY*zoom_coeff;
+    this.last_mouse1Y = this.last_mouse1Y - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }

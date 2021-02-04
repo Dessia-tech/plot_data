@@ -53,7 +53,7 @@ for i in range(100):
                               color_fill=random_color_fill,
                               color_stroke=random_color_stroke,
                               stroke_width=stroke_width)
-    elements += [point]
+    elements.append(point)
 
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
 pp_edge_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=BLACK)

@@ -42,7 +42,7 @@ objects.append(primitive_group)
 
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
 color_strokes = [BLACK, BROWN, GREEN, RED, ORANGE, LIGHTBLUE, GREY]
-for i in range(1000):
+for i in range(100):
     cx = random.uniform(0, 2)
     cy = random.uniform(0, 1)
     fills_index = random.randint(0, len(color_fills) - 1)
@@ -53,7 +53,7 @@ for i in range(1000):
                               color_fill=random_color_fill,
                               color_stroke=random_color_stroke,
                               stroke_width=stroke_width)
-    elements += [point]
+    elements.append(point)
 
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
 pp_edge_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=BLACK)
@@ -110,8 +110,29 @@ graph2d = plot_data.Graph2D(graphs=[dataset],
 objects.append(graph2d)
 # GRAPH TEST END
 
+# Primitive group container (start)
+circle1 = vm.wires.Circle2D(vm.Point2D(0, 0), 10).plot_data()
+
+l1 = vm.edges.LineSegment2D(vm.Point2D(1, 1), vm.Point2D(1, 2))
+l2 = vm.edges.LineSegment2D(vm.Point2D(1, 2), vm.Point2D(2, 2))
+l3 = vm.edges.LineSegment2D(vm.Point2D(2, 2), vm.Point2D(2, 1))
+l4 = vm.edges.LineSegment2D(vm.Point2D(2, 1), vm.Point2D(1, 1))
+contour = vm.wires.Contour2D([l1, l2, l3, l4]).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=LIGHTORANGE))
+
+circle2 = vm.wires.Circle2D(vm.Point2D(1, 1), 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=RED))
+
+primitive_group1 = plot_data.PrimitiveGroup(primitives=[circle1])
+primitive_group2 = plot_data.PrimitiveGroup(primitives=[contour])
+primitive_group3 = plot_data.PrimitiveGroup(primitives=[circle2])
+primitive_groups = [primitive_group1, primitive_group2, primitive_group3]
+
+coords1 = [[0,0], [600, 0], [0, 350]]
+primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups, coords=coords1)
+# objects.append(primitive_group_container)
+# primitive group container (end)
+
 coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0),
-          (300, 500)]
+          (300, 500), (0,100)]
 sizes = [plot_data.Window(width=560, height=300) for k in range(len(objects))]
 
 # point_family = plot_data.PointFamily(point_color=GREEN,

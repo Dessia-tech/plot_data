@@ -326,7 +326,7 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  add_primitive_group_container(serialized, associated_points:number[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
+  add_primitive_group_container(serialized=empty_container, associated_points:number[]=[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
     var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
     var primitive_entries = [];
     var elements_entries = [];
@@ -337,20 +337,25 @@ export class MultiplePlots {
     new_plot_data.primitive_dict = Object.fromEntries(primitive_entries);
     new_plot_data.elements_dict = Object.fromEntries(elements_entries);
     this.initialize_new_plot_data(new_plot_data);
-    
-    if (attribute_names === null) {
-      new_plot_data.regular_layout();
-    } else {
-      var layout = [];
-      for (let name of attribute_names) {
-        layout.push(this.get_attribute(name));
-      }
-      if (layout.length == 1) {
-        new_plot_data.multiplot_one_axis_layout(layout[0]);
-      } else if (layout.length == 2) {
-        new_plot_data.multiplot_two_axis_layout(layout);
-      }
 
+    if (serialized['primitive_groups'].length !== 0) {
+      if (attribute_names === null) {
+        new_plot_data.regular_layout();
+      } else {
+        var layout = [];
+        for (let name of attribute_names) {
+          layout.push(this.get_attribute(name));
+        }
+        if (layout.length == 1) {
+          new_plot_data.multiplot_one_axis_layout(layout[0]);
+        } else if (layout.length == 2) {
+          new_plot_data.multiplot_two_axis_layout(layout);
+        }
+      }
+    } else {
+      let obj = this.objectList[this.nbObjects - 1];
+      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
     return this.nbObjects - 1;
   }
@@ -2322,27 +2327,6 @@ export abstract class PlotData {
 
 
   from_to_display_list_to_elements(i, elements) {
-    // for (let i=0; i<elements.length; i++) {
-    //   let isTheRightElt = true;
-    //   for (let j=0; j<to_display_list_i.length; j++) {
-    //     let attr_name = this.axis_list[j].name;
-    //     let attr_type = this.axis_list[j].type_;
-    //     if (attr_type == 'color') {
-    //       if (color_to_string(elements[i][attr_name]) !== color_to_string(to_display_list_i[j])) {
-    //         isTheRightElt = false;
-    //         break;
-    //       }
-    //     } else {
-    //       if (elements[i][attr_name] !== to_display_list_i[j]) {
-    //         isTheRightElt = false;
-    //         break;
-    //       }
-    //     }
-    //   }
-    //   if (isTheRightElt) {
-    //     return i;
-    //   }
-    // }
     return this.display_list_to_elements_dict[i.toString()];
   }
 
@@ -2833,14 +2817,14 @@ export abstract class PlotData {
     this.selected_point_index = [];
     for (let i=0; i<this.select_on_click.length; i++) {
       if (!(this.select_on_click[i] === undefined)) {
-        if (this.plotObject['type_'] == 'scatterplot') {
+        if ((this.plotObject['type_'] == 'scatterplot') && this.select_on_click[i]) {
           let clicked_points = this.select_on_click[i].points_inside;
           for (let j=0; j<clicked_points.length; j++) {
             this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
           }
         } else if (this.plotObject['type_'] == 'graph2D') {
           for (let j=0; j<this.plotObject.graphs.length; j++) {
-            if (List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) {
+            if ((List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) && this.select_on_click[i]) {
               this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
             }
           }
@@ -3821,10 +3805,12 @@ export class PrimitiveGroupContainer extends PlotData {
   }
 
   click_on_reset_action() {
-    if (this.layout_mode == 'regular') {
-      this.regular_layout();
-    } else {
-      this.reset_scales();
+    if (this.primitive_groups.length !== 0) {
+      if (this.layout_mode == 'regular') {
+        this.regular_layout();
+      } else {
+        this.reset_scales();
+      }
     }
   }
 
@@ -4058,15 +4044,17 @@ export class PrimitiveGroupContainer extends PlotData {
 
 
   draw_layout_axis() {
-    if (this.layout_mode == 'one_axis') {
-      this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
+    if (this.primitive_groups.length !== 0) {
+      if (this.layout_mode == 'one_axis') {
+        this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
+            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+      } else if (this.layout_mode == 'two_axis') {
+        this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
           this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
-    } else if (this.layout_mode == 'two_axis') {
-      this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
-        this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
-
-      this.layout_axis.draw_sc_vertical_axis(this.context, this.last_mouse1Y, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
-        this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+  
+        this.layout_axis.draw_sc_vertical_axis(this.context, this.last_mouse1Y, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
+          this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+      }
     }
   }
 
@@ -7090,25 +7078,10 @@ export class List {
   }
 
   public static remove_element(val:any, list:any[]): any[] { //remove every element=val from list
-    // var temp = [];
-    // for (var i = 0; i < list.length; i++) {
-    //   var d = list[i];
-    //   if (val !== d) {
-    //     temp.push(d);
-    //   }
-    // }
-    // return temp;
     return list.filter(elt => elt !== val);
   }
 
   public static is_include(val:any, list:any[]): boolean {
-    // for (var i = 0; i < list.length; i++) {
-    //   var d = list[i];
-    //   if (equals(val,d)) {
-    //     return true;
-    //   }
-    // }
-    // return false;
     return list.findIndex(elt => equals(elt, val)) !== -1;
   }
 
@@ -7261,11 +7234,7 @@ export function check_package_version(package_version:string, requirement:string
     Number(version_array[2]);
   var requirement_num = Number(requirement_array[0])*Math.pow(10, 4) + Number(requirement_array[1])*Math.pow(10,2) +
     Number(requirement_array[2]);
-  if (package_version_num < requirement_num) {
-    // throw new Error("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
-    return false;
-  }
-  return true;
+  return package_version_num >= requirement_num;
 }
 
 export class MyObject {
@@ -7299,8 +7268,6 @@ export function equals(a, b) {
       return true;
     }
 
-
-
     if (a.constructor === RegExp) return a.source === b.source && a.flags === b.flags;
     if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b.valueOf();
     if (a.toString !== Object.prototype.toString) return a.toString() === b.toString();
@@ -7324,3 +7291,10 @@ export function equals(a, b) {
   // true if both NaN, false otherwise
   return a!==a && b!==b;
 };
+
+
+export var empty_container = {'name': '',
+'package_version': '0.4.11',
+'primitive_groups': [],
+'type_': 'primitivegroupcontainer'};
+

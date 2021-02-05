@@ -247,6 +247,15 @@ export class MultiplePlots {
     // this.redrawAllObjects();
   }
 
+  get_attribute(name:string) {
+    for (let attribute of this.displayable_attributes) {
+      if (attribute.name = name) {
+        return attribute;
+      }
+    }
+    throw new Error('get_attribute(): ' + name + ' is not an attribute');
+  }
+
   add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
     var graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', text_align_x:'center', text_align_y:'alphabetic', name:''}; 
     var axis_style = {line_width:0.5, color_stroke:string_to_rgb('grey'), dashline:[], name:''};
@@ -306,7 +315,7 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  add_primitive_group_container(serialized, associated_points:number[], layout:any='regular') { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
+  add_primitive_group_container(serialized, associated_points:number[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
     var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
     var primitive_entries = [];
     var elements_entries = [];
@@ -317,13 +326,22 @@ export class MultiplePlots {
     new_plot_data.primitive_dict = Object.fromEntries(primitive_entries);
     new_plot_data.elements_dict = Object.fromEntries(elements_entries);
     this.initialize_new_plot_data(new_plot_data);
-    if (layout == 'regular') {
+    
+    if (attribute_names === null) {
       new_plot_data.regular_layout();
-    } else if (layout.length == 1) {
-      new_plot_data.multiplot_one_axis_layout(layout[0]);
-    } else if (layout.length == 2) {
-      new_plot_data.multiplot_two_axis_layout(layout);
+    } else {
+      var layout = [];
+      for (let name of attribute_names) {
+        layout.push(this.get_attribute(name));
+      }
+      if (layout.length == 1) {
+        new_plot_data.multiplot_one_axis_layout(layout[0]);
+      } else if (layout.length == 2) {
+        new_plot_data.multiplot_two_axis_layout(layout);
+      }
+
     }
+    return this.nbObjects - 1;
   }
 
   add_primitive_group_to_container(serialized, container_index, point_index) {
@@ -5581,52 +5599,6 @@ export class Axis {
                     serialized['name']);
   }
 
-  // draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, x_step, y_step, font_size, X, Y) {
-  //   //x axis graduations
-  //   var i=0;
-  //   context.textAlign = 'center';
-  //   var x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(x_step)));
-  //   var delta_x = maxX - minX;
-  //   var grad_beg_x = minX - 10*delta_x;
-  //   var grad_end_x = maxX + 10*delta_x;
-  //   while(grad_beg_x + i*x_step < grad_end_x) {
-  //     if ((scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X > axis_x_start) && (scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X < axis_x_end - 9)) {
-  //       if (this.grid_on === true) {
-  //         context.strokeStyle = 'lightgrey';
-  //         Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_start], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
-  //       } else {
-  //         Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
-  //       }
-  //       context.fillText(MyMath.round(grad_beg_x + i*x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + font_size );
-  //     }
-  //     i++
-  //   }
-
-  //     //y axis graduations
-  //   i=0;
-  //   var real_minY = -maxY;
-  //   var real_maxY = -minY;
-  //   var delta_y = maxY - minY;
-  //   var grad_beg_y = real_minY - 10*delta_y;
-  //   var grad_end_y = real_maxY + 10*delta_y;
-  //   context.textAlign = 'end';
-  //   context.textBaseline = 'middle';
-  //   var y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(y_step)));
-  //   while (grad_beg_y + (i-1)*y_step < grad_end_y) {
-  //     if ((scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y > axis_y_start + 5) && (scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y < axis_y_end)) {
-  //       if (this.grid_on === true) {
-  //         context.strokeStyle = 'lightgrey';
-  //         Shape.drawLine(context,[[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y], [axis_x_end, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y]]);
-  //       } else {
-  //         Shape.drawLine(context, [[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y], [axis_x_start + 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y]]);
-  //       }
-  //       context.fillText(MyMath.round(grad_beg_y + i*y_step, y_nb_digits), axis_x_start - 5, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y);
-  //     }
-  //     i++;
-  //   }
-
-  //   context.stroke();
-  // }
 
   draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, x_step, font_size, X) {
     var i=0;
@@ -5676,54 +5648,6 @@ export class Axis {
     context.stroke();
   }
 
-  // draw(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, minX, maxX, minY, maxY, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_names) {
-  //   // Drawing the coordinate system
-  //   context.beginPath();
-  //   context.strokeStyle = this.axis_style.color_stroke;
-  //   context.lineWidth = this.axis_style.line_width;
-  //   var axis_x_start = decalage_axis_x + X;
-  //   var axis_x_end = width + X;
-  //   var axis_y_start = Y;
-  //   var axis_y_end = height - decalage_axis_y + Y;
-  //   //Arrows
-  //   if (this.arrow_on === true) {
-  //     Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
-  //     Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
-
-  //     Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
-  //     Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
-  //   }
-
-  //   //Axis
-  //   Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
-  //   Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
-
-  //   context.stroke();
-
-  //   //Graduations
-  //   if (scroll_x % 5 == 0) {
-  //     var kx = 1.1*scaleX/init_scaleX;
-  //     this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
-  //   }
-  //   if (scroll_y % 5 == 0) {
-  //     var ky = 1.1*scaleY/init_scaleY;
-  //     this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
-  //   }
-
-  //   context.fillStyle = this.graduation_style.text_color;
-  //   context.strokeStyle = this.axis_style.color_stroke;
-
-  //   context.font = 'bold 20px Arial';
-  //   context.textAlign = 'end';
-  //   context.fillText(to_disp_attribute_names[0], axis_x_end - 5, axis_y_end - 10);
-  //   context.textAlign = 'start';
-  //   context.fillText(to_disp_attribute_names[1], axis_x_start + 5, axis_y_start + 20);
-  //   context.stroke();
-
-  //   context.font = this.graduation_style.font_size.toString() + 'px Arial';
-  //   this.draw_graduations(context, mvx, mvy, scaleX, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, minY, maxY, this.x_step, this.y_step, this.graduation_style.font_size, X, Y);
-  //   context.closePath();
-  // }
 
   draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name) {
     context.beginPath();
@@ -5787,44 +5711,6 @@ export class Axis {
   }
 
   draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
-    // // Drawing the coordinate system
-    // context.beginPath();
-    // context.strokeStyle = this.axis_style.color_stroke;
-    // context.lineWidth = this.axis_style.line_width;
-    // var axis_x_start = decalage_axis_x + X;
-    // var axis_x_end = width + X;
-    // var axis_y_start = Y;
-    // var axis_y_end = height - decalage_axis_y + Y;
-    // //Arrows
-    // if (this.arrow_on === true) {
-    //   Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
-    //   Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
-
-    //   Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
-    //   Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
-    // }
-
-    // //Axis
-    // Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
-    // Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
-
-    // context.fillStyle = this.graduation_style.text_color;
-    // context.strokeStyle = this.axis_style.color_stroke;    context.font = 'bold 20px Arial';
-    // context.textAlign = 'end';
-    // context.fillText(to_display_attributes[0]['name'], axis_x_end - 5, axis_y_end - 10);
-    // context.textAlign = 'start';
-    // context.fillText(to_display_attributes[1]['name'], axis_x_start + 5, axis_y_start + 20);
-
-    // context.stroke();
-
-    // //Graduations
-    // context.font = this.graduation_style.font_size.toString() + 'px Arial';
-
-    // this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[0], to_display_attributes[0], scroll_x, X);
-    // this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, lists[1], to_display_attributes[1], scroll_y, Y);
-    // context.stroke();
-    // context.fill();
-    // context.closePath();
     this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0], scroll_x, decalage_axis_x, decalage_axis_y, X, Y);
     this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1], scroll_y, decalage_axis_x, decalage_axis_y, X, Y);
   }
@@ -7324,27 +7210,6 @@ export class List {
   }
 } //end class List
 
-// export function equals(obj1:any, obj2:any): boolean { //Works on any kind of objects, including strings and arrays. Also works on numbers
-//   if ((obj1 === undefined) || (obj2 === undefined)) {
-//     return false;
-//   }
-//   var objClass1 = obj1.constructor.name;
-//   var objClass2 = obj2.constructor.name;
-//   if (objClass1 != objClass2) {
-//     return false;
-//   }
-//   if (objClass1 == 'Number') {
-//     return obj1 == obj2;
-//   }
-//   var attribute_names = Object.getOwnPropertyNames(obj1);
-//   for (let i=0; i<attribute_names.length; i++) {
-//     let attr_name = attribute_names[i];
-//     if (obj1[attr_name] !== obj2[attr_name]) {
-//       return false;
-//     }
-//   }
-//   return true;
-// }
 
 export function set_default_values(dict_, default_dict_) { // returns a dictionary containing dict_ + every default_dict_'s keys that dict_ doesn't have
   // ex: dict_ = {color: red}; default_dict_ = {color: blue, shape: circle}
@@ -7431,81 +7296,3 @@ export function equals(a, b) {
   // true if both NaN, false otherwise
   return a!==a && b!==b;
 };
-
-var primitive_groups = {primitive_groups:[{'name': '',
-'package_version': '0.4.10.dev11',
-'primitives': [{'name': '',
-  'package_version': '0.4.10.dev11',
-  'r': 10,
-  'cy': 0.0,
-  'cx': 0.0,
-  'type_': 'circle'}],
-'type_': 'primitivegroup'},
-{'name': '',
-'package_version': '0.4.10.dev11',
-'primitives': [{'name': '',
-  'package_version': '0.4.10.dev11',
-  'plot_data_primitives': [{'name': '',
-    'package_version': '0.4.10.dev11',
-    'data': [1.0, 1.0, 1.0, 2.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.4.10.dev11'},
-    'type_': 'linesegment'},
-   {'name': '',
-    'package_version': '0.4.10.dev11',
-    'data': [1.0, 2.0, 2.0, 2.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.4.10.dev11'},
-    'type_': 'linesegment'},
-   {'name': '',
-    'package_version': '0.4.10.dev11',
-    'data': [2.0, 2.0, 2.0, 1.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.4.10.dev11'},
-    'type_': 'linesegment'},
-   {'name': '',
-    'package_version': '0.4.10.dev11',
-    'data': [2.0, 1.0, 1.0, 1.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.4.10.dev11'},
-    'type_': 'linesegment'}],
-  'surface_style': {'name': '',
-   'object_class': 'plot_data.core.SurfaceStyle',
-   'package_version': '0.4.10.dev11',
-   'color_fill': 'rgb(255,175,96)'},
-  'type_': 'contour'}],
-'type_': 'primitivegroup'},
-{'name': '',
-'package_version': '0.4.10.dev11',
-'primitives': [{'name': '',
-  'package_version': '0.4.10.dev11',
-  'surface_style': {'name': '',
-   'object_class': 'plot_data.core.SurfaceStyle',
-   'package_version': '0.4.10.dev11',
-   'color_fill': 'rgb(247,0,0)'},
-  'r': 5,
-  'cy': 1.0,
-  'cx': 1.0,
-  'type_': 'circle'}],
-'type_': 'primitivegroup'},
-{'name': '',
-'package_version': '0.4.10.dev11',
-'primitives': [{'name': '',
-  'package_version': '0.4.10.dev11',
-  'surface_style': {'name': '',
-   'object_class': 'plot_data.core.SurfaceStyle',
-   'package_version': '0.4.10.dev11',
-   'color_fill': 'rgb(222,184,135)'},
-  'r': 5,
-  'cy': 1.0,
-  'cx': 1.0,
-  'type_': 'circle'}],
-'type_': 'primitivegroup'}]};
-
-var attribute1 = new Attribute('cx', 'float');
-var attribute2 = new Attribute('cy', 'float');
-var attribute3 = new Attribute('color_fill', 'color');

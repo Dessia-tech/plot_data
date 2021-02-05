@@ -39,7 +39,8 @@ export class MultiplePlots {
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
-    check_package_version(data['package_version'], '0.4.3');
+    var requirement = '0.4.3';
+    this.manage_package_version(requirement);
     this.dataObjects = data['objects'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
     var elements = data['elements'];
@@ -79,6 +80,16 @@ export class MultiplePlots {
     }
     if (data['initial_view_on']) {
       this.clean_view();
+    }
+  }
+
+  manage_package_version(requirement) {
+    if (!check_package_version(this.data['package_version'], requirement)) {
+      this.define_canvas(this.canvas_id);
+      this.context_show.textAlign = 'center';
+      this.context_show.font = '20px sans-serif';
+      this.context_show.fillText("plot_data's version must be updated. Current version: " + this.data['package_version'] + ", minimum requirement: " + requirement, this.width/2, this.height/2);
+      throw new Error('Package version error');
     }
   }
 
@@ -1504,10 +1515,21 @@ export abstract class PlotData {
     public buttons_ON: boolean,
     public X: number,
     public Y: number,
-    public canvas_id: string) {}
+    public canvas_id: string) {
+    }
 
 
   abstract draw(hidden, mvx, mvy, scaleX, scaleY, X, Y);
+
+  manage_package_version(requirement) {
+    if (!check_package_version(this.data['package_version'], requirement)) {
+      this.define_canvas(this.canvas_id);
+      this.context_show.textAlign = 'center';
+      this.context_show.font = '10px sans-serif';
+      this.context_show.fillText("plot_data's version must be updated. Current version: " + this.data['package_version'] + ", minimum requirement: " + requirement, this.width/2, this.height/2);
+      throw new Error('Package version error');
+    }
+  }
 
   define_canvas(canvas_id: string):void {
     var canvas:any = document.getElementById(canvas_id);
@@ -3395,7 +3417,8 @@ export class PlotContour extends PlotData {
                 public Y: number,
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
-    check_package_version(data['package_version'], '0.4.0');
+    var requirement = '0.4.0';
+    this.manage_package_version(requirement);
     this.plot_datas = [];
     this.type_ = 'primitivegroup';
     var d = this.data;
@@ -3465,7 +3488,8 @@ export class PlotScatter extends PlotData {
     public Y: number,
     public canvas_id: string) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-      check_package_version(data['package_version'], '0.4.0');
+      var requirement = '0.4.0';
+      this.manage_package_version(requirement);
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
@@ -3560,7 +3584,8 @@ export class ParallelPlot extends PlotData {
 
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    check_package_version(data['package_version'], '0.4.0');
+    var requirement = '0.4.0';
+    this.manage_package_version(requirement);
     this.type_ = 'parallelplot';
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
@@ -3726,7 +3751,8 @@ export class PrimitiveGroupContainer extends PlotData {
               public Y: number,
               public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    //check_package_version()
+    var requirement = '0.4.11';
+    this.manage_package_version(requirement);
     this.type_ = 'primitivegroupcontainer';
     var serialized = data['primitive_groups'];
     var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
@@ -7236,8 +7262,10 @@ export function check_package_version(package_version:string, requirement:string
   var requirement_num = Number(requirement_array[0])*Math.pow(10, 4) + Number(requirement_array[1])*Math.pow(10,2) +
     Number(requirement_array[2]);
   if (package_version_num < requirement_num) {
-    throw new Error("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
+    // throw new Error("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
+    return false;
   }
+  return true;
 }
 
 export class MyObject {

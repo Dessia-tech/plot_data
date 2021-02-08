@@ -3096,7 +3096,6 @@ export abstract class PlotData {
       this.isSelecting = false;
       this.isDrawing_rubber_band = false;
       Interactions.reset_zoom_box(this);
-      console.log(this.latest_selected_points)
       return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 

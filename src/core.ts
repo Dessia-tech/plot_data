@@ -2910,11 +2910,10 @@ export abstract class PlotData {
       } else {
         this.select_on_click.push(click_plot_data);
         click_plot_data.selected = true;
-        this.latest_selected_points.push(click_plot_data);
+        this.latest_selected_points = [click_plot_data];
       }
     } else { 
       this.select_on_click.push(click_plot_data);
-      this.latest_selected_points.push(click_plot_data);
     }
     if (this.tooltip_ON && click_plot_data) {
       let is_in_tooltip_list = List.is_include(click_plot_data, this.tooltip_list);
@@ -3097,6 +3096,7 @@ export abstract class PlotData {
       this.isSelecting = false;
       this.isDrawing_rubber_band = false;
       Interactions.reset_zoom_box(this);
+      console.log(this.latest_selected_points)
       return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 
@@ -4687,6 +4687,7 @@ export class Interactions {
   public static selection_window_action(plot_data:PlotScatter) {
     plot_data.latest_selected_points = [];
     plot_data.select_on_click = [];
+    plot_data.tooltip_list = [];
     plot_data.context_show.setLineDash([]);
     plot_data.context_hidden.setLineDash([]);
     if (plot_data.plotObject['type_'] == 'graph2d') {

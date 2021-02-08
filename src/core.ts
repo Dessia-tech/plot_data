@@ -1758,11 +1758,10 @@ export abstract class PlotData {
       } else {
         if (this.plotObject.type_ == 'scatterplot') {
           if (this.sc_interpolation_ON) {
-            if ((!equals([this.perm_window_x, this.perm_window_y, this.perm_window_w, this.perm_window_h], [0,0,0,0])) 
-                || (this.select_on_click.length != 0) || (List.contains_undefined(this.select_on_click))) {
-              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
-            } else {
+            if (d.selected || List.contains_undefined(this.select_on_click)) {
               this.context.fillStyle = d.color_fill;
+            } else {
+              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
             }
           } else {
             this.context.fillStyle = this.plotObject.point_style.color_fill;

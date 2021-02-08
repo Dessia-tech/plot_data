@@ -352,11 +352,13 @@ export class MultiplePlots {
           new_plot_data.multiplot_two_axis_layout(layout);
         }
       }
+      this.redrawAllObjects();
     } else {
       let obj = this.objectList[this.nbObjects - 1];
-      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      this.objectList[this.nbObjects - 1].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      this.objectList[this.nbObjects - 1].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
+    
     return this.nbObjects - 1;
   }
 
@@ -497,7 +499,7 @@ export class MultiplePlots {
   }
 
   translateSelectedObject(move_plot_index, tx, ty):void {
-    var obj:PlotData = this.objectList[move_plot_index]
+    var obj:any = this.objectList[move_plot_index]
     obj.X = obj.X + tx;
     obj.Y = obj.Y + ty;
     if (obj.type_ == 'parallelplot') { this.objectList[move_plot_index].refresh_axis_coords(); }
@@ -763,7 +765,7 @@ export class MultiplePlots {
         this.objectList[i].reset_scales();
       } else if (this.objectList[i].type_ == 'primitivegroupcontainer') {
         let obj:any = this.objectList[i];
-        obj.click_on_reset_action();
+        obj.reset_action();
       }
     }
   }
@@ -910,41 +912,54 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  resizeObject(vertex_infos, mouse2X, mouse2Y):void {
+  resizeObject(vertex_infos, tx, ty):void {
     var widthSizeLimit = 100;
     var heightSizeLimit = 100;
-    var deltaX = mouse2X - this.initial_mouseX;
-    var deltaY = mouse2Y - this.initial_mouseY;
     for (let i=0; i<vertex_infos.length; i++) {
       let vertex_object_index = vertex_infos[i].index;
+      let obj:any = this.objectList[vertex_object_index];
       if (vertex_infos[i].up === true) {
-        if (this.initial_object_height[vertex_object_index] - deltaY > heightSizeLimit) {
-          this.objectList[vertex_object_index].Y = this.initial_objectsY[vertex_object_index] + deltaY;
-          this.objectList[vertex_object_index].height = this.initial_object_height[vertex_object_index] - deltaY;
+        if (obj.height - ty > heightSizeLimit) {
+          this.objectList[vertex_object_index].Y = obj.Y + ty;
+          this.objectList[vertex_object_index].height = obj.height - ty;
         } else {
           this.objectList[vertex_object_index].height = heightSizeLimit;
         }
       }
       if (vertex_infos[i].down === true) {
-        if (this.initial_object_height[vertex_object_index] + deltaY > heightSizeLimit) {
-          this.objectList[vertex_object_index].height = this.initial_object_height[vertex_object_index] + deltaY;
+        if (obj.height + ty > heightSizeLimit) {
+          this.objectList[vertex_object_index].height = obj.height + ty;
         } else {
           this.objectList[vertex_object_index].height = heightSizeLimit;
         }
       }
       if (vertex_infos[i].left === true) {
-        if (this.initial_object_width[vertex_object_index] - deltaX > widthSizeLimit) {
-          this.objectList[vertex_object_index].X = this.initial_objectsX[vertex_object_index] + deltaX;
-          this.objectList[vertex_object_index].width = this.initial_object_width[vertex_object_index] - deltaX;
+        if (obj.width - tx > widthSizeLimit) {
+          this.objectList[vertex_object_index].X = obj.X + tx;
+          this.objectList[vertex_object_index].width = obj.width - tx;
         } else {
           this.objectList[vertex_object_index].width = widthSizeLimit;
         }
       }
       if (vertex_infos[i].right === true) {
-        if (this.initial_object_width[vertex_object_index] + deltaX > widthSizeLimit) {
-          this.objectList[vertex_object_index].width = this.initial_object_width[vertex_object_index] + deltaX;
+        if (obj.width + tx > widthSizeLimit) {
+          this.objectList[vertex_object_index].width = obj.width + tx;
         } else {
           this.objectList[vertex_object_index].width = widthSizeLimit;
+        }
+      }
+
+      if (this.objectList[vertex_object_index].type_ == 'primitivegroupcontainer') {
+        let obj:any = this.objectList[vertex_object_index];
+        if (vertex_infos[i].left) {
+          for (let j=0; j<obj.primitive_groups.length; j++) {
+            obj.primitive_groups[j].X = obj.primitive_groups[j].X + tx;
+          }
+        }
+        if (vertex_infos[i].up) {
+          for (let j=0; j<obj.primitive_groups.length; j++) {
+            obj.primitive_groups[j].Y = obj.primitive_groups[j].Y + ty;
+          }
         }
       }
     }
@@ -1149,17 +1164,24 @@ export class MultiplePlots {
   zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
     if (event > 0) {var zoom_coeff = 1.1} else {var zoom_coeff = 1/1.1}
     for (let i=0; i<this.nbObjects; i++) {
+      let old_X = this.objectList[i].X; let old_Y = this.objectList[i].Y;
       this.objectList[i].X = mouse3X + zoom_coeff*(this.objectList[i].X - mouse3X);
       this.objectList[i].Y = mouse3Y + zoom_coeff*(this.objectList[i].Y - mouse3Y);
       this.objectList[i].width = this.objectList[i].width*zoom_coeff;
       this.objectList[i].height = this.objectList[i].height*zoom_coeff;
       if (this.objectList[i].type_ == 'primitivegroupcontainer') {
         let obj:any = this.objectList[i];
-        obj.zoom_elements(mouse3X, mouse3Y, event);
+        let tx = obj.X - old_X;
+        let ty = obj.Y - old_Y;
+        for (let i=0; i<obj.primitive_groups.length; i++) {
+          obj.primitive_groups[i].X = obj.primitive_groups[i].X + tx;
+          obj.primitive_groups[i].Y = obj.primitive_groups[i].Y + ty;
+        }
       }
     }
     this.resetAllObjects();
   }
+
 
   get_settings_on_object() {
     var obj_settings_on = -1;
@@ -1188,6 +1210,7 @@ export class MultiplePlots {
       this.objectList[object_index].settings_on = true;
     }
   }
+
 
   manage_selected_point_index_changes(old_selected_index:number[], canvas) {
     if (!equals(old_selected_index, this.selected_point_index)) {
@@ -1247,7 +1270,7 @@ export class MultiplePlots {
           } else if (this.clickedPlotIndex == -1) {
             this.translateAllObjects(mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
           } else if (clickOnVertex) {
-            this.resizeObject(vertex_infos, mouse2X, mouse2Y);
+            this.resizeObject(vertex_infos, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
           }
           if (this.view_bool === true) {
             let refreshed_sorted_list = this.getSortedList();
@@ -1328,7 +1351,6 @@ export class MultiplePlots {
       } else {
         this.redraw_object();
       }
-
     });
 
     canvas.addEventListener('mouseleave', e => {
@@ -1574,21 +1596,21 @@ export abstract class PlotData {
   reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
-    if ((this.axis_ON) && !(this.graph_ON)) {
+    if ((this.axis_ON) && !(this.graph_ON)) { // rescale and avoid axis
       this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
       this.init_scaleY = (this.height - this.decalage_axis_y-this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
       this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - this.decalage_axis_y/(2*this.scaleY) + this.pointLength/(2*this.scaleY);
-    } else if ((this.axis_ON) && (this.graph_ON)) {
+    } else if ((this.axis_ON) && (this.graph_ON)) { // rescale + avoid axis and graph buttons on top of canvas
       this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
       this.init_scaleY = (this.height - this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
       this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(2*this.scaleY);
-    } else {
+    } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
       this.init_scaleX = this.init_scale;
@@ -3738,6 +3760,7 @@ export class PrimitiveGroupContainer extends PlotData {
     var requirement = '0.4.11';
     this.manage_package_version(requirement);
     this.type_ = 'primitivegroupcontainer';
+    // if (serialized['layout_attributes']) {  }
     var serialized = data['primitive_groups'];
     var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
     var initial_sizes = data['sizes'] || Array(serialized.length).fill([560, 300]);
@@ -3746,6 +3769,16 @@ export class PrimitiveGroupContainer extends PlotData {
       this.display_order.push(i);
     }
   }
+
+
+  // initialize_layout(serialized_layout) {
+  //   this.layout_attributes = serialized_layout;
+  //   if (serialized_layout.length == 1) {
+  //     this.layout_mode = 'one_axis';
+  //   } else if (serialized_layout.length == 2) {
+  //     this.layout_mode == 'two_axis';
+  //   }
+  // }
 
   define_canvas(canvas_id) {
     super.define_canvas(canvas_id);
@@ -3790,7 +3823,7 @@ export class PrimitiveGroupContainer extends PlotData {
     if (Shape.isInRect(mouse1X, mouse1Y, this.manip_button_x, this.button_y, this.button_w, this.button_h)) {
       this.click_on_manipulation_action();
     } else if (Shape.isInRect(mouse1X, mouse1Y, this.reset_button_x, this.button_y, this.button_w, this.button_h)) {
-      this.click_on_reset_action();
+      this.reset_action();
     }
   }
 
@@ -3804,7 +3837,7 @@ export class PrimitiveGroupContainer extends PlotData {
     }
   }
 
-  click_on_reset_action() {
+  reset_action() {
     if (this.primitive_groups.length !== 0) {
       if (this.layout_mode == 'regular') {
         this.regular_layout();
@@ -3903,7 +3936,9 @@ export class PrimitiveGroupContainer extends PlotData {
     this.draw_empty_canvas();
     this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
     this.draw_layout_axis();
-    this.draw_coordinate_lines();
+    if (this.layout_mode !== 'regular') {
+      this.draw_coordinate_lines();
+    }
     for (let index of this.display_order) {
       let prim = this.primitive_groups[index];
       this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
@@ -3954,7 +3989,7 @@ export class PrimitiveGroupContainer extends PlotData {
       for (let primitive of this.primitive_groups) {
         let x = primitive.X + primitive.width/2;
         let y = primitive.Y + primitive.height;
-        Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y]]);
+        Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y + this.Y]]);
       }
     } else if (this.layout_mode == 'two_axis') {
       for (let primitive of this.primitive_groups) {
@@ -3977,7 +4012,7 @@ export class PrimitiveGroupContainer extends PlotData {
     new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
     new_plot_data.interaction_ON = false;
     this.primitive_dict[point_index.toString()] = this.primitive_groups.length - 1;
-    this.regular_layout();
+    this.reset_action();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   } 
@@ -4007,7 +4042,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
     }
     this.elements_dict = Object.fromEntries(elements_entries);
-    this.regular_layout();
+    this.reset_action();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
@@ -4047,10 +4082,10 @@ export class PrimitiveGroupContainer extends PlotData {
     if (this.primitive_groups.length !== 0) {
       if (this.layout_mode == 'one_axis') {
         this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
-            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+            this.scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
       } else if (this.layout_mode == 'two_axis') {
         this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
-          this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+          this.scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
   
         this.layout_axis.draw_sc_vertical_axis(this.context, this.last_mouse1Y, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
           this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
@@ -4284,12 +4319,8 @@ export class PrimitiveGroupContainer extends PlotData {
   regular_zoom_elements(mouse3X, mouse3Y, event) {
     if (event > 0) {
       var zoom_coeff = 1.1;
-      this.scroll_x++;
-      this.scroll_y++;
     } else {
       var zoom_coeff = 1/1.1;
-      this.scroll_x--;
-      this.scroll_y--;
     }
     for (let i=0; i<this.primitive_groups.length; i++) {
       this.primitive_groups[i].X = mouse3X + zoom_coeff*(this.primitive_groups[i].X - mouse3X);
@@ -4309,10 +4340,8 @@ export class PrimitiveGroupContainer extends PlotData {
   x_zoom_elements(event) {
     if (event > 0) {
       var zoom_coeff = 1.1;
-      this.scroll_x++;
     } else {
       zoom_coeff = 1/1.1;
-      this.scroll_x--;
     }
     var container_center_x = this.X + this.width/2;
     for (let i=0; i<this.primitive_groups.length; i++) {
@@ -4331,10 +4360,8 @@ export class PrimitiveGroupContainer extends PlotData {
   y_zoom_elements(event) {
     if (event > 0) {
       var zoom_coeff = 1.1;
-      this.scroll_y++;
     } else {
       zoom_coeff = 1/1.1;
-      this.scroll_y--;
     }
     var container_center_y = this.Y + this.height/2;
     for (let i=0; i<this.primitive_groups.length; i++) {
@@ -4348,6 +4375,19 @@ export class PrimitiveGroupContainer extends PlotData {
     this.last_mouse1Y = this.last_mouse1Y - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  }
+
+  manage_scroll(mouse3X, mouse3Y, event) {
+    if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
+      this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
+        this.scroll_x = this.scroll_x + event;
+    } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.X, this.Y, this.decalage_axis_x,
+      this.height - this.decalage_axis_y))) {
+        this.scroll_y = this.scroll_y + event;
+    } else {
+      this.scroll_x = this.scroll_x + event;
+      this.scroll_y = this.scroll_y + event;
+    }
   }
 
   delete_unwanted_vertex(vertex_infos) {
@@ -4555,6 +4595,7 @@ export class PrimitiveGroupContainer extends PlotData {
         mouse3X = e.offsetX; mouse3Y = e.offsetY;
         if (this.manipulation_bool) {
           var event = -e.deltaY/Math.abs(e.deltaY);
+          this.manage_scroll(mouse3X, mouse3Y, event);
           this.zoom_elements(mouse3X, mouse3Y, event);
         }
       }
@@ -7298,3 +7339,80 @@ export var empty_container = {'name': '',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 
+var test = {'name': '',
+'package_version': '0.4.11',
+'primitive_groups': [{'name': '',
+  'package_version': '0.4.11',
+  'primitives': [{'name': '',
+    'package_version': '0.4.11',
+    'r': 10,
+    'cy': 0.0,
+    'cx': 0.0,
+    'type_': 'circle'}],
+  'type_': 'primitivegroup'},
+ {'name': '',
+  'package_version': '0.4.11',
+  'primitives': [{'name': '',
+    'package_version': '0.4.11',
+    'plot_data_primitives': [{'name': '',
+      'package_version': '0.4.11',
+      'data': [1.0, 1.0, 1.0, 2.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.4.11'},
+      'type_': 'linesegment'},
+     {'name': '',
+      'package_version': '0.4.11',
+      'data': [1.0, 2.0, 2.0, 2.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.4.11'},
+      'type_': 'linesegment'},
+     {'name': '',
+      'package_version': '0.4.11',
+      'data': [2.0, 2.0, 2.0, 1.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.4.11'},
+      'type_': 'linesegment'},
+     {'name': '',
+      'package_version': '0.4.11',
+      'data': [2.0, 1.0, 1.0, 1.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.4.11'},
+      'type_': 'linesegment'}],
+    'surface_style': {'name': '',
+     'object_class': 'plot_data.core.SurfaceStyle',
+     'package_version': '0.4.11',
+     'color_fill': 'rgb(255,175,96)'},
+    'type_': 'contour'}],
+  'type_': 'primitivegroup'},
+ {'name': '',
+  'package_version': '0.4.11',
+  'primitives': [{'name': '',
+    'package_version': '0.4.11',
+    'surface_style': {'name': '',
+     'object_class': 'plot_data.core.SurfaceStyle',
+     'package_version': '0.4.11',
+     'color_fill': 'rgb(247,0,0)'},
+    'r': 5,
+    'cy': 1.0,
+    'cx': 1.0,
+    'type_': 'circle'}],
+  'type_': 'primitivegroup'},
+ {'name': '',
+  'package_version': '0.4.11',
+  'primitives': [{'name': '',
+    'package_version': '0.4.11',
+    'surface_style': {'name': '',
+     'object_class': 'plot_data.core.SurfaceStyle',
+     'package_version': '0.4.11',
+     'color_fill': 'rgb(222,184,135)'},
+    'r': 5,
+    'cy': 1.0,
+    'cx': 1.0,
+    'type_': 'circle'}],
+  'type_': 'primitivegroup'}],
+'coords': [[0, 0], [600, 0], [0, 350], [500, 350]],
+'type_': 'primitivegroupcontainer'}

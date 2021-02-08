@@ -7366,3 +7366,9 @@ export function equals(a, b) {
   return a!==a && b!==b;
 };
 
+
+export var empty_container = {'name': '',
+'package_version': '0.4.11',
+'primitive_groups': [],
+'type_': 'primitivegroupcontainer'};
+

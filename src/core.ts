@@ -1078,13 +1078,20 @@ export class MultiplePlots {
         let temp_select_on_click = List.getListEltFromIndex(this.dep_selected_points_index, obj.plotObject.point_list);
         this.objectList[i].select_on_click = [];
         for (let j=0; j<obj.scatter_point_list.length; j++) {
-          let scatter_point_list_j = obj.scatter_point_list[j]
+          let scatter_point_list_j = obj.scatter_point_list[j];
+          let is_inside = false;
           for (let k=0; k<scatter_point_list_j.points_inside.length; k++) {
-            if (List.is_include(scatter_point_list_j.points_inside[k], temp_select_on_click) && !scatter_point_list_j.selected) {
-              this.objectList[i].select_on_click.push(obj.scatter_point_list[j]);
-              this.objectList[i].scatter_point_list[j].selected = true;
-              break;
+            if (List.is_include(scatter_point_list_j.points_inside[k], temp_select_on_click)) {
+              is_inside = true;
+              if (!scatter_point_list_j.selected) {
+                this.objectList[i].select_on_click.push(obj.scatter_point_list[j]);
+                this.objectList[i].scatter_point_list[j].selected = true;
+                break;
+              } 
             }
+          }
+          if (!is_inside && this.objectList[i].scatter_point_list[j].selected) {
+            this.objectList[i].scatter_point_list[j].selected = false;
           }
         }
       } else if (obj.type_ == 'parallelplot') {
@@ -4082,10 +4089,10 @@ export class PrimitiveGroupContainer extends PlotData {
     if (this.primitive_groups.length !== 0) {
       if (this.layout_mode == 'one_axis') {
         this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
-            this.scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
       } else if (this.layout_mode == 'two_axis') {
         this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
-          this.scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+          this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
   
         this.layout_axis.draw_sc_vertical_axis(this.context, this.last_mouse1Y, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
           this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
@@ -5166,6 +5173,8 @@ export class MultiplotCom {
         if (bool === true) {
           new_select_on_click.push(plot_data.scatter_point_list[i]);
           plot_data.scatter_point_list[i].selected = true;
+        } else {
+          plot_data.scatter_point_list[i].selected = false;
         }
       }
       plot_data.select_on_click = new_select_on_click;

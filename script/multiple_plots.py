@@ -75,16 +75,16 @@ to_disp_attribute_names = ['cx', 'cy']
 tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names)
 point_style = plot_data.PointStyle(color_fill=LIGHTBLUE,
                                    color_stroke=GREY)
-# scatterPlot = plot_data.Scatter(tooltip=tooltip,
-#                                 to_disp_attribute_names=to_disp_attribute_names,
-#                                 point_style=point_style)
-# objects.append(scatterPlot)
+scatterPlot = plot_data.Scatter(tooltip=tooltip,
+                                to_disp_attribute_names=to_disp_attribute_names,
+                                point_style=point_style)
+objects.append(scatterPlot)
 
-# scatterPlot1 = plot_data.Scatter(tooltip=tooltip,
-#                                  to_disp_attribute_names=['cx', 'color_fill'],
-#                                  point_style=point_style)
-# objects.append(scatterPlot1)
-#
+scatterPlot1 = plot_data.Scatter(tooltip=tooltip,
+                                 to_disp_attribute_names=['cx', 'color_fill'],
+                                 point_style=point_style)
+objects.append(scatterPlot1)
+
 scatterPlot2 = plot_data.Scatter(tooltip=tooltip,
                                  to_disp_attribute_names=['cy',
                                                           'color_stroke'],

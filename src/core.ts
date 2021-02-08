@@ -2285,6 +2285,33 @@ export abstract class PlotData {
       let sorted_elements = sort.sortObjsByAttribute(Array.from(this.elements), this.selected_axis_name);
       this.refresh_to_display_list(sorted_elements);
     }
+    this.refresh_display_to_elements_dict();
+  }
+
+
+  refresh_display_to_elements_dict() {
+    var entries = [];
+    for (let i=0; i<this.to_display_list.length; i++) {
+      for (let j=0; j<this.elements.length; j++) {
+        let bool = true;
+        for (let k=0; k<this.axis_list.length; k++) {
+          if (this.axis_list[k].type_ == 'color') {
+            var is_equal = this.to_display_list[i][k] === rgb_to_string(this.elements[j][this.axis_list[k].name]);
+          } else {
+            is_equal = this.to_display_list[i][k] === this.elements[j][this.axis_list[k].name];
+          }
+          if (!is_equal) {
+            bool = false;
+            break;
+          }
+        }
+        if (bool) {
+          entries.push([i, j]);
+          break;
+        }
+      }
+    }
+    this.display_list_to_elements_dict = Object.fromEntries(entries);
   }
 
   pp_color_management(index:number) {
@@ -2309,10 +2336,6 @@ export abstract class PlotData {
 
 
   draw_parallel_coord_lines() {
-    if (this.selected_axis_name != '') {
-      this.sort_to_display_list(); // à modifier pour trier vertical et horizontal axis coords
-      this.refresh_axis_coords();
-    }
     for (let i=0; i<this.to_display_list.length; i++) {
       if (this.vertical) { var seg_list = this.vertical_axis_coords[i]; } else { var seg_list = this.horizontal_axis_coords[i]; }
       this.context.beginPath();
@@ -4923,6 +4946,8 @@ export class Interactions {
         plot_data.selected_axis_name = '';
       } else {
         plot_data.selected_axis_name = attribute_name;
+        plot_data.sort_to_display_list(); // à modifier pour trier vertical et horizontal axis coords
+        plot_data.refresh_axis_coords();
       }
     } else if ((plot_data.rubber_bands[selected_axis_index].length != 0) && !click_on_band && !click_on_border) {
       plot_data.rubber_bands[selected_axis_index] = [];

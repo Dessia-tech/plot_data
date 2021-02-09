@@ -3788,7 +3788,6 @@ export class PrimitiveGroupContainer extends PlotData {
     var requirement = '0.5.0';
     this.manage_package_version(requirement);
     this.type_ = 'primitivegroupcontainer';
-    // if (serialized['layout_attributes']) {  }
     var serialized = data['primitive_groups'];
     var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
     var initial_sizes = data['sizes'] || Array(serialized.length).fill([560, 300]);
@@ -7364,11 +7363,11 @@ export function equals(a, b) {
 
   // true if both NaN, false otherwise
   return a!==a && b!==b;
-};
+}
 
 
 export var empty_container = {'name': '',
-'package_version': '0.4.11',
+'package_version': '0.5.0',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 

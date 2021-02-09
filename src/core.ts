@@ -352,11 +352,13 @@ export class MultiplePlots {
           new_plot_data.multiplot_two_axis_layout(layout);
         }
       }
+      this.redrawAllObjects();
     } else {
       let obj = this.objectList[this.nbObjects - 1];
-      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      this.objectList[this.nbObjects - 1].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      this.objectList[this.nbObjects - 1].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
+    
     return this.nbObjects - 1;
   }
 
@@ -497,7 +499,7 @@ export class MultiplePlots {
   }
 
   translateSelectedObject(move_plot_index, tx, ty):void {
-    var obj:PlotData = this.objectList[move_plot_index]
+    var obj:any = this.objectList[move_plot_index]
     obj.X = obj.X + tx;
     obj.Y = obj.Y + ty;
     if (obj.type_ == 'parallelplot') { this.objectList[move_plot_index].refresh_axis_coords(); }
@@ -763,7 +765,7 @@ export class MultiplePlots {
         this.objectList[i].reset_scales();
       } else if (this.objectList[i].type_ == 'primitivegroupcontainer') {
         let obj:any = this.objectList[i];
-        obj.click_on_reset_action();
+        obj.reset_action();
       }
     }
   }
@@ -910,41 +912,54 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  resizeObject(vertex_infos, mouse2X, mouse2Y):void {
+  resizeObject(vertex_infos, tx, ty):void {
     var widthSizeLimit = 100;
     var heightSizeLimit = 100;
-    var deltaX = mouse2X - this.initial_mouseX;
-    var deltaY = mouse2Y - this.initial_mouseY;
     for (let i=0; i<vertex_infos.length; i++) {
       let vertex_object_index = vertex_infos[i].index;
+      let obj:any = this.objectList[vertex_object_index];
       if (vertex_infos[i].up === true) {
-        if (this.initial_object_height[vertex_object_index] - deltaY > heightSizeLimit) {
-          this.objectList[vertex_object_index].Y = this.initial_objectsY[vertex_object_index] + deltaY;
-          this.objectList[vertex_object_index].height = this.initial_object_height[vertex_object_index] - deltaY;
+        if (obj.height - ty > heightSizeLimit) {
+          this.objectList[vertex_object_index].Y = obj.Y + ty;
+          this.objectList[vertex_object_index].height = obj.height - ty;
         } else {
           this.objectList[vertex_object_index].height = heightSizeLimit;
         }
       }
       if (vertex_infos[i].down === true) {
-        if (this.initial_object_height[vertex_object_index] + deltaY > heightSizeLimit) {
-          this.objectList[vertex_object_index].height = this.initial_object_height[vertex_object_index] + deltaY;
+        if (obj.height + ty > heightSizeLimit) {
+          this.objectList[vertex_object_index].height = obj.height + ty;
         } else {
           this.objectList[vertex_object_index].height = heightSizeLimit;
         }
       }
       if (vertex_infos[i].left === true) {
-        if (this.initial_object_width[vertex_object_index] - deltaX > widthSizeLimit) {
-          this.objectList[vertex_object_index].X = this.initial_objectsX[vertex_object_index] + deltaX;
-          this.objectList[vertex_object_index].width = this.initial_object_width[vertex_object_index] - deltaX;
+        if (obj.width - tx > widthSizeLimit) {
+          this.objectList[vertex_object_index].X = obj.X + tx;
+          this.objectList[vertex_object_index].width = obj.width - tx;
         } else {
           this.objectList[vertex_object_index].width = widthSizeLimit;
         }
       }
       if (vertex_infos[i].right === true) {
-        if (this.initial_object_width[vertex_object_index] + deltaX > widthSizeLimit) {
-          this.objectList[vertex_object_index].width = this.initial_object_width[vertex_object_index] + deltaX;
+        if (obj.width + tx > widthSizeLimit) {
+          this.objectList[vertex_object_index].width = obj.width + tx;
         } else {
           this.objectList[vertex_object_index].width = widthSizeLimit;
+        }
+      }
+
+      if (this.objectList[vertex_object_index].type_ == 'primitivegroupcontainer') {
+        let obj:any = this.objectList[vertex_object_index];
+        if (vertex_infos[i].left) {
+          for (let j=0; j<obj.primitive_groups.length; j++) {
+            obj.primitive_groups[j].X = obj.primitive_groups[j].X + tx;
+          }
+        }
+        if (vertex_infos[i].up) {
+          for (let j=0; j<obj.primitive_groups.length; j++) {
+            obj.primitive_groups[j].Y = obj.primitive_groups[j].Y + ty;
+          }
         }
       }
     }
@@ -1063,13 +1078,20 @@ export class MultiplePlots {
         let temp_select_on_click = List.getListEltFromIndex(this.dep_selected_points_index, obj.plotObject.point_list);
         this.objectList[i].select_on_click = [];
         for (let j=0; j<obj.scatter_point_list.length; j++) {
-          let scatter_point_list_j = obj.scatter_point_list[j]
+          let scatter_point_list_j = obj.scatter_point_list[j];
+          let is_inside = false;
           for (let k=0; k<scatter_point_list_j.points_inside.length; k++) {
-            if (List.is_include(scatter_point_list_j.points_inside[k], temp_select_on_click) && !scatter_point_list_j.selected) {
-              this.objectList[i].select_on_click.push(obj.scatter_point_list[j]);
-              this.objectList[i].scatter_point_list[j].selected = true;
-              break;
+            if (List.is_include(scatter_point_list_j.points_inside[k], temp_select_on_click)) {
+              is_inside = true;
+              if (!scatter_point_list_j.selected) {
+                this.objectList[i].select_on_click.push(obj.scatter_point_list[j]);
+                this.objectList[i].scatter_point_list[j].selected = true;
+                break;
+              } 
             }
+          }
+          if (!is_inside && this.objectList[i].scatter_point_list[j].selected) {
+            this.objectList[i].scatter_point_list[j].selected = false;
           }
         }
       } else if (obj.type_ == 'parallelplot') {
@@ -1149,17 +1171,24 @@ export class MultiplePlots {
   zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
     if (event > 0) {var zoom_coeff = 1.1} else {var zoom_coeff = 1/1.1}
     for (let i=0; i<this.nbObjects; i++) {
+      let old_X = this.objectList[i].X; let old_Y = this.objectList[i].Y;
       this.objectList[i].X = mouse3X + zoom_coeff*(this.objectList[i].X - mouse3X);
       this.objectList[i].Y = mouse3Y + zoom_coeff*(this.objectList[i].Y - mouse3Y);
       this.objectList[i].width = this.objectList[i].width*zoom_coeff;
       this.objectList[i].height = this.objectList[i].height*zoom_coeff;
       if (this.objectList[i].type_ == 'primitivegroupcontainer') {
         let obj:any = this.objectList[i];
-        obj.zoom_elements(mouse3X, mouse3Y, event);
+        let tx = obj.X - old_X;
+        let ty = obj.Y - old_Y;
+        for (let i=0; i<obj.primitive_groups.length; i++) {
+          obj.primitive_groups[i].X = obj.primitive_groups[i].X + tx;
+          obj.primitive_groups[i].Y = obj.primitive_groups[i].Y + ty;
+        }
       }
     }
     this.resetAllObjects();
   }
+
 
   get_settings_on_object() {
     var obj_settings_on = -1;
@@ -1188,6 +1217,7 @@ export class MultiplePlots {
       this.objectList[object_index].settings_on = true;
     }
   }
+
 
   manage_selected_point_index_changes(old_selected_index:number[], canvas) {
     if (!equals(old_selected_index, this.selected_point_index)) {
@@ -1247,7 +1277,7 @@ export class MultiplePlots {
           } else if (this.clickedPlotIndex == -1) {
             this.translateAllObjects(mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
           } else if (clickOnVertex) {
-            this.resizeObject(vertex_infos, mouse2X, mouse2Y);
+            this.resizeObject(vertex_infos, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
           }
           if (this.view_bool === true) {
             let refreshed_sorted_list = this.getSortedList();
@@ -1328,7 +1358,6 @@ export class MultiplePlots {
       } else {
         this.redraw_object();
       }
-
     });
 
     canvas.addEventListener('mouseleave', e => {
@@ -1574,21 +1603,21 @@ export abstract class PlotData {
   reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
-    if ((this.axis_ON) && !(this.graph_ON)) {
+    if ((this.axis_ON) && !(this.graph_ON)) { // rescale and avoid axis
       this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
       this.init_scaleY = (this.height - this.decalage_axis_y-this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
       this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - this.decalage_axis_y/(2*this.scaleY) + this.pointLength/(2*this.scaleY);
-    } else if ((this.axis_ON) && (this.graph_ON)) {
+    } else if ((this.axis_ON) && (this.graph_ON)) { // rescale + avoid axis and graph buttons on top of canvas
       this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
       this.init_scaleY = (this.height - this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
       this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(2*this.scaleY);
-    } else {
+    } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
       this.init_scaleX = this.init_scale;
@@ -1729,11 +1758,10 @@ export abstract class PlotData {
       } else {
         if (this.plotObject.type_ == 'scatterplot') {
           if (this.sc_interpolation_ON) {
-            if ((!equals([this.perm_window_x, this.perm_window_y, this.perm_window_w, this.perm_window_h], [0,0,0,0])) 
-                || (this.select_on_click.length != 0) || (List.contains_undefined(this.select_on_click))) {
-              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
-            } else {
+            if (d.selected || List.contains_undefined(this.select_on_click)) {
               this.context.fillStyle = d.color_fill;
+            } else {
+              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
             }
           } else {
             this.context.fillStyle = this.plotObject.point_style.color_fill;
@@ -2256,6 +2284,33 @@ export abstract class PlotData {
       let sorted_elements = sort.sortObjsByAttribute(Array.from(this.elements), this.selected_axis_name);
       this.refresh_to_display_list(sorted_elements);
     }
+    this.refresh_display_to_elements_dict();
+  }
+
+
+  refresh_display_to_elements_dict() {
+    var entries = [];
+    for (let i=0; i<this.to_display_list.length; i++) {
+      for (let j=0; j<this.elements.length; j++) {
+        let bool = true;
+        for (let k=0; k<this.axis_list.length; k++) {
+          if (this.axis_list[k].type_ == 'color') {
+            var is_equal = this.to_display_list[i][k] === rgb_to_string(this.elements[j][this.axis_list[k].name]);
+          } else {
+            is_equal = this.to_display_list[i][k] === this.elements[j][this.axis_list[k].name];
+          }
+          if (!is_equal) {
+            bool = false;
+            break;
+          }
+        }
+        if (bool) {
+          entries.push([i, j]);
+          break;
+        }
+      }
+    }
+    this.display_list_to_elements_dict = Object.fromEntries(entries);
   }
 
   pp_color_management(index:number) {
@@ -2280,10 +2335,6 @@ export abstract class PlotData {
 
 
   draw_parallel_coord_lines() {
-    if (this.selected_axis_name != '') {
-      this.sort_to_display_list(); // à modifier pour trier vertical et horizontal axis coords
-      this.refresh_axis_coords();
-    }
     for (let i=0; i<this.to_display_list.length; i++) {
       if (this.vertical) { var seg_list = this.vertical_axis_coords[i]; } else { var seg_list = this.horizontal_axis_coords[i]; }
       this.context.beginPath();
@@ -2859,11 +2910,10 @@ export abstract class PlotData {
       } else {
         this.select_on_click.push(click_plot_data);
         click_plot_data.selected = true;
-        this.latest_selected_points.push(click_plot_data);
+        this.latest_selected_points = [click_plot_data];
       }
     } else { 
       this.select_on_click.push(click_plot_data);
-      this.latest_selected_points.push(click_plot_data);
     }
     if (this.tooltip_ON && click_plot_data) {
       let is_in_tooltip_list = List.is_include(click_plot_data, this.tooltip_list);
@@ -3735,7 +3785,7 @@ export class PrimitiveGroupContainer extends PlotData {
               public Y: number,
               public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    var requirement = '0.4.11';
+    var requirement = '0.5.0';
     this.manage_package_version(requirement);
     this.type_ = 'primitivegroupcontainer';
     var serialized = data['primitive_groups'];
@@ -3746,6 +3796,16 @@ export class PrimitiveGroupContainer extends PlotData {
       this.display_order.push(i);
     }
   }
+
+
+  // initialize_layout(serialized_layout) {
+  //   this.layout_attributes = serialized_layout;
+  //   if (serialized_layout.length == 1) {
+  //     this.layout_mode = 'one_axis';
+  //   } else if (serialized_layout.length == 2) {
+  //     this.layout_mode == 'two_axis';
+  //   }
+  // }
 
   define_canvas(canvas_id) {
     super.define_canvas(canvas_id);
@@ -3790,7 +3850,7 @@ export class PrimitiveGroupContainer extends PlotData {
     if (Shape.isInRect(mouse1X, mouse1Y, this.manip_button_x, this.button_y, this.button_w, this.button_h)) {
       this.click_on_manipulation_action();
     } else if (Shape.isInRect(mouse1X, mouse1Y, this.reset_button_x, this.button_y, this.button_w, this.button_h)) {
-      this.click_on_reset_action();
+      this.reset_action();
     }
   }
 
@@ -3804,7 +3864,7 @@ export class PrimitiveGroupContainer extends PlotData {
     }
   }
 
-  click_on_reset_action() {
+  reset_action() {
     if (this.primitive_groups.length !== 0) {
       if (this.layout_mode == 'regular') {
         this.regular_layout();
@@ -3903,7 +3963,9 @@ export class PrimitiveGroupContainer extends PlotData {
     this.draw_empty_canvas();
     this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
     this.draw_layout_axis();
-    this.draw_coordinate_lines();
+    if (this.layout_mode !== 'regular') {
+      this.draw_coordinate_lines();
+    }
     for (let index of this.display_order) {
       let prim = this.primitive_groups[index];
       this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
@@ -3954,7 +4016,7 @@ export class PrimitiveGroupContainer extends PlotData {
       for (let primitive of this.primitive_groups) {
         let x = primitive.X + primitive.width/2;
         let y = primitive.Y + primitive.height;
-        Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y]]);
+        Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y + this.Y]]);
       }
     } else if (this.layout_mode == 'two_axis') {
       for (let primitive of this.primitive_groups) {
@@ -3977,7 +4039,7 @@ export class PrimitiveGroupContainer extends PlotData {
     new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
     new_plot_data.interaction_ON = false;
     this.primitive_dict[point_index.toString()] = this.primitive_groups.length - 1;
-    this.regular_layout();
+    this.reset_action();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   } 
@@ -4007,7 +4069,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
     }
     this.elements_dict = Object.fromEntries(elements_entries);
-    this.regular_layout();
+    this.reset_action();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
@@ -4284,12 +4346,8 @@ export class PrimitiveGroupContainer extends PlotData {
   regular_zoom_elements(mouse3X, mouse3Y, event) {
     if (event > 0) {
       var zoom_coeff = 1.1;
-      this.scroll_x++;
-      this.scroll_y++;
     } else {
       var zoom_coeff = 1/1.1;
-      this.scroll_x--;
-      this.scroll_y--;
     }
     for (let i=0; i<this.primitive_groups.length; i++) {
       this.primitive_groups[i].X = mouse3X + zoom_coeff*(this.primitive_groups[i].X - mouse3X);
@@ -4309,10 +4367,8 @@ export class PrimitiveGroupContainer extends PlotData {
   x_zoom_elements(event) {
     if (event > 0) {
       var zoom_coeff = 1.1;
-      this.scroll_x++;
     } else {
       zoom_coeff = 1/1.1;
-      this.scroll_x--;
     }
     var container_center_x = this.X + this.width/2;
     for (let i=0; i<this.primitive_groups.length; i++) {
@@ -4331,10 +4387,8 @@ export class PrimitiveGroupContainer extends PlotData {
   y_zoom_elements(event) {
     if (event > 0) {
       var zoom_coeff = 1.1;
-      this.scroll_y++;
     } else {
       zoom_coeff = 1/1.1;
-      this.scroll_y--;
     }
     var container_center_y = this.Y + this.height/2;
     for (let i=0; i<this.primitive_groups.length; i++) {
@@ -4348,6 +4402,19 @@ export class PrimitiveGroupContainer extends PlotData {
     this.last_mouse1Y = this.last_mouse1Y - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  }
+
+  manage_scroll(mouse3X, mouse3Y, event) {
+    if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
+      this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
+        this.scroll_x = this.scroll_x + event;
+    } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.X, this.Y, this.decalage_axis_x,
+      this.height - this.decalage_axis_y))) {
+        this.scroll_y = this.scroll_y + event;
+    } else {
+      this.scroll_x = this.scroll_x + event;
+      this.scroll_y = this.scroll_y + event;
+    }
   }
 
   delete_unwanted_vertex(vertex_infos) {
@@ -4555,6 +4622,7 @@ export class PrimitiveGroupContainer extends PlotData {
         mouse3X = e.offsetX; mouse3Y = e.offsetY;
         if (this.manipulation_bool) {
           var event = -e.deltaY/Math.abs(e.deltaY);
+          this.manage_scroll(mouse3X, mouse3Y, event);
           this.zoom_elements(mouse3X, mouse3Y, event);
         }
       }
@@ -4617,6 +4685,7 @@ export class Interactions {
   public static selection_window_action(plot_data:PlotScatter) {
     plot_data.latest_selected_points = [];
     plot_data.select_on_click = [];
+    plot_data.tooltip_list = [];
     plot_data.context_show.setLineDash([]);
     plot_data.context_hidden.setLineDash([]);
     if (plot_data.plotObject['type_'] == 'graph2d') {
@@ -4875,6 +4944,8 @@ export class Interactions {
         plot_data.selected_axis_name = '';
       } else {
         plot_data.selected_axis_name = attribute_name;
+        plot_data.sort_to_display_list(); // à modifier pour trier vertical et horizontal axis coords
+        plot_data.refresh_axis_coords();
       }
     } else if ((plot_data.rubber_bands[selected_axis_index].length != 0) && !click_on_band && !click_on_border) {
       plot_data.rubber_bands[selected_axis_index] = [];
@@ -5125,6 +5196,8 @@ export class MultiplotCom {
         if (bool === true) {
           new_select_on_click.push(plot_data.scatter_point_list[i]);
           plot_data.scatter_point_list[i].selected = true;
+        } else {
+          plot_data.scatter_point_list[i].selected = false;
         }
       }
       plot_data.select_on_click = new_select_on_click;
@@ -7290,11 +7363,11 @@ export function equals(a, b) {
 
   // true if both NaN, false otherwise
   return a!==a && b!==b;
-};
+}
 
 
 export var empty_container = {'name': '',
-'package_version': '0.4.11',
+'package_version': '0.5.0',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 

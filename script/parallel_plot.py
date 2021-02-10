@@ -30,7 +30,7 @@ elements = []
 
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
 color_strokes = [BLACK, BROWN, GREEN, RED, ORANGE, LIGHTBLUE, GREY]
-for i in range(3000):
+for i in range(30):
     cx = random.uniform(0, 2)
     cy = random.uniform(0, 1)
     fills_index = random.randint(0, len(color_fills) - 1)

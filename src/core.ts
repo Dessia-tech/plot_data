@@ -790,6 +790,27 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
+  reset_selected_points_except(list:number[]) {
+    this.dep_selected_points_index = [];
+    this.selected_point_index = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      if (list.includes(i)) continue;
+      let obj = this.objectList[i];
+      if (obj.type_ == 'scatterplot') {
+        this.objectList[i].reset_select_on_click();
+        Interactions.reset_permanent_window(this.objectList[i])
+      } else if (obj.type_ == 'parallelplot') {
+        this.objectList[i].reset_pp_selected();
+        this.objectList[i].rubber_bands = [];
+        this.objectList[i].rubberbands_dep = [];
+        for (let j=0; j<obj.axis_list.length; j++) {
+          this.objectList[i].rubber_bands.push([]);
+        }
+      }
+    }
+    this.redrawAllObjects();
+  }
+
 
   refresh_selected_point_index() {
     this.selected_point_index = [];
@@ -1244,21 +1265,24 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
-      if (e.ctrlKey) {this.reset_all_selected_points();}
-      this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
-      this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
-      if (this.manipulation_bool) {
-        this.setAllInteractionsToOff();
-        if (this.clickedPlotIndex != -1) {
+      if (e.ctrlKey) {
+        this.reset_all_selected_points();
+      } else {
+        this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
+        this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
+        if (this.manipulation_bool) {
+          this.setAllInteractionsToOff();
+          if (this.clickedPlotIndex != -1) {
+            this.initializeObjectXY();
+            [clickOnVertex, vertex_infos] = this.initialize_clickOnVertex(mouse1X, mouse1Y);
+          } else {
+            clickOnVertex = false;
+          }
           this.initializeObjectXY();
-          [clickOnVertex, vertex_infos] = this.initialize_clickOnVertex(mouse1X, mouse1Y);
-        } else {
-          clickOnVertex = false;
-        }
-        this.initializeObjectXY();
-        if (clickOnVertex) {
-          this.initializeMouseXY(mouse1X, mouse1Y);
-          this.initialize_objects_hw();
+          if (clickOnVertex) {
+            this.initializeMouseXY(mouse1X, mouse1Y);
+            this.initialize_objects_hw();
+          }
         }
       }
     });
@@ -1319,20 +1343,27 @@ export class MultiplePlots {
 
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
-          var selected_axis_name: string; var vertical: boolean;  var inverted: boolean;
-          var hexs: string[]; var isSelectingppAxis: boolean;
-          [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
-          if (isSelectingppAxis) {
-            for (let i=0; i<this.nbObjects; i++) {
-              if (this.objectList[i].type_ == 'parallelplot') {
-                this.objectList[i].selected_axis_name = selected_axis_name;
+          if (this.objectList[this.clickedPlotIndex].type_ == 'parallelplot') {
+            var selected_axis_name: string; var vertical: boolean; var inverted: boolean;
+            var hexs: string[]; var isSelectingppAxis: boolean;
+            [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
+            if (isSelectingppAxis) {
+              for (let i=0; i<this.nbObjects; i++) {
+                if (this.objectList[i].type_ == 'parallelplot') {
+                  this.objectList[i].selected_axis_name = selected_axis_name;
+                }
               }
+              if (selected_axis_name != '') {
+                this.dependency_color_propagation(selected_axis_name, vertical, inverted, hexs);
+              } else {
+                this.setAllInterpolationToOFF();
+              }
+              this.reset_selected_points_except([this.clickedPlotIndex]);
+              this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep);
             }
-            if (selected_axis_name != '') {
-              this.dependency_color_propagation(selected_axis_name, vertical, inverted, hexs);
-            } else {
-              this.setAllInterpolationToOFF();
-            }
+          } else if ((this.objectList[this.clickedPlotIndex].type_ == 'scatterplot') &&
+              (this.objectList[this.clickedPlotIndex].select_on_click.length === 0)) {
+                this.reset_all_selected_points();
           }
         }
         this.refresh_selected_point_index();
@@ -6791,7 +6822,7 @@ export function genColor(){
     ret.push((nextCol & 0xff00) >> 8); // G
     ret.push((nextCol & 0xff0000) >> 16); // B
 
-    nextCol += 50;
+    nextCol += 1;
   }
   var col = "rgb(" + ret.join(',') + ")";
   return col;

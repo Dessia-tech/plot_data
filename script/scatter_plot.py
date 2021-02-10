@@ -28,7 +28,7 @@ tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names)
 plot_datas = []
 elements = []
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
-for i in range(500):
+for i in range(2000):
     cx = random.uniform(0, 2)
     cy = random.uniform(0, 1)
     random_color_fill = color_fills[random.randint(0, len(color_fills) - 1)]

@@ -373,6 +373,15 @@ export class MultiplePlots {
     obj.remove_primitive_group(point_index);
   }
 
+  remove_all_primitive_groups_from_container(container_index) {
+    var obj:any = this.objectList[container_index];
+    this.objectList[container_index].elements_dict = {};
+    this.objectList[container_index].primitive_dict = {};
+    obj.primitive_groups = [];
+    obj.display_order = [];
+    obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+    obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+  }
 
   remove_plot(index) {
     this.objectList = List.remove_at_index(index, this.objectList);
@@ -4186,8 +4195,8 @@ export class PrimitiveGroupContainer extends PlotData {
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    
   }
+
 
   getSortedList() {
     var big_coord = 'X';
@@ -7401,4 +7410,3 @@ export var empty_container = {'name': '',
 'package_version': '0.5.0',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
-

@@ -142,4 +142,4 @@ multipleplots = plot_data.MultiplePlots(elements=elements, objects=objects,
                                         sizes=sizes, coords=coords,
                                         initial_view_on=True)
 
-plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=False)

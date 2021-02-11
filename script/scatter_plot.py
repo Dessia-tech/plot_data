@@ -38,8 +38,10 @@ for i in range(500):
                               stroke_width=stroke_width)
     elements += [point]
 point_style = plot_data.PointStyle(color_fill=color_fill, color_stroke=color_stroke)
-scatter_plot = plot_data.Scatter(tooltip=tooltip, to_disp_attribute_names=to_disp_attribute_names, point_style=point_style,
-                                  elements=elements, axis=axis)
+scatter_plot = plot_data.Scatter(tooltip=tooltip,
+                                 to_disp_attribute_names=to_disp_attribute_names,
+                                 point_style=point_style,
+                                 elements=elements, axis=axis)
 
 
-plot_data.plot_canvas(plot_data_object=scatter_plot, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=scatter_plot, debug_mode=False)

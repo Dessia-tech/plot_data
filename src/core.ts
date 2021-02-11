@@ -1264,6 +1264,7 @@ export class MultiplePlots {
     var mouse_moving:boolean = false;
     var vertex_infos:Object;
     var clickOnVertex:boolean = false;
+    var old_selected_index;
 
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
@@ -1274,6 +1275,7 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
+      old_selected_index = this.selected_point_index;
       if (e.ctrlKey) {
         this.reset_all_selected_points();
       } else {
@@ -1348,7 +1350,6 @@ export class MultiplePlots {
       if (click_on_multi_button) {
         this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view);
       }
-      var old_selected_index = this.selected_point_index;
 
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
@@ -2907,17 +2908,16 @@ export abstract class PlotData {
   refresh_selected_point_index() {  //selected_point_index : index of selected points in the initial point list
     this.selected_point_index = [];
     for (let i=0; i<this.select_on_click.length; i++) {
-      if (!(this.select_on_click[i] === undefined)) {
-        if ((this.plotObject['type_'] == 'scatterplot') && this.select_on_click[i]) {
-          let clicked_points = this.select_on_click[i].points_inside;
-          for (let j=0; j<clicked_points.length; j++) {
-            this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
-          }
-        } else if (this.plotObject['type_'] == 'graph2D') {
-          for (let j=0; j<this.plotObject.graphs.length; j++) {
-            if ((List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) && this.select_on_click[i]) {
-              this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
-            }
+      if (this.select_on_click[i] === undefined) continue;
+      if ((this.plotObject['type_'] == 'scatterplot') && this.select_on_click[i]) {
+        let clicked_points = this.select_on_click[i].points_inside;
+        for (let j=0; j<clicked_points.length; j++) {
+          this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
+        }
+      } else if (this.plotObject['type_'] == 'graph2D') {
+        for (let j=0; j<this.plotObject.graphs.length; j++) {
+          if ((List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) && this.select_on_click[i]) {
+            this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
           }
         }
       }
@@ -7137,7 +7137,9 @@ export function isHex(str:string):boolean {
 
 export class List {
   public static sort_without_duplicates(list:number[]) {
-    var sorted = list.sort();
+    if (list.length == 0) return list;
+    var sort = new Sort();
+    var sorted = sort.MergeSort(list);
     var no_duplicates = [list[0]];
     var current_elt = sorted[0];
     for (let val of sorted) {

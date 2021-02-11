@@ -409,13 +409,17 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
-    core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
+    lib_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
-        core_path = '/'.join(
-            sys.modules[__name__].__file__.split('/')[:-2] + ['lib',
-                                                              'core.js'])
+        core_path = os.path.join(
+            *sys.modules[__name__].__file__.split(os.sep)[:-2], 'lib', 'core.js')
+        
+        if not os.path.isfile(core_path):
+            print('Compiled core.js not found, fall back to CDN')
+        else:
+            lib_path = core_path
 
-    s = template.substitute(data=json.dumps(data), core_path=core_path,
+    s = template.substitute(data=json.dumps(data), core_path=lib_path,
                             canvas_id=canvas_id, width=width, height=height)
     if page_name is None:
         temp_file = tempfile.mkstemp(suffix='.html')[1]

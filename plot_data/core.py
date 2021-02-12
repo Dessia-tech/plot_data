@@ -103,7 +103,7 @@ class EdgeStyle(DessiaObject):
 
 class PointStyle(DessiaObject):
     def __init__(self, color_fill: str = None, color_stroke: str = None,
-                 stroke_width: str = None,
+                 stroke_width: float = None,
                  size: float = None, shape: str = None, name: str = ''):
         self.color_fill = color_fill
         self.color_stroke = color_stroke
@@ -370,13 +370,13 @@ class PointFamily(PlotDataObject):
 
 
 class MultiplePlots(PlotDataObject):
-    def __init__(self, objects: List[Subclass[PlotDataObject]],
+    def __init__(self, plots: List[Subclass[PlotDataObject]],
                  sizes: List[Window] = None, elements: List[any] = None, coords: List[Tuple[float, float]] = None,
                  point_families: List[PointFamily] = None,
                  initial_view_on: bool = None,
                  name: str = ''):
         self.elements = elements
-        self.objects = objects
+        self.plots = plots
         self.sizes = sizes
         self.coords = coords
         self.point_families = point_families
@@ -411,9 +411,9 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
 
     lib_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
-        core_path = os.path.join(
+        core_path = os.sep + os.path.join(
             *sys.modules[__name__].__file__.split(os.sep)[:-2], 'lib', 'core.js')
-        
+
         if not os.path.isfile(core_path):
             print('Compiled core.js not found, fall back to CDN')
         else:

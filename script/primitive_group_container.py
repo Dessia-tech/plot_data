@@ -1,8 +1,13 @@
+# The name says it all, primitive_group_containers contain primitive_groups.
+# In the same way, primitive_groups contain primitives (ie: Arc2D, Circle2D, Contour2D,
+# LineSegment2D and Text)
+
 import plot_data
 from plot_data.colors import *
 import volmdlr as vm
 import volmdlr.wires
 import volmdlr.edges
+
 
 circle1 = vm.wires.Circle2D(vm.Point2D(0, 0), 10).plot_data()
 
@@ -22,11 +27,10 @@ primitive_group3 = plot_data.PrimitiveGroup(primitives=[circle2])
 primitive_group4 = plot_data.PrimitiveGroup(primitives=[circle3])
 primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primitive_group4]
 
-coords = [[0,0], [600, 0], [0, 350], [500,350]]
-primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups, coords=coords)
+primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups)
 
-
-plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
+# if debug_mode is True, set it to False
+plot_data.plot_canvas(plot_data_object=primitive_group_container, debug_mode=True)
 
 
 

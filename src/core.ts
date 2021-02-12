@@ -41,7 +41,7 @@ export class MultiplePlots {
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
     var requirement = '0.4.3';
     this.manage_package_version(requirement);
-    this.dataObjects = data['objects'];
+    this.dataObjects = data['plots'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
     var elements = data['elements'];
     if (elements) {this.initialize_displayable_attributes();}
@@ -1854,7 +1854,7 @@ export abstract class PlotData {
     if (d['type_'] == 'axis'){
       d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
         this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0]);
-      d.draw_vertical_axis(this.context, mvx, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
+      d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
         this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1]);
       this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
       this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
@@ -2525,7 +2525,6 @@ export abstract class PlotData {
   }
 
   refresh_buttons_coords() {
-
     this.button_x = Math.max(this.width*0.9, this.width - 45);
     this.button_w = Math.min(this.width*0.09, 35);
     this.button_h = Math.min(this.height*0.05, 20);
@@ -2534,8 +2533,8 @@ export abstract class PlotData {
     this.reset_rect_y = this.zw_y + this.button_h + 5;
     this.select_y = this.reset_rect_y + this.button_h + 5;
     this.graph1_button_y = 10;
-    this.graph1_button_w = this.width*0.09;
-    this.graph1_button_h = 15;
+    this.graph1_button_w = this.width*0.05;
+    this.graph1_button_h = this.height*0.04;
     this.merge_y = this.select_y + this.button_h + 5;
     this.perm_button_y = this.merge_y + this.button_h + 5;
   }

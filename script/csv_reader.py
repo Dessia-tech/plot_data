@@ -57,7 +57,7 @@ points = [{var: catalog.get_value_by_name(line, var)
            for var in pp_to_disp_attributes}
           for line in catalog.array]
 
-multipleplots = plot_data.MultiplePlots(elements=points, objects=objects,
+multipleplots = plot_data.MultiplePlots(elements=points, plots=objects,
                                         sizes=sizes, coords=coords, initial_view_on=True)
 
 plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)

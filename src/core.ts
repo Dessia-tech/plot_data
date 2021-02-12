@@ -41,7 +41,7 @@ export class MultiplePlots {
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
     var requirement = '0.4.3';
     this.manage_package_version(requirement);
-    this.dataObjects = data['objects'];
+    this.dataObjects = data['plots'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
     var elements = data['elements'];
     if (elements) {this.initialize_displayable_attributes();}
@@ -373,6 +373,15 @@ export class MultiplePlots {
     obj.remove_primitive_group(point_index);
   }
 
+  remove_all_primitive_groups_from_container(container_index) {
+    var obj:any = this.objectList[container_index];
+    this.objectList[container_index].elements_dict = {};
+    this.objectList[container_index].primitive_dict = {};
+    obj.primitive_groups = [];
+    obj.display_order = [];
+    obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+    obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+  }
 
   remove_plot(index) {
     this.objectList = List.remove_at_index(index, this.objectList);
@@ -774,6 +783,27 @@ export class MultiplePlots {
     this.dep_selected_points_index = [];
     this.selected_point_index = [];
     for (let i=0; i<this.nbObjects; i++) {
+      let obj = this.objectList[i];
+      if (obj.type_ == 'scatterplot') {
+        this.objectList[i].reset_select_on_click();
+        Interactions.reset_permanent_window(this.objectList[i])
+      } else if (obj.type_ == 'parallelplot') {
+        this.objectList[i].reset_pp_selected();
+        this.objectList[i].rubber_bands = [];
+        this.objectList[i].rubberbands_dep = [];
+        for (let j=0; j<obj.axis_list.length; j++) {
+          this.objectList[i].rubber_bands.push([]);
+        }
+      }
+    }
+    this.redrawAllObjects();
+  }
+
+  reset_selected_points_except(list:number[]) {
+    this.dep_selected_points_index = [];
+    this.selected_point_index = [];
+    for (let i=0; i<this.nbObjects; i++) {
+      if (list.includes(i)) continue;
       let obj = this.objectList[i];
       if (obj.type_ == 'scatterplot') {
         this.objectList[i].reset_select_on_click();
@@ -1234,6 +1264,7 @@ export class MultiplePlots {
     var mouse_moving:boolean = false;
     var vertex_infos:Object;
     var clickOnVertex:boolean = false;
+    var old_selected_index;
 
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
@@ -1244,21 +1275,25 @@ export class MultiplePlots {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
-      if (e.ctrlKey) {this.reset_all_selected_points();}
-      this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
-      this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
-      if (this.manipulation_bool) {
-        this.setAllInteractionsToOff();
-        if (this.clickedPlotIndex != -1) {
+      old_selected_index = this.selected_point_index;
+      if (e.ctrlKey) {
+        this.reset_all_selected_points();
+      } else {
+        this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
+        this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
+        if (this.manipulation_bool) {
+          this.setAllInteractionsToOff();
+          if (this.clickedPlotIndex != -1) {
+            this.initializeObjectXY();
+            [clickOnVertex, vertex_infos] = this.initialize_clickOnVertex(mouse1X, mouse1Y);
+          } else {
+            clickOnVertex = false;
+          }
           this.initializeObjectXY();
-          [clickOnVertex, vertex_infos] = this.initialize_clickOnVertex(mouse1X, mouse1Y);
-        } else {
-          clickOnVertex = false;
-        }
-        this.initializeObjectXY();
-        if (clickOnVertex) {
-          this.initializeMouseXY(mouse1X, mouse1Y);
-          this.initialize_objects_hw();
+          if (clickOnVertex) {
+            this.initializeMouseXY(mouse1X, mouse1Y);
+            this.initialize_objects_hw();
+          }
         }
       }
     });
@@ -1315,24 +1350,30 @@ export class MultiplePlots {
       if (click_on_multi_button) {
         this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view);
       }
-      var old_selected_index = this.selected_point_index;
 
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
-          var selected_axis_name: string; var vertical: boolean;  var inverted: boolean;
-          var hexs: string[]; var isSelectingppAxis: boolean;
-          [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
-          if (isSelectingppAxis) {
-            for (let i=0; i<this.nbObjects; i++) {
-              if (this.objectList[i].type_ == 'parallelplot') {
-                this.objectList[i].selected_axis_name = selected_axis_name;
+          if (this.objectList[this.clickedPlotIndex].type_ == 'parallelplot') {
+            var selected_axis_name: string; var vertical: boolean; var inverted: boolean;
+            var hexs: string[]; var isSelectingppAxis: boolean;
+            [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
+            if (isSelectingppAxis) {
+              for (let i=0; i<this.nbObjects; i++) {
+                if (this.objectList[i].type_ == 'parallelplot') {
+                  this.objectList[i].selected_axis_name = selected_axis_name;
+                }
               }
+              if (selected_axis_name != '') {
+                this.dependency_color_propagation(selected_axis_name, vertical, inverted, hexs);
+              } else {
+                this.setAllInterpolationToOFF();
+              }
+              this.reset_selected_points_except([this.clickedPlotIndex]);
+              this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep);
             }
-            if (selected_axis_name != '') {
-              this.dependency_color_propagation(selected_axis_name, vertical, inverted, hexs);
-            } else {
-              this.setAllInterpolationToOFF();
-            }
+          } else if ((this.objectList[this.clickedPlotIndex].type_ == 'scatterplot') &&
+              (this.objectList[this.clickedPlotIndex].select_on_click.length === 0)) {
+                this.reset_all_selected_points();
           }
         }
         this.refresh_selected_point_index();
@@ -1813,7 +1854,7 @@ export abstract class PlotData {
     if (d['type_'] == 'axis'){
       d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
         this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0]);
-      d.draw_vertical_axis(this.context, mvx, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
+      d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
         this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1]);
       this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
       this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
@@ -2484,7 +2525,6 @@ export abstract class PlotData {
   }
 
   refresh_buttons_coords() {
-
     this.button_x = Math.max(this.width*0.9, this.width - 45);
     this.button_w = Math.min(this.width*0.09, 35);
     this.button_h = Math.min(this.height*0.05, 20);
@@ -2493,8 +2533,8 @@ export abstract class PlotData {
     this.reset_rect_y = this.zw_y + this.button_h + 5;
     this.select_y = this.reset_rect_y + this.button_h + 5;
     this.graph1_button_y = 10;
-    this.graph1_button_w = this.width*0.09;
-    this.graph1_button_h = 15;
+    this.graph1_button_w = this.width*0.05;
+    this.graph1_button_h = this.height*0.04;
     this.merge_y = this.select_y + this.button_h + 5;
     this.perm_button_y = this.merge_y + this.button_h + 5;
   }
@@ -2867,17 +2907,16 @@ export abstract class PlotData {
   refresh_selected_point_index() {  //selected_point_index : index of selected points in the initial point list
     this.selected_point_index = [];
     for (let i=0; i<this.select_on_click.length; i++) {
-      if (!(this.select_on_click[i] === undefined)) {
-        if ((this.plotObject['type_'] == 'scatterplot') && this.select_on_click[i]) {
-          let clicked_points = this.select_on_click[i].points_inside;
-          for (let j=0; j<clicked_points.length; j++) {
-            this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
-          }
-        } else if (this.plotObject['type_'] == 'graph2D') {
-          for (let j=0; j<this.plotObject.graphs.length; j++) {
-            if ((List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) && this.select_on_click[i]) {
-              this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
-            }
+      if (this.select_on_click[i] === undefined) continue;
+      if ((this.plotObject['type_'] == 'scatterplot') && this.select_on_click[i]) {
+        let clicked_points = this.select_on_click[i].points_inside;
+        for (let j=0; j<clicked_points.length; j++) {
+          this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
+        }
+      } else if (this.plotObject['type_'] == 'graph2D') {
+        for (let j=0; j<this.plotObject.graphs.length; j++) {
+          if ((List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) && this.select_on_click[i]) {
+            this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
           }
         }
       }
@@ -4155,8 +4194,8 @@ export class PrimitiveGroupContainer extends PlotData {
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    
   }
+
 
   getSortedList() {
     var big_coord = 'X';
@@ -6791,7 +6830,7 @@ export function genColor(){
     ret.push((nextCol & 0xff00) >> 8); // G
     ret.push((nextCol & 0xff0000) >> 16); // B
 
-    nextCol += 50;
+    nextCol += 1;
   }
   var col = "rgb(" + ret.join(',') + ")";
   return col;
@@ -7096,17 +7135,34 @@ export function isHex(str:string):boolean {
 }
 
 export class List {
-  public static sort_without_duplicates(list:number[]) {
-    var sorted = list.sort();
-    var no_duplicates = [list[0]];
-    var current_elt = sorted[0];
-    for (let val of sorted) {
-      if (val>current_elt) {
-        current_elt = val;
-        no_duplicates.push(val);
+  // public static sort_without_duplicates(list:number[]) {
+  //   if (list.length == 0) return list;
+  //   var sort = new Sort();
+  //   var sorted = sort.MergeSort(list);
+  //   var no_duplicates = [list[0]];
+  //   var current_elt = sorted[0];
+  //   for (let val of sorted) {
+  //     if (val>current_elt) {
+  //       current_elt = val;
+  //       no_duplicates.push(val);
+  //     }
+  //   }
+  //   return no_duplicates
+  // }
+
+  public static sort_without_duplicates(list:any[]) {
+    var seen = {};
+    var out = [];
+    var len = list.length;
+    var j = 0;
+    for(var i = 0; i < len; i++) {
+      var item = list[i];
+      if(seen[item] !== 1) {
+            seen[item] = 1;
+            out[j++] = item;
       }
     }
-    return no_duplicates
+    return out;
   }
 
   public static contains_undefined(list:any[]):boolean {
@@ -7370,4 +7426,3 @@ export var empty_container = {'name': '',
 'package_version': '0.5.0',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
-

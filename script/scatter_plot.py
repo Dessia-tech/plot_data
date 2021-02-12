@@ -2,44 +2,68 @@ import plot_data
 from plot_data.colors import *
 import random
 
-# Point test ####
-
-# PARAMETERS #
-# Window size
-width = 2
-height = 1
-
-# Shape set (circle, square, crux)
-shape = 'circle'
-
-# Point size (1 to 4)
-size = 2
-
-# Points' color
-color_fill = LIGHTBLUE
-color_stroke = GREY
-stroke_width = 0.5
-
-# Scatter plot
-axis = plot_data.Axis()
-to_disp_attribute_names = ['cx', 'cy']
-tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names)
-
-plot_datas = []
 elements = []
-color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
-for i in range(500):
-    cx = random.uniform(0, 2)
-    cy = random.uniform(0, 1)
-    random_color_fill = color_fills[random.randint(0, len(color_fills) - 1)]
-    point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape,
-                              color_fill=random_color_fill,
-                              color_stroke=color_stroke,
-                              stroke_width=stroke_width)
-    elements += [point]
-point_style = plot_data.PointStyle(color_fill=color_fill, color_stroke=color_stroke)
-scatter_plot = plot_data.Scatter(tooltip=tooltip, to_disp_attribute_names=to_disp_attribute_names, point_style=point_style,
-                                  elements=elements, axis=axis)
+SHAPES = ['round', 'square', 'triangle', 'ellipse']
+COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
+for i in range(50):
+    random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
+    random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
+    elements.append({'mass': random.uniform(0, 50),
+                     'length': random.uniform(0, 100),
+                     'shape': random_shape,
+                     'color': random_color
+                     })
+
+# a tooltip is drawn when clicking on a point. Users can choose what information
+# they want to be displayed.
+tooltip = plot_data.Tooltip(to_disp_attribute_names=['mass', 'length'])
+
+scatterplot = plot_data.Scatter(elements=elements,
+                                to_disp_attribute_names=['mass', 'length'],
+                                tooltip=tooltip)
+
+# The previous scripts actually shows the simplest way of creating a scatterplot.
+# However, many options are available for futher customization
+
+# First of all, apart from the tooltip's information, the user can customize
+# its style. 'text_style' modifies the text while 'surface_style'
+# changes the tooltip's inside. Tooltips are rounded-rectangle-shaped and the radius of the
+# vertices can be changed.
+text_style = plot_data.TextStyle(text_color=GREY,
+                                 font_size=10,
+                                 font_style='sans-serif')
+surface_style = plot_data.SurfaceStyle(color_fill=LIGHTVIOLET, opacity=0.3)
+custom_tooltip = plot_data.Tooltip(to_disp_attribute_names=['mass', 'length'],
+                                   surface_style=surface_style,
+                                   text_style=text_style,
+                                   tooltip_radius=10)
 
 
-plot_data.plot_canvas(plot_data_object=scatter_plot, debug_mode=True)
+# Then, points' appearance can be changed through point_style attribute
+point_style = plot_data.PointStyle(color_fill=LIGHTGREEN,
+                                   color_stroke=VIOLET,
+                                   stroke_width=0.5,
+                                   size=2,  # 1, 2, 3 or 4
+                                   shape='circle')  # 'circle', 'square' or 'crux'
+
+# Finally, axis can be personalized too
+graduation_style = plot_data.TextStyle(text_color=BLUE, font_size=10,
+                                       font_style='Arial')
+axis_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=ROSE,
+                                 dashline=[])
+
+axis = plot_data.Axis(nb_points_x=7, nb_points_y=5,
+                      graduation_style=graduation_style,
+                      axis_style=axis_style
+                      )
+
+# Now, here is the new scatterplot
+customized_scatterplot = plot_data.Scatter(tooltip=tooltip,
+                                           to_disp_attribute_names=['mass', 'shape'],
+                                           point_style=point_style,
+                                           elements=elements,
+                                           axis=axis)
+
+# if debug_mode is True, set it to False
+plot_data.plot_canvas(plot_data_object=customized_scatterplot, debug_mode=True)
+

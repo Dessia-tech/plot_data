@@ -103,7 +103,7 @@ class EdgeStyle(DessiaObject):
 
 class PointStyle(DessiaObject):
     def __init__(self, color_fill: str = None, color_stroke: str = None,
-                 stroke_width: str = None,
+                 stroke_width: float = None,
                  size: float = None, shape: str = None, name: str = ''):
         self.color_fill = color_fill
         self.color_stroke = color_stroke
@@ -370,13 +370,13 @@ class PointFamily(PlotDataObject):
 
 
 class MultiplePlots(PlotDataObject):
-    def __init__(self, objects: List[Subclass[PlotDataObject]],
+    def __init__(self, plots: List[Subclass[PlotDataObject]],
                  sizes: List[Window] = None, elements: List[any] = None, coords: List[Tuple[float, float]] = None,
                  point_families: List[PointFamily] = None,
                  initial_view_on: bool = None,
                  name: str = ''):
         self.elements = elements
-        self.objects = objects
+        self.plots = plots
         self.sizes = sizes
         self.coords = coords
         self.point_families = point_families
@@ -409,13 +409,17 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
-    core_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
+    lib_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
     if debug_mode:
-        core_path = '/'.join(
-            sys.modules[__name__].__file__.split('/')[:-2] + ['lib',
-                                                              'core.js'])
+        core_path = os.sep + os.path.join(
+            *sys.modules[__name__].__file__.split(os.sep)[:-2], 'lib', 'core.js')
 
-    s = template.substitute(data=json.dumps(data), core_path=core_path,
+        if not os.path.isfile(core_path):
+            print('Compiled core.js not found, fall back to CDN')
+        else:
+            lib_path = core_path
+
+    s = template.substitute(data=json.dumps(data), core_path=lib_path,
                             canvas_id=canvas_id, width=width, height=height)
     if page_name is None:
         temp_file = tempfile.mkstemp(suffix='.html')[1]

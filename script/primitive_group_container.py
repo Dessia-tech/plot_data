@@ -1,6 +1,6 @@
 # The name says it all, primitive_group_containers contain primitive_groups.
 # In the same way, primitive_groups contain primitives (ie: Arc2D, Circle2D, Contour2D,
-# LineSegment2D and Text)
+# LineSegment and Text)
 
 import plot_data
 from plot_data.colors import *

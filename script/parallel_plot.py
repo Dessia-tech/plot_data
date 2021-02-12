@@ -2,7 +2,6 @@ import plot_data
 from plot_data.colors import *
 import random
 
-
 elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']
 COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
@@ -25,7 +24,7 @@ parallelplot = plot_data.ParallelPlot(elements=elements,
 # parallel plot. However, many options are available for further customization.
 
 # 'edge_style' option allows customization of the lines
-edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=ROSE, dashline=[])
+edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=VIOLET, dashline=[])
 
 # 'disposition' = 'vertical' or 'horizontal' whether you want the axis to be
 # vertical of hozizontal. This can be changed by pressing the 'disp' button on
@@ -48,6 +47,6 @@ customized_parallelplot = plot_data.ParallelPlot(elements=elements,
                                                  disposition=disposition,
                                                  rgbs=rgbs)
 
-# if debug_mode = True, set it to False
+# if debug_mode == True, set it to False
 plot_data.plot_canvas(plot_data_object=customized_parallelplot, debug_mode=True)
 

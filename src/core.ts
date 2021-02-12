@@ -3096,12 +3096,12 @@ export abstract class PlotData {
     this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph || click_on_merge || click_on_perm;
 
     if (mouse_moving) {
-        if (this.zw_bool) {
-          Interactions.zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, this);
+      if (this.zw_bool) {
+        Interactions.zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, this);
 
-        } else if ((this.select_bool) && (this.permanent_window)) {
-          Interactions.refresh_permanent_rect(this);
-        }
+      } else if ((this.select_bool) && (this.permanent_window)) {
+        Interactions.refresh_permanent_rect(this);
+      }
     } else {
         this.selecting_point_action(mouse1X, mouse1Y);
         if ((click_on_plus === true) && (this.scaleX*1.2 < scale_ceil) && (this.scaleY*1.2 < scale_ceil)) {
@@ -3128,13 +3128,13 @@ export abstract class PlotData {
           Interactions.click_on_perm_action(this);
         }
       }
+      Interactions.reset_zoom_box(this);
       this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
       this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
       var isDrawing = false;
       mouse_moving = false;
       this.isSelecting = false;
       this.isDrawing_rubber_band = false;
-      Interactions.reset_zoom_box(this);
       return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 
@@ -5500,13 +5500,10 @@ export class Text {
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    if (this.text_scaling) {
-      var font_size = this.text_style.font_size * scaleX/this.init_scale;
-    } else {
-      font_size = this.text_style.font_size;
-    }
+    if (this.text_scaling) var font_size = this.text_style.font_size * scaleX/this.init_scale;
+    else font_size = this.text_style.font_size;
+
     context.font = font_size.toString() + 'px ' + this.text_style.font_style;
-    // context.font = this.text_style.font;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;
@@ -5535,10 +5532,10 @@ export class LineSegment {
     var default_dict_ = {edge_style:default_edge_style};
     serialized = set_default_values(serialized, default_dict_);
     var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
-      return new LineSegment(serialized['data'],
-                               edge_style,
-                               serialized['type_'],
-                               serialized['name']);
+    return new LineSegment(serialized['data'],
+                             edge_style,
+                             serialized['type_'],
+                             serialized['name']);
   }
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {

@@ -1,5 +1,7 @@
 import plot_data
 from plot_data.colors import *
+import primitive_group_container as container_script
+import simple_shapes
 import random
 import volmdlr as vm
 import volmdlr.wires
@@ -17,28 +19,7 @@ plot_datas = []
 objects = []
 elements = []
 
-pt1 = vm.Point2D(3, 0)
-pt2 = vm.Point2D(1, 1)
-pt3 = vm.Point2D(2, 1)
-line_edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=ORANGE,
-                                      dashline=[10, 5])
-line1 = vm.edges.LineSegment2D(pt1, pt2).plot_data(edge_style=line_edge_style)
-line2 = vm.edges.LineSegment2D(pt2, pt3).plot_data(edge_style=line_edge_style)
-circle_edge_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=RED)
-circle_surface_style = plot_data.SurfaceStyle(color_fill=LIGHTROSE, opacity=1)
-circle1 = vm.wires.Circle2D(pt1, 0.1).plot_data(edge_style=circle_edge_style,
-                                                surface_style=circle_surface_style)
-circle2 = vm.wires.Circle2D(pt2, 0.1).plot_data(edge_style=circle_edge_style,
-                                                surface_style=circle_surface_style)
-circle3 = vm.wires.Circle2D(pt3, 0.1).plot_data(edge_style=circle_edge_style,
-                                                surface_style=circle_surface_style)
-text_style = plot_data.TextStyle(text_color=BLACK, font_size=12,
-                                 font_style='sans-serif')
-text = plot_data.Text(comment='Hello Dessia', position_x=3, position_y=0.2,
-                      text_style=text_style)
-primitives = [line1, line2, circle1, circle2, circle3, text]
-primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
-objects.append(primitive_group)
+objects.append(simple_shapes.primitive_group)
 
 color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
 color_strokes = [BLACK, BROWN, GREEN, RED, ORANGE, LIGHTBLUE, GREY]
@@ -109,27 +90,6 @@ graph2d = plot_data.Graph2D(graphs=[dataset],
                             to_disp_attribute_names=graph_to_disp_attribute_names)
 objects.append(graph2d)
 # GRAPH TEST END
-
-# Primitive group container (start)
-circle1 = vm.wires.Circle2D(vm.Point2D(0, 0), 10).plot_data()
-
-l1 = vm.edges.LineSegment2D(vm.Point2D(1, 1), vm.Point2D(1, 2))
-l2 = vm.edges.LineSegment2D(vm.Point2D(1, 2), vm.Point2D(2, 2))
-l3 = vm.edges.LineSegment2D(vm.Point2D(2, 2), vm.Point2D(2, 1))
-l4 = vm.edges.LineSegment2D(vm.Point2D(2, 1), vm.Point2D(1, 1))
-contour = vm.wires.Contour2D([l1, l2, l3, l4]).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=LIGHTORANGE))
-
-circle2 = vm.wires.Circle2D(vm.Point2D(1, 1), 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=RED))
-
-primitive_group1 = plot_data.PrimitiveGroup(primitives=[circle1])
-primitive_group2 = plot_data.PrimitiveGroup(primitives=[contour])
-primitive_group3 = plot_data.PrimitiveGroup(primitives=[circle2])
-primitive_groups = [primitive_group1, primitive_group2, primitive_group3]
-
-coords1 = [[0,0], [600, 0], [0, 350]]
-primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups, coords=coords1)
-# objects.append(primitive_group_container)
-# primitive group container (end)
 
 coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0),
           (300, 500), (0,100)]

@@ -7136,19 +7136,34 @@ export function isHex(str:string):boolean {
 }
 
 export class List {
-  public static sort_without_duplicates(list:number[]) {
-    if (list.length == 0) return list;
-    var sort = new Sort();
-    var sorted = sort.MergeSort(list);
-    var no_duplicates = [list[0]];
-    var current_elt = sorted[0];
-    for (let val of sorted) {
-      if (val>current_elt) {
-        current_elt = val;
-        no_duplicates.push(val);
+  // public static sort_without_duplicates(list:number[]) {
+  //   if (list.length == 0) return list;
+  //   var sort = new Sort();
+  //   var sorted = sort.MergeSort(list);
+  //   var no_duplicates = [list[0]];
+  //   var current_elt = sorted[0];
+  //   for (let val of sorted) {
+  //     if (val>current_elt) {
+  //       current_elt = val;
+  //       no_duplicates.push(val);
+  //     }
+  //   }
+  //   return no_duplicates
+  // }
+
+  public static sort_without_duplicates(list:any[]) {
+    var seen = {};
+    var out = [];
+    var len = list.length;
+    var j = 0;
+    for(var i = 0; i < len; i++) {
+      var item = list[i];
+      if(seen[item] !== 1) {
+            seen[item] = 1;
+            out[j++] = item;
       }
     }
-    return no_duplicates
+    return out;
   }
 
   public static contains_undefined(list:any[]):boolean {

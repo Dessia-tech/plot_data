@@ -25,7 +25,6 @@ primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primit
 coords = [[0,0], [600, 0], [0, 350], [500,350]]
 primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups, coords=coords)
 
-multiplot = plot_data.MultiplePlots(objects=[primitive_group_container], initial_view_on=True)
 
 plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
 

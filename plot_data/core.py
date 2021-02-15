@@ -139,12 +139,14 @@ class SurfaceStyle(DessiaObject):
 
 class Text(PlotDataObject):
     def __init__(self, comment: str, position_x: float, position_y: float,
-                 text_style: TextStyle = None, text_scaling: bool = None, name: str = ''):
+                 text_style: TextStyle = None, text_scaling: bool = None,
+                 max_width: float = None, name: str = ''):
         self.text_style = text_style
         self.comment = comment
         self.position_x = position_x
         self.position_y = position_y
         self.text_scaling = text_scaling
+        self.max_width = max_width
         PlotDataObject.__init__(self, type_='text', name=name)
 
 
@@ -438,8 +440,8 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         print(page_name + '.html')
 
 
-def get_csv_vectors(filename):
-    lines, variables = from_csv(filename=filename)
+def get_csv_vectors(filepath):
+    lines, variables = from_csv(filename=filepath)
     catalog = Catalog(array=lines, variables=variables,
                       pareto_settings=ParetoSettings({}, enabled=False))
     return catalog

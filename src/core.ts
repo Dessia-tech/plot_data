@@ -1,3 +1,5 @@
+import { kMaxLength } from "buffer";
+import { Console } from "console";
 import { type } from "os";
 
 export class MultiplePlots {
@@ -5480,8 +5482,9 @@ export class Text {
               public position_y:number,
               public text_style:TextStyle,
               public text_scaling:boolean=true,
-              public type_:string,
-              public name:string) {
+              public max_width,
+              public type_:string='text',
+              public name:string='') {
   }
 
   public static deserialize(serialized) {
@@ -5495,6 +5498,7 @@ export class Text {
                     -serialized['position_y'],
                     text_style,
                     serialized['text_scaling'],
+                    serialized['max_width'],
                     serialized['type_'],
                     serialized['name']);
   }
@@ -5507,8 +5511,53 @@ export class Text {
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;
-    context.fillText(this.comment, scaleX*(1000*this.position_x+ mvx) + X, scaleY*(1000*this.position_y+ mvy) + Y);
+    if (this.max_width) {
+      var cut_texts = this.cutting_text(context, scaleX*1000*this.max_width);
+      for (let i=0; i<cut_texts.length; i++) {
+        context.fillText(cut_texts[i], scaleX*(1000*this.position_x + mvx) + X, scaleY*(1000*this.position_y + mvy) + i*font_size + Y);
+      }
+    } else {
+      context.fillText(this.comment, scaleX*(1000*this.position_x + mvx) + X, scaleY*(1000*this.position_y + mvy) + Y);
+    }
   }
+
+  cutting_text(context, display_max_width) {
+    console.log(display_max_width)
+    var words = this.comment.split(' ');
+    var space_length = context.measureText(' ').width;
+    var cut_texts = [];
+    var i=0;
+    var line_length = 0;
+    var line_text = '';
+    while (i<words.length) {
+      let word = words[i];
+      let word_length = context.measureText(word).width;
+      if (word_length >= display_max_width) {
+        if (line_text !== '') cut_texts.push(line_text);
+        line_length = 0;
+        line_text = '';
+        cut_texts.push(word);
+        i++;
+      } else {
+        if (line_length + word_length <= display_max_width) {
+          if (line_length !== 0) {
+            line_length = line_length + space_length;
+            line_text = line_text + ' ';
+          }
+          line_text = line_text + word;
+          line_length = line_length + word_length;
+          i++;
+        } else {
+          cut_texts.push(line_text);
+          line_length = 0;
+          line_text = '';
+        }
+      }
+    }
+    if (line_text !== '') cut_texts.push(line_text);
+    return cut_texts;
+  }
+
 }
 
 export class LineSegment {

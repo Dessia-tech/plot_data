@@ -11,9 +11,9 @@ from plot_data.colors import *
 
 
 # defining a couple style objects
-  # edges customization
+    # edges customization
 edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=BLUE, dashline=[])
-  # surfaces customization
+    # surfaces customization
 hatching = plot_data.HatchingSet(0.5, 3)
 surface_style = plot_data.SurfaceStyle(color_fill=WHITE, opacity=1,
                                        hatching=hatching)
@@ -59,9 +59,9 @@ plot_data_circle = circle.plot_data(edge_style=circle_edge_style,
 
 
 # Text
-text = plot_data.Text(comment='Hello', position_x=5, position_y=5,
+text = plot_data.Text(comment='Hello', position_x=6, position_y=9,
                       text_style=plot_data.TextStyle(text_color=RED,
-                                                     font_size=20,
+                                                     font_size=12,
                                                      font_style='sans-serif')
                       )
 

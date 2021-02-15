@@ -5522,7 +5522,6 @@ export class Text {
   }
 
   cutting_text(context, display_max_width) {
-    console.log(display_max_width)
     var words = this.comment.split(' ');
     var space_length = context.measureText(' ').width;
     var cut_texts = [];

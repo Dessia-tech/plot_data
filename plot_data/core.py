@@ -16,6 +16,7 @@ import webbrowser
 from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
 from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
+import warnings
 
 import plot_data.templates as templates
 
@@ -150,7 +151,7 @@ class Text(PlotDataObject):
         PlotDataObject.__init__(self, type_='text', name=name)
 
 
-class LineSegment(PlotDataObject):
+class LineSegment2D(PlotDataObject):
     def __init__(self, data: List[float], edge_style: EdgeStyle = None,
                  name: str = ''):
         self.data = data
@@ -165,6 +166,13 @@ class LineSegment(PlotDataObject):
                 max(self.data[0], self.data[2]),
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
+
+
+class LineSegment(LineSegment2D):
+    def __init__(self, data: List[float], edge_style: EdgeStyle = None,
+                 name: str = ''):
+        LineSegment2D.__init__(self, data=data, edge_style=edge_style, name=name)
+        warnings.warn("LineSegment is deprecated, use LineSegment2D instead", DeprecationWarning)
 
 
 class Circle2D(PlotDataObject):
@@ -288,16 +296,16 @@ class Scatter(PlotDataObject):
 
 
 class Arc2D(PlotDataObject):
-    def __init__(self, cx: float, cy: float, r: float,
-                 data: List[float], angle1: float, angle2: float,
-                 edge_style: EdgeStyle = None, name: str = ''):
-        self.angle2 = angle2
-        self.angle1 = angle1
-        self.data = data
-        self.edge_style = edge_style
-        self.r = r
-        self.cy = cy
+    def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float,
+                 anticlockwise: bool = None, edge_style: EdgeStyle = None, name: str = ''):
+        # anticlockwise's default value is True
         self.cx = cx
+        self.cy = cy
+        self.r = r
+        self.start_angle = start_angle
+        self.end_angle = end_angle
+        self.anticlockwise = anticlockwise
+        self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='arc', name=name)
 
     def bounding_box(self):

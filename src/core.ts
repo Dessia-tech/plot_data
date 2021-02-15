@@ -1710,6 +1710,7 @@ export abstract class PlotData {
         if ((d.primitives[i].type_ == 'contour') && is_inside_canvas) {
           this.draw_contour(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
         } else if ((d.primitives[i].type_ == 'arc') && is_inside_canvas) {
+          d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
         } else if (d.primitives[i].type_ == 'text') {
@@ -5396,7 +5397,7 @@ export class PrimitiveGroup {
       } else if (temp[i]['type_'] == 'text') {
         primitives.push(Text.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'linesegment') {
-        primitives.push(LineSegment.deserialize(temp[i]));
+        primitives.push(LineSegment2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'arc') {
         primitives.push(Arc2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'circle') {
@@ -5444,7 +5445,7 @@ export class Contour2D {
     for (var i = 0; i < temp.length; i++) {
       var d = temp[i];
       if (d['type_'] == 'linesegment') {
-        let new_line = LineSegment.deserialize(d);
+        let new_line = LineSegment2D.deserialize(d);
         new_line.edge_style = edge_style;
         plot_data_primitives.push(new_line);
       }
@@ -5559,7 +5560,7 @@ export class Text {
 
 }
 
-export class LineSegment {
+export class LineSegment2D {
   minX:number=0;
   maxX:number=0;
   minY:number=0;
@@ -5580,7 +5581,7 @@ export class LineSegment {
     var default_dict_ = {edge_style:default_edge_style};
     serialized = set_default_values(serialized, default_dict_);
     var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
-    return new LineSegment(serialized['data'],
+    return new LineSegment2D(serialized['data'],
                              edge_style,
                              serialized['type_'],
                              serialized['name']);
@@ -6183,7 +6184,7 @@ export class Tooltip {
 export class Dataset {
   id:number=0;
   point_list:Point2D[]=[];
-  segments:LineSegment[];
+  segments:LineSegment2D[];
 
   constructor(public to_disp_attribute_names:string[],
               public edge_style:EdgeStyle,
@@ -6216,7 +6217,7 @@ export class Dataset {
       let current_point = this.point_list[i];
       let next_point = this.point_list[i+1];
       let data = [current_point.cx, -current_point.cy, next_point.cx, -next_point.cy];
-      this.segments.push(new LineSegment(data, this.edge_style, 'line', ''));
+      this.segments.push(new LineSegment2D(data, this.edge_style, 'line', ''));
     }
   }
 
@@ -6399,13 +6400,14 @@ export class Arc2D {
   maxX:number=0;
   minY:number=0;
   maxY:number=0;
+  init_scale:number=0;
 
   constructor(public cx:number,
               public cy:number,
               public r:number,
-              public data:any,
-              public angle1:number,
-              public angle2:number,
+              public start_angle:number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
+              public end_angle:number,
+              public anticlockwise:boolean=true,
               public edge_style:EdgeStyle,
               public type_:string,
               public name:string) {
@@ -6429,28 +6431,25 @@ export class Arc2D {
     serialized = set_default_values(serialized, default_dict_);
     var edge_style = EdgeStyle.deserialize(serialized['edge_style'])
     return new Arc2D(serialized['cx'],
-                                -serialized['cy'],
-                                serialized['r'],
-                                serialized['data'],
-                                serialized['angle1'],
-                                serialized['angle2'],
-                                edge_style,
-                                serialized['type_'],
-                                serialized['name']);
+                     -serialized['cy'],
+                     serialized['r'],
+                     -serialized['start_angle'],
+                     -serialized['end_angle'],
+                     serialized['anticlockwise'],
+                     edge_style,
+                     serialized['type_'],
+                     serialized['name']);
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
     context.lineWidth = this.edge_style.line_width;
-    context.strokeStyle = this.edge_style.color_stroke;
-    var ptsa = [];
-    for (var l = 0; l < this.data.length; l++) {
-      ptsa.push(scaleX*(1000*this.data[l]['x']+ mvx) + X);
-      ptsa.push(scaleY*(1000*this.data[l]['y']+ mvy) + Y);
-    }
-    var tension = 0.4;
-    var isClosed = false;
-    var numOfSegments = 16;
-    drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments));
+    context.color_stroke = this.edge_style.color_stroke;
+    context.arc(scaleX*(1000*this.cx + mvx) + X, 
+                scaleY*(1000*this.cy + mvy) + Y, 
+                scaleX*1000*this.r, 
+                this.start_angle, 
+                this.end_angle, 
+                this.anticlockwise);
   }
 }
 
@@ -6788,83 +6787,83 @@ export class Shape {
   }
 }
 
-export function drawLines(ctx, pts) {
-  // ctx.moveTo(pts[0], pts[1]);
-  for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
-}
+// export function drawLines(ctx, pts) {
+//   // ctx.moveTo(pts[0], pts[1]);
+//   for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
+// }
 
-export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
+// export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
 
-  // use input value if provided, or use a default value
-  tension = (typeof tension != 'undefined') ? tension : 0.5;
-  isClosed = isClosed ? isClosed : false;
-  numOfSegments = numOfSegments ? numOfSegments : 16;
+//   // use input value if provided, or use a default value
+//   tension = (typeof tension != 'undefined') ? tension : 0.5;
+//   isClosed = isClosed ? isClosed : false;
+//   numOfSegments = numOfSegments ? numOfSegments : 16;
 
-  var _pts = [], res = [],    // clone array
-      x, y,           // our x,y coords
-      t1x, t2x, t1y, t2y, // tension vectors
-      c1, c2, c3, c4,     // cardinal points
-      st, t, i;       // steps based on num. of segments
+//   var _pts = [], res = [],    // clone array
+//       x, y,           // our x,y coords
+//       t1x, t2x, t1y, t2y, // tension vectors
+//       c1, c2, c3, c4,     // cardinal points
+//       st, t, i;       // steps based on num. of segments
 
-  // clone array so we don't change the original
-  //
-  _pts = pts.slice(0);
+//   // clone array so we don't change the original
+//   //
+//   _pts = pts.slice(0);
 
-  // The algorithm require a previous and next point to the actual point array.
-  // Check if we will draw closed or open curve.
-  // If closed, copy end points to beginning and first points to end
-  // If open, duplicate first points to befinning, end points to end
-  if (isClosed) {
-      _pts.unshift(pts[pts.length - 1]);
-      _pts.unshift(pts[pts.length - 2]);
-      _pts.unshift(pts[pts.length - 1]);
-      _pts.unshift(pts[pts.length - 2]);
-      _pts.push(pts[0]);
-      _pts.push(pts[1]);
-  }
-  else {
-      _pts.unshift(pts[1]);   //copy 1. point and insert at beginning
-      _pts.unshift(pts[0]);
-      _pts.push(pts[pts.length - 2]); //copy last point and append
-      _pts.push(pts[pts.length - 1]);
-  }
+//   // The algorithm require a previous and next point to the actual point array.
+//   // Check if we will draw closed or open curve.
+//   // If closed, copy end points to beginning and first points to end
+//   // If open, duplicate first points to befinning, end points to end
+//   if (isClosed) {
+//       _pts.unshift(pts[pts.length - 1]);
+//       _pts.unshift(pts[pts.length - 2]);
+//       _pts.unshift(pts[pts.length - 1]);
+//       _pts.unshift(pts[pts.length - 2]);
+//       _pts.push(pts[0]);
+//       _pts.push(pts[1]);
+//   }
+//   else {
+//       _pts.unshift(pts[1]);   //copy 1. point and insert at beginning
+//       _pts.unshift(pts[0]);
+//       _pts.push(pts[pts.length - 2]); //copy last point and append
+//       _pts.push(pts[pts.length - 1]);
+//   }
 
-  // ok, lets start..
+//   // ok, lets start..
 
-  // 1. loop goes through point array
-  // 2. loop goes through each segment between the 2 pts + 1e point before and after
-  for (i=2; i < (_pts.length - 4); i+=2) {
-      for (t=0; t <= numOfSegments; t++) {
+//   // 1. loop goes through point array
+//   // 2. loop goes through each segment between the 2 pts + 1e point before and after
+//   for (i=2; i < (_pts.length - 4); i+=2) {
+//       for (t=0; t <= numOfSegments; t++) {
 
-          // calc tension vectors
-          t1x = (_pts[i+2] - _pts[i-2]) * tension;
-          t2x = (_pts[i+4] - _pts[i]) * tension;
+//           // calc tension vectors
+//           t1x = (_pts[i+2] - _pts[i-2]) * tension;
+//           t2x = (_pts[i+4] - _pts[i]) * tension;
 
-          t1y = (_pts[i+3] - _pts[i-1]) * tension;
-          t2y = (_pts[i+5] - _pts[i+1]) * tension;
+//           t1y = (_pts[i+3] - _pts[i-1]) * tension;
+//           t2y = (_pts[i+5] - _pts[i+1]) * tension;
 
-          // calc step
-          st = t / numOfSegments;
+//           // calc step
+//           st = t / numOfSegments;
 
-          // calc cardinals
-          c1 =   2 * Math.pow(st, 3)  - 3 * Math.pow(st, 2) + 1;
-          c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2);
-          c3 =       Math.pow(st, 3)  - 2 * Math.pow(st, 2) + st;
-          c4 =       Math.pow(st, 3)  -     Math.pow(st, 2);
+//           // calc cardinals
+//           c1 =   2 * Math.pow(st, 3)  - 3 * Math.pow(st, 2) + 1;
+//           c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2);
+//           c3 =       Math.pow(st, 3)  - 2 * Math.pow(st, 2) + st;
+//           c4 =       Math.pow(st, 3)  -     Math.pow(st, 2);
 
-          // calc x and y cords with common control vectors
-          x = c1 * _pts[i]    + c2 * _pts[i+2] + c3 * t1x + c4 * t2x;
-          y = c1 * _pts[i+1]  + c2 * _pts[i+3] + c3 * t1y + c4 * t2y;
+//           // calc x and y cords with common control vectors
+//           x = c1 * _pts[i]    + c2 * _pts[i+2] + c3 * t1x + c4 * t2x;
+//           y = c1 * _pts[i+1]  + c2 * _pts[i+3] + c3 * t1y + c4 * t2y;
 
-          //store points in array
-          res.push(x);
-          res.push(y);
+//           //store points in array
+//           res.push(x);
+//           res.push(y);
 
-      }
-  }
+//       }
+//   }
 
-  return res;
-}
+//   return res;
+// }
 
 var nextCol = 1;
 export function genColor(){

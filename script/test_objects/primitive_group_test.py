@@ -5,14 +5,14 @@
 import plot_data
 import numpy as npy
 import volmdlr as vm
-import volmdlr.wires
 import volmdlr.edges
+import volmdlr.wires
 from plot_data.colors import *
 
 
 # defining a couple style objects
     # edges customization
-edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=BLUE, dashline=[])
+edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=RED, dashline=[])
     # surfaces customization
 hatching = plot_data.HatchingSet(0.5, 3)
 surface_style = plot_data.SurfaceStyle(color_fill=WHITE, opacity=1,
@@ -21,6 +21,8 @@ surface_style = plot_data.SurfaceStyle(color_fill=WHITE, opacity=1,
 
 # Creating several primitives. plot_data() functions are used to convert
 # a volmdlr object into a plot_data object
+
+# arc
 p0 = vm.Point2D(-1, 0)
 p1 = vm.Point2D(-npy.cos(npy.pi / 4), npy.sin(npy.pi / 4))
 p2 = vm.Point2D(0, 1)

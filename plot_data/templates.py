@@ -106,6 +106,7 @@ multiplot_template = Template('''<div id="app"></div>
 	globalWidth = 1500;
 	globalHeight = 800;
 	var multiplot = new MultiplePlots(data, globalWidth, globalHeight, 1000, true, $canvas_id.id);
+	multiplot.add_primitive_group_container(test, [1,2,3,4], ['x', 'y']);
 </script> 
 ''')
 

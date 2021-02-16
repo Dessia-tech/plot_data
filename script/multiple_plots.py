@@ -33,17 +33,17 @@ parallelplot2 = plot_data.ParallelPlot(to_disp_attribute_names=['x', 'color'])
 scatterplot1 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
                                  to_disp_attribute_names=['x', 'y'])
 
-scatterplot2 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['y', 'color']),
-                                 to_disp_attribute_names=['y', 'color'],
-                                 point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes points' appearance
-
-scatterplot3 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
-                                 to_disp_attribute_names=['x', 'direction'])
+# scatterplot2 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['y', 'color']),
+#                                  to_disp_attribute_names=['y', 'color'],
+#                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes points' appearance
+#
+# scatterplot3 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
+#                                  to_disp_attribute_names=['x', 'direction'])
 
 
 # Creating the multiplot
-plots = [primitive_group, parallelplot1, parallelplot2, scatterplot1,
-         scatterplot2, scatterplot3, graph2d]
+plots = [primitive_group, parallelplot1, parallelplot2, scatterplot1]
+      #   scatterplot2, scatterplot3] #, graph2d]
 
 
 multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,

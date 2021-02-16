@@ -263,7 +263,7 @@ export class MultiplePlots {
 
   get_attribute(name:string) {
     for (let attribute of this.displayable_attributes) {
-      if (attribute.name = name) {
+      if (attribute.name === name) {
         return attribute;
       }
     }
@@ -334,8 +334,9 @@ export class MultiplePlots {
     var primitive_entries = [];
     var elements_entries = [];
     for (let i=0; i<associated_points.length; i++) {
-      primitive_entries.push([associated_points[i], i]);
-      elements_entries.push([i, this.data['elements'][i]]);
+      let associated_point_index = associated_points[i];
+      primitive_entries.push([associated_point_index, i]);
+      elements_entries.push([i, this.data['elements'][associated_point_index]]);
     }
     new_plot_data.primitive_dict = Object.fromEntries(primitive_entries);
     new_plot_data.elements_dict = Object.fromEntries(elements_entries);
@@ -1259,6 +1260,53 @@ export class MultiplePlots {
     }
   }
 
+  mouse_over_scatterplot(point_index) { // used by mouse_over_primitive_group() to select points inside scatterplots
+    for (let i=0; i<this.nbObjects; i++) {
+      if (this.objectList[i].type_ === 'scatterplot') {
+        let obj = this.objectList[i];
+        let selected_point = obj.plotObject.point_list[point_index];
+        let sc_point_list = obj.scatter_point_list;
+        if (obj.mergeON) {
+          for (let j=0; j<sc_point_list.length; j++) {
+            let point = sc_point_list[j];
+            let bool = false;
+            for (let k=0; k<point.points_inside.length; k++) {
+              if (point.points_inside[k] === selected_point) {
+                obj.select_on_mouse = point;
+                bool = true; 
+                break;
+              }
+            }
+            if (bool) break;
+          }
+        } else {
+          obj.select_on_mouse = obj.plotObject.point_list[point_index];
+        }
+      }
+    }
+  }
+
+
+  mouse_over_primitive_group() {
+    if (this.move_plot_index !== -1) {
+      if (this.objectList[this.move_plot_index].type_ === 'primitivegroupcontainer') {
+        let obj:any = this.objectList[this.move_plot_index];
+        if (obj.selected_primitive !== -1) {
+          let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(obj.primitive_dict), list => list.reverse()));
+          let point_index = Number(primitive_to_point_index[obj.selected_primitive]);
+          this.mouse_over_scatterplot(point_index);
+        } else {
+          for (let i=0; i<this.nbObjects; i++) {
+            if (this.objectList[i].type_ === 'scatterplot') {
+              this.objectList[i].select_on_mouse = undefined;
+            }
+          }
+        }
+        this.redrawAllObjects();
+      }
+    } 
+  }
+
 
   mouse_interaction(): void {
     var canvas = document.getElementById(this.canvas_id);
@@ -1339,6 +1387,10 @@ export class MultiplePlots {
           }
           this.refresh_selected_point_index();
           this.redraw_object();
+        } else {
+          if (this.selectDependency_bool) {
+            this.mouse_over_primitive_group();
+          }
         }
       }
     });
@@ -2980,6 +3032,7 @@ export abstract class PlotData {
 
   reset_select_on_click() {
     this.select_on_click = [];
+    this.tooltip_list = [];
     if (this.type_ == 'scatterplot') {
       for (let i=0; i<this.plotObject.point_list.length; i++) {
         this.plotObject.point_list[i].selected = false;
@@ -3819,6 +3872,7 @@ export class PrimitiveGroupContainer extends PlotData {
   layout_mode:string='regular';
   layout_axis:Axis;
   layout_attributes:Attribute[]=[];
+  selected_primitive:number=-1;
 
   constructor(public data:any,
               public width: number,
@@ -4075,7 +4129,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
   add_primitive_group(serialized, point_index) {
     var new_plot_data = new PlotContour(serialized, 560, 300, 1000, this.buttons_ON, this.X, this.Y, this.canvas_id);
-    new_plot_data.context_hidden = this.context_hidden;
+    new_plot_data.context_hidden = this.context_hidden; 
     new_plot_data.context_show = this.context_show;
     this.primitive_groups.push(new_plot_data);
     this.display_order.push(this.primitive_groups.length - 1);
@@ -4589,7 +4643,7 @@ export class PrimitiveGroupContainer extends PlotData {
     var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
     var nbObjects:number = this.primitive_groups.length;
     var canvas = document.getElementById(this.canvas_id);
-    var selected_primitive:number = -1;
+    // var selected_primitive:number = -1;
     var last_selected_primitive = -1;
     var isDrawing = false;
     var vertex_infos:Object;
@@ -4620,7 +4674,7 @@ export class PrimitiveGroupContainer extends PlotData {
       if (this.interaction_ON) {
         var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
         mouse2X = e.offsetX, mouse2Y = e.offsetY;
-        selected_primitive = this.get_selected_primitive(mouse2X, mouse2Y);
+        this.selected_primitive = this.get_selected_primitive(mouse2X, mouse2Y);
         if (this.manipulation_bool) {
           if (isDrawing) {
             if ((this.clickedPlotIndex == -1) || (this.layout_mode !== 'regular')) {
@@ -4638,14 +4692,14 @@ export class PrimitiveGroupContainer extends PlotData {
             }
           } else {
             if (this.layout_mode === 'regular') {
-              this.setCursorStyle(mouse2X, mouse2Y, canvas, selected_primitive);
+              this.setCursorStyle(mouse2X, mouse2Y, canvas, this.selected_primitive);
             }
           }
         } else {
-          if (selected_primitive !== last_selected_primitive) {
-            this.manage_mouse_interactions(selected_primitive);
+          if (this.selected_primitive !== last_selected_primitive) {
+            this.manage_mouse_interactions(this.selected_primitive);
           }
-          last_selected_primitive = selected_primitive;
+          last_selected_primitive = this.selected_primitive;
         }
       } else {
         isDrawing = false;
@@ -4674,6 +4728,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
     canvas.addEventListener('mouseleave', e => {
       this.clickedPlotIndex = -1;
+      this.selected_primitive = -1;
       this.setAllInteractionsToOff();
     })
   }
@@ -6470,8 +6525,55 @@ export class Arc2D {
     var tension = 0.4;
     var isClosed = false;
     var numOfSegments = 16;
-    drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
+  drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
   }
+
+  // contour_draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
+  //   context.lineWidth = this.edge_style.line_width;
+  //   context.color_stroke = this.edge_style.color_stroke;
+  //   this.manage_angles();
+  //   var nb_points = 100;
+  //   var points = this.get_points_on_arc(context, mvx, mvy, scaleX, scaleY, X, Y, nb_points);
+  //   drawLines(context, points, first_elem);
+  // }
+
+  // manage_angles() {
+  //   this.start_angle = this.start_angle % (2*Math.PI);
+  //   if (this.start_angle < 0) this.start_angle += 2*Math.PI;
+
+  //   this.end_angle = this.end_angle % (2*Math.PI);
+  //   if (this.end_angle < 0) this.end_angle += 2*Math.PI;
+
+  //   if (this.anticlockwise && this.end_angle>this.start_angle) {
+  //     this.start_angle = this.start_angle + 2*Math.PI;
+  //   } else if (!this.anticlockwise && this.start_angle>this.end_angle) {
+  //     this.end_angle = this.end_angle + 2*Math.PI;
+  //   }
+  // }
+
+
+  // get_points_on_arc(context, mvx, mvy, scaleX, scaleY, X, Y, nb_points) {
+  //   var step = Math.abs(this.end_angle - this.start_angle)/nb_points;
+  //   if (!this.anticlockwise) {
+  //     var theta_i = this.start_angle;
+  //     var theta_f = this.end_angle;
+  //   } else {
+  //     theta_i = this.end_angle;
+  //     theta_f = this.start_angle;
+  //   }
+  //   var theta = theta_i;
+  //   var points = [];
+  //   var cx_d = scaleX*(1000*this.cx + mvx) + X;
+  //   var cy_d = scaleY*(1000*this.cy + mvy) + Y;
+  //   var r_d = scaleX*1000*this.r;
+  //   while (theta <= theta_f) {
+  //     let x = cx_d + r_d * Math.cos(theta);
+  //     let y = cy_d + r_d * Math.sin(theta);
+  //     points.push(x, y);
+  //     theta += step;
+  //   }
+  //   return points;
+  // }
 }
 
 export class Attribute {
@@ -7488,6 +7590,91 @@ export function equals(a, b) {
 
 
 export var empty_container = {'name': '',
-'package_version': '0.5.0',
+'package_version': '0.5.1',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
+
+
+
+
+
+
+
+
+
+var test = {'name': '',
+'package_version': '0.5.1',
+'primitive_groups': [{'name': '',
+  'package_version': '0.5.1',
+  'primitives': [{'name': '',
+    'package_version': '0.5.1',
+    'r': 10,
+    'cy': 0.0,
+    'cx': 0.0,
+    'type_': 'circle'}],
+  'type_': 'primitivegroup'},
+ {'name': '',
+  'package_version': '0.5.1',
+  'primitives': [{'name': '',
+    'package_version': '0.5.1',
+    'plot_data_primitives': [{'name': '',
+      'package_version': '0.5.1',
+      'data': [1.0, 1.0, 1.0, 2.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.5.1'},
+      'type_': 'linesegment'},
+     {'name': '',
+      'package_version': '0.5.1',
+      'data': [1.0, 2.0, 2.0, 2.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.5.1'},
+      'type_': 'linesegment'},
+     {'name': '',
+      'package_version': '0.5.1',
+      'data': [2.0, 2.0, 2.0, 1.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.5.1'},
+      'type_': 'linesegment'},
+     {'name': '',
+      'package_version': '0.5.1',
+      'data': [2.0, 1.0, 1.0, 1.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.5.1'},
+      'type_': 'linesegment'}],
+    'surface_style': {'name': '',
+     'object_class': 'plot_data.core.SurfaceStyle',
+     'package_version': '0.5.1',
+     'color_fill': 'rgb(255,175,96)'},
+    'type_': 'contour'}],
+  'type_': 'primitivegroup'},
+ {'name': '',
+  'package_version': '0.5.1',
+  'primitives': [{'name': '',
+    'package_version': '0.5.1',
+    'surface_style': {'name': '',
+     'object_class': 'plot_data.core.SurfaceStyle',
+     'package_version': '0.5.1',
+     'color_fill': 'rgb(247,0,0)'},
+    'r': 5,
+    'cy': 1.0,
+    'cx': 1.0,
+    'type_': 'circle'}],
+  'type_': 'primitivegroup'},
+ {'name': '',
+  'package_version': '0.5.1',
+  'primitives': [{'name': '',
+    'package_version': '0.5.1',
+    'surface_style': {'name': '',
+     'object_class': 'plot_data.core.SurfaceStyle',
+     'package_version': '0.5.1',
+     'color_fill': 'rgb(222,184,135)'},
+    'r': 5,
+    'cy': 1.0,
+    'cx': 1.0,
+    'type_': 'circle'}],
+  'type_': 'primitivegroup'}],
+'type_': 'primitivegroupcontainer'}

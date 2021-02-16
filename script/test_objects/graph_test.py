@@ -8,13 +8,13 @@ import numpy as np
 k = 0
 
 to_disp_attribute_names = ['time', 'electric current']
-tooltip = plot_data.Tooltip(to_disp_attribute_names=['cx', 'cy'])
+tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names)
 T1 = np.linspace(0, 20, 20)
 I1 = [t ** 2 for t in T1]
 elements1 = []
 for k in range(len(T1)):
     elements1.append({'time': T1[k], 'electric current': I1[k]})
-dataset1 = plot_data.Dataset(elements=elements1, name='I1 = f(t)')
+dataset1 = plot_data.Dataset(elements=elements1, name='I1 = f(t)',)
 
 
 # The previous line instantiates a dataset with limited arguments but

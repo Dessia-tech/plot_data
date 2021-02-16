@@ -5505,7 +5505,7 @@ export class Contour2D {
   constructor(public plot_data_primitives:any,
               public edge_style:EdgeStyle,
               public surface_style:SurfaceStyle,
-              public type_:string,
+              public type_:string='contour',
               public name:string) {
       for (var i = 0; i < this.plot_data_primitives.length; i++) {
         var d = plot_data_primitives[i]
@@ -5748,7 +5748,7 @@ export class Point2D {
               public color_fill:string,
               public color_stroke:string,
               public stroke_width:number,
-              public type_:string,
+              public type_:string='point',
               public name:string) {
       if (point_size<1) {
         throw new Error('Invalid point_size');
@@ -6117,9 +6117,9 @@ export class Tooltip {
   constructor(public to_disp_attribute_names:string[],
               public surface_style:SurfaceStyle,
               public text_style:TextStyle,
-              public tooltip_radius:number,
-              public type_:string,
-              public name:string) {
+              public tooltip_radius:number=5,
+              public type_:string='tooltip',
+              public name:string='') {
               }
 
   public static deserialize(serialized) {
@@ -6309,11 +6309,13 @@ export class Dataset {
   public static deserialize(serialized) {
     var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
     var default_point_style = {color_fill:string_to_rgb('lightviolet'), color_stroke:string_to_rgb('grey'),
-                               shape:'circle', size:2, name:''};
-    var default_dict_ = {tooltip:{}, edge_style:default_edge_style, point_style:default_point_style,
+                               shape:'circle', size:2, name:'', type_:'tooltip'};
+    var tooltip_text_style = {font_size: 10, font_style: 'sans-serif', text_align_x:'center', text_color:string_to_rgb('black')};
+    var default_dict_ = {tooltip:{to_disp_attribute_names : serialized['to_disp_attribute_names'], text_style: tooltip_text_style}, edge_style:default_edge_style, point_style:default_point_style,
                           display_step:1};
     serialized = set_default_values(serialized, default_dict_)
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
+    console.log(tooltip, serialized['to_disp_attribute_names'], serialized['tooltip'])
     var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
     var point_style = PointStyle.deserialize(serialized['point_style']);
     return new Dataset(serialized['to_disp_attribute_names'],
@@ -7025,16 +7027,12 @@ export function genColor(){
     ret.push((nextCol & 0xff00) >> 8); // G
     ret.push((nextCol & 0xff0000) >> 16); // B
 
-    nextCol += 1;
+    nextCol += 20;
   }
   var col = "rgb(" + ret.join(',') + ")";
   return col;
 }
 
-
-// export var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#c3e6fc'], ['lightskyblue', '#87CEFA'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
-//   ['lightorange', '#ff8700'], ['cyan', '#13f0f0'], ['lightcyan', '#90f7f7'], ['rose', '#FF69B4'], ['lightrose', '#FFC0CB'], ['violet', '#EE82EE'], ['lightviolet', '#eaa5f6'], ['white', '#ffffff'], ['black', '#000000'], ['brown', '#cd8f40'],
-//   ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']];
 
 export var string_to_hex_dict = {red:'#f70000', lightred:'#ed8080', blue:'#0013fe', lightblue:'#c3e6fc', lightskyblue:'#87cefa', green:'#00c112', lightgreen:'#89e892', yellow:'#f4ff00', lightyellow:'#f9ff7b', orange:'#ff8700',
   lightorange:'#ff8700', cyan:'#13f0f0', lightcyan:'#90f7f7', rose:'#ff69b4', lightrose:'#ffc0cb', violet:'#ee82ee', lightviolet:'#eaa5f6', white:'#ffffff', black:'#000000', brown:'#cd8f40',
@@ -7645,79 +7643,79 @@ export var empty_container = {'name': '',
 
 
 
-var test = {'name': '',
-'package_version': '0.5.1',
-'primitive_groups': [{'name': '',
-  'package_version': '0.5.1',
-  'primitives': [{'name': '',
-    'package_version': '0.5.1',
-    'r': 10,
-    'cy': 0.0,
-    'cx': 0.0,
-    'type_': 'circle'}],
-  'type_': 'primitivegroup'},
- {'name': '',
-  'package_version': '0.5.1',
-  'primitives': [{'name': '',
-    'package_version': '0.5.1',
-    'plot_data_primitives': [{'name': '',
-      'package_version': '0.5.1',
-      'data': [1.0, 1.0, 1.0, 2.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.1'},
-      'type_': 'linesegment'},
-     {'name': '',
-      'package_version': '0.5.1',
-      'data': [1.0, 2.0, 2.0, 2.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.1'},
-      'type_': 'linesegment'},
-     {'name': '',
-      'package_version': '0.5.1',
-      'data': [2.0, 2.0, 2.0, 1.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.1'},
-      'type_': 'linesegment'},
-     {'name': '',
-      'package_version': '0.5.1',
-      'data': [2.0, 1.0, 1.0, 1.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.1'},
-      'type_': 'linesegment'}],
-    'surface_style': {'name': '',
-     'object_class': 'plot_data.core.SurfaceStyle',
-     'package_version': '0.5.1',
-     'color_fill': 'rgb(255,175,96)'},
-    'type_': 'contour'}],
-  'type_': 'primitivegroup'},
- {'name': '',
-  'package_version': '0.5.1',
-  'primitives': [{'name': '',
-    'package_version': '0.5.1',
-    'surface_style': {'name': '',
-     'object_class': 'plot_data.core.SurfaceStyle',
-     'package_version': '0.5.1',
-     'color_fill': 'rgb(247,0,0)'},
-    'r': 5,
-    'cy': 1.0,
-    'cx': 1.0,
-    'type_': 'circle'}],
-  'type_': 'primitivegroup'},
- {'name': '',
-  'package_version': '0.5.1',
-  'primitives': [{'name': '',
-    'package_version': '0.5.1',
-    'surface_style': {'name': '',
-     'object_class': 'plot_data.core.SurfaceStyle',
-     'package_version': '0.5.1',
-     'color_fill': 'rgb(222,184,135)'},
-    'r': 5,
-    'cy': 1.0,
-    'cx': 1.0,
-    'type_': 'circle'}],
-  'type_': 'primitivegroup'}],
-'type_': 'primitivegroupcontainer'}
+// var test = {'name': '',
+// 'package_version': '0.5.1',
+// 'primitive_groups': [{'name': '',
+//   'package_version': '0.5.1',
+//   'primitives': [{'name': '',
+//     'package_version': '0.5.1',
+//     'r': 10,
+//     'cy': 0.0,
+//     'cx': 0.0,
+//     'type_': 'circle'}],
+//   'type_': 'primitivegroup'},
+//  {'name': '',
+//   'package_version': '0.5.1',
+//   'primitives': [{'name': '',
+//     'package_version': '0.5.1',
+//     'plot_data_primitives': [{'name': '',
+//       'package_version': '0.5.1',
+//       'data': [1.0, 1.0, 1.0, 2.0],
+//       'edge_style': {'name': '',
+//        'object_class': 'plot_data.core.EdgeStyle',
+//        'package_version': '0.5.1'},
+//       'type_': 'linesegment'},
+//      {'name': '',
+//       'package_version': '0.5.1',
+//       'data': [1.0, 2.0, 2.0, 2.0],
+//       'edge_style': {'name': '',
+//        'object_class': 'plot_data.core.EdgeStyle',
+//        'package_version': '0.5.1'},
+//       'type_': 'linesegment'},
+//      {'name': '',
+//       'package_version': '0.5.1',
+//       'data': [2.0, 2.0, 2.0, 1.0],
+//       'edge_style': {'name': '',
+//        'object_class': 'plot_data.core.EdgeStyle',
+//        'package_version': '0.5.1'},
+//       'type_': 'linesegment'},
+//      {'name': '',
+//       'package_version': '0.5.1',
+//       'data': [2.0, 1.0, 1.0, 1.0],
+//       'edge_style': {'name': '',
+//        'object_class': 'plot_data.core.EdgeStyle',
+//        'package_version': '0.5.1'},
+//       'type_': 'linesegment'}],
+//     'surface_style': {'name': '',
+//      'object_class': 'plot_data.core.SurfaceStyle',
+//      'package_version': '0.5.1',
+//      'color_fill': 'rgb(255,175,96)'},
+//     'type_': 'contour'}],
+//   'type_': 'primitivegroup'},
+//  {'name': '',
+//   'package_version': '0.5.1',
+//   'primitives': [{'name': '',
+//     'package_version': '0.5.1',
+//     'surface_style': {'name': '',
+//      'object_class': 'plot_data.core.SurfaceStyle',
+//      'package_version': '0.5.1',
+//      'color_fill': 'rgb(247,0,0)'},
+//     'r': 5,
+//     'cy': 1.0,
+//     'cx': 1.0,
+//     'type_': 'circle'}],
+//   'type_': 'primitivegroup'},
+//  {'name': '',
+//   'package_version': '0.5.1',
+//   'primitives': [{'name': '',
+//     'package_version': '0.5.1',
+//     'surface_style': {'name': '',
+//      'object_class': 'plot_data.core.SurfaceStyle',
+//      'package_version': '0.5.1',
+//      'color_fill': 'rgb(222,184,135)'},
+//     'r': 5,
+//     'cy': 1.0,
+//     'cx': 1.0,
+//     'type_': 'circle'}],
+//   'type_': 'primitivegroup'}],
+// 'type_': 'primitivegroupcontainer'}

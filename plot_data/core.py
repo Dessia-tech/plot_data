@@ -211,7 +211,7 @@ class Circle2D(PlotDataObject):
             alpha = 1
         ax.add_patch(patches.Circle((self.cx, self.cy), self.r,
                                     edgecolor=edgecolor,
-                                    color=color,
+                                    facecolor=color,
                                     alpha=alpha))
         return ax
 

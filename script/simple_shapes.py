@@ -6,56 +6,11 @@ Created on Wed Mar 14 15:32:37 2018
 @author: Steven Masfaraud masfaraud@dessia.tech
 """
 import plot_data
-import numpy as npy
-import volmdlr as vm
-import volmdlr.wires
-import volmdlr.edges
+from test_objects.primitive_group_test import primitive_group
+# The primitive_group's definition has been moved to test_objects.primitive_group_test.py
+# to make MultiplePlots' more convenient
 
-contours = []
-triangle_points = [vm.Point2D(*npy.random.random(2)) for i in range(3)]
-triangle = vm.wires.ClosedPolygon2D(triangle_points)
-
-cog_triangle = triangle.center_of_mass()
-
-# print(triangle.area())
-
-p0 = vm.Point2D(-1, 0)
-p1 = vm.Point2D(-npy.cos(npy.pi / 4), npy.sin(npy.pi / 4))
-p2 = vm.Point2D(0, 1)
-
-a = vm.edges.Arc2D(p2, p1, p0)
-l1 = vm.edges.LineSegment2D(p0, a.center)
-l2 = vm.edges.LineSegment2D(a.center, p2)
-
-c = vm.wires.Contour2D([a, l1, l2])
-
-hatching = plot_data.HatchingSet(0.5, 3)
-color_surface = plot_data.ColorSurfaceSet(color='white')
-plot_data_state = plot_data.Settings(name='be_sup', hatching=hatching,
-                                     stroke_width=1)
-# contours.append(c.plot_data(plot_data_states=[plot_data_state]))
-
-hatching = plot_data.HatchingSet(1)
-plot_data_state = plot_data.Settings(name='name', hatching=hatching,
-                                     stroke_width=1)
-
-size = 1
-pt1 = vm.Point2D(0, 0)
-pt2 = vm.Point2D(0, size)
-pt3 = vm.Point2D(size, size)
-pt4 = vm.Point2D(size, 0)
-c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
-                         vm.edges.LineSegment2D(pt2, pt3),
-                         vm.edges.LineSegment2D(pt3, pt4),
-                         vm.edges.LineSegment2D(pt4, pt1)])
-
-d = c1.plot_data(plot_data_states=[plot_data_state])
-d2 = c.plot_data(plot_data_states=[plot_data_state])
-contours.append(d)
-contours.append(d2)
-text=plot_data.Text('this is a tex(s)t', p0.x, p1.y)
-contours.append(text)
-contour_group = plot_data.PrimitiveGroup(contours=contours)
-contour_group.mpl_plot()
-plot_data.plot_canvas(plot_data_object=contour_group, canvas_id='canvas',
+# if debug mode is True, set it to False
+plot_data.plot_canvas(plot_data_object=primitive_group,
                       debug_mode=True)
+

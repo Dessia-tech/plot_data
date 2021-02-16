@@ -27,11 +27,11 @@ line_color = BLACK
 line_width = 0.5
 disposition = 'vertical'
 rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
-parallel_plot = plot_data.ParallelPlot(line_color=line_color,
-                                       line_width=line_width,
-                                       disposition=disposition,
-                                       to_disp_attributes=pp_to_disp_attributes,
-                                       rgbs=rgbs)
+pp_edge_style = plot_data.EdgeStyle(line_width=line_width, color_stroke=line_color)
+parallel_plot = plot_data.ParallelPlot(disposition=disposition,
+                                       rgbs=rgbs,
+                                       edge_style=pp_edge_style,
+                                       to_disp_attribute_names=pp_to_disp_attributes)
 objects.append(parallel_plot)
 
 # Scatter
@@ -41,24 +41,12 @@ sc_color_fill = LIGHTBLUE
 sc_color_stroke = GREY
 sc_stroke_width = 0.5
 
-axis = plot_data.Axis(nb_points_x=nb_points_x, nb_points_y=nb_points_y,
-                      font_size=font_size, graduation_color=graduation_color,
-                      axis_color=axis_color, arrow_on=arrow_on,
-                      axis_width=axis_width, grid_on=grid_on)
-
 sc_to_disp_att_names = ['price_wather', 'length_wather']
-tooltip = plot_data.Tooltip(colorfill=tp_colorfill, text_color=text_color,
-                            fontsize=tl_fontsize, fontstyle=tl_fontstyle,
-                            tp_radius=tp_radius,
-                            to_plot_list=sc_to_disp_att_names, opacity=opacity)
+tooltip = plot_data.Tooltip(to_disp_attribute_names=sc_to_disp_att_names)
 
-ScatterPlot = plot_data.Scatter(axis=plot_data.DEFAULT_AXIS, tooltip=tooltip,
-                                to_display_att_names=sc_to_disp_att_names,
-                                point_shape=shape, point_size=size,
-                                color_fill=sc_color_fill,
-                                color_stroke=sc_color_stroke, stroke_width=0.5)
+scatter_plot = plot_data.Scatter(tooltip=tooltip, to_disp_attribute_names=sc_to_disp_att_names)
 
-objects.append(ScatterPlot)
+objects.append(scatter_plot)
 
 coords = [(0, 450), (0, 0)]
 sizes = [plot_data.Window(width=750, height=400),
@@ -69,7 +57,7 @@ points = [{var: catalog.get_value_by_name(line, var)
            for var in pp_to_disp_attributes}
           for line in catalog.array]
 
-multipleplots = plot_data.MultiplePlots(points=points, objects=objects,
-                                        sizes=sizes, coords=coords)
+multipleplots = plot_data.MultiplePlots(elements=points, plots=objects,
+                                        sizes=sizes, coords=coords, initial_view_on=True)
 
 plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)

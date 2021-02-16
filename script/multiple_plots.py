@@ -1,118 +1,54 @@
+# An example of MultiplePlots instantiation. It draws and allows interactions between
+# different plots in one canvas, including scatterplots, parallelplots,
+# primitive_groups and primitive_group_containers.
+# The plots are created using needed parameters only. For more details about
+# customization, feel free read the plots' related scripts.
+
 import plot_data
 from plot_data.colors import *
+from test_objects.primitive_group_test import primitive_group
+from test_objects.graph_test import graph2d
 import random
-import volmdlr as vm
-import volmdlr.wires
-import volmdlr.edges
 
-shape = 'circle'
-size = 2
-stroke_width = 1  # Points' stroke width
+elements = []  # a list of vectors (dictionaries) that are displayed
+# through different representations such as parallel plots and scatter plots
+
+nb_elements = 500
+colors = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
+directions = ['north', 'south', 'west', 'east']
+for i in range(nb_elements):
+    random_color = colors[random.randint(0, len(colors) - 1)]
+    random_direction = directions[random.randint(0, len(directions) - 1)]
+    elements.append({'x': random.uniform(0, 2),
+                     'y': random.uniform(0, 1),
+                     'color': random_color,
+                     'direction': random_direction})
+
 # ParallelPlot
-to_disp_attributes = ['cx', 'cy', 'color_fill', 'color_stroke']
-line_color = BLACK
-line_width = 0.5
-disposition = 'vertical'
-plot_datas = []
-objects = []
-points = []
+parallelplot1 = plot_data.ParallelPlot(to_disp_attribute_names=['x', 'y', 'color', 'direction'])
+parallelplot2 = plot_data.ParallelPlot(to_disp_attribute_names=['x', 'color'])
 
-# Defining the contour
-hatching = plot_data.HatchingSet(1)
-plot_data_state = plot_data.Settings(name='name', hatching=hatching, stroke_width=1)
 
-contour_size = 1
-pt1 = vm.Point2D(0, 0)
-pt2 = vm.Point2D(0, contour_size)
-pt3 = vm.Point2D(contour_size, contour_size)
-pt4 = vm.Point2D(contour_size, 0)
-c1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
-                         vm.edges.LineSegment2D(pt2, pt3),
-                         vm.edges.LineSegment2D(pt3, pt4),
-                         vm.edges.LineSegment2D(pt4, pt1)])
+# Scatterplots
+scatterplot1 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
+                                 to_disp_attribute_names=['x', 'y'])
 
-d = c1.plot_data(plot_data_states=[plot_data_state])
-primitive_group = plot_data.PrimitiveGroup(contours=[d])
-objects.append(primitive_group)
-# End contour
+scatterplot2 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['y', 'color']),
+                                 to_disp_attribute_names=['y', 'color'],
+                                 point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes points' appearance
 
-color_fills = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
-color_strokes = [BLACK, BROWN, GREEN, RED, ORANGE, LIGHTBLUE, GREY]
-for i in range(50):
-    cx = random.uniform(0,2)
-    cy = random.uniform(0,1)
-    fills_index = random.randint(0, len(color_fills) - 1)
-    strokes_index = random.randint(0, len(color_strokes) - 1)
-    random_color_fill = color_fills[fills_index]
-    random_color_stroke = color_strokes[strokes_index]
-    point = plot_data.Point2D(cx=cx, cy=cy, size=size, shape=shape,
-                              color_fill=random_color_fill,
-                              color_stroke=random_color_stroke,
-                              stroke_width=stroke_width)
-    points += [point]
+scatterplot3 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
+                                 to_disp_attribute_names=['x', 'direction'])
 
-rgbs = [[192, 11, 11], [14, 192, 11], [11, 11, 192]]
-parallel_plot = plot_data.ParallelPlot(line_color=line_color,
-                                       line_width=line_width,
-                                       disposition=disposition,
-                                       to_disp_attributes=to_disp_attributes,
-                                       rgbs=rgbs)
-objects.append(parallel_plot)
-parallel_plot1 = plot_data.ParallelPlot(line_color=line_color,
-                                        line_width=line_width,
-                                        disposition=disposition,
-                                        to_disp_attributes=['color_fill', 'cx'],
-                                        rgbs=rgbs)
-objects.append(parallel_plot1)
 
-# Tooltip
-tp_colorfill = BLACK
-text_color = WHITE
-tl_fontsize = 12  # Font family : Arial, Helvetica, serif, sans-serif, Verdana, Times New Roman, Courier New
-tl_fontstyle = 'sans-serif'
-tp_radius = 5
-opacity = 0.75
+# Creating the multiplot
+plots = [primitive_group, parallelplot1, parallelplot2, scatterplot1,
+         scatterplot2, scatterplot3, graph2d]
 
-# Scatter
-sc_color_fill = LIGHTBLUE
-sc_color_stroke = GREY
-sc_stroke_width = 0.5
 
-to_disp_att_names = ['cx', 'cy']
-tooltip = plot_data.Tooltip(to_plot_list=to_disp_att_names)
+multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
+                                    initial_view_on=True)
 
-scatterPlot = plot_data.Scatter(tooltip=tooltip,
-                                to_display_att_names=to_disp_att_names,
-                                point_shape=shape, point_size=size,
-                                color_fill=sc_color_fill,
-                                color_stroke=sc_color_stroke, stroke_width=0.5)
-objects.append(scatterPlot)
+# Display
+plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
 
-scatterPlot1 = plot_data.Scatter(tooltip=tooltip,
-                                 to_display_att_names=['cx', 'color_fill'],
-                                 point_shape=shape, point_size=size,
-                                 color_fill=sc_color_fill,
-                                 color_stroke=sc_color_stroke,
-                                 stroke_width=0.5)
-objects.append(scatterPlot1)
-
-scatterPlot2 = plot_data.Scatter(tooltip=tooltip,
-                                 to_display_att_names=['cy', 'color_stroke'],
-                                 point_shape=shape, point_size=size,
-                                 color_fill=sc_color_fill,
-                                 color_stroke=sc_color_stroke,
-                                 stroke_width=0.5)
-objects.append(scatterPlot2)
-
-coords = [(600, 600), (300, 0), (0, 0), (300, 300), (500, 500), (1000, 0)]
-sizes = [plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300),
-         plot_data.Window(width=560, height=300)]
-
-multipleplots = plot_data.MultiplePlots(points=points, objects=objects,
-                                        sizes=sizes, coords=coords)
-
-plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)

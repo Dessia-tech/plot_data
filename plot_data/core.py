@@ -396,8 +396,6 @@ class PrimitiveGroup(PlotDataObject):
         ax.set_aspect('equal')
         return ax
 
-color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
-
 
 class PrimitiveGroupsContainer(PlotDataObject):
     def __init__(self, primitive_groups: List[PrimitiveGroup], sizes: List[Tuple[float, float]] = None,

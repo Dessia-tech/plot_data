@@ -42,7 +42,7 @@ export class MultiplePlots {
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
-    var requirement = '0.4.3';
+    var requirement = '0.4.10';
     this.manage_package_version(requirement);
     this.dataObjects = data['plots'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
@@ -927,20 +927,48 @@ export class MultiplePlots {
     for (let i=0; i<big_length_nbObjects - 1; i++) {
       for (let j=0; j<small_length_nbObjects; j++) {
         var current_index = i*small_length_nbObjects + j; //current_index in sorted_list
+
+        // The three following lines are useful for primitive group containers only
+        let obj:any = this.objectList[this.sorted_list[current_index]];
+        let old_small_coord = obj[small_coord];
+        let old_big_coord = obj[big_coord];
+
         this.objectList[this.sorted_list[current_index]][big_coord] = i*big_length_step;
         this.objectList[this.sorted_list[current_index]][small_coord] = j*small_length_step;
         this.objectList[this.sorted_list[current_index]][big_length] = big_length_step;
         this.objectList[this.sorted_list[current_index]][small_length] = small_length_step;
+
+        if (obj.type_ === 'primitivegroupcontainer') {
+          for (let k=0; k<obj.primitive_groups.length; k++) {
+            obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
+            obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord; 
+          }
+        }
+
       }
     }
     let last_index = current_index + 1;
     let remaining_obj = nbObjectsDisplayed - last_index;
     let last_small_length_step = this[small_length]/remaining_obj;
     for (let j=0; j<remaining_obj; j++) {
+
+      // The three following lines are useful for primitive group containers only
+      let obj:any = this.objectList[this.sorted_list[last_index + j]];
+      let old_small_coord = obj[small_coord];
+      let old_big_coord = obj[big_coord];
+
       this.objectList[this.sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step;
       this.objectList[this.sorted_list[last_index + j]][small_coord] = j*last_small_length_step;
       this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
+
+      if (obj.type_ === 'primitivegroupcontainer') {
+        for (let k=0; k<obj.primitive_groups.length; k++) {
+          obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
+          obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord; 
+        }
+      }
+
     }
     this.resetAllObjects();
     this.redrawAllObjects();
@@ -7079,7 +7107,22 @@ export function string_to_hex(str:string): string {
 }
 
 export function rgb_to_string(rgb:string): string {
-  return rgb_to_string_dict[rgb];
+  if (rgb_to_string_dict[rgb]) return rgb_to_string_dict[rgb];
+  // otherwise, returns the closest color
+  var min_dist = Infinity;
+  var closest_string = '';
+  var rgb_vect = rgb_strToVector(rgb);
+  for (let dict_rgb of Object.keys(rgb_to_string_dict)) {
+    let dict_rgb_vect = rgb_strToVector(dict_rgb);
+    let distance = Math.sqrt(Math.pow(rgb_vect[0] - dict_rgb_vect[0], 2) +
+                             Math.pow(rgb_vect[1] - dict_rgb_vect[1], 2) +
+                             Math.pow(rgb_vect[2] - dict_rgb_vect[2], 2));
+    if (distance < min_dist) {
+      closest_string = rgb_to_string_dict[dict_rgb];
+      min_dist = distance;
+    }
+  }
+  return closest_string;
 }
 
 export function string_to_rgb(str:string) {

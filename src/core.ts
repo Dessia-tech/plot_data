@@ -1,6 +1,7 @@
 import { kMaxLength } from "buffer";
 import { Console } from "console";
 import { type } from "os";
+import { start } from "repl";
 
 export class MultiplePlots {
   context_show:any;
@@ -1733,7 +1734,7 @@ export abstract class PlotData {
 
   draw_contour(hidden, mvx, mvy, scaleX, scaleY, d) {
     if (d['type_'] == 'contour') {
-      this.context.beginPath();
+      // this.context.beginPath();
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
       } else {
@@ -1754,13 +1755,14 @@ export abstract class PlotData {
         }
       }
       for (var j = 0; j < d.plot_data_primitives.length; j++) {
-        var elem = d.plot_data_primitives[j];
-        if (j == 0) {var first_elem = true;} else {var first_elem = false;}
-        elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+        let elem = d.plot_data_primitives[j];
+        if (j == 0) var first_elem = true; else first_elem = false;
+        if (elem.type_ == 'linesegment') elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+        else elem.contour_draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
       }
       this.context.fill();
       this.context.stroke();
-      this.context.closePath();
+      // this.context.closePath();
       this.context.setLineDash([]);
     }
   }
@@ -6407,6 +6409,7 @@ export class Arc2D {
               public r:number,
               public start_angle:number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
               public end_angle:number,
+              public data:any[],
               public anticlockwise:boolean=true,
               public edge_style:EdgeStyle,
               public type_:string,
@@ -6423,6 +6426,9 @@ export class Arc2D {
       if((this.cy + this.r) > this.maxY){
         this.maxY = this.cy + this.r;
       }
+
+      this.start_angle = this.start_angle % Math.PI;
+      this.end_angle = this.end_angle % Math.PI;
   }
 
   public static deserialize(serialized) {
@@ -6435,6 +6441,7 @@ export class Arc2D {
                      serialized['r'],
                      -serialized['start_angle'],
                      -serialized['end_angle'],
+                     serialized['data'],
                      serialized['anticlockwise'],
                      edge_style,
                      serialized['type_'],
@@ -6450,6 +6457,20 @@ export class Arc2D {
                 this.start_angle, 
                 this.end_angle, 
                 this.anticlockwise);
+  }
+
+  contour_draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
+    context.lineWidth = this.edge_style.line_width;
+    context.strokeStyle = this.edge_style.color_stroke;
+    var ptsa = [];
+    for (var l = 0; l < this.data.length; l++) {
+      ptsa.push(scaleX*(1000*this.data[l]['x']+ mvx) + X);
+      ptsa.push(scaleY*(-1000*this.data[l]['y']+ mvy) + Y);
+    }
+    var tension = 0.4;
+    var isClosed = false;
+    var numOfSegments = 16;
+    drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
   }
 }
 
@@ -6787,83 +6808,83 @@ export class Shape {
   }
 }
 
-// export function drawLines(ctx, pts) {
-//   // ctx.moveTo(pts[0], pts[1]);
-//   for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
-// }
+export function drawLines(ctx, pts, first_elem) {
+  if (first_elem) ctx.moveTo(pts[0], pts[1]);
+  for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
+}
 
-// export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
+export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
 
-//   // use input value if provided, or use a default value
-//   tension = (typeof tension != 'undefined') ? tension : 0.5;
-//   isClosed = isClosed ? isClosed : false;
-//   numOfSegments = numOfSegments ? numOfSegments : 16;
+  // use input value if provided, or use a default value
+  tension = (typeof tension != 'undefined') ? tension : 0.5;
+  isClosed = isClosed ? isClosed : false;
+  numOfSegments = numOfSegments ? numOfSegments : 16;
 
-//   var _pts = [], res = [],    // clone array
-//       x, y,           // our x,y coords
-//       t1x, t2x, t1y, t2y, // tension vectors
-//       c1, c2, c3, c4,     // cardinal points
-//       st, t, i;       // steps based on num. of segments
+  var _pts = [], res = [],    // clone array
+      x, y,           // our x,y coords
+      t1x, t2x, t1y, t2y, // tension vectors
+      c1, c2, c3, c4,     // cardinal points
+      st, t, i;       // steps based on num. of segments
 
-//   // clone array so we don't change the original
-//   //
-//   _pts = pts.slice(0);
+  // clone array so we don't change the original
+  //
+  _pts = pts.slice(0);
 
-//   // The algorithm require a previous and next point to the actual point array.
-//   // Check if we will draw closed or open curve.
-//   // If closed, copy end points to beginning and first points to end
-//   // If open, duplicate first points to befinning, end points to end
-//   if (isClosed) {
-//       _pts.unshift(pts[pts.length - 1]);
-//       _pts.unshift(pts[pts.length - 2]);
-//       _pts.unshift(pts[pts.length - 1]);
-//       _pts.unshift(pts[pts.length - 2]);
-//       _pts.push(pts[0]);
-//       _pts.push(pts[1]);
-//   }
-//   else {
-//       _pts.unshift(pts[1]);   //copy 1. point and insert at beginning
-//       _pts.unshift(pts[0]);
-//       _pts.push(pts[pts.length - 2]); //copy last point and append
-//       _pts.push(pts[pts.length - 1]);
-//   }
+  // The algorithm require a previous and next point to the actual point array.
+  // Check if we will draw closed or open curve.
+  // If closed, copy end points to beginning and first points to end
+  // If open, duplicate first points to befinning, end points to end
+  if (isClosed) {
+      _pts.unshift(pts[pts.length - 1]);
+      _pts.unshift(pts[pts.length - 2]);
+      _pts.unshift(pts[pts.length - 1]);
+      _pts.unshift(pts[pts.length - 2]);
+      _pts.push(pts[0]);
+      _pts.push(pts[1]);
+  }
+  else {
+      _pts.unshift(pts[1]);   //copy 1. point and insert at beginning
+      _pts.unshift(pts[0]);
+      _pts.push(pts[pts.length - 2]); //copy last point and append
+      _pts.push(pts[pts.length - 1]);
+  }
 
-//   // ok, lets start..
+  // ok, lets start..
 
-//   // 1. loop goes through point array
-//   // 2. loop goes through each segment between the 2 pts + 1e point before and after
-//   for (i=2; i < (_pts.length - 4); i+=2) {
-//       for (t=0; t <= numOfSegments; t++) {
+  // 1. loop goes through point array
+  // 2. loop goes through each segment between the 2 pts + 1e point before and after
+  for (i=2; i < (_pts.length - 4); i+=2) {
+      for (t=0; t <= numOfSegments; t++) {
 
-//           // calc tension vectors
-//           t1x = (_pts[i+2] - _pts[i-2]) * tension;
-//           t2x = (_pts[i+4] - _pts[i]) * tension;
+          // calc tension vectors
+          t1x = (_pts[i+2] - _pts[i-2]) * tension;
+          t2x = (_pts[i+4] - _pts[i]) * tension;
 
-//           t1y = (_pts[i+3] - _pts[i-1]) * tension;
-//           t2y = (_pts[i+5] - _pts[i+1]) * tension;
+          t1y = (_pts[i+3] - _pts[i-1]) * tension;
+          t2y = (_pts[i+5] - _pts[i+1]) * tension;
 
-//           // calc step
-//           st = t / numOfSegments;
+          // calc step
+          st = t / numOfSegments;
 
-//           // calc cardinals
-//           c1 =   2 * Math.pow(st, 3)  - 3 * Math.pow(st, 2) + 1;
-//           c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2);
-//           c3 =       Math.pow(st, 3)  - 2 * Math.pow(st, 2) + st;
-//           c4 =       Math.pow(st, 3)  -     Math.pow(st, 2);
+          // calc cardinals
+          c1 =   2 * Math.pow(st, 3)  - 3 * Math.pow(st, 2) + 1;
+          c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2);
+          c3 =       Math.pow(st, 3)  - 2 * Math.pow(st, 2) + st;
+          c4 =       Math.pow(st, 3)  -     Math.pow(st, 2);
 
-//           // calc x and y cords with common control vectors
-//           x = c1 * _pts[i]    + c2 * _pts[i+2] + c3 * t1x + c4 * t2x;
-//           y = c1 * _pts[i+1]  + c2 * _pts[i+3] + c3 * t1y + c4 * t2y;
+          // calc x and y cords with common control vectors
+          x = c1 * _pts[i]    + c2 * _pts[i+2] + c3 * t1x + c4 * t2x;
+          y = c1 * _pts[i+1]  + c2 * _pts[i+3] + c3 * t1y + c4 * t2y;
 
-//           //store points in array
-//           res.push(x);
-//           res.push(y);
+          //store points in array
+          res.push(x);
+          res.push(y);
 
-//       }
-//   }
+      }
+  }
 
-//   return res;
-// }
+  return res;
+}
 
 var nextCol = 1;
 export function genColor(){

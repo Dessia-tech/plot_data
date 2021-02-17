@@ -13,6 +13,8 @@ steps:
   - npm version $${version}
   - npm install
   - npm run-script build
+  - npm install typedoc
+  - npx typedoc src/core.ts --out doc/build/typescript/
 
 - name: upload npm
   image: plugins/npm
@@ -53,10 +55,30 @@ steps:
     source: lib/*
     strip_components: 1
 
+- name: upload_doc_typescript
+  image: appleboy/drone-scp
+  when:
+    branch: master
+    event: push
+  settings:
+    host: austerlitz.dessia.tech
+    target: /var/www/documentation/plot_data/typescript
+    source: doc/build/typescript/*
+    strip_components: 3
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+
+
+
 - name: install, build doc run scripts
   image: python:3.8
   commands:
+  - pip install sphinx sphinx_rtd_theme
   - python setup.py install
+  - cd doc
+  - make html
+
 
 - name: develop
   image: python:3.8
@@ -77,6 +99,20 @@ steps:
     username: dessia_tech
     password:
         from_secret: pypi_password
+
+- name: upload_doc_python
+  image: appleboy/drone-scp
+  when:
+    branch: master
+    event: push
+  settings:
+    host: austerlitz.dessia.tech
+    target: /var/www/documentation/plot_data/python
+    source: doc/build/html/*
+    strip_components: 3
+    username: drone
+    password:
+      from_secret: ssh_drone_password
 
 - name: notify by email
   when:

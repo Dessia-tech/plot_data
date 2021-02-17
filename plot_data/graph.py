@@ -1,5 +1,5 @@
 import networkx as nx
-import plot_data.core as plot_data
+import plot_data
 
 
 class NetworkxGraph(plot_data.PrimitiveGroup):
@@ -21,7 +21,7 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
         for edge in self.graph.edges:
             node1, node2 = edge[0], edge[1]
             pos1, pos2 = pos[node1], pos[node2]
-            line = plot_data.LineSegment(
+            line = plot_data.LineSegment2D(
                 [pos1[0], pos1[1], pos2[0], pos2[1]],
                 edge_style=plot_data.EdgeStyle())
             primitives.append(line)

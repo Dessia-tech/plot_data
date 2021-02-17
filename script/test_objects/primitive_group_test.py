@@ -1,25 +1,28 @@
+# An example of primitive_group instantiation.
+# primitive_group: an object that contains multiple primitives. A primitive
+# is either a Circle2D, a LineSegment, a Contour2D, an Arc2D or a Text
+
 import plot_data
 import numpy as npy
 import volmdlr as vm
-import volmdlr.wires
 import volmdlr.edges
+import volmdlr.wires
 from plot_data.colors import *
-
-# An example of primitive_group instantiation.
-# primitive_group: an object that contains multiple primitives. A primitive
-# is either a circle2D, a lineSegment2D, a contour2D, an arc2D or a text
 
 
 # defining a couple style objects
+    # edges customization
+edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=RED, dashline=[])
+    # surfaces customization
 hatching = plot_data.HatchingSet(0.5, 3)
-  # edges customization
-edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=BLUE, dashline=[])
-  # surfaces customization
 surface_style = plot_data.SurfaceStyle(color_fill=WHITE, opacity=1,
                                        hatching=hatching)
 
+
 # Creating several primitives. plot_data() functions are used to convert
 # a volmdlr object into a plot_data object
+
+# arc
 p0 = vm.Point2D(-1, 0)
 p1 = vm.Point2D(-npy.cos(npy.pi / 4), npy.sin(npy.pi / 4))
 p2 = vm.Point2D(0, 1)
@@ -58,10 +61,10 @@ plot_data_circle = circle.plot_data(edge_style=circle_edge_style,
 
 
 # Text
-text = plot_data.Text(comment='Hello', position_x=5, position_y=5,
+text = plot_data.Text(comment='Hello', position_x=6, position_y=9,
                       text_style=plot_data.TextStyle(text_color=RED,
-                                                     font_size=20,
-                                                     font_style='sans-serif'),
+                                                     font_size=12,
+                                                     font_style='sans-serif')
                       )
 
 

@@ -25,30 +25,31 @@ for i in range(nb_elements):
                      'direction': random_direction})
 
 # ParallelPlot
-parallelplot1 = plot_data.ParallelPlot(to_disp_attribute_names=['x', 'y', 'color', 'direction'])
+parallelplot1 = plot_data.ParallelPlot(
+    to_disp_attribute_names=['x', 'y', 'color', 'direction'])
 parallelplot2 = plot_data.ParallelPlot(to_disp_attribute_names=['x', 'color'])
 
-
 # Scatterplots
-scatterplot1 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
-                                 to_disp_attribute_names=['x', 'y'])
+scatterplot1 = plot_data.Scatter(
+    tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
+    to_disp_attribute_names=['x', 'y'])
 
-scatterplot2 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['y', 'color']),
-                                 to_disp_attribute_names=['y', 'color'],
-                                 point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes points' appearance
+scatterplot2 = plot_data.Scatter(
+    tooltip=plot_data.Tooltip(to_disp_attribute_names=['y', 'color']),
+    to_disp_attribute_names=['y', 'color'],
+    point_style=plot_data.PointStyle(
+        shape='square'))  # optional argument that changes points' appearance
 
-scatterplot3 = plot_data.Scatter(tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
-                                 to_disp_attribute_names=['x', 'direction'])
-
+scatterplot3 = plot_data.Scatter(
+    tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
+    to_disp_attribute_names=['x', 'direction'])
 
 # Creating the multiplot
 plots = [primitive_group, parallelplot1, parallelplot2, scatterplot1,
          scatterplot2, scatterplot3, graph2d]
-
 
 multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
                                     initial_view_on=True)
 
 # Display
 plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
-

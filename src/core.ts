@@ -1,4 +1,7 @@
+import { kMaxLength } from "buffer";
+import { Console } from "console";
 import { type } from "os";
+import { start } from "repl";
 
 export class MultiplePlots {
   context_show:any;
@@ -39,7 +42,7 @@ export class MultiplePlots {
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
-    var requirement = '0.4.3';
+    var requirement = '0.4.10';
     this.manage_package_version(requirement);
     this.dataObjects = data['plots'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
@@ -260,7 +263,7 @@ export class MultiplePlots {
 
   get_attribute(name:string) {
     for (let attribute of this.displayable_attributes) {
-      if (attribute.name = name) {
+      if (attribute.name === name) {
         return attribute;
       }
     }
@@ -331,8 +334,9 @@ export class MultiplePlots {
     var primitive_entries = [];
     var elements_entries = [];
     for (let i=0; i<associated_points.length; i++) {
-      primitive_entries.push([associated_points[i], i]);
-      elements_entries.push([i, this.data['elements'][i]]);
+      let associated_point_index = associated_points[i];
+      primitive_entries.push([associated_point_index, i]);
+      elements_entries.push([i, this.data['elements'][associated_point_index]]);
     }
     new_plot_data.primitive_dict = Object.fromEntries(primitive_entries);
     new_plot_data.elements_dict = Object.fromEntries(elements_entries);
@@ -923,20 +927,48 @@ export class MultiplePlots {
     for (let i=0; i<big_length_nbObjects - 1; i++) {
       for (let j=0; j<small_length_nbObjects; j++) {
         var current_index = i*small_length_nbObjects + j; //current_index in sorted_list
+
+        // The three following lines are useful for primitive group containers only
+        let obj:any = this.objectList[this.sorted_list[current_index]];
+        let old_small_coord = obj[small_coord];
+        let old_big_coord = obj[big_coord];
+
         this.objectList[this.sorted_list[current_index]][big_coord] = i*big_length_step;
         this.objectList[this.sorted_list[current_index]][small_coord] = j*small_length_step;
         this.objectList[this.sorted_list[current_index]][big_length] = big_length_step;
         this.objectList[this.sorted_list[current_index]][small_length] = small_length_step;
+
+        if (obj.type_ === 'primitivegroupcontainer') {
+          for (let k=0; k<obj.primitive_groups.length; k++) {
+            obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
+            obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord; 
+          }
+        }
+
       }
     }
     let last_index = current_index + 1;
     let remaining_obj = nbObjectsDisplayed - last_index;
     let last_small_length_step = this[small_length]/remaining_obj;
     for (let j=0; j<remaining_obj; j++) {
+
+      // The three following lines are useful for primitive group containers only
+      let obj:any = this.objectList[this.sorted_list[last_index + j]];
+      let old_small_coord = obj[small_coord];
+      let old_big_coord = obj[big_coord];
+
       this.objectList[this.sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step;
       this.objectList[this.sorted_list[last_index + j]][small_coord] = j*last_small_length_step;
       this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
+
+      if (obj.type_ === 'primitivegroupcontainer') {
+        for (let k=0; k<obj.primitive_groups.length; k++) {
+          obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
+          obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord; 
+        }
+      }
+
     }
     this.resetAllObjects();
     this.redrawAllObjects();
@@ -1256,6 +1288,53 @@ export class MultiplePlots {
     }
   }
 
+  mouse_over_scatterplot(point_index) { // used by mouse_over_primitive_group() to select points inside scatterplots
+    for (let i=0; i<this.nbObjects; i++) {
+      if (this.objectList[i].type_ === 'scatterplot') {
+        let obj = this.objectList[i];
+        let selected_point = obj.plotObject.point_list[point_index];
+        let sc_point_list = obj.scatter_point_list;
+        if (obj.mergeON) {
+          for (let j=0; j<sc_point_list.length; j++) {
+            let point = sc_point_list[j];
+            let bool = false;
+            for (let k=0; k<point.points_inside.length; k++) {
+              if (point.points_inside[k] === selected_point) {
+                obj.select_on_mouse = point;
+                bool = true; 
+                break;
+              }
+            }
+            if (bool) break;
+          }
+        } else {
+          obj.select_on_mouse = obj.plotObject.point_list[point_index];
+        }
+      }
+    }
+  }
+
+
+  mouse_over_primitive_group() {
+    if (this.move_plot_index !== -1) {
+      if (this.objectList[this.move_plot_index].type_ === 'primitivegroupcontainer') {
+        let obj:any = this.objectList[this.move_plot_index];
+        if (obj.selected_primitive !== -1) {
+          let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(obj.primitive_dict), list => list.reverse()));
+          let point_index = Number(primitive_to_point_index[obj.selected_primitive]);
+          this.mouse_over_scatterplot(point_index);
+        } else {
+          for (let i=0; i<this.nbObjects; i++) {
+            if (this.objectList[i].type_ === 'scatterplot') {
+              this.objectList[i].select_on_mouse = undefined;
+            }
+          }
+        }
+        this.redrawAllObjects();
+      }
+    } 
+  }
+
 
   mouse_interaction(): void {
     var canvas = document.getElementById(this.canvas_id);
@@ -1336,6 +1415,10 @@ export class MultiplePlots {
           }
           this.refresh_selected_point_index();
           this.redraw_object();
+        } else {
+          if (this.selectDependency_bool) {
+            this.mouse_over_primitive_group();
+          }
         }
       }
     });
@@ -1708,6 +1791,7 @@ export abstract class PlotData {
         if ((d.primitives[i].type_ == 'contour') && is_inside_canvas) {
           this.draw_contour(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
         } else if ((d.primitives[i].type_ == 'arc') && is_inside_canvas) {
+          d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
         } else if (d.primitives[i].type_ == 'text') {
@@ -1717,11 +1801,13 @@ export abstract class PlotData {
           this.context.fill();
         } else if ((d.primitives[i].type_ == 'circle') && is_inside_canvas) {
           this.draw_circle(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if ((d.primitives[i].type_ == 'linesegment') && is_inside_canvas) {
+        } else if ((d.primitives[i].type_ == 'linesegment2d') && is_inside_canvas) {
           d.primitives[i].draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
           this.context.fill();
           this.context.setLineDash([]);
+        } else if ((d.primitives[i].type_ == 'line2d') && is_inside_canvas) {
+          d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.width, this.height);
         }
         this.context.closePath();
       }
@@ -1730,7 +1816,7 @@ export abstract class PlotData {
 
   draw_contour(hidden, mvx, mvy, scaleX, scaleY, d) {
     if (d['type_'] == 'contour') {
-      this.context.beginPath();
+      // this.context.beginPath();
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
       } else {
@@ -1751,13 +1837,14 @@ export abstract class PlotData {
         }
       }
       for (var j = 0; j < d.plot_data_primitives.length; j++) {
-        var elem = d.plot_data_primitives[j];
-        if (j == 0) {var first_elem = true;} else {var first_elem = false;}
-        elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+        let elem = d.plot_data_primitives[j];
+        if (j == 0) var first_elem = true; else first_elem = false;
+        if (elem.type_ == 'linesegment2d') elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+        else elem.contour_draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
       }
       this.context.fill();
       this.context.stroke();
-      this.context.closePath();
+      // this.context.closePath();
       this.context.setLineDash([]);
     }
   }
@@ -2975,6 +3062,7 @@ export abstract class PlotData {
 
   reset_select_on_click() {
     this.select_on_click = [];
+    this.tooltip_list = [];
     if (this.type_ == 'scatterplot') {
       for (let i=0; i<this.plotObject.point_list.length; i++) {
         this.plotObject.point_list[i].selected = false;
@@ -3096,12 +3184,12 @@ export abstract class PlotData {
     this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph || click_on_merge || click_on_perm;
 
     if (mouse_moving) {
-        if (this.zw_bool) {
-          Interactions.zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, this);
+      if (this.zw_bool) {
+        Interactions.zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, this);
 
-        } else if ((this.select_bool) && (this.permanent_window)) {
-          Interactions.refresh_permanent_rect(this);
-        }
+      } else if ((this.select_bool) && (this.permanent_window)) {
+        Interactions.refresh_permanent_rect(this);
+      }
     } else {
         this.selecting_point_action(mouse1X, mouse1Y);
         if ((click_on_plus === true) && (this.scaleX*1.2 < scale_ceil) && (this.scaleY*1.2 < scale_ceil)) {
@@ -3128,13 +3216,13 @@ export abstract class PlotData {
           Interactions.click_on_perm_action(this);
         }
       }
+      Interactions.reset_zoom_box(this);
       this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
       this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
       var isDrawing = false;
       mouse_moving = false;
       this.isSelecting = false;
       this.isDrawing_rubber_band = false;
-      Interactions.reset_zoom_box(this);
       return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 
@@ -3490,7 +3578,7 @@ export class PlotContour extends PlotData {
                 public Y: number,
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
-    var requirement = '0.4.0';
+    var requirement = '0.5.2';
     this.manage_package_version(requirement);
     this.plot_datas = [];
     this.type_ = 'primitivegroup';
@@ -3561,7 +3649,7 @@ export class PlotScatter extends PlotData {
     public Y: number,
     public canvas_id: string) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-      var requirement = '0.4.0';
+      var requirement = '0.4.10';
       this.manage_package_version(requirement);
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
@@ -3657,7 +3745,7 @@ export class ParallelPlot extends PlotData {
 
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    var requirement = '0.4.0';
+    var requirement = '0.4.10';
     this.manage_package_version(requirement);
     this.type_ = 'parallelplot';
     if (this.buttons_ON) {
@@ -3814,6 +3902,7 @@ export class PrimitiveGroupContainer extends PlotData {
   layout_mode:string='regular';
   layout_axis:Axis;
   layout_attributes:Attribute[]=[];
+  selected_primitive:number=-1;
 
   constructor(public data:any,
               public width: number,
@@ -3824,7 +3913,7 @@ export class PrimitiveGroupContainer extends PlotData {
               public Y: number,
               public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    var requirement = '0.5.0';
+    var requirement = '0.5.2';
     this.manage_package_version(requirement);
     this.type_ = 'primitivegroupcontainer';
     var serialized = data['primitive_groups'];
@@ -4070,7 +4159,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
   add_primitive_group(serialized, point_index) {
     var new_plot_data = new PlotContour(serialized, 560, 300, 1000, this.buttons_ON, this.X, this.Y, this.canvas_id);
-    new_plot_data.context_hidden = this.context_hidden;
+    new_plot_data.context_hidden = this.context_hidden; 
     new_plot_data.context_show = this.context_show;
     this.primitive_groups.push(new_plot_data);
     this.display_order.push(this.primitive_groups.length - 1);
@@ -4584,7 +4673,7 @@ export class PrimitiveGroupContainer extends PlotData {
     var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
     var nbObjects:number = this.primitive_groups.length;
     var canvas = document.getElementById(this.canvas_id);
-    var selected_primitive:number = -1;
+    // var selected_primitive:number = -1;
     var last_selected_primitive = -1;
     var isDrawing = false;
     var vertex_infos:Object;
@@ -4615,7 +4704,7 @@ export class PrimitiveGroupContainer extends PlotData {
       if (this.interaction_ON) {
         var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
         mouse2X = e.offsetX, mouse2Y = e.offsetY;
-        selected_primitive = this.get_selected_primitive(mouse2X, mouse2Y);
+        this.selected_primitive = this.get_selected_primitive(mouse2X, mouse2Y);
         if (this.manipulation_bool) {
           if (isDrawing) {
             if ((this.clickedPlotIndex == -1) || (this.layout_mode !== 'regular')) {
@@ -4633,14 +4722,14 @@ export class PrimitiveGroupContainer extends PlotData {
             }
           } else {
             if (this.layout_mode === 'regular') {
-              this.setCursorStyle(mouse2X, mouse2Y, canvas, selected_primitive);
+              this.setCursorStyle(mouse2X, mouse2Y, canvas, this.selected_primitive);
             }
           }
         } else {
-          if (selected_primitive !== last_selected_primitive) {
-            this.manage_mouse_interactions(selected_primitive);
+          if (this.selected_primitive !== last_selected_primitive) {
+            this.manage_mouse_interactions(this.selected_primitive);
           }
-          last_selected_primitive = selected_primitive;
+          last_selected_primitive = this.selected_primitive;
         }
       } else {
         isDrawing = false;
@@ -4669,6 +4758,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
     canvas.addEventListener('mouseleave', e => {
       this.clickedPlotIndex = -1;
+      this.selected_primitive = -1;
       this.setAllInteractionsToOff();
     })
   }
@@ -5393,12 +5483,14 @@ export class PrimitiveGroup {
         primitives.push(Contour2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'text') {
         primitives.push(Text.deserialize(temp[i]));
-      } else if (temp[i]['type_'] == 'linesegment') {
-        primitives.push(LineSegment.deserialize(temp[i]));
+      } else if (temp[i]['type_'] == 'linesegment2d') {
+        primitives.push(LineSegment2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'arc') {
         primitives.push(Arc2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'circle') {
         primitives.push(Circle2D.deserialize(temp[i]));
+      } else if (temp[i]['type_'] == 'line2d') {
+        primitives.push(Line2D.deserialize(temp[i]));
       }
     }
     return new PrimitiveGroup(primitives,
@@ -5417,7 +5509,7 @@ export class Contour2D {
   constructor(public plot_data_primitives:any,
               public edge_style:EdgeStyle,
               public surface_style:SurfaceStyle,
-              public type_:string,
+              public type_:string='contour',
               public name:string) {
       for (var i = 0; i < this.plot_data_primitives.length; i++) {
         var d = plot_data_primitives[i]
@@ -5441,8 +5533,8 @@ export class Contour2D {
     var plot_data_primitives = [];
     for (var i = 0; i < temp.length; i++) {
       var d = temp[i];
-      if (d['type_'] == 'linesegment') {
-        let new_line = LineSegment.deserialize(d);
+      if (d['type_'] == 'linesegment2d') {
+        let new_line = LineSegment2D.deserialize(d);
         new_line.edge_style = edge_style;
         plot_data_primitives.push(new_line);
       }
@@ -5480,8 +5572,9 @@ export class Text {
               public position_y:number,
               public text_style:TextStyle,
               public text_scaling:boolean=true,
-              public type_:string,
-              public name:string) {
+              public max_width,
+              public type_:string='text',
+              public name:string='') {
   }
 
   public static deserialize(serialized) {
@@ -5495,26 +5588,133 @@ export class Text {
                     -serialized['position_y'],
                     text_style,
                     serialized['text_scaling'],
+                    serialized['max_width'],
                     serialized['type_'],
                     serialized['name']);
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    if (this.text_scaling) {
-      var font_size = this.text_style.font_size * scaleX/this.init_scale;
-    } else {
-      font_size = this.text_style.font_size;
-    }
+    if (this.text_scaling) var font_size = this.text_style.font_size * scaleX/this.init_scale;
+    else font_size = this.text_style.font_size;
+
     context.font = font_size.toString() + 'px ' + this.text_style.font_style;
-    // context.font = this.text_style.font;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;
-    context.fillText(this.comment, scaleX*(1000*this.position_x+ mvx) + X, scaleY*(1000*this.position_y+ mvy) + Y);
+    if (this.max_width) {
+      var cut_texts = this.cutting_text(context, scaleX*1000*this.max_width);
+      for (let i=0; i<cut_texts.length; i++) {
+        context.fillText(cut_texts[i], scaleX*(1000*this.position_x + mvx) + X, scaleY*(1000*this.position_y + mvy) + i*font_size + Y);
+      }
+    } else {
+      context.fillText(this.comment, scaleX*(1000*this.position_x + mvx) + X, scaleY*(1000*this.position_y + mvy) + Y);
+    }
   }
+
+  cutting_text(context, display_max_width) {
+    var words = this.comment.split(' ');
+    var space_length = context.measureText(' ').width;
+    var cut_texts = [];
+    var i=0;
+    var line_length = 0;
+    var line_text = '';
+    while (i<words.length) {
+      let word = words[i];
+      let word_length = context.measureText(word).width;
+      if (word_length >= display_max_width) {
+        if (line_text !== '') cut_texts.push(line_text);
+        line_length = 0;
+        line_text = '';
+        cut_texts.push(word);
+        i++;
+      } else {
+        if (line_length + word_length <= display_max_width) {
+          if (line_length !== 0) {
+            line_length = line_length + space_length;
+            line_text = line_text + ' ';
+          }
+          line_text = line_text + word;
+          line_length = line_length + word_length;
+          i++;
+        } else {
+          cut_texts.push(line_text);
+          line_length = 0;
+          line_text = '';
+        }
+      }
+    }
+    if (line_text !== '') cut_texts.push(line_text);
+    return cut_texts;
+  }
+
 }
 
-export class LineSegment {
+
+export class Line2D {
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
+
+  constructor(public data:number[],
+              public edge_style:EdgeStyle,
+              public type_:string='line2d',
+              public name:string='') {
+    this.minX = Math.min(this.data[0], this.data[2]);
+    this.maxX = Math.max(this.data[0], this.data[2]);
+    this.minY = Math.min(-this.data[1], -this.data[3]);
+    this.maxY = Math.max(-this.data[1], -this.data[3]);
+  }
+
+  public static deserialize(serialized) {
+    var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
+    var default_dict_ = {edge_style:default_edge_style};
+    serialized = set_default_values(serialized, default_dict_);
+    var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
+    return new Line2D(serialized['data'],
+                      edge_style,
+                      serialized['type_'],
+                      serialized['name']);
+  }
+
+  draw(context, mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height) {
+    context.lineWidth = this.edge_style.line_width;
+    context.strokeStyle = this.edge_style.color_stroke;
+    var xi, yi, xf, yf;
+    [xi, yi, xf, yf] = this.get_side_points(mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height);
+    context.moveTo(xi, yi);
+    context.lineTo(xf, yf);
+    context.stroke();
+  }
+
+  get_side_points(mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height) {
+    var x1 = scaleX*(1000*this.data[0] + mvx) + X;
+    var y1 = scaleY*(-1000*this.data[1] + mvy) + Y;
+    var x2 = scaleX*(1000*this.data[2] + mvx) + X;
+    var y2 = scaleY*(-1000*this.data[3] + mvy) + Y;
+
+    if (y1 === y2) {
+      return [X, y1, canvas_width + X, y2];
+    } else if (x1 === x2) {
+      return [x1, Y, x2, canvas_height + Y];
+    } 
+    let canvas_angle = Math.atan(canvas_height/canvas_width);
+    let angle = Math.abs(Math.atan((y2 - y1)/(x2 - x1)));
+    let a = (y2 - y1)/(x2 - x1);
+    if (angle <= canvas_angle) {
+      let y_left = y1 + a*(X - x1);
+      let y_right = a*(canvas_width + X - x1) + y1;
+      return [0, y_left, canvas_width, y_right];
+    }
+    let x_top = x1 + (Y - y1)/a;
+    let x_bottom = x1 + (canvas_height + Y - y1)/a;
+    return [x_top, 0, x_bottom, canvas_height];
+  }
+
+}
+
+
+export class LineSegment2D {
   minX:number=0;
   maxX:number=0;
   minY:number=0;
@@ -5535,10 +5735,10 @@ export class LineSegment {
     var default_dict_ = {edge_style:default_edge_style};
     serialized = set_default_values(serialized, default_dict_);
     var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
-      return new LineSegment(serialized['data'],
-                               edge_style,
-                               serialized['type_'],
-                               serialized['name']);
+    return new LineSegment2D(serialized['data'],
+                             edge_style,
+                             serialized['type_'],
+                             serialized['name']);
   }
 
   draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
@@ -5617,7 +5817,7 @@ export class Point2D {
               public color_fill:string,
               public color_stroke:string,
               public stroke_width:number,
-              public type_:string,
+              public type_:string='point',
               public name:string) {
       if (point_size<1) {
         throw new Error('Invalid point_size');
@@ -5986,9 +6186,9 @@ export class Tooltip {
   constructor(public to_disp_attribute_names:string[],
               public surface_style:SurfaceStyle,
               public text_style:TextStyle,
-              public tooltip_radius:number,
-              public type_:string,
-              public name:string) {
+              public tooltip_radius:number=5,
+              public type_:string='tooltip',
+              public name:string='') {
               }
 
   public static deserialize(serialized) {
@@ -6138,7 +6338,7 @@ export class Tooltip {
 export class Dataset {
   id:number=0;
   point_list:Point2D[]=[];
-  segments:LineSegment[];
+  segments:LineSegment2D[];
 
   constructor(public to_disp_attribute_names:string[],
               public edge_style:EdgeStyle,
@@ -6171,15 +6371,16 @@ export class Dataset {
       let current_point = this.point_list[i];
       let next_point = this.point_list[i+1];
       let data = [current_point.cx, -current_point.cy, next_point.cx, -next_point.cy];
-      this.segments.push(new LineSegment(data, this.edge_style, 'line', ''));
+      this.segments.push(new LineSegment2D(data, this.edge_style, 'line', ''));
     }
   }
 
   public static deserialize(serialized) {
     var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
     var default_point_style = {color_fill:string_to_rgb('lightviolet'), color_stroke:string_to_rgb('grey'),
-                               shape:'circle', size:2, name:''};
-    var default_dict_ = {tooltip:{}, edge_style:default_edge_style, point_style:default_point_style,
+                               shape:'circle', size:2, name:'', type_:'tooltip'};
+    var tooltip_text_style = {font_size: 10, font_style: 'sans-serif', text_align_x:'center', text_color:string_to_rgb('black')};
+    var default_dict_ = {tooltip:{to_disp_attribute_names : serialized['to_disp_attribute_names'], text_style: tooltip_text_style}, edge_style:default_edge_style, point_style:default_point_style,
                           display_step:1};
     serialized = set_default_values(serialized, default_dict_)
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
@@ -6354,13 +6555,15 @@ export class Arc2D {
   maxX:number=0;
   minY:number=0;
   maxY:number=0;
+  init_scale:number=0;
 
   constructor(public cx:number,
               public cy:number,
               public r:number,
-              public data:any,
-              public angle1:number,
-              public angle2:number,
+              public start_angle:number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
+              public end_angle:number,
+              public data:any[],
+              public anticlockwise:boolean=true,
               public edge_style:EdgeStyle,
               public type_:string,
               public name:string) {
@@ -6376,6 +6579,9 @@ export class Arc2D {
       if((this.cy + this.r) > this.maxY){
         this.maxY = this.cy + this.r;
       }
+
+      this.start_angle = this.start_angle % Math.PI;
+      this.end_angle = this.end_angle % Math.PI;
   }
 
   public static deserialize(serialized) {
@@ -6384,29 +6590,88 @@ export class Arc2D {
     serialized = set_default_values(serialized, default_dict_);
     var edge_style = EdgeStyle.deserialize(serialized['edge_style'])
     return new Arc2D(serialized['cx'],
-                                -serialized['cy'],
-                                serialized['r'],
-                                serialized['data'],
-                                serialized['angle1'],
-                                serialized['angle2'],
-                                edge_style,
-                                serialized['type_'],
-                                serialized['name']);
+                     -serialized['cy'],
+                     serialized['r'],
+                     -serialized['start_angle'],
+                     -serialized['end_angle'],
+                     serialized['data'],
+                     serialized['anticlockwise'],
+                     edge_style,
+                     serialized['type_'],
+                     serialized['name']);
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
+    context.lineWidth = this.edge_style.line_width;
+    context.color_stroke = this.edge_style.color_stroke;
+    context.arc(scaleX*(1000*this.cx + mvx) + X, 
+                scaleY*(1000*this.cy + mvy) + Y, 
+                scaleX*1000*this.r, 
+                this.start_angle, 
+                this.end_angle, 
+                this.anticlockwise);
+  }
+
+  contour_draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
     context.lineWidth = this.edge_style.line_width;
     context.strokeStyle = this.edge_style.color_stroke;
     var ptsa = [];
     for (var l = 0; l < this.data.length; l++) {
       ptsa.push(scaleX*(1000*this.data[l]['x']+ mvx) + X);
-      ptsa.push(scaleY*(1000*this.data[l]['y']+ mvy) + Y);
+      ptsa.push(scaleY*(-1000*this.data[l]['y']+ mvy) + Y);
     }
     var tension = 0.4;
     var isClosed = false;
     var numOfSegments = 16;
-    drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments));
+  drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
   }
+
+  // contour_draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
+  //   context.lineWidth = this.edge_style.line_width;
+  //   context.color_stroke = this.edge_style.color_stroke;
+  //   this.manage_angles();
+  //   var nb_points = 100;
+  //   var points = this.get_points_on_arc(context, mvx, mvy, scaleX, scaleY, X, Y, nb_points);
+  //   drawLines(context, points, first_elem);
+  // }
+
+  // manage_angles() {
+  //   this.start_angle = this.start_angle % (2*Math.PI);
+  //   if (this.start_angle < 0) this.start_angle += 2*Math.PI;
+
+  //   this.end_angle = this.end_angle % (2*Math.PI);
+  //   if (this.end_angle < 0) this.end_angle += 2*Math.PI;
+
+  //   if (this.anticlockwise && this.end_angle>this.start_angle) {
+  //     this.start_angle = this.start_angle + 2*Math.PI;
+  //   } else if (!this.anticlockwise && this.start_angle>this.end_angle) {
+  //     this.end_angle = this.end_angle + 2*Math.PI;
+  //   }
+  // }
+
+
+  // get_points_on_arc(context, mvx, mvy, scaleX, scaleY, X, Y, nb_points) {
+  //   var step = Math.abs(this.end_angle - this.start_angle)/nb_points;
+  //   if (!this.anticlockwise) {
+  //     var theta_i = this.start_angle;
+  //     var theta_f = this.end_angle;
+  //   } else {
+  //     theta_i = this.end_angle;
+  //     theta_f = this.start_angle;
+  //   }
+  //   var theta = theta_i;
+  //   var points = [];
+  //   var cx_d = scaleX*(1000*this.cx + mvx) + X;
+  //   var cy_d = scaleY*(1000*this.cy + mvy) + Y;
+  //   var r_d = scaleX*1000*this.r;
+  //   while (theta <= theta_f) {
+  //     let x = cx_d + r_d * Math.cos(theta);
+  //     let y = cy_d + r_d * Math.sin(theta);
+  //     points.push(x, y);
+  //     theta += step;
+  //   }
+  //   return points;
+  // }
 }
 
 export class Attribute {
@@ -6743,8 +7008,8 @@ export class Shape {
   }
 }
 
-export function drawLines(ctx, pts) {
-  // ctx.moveTo(pts[0], pts[1]);
+export function drawLines(ctx, pts, first_elem) {
+  if (first_elem) ctx.moveTo(pts[0], pts[1]);
   for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
 }
 
@@ -6830,16 +7095,12 @@ export function genColor(){
     ret.push((nextCol & 0xff00) >> 8); // G
     ret.push((nextCol & 0xff0000) >> 16); // B
 
-    nextCol += 1;
+    nextCol += 20;
   }
   var col = "rgb(" + ret.join(',') + ")";
   return col;
 }
 
-
-// export var color_dict = [['red', '#f70000'], ['lightred', '#ed8080'], ['blue', '#0013fe'], ['lightblue', '#c3e6fc'], ['lightskyblue', '#87CEFA'], ['green', '#00c112'], ['lightgreen', '#89e892'], ['yellow', '#f4ff00'], ['lightyellow', '#f9ff7b'], ['orange', '#ff8700'],
-//   ['lightorange', '#ff8700'], ['cyan', '#13f0f0'], ['lightcyan', '#90f7f7'], ['rose', '#FF69B4'], ['lightrose', '#FFC0CB'], ['violet', '#EE82EE'], ['lightviolet', '#eaa5f6'], ['white', '#ffffff'], ['black', '#000000'], ['brown', '#cd8f40'],
-//   ['lightbrown', '#DEB887'], ['grey', '#A9A9A9'], ['lightgrey', '#D3D3D3']];
 
 export var string_to_hex_dict = {red:'#f70000', lightred:'#ed8080', blue:'#0013fe', lightblue:'#c3e6fc', lightskyblue:'#87cefa', green:'#00c112', lightgreen:'#89e892', yellow:'#f4ff00', lightyellow:'#f9ff7b', orange:'#ff8700',
   lightorange:'#ff8700', cyan:'#13f0f0', lightcyan:'#90f7f7', rose:'#ff69b4', lightrose:'#ffc0cb', violet:'#ee82ee', lightviolet:'#eaa5f6', white:'#ffffff', black:'#000000', brown:'#cd8f40',
@@ -6912,7 +7173,22 @@ export function string_to_hex(str:string): string {
 }
 
 export function rgb_to_string(rgb:string): string {
-  return rgb_to_string_dict[rgb];
+  if (rgb_to_string_dict[rgb]) return rgb_to_string_dict[rgb];
+  // otherwise, returns the closest color
+  var min_dist = Infinity;
+  var closest_string = '';
+  var rgb_vect = rgb_strToVector(rgb);
+  for (let dict_rgb of Object.keys(rgb_to_string_dict)) {
+    let dict_rgb_vect = rgb_strToVector(dict_rgb);
+    let distance = Math.sqrt(Math.pow(rgb_vect[0] - dict_rgb_vect[0], 2) +
+                             Math.pow(rgb_vect[1] - dict_rgb_vect[1], 2) +
+                             Math.pow(rgb_vect[2] - dict_rgb_vect[2], 2));
+    if (distance < min_dist) {
+      closest_string = rgb_to_string_dict[dict_rgb];
+      min_dist = distance;
+    }
+  }
+  return closest_string;
 }
 
 export function string_to_rgb(str:string) {
@@ -7423,6 +7699,8 @@ export function equals(a, b) {
 
 
 export var empty_container = {'name': '',
-'package_version': '0.5.0',
+'package_version': '0.5.2',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
+
+

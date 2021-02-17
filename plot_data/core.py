@@ -13,14 +13,17 @@ import sys
 import json
 import tempfile
 import webbrowser
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
 from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
+import warnings
 
 import plot_data.templates as templates
 
 from typing import List, Tuple, Any, Type
-from plot_data.colors import *
+import plot_data.colors as colors
 
 npy.seterr(divide='raise')
 
@@ -139,16 +142,36 @@ class SurfaceStyle(DessiaObject):
 
 class Text(PlotDataObject):
     def __init__(self, comment: str, position_x: float, position_y: float,
-                 text_style: TextStyle = None, text_scaling: bool = None, name: str = ''):
+                 text_style: TextStyle = None, text_scaling: bool = None,
+                 max_width: float = None, name: str = ''):
         self.text_style = text_style
         self.comment = comment
         self.position_x = position_x
         self.position_y = position_y
         self.text_scaling = text_scaling
+        self.max_width = max_width
         PlotDataObject.__init__(self, type_='text', name=name)
 
+    def mpl_plot(self, ax=None, color='k', alpha=1.):
+        if not ax:
+            _, ax = plt.subplots()
+        ax.text(self.position_x, self.position_y,
+                self.comment,
+                color=color,
+                alpha=alpha)
 
-class LineSegment(PlotDataObject):
+        return ax
+
+
+class Line2D(PlotDataObject):
+    def __init__(self, data: List[float], edge_style: EdgeStyle = None,
+                 name: str = ''):
+        self.data = data
+        self.edge_style = edge_style
+        PlotDataObject.__init__(self, type_='line2d', name=name)
+
+
+class LineSegment2D(PlotDataObject):
     def __init__(self, data: List[float], edge_style: EdgeStyle = None,
                  name: str = ''):
         self.data = data
@@ -156,13 +179,28 @@ class LineSegment(PlotDataObject):
             self.edge_style = EdgeStyle()
         else:
             self.edge_style = edge_style
-        PlotDataObject.__init__(self, type_='linesegment', name=name)
+        PlotDataObject.__init__(self, type_='linesegment2d', name=name)
 
     def bounding_box(self):
         return (min(self.data[0], self.data[2]),
                 max(self.data[0], self.data[2]),
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
+
+    def mpl_plot(self, ax=None, color='k', alpha=1.):
+        if not ax:
+            _, ax = plt.subplots()
+        ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
+                color=color,
+                alpha=alpha)
+        return ax
+
+
+class LineSegment(LineSegment2D):
+    def __init__(self, data: List[float], edge_style: EdgeStyle = None,
+                 name: str = ''):
+        LineSegment2D.__init__(self, data=data, edge_style=edge_style, name=name)
+        warnings.warn("LineSegment is deprecated, use LineSegment2D instead", DeprecationWarning)
 
 
 class Circle2D(PlotDataObject):
@@ -179,11 +217,30 @@ class Circle2D(PlotDataObject):
     def bounding_box(self):
         return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
 
+    def mpl_plot(self, ax=None):
+        if not ax:
+            _, ax = plt.subplots()
+        if self.edge_style:
+            edgecolor = self.edge_style.color_stroke
+        else:
+            edgecolor = colors.BLACK.rgb
+        if self.surface_style:
+            color = self.surface_style.color_fill
+            alpha = self.surface_style.opacity
+        else:
+            color = colors.WHITE.rgb
+            alpha = 1
+        ax.add_patch(patches.Circle((self.cx, self.cy), self.r,
+                                    edgecolor=edgecolor,
+                                    color=color,
+                                    alpha=alpha))
+        return ax
+
 
 class Point2D(PlotDataObject):
     def __init__(self, cx: float, cy: float, shape: str = 'circle',
                  size: float = 2,
-                 color_fill: str = LIGHTBLUE, color_stroke: str = BLACK,
+                 color_fill: colors.Color = colors.LIGHTBLUE, color_stroke: colors.Color = colors.BLACK,
                  stroke_width: float = 0.5,
                  name: str = ''):
         self.cx = cx
@@ -208,10 +265,10 @@ class Axis(PlotDataObject):
         self.nb_points_y = nb_points_y
         self.graduation_style = graduation_style
         if graduation_style is None:
-            self.graduation_style = TextStyle(text_color=GREY)
+            self.graduation_style = TextStyle(text_color=colors.GREY)
         self.axis_style = axis_style
         if axis_style is None:
-            self.axis_style = EdgeStyle(color_stroke=LIGHTGREY)
+            self.axis_style = EdgeStyle(color_stroke=colors.LIGHTGREY)
         self.arrow_on = arrow_on
         self.grid_on = grid_on
         PlotDataObject.__init__(self, type_='axis', name=name)
@@ -225,11 +282,11 @@ class Tooltip(PlotDataObject):
         self.to_disp_attribute_names = to_disp_attribute_names
         self.surface_style = surface_style
         if surface_style is None:
-            self.surface_style = SurfaceStyle(color_fill=LIGHTBLUE,
+            self.surface_style = SurfaceStyle(color_fill=colors.LIGHTBLUE,
                                               opacity=0.75)
         self.text_style = text_style
         if text_style is None:
-            self.text_style = TextStyle(text_color=BLACK, font_size=10)
+            self.text_style = TextStyle(text_color=colors.BLACK, font_size=10)
         self.tooltip_radius = tooltip_radius
         PlotDataObject.__init__(self, type_='tooltip', name=name)
 
@@ -286,20 +343,33 @@ class Scatter(PlotDataObject):
 
 
 class Arc2D(PlotDataObject):
-    def __init__(self, cx: float, cy: float, r: float,
-                 data: List[float], angle1: float, angle2: float,
-                 edge_style: EdgeStyle = None, name: str = ''):
-        self.angle2 = angle2
-        self.angle1 = angle1
-        self.data = data
-        self.edge_style = edge_style
-        self.r = r
+    def __init__(self, cx: float, cy: float, r: float, start_angle: float,
+                 end_angle: float, data=None, anticlockwise: bool = None, # data argument is generated by volmdlr Arc2D's plot_data function
+                 edge_style: EdgeStyle = None, name: str = ''):           # It is only used if Arc2D is inside a Contour2D
+        # anticlockwise's default value is True                       # thus, if an Arc2D is inside a Contour2D, it has to be instantiated with volmdlr
+        self.cx = cx                                                  # otherwise, use cx, cy, r, start_angle and end_angle to draw an Arc2D
         self.cy = cy
-        self.cx = cx
+        self.r = r
+        self.start_angle = start_angle
+        self.end_angle = end_angle
+        self.data = data
+        self.anticlockwise = anticlockwise
+        self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='arc', name=name)
 
     def bounding_box(self):
         return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
+
+    def mpl_plot(self, ax=None, color='k', alpha=1.):
+        if not ax:
+            _, ax = plt.subplots()
+        ax.add_patch(patches.Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
+                                 theta1=self.angle1 * 0.5 / math.pi * 360,
+                                 theta2=self.angle2 * 0.5 / math.pi * 360,
+                                 color=color,
+                                 alpha=alpha))
+
+        return ax
 
 
 class Contour2D(PlotDataObject):
@@ -322,14 +392,23 @@ class Contour2D(PlotDataObject):
 
         return xmin, xmax, ymin, ymax
 
+    def mpl_plot(self, ax=None, color='k', alpha=1.):
+        for primitive in self.plot_data_primitives:
+            ax = primitive.mpl_plot(ax=ax, color=color, alpha=alpha)
+        return ax
+
 
 class PrimitiveGroup(PlotDataObject):
     def __init__(self, primitives, name: str = ''):  # primitives: contour2D, arc2D, line2D or circle2D. A contour isn't needed for circle2D anymore
         self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)
 
-
-color = {'black': 'k', 'blue': 'b', 'red': 'r', 'green': 'g'}
+    def mpl_plot(self, ax=None, equal_aspect=True):
+        ax = self.primitives[0].mpl_plot(ax=ax)
+        for primitive in self.primitives[1:]:
+            primitive.mpl_plot(ax=ax)
+        ax.set_aspect('equal')
+        return ax
 
 
 class PrimitiveGroupsContainer(PlotDataObject):
@@ -438,8 +517,8 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         print(page_name + '.html')
 
 
-def get_csv_vectors(filename):
-    lines, variables = from_csv(filename=filename)
+def get_csv_vectors(filepath):
+    lines, variables = from_csv(filename=filepath)
     catalog = Catalog(array=lines, variables=variables,
                       pareto_settings=ParetoSettings({}, enabled=False))
     return catalog

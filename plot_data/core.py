@@ -187,12 +187,16 @@ class LineSegment2D(PlotDataObject):
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
 
-    def mpl_plot(self, ax=None, color='k', alpha=1.):
+    def mpl_plot(self, ax=None):
         if not ax:
             _, ax = plt.subplots()
+            
+        if self.edge_style and self.edge_style.color_stroke:
+            color = self.edge_style.color_stroke.rgb
+        else:
+            color = colors.BLACK.rgb
         ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
-                color=color,
-                alpha=alpha)
+                color=color)
         return ax
 
 
@@ -360,14 +364,18 @@ class Arc2D(PlotDataObject):
     def bounding_box(self):
         return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
 
-    def mpl_plot(self, ax=None, color='k', alpha=1.):
+    def mpl_plot(self, ax=None):
         if not ax:
             _, ax = plt.subplots()
+        if self.edge_style:
+            edgecolor = self.edge_style.color_stroke
+        else:
+            edgecolor = colors.BLACK.rgb
+            
         ax.add_patch(patches.Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
                                  theta1=self.angle1 * 0.5 / math.pi * 360,
                                  theta2=self.angle2 * 0.5 / math.pi * 360,
-                                 color=color,
-                                 alpha=alpha))
+                                 edgecolor=edgecolor))
 
         return ax
 
@@ -392,9 +400,9 @@ class Contour2D(PlotDataObject):
 
         return xmin, xmax, ymin, ymax
 
-    def mpl_plot(self, ax=None, color='k', alpha=1.):
+    def mpl_plot(self, ax=None):
         for primitive in self.plot_data_primitives:
-            ax = primitive.mpl_plot(ax=ax, color=color, alpha=alpha)
+            ax = primitive.mpl_plot(ax=ax)
         return ax
 
 

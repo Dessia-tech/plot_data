@@ -161,6 +161,15 @@ class Text(PlotDataObject):
 
         return ax
 
+
+class Line2D(PlotDataObject):
+    def __init__(self, data: List[float], edge_style: EdgeStyle = None,
+                 name: str = ''):
+        self.data = data
+        self.edge_style = edge_style
+        PlotDataObject.__init__(self, type_='line2d', name=name)
+
+
 class LineSegment2D(PlotDataObject):
     def __init__(self, data: List[float], edge_style: EdgeStyle = None,
                  name: str = ''):
@@ -169,7 +178,7 @@ class LineSegment2D(PlotDataObject):
             self.edge_style = EdgeStyle()
         else:
             self.edge_style = edge_style
-        PlotDataObject.__init__(self, type_='linesegment', name=name)
+        PlotDataObject.__init__(self, type_='linesegment2d', name=name)
 
     def bounding_box(self):
         return (min(self.data[0], self.data[2]),
@@ -184,6 +193,7 @@ class LineSegment2D(PlotDataObject):
                 color=color,
                 alpha=alpha)
         return ax
+
 
 class LineSegment(LineSegment2D):
     def __init__(self, data: List[float], edge_style: EdgeStyle = None,

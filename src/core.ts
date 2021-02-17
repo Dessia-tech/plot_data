@@ -1801,11 +1801,13 @@ export abstract class PlotData {
           this.context.fill();
         } else if ((d.primitives[i].type_ == 'circle') && is_inside_canvas) {
           this.draw_circle(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if ((d.primitives[i].type_ == 'linesegment') && is_inside_canvas) {
+        } else if ((d.primitives[i].type_ == 'linesegment2d') && is_inside_canvas) {
           d.primitives[i].draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
           this.context.fill();
           this.context.setLineDash([]);
+        } else if ((d.primitives[i].type_ == 'line2d') && is_inside_canvas) {
+          d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.width, this.height);
         }
         this.context.closePath();
       }
@@ -1837,7 +1839,7 @@ export abstract class PlotData {
       for (var j = 0; j < d.plot_data_primitives.length; j++) {
         let elem = d.plot_data_primitives[j];
         if (j == 0) var first_elem = true; else first_elem = false;
-        if (elem.type_ == 'linesegment') elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+        if (elem.type_ == 'linesegment2d') elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
         else elem.contour_draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
       }
       this.context.fill();
@@ -5481,12 +5483,14 @@ export class PrimitiveGroup {
         primitives.push(Contour2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'text') {
         primitives.push(Text.deserialize(temp[i]));
-      } else if (temp[i]['type_'] == 'linesegment') {
+      } else if (temp[i]['type_'] == 'linesegment2d') {
         primitives.push(LineSegment2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'arc') {
         primitives.push(Arc2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'circle') {
         primitives.push(Circle2D.deserialize(temp[i]));
+      } else if (temp[i]['type_'] == 'line2d') {
+        primitives.push(Line2D.deserialize(temp[i]));
       }
     }
     return new PrimitiveGroup(primitives,
@@ -5529,7 +5533,7 @@ export class Contour2D {
     var plot_data_primitives = [];
     for (var i = 0; i < temp.length; i++) {
       var d = temp[i];
-      if (d['type_'] == 'linesegment') {
+      if (d['type_'] == 'linesegment2d') {
         let new_line = LineSegment2D.deserialize(d);
         new_line.edge_style = edge_style;
         plot_data_primitives.push(new_line);
@@ -5644,6 +5648,71 @@ export class Text {
   }
 
 }
+
+
+export class Line2D {
+  minX:number=0;
+  maxX:number=0;
+  minY:number=0;
+  maxY:number=0;
+
+  constructor(public data:number[],
+              public edge_style:EdgeStyle,
+              public type_:string='line2d',
+              public name:string='') {
+    this.minX = Math.min(this.data[0], this.data[2]);
+    this.maxX = Math.max(this.data[0], this.data[2]);
+    this.minY = Math.min(-this.data[1], -this.data[3]);
+    this.maxY = Math.max(-this.data[1], -this.data[3]);
+  }
+
+  public static deserialize(serialized) {
+    var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
+    var default_dict_ = {edge_style:default_edge_style};
+    serialized = set_default_values(serialized, default_dict_);
+    var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
+    return new Line2D(serialized['data'],
+                      edge_style,
+                      serialized['type_'],
+                      serialized['name']);
+  }
+
+  draw(context, mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height) {
+    context.lineWidth = this.edge_style.line_width;
+    context.strokeStyle = this.edge_style.color_stroke;
+    var xi, yi, xf, yf;
+    [xi, yi, xf, yf] = this.get_side_points(mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height);
+    context.moveTo(xi, yi);
+    context.lineTo(xf, yf);
+    context.stroke();
+  }
+
+  get_side_points(mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height) {
+    var x1 = scaleX*(1000*this.data[0] + mvx) + X;
+    var y1 = scaleY*(-1000*this.data[1] + mvy) + Y;
+    var x2 = scaleX*(1000*this.data[2] + mvx) + X;
+    var y2 = scaleY*(-1000*this.data[3] + mvy) + Y;
+
+    if (y1 === y2) {
+      return [X, y1, canvas_width + X, y2];
+    } else if (x1 === x2) {
+      return [x1, Y, x2, canvas_height + Y];
+    } 
+    let canvas_angle = Math.atan(canvas_height/canvas_width);
+    let angle = Math.abs(Math.atan((y2 - y1)/(x2 - x1)));
+    let a = (y2 - y1)/(x2 - x1);
+    if (angle <= canvas_angle) {
+      let y_left = y1 + a*(X - x1);
+      let y_right = a*(canvas_width + X - x1) + y1;
+      return [0, y_left, canvas_width, y_right];
+    }
+    let x_top = x1 + (Y - y1)/a;
+    let x_bottom = x1 + (canvas_height + Y - y1)/a;
+    return [x_top, 0, x_bottom, canvas_height];
+  }
+
+}
+
 
 export class LineSegment2D {
   minX:number=0;
@@ -6315,7 +6384,6 @@ export class Dataset {
                           display_step:1};
     serialized = set_default_values(serialized, default_dict_)
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    console.log(tooltip, serialized['to_disp_attribute_names'], serialized['tooltip'])
     var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
     var point_style = PointStyle.deserialize(serialized['point_style']);
     return new Dataset(serialized['to_disp_attribute_names'],
@@ -7664,28 +7732,28 @@ export var empty_container = {'name': '',
 //       'edge_style': {'name': '',
 //        'object_class': 'plot_data.core.EdgeStyle',
 //        'package_version': '0.5.1'},
-//       'type_': 'linesegment'},
+//       'type_': 'linesegment2d'},
 //      {'name': '',
 //       'package_version': '0.5.1',
 //       'data': [1.0, 2.0, 2.0, 2.0],
 //       'edge_style': {'name': '',
 //        'object_class': 'plot_data.core.EdgeStyle',
 //        'package_version': '0.5.1'},
-//       'type_': 'linesegment'},
+//       'type_': 'linesegment2d'},
 //      {'name': '',
 //       'package_version': '0.5.1',
 //       'data': [2.0, 2.0, 2.0, 1.0],
 //       'edge_style': {'name': '',
 //        'object_class': 'plot_data.core.EdgeStyle',
 //        'package_version': '0.5.1'},
-//       'type_': 'linesegment'},
+//       'type_': 'linesegment2d'},
 //      {'name': '',
 //       'package_version': '0.5.1',
 //       'data': [2.0, 1.0, 1.0, 1.0],
 //       'edge_style': {'name': '',
 //        'object_class': 'plot_data.core.EdgeStyle',
 //        'package_version': '0.5.1'},
-//       'type_': 'linesegment'}],
+//       'type_': 'linesegment2d'}],
 //     'surface_style': {'name': '',
 //      'object_class': 'plot_data.core.SurfaceStyle',
 //      'package_version': '0.5.1',

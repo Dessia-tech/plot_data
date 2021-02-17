@@ -16,3 +16,4 @@ from test_objects.primitive_group_test import primitive_group
 plot_data.plot_canvas(plot_data_object=primitive_group,
                       debug_mode=True)
 
+

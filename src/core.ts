@@ -3578,7 +3578,7 @@ export class PlotContour extends PlotData {
                 public Y: number,
                 public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
-    var requirement = '0.4.0';
+    var requirement = '0.5.2';
     this.manage_package_version(requirement);
     this.plot_datas = [];
     this.type_ = 'primitivegroup';
@@ -3649,7 +3649,7 @@ export class PlotScatter extends PlotData {
     public Y: number,
     public canvas_id: string) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-      var requirement = '0.4.0';
+      var requirement = '0.4.10';
       this.manage_package_version(requirement);
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
@@ -3745,7 +3745,7 @@ export class ParallelPlot extends PlotData {
 
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    var requirement = '0.4.0';
+    var requirement = '0.4.10';
     this.manage_package_version(requirement);
     this.type_ = 'parallelplot';
     if (this.buttons_ON) {
@@ -3913,7 +3913,7 @@ export class PrimitiveGroupContainer extends PlotData {
               public Y: number,
               public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    var requirement = '0.5.0';
+    var requirement = '0.5.2';
     this.manage_package_version(requirement);
     this.type_ = 'primitivegroupcontainer';
     var serialized = data['primitive_groups'];
@@ -7699,7 +7699,7 @@ export function equals(a, b) {
 
 
 export var empty_container = {'name': '',
-'package_version': '0.5.1',
+'package_version': '0.5.2',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 

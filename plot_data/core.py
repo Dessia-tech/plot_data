@@ -496,7 +496,7 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
-    lib_path = 'https://cdn.dessia.tech/js/plot-data/sid/core.js'
+    lib_path = 'https://cdn.dessia.tech/js/plot-data/latest/core.js'
     if debug_mode:
         core_path = os.sep + os.path.join(
             *sys.modules[__name__].__file__.split(os.sep)[:-2], 'lib', 'core.js')

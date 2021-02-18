@@ -1344,10 +1344,11 @@ export class MultiplePlots {
         }
       }
     }
-    
+
   }
 
   mouse_over_scatter_plot() {
+    if (!this.has_primitive_group_container) return;
     var bool = false;
     if (this.move_plot_index !== -1) {
       if (this.objectList[this.move_plot_index].type_ === 'scatterplot') {
@@ -1395,6 +1396,19 @@ export class MultiplePlots {
       }
     }
     
+  }
+
+
+  has_primitive_group_container() {
+    for (let i=0; i<this.objectList.length; i++) {
+      let obj:any = this.objectList[i];
+      if (obj.type_ === 'primitivegroupcontainer') {
+        if (obj.primitive_groups.length !== 0) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
 
@@ -1664,6 +1678,7 @@ export abstract class PlotData {
   zoom_box_y:number=0;
   zoom_box_w:number=0;
   zoom_box_h:number=0;
+  clear_point_button_y:number=0;
 
   displayable_attributes:Attribute[]=[];
   attribute_booleans:boolean[]=[];
@@ -2700,6 +2715,7 @@ export abstract class PlotData {
     this.graph1_button_h = this.height*0.04;
     this.merge_y = this.select_y + this.button_h + 5;
     this.perm_button_y = this.merge_y + this.button_h + 5;
+    this.clear_point_button_y = this.perm_button_y + this.button_h + 5;
   }
 
   refresh_attribute_booleans() {
@@ -3127,12 +3143,16 @@ export abstract class PlotData {
       }
     }
 
-    if (List.contains_undefined(this.select_on_click) && !this.click_on_button) {
-      this.reset_select_on_click();
-      this.tooltip_list = [];
-      this.latest_selected_points = [];
-      Interactions.reset_permanent_window(this);
-    }
+    // The following commented lines add a feature that unselect all points when the user is not clicking on a point (in such case,
+    // an undefined element is pushed into this.select_on_click).
+    // It has been removed but I let it here in case it'd be useful someday.
+
+    // if (List.contains_undefined(this.select_on_click) && !this.click_on_button) {
+    //   this.reset_select_on_click();
+    //   this.tooltip_list = [];
+    //   this.latest_selected_points = [];
+    //   Interactions.reset_permanent_window(this);
+    // }
     this.refresh_selected_point_index();
     if (this.type_ == 'scatterplot') {this.refresh_latest_selected_points_index();}
   }
@@ -3250,6 +3270,7 @@ export abstract class PlotData {
     var click_on_graph = false;
     var click_on_merge = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.merge_y + this.Y, this.button_w, this.button_h);
     var click_on_perm = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.perm_button_y + this.Y, this.button_w, this.button_h);
+    var click_on_clear = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.clear_point_button_y + this.Y, this.button_w, this.button_h);
 
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
@@ -3258,7 +3279,8 @@ export abstract class PlotData {
       text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
     this.click_on_button = false;
-    this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph || click_on_merge || click_on_perm;
+    this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select 
+    || click_on_graph || click_on_merge || click_on_perm || click_on_clear;
 
     if (mouse_moving) {
       if (this.zw_bool) {
@@ -3291,6 +3313,8 @@ export abstract class PlotData {
           Interactions.click_on_merge_action(this);
         } else if (click_on_perm) {
           Interactions.click_on_perm_action(this);
+        } else if (click_on_clear) {
+          Interactions.click_on_clear_action(this);
         }
       }
       Interactions.reset_zoom_box(this);
@@ -3818,6 +3842,9 @@ export class PlotScatter extends PlotData {
 
       //draw permanent window button
       Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
+
+      //draw clear point button
+      Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
     }
     if (this.multiplot_manipulation) {
       this.draw_manipulable_rect();
@@ -5021,6 +5048,11 @@ export class Interactions {
     this.reset_permanent_window(plot_data);
   }
 
+  public static click_on_clear_action(plot_data:PlotScatter) {
+    this.reset_permanent_window(plot_data);
+    plot_data.reset_select_on_click();
+  }
+
   public static zoom_in_button_action(plot_data:PlotScatter) {
     var old_scaleX = plot_data.scaleX;
     var old_scaleY = plot_data.scaleY;
@@ -5555,6 +5587,10 @@ export class Buttons {
     } else {
       Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, 'PermOFF', police);
     }
+  }
+
+  public static clear_point_button(x, y, w, h, police, plot_data:PlotData) {
+    Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, 'Clear', police);
   }
 }
 

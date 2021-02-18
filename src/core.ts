@@ -1293,7 +1293,7 @@ export class MultiplePlots {
     }
   }
 
-  mouse_over_scatterplot(point_index) { // used by mouse_over_primitive_group() to select points inside scatterplots
+  color_associated_scatter_point(point_index) { // used by mouse_over_primitive_group() to select points inside scatterplots
     for (let i=0; i<this.nbObjects; i++) {
       if (this.objectList[i].type_ === 'scatterplot') {
         let obj = this.objectList[i];
@@ -1315,30 +1315,88 @@ export class MultiplePlots {
         } else {
           obj.select_on_mouse = obj.plotObject.point_list[point_index];
         }
+        obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+        obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);      
       }
     }
   }
 
 
   mouse_over_primitive_group() {
+    var bool = false;
     if (this.move_plot_index !== -1) {
       if (this.objectList[this.move_plot_index].type_ === 'primitivegroupcontainer') {
         let obj:any = this.objectList[this.move_plot_index];
         if (obj.selected_primitive !== -1) {
+          bool = true;
           let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(obj.primitive_dict), list => list.reverse()));
           let point_index = Number(primitive_to_point_index[obj.selected_primitive]);
-          this.mouse_over_scatterplot(point_index);
+          this.color_associated_scatter_point(point_index);
+        }
+      }
+    }
+    if (!bool) {
+      for (let i=0; i<this.nbObjects; i++) {
+        if (this.objectList[i].type_ === 'scatterplot') {
+          let obj = this.objectList[i];
+          obj.select_on_mouse = undefined;
+          obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+          obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y); 
+        }
+      }
+    }
+  }
+
+  mouse_over_scatter_plot() {
+    var bool = false;
+    if (this.move_plot_index !== -1) {
+      if (this.objectList[this.move_plot_index].type_ === 'scatterplot') {
+        let obj = this.objectList[this.move_plot_index];
+        if (obj.select_on_mouse) {
+          bool = true;
+          var element_index_list = [];
+          let points_inside = obj.select_on_mouse.points_inside;
+          for (let i=0; i<points_inside.length; i++) {
+            let index = List.get_index_of_element(points_inside[i], obj.plotObject.point_list);
+            element_index_list.push(index);
+          }
+          for (let i=0; i<this.nbObjects; i++) {
+            if (this.objectList[i].type_ !== 'primitivegroupcontainer') continue;
+            let container:any = this.objectList[i];
+            let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(container.primitive_dict), list => list.reverse()));  
+            for (let j=0; j<container.primitive_groups.length; j++) {
+                container.primitive_groups[j].dep_mouse_over = element_index_list.includes(Number(primitive_to_point_index[j]));
+            }
+            container.draw(false, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);
+            container.draw(true, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);        
+          }
         } else {
           for (let i=0; i<this.nbObjects; i++) {
-            if (this.objectList[i].type_ === 'scatterplot') {
-              this.objectList[i].select_on_mouse = undefined;
+            if (this.objectList[i].type_ !== 'primitivegroupcontainer') continue;
+            let container:any = this.objectList[i];
+            for (let j=0; j<container.primitive_groups.length; j++) {
+              container.primitive_groups[j].dep_mouse_over = false;
+              container.draw(false, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);
+              container.draw(true, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);  
             }
           }
         }
-        this.redrawAllObjects();
       }
-    } 
+    }
+    if (!bool) {
+      for (let i=0; i<this.nbObjects; i++) {
+        if (this.objectList[i].type_ !== 'primitivegroupcontainer') continue;
+        let container:any = this.objectList[i];
+        for (let j=0; j<container.primitive_groups.length; j++) {
+          container.primitive_groups[j].dep_mouse_over = false;
+          container.draw(false, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);
+          container.draw(true, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);  
+        }
+      }
+    }
+    
   }
+
 
 
   mouse_interaction(): void {
@@ -1423,6 +1481,7 @@ export class MultiplePlots {
         } else {
           if (this.selectDependency_bool) {
             this.mouse_over_primitive_group();
+            this.mouse_over_scatter_plot();
           }
         }
       }
@@ -1674,6 +1733,7 @@ export abstract class PlotData {
   clickedPlotIndex:number=-1;
   primitive_dict:any={};
   elements_dict:any={};
+  dep_mouse_over:boolean=false;
 
   public constructor(
     public data:any,
@@ -1765,6 +1825,7 @@ export abstract class PlotData {
     Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', string_to_hex('blue'), 1, 1, [10,10]);
   }
 
+
   draw_rect() {
     if (this.multiplot_manipulation === false) {
       Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', this.initial_rect_color_stroke, this.initial_rect_line_width, 1, this.initial_rect_dashline);
@@ -1786,6 +1847,11 @@ export abstract class PlotData {
   draw_manipulable_rect() {
     Shape.rect(this.X, this.Y, this.width, this.height, this.context, this.manipulation_rect_color_fill, this.manipulation_rect_color_stroke, 
       this.manipulation_rect_line_width, this.manipulation_rect_opacity, this.manipulation_rect_dashline);
+  }
+
+  draw_mouse_over_rect() {
+    Shape.rect(this.X, this.Y, this.width, this.height, this.context, string_to_hex('yellow'), string_to_hex('grey'),
+      1, 0.5, [10,10]);
   }
 
   draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d:PrimitiveGroup) {
@@ -3001,6 +3067,7 @@ export abstract class PlotData {
     this.refresh_attribute_booleans();
   }
 
+
   refresh_selected_point_index() {  //selected_point_index : index of selected points in the initial point list
     this.selected_point_index = [];
     for (let i=0; i<this.select_on_click.length; i++) {
@@ -3576,18 +3643,19 @@ export abstract class PlotData {
   }
 }
 
-/** A class that inherits from PlotData and is specific for drawing PrimitiveGroups.
+/** 
+ * A class that inherits from PlotData and is specific for drawing PrimitiveGroups.
  */
 export class PlotContour extends PlotData {
   plot_datas:any;
   public constructor(public data:any,
-                public width: number,
-                public height: number,
-                public coeff_pixel: number,
-                public buttons_ON: boolean,
-                public X: number,
-                public Y: number,
-                public canvas_id: string) {
+                     public width: number,
+                     public height: number,
+                     public coeff_pixel: number,
+                     public buttons_ON: boolean,
+                     public X: number,
+                     public Y: number,
+                     public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     var requirement = '0.5.2';
     this.manage_package_version(requirement);
@@ -3627,9 +3695,13 @@ export class PlotContour extends PlotData {
       let d = this.plot_datas[i];
       this.draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d);
     }
-    if (this.multiplot_manipulation) {
+
+    if (this.dep_mouse_over) {
+      this.draw_mouse_over_rect();
+    } else if (this.multiplot_manipulation) {
       this.draw_manipulable_rect();
     }
+    
     if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
       this.draw_zoom_rectangle();
     }

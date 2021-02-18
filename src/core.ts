@@ -2532,8 +2532,7 @@ export abstract class PlotData {
     this.display_list_to_elements_dict = Object.fromEntries(entries);
   }
 
-  pp_color_management(index:number) {
-    var selected = List.is_include(this.to_display_list[index], this.pp_selected);
+  pp_color_management(index:number, selected:boolean) {
     if (List.isListOfEmptyList(this.rubber_bands)) {
       selected = true;
     }
@@ -2554,12 +2553,25 @@ export abstract class PlotData {
 
 
   draw_parallel_coord_lines() {
+    var selected_seg_lists = [];
+    this.context.lineWidth = this.edge_style.line_width;
     for (let i=0; i<this.to_display_list.length; i++) {
       if (this.vertical) { var seg_list = this.vertical_axis_coords[i]; } else { var seg_list = this.horizontal_axis_coords[i]; }
+      let selected = List.is_include(this.to_display_list[i], this.pp_selected);
+      if (!selected) {
+        this.context.beginPath();
+        this.pp_color_management(i, selected);
+        Shape.drawLine(this.context, seg_list);
+        this.context.stroke();
+        this.context.closePath();
+      } else {
+        selected_seg_lists.push({seg_list:seg_list, index:i});
+      }
+    }
+    for (let seg_dict of selected_seg_lists) {
       this.context.beginPath();
-      this.pp_color_management(i);
-      this.context.lineWidth = this.edge_style.line_width;
-      Shape.drawLine(this.context, seg_list);
+      this.pp_color_management(seg_dict.index, true);
+      Shape.drawLine(this.context, seg_dict.seg_list);
       this.context.stroke();
       this.context.closePath();
     }

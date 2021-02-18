@@ -120,6 +120,7 @@ class TextStyle(DessiaObject):
     def __init__(self, text_color: str = None, font_size: float = None,
                  font_style: str = None,
                  text_align_x: str = None, text_align_y: str = None,
+                 bold: bool = None, italic: bool = None,
                  name: str = ''):
         self.text_color = text_color
         self.font_size = font_size
@@ -128,6 +129,8 @@ class TextStyle(DessiaObject):
         # see more about text_align_x's options: https://www.w3schools.com/tags/canvas_textalign.asp
         self.text_align_y = text_align_y  # options : "top", "hanging", "middle", "alphabetic", "ideographic" or "bottom"
         # see more about text_align_y's options: https://www.w3schools.com/tags/canvas_textbaseline.asp
+        self.bold = bold
+        self.italic = italic
         DessiaObject.__init__(self, name=name)
 
 
@@ -398,6 +401,22 @@ class Contour2D(PlotDataObject):
         return ax
 
 
+class Label(PlotDataObject):
+    def __init__(self, title: str, text_style: TextStyle = None, rectangle_surface_style: SurfaceStyle = None,
+                 rectangle_edge_style: EdgeStyle = None, name: str = ''):
+        self.title = title
+        self.text_style = text_style
+        self.rectangle_surface_style = rectangle_surface_style
+        self.rectangle_edge_style = rectangle_edge_style
+        PlotDataObject.__init__(self, type_='label', name=name)
+
+
+class MultipleLabels(PlotDataObject):
+    def __init__(self, labels: List[Label], name: str = ''):
+        self.labels = labels
+        PlotDataObject.__init__(self, type_='multiplelabels', name=name)
+
+
 class PrimitiveGroup(PlotDataObject):
     def __init__(self, primitives, name: str = ''):  # primitives: contour2D, arc2D, line2D or circle2D. A contour isn't needed for circle2D anymore
         self.primitives = primitives
@@ -526,7 +545,7 @@ def get_csv_vectors(filepath):
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'contour': Contour2D, 'graph2D': Dataset,
-                 'graphs2D': Graph2D, 'linesegment': LineSegment,
+                 'graphs2D': Graph2D, 'linesegment2d': LineSegment,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
                  'primitivegroup': PrimitiveGroup}

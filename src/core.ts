@@ -1900,8 +1900,10 @@ export abstract class PlotData {
           this.context.setLineDash([]);
         } else if ((d.primitives[i].type_ == 'line2d') && is_inside_canvas) {
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.width, this.height);
+        } else if (d.primitives[i].type_ === 'multiplelabels') {
+          d.primitives[i].draw(this.context, this.width);
         }
-        this.context.closePath();
+        this.context.closePath(); 
       }
     }
   }
@@ -3702,15 +3704,23 @@ export class PlotContour extends PlotData {
     if (d['type_'] == 'primitivegroup') { 
       var a = PrimitiveGroup.deserialize(d);
       this.plot_datas.push(a);
+      let multiple_labels_index = -1;
       for (let i=0; i<a.primitives.length; i++) {
         let primitive = a.primitives[i];
-        if (isNaN(this.minX)) {this.minX = primitive.minX} else {this.minX = Math.min(this.minX, primitive.minX)};
-        if (isNaN(this.maxX)) {this.maxX = primitive.maxX} else {this.maxX = Math.max(this.maxX, primitive.maxX)};
-        if (isNaN(this.minY)) {this.minY = primitive.minY} else {this.minY = Math.min(this.minY, primitive.minY)};
-        if (isNaN(this.maxY)) {this.maxY = primitive.maxY} else {this.maxY = Math.max(this.maxY, primitive.maxY)};
-        if ((primitive.type_ == 'contour') || (primitive.type_ == 'circle')) {
-          this.colour_to_plot_data[primitive.mouse_selection_color] = primitive;
+        if (primitive.type_ === 'multiplelabels') {
+          multiple_labels_index = i;
+        } else {
+          if (isNaN(this.minX)) {this.minX = primitive.minX} else {this.minX = Math.min(this.minX, primitive.minX)};
+          if (isNaN(this.maxX)) {this.maxX = primitive.maxX} else {this.maxX = Math.max(this.maxX, primitive.maxX)};
+          if (isNaN(this.minY)) {this.minY = primitive.minY} else {this.minY = Math.min(this.minY, primitive.minY)};
+          if (isNaN(this.maxY)) {this.maxY = primitive.maxY} else {this.maxY = Math.max(this.maxY, primitive.maxY)};
+          if ((primitive.type_ == 'contour') || (primitive.type_ == 'circle')) {
+            this.colour_to_plot_data[primitive.mouse_selection_color] = primitive;
+          }
         }
+      }
+      if (multiple_labels_index !== -1) {
+        a.primitives = List.move_elements(multiple_labels_index, a.primitives.length - 1, a.primitives);
       }
     }
 
@@ -4490,7 +4500,7 @@ export class PrimitiveGroupContainer extends PlotData {
   }
 
   one_axis_layout() {
-    var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic', '');
+    var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
     var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
     this.layout_axis = Axis.deserialize(serialized_axis);
@@ -4531,7 +4541,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
 
   two_axis_layout() {
-    var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic', '');
+    var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
     var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
     this.layout_axis = Axis.deserialize(serialized_axis);
@@ -5632,6 +5642,8 @@ export class PrimitiveGroup {
         primitives.push(Circle2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'line2d') {
         primitives.push(Line2D.deserialize(temp[i]));
+      } else if (temp[i]['type_'] == 'multiplelabels') {
+        primitives.push(MultipleLabels.deserialize(temp[i]));
       }
     }
     return new PrimitiveGroup(primitives,
@@ -5792,6 +5804,66 @@ export class Text {
     return cut_texts;
   }
 
+}
+
+
+export class Label {
+  constructor(public title:string,
+    public text_style: TextStyle,
+    public rectangle_surface_style: SurfaceStyle,
+    public rectangle_edge_style: EdgeStyle,
+    public type_:string = 'label',
+    public name:string = '') {}
+  
+
+  public static deserialize(serialized) {
+    var text_style = TextStyle.deserialize(serialized['text_style']);
+    var rectangle_surface_style = SurfaceStyle.deserialize(serialized['rectangle_surface_style']);
+    var rectangle_edge_style = EdgeStyle.deserialize(serialized['rectangle_edge_style']);
+    return new Label(serialized['title'],
+                     text_style,
+                     rectangle_surface_style, rectangle_edge_style,
+                     serialized['type_'],
+                     serialized['name']);
+  }
+
+  draw(context, decalage_x, decalage_y, rect_w) {
+    var rect_h = this.text_style.font_size;
+    Shape.rect(decalage_x, decalage_y, rect_w, rect_h, context, this.rectangle_surface_style.color_fill,
+      this.rectangle_edge_style.color_stroke, this.rectangle_edge_style.line_width, this.rectangle_surface_style.opacity,
+      this.rectangle_edge_style.dashline);
+    context.font = this.text_style.font;
+    context.textAlign = 'start';
+    context.textBaseline = 'middle';
+    context.fillStyle = this.text_style.text_color;
+    context.fillText(this.title, decalage_x + rect_w + 5, decalage_y + rect_h/2);
+  }
+}
+
+
+export class MultipleLabels {
+  constructor(public labels:Label[],
+              public type_:string='multiplelabels',
+              public name:string='') {}
+      
+  public static deserialize(serialized) {
+    let labels = [];
+    for (let serialized_label of serialized['labels']) {
+      labels.push(Label.deserialize(serialized_label));
+    }
+    return new MultipleLabels(labels,
+                              serialized['type_'],
+                              serialized['name']);
+  }
+
+  draw(context, canvas_width) {
+    var rect_w = canvas_width*0.03;
+    var decalage_x = 5, decalage_y = 5;
+    for (let label of this.labels) {
+      label.draw(context, decalage_x, decalage_y, rect_w);
+      decalage_y += label.text_style.font_size + 5;
+    }
+  }
 }
 
 
@@ -6923,13 +6995,16 @@ export class PointStyle {
  * A settings class for text customization.
  */
 export class TextStyle {
-  font:string
+  font:string;
+  option:string = '';
   constructor(public text_color:string,
               public font_size:number,
               public font_style:string,
-              public text_align_x:string,
-              public text_align_y:string,
-              public name:string) {
+              public text_align_x:string='start',
+              public text_align_y:string='alphabetic',
+              public bold:boolean=false,
+              public italic:boolean=false,
+              public name:string='') {
     if (text_color === undefined) {
       text_color = string_to_hex('black');
     }
@@ -6939,11 +7014,15 @@ export class TextStyle {
     if (font_style === undefined) {
       font_style = 'sans-serif';
     }
-    this.font = font_size.toString() + 'px ' + font_style;
+    this.option = '';
+    if (bold && !italic) this.option = 'bold ';
+    else if (italic && !bold) this.option = 'italic ';
+    else if (italic && bold) this.option = 'bold italic ';
+    this.font = this.option + font_size.toString() + 'px ' + font_style;
   }
 
   public static deserialize(serialized) {
-    let default_dict_ = {text_color:string_to_hex('black'), font_size:12, 
+    let default_dict_ = {text_color:string_to_rgb('black'), font_size:12, 
                          font_style:'sans-serif', text_align_x:'start',
                          text_align_y: 'alphabetic', name:''};
     serialized = set_default_values(serialized,default_dict_);
@@ -6952,7 +7031,13 @@ export class TextStyle {
                             serialized['font_style'],
                             serialized['text_align_x'],
                             serialized['text_align_y'],
+                            serialized['bold'],
+                            serialized['italic'],
                             serialized['name']);
+  }
+
+  get_font_from_size(font_size:number): string {
+    return this.font = this.option + font_size.toString() + 'px ' + this.font_style;
   }
 }
 
@@ -6972,7 +7057,7 @@ export class SurfaceStyle {
   }
             
   public static deserialize(serialized) {
-    let default_dict_ = {color_fill:'grey', opacity:1, hatching:null};
+    let default_dict_ = {color_fill:string_to_rgb('grey'), opacity:1, hatching:null};
     serialized = set_default_values(serialized, default_dict_);
     if (serialized['hatching'] != null) {
       var hatching = HatchingSet.deserialize(serialized['hatching']);

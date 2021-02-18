@@ -103,6 +103,7 @@ class EdgeStyle(DessiaObject):
         self.dashline = dashline
         DessiaObject.__init__(self, name=name)
 
+DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=colors.BLACK)
 
 class PointStyle(DessiaObject):
     def __init__(self, color_fill: str = None, color_stroke: str = None,
@@ -171,6 +172,19 @@ class Line2D(PlotDataObject):
         PlotDataObject.__init__(self, type_='line2d', name=name)
 
 
+    def mpl_plot(self, ax=None):
+        
+        if ax is None:
+            _, ax = plt.subplots()
+        
+        if not self.edge_style:
+            color = DEFAULT_EDGESTYLE.color_stroke.rgb
+        else:
+            color = self.edge_style.color_stroke.rgb
+        
+        ax.axline((self.data[0], self.data[1]),(self.data[2], self.data[3]),
+                  color=color)
+
 class LineSegment2D(PlotDataObject):
     def __init__(self, data: List[float], edge_style: EdgeStyle = None,
                  name: str = ''):
@@ -225,7 +239,7 @@ class Circle2D(PlotDataObject):
         if not ax:
             _, ax = plt.subplots()
         if self.edge_style:
-            edgecolor = self.edge_style.color_stroke
+            edgecolor = self.edge_style.color_stroke.rgb
         else:
             edgecolor = colors.BLACK.rgb
         if self.surface_style:
@@ -373,8 +387,8 @@ class Arc2D(PlotDataObject):
             edgecolor = colors.BLACK.rgb
             
         ax.add_patch(patches.Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
-                                 theta1=self.angle1 * 0.5 / math.pi * 360,
-                                 theta2=self.angle2 * 0.5 / math.pi * 360,
+                                 theta1=self.start_angle * 0.5 / math.pi * 360,
+                                 theta2=self.end_angle * 0.5 / math.pi * 360,
                                  edgecolor=edgecolor))
 
         return ax
@@ -414,6 +428,7 @@ class PrimitiveGroup(PlotDataObject):
     def mpl_plot(self, ax=None, equal_aspect=True):
         ax = self.primitives[0].mpl_plot(ax=ax)
         for primitive in self.primitives[1:]:
+            print(primitive)
             primitive.mpl_plot(ax=ax)
         ax.set_aspect('equal')
         return ax

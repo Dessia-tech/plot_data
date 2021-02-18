@@ -1305,7 +1305,7 @@ export class MultiplePlots {
             let bool = false;
             for (let k=0; k<point.points_inside.length; k++) {
               if (point.points_inside[k] === selected_point) {
-                obj.select_on_mouse = point;
+                obj.primitive_mouse_over_point = point;
                 bool = true; 
                 break;
               }
@@ -1313,7 +1313,7 @@ export class MultiplePlots {
             if (bool) break;
           }
         } else {
-          obj.select_on_mouse = obj.plotObject.point_list[point_index];
+          obj.primitive_mouse_over_point = obj.plotObject.point_list[point_index];
         }
         obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
         obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);      
@@ -1332,19 +1332,19 @@ export class MultiplePlots {
           let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(obj.primitive_dict), list => list.reverse()));
           let point_index = Number(primitive_to_point_index[obj.selected_primitive]);
           this.color_associated_scatter_point(point_index);
-        } else {
-          for (let i=0; i<this.nbObjects; i++) {
-            if (this.objectList[i].type_ === 'scatterplot') {
-              let obj = this.objectList[i];
-              obj.select_on_mouse = undefined;
-              obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-              obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y); 
-            }
-          }
+        } 
+      }
+    }
+    if (!bool) {
+      for (let i=0; i<this.nbObjects; i++) {
+        if (this.objectList[i].type_ === 'scatterplot') {
+          let obj = this.objectList[i];
+          obj.primitive_mouse_over_point = undefined;
+          obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+          obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y); 
         }
       }
     }
-
   }
 
   mouse_over_scatter_plot() {
@@ -1615,6 +1615,7 @@ export abstract class PlotData {
   settings_on:boolean=false;
   colour_to_plot_data:any={};
   select_on_mouse:any;
+  primitive_mouse_over_point:Point2D;
   select_on_click:any[]=[];
   selected_point_index:any[]=[];
   color_surface_on_mouse:string=string_to_hex('lightskyblue');
@@ -1998,7 +1999,7 @@ export abstract class PlotData {
         if (shape == 'crux') {
           this.context.strokeStyle = d.color_fill;
         }
-        if (this.select_on_mouse == d) {
+        if ((this.select_on_mouse === d) || (this.primitive_mouse_over_point === d)) {
           this.context.fillStyle = this.color_surface_on_mouse;
         }
         if (d.selected) {
@@ -6727,18 +6728,10 @@ export class Arc2D {
               public edge_style:EdgeStyle,
               public type_:string,
               public name:string) {
-      if((this.cx - this.r) < this.minX){
-        this.minX = this.cx - this.r;
-      }
-      if((this.cx - this.r) > this.maxX){
-        this.maxX = this.cx + this.r;
-      }
-      if((this.cy - this.r) < this.minY){
-        this.minY = this.cy - this.r;
-      }
-      if((this.cy + this.r) > this.maxY){
-        this.maxY = this.cy + this.r;
-      }
+      this.minX = this.cx - this.r;
+      this.maxX = this.cx + this.r;
+      this.minY = this.cy - this.r;
+      this.maxY = this.cy + this.r;
 
       this.start_angle = this.start_angle % Math.PI;
       this.end_angle = this.end_angle % Math.PI;
@@ -6784,7 +6777,7 @@ export class Arc2D {
     var tension = 0.4;
     var isClosed = false;
     var numOfSegments = 16;
-  drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
+    drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
   }
 
   // contour_draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
@@ -6990,17 +6983,6 @@ export class SurfaceStyle {
   }
 }
 
-
-export class ColorSurfaceSet {
-
-  constructor(public name:string,
-              public color:any) {}
-
-  public static deserialize(serialized) {
-      return new ColorSurfaceSet(serialized['name'],
-                                 rgb_to_hex(serialized['color']));
-  }
-}
 
 export class Window {
   constructor(public height:number,public width:number, public name?:string){

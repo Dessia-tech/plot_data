@@ -1332,19 +1332,19 @@ export class MultiplePlots {
           let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(obj.primitive_dict), list => list.reverse()));
           let point_index = Number(primitive_to_point_index[obj.selected_primitive]);
           this.color_associated_scatter_point(point_index);
+        } else {
+          for (let i=0; i<this.nbObjects; i++) {
+            if (this.objectList[i].type_ === 'scatterplot') {
+              let obj = this.objectList[i];
+              obj.select_on_mouse = undefined;
+              obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+              obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y); 
+            }
+          }
         }
       }
     }
-    if (!bool) {
-      for (let i=0; i<this.nbObjects; i++) {
-        if (this.objectList[i].type_ === 'scatterplot') {
-          let obj = this.objectList[i];
-          obj.select_on_mouse = undefined;
-          obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-          obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y); 
-        }
-      }
-    }
+    
   }
 
   mouse_over_scatter_plot() {

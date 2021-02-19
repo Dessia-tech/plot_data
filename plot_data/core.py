@@ -437,6 +437,18 @@ class PrimitiveGroup(PlotDataObject):
         ax.set_aspect('equal')
         return ax
 
+    def bounding_box(self):
+        xmin, xmax, ymin, ymax = math.inf, -math.inf, math.inf, -math.inf
+        for primitive in self.primitives:
+            if not hasattr(primitive, 'bounding_box'):
+                continue
+            p_xmin, p_xmax, p_ymin, p_ymax = primitive.bounding_box()
+            xmin = min(xmin, p_xmin)
+            xmax = max(xmax, p_xmax)
+            ymin = min(ymin, p_ymin)
+            ymax = max(ymax, p_ymax)
+        return xmin, xmax, ymin, ymax
+
 
 class PrimitiveGroupsContainer(PlotDataObject):
     def __init__(self, primitive_groups: List[PrimitiveGroup],

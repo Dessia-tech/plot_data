@@ -1901,7 +1901,7 @@ export abstract class PlotData {
         } else if ((d.primitives[i].type_ == 'line2d') && is_inside_canvas) {
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.width, this.height);
         } else if (d.primitives[i].type_ === 'multiplelabels') {
-          d.primitives[i].draw(this.context, this.width);
+          d.primitives[i].draw(this.context, this.width, this.X, this.Y);
         }
         this.context.closePath(); 
       }
@@ -1973,7 +1973,7 @@ export abstract class PlotData {
     }
   }
 
-  draw_point(hidden, mvx, mvy, scaleX, scaleY, d) {
+  draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
     if (d['type_'] == 'point') {
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
@@ -1981,9 +1981,9 @@ export abstract class PlotData {
         if (this.plotObject.type_ == 'scatterplot') {
           if (this.sc_interpolation_ON) {
             if (d.selected || List.contains_undefined(this.select_on_click)) {
-              this.context.fillStyle = d.color_fill;
+              this.context.fillStyle = d.point_style.color_fill;
             } else {
-              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
+              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
             }
           } else {
             this.context.fillStyle = this.plotObject.point_style.color_fill;
@@ -1992,14 +1992,14 @@ export abstract class PlotData {
             }
           }
         } else { // graph2d
-          this.context.fillStyle = d.color_fill;
+          this.context.fillStyle = d.point_style.color_fill;
         }
-        this.context.lineWidth = d.stroke_width;
-        this.context.strokeStyle = d.color_stroke;
-        var shape = d.point_shape;
+        this.context.lineWidth = d.point_style.stroke_width;
+        this.context.strokeStyle = d.point_style.color_stroke;
+        var shape = d.point_style.shape;
 
         if (shape == 'crux') {
-          this.context.strokeStyle = d.color_fill;
+          this.context.strokeStyle = d.point_style.color_fill;
         }
         if ((this.select_on_mouse === d) || (this.primitive_mouse_over_point === d)) {
           this.context.fillStyle = this.color_surface_on_mouse;
@@ -2009,7 +2009,7 @@ export abstract class PlotData {
             this.context.strokeStyle = this.color_surface_on_click;
           } else {
             if (this.sc_interpolation_ON) {
-              this.context.fillStyle = d.color_fill;
+              this.context.fillStyle = d.point_style.color_fill;
             } else {
               this.context.fillStyle = this.color_surface_on_click;
             }
@@ -2051,7 +2051,7 @@ export abstract class PlotData {
     this.context.fill();
   }
 
-  draw_tooltip(d, mvx, mvy, point_list, elements, mergeON) {
+  draw_tooltip(d:Tooltip, mvx, mvy, point_list, elements, mergeON) {
     if (d['type_'] == 'tooltip') {
       this.tooltip_ON = true;
       d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, elements, mergeON);
@@ -3595,12 +3595,7 @@ export abstract class PlotData {
         if (this.distance([xi,yi], [xj,yj])<1000*(point_list_copy[i].size + point_list_copy[j].size)) {
           var new_cx = (point_list_copy[i].cx + point_list_copy[j].cx)/2;
           var new_cy = (point_list_copy[i].cy + point_list_copy[j].cy)/2;
-          var new_shape = point_list_copy[i].shape;
-          var new_point_size = point_list_copy[i].point_size;
-          var new_color_fill = point_list_copy[i].color_fill;
-          var new_color_stroke = point_list_copy[i].color_stroke;
-          var new_stroke_width = point_list_copy[i].stroke_width;
-          var point = new Point2D(new_cx, new_cy, new_shape, new_point_size, new_color_fill, new_color_stroke, new_stroke_width, 'point', '');
+          var point = new Point2D(new_cx, new_cy, point_list_copy[i].point_style, 'point', '');
           point.points_inside = point_list_copy[i].points_inside.concat(point_list_copy[j].points_inside);
           point.point_families = List.union(point_list_copy[i].point_families, point_list_copy[j].point_families);
           point.selected = point_list_copy[i].selected || point_list_copy[j].selected;
@@ -3795,7 +3790,7 @@ export class PlotScatter extends PlotData {
         this.plot_datas['value'] = this.plotObject.graphs;
         for (let i=0; i<this.plotObject.graphs.length; i++) {
           let graph = this.plotObject.graphs[i];
-          this.graph_colorlist.push(graph.point_list[0].color_fill);
+          this.graph_colorlist.push(graph.point_list[0].point_style.color_fill);
           this.graph_to_display.push(true);
           this.graph_name_list.push(graph.name);
           graph.id = i;
@@ -5809,11 +5804,11 @@ export class Text {
 
 export class Label {
   constructor(public title:string,
-    public text_style: TextStyle,
-    public rectangle_surface_style: SurfaceStyle,
-    public rectangle_edge_style: EdgeStyle,
-    public type_:string = 'label',
-    public name:string = '') {}
+              public text_style: TextStyle,
+              public rectangle_surface_style: SurfaceStyle,
+              public rectangle_edge_style: EdgeStyle,
+              public type_:string = 'label',
+              public name:string = '') {}
   
 
   public static deserialize(serialized) {
@@ -5836,7 +5831,7 @@ export class Label {
     context.textAlign = 'start';
     context.textBaseline = 'middle';
     context.fillStyle = this.text_style.text_color;
-    context.fillText(this.title, decalage_x + rect_w + 5, decalage_y + rect_h/2);
+    context.fillText(this.title, decalage_x + rect_w + 5, decalage_y + 2*rect_h/3);
   }
 }
 
@@ -5856,9 +5851,9 @@ export class MultipleLabels {
                               serialized['name']);
   }
 
-  draw(context, canvas_width) {
-    var rect_w = canvas_width*0.03;
-    var decalage_x = 5, decalage_y = 5;
+  draw(context, canvas_width, X, Y) {
+    var rect_w = canvas_width*0.04;
+    var decalage_x = 5 + X, decalage_y = 5 + Y;
     for (let label of this.labels) {
       label.draw(context, decalage_x, decalage_y, rect_w);
       decalage_y += label.text_style.font_size + 5;
@@ -5939,7 +5934,7 @@ export class LineSegment2D {
 
   constructor(public data:any,
               public edge_style:EdgeStyle,
-              public type_:string,
+              public type_:string='linesegment2d',
               public name:string) {
       this.minX = Math.min(this.data[0], this.data[2]);
       this.maxX = Math.max(this.data[0], this.data[2]);
@@ -5982,7 +5977,7 @@ export class Circle2D {
               public r:number,
               public edge_style:EdgeStyle,
               public surface_style:SurfaceStyle,
-              public type_:string,
+              public type_:string='circle',
               public name:string) {
       this.minX = this.cx - this.r;
       this.maxX = this.cx + this.r;
@@ -6016,6 +6011,10 @@ export class Circle2D {
 }
 
 export class Point2D {
+  /**
+   * minX, maxX, minY, maxY define the bouding box.
+   * size is the real size of the point (depends on point_size which value is 1, 2, 3 or 4).
+   */
   minX:number=0;
   maxX:number=0;
   minY:number=0;
@@ -6029,17 +6028,18 @@ export class Point2D {
 
   constructor(public cx:number,
               public cy:number,
-              public shape:string,
-              public point_size:number,
-              public color_fill:string,
-              public color_stroke:string,
-              public stroke_width:number,
+              // public shape:string,
+              // public point_size:number,
+              // public color_fill:string,
+              // public color_stroke:string,
+              // public stroke_width:number,
+              public point_style: PointStyle,
               public type_:string='point',
               public name:string) {
-      if (point_size<1) {
+      if (point_style.size<1) {
         throw new Error('Invalid point_size');
       }
-      this.size = this.k*point_size/400;
+      this.size = this.k*point_style.size/400;
       this.minX = this.cx - 2.5*this.size;
       this.maxX = this.cx + 2.5*this.size;
       this.minY = this.cy - 5*this.size;
@@ -6049,25 +6049,23 @@ export class Point2D {
     }
 
     public static deserialize(serialized) {
+      // var default_point_style = {}
+      var point_style = PointStyle.deserialize(serialized['point_style']);
       return new Point2D(serialized['cx'],
-                                  -serialized['cy'],
-                                  serialized['shape'],
-                                  serialized['size'],
-                                  rgb_to_hex(serialized['color_fill']),
-                                  rgb_to_hex(serialized['color_stroke']),
-                                  serialized['stroke_width'],
-                                  serialized['type_'],
-                                  serialized['name']);
+                         -serialized['cy'],
+                         point_style,
+                         serialized['type_'],
+                         serialized['name']);
     }
 
     draw(context, context_hidden, mvx, mvy, scaleX, scaleY, X, Y) {
-        if (this.shape == 'circle') {
+        if (this.point_style.shape == 'circle') {
           context.arc(scaleX*(1000*this.cx+ mvx) + X, scaleY*(1000*this.cy+ mvy) + Y, 1000*this.size, 0, 2*Math.PI);
           context.stroke();
-        } else if (this.shape == 'square') {
+        } else if (this.point_style.shape == 'square') {
           context.rect(scaleX*(1000*this.cx + mvx) - 1000*this.size + X, scaleY*(1000*this.cy + mvy) - 1000*this.size + Y, 1000*this.size*2, 1000*this.size*2);
           context.stroke();
-        } else if (this.shape == 'crux') {
+        } else if (this.point_style.shape == 'crux') {
           context.rect(scaleX*(1000*this.cx + mvx) + X, scaleY*(1000*this.cy + mvy) + Y, 1000*this.size, 100*this.size);
           context.rect(scaleX*(1000*this.cx + mvx) + X, scaleY*(1000*this.cy + mvy) + Y, -1000*this.size, 100*this.size);
           context.rect(scaleX*(1000*this.cx + mvx) + X, scaleY*(1000*this.cy + mvy) + Y, 100*this.size, 1000*this.size);
@@ -6081,13 +6079,13 @@ export class Point2D {
     }
 
     copy() {
-      return new Point2D(this.cx, this.cy, this.shape, this.point_size, this.color_fill, this.color_stroke, this.stroke_width, this.type_, this.name);
+      return new Point2D(this.cx, this.cy, this.point_style, this.type_, this.name);
     }
 
     equals(point:Point2D): boolean {
-      return (this.cx == point.cx) && (this.cy == point.cy) && (this.shape == point.shape)
-              && (this.size == point.size) && (this.color_fill == point.color_fill) && (this.color_stroke == point.color_stroke)
-              && (this.stroke_width == point.stroke_width);
+      return (this.cx == point.cx) && (this.cy == point.cy) && (this.point_style.shape == point.point_style.shape)
+              && (this.size == point.size) && (this.point_style.color_fill == point.point_style.color_fill) && (this.point_style.color_stroke == point.point_style.color_stroke)
+              && (this.point_style.stroke_width == point.point_style.stroke_width);
     }
 
     getPointIndex(point_list:Point2D[]) {
@@ -6505,7 +6503,7 @@ export class Tooltip {
       var tp_height = (textfills.length + 0.25)*this.text_style.font_size ;
       var cx = point.cx;
       var cy = point.cy;
-      var point_size = point.point_size;
+      var point_size = point.point_style.size;
       var decalage = 2.5*point_size + 5
       var tp_x = scaleX*(1000*cx + mvx) + decalage + X;
       var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height + Y;
@@ -6525,7 +6523,7 @@ export class Tooltip {
       this.surface_style.opacity, []);
       context.fillStyle = this.text_style.text_color;
       context.textAlign = 'start';
-      context.textBaseline = 'Alphabetic';
+      context.textBaseline = 'middle';
 
       var x_start = tp_x + 1/10*tp_width;
       context.font = this.text_style.font;
@@ -6545,7 +6543,7 @@ export class Tooltip {
 
   manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON) {
     for (var i=0; i<tooltip_list.length; i++) {
-      if (!(typeof tooltip_list[i] === "undefined") && this.isTooltipInsideCanvas(tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height)) {
+      if (tooltip_list[i] && this.isTooltipInsideCanvas(tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height)) {
         this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON);
       }
     }
@@ -6576,9 +6574,7 @@ export class Dataset {
       for (let j=0; j<2; j++) {
         coord.push(Math.pow(-1, j)*this.elements[i][this.to_disp_attribute_names[j]]);
       }
-      this.point_list.push(new Point2D(coord[0], coord[1], this.point_style.shape, this.point_style.size,
-                           this.point_style.color_fill, this.point_style.color_stroke, 
-                           this.point_style.stroke_width, 'point', ''));
+      this.point_list.push(new Point2D(coord[0], coord[1], this.point_style, 'point', ''));
     } 
   }
 
@@ -6759,9 +6755,7 @@ export class Scatter {
       } else {
         cy = - List.get_index_of_element(elt1.toString(), this.lists[1]);
       }
-      this.point_list.push(new Point2D(cx, cy, this.point_style.shape, this.point_style.size, 
-                           this.point_style.color_fill, this.point_style.color_stroke,
-                           this.point_style.stroke_width, 'point', ''));
+      this.point_list.push(new Point2D(cx, cy, this.point_style, 'point', ''));
     }
   }
 
@@ -7569,7 +7563,7 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
   return rgb_vectorToStr(r,g,b);
 }
 
- export class Sort {
+export class Sort {
   nbPermutations:number = 0;
   constructor(){};
 
@@ -7856,7 +7850,7 @@ export class List {
 
 
   /**
-   * @returns a list where <value> is inserted at <index> inside <list>
+   * @returns a list where value is inserted at index inside list
    */
   public static insert(value:any, index:number, list:any[]): void {
     list.splice(index, 0, value);
@@ -7864,7 +7858,7 @@ export class List {
 
 
   /**
-   * @returns the index of <val> in <list>
+   * @returns the index of val in list
    */
   public static get_index_of_element(val:any, list:any[]):number {
     var elt_index = list.findIndex(obj => Object.is(obj, val));
@@ -7875,7 +7869,7 @@ export class List {
   }
 
   /**
-   * @returns The input list after removing its element at index <i>
+   * @returns The input list after removing its element at index i
    */
   public static remove_at_index(i:number, list:any[]):any[] {
     return list.slice(0, i).concat(list.slice(i + 1, list.length));
@@ -7883,8 +7877,8 @@ export class List {
 
 
   /**
-   * @returns the input list after removing its element at index <old_index> and
-   * inserting it at <new_index>
+   * @returns the input list after removing its element at index old_index and
+   * inserting it at new_index
    */
   public static move_elements(old_index:number, new_index:number, list:any[]):any[] {
     var elt = list[old_index];
@@ -7900,7 +7894,7 @@ export class List {
 
 
   /**
-   * Exchanges <list>'s elements at >index1< and <index2>.
+   * Exchanges list's elements at index1 and index2.
    */
   public static switchElements(list:any[], index1:number, index2:number): void {
     [list[index1], list[index2]] = [list[index2], list[index1]];
@@ -7912,7 +7906,7 @@ export class List {
   }
 
   /**
-   * Checks whether <list> is a list of empty list, ie [[], [],..., []]
+   * Checks whether list is a list of empty list, ie [[], [],..., []]
    */
   public static isListOfEmptyList(list:any[]): boolean { 
     for (let i=0; i<list.length; i++) {
@@ -7926,7 +7920,7 @@ export class List {
 
 
   /**
-   * @returns A list that contains all elements that are inside both <list1> and <list2>
+   * @returns A list that contains all elements that are inside both list1 and list2
    */
   public static listIntersection(list1:any[], list2:any[]): any[] {
     // var intersection = [];
@@ -7941,7 +7935,7 @@ export class List {
 
 
   /**
-   * @returns a list that contains <list>'s elements at index <list_index>[i].
+   * @returns a list that contains list's elements at index <list_index[i].
    ex: getListEltFromIndex([1,2], ['a', 'b', 'c', 'd']) = ['b', 'c']
    */
   public static getListEltFromIndex(list_index:number[], list:any[]): any[] {
@@ -7954,8 +7948,8 @@ export class List {
 
 
   /**
-   * @returns the union of <list1> and <list2>, ie a list that contains elements that are
-   inside <list1> or <list2>
+   * @returns the union of list1 and list2, ie a list that contains elements that are
+   inside list1 or list2
    */
   public static union(list1:any[], list2:any[]): any[] {
     var union_list = this.copy(list1);
@@ -7969,7 +7963,7 @@ export class List {
 
 
   /**
-   * @param to_remove a list that contains elements to be removed from <list>
+   * @param to_remove a list that contains elements to be removed from list
    */
   public static remove_selection(to_remove:any[], list:any[]): any[] {
     var new_list = Array.from(list);

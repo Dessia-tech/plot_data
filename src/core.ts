@@ -1134,7 +1134,7 @@ export class MultiplePlots {
             attribute_index = j;
           }
         }
-        obj.dep_color_propagation(attribute_index, vertical, inverted, hexs, selected_axis_name);
+        obj.dep_color_propagation(vertical, inverted, hexs, selected_axis_name);
         obj.sc_interpolation_ON = true;
       }
     }
@@ -1517,8 +1517,8 @@ export class MultiplePlots {
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
           if (this.objectList[this.clickedPlotIndex].type_ == 'parallelplot') {
-            var selected_axis_name: string; var vertical: boolean; var inverted: boolean;
-            var hexs: string[]; var isSelectingppAxis: boolean;
+            var selected_axis_name: string, vertical: boolean, inverted: boolean;
+            var hexs: string[], isSelectingppAxis: boolean;
             [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
             if (isSelectingppAxis) {
               for (let i=0; i<this.nbObjects; i++) {
@@ -1547,6 +1547,7 @@ export class MultiplePlots {
       isDrawing = false;
       mouse_moving = false;
     });
+
 
     canvas.addEventListener('wheel', e => {
       e.preventDefault();
@@ -2665,16 +2666,16 @@ export abstract class PlotData {
   }
 
 
-  dep_color_propagation(attribute_index:number, vertical:boolean, inverted:boolean, hexs:string[], attribute_name:string): void {
+  dep_color_propagation(vertical:boolean, inverted:boolean, hexs:string[], attribute_name:string): void {
     var sort: Sort = new Sort();
-    var sorted_elements = sort.sortObjsByAttribute(List.copy(Array.from(this.plotObject.elements)), attribute_name);
+    var sorted_elements = sort.sortObjsByAttribute(List.copy(this.plotObject.elements), attribute_name);
     var nb_points = this.plotObject.point_list.length;
     for (let i=0; i<nb_points; i++) {
       let j = List.get_index_of_element(sorted_elements[i], this.plotObject.elements);
       if ((vertical && inverted) || (!vertical && !inverted)) {
-        this.plotObject.point_list[j].color_fill = hexs[i];
+        this.plotObject.point_list[j].point_style.color_fill = hexs[i];
       } else {
-        this.plotObject.point_list[j].color_fill = hexs[nb_points - 1 - i];
+        this.plotObject.point_list[j].point_style.color_fill = hexs[nb_points - 1 - i];
       }
     }
     this.refresh_point_list_bool = true;
@@ -6031,14 +6032,9 @@ export class Point2D {
 
   constructor(public cx:number,
               public cy:number,
-              // public shape:string,
-              // public point_size:number,
-              // public color_fill:string,
-              // public color_stroke:string,
-              // public stroke_width:number,
               public point_style: PointStyle,
               public type_:string='point',
-              public name:string) {
+              public name:string='') {
       if (point_style.size<1) {
         throw new Error('Invalid point_size');
       }
@@ -6052,7 +6048,6 @@ export class Point2D {
     }
 
     public static deserialize(serialized) {
-      // var default_point_style = {}
       var point_style = PointStyle.deserialize(serialized['point_style']);
       return new Point2D(serialized['cx'],
                          -serialized['cy'],
@@ -6660,8 +6655,7 @@ export class Scatter {
   }
 
   public static deserialize(serialized) {
-    let default_point_style = new PointStyle(string_to_rgb('lightviolet'), string_to_rgb('lightgrey'), 
-                              0.5, 2, 'circle', '');
+    let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')}
     var default_dict_ = {point_style:default_point_style}
     serialized = set_default_values(serialized, default_dict_);
     var axis = Axis.deserialize(serialized['axis']);
@@ -6758,7 +6752,7 @@ export class Scatter {
       } else {
         cy = - List.get_index_of_element(elt1.toString(), this.lists[1]);
       }
-      this.point_list.push(new Point2D(cx, cy, this.point_style, 'point', ''));
+      this.point_list.push(new Point2D(cx, cy, MyObject.copy(this.point_style)));
     }
   }
 
@@ -8029,6 +8023,10 @@ export class MyObject {
       }
     }
     return Object.fromEntries(entries);
+  }
+
+  public static copy(obj) {
+    return Object.assign({}, obj);
   }
 }
 

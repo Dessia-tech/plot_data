@@ -5522,6 +5522,8 @@ export class MultiplotCom {
           let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
           let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
           plot_data.rubber_bands[j] = [received_axis_min, received_axis_max];
+          plot_data.add_to_rubberbands_dep(rubberbands_dep[i]);
+          break;
         }
       }
     }

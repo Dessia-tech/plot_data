@@ -747,6 +747,8 @@ export class MultiplePlots {
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
       }
     }
+
+
     if (equals(all_index, this.dep_selected_points_index)) {
       this.dep_selected_points_index = [];
     }
@@ -1532,10 +1534,7 @@ export class MultiplePlots {
               this.reset_selected_points_except([this.clickedPlotIndex]);
               this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep);
             }
-          } else if ((this.objectList[this.clickedPlotIndex].type_ == 'scatterplot') &&
-              (this.objectList[this.clickedPlotIndex].select_on_click.length === 0)) {
-                this.reset_all_selected_points();
-          }
+          } 
         }
         this.refresh_selected_point_index();
       } else {
@@ -3147,7 +3146,7 @@ export abstract class PlotData {
         this.latest_selected_points = [click_plot_data];
       }
     } else { 
-      this.select_on_click.push(click_plot_data);
+      // this.select_on_click.push(click_plot_data); // used to add undefined to select_on_click
     }
     if (this.tooltip_ON && click_plot_data) {
       let is_in_tooltip_list = List.is_include(click_plot_data, this.tooltip_list);
@@ -5441,8 +5440,9 @@ export class MultiplotCom {
   }
 
   public static pp_to_sc_communication(to_select:[string, [number, number]][], axis_numbers:number[], plot_data:PlotData):void {
-    var new_select_on_click = [];
     if (to_select.length == 1) {
+      var new_select_on_click = [];
+      var new_selected_point_index = [];
       let min = to_select[0][1][0];
       let max = to_select[0][1][1];
       for (let i=0; i<plot_data.scatter_point_list.length; i++) {
@@ -5462,13 +5462,17 @@ export class MultiplotCom {
         }
         if (bool === true) {
           new_select_on_click.push(plot_data.scatter_point_list[i]);
+          new_selected_point_index.push(i);
           plot_data.scatter_point_list[i].selected = true;
         } else {
           plot_data.scatter_point_list[i].selected = false;
         }
       }
       plot_data.select_on_click = new_select_on_click;
+      plot_data.selected_point_index = new_selected_point_index;
     } else if (to_select.length == 2) {
+      var new_select_on_click = [];
+      var new_selected_point_index = [];
       let min1 = to_select[0][1][0];
       let max1 = to_select[0][1][1];
       let min2 = to_select[1][1][0];
@@ -5496,13 +5500,15 @@ export class MultiplotCom {
         }
         if (bool1 && bool2) {
           plot_data.scatter_point_list[i].selected = true;
+          new_selected_point_index.push(i);
           new_select_on_click.push(plot_data.scatter_point_list[i]);
         }
       }
       plot_data.select_on_click = new_select_on_click;
+      plot_data.selected_point_index = new_selected_point_index;
     }
 
-    plot_data.refresh_selected_point_index();
+    // plot_data.refresh_selected_point_index();
   }
 
   public static pp_to_pp_communication(rubberbands_dep:[string, [number, number]][], plot_data:PlotData) {
@@ -7930,6 +7936,15 @@ export class List {
     //   }
     // }
     // return intersection;
+    return list1.filter(value => list2.includes(value));
+  }
+
+  /**
+   * @returns A list that contains all elements that are inside both list1 and list2. If one list is empty, then it returns the other list.
+   */
+  public static listIntersectionExceptEmpty(list1:any[], list2:any[]) {
+    if (list1.length === 0) return list2;
+    if (list2.length === 0) return list1;
     return list1.filter(value => list2.includes(value));
   }
 

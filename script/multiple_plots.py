@@ -13,7 +13,7 @@ import random
 elements = []  # a list of vectors (dictionaries) that are displayed
 # through different representations such as parallel plots and scatter plots
 
-nb_elements = 500
+nb_elements = 50
 colors = [VIOLET, BLUE, GREEN, RED, YELLOW, CYAN, ROSE]
 directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):

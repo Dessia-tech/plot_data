@@ -748,7 +748,6 @@ export class MultiplePlots {
       }
     }
 
-
     if (equals(all_index, this.dep_selected_points_index)) {
       this.dep_selected_points_index = [];
     }
@@ -1037,7 +1036,8 @@ export class MultiplePlots {
 
   getSelectionONObject():number {
     for (let i=0; i<this.nbObjects; i++) {
-      if (this.objectList[i].isSelecting === true) {
+      let obj = this.objectList[i];
+      if ((obj.type_ === 'scatterplot') && (obj.isSelecting === true)) {
         return i;
       }
     }
@@ -5442,7 +5442,6 @@ export class MultiplotCom {
   public static pp_to_sc_communication(to_select:[string, [number, number]][], axis_numbers:number[], plot_data:PlotData):void {
     if (to_select.length == 1) {
       var new_select_on_click = [];
-      var new_selected_point_index = [];
       let min = to_select[0][1][0];
       let max = to_select[0][1][1];
       for (let i=0; i<plot_data.scatter_point_list.length; i++) {
@@ -5462,17 +5461,16 @@ export class MultiplotCom {
         }
         if (bool === true) {
           new_select_on_click.push(plot_data.scatter_point_list[i]);
-          new_selected_point_index.push(i);
           plot_data.scatter_point_list[i].selected = true;
         } else {
           plot_data.scatter_point_list[i].selected = false;
         }
       }
       plot_data.select_on_click = new_select_on_click;
-      plot_data.selected_point_index = new_selected_point_index;
+      plot_data.refresh_selected_point_index();
+
     } else if (to_select.length == 2) {
       var new_select_on_click = [];
-      var new_selected_point_index = [];
       let min1 = to_select[0][1][0];
       let max1 = to_select[0][1][1];
       let min2 = to_select[1][1][0];
@@ -5500,15 +5498,14 @@ export class MultiplotCom {
         }
         if (bool1 && bool2) {
           plot_data.scatter_point_list[i].selected = true;
-          new_selected_point_index.push(i);
           new_select_on_click.push(plot_data.scatter_point_list[i]);
         }
       }
       plot_data.select_on_click = new_select_on_click;
-      plot_data.selected_point_index = new_selected_point_index;
+      plot_data.refresh_selected_point_index();
+
     }
 
-    // plot_data.refresh_selected_point_index();
   }
 
   public static pp_to_pp_communication(rubberbands_dep:[string, [number, number]][], plot_data:PlotData) {

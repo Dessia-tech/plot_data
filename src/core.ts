@@ -3,6 +3,11 @@ import { Console } from "console";
 import { type } from "os";
 import { start } from "repl";
 
+
+/** 
+ * MultiplePlots takes a list of elements (dictionaries) that represent vectors and displays it throught different representations
+ * such as ParallelPlot or ScatterPlot. On top of that, each element can be represented by a PrimitiveGroup or a Graph2D. 
+ */
 export class MultiplePlots {
   context_show:any;
   context_hidden:any;
@@ -742,6 +747,7 @@ export class MultiplePlots {
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
       }
     }
+
     if (equals(all_index, this.dep_selected_points_index)) {
       this.dep_selected_points_index = [];
     }
@@ -835,7 +841,7 @@ export class MultiplePlots {
         }
       }
     }
-    this.selected_point_index = List.sort_without_duplicates(this.selected_point_index);
+    this.selected_point_index = List.remove_duplicates(this.selected_point_index);
   }
 
   getSortedList() {
@@ -1030,7 +1036,8 @@ export class MultiplePlots {
 
   getSelectionONObject():number {
     for (let i=0; i<this.nbObjects; i++) {
-      if (this.objectList[i].isSelecting === true) {
+      let obj = this.objectList[i];
+      if ((obj.type_ === 'scatterplot') && (obj.isSelecting === true)) {
         return i;
       }
     }
@@ -1127,7 +1134,7 @@ export class MultiplePlots {
             attribute_index = j;
           }
         }
-        obj.dep_color_propagation(attribute_index, vertical, inverted, hexs, selected_axis_name);
+        obj.dep_color_propagation(vertical, inverted, hexs, selected_axis_name);
         obj.sc_interpolation_ON = true;
       }
     }
@@ -1288,7 +1295,7 @@ export class MultiplePlots {
     }
   }
 
-  mouse_over_scatterplot(point_index) { // used by mouse_over_primitive_group() to select points inside scatterplots
+  color_associated_scatter_point(point_index) { // used by mouse_over_primitive_group() to select points inside scatterplots
     for (let i=0; i<this.nbObjects; i++) {
       if (this.objectList[i].type_ === 'scatterplot') {
         let obj = this.objectList[i];
@@ -1300,7 +1307,7 @@ export class MultiplePlots {
             let bool = false;
             for (let k=0; k<point.points_inside.length; k++) {
               if (point.points_inside[k] === selected_point) {
-                obj.select_on_mouse = point;
+                obj.primitive_mouse_over_point = point;
                 bool = true; 
                 break;
               }
@@ -1308,32 +1315,104 @@ export class MultiplePlots {
             if (bool) break;
           }
         } else {
-          obj.select_on_mouse = obj.plotObject.point_list[point_index];
+          obj.primitive_mouse_over_point = obj.plotObject.point_list[point_index];
         }
+        obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+        obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);      
       }
     }
   }
 
 
   mouse_over_primitive_group() {
+    var bool = false;
     if (this.move_plot_index !== -1) {
       if (this.objectList[this.move_plot_index].type_ === 'primitivegroupcontainer') {
         let obj:any = this.objectList[this.move_plot_index];
         if (obj.selected_primitive !== -1) {
+          bool = true;
           let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(obj.primitive_dict), list => list.reverse()));
           let point_index = Number(primitive_to_point_index[obj.selected_primitive]);
-          this.mouse_over_scatterplot(point_index);
+          this.color_associated_scatter_point(point_index);
+        } 
+      }
+    }
+    if (!bool) {
+      for (let i=0; i<this.nbObjects; i++) {
+        if (this.objectList[i].type_ === 'scatterplot') {
+          let obj = this.objectList[i];
+          obj.primitive_mouse_over_point = undefined;
+          obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+          obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y); 
+        }
+      }
+    }
+  }
+
+  mouse_over_scatter_plot() {
+    if (!this.has_primitive_group_container) return;
+    var bool = false;
+    if (this.move_plot_index !== -1) {
+      if (this.objectList[this.move_plot_index].type_ === 'scatterplot') {
+        let obj = this.objectList[this.move_plot_index];
+        if (obj.select_on_mouse) {
+          bool = true;
+          var element_index_list = [];
+          let points_inside = obj.select_on_mouse.points_inside;
+          for (let i=0; i<points_inside.length; i++) {
+            let index = List.get_index_of_element(points_inside[i], obj.plotObject.point_list);
+            element_index_list.push(index);
+          }
+          for (let i=0; i<this.nbObjects; i++) {
+            if (this.objectList[i].type_ !== 'primitivegroupcontainer') continue;
+            let container:any = this.objectList[i];
+            let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(container.primitive_dict), list => list.reverse()));  
+            for (let j=0; j<container.primitive_groups.length; j++) {
+                container.primitive_groups[j].dep_mouse_over = element_index_list.includes(Number(primitive_to_point_index[j]));
+            }
+            container.draw(false, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);
+            container.draw(true, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);        
+          }
         } else {
           for (let i=0; i<this.nbObjects; i++) {
-            if (this.objectList[i].type_ === 'scatterplot') {
-              this.objectList[i].select_on_mouse = undefined;
+            if (this.objectList[i].type_ !== 'primitivegroupcontainer') continue;
+            let container:any = this.objectList[i];
+            for (let j=0; j<container.primitive_groups.length; j++) {
+              container.primitive_groups[j].dep_mouse_over = false;
+              container.draw(false, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);
+              container.draw(true, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);  
             }
           }
         }
-        this.redrawAllObjects();
       }
-    } 
+    }
+    if (!bool) {
+      for (let i=0; i<this.nbObjects; i++) {
+        if (this.objectList[i].type_ !== 'primitivegroupcontainer') continue;
+        let container:any = this.objectList[i];
+        for (let j=0; j<container.primitive_groups.length; j++) {
+          container.primitive_groups[j].dep_mouse_over = false;
+          container.draw(false, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);
+          container.draw(true, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);  
+        }
+      }
+    }
+    
   }
+
+
+  has_primitive_group_container() {
+    for (let i=0; i<this.objectList.length; i++) {
+      let obj:any = this.objectList[i];
+      if (obj.type_ === 'primitivegroupcontainer') {
+        if (obj.primitive_groups.length !== 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
 
 
   mouse_interaction(): void {
@@ -1418,6 +1497,7 @@ export class MultiplePlots {
         } else {
           if (this.selectDependency_bool) {
             this.mouse_over_primitive_group();
+            this.mouse_over_scatter_plot();
           }
         }
       }
@@ -1437,8 +1517,8 @@ export class MultiplePlots {
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
           if (this.objectList[this.clickedPlotIndex].type_ == 'parallelplot') {
-            var selected_axis_name: string; var vertical: boolean; var inverted: boolean;
-            var hexs: string[]; var isSelectingppAxis: boolean;
+            var selected_axis_name: string, vertical: boolean, inverted: boolean;
+            var hexs: string[], isSelectingppAxis: boolean;
             [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
             if (isSelectingppAxis) {
               for (let i=0; i<this.nbObjects; i++) {
@@ -1454,10 +1534,7 @@ export class MultiplePlots {
               this.reset_selected_points_except([this.clickedPlotIndex]);
               this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep);
             }
-          } else if ((this.objectList[this.clickedPlotIndex].type_ == 'scatterplot') &&
-              (this.objectList[this.clickedPlotIndex].select_on_click.length === 0)) {
-                this.reset_all_selected_points();
-          }
+          } 
         }
         this.refresh_selected_point_index();
       } else {
@@ -1470,6 +1547,7 @@ export class MultiplePlots {
       isDrawing = false;
       mouse_moving = false;
     });
+
 
     canvas.addEventListener('wheel', e => {
       e.preventDefault();
@@ -1508,6 +1586,11 @@ export class MultiplePlots {
   }
 }
 
+
+/** PlotData is the key class for displaying data. It contains numerous parameters and methods 
+ * for that purpose. It is inherited by more specific data-visualization objects such as
+ * PlotScatter, PlotContour, ParallelPlot and PrimitiveGroupContainer 
+ */  
 export abstract class PlotData {
   type_:string;
   context_show:any;
@@ -1532,6 +1615,7 @@ export abstract class PlotData {
   settings_on:boolean=false;
   colour_to_plot_data:any={};
   select_on_mouse:any;
+  primitive_mouse_over_point:Point2D;
   select_on_click:any[]=[];
   selected_point_index:any[]=[];
   color_surface_on_mouse:string=string_to_hex('lightskyblue');
@@ -1595,6 +1679,7 @@ export abstract class PlotData {
   zoom_box_y:number=0;
   zoom_box_w:number=0;
   zoom_box_h:number=0;
+  clear_point_button_y:number=0;
 
   displayable_attributes:Attribute[]=[];
   attribute_booleans:boolean[]=[];
@@ -1664,6 +1749,7 @@ export abstract class PlotData {
   clickedPlotIndex:number=-1;
   primitive_dict:any={};
   elements_dict:any={};
+  dep_mouse_over:boolean=false;
 
   public constructor(
     public data:any,
@@ -1755,6 +1841,7 @@ export abstract class PlotData {
     Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', string_to_hex('blue'), 1, 1, [10,10]);
   }
 
+
   draw_rect() {
     if (this.multiplot_manipulation === false) {
       Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', this.initial_rect_color_stroke, this.initial_rect_line_width, 1, this.initial_rect_dashline);
@@ -1776,6 +1863,11 @@ export abstract class PlotData {
   draw_manipulable_rect() {
     Shape.rect(this.X, this.Y, this.width, this.height, this.context, this.manipulation_rect_color_fill, this.manipulation_rect_color_stroke, 
       this.manipulation_rect_line_width, this.manipulation_rect_opacity, this.manipulation_rect_dashline);
+  }
+
+  draw_mouse_over_rect() {
+    Shape.rect(this.X, this.Y, this.width, this.height, this.context, string_to_hex('yellow'), string_to_hex('grey'),
+      1, 0.5, [10,10]);
   }
 
   draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d:PrimitiveGroup) {
@@ -1808,8 +1900,10 @@ export abstract class PlotData {
           this.context.setLineDash([]);
         } else if ((d.primitives[i].type_ == 'line2d') && is_inside_canvas) {
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.width, this.height);
+        } else if (d.primitives[i].type_ === 'multiplelabels') {
+          d.primitives[i].draw(this.context, this.width, this.X, this.Y);
         }
-        this.context.closePath();
+        this.context.closePath(); 
       }
     }
   }
@@ -1879,7 +1973,7 @@ export abstract class PlotData {
     }
   }
 
-  draw_point(hidden, mvx, mvy, scaleX, scaleY, d) {
+  draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
     if (d['type_'] == 'point') {
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
@@ -1887,9 +1981,9 @@ export abstract class PlotData {
         if (this.plotObject.type_ == 'scatterplot') {
           if (this.sc_interpolation_ON) {
             if (d.selected || List.contains_undefined(this.select_on_click)) {
-              this.context.fillStyle = d.color_fill;
+              this.context.fillStyle = d.point_style.color_fill;
             } else {
-              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.color_fill), 0.75));
+              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
             }
           } else {
             this.context.fillStyle = this.plotObject.point_style.color_fill;
@@ -1898,16 +1992,16 @@ export abstract class PlotData {
             }
           }
         } else { // graph2d
-          this.context.fillStyle = d.color_fill;
+          this.context.fillStyle = d.point_style.color_fill;
         }
-        this.context.lineWidth = d.stroke_width;
-        this.context.strokeStyle = d.color_stroke;
-        var shape = d.point_shape;
+        this.context.lineWidth = d.point_style.stroke_width;
+        this.context.strokeStyle = d.point_style.color_stroke;
+        var shape = d.point_style.shape;
 
         if (shape == 'crux') {
-          this.context.strokeStyle = d.color_fill;
+          this.context.strokeStyle = d.point_style.color_fill;
         }
-        if (this.select_on_mouse == d) {
+        if ((this.select_on_mouse === d) || (this.primitive_mouse_over_point === d)) {
           this.context.fillStyle = this.color_surface_on_mouse;
         }
         if (d.selected) {
@@ -1915,7 +2009,7 @@ export abstract class PlotData {
             this.context.strokeStyle = this.color_surface_on_click;
           } else {
             if (this.sc_interpolation_ON) {
-              this.context.fillStyle = d.color_fill;
+              this.context.fillStyle = d.point_style.color_fill;
             } else {
               this.context.fillStyle = this.color_surface_on_click;
             }
@@ -1957,7 +2051,7 @@ export abstract class PlotData {
     this.context.fill();
   }
 
-  draw_tooltip(d, mvx, mvy, point_list, elements, mergeON) {
+  draw_tooltip(d:Tooltip, mvx, mvy, point_list, elements, mergeON) {
     if (d['type_'] == 'tooltip') {
       this.tooltip_ON = true;
       d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, elements, mergeON);
@@ -2441,8 +2535,7 @@ export abstract class PlotData {
     this.display_list_to_elements_dict = Object.fromEntries(entries);
   }
 
-  pp_color_management(index:number) {
-    var selected = List.is_include(this.to_display_list[index], this.pp_selected);
+  pp_color_management(index:number, selected:boolean) {
     if (List.isListOfEmptyList(this.rubber_bands)) {
       selected = true;
     }
@@ -2463,12 +2556,25 @@ export abstract class PlotData {
 
 
   draw_parallel_coord_lines() {
+    var selected_seg_lists = [];
+    this.context.lineWidth = this.edge_style.line_width;
     for (let i=0; i<this.to_display_list.length; i++) {
       if (this.vertical) { var seg_list = this.vertical_axis_coords[i]; } else { var seg_list = this.horizontal_axis_coords[i]; }
+      let selected = List.is_include(this.to_display_list[i], this.pp_selected);
+      if (!selected) {
+        this.context.beginPath();
+        this.pp_color_management(i, selected);
+        Shape.drawLine(this.context, seg_list);
+        this.context.stroke();
+        this.context.closePath();
+      } else {
+        selected_seg_lists.push({seg_list:seg_list, index:i});
+      }
+    }
+    for (let seg_dict of selected_seg_lists) {
       this.context.beginPath();
-      this.pp_color_management(i);
-      this.context.lineWidth = this.edge_style.line_width;
-      Shape.drawLine(this.context, seg_list);
+      this.pp_color_management(seg_dict.index, true);
+      Shape.drawLine(this.context, seg_dict.seg_list);
       this.context.stroke();
       this.context.closePath();
     }
@@ -2560,16 +2666,16 @@ export abstract class PlotData {
   }
 
 
-  dep_color_propagation(attribute_index:number, vertical:boolean, inverted:boolean, hexs:string[], attribute_name:string): void {
+  dep_color_propagation(vertical:boolean, inverted:boolean, hexs:string[], attribute_name:string): void {
     var sort: Sort = new Sort();
-    var sorted_elements = sort.sortObjsByAttribute(List.copy(Array.from(this.plotObject.elements)), attribute_name);
+    var sorted_elements = sort.sortObjsByAttribute(List.copy(this.plotObject.elements), attribute_name);
     var nb_points = this.plotObject.point_list.length;
     for (let i=0; i<nb_points; i++) {
       let j = List.get_index_of_element(sorted_elements[i], this.plotObject.elements);
       if ((vertical && inverted) || (!vertical && !inverted)) {
-        this.plotObject.point_list[j].color_fill = hexs[i];
+        this.plotObject.point_list[j].point_style.color_fill = hexs[i];
       } else {
-        this.plotObject.point_list[j].color_fill = hexs[nb_points - 1 - i];
+        this.plotObject.point_list[j].point_style.color_fill = hexs[nb_points - 1 - i];
       }
     }
     this.refresh_point_list_bool = true;
@@ -2620,10 +2726,11 @@ export abstract class PlotData {
     this.reset_rect_y = this.zw_y + this.button_h + 5;
     this.select_y = this.reset_rect_y + this.button_h + 5;
     this.graph1_button_y = 10;
-    this.graph1_button_w = this.width*0.05;
-    this.graph1_button_h = this.height*0.04;
+    this.graph1_button_w = Math.min(this.width*0.05, 30);
+    this.graph1_button_h = Math.min(this.height*0.04, 15);
     this.merge_y = this.select_y + this.button_h + 5;
     this.perm_button_y = this.merge_y + this.button_h + 5;
+    this.clear_point_button_y = this.perm_button_y + this.button_h + 5;
   }
 
   refresh_attribute_booleans() {
@@ -2991,6 +3098,7 @@ export abstract class PlotData {
     this.refresh_attribute_booleans();
   }
 
+
   refresh_selected_point_index() {  //selected_point_index : index of selected points in the initial point list
     this.selected_point_index = [];
     for (let i=0; i<this.select_on_click.length; i++) {
@@ -3039,7 +3147,7 @@ export abstract class PlotData {
         this.latest_selected_points = [click_plot_data];
       }
     } else { 
-      this.select_on_click.push(click_plot_data);
+      // this.select_on_click.push(click_plot_data); // used to add undefined to select_on_click
     }
     if (this.tooltip_ON && click_plot_data) {
       let is_in_tooltip_list = List.is_include(click_plot_data, this.tooltip_list);
@@ -3050,12 +3158,16 @@ export abstract class PlotData {
       }
     }
 
-    if (List.contains_undefined(this.select_on_click) && !this.click_on_button) {
-      this.reset_select_on_click();
-      this.tooltip_list = [];
-      this.latest_selected_points = [];
-      Interactions.reset_permanent_window(this);
-    }
+    // The following commented lines add a feature that unselect all points when the user is not clicking on a point (in such case,
+    // an undefined element is pushed into this.select_on_click).
+    // It has been removed but I let it here in case it'd be useful someday.
+
+    // if (List.contains_undefined(this.select_on_click) && !this.click_on_button) {
+    //   this.reset_select_on_click();
+    //   this.tooltip_list = [];
+    //   this.latest_selected_points = [];
+    //   Interactions.reset_permanent_window(this);
+    // }
     this.refresh_selected_point_index();
     if (this.type_ == 'scatterplot') {this.refresh_latest_selected_points_index();}
   }
@@ -3173,6 +3285,7 @@ export abstract class PlotData {
     var click_on_graph = false;
     var click_on_merge = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.merge_y + this.Y, this.button_w, this.button_h);
     var click_on_perm = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.perm_button_y + this.Y, this.button_w, this.button_h);
+    var click_on_clear = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.clear_point_button_y + this.Y, this.button_w, this.button_h);
 
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
@@ -3181,7 +3294,8 @@ export abstract class PlotData {
       text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
     this.click_on_button = false;
-    this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select || click_on_graph || click_on_merge || click_on_perm;
+    this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select 
+    || click_on_graph || click_on_merge || click_on_perm || click_on_clear;
 
     if (mouse_moving) {
       if (this.zw_bool) {
@@ -3214,6 +3328,8 @@ export abstract class PlotData {
           Interactions.click_on_merge_action(this);
         } else if (click_on_perm) {
           Interactions.click_on_perm_action(this);
+        } else if (click_on_clear) {
+          Interactions.click_on_clear_action(this);
         }
       }
       Interactions.reset_zoom_box(this);
@@ -3479,12 +3595,7 @@ export abstract class PlotData {
         if (this.distance([xi,yi], [xj,yj])<1000*(point_list_copy[i].size + point_list_copy[j].size)) {
           var new_cx = (point_list_copy[i].cx + point_list_copy[j].cx)/2;
           var new_cy = (point_list_copy[i].cy + point_list_copy[j].cy)/2;
-          var new_shape = point_list_copy[i].shape;
-          var new_point_size = point_list_copy[i].point_size;
-          var new_color_fill = point_list_copy[i].color_fill;
-          var new_color_stroke = point_list_copy[i].color_stroke;
-          var new_stroke_width = point_list_copy[i].stroke_width;
-          var point = new Point2D(new_cx, new_cy, new_shape, new_point_size, new_color_fill, new_color_stroke, new_stroke_width, 'point', '');
+          var point = new Point2D(new_cx, new_cy, point_list_copy[i].point_style, 'point', '');
           point.points_inside = point_list_copy[i].points_inside.concat(point_list_copy[j].points_inside);
           point.point_families = List.union(point_list_copy[i].point_families, point_list_copy[j].point_families);
           point.selected = point_list_copy[i].selected || point_list_copy[j].selected;
@@ -3566,17 +3677,19 @@ export abstract class PlotData {
   }
 }
 
-
+/** 
+ * A class that inherits from PlotData and is specific for drawing PrimitiveGroups.
+ */
 export class PlotContour extends PlotData {
   plot_datas:any;
   public constructor(public data:any,
-                public width: number,
-                public height: number,
-                public coeff_pixel: number,
-                public buttons_ON: boolean,
-                public X: number,
-                public Y: number,
-                public canvas_id: string) {
+                     public width: number,
+                     public height: number,
+                     public coeff_pixel: number,
+                     public buttons_ON: boolean,
+                     public X: number,
+                     public Y: number,
+                     public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     var requirement = '0.5.2';
     this.manage_package_version(requirement);
@@ -3586,15 +3699,23 @@ export class PlotContour extends PlotData {
     if (d['type_'] == 'primitivegroup') { 
       var a = PrimitiveGroup.deserialize(d);
       this.plot_datas.push(a);
+      let multiple_labels_index = -1;
       for (let i=0; i<a.primitives.length; i++) {
         let primitive = a.primitives[i];
-        if (isNaN(this.minX)) {this.minX = primitive.minX} else {this.minX = Math.min(this.minX, primitive.minX)};
-        if (isNaN(this.maxX)) {this.maxX = primitive.maxX} else {this.maxX = Math.max(this.maxX, primitive.maxX)};
-        if (isNaN(this.minY)) {this.minY = primitive.minY} else {this.minY = Math.min(this.minY, primitive.minY)};
-        if (isNaN(this.maxY)) {this.maxY = primitive.maxY} else {this.maxY = Math.max(this.maxY, primitive.maxY)};
-        if ((primitive.type_ == 'contour') || (primitive.type_ == 'circle')) {
-          this.colour_to_plot_data[primitive.mouse_selection_color] = primitive;
+        if (primitive.type_ === 'multiplelabels') {
+          multiple_labels_index = i;
+        } else {
+          if (isNaN(this.minX)) {this.minX = primitive.minX} else {this.minX = Math.min(this.minX, primitive.minX)};
+          if (isNaN(this.maxX)) {this.maxX = primitive.maxX} else {this.maxX = Math.max(this.maxX, primitive.maxX)};
+          if (isNaN(this.minY)) {this.minY = primitive.minY} else {this.minY = Math.min(this.minY, primitive.minY)};
+          if (isNaN(this.maxY)) {this.maxY = primitive.maxY} else {this.maxY = Math.max(this.maxY, primitive.maxY)};
+          if ((primitive.type_ == 'contour') || (primitive.type_ == 'circle')) {
+            this.colour_to_plot_data[primitive.mouse_selection_color] = primitive;
+          }
         }
+      }
+      if (multiple_labels_index !== -1) {
+        a.primitives = List.move_elements(multiple_labels_index, a.primitives.length - 1, a.primitives);
       }
     }
 
@@ -3616,9 +3737,13 @@ export class PlotContour extends PlotData {
       let d = this.plot_datas[i];
       this.draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d);
     }
-    if (this.multiplot_manipulation) {
+
+    if (this.dep_mouse_over) {
+      this.draw_mouse_over_rect();
+    } else if (this.multiplot_manipulation) {
       this.draw_manipulable_rect();
     }
+    
     if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
       this.draw_zoom_rectangle();
     }
@@ -3639,6 +3764,9 @@ export class PlotContour extends PlotData {
   }
 }
 
+
+/** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
+ */
 export class PlotScatter extends PlotData {
   public constructor(public data:any,
     public width: number,
@@ -3662,7 +3790,7 @@ export class PlotScatter extends PlotData {
         this.plot_datas['value'] = this.plotObject.graphs;
         for (let i=0; i<this.plotObject.graphs.length; i++) {
           let graph = this.plotObject.graphs[i];
-          this.graph_colorlist.push(graph.point_list[0].color_fill);
+          this.graph_colorlist.push(graph.point_list[0].point_style.color_fill);
           this.graph_to_display.push(true);
           this.graph_name_list.push(graph.name);
           graph.id = i;
@@ -3732,6 +3860,9 @@ export class PlotScatter extends PlotData {
 
       //draw permanent window button
       Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
+
+      //draw clear point button
+      Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
     }
     if (this.multiplot_manipulation) {
       this.draw_manipulable_rect();
@@ -3740,7 +3871,7 @@ export class PlotScatter extends PlotData {
   }
 }
 
-
+/** A class thtat inherits from PlotData and is specific for drawing ParallelPlots  */
 export class ParallelPlot extends PlotData {
 
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
@@ -3897,6 +4028,8 @@ export class ParallelPlot extends PlotData {
   }
 }
 
+
+/** A class that inherits from PlotData and is specific for drawing PrimitiveGroupContainers.  */
 export class PrimitiveGroupContainer extends PlotData {
   primitive_groups:PlotContour[]=[];
   layout_mode:string='regular';
@@ -4362,7 +4495,7 @@ export class PrimitiveGroupContainer extends PlotData {
   }
 
   one_axis_layout() {
-    var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic', '');
+    var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
     var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
     this.layout_axis = Axis.deserialize(serialized_axis);
@@ -4403,7 +4536,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
 
   two_axis_layout() {
-    var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic', '');
+    var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
     var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
     this.layout_axis = Axis.deserialize(serialized_axis);
@@ -4804,10 +4937,13 @@ export class Interactions {
   }
 
   public static mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y, plot_data:PlotScatter) {
+    var temp_w = Math.abs(mouse2X - mouse1X);
+    var temp_h = Math.abs(mouse2Y - mouse1Y);
+    if ((temp_w <= 5) || (temp_h <= 5)) return;
     plot_data.perm_window_x = plot_data.scatter_to_real_coords(Math.min(mouse1X, mouse2X), 'x');
     plot_data.perm_window_y = plot_data.scatter_to_real_coords(Math.min(mouse1Y, mouse2Y), 'y');
-    plot_data.perm_window_w = plot_data.scatter_to_real_length(Math.abs(mouse2X - mouse1X), 'x');
-    plot_data.perm_window_h = plot_data.scatter_to_real_length(Math.abs(mouse2Y - mouse1Y), 'y');
+    plot_data.perm_window_w = plot_data.scatter_to_real_length(temp_w, 'x');
+    plot_data.perm_window_h = plot_data.scatter_to_real_length(temp_h, 'y');
   }
 
 
@@ -4817,6 +4953,13 @@ export class Interactions {
     plot_data.tooltip_list = [];
     plot_data.context_show.setLineDash([]);
     plot_data.context_hidden.setLineDash([]);
+    var sc_perm_window_x = plot_data.real_to_scatter_coords(plot_data.perm_window_x, 'x');
+    var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
+    var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
+    var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
+    
+    if (sc_perm_window_w <= 5 || sc_perm_window_h <= 5) return;
+
     if (plot_data.plotObject['type_'] == 'graph2d') {
       for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
         let graph = plot_data.plotObject.graphs[i];
@@ -4824,11 +4967,7 @@ export class Interactions {
           let point = graph.point_list[j];
           var x = plot_data.scaleX*(1000*point.cx + plot_data.last_mouse1X) + plot_data.X;
           var y = plot_data.scaleY*(1000*point.cy + plot_data.last_mouse1Y) + plot_data.Y;
-            var sc_perm_window_x = plot_data.real_to_scatter_coords(plot_data.perm_window_x, 'x');
-            var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
-            var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
-            var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
-            var in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
+          var in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
           if ((in_rect===true) && !List.is_include(point, plot_data.select_on_click)) {
             plot_data.select_on_click.push(point);
             graph.point_list[j].selected = true;
@@ -4843,10 +4982,6 @@ export class Interactions {
       for (var j=0; j<plot_data.scatter_point_list.length; j++) {
         var x = plot_data.scaleX*(1000*plot_data.scatter_point_list[j].cx + plot_data.last_mouse1X) + plot_data.X;
         var y = plot_data.scaleY*(1000*plot_data.scatter_point_list[j].cy + plot_data.last_mouse1Y) + plot_data.Y;
-        var sc_perm_window_x = plot_data.real_to_scatter_coords(plot_data.perm_window_x, 'x');
-        var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
-        var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
-        var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
         in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
         if ((in_rect===true) && !List.is_include(plot_data.scatter_point_list[j], plot_data.select_on_click)) {
           plot_data.select_on_click.push(plot_data.scatter_point_list[j]);
@@ -4931,6 +5066,11 @@ export class Interactions {
   public static click_on_perm_action(plot_data:PlotScatter) {
     plot_data.permanent_window = !plot_data.permanent_window;
     this.reset_permanent_window(plot_data);
+  }
+
+  public static click_on_clear_action(plot_data:PlotScatter) {
+    this.reset_permanent_window(plot_data);
+    plot_data.reset_select_on_click();
   }
 
   public static zoom_in_button_action(plot_data:PlotScatter) {
@@ -5303,8 +5443,8 @@ export class MultiplotCom {
   }
 
   public static pp_to_sc_communication(to_select:[string, [number, number]][], axis_numbers:number[], plot_data:PlotData):void {
-    var new_select_on_click = [];
     if (to_select.length == 1) {
+      var new_select_on_click = [];
       let min = to_select[0][1][0];
       let max = to_select[0][1][1];
       for (let i=0; i<plot_data.scatter_point_list.length; i++) {
@@ -5330,7 +5470,10 @@ export class MultiplotCom {
         }
       }
       plot_data.select_on_click = new_select_on_click;
+      plot_data.refresh_selected_point_index();
+
     } else if (to_select.length == 2) {
+      var new_select_on_click = [];
       let min1 = to_select[0][1][0];
       let max1 = to_select[0][1][1];
       let min2 = to_select[1][1][0];
@@ -5362,9 +5505,10 @@ export class MultiplotCom {
         }
       }
       plot_data.select_on_click = new_select_on_click;
+      plot_data.refresh_selected_point_index();
+
     }
 
-    plot_data.refresh_selected_point_index();
   }
 
   public static pp_to_pp_communication(rubberbands_dep:[string, [number, number]][], plot_data:PlotData) {
@@ -5380,6 +5524,8 @@ export class MultiplotCom {
           let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
           let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
           plot_data.rubber_bands[j] = [received_axis_min, received_axis_max];
+          plot_data.add_to_rubberbands_dep(rubberbands_dep[i]);
+          break;
         }
       }
     }
@@ -5468,8 +5614,16 @@ export class Buttons {
       Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, 'PermOFF', police);
     }
   }
+
+  public static clear_point_button(x, y, w, h, police, plot_data:PlotData) {
+    Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, 'Clear', police);
+  }
 }
 
+/** 
+ * A class that allows you to draw multiple primitives in one canvas.
+ * @param primitives A list of primitives, ie. Contour2D, Text, LineSegment2D, Arc2D, Circle2D or Line2D
+ */
 export class PrimitiveGroup {
   constructor(public primitives: any[],
               public type_: string,
@@ -5491,6 +5645,8 @@ export class PrimitiveGroup {
         primitives.push(Circle2D.deserialize(temp[i]));
       } else if (temp[i]['type_'] == 'line2d') {
         primitives.push(Line2D.deserialize(temp[i]));
+      } else if (temp[i]['type_'] == 'multiplelabels') {
+        primitives.push(MultipleLabels.deserialize(temp[i]));
       }
     }
     return new PrimitiveGroup(primitives,
@@ -5499,6 +5655,10 @@ export class PrimitiveGroup {
   }
 }
 
+
+/** 
+ * @param plot_data_primitives A set of primitives (LineSegment2D, Arc2D) that draw a closed polygon.
+ */
 export class Contour2D {
   minX:number=0;
   maxX:number=0;
@@ -5538,12 +5698,12 @@ export class Contour2D {
         new_line.edge_style = edge_style;
         plot_data_primitives.push(new_line);
       }
-      if (d['type_'] == 'circle') {
-        let new_circle = Circle2D.deserialize(d);
-        new_circle.edge_style = edge_style;
-        new_circle.surface_style = surface_style;
-        plot_data_primitives.push(new_circle);
-      }
+      // if (d['type_'] == 'circle') {
+      //   let new_circle = Circle2D.deserialize(d);
+      //   new_circle.edge_style = edge_style;
+      //   new_circle.surface_style = surface_style;
+      //   plot_data_primitives.push(new_circle);
+      // }
       if (d['type_'] == 'arc') {
         let new_arc = Arc2D.deserialize(d);
         new_arc.edge_style = edge_style;
@@ -5650,6 +5810,66 @@ export class Text {
 }
 
 
+export class Label {
+  constructor(public title:string,
+              public text_style: TextStyle,
+              public rectangle_surface_style: SurfaceStyle,
+              public rectangle_edge_style: EdgeStyle,
+              public type_:string = 'label',
+              public name:string = '') {}
+  
+
+  public static deserialize(serialized) {
+    var text_style = TextStyle.deserialize(serialized['text_style']);
+    var rectangle_surface_style = SurfaceStyle.deserialize(serialized['rectangle_surface_style']);
+    var rectangle_edge_style = EdgeStyle.deserialize(serialized['rectangle_edge_style']);
+    return new Label(serialized['title'],
+                     text_style,
+                     rectangle_surface_style, rectangle_edge_style,
+                     serialized['type_'],
+                     serialized['name']);
+  }
+
+  draw(context, decalage_x, decalage_y, rect_w) {
+    var rect_h = this.text_style.font_size;
+    Shape.rect(decalage_x, decalage_y, rect_w, rect_h, context, this.rectangle_surface_style.color_fill,
+      this.rectangle_edge_style.color_stroke, this.rectangle_edge_style.line_width, this.rectangle_surface_style.opacity,
+      this.rectangle_edge_style.dashline);
+    context.font = this.text_style.font;
+    context.textAlign = 'start';
+    context.textBaseline = 'middle';
+    context.fillStyle = this.text_style.text_color;
+    context.fillText(this.title, decalage_x + rect_w + 5, decalage_y + 2*rect_h/3);
+  }
+}
+
+
+export class MultipleLabels {
+  constructor(public labels:Label[],
+              public type_:string='multiplelabels',
+              public name:string='') {}
+      
+  public static deserialize(serialized) {
+    let labels = [];
+    for (let serialized_label of serialized['labels']) {
+      labels.push(Label.deserialize(serialized_label));
+    }
+    return new MultipleLabels(labels,
+                              serialized['type_'],
+                              serialized['name']);
+  }
+
+  draw(context, canvas_width, X, Y) {
+    var rect_w = canvas_width*0.04;
+    var decalage_x = 5 + X, decalage_y = 5 + Y;
+    for (let label of this.labels) {
+      label.draw(context, decalage_x, decalage_y, rect_w);
+      decalage_y += label.text_style.font_size + 5;
+    }
+  }
+}
+
+
 export class Line2D {
   minX:number=0;
   maxX:number=0;
@@ -5722,7 +5942,7 @@ export class LineSegment2D {
 
   constructor(public data:any,
               public edge_style:EdgeStyle,
-              public type_:string,
+              public type_:string='linesegment2d',
               public name:string) {
       this.minX = Math.min(this.data[0], this.data[2]);
       this.maxX = Math.max(this.data[0], this.data[2]);
@@ -5765,7 +5985,7 @@ export class Circle2D {
               public r:number,
               public edge_style:EdgeStyle,
               public surface_style:SurfaceStyle,
-              public type_:string,
+              public type_:string='circle',
               public name:string) {
       this.minX = this.cx - this.r;
       this.maxX = this.cx + this.r;
@@ -5799,6 +6019,10 @@ export class Circle2D {
 }
 
 export class Point2D {
+  /**
+   * minX, maxX, minY, maxY define the bouding box.
+   * size is the real size of the point (depends on point_size which value is 1, 2, 3 or 4).
+   */
   minX:number=0;
   maxX:number=0;
   minY:number=0;
@@ -5812,17 +6036,13 @@ export class Point2D {
 
   constructor(public cx:number,
               public cy:number,
-              public shape:string,
-              public point_size:number,
-              public color_fill:string,
-              public color_stroke:string,
-              public stroke_width:number,
+              public point_style: PointStyle,
               public type_:string='point',
-              public name:string) {
-      if (point_size<1) {
+              public name:string='') {
+      if (point_style.size<1) {
         throw new Error('Invalid point_size');
       }
-      this.size = this.k*point_size/400;
+      this.size = this.k*point_style.size/400;
       this.minX = this.cx - 2.5*this.size;
       this.maxX = this.cx + 2.5*this.size;
       this.minY = this.cy - 5*this.size;
@@ -5832,25 +6052,22 @@ export class Point2D {
     }
 
     public static deserialize(serialized) {
+      var point_style = PointStyle.deserialize(serialized['point_style']);
       return new Point2D(serialized['cx'],
-                                  -serialized['cy'],
-                                  serialized['shape'],
-                                  serialized['size'],
-                                  rgb_to_hex(serialized['color_fill']),
-                                  rgb_to_hex(serialized['color_stroke']),
-                                  serialized['stroke_width'],
-                                  serialized['type_'],
-                                  serialized['name']);
+                         -serialized['cy'],
+                         point_style,
+                         serialized['type_'],
+                         serialized['name']);
     }
 
     draw(context, context_hidden, mvx, mvy, scaleX, scaleY, X, Y) {
-        if (this.shape == 'circle') {
+        if (this.point_style.shape == 'circle') {
           context.arc(scaleX*(1000*this.cx+ mvx) + X, scaleY*(1000*this.cy+ mvy) + Y, 1000*this.size, 0, 2*Math.PI);
           context.stroke();
-        } else if (this.shape == 'square') {
+        } else if (this.point_style.shape == 'square') {
           context.rect(scaleX*(1000*this.cx + mvx) - 1000*this.size + X, scaleY*(1000*this.cy + mvy) - 1000*this.size + Y, 1000*this.size*2, 1000*this.size*2);
           context.stroke();
-        } else if (this.shape == 'crux') {
+        } else if (this.point_style.shape == 'crux') {
           context.rect(scaleX*(1000*this.cx + mvx) + X, scaleY*(1000*this.cy + mvy) + Y, 1000*this.size, 100*this.size);
           context.rect(scaleX*(1000*this.cx + mvx) + X, scaleY*(1000*this.cy + mvy) + Y, -1000*this.size, 100*this.size);
           context.rect(scaleX*(1000*this.cx + mvx) + X, scaleY*(1000*this.cy + mvy) + Y, 100*this.size, 1000*this.size);
@@ -5864,13 +6081,13 @@ export class Point2D {
     }
 
     copy() {
-      return new Point2D(this.cx, this.cy, this.shape, this.point_size, this.color_fill, this.color_stroke, this.stroke_width, this.type_, this.name);
+      return new Point2D(this.cx, this.cy, this.point_style, this.type_, this.name);
     }
 
     equals(point:Point2D): boolean {
-      return (this.cx == point.cx) && (this.cy == point.cy) && (this.shape == point.shape)
-              && (this.size == point.size) && (this.color_fill == point.color_fill) && (this.color_stroke == point.color_stroke)
-              && (this.stroke_width == point.stroke_width);
+      return (this.cx == point.cx) && (this.cy == point.cy) && (this.point_style.shape == point.point_style.shape)
+              && (this.size == point.size) && (this.point_style.color_fill == point.point_style.color_fill) && (this.point_style.color_stroke == point.point_style.color_stroke)
+              && (this.point_style.stroke_width == point.point_style.stroke_width);
     }
 
     getPointIndex(point_list:Point2D[]) {
@@ -6288,7 +6505,7 @@ export class Tooltip {
       var tp_height = (textfills.length + 0.25)*this.text_style.font_size ;
       var cx = point.cx;
       var cy = point.cy;
-      var point_size = point.point_size;
+      var point_size = point.point_style.size;
       var decalage = 2.5*point_size + 5
       var tp_x = scaleX*(1000*cx + mvx) + decalage + X;
       var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height + Y;
@@ -6308,7 +6525,7 @@ export class Tooltip {
       this.surface_style.opacity, []);
       context.fillStyle = this.text_style.text_color;
       context.textAlign = 'start';
-      context.textBaseline = 'Alphabetic';
+      context.textBaseline = 'middle';
 
       var x_start = tp_x + 1/10*tp_width;
       context.font = this.text_style.font;
@@ -6328,7 +6545,7 @@ export class Tooltip {
 
   manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON) {
     for (var i=0; i<tooltip_list.length; i++) {
-      if (!(typeof tooltip_list[i] === "undefined") && this.isTooltipInsideCanvas(tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height)) {
+      if (tooltip_list[i] && this.isTooltipInsideCanvas(tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height)) {
         this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON);
       }
     }
@@ -6359,9 +6576,7 @@ export class Dataset {
       for (let j=0; j<2; j++) {
         coord.push(Math.pow(-1, j)*this.elements[i][this.to_disp_attribute_names[j]]);
       }
-      this.point_list.push(new Point2D(coord[0], coord[1], this.point_style.shape, this.point_style.size,
-                           this.point_style.color_fill, this.point_style.color_stroke, 
-                           this.point_style.stroke_width, 'point', ''));
+      this.point_list.push(new Point2D(coord[0], coord[1], this.point_style, 'point', ''));
     } 
   }
 
@@ -6444,8 +6659,7 @@ export class Scatter {
   }
 
   public static deserialize(serialized) {
-    let default_point_style = new PointStyle(string_to_rgb('lightviolet'), string_to_rgb('lightgrey'), 
-                              0.5, 2, 'circle', '');
+    let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')}
     var default_dict_ = {point_style:default_point_style}
     serialized = set_default_values(serialized, default_dict_);
     var axis = Axis.deserialize(serialized['axis']);
@@ -6542,14 +6756,16 @@ export class Scatter {
       } else {
         cy = - List.get_index_of_element(elt1.toString(), this.lists[1]);
       }
-      this.point_list.push(new Point2D(cx, cy, this.point_style.shape, this.point_style.size, 
-                           this.point_style.color_fill, this.point_style.color_stroke,
-                           this.point_style.stroke_width, 'point', ''));
+      this.point_list.push(new Point2D(cx, cy, MyObject.copy(this.point_style)));
     }
   }
 
 }
 
+
+/**
+ * A class for drawing Arc2Ds.
+ */
 export class Arc2D {
   minX:number=0;
   maxX:number=0;
@@ -6557,6 +6773,18 @@ export class Arc2D {
   maxY:number=0;
   init_scale:number=0;
 
+  /**
+   * 
+   * @param cx the center x coordinate
+   * @param cy the center y coordinate
+   * @param r radius
+   * @param start_angle in radian
+   * @param end_angle in radian
+   * @param data A list of relevant points for BSPline drawing (optional if the arc2D isn't inside a contour).
+   It is usually generated by volmdlr.
+   * @param anticlockwise true or false whether you want the arc the be drawn anticlockwise or not.
+   * @param edge_style Edge customization
+   */
   constructor(public cx:number,
               public cy:number,
               public r:number,
@@ -6567,18 +6795,10 @@ export class Arc2D {
               public edge_style:EdgeStyle,
               public type_:string,
               public name:string) {
-      if((this.cx - this.r) < this.minX){
-        this.minX = this.cx - this.r;
-      }
-      if((this.cx - this.r) > this.maxX){
-        this.maxX = this.cx + this.r;
-      }
-      if((this.cy - this.r) < this.minY){
-        this.minY = this.cy - this.r;
-      }
-      if((this.cy + this.r) > this.maxY){
-        this.maxY = this.cy + this.r;
-      }
+      this.minX = this.cx - this.r;
+      this.maxX = this.cx + this.r;
+      this.minY = this.cy - this.r;
+      this.maxY = this.cy + this.r;
 
       this.start_angle = this.start_angle % Math.PI;
       this.end_angle = this.end_angle % Math.PI;
@@ -6612,6 +6832,7 @@ export class Arc2D {
                 this.anticlockwise);
   }
 
+
   contour_draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
     context.lineWidth = this.edge_style.line_width;
     context.strokeStyle = this.edge_style.color_stroke;
@@ -6623,7 +6844,7 @@ export class Arc2D {
     var tension = 0.4;
     var isClosed = false;
     var numOfSegments = 16;
-  drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
+    drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
   }
 
   // contour_draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
@@ -6674,6 +6895,7 @@ export class Arc2D {
   // }
 }
 
+
 export class Attribute {
   list:any[];
   alias:string;
@@ -6692,6 +6914,10 @@ export class Attribute {
   }
 }
 
+
+/**
+ * A settings class for the customizing objects that have edges such as lines and contours.
+ */
 export class EdgeStyle {
   constructor(public line_width:number,
               public color_stroke:string,
@@ -6719,6 +6945,10 @@ export class EdgeStyle {
   }
 }
 
+
+/**
+ * A settings class for points customization.
+ */
 export class PointStyle {
   constructor(public color_fill: string,
               public color_stroke: string, 
@@ -6756,14 +6986,20 @@ export class PointStyle {
   }
 }
 
+/**
+ * A settings class for text customization.
+ */
 export class TextStyle {
-  font:string
+  font:string;
+  option:string = '';
   constructor(public text_color:string,
               public font_size:number,
               public font_style:string,
-              public text_align_x:string,
-              public text_align_y:string,
-              public name:string) {
+              public text_align_x:string='start',
+              public text_align_y:string='alphabetic',
+              public bold:boolean=false,
+              public italic:boolean=false,
+              public name:string='') {
     if (text_color === undefined) {
       text_color = string_to_hex('black');
     }
@@ -6773,11 +7009,15 @@ export class TextStyle {
     if (font_style === undefined) {
       font_style = 'sans-serif';
     }
-    this.font = font_size.toString() + 'px ' + font_style;
+    this.option = '';
+    if (bold && !italic) this.option = 'bold ';
+    else if (italic && !bold) this.option = 'italic ';
+    else if (italic && bold) this.option = 'bold italic ';
+    this.font = this.option + font_size.toString() + 'px ' + font_style;
   }
 
   public static deserialize(serialized) {
-    let default_dict_ = {text_color:string_to_hex('black'), font_size:12, 
+    let default_dict_ = {text_color:string_to_rgb('black'), font_size:12, 
                          font_style:'sans-serif', text_align_x:'start',
                          text_align_y: 'alphabetic', name:''};
     serialized = set_default_values(serialized,default_dict_);
@@ -6786,10 +7026,19 @@ export class TextStyle {
                             serialized['font_style'],
                             serialized['text_align_x'],
                             serialized['text_align_y'],
+                            serialized['bold'],
+                            serialized['italic'],
                             serialized['name']);
+  }
+
+  get_font_from_size(font_size:number): string {
+    return this.font = this.option + font_size.toString() + 'px ' + this.font_style;
   }
 }
 
+/**
+ * A setting object for customizing objects that have a surface.
+ */
 export class SurfaceStyle {
   constructor(public color_fill:string,
               public opacity:number,
@@ -6803,7 +7052,7 @@ export class SurfaceStyle {
   }
             
   public static deserialize(serialized) {
-    let default_dict_ = {color_fill:'grey', opacity:1, hatching:null};
+    let default_dict_ = {color_fill:string_to_rgb('grey'), opacity:1, hatching:null};
     serialized = set_default_values(serialized, default_dict_);
     if (serialized['hatching'] != null) {
       var hatching = HatchingSet.deserialize(serialized['hatching']);
@@ -6814,17 +7063,6 @@ export class SurfaceStyle {
   }
 }
 
-
-export class ColorSurfaceSet {
-
-  constructor(public name:string,
-              public color:any) {}
-
-  public static deserialize(serialized) {
-      return new ColorSurfaceSet(serialized['name'],
-                                 rgb_to_hex(serialized['color']));
-  }
-}
 
 export class Window {
   constructor(public height:number,public width:number, public name?:string){
@@ -6899,8 +7137,16 @@ export class MyMath {
   }
 }
 
+/** 
+ * A generic toolbox class that contains numerous geometrical static functions.
+ * The functions often require a context, which is got from a canvas element.
+ */
 export class Shape {
 
+  /**
+   * Draws lines that join each point of the list parameter
+   * @param list A list of points: [[x1, y1], [x2, y2],..., [xn, yn]]
+   */
   public static drawLine(context, list) {
     context.moveTo(list[0][0], list[0][1]);
     for (var i=1; i<list.length; i++) {
@@ -6908,6 +7154,12 @@ export class Shape {
     }
   }
 
+  /**
+   * Draws a crux 
+   * @param cx center x coordinate of the crux
+   * @param cy center y coordinate of the crux
+   * @param length half the lengh of the crux
+   */
   public static crux(context:any, cx:number, cy:number, length:number) {
     this.drawLine(context, [[cx, cy], [cx - length, cy]]);
     this.drawLine(context, [[cx, cy], [cx + length, cy]]);
@@ -6915,7 +7167,20 @@ export class Shape {
     this.drawLine(context, [[cx, cy], [cx, cy + length]]);
   }
 
-  public static roundRect(x, y, w, h, radius, context, color_fill, color_stroke, line_width, opacity, dashline) {
+
+  /**
+   * 
+   * @param x x coordinate of the top-left corner
+   * @param y y coordinate od the top_left corner
+   * @param w width
+   * @param h height
+   * @param radius radius of the corners
+   * @param context canvas' context element
+   * @param opacity between 0 and 1
+   * @param dashline a pattern list [a_0,..., a_n] where a_i represents the number of filled pixels is i%2 == 0
+   and the number of empty pixels if i%2 != 0. [] for no dashline.
+   */
+  public static roundRect(x, y, w, h, radius, context, color_fill='No', color_stroke=string_to_hex('black'), line_width=1, opacity=1, dashline=[]) {
     var r = x + w;
     var b = y + h;
     context.setLineDash(dashline);
@@ -6939,6 +7204,16 @@ export class Shape {
     context.setLineDash([]);
   }
 
+
+  /**
+   * @returns true if (x, y) is in the rectangle, false otherwise
+   * @param x the point's x coordinate
+   * @param y the point's y coordinate
+   * @param rect_x the rectangle's top_left x coordinate
+   * @param rect_y the rectangle's top-left y coordinate
+   * @param rect_w the rectangle's width
+   * @param rect_h the rectangle's height
+   */
   public static isInRect(x, y, rect_x, rect_y, rect_w, rect_h) {
     if (rect_w>=0 && rect_h>=0) {
       return ((x>=rect_x) && (x<= rect_x + rect_w) && (y>=rect_y) && (y<=rect_y + rect_h));
@@ -6992,7 +7267,22 @@ export class Shape {
     context.closePath();
   }
 
-  public static rect(x, y, w, h, context, color_fill, color_stroke, line_width, opacity, dashline) {
+  /**
+   * Draws a rectangle on canvas.
+   * @param x the rectangle's top-left x coordinate
+   * @param y the rectangle's top-left y coordinate
+   * @param w the rectangle's width
+   * @param h the rectangle's height
+   * @param context canvas' context
+   * @param color_fill the rectangle's fill color. Can be set to 'No' if the rectangle
+   doesn't have to be filled.
+   * @param color_stroke its stroke color. It can be set to 'No' if a contour isn't needed.
+   * @param line_width its contour's line width.
+   * @param opacity The opacity inside (from 0 to 1).
+   * @param dashline contour's dashline ([] for no dashline). A pattern list [a_0,..., a_n] where a_i represents the number of filled pixels is i%2 == 0
+   and the number of empty pixels if i%2 != 0. 
+   */
+  public static rect(x, y, w, h, context, color_fill='No', color_stroke=string_to_hex('black'), line_width=1, opacity=1, dashline=[]) {
     context.beginPath();
     context.setLineDash(dashline);
     context.fillStyle = color_fill;
@@ -7274,7 +7564,7 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
   return rgb_vectorToStr(r,g,b);
 }
 
- export class Sort {
+export class Sort {
   nbPermutations:number = 0;
   constructor(){};
 
@@ -7410,6 +7700,10 @@ export function isHex(str:string):boolean {
   return str.substring(0,1) == '#';
 }
 
+
+/**
+ * A toolbox with useful functions related to arrays.
+ */
 export class List {
   // public static sort_without_duplicates(list:number[]) {
   //   if (list.length == 0) return list;
@@ -7426,7 +7720,10 @@ export class List {
   //   return no_duplicates
   // }
 
-  public static sort_without_duplicates(list:any[]) {
+  /**
+   * @returns the input list without its duplicates.
+   */
+  public static remove_duplicates(list:any[]) {
     var seen = {};
     var out = [];
     var len = list.length;
@@ -7441,6 +7738,9 @@ export class List {
     return out;
   }
 
+  /**
+   * @returns true if the list contains a undefined element, false otherwise.
+   */
   public static contains_undefined(list:any[]):boolean {
     for (var i=0; i<list.length; i++) {
       if (typeof list[i] === "undefined") {
@@ -7449,6 +7749,7 @@ export class List {
     }
     return false;
   }
+
 
   public static copy(list:any[]): any[] {
     var new_list = [];
@@ -7459,6 +7760,10 @@ export class List {
     // return Array.from(list);
   }
 
+
+  /**
+   * @returns a the input list without the first element equal to val.
+   */
   public static remove_first_selection(val:any, list:any[]): any[] { //remove the first occurrence of val in list
     var temp = [];
     var bool = true;
@@ -7472,6 +7777,10 @@ export class List {
     return temp;
   }
 
+
+  /**
+   * Compares two lists by comparing their elements using ===
+   */
   public static equals(list1, list2) {
     if (list1.length != list2.length) { return false; }
     for (let i=0; i<list1.length; i++) {
@@ -7482,14 +7791,23 @@ export class List {
     return true;
   }
 
+  /**
+   * @returns The input list without all instances of val.
+   */
   public static remove_element(val:any, list:any[]): any[] { //remove every element=val from list
     return list.filter(elt => elt !== val);
   }
 
+  /**
+   * @returns true or false whether val is inside list or not. It uses a generic equals function
+   */
   public static is_include(val:any, list:any[]): boolean {
     return list.findIndex(elt => equals(elt, val)) !== -1;
   }
 
+  /**
+   * @returns true or false whether a list is inside an array of list. It uses a generic equals function.
+   */
   public static is_list_include(list:any[], listArray:any[][]) { //check if a list is inside a list of lists
     for (let i=0; i<listArray.length; i++) {
         if (this.equals(listArray[i], list)) {
@@ -7499,6 +7817,10 @@ export class List {
     return false;
   }
 
+  /**
+   * Provided that obj_list is a list of objects (ie. dictionary is TS), it returns true if a element
+   of obj_list has an attribute 'name' equal to the input name, and false otherwise.
+   */
   public static is_name_include(name:string, obj_list:any[]): boolean {
     for (let i=0; i<obj_list.length; i++) {
       if (name === obj_list[i].name) {
@@ -7508,6 +7830,11 @@ export class List {
     return false;
   }
 
+
+  /**
+   * @returns [min, max] of the input list
+   * @param list a list of real numbers
+   */
   public static getExtremum(list:number[]): [number, number] { //Get the extremas of the list
     var min = list[0];
     var max = list[0];
@@ -7522,10 +7849,18 @@ export class List {
     return [min, max];
   }
 
+
+  /**
+   * @returns a list where value is inserted at index inside list
+   */
   public static insert(value:any, index:number, list:any[]): void {
     list.splice(index, 0, value);
   }
 
+
+  /**
+   * @returns the index of val in list
+   */
   public static get_index_of_element(val:any, list:any[]):number {
     var elt_index = list.findIndex(obj => Object.is(obj, val));
     if (elt_index !== -1) {
@@ -7534,10 +7869,18 @@ export class List {
     throw new Error('cannot get index of element')
   }
 
+  /**
+   * @returns The input list after removing its element at index i
+   */
   public static remove_at_index(i:number, list:any[]):any[] {
     return list.slice(0, i).concat(list.slice(i + 1, list.length));
   }
 
+
+  /**
+   * @returns the input list after removing its element at index old_index and
+   * inserting it at new_index
+   */
   public static move_elements(old_index:number, new_index:number, list:any[]):any[] {
     var elt = list[old_index];
     if (old_index<new_index) {
@@ -7550,15 +7893,23 @@ export class List {
     return list;
   }
 
+
+  /**
+   * Exchanges list's elements at index1 and index2.
+   */
   public static switchElements(list:any[], index1:number, index2:number): void {
     [list[index1], list[index2]] = [list[index2], list[index1]];
   }
+
 
   public static reverse(list:any[]): any[] {
     return Array.from(list).reverse();
   }
 
-  public static isListOfEmptyList(list:any[]): boolean { //check if list === [[], [], ..., []]
+  /**
+   * Checks whether list is a list of empty list, ie [[], [],..., []]
+   */
+  public static isListOfEmptyList(list:any[]): boolean { 
     for (let i=0; i<list.length; i++) {
       if (list[i].length !== 0) {
         return false;
@@ -7567,15 +7918,11 @@ export class List {
     return true;
   }
 
-    public static list_sum(list1:number[], list2:number[]) {
-    if (list1.length !== list2.length) {throw new Error("list1 and list2 must have the same size");}
-    var sum = [];
-    for (let i=0; i<list1.length; i++) {
-      sum.push(list1[i] + list2[i]);
-    }
-    return sum;
-  }
 
+
+  /**
+   * @returns A list that contains all elements that are inside both list1 and list2
+   */
   public static listIntersection(list1:any[], list2:any[]): any[] {
     // var intersection = [];
     // for (let i=0; i<list1.length; i++) {
@@ -7587,6 +7934,20 @@ export class List {
     return list1.filter(value => list2.includes(value));
   }
 
+  /**
+   * @returns A list that contains all elements that are inside both list1 and list2. If one list is empty, then it returns the other list.
+   */
+  public static listIntersectionExceptEmpty(list1:any[], list2:any[]) {
+    if (list1.length === 0) return list2;
+    if (list2.length === 0) return list1;
+    return list1.filter(value => list2.includes(value));
+  }
+
+
+  /**
+   * @returns a list that contains list's elements at index <list_index[i].
+   ex: getListEltFromIndex([1,2], ['a', 'b', 'c', 'd']) = ['b', 'c']
+   */
   public static getListEltFromIndex(list_index:number[], list:any[]): any[] {
     var new_list = [];
     for (let i=0; i<list_index.length; i++) {
@@ -7595,6 +7956,11 @@ export class List {
     return new_list;
   }
 
+
+  /**
+   * @returns the union of list1 and list2, ie a list that contains elements that are
+   inside list1 or list2
+   */
   public static union(list1:any[], list2:any[]): any[] {
     var union_list = this.copy(list1);
     for (let i=0; i<list2.length; i++) {
@@ -7605,6 +7971,10 @@ export class List {
     return union_list;
   } 
 
+
+  /**
+   * @param to_remove a list that contains elements to be removed from list
+   */
   public static remove_selection(to_remove:any[], list:any[]): any[] {
     var new_list = Array.from(list);
     for (let val of to_remove) {
@@ -7632,6 +8002,8 @@ export function set_default_values(dict_, default_dict_) { // returns a dictiona
   return Object.fromEntries(entries);
 }
 
+
+
 export function check_package_version(package_version:string, requirement:string) {
   var version_array = package_version.split('.');
   var requirement_array = requirement.split('.');
@@ -7641,6 +8013,7 @@ export function check_package_version(package_version:string, requirement:string
     Number(requirement_array[2]);
   return package_version_num >= requirement_num;
 }
+
 
 export class MyObject {
   public static removeEntries(keys:string[], dict_) {
@@ -7655,9 +8028,15 @@ export class MyObject {
     }
     return Object.fromEntries(entries);
   }
+
+  public static copy(obj) {
+    return Object.assign({}, obj);
+  }
 }
 
-
+/**
+ * A generic equals function that compares values and not references.
+ */
 export function equals(a, b) {
   if (a === b) return true;
 
@@ -7704,3 +8083,79 @@ export var empty_container = {'name': '',
 'type_': 'primitivegroupcontainer'};
 
 
+var test = {'name': '',
+'package_version': '0.5.2',
+'primitive_groups': [{'name': '',
+  'package_version': '0.5.2',
+  'primitives': [{'name': '',
+    'package_version': '0.5.2',
+    'r': 10,
+    'cy': 0.0,
+    'cx': 0.0,
+    'type_': 'circle'}],
+  'type_': 'primitivegroup'},
+ {'name': '',
+  'package_version': '0.5.2',
+  'primitives': [{'name': '',
+    'package_version': '0.5.2',
+    'plot_data_primitives': [{'name': '',
+      'package_version': '0.5.2',
+      'data': [1.0, 1.0, 1.0, 2.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.5.2'},
+      'type_': 'linesegment2d'},
+     {'name': '',
+      'package_version': '0.5.2',
+      'data': [1.0, 2.0, 2.0, 2.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.5.2'},
+      'type_': 'linesegment2d'},
+     {'name': '',
+      'package_version': '0.5.2',
+      'data': [2.0, 2.0, 2.0, 1.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.5.2'},
+      'type_': 'linesegment2d'},
+     {'name': '',
+      'package_version': '0.5.2',
+      'data': [2.0, 1.0, 1.0, 1.0],
+      'edge_style': {'name': '',
+       'object_class': 'plot_data.core.EdgeStyle',
+       'package_version': '0.5.2'},
+      'type_': 'linesegment2d'}],
+    'surface_style': {'name': '',
+     'object_class': 'plot_data.core.SurfaceStyle',
+     'package_version': '0.5.2',
+     'color_fill': 'rgb(255,175,96)'},
+    'type_': 'contour'}],
+  'type_': 'primitivegroup'},
+ {'name': '',
+  'package_version': '0.5.2',
+  'primitives': [{'name': '',
+    'package_version': '0.5.2',
+    'surface_style': {'name': '',
+     'object_class': 'plot_data.core.SurfaceStyle',
+     'package_version': '0.5.2',
+     'color_fill': 'rgb(247,0,0)'},
+    'r': 5,
+    'cy': 1.0,
+    'cx': 1.0,
+    'type_': 'circle'}],
+  'type_': 'primitivegroup'},
+ {'name': '',
+  'package_version': '0.5.2',
+  'primitives': [{'name': '',
+    'package_version': '0.5.2',
+    'surface_style': {'name': '',
+     'object_class': 'plot_data.core.SurfaceStyle',
+     'package_version': '0.5.2',
+     'color_fill': 'rgb(222,184,135)'},
+    'r': 5,
+    'cy': 1.0,
+    'cx': 1.0,
+    'type_': 'circle'}],
+  'type_': 'primitivegroup'}],
+'type_': 'primitivegroupcontainer'}

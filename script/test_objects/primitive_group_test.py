@@ -67,7 +67,19 @@ text = plot_data.Text(comment='Hello', position_x=6, position_y=9,
                                                      font_style='sans-serif')
                       )
 
+# Label
+  # This label is created with minimum information
+label1 = plot_data.Label(title='label1')
+
+  # This label is created using all customizations
+fill1 = plot_data.SurfaceStyle(color_fill=RED, opacity=0.5)
+edge1 = plot_data.EdgeStyle(line_width=1, color_stroke=BLUE, dashline=[5, 5])
+text_style = plot_data.TextStyle(text_color=ORANGE, font_size=14, italic=True, bold=True)
+label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surface_style=fill1,
+                         rectangle_edge_style=edge1)
+
+labels = plot_data.MultipleLabels(labels=[label1, label2])
 
 primitives = [plot_data_contour, plot_data_line, plot_data_arc,
-              plot_data_circle, text]
+              plot_data_circle, text, labels]
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)

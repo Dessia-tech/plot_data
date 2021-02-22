@@ -53,6 +53,7 @@ steps:
     target: /var/www/cdn/js/plot-data/latest/
     target: /var/www/cdn/js/plot-data/${DRONE_TAG}/
     source: lib/*
+    source: lib/*
     strip_components: 1
 
 - name: upload_doc_typescript

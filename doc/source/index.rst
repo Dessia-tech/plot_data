@@ -14,6 +14,8 @@ For the typescript doc see: https://documentation.dessia.tech/plot_data/typescri
    :maxdepth: 2
    :caption: Contents:
 
+.. autoclass:: plot_data.EdgeStyle
+  :members:
 
 
 Indices and tables

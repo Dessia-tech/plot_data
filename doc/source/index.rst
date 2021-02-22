@@ -100,6 +100,9 @@ For the typescript doc see: https://documentation.dessia.tech/plot_data/typescri
 
 .. autofunction:: plot_data.bounding_box
 
+.. autoclass:: plot_data.colors.Color
+  :members:
+
 
 Indices and tables
 ==================

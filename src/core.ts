@@ -2726,8 +2726,8 @@ export abstract class PlotData {
     this.reset_rect_y = this.zw_y + this.button_h + 5;
     this.select_y = this.reset_rect_y + this.button_h + 5;
     this.graph1_button_y = 10;
-    this.graph1_button_w = this.width*0.05;
-    this.graph1_button_h = this.height*0.04;
+    this.graph1_button_w = Math.min(this.width*0.05, 30);
+    this.graph1_button_h = Math.min(this.height*0.04, 15);
     this.merge_y = this.select_y + this.button_h + 5;
     this.perm_button_y = this.merge_y + this.button_h + 5;
     this.clear_point_button_y = this.perm_button_y + this.button_h + 5;
@@ -4957,6 +4957,9 @@ export class Interactions {
     var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
     var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
     var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
+    
+    if (sc_perm_window_w <= 5 || sc_perm_window_h <= 5) return;
+
     if (plot_data.plotObject['type_'] == 'graph2d') {
       for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
         let graph = plot_data.plotObject.graphs[i];

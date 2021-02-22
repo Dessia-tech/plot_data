@@ -26,7 +26,7 @@ steps:
       from_secret: npm_password
     email: root@dessia.tech
 
-- name: upload to cdn latest
+- name: upload to cdn sid
   image: appleboy/drone-scp
   when:
       branch: master

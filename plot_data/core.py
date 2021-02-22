@@ -75,6 +75,9 @@ class ColorMapSet(DessiaObject):
 
 
 class HatchingSet(DessiaObject):
+    """
+    A class for setting hatchings on a surface.
+    """
     def __init__(self, stroke_width: float = 1, hatch_spacing: float = 10,
                  name: str = ''):
         self.stroke_width = stroke_width
@@ -96,6 +99,13 @@ class Window(DessiaObject):
 
 
 class EdgeStyle(DessiaObject):
+    """
+    A class for customizing edges (such as lines) style.
+
+    :param line_width: line width in pixels
+    :param color_stroke: the edge's color (rgb255)
+    :param dashline: a list of positive floats [a1,...,an] representing a pattern where a_2i is the number of solid pixels and a_2i+1 is the number of empty pixels.
+    """
     def __init__(self, line_width: float = None, color_stroke: str = None,
                  dashline: List[int] = None, name: str = ''):
         self.line_width = line_width
@@ -145,6 +155,9 @@ class SurfaceStyle(DessiaObject):
 
 
 class Text(PlotDataObject):
+    """
+    A class for displaying texts.
+    """
     def __init__(self, comment: str, position_x: float, position_y: float,
                  text_style: TextStyle = None, text_scaling: bool = None,
                  max_width: float = None, name: str = ''):
@@ -157,6 +170,9 @@ class Text(PlotDataObject):
         PlotDataObject.__init__(self, type_='text', name=name)
 
     def mpl_plot(self, ax=None, color='k', alpha=1.):
+        """
+        Plots using Matplotlib.
+        """
         if not ax:
             _, ax = plt.subplots()
         ax.text(self.position_x, self.position_y,

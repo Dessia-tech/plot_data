@@ -4937,10 +4937,13 @@ export class Interactions {
   }
 
   public static mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y, plot_data:PlotScatter) {
+    var temp_w = Math.abs(mouse2X - mouse1X);
+    var temp_h = Math.abs(mouse2Y - mouse1Y);
+    if ((temp_w <= 5) || (temp_h <= 5)) return;
     plot_data.perm_window_x = plot_data.scatter_to_real_coords(Math.min(mouse1X, mouse2X), 'x');
     plot_data.perm_window_y = plot_data.scatter_to_real_coords(Math.min(mouse1Y, mouse2Y), 'y');
-    plot_data.perm_window_w = plot_data.scatter_to_real_length(Math.abs(mouse2X - mouse1X), 'x');
-    plot_data.perm_window_h = plot_data.scatter_to_real_length(Math.abs(mouse2Y - mouse1Y), 'y');
+    plot_data.perm_window_w = plot_data.scatter_to_real_length(temp_w, 'x');
+    plot_data.perm_window_h = plot_data.scatter_to_real_length(temp_h, 'y');
   }
 
 
@@ -4950,6 +4953,10 @@ export class Interactions {
     plot_data.tooltip_list = [];
     plot_data.context_show.setLineDash([]);
     plot_data.context_hidden.setLineDash([]);
+    var sc_perm_window_x = plot_data.real_to_scatter_coords(plot_data.perm_window_x, 'x');
+    var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
+    var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
+    var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
     if (plot_data.plotObject['type_'] == 'graph2d') {
       for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
         let graph = plot_data.plotObject.graphs[i];
@@ -4957,11 +4964,7 @@ export class Interactions {
           let point = graph.point_list[j];
           var x = plot_data.scaleX*(1000*point.cx + plot_data.last_mouse1X) + plot_data.X;
           var y = plot_data.scaleY*(1000*point.cy + plot_data.last_mouse1Y) + plot_data.Y;
-            var sc_perm_window_x = plot_data.real_to_scatter_coords(plot_data.perm_window_x, 'x');
-            var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
-            var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
-            var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
-            var in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
+          var in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
           if ((in_rect===true) && !List.is_include(point, plot_data.select_on_click)) {
             plot_data.select_on_click.push(point);
             graph.point_list[j].selected = true;
@@ -4976,10 +4979,6 @@ export class Interactions {
       for (var j=0; j<plot_data.scatter_point_list.length; j++) {
         var x = plot_data.scaleX*(1000*plot_data.scatter_point_list[j].cx + plot_data.last_mouse1X) + plot_data.X;
         var y = plot_data.scaleY*(1000*plot_data.scatter_point_list[j].cy + plot_data.last_mouse1Y) + plot_data.Y;
-        var sc_perm_window_x = plot_data.real_to_scatter_coords(plot_data.perm_window_x, 'x');
-        var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
-        var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
-        var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
         in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
         if ((in_rect===true) && !List.is_include(plot_data.scatter_point_list[j], plot_data.select_on_click)) {
           plot_data.select_on_click.push(plot_data.scatter_point_list[j]);

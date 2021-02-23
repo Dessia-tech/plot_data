@@ -1,4 +1,4 @@
-# An example of graph2D instantiation. It draws one or several datasets on
+# An example of Graph2D instantiation. It draws one or several datasets on
 # one canvas and is useful for displaying numerical functions
 
 import plot_data

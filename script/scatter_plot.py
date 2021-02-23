@@ -1,6 +1,7 @@
 import plot_data
 from plot_data.colors import *
 import random
+# A script showing scatter plots instantiations.
 
 elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']
@@ -25,10 +26,10 @@ scatterplot = plot_data.Scatter(elements=elements,
 # The previous scripts actually shows the simplest way of creating a scatterplot.
 # However, many options are available for futher customization
 
-# First of all, apart from the tooltip's information, the user can customize
-# its style. 'text_style' modifies the text while 'surface_style'
-# changes the tooltip's inside. Tooltips are rounded-rectangle-shaped and the radius of the
-# vertices can be changed.
+# First of all, apart from tooltips' information, the user can customize
+# the style. 'text_style' modifies the text while 'surface_style'
+# changes the tooltip's interior. Tooltips are rounded-rectangle-shaped and the radius of the
+# vertices can also be changed.
 text_style = plot_data.TextStyle(text_color=GREY,
                                  font_size=10,
                                  font_style='sans-serif')
@@ -39,7 +40,7 @@ custom_tooltip = plot_data.Tooltip(to_disp_attribute_names=['mass', 'length'],
                                    tooltip_radius=10)
 
 
-# Then, points' appearance can be changed through point_style attribute
+# Then, points' appearance can be modified through point_style attribute
 point_style = plot_data.PointStyle(color_fill=LIGHTGREEN,
                                    color_stroke=VIOLET,
                                    stroke_width=0.5,

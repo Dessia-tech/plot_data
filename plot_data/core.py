@@ -44,7 +44,7 @@ def delete_none_from_dict(dict1):
 
 class PlotDataObject(DessiaObject):
     """
-    Abstract interface for DessiaObject implementing in module
+    Abstract interface for DessiaObject implementation in module
     """
 
     def __init__(self, type_: str, name: str = '', **kwargs):
@@ -73,15 +73,15 @@ class PlotDataObject(DessiaObject):
         return DessiaObject.dict_to_object(dict_=dict_)
 
 
-class ColorMapSet(DessiaObject):
-    def __init__(self, value: float = None, tooltip: bool = False,
-                 color_range: str = None, selector: bool = True,
-                 name: str = ''):
-        self.selector = selector
-        self.color_range = color_range
-        self.tooltip = tooltip
-        self.value = value
-        DessiaObject.__init__(self, name=name)
+# class ColorMapSet(DessiaObject):
+#     def __init__(self, value: float = None, tooltip: bool = False,
+#                  color_range: str = None, selector: bool = True,
+#                  name: str = ''):
+#         self.selector = selector
+#         self.color_range = color_range
+#         self.tooltip = tooltip
+#         self.value = value
+#         DessiaObject.__init__(self, name=name)
 
 
 class HatchingSet(DessiaObject):
@@ -100,10 +100,10 @@ class HatchingSet(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class ColorSurfaceSet(DessiaObject):
-    def __init__(self, color: str = 'white', name: str = ''):
-        self.color = color
-        DessiaObject.__init__(self, name=name)
+# class ColorSurfaceSet(DessiaObject):
+#     def __init__(self, color: str = 'white', name: str = ''):
+#         self.color = color
+#         DessiaObject.__init__(self, name=name)
 
 
 class Window(DessiaObject):

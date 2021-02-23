@@ -4948,17 +4948,19 @@ export class Interactions {
 
 
   public static selection_window_action(plot_data:PlotScatter) {
-    plot_data.latest_selected_points = [];
-    plot_data.select_on_click = [];
-    plot_data.tooltip_list = [];
-    plot_data.context_show.setLineDash([]);
-    plot_data.context_hidden.setLineDash([]);
+
     var sc_perm_window_x = plot_data.real_to_scatter_coords(plot_data.perm_window_x, 'x');
     var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
     var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
     var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
     
     if (sc_perm_window_w <= 5 || sc_perm_window_h <= 5) return;
+
+    plot_data.latest_selected_points = [];
+    plot_data.select_on_click = [];
+    plot_data.tooltip_list = [];
+    plot_data.context_show.setLineDash([]);
+    plot_data.context_hidden.setLineDash([]);
 
     if (plot_data.plotObject['type_'] == 'graph2d') {
       for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
@@ -7985,9 +7987,16 @@ export class List {
 } //end class List
 
 
-export function set_default_values(dict_, default_dict_) { // returns a dictionary containing dict_ + every default_dict_'s keys that dict_ doesn't have
-  // ex: dict_ = {color: red}; default_dict_ = {color: blue, shape: circle}
-  // set_default_values(dict_, default_dict_) = {color: red, shape: circle} 
+/**
+ * Returns a dictionary containing dict_ + every default_dict_'s keys that dict_ doesn't have.
+ * ex: dict_ = {color: red}; default_dict_ = {color: blue, shape: circle}
+ * set_default_values(dict_, default_dict_) = {color: red, shape: circle} 
+ * @param dict_ the current dictionary
+ * @param default_dict_ a list with all default value
+ * 
+ * @returns the input dictionaries with potential new values
+ */
+export function set_default_values(dict_, default_dict_) {
   if (dict_ === undefined) {
     dict_ = {};
   }
@@ -8083,6 +8092,8 @@ export var empty_container = {'name': '',
 'type_': 'primitivegroupcontainer'};
 
 
+
+// This one dictionary is just here for debugging. It can be removed if not needed.
 var test = {'name': '',
 'package_version': '0.5.2',
 'primitive_groups': [{'name': '',

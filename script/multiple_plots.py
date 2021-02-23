@@ -1,8 +1,8 @@
 # An example of MultiplePlots instantiation. It draws and allows interactions between
 # different plots in one canvas, including scatterplots, parallelplots,
 # primitive_groups and primitive_group_containers.
-# The plots are created using needed parameters only. For more details about
-# customization, feel free read the plots' related scripts.
+# The plots are created using necessary parameters only. For more details about
+# customization an optional parameters, feel free read the plots' specific scripts.
 
 import plot_data
 from plot_data.colors import *

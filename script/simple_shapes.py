@@ -12,7 +12,6 @@ from test_objects.primitive_group_test import primitive_group
 # to make MultiplePlots' more convenient
 
 # if debug mode is True, set it to False
-
 plot_data.plot_canvas(plot_data_object=primitive_group,
                       debug_mode=True)
 

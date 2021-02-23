@@ -739,16 +739,19 @@ export class MultiplePlots {
       all_index.push(i);
       this.dep_selected_points_index.push(i);
     }
+    var bool = false;
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
       if ((obj.type_ == 'scatterplot') && !equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
+        bool = true;
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
       } else if ((obj.type_ == 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
+        bool = true;
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
       }
     }
 
-    if (equals(all_index, this.dep_selected_points_index)) {
+    if (equals(all_index, this.dep_selected_points_index) && !bool) {
       this.dep_selected_points_index = [];
     }
   }
@@ -4961,7 +4964,7 @@ export class Interactions {
     var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
     var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
     
-    if (sc_perm_window_w <= 5 || sc_perm_window_h <= 5) return;
+    if (Math.abs(sc_perm_window_w) <= 5 || Math.abs(sc_perm_window_h) <= 5) return;
 
     plot_data.latest_selected_points = [];
     plot_data.select_on_click = [];

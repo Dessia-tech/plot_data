@@ -131,7 +131,9 @@ class EdgeStyle(DessiaObject):
         self.dashline = dashline
         DessiaObject.__init__(self, name=name)
 
+
 DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=colors.BLACK)
+
 
 class PointStyle(DessiaObject):
     """

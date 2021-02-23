@@ -45,7 +45,8 @@ scatterplot3 = plot_data.Scatter(
     to_disp_attribute_names=['x', 'direction'])
 
 # Creating the multiplot
-plots = [primitive_group, parallelplot1, parallelplot2, scatterplot1, graph2d]
+plots = [primitive_group, parallelplot1, parallelplot2, scatterplot1,
+         scatterplot2, scatterplot3, graph2d]
 
 multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
                                     initial_view_on=True)

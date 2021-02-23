@@ -4499,9 +4499,13 @@ export class PrimitiveGroupContainer extends PlotData {
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
     var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
     this.layout_axis = Axis.deserialize(serialized_axis);
-    
     var nb_primitive_groups = this.primitive_groups.length;
     var name = this.layout_attributes[0].name;
+    var type_ = this.layout_attributes[0].type_;
+    if (type_ !== 'float') {
+      var real_xs = [];
+      var y_incs = Array(nb_primitive_groups).fill(0);
+    }
     for (let i=0; i<nb_primitive_groups; i++) {
       this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
       this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
@@ -4509,12 +4513,15 @@ export class PrimitiveGroupContainer extends PlotData {
         var real_x = this.elements_dict[i.toString()][name];
       } else if (this.layout_attributes[0].type_ == 'color') {
         real_x = List.get_index_of_element(rgb_to_string(this.elements_dict[i.toString()][name]), this.layout_attributes[0].list);
+        if (List.is_include(real_x, real_xs)) { y_incs[i] += - this.primitive_groups[i].height; } else {real_xs.push(real_x);}
+
       } else {
         real_x = List.get_index_of_element(this.elements_dict[i.toString()][name], this.layout_attributes[0].list);
+        if (List.is_include(real_x, real_xs)) {y_incs[i] += - this.primitive_groups[i].height;} else {real_xs.push(real_x);}
       }
       var center_x = this.scaleX*1000*real_x + this.last_mouse1X;
       this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
-      this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
+      this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2 + y_incs[i];
     }
     this.reset_scales();
     this.resetAllObjects();

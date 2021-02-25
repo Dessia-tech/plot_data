@@ -50,11 +50,23 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
-    target: /var/www/cdn/js/plot-data/latest/
     target: /var/www/cdn/js/plot-data/${DRONE_TAG}/
     source: lib/*
+    strip_components: 1
+
+- name: upload to cdn latest
+  image: appleboy/drone-scp
+  when:
+      event: tag
+  settings:
+    host: magenta.dessia.tech
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+    target: /var/www/cdn/js/plot-data/latest/
     source: lib/*
     strip_components: 1
+
 
 - name: upload_doc_typescript
   image: appleboy/drone-scp

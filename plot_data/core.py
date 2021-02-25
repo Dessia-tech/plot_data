@@ -281,11 +281,13 @@ class Line2D(PlotDataObject):
         
         if not self.edge_style:
             color = DEFAULT_EDGESTYLE.color_stroke.rgb
+            dashes = DEFAULT_EDGESTYLE.dashline
         else:
             color = self.edge_style.color_stroke.rgb
-        
+            dashes = self.edge_style.dashline
+
         ax.axline((self.data[0], self.data[1]),(self.data[2], self.data[3]),
-                  color=color)
+                  color=color, dashes=dashes)
 
 class LineSegment2D(PlotDataObject):
     """
@@ -381,18 +383,21 @@ class Circle2D(PlotDataObject):
             _, ax = plt.subplots()
         if self.edge_style:
             edgecolor = self.edge_style.color_stroke.rgb
+            dashes = DEFAULT_EDGESTYLE.dashline
         else:
-            edgecolor = colors.BLACK.rgb
+            edgecolor = DEFAULT_EDGESTYLE.color_stroke.rgb
+            dashes = DEFAULT_EDGESTYLE.dashline
         if self.surface_style:
-            color = self.surface_style.color_fill
-            alpha = self.surface_style.opacity
+            facecolor = self.surface_style.color_fill
+            surface_alpha = self.surface_style.opacity
         else:
-            color = colors.WHITE.rgb
-            alpha = 1
+            facecolor = None
+            surface_alpha = 0
+
         ax.add_patch(patches.Circle((self.cx, self.cy), self.r,
                                     edgecolor=edgecolor,
-                                    facecolor=color,
-                                    alpha=alpha))
+                                    facecolor=facecolor,
+                                    fill=surface_alpha>0))
         return ax
 
 
@@ -737,7 +742,6 @@ class PrimitiveGroup(PlotDataObject):
         """
         ax = self.primitives[0].mpl_plot(ax=ax)
         for primitive in self.primitives[1:]:
-            print(primitive)
             primitive.mpl_plot(ax=ax)
         ax.set_aspect('equal')
         return ax
@@ -914,7 +918,7 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
             'core.js')
 
         if not os.path.isfile(core_path):
-            print('Compiled core.js not found, fall back to CDN')
+            print('Local compiled core.js not found, fall back to CDN')
         else:
             lib_path = core_path
 

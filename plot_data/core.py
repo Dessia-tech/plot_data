@@ -773,14 +773,23 @@ class PrimitiveGroupsContainer(PlotDataObject):
     :type sizes: List[Tuple[float, float]]
     :param coords: In the same way as sizes but for coordinates.
     :type coords: List[Tuple[float, float]]
+    :param associated_elements: A list containing the associated elements indices. associated_elements[i] is assoaciated with primitive_groups[i]. It only works if this object is inside a MultiplePlots.
+    :type associated_elements: List[int]
+    :param to_disp_attribute_names: A list containing the attribute names to be displayed on axis. It may contain one or two names. ex: ['mass'] or ['length', 'mass']. Set it to None for no axis.
+    :type to_disp_attribute_names: List[str]
     """
     def __init__(self, primitive_groups: List[PrimitiveGroup],
                  sizes: List[Tuple[float, float]] = None,
                  coords: List[Tuple[float, float]] = None,
+                 associated_elements:List[int] = None,
+                 to_disp_attribute_names: List[str] = None,
                  name: str = ''):
         self.primitive_groups = primitive_groups
         self.sizes = sizes
         self.coords = coords
+        if to_disp_attribute_names:
+            self.association = {'associated_elements': associated_elements,
+                                'to_disp_attribute_names': to_disp_attribute_names}
         PlotDataObject.__init__(self, type_='primitivegroupcontainer',
                                 name=name)
 
@@ -798,12 +807,12 @@ class ParallelPlot(PlotDataObject):
     :param to_disp_attribute_names: a list on attribute names you want to display as axis on this parallel plot.
     :type to_disp_attribute_names: List[str]
     :param rgbs: a list of rgb255 colors for color interpolation. Color interpolation is enabled when clicking on an axis.
-    :type rgbs: List[str]
+    :type rgbs: List[Tuple[int, int, int]]
     """
     def __init__(self, elements=None, edge_style: EdgeStyle = None,
                  disposition: str = None,
                  to_disp_attribute_names: List[str] = None,
-                 rgbs: List[float] = None,
+                 rgbs: List[Tuple[int, int, int]] = None,
                  name: str = ''):
         self.elements = elements
         self.edge_style = edge_style

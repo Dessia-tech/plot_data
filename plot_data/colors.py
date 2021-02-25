@@ -18,7 +18,7 @@ class Color(dc.DessiaObject):
         :param hex_code: an hexadecimal string
         :type hex_code: str
 
-        :return: a Color object from a hex string
+        :return: a Color object
         :rtype: Color
         """
         hex_code = hex_code.replace('#', '')
@@ -28,7 +28,7 @@ class Color(dc.DessiaObject):
     @classmethod
     def from_hsv(cls, h:float, s:float, v:float):
         """
-        :return: a Color object from HSV
+        :return: a Color object
         :rtype: Color
         """
         return cls(hsv_to_rgb(h, s, v))
@@ -47,7 +47,7 @@ class Color(dc.DessiaObject):
     @classmethod
     def dict_to_object(cls, d):
         """
-        :return: a Color object from a dictionary
+        :return: a Color object
         """
         if not d.startswith('rgb('):
             raise ValueError('Color should be string starting with rgb(')

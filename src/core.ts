@@ -67,6 +67,12 @@ export class MultiplePlots {
         newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else if (this.dataObjects[i]['type_'] == 'primitivegroupcontainer') {
         newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+        if (this.dataObjects[i]['association']) {
+          this.initializeObjectContext(newObject);
+          let association = this.dataObjects[i]['association'];
+          newObject = this.initialize_containers_dicts(newObject, association['associated_elements']);
+          newObject = this.call_layout(newObject, association['to_disp_attribute_names']);
+        }
       } else {
         throw new Error('MultiplePlots constructor : invalid object type');
       }
@@ -163,6 +169,7 @@ export class MultiplePlots {
     this.define_canvas(this.canvas_id);
     // this.redrawAllObjects();
   }
+
 
   initializeButtons():void {
     this.transbutton_x = 5;
@@ -334,10 +341,12 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  add_primitive_group_container(serialized=empty_container, associated_points:number[]=[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
-    var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
+  initialize_containers_dicts(new_plot_data, associated_points) { 
     var primitive_entries = [];
     var elements_entries = [];
+    if (associated_points.length !== new_plot_data.primitive_groups.length) {
+        throw new Error("initialize_containers_dicts(): primitive_groups and associated_points don't have the same length.");
+    }
     for (let i=0; i<associated_points.length; i++) {
       let associated_point_index = associated_points[i];
       primitive_entries.push([associated_point_index, i]);
@@ -345,22 +354,33 @@ export class MultiplePlots {
     }
     new_plot_data.primitive_dict = Object.fromEntries(primitive_entries);
     new_plot_data.elements_dict = Object.fromEntries(elements_entries);
-    this.initialize_new_plot_data(new_plot_data);
+    return new_plot_data;
+  }
 
-    if (serialized['primitive_groups'].length !== 0) {
-      if (attribute_names === null) {
-        new_plot_data.regular_layout();
-      } else {
-        var layout = [];
-        for (let name of attribute_names) {
-          layout.push(this.get_attribute(name));
-        }
-        if (layout.length == 1) {
-          new_plot_data.multiplot_one_axis_layout(layout[0]);
-        } else if (layout.length == 2) {
-          new_plot_data.multiplot_two_axis_layout(layout);
-        }
+  call_layout(new_plot_data, attribute_names:string[]=null) {
+    if (equals(attribute_names, [])) attribute_names = null;
+    if (attribute_names === null) {
+      new_plot_data.regular_layout();
+    } else {
+      var layout = [];
+      for (let name of attribute_names) {
+        layout.push(this.get_attribute(name));
       }
+      if (layout.length == 1) {
+        new_plot_data.multiplot_one_axis_layout(layout[0]);
+      } else if (layout.length == 2) {
+        new_plot_data.multiplot_two_axis_layout(layout);
+      }
+    }
+    return new_plot_data;
+  }
+
+  add_primitive_group_container(serialized=empty_container, associated_points:number[]=[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
+    var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
+    if (attribute_names !== null) new_plot_data = this.initialize_containers_dicts(new_plot_data, associated_points);
+    this.initialize_new_plot_data(new_plot_data);
+    if (serialized['primitive_groups'].length !== 0) {
+      new_plot_data = this.call_layout(new_plot_data, attribute_names);
       this.redrawAllObjects();
     } else {
       let obj = this.objectList[this.nbObjects - 1];
@@ -7199,6 +7219,7 @@ export class Shape {
     context.fillStyle = color_fill;
     context.strokeStyle = color_stroke;
     context.lineWidth = line_width;
+    context.globalAlpha = opacity;
 
     context.moveTo(x+radius, y);
     context.lineTo(r-radius, y);
@@ -7308,6 +7329,13 @@ export class Shape {
     context.globalAlpha = 1;
     context.setLineDash([]);
   }
+
+  public static isInCircle(x, y, cx, cy, r) {
+    var delta_x2 = Math.pow(x - cx, 2);
+    var delta_y2 = Math.pow(y - cy, 2);
+    var distance = Math.sqrt(delta_x2 + delta_y2);
+    return distance <= r;
+  }
 }
 
 export function drawLines(ctx, pts, first_elem) {
@@ -7404,7 +7432,7 @@ export function genColor(){
 }
 
 
-export var string_to_hex_dict = {red:'#f70000', lightred:'#ed8080', blue:'#0013fe', lightblue:'#c3e6fc', lightskyblue:'#87cefa', green:'#00c112', lightgreen:'#89e892', yellow:'#f4ff00', lightyellow:'#f9ff7b', orange:'#ff8700',
+export const string_to_hex_dict = {red:'#f70000', lightred:'#ed8080', blue:'#0013fe', lightblue:'#c3e6fc', lightskyblue:'#87cefa', green:'#00c112', lightgreen:'#89e892', yellow:'#f4ff00', lightyellow:'#f9ff7b', orange:'#ff8700',
   lightorange:'#ff8700', cyan:'#13f0f0', lightcyan:'#90f7f7', rose:'#ff69b4', lightrose:'#ffc0cb', violet:'#ee82ee', lightviolet:'#eaa5f6', white:'#ffffff', black:'#000000', brown:'#cd8f40',
   lightbrown:'#deb887', grey:'#a9a9a9', lightgrey:'#d3d3d3'};
 
@@ -7416,7 +7444,7 @@ function reverse_string_to_hex_dict() {
   return Object.fromEntries(entries);
 }
 
-export var hex_to_string_dict = reverse_string_to_hex_dict();
+export const hex_to_string_dict = reverse_string_to_hex_dict();
 
 function get_rgb_to_string_dict() {
   var entries = Object.entries(hex_to_string_dict);
@@ -7425,7 +7453,7 @@ function get_rgb_to_string_dict() {
   }
   return Object.fromEntries(entries);
 }
-export var rgb_to_string_dict = get_rgb_to_string_dict();
+export const rgb_to_string_dict = get_rgb_to_string_dict();
 
 function componentToHex(c) {
   var hex = c.toString(16);
@@ -8096,8 +8124,8 @@ export function equals(a, b) {
 }
 
 
-export var empty_container = {'name': '',
-'package_version': '0.5.2',
+const empty_container = {'name': '',
+'package_version': '0.5.3',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 

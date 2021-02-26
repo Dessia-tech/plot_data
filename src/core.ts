@@ -1,7 +1,10 @@
-import { kMaxLength } from "buffer";
-import { Console } from "console";
-import { type } from "os";
-import { start } from "repl";
+// import { kMaxLength } from "buffer";
+// import { Console } from "console";
+// import { endianness, type } from "os";
+// import { start } from "repl";
+
+var multiplot_saves:MultiplePlots[]=[];
+var current_save:number=0;
 
 
 /** 
@@ -48,7 +51,7 @@ export class MultiplePlots {
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
     var requirement = '0.4.10';
-    this.manage_package_version(requirement);
+    check_package_version(data['package_version'], requirement);
     this.dataObjects = data['plots'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
     var elements = data['elements'];
@@ -95,16 +98,7 @@ export class MultiplePlots {
     if (data['initial_view_on']) {
       this.clean_view();
     }
-  }
-
-  manage_package_version(requirement) {
-    if (!check_package_version(this.data['package_version'], requirement)) {
-      this.define_canvas(this.canvas_id);
-      this.context_show.textAlign = 'center';
-      this.context_show.font = '20px sans-serif';
-      this.context_show.fillText("plot_data's version must be updated. Current version: " + this.data['package_version'] + ", minimum requirement: " + requirement, this.width/2, this.height/2);
-      throw new Error('Package version error');
-    }
+    this.save_canvas();
   }
 
   initialize_sizes() {
@@ -1209,6 +1203,7 @@ export class MultiplePlots {
 
   manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
     this.move_plot_index = this.getLastObjectIndex(mouse2X, mouse2Y);
+    var l = []
     if (this.move_plot_index != this.last_index) {
       for (let i=0; i<this.nbObjects; i++) {
         if (i == this.move_plot_index) {
@@ -1437,6 +1432,40 @@ export class MultiplePlots {
   }
 
 
+  save_canvas() {
+    if (current_save <= multiplot_saves.length - 2) {
+      multiplot_saves = List.remove_at_indices(current_save + 1, multiplot_saves.length - 1, multiplot_saves);
+    }
+    multiplot_saves.push(MyObject.deepClone(this));
+    if (multiplot_saves.length === 11) {
+      multiplot_saves = List.remove_at_index(0, multiplot_saves);
+    }
+    current_save = multiplot_saves.length - 1;
+  }
+  
+
+  restore_previous_canvas() {
+    if (current_save === 0) return;
+    current_save--; 
+    Object.assign(this, multiplot_saves[current_save]);
+    this.define_canvas(this.canvas_id);
+    for (let i=0; i<this.nbObjects; i++) {
+      this.initializeObjectContext(this.objectList[i]);
+    }
+    this.redrawAllObjects();
+  }
+
+  restore_next_canvas() {
+    if (current_save === multiplot_saves.length - 1) return;
+    current_save++;
+    Object.assign(this, multiplot_saves[current_save]);
+    this.define_canvas(this.canvas_id);
+    for (let i=0; i<this.nbObjects; i++) {
+      this.initializeObjectContext(this.objectList[i]);
+    }
+    this.redrawAllObjects();
+  }
+
 
   mouse_interaction(): void {
     var canvas = document.getElementById(this.canvas_id);
@@ -1446,6 +1475,10 @@ export class MultiplePlots {
     var vertex_infos:Object;
     var clickOnVertex:boolean = false;
     var old_selected_index;
+
+    // For canvas to read keyboard inputs.
+    canvas.setAttribute('tabindex', '0');
+    canvas.focus(); 
 
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
@@ -1569,6 +1602,7 @@ export class MultiplePlots {
       this.redrawAllObjects();
       isDrawing = false;
       mouse_moving = false;
+      // this.save_canvas(); 
     });
 
 
@@ -1606,6 +1640,18 @@ export class MultiplePlots {
 
     canvas.addEventListener('selectionchange', (e:any) => {
     });
+
+  // Not working well actually, but I let it here in case somebody wants to give it a try
+    // canvas.addEventListener('keydown', e => {
+    //   if (e.ctrlKey) {
+    //     e.preventDefault();
+    //     if (e.key === 'z') {
+    //       this.restore_previous_canvas();
+    //     } else if (e.key === 'y') {
+    //       this.restore_next_canvas();
+    //     }
+    //   }
+    // });
   }
 }
 
@@ -1788,16 +1834,6 @@ export abstract class PlotData {
 
   abstract draw(hidden, mvx, mvy, scaleX, scaleY, X, Y);
 
-  manage_package_version(requirement) {
-    if (!check_package_version(this.data['package_version'], requirement)) {
-      this.define_canvas(this.canvas_id);
-      this.context_show.textAlign = 'center';
-      this.context_show.font = '10px sans-serif';
-      this.context_show.fillText("plot_data's version must be updated. Current version: " + this.data['package_version'] + ", minimum requirement: " + requirement, this.width/2, this.height/2);
-      throw new Error('Package version error');
-    }
-  }
-
   define_canvas(canvas_id: string):void {
     var canvas:any = document.getElementById(canvas_id);
     canvas.width = this.width;
@@ -1931,9 +1967,8 @@ export abstract class PlotData {
     }
   }
 
-  draw_contour(hidden, mvx, mvy, scaleX, scaleY, d) {
+  draw_contour(hidden, mvx, mvy, scaleX, scaleY, d:Contour2D) {
     if (d['type_'] == 'contour') {
-      // this.context.beginPath();
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
       } else {
@@ -1961,7 +1996,6 @@ export abstract class PlotData {
       }
       this.context.fill();
       this.context.stroke();
-      // this.context.closePath();
       this.context.setLineDash([]);
     }
   }
@@ -2060,16 +2094,16 @@ export abstract class PlotData {
         this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0]);
       d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
         this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1]);
-      this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
-      this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
+      this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
+      this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     }
   }
 
-  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d, lists, to_display_attributes) {
+  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d:Axis, lists, to_display_attributes) {
     d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, 
       to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
-    this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
-    this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
+    this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
+    this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     this.context.closePath();
     this.context.fill();
   }
@@ -2133,7 +2167,7 @@ export abstract class PlotData {
     }
   }
 
-  draw_graph2D(d, hidden, mvx, mvy) {
+  draw_graph2D(d:Graph2D, hidden, mvx, mvy) {
     if (d['type_'] == 'graph2d') {
       this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
       for (let i=0; i<d.graphs.length; i++) {
@@ -3715,7 +3749,7 @@ export class PlotContour extends PlotData {
                      public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     var requirement = '0.5.2';
-    this.manage_package_version(requirement);
+    check_package_version(data['package_version'], requirement);
     this.plot_datas = [];
     this.type_ = 'primitivegroup';
     var d = this.data;
@@ -3801,7 +3835,7 @@ export class PlotScatter extends PlotData {
     public canvas_id: string) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
       var requirement = '0.4.10';
-      this.manage_package_version(requirement);
+      check_package_version(data['package_version'], requirement);
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
@@ -3900,7 +3934,7 @@ export class ParallelPlot extends PlotData {
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
     var requirement = '0.4.10';
-    this.manage_package_version(requirement);
+    check_package_version(data['package_version'], requirement);
     this.type_ = 'parallelplot';
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
@@ -4070,7 +4104,7 @@ export class PrimitiveGroupContainer extends PlotData {
               public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
     var requirement = '0.5.2';
-    this.manage_package_version(requirement);
+    check_package_version(data['package_version'], requirement);
     this.type_ = 'primitivegroupcontainer';
     var serialized = data['primitive_groups'];
     var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
@@ -6178,7 +6212,7 @@ export class Axis {
   draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, x_step, font_size, X) {
     var i=0;
     context.textAlign = 'center';
-    var x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(x_step)));
+    var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(x_step)));
     var delta_x = maxX - minX;
     var grad_beg_x = minX - 10*delta_x;
     var grad_end_x = maxX + 10*delta_x;
@@ -6206,7 +6240,7 @@ export class Axis {
     var grad_end_y = real_maxY + 10*delta_y;
     context.textAlign = 'end';
     context.textBaseline = 'middle';
-    var y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(y_step)));
+    var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(y_step)));
     while (grad_beg_y + (i-1)*y_step < grad_end_y) {
       if ((scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y > axis_y_start + 5) && (scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y < axis_y_end)) {
         if (this.grid_on === true) {
@@ -6361,7 +6395,7 @@ export class Axis {
         this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
       }
       var i=0;
-      var x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(this.x_step)));
+      var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(this.x_step)));
       var delta_x = maxX - minX;
       var grad_beg_x = minX - 10*delta_x;
       var grad_end_x = maxX + 10*delta_x;
@@ -6404,7 +6438,7 @@ export class Axis {
       var delta_y = maxY - minY;
       var grad_beg_y = minY - 10*delta_y;
       var grad_end_y = maxY + 10*delta_y;
-      var y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(this.y_step)));
+      var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(this.y_step)));
       while (grad_beg_y + (i-1)*this.y_step < grad_end_y) {
         if ((scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y > axis_y_start + 5) && (scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y < axis_y_end)) {
           if (this.grid_on === true) {
@@ -6971,9 +7005,9 @@ export class EdgeStyle {
                           name:''};
     serialized = set_default_values(serialized, default_dict_);
     return new EdgeStyle(serialized['line_width'],
-                            rgb_to_hex(serialized['color_stroke']),
-                            serialized['dashline'],
-                            serialized['name']);
+                         rgb_to_hex(serialized['color_stroke']),
+                         serialized['dashline'],
+                         serialized['name']);
   }
 }
 
@@ -7010,11 +7044,11 @@ export class PointStyle {
                                stroke_width:0.5, size:2, shape:'circle', name:''};
     serialized = set_default_values(serialized, default_dict_);
     return new PointStyle(rgb_to_hex(serialized['color_fill']),
-                             rgb_to_hex(serialized['color_stroke']),
-                             serialized['stroke_width'],
-                             serialized['size'],
-                             serialized['shape'],
-                             serialized['name']);
+                          rgb_to_hex(serialized['color_stroke']),
+                          serialized['stroke_width'],
+                          serialized['size'],
+                          serialized['shape'],
+                          serialized['name']);
   }
 }
 
@@ -7159,13 +7193,16 @@ export class PointFamily {
   }
 }
 
-
+/**
+ * A toolbox class that contains useful functions that don't exist in typescript API.
+ */
 export class MyMath {
+
+  /**
+   * ex: round(1.12345, 2) = 1.12 
+   */
   public static round(x:number, n:number) {
     return Math.round(x*Math.pow(10,n)) / Math.pow(10,n);
-  }
-  public static log10(x) {
-    return Math.log(x)/Math.log(10);
   }
 }
 
@@ -7330,6 +7367,14 @@ export class Shape {
     context.setLineDash([]);
   }
 
+  /**
+   * 
+   * @param x The point's x coordinate
+   * @param y The point's y coordinate
+   * @param cx The circle's center x-coordinate
+   * @param cy Thre circle's center y-coordinate
+   * @param r The circle's radius
+   */
   public static isInCircle(x, y, cx, cy, r) {
     var delta_x2 = Math.pow(x - cx, 2);
     var delta_y2 = Math.pow(y - cy, 2);
@@ -7342,6 +7387,7 @@ export function drawLines(ctx, pts, first_elem) {
   if (first_elem) ctx.moveTo(pts[0], pts[1]);
   for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
 }
+
 
 export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
 
@@ -7604,6 +7650,10 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
   return rgb_vectorToStr(r,g,b);
 }
 
+
+/**
+ * A class for sorting lists.
+ */
 export class Sort {
   nbPermutations:number = 0;
   constructor(){};
@@ -7742,7 +7792,7 @@ export function isHex(str:string):boolean {
 
 
 /**
- * A toolbox with useful functions related to arrays.
+ * A toolbox with useful functions that manipulate arrays.
  */
 export class List {
   // public static sort_without_duplicates(list:number[]) {
@@ -7916,6 +7966,14 @@ export class List {
     return list.slice(0, i).concat(list.slice(i + 1, list.length));
   }
 
+  public static remove_at_indices(start_index:number, end_index:number, list:any[]):any[] {
+    if (start_index > end_index) throw new Error('remove_indices(): start_index must be <= end_index');
+    if (start_index<0 || end_index>=list.length) throw new Error('remove_indices(): index out of range');
+    for (let i=0; i<=end_index-start_index; i++) {
+      list = this.remove_at_index(start_index, list);
+    }
+    return list;
+  }
 
   /**
    * @returns the input list after removing its element at index old_index and
@@ -8058,11 +8116,17 @@ export function check_package_version(package_version:string, requirement:string
     Number(version_array[2]);
   var requirement_num = Number(requirement_array[0])*Math.pow(10, 4) + Number(requirement_array[1])*Math.pow(10,2) +
     Number(requirement_array[2]);
-  return package_version_num >= requirement_num;
+  if (package_version_num < requirement_num) {
+    alert("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
+  }
 }
 
 
 export class MyObject {
+
+  /**
+   * Returns the input dictionary without keys that are in input.
+   */
   public static removeEntries(keys:string[], dict_) {
     var entries = Object.entries(dict_);
     var i=0;
@@ -8076,9 +8140,38 @@ export class MyObject {
     return Object.fromEntries(entries);
   }
 
+  /**
+   * A shallow copy.
+   */
   public static copy(obj) {
     return Object.assign({}, obj);
   }
+
+  /**
+   * A function that clones without references. It handles circular references.
+   */
+  public static deepClone(obj, hash = new WeakMap()) {
+    // Do not try to clone primitives or functions
+    if (Object(obj) !== obj || obj instanceof Function) return obj;
+    if (hash.has(obj)) return hash.get(obj); // Cyclic reference
+    try { // Try to run constructor (without arguments, as we don't know them)
+        var result = new obj.constructor();
+    } catch(e) { // Constructor failed, create object without running the constructor
+        result = Object.create(Object.getPrototypeOf(obj));
+    }
+    // Optional: support for some standard constructors (extend as desired)
+    if (obj instanceof Map)
+        Array.from(obj, ([key, val]) => result.set(this.deepClone(key, hash), 
+        this.deepClone(val, hash)) );
+    else if (obj instanceof Set)
+        Array.from(obj, (key) => result.add(this.deepClone(key, hash)) );
+    // Register in hash    
+    hash.set(obj, result);
+    // Clone and assign enumerable own properties recursively
+    return Object.assign(result, ...Object.keys(obj).map (
+        key => ({ [key]: this.deepClone(obj[key], hash) }) ));
+  }
+
 }
 
 /**
@@ -8125,86 +8218,7 @@ export function equals(a, b) {
 
 
 const empty_container = {'name': '',
-'package_version': '0.5.3',
+'package_version': '0.5.4',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 
-
-
-// This one dictionary is just here for debugging. It can be removed if not needed.
-var test = {'name': '',
-'package_version': '0.5.2',
-'primitive_groups': [{'name': '',
-  'package_version': '0.5.2',
-  'primitives': [{'name': '',
-    'package_version': '0.5.2',
-    'r': 10,
-    'cy': 0.0,
-    'cx': 0.0,
-    'type_': 'circle'}],
-  'type_': 'primitivegroup'},
- {'name': '',
-  'package_version': '0.5.2',
-  'primitives': [{'name': '',
-    'package_version': '0.5.2',
-    'plot_data_primitives': [{'name': '',
-      'package_version': '0.5.2',
-      'data': [1.0, 1.0, 1.0, 2.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.2'},
-      'type_': 'linesegment2d'},
-     {'name': '',
-      'package_version': '0.5.2',
-      'data': [1.0, 2.0, 2.0, 2.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.2'},
-      'type_': 'linesegment2d'},
-     {'name': '',
-      'package_version': '0.5.2',
-      'data': [2.0, 2.0, 2.0, 1.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.2'},
-      'type_': 'linesegment2d'},
-     {'name': '',
-      'package_version': '0.5.2',
-      'data': [2.0, 1.0, 1.0, 1.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.2'},
-      'type_': 'linesegment2d'}],
-    'surface_style': {'name': '',
-     'object_class': 'plot_data.core.SurfaceStyle',
-     'package_version': '0.5.2',
-     'color_fill': 'rgb(255,175,96)'},
-    'type_': 'contour'}],
-  'type_': 'primitivegroup'},
- {'name': '',
-  'package_version': '0.5.2',
-  'primitives': [{'name': '',
-    'package_version': '0.5.2',
-    'surface_style': {'name': '',
-     'object_class': 'plot_data.core.SurfaceStyle',
-     'package_version': '0.5.2',
-     'color_fill': 'rgb(247,0,0)'},
-    'r': 5,
-    'cy': 1.0,
-    'cx': 1.0,
-    'type_': 'circle'}],
-  'type_': 'primitivegroup'},
- {'name': '',
-  'package_version': '0.5.2',
-  'primitives': [{'name': '',
-    'package_version': '0.5.2',
-    'surface_style': {'name': '',
-     'object_class': 'plot_data.core.SurfaceStyle',
-     'package_version': '0.5.2',
-     'color_fill': 'rgb(222,184,135)'},
-    'r': 5,
-    'cy': 1.0,
-    'cx': 1.0,
-    'type_': 'circle'}],
-  'type_': 'primitivegroup'}],
-'type_': 'primitivegroupcontainer'}

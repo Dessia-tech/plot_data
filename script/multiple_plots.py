@@ -10,7 +10,7 @@ from test_objects.primitive_group_test import primitive_group
 from test_objects.graph_test import graph2d
 import random
 
-import volmdlr as vm
+import volmdlr as vm  # You can install volmdlr using pip in plot_data's package
 
 elements = []  # a list of vectors (dictionaries) that are displayed
 # through different representations such as parallel plots and scatter plots
@@ -66,14 +66,16 @@ primitive_group4 = plot_data.PrimitiveGroup(primitives=[circle3])
 primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primitive_group4]
 
 primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups,
-                                                               associated_elements=[1,2,3,4],
+                                                               associated_elements=[1, 2, 3, 4],
                                                                to_disp_attribute_names=['x', 'direction']
                                                                )
 
 
 # Creating the multiplot
-plots = [primitive_group, parallelplot1, parallelplot2, scatterplot1,
+plots = [parallelplot1, parallelplot2, scatterplot1,
          scatterplot2, scatterplot3, graph2d, primitive_group_container]
+
+# plots = [scatterplot1]
 
 multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
                                     initial_view_on=True)

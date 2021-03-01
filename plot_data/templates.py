@@ -22,7 +22,6 @@ contour_template = Template('''<div id="app"></div>
 	plot_data.define_canvas($canvas_id.id);
 	plot_data.draw_initial();
     plot_data.mouse_interaction(plot_data.isParallelPlot);
-
 </script>
 ''')
 

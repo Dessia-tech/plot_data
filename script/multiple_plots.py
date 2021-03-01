@@ -73,7 +73,7 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 
 # Creating the multiplot
 plots = [parallelplot1, parallelplot2, scatterplot1,
-         scatterplot2, scatterplot3, graph2d, primitive_group_container]
+         scatterplot2, scatterplot3, graph2d]
 
 # plots = [scatterplot1]
 

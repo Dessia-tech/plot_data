@@ -369,12 +369,13 @@ export class MultiplePlots {
     return new_plot_data;
   }
 
+
   add_primitive_group_container(serialized=empty_container, associated_points:number[]=[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
     var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
     if (attribute_names !== null) new_plot_data = this.initialize_containers_dicts(new_plot_data, associated_points);
     this.initialize_new_plot_data(new_plot_data);
+    new_plot_data = this.call_layout(new_plot_data, attribute_names);
     if (serialized['primitive_groups'].length !== 0) {
-      new_plot_data = this.call_layout(new_plot_data, attribute_names);
       this.redrawAllObjects();
     } else {
       let obj = this.objectList[this.nbObjects - 1];
@@ -388,7 +389,7 @@ export class MultiplePlots {
   add_primitive_group_to_container(serialized, container_index, point_index) {
     let obj:any = this.objectList[container_index];
     obj.elements_dict[obj.primitive_groups.length.toString()] = this.data['elements'][point_index];
-    obj.add_primitive_group(serialized, point_index);
+    obj.add_primitive_group(serialized, point_index); // primitive_dict updated inside this function
   }
 
   remove_primitive_group_from_container(point_index, container_index) {
@@ -4187,7 +4188,7 @@ export class PrimitiveGroupContainer extends PlotData {
       if (this.layout_mode == 'regular') {
         this.regular_layout();
       } else {
-        this.reset_scales();
+        if (this.primitive_groups.length >= 2) this.reset_scales();
       }
     }
   }
@@ -4347,6 +4348,19 @@ export class PrimitiveGroupContainer extends PlotData {
     this.context.setLineDash([]);
   }
 
+
+  /**
+   * Calls the layout function of a PrimitiveGroupContainer whose layout_mode and axis are already set.
+   */
+  refresh_layout() { 
+    if (this.layout_mode === 'one_axis') {
+      this.multiplot_one_axis_layout(this.layout_attributes[0]);
+    } else if (this.layout_mode === 'two_axis') {
+      this.multiplot_two_axis_layout(this.layout_attributes);
+    }
+  }
+
+
   add_primitive_group(serialized, point_index) {
     var new_plot_data = new PlotContour(serialized, 560, 300, 1000, this.buttons_ON, this.X, this.Y, this.canvas_id);
     new_plot_data.context_hidden = this.context_hidden; 
@@ -4357,6 +4371,7 @@ export class PrimitiveGroupContainer extends PlotData {
     new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
     new_plot_data.interaction_ON = false;
     this.primitive_dict[point_index.toString()] = this.primitive_groups.length - 1;
+    this.refresh_layout();
     this.reset_action();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -4431,12 +4446,13 @@ export class PrimitiveGroupContainer extends PlotData {
       } else if (this.layout_mode == 'two_axis') {
         this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
           this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
-  
+
         this.layout_axis.draw_sc_vertical_axis(this.context, this.last_mouse1Y, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
           this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
       }
     }
   }
+
 
   regular_layout():void {
     var big_coord = 'X';
@@ -4519,6 +4535,11 @@ export class PrimitiveGroupContainer extends PlotData {
           min = elt;
         }
       }
+      if (min === max) {
+        if (min < 0) return [2*min, 0];
+        else if (min === 0) return [-1, 1];
+        else return [0, 2*min];
+      }
       return [min, max];
     } else if (type_ == 'color') {
       var list = []
@@ -4540,6 +4561,10 @@ export class PrimitiveGroupContainer extends PlotData {
     } 
   }
 
+  is_element_dict_empty() {
+    return Object.keys(this.elements_dict).length === 0;
+  }
+
   multiplot_one_axis_layout(attribute:Attribute) {
     this.refresh_one_axis_layout_list(attribute);
     this.one_axis_layout();
@@ -4547,9 +4572,12 @@ export class PrimitiveGroupContainer extends PlotData {
 
   refresh_one_axis_layout_list(attribute:Attribute) {
     this.layout_mode = 'one_axis';
-    attribute.list = this.initialize_list(attribute);
+    if (!this.is_element_dict_empty()) {
+      attribute.list = this.initialize_list(attribute);
+    }
     this.layout_attributes = [attribute];
   }
+
 
   one_axis_layout() {
     var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
@@ -4581,7 +4609,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
       if (type_ !== 'float') this.primitive_groups[i].Y += y_incs[i];
     }
-    this.reset_scales();
+    if (this.primitive_groups.length >= 1) this.reset_scales();
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -4589,8 +4617,10 @@ export class PrimitiveGroupContainer extends PlotData {
 
   refresh_two_axis_layout_list(attributes:Attribute[]) {
     this.layout_mode = 'two_axis';
-    attributes[0].list = this.initialize_list(attributes[0]);
-    attributes[1].list = this.initialize_list(attributes[1]);
+    if (!this.is_element_dict_empty()) {
+      attributes[0].list = this.initialize_list(attributes[0]);
+      attributes[1].list = this.initialize_list(attributes[1]);
+    }
     this.layout_attributes = attributes;
   }
 
@@ -4631,7 +4661,7 @@ export class PrimitiveGroupContainer extends PlotData {
       var center_y = -this.scaleX*1000*real_y + this.last_mouse1Y;
       this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height/2;
     }
-    this.reset_scales();
+    if (this.primitive_groups.length >= 2) this.reset_scales();
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -8223,3 +8253,52 @@ const empty_container = {'name': '',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 
+
+var primitive_group1 = {'name': '',
+ 'package_version': '0.5.5.dev9',
+ 'primitives': [{'name': '',
+   'package_version': '0.5.5.dev9',
+   'r': 10,
+   'cy': 0.0,
+   'cx': 0.0,
+   'type_': 'circle'}],
+ 'type_': 'primitivegroup'};
+
+var primitive_group2 = {'name': '',
+'package_version': '0.5.5.dev9',
+'primitives': [{'name': '',
+  'package_version': '0.5.5.dev9',
+  'plot_data_primitives': [{'name': '',
+    'package_version': '0.5.5.dev9',
+    'data': [1.0, 1.0, 1.0, 2.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.5.5.dev9'},
+    'type_': 'linesegment2d'},
+   {'name': '',
+    'package_version': '0.5.5.dev9',
+    'data': [1.0, 2.0, 2.0, 2.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.5.5.dev9'},
+    'type_': 'linesegment2d'},
+   {'name': '',
+    'package_version': '0.5.5.dev9',
+    'data': [2.0, 2.0, 2.0, 1.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.5.5.dev9'},
+    'type_': 'linesegment2d'},
+   {'name': '',
+    'package_version': '0.5.5.dev9',
+    'data': [2.0, 1.0, 1.0, 1.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.5.5.dev9'},
+    'type_': 'linesegment2d'}],
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.5.5.dev9',
+   'color_fill': 'rgb(255,175,96)'},
+  'type_': 'contour'}],
+'type_': 'primitivegroup'};

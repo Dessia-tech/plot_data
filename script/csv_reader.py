@@ -1,4 +1,4 @@
-# This script shows how to instanciate a MultiplePlots from a csv file
+# This script shows how to instantiate a MultiplePlots from a csv file
 import plot_data
 from plot_data.colors import GREY, BLACK, WHITE, LIGHTBLUE
 

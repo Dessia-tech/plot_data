@@ -4,7 +4,7 @@
 
 import plot_data
 from plot_data.colors import *
-import volmdlr as vm
+import volmdlr as vm  # you can install volmdlr using pip in plot_data's package
 import volmdlr.wires
 import volmdlr.edges
 

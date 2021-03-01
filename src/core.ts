@@ -335,7 +335,7 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  initialize_containers_dicts(new_plot_data, associated_points) { 
+  initialize_containers_dicts(new_plot_data, associated_points:number[]) { 
     var primitive_entries = [];
     var elements_entries = [];
     if (associated_points.length !== new_plot_data.primitive_groups.length) {
@@ -4578,7 +4578,8 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       var center_x = this.scaleX*1000*real_x + this.last_mouse1X;
       this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
-      this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2 + y_incs[i];
+      this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
+      if (type_ !== 'float') this.primitive_groups[i].Y += y_incs[i];
     }
     this.reset_scales();
     this.resetAllObjects();

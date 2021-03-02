@@ -21,8 +21,8 @@ directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
     random_color = colors[random.randint(0, len(colors) - 1)]
     random_direction = directions[random.randint(0, len(directions) - 1)]
-    elements.append({'x': random.uniform(0, 2),
-                     'y': random.uniform(0, 1),
+    elements.append({'x': random.uniform(0, 0.01),
+                     'y': random.uniform(0, 0.01),
                      'color': random_color,
                      'direction': random_direction})
 
@@ -67,7 +67,7 @@ primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primit
 
 primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups,
                                                                associated_elements=[1, 2, 3, 4],
-                                                               to_disp_attribute_names=['x', 'direction']
+                                                               to_disp_attribute_names=['x', 'y']
                                                                )
 
 

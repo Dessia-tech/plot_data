@@ -2110,7 +2110,7 @@ export abstract class PlotData {
 
   draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d:Axis, lists, to_display_attributes) {
     d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, 
-      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, this.height);
     this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
     this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     this.context.closePath();
@@ -4196,15 +4196,20 @@ export class PrimitiveGroupContainer extends PlotData {
       if (this.layout_mode == 'regular') {
         this.regular_layout();
       } else {
-        if (this.primitive_groups.length >= 2) this.reset_scales();
+        if (this.primitive_groups.length >= 1) this.reset_scales();
       }
     }
   }
 
   reset_sizes() {
     var nb_primitives = this.primitive_groups.length;
-    var primitive_width = this.width/(1.2*nb_primitives);
-    var primitive_height = this.height/(1.2*nb_primitives);
+    if (nb_primitives === 1) {
+      var primitive_width = this.width/3;
+      var primitive_height = this.height/3;
+    } else {
+      var primitive_width = this.width/(1.2*nb_primitives);
+      var primitive_height = this.height/(1.2*nb_primitives);
+    }
     for (let i=0; i<nb_primitives; i++) {
       let center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
       let center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
@@ -4270,7 +4275,8 @@ export class PrimitiveGroupContainer extends PlotData {
   reset_scales() {
     this.reset_sizes();
     this.refresh_MinMax();
-    this.refresh_spacing();
+    if (this.primitive_groups.length >= 2) this.refresh_spacing();
+    else if (this.primitive_groups.length === 1) Interactions.click_on_reset_action(this.primitive_groups[0]);
     this.translate_inside_canvas();
   }
 
@@ -4450,13 +4456,13 @@ export class PrimitiveGroupContainer extends PlotData {
     if (this.primitive_groups.length !== 0) {
       if (this.layout_mode == 'one_axis') {
         this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
-            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
       } else if (this.layout_mode == 'two_axis') {
         this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
-          this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+          this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
 
         this.layout_axis.draw_sc_vertical_axis(this.context, this.last_mouse1Y, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
-          this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+          this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.height);
       }
     }
   }
@@ -4617,7 +4623,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
       if (type_ !== 'float') this.primitive_groups[i].Y += y_incs[i];
     }
-    if (this.primitive_groups.length >= 2) this.reset_scales();
+    if (this.primitive_groups.length >= 1) this.reset_scales();
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -6362,12 +6368,12 @@ export class Axis {
     context.closePath();
   }
 
-  draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
-    this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0], scroll_x, decalage_axis_x, decalage_axis_y, X, Y);
-    this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1], scroll_y, decalage_axis_x, decalage_axis_y, X, Y);
+  draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, canvas_height) {
+    this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0], scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width);
+    this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1], scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height);
   }
 
-  draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute:Attribute, scroll_x, decalage_axis_x, decalage_axis_y, X, Y) {
+  draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute:Attribute, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width) {
     // Drawing the coordinate system
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
@@ -6392,12 +6398,12 @@ export class Axis {
     context.stroke();
     //Graduations
     context.font = this.graduation_style.font_size.toString() + 'px Arial';
-    this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X);  
+    this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X, canvas_width);  
     context.stroke();
     context.closePath();  
   }
 
-  draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
+  draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height) {
     // Drawing the coordinate system
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
@@ -6422,20 +6428,21 @@ export class Axis {
 
     //Graduations
     context.font = this.graduation_style.font_size.toString() + 'px Arial';
-    this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_y, Y);
+    this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_y, Y, canvas_height);
     context.stroke();
     context.closePath();
   }
 
-  draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_x, X) {
+  draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_x, X, canvas_width) {
     context.textAlign = 'center';
 
     if (attribute['type_'] == 'float') {
       var minX = list[0];
       var maxX = list[1];
       if (scroll_x % 5 == 0) {
-        var kx = 1.1*scaleX/init_scaleX;
-        this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+        let kx = 1.1*scaleX/init_scaleX;
+        let num = Math.max(maxX - minX, 1);
+        this.x_step = Math.min(num/(kx*(this.nb_points_x-1)), canvas_width/(scaleX*1000*(this.nb_points_x - 1)));
       }
       var i=0;
       var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(this.x_step)));
@@ -6467,15 +6474,16 @@ export class Axis {
     }
   }
 
-  draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_y, Y) {
+  draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_y, Y, canvas_height) {
     context.textAlign = 'end';
     context.textBaseline = 'middle';
     if (attribute['type_'] == 'float') {
       var minY = list[0];
       var maxY = list[1];
       if (scroll_y % 5 == 0) {
-        var ky = 1.1*scaleY/init_scaleY;
-        this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
+        let ky = 1.1*scaleY/init_scaleY;
+        let num = Math.max(maxY - minY, 1);
+        this.y_step = Math.min(num/(ky*(this.nb_points_y-1)), canvas_height/(1000*scaleY*(this.nb_points_y - 1)));
       }
       var i=0;
       var delta_y = maxY - minY;
@@ -8266,3 +8274,30 @@ const empty_container = {'name': '',
 'type_': 'primitivegroupcontainer'};
 
 
+var primitive_group3 = {'name': '',
+'package_version': '0.5.6',
+'primitives': [{'name': '',
+  'package_version': '0.5.6',
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.5.6',
+   'color_fill': 'rgb(247,0,0)'},
+  'r': 5,
+  'cy': 1.0,
+  'cx': 1.0,
+  'type_': 'circle'}],
+'type_': 'primitivegroup'}
+
+var primitive_group4 = {'name': '',
+'package_version': '0.5.6',
+'primitives': [{'name': '',
+  'package_version': '0.5.6',
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.5.6',
+   'color_fill': 'rgb(222,184,135)'},
+  'r': 5,
+  'cy': 1.0,
+  'cx': 1.0,
+  'type_': 'circle'}],
+'type_': 'primitivegroup'}

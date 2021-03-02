@@ -3780,7 +3780,7 @@ export class PlotContour extends PlotData {
           }
         }
       }
-      if (multiple_labels_index !== -1) {
+      if (multiple_labels_index !== -1) { // So that labels are drawn at last
         a.primitives = List.move_elements(multiple_labels_index, a.primitives.length - 1, a.primitives);
       }
     }
@@ -5825,10 +5825,10 @@ export class Contour2D {
 }
 
 export class Text {
-  minX:number=0;
-  maxX:number=0;
-  minY:number=0;
-  maxY:number=0;
+  minX:number=Infinity;
+  maxX:number=-Infinity;
+  minY:number=Infinity;
+  maxY:number=-Infinity;
   mouse_selection_color:any;
   init_scale:number=0;
 
@@ -5840,6 +5840,10 @@ export class Text {
               public max_width,
               public type_:string='text',
               public name:string='') {
+                this.minX = position_x;
+                this.maxX = position_x;
+                this.minY = position_y;
+                this.maxY = position_y;
   }
 
   public static deserialize(serialized) {

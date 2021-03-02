@@ -13,6 +13,6 @@ from test_objects.primitive_group_test import primitive_group
 
 # if debug mode is True, set it to False
 plot_data.plot_canvas(plot_data_object=primitive_group,
-                      debug_mode=False)
+                      debug_mode=True)
 
 

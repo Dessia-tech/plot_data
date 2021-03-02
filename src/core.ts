@@ -374,13 +374,17 @@ export class MultiplePlots {
     var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
     if (attribute_names !== null) new_plot_data = this.initialize_containers_dicts(new_plot_data, associated_points);
     this.initialize_new_plot_data(new_plot_data);
-    new_plot_data = this.call_layout(new_plot_data, attribute_names);
+    try {
+      new_plot_data = this.call_layout(new_plot_data, attribute_names);
+    } catch(e) {
+      console.warn('F');
+    }
     if (serialized['primitive_groups'].length !== 0) {
       this.redrawAllObjects();
     } else {
       let obj = this.objectList[this.nbObjects - 1];
-      this.objectList[this.nbObjects - 1].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      this.objectList[this.nbObjects - 1].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
     
     return this.nbObjects - 1;
@@ -394,7 +398,11 @@ export class MultiplePlots {
 
   remove_primitive_group_from_container(point_index, container_index) {
     let obj:any = this.objectList[container_index];
-    obj.remove_primitive_group(point_index);
+    try {
+      obj.remove_primitive_group(point_index);
+    } catch(e) {
+      console.warn('WARNING - remove_primitive_group_from_container() : point n°' + point_index + " may not be associated with any primitive_group");
+    }
   }
 
   remove_all_primitive_groups_from_container(container_index) {
@@ -4609,7 +4617,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
       if (type_ !== 'float') this.primitive_groups[i].Y += y_incs[i];
     }
-    if (this.primitive_groups.length >= 1) this.reset_scales();
+    if (this.primitive_groups.length >= 2) this.reset_scales();
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -8254,51 +8262,3 @@ const empty_container = {'name': '',
 'type_': 'primitivegroupcontainer'};
 
 
-var primitive_group1 = {'name': '',
- 'package_version': '0.5.5.dev9',
- 'primitives': [{'name': '',
-   'package_version': '0.5.5.dev9',
-   'r': 10,
-   'cy': 0.0,
-   'cx': 0.0,
-   'type_': 'circle'}],
- 'type_': 'primitivegroup'};
-
-var primitive_group2 = {'name': '',
-'package_version': '0.5.5.dev9',
-'primitives': [{'name': '',
-  'package_version': '0.5.5.dev9',
-  'plot_data_primitives': [{'name': '',
-    'package_version': '0.5.5.dev9',
-    'data': [1.0, 1.0, 1.0, 2.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.5.5.dev9'},
-    'type_': 'linesegment2d'},
-   {'name': '',
-    'package_version': '0.5.5.dev9',
-    'data': [1.0, 2.0, 2.0, 2.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.5.5.dev9'},
-    'type_': 'linesegment2d'},
-   {'name': '',
-    'package_version': '0.5.5.dev9',
-    'data': [2.0, 2.0, 2.0, 1.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.5.5.dev9'},
-    'type_': 'linesegment2d'},
-   {'name': '',
-    'package_version': '0.5.5.dev9',
-    'data': [2.0, 1.0, 1.0, 1.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.5.5.dev9'},
-    'type_': 'linesegment2d'}],
-  'surface_style': {'name': '',
-   'object_class': 'plot_data.core.SurfaceStyle',
-   'package_version': '0.5.5.dev9',
-   'color_fill': 'rgb(255,175,96)'},
-  'type_': 'contour'}],
-'type_': 'primitivegroup'};

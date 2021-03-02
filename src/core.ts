@@ -98,7 +98,7 @@ export class MultiplePlots {
     if (data['initial_view_on']) {
       this.clean_view();
     }
-    this.save_canvas();
+    // this.save_canvas();
   }
 
   initialize_sizes() {
@@ -1882,8 +1882,8 @@ export abstract class PlotData {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
     if ((this.axis_ON) && !(this.graph_ON)) { // rescale and avoid axis
-      this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
-      this.init_scaleY = (this.height - this.decalage_axis_y-this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
+      this.init_scaleX = (this.width - this.decalage_axis_x - this.pointLength)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
+      this.init_scaleY = (this.height - this.decalage_axis_y - this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
@@ -2100,9 +2100,9 @@ export abstract class PlotData {
   draw_axis(mvx, mvy, scaleX, scaleY, d:Axis) { // Only used by graph2D
     if (d['type_'] == 'axis'){
       d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0]);
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0], this.width);
       d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1]);
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1], this.height);
       this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
       this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     }
@@ -4232,33 +4232,38 @@ export class PrimitiveGroupContainer extends PlotData {
 
   refresh_spacing() {
     var count = 0;
+    var max_count = 50;
     if (this.maxX - this.minX > this.width) {
-      while ((this.maxX - this.minX > this.width - this.decalage_axis_x) && (count < 50)) {
+      while ((this.maxX - this.minX > this.width - this.decalage_axis_x) && (count < max_count)) {
         this.x_zoom_elements(-1);
         this.refresh_MinMax();
+        count++;
       } 
     } else {
-      while ((this.maxX - this.minX < (this.width - this.decalage_axis_x)/1.1) && (count < 50)) {
+      while ((this.maxX - this.minX < (this.width - this.decalage_axis_x)/1.1) && (count < max_count)) {
         this.x_zoom_elements(1);
         this.refresh_MinMax();
+        count++;
       } 
     }
     count = 0;
     if (this.layout_mode == 'two_axis') {
       if (this.maxY - this.minY > this.height) {
-        while ((this.maxY - this.minY > this.height - this.decalage_axis_y) && (count < 50)) {
+        while ((this.maxY - this.minY > this.height - this.decalage_axis_y) && (count < max_count)) {
           this.y_zoom_elements(-1);
           this.refresh_MinMax();
+          count++;
         } 
       } else {
-        while ((this.maxY - this.minY < (this.height - this.decalage_axis_y)/1.1) && (count < 50)) {
+        while ((this.maxY - this.minY < (this.height - this.decalage_axis_y)/1.1) && (count < max_count)) {
           this.y_zoom_elements(1);
           this.refresh_MinMax();
+          count++;
         }
       }
     }
-    if (count == 50) {
-      throw new Error('Primitive_group_container, refresh_spacing(): max count reached');
+    if (count === max_count) {
+      console.warn("WARNING: Primitive_group_container -> refresh_spacing(): max count reached. Autoscaling won't be optimal.");
     }
   }
 
@@ -6158,10 +6163,10 @@ export class Point2D {
         throw new Error('Invalid point_size');
       }
       this.size = this.k*point_style.size/400;
-      this.minX = this.cx - 2.5*this.size;
-      this.maxX = this.cx + 2.5*this.size;
-      this.minY = this.cy - 5*this.size;
-      this.maxY = this.cy + 5*this.size;
+      this.minX = this.cx;
+      this.maxX = this.cx;
+      this.minY = this.cy;
+      this.maxY = this.cy;
 
       this.mouse_selection_color = genColor();
     }
@@ -6307,7 +6312,7 @@ export class Axis {
   }
 
 
-  draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name) {
+  draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, canvas_width) {
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
     context.lineWidth = this.axis_style.line_width;
@@ -6324,8 +6329,9 @@ export class Axis {
     Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
     //Graduations
     if (scroll_x % 5 == 0) {
-      var kx = 1.1*scaleX/init_scaleX;
-      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+      let kx = 1.1*scaleX/init_scaleX;
+      let num = Math.max(maxX - minX, 1);
+      this.x_step = Math.min(num/(kx*(this.nb_points_x-1)), canvas_width/(scaleX*1000*(this.nb_points_x - 1)));
     }
     context.font = 'bold 20px Arial';
     context.textAlign = 'end';
@@ -6338,7 +6344,7 @@ export class Axis {
   }
 
 
-  draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name) {
+  draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, canvas_height) {
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
     context.lineWidth = this.axis_style.line_width;
@@ -6355,8 +6361,9 @@ export class Axis {
     Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
     // Graduations
     if (scroll_y % 5 == 0) {
-      var ky = 1.1*scaleY/init_scaleY;
-      this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
+      let ky = 1.1*scaleY/init_scaleY;
+      let num = Math.max(maxY - minY, 1);
+      this.y_step = Math.min(num/(ky*(this.nb_points_y-1)), canvas_height/(1000*scaleY*(this.nb_points_y - 1)));
     }
     context.font = 'bold 20px Arial';
     context.textAlign = 'start';

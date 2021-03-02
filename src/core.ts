@@ -6106,7 +6106,7 @@ export class Circle2D {
 
   public static deserialize(serialized) {
       var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:0.5, name:''};
-      var default_surface_style = {color_fill:string_to_rgb('violet'), hatching:null, opacity:1};
+      var default_surface_style = {color_fill:string_to_rgb('white'), hatching:null, opacity:0};
       var default_dict_ = {edge_style:default_edge_style, surface_style:default_surface_style};
       serialized = set_default_values(serialized, default_dict_);
       var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
@@ -7161,7 +7161,7 @@ export class SurfaceStyle {
   }
             
   public static deserialize(serialized) {
-    let default_dict_ = {color_fill:string_to_rgb('grey'), opacity:1, hatching:null};
+    let default_dict_ = {color_fill:string_to_rgb('white'), opacity:1, hatching:null};
     serialized = set_default_values(serialized, default_dict_);
     if (serialized['hatching'] != null) {
       var hatching = HatchingSet.deserialize(serialized['hatching']);

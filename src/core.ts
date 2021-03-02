@@ -4299,14 +4299,17 @@ export class PrimitiveGroupContainer extends PlotData {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas();
+
     this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
-    this.draw_layout_axis();
-    if (this.layout_mode !== 'regular') {
-      this.draw_coordinate_lines();
-    }
-    for (let index of this.display_order) {
-      let prim = this.primitive_groups[index];
-      this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
+    if (this.width > 100 && this.height > 100) {
+      this.draw_layout_axis();
+      if (this.layout_mode !== 'regular') {
+        this.draw_coordinate_lines();
+      }
+      for (let index of this.display_order) {
+        let prim = this.primitive_groups[index];
+        this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
+      }
     }
 
     if (this.multiplot_manipulation) { 
@@ -8280,31 +8283,3 @@ const empty_container = {'name': '',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 
-
-var primitive_group3 = {'name': '',
-'package_version': '0.5.6',
-'primitives': [{'name': '',
-  'package_version': '0.5.6',
-  'surface_style': {'name': '',
-   'object_class': 'plot_data.core.SurfaceStyle',
-   'package_version': '0.5.6',
-   'color_fill': 'rgb(247,0,0)'},
-  'r': 5,
-  'cy': 1.0,
-  'cx': 1.0,
-  'type_': 'circle'}],
-'type_': 'primitivegroup'}
-
-var primitive_group4 = {'name': '',
-'package_version': '0.5.6',
-'primitives': [{'name': '',
-  'package_version': '0.5.6',
-  'surface_style': {'name': '',
-   'object_class': 'plot_data.core.SurfaceStyle',
-   'package_version': '0.5.6',
-   'color_fill': 'rgb(222,184,135)'},
-  'r': 5,
-  'cy': 1.0,
-  'cx': 1.0,
-  'type_': 'circle'}],
-'type_': 'primitivegroup'}

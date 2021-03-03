@@ -47,6 +47,7 @@ export class MultiplePlots {
   primitive_dict={};
   shown_datas:any[]=[];
   hidden_datas:any[]=[];
+  canvas:any;
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
@@ -238,10 +239,10 @@ export class MultiplePlots {
   }
 
   define_canvas(canvas_id: string):void {
-    var canvas:any = document.getElementById(canvas_id);
-    canvas.width = this.width;
-		canvas.height = this.height;
-    this.context_show = canvas.getContext("2d");
+    this.canvas = document.getElementById(canvas_id);
+    this.canvas.width = this.width;
+		this.canvas.height = this.height;
+    this.context_show = this.canvas.getContext("2d");
     var hiddenCanvas:any = document.createElement("canvas", { is : canvas_id });
     hiddenCanvas.id = canvas_id + '_hidden';
 		hiddenCanvas.width = this.width;
@@ -729,7 +730,7 @@ export class MultiplePlots {
     return resize_style;
   }
 
-  setCursorStyle(mouse2X, mouse2Y, canvas):void {
+  setCursorStyle(mouse2X, mouse2Y):void {
     if (this.move_plot_index != -1) {
       var thickness = 15;
       var resize_style:any = '';
@@ -745,13 +746,13 @@ export class MultiplePlots {
         if (right && !resize_style.includes('e')) {resize_style = resize_style + 'e';}
       }
       if (resize_style == '') {
-        canvas.style.cursor = 'default';
+        this.canvas.style.cursor = 'default';
       } else {
         resize_style = this.reorder_resize_style(resize_style);
-        canvas.style.cursor = resize_style + '-resize';
+        this.canvas.style.cursor = resize_style + '-resize';
       }
     } else {
-      canvas.style.cursor = 'default';
+      this.canvas.style.cursor = 'default';
     }
   }
 
@@ -1315,10 +1316,10 @@ export class MultiplePlots {
   }
 
 
-  manage_selected_point_index_changes(old_selected_index:number[], canvas) {
+  manage_selected_point_index_changes(old_selected_index:number[]) {
     if (!equals(old_selected_index, this.selected_point_index)) {
       var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.selected_point_index } });
-      canvas.dispatchEvent(evt);
+      this.canvas.dispatchEvent(evt);
     }
   }
 
@@ -1477,7 +1478,6 @@ export class MultiplePlots {
 
 
   mouse_interaction(): void {
-    var canvas = document.getElementById(this.canvas_id);
     var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
     var isDrawing = false;
     var mouse_moving:boolean = false;
@@ -1486,15 +1486,15 @@ export class MultiplePlots {
     var old_selected_index;
 
     // For canvas to read keyboard inputs.
-    canvas.setAttribute('tabindex', '0');
-    canvas.focus(); 
+    this.canvas.setAttribute('tabindex', '0');
+    this.canvas.focus(); 
 
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
     }
     this.setAllInteractionsToOff();
 
-    canvas.addEventListener('mousedown', e => {
+    this.canvas.addEventListener('mousedown', e => {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
@@ -1521,7 +1521,7 @@ export class MultiplePlots {
       }
     });
 
-    canvas.addEventListener('mousemove', e => {
+    this.canvas.addEventListener('mousemove', e => {
       var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
       mouse2X = e.offsetX; mouse2Y = e.offsetY;
       if (this.manipulation_bool) {
@@ -1529,7 +1529,7 @@ export class MultiplePlots {
           mouse_moving = true;
           if ((this.clickedPlotIndex != -1) && !(clickOnVertex)) {
             this.setAllInteractionsToOff();
-            canvas.style.cursor = 'move';
+            this.canvas.style.cursor = 'move';
             this.translateSelectedObject(this.clickedPlotIndex, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
             this.redrawAllObjects();
           } else if (this.clickedPlotIndex == -1) {
@@ -1545,7 +1545,7 @@ export class MultiplePlots {
           }
         } else {
           this.move_plot_index = this.getLastObjectIndex(mouse2X, mouse2Y);
-          this.setCursorStyle(mouse2X, mouse2Y, canvas);
+          this.setCursorStyle(mouse2X, mouse2Y);
           this.redrawAllObjects();
         }
       } else {
@@ -1568,7 +1568,7 @@ export class MultiplePlots {
       }
     });
 
-    canvas.addEventListener('mouseup', e => {
+    this.canvas.addEventListener('mouseup', e => {
       mouse3X = e.offsetX;
       mouse3Y = e.offsetY;
       var click_on_manip_button = Shape.isInRect(mouse3X, mouse3Y, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
@@ -1607,7 +1607,7 @@ export class MultiplePlots {
           this.clean_view();
         }
       }
-      this.manage_selected_point_index_changes(old_selected_index, canvas);
+      this.manage_selected_point_index_changes(old_selected_index);
       this.redrawAllObjects();
       isDrawing = false;
       mouse_moving = false;
@@ -1615,7 +1615,7 @@ export class MultiplePlots {
     });
 
 
-    canvas.addEventListener('wheel', e => {
+    this.canvas.addEventListener('wheel', e => {
       e.preventDefault();
       var mouse3X = e.offsetX;
       var mouse3Y = e.offsetY;
@@ -1628,26 +1628,26 @@ export class MultiplePlots {
       }
     });
 
-    canvas.addEventListener('mouseleave', e => {
+    this.canvas.addEventListener('mouseleave', e => {
       isDrawing = false;
       mouse_moving = false;
     });
 
-    canvas.addEventListener('dblclick', e => {
+    this.canvas.addEventListener('dblclick', e => {
       if (this.clickedPlotIndex !== -1) {
         this.dbl_click_manage_settings_on(this.clickedPlotIndex);
         // this.redrawAllObjects();
       }
     });
 
-    canvas.addEventListener('click', e => {
+    this.canvas.addEventListener('click', e => {
       if (this.clickedPlotIndex !== -1) {
         this.single_click_manage_settings_on(this.clickedPlotIndex);
         // this.redrawAllObjects();
       }
     });
 
-    canvas.addEventListener('selectionchange', (e:any) => {
+    this.canvas.addEventListener('selectionchange', (e:any) => {
     });
 
   // Not working well actually, but I let it here in case somebody wants to give it a try
@@ -3240,6 +3240,7 @@ export abstract class PlotData {
 
   reset_select_on_click() {
     this.select_on_click = [];
+    this.selected_point_index = [];
     this.tooltip_list = [];
     if (this.type_ == 'scatterplot') {
       for (let i=0; i<this.plotObject.point_list.length; i++) {
@@ -3265,6 +3266,7 @@ export abstract class PlotData {
     this.initial_last_mouse1X = this.last_mouse1X;
     this.initial_last_mouse1Y = this.last_mouse1Y;
     var click_on_selectw_border = false; var up=false; var down=false; var left=false; var right=false;
+    if (e.ctrlKey) Interactions.click_on_clear_action(this);
     if (this.select_bool) {
       if (this.permanent_window) {
         [click_on_selectw_border, up, down, left, right] = Interactions.initialize_select_win_bool(mouse1X, mouse1Y, this);
@@ -3481,7 +3483,7 @@ export abstract class PlotData {
     return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing];
   }
 
-  mouse_interaction(parallelplot:boolean) {
+  mouse_interaction(is_parallelplot:boolean) {
     if (this.interaction_ON === true) {
       var isDrawing = false;
       var mouse_moving = false;
@@ -3503,7 +3505,7 @@ export abstract class PlotData {
       canvas.addEventListener('mousedown', e => {
         if (this.interaction_ON) {
           [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
-          if (parallelplot) {
+          if (is_parallelplot) {
             [click_on_axis, selected_axis_index] = Interactions.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis, this);
             [click_on_name, selected_name_index] = Interactions.initialize_click_on_name(this.axis_list.length, mouse1X, mouse1Y, this);
             [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
@@ -3513,7 +3515,7 @@ export abstract class PlotData {
 
       canvas.addEventListener('mousemove', e => {
         if (this.interaction_ON) {
-          if (parallelplot) {
+          if (is_parallelplot) {
             this.isSelectingppAxis = false;
             if (isDrawing) {
               mouse_moving = true;
@@ -3536,7 +3538,7 @@ export abstract class PlotData {
 
       canvas.addEventListener('mouseup', e => {
         if (this.interaction_ON) {
-          if (parallelplot) {
+          if (is_parallelplot) {
             [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
           } else {
             [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
@@ -3545,7 +3547,7 @@ export abstract class PlotData {
       })
 
       canvas.addEventListener('wheel', e => {
-        if (!parallelplot && this.interaction_ON) {
+        if (!is_parallelplot && this.interaction_ON) {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
         }
       });
@@ -6739,12 +6741,13 @@ export class Dataset {
   }
 }
 
+
 export class Graph2D {
   constructor(public graphs: Dataset[],
               public to_disp_attribute_names:string[],
               public axis: Axis,
-              public type_: string,
-              public name: string) {}
+              public type_: string='graph2d',
+              public name: string='') {}
 
   public static deserialize(serialized) {
     var default_dict_ = {axis:{}};
@@ -6763,6 +6766,7 @@ export class Graph2D {
                        serialized['name']);
   }
 }
+
 
 export class Scatter {
 

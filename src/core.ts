@@ -1,8 +1,3 @@
-// import { kMaxLength } from "buffer";
-// import { Console } from "console";
-// import { endianness, type } from "os";
-// import { start } from "repl";
-
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
 
@@ -1882,8 +1877,8 @@ export abstract class PlotData {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
     if ((this.axis_ON) && !(this.graph_ON)) { // rescale and avoid axis
-      this.init_scaleX = (this.width - this.decalage_axis_x - this.pointLength)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
-      this.init_scaleY = (this.height - this.decalage_axis_y - this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
+      this.init_scaleX = (this.width - this.decalage_axis_x - 2*this.pointLength)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
+      this.init_scaleY = (this.height - this.decalage_axis_y - 2*this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
@@ -6200,7 +6195,7 @@ export class Point2D {
           context.fillStyle = context.strokeStyle;
           context.stroke();
         } else {
-          throw new Error('Invalid shape for point');
+          throw new Error(this.point_style.shape + ' is not a valid point shape.');
         }
 
     }
@@ -6221,7 +6216,7 @@ export class Point2D {
           return i;
         }
       }
-      throw new Error('getPointIndex : not in list');
+      throw new Error('Point2D.getPointIndex() : not in list');
     }
 
     isPointInList(point_list:Point2D[]) {
@@ -7585,7 +7580,7 @@ export function isColorInDict(str:string): boolean {
 }
 
 export function hex_to_string(hexa:string): string {
-  if (!Object.keys(hex_to_string_dict).includes(hexa)) { throw new Error('hex_to_string -> Invalid color : ' + hexa + ' not in list'); }
+  if (!Object.keys(hex_to_string_dict).includes(hexa)) { throw new Error('hex_to_string -> Invalid color : ' + hexa + ' is not in list'); }
   return hex_to_string_dict[hexa];
 }
 

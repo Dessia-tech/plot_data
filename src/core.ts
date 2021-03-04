@@ -368,7 +368,15 @@ export class MultiplePlots {
 
   add_primitive_group_container(serialized=empty_container, associated_points:number[]=[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
     var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
-    if (attribute_names !== null) new_plot_data = this.initialize_containers_dicts(new_plot_data, associated_points);
+    if (attribute_names !== null) {
+      new_plot_data = this.initialize_containers_dicts(new_plot_data, associated_points);
+      let displayable_names = Array.from(this.displayable_attributes, attribute => attribute.name);
+      for (let name of attribute_names) {
+        if (!displayable_names.includes(name)) {
+          throw new Error('add_primitive_group_container(): ' + name + " isn't a valid attribute");
+        }
+      }
+    } 
     this.initialize_new_plot_data(new_plot_data);
     try {
       new_plot_data = this.call_layout(new_plot_data, attribute_names);
@@ -388,7 +396,7 @@ export class MultiplePlots {
 
   add_primitive_group_to_container(serialized, container_index, point_index) {
     let obj:any = this.objectList[container_index];
-    obj.elements_dict[obj.primitive_groups.length.toString()] = this.data['elements'][point_index];
+    obj.elements_dict = MyObject.add_properties(obj.elements_dict, [obj.primitive_groups.length, this.data['elements'][point_index]]);
     obj.add_primitive_group(serialized, point_index); // primitive_dict updated inside this function
   }
 
@@ -403,10 +411,7 @@ export class MultiplePlots {
 
   remove_all_primitive_groups_from_container(container_index) {
     var obj:any = this.objectList[container_index];
-    this.objectList[container_index].elements_dict = {};
-    this.objectList[container_index].primitive_dict = {};
-    obj.primitive_groups = [];
-    obj.display_order = [];
+    obj.reinitialize_all();
     obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
   }
@@ -1979,6 +1984,7 @@ export abstract class PlotData {
         this.context.strokeStyle = d.edge_style.color_stroke;
         this.context.lineWidth = d.edge_style.line_width;
         this.context.fillStyle = d.surface_style.color_fill;
+        this.context.setLineDash(d.edge_style.dashline);
         if (d.surface_style.hatching != null) {
           this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
         }
@@ -2014,6 +2020,7 @@ export abstract class PlotData {
         this.context.strokeStyle = d.edge_style.color_stroke;
         this.context.lineWidth = d.edge_style.line_width;
         this.context.fillStyle = d.surface_style.color_fill;
+        this.context.setLineDash(d.edge_style.dashline);
         this.context.fill();
         if (d.surface_style.hatching != null) {
           this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
@@ -2031,6 +2038,7 @@ export abstract class PlotData {
       }
       this.context.fill();
       this.context.stroke();
+      this.context.setLineDash([]);
     }
   }
 
@@ -2062,9 +2070,6 @@ export abstract class PlotData {
         if (shape == 'crux') {
           this.context.strokeStyle = d.point_style.color_fill;
         }
-        if ((this.select_on_mouse === d) || (this.primitive_mouse_over_point === d)) {
-          this.context.fillStyle = this.color_surface_on_mouse;
-        }
         if (d.selected) {
           if (shape == 'crux') {
             this.context.strokeStyle = this.color_surface_on_click;
@@ -2075,6 +2080,9 @@ export abstract class PlotData {
               this.context.fillStyle = this.color_surface_on_click;
             }
           }
+        }
+        if ((this.select_on_mouse === d) || (this.primitive_mouse_over_point === d)) {
+          this.context.fillStyle = this.color_surface_on_mouse;
         }
       }
       var x = scaleX*(1000*d.cx+ mvx);
@@ -4143,6 +4151,16 @@ export class PrimitiveGroupContainer extends PlotData {
     }
   }
 
+  reinitialize_all() {
+    this.elements_dict = {};
+    this.primitive_dict = {};
+    this.primitive_groups = [];
+    this.display_order = [];
+    // this.scaleX = 1, this.scaleY = 1;
+    // this.last_mouse1X = 0;
+    // this.last_mouse1Y = 0;
+  }
+
   refresh_buttons_coords() {
     this.button_w = 40;
     this.button_h = 20;
@@ -4228,40 +4246,69 @@ export class PrimitiveGroupContainer extends PlotData {
   }
 
   refresh_spacing() {
-    var count = 0;
-    var max_count = 50;
-    if (this.maxX - this.minX > this.width) {
-      while ((this.maxX - this.minX > this.width - this.decalage_axis_x) && (count < max_count)) {
-        this.x_zoom_elements(-1);
-        this.refresh_MinMax();
-        count++;
-      } 
-    } else {
-      while ((this.maxX - this.minX < (this.width - this.decalage_axis_x)/1.1) && (count < max_count)) {
-        this.x_zoom_elements(1);
-        this.refresh_MinMax();
-        count++;
-      } 
+    // var count = 0;
+    // var max_count = 50;
+    // if (this.maxX - this.minX > this.width) {
+    //   while ((this.maxX - this.minX > this.width - this.decalage_axis_x) && (count < max_count)) {
+    //     this.x_zoom_elements(-1);
+    //     this.refresh_MinMax();
+    //     count++;
+    //   } 
+    // } else {
+    //   while ((this.maxX - this.minX < (this.width - this.decalage_axis_x)/1.1) && (count < max_count)) {
+    //     this.x_zoom_elements(1);
+    //     this.refresh_MinMax();
+    //     count++;
+    //   } 
+    // }
+    // count = 0;
+    // if (this.layout_mode == 'two_axis') {
+    //   if (this.maxY - this.minY > this.height) {
+    //     while ((this.maxY - this.minY > this.height - this.decalage_axis_y) && (count < max_count)) {
+    //       this.y_zoom_elements(-1);
+    //       this.refresh_MinMax();
+    //       count++;
+    //     } 
+    //   } else {
+    //     while ((this.maxY - this.minY < (this.height - this.decalage_axis_y)/1.1) && (count < max_count)) {
+    //       this.y_zoom_elements(1);
+    //       this.refresh_MinMax();
+    //       count++;
+    //     }
+    //   }
+    // }
+    // if (count === max_count) {
+    //   console.warn("WARNING: Primitive_group_container -> refresh_spacing(): max count reached. Autoscaling won't be optimal.");
+    // }
+    var zoom_coeff_x = (this.width - this.decalage_axis_x)/(this.maxX - this.minX);
+    var container_center_x = this.X + this.width/2;
+    for (let i=0; i<this.primitive_groups.length; i++) {
+      let primitive_center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
+      primitive_center_x = container_center_x + zoom_coeff_x*(primitive_center_x - container_center_x);
+      this.primitive_groups[i].X = primitive_center_x - this.primitive_groups[i].width/2;
     }
-    count = 0;
-    if (this.layout_mode == 'two_axis') {
-      if (this.maxY - this.minY > this.height) {
-        while ((this.maxY - this.minY > this.height - this.decalage_axis_y) && (count < max_count)) {
-          this.y_zoom_elements(-1);
-          this.refresh_MinMax();
-          count++;
-        } 
-      } else {
-        while ((this.maxY - this.minY < (this.height - this.decalage_axis_y)/1.1) && (count < max_count)) {
-          this.y_zoom_elements(1);
-          this.refresh_MinMax();
-          count++;
-        }
+    var old_scaleX = this.scaleX;
+    this.scaleX = this.scaleX*zoom_coeff_x;
+    this.last_mouse1X = this.last_mouse1X - ((container_center_x - this.X)/old_scaleX - (container_center_x - this.X)/this.scaleX);
+    this.scroll_x = 0;
+    this.refresh_MinMax();
+    
+
+    if (this.layout_mode === 'two_axis') {
+      let zoom_coeff_y = (this.height - this.decalage_axis_y)/(this.maxY - this.minY);
+      var container_center_y = this.Y + this.height/2;
+      for (let i=0; i<this.primitive_groups.length; i++) {
+        let primitive_center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
+        primitive_center_y = container_center_y + zoom_coeff_y*(primitive_center_y - container_center_y);
+        this.primitive_groups[i].Y = primitive_center_y - this.primitive_groups[i].height/2;
       }
+      var old_scaleY = this.scaleY;
+      this.scaleY = this.scaleY*zoom_coeff_y;
+      this.last_mouse1Y = this.last_mouse1Y - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
+      this.scroll_y = 0;
     }
-    if (count === max_count) {
-      console.warn("WARNING: Primitive_group_container -> refresh_spacing(): max count reached. Autoscaling won't be optimal.");
-    }
+    
+    this.resetAllObjects();
   }
 
   translate_inside_canvas() {
@@ -4276,9 +4323,14 @@ export class PrimitiveGroupContainer extends PlotData {
 
   reset_scales() {
     this.reset_sizes();
-    this.refresh_MinMax();
-    if (this.primitive_groups.length >= 2) this.refresh_spacing();
+    if (this.primitive_groups.length >= 2) {
+      this.refresh_MinMax();
+      for (let i=0; i<10; i++) {
+        this.refresh_spacing();
+      }
+    }
     else if (this.primitive_groups.length === 1) Interactions.click_on_reset_action(this.primitive_groups[0]);
+    this.refresh_MinMax();
     this.translate_inside_canvas();
   }
 
@@ -5799,7 +5851,7 @@ export class Contour2D {
   }
 
   public static deserialize(serialized) {
-    var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5};
+    var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:1};
     var default_surface_style = {color_fill:string_to_rgb('white'), hatching:null, opacity:1};
     var default_dict_ = {edge_style:default_edge_style, surface_style:default_surface_style};
     serialized = set_default_values(serialized, default_dict_);
@@ -6007,7 +6059,7 @@ export class Line2D {
   }
 
   public static deserialize(serialized) {
-    var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
+    var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:1, name:''};
     var default_dict_ = {edge_style:default_edge_style};
     serialized = set_default_values(serialized, default_dict_);
     var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
@@ -6020,11 +6072,13 @@ export class Line2D {
   draw(context, mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height) {
     context.lineWidth = this.edge_style.line_width;
     context.strokeStyle = this.edge_style.color_stroke;
+    context.setLineDash(this.edge_style.dashline);
     var xi, yi, xf, yf;
     [xi, yi, xf, yf] = this.get_side_points(mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height);
     context.moveTo(xi, yi);
     context.lineTo(xf, yf);
     context.stroke();
+    context.setLineDash([]);
   }
 
   get_side_points(mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height) {
@@ -6116,7 +6170,7 @@ export class Circle2D {
   }
 
   public static deserialize(serialized) {
-      var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:0.5, name:''};
+      var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:1, name:''};
       var default_surface_style = {color_fill:string_to_rgb('white'), hatching:null, opacity:0};
       var default_dict_ = {edge_style:default_edge_style, surface_style:default_surface_style};
       serialized = set_default_values(serialized, default_dict_);
@@ -8232,6 +8286,14 @@ export class MyObject {
         key => ({ [key]: this.deepClone(obj[key], hash) }) ));
   }
 
+  public static add_properties(obj:Object, ...entries:[string, any][]): Object {
+    var obj_entries = Object.entries(obj);
+    for (let entry of entries) {
+      obj_entries.push(entry);
+    }
+    return Object.fromEntries(obj_entries);
+  }
+
 }
 
 /**
@@ -8282,3 +8344,80 @@ const empty_container = {'name': '',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 
+var primitive_group1 = {'name': '',
+'package_version': '0.5.7',
+'primitives': [{'name': '',
+  'package_version': '0.5.7',
+  'r': 10,
+  'cy': 0.0,
+  'cx': 0.0,
+  'type_': 'circle'}],
+'type_': 'primitivegroup'}
+
+var primitive_group2 = {'name': '',
+'package_version': '0.5.7',
+'primitives': [{'name': '',
+  'package_version': '0.5.7',
+  'plot_data_primitives': [{'name': '',
+    'package_version': '0.5.7',
+    'data': [1.0, 1.0, 1.0, 2.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.5.7'},
+    'type_': 'linesegment2d'},
+   {'name': '',
+    'package_version': '0.5.7',
+    'data': [1.0, 2.0, 2.0, 2.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.5.7'},
+    'type_': 'linesegment2d'},
+   {'name': '',
+    'package_version': '0.5.7',
+    'data': [2.0, 2.0, 2.0, 1.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.5.7'},
+    'type_': 'linesegment2d'},
+   {'name': '',
+    'package_version': '0.5.7',
+    'data': [2.0, 1.0, 1.0, 1.0],
+    'edge_style': {'name': '',
+     'object_class': 'plot_data.core.EdgeStyle',
+     'package_version': '0.5.7'},
+    'type_': 'linesegment2d'}],
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.5.7',
+   'color_fill': 'rgb(255,175,96)'},
+  'type_': 'contour'}],
+'type_': 'primitivegroup'}
+
+
+var primitive_group3 = {'name': '',
+'package_version': '0.5.7',
+'primitives': [{'name': '',
+  'package_version': '0.5.7',
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.5.7',
+   'color_fill': 'rgb(247,0,0)'},
+  'r': 5,
+  'cy': 1.0,
+  'cx': 1.0,
+  'type_': 'circle'}],
+'type_': 'primitivegroup'}
+
+var primitive_group4 = {'name': '',
+'package_version': '0.5.7',
+'primitives': [{'name': '',
+  'package_version': '0.5.7',
+  'surface_style': {'name': '',
+   'object_class': 'plot_data.core.SurfaceStyle',
+   'package_version': '0.5.7',
+   'color_fill': 'rgb(222,184,135)'},
+  'r': 5,
+  'cy': 1.0,
+  'cx': 1.0,
+  'type_': 'circle'}],
+'type_': 'primitivegroup'}

@@ -4130,15 +4130,6 @@ export class PrimitiveGroupContainer extends PlotData {
   }
 
 
-  // initialize_layout(serialized_layout) {
-  //   this.layout_attributes = serialized_layout;
-  //   if (serialized_layout.length == 1) {
-  //     this.layout_mode = 'one_axis';
-  //   } else if (serialized_layout.length == 2) {
-  //     this.layout_mode == 'two_axis';
-  //   }
-  // }
-
   define_canvas(canvas_id) {
     super.define_canvas(canvas_id);
     this.initialize_primitive_groups_contexts();
@@ -4156,9 +4147,6 @@ export class PrimitiveGroupContainer extends PlotData {
     this.primitive_dict = {};
     this.primitive_groups = [];
     this.display_order = [];
-    // this.scaleX = 1, this.scaleY = 1;
-    // this.last_mouse1X = 0;
-    // this.last_mouse1Y = 0;
   }
 
   refresh_buttons_coords() {
@@ -4294,7 +4282,7 @@ export class PrimitiveGroupContainer extends PlotData {
     this.refresh_MinMax();
     
 
-    if (this.layout_mode === 'two_axis') {
+    if (this.layout_mode === 'two_axis') { // Then the algo does the same with the y-axis
       let zoom_coeff_y = (this.height - this.decalage_axis_y)/(this.maxY - this.minY);
       var container_center_y = this.Y + this.height/2;
       for (let i=0; i<this.primitive_groups.length; i++) {
@@ -4659,6 +4647,8 @@ export class PrimitiveGroupContainer extends PlotData {
     var nb_primitive_groups = this.primitive_groups.length;
     var name = this.layout_attributes[0].name;
     var type_ = this.layout_attributes[0].type_;
+    this.scaleX = 1; this.scaleY = 1;
+    this.last_mouse1X = 0; this.last_mouse1Y = 0;
     if (type_ !== 'float') {
       var real_xs = [];
       var y_incs = Array(nb_primitive_groups).fill(0);
@@ -4708,6 +4698,8 @@ export class PrimitiveGroupContainer extends PlotData {
     var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
     this.layout_axis = Axis.deserialize(serialized_axis);
     var nb_primitive_groups = this.primitive_groups.length;
+    this.scaleX = 1; this.scaleY = 1;
+    this.last_mouse1X = 0; this.last_mouse1Y = 0;
     for (let i=0; i<nb_primitive_groups; i++) {
       this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
       this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
@@ -8340,86 +8332,3 @@ export function equals(a, b) {
   return a!==a && b!==b;
 }
 
-
-const empty_container = {'name': '',
-'package_version': '0.5.4',
-'primitive_groups': [],
-'type_': 'primitivegroupcontainer'};
-
-var primitive_group1 = {'name': '',
-'package_version': '0.5.7',
-'primitives': [{'name': '',
-  'package_version': '0.5.7',
-  'r': 10,
-  'cy': 0.0,
-  'cx': 0.0,
-  'type_': 'circle'}],
-'type_': 'primitivegroup'}
-
-var primitive_group2 = {'name': '',
-'package_version': '0.5.7',
-'primitives': [{'name': '',
-  'package_version': '0.5.7',
-  'plot_data_primitives': [{'name': '',
-    'package_version': '0.5.7',
-    'data': [1.0, 1.0, 1.0, 2.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.5.7'},
-    'type_': 'linesegment2d'},
-   {'name': '',
-    'package_version': '0.5.7',
-    'data': [1.0, 2.0, 2.0, 2.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.5.7'},
-    'type_': 'linesegment2d'},
-   {'name': '',
-    'package_version': '0.5.7',
-    'data': [2.0, 2.0, 2.0, 1.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.5.7'},
-    'type_': 'linesegment2d'},
-   {'name': '',
-    'package_version': '0.5.7',
-    'data': [2.0, 1.0, 1.0, 1.0],
-    'edge_style': {'name': '',
-     'object_class': 'plot_data.core.EdgeStyle',
-     'package_version': '0.5.7'},
-    'type_': 'linesegment2d'}],
-  'surface_style': {'name': '',
-   'object_class': 'plot_data.core.SurfaceStyle',
-   'package_version': '0.5.7',
-   'color_fill': 'rgb(255,175,96)'},
-  'type_': 'contour'}],
-'type_': 'primitivegroup'}
-
-
-var primitive_group3 = {'name': '',
-'package_version': '0.5.7',
-'primitives': [{'name': '',
-  'package_version': '0.5.7',
-  'surface_style': {'name': '',
-   'object_class': 'plot_data.core.SurfaceStyle',
-   'package_version': '0.5.7',
-   'color_fill': 'rgb(247,0,0)'},
-  'r': 5,
-  'cy': 1.0,
-  'cx': 1.0,
-  'type_': 'circle'}],
-'type_': 'primitivegroup'}
-
-var primitive_group4 = {'name': '',
-'package_version': '0.5.7',
-'primitives': [{'name': '',
-  'package_version': '0.5.7',
-  'surface_style': {'name': '',
-   'object_class': 'plot_data.core.SurfaceStyle',
-   'package_version': '0.5.7',
-   'color_fill': 'rgb(222,184,135)'},
-  'r': 5,
-  'cy': 1.0,
-  'cx': 1.0,
-  'type_': 'circle'}],
-'type_': 'primitivegroup'}

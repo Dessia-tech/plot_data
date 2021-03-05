@@ -8332,3 +8332,9 @@ export function equals(a, b) {
   return a!==a && b!==b;
 }
 
+
+const empty_container = {'name': '',
+'package_version': '0.5.8',
+'primitive_groups': [],
+'type_': 'primitivegroupcontainer'};
+

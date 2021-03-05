@@ -97,16 +97,6 @@ multiplot_template = Template('''<div id="app"></div>
 	globalWidth = 1500;
 	globalHeight = 800;
 	var multiplot = new MultiplePlots(data, globalWidth, globalHeight, 1000, true, $canvas_id.id);
-	//var n =multiplot.add_primitive_group_container(undefined, [], ['x', 'y']);
-	//var list = [0,1,2,3,4,5,6];
-	//for (index of [10]) {
-	//    multiplot.add_primitive_group_to_container(primitive_group2, n, index);
-	//}
-	//for (index of [10]) {
-	//    multiplot.remove_primitive_group_from_container(index, n);
-	//}
-	//multiplot.add_primitive_group_to_container(primitive_group2, n, 10);
-
 </script> 
 ''')
 

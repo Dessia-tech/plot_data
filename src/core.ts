@@ -335,7 +335,7 @@ export class MultiplePlots {
     var primitive_entries = [];
     var elements_entries = [];
     if (associated_points.length !== new_plot_data.primitive_groups.length) {
-        throw new Error("initialize_containers_dicts(): primitive_groups and associated_points don't have the same length.");
+        throw new Error("initialize_containers_dicts(): container.primitive_groups and associated_points don't have the same length.");
     }
     for (let i=0; i<associated_points.length; i++) {
       let associated_point_index = associated_points[i];
@@ -1581,7 +1581,7 @@ export class MultiplePlots {
 
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
-          if (this.objectList[this.clickedPlotIndex].type_ == 'parallelplot') {
+          if (this.clickedPlotIndex !== -1 && this.objectList[this.clickedPlotIndex].type_ === 'parallelplot') {
             var selected_axis_name: string, vertical: boolean, inverted: boolean;
             var hexs: string[], isSelectingppAxis: boolean;
             [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
@@ -4520,6 +4520,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
         this.layout_axis.draw_sc_vertical_axis(this.context, this.last_mouse1Y, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
           this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.height);
+
       }
     }
   }
@@ -6453,7 +6454,8 @@ export class Axis {
     //Axis
     Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
     context.fillStyle = this.graduation_style.text_color;
-    context.strokeStyle = this.axis_style.color_stroke;    context.font = 'bold 20px Arial';
+    context.strokeStyle = this.axis_style.color_stroke;    
+    context.font = 'bold 20px Arial';
     context.textAlign = 'end';
     context.fillText(to_display_attribute['name'], axis_x_end - 5, axis_y_end - 10);
     context.stroke();

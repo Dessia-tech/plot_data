@@ -21,8 +21,8 @@ directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
     random_color = colors[random.randint(0, len(colors) - 1)]
     random_direction = directions[random.randint(0, len(directions) - 1)]
-    elements.append({'x': random.uniform(0, 2),
-                     'y': random.uniform(0, 1),
+    elements.append({'x': random.uniform(0, 1000),
+                     'y': random.uniform(0, 1000),
                      'color': random_color,
                      'direction': random_direction})
 

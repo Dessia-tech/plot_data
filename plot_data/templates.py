@@ -10,10 +10,8 @@ contour_template = Template('''<div id="app"></div>
 <script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
-    var width = $width,
-			height = $height;
-	var show_state = 1
-	var coeff_pixel = 1000
+    var width = $width, height = $height;
+	var coeff_pixel = 1000;
 
   	var data = $data;
 	var number_plot_data = data.length;
@@ -37,10 +35,8 @@ scatter_template = Template('''<div id="app"></div>
 <script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
-	var width = 750,
-			height = 400;
-	var show_state = 1
-	var coeff_pixel = 1000
+	var width = 750, height = 400;
+	var coeff_pixel = 1000;
 
   	var data = $data;
 	var number_plot_data = data.length
@@ -65,10 +61,8 @@ parallelplot_template = Template('''<div id="app"></div>
 <script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
-	var width = 750,
-			height = 400;
-	var show_state = 1
-	var coeff_pixel = 1000
+	var width = 750, height = 400;
+	var coeff_pixel = 1000;
 
 	  var data = $data;
 	var number_plot_data = data.length
@@ -94,13 +88,11 @@ multiplot_template = Template('''<div id="app"></div>
 <script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
-	var width = 750,
-			height = 400;
-	var show_state = 1
-	var coeff_pixel = 1000
+	var width = 750, height = 400;
+	var coeff_pixel = 1000;
 
-  	var data = $data
-	var number_plot_data = data.length
+    var data = $data;
+	var number_plot_data = data.length;
 
 	globalWidth = 1500;
 	globalHeight = 800;
@@ -125,7 +117,7 @@ primitive_group_container_template = Template('''<div id="app"></div>
 	var show_state = 1
 	var coeff_pixel = 1000
 
-  	var data = $data
+  	var data = $data;
 	var number_plot_data = data.length
 
 	globalWidth = 1500;

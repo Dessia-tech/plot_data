@@ -1,7 +1,10 @@
-import { kMaxLength } from "buffer";
-import { Console } from "console";
-import { type } from "os";
-import { start } from "repl";
+// import { kMaxLength } from "buffer";
+// import { Console } from "console";
+// import { endianness, type } from "os";
+// import { start } from "repl";
+
+var multiplot_saves:MultiplePlots[]=[];
+var current_save:number=0;
 
 
 /** 
@@ -48,7 +51,7 @@ export class MultiplePlots {
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
     var requirement = '0.4.10';
-    this.manage_package_version(requirement);
+    check_package_version(data['package_version'], requirement);
     this.dataObjects = data['plots'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
     var elements = data['elements'];
@@ -67,6 +70,12 @@ export class MultiplePlots {
         newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
       } else if (this.dataObjects[i]['type_'] == 'primitivegroupcontainer') {
         newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+        if (this.dataObjects[i]['association']) {
+          this.initializeObjectContext(newObject);
+          let association = this.dataObjects[i]['association'];
+          newObject = this.initialize_containers_dicts(newObject, association['associated_elements']);
+          newObject = this.call_layout(newObject, association['to_disp_attribute_names']);
+        }
       } else {
         throw new Error('MultiplePlots constructor : invalid object type');
       }
@@ -89,16 +98,7 @@ export class MultiplePlots {
     if (data['initial_view_on']) {
       this.clean_view();
     }
-  }
-
-  manage_package_version(requirement) {
-    if (!check_package_version(this.data['package_version'], requirement)) {
-      this.define_canvas(this.canvas_id);
-      this.context_show.textAlign = 'center';
-      this.context_show.font = '20px sans-serif';
-      this.context_show.fillText("plot_data's version must be updated. Current version: " + this.data['package_version'] + ", minimum requirement: " + requirement, this.width/2, this.height/2);
-      throw new Error('Package version error');
-    }
+    // this.save_canvas();
   }
 
   initialize_sizes() {
@@ -163,6 +163,7 @@ export class MultiplePlots {
     this.define_canvas(this.canvas_id);
     // this.redrawAllObjects();
   }
+
 
   initializeButtons():void {
     this.transbutton_x = 5;
@@ -334,10 +335,12 @@ export class MultiplePlots {
     this.redrawAllObjects();
   }
 
-  add_primitive_group_container(serialized=empty_container, associated_points:number[]=[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
-    var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
+  initialize_containers_dicts(new_plot_data, associated_points:number[]) { 
     var primitive_entries = [];
     var elements_entries = [];
+    if (associated_points.length !== new_plot_data.primitive_groups.length) {
+        throw new Error("initialize_containers_dicts(): primitive_groups and associated_points don't have the same length.");
+    }
     for (let i=0; i<associated_points.length; i++) {
       let associated_point_index = associated_points[i];
       primitive_entries.push([associated_point_index, i]);
@@ -345,27 +348,43 @@ export class MultiplePlots {
     }
     new_plot_data.primitive_dict = Object.fromEntries(primitive_entries);
     new_plot_data.elements_dict = Object.fromEntries(elements_entries);
-    this.initialize_new_plot_data(new_plot_data);
+    return new_plot_data;
+  }
 
-    if (serialized['primitive_groups'].length !== 0) {
-      if (attribute_names === null) {
-        new_plot_data.regular_layout();
-      } else {
-        var layout = [];
-        for (let name of attribute_names) {
-          layout.push(this.get_attribute(name));
-        }
-        if (layout.length == 1) {
-          new_plot_data.multiplot_one_axis_layout(layout[0]);
-        } else if (layout.length == 2) {
-          new_plot_data.multiplot_two_axis_layout(layout);
-        }
+  call_layout(new_plot_data, attribute_names:string[]=null) {
+    if (equals(attribute_names, [])) attribute_names = null;
+    if (attribute_names === null) {
+      new_plot_data.regular_layout();
+    } else {
+      var layout = [];
+      for (let name of attribute_names) {
+        layout.push(this.get_attribute(name));
       }
+      if (layout.length == 1) {
+        new_plot_data.multiplot_one_axis_layout(layout[0]);
+      } else if (layout.length == 2) {
+        new_plot_data.multiplot_two_axis_layout(layout);
+      }
+    }
+    return new_plot_data;
+  }
+
+
+  add_primitive_group_container(serialized=empty_container, associated_points:number[]=[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
+    var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, 1000, this.buttons_ON, 0, 0, this.canvas_id);
+    if (attribute_names !== null) new_plot_data = this.initialize_containers_dicts(new_plot_data, associated_points);
+    this.initialize_new_plot_data(new_plot_data);
+    try {
+      new_plot_data = this.call_layout(new_plot_data, attribute_names);
+    } catch(e) {
+      console.warn('F');
+    }
+    if (serialized['primitive_groups'].length !== 0) {
       this.redrawAllObjects();
     } else {
       let obj = this.objectList[this.nbObjects - 1];
-      this.objectList[this.nbObjects - 1].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      this.objectList[this.nbObjects - 1].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
     }
     
     return this.nbObjects - 1;
@@ -374,12 +393,16 @@ export class MultiplePlots {
   add_primitive_group_to_container(serialized, container_index, point_index) {
     let obj:any = this.objectList[container_index];
     obj.elements_dict[obj.primitive_groups.length.toString()] = this.data['elements'][point_index];
-    obj.add_primitive_group(serialized, point_index);
+    obj.add_primitive_group(serialized, point_index); // primitive_dict updated inside this function
   }
 
   remove_primitive_group_from_container(point_index, container_index) {
     let obj:any = this.objectList[container_index];
-    obj.remove_primitive_group(point_index);
+    try {
+      obj.remove_primitive_group(point_index);
+    } catch(e) {
+      console.warn('WARNING - remove_primitive_group_from_container() : point n°' + point_index + " may not be associated with any primitive_group");
+    }
   }
 
   remove_all_primitive_groups_from_container(container_index) {
@@ -739,16 +762,19 @@ export class MultiplePlots {
       all_index.push(i);
       this.dep_selected_points_index.push(i);
     }
+    var bool = false;
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
       if ((obj.type_ == 'scatterplot') && !equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
+        bool = true;
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
       } else if ((obj.type_ == 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
+        bool = true;
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
       }
     }
 
-    if (equals(all_index, this.dep_selected_points_index)) {
+    if (equals(all_index, this.dep_selected_points_index) && !bool) {
       this.dep_selected_points_index = [];
     }
   }
@@ -1186,6 +1212,7 @@ export class MultiplePlots {
 
   manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
     this.move_plot_index = this.getLastObjectIndex(mouse2X, mouse2Y);
+    var l = []
     if (this.move_plot_index != this.last_index) {
       for (let i=0; i<this.nbObjects; i++) {
         if (i == this.move_plot_index) {
@@ -1414,6 +1441,40 @@ export class MultiplePlots {
   }
 
 
+  save_canvas() {
+    if (current_save <= multiplot_saves.length - 2) {
+      multiplot_saves = List.remove_at_indices(current_save + 1, multiplot_saves.length - 1, multiplot_saves);
+    }
+    multiplot_saves.push(MyObject.deepClone(this));
+    if (multiplot_saves.length === 11) {
+      multiplot_saves = List.remove_at_index(0, multiplot_saves);
+    }
+    current_save = multiplot_saves.length - 1;
+  }
+  
+
+  restore_previous_canvas() {
+    if (current_save === 0) return;
+    current_save--; 
+    Object.assign(this, multiplot_saves[current_save]);
+    this.define_canvas(this.canvas_id);
+    for (let i=0; i<this.nbObjects; i++) {
+      this.initializeObjectContext(this.objectList[i]);
+    }
+    this.redrawAllObjects();
+  }
+
+  restore_next_canvas() {
+    if (current_save === multiplot_saves.length - 1) return;
+    current_save++;
+    Object.assign(this, multiplot_saves[current_save]);
+    this.define_canvas(this.canvas_id);
+    for (let i=0; i<this.nbObjects; i++) {
+      this.initializeObjectContext(this.objectList[i]);
+    }
+    this.redrawAllObjects();
+  }
+
 
   mouse_interaction(): void {
     var canvas = document.getElementById(this.canvas_id);
@@ -1423,6 +1484,10 @@ export class MultiplePlots {
     var vertex_infos:Object;
     var clickOnVertex:boolean = false;
     var old_selected_index;
+
+    // For canvas to read keyboard inputs.
+    canvas.setAttribute('tabindex', '0');
+    canvas.focus(); 
 
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
@@ -1546,6 +1611,7 @@ export class MultiplePlots {
       this.redrawAllObjects();
       isDrawing = false;
       mouse_moving = false;
+      // this.save_canvas(); 
     });
 
 
@@ -1583,6 +1649,18 @@ export class MultiplePlots {
 
     canvas.addEventListener('selectionchange', (e:any) => {
     });
+
+  // Not working well actually, but I let it here in case somebody wants to give it a try
+    // canvas.addEventListener('keydown', e => {
+    //   if (e.ctrlKey) {
+    //     e.preventDefault();
+    //     if (e.key === 'z') {
+    //       this.restore_previous_canvas();
+    //     } else if (e.key === 'y') {
+    //       this.restore_next_canvas();
+    //     }
+    //   }
+    // });
   }
 }
 
@@ -1765,16 +1843,6 @@ export abstract class PlotData {
 
   abstract draw(hidden, mvx, mvy, scaleX, scaleY, X, Y);
 
-  manage_package_version(requirement) {
-    if (!check_package_version(this.data['package_version'], requirement)) {
-      this.define_canvas(this.canvas_id);
-      this.context_show.textAlign = 'center';
-      this.context_show.font = '10px sans-serif';
-      this.context_show.fillText("plot_data's version must be updated. Current version: " + this.data['package_version'] + ", minimum requirement: " + requirement, this.width/2, this.height/2);
-      throw new Error('Package version error');
-    }
-  }
-
   define_canvas(canvas_id: string):void {
     var canvas:any = document.getElementById(canvas_id);
     canvas.width = this.width;
@@ -1814,8 +1882,8 @@ export abstract class PlotData {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
     if ((this.axis_ON) && !(this.graph_ON)) { // rescale and avoid axis
-      this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
-      this.init_scaleY = (this.height - this.decalage_axis_y-this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
+      this.init_scaleX = (this.width - this.decalage_axis_x - this.pointLength)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
+      this.init_scaleY = (this.height - this.decalage_axis_y - this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
@@ -1908,9 +1976,8 @@ export abstract class PlotData {
     }
   }
 
-  draw_contour(hidden, mvx, mvy, scaleX, scaleY, d) {
+  draw_contour(hidden, mvx, mvy, scaleX, scaleY, d:Contour2D) {
     if (d['type_'] == 'contour') {
-      // this.context.beginPath();
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
       } else {
@@ -1938,7 +2005,6 @@ export abstract class PlotData {
       }
       this.context.fill();
       this.context.stroke();
-      // this.context.closePath();
       this.context.setLineDash([]);
     }
   }
@@ -2034,19 +2100,19 @@ export abstract class PlotData {
   draw_axis(mvx, mvy, scaleX, scaleY, d:Axis) { // Only used by graph2D
     if (d['type_'] == 'axis'){
       d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0]);
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0], this.width);
       d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1]);
-      this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
-      this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1], this.height);
+      this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
+      this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     }
   }
 
-  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d, lists, to_display_attributes) {
+  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d:Axis, lists, to_display_attributes) {
     d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, 
-      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
-    this.x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.x_step)));
-    this.y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(d.y_step)));
+      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, this.height);
+    this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
+    this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     this.context.closePath();
     this.context.fill();
   }
@@ -2110,7 +2176,7 @@ export abstract class PlotData {
     }
   }
 
-  draw_graph2D(d, hidden, mvx, mvy) {
+  draw_graph2D(d:Graph2D, hidden, mvx, mvy) {
     if (d['type_'] == 'graph2d') {
       this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
       for (let i=0; i<d.graphs.length; i++) {
@@ -3692,7 +3758,7 @@ export class PlotContour extends PlotData {
                      public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
     var requirement = '0.5.2';
-    this.manage_package_version(requirement);
+    check_package_version(data['package_version'], requirement);
     this.plot_datas = [];
     this.type_ = 'primitivegroup';
     var d = this.data;
@@ -3714,7 +3780,7 @@ export class PlotContour extends PlotData {
           }
         }
       }
-      if (multiple_labels_index !== -1) {
+      if (multiple_labels_index !== -1) { // So that labels are drawn at last
         a.primitives = List.move_elements(multiple_labels_index, a.primitives.length - 1, a.primitives);
       }
     }
@@ -3778,7 +3844,7 @@ export class PlotScatter extends PlotData {
     public canvas_id: string) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
       var requirement = '0.4.10';
-      this.manage_package_version(requirement);
+      check_package_version(data['package_version'], requirement);
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
@@ -3877,7 +3943,7 @@ export class ParallelPlot extends PlotData {
   constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
     var requirement = '0.4.10';
-    this.manage_package_version(requirement);
+    check_package_version(data['package_version'], requirement);
     this.type_ = 'parallelplot';
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
@@ -4047,7 +4113,7 @@ export class PrimitiveGroupContainer extends PlotData {
               public canvas_id: string) {
     super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
     var requirement = '0.5.2';
-    this.manage_package_version(requirement);
+    check_package_version(data['package_version'], requirement);
     this.type_ = 'primitivegroupcontainer';
     var serialized = data['primitive_groups'];
     var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
@@ -4130,15 +4196,20 @@ export class PrimitiveGroupContainer extends PlotData {
       if (this.layout_mode == 'regular') {
         this.regular_layout();
       } else {
-        this.reset_scales();
+        if (this.primitive_groups.length >= 1) this.reset_scales();
       }
     }
   }
 
   reset_sizes() {
     var nb_primitives = this.primitive_groups.length;
-    var primitive_width = this.width/(1.2*nb_primitives);
-    var primitive_height = this.height/(1.2*nb_primitives);
+    if (nb_primitives === 1) {
+      var primitive_width = this.width/3;
+      var primitive_height = this.height/3;
+    } else {
+      var primitive_width = this.width/(1.2*nb_primitives);
+      var primitive_height = this.height/(1.2*nb_primitives);
+    }
     for (let i=0; i<nb_primitives; i++) {
       let center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
       let center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
@@ -4161,33 +4232,38 @@ export class PrimitiveGroupContainer extends PlotData {
 
   refresh_spacing() {
     var count = 0;
+    var max_count = 50;
     if (this.maxX - this.minX > this.width) {
-      while ((this.maxX - this.minX > this.width - this.decalage_axis_x) && (count < 50)) {
+      while ((this.maxX - this.minX > this.width - this.decalage_axis_x) && (count < max_count)) {
         this.x_zoom_elements(-1);
         this.refresh_MinMax();
+        count++;
       } 
     } else {
-      while ((this.maxX - this.minX < (this.width - this.decalage_axis_x)/1.1) && (count < 50)) {
+      while ((this.maxX - this.minX < (this.width - this.decalage_axis_x)/1.1) && (count < max_count)) {
         this.x_zoom_elements(1);
         this.refresh_MinMax();
+        count++;
       } 
     }
     count = 0;
     if (this.layout_mode == 'two_axis') {
       if (this.maxY - this.minY > this.height) {
-        while ((this.maxY - this.minY > this.height - this.decalage_axis_y) && (count < 50)) {
+        while ((this.maxY - this.minY > this.height - this.decalage_axis_y) && (count < max_count)) {
           this.y_zoom_elements(-1);
           this.refresh_MinMax();
+          count++;
         } 
       } else {
-        while ((this.maxY - this.minY < (this.height - this.decalage_axis_y)/1.1) && (count < 50)) {
+        while ((this.maxY - this.minY < (this.height - this.decalage_axis_y)/1.1) && (count < max_count)) {
           this.y_zoom_elements(1);
           this.refresh_MinMax();
+          count++;
         }
       }
     }
-    if (count == 50) {
-      throw new Error('Primitive_group_container, refresh_spacing(): max count reached');
+    if (count === max_count) {
+      console.warn("WARNING: Primitive_group_container -> refresh_spacing(): max count reached. Autoscaling won't be optimal.");
     }
   }
 
@@ -4204,7 +4280,8 @@ export class PrimitiveGroupContainer extends PlotData {
   reset_scales() {
     this.reset_sizes();
     this.refresh_MinMax();
-    this.refresh_spacing();
+    if (this.primitive_groups.length >= 2) this.refresh_spacing();
+    else if (this.primitive_groups.length === 1) Interactions.click_on_reset_action(this.primitive_groups[0]);
     this.translate_inside_canvas();
   }
 
@@ -4222,14 +4299,17 @@ export class PrimitiveGroupContainer extends PlotData {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas();
+
     this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
-    this.draw_layout_axis();
-    if (this.layout_mode !== 'regular') {
-      this.draw_coordinate_lines();
-    }
-    for (let index of this.display_order) {
-      let prim = this.primitive_groups[index];
-      this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
+    if (this.width > 100 && this.height > 100) {
+      this.draw_layout_axis();
+      if (this.layout_mode !== 'regular') {
+        this.draw_coordinate_lines();
+      }
+      for (let index of this.display_order) {
+        let prim = this.primitive_groups[index];
+        this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
+      }
     }
 
     if (this.multiplot_manipulation) { 
@@ -4290,6 +4370,19 @@ export class PrimitiveGroupContainer extends PlotData {
     this.context.setLineDash([]);
   }
 
+
+  /**
+   * Calls the layout function of a PrimitiveGroupContainer whose layout_mode and axis are already set.
+   */
+  refresh_layout() { 
+    if (this.layout_mode === 'one_axis') {
+      this.multiplot_one_axis_layout(this.layout_attributes[0]);
+    } else if (this.layout_mode === 'two_axis') {
+      this.multiplot_two_axis_layout(this.layout_attributes);
+    }
+  }
+
+
   add_primitive_group(serialized, point_index) {
     var new_plot_data = new PlotContour(serialized, 560, 300, 1000, this.buttons_ON, this.X, this.Y, this.canvas_id);
     new_plot_data.context_hidden = this.context_hidden; 
@@ -4300,6 +4393,7 @@ export class PrimitiveGroupContainer extends PlotData {
     new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
     new_plot_data.interaction_ON = false;
     this.primitive_dict[point_index.toString()] = this.primitive_groups.length - 1;
+    this.refresh_layout();
     this.reset_action();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -4370,16 +4464,17 @@ export class PrimitiveGroupContainer extends PlotData {
     if (this.primitive_groups.length !== 0) {
       if (this.layout_mode == 'one_axis') {
         this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
-            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
       } else if (this.layout_mode == 'two_axis') {
         this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
-          this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
-  
+          this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
+
         this.layout_axis.draw_sc_vertical_axis(this.context, this.last_mouse1Y, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
-          this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y);
+          this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.height);
       }
     }
   }
+
 
   regular_layout():void {
     var big_coord = 'X';
@@ -4462,6 +4557,11 @@ export class PrimitiveGroupContainer extends PlotData {
           min = elt;
         }
       }
+      if (min === max) {
+        if (min < 0) return [2*min, 0];
+        else if (min === 0) return [-1, 1];
+        else return [0, 2*min];
+      }
       return [min, max];
     } else if (type_ == 'color') {
       var list = []
@@ -4483,6 +4583,10 @@ export class PrimitiveGroupContainer extends PlotData {
     } 
   }
 
+  is_element_dict_empty() {
+    return Object.keys(this.elements_dict).length === 0;
+  }
+
   multiplot_one_axis_layout(attribute:Attribute) {
     this.refresh_one_axis_layout_list(attribute);
     this.one_axis_layout();
@@ -4490,18 +4594,25 @@ export class PrimitiveGroupContainer extends PlotData {
 
   refresh_one_axis_layout_list(attribute:Attribute) {
     this.layout_mode = 'one_axis';
-    attribute.list = this.initialize_list(attribute);
+    if (!this.is_element_dict_empty()) {
+      attribute.list = this.initialize_list(attribute);
+    }
     this.layout_attributes = [attribute];
   }
+
 
   one_axis_layout() {
     var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
     var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
     var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
     this.layout_axis = Axis.deserialize(serialized_axis);
-    
     var nb_primitive_groups = this.primitive_groups.length;
     var name = this.layout_attributes[0].name;
+    var type_ = this.layout_attributes[0].type_;
+    if (type_ !== 'float') {
+      var real_xs = [];
+      var y_incs = Array(nb_primitive_groups).fill(0);
+    }
     for (let i=0; i<nb_primitive_groups; i++) {
       this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
       this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
@@ -4509,14 +4620,18 @@ export class PrimitiveGroupContainer extends PlotData {
         var real_x = this.elements_dict[i.toString()][name];
       } else if (this.layout_attributes[0].type_ == 'color') {
         real_x = List.get_index_of_element(rgb_to_string(this.elements_dict[i.toString()][name]), this.layout_attributes[0].list);
+        if (List.is_include(real_x, real_xs)) { y_incs[i] += - this.primitive_groups[i].height; } else {real_xs.push(real_x);}
+
       } else {
         real_x = List.get_index_of_element(this.elements_dict[i.toString()][name], this.layout_attributes[0].list);
+        if (List.is_include(real_x, real_xs)) {y_incs[i] += - this.primitive_groups[i].height;} else {real_xs.push(real_x);}
       }
       var center_x = this.scaleX*1000*real_x + this.last_mouse1X;
       this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
       this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
+      if (type_ !== 'float') this.primitive_groups[i].Y += y_incs[i];
     }
-    this.reset_scales();
+    if (this.primitive_groups.length >= 1) this.reset_scales();
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -4524,8 +4639,10 @@ export class PrimitiveGroupContainer extends PlotData {
 
   refresh_two_axis_layout_list(attributes:Attribute[]) {
     this.layout_mode = 'two_axis';
-    attributes[0].list = this.initialize_list(attributes[0]);
-    attributes[1].list = this.initialize_list(attributes[1]);
+    if (!this.is_element_dict_empty()) {
+      attributes[0].list = this.initialize_list(attributes[0]);
+      attributes[1].list = this.initialize_list(attributes[1]);
+    }
     this.layout_attributes = attributes;
   }
 
@@ -4566,7 +4683,7 @@ export class PrimitiveGroupContainer extends PlotData {
       var center_y = -this.scaleX*1000*real_y + this.last_mouse1Y;
       this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height/2;
     }
-    this.reset_scales();
+    if (this.primitive_groups.length >= 2) this.reset_scales();
     this.resetAllObjects();
     this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
@@ -4954,7 +5071,7 @@ export class Interactions {
     var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
     var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
     
-    if (sc_perm_window_w <= 5 || sc_perm_window_h <= 5) return;
+    if (Math.abs(sc_perm_window_w) <= 5 || Math.abs(sc_perm_window_h) <= 5) return;
 
     plot_data.latest_selected_points = [];
     plot_data.select_on_click = [];
@@ -5722,10 +5839,10 @@ export class Contour2D {
 }
 
 export class Text {
-  minX:number=0;
-  maxX:number=0;
-  minY:number=0;
-  maxY:number=0;
+  minX:number=Infinity;
+  maxX:number=-Infinity;
+  minY:number=Infinity;
+  maxY:number=-Infinity;
   mouse_selection_color:any;
   init_scale:number=0;
 
@@ -5737,6 +5854,10 @@ export class Text {
               public max_width,
               public type_:string='text',
               public name:string='') {
+                this.minX = position_x;
+                this.maxX = position_x;
+                this.minY = position_y;
+                this.maxY = position_y;
   }
 
   public static deserialize(serialized) {
@@ -5999,7 +6120,7 @@ export class Circle2D {
 
   public static deserialize(serialized) {
       var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:0.5, name:''};
-      var default_surface_style = {color_fill:string_to_rgb('violet'), hatching:null, opacity:1};
+      var default_surface_style = {color_fill:string_to_rgb('white'), hatching:null, opacity:0};
       var default_dict_ = {edge_style:default_edge_style, surface_style:default_surface_style};
       serialized = set_default_values(serialized, default_dict_);
       var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
@@ -6045,10 +6166,10 @@ export class Point2D {
         throw new Error('Invalid point_size');
       }
       this.size = this.k*point_style.size/400;
-      this.minX = this.cx - 2.5*this.size;
-      this.maxX = this.cx + 2.5*this.size;
-      this.minY = this.cy - 5*this.size;
-      this.maxY = this.cy + 5*this.size;
+      this.minX = this.cx;
+      this.maxX = this.cx;
+      this.minY = this.cy;
+      this.maxY = this.cy;
 
       this.mouse_selection_color = genColor();
     }
@@ -6148,7 +6269,7 @@ export class Axis {
   draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, x_step, font_size, X) {
     var i=0;
     context.textAlign = 'center';
-    var x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(x_step)));
+    var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(x_step)));
     var delta_x = maxX - minX;
     var grad_beg_x = minX - 10*delta_x;
     var grad_end_x = maxX + 10*delta_x;
@@ -6176,7 +6297,7 @@ export class Axis {
     var grad_end_y = real_maxY + 10*delta_y;
     context.textAlign = 'end';
     context.textBaseline = 'middle';
-    var y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(y_step)));
+    var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(y_step)));
     while (grad_beg_y + (i-1)*y_step < grad_end_y) {
       if ((scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y > axis_y_start + 5) && (scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y < axis_y_end)) {
         if (this.grid_on === true) {
@@ -6194,7 +6315,7 @@ export class Axis {
   }
 
 
-  draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name) {
+  draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, canvas_width) {
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
     context.lineWidth = this.axis_style.line_width;
@@ -6211,8 +6332,9 @@ export class Axis {
     Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
     //Graduations
     if (scroll_x % 5 == 0) {
-      var kx = 1.1*scaleX/init_scaleX;
-      this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+      let kx = 1.1*scaleX/init_scaleX;
+      let num = Math.max(maxX - minX, 1);
+      this.x_step = Math.min(num/(kx*(this.nb_points_x-1)), canvas_width/(scaleX*1000*(this.nb_points_x - 1)));
     }
     context.font = 'bold 20px Arial';
     context.textAlign = 'end';
@@ -6225,7 +6347,7 @@ export class Axis {
   }
 
 
-  draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name) {
+  draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, canvas_height) {
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
     context.lineWidth = this.axis_style.line_width;
@@ -6242,8 +6364,9 @@ export class Axis {
     Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
     // Graduations
     if (scroll_y % 5 == 0) {
-      var ky = 1.1*scaleY/init_scaleY;
-      this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
+      let ky = 1.1*scaleY/init_scaleY;
+      let num = Math.max(maxY - minY, 1);
+      this.y_step = Math.min(num/(ky*(this.nb_points_y-1)), canvas_height/(1000*scaleY*(this.nb_points_y - 1)));
     }
     context.font = 'bold 20px Arial';
     context.textAlign = 'start';
@@ -6255,12 +6378,12 @@ export class Axis {
     context.closePath();
   }
 
-  draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
-    this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0], scroll_x, decalage_axis_x, decalage_axis_y, X, Y);
-    this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1], scroll_y, decalage_axis_x, decalage_axis_y, X, Y);
+  draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, canvas_height) {
+    this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0], scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width);
+    this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1], scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height);
   }
 
-  draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute:Attribute, scroll_x, decalage_axis_x, decalage_axis_y, X, Y) {
+  draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute:Attribute, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width) {
     // Drawing the coordinate system
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
@@ -6285,12 +6408,12 @@ export class Axis {
     context.stroke();
     //Graduations
     context.font = this.graduation_style.font_size.toString() + 'px Arial';
-    this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X);  
+    this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X, canvas_width);  
     context.stroke();
     context.closePath();  
   }
 
-  draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y, decalage_axis_x, decalage_axis_y, X, Y) {
+  draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height) {
     // Drawing the coordinate system
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
@@ -6315,23 +6438,24 @@ export class Axis {
 
     //Graduations
     context.font = this.graduation_style.font_size.toString() + 'px Arial';
-    this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_y, Y);
+    this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_y, Y, canvas_height);
     context.stroke();
     context.closePath();
   }
 
-  draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_x, X) {
+  draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_x, X, canvas_width) {
     context.textAlign = 'center';
 
     if (attribute['type_'] == 'float') {
       var minX = list[0];
       var maxX = list[1];
       if (scroll_x % 5 == 0) {
-        var kx = 1.1*scaleX/init_scaleX;
-        this.x_step = (maxX - minX)/(kx*(this.nb_points_x-1));
+        let kx = 1.1*scaleX/init_scaleX;
+        let num = Math.max(maxX - minX, 1);
+        this.x_step = Math.min(num/(kx*(this.nb_points_x-1)), canvas_width/(scaleX*1000*(this.nb_points_x - 1)));
       }
       var i=0;
-      var x_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(this.x_step)));
+      var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(this.x_step)));
       var delta_x = maxX - minX;
       var grad_beg_x = minX - 10*delta_x;
       var grad_end_x = maxX + 10*delta_x;
@@ -6360,21 +6484,22 @@ export class Axis {
     }
   }
 
-  draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_y, Y) {
+  draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_y, Y, canvas_height) {
     context.textAlign = 'end';
     context.textBaseline = 'middle';
     if (attribute['type_'] == 'float') {
       var minY = list[0];
       var maxY = list[1];
       if (scroll_y % 5 == 0) {
-        var ky = 1.1*scaleY/init_scaleY;
-        this.y_step = (maxY - minY)/(ky*(this.nb_points_y-1));
+        let ky = 1.1*scaleY/init_scaleY;
+        let num = Math.max(maxY - minY, 1);
+        this.y_step = Math.min(num/(ky*(this.nb_points_y-1)), canvas_height/(1000*scaleY*(this.nb_points_y - 1)));
       }
       var i=0;
       var delta_y = maxY - minY;
       var grad_beg_y = minY - 10*delta_y;
       var grad_end_y = maxY + 10*delta_y;
-      var y_nb_digits = Math.max(0, 1-Math.floor(MyMath.log10(this.y_step)));
+      var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(this.y_step)));
       while (grad_beg_y + (i-1)*this.y_step < grad_end_y) {
         if ((scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y > axis_y_start + 5) && (scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y < axis_y_end)) {
           if (this.grid_on === true) {
@@ -6941,9 +7066,9 @@ export class EdgeStyle {
                           name:''};
     serialized = set_default_values(serialized, default_dict_);
     return new EdgeStyle(serialized['line_width'],
-                            rgb_to_hex(serialized['color_stroke']),
-                            serialized['dashline'],
-                            serialized['name']);
+                         rgb_to_hex(serialized['color_stroke']),
+                         serialized['dashline'],
+                         serialized['name']);
   }
 }
 
@@ -6980,11 +7105,11 @@ export class PointStyle {
                                stroke_width:0.5, size:2, shape:'circle', name:''};
     serialized = set_default_values(serialized, default_dict_);
     return new PointStyle(rgb_to_hex(serialized['color_fill']),
-                             rgb_to_hex(serialized['color_stroke']),
-                             serialized['stroke_width'],
-                             serialized['size'],
-                             serialized['shape'],
-                             serialized['name']);
+                          rgb_to_hex(serialized['color_stroke']),
+                          serialized['stroke_width'],
+                          serialized['size'],
+                          serialized['shape'],
+                          serialized['name']);
   }
 }
 
@@ -7054,7 +7179,7 @@ export class SurfaceStyle {
   }
             
   public static deserialize(serialized) {
-    let default_dict_ = {color_fill:string_to_rgb('grey'), opacity:1, hatching:null};
+    let default_dict_ = {color_fill:string_to_rgb('white'), opacity:1, hatching:null};
     serialized = set_default_values(serialized, default_dict_);
     if (serialized['hatching'] != null) {
       var hatching = HatchingSet.deserialize(serialized['hatching']);
@@ -7129,13 +7254,16 @@ export class PointFamily {
   }
 }
 
-
+/**
+ * A toolbox class that contains useful functions that don't exist in typescript API.
+ */
 export class MyMath {
+
+  /**
+   * ex: round(1.12345, 2) = 1.12 
+   */
   public static round(x:number, n:number) {
     return Math.round(x*Math.pow(10,n)) / Math.pow(10,n);
-  }
-  public static log10(x) {
-    return Math.log(x)/Math.log(10);
   }
 }
 
@@ -7189,6 +7317,7 @@ export class Shape {
     context.fillStyle = color_fill;
     context.strokeStyle = color_stroke;
     context.lineWidth = line_width;
+    context.globalAlpha = opacity;
 
     context.moveTo(x+radius, y);
     context.lineTo(r-radius, y);
@@ -7298,12 +7427,28 @@ export class Shape {
     context.globalAlpha = 1;
     context.setLineDash([]);
   }
+
+  /**
+   * 
+   * @param x The point's x coordinate
+   * @param y The point's y coordinate
+   * @param cx The circle's center x-coordinate
+   * @param cy Thre circle's center y-coordinate
+   * @param r The circle's radius
+   */
+  public static isInCircle(x, y, cx, cy, r) {
+    var delta_x2 = Math.pow(x - cx, 2);
+    var delta_y2 = Math.pow(y - cy, 2);
+    var distance = Math.sqrt(delta_x2 + delta_y2);
+    return distance <= r;
+  }
 }
 
 export function drawLines(ctx, pts, first_elem) {
   if (first_elem) ctx.moveTo(pts[0], pts[1]);
   for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
 }
+
 
 export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
 
@@ -7394,7 +7539,7 @@ export function genColor(){
 }
 
 
-export var string_to_hex_dict = {red:'#f70000', lightred:'#ed8080', blue:'#0013fe', lightblue:'#c3e6fc', lightskyblue:'#87cefa', green:'#00c112', lightgreen:'#89e892', yellow:'#f4ff00', lightyellow:'#f9ff7b', orange:'#ff8700',
+export const string_to_hex_dict = {red:'#f70000', lightred:'#ed8080', blue:'#0013fe', lightblue:'#c3e6fc', lightskyblue:'#87cefa', green:'#00c112', lightgreen:'#89e892', yellow:'#f4ff00', lightyellow:'#f9ff7b', orange:'#ff8700',
   lightorange:'#ff8700', cyan:'#13f0f0', lightcyan:'#90f7f7', rose:'#ff69b4', lightrose:'#ffc0cb', violet:'#ee82ee', lightviolet:'#eaa5f6', white:'#ffffff', black:'#000000', brown:'#cd8f40',
   lightbrown:'#deb887', grey:'#a9a9a9', lightgrey:'#d3d3d3'};
 
@@ -7406,7 +7551,7 @@ function reverse_string_to_hex_dict() {
   return Object.fromEntries(entries);
 }
 
-export var hex_to_string_dict = reverse_string_to_hex_dict();
+export const hex_to_string_dict = reverse_string_to_hex_dict();
 
 function get_rgb_to_string_dict() {
   var entries = Object.entries(hex_to_string_dict);
@@ -7415,7 +7560,7 @@ function get_rgb_to_string_dict() {
   }
   return Object.fromEntries(entries);
 }
-export var rgb_to_string_dict = get_rgb_to_string_dict();
+export const rgb_to_string_dict = get_rgb_to_string_dict();
 
 function componentToHex(c) {
   var hex = c.toString(16);
@@ -7566,6 +7711,10 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
   return rgb_vectorToStr(r,g,b);
 }
 
+
+/**
+ * A class for sorting lists.
+ */
 export class Sort {
   nbPermutations:number = 0;
   constructor(){};
@@ -7704,7 +7853,7 @@ export function isHex(str:string):boolean {
 
 
 /**
- * A toolbox with useful functions related to arrays.
+ * A toolbox with useful functions that manipulate arrays.
  */
 export class List {
   // public static sort_without_duplicates(list:number[]) {
@@ -7878,6 +8027,14 @@ export class List {
     return list.slice(0, i).concat(list.slice(i + 1, list.length));
   }
 
+  public static remove_at_indices(start_index:number, end_index:number, list:any[]):any[] {
+    if (start_index > end_index) throw new Error('remove_indices(): start_index must be <= end_index');
+    if (start_index<0 || end_index>=list.length) throw new Error('remove_indices(): index out of range');
+    for (let i=0; i<=end_index-start_index; i++) {
+      list = this.remove_at_index(start_index, list);
+    }
+    return list;
+  }
 
   /**
    * @returns the input list after removing its element at index old_index and
@@ -8020,11 +8177,17 @@ export function check_package_version(package_version:string, requirement:string
     Number(version_array[2]);
   var requirement_num = Number(requirement_array[0])*Math.pow(10, 4) + Number(requirement_array[1])*Math.pow(10,2) +
     Number(requirement_array[2]);
-  return package_version_num >= requirement_num;
+  if (package_version_num < requirement_num) {
+    alert("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
+  }
 }
 
 
 export class MyObject {
+
+  /**
+   * Returns the input dictionary without keys that are in input.
+   */
   public static removeEntries(keys:string[], dict_) {
     var entries = Object.entries(dict_);
     var i=0;
@@ -8038,9 +8201,38 @@ export class MyObject {
     return Object.fromEntries(entries);
   }
 
+  /**
+   * A shallow copy.
+   */
   public static copy(obj) {
     return Object.assign({}, obj);
   }
+
+  /**
+   * A function that clones without references. It handles circular references.
+   */
+  public static deepClone(obj, hash = new WeakMap()) {
+    // Do not try to clone primitives or functions
+    if (Object(obj) !== obj || obj instanceof Function) return obj;
+    if (hash.has(obj)) return hash.get(obj); // Cyclic reference
+    try { // Try to run constructor (without arguments, as we don't know them)
+        var result = new obj.constructor();
+    } catch(e) { // Constructor failed, create object without running the constructor
+        result = Object.create(Object.getPrototypeOf(obj));
+    }
+    // Optional: support for some standard constructors (extend as desired)
+    if (obj instanceof Map)
+        Array.from(obj, ([key, val]) => result.set(this.deepClone(key, hash), 
+        this.deepClone(val, hash)) );
+    else if (obj instanceof Set)
+        Array.from(obj, (key) => result.add(this.deepClone(key, hash)) );
+    // Register in hash    
+    hash.set(obj, result);
+    // Clone and assign enumerable own properties recursively
+    return Object.assign(result, ...Object.keys(obj).map (
+        key => ({ [key]: this.deepClone(obj[key], hash) }) ));
+  }
+
 }
 
 /**
@@ -8086,87 +8278,8 @@ export function equals(a, b) {
 }
 
 
-export var empty_container = {'name': '',
-'package_version': '0.5.2',
+const empty_container = {'name': '',
+'package_version': '0.5.4',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 
-
-
-// This one dictionary is just here for debugging. It can be removed if not needed.
-var test = {'name': '',
-'package_version': '0.5.2',
-'primitive_groups': [{'name': '',
-  'package_version': '0.5.2',
-  'primitives': [{'name': '',
-    'package_version': '0.5.2',
-    'r': 10,
-    'cy': 0.0,
-    'cx': 0.0,
-    'type_': 'circle'}],
-  'type_': 'primitivegroup'},
- {'name': '',
-  'package_version': '0.5.2',
-  'primitives': [{'name': '',
-    'package_version': '0.5.2',
-    'plot_data_primitives': [{'name': '',
-      'package_version': '0.5.2',
-      'data': [1.0, 1.0, 1.0, 2.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.2'},
-      'type_': 'linesegment2d'},
-     {'name': '',
-      'package_version': '0.5.2',
-      'data': [1.0, 2.0, 2.0, 2.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.2'},
-      'type_': 'linesegment2d'},
-     {'name': '',
-      'package_version': '0.5.2',
-      'data': [2.0, 2.0, 2.0, 1.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.2'},
-      'type_': 'linesegment2d'},
-     {'name': '',
-      'package_version': '0.5.2',
-      'data': [2.0, 1.0, 1.0, 1.0],
-      'edge_style': {'name': '',
-       'object_class': 'plot_data.core.EdgeStyle',
-       'package_version': '0.5.2'},
-      'type_': 'linesegment2d'}],
-    'surface_style': {'name': '',
-     'object_class': 'plot_data.core.SurfaceStyle',
-     'package_version': '0.5.2',
-     'color_fill': 'rgb(255,175,96)'},
-    'type_': 'contour'}],
-  'type_': 'primitivegroup'},
- {'name': '',
-  'package_version': '0.5.2',
-  'primitives': [{'name': '',
-    'package_version': '0.5.2',
-    'surface_style': {'name': '',
-     'object_class': 'plot_data.core.SurfaceStyle',
-     'package_version': '0.5.2',
-     'color_fill': 'rgb(247,0,0)'},
-    'r': 5,
-    'cy': 1.0,
-    'cx': 1.0,
-    'type_': 'circle'}],
-  'type_': 'primitivegroup'},
- {'name': '',
-  'package_version': '0.5.2',
-  'primitives': [{'name': '',
-    'package_version': '0.5.2',
-    'surface_style': {'name': '',
-     'object_class': 'plot_data.core.SurfaceStyle',
-     'package_version': '0.5.2',
-     'color_fill': 'rgb(222,184,135)'},
-    'r': 5,
-    'cy': 1.0,
-    'cx': 1.0,
-    'type_': 'circle'}],
-  'type_': 'primitivegroup'}],
-'type_': 'primitivegroupcontainer'}

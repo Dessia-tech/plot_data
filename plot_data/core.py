@@ -590,6 +590,20 @@ class Graph2D(PlotDataObject):
             self.axis = axis
         PlotDataObject.__init__(self, type_='graph2d', name=name)
 
+    def mpl_plot(self):
+        # axs = plt.subplots(len(self.graphs))
+        _, ax = plt.subplots()
+        xname, yname = self.to_disp_attribute_names[:2]
+        for dataset in self.graphs:
+            x = []
+            y = []
+            for element in dataset.elements:
+                x.append(element[xname])
+                y.append(element[yname])
+            ax.plot(x, y)
+        ax.set_xlabel(xname)
+        ax.set_ylabel(yname)
+        return ax
 
 class Scatter(PlotDataObject):
     """

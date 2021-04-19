@@ -15,7 +15,7 @@ import tempfile
 import webbrowser
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-from dessia_common import DessiaObject, full_classname, dict_to_object
+from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
 from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 import warnings

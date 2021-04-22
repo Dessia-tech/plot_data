@@ -68,9 +68,9 @@ class PlotDataObject(DessiaObject):
         """
         type_ = dict_['type_']
         object_class = TYPE_TO_CLASS[type_]
-
-        dict_['object_class'] = full_classname(object_class)
-        return DessiaObject.dict_to_object(dict_=dict_)
+        dict_['object_class'] = full_classname(object_=object_class,
+                                               compute_for='class')
+        return DessiaObject.dict_to_object(dict_=dict_, force_generic=True)
 
 
 # class ColorMapSet(DessiaObject):

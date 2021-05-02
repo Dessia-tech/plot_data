@@ -95,7 +95,7 @@ multiplot_template = Template('''<div id="app"></div>
 	var number_plot_data = data.length;
 
 	globalWidth = 1500;
-	globalHeight = 800;
+	globalHeight = 700;
 	var multiplot = new MultiplePlots(data, globalWidth, globalHeight, 1000, true, $canvas_id.id);
 </script> 
 ''')

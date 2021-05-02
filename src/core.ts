@@ -6310,40 +6310,33 @@ export class Axis {
   }
 
 
-  draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, x_step, font_size, X) {
+  draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end, x_step, font_size, X, canvas_width) {
     var i=0;
     context.textAlign = 'center';
     var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(x_step)));
-    var delta_x = maxX - minX;
-    var grad_beg_x = minX - 10*delta_x;
-    var grad_end_x = maxX + 10*delta_x;
+    var grad_beg_x = Math.floor(1/(1000*this.x_step) * ((axis_x_start-X)/scaleX - mvx)) * this.x_step;
+    var grad_end_x = Math.ceil(1/(1000*this.x_step) * (canvas_width/scaleX - mvx)) * this.x_step;
     while(grad_beg_x + i*x_step < grad_end_x) {
-      if ((scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X > axis_x_start) && (scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X < axis_x_end - 9)) {
-        if (this.grid_on === true) {
-          context.strokeStyle = 'lightgrey';
-          Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_start], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
-        } else {
-          Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
-        }
-        context.fillText(MyMath.round(grad_beg_x + i*x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + font_size );
+      if (this.grid_on === true) {
+        context.strokeStyle = 'lightgrey';
+        Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_start], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
+      } else {
+        Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
       }
+      context.fillText(MyMath.round(grad_beg_x + i*x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + font_size );
       i++
     }
     context.stroke();
   }
 
-  draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minY, maxY, y_step, Y) {
+  draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, y_step, Y) {
     var i=0;
-    var real_minY = -maxY;
-    var real_maxY = -minY;
-    var delta_y = maxY - minY;
-    var grad_beg_y = real_minY - 10*delta_y;
-    var grad_end_y = real_maxY + 10*delta_y;
+    var grad_beg_y = Math.ceil(-1/(1000*this.y_step)*((axis_y_end - Y)/scaleY - mvy)) * this.y_step;
+    var grad_end_y = Math.floor(mvy/(1000*this.y_step)) * this.y_step;
     context.textAlign = 'end';
     context.textBaseline = 'middle';
     var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(y_step)));
     while (grad_beg_y + (i-1)*y_step < grad_end_y) {
-      if ((scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y > axis_y_start + 5) && (scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y < axis_y_end)) {
         if (this.grid_on === true) {
           context.strokeStyle = 'lightgrey';
           Shape.drawLine(context,[[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y], [axis_x_end, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y]]);
@@ -6351,7 +6344,6 @@ export class Axis {
           Shape.drawLine(context, [[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y], [axis_x_start + 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y]]);
         }
         context.fillText(MyMath.round(grad_beg_y + i*y_step, y_nb_digits), axis_x_start - 5, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y);
-      }
       i++;
     }
 
@@ -6386,7 +6378,7 @@ export class Axis {
     context.fillText(to_disp_attribute_name, axis_x_end - 5, axis_y_end - 10);
     // draw_horizontal_graduations
     context.font = this.graduation_style.font_size.toString() + 'px Arial';
-    this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minX, maxX, this.x_step, this.graduation_style.font_size, X);
+    this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end, this.x_step, this.graduation_style.font_size, X, width);
     context.closePath();
   }
 
@@ -6418,7 +6410,7 @@ export class Axis {
     context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
     //draw vertical graduations
     context.font = this.graduation_style.font_size.toString() + 'px Arial';
-    this.draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, minY, maxY, this.y_step, Y);
+    this.draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, this.y_step, Y);
     context.closePath();
   }
 
@@ -6490,7 +6482,6 @@ export class Axis {
 
   draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_x, X, canvas_width) {
     context.textAlign = 'center';
-
     if (attribute['type_'] == 'float') {
       var minX = list[0];
       var maxX = list[1];
@@ -6501,18 +6492,15 @@ export class Axis {
       }
       var i=0;
       var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(this.x_step)));
-      var delta_x = maxX - minX;
-      var grad_beg_x = minX - 10*delta_x;
-      var grad_end_x = maxX + 10*delta_x;
+      var grad_beg_x = Math.ceil(1/(1000*this.x_step) * ((axis_x_start-X)/scaleX - mvx)) * this.x_step;
+      var grad_end_x = Math.ceil(1/(1000*this.x_step) * (canvas_width/scaleX - mvx)) * this.x_step;
       while(grad_beg_x + i*this.x_step < grad_end_x) {
-        if ((scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X > axis_x_start) && (scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X < axis_x_end - 9)) {
-          if (this.grid_on === true) {
-            Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_start], [scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + 3]]);
-          } else {
-            Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + 3]]);
-          }
-          context.fillText(MyMath.round(grad_beg_x + i*this.x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + this.graduation_style.font_size);
+        if (this.grid_on === true) {
+          Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_start], [scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + 3]]);
+        } else {
+          Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + 3]]);
         }
+        context.fillText(MyMath.round(grad_beg_x + i*this.x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*this.x_step) + mvx) + X, axis_y_end + this.graduation_style.font_size);
         i++;
       }
     } else {
@@ -6541,19 +6529,16 @@ export class Axis {
         this.y_step = Math.min(num/(ky*(this.nb_points_y-1)), canvas_height/(1000*scaleY*(this.nb_points_y - 1)));
       }
       var i=0;
-      var delta_y = maxY - minY;
-      var grad_beg_y = minY - 10*delta_y;
-      var grad_end_y = maxY + 10*delta_y;
+      var grad_beg_y = Math.ceil(-1/(1000*this.y_step)*((axis_y_end - Y)/scaleY - mvy)) * this.y_step;
+      var grad_end_y = Math.floor(mvy/(1000*this.y_step)) * this.y_step;
       var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(this.y_step)));
       while (grad_beg_y + (i-1)*this.y_step < grad_end_y) {
-        if ((scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y > axis_y_start + 5) && (scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y < axis_y_end)) {
-          if (this.grid_on === true) {
-            Shape.drawLine(context,[[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y], [axis_x_end, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y]]);
-          } else {
-            Shape.drawLine(context, [[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y], [axis_x_start + 3, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y]]);
-          }
-          context.fillText(MyMath.round(grad_beg_y + i*this.y_step, y_nb_digits), axis_x_start - 5, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y);
+        if (this.grid_on === true) {
+          Shape.drawLine(context,[[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y], [axis_x_end, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y]]);
+        } else {
+          Shape.drawLine(context, [[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y], [axis_x_start + 3, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y]]);
         }
+        context.fillText(MyMath.round(grad_beg_y + i*this.y_step, y_nb_digits), axis_x_start - 5, scaleY*(-1000*(grad_beg_y + i*this.y_step) + mvy) + Y);
         i++;
       }
     } else {

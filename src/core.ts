@@ -6835,7 +6835,7 @@ export class Scatter {
 
   initialize_displayable_attributes() {
     var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
-    var exceptions = ['name', 'package_version', 'object_class'];
+    var exceptions = ['package_version', 'object_class'];
     for (let i=0; i<attribute_names.length; i++) {
       let name = attribute_names[i];
       if (!List.is_include(name, exceptions)) {

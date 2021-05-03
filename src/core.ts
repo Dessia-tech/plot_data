@@ -1983,8 +1983,11 @@ export abstract class PlotData {
       } else {
         this.context.strokeStyle = d.edge_style.color_stroke;
         this.context.lineWidth = d.edge_style.line_width;
-        this.context.fillStyle = d.surface_style.color_fill;
         this.context.setLineDash(d.edge_style.dashline);
+        this.context.fillStyle = d.surface_style.color_fill;
+        this.context.globalAlpha = d.surface_style.opacity;
+        this.context.fill();
+        this.context.globalAlpha = 1;
         if (d.surface_style.hatching != null) {
           this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
         }
@@ -2004,8 +2007,8 @@ export abstract class PlotData {
         if (elem.type_ == 'linesegment2d') elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
         else elem.contour_draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
       }
-      this.context.fill();
       this.context.stroke();
+      this.context.fill();
       this.context.setLineDash([]);
     }
   }
@@ -2018,16 +2021,20 @@ export abstract class PlotData {
       } else {
         d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
         this.context.strokeStyle = d.edge_style.color_stroke;
-        this.context.lineWidth = d.edge_style.line_width;
-        this.context.fillStyle = d.surface_style.color_fill;
         this.context.setLineDash(d.edge_style.dashline);
+        this.context.lineWidth = d.edge_style.line_width;
+        this.context.stroke();
+        this.context.fillStyle = d.surface_style.color_fill;
+        this.context.globalAlpha = d.surface_style.opacity;
         this.context.fill();
+        this.context.globalAlpha = 1;
         if (d.surface_style.hatching != null) {
           this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
           this.context.fill();
         }
         if (this.select_on_mouse == d) {
           this.context.fillStyle = this.color_surface_on_mouse;
+
         }
         for (var j = 0; j < this.select_on_click.length; j++) {
           var z = this.select_on_click[j];
@@ -2037,7 +2044,6 @@ export abstract class PlotData {
         }
       }
       this.context.fill();
-      this.context.stroke();
       this.context.setLineDash([]);
     }
   }

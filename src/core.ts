@@ -3221,9 +3221,10 @@ export abstract class PlotData {
         click_plot_data.selected = true;
         this.latest_selected_points = [click_plot_data];
       }
-    } else { 
+    } 
+    // else { 
       // this.select_on_click.push(click_plot_data); // used to add undefined to select_on_click
-    }
+    // }
     if (this.tooltip_ON && click_plot_data) {
       let is_in_tooltip_list = List.is_include(click_plot_data, this.tooltip_list);
       if (is_in_tooltip_list && !click_plot_data.selected) {
@@ -8327,7 +8328,7 @@ export function equals(a, b) {
 
 
 const empty_container = {'name': '',
-'package_version': '0.5.8',
+'package_version': '0.5.9',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 

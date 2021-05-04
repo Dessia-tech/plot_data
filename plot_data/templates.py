@@ -10,7 +10,7 @@ contour_template = Template('''<div id="app"></div>
 <script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
-    var width = $width, height = $height;
+	var width = 0.95*window.innerWidth, height = 0.95*window.innerHeight;
 	var coeff_pixel = 1000;
 
   	var data = $data;
@@ -35,7 +35,7 @@ scatter_template = Template('''<div id="app"></div>
 <script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
-	var width = 750, height = 400;
+	var width = 0.95*window.innerWidth, height = 0.95*window.innerHeight;
 	var coeff_pixel = 1000;
 
   	var data = $data;
@@ -61,7 +61,7 @@ parallelplot_template = Template('''<div id="app"></div>
 <script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
-	var width = 750, height = 400;
+	var width = 0.95*window.innerWidth, height = 0.95*window.innerHeight;
 	var coeff_pixel = 1000;
 
 	  var data = $data;
@@ -88,15 +88,13 @@ multiplot_template = Template('''<div id="app"></div>
 <script type="text/javascript" src=$core_path ></script>
 
 <script type="text/javascript">
-	var width = 750, height = 400;
+	var width = 0.95*window.innerWidth, height = 0.95*window.innerHeight;
 	var coeff_pixel = 1000;
 
     var data = $data;
 	var number_plot_data = data.length;
 
-	globalWidth = 1500;
-	globalHeight = 700;
-	var multiplot = new MultiplePlots(data, globalWidth, globalHeight, 1000, true, $canvas_id.id);
+	var multiplot = new MultiplePlots(data, width, height, 1000, true, $canvas_id.id);
 </script> 
 ''')
 

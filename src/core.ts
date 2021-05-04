@@ -3464,6 +3464,8 @@ export abstract class PlotData {
         this.last_mouse1X = this.last_mouse1X - ((mouse3X - this.X)/old_scaleX - (mouse3X - this.X)/this.scaleX);
         this.last_mouse1Y = this.last_mouse1Y - ((mouse3Y - this.Y)/old_scaleY - (mouse3Y - this.Y)/this.scaleY);
       }
+      if (isNaN(this.scroll_x)) this.scroll_x = 0;
+      if (isNaN(this.scroll_y)) this.scroll_y = 0;
       this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
       this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
       return [mouse3X, mouse3Y];
@@ -8199,7 +8201,7 @@ export function set_default_values(dict_, default_dict_) {
   var entries = Object.entries(dict_);
   for (let i=0; i<properties_names.length; i++) {
     let property = properties_names[i];
-    if (!dict_.hasOwnProperty(property)) {
+    if (!dict_.hasOwnProperty(property) || dict_[property] === null) {
       entries.push([property, default_dict_[property]]);
     }
   }

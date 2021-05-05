@@ -1650,6 +1650,7 @@ export class MultiplePlots {
     this.canvas.addEventListener('selectionchange', (e:any) => {
     });
 
+
   // Not working well actually, but I let it here in case somebody wants to give it a try
     // canvas.addEventListener('keydown', e => {
     //   if (e.ctrlKey) {
@@ -1939,18 +1940,20 @@ export abstract class PlotData {
   }
 
   draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d:PrimitiveGroup) {
+    var need_check = ['contour', 'arc', 'circle', 'linesegment2d'];
     if (d['type_'] == 'primitivegroup') {
       for (let i=0; i<d.primitives.length; i++) {
         this.context.beginPath();
-        // let pr_x=this.scale*1000*d.primitives[i].minX + mvx; let pr_y=this.scale*1000*d.primitives[i].minY + mvy;
-        // let pr_w=this.scale*1000*(d.primitives[i].maxX - d.primitives[i].minX);
-        // let pr_h=this.scale*1000*(d.primitives[i].maxY - d.primitives[i].minY);
-        // let is_inside_canvas = (pr_x+pr_w>=0) && (pr_x<=this.width) &&
-        //   (pr_y+pr_h>=0) && (pr_y<=this.height);
-        let is_inside_canvas = true;
-        if ((d.primitives[i].type_ == 'contour') && is_inside_canvas) {
+        let pr_x=this.scale*(1000*d.primitives[i].minX + mvx); let pr_y=this.scale*(1000*d.primitives[i].minY + mvy);
+        let pr_w=this.scale*1000*(d.primitives[i].maxX - d.primitives[i].minX);
+        let pr_h=this.scale*1000*(d.primitives[i].maxY - d.primitives[i].minY);
+        var is_inside_canvas = (pr_x+pr_w>=0) && (pr_x<=this.width) &&
+          (pr_y+pr_h>=0) && (pr_y<=this.height);
+        is_inside_canvas = true
+        if (need_check.includes(d.primitives[i].type_) && !is_inside_canvas) continue;
+        if (d.primitives[i].type_ == 'contour') {
           this.draw_contour(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if ((d.primitives[i].type_ == 'arc') && is_inside_canvas) {
+        } else if (d.primitives[i].type_ == 'arc') {
           d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
@@ -1959,14 +1962,13 @@ export abstract class PlotData {
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
           this.context.fill();
-        } else if ((d.primitives[i].type_ == 'circle') && is_inside_canvas) {
+        } else if (d.primitives[i].type_ == 'circle') {
           this.draw_circle(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if ((d.primitives[i].type_ == 'linesegment2d') && is_inside_canvas) {
+        } else if (d.primitives[i].type_ == 'linesegment2d') {
           d.primitives[i].draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
-          this.context.fill();
           this.context.setLineDash([]);
-        } else if ((d.primitives[i].type_ == 'line2d') && is_inside_canvas) {
+        } else if (d.primitives[i].type_ == 'line2d') {
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.width, this.height);
         } else if (d.primitives[i].type_ === 'multiplelabels') {
           d.primitives[i].draw(this.context, this.width, this.X, this.Y);

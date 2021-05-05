@@ -803,9 +803,9 @@ class PrimitiveGroup(PlotDataObject):
     A class for drawing multiple primitives and contours inside a canvas.
 
     :param primitives: a list of Contour2D, Arc2D, LineSegment2D, \
-    Circle2D or Line2D
+    Circle2D, Line2D or MultipleLabels
     :type primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D]]
+    Circle2D, Line2D, MultipleLabels]]
     """
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,

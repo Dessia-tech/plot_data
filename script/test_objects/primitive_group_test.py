@@ -55,7 +55,8 @@ plot_data_line = vm.edges.LineSegment2D(vm.Point2D(2, 2),
 circle_edge_style = plot_data.EdgeStyle(1, RED)
 circle_surface_style = plot_data.SurfaceStyle(color_fill=YELLOW, opacity=0.5,
                                               hatching=plot_data.HatchingSet())
-circle = vm.wires.Circle2D(vm.Point2D(6, 9), 5)
+
+circle = vm.wires.Circle2D(vm.Point2D(5, 9), 5)
 plot_data_circle = circle.plot_data(edge_style=circle_edge_style,
                                     surface_style=circle_surface_style)
 

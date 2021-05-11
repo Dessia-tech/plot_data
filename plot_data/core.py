@@ -803,9 +803,9 @@ class PrimitiveGroup(PlotDataObject):
     A class for drawing multiple primitives and contours inside a canvas.
 
     :param primitives: a list of Contour2D, Arc2D, LineSegment2D, \
-    Circle2D or Line2D
+    Circle2D, Line2D or MultipleLabels
     :type primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D]]
+    Circle2D, Line2D, MultipleLabels]]
     """
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
@@ -1025,9 +1025,12 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
 
     lib_path = 'https://cdn.dessia.tech/js/plot-data/latest/core.js'
     if debug_mode:
-        core_path = os.sep + os.path.join(
-            *sys.modules[__name__].__file__.split(os.sep)[:-2], 'lib',
-            'core.js')
+        # core_path = os.sep + os.path.join(
+        #     *sys.modules[__name__].__file__.split(os.sep)[:-2], 'lib',
+        #     'core.js')
+        # I added the line below since the one above that I commented didn't work for me on Windows 10.
+        # I'm going to fix it later on and if I forget to remove it, feel free to do so. Jeremie
+        core_path = 'C:\\Users\\jch1\\Documents\\Github\\plot_data\\lib\\core.js'
 
         if not os.path.isfile(core_path):
             print('Local compiled core.js not found, fall back to CDN')

@@ -21,8 +21,8 @@ directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
     random_color = colors[random.randint(0, len(colors) - 1)]
     random_direction = directions[random.randint(0, len(directions) - 1)]
-    elements.append({'x': random.uniform(0, 1000),
-                     'y': random.uniform(0, 1000),
+    elements.append({'x': random.uniform(0, 200),
+                     'y': random.uniform(0, 100),
                      'color': random_color,
                      'direction': random_direction})
 
@@ -74,8 +74,6 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 # Creating the multiplot
 plots = [parallelplot1, parallelplot2, scatterplot1,
          scatterplot2, scatterplot3, graph2d, primitive_group_container]
-
-# plots = [scatterplot1]
 
 multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
                                     initial_view_on=True)

@@ -1949,7 +1949,6 @@ export abstract class PlotData {
         let pr_h=this.scale*1000*(d.primitives[i].maxY - d.primitives[i].minY);
         var is_inside_canvas = (pr_x+pr_w>=0) && (pr_x<=this.width) &&
           (pr_y+pr_h>=0) && (pr_y<=this.height);
-        is_inside_canvas = true
         if (need_check.includes(d.primitives[i].type_) && !is_inside_canvas) continue;
         if (d.primitives[i].type_ == 'contour') {
           this.draw_contour(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
@@ -1960,8 +1959,6 @@ export abstract class PlotData {
         } else if (d.primitives[i].type_ == 'text') {
           d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
-          this.context.stroke();
-          this.context.fill();
         } else if (d.primitives[i].type_ == 'circle') {
           this.draw_circle(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
         } else if (d.primitives[i].type_ == 'linesegment2d') {
@@ -4846,6 +4843,8 @@ export class PrimitiveGroupContainer extends PlotData {
       this.scroll_x = this.scroll_x + event;
       this.scroll_y = this.scroll_y + event;
     }
+    if (isNaN(this.scroll_x)) this.scroll_x = 0;
+    if (isNaN(this.scroll_y)) this.scroll_y = 0;
   }
 
   delete_unwanted_vertex(vertex_infos) {

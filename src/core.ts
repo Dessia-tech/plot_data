@@ -1318,7 +1318,7 @@ export class MultiplePlots {
 
   manage_selected_point_index_changes(old_selected_index:number[]) {
     if (!equals(old_selected_index, this.selected_point_index)) {
-      var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.selected_point_index } });
+      var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.dep_selected_points_index } });
       this.canvas.dispatchEvent(evt);
     }
   }
@@ -8329,7 +8329,7 @@ export function equals(a, b) {
 
 
 const empty_container = {'name': '',
-'package_version': '0.5.9',
+'package_version': '0.5.10',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 

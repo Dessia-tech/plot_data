@@ -247,10 +247,12 @@ export class MultiplePlots {
 
   initialize_new_plot_data(new_plot_data:PlotData) {
     this.initializeObjectContext(new_plot_data);
-    new_plot_data.point_families.push(this.point_families[0]);
+    new_plot_data.point_families = this.point_families;    
     if (new_plot_data.type_ == 'scatterplot') {
-      for (let i=0; i<new_plot_data.plotObject.point_list.length; i++) {
-        new_plot_data.plotObject.point_list[i].point_families.push(this.point_families[0]);
+      for (let family of this.point_families) {
+        for (let index of family.point_index) {
+            new_plot_data.plotObject.point_list[index].point_families.push(family);
+        }
       }
     }
     this.objectList.push(new_plot_data);
@@ -431,6 +433,8 @@ export class MultiplePlots {
         this.to_display_plots[i]--;
       }
     }
+    this.clickedPlotIndex = -1; 
+    this.move_plot_index = -1;
   }
 
   getObjectIndex(x, y): number[] {

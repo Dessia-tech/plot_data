@@ -1,7 +1,7 @@
 import networkx as nx
 import plot_data
-
-
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
 class NetworkxGraph(plot_data.PrimitiveGroup):
     _non_serializable_attributes = ['graph']
 
@@ -21,9 +21,11 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
         for edge in self.graph.edges:
             node1, node2 = edge[0], edge[1]
             pos1, pos2 = pos[node1], pos[node2]
+            edge_color = self.graph.edges[edge]['color']
+            line_width = self.graph.edges[edge]['width']
             line = plot_data.LineSegment2D(
                 [pos1[0], pos1[1], pos2[0], pos2[1]],
-                edge_style=plot_data.EdgeStyle())
+                edge_style=plot_data.EdgeStyle(line_width = line_width, color_stroke=edge_color))
             primitives.append(line)
 
         for node, data in self.graph.nodes(data=True):
@@ -38,7 +40,11 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                         edge_style=edge_style,
                         surface_style=surface_style)
             elif shape == 's':
+                # _, ax  = plt.subplots()
                 # TODO: changer Circle2D par un carré
+                # xy = [x-r, y-r]
+                # prim = plot_data.Rectangle2D(x, y, r*2, r*2, edge_style=None, surface_style = None)
+                # prim = ax.add_patch(patches.Rectangle(xy=xy, width=2*r, height=2*r, edgecolor= 'red', facecolor = 'red'))
                 prim = plot_data.Circle2D(
                         x, y, r*2, edge_style=edge_style,
                         surface_style=surface_style)

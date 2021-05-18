@@ -359,7 +359,65 @@ class LineSegment(LineSegment2D):
         warnings.warn("LineSegment is deprecated, use LineSegment2D instead",
                       DeprecationWarning)
 
+# class Rectangle2D(PlotDataObject):
+#     """
+#     A Rectangle. It is a primitive and can be instantiated by PrimitiveGroup.
 
+#     :param cx: the center's x position.
+#     :type cx: float
+#     :param cy: the center's y position
+#     :type cy: float
+#     :param b: width
+#     :type b: float
+#     :param h: height
+#     :type h: float
+#     :param edge_style: customization of the rectangles's contour
+#     :type edge_style: EdgeStyle
+#     :param surface_style: customization of the rectangles's interior
+#     :type surface_style: SurfaceStyle
+#     """
+#     def __init__(self, cx: float, cy: float, b: float,h:float,
+#                  edge_style: EdgeStyle = None,
+#                  surface_style: SurfaceStyle = None,
+#                  name: str = ''):
+#         self.edge_style = edge_style
+#         self.surface_style = surface_style
+#         self.b = b
+#         self.h = h
+#         self.cy = cy
+#         self.cx = cx
+#         PlotDataObject.__init__(self, type_='rectangle', name=name)
+#     def bounding_box(self):
+#         """
+#         :return: the rectagle's bounding box
+#         :rtype: float, float, float, float
+#         """
+#         return self.cx - self.b/2, self.cx + self.b/2, self.cy - self.h/2, self.cy + self.h/2
+    
+#     def mpl_plot(self, ax=None):
+#         """
+#         Plots using matplotlib
+#         """
+#         if not ax:
+#             _, ax = plt.subplots()
+#         if self.edge_style:
+#             edgecolor = self.edge_style.color_stroke.rgb
+#             dashes = DEFAULT_EDGESTYLE.dashline
+#         else:
+#             edgecolor = DEFAULT_EDGESTYLE.color_stroke.rgb
+#             dashes = DEFAULT_EDGESTYLE.dashline
+#         if self.surface_style:
+#             facecolor = self.surface_style.color_fill
+#             surface_alpha = self.surface_style.opacity
+#         else:
+#             facecolor = None
+#             surface_alpha = 0
+#         xy = [self.cx-self.b/2, self.cy-self.h/2]
+#         ax.add_patch(patches.Rectangle(xy=xy, width=self.b, height=self.h,
+#                                        edgecolor= edgecolor,
+#                                        facecolor = facecolor, 
+#                                        fill=surface_alpha > 0))
+#         return ax
 class Circle2D(PlotDataObject):
     """
     A circle. It is a primitive and can be instantiated by PrimitiveGroup.
@@ -1072,7 +1130,8 @@ def get_csv_vectors(filepath):
     return catalog
 
 
-TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
+TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,   # Attribute
+                 # 'rectangle': Rectangle2D, 
                  'contour': Contour2D, 'graph2D': Dataset,
                  'graphs2D': Graph2D, 'linesegment2d': LineSegment,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,

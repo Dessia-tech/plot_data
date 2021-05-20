@@ -6636,21 +6636,17 @@ export class Tooltip {
     return [textfills, text_max_length];
   }
 
-  initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt, point): [string[], number] {
+  initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt): [string[], number] {
     var textfills = [];
     var text_max_length = 0;
     for (let i=0; i<this.to_disp_attribute_names.length; i++) {
       let attribute_name = this.to_disp_attribute_names[i];
       let attribute_type = TypeOf(elt[attribute_name]);
       if (attribute_type == 'float') {
-        if (i==0) {
-          var text = attribute_name + ' : ' + MyMath.round(point.cx, Math.max(x_nb_digits, y_nb_digits,2));
-        } else {
-          var text = attribute_name + ' : ' + MyMath.round(-point.cy, Math.max(x_nb_digits, y_nb_digits,2));
-        }
+        var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digits évidemment pas définie lorsque l'axe des x est un string...
+        var text_w = context.measureText(text).width;
+        textfills.push(text);
       }
-      var text_w = context.measureText(text).width;
-      textfills.push(text);
       if (text_w > text_max_length) {
         text_max_length = text_w;
       }
@@ -6666,7 +6662,7 @@ export class Tooltip {
       var index = point.getPointIndex(point_list);
       var elt = elements[index];
       if (mergeON === true) {
-        [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt, point);
+        [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt);
       } else {
         [textfills, text_max_length] = this.initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt);
       }
@@ -6833,7 +6829,8 @@ export class Scatter {
 
   public static deserialize(serialized) {
     let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')}
-    var default_dict_ = {point_style:default_point_style}
+    let default_tooltip = {to_disp_attribute_names: serialized['to_disp_attribute_names']}
+    var default_dict_ = {point_style:default_point_style, tooltip: default_tooltip};
     serialized = set_default_values(serialized, default_dict_);
     var axis = Axis.deserialize(serialized['axis']);
     var tooltip = Tooltip.deserialize(serialized['tooltip']);

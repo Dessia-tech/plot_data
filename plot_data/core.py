@@ -73,17 +73,6 @@ class PlotDataObject(DessiaObject):
         return DessiaObject.dict_to_object(dict_=dict_, force_generic=True)
 
 
-# class ColorMapSet(DessiaObject):
-#     def __init__(self, value: float = None, tooltip: bool = False,
-#                  color_range: str = None, selector: bool = True,
-#                  name: str = ''):
-#         self.selector = selector
-#         self.color_range = color_range
-#         self.tooltip = tooltip
-#         self.value = value
-#         DessiaObject.__init__(self, name=name)
-
-
 class HatchingSet(DessiaObject):
     """
     A class for setting hatchings on a surface.
@@ -99,12 +88,6 @@ class HatchingSet(DessiaObject):
         self.stroke_width = stroke_width
         self.hatch_spacing = hatch_spacing
         DessiaObject.__init__(self, name=name)
-
-
-# class ColorSurfaceSet(DessiaObject):
-#     def __init__(self, color: str = 'white', name: str = ''):
-#         self.color = color
-#         DessiaObject.__init__(self, name=name)
 
 
 class Window(DessiaObject):
@@ -571,19 +554,19 @@ class Graph2D(PlotDataObject):
 
     :param graphs: a list of Datasets
     :type graphs: List[Dataset]
-    :param to_disp_attribute_names: [attribute_x, attribute_y] where \
-    attribute_x is the attribute displayed on x-axis and attribute_y \
-    is the attribute displayed on y-axis
-    :type to_disp_attribute_names: [str, str]
+    :param x_variable: variable that you want to display on x axis
+    :type x_variable: str
+    :param y_variable: variable that you want to display on y axis
+    :type y_variable: str
     :param axis: an object containing all information needed for \
     drawing axis
     :type axis: Axis
     """
 
-    def __init__(self, graphs: List[Dataset], to_disp_attribute_names,
+    def __init__(self, graphs: List[Dataset], x_variable: str, y_variable:str,
                  axis: Axis = None, name: str = ''):
         self.graphs = graphs
-        self.to_disp_attribute_names = to_disp_attribute_names
+        self.to_disp_attribute_names = [x_variable, y_variable]
         if axis is None:
             self.axis = Axis()
         else:
@@ -605,6 +588,7 @@ class Graph2D(PlotDataObject):
         ax.set_ylabel(yname)
         return ax
 
+
 class Scatter(PlotDataObject):
     """
     A class for drawing scatter plots.
@@ -612,10 +596,10 @@ class Scatter(PlotDataObject):
     :param elements: A list of vectors. Vectors must have the same \
     attributes (ie the same keys)
     :type elements: List[dict]
-    :param to_disp_attribute_names: [attribute_x, attribute_y] where \
-    attribute_x is the attribute displayed on x-axis and attribute_y \
-    is the attribute displayed on y-axis
-    :type to_disp_attribute_names: [str, str]
+    :param x_variable: variable that you want to display on x axis
+    :type x_variable: str
+    :param y_variable: variable that you want to display on y axis
+    :type y_variable: str
     :param tooltip: an object containing all information needed for \
     drawing tooltips
     :type tooltip: Tooltip
@@ -626,19 +610,19 @@ class Scatter(PlotDataObject):
     :type axis: Axis
     """
 
-    def __init__(self, tooltip: Tooltip,
-                 to_disp_attribute_names: List[str],
+    def __init__(self, x_variable: str, y_variable: str,
+                 tooltip: Tooltip = None,
                  point_style: PointStyle = None,
                  elements: List[Any] = None, axis: Axis = None,
                  name: str = ''):
         self.tooltip = tooltip
-        self.to_disp_attribute_names = to_disp_attribute_names
+        self.to_disp_attribute_names = [x_variable, y_variable]
         self.point_style = point_style
         if not elements:
             self.elements = []
         else:
             self.elements = elements
-        if axis:
+        if not axis:
             self.axis = Axis()
         else:
             self.axis = axis
@@ -857,22 +841,27 @@ class PrimitiveGroupsContainer(PlotDataObject):
     primitive_groups[i]. It only works if this object is inside a \
     MultiplePlots.
     :type associated_elements: List[int]
-    :param to_disp_attribute_names: A list containing the attribute \
-    names to be displayed on axis. It may contain one or two names. ex:\
-     ['mass'] or ['length', 'mass']. Set it to None for no axis.
-    :type to_disp_attribute_names: List[str]
+    :param x_variable: variable that you want to display on x axis
+    :type x_variable: str
+    :param y_variable: variable that you want to display on y axis
+    :type y_variable: str
     """
 
     def __init__(self, primitive_groups: List[PrimitiveGroup],
                  sizes: List[Tuple[float, float]] = None,
                  coords: List[Tuple[float, float]] = None,
                  associated_elements: List[int] = None,
-                 to_disp_attribute_names: List[str] = None,
+                 x_variable: str = None, y_variable: str = None,
                  name: str = ''):
         self.primitive_groups = primitive_groups
         self.sizes = sizes
         self.coords = coords
-        if to_disp_attribute_names:
+        if x_variable or y_variable:
+            to_disp_attribute_names = []
+            if x_variable:
+                to_disp_attribute_names.append(x_variable)
+            if (y_variable):
+                to_disp_attribute_names.append(y_variable)
             self.association = {'associated_elements': associated_elements,
                                 'to_disp_attribute_names': to_disp_attribute_names}
         PlotDataObject.__init__(self, type_='primitivegroupcontainer',

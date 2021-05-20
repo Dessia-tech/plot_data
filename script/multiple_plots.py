@@ -32,19 +32,13 @@ parallelplot1 = plot_data.ParallelPlot(
 parallelplot2 = plot_data.ParallelPlot(to_disp_attribute_names=['x', 'color'])
 
 # Scatterplots
-scatterplot1 = plot_data.Scatter(
-    tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
-    to_disp_attribute_names=['x', 'y'])
+scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
 
-scatterplot2 = plot_data.Scatter(
-    tooltip=plot_data.Tooltip(to_disp_attribute_names=['y', 'color']),
-    to_disp_attribute_names=['y', 'color'],
-    point_style=plot_data.PointStyle(
-        shape='square'))  # optional argument that changes points' appearance
+scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
+                                 point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes
+# points' appearance
 
-scatterplot3 = plot_data.Scatter(
-    tooltip=plot_data.Tooltip(to_disp_attribute_names=['x', 'direction']),
-    to_disp_attribute_names=['x', 'direction'])
+scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 
 # PrimitiveGroupContainers
 circle1 = vm.wires.Circle2D(vm.Point2D(0, 0), 10).plot_data()
@@ -67,8 +61,7 @@ primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primit
 
 primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups,
                                                                associated_elements=[1, 2, 3, 4],
-                                                               to_disp_attribute_names=['x', 'y']
-                                                               )
+                                                               x_variable='x', y_variable='y')
 
 
 # Creating the multiplot

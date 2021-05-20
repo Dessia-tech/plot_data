@@ -20,11 +20,10 @@ for i in range(50):
 tooltip = plot_data.Tooltip(to_disp_attribute_names=['mass', 'length'])
 
 scatterplot = plot_data.Scatter(elements=elements,
-                                to_disp_attribute_names=['mass', 'length'],
-                                tooltip=tooltip)
+                                x_variable='mass', y_variable='length')
 
 # The previous scripts actually shows the simplest way of creating a scatterplot.
-# However, many options are available for futher customization
+# However, many options are available for further customization
 
 # First of all, apart from tooltips' information, the user can customize
 # the style. 'text_style' modifies the text while 'surface_style'
@@ -59,8 +58,7 @@ axis = plot_data.Axis(nb_points_x=7, nb_points_y=5,
                       )
 
 # Now, here is the new scatterplot
-customized_scatterplot = plot_data.Scatter(tooltip=tooltip,
-                                           to_disp_attribute_names=['mass', 'shape'],
+customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='shape',
                                            point_style=point_style,
                                            elements=elements,
                                            axis=axis)

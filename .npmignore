@@ -2,6 +2,7 @@
 /plot_data
 /script
 /src
+/doc
 .drone.yml
 .prettierrc
 CHANGELOG.md

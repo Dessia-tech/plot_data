@@ -24,6 +24,11 @@ npm i
 npm run-script build
 ```
 
+## Documentation
+
+Python: https://documentation.dessia.tech/plot_data/python/ <br>
+Typescript: https://documentation.dessia.tech/plot_data/typescript/
+
 ## Changelog
 
 Check the changelog [here](CHANGELOG.md)

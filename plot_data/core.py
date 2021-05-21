@@ -104,14 +104,14 @@ class EdgeStyle(DessiaObject):
     :param line_width: line width in pixels.
     :type line_width: float
     :param color_stroke: the edge's color (rgb255).
-    :type color_stroke: str
+    :type color_stroke: plot_data.Colors.Color
     :param dashline: a list of positive floats [a1,...,an] representing \
     a pattern where a_2i is the number of solid pixels and a_2i+1 is \
     the number of empty pixels.
     :type dashline: List[float]
     """
 
-    def __init__(self, line_width: float = None, color_stroke: str = None,
+    def __init__(self, line_width: float = None, color_stroke: colors.Color = None,
                  dashline: List[int] = None, name: str = ''):
         self.line_width = line_width
         self.color_stroke = color_stroke
@@ -256,16 +256,17 @@ class Line2D(PlotDataObject):
     An infinite line. Line2D is a primitive and can be instantiated by \
     PrimitiveGroups.
 
-    :param data: [x1, y1, x2, y2] where (x1, y1) and (x2, y2) are two \
-    points that belong to the line.
-    :type data: [float, float, float, float]
+    :param point1: first endpoint of the line segment [x1, y1].
+    :type point1: List[float]
+    :param point2: first endpoint of the line segment [x2, y2].
+    :type point2: List[float]
     :param edge_style: for customization
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, data: List[float], edge_style: EdgeStyle = None,
-                 name: str = ''):
-        self.data = data
+    def __init__(self, point1: List[float], point2: List[float],
+                 edge_style: EdgeStyle = None, name: str = ''):
+        self.data = point1 + point2
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='line2d', name=name)
 
@@ -292,16 +293,18 @@ class LineSegment2D(PlotDataObject):
     A line segment. This is a primitive that can be called by \
     PrimitiveGroup.
 
-    :param data: [x1, y1, x2, y2] where (x1, y1) and (x2, y2) are two \
-    points that belong to the line segment.
-    :type data: [float, float, float, float]
+    :param point1: first endpoint of the line segment [x1, y1].
+    :type point1: List[float]
+    :param point2: first endpoint of the line segment [x2, y2].
+    :type point2: List[float]
     :param edge_style: for customization
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, data: List[float], edge_style: EdgeStyle = None,
+    def __init__(self, point1: List[float], point2: List[float],
+                 edge_style: EdgeStyle = None,
                  name: str = ''):
-        self.data = data
+        self.data = point1 + point2
         if edge_style is None:
             self.edge_style = EdgeStyle()
         else:
@@ -366,8 +369,8 @@ class Circle2D(PlotDataObject):
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.r = r
-        self.cy = cy
         self.cx = cx
+        self.cy = cy
         PlotDataObject.__init__(self, type_='circle', name=name)
 
     def bounding_box(self):
@@ -633,7 +636,7 @@ class Scatter(PlotDataObject):
 class Arc2D(PlotDataObject):
     """
     A class for drawing arcs. Arc2D is a primitive and can be \
-    instantiated by PrimitiveGroup.
+    instantiated by PrimitiveGroup. By default, the arc is drawn anticlockwise.
 
     :param cx: the arc center's x position
     :type cx: float
@@ -728,9 +731,8 @@ class Contour2D(PlotDataObject):
         for plot_data_primitive in self.plot_data_primitives:
             if hasattr(plot_data_primitive, 'bounding_box'):
                 bb = plot_data_primitive.bounding_box()
-                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax,
-                                                               bb[1]), min(
-                    ymin, bb[2]), max(ymax, bb[3])
+                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax,bb[1]), \
+                                         min(ymin, bb[2]), max(ymax, bb[3])
 
         return xmin, xmax, ymin, ymax
 
@@ -837,7 +839,7 @@ class PrimitiveGroupsContainer(PlotDataObject):
     :param coords: In the same way as sizes but for coordinates.
     :type coords: List[Tuple[float, float]]
     :param associated_elements: A list containing the associated \
-    elements indices. associated_elements[i] is assoaciated with \
+    elements indices. associated_elements[i] is associated with \
     primitive_groups[i]. It only works if this object is inside a \
     MultiplePlots.
     :type associated_elements: List[int]
@@ -860,7 +862,7 @@ class PrimitiveGroupsContainer(PlotDataObject):
             to_disp_attribute_names = []
             if x_variable:
                 to_disp_attribute_names.append(x_variable)
-            if (y_variable):
+            if y_variable:
                 to_disp_attribute_names.append(y_variable)
             self.association = {'associated_elements': associated_elements,
                                 'to_disp_attribute_names': to_disp_attribute_names}
@@ -880,9 +882,9 @@ class ParallelPlot(PlotDataObject):
     :param disposition: either 'vertical' or 'horizontal' depending on \
     how you want the initial disposition to be.
     :type disposition: str
-    :param to_disp_attribute_names: a list on attribute names you want \
+    :param axes: a list on attribute names you want \
     to display as axis on this parallel plot.
-    :type to_disp_attribute_names: List[str]
+    :type axes: List[str]
     :param rgbs: a list of rgb255 colors for color interpolation. Color\
      interpolation is enabled when clicking on an axis.
     :type rgbs: List[Tuple[int, int, int]]
@@ -890,13 +892,13 @@ class ParallelPlot(PlotDataObject):
 
     def __init__(self, elements=None, edge_style: EdgeStyle = None,
                  disposition: str = None,
-                 to_disp_attribute_names: List[str] = None,
+                 axes: List[str] = None,
                  rgbs: List[Tuple[int, int, int]] = None,
                  name: str = ''):
         self.elements = elements
         self.edge_style = edge_style
         self.disposition = disposition
-        self.to_disp_attribute_names = to_disp_attribute_names
+        self.to_disp_attribute_names = axes
         self.rgbs = rgbs
         PlotDataObject.__init__(self, type_='parallelplot', name=name)
 

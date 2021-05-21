@@ -1883,6 +1883,12 @@ export abstract class PlotData {
     }
   }
 
+  merge_alert() {
+    if (this.mergeON) {
+      alert('Warning: point merge is enabled. Therefore, only float attributes will be displayed on tooltips.')
+    }
+  }
+
   reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
@@ -3860,7 +3866,7 @@ export class PlotScatter extends PlotData {
     public Y: number,
     public canvas_id: string) {
       super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-      var requirement = '0.4.10';
+      var requirement = '0.5.10';
       check_package_version(data['package_version'], requirement);
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
@@ -3897,6 +3903,7 @@ export class PlotScatter extends PlotData {
         this.scatter_init_points = this.plotObject.point_list;
         this.refresh_MinMax(this.plotObject.point_list);
       }
+      this.merge_alert();
       this.isParallelPlot = false;
   }
 
@@ -6824,7 +6831,6 @@ export class Scatter {
     this.initialize_to_display_attributes();
     this.initialize_lists();
     this.initialize_point_list(elements);
-
   }
 
   public static deserialize(serialized) {

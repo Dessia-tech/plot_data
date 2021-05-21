@@ -15,12 +15,9 @@ for i in range(50):
                      })
 
 parallelplot = plot_data.ParallelPlot(elements=elements,
-                                      to_disp_attribute_names=['mass',
-                                                               'length',
-                                                               'shape',
-                                                               'color'])
+                                      axes=['mass', 'length', 'shape', 'color'])
 
-# The previous script is actually the minimum requirement for creating a
+# The line above shows the minimum requirement for creating a
 # parallel plot. However, many options are available for further customization.
 
 # 'edge_style' option allows customization of the lines
@@ -39,10 +36,7 @@ disposition = 'horizontal'
 rgbs = [BLUE, YELLOW, ORANGE]
 
 customized_parallelplot = plot_data.ParallelPlot(elements=elements,
-                                                 to_disp_attribute_names=['mass',
-                                                                          'length',
-                                                                          'shape',
-                                                                          'color'],
+                                                 axes=['mass', 'length', 'shape', 'color'],
                                                  edge_style=edge_style,
                                                  disposition=disposition,
                                                  rgbs=rgbs)

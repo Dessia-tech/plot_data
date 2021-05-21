@@ -17,7 +17,7 @@ for i in range(50):
 parallelplot = plot_data.ParallelPlot(elements=elements,
                                       axes=['mass', 'length', 'shape', 'color'])
 
-# The line above shows the minimum requirement for creating a
+# The line above shows the minimum requirements for creating a
 # parallel plot. However, many options are available for further customization.
 
 # 'edge_style' option allows customization of the lines

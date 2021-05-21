@@ -855,6 +855,9 @@ class PrimitiveGroupsContainer(PlotDataObject):
                  associated_elements: List[int] = None,
                  x_variable: str = None, y_variable: str = None,
                  name: str = ''):
+        for i, value in enumerate(primitive_groups):
+            if not str(value.__class__) == "<class 'plot_data.core.PrimitiveGroup'>":
+                primitive_groups[i] = PrimitiveGroup(primitives=value)
         self.primitive_groups = primitive_groups
         self.sizes = sizes
         self.coords = coords

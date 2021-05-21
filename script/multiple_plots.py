@@ -16,10 +16,10 @@ elements = []  # a list of vectors (dictionaries) that are displayed
 # through different representations such as parallel plots and scatter plots
 
 nb_elements = 50
-colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]
+available_colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]
 directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
-    random_color = colors[random.randint(0, len(colors) - 1)]
+    random_color = available_colors[random.randint(0, len(available_colors) - 1)]
     random_direction = directions[random.randint(0, len(directions) - 1)]
     elements.append({'x': random.uniform(0, 200),
                      'y': random.uniform(0, 100),
@@ -40,22 +40,22 @@ scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
 scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 
 # PrimitiveGroupContainers
-circle1 = vm.wires.Circle2D(vm.Point2D(0, 0), 10).plot_data()
+circle1 = vm.wires.Circle2D([0, 0], 10).plot_data()
 
-l1 = vm.edges.LineSegment2D(vm.Point2D(1, 1), vm.Point2D(1, 2))
-l2 = vm.edges.LineSegment2D(vm.Point2D(1, 2), vm.Point2D(2, 2))
-l3 = vm.edges.LineSegment2D(vm.Point2D(2, 2), vm.Point2D(2, 1))
-l4 = vm.edges.LineSegment2D(vm.Point2D(2, 1), vm.Point2D(1, 1))
+l1 = vm.edges.LineSegment2D([1, 1], [1, 2])
+l2 = vm.edges.LineSegment2D([1, 2], [2, 2])
+l3 = vm.edges.LineSegment2D([2, 2], [2, 1])
+l4 = vm.edges.LineSegment2D([2, 1], [1, 1])
 contour = vm.wires.Contour2D([l1, l2, l3, l4]).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=colors.LIGHTORANGE))
 
-circle2 = vm.wires.Circle2D(vm.Point2D(1, 1), 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=colors.RED))
+circle2 = vm.wires.Circle2D([1, 1], 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=colors.RED))
 
-circle3 = vm.wires.Circle2D(vm.Point2D(1, 1), 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=colors.LIGHTBROWN))
+circle3 = vm.wires.Circle2D([1, 1], 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=colors.LIGHTBROWN))
 
-primitive_group1 = plot_data.PrimitiveGroup(primitives=[circle1])
-primitive_group2 = plot_data.PrimitiveGroup(primitives=[contour])
-primitive_group3 = plot_data.PrimitiveGroup(primitives=[circle2])
-primitive_group4 = plot_data.PrimitiveGroup(primitives=[circle3])
+primitive_group1 = [circle1]
+primitive_group2 = [contour]
+primitive_group3 = [circle2]
+primitive_group4 = [circle3]
 primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primitive_group4]
 
 primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups,

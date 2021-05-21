@@ -7,15 +7,15 @@ import numpy as npy
 import volmdlr as vm  # You can install volmdlr using pip in plot_data's package
 import volmdlr.edges
 import volmdlr.wires
-from plot_data.colors import *
+import plot_data.colors as colors
 
 
 # defining a couple style objects
     # edges customization
-edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=RED, dashline=[])
+edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=colors.RED, dashline=[])
     # surfaces customization
 hatching = plot_data.HatchingSet(0.5, 3)
-surface_style = plot_data.SurfaceStyle(color_fill=WHITE, opacity=1,
+surface_style = plot_data.SurfaceStyle(color_fill=colors.WHITE, opacity=1,
                                        hatching=hatching)
 
 
@@ -33,37 +33,32 @@ plot_data_arc = arc.plot_data(edge_style=edge_style)
 
 # square contour
 rectangle_size = 1
-pt1 = vm.Point2D(0, 0)
-pt2 = vm.Point2D(0, rectangle_size)
-pt3 = vm.Point2D(rectangle_size, rectangle_size)
-pt4 = vm.Point2D(rectangle_size, 0)
-contour1 = vm.wires.Contour2D([vm.edges.LineSegment2D(pt1, pt2),
-                               vm.edges.LineSegment2D(pt2, pt3),
-                               vm.edges.LineSegment2D(pt3, pt4),
-                               vm.edges.LineSegment2D(pt4, pt1)])
+contour1 = vm.wires.Contour2D([vm.edges.LineSegment2D([0, 0], [0, rectangle_size]),
+                               vm.edges.LineSegment2D([0, rectangle_size], [rectangle_size, rectangle_size]),
+                               vm.edges.LineSegment2D([rectangle_size, rectangle_size], [rectangle_size, 0]),
+                               vm.edges.LineSegment2D([rectangle_size, 0], [0, 0])])
 
 plot_data_contour = contour1.plot_data(edge_style=edge_style,
                                        surface_style=surface_style)
 
 
 # LineSegment2D
-plot_data_line = vm.edges.LineSegment2D(vm.Point2D(2, 2),
-                                        vm.Point2D(3, 3)).plot_data(edge_style)
+plot_data_line = vm.edges.LineSegment2D([2, 2], [3, 3]).plot_data(edge_style)
 
 
 # Circle
-circle_edge_style = plot_data.EdgeStyle(1, RED)
-circle_surface_style = plot_data.SurfaceStyle(color_fill=YELLOW, opacity=0.5,
+circle_edge_style = plot_data.EdgeStyle(1, colors.RED)
+circle_surface_style = plot_data.SurfaceStyle(color_fill=colors.YELLOW, opacity=0.5,
                                               hatching=plot_data.HatchingSet())
 
-circle = vm.wires.Circle2D(vm.Point2D(5, 9), 5)
+circle = vm.wires.Circle2D([5, 9], 5)
 plot_data_circle = circle.plot_data(edge_style=circle_edge_style,
                                     surface_style=circle_surface_style)
 
 
 # Text
 text = plot_data.Text(comment='Hello', position_x=6, position_y=9,
-                      text_style=plot_data.TextStyle(text_color=RED,
+                      text_style=plot_data.TextStyle(text_color=colors.RED,
                                                      font_size=12,
                                                      font_style='sans-serif')
                       )
@@ -73,9 +68,9 @@ text = plot_data.Text(comment='Hello', position_x=6, position_y=9,
 label1 = plot_data.Label(title='label1')
 
   # This label is created using all customizations
-fill1 = plot_data.SurfaceStyle(color_fill=RED, opacity=0.5)
-edge1 = plot_data.EdgeStyle(line_width=1, color_stroke=BLUE, dashline=[5, 5])
-text_style = plot_data.TextStyle(text_color=ORANGE, font_size=14, italic=True, bold=True)
+fill1 = plot_data.SurfaceStyle(color_fill=colors.RED, opacity=0.5)
+edge1 = plot_data.EdgeStyle(line_width=1, color_stroke=colors.BLUE, dashline=[5, 5])
+text_style = plot_data.TextStyle(text_color=colors.ORANGE, font_size=14, italic=True, bold=True)
 label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surface_style=fill1,
                          rectangle_edge_style=edge1)
 

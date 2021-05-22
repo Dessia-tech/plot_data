@@ -856,7 +856,7 @@ class PrimitiveGroupsContainer(PlotDataObject):
                  x_variable: str = None, y_variable: str = None,
                  name: str = ''):
         for i, value in enumerate(primitive_groups):
-            if not str(value.__class__) == "<class 'plot_data.core.PrimitiveGroup'>":
+            if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
         self.primitive_groups = primitive_groups
         self.sizes = sizes

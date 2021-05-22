@@ -1954,8 +1954,8 @@ export abstract class PlotData {
     if (d['type_'] == 'primitivegroup') {
       for (let i=0; i<d.primitives.length; i++) {
         this.context.beginPath();
-        let pr_x=scaleX*(1000*d.primitives[i].minX + mvx) + this.X; 
-        let pr_y=scaleY*(1000*d.primitives[i].minY + mvy) + this.Y;
+        let pr_x=scaleX*(1000*d.primitives[i].minX + mvx); 
+        let pr_y=scaleY*(1000*d.primitives[i].minY + mvy);
         let pr_w=scaleX*1000*(d.primitives[i].maxX - d.primitives[i].minX);
         let pr_h=scaleY*1000*(d.primitives[i].maxY - d.primitives[i].minY);
         var is_inside_canvas = (pr_x+pr_w>=0) && (pr_x<=this.width) &&

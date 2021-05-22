@@ -1883,11 +1883,6 @@ export abstract class PlotData {
     }
   }
 
-  merge_alert() {
-    if (this.mergeON) {
-      alert('Warning: point merge is enabled. Therefore, only float attributes will be displayed on tooltips.')
-    }
-  }
 
   reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
@@ -3904,8 +3899,10 @@ export class PlotScatter extends PlotData {
         this.scatter_init_points = this.plotObject.point_list;
         this.refresh_MinMax(this.plotObject.point_list);
       }
-      this.merge_alert();
       this.isParallelPlot = false;
+      if (this.mergeON && alert_count === 0) {
+        merge_alert();
+      }
   }
 
   draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
@@ -8232,6 +8229,13 @@ export function check_package_version(package_version:string, requirement:string
   if (package_version_num < requirement_num) {
     alert("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
   }
+}
+
+var alert_count = 0;
+
+export function merge_alert() {
+  alert('Note: when point merge option is enabled, only float attributes will be displayed in tooltips.')
+  alert_count++;
 }
 
 

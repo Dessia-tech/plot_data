@@ -1490,8 +1490,8 @@ export class MultiplePlots {
     var old_selected_index;
 
     // For canvas to read keyboard inputs.
-    this.canvas.setAttribute('tabindex', '0');
-    this.canvas.focus(); 
+    // this.canvas.setAttribute('tabindex', '0');
+    // this.canvas.focus(); 
 
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);

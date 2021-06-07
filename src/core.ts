@@ -6759,7 +6759,7 @@ export class Dataset {
     for (let i=0; i<this.point_list.length - 1; i++) {
       let current_point = this.point_list[i];
       let next_point = this.point_list[i+1];
-      let data = [current_point.cx, -current_point.cy, next_point.cx, -next_point.cy];
+      let data = [current_point.cx, current_point.cy, next_point.cx, next_point.cy];
       this.segments.push(new LineSegment2D(data, this.edge_style, 'line', ''));
     }
   }
@@ -7982,13 +7982,14 @@ export class List {
    * Compares two lists by comparing their elements using ===
    */
   public static equals(list1, list2) {
-    if (list1.length != list2.length) { return false; }
-    for (let i=0; i<list1.length; i++) {
-      if (list1[i] !== list2[i]) {
-        return false;
-      }
-    }
-    return true;
+    // if (list1.length != list2.length) { return false; }
+    // for (let i=0; i<list1.length; i++) {
+    //   if (list1[i] !== list2[i]) {
+    //     return false;
+    //   }
+    // }
+    // return true;
+    return list1.toString() === list2.toString();
   }
 
   /**

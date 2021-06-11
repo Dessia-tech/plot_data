@@ -1292,22 +1292,25 @@ export class MultiplePlots {
 
 
   get_settings_on_object() {
-    var obj_settings_on = -1;
     for (let i=0; i<this.nbObjects; i++) {
       if (this.objectList[i].settings_on) {
-        obj_settings_on = i;
-        break;
+        return i;
       }
     }
-    return obj_settings_on;
+    return -1;
   }
 
   dbl_click_manage_settings_on(object_index:number): void {
     var obj_settings_on = this.get_settings_on_object();
+    var obj = this.objectList[this.clickedPlotIndex];
     if (obj_settings_on == -1) {
-      this.objectList[object_index].settings_on = true;
-    } else if (obj_settings_on == object_index) {
-      this.objectList[object_index].settings_on = false;
+      obj.settings_on = true;
+      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);   
+    } else if (obj_settings_on === object_index) {
+      obj.settings_on = false;
+      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);   
     }
   }
 
@@ -1316,6 +1319,12 @@ export class MultiplePlots {
     if ((obj_settings_on !== -1) && (obj_settings_on !== object_index)) {
       this.objectList[obj_settings_on].settings_on = false;
       this.objectList[object_index].settings_on = true;
+      let obj = this.objectList[obj_settings_on];
+      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);  
+      let obj1 = this.objectList[object_index];
+      obj1.draw(false, obj1.last_mouse1X, obj1.last_mouse1Y, obj1.scaleX, obj1.scaleY, obj1.X, obj1.Y);
+      obj1.draw(true, obj1.last_mouse1X, obj1.last_mouse1Y, obj1.scaleX, obj1.scaleY, obj1.X, obj1.Y);  
     }
   }
 
@@ -1488,6 +1497,8 @@ export class MultiplePlots {
     var vertex_infos:Object;
     var clickOnVertex:boolean = false;
     var old_selected_index;
+    var double_click = false;
+
 
     // For canvas to read keyboard inputs.
     // this.canvas.setAttribute('tabindex', '0');
@@ -1637,19 +1648,24 @@ export class MultiplePlots {
       mouse_moving = false;
     });
 
+
     this.canvas.addEventListener('dblclick', e => {
       if (this.clickedPlotIndex !== -1) {
         this.dbl_click_manage_settings_on(this.clickedPlotIndex);
         // this.redrawAllObjects();
       }
+      double_click = true;
     });
 
     this.canvas.addEventListener('click', e => {
-      if (this.clickedPlotIndex !== -1) {
-        this.single_click_manage_settings_on(this.clickedPlotIndex);
-        // this.redrawAllObjects();
-      }
-    });
+      setTimeout(() => {
+        if (this.clickedPlotIndex !== -1 && !double_click) {
+          this.single_click_manage_settings_on(this.clickedPlotIndex);
+          // this.redrawAllObjects();
+        }
+      }, 100);
+      double_click = false;
+      });
 
     this.canvas.addEventListener('selectionchange', (e:any) => {
     });
@@ -1912,7 +1928,7 @@ export abstract class PlotData {
   }
 
   draw_settings_rect() {
-    Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', string_to_hex('blue'), 1, 1, [10,10]);
+    Shape.rect(this.X + 1, this.Y + 1, this.width - 2, this.height - 2, this.context, 'white', string_to_hex('blue'), 1, 1, [10,10]);
   }
 
 
@@ -2681,7 +2697,7 @@ export abstract class PlotData {
       }
       if (selected) {
         this.pp_selected.push(this.to_display_list[i]);
-        this.pp_selected_index.push(this.from_to_display_list_to_elements(i, this.elements));
+        this.pp_selected_index.push(this.from_to_display_list_to_elements(i));
       }
     }
     if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
@@ -2691,7 +2707,7 @@ export abstract class PlotData {
 
 
 
-  from_to_display_list_to_elements(i, elements) {
+  from_to_display_list_to_elements(i) {
     return this.display_list_to_elements_dict[i.toString()];
   }
 
@@ -4353,7 +4369,7 @@ export class PrimitiveGroupContainer extends PlotData {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas();
-
+    if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
     if (this.width > 100 && this.height > 100) {
       this.draw_layout_axis();

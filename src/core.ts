@@ -6638,7 +6638,7 @@ export class Tooltip {
   }
 
   initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt): [string[], number] {
-    var textfills = [];
+    var textfills = ['Information'];
     var text_max_length = 0;
     for (let i=0; i<this.to_disp_attribute_names.length; i++) {
       let attribute_name = this.to_disp_attribute_names[i];
@@ -6673,7 +6673,6 @@ export class Tooltip {
         } else {
           let index = point.points_inside[0].getPointIndex(initial_point_list);
           let elt = elements[index];
-          console.log(point, elt)
           var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2));
         }
         var text_w = context.measureText(text).width;
@@ -6731,7 +6730,15 @@ export class Tooltip {
 
       var current_y = tp_y + 0.75*this.text_style.font_size;
       for (var i=0; i<textfills.length; i++) {
-        context.fillText(textfills[i], x_start, current_y);
+        if (i == 0) {
+          context.fillStyle = string_to_rgb('black');
+          context.font = 'bold ' + this.text_style.font;
+          context.fillText(textfills[0], x_start, current_y);
+          context.fillStyle = this.text_style.text_color;
+          context.font = this.text_style.font;
+        } else {
+          context.fillText(textfills[i], x_start, current_y); 
+        }
         current_y = current_y + this.text_style.font_size;
       }
 

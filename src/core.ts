@@ -1665,7 +1665,7 @@ export class MultiplePlots {
         }
       }, 100);
       double_click = false;
-      });
+    });
 
     this.canvas.addEventListener('selectionchange', (e:any) => {
     });
@@ -2147,10 +2147,10 @@ export abstract class PlotData {
     this.context.fill();
   }
 
-  draw_tooltip(d:Tooltip, mvx, mvy, point_list, elements, mergeON) {
+  draw_tooltip(d:Tooltip, mvx, mvy, point_list, initial_point_list, elements, mergeON, axes:any[]) {
     if (d['type_'] == 'tooltip') {
       this.tooltip_ON = true;
-      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, elements, mergeON);
+      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, initial_point_list, elements, mergeON, axes);
     }
   }
 
@@ -2214,8 +2214,8 @@ export abstract class PlotData {
         this.draw_dataset(graph, hidden, mvx, mvy);
       }
       for (let i=0; i<d.graphs.length; i++) {
-        let graph = d.graphs[i];
-        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.elements, false);
+        let graph: Dataset = d.graphs[i];
+        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, graph.elements, false, d.to_disp_attribute_names);
       }
     }
   }
@@ -2236,7 +2236,7 @@ export abstract class PlotData {
           this.scatter_point_list = d.point_list;
         }
       }
-      if ((this.scroll_x%5 != 0) && (this.scroll_y%5 != 0)) {
+      if ((this.scroll_x % 5 != 0) && (this.scroll_y % 5 != 0)) {
         this.refresh_point_list_bool = true;
       }
       if (this.point_families.length == 0) {
@@ -2260,7 +2260,7 @@ export abstract class PlotData {
           this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
         }
       }
-      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_point_list, d.elements, this.mergeON);
+      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_point_list, d.point_list, d.elements, this.mergeON, d.to_disp_attribute_names);
     }
   }
 
@@ -6603,8 +6603,8 @@ export class Tooltip {
               }
 
   public static deserialize(serialized) {
-    let default_surface_style = {color_fill:string_to_rgb('lightblue'), opacity:0.75, hatching:undefined};
-    let default_text_style = {text_color:string_to_rgb('black'), font_size:12, font_style:'sans-serif', 
+    let default_surface_style = {color_fill:string_to_rgb('grey'), opacity:0.75, hatching:undefined};
+    let default_text_style = {text_color:string_to_rgb('white'), font_size:12, font_style:'helvetica', 
                               text_align_x:'start', text_align_y:'alphabetic', name:''};
     let default_dict_ = {surface_style:default_surface_style, text_style:default_text_style, tooltip_radius:5};
     serialized = set_default_values(serialized, default_dict_);
@@ -6659,14 +6659,23 @@ export class Tooltip {
     return [textfills, text_max_length];
   }
 
-  initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt): [string[], number] {
-    var textfills = [];
+  initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point: Point2D, initial_point_list, elements, axes): [string[], number] {
+    var textfills = ['Information'];
     var text_max_length = 0;
     for (let i=0; i<this.to_disp_attribute_names.length; i++) {
       let attribute_name = this.to_disp_attribute_names[i];
-      let attribute_type = TypeOf(elt[attribute_name]);
+      let attribute_type = TypeOf(elements[0][attribute_name]);
       if (attribute_type == 'float') {
-        var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digits évidemment pas définie lorsque l'axe des x est un string...
+        if (attribute_name === axes[0]) {
+          var text = attribute_name + ' : ' + MyMath.round(point.cx, Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digits évidemment pas définie lorsque l'axe des x est un string...
+        } else if (attribute_name === axes[1]) {
+          var text = attribute_name + ' : ' + MyMath.round(-point.cy, Math.max(x_nb_digits, y_nb_digits,2));
+        } else {
+          let index = point.points_inside[0].getPointIndex(initial_point_list);
+          let elt = elements[index];
+          console.log(point, elt)
+          var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2));
+        }
         var text_w = context.measureText(text).width;
         textfills.push(text);
       }
@@ -6677,7 +6686,7 @@ export class Tooltip {
     return [textfills, text_max_length];
   }
 
-  draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON) {
+  draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes) {
     var textfills = [];
     var text_max_length = 0;
     [x_nb_digits, y_nb_digits] = this.refresh_nb_digits(x_nb_digits, y_nb_digits);
@@ -6685,7 +6694,7 @@ export class Tooltip {
       var index = point.getPointIndex(point_list);
       var elt = elements[index];
       if (mergeON === true) {
-        [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, elt);
+        [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point, initial_point_list, elements, axes);
       } else {
         [textfills, text_max_length] = this.initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt);
       }
@@ -6711,7 +6720,7 @@ export class Tooltip {
         tp_y = scaleY*(1000*cy + mvy) - tp_height + Y;
       }
       context.beginPath();
-      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('black'), 0.5,
+      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('grey'), 0.5,
       this.surface_style.opacity, []);
       context.fillStyle = this.text_style.text_color;
       context.textAlign = 'start';
@@ -6733,10 +6742,10 @@ export class Tooltip {
 
   }
 
-  manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON) {
+  manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes) {
     for (var i=0; i<tooltip_list.length; i++) {
       if (tooltip_list[i] && this.isTooltipInsideCanvas(tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height)) {
-        this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, elements, mergeON);
+        this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes);
       }
     }
   }

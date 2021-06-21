@@ -1,3 +1,5 @@
+import { serialize } from "v8";
+
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
 
@@ -6597,16 +6599,16 @@ export class Tooltip {
   constructor(public to_disp_attribute_names:string[],
               public surface_style:SurfaceStyle,
               public text_style:TextStyle,
-              public tooltip_radius:number=5,
+              public tooltip_radius:number=10,
               public type_:string='tooltip',
               public name:string='') {
               }
 
   public static deserialize(serialized) {
-    let default_surface_style = {color_fill:string_to_rgb('grey'), opacity:0.75, hatching:undefined};
-    let default_text_style = {text_color:string_to_rgb('white'), font_size:12, font_style:'helvetica', 
+    let default_surface_style = {color_fill:string_to_rgb('black'), opacity:0.9, hatching:undefined};
+    let default_text_style = {text_color:string_to_rgb('lightgrey'), font_size:14, font_style:'Calibri', 
                               text_align_x:'start', text_align_y:'alphabetic', name:''};
-    let default_dict_ = {surface_style:default_surface_style, text_style:default_text_style, tooltip_radius:5};
+    let default_dict_ = {surface_style:default_surface_style, text_style:default_text_style, tooltip_radius:10};
     serialized = set_default_values(serialized, default_dict_);
     var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
     var text_style = TextStyle.deserialize(serialized['text_style']);
@@ -6700,14 +6702,14 @@ export class Tooltip {
     }
 
     if (textfills.length > 0) {
-      var tp_height = (textfills.length + 0.25)*this.text_style.font_size ;
+      var tp_height = textfills.length*this.text_style.font_size*1.15;
       var cx = point.cx;
       var cy = point.cy;
       var point_size = point.point_style.size;
       var decalage = 2.5*point_size + 5
       var tp_x = scaleX*(1000*cx + mvx) + decalage + X;
       var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height + Y;
-      var tp_width = text_max_length + 25;
+      var tp_width = text_max_length * 1.4;
 
       if (tp_x + tp_width  > canvas_width + X) {
         tp_x = scaleX*(1000*cx + mvx) - decalage - tp_width + X;
@@ -6722,7 +6724,7 @@ export class Tooltip {
       Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('grey'), 0.5,
       this.surface_style.opacity, []);
       context.fillStyle = this.text_style.text_color;
-      context.textAlign = 'start';
+      context.textAlign = 'center';
       context.textBaseline = 'middle';
 
       var x_start = tp_x + 1/10*tp_width;
@@ -6731,15 +6733,16 @@ export class Tooltip {
       var current_y = tp_y + 0.75*this.text_style.font_size;
       for (var i=0; i<textfills.length; i++) {
         if (i == 0) {
-          context.fillStyle = string_to_rgb('black');
+          context.fillStyle = string_to_rgb('white');
           context.font = 'bold ' + this.text_style.font;
-          context.fillText(textfills[0], x_start, current_y);
+          context.fillText(textfills[0], tp_x + tp_width/2, current_y);
           context.fillStyle = this.text_style.text_color;
           context.font = this.text_style.font;
+          current_y += this.text_style.font_size * 1.1;
         } else {
-          context.fillText(textfills[i], x_start, current_y); 
+          context.fillText(textfills[i], tp_x + tp_width/2, current_y); 
+          current_y += this.text_style.font_size;
         }
-        current_y = current_y + this.text_style.font_size;
       }
 
       context.globalAlpha = 1;

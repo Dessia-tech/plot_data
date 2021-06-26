@@ -1,3 +1,4 @@
+import { createUnparsedSourceFile } from "typescript";
 import { serialize } from "v8";
 
 var multiplot_saves:MultiplePlots[]=[];
@@ -45,6 +46,11 @@ export class MultiplePlots {
   shown_datas:any[]=[];
   hidden_datas:any[]=[];
   canvas:any;
+  // Subplot dimensions before redimensioning due to settings enabled
+  settings_on_initial_widths:number[]=[]; 
+  settings_on_initial_heights:number[]=[];
+  obj_settings_on:number=-1;
+  view_on_disposition:boolean = false; //True if layout disposition, turns false if you move the subplots
 
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
@@ -95,6 +101,7 @@ export class MultiplePlots {
     }
     if (data['initial_view_on']) {
       this.clean_view();
+      this.store_dimensions();
     }
     // this.save_canvas();
   }
@@ -178,6 +185,15 @@ export class MultiplePlots {
     this.view_button_h = 20;
   }
 
+  store_dimensions() {
+    this.settings_on_initial_widths = [];
+    this.settings_on_initial_heights = [];
+    for (let obj of this.objectList) {
+      this.settings_on_initial_widths.push(obj.width);
+      this.settings_on_initial_heights.push(obj.height);
+    }
+  }
+
   draw_manipulation_button():void {
       Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, this.manipulation_bool.toString(), '12px sans-serif');
   }
@@ -210,6 +226,7 @@ export class MultiplePlots {
     this.refreshAllManipulableBool();
     if (this.view_bool) {
       this.clean_view();
+      this.store_dimensions();
     }
   }
 
@@ -463,6 +480,17 @@ export class MultiplePlots {
       }
     }
     return index;
+  }
+
+  clear_object(index) {
+    var obj = this.objectList[index];
+    this.context_show.beginPath();
+    obj.draw_empty_canvas(this.context_show);
+    this.context_show.closePath();
+    this.context_hidden.beginPath();
+    obj.draw_empty_canvas(this.context_hidden);
+    this.context_hidden.closePath();
+
   }
 
   clearAll():void {
@@ -1011,6 +1039,7 @@ export class MultiplePlots {
     }
     this.resetAllObjects();
     this.redrawAllObjects();
+    this.view_on_disposition = true;
   }
 
   resizeObject(vertex_infos, tx, ty):void {
@@ -1302,15 +1331,37 @@ export class MultiplePlots {
     return -1;
   }
 
+  settings_padding(index, coef) {
+    var obj = this.objectList[index];
+    this.clear_object(index);
+    var center_x = obj.X + obj.width/2;
+    var center_y = obj.Y + obj.height/2;
+    obj.width = coef*this.settings_on_initial_widths[index];
+    obj.height = coef*this.settings_on_initial_heights[index];
+    obj.X = center_x - obj.width/2;
+    obj.Y = center_y - obj.height/2;
+    if (obj.type_ === 'parallelplot') obj.refresh_axis_coords();
+  }
+
+  settings_on_padding(index) {
+    this.settings_padding(index, 0.9);
+  }
+
+  settings_off_padding(index) {
+    this.settings_padding(index, 1);
+  }
+
   dbl_click_manage_settings_on(object_index:number): void {
-    var obj_settings_on = this.get_settings_on_object();
+    this.obj_settings_on = this.get_settings_on_object();
     var obj = this.objectList[this.clickedPlotIndex];
-    if (obj_settings_on == -1) {
+    if (this.obj_settings_on === -1) {
       obj.settings_on = true;
+      if (this.view_on_disposition) this.settings_on_padding(this.clickedPlotIndex);
       obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
       obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);   
-    } else if (obj_settings_on === object_index) {
+    } else if (this.obj_settings_on === object_index) {
       obj.settings_on = false;
+      this.settings_off_padding(this.clickedPlotIndex);
       obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
       obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);   
     }
@@ -1322,9 +1373,11 @@ export class MultiplePlots {
       this.objectList[obj_settings_on].settings_on = false;
       this.objectList[object_index].settings_on = true;
       let obj = this.objectList[obj_settings_on];
+      this.settings_off_padding(obj_settings_on);
       obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
       obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);  
       let obj1 = this.objectList[object_index];
+      if (this.view_on_disposition) this.settings_on_padding(object_index);
       obj1.draw(false, obj1.last_mouse1X, obj1.last_mouse1Y, obj1.scaleX, obj1.scaleY, obj1.X, obj1.Y);
       obj1.draw(true, obj1.last_mouse1X, obj1.last_mouse1Y, obj1.scaleX, obj1.scaleY, obj1.X, obj1.Y);  
     }
@@ -1543,6 +1596,7 @@ export class MultiplePlots {
       mouse2X = e.offsetX; mouse2Y = e.offsetY;
       if (this.manipulation_bool) {
         if (isDrawing) {
+          this.view_on_disposition = false;
           mouse_moving = true;
           if ((this.clickedPlotIndex != -1) && !(clickOnVertex)) {
             this.setAllInteractionsToOff();
@@ -1638,6 +1692,7 @@ export class MultiplePlots {
       var mouse3Y = e.offsetY;
       var event = -e.deltaY/Math.abs(e.deltaY);
       if (this.manipulation_bool && !this.view_bool) {
+        this.view_on_disposition = false;
         this.zoom_elements(mouse3X, mouse3Y, event);
         this.redrawAllObjects();
       } else {
@@ -1711,6 +1766,8 @@ export abstract class PlotData {
   scroll_y:number=0;
   initial_last_mouse1X:number=0;
   initial_last_mouse1Y:number=0;
+  initial_width:number=0;
+  initial_height:number = 0;
   last_mouse1X:number=0;
   last_mouse1Y:number=0;
   settings_on:boolean=false;
@@ -1861,6 +1918,8 @@ export abstract class PlotData {
     public X: number,
     public Y: number,
     public canvas_id: string) {
+      this.initial_width = width;
+      this.initial_height = height;
     }
 
 
@@ -1933,7 +1992,6 @@ export abstract class PlotData {
     Shape.rect(this.X + 1, this.Y + 1, this.width - 2, this.height - 2, this.context, 'white', string_to_hex('blue'), 1, 1, [10,10]);
   }
 
-
   draw_rect() {
     if (this.multiplot_manipulation === false) {
       Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', this.initial_rect_color_stroke, this.initial_rect_line_width, 1, this.initial_rect_dashline);
@@ -1948,8 +2006,8 @@ export abstract class PlotData {
     }
   }
 
-  draw_empty_canvas() {
-    this.context.clearRect(this.X - 1, this.Y - 1, this.width + 2, this.height + 2);
+  draw_empty_canvas(context) {
+    context.clearRect(this.X - 1, this.Y - 1, this.width + 2, this.height + 2);
   }
 
   draw_manipulable_rect() {
@@ -3830,7 +3888,7 @@ export class PlotContour extends PlotData {
   draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
     this.define_context(hidden);
     this.context.save();
-    this.draw_empty_canvas();
+    this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height+2);
@@ -3926,7 +3984,7 @@ export class PlotScatter extends PlotData {
   draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
     this.define_context(hidden);
     this.context.save();
-    this.draw_empty_canvas();
+    this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height+2);
@@ -4099,7 +4157,7 @@ export class ParallelPlot extends PlotData {
     this.refresh_axis_bounds(this.axis_list.length);
     this.define_context(hidden);
     this.context.save();
-    this.draw_empty_canvas();
+    this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
     this.context.rect(X-1, Y-1, this.width+2, this.height + 2);
@@ -4370,7 +4428,7 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     this.define_context(hidden);
     this.context.save();
-    this.draw_empty_canvas();
+    this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
     if (this.width > 100 && this.height > 100) {
@@ -4398,7 +4456,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
   redraw_object() {
     this.store_datas();
-    this.draw_empty_canvas();
+    this.draw_empty_canvas(this.context);
     for (let display_index of this.display_order) {
       let obj = this.primitive_groups[display_index];
       if (display_index == this.clickedPlotIndex) {
@@ -6641,7 +6699,7 @@ export class Tooltip {
 
   initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt): [string[], number] {
     var textfills = ['Information'];
-    var text_max_length = 0;
+    var text_max_length = context.measureText('Information').width;
     for (let i=0; i<this.to_disp_attribute_names.length; i++) {
       let attribute_name = this.to_disp_attribute_names[i];
       let attribute_type = TypeOf(elt[attribute_name]);
@@ -6663,11 +6721,11 @@ export class Tooltip {
 
   initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point: Point2D, initial_point_list, elements, axes): [string[], number] {
     var textfills = ['Information'];
-    var text_max_length = 0;
+    var text_max_length = context.measureText('Information').width;
     for (let i=0; i<this.to_disp_attribute_names.length; i++) {
       let attribute_name = this.to_disp_attribute_names[i];
       let attribute_type = TypeOf(elements[0][attribute_name]);
-      if (attribute_type == 'float') {
+      if (attribute_type == 'float') { 
         if (attribute_name === axes[0]) {
           var text = attribute_name + ' : ' + MyMath.round(point.cx, Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digits évidemment pas définie lorsque l'axe des x est un string...
         } else if (attribute_name === axes[1]) {

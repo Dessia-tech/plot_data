@@ -1369,7 +1369,7 @@ export class MultiplePlots {
 
   single_click_manage_settings_on(object_index:number): void {
     var obj_settings_on = this.get_settings_on_object();
-    if ((obj_settings_on !== -1) && (obj_settings_on !== object_index)) {
+    if ((obj_settings_on !== -1) && (obj_settings_on !== object_index)) { 
       this.objectList[obj_settings_on].settings_on = false;
       this.objectList[object_index].settings_on = true;
       let obj = this.objectList[obj_settings_on];
@@ -6664,9 +6664,9 @@ export class Tooltip {
 
   public static deserialize(serialized) {
     let default_surface_style = {color_fill:string_to_rgb('black'), opacity:0.9, hatching:undefined};
-    let default_text_style = {text_color:string_to_rgb('lightgrey'), font_size:14, font_style:'Calibri', 
+    let default_text_style = {text_color:string_to_rgb('lightgrey'), font_size:12, font_style:'Calibri', 
                               text_align_x:'start', text_align_y:'alphabetic', name:''};
-    let default_dict_ = {surface_style:default_surface_style, text_style:default_text_style, tooltip_radius:10};
+    let default_dict_ = {surface_style:default_surface_style, text_style:default_text_style, tooltip_radius:7};
     serialized = set_default_values(serialized, default_dict_);
     var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
     var text_style = TextStyle.deserialize(serialized['text_style']);
@@ -6760,26 +6760,38 @@ export class Tooltip {
     }
 
     if (textfills.length > 0) {
-      var tp_height = textfills.length*this.text_style.font_size*1.15;
+      var tp_height = textfills.length*this.text_style.font_size*1.25;
       var cx = point.cx;
       var cy = point.cy;
       var point_size = point.point_style.size;
-      var decalage = 2.5*point_size + 5
+      var decalage = 2.5*point_size + 15;
       var tp_x = scaleX*(1000*cx + mvx) + decalage + X;
       var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height + Y;
       var tp_width = text_max_length * 1.4;
 
+      // Bec
+      var point1 = [tp_x - decalage/2, scaleY*(1000*cy + mvy) + Y];
+      var point2 = [tp_x, scaleY*(1000*cy + mvy) + Y + 5];
+      var point3 = [tp_x, scaleY*(1000*cy + mvy) + Y - 5];
+
       if (tp_x + tp_width  > canvas_width + X) {
         tp_x = scaleX*(1000*cx + mvx) - decalage - tp_width + X;
+        point1 = [tp_x + tp_width, scaleY*(1000*cy + mvy) + Y + 5];
+        point2 = [tp_x + tp_width, scaleY*(1000*cy + mvy) + Y - 5];
+        point3 = [tp_x + tp_width + decalage/2, scaleY*(1000*cy + mvy) + Y];
       }
       if (tp_y < Y) {
-        tp_y = scaleY*(1000*cy + mvy) + Y;
+        tp_y = scaleY*(1000*cy + mvy) + Y - 7*point_size;
       }
       if (tp_y + tp_height > canvas_height + Y) {
-        tp_y = scaleY*(1000*cy + mvy) - tp_height + Y;
+        tp_y = scaleY*(1000*cy + mvy) - tp_height + Y + 7*point_size;
       }
       context.beginPath();
-      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('grey'), 0.5,
+      Shape.drawLine(context, [point1, point2, point3]);
+      context.stroke();
+      context.fill();
+
+      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('black'), 0.5,
       this.surface_style.opacity, []);
       context.fillStyle = this.text_style.text_color;
       context.textAlign = 'center';

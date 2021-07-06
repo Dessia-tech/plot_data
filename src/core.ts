@@ -989,8 +989,12 @@ export class MultiplePlots {
     var nbObjectsDisplayed = this.to_display_plots.length;
     let small_length_nbObjects = Math.min(Math.ceil(nbObjectsDisplayed/2), Math.floor(Math.sqrt(nbObjectsDisplayed)));
     let big_length_nbObjects = Math.ceil(nbObjectsDisplayed/small_length_nbObjects);
-    let big_length_step = this[big_length]/big_length_nbObjects;
-    let small_length_step = this[small_length]/small_length_nbObjects;
+    // let big_length_step = this[big_length]/big_length_nbObjects;
+    // let small_length_step = this[small_length]/small_length_nbObjects;
+    let blank_space = 0.01*this[small_length];
+    let big_length_step = (this[big_length] - (big_length_nbObjects + 1)*blank_space)/big_length_nbObjects;
+    let small_length_step = (this[small_length] - (small_length_nbObjects + 1)*blank_space)/small_length_nbObjects;
+
     for (let i=0; i<big_length_nbObjects - 1; i++) {
       for (let j=0; j<small_length_nbObjects; j++) {
         var current_index = i*small_length_nbObjects + j; //current_index in sorted_list
@@ -1000,8 +1004,9 @@ export class MultiplePlots {
         let old_small_coord = obj[small_coord];
         let old_big_coord = obj[big_coord];
 
-        this.objectList[this.sorted_list[current_index]][big_coord] = i*big_length_step;
-        this.objectList[this.sorted_list[current_index]][small_coord] = j*small_length_step;
+        this.objectList[this.sorted_list[current_index]][big_coord] = i*big_length_step + (i+1)*blank_space;
+        this.objectList[this.sorted_list[current_index]][small_coord] = j*small_length_step + (j+1)*blank_space;
+
         this.objectList[this.sorted_list[current_index]][big_length] = big_length_step;
         this.objectList[this.sorted_list[current_index]][small_length] = small_length_step;
 
@@ -1016,7 +1021,8 @@ export class MultiplePlots {
     }
     let last_index = current_index + 1;
     let remaining_obj = nbObjectsDisplayed - last_index;
-    let last_small_length_step = this[small_length]/remaining_obj;
+    // let last_small_length_step = this[small_length]/remaining_obj;
+    let last_small_length_step = (this[small_length] - (remaining_obj + 1)*blank_space)/remaining_obj;
     for (let j=0; j<remaining_obj; j++) {
 
       // The three following lines are useful for primitive group containers only
@@ -1024,8 +1030,9 @@ export class MultiplePlots {
       let old_small_coord = obj[small_coord];
       let old_big_coord = obj[big_coord];
 
-      this.objectList[this.sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step;
-      this.objectList[this.sorted_list[last_index + j]][small_coord] = j*last_small_length_step;
+      this.objectList[this.sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step 
+                                                                     + big_length_nbObjects*blank_space;
+      this.objectList[this.sorted_list[last_index + j]][small_coord] = j*last_small_length_step + (j+1)*blank_space;
       this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
 
@@ -1965,15 +1972,15 @@ export abstract class PlotData {
     this.init_scale = Math.min(this.width/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX), this.height/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY));
     this.scale = this.init_scale;
     if ((this.axis_ON) && !(this.graph_ON)) { // rescale and avoid axis
-      this.init_scaleX = (this.width - this.decalage_axis_x - 2*this.pointLength)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
-      this.init_scaleY = (this.height - this.decalage_axis_y - 2*this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
+      this.init_scaleX = 0.95*(this.width - this.decalage_axis_x - 2*this.pointLength)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
+      this.init_scaleY = 0.95*(this.height - this.decalage_axis_y - 2*this.pointLength)/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
       this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - this.decalage_axis_y/(2*this.scaleY) + this.pointLength/(2*this.scaleY);
     } else if ((this.axis_ON) && (this.graph_ON)) { // rescale + avoid axis and graph buttons on top of canvas
-      this.init_scaleX = (this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
-      this.init_scaleY = (this.height - this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
+      this.init_scaleX = 0.95*(this.width-this.decalage_axis_x)/(this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX);
+      this.init_scaleY = 0.95*(this.height - this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);

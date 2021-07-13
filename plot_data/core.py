@@ -491,11 +491,11 @@ class Tooltip(PlotDataObject):
     :type tooltip_radius: float
     """
 
-    def __init__(self, to_disp_attribute_names: List[str],
+    def __init__(self, attributes: List[str],
                  surface_style: SurfaceStyle = None,
                  text_style: TextStyle = None, tooltip_radius: float = None,
                  name: str = ''):
-        self.to_disp_attribute_names = to_disp_attribute_names
+        self.attributes = attributes
         self.surface_style = surface_style
         if surface_style is None:
             self.surface_style = SurfaceStyle(color_fill=colors.LIGHTBLUE,

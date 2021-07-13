@@ -6677,7 +6677,8 @@ export class Tooltip {
     serialized = set_default_values(serialized, default_dict_);
     var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
     var text_style = TextStyle.deserialize(serialized['text_style']);
-    return new Tooltip(serialized['to_disp_attribute_names'],
+
+    return new Tooltip(serialized['attributes'],
                        surface_style,
                        text_style,
                        serialized['tooltip_radius'],
@@ -6755,6 +6756,7 @@ export class Tooltip {
   draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes) {
     var textfills = [];
     var text_max_length = 0;
+    context.font = this.text_style.font;
     [x_nb_digits, y_nb_digits] = this.refresh_nb_digits(x_nb_digits, y_nb_digits);
     if (point.isPointInList(point_list)) {
       var index = point.getPointIndex(point_list);
@@ -6774,7 +6776,7 @@ export class Tooltip {
       var decalage = 2.5*point_size + 15;
       var tp_x = scaleX*(1000*cx + mvx) + decalage + X;
       var tp_y = scaleY*(1000*cy + mvy) - 1/2*tp_height + Y;
-      var tp_width = text_max_length * 1.4;
+      var tp_width = text_max_length*1.3;
 
       // Bec
       var point1 = [tp_x - decalage/2, scaleY*(1000*cy + mvy) + Y];
@@ -6805,7 +6807,6 @@ export class Tooltip {
       context.textBaseline = 'middle';
 
       var x_start = tp_x + 1/10*tp_width;
-      context.font = this.text_style.font;
 
       var current_y = tp_y + 0.75*this.text_style.font_size;
       for (var i=0; i<textfills.length; i++) {
@@ -6880,8 +6881,8 @@ export class Dataset {
     var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
     var default_point_style = {color_fill:string_to_rgb('lightviolet'), color_stroke:string_to_rgb('grey'),
                                shape:'circle', size:2, name:'', type_:'tooltip'};
-    var tooltip_text_style = {font_size: 10, font_style: 'sans-serif', text_align_x:'center', text_color:string_to_rgb('black')};
-    var default_dict_ = {tooltip:{to_disp_attribute_names : serialized['to_disp_attribute_names'], text_style: tooltip_text_style}, edge_style:default_edge_style, point_style:default_point_style,
+    var tooltip_text_style = {font_size: 10, font_style: 'sans-serif', text_align_x:'center', text_color:string_to_rgb('white')};
+    var default_dict_ = {tooltip:{attributes: serialized['to_disp_attribute_names'], text_style: tooltip_text_style}, edge_style:default_edge_style, point_style:default_point_style,
                           display_step:1};
     serialized = set_default_values(serialized, default_dict_)
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
@@ -6946,8 +6947,8 @@ export class Scatter {
   }
 
   public static deserialize(serialized) {
-    let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')}
-    let default_tooltip = {to_disp_attribute_names: serialized['to_disp_attribute_names']}
+    let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')};
+    let default_tooltip = {attributes: serialized['to_disp_attribute_names']};
     var default_dict_ = {point_style:default_point_style, tooltip: default_tooltip};
     serialized = set_default_values(serialized, default_dict_);
     var axis = Axis.deserialize(serialized['axis']);

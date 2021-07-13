@@ -30,7 +30,7 @@ text_style = plot_data.TextStyle(text_color=colors.GREY,
                                  font_size=10,
                                  font_style='sans-serif')
 surface_style = plot_data.SurfaceStyle(color_fill=colors.LIGHTVIOLET, opacity=0.3)
-custom_tooltip = plot_data.Tooltip(to_disp_attribute_names=['mass', 'length'],
+custom_tooltip = plot_data.Tooltip(attributes=['mass', 'length'],
                                    surface_style=surface_style,
                                    text_style=text_style,
                                    tooltip_radius=10)
@@ -57,7 +57,7 @@ axis = plot_data.Axis(nb_points_x=7, nb_points_y=5,
 
 # a tooltip is drawn when clicking on a point. Users can choose what information
 # they want to be displayed.
-tooltip = plot_data.Tooltip(to_disp_attribute_names=['mass', 'length', 'shape', 'color'])
+tooltip = plot_data.Tooltip(attributes=['mass', 'length', 'shape', 'color'])
 
 
 # Now, here is the new scatterplot
@@ -68,5 +68,5 @@ customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='shape'
                                            tooltip=tooltip)
 
 # if debug_mode is True, set it to False
-plot_data.plot_canvas(plot_data_object=customized_scatterplot, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=scatterplot, debug_mode=True)
 

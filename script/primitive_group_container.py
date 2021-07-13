@@ -3,23 +3,17 @@
 # LineSegment and Text)
 
 import plot_data
-from plot_data.colors import *
-import volmdlr as vm  # you can install volmdlr using pip in plot_data's package
-import volmdlr.wires
-import volmdlr.edges
+import plot_data.colors as colors
 
+contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
+                                                    plot_data.LineSegment2D([1, 2], [2, 2]),
+                                                    plot_data.LineSegment2D([2, 2], [2, 1]),
+                                                    plot_data.LineSegment2D([2, 1], [1, 1])],
+                              surface_style=plot_data.SurfaceStyle(colors.LIGHTORANGE))
 
-circle1 = vm.wires.Circle2D(vm.Point2D(0, 0), 10).plot_data()
-
-l1 = vm.edges.LineSegment2D(vm.Point2D(1, 1), vm.Point2D(1, 2))
-l2 = vm.edges.LineSegment2D(vm.Point2D(1, 2), vm.Point2D(2, 2))
-l3 = vm.edges.LineSegment2D(vm.Point2D(2, 2), vm.Point2D(2, 1))
-l4 = vm.edges.LineSegment2D(vm.Point2D(2, 1), vm.Point2D(1, 1))
-contour = vm.wires.Contour2D([l1, l2, l3, l4]).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=LIGHTORANGE))
-
-circle2 = vm.wires.Circle2D(vm.Point2D(1, 1), 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=RED))
-
-circle3 = vm.wires.Circle2D(vm.Point2D(1, 1), 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=LIGHTBROWN))
+circle1 = plot_data.Circle2D(cx=0, cy=0, r=10)
+circle2 = plot_data.Circle2D(cx=1, cy=1, r=5, surface_style=plot_data.SurfaceStyle(colors.RED))
+circle3 = plot_data.Circle2D(cx=1, cy=1, r=5, surface_style=plot_data.SurfaceStyle(colors.LIGHTBROWN))
 
 primitive_group1 = plot_data.PrimitiveGroup(primitives=[circle1])
 primitive_group2 = plot_data.PrimitiveGroup(primitives=[contour])

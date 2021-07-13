@@ -478,10 +478,10 @@ class Tooltip(PlotDataObject):
     clicking on points.
     A tooltip object is instantiated by Scatter and Dataset classes.
 
-    :param to_disp_attribute_names: a list containing the attributes \
+    :param attributes: a list containing the attributes \
     you want to display. Attributes must be taken from Dataset's or \
     Scatter's elements.
-    :type to_disp_attribute_names: List[str]
+    :type attributes: List[str]
     :param surface_style: for customizing the tooltip's interior
     :type surface_style: SurfaceStyle
     :param text_style: for customizing its text

@@ -478,10 +478,10 @@ class Tooltip(PlotDataObject):
     clicking on points.
     A tooltip object is instantiated by Scatter and Dataset classes.
 
-    :param to_disp_attribute_names: a list containing the attributes \
+    :param attributes: a list containing the attributes \
     you want to display. Attributes must be taken from Dataset's or \
     Scatter's elements.
-    :type to_disp_attribute_names: List[str]
+    :type attributes: List[str]
     :param surface_style: for customizing the tooltip's interior
     :type surface_style: SurfaceStyle
     :param text_style: for customizing its text
@@ -491,11 +491,11 @@ class Tooltip(PlotDataObject):
     :type tooltip_radius: float
     """
 
-    def __init__(self, to_disp_attribute_names: List[str],
+    def __init__(self, attributes: List[str],
                  surface_style: SurfaceStyle = None,
-                 text_style: TextStyle = None, tooltip_radius: float = 5,
+                 text_style: TextStyle = None, tooltip_radius: float = None,
                  name: str = ''):
-        self.to_disp_attribute_names = to_disp_attribute_names
+        self.attributes = attributes
         self.surface_style = surface_style
         if surface_style is None:
             self.surface_style = SurfaceStyle(color_fill=colors.LIGHTBLUE,

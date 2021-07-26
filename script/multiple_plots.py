@@ -10,8 +10,6 @@ from test_objects.primitive_group_test import primitive_group
 from test_objects.graph_test import graph2d
 import random
 
-import volmdlr as vm  # You can install volmdlr using pip
-
 elements = []  # a list of vectors (dictionaries) that are displayed
 # through different representations such as parallel plots and scatter plots
 
@@ -40,17 +38,15 @@ scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
 scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 
 # PrimitiveGroupContainers
-circle1 = vm.wires.Circle2D([0, 0], 10).plot_data()
+contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
+                                                    plot_data.LineSegment2D([1, 2], [2, 2]),
+                                                    plot_data.LineSegment2D([2, 2], [2, 1]),
+                                                    plot_data.LineSegment2D([2, 1], [1, 1])],
+                              surface_style=plot_data.SurfaceStyle(colors.LIGHTORANGE))
 
-l1 = vm.edges.LineSegment2D([1, 1], [1, 2])
-l2 = vm.edges.LineSegment2D([1, 2], [2, 2])
-l3 = vm.edges.LineSegment2D([2, 2], [2, 1])
-l4 = vm.edges.LineSegment2D([2, 1], [1, 1])
-contour = vm.wires.Contour2D([l1, l2, l3, l4]).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=colors.LIGHTORANGE))
-
-circle2 = vm.wires.Circle2D([1, 1], 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=colors.RED))
-
-circle3 = vm.wires.Circle2D([1, 1], 5).plot_data(surface_style=plot_data.SurfaceStyle(color_fill=colors.LIGHTBROWN))
+circle1 = plot_data.Circle2D(cx=0, cy=0, r=10)
+circle2 = plot_data.Circle2D(cx=1, cy=1, r=5, surface_style=plot_data.SurfaceStyle(colors.RED))
+circle3 = plot_data.Circle2D(cx=1, cy=1, r=5, surface_style=plot_data.SurfaceStyle(colors.LIGHTBROWN))
 
 primitive_group1 = [circle1]
 primitive_group2 = [contour]

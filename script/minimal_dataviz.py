@@ -11,10 +11,9 @@ import plot_data.colors as colors
 import random
 
 
-objects = []
 elements = []
 
-to_disp_attribute_names = ['cost', 'mass', 'wiring_length']
+axes = ['cost', 'mass', 'wiring_length']
 
 for i in range(100):
     
@@ -24,28 +23,19 @@ for i in range(100):
 
 
 parallel_plot = plot_data.ParallelPlot(disposition='vertical',
-                                       to_disp_attribute_names=to_disp_attribute_names)
-objects.append(parallel_plot)
+                                           axes=axes)
 
 # Scatter
 
 scatter1 = plot_data.Scatter(elements=elements,
-                                tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names),
-                                to_disp_attribute_names=['cost', 'mass'])
-objects.append(scatter1)
+                             x_variable='cost', y_variable='mass')
 
 scatter2 = plot_data.Scatter(elements=elements,
-                                tooltip = plot_data.Tooltip(to_disp_attribute_names=to_disp_attribute_names),
-                                to_disp_attribute_names=['cost', 'wiring_length'])
-objects.append(scatter2)
+                             x_variable='cost', y_variable='wiring_length')
 
+plots = [parallel_plot, scatter1, scatter2]
 
-coords = [(0, 0), (300, 600), (600, 600)]
-sizes = [plot_data.Window(width=560, height=300) for k in range(len(objects))]
-
-
-multipleplots = plot_data.MultiplePlots(elements=elements, objects=objects,
-                                        sizes=sizes, coords=coords,
+multipleplots = plot_data.MultiplePlots(elements=elements, plots=plots,
                                         initial_view_on=True)
 
 plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)

@@ -52,9 +52,11 @@ export class MultiplePlots {
   obj_settings_on:number=-1;
   view_on_disposition:boolean = false; //True if layout disposition, turns false if you move the subplots
 
+  public padding: number;
+
 
   constructor(public data: any[], public width:number, public height:number, coeff_pixel: number, public buttons_ON: boolean, public canvas_id: string) {
-    var requirement = '0.4.10';
+    var requirement = '0.6.0';
     check_package_version(data['package_version'], requirement);
     this.dataObjects = data['plots'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
@@ -66,14 +68,14 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       if ((this.dataObjects[i]['type_'] == 'scatterplot') || (this.dataObjects[i]['type_'] == 'graph2d')) {
         this.dataObjects[i]['elements'] = elements;
-        var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+        var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
       } else if (this.dataObjects[i]['type_'] == 'parallelplot') {
         this.dataObjects[i]['elements'] = elements;
-        newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+        newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
       } else if (this.dataObjects[i]['type_'] == 'primitivegroup') {
-        newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+        newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
       } else if (this.dataObjects[i]['type_'] == 'primitivegroupcontainer') {
-        newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id);
+        newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], coeff_pixel, buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
         if (this.dataObjects[i]['association']) {
           this.initializeObjectContext(newObject);
           let association = this.dataObjects[i]['association'];
@@ -991,7 +993,7 @@ export class MultiplePlots {
     let big_length_nbObjects = Math.ceil(nbObjectsDisplayed/small_length_nbObjects);
     // let big_length_step = this[big_length]/big_length_nbObjects;
     // let small_length_step = this[small_length]/small_length_nbObjects;
-    let blank_space = 0.01*this[small_length];
+    let blank_space = this.padding || 0.01*this[small_length];
     let big_length_step = (this[big_length] - (big_length_nbObjects + 1)*blank_space)/big_length_nbObjects;
     let small_length_step = (this[small_length] - (small_length_nbObjects + 1)*blank_space)/small_length_nbObjects;
 
@@ -1924,7 +1926,8 @@ export abstract class PlotData {
     public buttons_ON: boolean,
     public X: number,
     public Y: number,
-    public canvas_id: string) {
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false) {
       this.initial_width = width;
       this.initial_height = height;
     }
@@ -3857,10 +3860,13 @@ export class PlotContour extends PlotData {
                      public buttons_ON: boolean,
                      public X: number,
                      public Y: number,
-                     public canvas_id: string) {
-    super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id);
-    var requirement = '0.5.2';
-    check_package_version(data['package_version'], requirement);
+                     public canvas_id: string,
+                     public is_in_multiplot = false) {
+    super(data, width, height, coeff_pixel, buttons_ON, 0, 0, canvas_id, is_in_multiplot);
+    if (!is_in_multiplot) {
+      var requirement = '0.6.0';
+      check_package_version(data['package_version'], requirement);
+    }
     this.plot_datas = [];
     this.type_ = 'primitivegroup';
     var d = this.data;
@@ -3943,10 +3949,13 @@ export class PlotScatter extends PlotData {
     public buttons_ON: boolean,
     public X: number,
     public Y: number,
-    public canvas_id: string) {
-      super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-      var requirement = '0.5.10';
-      check_package_version(data['package_version'], requirement);
+    public canvas_id: string,
+    public is_in_multiplot = false) {
+      super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      if (!is_in_multiplot) {
+        var requirement = '0.6.0';
+        check_package_version(data['package_version'], requirement);
+      }
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }
@@ -4045,10 +4054,13 @@ export class PlotScatter extends PlotData {
 /** A class thtat inherits from PlotData and is specific for drawing ParallelPlots  */
 export class ParallelPlot extends PlotData {
 
-  constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string) {
-    super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    var requirement = '0.4.10';
-    check_package_version(data['package_version'], requirement);
+  constructor(public data, public width, public height, public coeff_pixel, public buttons_ON, X, Y, public canvas_id: string,
+              public is_in_multiplot = false) {
+    super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+    if (!is_in_multiplot) {
+      var requirement = '0.6.0';
+      check_package_version(data['package_version'], requirement);
+    }
     this.type_ = 'parallelplot';
     if (this.buttons_ON) {
       this.disp_x = this.width - 35;
@@ -4200,6 +4212,28 @@ export class ParallelPlot extends PlotData {
 }
 
 
+export class Histogram extends PlotData {
+  edge_style: EdgeStyle;
+  x_variable: string;
+
+  constructor(public data:any,
+              public width: number,
+              public height: number,
+              public coeff_pixel: number,
+              public buttons_ON: boolean,
+              public X: number,
+              public Y: number,
+              public canvas_id: string) {
+    super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
+    var requirement = '0.6.0';
+    this.elements = data['elements'];
+    this.x_variable = data['x_variable'];
+  }
+
+  draw() {};
+}
+
+
 /** A class that inherits from PlotData and is specific for drawing PrimitiveGroupContainers.  */
 export class PrimitiveGroupContainer extends PlotData {
   primitive_groups:PlotContour[]=[];
@@ -4215,16 +4249,19 @@ export class PrimitiveGroupContainer extends PlotData {
               public buttons_ON: boolean,
               public X: number,
               public Y: number,
-              public canvas_id: string) {
-    super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    var requirement = '0.5.2';
-    check_package_version(data['package_version'], requirement);
+              public canvas_id: string,
+              public is_in_multiplot: boolean = false) {
+    super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+    if (!is_in_multiplot) {
+      var requirement = '0.6.0';
+      check_package_version(data['package_version'], requirement);
+    }
     this.type_ = 'primitivegroupcontainer';
     var serialized = data['primitive_groups'];
     var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
     var initial_sizes = data['sizes'] || Array(serialized.length).fill([560, 300]);
-    for (let i=0; i<serialized.length; i++) {
-      this.primitive_groups.push(new PlotContour(serialized[i], initial_sizes[i][0], initial_sizes[i][1], coeff_pixel, buttons_ON, X+initial_coords[i][0], Y+initial_coords[i][1], canvas_id));
+    for (let i=0; i<serialized.length; i++) { // Warning: is_in_multiplot is set to true for primitive groups
+      this.primitive_groups.push(new PlotContour(serialized[i], initial_sizes[i][0], initial_sizes[i][1], coeff_pixel, buttons_ON, X+initial_coords[i][0], Y+initial_coords[i][1], canvas_id, true));
       this.display_order.push(i);
     }
   }
@@ -5890,7 +5927,8 @@ export class Buttons {
 export class PrimitiveGroup {
   constructor(public primitives: any[],
               public type_: string,
-              public name:string) {}
+              public name:string) {
+              }
 
   public static deserialize(serialized) {
     var primitives:any[] = [];

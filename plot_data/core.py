@@ -940,6 +940,18 @@ class PointFamily(PlotDataObject):
         PlotDataObject.__init__(self, type_=None, name=name)
 
 
+class Histogram(PlotDataObject):
+    def __init__(self, x_variable: str, elements=None, discrete: bool = None, axis: Axis = None,
+                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, name: str = ''):
+        self.x_variable = x_variable
+        self.elements = elements
+        self.discrete = discrete
+        self.axis = axis
+        self.edge_style = edge_style
+        self.surface_style = surface_style
+        PlotDataObject.__init__(self, type_='histogram', name=name)
+
+
 class MultiplePlots(PlotDataObject):
     """
     A class for drawing multiple PlotDataObjects (except MultiplePlots)\

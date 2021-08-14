@@ -4443,6 +4443,19 @@ export class Histogram extends PlotData {
     }
   }
 
+  mouse_interaction() {
+    var mouse1X=0, mouse1Y=0, mouse2X=0, mouse2Y=0, mouse3X=0, mouse3Y=0;
+    var isDrawing=false, mouse_moving=false;
+    var canvas = document.getElementById(this.canvas_id);
+
+    canvas.addEventListener('mousedown', e => {
+      isDrawing = true;
+      mouse1X = e.offsetX;
+      mouse1Y = e.offsetY;
+      
+    });
+  }
+
 }
 
 

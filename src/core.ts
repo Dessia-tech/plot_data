@@ -1,5 +1,5 @@
 import { info } from "console";
-import { createUnparsedSourceFile } from "typescript";
+import { createUnparsedSourceFile, isExternalModuleNameRelative, isJsxFragment } from "typescript";
 import { serialize } from "v8";
 
 var multiplot_saves:MultiplePlots[]=[];
@@ -4447,12 +4447,34 @@ export class Histogram extends PlotData {
     var mouse1X=0, mouse1Y=0, mouse2X=0, mouse2Y=0, mouse3X=0, mouse3Y=0;
     var isDrawing=false, mouse_moving=false;
     var canvas = document.getElementById(this.canvas_id);
+    var click_on_x_axis = false;
+    var click_on_y_axis = false;
 
     canvas.addEventListener('mousedown', e => {
       isDrawing = true;
       mouse1X = e.offsetX;
       mouse1Y = e.offsetY;
-      
+      click_on_x_axis = Shape.isInRect(mouse1X, mouse2Y, this.decalage_axis_x, this.height - this.decalage_axis_y - 10,
+                        this.width - this.decalage_axis_x, 20);
+      click_on_y_axis = Shape.isInRect(mouse1X, mouse1Y, this.decalage_axis_x - 10, 0, 20, this.height - this.decalage_axis_y);
+    });
+
+    canvas.addEventListener('mousemove', e => {
+      let old_mouse2X = mouse2X, old_mouse2Y = mouse2Y;
+      mouse_moving = true;
+      mouse2X = e.offsetX;
+      mouse2Y = e.offsetY;
+      if (isDrawing) {
+        if (!click_on_x_axis) {
+          this.last_mouse1X += (mouse2X - old_mouse2X)/this.scale;
+        }
+      }
+      this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scale, this.scaleY, this.X, this.Y);
+    });
+
+    canvas.addEventListener('mouseup', e => {
+      isDrawing = false;
+      mouse_moving = false;
     });
   }
 

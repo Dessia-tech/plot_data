@@ -1,3 +1,4 @@
+import { info } from "console";
 import { createUnparsedSourceFile } from "typescript";
 import { serialize } from "v8";
 
@@ -1988,6 +1989,10 @@ export abstract class PlotData {
       this.scaleY = this.init_scaleY;
       this.last_mouse1X = (this.width/2 - (this.coeff_pixel*this.maxX - this.coeff_pixel*this.minX)*this.scaleX/2)/this.scaleX - this.coeff_pixel*this.minX + this.decalage_axis_x/(2*this.scaleX);
       this.last_mouse1Y = (this.height/2 - (this.coeff_pixel*this.maxY - this.coeff_pixel*this.minY)*this.scaleY/2)/this.scaleY - this.coeff_pixel*this.minY - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(2*this.scaleY);
+    } else if (this.type_ === 'histogram') {
+      this.init_scale = 0.95*(this.width - this.decalage_axis_x)/(this.coeff_pixel*this['max_abs'] - this.coeff_pixel*this['min_abs']);
+      this.scale = this.init_scale; 
+      this.last_mouse1X = this.decalage_axis_x/this.scale - this.coeff_pixel*this['min_abs'];
     } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
@@ -2200,9 +2205,9 @@ export abstract class PlotData {
   draw_axis(mvx, mvy, scaleX, scaleY, d:Axis) { // Only used by graph2D
     if (d['type_'] == 'axis'){
       d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0], this.width);
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0]);
       d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1], this.height);
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1]);
       this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
       this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     }
@@ -4168,7 +4173,6 @@ export class ParallelPlot extends PlotData {
     this.scaleY = 1;
     this.last_mouse1X = 0;
     this.last_mouse1Y = 0;
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
     this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
   }
 
@@ -4214,7 +4218,15 @@ export class ParallelPlot extends PlotData {
 
 export class Histogram extends PlotData {
   edge_style: EdgeStyle;
-  x_variable: string;
+  surface_style: SurfaceStyle;
+  x_variable: Attribute;
+  axis: Axis;
+  x_nb_points: number = 6;
+  infos = {};
+  min_abs: number = 0;
+  max_abs: number = 0;
+  max_frequency: number = 0;
+  discrete: boolean = false;
 
   constructor(public data:any,
               public width: number,
@@ -4223,14 +4235,214 @@ export class Histogram extends PlotData {
               public buttons_ON: boolean,
               public X: number,
               public Y: number,
-              public canvas_id: string) {
-    super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id);
-    var requirement = '0.6.0';
+              public canvas_id: string,
+              public is_in_multiplot: boolean = false) {
+    super(data, width, height, coeff_pixel, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+    if (!is_in_multiplot) {
+      var requirement = '0.6.0';
+      check_package_version(data['package_version'], requirement);
+    }
+    this.type_ = data['type_'];
     this.elements = data['elements'];
-    this.x_variable = data['x_variable'];
+    let name = data['x_variable'];
+    let type_ = TypeOf(this.elements[0][name]);
+
+    this.discrete = false;
+    if (type_ !== 'float') this.discrete = true;
+
+    this.x_variable = new Attribute(name, type_);
+    const axis = data['axis'] || {grid_on: false};
+    this.axis = Axis.deserialize(axis);
+    let temp_surface_style = data['surface_style'] || {};
+    temp_surface_style = set_default_values(temp_surface_style, {color_fill: string_to_rgb('lightblue'), opacity: 1});
+    this.surface_style = SurfaceStyle.deserialize(temp_surface_style);
+    this.edge_style = EdgeStyle.deserialize(data['edge_style']);
+    if (type_ === 'float') {
+      for (let element of this.elements) {
+        this.minX = Math.min(this.minX, element[name]);
+        this.maxX = Math.max(this.maxX, element[name]);
+      }
+      this.x_variable.list = [this.minX, this.maxX];
+    } else {
+      let list = [];
+      for (let element of this.elements) {
+        let graduation = element[name];
+        if (type_ === 'color') graduation = color_to_string(graduation);
+        if (!list.includes(graduation)) list.push(graduation);
+      }
+      this.minX = 0;
+      this.maxX = list.length;
+      this.min_abs = this.minX;
+      this.max_abs = this.maxX;
+      this.x_variable.list = list;
+    }
+    this.infos = this.get_infos();
+    this.refresh_max_frequency();
   }
 
-  draw() {};
+
+  draw_initial() {
+    this.reset_scales();
+    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+  }
+
+
+  draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
+    this.define_context(hidden);
+    this.context.save();
+    this.draw_empty_canvas(this.context);
+    if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
+    this.context.beginPath();
+    this.context.rect(X-1, Y-1, this.width+2, this.height + 2);
+    this.context.clip();
+    this.context.closePath();
+
+    this.infos = this.get_infos();
+    this.draw_axis();
+    this.draw_histogram();
+
+
+    if (this.multiplot_manipulation) {
+      this.draw_manipulable_rect();
+    }
+    this.context.restore();
+  };
+
+
+  coordinate_to_string(x1, x2) {
+    return x1.toString() + '_' + x2.toString();
+  }
+
+  string_to_coordinate(str) {
+    let l = str.split('_');
+    return {x1: Number(l[0]), x2: Number(l[1])};
+  }
+
+
+  refresh_max_frequency() {
+    let keys = Object.keys(this.infos);
+    for (let key of keys) {
+      this.max_frequency = Math.max(this.infos[key], this.max_frequency);
+    }
+  }
+
+  
+  get_infos() {
+    let infos = {}, temp_infos = [];
+    if (this.x_variable.type_ === 'float') {
+      let min = this.x_variable.list[0], max = this.x_variable.list[1];
+      let delta = max - min;
+      let d = Math.pow(10, Math.floor(Math.log10(delta)));
+      this.min_abs = Math.floor(min / d) * d;
+      this.max_abs = Math.ceil(max / d) * d;
+      let step;
+      if (this.x_nb_points !== 1) {
+        step = (this.max_abs - this.min_abs) / (this.x_nb_points - 1);
+        let current_x = this.min_abs;
+        while (current_x < this.max_abs) {
+          let next_x = current_x + step;
+          let frequency = 0;
+          for (let element of this.elements) {
+            let nb = element[this.x_variable.name];
+            if ((nb >= current_x && nb < next_x) || (next_x === this.max_abs && nb === next_x)) {
+              frequency += 1;
+            }
+          }
+          let key = this.coordinate_to_string(current_x, next_x);
+          temp_infos.push([key, frequency]);
+          current_x = next_x;
+        }
+      } else {
+        step = this.width / 3;
+        let key = this.coordinate_to_string(this.minX, this.maxX);
+        temp_infos = [[key, this.elements.length]];
+      }
+      infos = Object.fromEntries(temp_infos);
+    } else {
+      for (let graduation of this.x_variable.list) {
+        temp_infos.push([graduation, 0]);
+      }
+      infos = Object.fromEntries(temp_infos);
+      for (let element of this.elements) {
+        let graduation;
+        if (this.x_variable.type_ === 'color') {
+          graduation = color_to_string(element[this.x_variable.name]);
+        } else {
+          graduation = element[this.x_variable.name];
+        }
+        infos[graduation] += 1;
+      }
+    }
+    return infos;
+  }
+
+
+  draw_axis() {
+    let keys = Object.keys(this.infos);
+    let y_step = this.get_y_step(this.max_frequency);
+    if (this.discrete) {
+      this.axis.draw_histogram_x_axis(this.context, this.scale, this.init_scale, this.last_mouse1X, this.width,
+                                      this.height, this.x_variable.list, this.decalage_axis_x, this.decalage_axis_y,
+                                      this.scroll_x, this.X, this.Y, this.x_variable.name);
+    } else {
+      let {x1, x2} = this.string_to_coordinate(keys[0]); // à voir si ça marche
+      let x_step = x2 - x1;
+      this.axis.draw_horizontal_axis(this.context, this.last_mouse1X, this.scale,
+                                     this.width, this.height, this.init_scale, this.minX, this.maxX,
+                                     this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
+                                     this.X, this.Y, this.x_variable.name, x_step);
+    }
+    this.axis.draw_histogram_y_axis(this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x, 
+      this.decalage_axis_y, this.X, this.Y, 'Frequency', y_step);
+  }
+
+
+  get_y_step(max_frequency) {
+    if (max_frequency <= 10) {
+      return 1;
+    } else if (max_frequency <= 20) {
+      return 2;
+    } else if (max_frequency <= 50) {
+      return 5;
+    }
+    return Math.floor(max_frequency / 10);
+  }
+
+
+  draw_histogram() {
+    let grad_beg_y = this.height - this.decalage_axis_y;
+    let keys = Object.keys(this.infos);
+    let scaleY = (0.88*this.height - this.decalage_axis_y) / this.max_frequency;
+    let color_fill = this.surface_style.color_fill;
+    let color_stroke = this.edge_style.color_stroke;
+    let line_width = this.edge_style.line_width;
+    let opacity = this.surface_style.opacity;
+    let dashline = this.edge_style.dashline;
+    if (this.discrete) {
+      let grad_beg_x = 1/1000 * (this.decalage_axis_x/this.scale - this.last_mouse1X) + 1/4;
+      let w = 1/2;
+      for (let i=0; i<keys.length; i++) {
+        this.context.beginPath();
+        let f = this.infos[keys[i]];
+        let current_x = this.scale*(1000*(grad_beg_x + i) + this.last_mouse1X) + this.X;
+        Shape.rect(current_x, grad_beg_y, this.scale*1000*w, -scaleY*f, this.context, 
+                   color_fill, color_stroke, line_width, opacity, dashline);
+        this.context.closePath();
+      }
+    } else {
+      let {x1, x2} = this.string_to_coordinate(keys[0]);
+      let w = x2 - x1;
+      for (let key of keys) {
+        this.context.beginPath();
+        let {x1} = this.string_to_coordinate(key); 
+        let f = this.infos[key];
+        Shape.rect(this.scale*(1000*x1 + this.last_mouse1X), grad_beg_y, this.scale*1000*w,
+                   -scaleY*f, this.context, color_fill, color_stroke, line_width, opacity, dashline);
+        this.context.closePath();
+      }
+    }
+  }
+
 }
 
 
@@ -6465,7 +6677,7 @@ export class Axis {
       } else {
         Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
       }
-      context.fillText(MyMath.round(grad_beg_x + i*x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + font_size );
+      context.fillText(MyMath.round(grad_beg_x + i*x_step, x_nb_digits), scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + font_size);
       i++
     }
     context.stroke();
@@ -6481,7 +6693,7 @@ export class Axis {
     while (grad_beg_y + (i-1)*y_step < grad_end_y) {
         if (this.grid_on === true) {
           context.strokeStyle = 'lightgrey';
-          Shape.drawLine(context,[[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y], [axis_x_end, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y]]);
+          Shape.drawLine(context, [[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y], [axis_x_end, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y]]);
         } else {
           Shape.drawLine(context, [[axis_x_start - 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y], [axis_x_start + 3, scaleY*(-1000*(grad_beg_y + i*y_step) + mvy) + Y]]);
         }
@@ -6492,8 +6704,23 @@ export class Axis {
     context.stroke();
   }
 
+  draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y) {
+    let scale = (0.88*height - decalage_axis_y) / max_frequency;
+    let grad_beg_y = height - decalage_axis_y;
+    let i = 0;
+    context.textAlign = 'end';
+    context.textBaseline = 'middle';
+    while (i * y_step < max_frequency + y_step) {
+      Shape.drawLine(context, [[axis_x_start - 3, grad_beg_y - scale * (i * y_step) + Y], 
+                     [axis_x_start + 3, grad_beg_y - scale * (i * y_step) + Y]]);
+      context.fillText(i * y_step, axis_x_start - 5, grad_beg_y - scale * (i * y_step) + Y);
+      i++;
+    }
+    context.stroke();
+  }
 
-  draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, canvas_width) {
+
+  draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, x_step?) {
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
     context.lineWidth = this.axis_style.line_width;
@@ -6512,7 +6739,7 @@ export class Axis {
     if (scroll_x % 5 == 0) {
       let kx = 1.1*scaleX/init_scaleX;
       let num = Math.max(maxX - minX, 1);
-      this.x_step = Math.min(num/(kx*(this.nb_points_x-1)), canvas_width/(scaleX*1000*(this.nb_points_x - 1)));
+      this.x_step = x_step || Math.min(num/(kx*(this.nb_points_x-1)), width/(scaleX*1000*(this.nb_points_x - 1)));
     }
     context.font = 'bold 20px Arial';
     context.textAlign = 'end';
@@ -6525,7 +6752,7 @@ export class Axis {
   }
 
 
-  draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, canvas_height) {
+  draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, y_step?) {
     context.beginPath();
     context.strokeStyle = this.axis_style.color_stroke;
     context.lineWidth = this.axis_style.line_width;
@@ -6544,15 +6771,88 @@ export class Axis {
     if (scroll_y % 5 == 0) {
       let ky = 1.1*scaleY/init_scaleY;
       let num = Math.max(maxY - minY, 1);
-      this.y_step = Math.min(num/(ky*(this.nb_points_y-1)), canvas_height/(1000*scaleY*(this.nb_points_y - 1)));
+      this.y_step = y_step || Math.min(num/(ky*(this.nb_points_y-1)), height/(1000*scaleY*(this.nb_points_y - 1)));
     }
     context.font = 'bold 20px Arial';
     context.textAlign = 'start';
     context.fillStyle = this.graduation_style.text_color;
     context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
-    //draw vertical graduations
     context.font = this.graduation_style.font_size.toString() + 'px Arial';
     this.draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, this.y_step, Y);
+    context.closePath();
+  }
+
+
+  draw_histogram_x_axis(context, scaleX, init_scaleX, mvx, width, height, graduations, decalage_axis_x, 
+                        decalage_axis_y, scroll_x, X, Y, to_disp_attribute_name, x_step?) {
+    context.beginPath();
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
+    var axis_x_start = decalage_axis_x + X;
+    var axis_x_end = width + X;
+    var axis_y_start = Y;
+    var axis_y_end = height - decalage_axis_y + Y;
+    //Arrow
+    if (this.arrow_on) {
+      Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
+      Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
+    }
+    //Axis
+    Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
+
+    //Graduations
+    context.font = 'bold 20px Arial';
+    context.textAlign = 'end';
+    context.fillStyle = this.graduation_style.text_color;
+    context.fillText(to_disp_attribute_name, axis_x_end - 5, axis_y_end - 10);
+
+    // draw_horizontal_graduations
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    var i=0;
+    context.textAlign = 'center';
+    var grad_beg_x = 1/1000 * (decalage_axis_x/scaleX - mvx) + 1/2;
+    while(i < graduations.length) {
+      if (this.grid_on === true) {
+        context.strokeStyle = 'lightgrey';
+        Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i) + mvx) + X, axis_y_start], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
+      } else {
+        Shape.drawLine(context, [[scaleX*(1000*(grad_beg_x + i) + mvx) + X, axis_y_end - 3], [scaleX*(1000*(grad_beg_x + i*x_step) + mvx) + X, axis_y_end + 3]]);
+      }
+      context.fillText(graduations[i], scaleX*(1000*(grad_beg_x + i) + mvx) + X, axis_y_end + this.graduation_style.font_size);
+      i++;
+    }
+    context.stroke();
+    context.closePath();
+  }
+
+
+  draw_histogram_y_axis(context, width, height, max_frequency, decalage_axis_x, 
+                        decalage_axis_y, X, Y, to_disp_attribute_name, y_step) {
+    context.beginPath();
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
+    var axis_x_start = decalage_axis_x + X;
+    var axis_x_end = width + X;
+    var axis_y_start = Y;
+    var axis_y_end = height - decalage_axis_y + Y;
+    //Arrows
+    if (this.arrow_on === true) {
+      Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
+      Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
+    }
+    //Axis
+    Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
+    // context.stroke();
+    // Graduations
+    this.y_step = y_step;
+    context.font = 'bold 20px Arial';
+    context.textAlign = 'start';
+    context.fillStyle = this.graduation_style.text_color;
+    context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
+
+    //draw vertical graduations
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    this.draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y);
     context.closePath();
   }
 

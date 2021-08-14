@@ -941,11 +941,10 @@ class PointFamily(PlotDataObject):
 
 
 class Histogram(PlotDataObject):
-    def __init__(self, x_variable: str, elements=None, discrete: bool = None, axis: Axis = None,
+    def __init__(self, x_variable: str, elements=None, axis: Axis = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, name: str = ''):
         self.x_variable = x_variable
         self.elements = elements
-        self.discrete = discrete
         self.axis = axis
         self.edge_style = edge_style
         self.surface_style = surface_style
@@ -1026,6 +1025,8 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         template = templates.multiplot_template
     elif plot_type == 'primitivegroupcontainer':
         template = templates.primitive_group_container_template
+    elif plot_type == 'histogram':
+        template = templates.histogram_template
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 

@@ -1,4 +1,5 @@
 import { info } from "console";
+import { Context } from "typedoc/dist/lib/converter";
 import { createUnparsedSourceFile, isExternalModuleNameRelative, isJsxFragment } from "typescript";
 import { serialize } from "v8";
 
@@ -411,8 +412,7 @@ export class MultiplePlots {
       this.redrawAllObjects();
     } else {
       let obj = this.objectList[this.nbObjects - 1];
-      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+      obj.draw();
     }
     
     return this.nbObjects - 1;
@@ -534,8 +534,7 @@ export class MultiplePlots {
       if (List.is_include(display_index, this.to_display_plots)) {
         let obj = this.objectList[display_index];
         if (obj.type_ == 'parallelplot') { this.objectList[display_index].refresh_axis_coords(); }
-        this.objectList[display_index].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        this.objectList[display_index].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+        this.objectList[display_index].draw();
       }
     }
     if (this.buttons_ON) {
@@ -549,8 +548,7 @@ export class MultiplePlots {
     for (let display_index of this.display_order) {
       let obj = this.objectList[display_index];
       if (display_index == this.clickedPlotIndex) {
-        this.objectList[display_index].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        this.objectList[display_index].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+        this.objectList[display_index].draw();
       } else {
          this.context_show.putImageData(this.shown_datas[display_index], obj.X, obj.Y);
          this.context_hidden.putImageData(this.hidden_datas[display_index], obj.X, obj.Y);
@@ -1367,13 +1365,11 @@ export class MultiplePlots {
     if (this.obj_settings_on === -1) {
       obj.settings_on = true;
       if (this.view_on_disposition) this.settings_on_padding(this.clickedPlotIndex);
-      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);   
+      obj.draw();   
     } else if (this.obj_settings_on === object_index) {
       obj.settings_on = false;
       this.settings_off_padding(this.clickedPlotIndex);
-      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);   
+      obj.draw();   
     }
   }
 
@@ -1384,12 +1380,10 @@ export class MultiplePlots {
       this.objectList[object_index].settings_on = true;
       let obj = this.objectList[obj_settings_on];
       this.settings_off_padding(obj_settings_on);
-      obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-      obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);  
+      obj.draw();  
       let obj1 = this.objectList[object_index];
       if (this.view_on_disposition) this.settings_on_padding(object_index);
-      obj1.draw(false, obj1.last_mouse1X, obj1.last_mouse1Y, obj1.scaleX, obj1.scaleY, obj1.X, obj1.Y);
-      obj1.draw(true, obj1.last_mouse1X, obj1.last_mouse1Y, obj1.scaleX, obj1.scaleY, obj1.X, obj1.Y);  
+      obj1.draw();  
     }
   }
 
@@ -1423,8 +1417,7 @@ export class MultiplePlots {
         } else {
           obj.primitive_mouse_over_point = obj.plotObject.point_list[point_index];
         }
-        obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);      
+        obj.draw();      
       }
     }
   }
@@ -1448,8 +1441,7 @@ export class MultiplePlots {
         if (this.objectList[i].type_ === 'scatterplot') {
           let obj = this.objectList[i];
           obj.primitive_mouse_over_point = undefined;
-          obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-          obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y); 
+          obj.draw(); 
         }
       }
     }
@@ -1933,7 +1925,9 @@ export abstract class PlotData {
     }
 
 
-  abstract draw(hidden, mvx, mvy, scaleX, scaleY, X, Y);
+  abstract draw();
+
+  abstract draw_from_context(hidden);
 
   define_canvas(canvas_id: string):void {
     var canvas:any = document.getElementById(canvas_id);
@@ -1954,8 +1948,8 @@ export abstract class PlotData {
 
   draw_initial(): void {
     this.reset_scales();
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
+    this.draw();
   }
 
   refresh_MinMax(point_list):void {
@@ -2960,8 +2954,7 @@ export abstract class PlotData {
     }
     this.refresh_selected_point_index();
     this.refresh_latest_selected_points_index();
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   add_axis_to_parallelplot(name:string):void { //Adding a new axis to the plot and redraw the canvas
@@ -2976,7 +2969,7 @@ export abstract class PlotData {
     this.refresh_attribute_booleans();
     this.rubber_bands.push([]);
     this.refresh_to_display_list(this.elements);
-    this.draw(false, 0, 0, 0, 0, this.X, this.Y);
+    this.draw();
   }
 
   remove_axis_from_parallelplot(name:string) { //Remove an existing axis and redraw the whole canvas
@@ -2997,7 +2990,7 @@ export abstract class PlotData {
     this.refresh_axis_bounds(this.axis_list.length);
     this.refresh_displayable_attributes();
     this.refresh_attribute_booleans();
-    this.draw(false, 0 ,0 ,0 ,0, this.X, this.Y);
+    this.draw();
   }
 
   get_scatterplot_displayed_axis():Attribute[] {
@@ -3043,8 +3036,7 @@ export abstract class PlotData {
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   set_scatterplot_y_axis(attribute_name:string):void {
@@ -3066,8 +3058,7 @@ export abstract class PlotData {
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
     if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   add_to_tooltip(tooltip:Tooltip, str:string): Tooltip {
@@ -3395,8 +3386,7 @@ export abstract class PlotData {
 
         this.last_mouse1X = this.initial_last_mouse1X + mouse2X - mouse1X;
         this.last_mouse1Y = this.initial_last_mouse1Y + mouse2Y - mouse1Y;
-        this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-        this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw();
       } else {
         if (this.select_bool) {
           this.isSelecting = true;
@@ -3418,8 +3408,7 @@ export abstract class PlotData {
         this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
         this.zoom_box_w = Math.abs(mouse2X - mouse1X);
         this.zoom_box_h = Math.abs(mouse2Y - mouse1Y);
-        this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-        this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw();
         
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
@@ -3437,8 +3426,7 @@ export abstract class PlotData {
       var old_select_on_mouse = this.select_on_mouse;
       this.select_on_mouse = this.colour_to_plot_data[colKey];
       if (this.select_on_mouse !== old_select_on_mouse) {
-        this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-        this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw();
       }
     }
     var is_inside_canvas = (mouse2X>=this.X) && (mouse2X<=this.width + this.X) && (mouse2Y>=this.Y) && (mouse2Y<=this.height + this.Y);
@@ -3510,8 +3498,7 @@ export abstract class PlotData {
         }
       }
       Interactions.reset_zoom_box(this);
-      this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-      this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+      this.draw();
       var isDrawing = false;
       mouse_moving = false;
       this.isSelecting = false;
@@ -3562,8 +3549,7 @@ export abstract class PlotData {
       }
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
-      this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-      this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+      this.draw();
       return [mouse3X, mouse3Y];
   }
 
@@ -3901,18 +3887,25 @@ export class PlotContour extends PlotData {
     this.interaction_ON = true;
   }
 
-  draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
-    this.define_context(hidden);
+  draw() {
+    this.context = this.context_hidden;
+    this.draw_from_context(true);
+    this.context = this.context_show;
+    this.draw_from_context(false);
+
+  }
+
+  draw_from_context(hidden) {
     this.context.save();
     this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
-    this.context.rect(X-1, Y-1, this.width+2, this.height+2);
+    this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
     this.context.clip();
     this.context.closePath();
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
-      this.draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d);
+      this.draw_primitivegroup(hidden, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, d);
     }
 
     if (this.dep_mouse_over) {
@@ -3936,7 +3929,6 @@ export class PlotContour extends PlotData {
 
       //Drawing the reset button
       Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
-
     }
   }
 }
@@ -3999,17 +3991,22 @@ export class PlotScatter extends PlotData {
       }
   }
 
-  draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
+  draw() {
+    this.draw_from_context(true);
+    this.draw_from_context(false);
+  }
+
+  draw_from_context(hidden) {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
-    this.context.rect(X-1, Y-1, this.width+2, this.height+2);
+    this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
     this.context.clip();
     this.context.closePath();
-    this.draw_graph2D(this.plotObject, hidden, mvx, mvy);
-    this.draw_scatterplot(this.plotObject, hidden, mvx, mvy);
+    this.draw_graph2D(this.plotObject, hidden, this.last_mouse1X, this.last_mouse1Y);
+    this.draw_scatterplot(this.plotObject, hidden, this.last_mouse1X, this.last_mouse1Y);
     if (this.permanent_window) {
       this.draw_selection_rectangle();
     }
@@ -4165,28 +4162,28 @@ export class ParallelPlot extends PlotData {
 
   draw_initial() {
     this.init_scale = 1;
-    this.scale = 1;
-    this.scaleX = 1;
-    this.scaleY = 1;
+    // this.scale = 1;
+    // this.scaleX = 1;
+    // this.scaleY = 1;
     this.last_mouse1X = 0;
-    this.last_mouse1Y = 0;
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    // this.last_mouse1Y = 0;
+    this.draw();
   }
 
-  draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
+  draw() {
     this.refresh_axis_bounds(this.axis_list.length);
-    this.define_context(hidden);
+    this.context = this.context_show;
     this.context.save();
     this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
-    this.context.rect(X-1, Y-1, this.width+2, this.height + 2);
+    this.context.rect(this.X-1, this.Y-1, this.width+2, this.height + 2);
     this.context.clip();
     this.context.closePath();
-    this.draw_rubber_bands(mvx);
+    this.draw_rubber_bands(this.last_mouse1X);
     var nb_axis = this.axis_list.length;
     this.draw_parallel_coord_lines();
-    this.draw_parallel_axis(nb_axis, mvx);
+    this.draw_parallel_axis(nb_axis, this.last_mouse1X);
     if (this.buttons_ON) {
       this.refresh_pp_buttons_coords();
       Buttons.disp_button(this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h, '10px Arial', this);
@@ -4196,6 +4193,10 @@ export class ParallelPlot extends PlotData {
     }
     this.context.restore();
   }
+
+
+  draw_from_context(hidden) {};
+
 
   initialize_data_lists() {
     for (let i=0; i<this.axis_list.length; i++) {
@@ -4279,17 +4280,17 @@ export class Histogram extends PlotData {
 
   draw_initial() {
     this.reset_scales();
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
 
-  draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
-    this.define_context(hidden);
+  draw() {
+    this.context = this.context_show;
     this.context.save();
     this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
     this.context.beginPath();
-    this.context.rect(X-1, Y-1, this.width+2, this.height + 2);
+    this.context.rect(this.X-1, this.Y-1, this.width+2, this.height + 2);
     this.context.clip();
     this.context.closePath();
 
@@ -4303,6 +4304,9 @@ export class Histogram extends PlotData {
     }
     this.context.restore();
   };
+
+
+  draw_from_context(hidden) {};
 
 
   coordinate_to_string(x1, x2) {
@@ -4465,7 +4469,7 @@ export class Histogram extends PlotData {
           this.last_mouse1X += mouse2X - old_mouse2X;
         }
       }
-      this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scale, this.scaleY, this.X, this.Y);
+      this.draw();
     });
 
     canvas.addEventListener('mouseup', e => {
@@ -4650,8 +4654,7 @@ export class PrimitiveGroupContainer extends PlotData {
     } else if (this.layout_mode == 'two_axis') {
       this.translateAllPrimitives(this.decalage_axis_x - this.minX + this.X, -this.minY + this.Y);
     }
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   reset_scales() {
@@ -4673,16 +4676,22 @@ export class PrimitiveGroupContainer extends PlotData {
     }
   }
 
-  draw(hidden, mvx, mvy, scaleX, scaleY, X, Y) {
+  draw() {
     if (this.clickedPlotIndex != -1) {
       let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
       this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
     }
+    this.draw_from_context(true);
+    this.draw_from_context(false);
+  }
+
+
+  draw_from_context(hidden) {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
-    this.context.clip(this.context.rect(X-1, Y-1, this.width+2, this.height+2));
+    this.context.clip(this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2));
     if (this.width > 100 && this.height > 100) {
       this.draw_layout_axis();
       if (this.layout_mode !== 'regular') {
@@ -4690,7 +4699,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       for (let index of this.display_order) {
         let prim = this.primitive_groups[index];
-        this.primitive_groups[index].draw(hidden, prim.last_mouse1X, prim.last_mouse1Y, prim.scaleX, prim.scaleY, prim.X, prim.Y);
+        this.primitive_groups[index].draw();
       }
     }
 
@@ -4699,7 +4708,7 @@ export class PrimitiveGroupContainer extends PlotData {
     } else { 
       this.context.strokeStyle = this.initial_rect_color_stroke;
       this.context.lineWidth = this.initial_rect_line_width;
-      this.context.strokeRect(X, Y, this.width, this.height); 
+      this.context.strokeRect(this.X, this.Y, this.width, this.height); 
     }
     if (this.buttons_ON) { this.draw_buttons(); }
     this.context.restore();
@@ -4712,8 +4721,7 @@ export class PrimitiveGroupContainer extends PlotData {
     for (let display_index of this.display_order) {
       let obj = this.primitive_groups[display_index];
       if (display_index == this.clickedPlotIndex) {
-        this.primitive_groups[display_index].draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-        this.primitive_groups[display_index].draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+        this.primitive_groups[display_index].draw();
       } else {
          this.context_show.putImageData(this.shown_datas[display_index], obj.X, obj.Y);
          this.context_hidden.putImageData(this.hidden_datas[display_index], obj.X, obj.Y);
@@ -4777,8 +4785,7 @@ export class PrimitiveGroupContainer extends PlotData {
     this.primitive_dict[point_index.toString()] = this.primitive_groups.length - 1;
     this.refresh_layout();
     this.reset_action();
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   } 
 
 
@@ -4807,8 +4814,7 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     this.elements_dict = Object.fromEntries(elements_entries);
     this.reset_action();
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
 
@@ -4892,8 +4898,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.primitive_groups[sorted_list[last_index + j]][small_length] = last_small_length_step;
     }
     this.resetAllObjects();
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
 
@@ -5018,8 +5023,7 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     if (this.primitive_groups.length >= 1) this.reset_scales();
     this.resetAllObjects();
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   refresh_two_axis_layout_list(attributes:Attribute[]) {
@@ -5072,8 +5076,7 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     if (this.primitive_groups.length >= 2) this.reset_scales();
     this.resetAllObjects();
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   translatePrimitive(index, tx, ty) {
@@ -5125,8 +5128,7 @@ export class PrimitiveGroupContainer extends PlotData {
     this.scaleX = this.scaleX*zoom_coeff; this.scaleY = this.scaleY*zoom_coeff;
     this.last_mouse1X = this.last_mouse1X - ((mouse3X - this.X)/old_scaleX - (mouse3X - this.X)/this.scaleX);
     this.last_mouse1Y = this.last_mouse1Y - ((mouse3Y - this.Y)/old_scaleY - (mouse3Y - this.Y)/this.scaleY);
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   x_zoom_elements(event) {
@@ -5145,8 +5147,7 @@ export class PrimitiveGroupContainer extends PlotData {
     var old_scaleX = this.scaleX;
     this.scaleX = this.scaleX*zoom_coeff;
     this.last_mouse1X = this.last_mouse1X - ((container_center_x - this.X)/old_scaleX - (container_center_x - this.X)/this.scaleX);
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   y_zoom_elements(event) {
@@ -5165,8 +5166,7 @@ export class PrimitiveGroupContainer extends PlotData {
     var old_scaleY = this.scaleY;
     this.scaleY = this.scaleY*zoom_coeff;
     this.last_mouse1Y = this.last_mouse1Y - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   manage_scroll(mouse3X, mouse3Y, event) {
@@ -5264,8 +5264,7 @@ export class PrimitiveGroupContainer extends PlotData {
         }
       }
     }
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
   reorder_resize_style(resize_style) {
@@ -5303,8 +5302,7 @@ export class PrimitiveGroupContainer extends PlotData {
     } else {
       canvas.style.cursor = 'default';
     }
-    this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-    this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+    this.draw();
   }
 
 
@@ -5348,15 +5346,13 @@ export class PrimitiveGroupContainer extends PlotData {
           if (isDrawing) {
             if ((this.clickedPlotIndex == -1) || (this.layout_mode !== 'regular')) {
               this.translateAllPrimitives(mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
-              this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-              this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+              this.draw();
             } else {
               if (clickOnVertex) {
                 this.resizeObject(vertex_infos, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
               } else {
                 this.translatePrimitive(this.clickedPlotIndex, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
-                this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-                this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+                this.draw();
               }
             }
           } else {
@@ -5378,8 +5374,7 @@ export class PrimitiveGroupContainer extends PlotData {
     canvas.addEventListener('mouseup', e => {
       if (this.interaction_ON) {
         isDrawing = false;
-        this.draw(true, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
-        this.draw(false, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, this.X, this.Y);
+        this.draw();
       }
     });
 
@@ -5736,8 +5731,7 @@ export class Interactions {
       }
       plot_data.refresh_pp_selected();
     }
-    plot_data.draw(false, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
+    plot_data.draw();
   }
 
   public static mouse_up_axis_interversion(mouse1X, mouse1Y, e, plot_data:any) {

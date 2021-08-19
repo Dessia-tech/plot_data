@@ -941,6 +941,22 @@ class PointFamily(PlotDataObject):
 
 
 class Histogram(PlotDataObject):
+    """
+    The Histogram object. This class can be instantiated in Multiplot.
+
+    :param x_variable: The name of x variable
+    :type x_variable: str
+    :param elements: A list of vectors.
+    :type elements: list(dict)
+    :param axis: axis style customization. The number of points cannot\
+    be changed for a histogram
+    :type axis: Axis
+    :param edge_style: histogram rectangles edge style
+    :type edge_style: EdgeStyle
+    :param surface_style: histogram rectangle surface style
+    :type surface_style: SurfaceStyle
+    """
+    
     def __init__(self, x_variable: str, elements=None, axis: Axis = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, name: str = ''):
         self.x_variable = x_variable

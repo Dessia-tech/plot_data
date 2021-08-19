@@ -14,6 +14,7 @@ for i in range(50):
                      'color': random_color
                      })
 
+
 histogram = plot_data.Histogram(x_variable='mass',
                                 elements=elements)
 

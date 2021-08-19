@@ -3509,7 +3509,7 @@ export abstract class PlotData {
   wheel_interaction(mouse3X, mouse3Y, e) {
     e.preventDefault();
     this.fusion_coeff = 1.2;
-    var event = -e.deltaY/Math.abs(e.deltaY);
+    var event = -Math.sign(e.deltaY);
     mouse3X = e.offsetX;
     mouse3Y = e.offsetY;
     if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
@@ -3520,7 +3520,7 @@ export abstract class PlotData {
         } else if (event<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
           this.scroll_x--;
-          this.last_mouse1X = this.width/2 + 1/this.fusion_coeff * (this.last_mouse1X - this.height/2);
+          this.last_mouse1X = this.width/2 + 1/this.fusion_coeff * (this.last_mouse1X - this.width/2);
         }
 
     } else if ((mouse3X<=this.decalage_axis_x + this.X) && (mouse3Y<this.height - this.decalage_axis_y + this.Y) && this.axis_ON) {
@@ -3535,11 +3535,7 @@ export abstract class PlotData {
         }
 
     } else {
-        if (event>0) {
-          var coeff = this.fusion_coeff;
-        } else if (event<0) {
-          coeff = 1/this.fusion_coeff;
-        }
+        if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
         this.scaleX = this.scaleX*coeff;
         this.scaleY = this.scaleY*coeff;
         this.scroll_x = this.scroll_x + event;
@@ -5306,7 +5302,7 @@ export class PrimitiveGroupContainer extends PlotData {
   }
 
 
-  mouse_interaction(isParallelPlot:boolean=false) {
+  mouse_interaction() {
     var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
     var nbObjects:number = this.primitive_groups.length;
     var canvas = document.getElementById(this.canvas_id);

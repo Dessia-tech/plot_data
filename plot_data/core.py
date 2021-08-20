@@ -956,7 +956,7 @@ class Histogram(PlotDataObject):
     :param surface_style: histogram rectangle surface style
     :type surface_style: SurfaceStyle
     """
-    
+
     def __init__(self, x_variable: str, elements=None, axis: Axis = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, name: str = ''):
         self.x_variable = x_variable
@@ -1049,11 +1049,13 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     lib_path = 'https://cdn.dessia.tech/js/plot-data/latest/core.js'
     if debug_mode:
         # core_path = os.sep + os.path.join(
-        #     *sys.modules[__name__].__file__.split(os.sep)[:-2], 'lib',
+        #     *sys.modules[__name__].__file__.split('/')[:-2], 'lib',
         #     'core.js')
+        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['lib', 'core.js'])
+
         # I added the line below since the one above that I commented didn't work for me on Windows 10.
         # I'm going to fix it later on and if I forget to remove it, feel free to do so. Jeremie
-        core_path = 'C:\\Users\\jch1\\Documents\\Github\\plot_data\\lib\\core.js'
+        # core_path = 'C:\\Users\\jch1\\Documents\\Github\\plot_data\\lib\\core.js'
 
         if not os.path.isfile(core_path):
             print('Local compiled core.js not found, fall back to CDN')

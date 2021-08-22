@@ -1,4 +1,5 @@
 import { info } from "console";
+import { type } from "os";
 import { relative } from "path";
 import { Context } from "typedoc/dist/lib/converter";
 import { createUnparsedSourceFile, isExternalModuleNameRelative, isJsxFragment } from "typescript";
@@ -4320,7 +4321,7 @@ export class Histogram extends PlotData {
       this.draw_x_rubberband();
     }
     if (this.y_rubberband.length !== 0) {
-      this.draw__y_rubberband();
+      this.draw_y_rubberband();
     }
     this.context.closePath();
   }
@@ -4336,7 +4337,7 @@ export class Histogram extends PlotData {
                string_to_hex('lightgrey'), 0.5, 0.6);
   }
 
-  draw__y_rubberband() {
+  draw_y_rubberband() {
     let w = 20;
     let y1d = this.real_to_display(this.y_rubberband[0], 'y');
     let y2d = this.real_to_display(this.y_rubberband[1], 'y');
@@ -4487,6 +4488,10 @@ export class Histogram extends PlotData {
     var canvas = document.getElementById(this.canvas_id);
     var click_on_x_axis = false;
     var click_on_y_axis = false;
+    var click_on_x_band = false;
+    var click_on_y_band = false;
+    var up = false, down = false;
+    var left = false, right = false; 
 
     canvas.addEventListener('mousedown', e => {
       if (!this.interaction_ON) return;
@@ -4497,19 +4502,43 @@ export class Histogram extends PlotData {
       click_on_x_axis = Shape.isInRect(mouse1X, mouse2Y, this.decalage_axis_x + this.X, this.height - this.decalage_axis_y - 10 + this.Y,
                         this.width - this.decalage_axis_x, 20);
       click_on_y_axis = Shape.isInRect(mouse1X, mouse1Y, this.decalage_axis_x - 10 + this.X, this.Y, 20, this.height - this.decalage_axis_y);
+      if (click_on_x_axis) {
+        [click_on_x_band, left, right] = this.is_in_x_rubberband(mouse1X, mouse1Y);
+      }
+      if (click_on_y_axis) {
+        [click_on_y_band, up, down] = this.is_in_y_rubberband(mouse1X, mouse1Y);
+      }
     });
 
     canvas.addEventListener('mousemove', e => {
       if (!this.interaction_ON) return;
-      let old_mouse2X = mouse2X;
+      let old_mouse2X = mouse2X, old_mouse2Y = mouse2Y;
       mouse_moving = true;
       mouse2X = e.offsetX;
       mouse2Y = e.offsetY;
       if (isDrawing) {
         if (click_on_x_axis) {
-          this.set_x_rubberband(mouse1X, mouse2X);
+          if (click_on_x_band) {
+            let tx = this.display_to_real_length(mouse2X - old_mouse2X, 'x')
+            if (left || right) {
+              this.resize_rubberband(tx, false, false, left, right);
+            } else {
+              this.translate_rubberband(tx, 'x');
+            }
+          } else {
+            this.set_x_rubberband(mouse1X, mouse2X);
+          }
         } else if (click_on_y_axis) {
-          this.set_y_rubberband(mouse1Y, mouse2Y);
+          if (click_on_y_band) {
+            let ty = this.display_to_real_length(old_mouse2Y - mouse2Y, 'y');
+            if (up || down) {
+              this.resize_rubberband(ty, up, down, false, false);
+            } else {
+              this.translate_rubberband(ty, 'y');
+            }
+          } else {
+            this.set_y_rubberband(mouse1Y, mouse2Y);
+          }
         } else {
           this.last_mouse1X += mouse2X - old_mouse2X;
         }
@@ -4519,14 +4548,17 @@ export class Histogram extends PlotData {
 
     canvas.addEventListener('mouseup', e => {
       if (!this.interaction_ON) return;
-      if (!mouse_moving) {
+      if (mouse_moving) {
+        if (up || down || left || right) {
+          this.reorder_rubberbands();
+        }
+      } else {
         if (click_on_x_axis) {
           this.x_rubberband = [];
         } else if (click_on_y_axis) {
           this.y_rubberband = [];
         }
       }
-      // reset_parameters();
       reset_parameters();
       this.draw();
     });
@@ -4536,6 +4568,12 @@ export class Histogram extends PlotData {
       mouse_moving = false;
       click_on_x_axis = false;
       click_on_y_axis = false;
+      click_on_x_band = false;
+      click_on_y_band = false;
+      up = false;
+      down = false;
+      left = false;
+      right = false;
     }
   }
 
@@ -4553,7 +4591,70 @@ export class Histogram extends PlotData {
   }
 
 
-   real_to_display(real: number, type_) { // type_ = 'x' or 'y'
+  is_in_x_rubberband(x, y) {
+    let h = 20;
+    let grad_beg_y = this.height - this.decalage_axis_y + this.X;
+    let y1 = grad_beg_y - h/2;
+    let x1 = this.real_to_display(this.x_rubberband[0], 'x');
+    let x2 = this.real_to_display(this.x_rubberband[1], 'x');
+    let w = x2 - x1;
+    let click_on_x_band = Shape.isInRect(x, y, x1, y1, w, h);
+
+    let vertex_w = 5;
+    let left = Shape.isInRect(x, y, x1, y1, vertex_w, h);
+    let right = Shape.isInRect(x, y, x2, y1, -vertex_w, h);
+    return [click_on_x_band, left, right];
+  }
+
+
+  is_in_y_rubberband(x, y) {
+    let w = 20;
+    let x1 = this.X + this.decalage_axis_x - w/2;
+    let y1 = this.real_to_display(this.y_rubberband[0], 'y');
+    let y2 = this.real_to_display(this.y_rubberband[1], 'y');
+    let h = y2 - y1;
+    let click_on_y_band = Shape.isInRect(x, y, x1, y1, w, h);
+
+    let vertex_h = 5;
+    let down = Shape.isInRect(x, y, x1, y1, w, -vertex_h);
+    let up = Shape.isInRect(x, y, x1, y2, w, vertex_h);
+    return [click_on_y_band, up, down];
+  }
+
+
+  translate_rubberband(t, type_) {
+    if (type_ === 'x') {
+      this.x_rubberband = [this.x_rubberband[0] + t, this.x_rubberband[1] + t];
+    } else if (type_ === 'y') {
+      this.y_rubberband = [this.y_rubberband[0] + t, this.y_rubberband[1] + t];
+    } else {
+      throw new Error("translate_rubberband(): type_ must be 'x' or 'y'");
+    }
+  }
+
+
+  resize_rubberband(t, up, down, left, right) {
+    if (up) {
+      this.y_rubberband[1] += t;
+    } else if (down) {
+      this.y_rubberband[0] += t;
+    } else if (left) {
+      this.x_rubberband[0] += t;
+    } else if (right) {
+      this.x_rubberband[1] += t;
+    }
+  }
+
+
+  reorder_rubberbands() {
+    this.x_rubberband = [Math.min(this.x_rubberband[0], this.x_rubberband[1]),
+                         Math.max(this.x_rubberband[0], this.x_rubberband[1])];
+    this.y_rubberband = [Math.min(this.y_rubberband[0], this.y_rubberband[1]), 
+                         Math.max(this.y_rubberband[0], this.y_rubberband[1])];
+  }
+
+
+  real_to_display(real: number, type_) { // type_ = 'x' or 'y'
     if (type_ === 'x') {
       return this.scale * real + this.last_mouse1X + this.X;
     } else if (type_ === 'y') {
@@ -4563,6 +4664,19 @@ export class Histogram extends PlotData {
       return grad_beg_y - scale_y * real * y_step + this.Y;
     } else {
       throw new Error("real_to_display(): type_ must be 'x' or 'y'");
+    }
+  }
+
+
+  real_to_display_length(real: number, type_) {
+    if (type_ === 'x') {
+      return this.scale * real;
+    } else if (type_ === 'y') {
+      let y_step = this.get_y_step();
+      let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
+      return scale_y * real * y_step;
+    } else {
+      throw new Error("real_to_display_length(): type_ must be 'x' or 'y'");
     }
   }
 
@@ -4577,6 +4691,18 @@ export class Histogram extends PlotData {
       return (grad_beg_y + this.Y - display) / (scale_y * y_step);
     } else {
       throw new Error("display_to_real(): type_ must be 'x' or 'y'");
+    }
+  }
+
+  display_to_real_length(display: number, type_) {
+    if (type_ === 'x') {
+      return display / this.scale;
+    } else if (type_ === 'y') {
+      let y_step = this.get_y_step();
+      let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
+      return display / (scale_y * y_step);
+    } else {
+      throw new Error("display_to_real_length(): type_ must be 'x' or 'y'")
     }
   }
 

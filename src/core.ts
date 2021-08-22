@@ -4231,6 +4231,7 @@ export class Histogram extends PlotData {
   y_rubberband:number[]=[];
   coeff:number=0.88;
   y_step: number = 0;
+  selected_keys = [];
 
   constructor(public data:any,
               public width: number,
@@ -4452,7 +4453,6 @@ export class Histogram extends PlotData {
     let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
     let keys = Object.keys(this.infos);
     let scaleY = (0.88*this.height - this.decalage_axis_y) / this.max_frequency;
-    let color_fill = this.surface_style.color_fill;
     let color_stroke = this.edge_style.color_stroke;
     let line_width = this.edge_style.line_width;
     let opacity = this.surface_style.opacity;
@@ -4464,8 +4464,8 @@ export class Histogram extends PlotData {
         this.context.beginPath();
         let f = this.infos[keys[i]];
         let current_x = this.real_to_display(grad_beg_x + i, 'x');
-        Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context, 
-                   color_fill, color_stroke, line_width, opacity, dashline);
+        // Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context, 
+        //            color_fill, color_stroke, line_width, opacity, dashline);
         this.context.closePath();
       }
     } else {
@@ -4473,6 +4473,10 @@ export class Histogram extends PlotData {
       let w = x2 - x1;
       for (let key of keys) {
         this.context.beginPath();
+        let color_fill = this.surface_style.color_fill;
+        if (this.selected_keys.includes(key)) {
+          color_fill = string_to_hex('lightyellow');
+        }
         let {x1} = this.string_to_coordinate(key);
         let current_x = this.real_to_display(x1, 'x'); 
         let f = this.infos[key];
@@ -4529,6 +4533,7 @@ export class Histogram extends PlotData {
           } else {
             this.set_x_rubberband(mouse1X, mouse2X);
           }
+          this.get_selected_keys();
         } else if (click_on_y_axis) {
           if (click_on_y_band) {
             let ty = this.display_to_real_length(old_mouse2Y - mouse2Y, 'y');
@@ -4540,6 +4545,7 @@ export class Histogram extends PlotData {
           } else {
             this.set_y_rubberband(mouse1Y, mouse2Y);
           }
+          this.get_selected_keys();
         } else {
           this.last_mouse1X += mouse2X - old_mouse2X;
         }
@@ -4648,10 +4654,38 @@ export class Histogram extends PlotData {
 
 
   reorder_rubberbands() {
-    this.x_rubberband = [Math.min(this.x_rubberband[0], this.x_rubberband[1]),
-                         Math.max(this.x_rubberband[0], this.x_rubberband[1])];
-    this.y_rubberband = [Math.min(this.y_rubberband[0], this.y_rubberband[1]), 
-                         Math.max(this.y_rubberband[0], this.y_rubberband[1])];
+    if (this.x_rubberband.length !== 0) {
+      this.x_rubberband = [Math.min(this.x_rubberband[0], this.x_rubberband[1]),
+      Math.max(this.x_rubberband[0], this.x_rubberband[1])];
+    }
+    if (this.y_rubberband.length !== 0) {
+      this.y_rubberband = [Math.min(this.y_rubberband[0], this.y_rubberband[1]), 
+      Math.max(this.y_rubberband[0], this.y_rubberband[1])];
+    }
+  }
+
+
+  get_selected_keys() {
+    this.selected_keys = [];
+    let keys = Object.keys(this.infos);
+    for (let key of keys) {
+      let {x1, x2} = this.string_to_coordinate(key);
+      let x_rubberband_0 = Math.min(this.x_rubberband[0], this.x_rubberband[1]);
+      let x_rubberband_1 = Math.max(this.x_rubberband[0], this.x_rubberband[1]);
+      let y_rubberband_0 = Math.min(this.y_rubberband[0], this.y_rubberband[1]);
+      let y_rubberband_1 = Math.max(this.y_rubberband[0], this.y_rubberband[1]);
+      let f = this.infos[key];
+      let bool = true;
+      if (this.x_rubberband.length !== 0) {
+        bool = bool && x_rubberband_0 <= x1 && x2 <= x_rubberband_1;
+      }
+      if (this.y_rubberband.length !== 0) {
+        bool = bool && y_rubberband_0 <= f && f <= y_rubberband_1;
+      }
+      if (bool) {
+        this.selected_keys.push(key);
+      }
+    }
   }
 
 
@@ -4661,7 +4695,7 @@ export class Histogram extends PlotData {
     } else if (type_ === 'y') {
       let grad_beg_y = this.height - this.decalage_axis_y;
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-      return grad_beg_y - scale_y * real * this.y_step + this.Y;
+      return grad_beg_y - scale_y * real + this.Y;
     } else {
       throw new Error("real_to_display(): type_ must be 'x' or 'y'");
     }
@@ -4673,7 +4707,7 @@ export class Histogram extends PlotData {
       return this.scale * real;
     } else if (type_ === 'y') {
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-      return scale_y * real * this.y_step;
+      return -scale_y * real;
     } else {
       throw new Error("real_to_display_length(): type_ must be 'x' or 'y'");
     }
@@ -4686,18 +4720,19 @@ export class Histogram extends PlotData {
     } else if (type_ === 'y') {
       let grad_beg_y = this.height - this.decalage_axis_y;
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-      return (grad_beg_y + this.Y - display) / (scale_y * this.y_step);
+      return (grad_beg_y + this.Y - display) / scale_y;
     } else {
       throw new Error("display_to_real(): type_ must be 'x' or 'y'");
     }
   }
+
 
   display_to_real_length(display: number, type_) {
     if (type_ === 'x') {
       return display / this.scale;
     } else if (type_ === 'y') {
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-      return display / (scale_y * this.y_step);
+      return -display / scale_y;
     } else {
       throw new Error("display_to_real_length(): type_ must be 'x' or 'y'")
     }

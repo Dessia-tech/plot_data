@@ -4457,6 +4457,8 @@ export class Histogram extends PlotData {
     let line_width = this.edge_style.line_width;
     let opacity = this.surface_style.opacity;
     let dashline = this.edge_style.dashline;
+
+    let color_fill = this.surface_style.color_fill; // It will be removed once the discrete histogram selection is done
     if (this.discrete) {
       let grad_beg_x = (this.decalage_axis_x - this.last_mouse1X)/this.scale + 1/4;
       let w = 1/2;
@@ -4464,8 +4466,8 @@ export class Histogram extends PlotData {
         this.context.beginPath();
         let f = this.infos[keys[i]];
         let current_x = this.real_to_display(grad_beg_x + i, 'x');
-        // Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context, 
-        //            color_fill, color_stroke, line_width, opacity, dashline);
+        Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context, 
+                   color_fill, color_stroke, line_width, opacity, dashline);
         this.context.closePath();
       }
     } else {

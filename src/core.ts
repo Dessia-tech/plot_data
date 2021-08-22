@@ -4593,7 +4593,7 @@ export class Histogram extends PlotData {
 
   is_in_x_rubberband(x, y) {
     let h = 20;
-    let grad_beg_y = this.height - this.decalage_axis_y + this.X;
+    let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
     let y1 = grad_beg_y - h/2;
     let x1 = this.real_to_display(this.x_rubberband[0], 'x');
     let x2 = this.real_to_display(this.x_rubberband[1], 'x');

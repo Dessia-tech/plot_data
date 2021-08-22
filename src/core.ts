@@ -4230,6 +4230,7 @@ export class Histogram extends PlotData {
   x_rubberband:number[]=[];
   y_rubberband:number[]=[];
   coeff:number=0.88;
+  y_step: number = 0;
 
   constructor(public data:any,
               public width: number,
@@ -4417,7 +4418,7 @@ export class Histogram extends PlotData {
 
   draw_axis() {
     let keys = Object.keys(this.infos);
-    let y_step = this.get_y_step();
+    this.y_step = this.get_y_step();
     if (this.discrete) {
       this.axis.draw_histogram_x_axis(this.context, this.scale, this.init_scale, this.last_mouse1X, this.width,
                                       this.height, this.x_variable.list, this.decalage_axis_x, this.decalage_axis_y,
@@ -4431,7 +4432,7 @@ export class Histogram extends PlotData {
                                      this.X, this.Y, this.x_variable.name, x_step);
     }
     this.axis.draw_histogram_y_axis(this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x, 
-      this.decalage_axis_y, this.X, this.Y, 'Frequency', y_step, this.coeff);
+      this.decalage_axis_y, this.X, this.Y, 'Frequency', this.y_step, this.coeff);
   }
 
 
@@ -4658,10 +4659,9 @@ export class Histogram extends PlotData {
     if (type_ === 'x') {
       return this.scale * real + this.last_mouse1X + this.X;
     } else if (type_ === 'y') {
-      let y_step = this.get_y_step();
       let grad_beg_y = this.height - this.decalage_axis_y;
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-      return grad_beg_y - scale_y * real * y_step + this.Y;
+      return grad_beg_y - scale_y * real * this.y_step + this.Y;
     } else {
       throw new Error("real_to_display(): type_ must be 'x' or 'y'");
     }
@@ -4672,9 +4672,8 @@ export class Histogram extends PlotData {
     if (type_ === 'x') {
       return this.scale * real;
     } else if (type_ === 'y') {
-      let y_step = this.get_y_step();
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-      return scale_y * real * y_step;
+      return scale_y * real * this.y_step;
     } else {
       throw new Error("real_to_display_length(): type_ must be 'x' or 'y'");
     }
@@ -4685,10 +4684,9 @@ export class Histogram extends PlotData {
     if (type_ === 'x') {
       return (display - this.last_mouse1X - this.X) / this.scale;
     } else if (type_ === 'y') {
-      let y_step = this.get_y_step();
       let grad_beg_y = this.height - this.decalage_axis_y;
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-      return (grad_beg_y + this.Y - display) / (scale_y * y_step);
+      return (grad_beg_y + this.Y - display) / (scale_y * this.y_step);
     } else {
       throw new Error("display_to_real(): type_ must be 'x' or 'y'");
     }
@@ -4698,9 +4696,8 @@ export class Histogram extends PlotData {
     if (type_ === 'x') {
       return display / this.scale;
     } else if (type_ === 'y') {
-      let y_step = this.get_y_step();
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-      return display / (scale_y * y_step);
+      return display / (scale_y * this.y_step);
     } else {
       throw new Error("display_to_real_length(): type_ must be 'x' or 'y'")
     }

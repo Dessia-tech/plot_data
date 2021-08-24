@@ -4367,7 +4367,7 @@ export class Histogram extends PlotData {
   refresh_max_frequency() {
     let keys = Object.keys(this.infos);
     for (let key of keys) {
-      this.max_frequency = Math.max(this.infos[key], this.max_frequency);
+      this.max_frequency = Math.max(this.infos[key].length, this.max_frequency);
     }
   }
 
@@ -4386,36 +4386,36 @@ export class Histogram extends PlotData {
         let current_x = this.min_abs;
         while (current_x < this.max_abs) {
           let next_x = current_x + step;
-          let frequency = 0;
-          for (let element of this.elements) {
-            let nb = element[this.x_variable.name];
+          let selected_elts = [];
+          for (let i=0;i<this.elements.length; i++) {
+            let nb = this.elements[i][this.x_variable.name];
             if ((nb >= current_x && nb < next_x) || (next_x === this.max_abs && nb === next_x)) {
-              frequency += 1;
+              selected_elts.push(i);
             }
           }
           let key = this.coordinate_to_string(current_x, next_x);
-          temp_infos.push([key, frequency]);
+          temp_infos.push([key, selected_elts]);
           current_x = next_x;
         }
       } else {
         step = this.width / 3;
         let key = this.coordinate_to_string(this.minX, this.maxX);
-        temp_infos = [[key, this.elements.length]];
+        temp_infos = [[key, this.elements]];
       }
       infos = Object.fromEntries(temp_infos);
     } else {
       for (let graduation of this.x_variable.list) {
-        temp_infos.push([graduation, 0]);
+        temp_infos.push([graduation, []]);
       }
       infos = Object.fromEntries(temp_infos);
-      for (let element of this.elements) {
+      for (let i=0; i<this.elements.length; i++) {
         let graduation;
         if (this.x_variable.type_ === 'color') {
-          graduation = color_to_string(element[this.x_variable.name]);
+          graduation = color_to_string(this.elements[i][this.x_variable.name]);
         } else {
-          graduation = element[this.x_variable.name];
+          graduation = this.elements[i][this.x_variable.name];
         }
-        infos[graduation] += 1;
+        infos[graduation].push(i);
       }
     }
     return infos;
@@ -4472,7 +4472,7 @@ export class Histogram extends PlotData {
         if (this.selected_keys.includes(keys[i])) {
           color_fill = string_to_hex('lightyellow');
         }
-        let f = this.infos[keys[i]];
+        let f = this.infos[keys[i]].length;
         let current_x = this.real_to_display(i, 'x');
         Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context, 
                    color_fill, color_stroke, line_width, opacity, dashline);
@@ -4489,7 +4489,7 @@ export class Histogram extends PlotData {
         }
         let {x1} = this.string_to_coordinate(key);
         let current_x = this.real_to_display(x1, 'x'); 
-        let f = this.infos[key];
+        let f = this.infos[key].length;
         Shape.rect(current_x, grad_beg_y, this.scale*w,
                    -scaleY*f, this.context, color_fill, color_stroke, line_width, opacity, dashline);
         this.context.closePath();
@@ -4686,7 +4686,7 @@ export class Histogram extends PlotData {
       let x_rubberband_1 = Math.max(this.x_rubberband[0], this.x_rubberband[1]);
       let y_rubberband_0 = Math.min(this.y_rubberband[0], this.y_rubberband[1]);
       let y_rubberband_1 = Math.max(this.y_rubberband[0], this.y_rubberband[1]);
-      let f = this.infos[key];
+      let f = this.infos[key].length;
       let bool = true;
       if (this.x_rubberband.length !== 0) {
         if (this.discrete) {
@@ -6292,9 +6292,7 @@ export class MultiplotCom {
       }
       plot_data.select_on_click = new_select_on_click;
       plot_data.refresh_selected_point_index();
-
     }
-
   }
 
   public static pp_to_pp_communication(rubberbands_dep:[string, [number, number]][], plot_data:PlotData) {
@@ -6317,6 +6315,27 @@ export class MultiplotCom {
     }
     plot_data.refresh_pp_selected();
   }
+
+
+  public static histogram_to_histogram_communication(histogram1, histogram2) {
+    if (histogram1.x_variable.name !== histogram2.x_variable.name) return;
+    histogram2.x_rubberband = histogram1.x_rubberband;
+    histogram2.draw();
+  }
+
+
+  public static histogram_to_pp_communication() {
+  }
+
+
+  public static histogram_to_scatter_communication() {}
+
+
+  public static scatter_to_histogram_communication() {
+  }
+
+
+  public static pp_to_histogram_communication() {}
 }
 
 export class Buttons {

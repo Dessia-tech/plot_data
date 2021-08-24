@@ -23,7 +23,7 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                                           name=name)
 
     def _to_primitives(self):
-        r = 0.02
+        r = 0.04
         primitives = []
         pos = nx.kamada_kawai_layout(self.graph)
 
@@ -31,7 +31,7 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
             node1, node2 = edge[0], edge[1]
             pos1, pos2 = pos[node1], pos[node2]
             line = plot_data.LineSegment2D(
-                [pos1[0], pos1[1], pos2[0], pos2[1]],
+                [pos1[0], pos1[1]], [pos2[0], pos2[1]],
                 edge_style=plot_data.EdgeStyle())
             primitives.append(line)
 
@@ -46,15 +46,15 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                                          color_stroke=color)
             elif shape == 'o':
                 prim = plot_data.Circle2D(
-                        x, y, r*2,
+                        x, y, r,
                         edge_style=edge_style,
                         surface_style=surface_style)
             elif shape == 's':
                 x1, x2, y1, y2 = x - r, x + r, y - r, y + r
-                l1 = plot_data.LineSegment2D([x1, y1, x2, y1])
-                l2 = plot_data.LineSegment2D([x2, y1, x2, y2])
-                l3 = plot_data.LineSegment2D([x2, y2, x1, y2])
-                l4 = plot_data.LineSegment2D([x1, y2, x1, y1])
+                l1 = plot_data.LineSegment2D([x1, y1], [x2, y1])
+                l2 = plot_data.LineSegment2D([x2, y1], [x2, y2])
+                l3 = plot_data.LineSegment2D([x2, y2], [x1, y2])
+                l4 = plot_data.LineSegment2D([x1, y2], [x1, y1])
                 prim = plot_data.Contour2D([l1, l2, l3, l4],
                                            edge_style=edge_style,
                                            surface_style=surface_style)

@@ -3756,7 +3756,7 @@ export abstract class PlotData {
         if (size_i>=size_j) {var max_size_index = i;} else {var max_size_index = j;}
         var xj = this.scaleX*point_list_copy[j].cx + mvx;
         var yj = this.scaleY*point_list_copy[j].cy + mvy;
-        if (this.distance([xi,yi], [xj,yj])<(point_list_copy[i].size + point_list_copy[j].size)) {
+        if (this.distance([xi,yi], [xj,yj])< 10*(point_list_copy[i].size + point_list_copy[j].size)) {
           var new_cx = (point_list_copy[i].cx + point_list_copy[j].cx)/2;
           var new_cy = (point_list_copy[i].cy + point_list_copy[j].cy)/2;
           var point = new Point2D(new_cx, new_cy, point_list_copy[i].point_style, 'point', '');
@@ -3785,7 +3785,6 @@ export abstract class PlotData {
         i++;
       }
     }
-
     return point_list_copy;
   }
 
@@ -4349,11 +4348,17 @@ export class Histogram extends PlotData {
   }
 
 
-  coordinate_to_string(x1, x2) {
+  coordinate_to_string(x1, x2?) {
+    if (this.discrete) {
+      return this.x_variable.list[x1];
+    }
     return x1.toString() + '_' + x2.toString();
   }
 
   string_to_coordinate(str) {
+    if (this.discrete) {
+      return {x1: List.get_index_of_element(str, this.x_variable.list)};
+    }
     let l = str.split('_');
     return {x1: Number(l[0]), x2: Number(l[1])};
   }
@@ -4458,14 +4463,17 @@ export class Histogram extends PlotData {
     let opacity = this.surface_style.opacity;
     let dashline = this.edge_style.dashline;
 
-    let color_fill = this.surface_style.color_fill; // It will be removed once the discrete histogram selection is done
     if (this.discrete) {
-      let grad_beg_x = (this.decalage_axis_x - this.last_mouse1X)/this.scale + 1/4;
+      // var grad_beg_x = this.decalage_axis_x/this.scale + 1/4;
       let w = 1/2;
       for (let i=0; i<keys.length; i++) {
         this.context.beginPath();
+        let color_fill = this.surface_style.color_fill; 
+        if (this.selected_keys.includes(keys[i])) {
+          color_fill = string_to_hex('lightyellow');
+        }
         let f = this.infos[keys[i]];
-        let current_x = this.real_to_display(grad_beg_x + i, 'x');
+        let current_x = this.real_to_display(i, 'x');
         Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context, 
                    color_fill, color_stroke, line_width, opacity, dashline);
         this.context.closePath();
@@ -4538,7 +4546,7 @@ export class Histogram extends PlotData {
           this.get_selected_keys();
         } else if (click_on_y_axis) {
           if (click_on_y_band) {
-            let ty = this.display_to_real_length(old_mouse2Y - mouse2Y, 'y');
+            let ty = this.display_to_real_length(mouse2Y - old_mouse2Y, 'y');
             if (up || down) {
               this.resize_rubberband(ty, up, down, false, false);
             } else {
@@ -4567,6 +4575,7 @@ export class Histogram extends PlotData {
         } else if (click_on_y_axis) {
           this.y_rubberband = [];
         }
+        this.get_selected_keys();
       }
       reset_parameters();
       this.draw();
@@ -4670,6 +4679,7 @@ export class Histogram extends PlotData {
   get_selected_keys() {
     this.selected_keys = [];
     let keys = Object.keys(this.infos);
+    if (this.x_rubberband.length === 0 && this.y_rubberband.length === 0) return;
     for (let key of keys) {
       let {x1, x2} = this.string_to_coordinate(key);
       let x_rubberband_0 = Math.min(this.x_rubberband[0], this.x_rubberband[1]);
@@ -4679,7 +4689,11 @@ export class Histogram extends PlotData {
       let f = this.infos[key];
       let bool = true;
       if (this.x_rubberband.length !== 0) {
-        bool = bool && x_rubberband_0 <= x1 && x2 <= x_rubberband_1;
+        if (this.discrete) {
+          bool = bool && x_rubberband_0 <= x1 && x1 + 1/2 <= x_rubberband_1;
+        } else {
+          bool = bool && x_rubberband_0 <= x1 && x2 <= x_rubberband_1;
+        }
       }
       if (this.y_rubberband.length !== 0) {
         bool = bool && y_rubberband_0 <= f && f <= y_rubberband_1;
@@ -4693,7 +4707,12 @@ export class Histogram extends PlotData {
 
   real_to_display(real: number, type_) { // type_ = 'x' or 'y'
     if (type_ === 'x') {
-      return this.scale * real + this.last_mouse1X + this.X;
+      if (this.discrete) {
+        let grad_beg_x = this.decalage_axis_x / this.scale;
+        return this.scale * (grad_beg_x + real) + this.last_mouse1X + this.X;
+      } else {
+        return this.scale * real + this.last_mouse1X + this.X;
+      }
     } else if (type_ === 'y') {
       let grad_beg_y = this.height - this.decalage_axis_y;
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
@@ -4718,7 +4737,12 @@ export class Histogram extends PlotData {
 
   display_to_real(display: number, type_) {
     if (type_ === 'x') {
-      return (display - this.last_mouse1X - this.X) / this.scale;
+      if (this.discrete) {
+        let grad_beg_x = this.decalage_axis_x / this.scale;
+        return (display - this.last_mouse1X - this.X) / this.scale - grad_beg_x;
+      } else {
+        return (display - this.last_mouse1X - this.X) / this.scale;
+      }
     } else if (type_ === 'y') {
       let grad_beg_y = this.height - this.decalage_axis_y;
       let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
@@ -6818,7 +6842,7 @@ export class Point2D {
       if (point_style.size<1) {
         throw new Error('Invalid point_size');
       }
-      this.size = this.k*point_style.size/400;
+      this.size = this.k*point_style.size/4;
       this.minX = this.cx;
       this.maxX = this.cx;
       this.minY = this.cy;
@@ -6838,16 +6862,16 @@ export class Point2D {
 
     draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
         if (this.point_style.shape == 'circle') {
-          context.arc(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, 1000*this.size, 0, 2*Math.PI);
+          context.arc(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, 10*this.size, 0, 2*Math.PI);
           context.stroke();
         } else if (this.point_style.shape == 'square') {
-          context.rect(scaleX*this.cx + mvx - this.size + X, scaleY*this.cy + mvy - 1000*this.size + Y, 1000*this.size*2, 1000* this.size*2);
+          context.rect(scaleX*this.cx + mvx - this.size + X, scaleY*this.cy + mvy - 10*this.size + Y, 10*this.size*2, 10* this.size*2);
           context.stroke();
         } else if (this.point_style.shape == 'crux') {
-          context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, 1000*this.size, 100*this.size);
-          context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, this.size, 100*this.size);
-          context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, 100*this.size, 1000*this.size);
-          context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, 100*this.size, -1000* this.size);
+          context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, 10*this.size, this.size);
+          context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, -10*this.size, this.size);
+          context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, this.size, 10*this.size);
+          context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, this.size, -10* this.size);
           context.fillStyle = context.strokeStyle;
           context.stroke();
         } else {
@@ -7066,7 +7090,7 @@ export class Axis {
     context.font = this.graduation_style.font_size.toString() + 'px Arial';
     var i=0;
     context.textAlign = 'center';
-    var grad_beg_x = (decalage_axis_x - mvx)/scaleX + 1/2;
+    var grad_beg_x = decalage_axis_x/scaleX + 1/4;
     while(i < graduations.length) {
       if (this.grid_on === true) {
         context.strokeStyle = 'lightgrey';
@@ -7074,7 +7098,7 @@ export class Axis {
       } else {
         Shape.drawLine(context, [[scaleX*(grad_beg_x + i) + mvx + X, axis_y_end - 3], [scaleX*(grad_beg_x + i*x_step) + mvx + X, axis_y_end + 3]]);
       }
-      context.fillText(graduations[i], scaleX*(grad_beg_x + i + mvx) + X, axis_y_end + this.graduation_style.font_size);
+      context.fillText(graduations[i], scaleX*(grad_beg_x + i) + mvx + X, axis_y_end + this.graduation_style.font_size);
       i++;
     }
     context.stroke();

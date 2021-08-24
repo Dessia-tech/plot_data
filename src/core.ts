@@ -5863,25 +5863,20 @@ export class Interactions {
   }
 
   public static zoom_in_button_action(plot_data:PlotScatter) {
-    var old_scaleX = plot_data.scaleX;
-    var old_scaleY = plot_data.scaleY;
-    plot_data.scaleX = plot_data.scaleX*1.2;
-    plot_data.scaleY = plot_data.scaleY*1.2;
-    plot_data.last_mouse1X = plot_data.last_mouse1X - (plot_data.width/(2*old_scaleX) - plot_data.width/(2*plot_data.scaleX));
-    plot_data.last_mouse1Y = plot_data.last_mouse1Y - (plot_data.height/(2*old_scaleY) - plot_data.height/(2*plot_data.scaleY));
+    let zoom_coeff = 1.2;
+    plot_data.scaleX = plot_data.scaleX*zoom_coeff;
+    plot_data.scaleY = plot_data.scaleY*zoom_coeff;
+    plot_data.last_mouse1X = plot_data.width/2 + zoom_coeff * (plot_data.last_mouse1X - plot_data.width/2);
+    plot_data.last_mouse1Y = plot_data.height/2 + zoom_coeff * (plot_data.last_mouse1Y - plot_data.height/2);
     plot_data.reset_scroll();
   }
 
   public static zoom_out_button_action(plot_data:PlotScatter) {
-    // var old_scaleX = plot_data.scaleX;
-    // var old_scaleY = plot_data.scaleY;
     var zoom_coeff = 1/1.2;
     plot_data.scaleX = plot_data.scaleX*zoom_coeff;
     plot_data.scaleY = plot_data.scaleY*zoom_coeff;
     plot_data.last_mouse1X = plot_data.width/2 + zoom_coeff * (plot_data.last_mouse1X - plot_data.width/2);
     plot_data.last_mouse1Y = plot_data.height/2 + zoom_coeff * (plot_data.last_mouse1Y - plot_data.height/2);
-    // plot_data.last_mouse1X = plot_data.last_mouse1X - (plot_data.width/(2*old_scaleX) - plot_data.width/(2*plot_data.scaleX));
-    // plot_data.last_mouse1Y = plot_data.last_mouse1Y - (plot_data.height/(2*old_scaleY) - plot_data.height/(2*plot_data.scaleY));
     plot_data.reset_scroll();
   }
 

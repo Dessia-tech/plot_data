@@ -5791,10 +5791,13 @@ export class Interactions {
     var zoom_coeff_x = plot_data.width/Math.abs(mouse2X - mouse1X);
     var zoom_coeff_y = plot_data.height/Math.abs(mouse2Y - mouse1Y);
     if ((plot_data.scaleX*zoom_coeff_x < scale_ceil) && (plot_data.scaleY*zoom_coeff_y < scale_ceil)) {
-      plot_data.last_mouse1X = plot_data.last_mouse1X - Math.min(mouse1X - plot_data.X, mouse2X - plot_data.X);
-      plot_data.last_mouse1Y = plot_data.last_mouse1Y - Math.min(mouse1Y - plot_data.Y,mouse2Y - plot_data.Y);
       plot_data.scaleX = plot_data.scaleX*zoom_coeff_x;
       plot_data.scaleY = plot_data.scaleY*zoom_coeff_y;
+
+      let mouseX = Math.min(mouse1X, mouse2X);
+      plot_data.last_mouse1X = zoom_coeff_x * (plot_data.X + plot_data.last_mouse1X - mouseX) - plot_data.X;
+      let mouseY = Math.min(mouse1Y, mouse2Y);
+      plot_data.last_mouse1Y = zoom_coeff_y * (plot_data.Y + plot_data.last_mouse1Y - mouseY) - plot_data.Y;
     }
   }
 

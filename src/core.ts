@@ -5795,9 +5795,9 @@ export class Interactions {
       plot_data.scaleY = plot_data.scaleY*zoom_coeff_y;
 
       let mouseX = Math.min(mouse1X, mouse2X);
-      plot_data.last_mouse1X = zoom_coeff_x * (plot_data.X + plot_data.last_mouse1X - mouseX) - plot_data.X;
+      plot_data.last_mouse1X = zoom_coeff_x * (plot_data.X + plot_data.last_mouse1X - mouseX);
       let mouseY = Math.min(mouse1Y, mouse2Y);
-      plot_data.last_mouse1Y = zoom_coeff_y * (plot_data.Y + plot_data.last_mouse1Y - mouseY) - plot_data.Y;
+      plot_data.last_mouse1Y = zoom_coeff_y * (plot_data.Y + plot_data.last_mouse1Y - mouseY);
     }
   }
 

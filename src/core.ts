@@ -852,7 +852,7 @@ export class MultiplePlots {
     this.selected_point_index = [];
     for (let i=0; i<this.nbObjects; i++) {
       let type_ = this.objectList[i].type_;
-      if (type_ === 'scatterplot') {
+      if (type_ === 'scatterplot' || type_ === 'graph2d') {
         Interactions.click_on_reset_action(this.objectList[i]);
       } else if (type_ === 'contour' || type_ === 'histogram') {
         this.objectList[i].reset_scales();
@@ -1731,7 +1731,7 @@ export class MultiplePlots {
             } else if (type_ === 'histogram') {
               let obj: any = this.objectList[this.clickedPlotIndex];
               if (obj.x_rubberband.length === 0) {
-                this.resetAllObjects();
+                this.reset_all_selected_points();
               }
             }
           }
@@ -6393,6 +6393,7 @@ export class MultiplotCom {
   public static histogram_to_histogram_communication(histogram1, histogram2) {
     if (histogram1.x_variable.name !== histogram2.x_variable.name) return;
     histogram2.x_rubberband = histogram1.x_rubberband;
+    histogram2.get_selected_keys();
   }
 
 

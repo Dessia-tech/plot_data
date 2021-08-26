@@ -848,6 +848,8 @@ export class MultiplePlots {
   }
 
   resetAllObjects():void {
+    this.dep_selected_points_index = [];
+    this.selected_point_index = [];
     for (let i=0; i<this.nbObjects; i++) {
       let type_ = this.objectList[i].type_;
       if (type_ === 'scatterplot') {
@@ -857,6 +859,9 @@ export class MultiplePlots {
       } else if (type_ == 'primitivegroupcontainer') {
         let obj:any = this.objectList[i];
         obj.reset_action();
+      } else if (type_ === 'histogram') {
+        let obj: any = this.objectList[i];
+        obj.reset_x_rubberband();
       }
     }
   }
@@ -865,17 +870,19 @@ export class MultiplePlots {
     this.dep_selected_points_index = [];
     this.selected_point_index = [];
     for (let i=0; i<this.nbObjects; i++) {
-      let obj = this.objectList[i];
+      let obj: any = this.objectList[i];
       if (obj.type_ == 'scatterplot') {
-        this.objectList[i].reset_select_on_click();
+        obj.reset_select_on_click();
         Interactions.reset_permanent_window(this.objectList[i])
       } else if (obj.type_ == 'parallelplot') {
-        this.objectList[i].reset_pp_selected();
-        this.objectList[i].rubber_bands = [];
-        this.objectList[i].rubberbands_dep = [];
+        obj.reset_pp_selected();
+        obj.rubber_bands = [];
+        obj.rubberbands_dep = [];
         for (let j=0; j<obj.axis_list.length; j++) {
-          this.objectList[i].rubber_bands.push([]);
+          obj.rubber_bands.push([]);
         }
+      } else if (obj.type_ === 'histogram') {
+        obj.reset_x_rubberband(); 
       }
     }
     this.redrawAllObjects();
@@ -1198,8 +1205,13 @@ export class MultiplePlots {
       } else if (obj.type_ === 'parallelplot') {
         MultiplotCom.pp_to_pp_communication(rubberbands_dep, this.objectList[i]);
       } else if (obj.type_ === 'histogram') {
-        for (let rubberband_dep of rubberbands_dep) {
-          MultiplotCom.pp_to_histogram_communication(rubberband_dep, obj);
+        if (rubberbands_dep.length === 0) {
+          let histogram: any = obj;
+          histogram.reset_x_rubberband();
+        } else {
+          for (let rubberband_dep of rubberbands_dep) {
+            MultiplotCom.pp_to_histogram_communication(rubberband_dep, obj);
+          }
         }
       }
     }
@@ -1696,25 +1708,33 @@ export class MultiplePlots {
 
       if (mouse_moving === false) {
         if (this.selectDependency_bool) {
-          if (this.clickedPlotIndex !== -1 && this.objectList[this.clickedPlotIndex].type_ === 'parallelplot') {
-            var selected_axis_name: string, vertical: boolean, inverted: boolean;
-            var hexs: string[], isSelectingppAxis: boolean;
-            [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
-            if (isSelectingppAxis) {
-              for (let i=0; i<this.nbObjects; i++) {
-                if (this.objectList[i].type_ == 'parallelplot') {
-                  this.objectList[i].selected_axis_name = selected_axis_name;
+          if (this.clickedPlotIndex !== -1) {
+            let type_ = this.objectList[this.clickedPlotIndex].type_ 
+            if (type_ === 'parallelplot') {
+              var selected_axis_name: string, vertical: boolean, inverted: boolean;
+              var hexs: string[], isSelectingppAxis: boolean;
+              [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
+              if (isSelectingppAxis) {
+                for (let i=0; i<this.nbObjects; i++) {
+                  if (this.objectList[i].type_ == 'parallelplot') {
+                    this.objectList[i].selected_axis_name = selected_axis_name;
+                  }
                 }
+                if (selected_axis_name != '') {
+                  this.dependency_color_propagation(selected_axis_name, vertical, inverted, hexs);
+                } else {
+                  this.setAllInterpolationToOFF();
+                }
+                this.reset_selected_points_except([this.clickedPlotIndex]);
+                this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep);
               }
-              if (selected_axis_name != '') {
-                this.dependency_color_propagation(selected_axis_name, vertical, inverted, hexs);
-              } else {
-                this.setAllInterpolationToOFF();
+            } else if (type_ === 'histogram') {
+              let obj: any = this.objectList[this.clickedPlotIndex];
+              if (obj.x_rubberband.length === 0) {
+                this.resetAllObjects();
               }
-              this.reset_selected_points_except([this.clickedPlotIndex]);
-              this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep);
             }
-          } 
+          }
         }
         this.refresh_selected_point_index();
       } else {
@@ -4607,7 +4627,7 @@ export class Histogram extends PlotData {
         }
       } else {
         if (click_on_x_axis) {
-          this.x_rubberband = [];
+          this.reset_x_rubberband();
         } else if (click_on_y_axis) {
           this.y_rubberband = [];
         }
@@ -4710,6 +4730,13 @@ export class Histogram extends PlotData {
       this.y_rubberband = [Math.min(this.y_rubberband[0], this.y_rubberband[1]), 
       Math.max(this.y_rubberband[0], this.y_rubberband[1])];
     }
+  }
+
+
+  reset_x_rubberband() {
+    this.x_rubberband = [];
+    this.selected_keys = [];
+    this.selected_point_index = [];
   }
 
 

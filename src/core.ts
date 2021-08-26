@@ -807,12 +807,15 @@ export class MultiplePlots {
     var bool = false;
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
-      if ((obj.type_ == 'scatterplot') && !equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
+      if ((obj.type_ === 'scatterplot') && !equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
         bool = true;
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
-      } else if ((obj.type_ == 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
+      } else if ((obj.type_ === 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
         bool = true;
         this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
+      } else if ((obj.type_ === 'histogram') && !equals(obj.selected_point_index, [])) {
+        bool = true;
+        this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
       }
     }
 
@@ -1169,7 +1172,7 @@ export class MultiplePlots {
 
 
   mouse_move_pp_communication() {
-    let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index();
+    let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
     if (isDrawingRubberObjIndex != -1) {
       let isDrawingPP = this.objectList[isDrawingRubberObjIndex];
       let rubberbands_dep = isDrawingPP.rubberbands_dep;
@@ -1181,7 +1184,7 @@ export class MultiplePlots {
     for (let i=0; i<this.nbObjects; i++) {
       var obj:PlotData = this.objectList[i];
       var axis_numbers:number[] = [];
-      if (obj.type_ == 'scatterplot') {
+      if (obj.type_ === 'scatterplot') {
         var to_select:[string, [number, number]][] = [];
         for (let j=0; j<rubberbands_dep.length; j++) {
           for (let k=0; k<obj.plotObject.to_display_attributes.length; k++) {
@@ -1192,13 +1195,42 @@ export class MultiplePlots {
           }
         }
         MultiplotCom.pp_to_sc_communication(to_select, axis_numbers, this.objectList[i]);
-      } else if (obj.type_ == 'parallelplot') {
+      } else if (obj.type_ === 'parallelplot') {
         MultiplotCom.pp_to_pp_communication(rubberbands_dep, this.objectList[i]);
+      } else if (obj.type_ === 'histogram') {
+        for (let rubberband_dep of rubberbands_dep) {
+          MultiplotCom.pp_to_histogram_communication(rubberband_dep, obj);
+        }
       }
     }
     this.refresh_dep_selected_points_index();
     this.refresh_selected_object_from_index();
   }
+
+
+  mouse_move_histogram_communication() {
+    let index = this.get_drawing_rubberbands_obj_index('histogram');
+    if (index === -1) return;
+    this.histogram_communication(index);
+  }
+
+
+  histogram_communication(index) {
+    let histogram = this.objectList[index];
+    for (let i=0; i<this.nbObjects; i++) {
+      let obj = this.objectList[i];
+      if (obj.type_ === 'scatterplot') {
+        MultiplotCom.histogram_to_scatter_communication(histogram, obj);
+      } else if (obj.type_ === 'parallelplot') {
+        MultiplotCom.histogram_to_pp_communication(histogram, obj);
+      } else if (obj.type_ === 'histogram') {
+        MultiplotCom.histogram_to_histogram_communication(histogram, obj);
+      }
+    }
+    this.refresh_dep_selected_points_index();
+    this.refresh_selected_object_from_index();
+  }
+
 
   dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]):void {
     for (let i=0; i<this.nbObjects; i++) {
@@ -1219,6 +1251,7 @@ export class MultiplePlots {
 
   refresh_selected_object_from_index(): void {
     for (let i=0; i<this.nbObjects; i++) {
+      if (i === this.clickedPlotIndex) continue;
       var obj = this.objectList[i];
       if (obj.type_ == 'scatterplot') {
         let temp_select_on_click = List.getListEltFromIndex(this.dep_selected_points_index, obj.plotObject.point_list);
@@ -1280,9 +1313,10 @@ export class MultiplePlots {
     }
   }
 
-  get_drawing_rubberbands_obj_index():number {
+  get_drawing_rubberbands_obj_index(type_):number {
     for (let i=0; i<this.nbObjects; i++) {
-      if (this.objectList[i].isDrawing_rubber_band === true) {
+      let obj = this.objectList[i];
+      if (obj.isDrawing_rubber_band === true && obj.type_ === type_) {
         return i;
       }
     }
@@ -1635,6 +1669,7 @@ export class MultiplePlots {
           if (this.selectDependency_bool) {
             this.mouse_move_scatter_communication();
             this.mouse_move_pp_communication();
+            this.mouse_move_histogram_communication();
             this.redrawAllObjects();
           }
           this.refresh_selected_point_index();
@@ -2538,7 +2573,7 @@ export abstract class PlotData {
     return true;
   }
 
-  real_to_axis_coord(real_coord, type_, list, inverted) {
+  real_to_axis_coord(real_coord, type_, list, inverted) { // axis coordinate belongs to [0,1]
     if (type_ == 'float') {
       if (this.vertical) {
         var axis_coord_start = this.axis_y_start;
@@ -4533,6 +4568,7 @@ export class Histogram extends PlotData {
       mouse2Y = e.offsetY;
       if (isDrawing) {
         if (click_on_x_axis) {
+          this.isDrawing_rubber_band = true;
           if (click_on_x_band) {
             let tx = this.display_to_real_length(mouse2X - old_mouse2X, 'x')
             if (left || right) {
@@ -4578,6 +4614,7 @@ export class Histogram extends PlotData {
         this.get_selected_keys();
       }
       reset_parameters();
+      this.isDrawing_rubber_band = false;
       this.draw();
     });
 
@@ -4678,6 +4715,7 @@ export class Histogram extends PlotData {
 
   get_selected_keys() {
     this.selected_keys = [];
+    this.selected_point_index = [];
     let keys = Object.keys(this.infos);
     if (this.x_rubberband.length === 0 && this.y_rubberband.length === 0) return;
     for (let key of keys) {
@@ -4700,8 +4738,11 @@ export class Histogram extends PlotData {
       }
       if (bool) {
         this.selected_keys.push(key);
+        this.selected_point_index = this.selected_point_index.concat(this.infos[key]);
       }
     }
+    let sort = new Sort();
+    this.selected_point_index = sort.MergeSort(this.selected_point_index);
   }
 
 
@@ -6294,7 +6335,6 @@ export class MultiplotCom {
         }
       }
       plot_data.select_on_click = new_select_on_click;
-      plot_data.refresh_selected_point_index();
     }
   }
 
@@ -6316,29 +6356,61 @@ export class MultiplotCom {
         }
       }
     }
-    plot_data.refresh_pp_selected();
   }
 
 
   public static histogram_to_histogram_communication(histogram1, histogram2) {
     if (histogram1.x_variable.name !== histogram2.x_variable.name) return;
     histogram2.x_rubberband = histogram1.x_rubberband;
-    histogram2.draw();
   }
 
 
-  public static histogram_to_pp_communication() {
+  public static histogram_to_pp_communication(histogram, parallel_plot) {
+    let index = -1;
+    for (let i=0; i<parallel_plot.axis_list.length; i++) {
+      if (histogram.x_variable.name === parallel_plot.axis_list[i].name) {
+        index = i;
+        break;
+      }
+    }
+    if (index === -1) return; 
+    let x_variable = histogram.x_variable;
+    let x_rubberband = histogram.x_rubberband;
+    let axis_coord1 = parallel_plot.real_to_axis_coord(x_rubberband[0], x_variable.type_, x_variable.list, 
+                                                        parallel_plot.inverted_axis_list[index]);
+    axis_coord1 = Math.max(Math.min(axis_coord1, 1), 0);
+    let axis_coord2 = parallel_plot.real_to_axis_coord(x_rubberband[1], x_variable.type_, x_variable.list,
+                                                        parallel_plot.inverted_axis_list[index]);
+    axis_coord2 = Math.max(Math.min(axis_coord2, 1), 0);
+    parallel_plot.rubber_bands[index] = [Math.min(axis_coord1, axis_coord2), Math.max(axis_coord1, axis_coord2)];
+    parallel_plot.add_to_rubberbands_dep([x_variable.name, [x_rubberband[0], x_rubberband[1]]]);    
   }
 
 
-  public static histogram_to_scatter_communication() {}
-
-
-  public static scatter_to_histogram_communication() {
+  public static histogram_to_scatter_communication(histogram, scatter) {
+    let scatter_x = scatter.plotObject.to_disp_attribute_names[0];
+    let scatter_y = scatter.plotObject.to_disp_attribute_names[1];
+    if (histogram.x_variable.name === scatter_x) {
+      scatter.perm_window_x = histogram.x_rubberband[0];
+      scatter.perm_window_y = -scatter.minY;
+      scatter.perm_window_w = histogram.x_rubberband[1] - histogram.x_rubberband[0];
+      scatter.perm_window_h = scatter.maxY - scatter.minY;
+    } else if (histogram.x_variable.name === scatter_y) {
+      scatter.perm_window_x = scatter.minX;
+      scatter.perm_window_y = histogram.x_rubberband[1];
+      scatter.perm_window_w = scatter.maxX - scatter.minX;
+      scatter.perm_window_h = histogram.x_rubberband[1] - histogram.x_rubberband[0];
+    }
+    Interactions.selection_window_action(scatter)
   }
 
 
-  public static pp_to_histogram_communication() {}
+  public static pp_to_histogram_communication(rubberband_dep: [string, [number, number]], histogram) {
+    if (histogram.x_variable.name === rubberband_dep[0]) {
+      histogram.x_rubberband = rubberband_dep[1];
+      histogram.get_selected_keys();
+    }
+  }
 }
 
 export class Buttons {

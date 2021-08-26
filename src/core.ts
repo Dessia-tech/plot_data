@@ -1392,7 +1392,7 @@ export class MultiplePlots {
     return -1;
   }
 
-  settings_padding(index, coef) {
+  settings_padding(index, coef=1) {
     var obj = this.objectList[index];
     this.clear_object(index);
     var center_x = obj.X + obj.width/2;
@@ -1404,26 +1404,18 @@ export class MultiplePlots {
     if (obj.type_ === 'parallelplot') obj.refresh_axis_coords();
   }
 
-  settings_on_padding(index) {
-    this.settings_padding(index, 0.9);
-  }
-
-  settings_off_padding(index) {
-    this.settings_padding(index, 1);
-  }
 
   dbl_click_manage_settings_on(object_index:number): void {
     this.obj_settings_on = this.get_settings_on_object();
     var obj = this.objectList[this.clickedPlotIndex];
     if (this.obj_settings_on === -1) {
       obj.settings_on = true;
-      if (this.view_on_disposition) this.settings_on_padding(this.clickedPlotIndex);
-      obj.draw();   
+      if (this.view_on_disposition) this.settings_padding(this.clickedPlotIndex);
     } else if (this.obj_settings_on === object_index) {
       obj.settings_on = false;
-      this.settings_off_padding(this.clickedPlotIndex);
-      obj.draw();   
+      this.settings_padding(this.clickedPlotIndex);
     }
+    obj.draw();
   }
 
   single_click_manage_settings_on(object_index:number): void {
@@ -1432,10 +1424,10 @@ export class MultiplePlots {
       this.objectList[obj_settings_on].settings_on = false;
       this.objectList[object_index].settings_on = true;
       let obj = this.objectList[obj_settings_on];
-      this.settings_off_padding(obj_settings_on);
+      this.settings_padding(obj_settings_on);
       obj.draw();  
       let obj1 = this.objectList[object_index];
-      if (this.view_on_disposition) this.settings_on_padding(object_index);
+      if (this.view_on_disposition) this.settings_padding(object_index);
       obj1.draw();  
     }
   }

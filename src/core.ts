@@ -4728,9 +4728,13 @@ export class Histogram extends PlotData {
       let bool = true;
       if (this.x_rubberband.length !== 0) {
         if (this.discrete) {
-          bool = bool && x_rubberband_0 <= x1 && x1 + 1/2 <= x_rubberband_1;
+          let middle = x1 + 1/4;
+          bool = bool && x_rubberband_0 <= middle && middle <= x_rubberband_1;
+          // bool = bool && x_rubberband_0 <= x1 && x1 + 1/2 <= x_rubberband_1;
         } else {
-          bool = bool && x_rubberband_0 <= x1 && x2 <= x_rubberband_1;
+          let middle = (x1 + x2) / 2;
+          bool = bool && x_rubberband_0 <= middle && middle <= x_rubberband_1;
+          // bool = bool && x_rubberband_0 <= x1 && x2 <= x_rubberband_1;
         }
       }
       if (this.y_rubberband.length !== 0) {

@@ -3594,8 +3594,8 @@ export abstract class PlotData {
         this.scaleY = this.scaleY*coeff;
         this.scroll_x = this.scroll_x + event;
         this.scroll_y = this.scroll_y + event;
-        this.last_mouse1X = this.width/2 + coeff * (this.last_mouse1X - this.width/2);
-        this.last_mouse1Y = this.height/2 + coeff * (this.last_mouse1Y - this.height/2);
+        this.last_mouse1X = mouse3X - this.X + coeff * (this.last_mouse1X - mouse3X + this.X);
+        this.last_mouse1Y = mouse3Y - this.Y + coeff * (this.last_mouse1Y - mouse3Y + this.Y);
       }
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
@@ -4656,7 +4656,7 @@ export class Histogram extends PlotData {
       let event = -Math.sign(e.deltaY);
       if (event >= 0) zoom_coeff = 1.2; else zoom_coeff = 1/1.2;
       this.scale = this.scale * zoom_coeff;
-      this.last_mouse1X = mouse2X + zoom_coeff * (this.last_mouse1X - mouse2X);
+      this.last_mouse1X = mouse2X - this.X + zoom_coeff * (this.last_mouse1X - mouse2X + this.X);
       this.draw();
     });
 

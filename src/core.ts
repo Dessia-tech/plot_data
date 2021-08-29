@@ -4632,6 +4632,19 @@ export class Histogram extends PlotData {
       this.draw();
     });
 
+
+    canvas.addEventListener('wheel', e => {
+      if (!this.interaction_ON) return;
+      e.preventDefault();
+      let zoom_coeff;
+      let event = -Math.sign(e.deltaY);
+      if (event >= 0) zoom_coeff = 1.2; else zoom_coeff = 1/1.2;
+      this.scale = this.scale * zoom_coeff;
+      this.last_mouse1X = mouse2X + zoom_coeff * (this.last_mouse1X - mouse2X);
+      this.draw();
+    });
+
+
     function reset_parameters() {
       isDrawing = false;
       mouse_moving = false;

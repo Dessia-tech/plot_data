@@ -3931,6 +3931,7 @@ export class PlotContour extends PlotData {
       }
     }
 
+    if (buttons_ON) this.refresh_buttons_coords();
     this.plotObject = this.plot_datas[0];
     this.isParallelPlot = false;
     this.interaction_ON = true;
@@ -3967,8 +3968,9 @@ export class PlotContour extends PlotData {
     }
     this.context.restore();
 
-    this.refresh_buttons_coords();
     if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
+
+      this.refresh_buttons_coords();
       //Drawing the zooming button
       Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
 
@@ -4062,9 +4064,9 @@ export class PlotScatter extends PlotData {
       this.draw_zoom_rectangle();
     }
 
-    this.refresh_buttons_coords();
-
     if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
+      this.refresh_buttons_coords();
+
       //Drawing the zooming button
       Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
 
@@ -4330,6 +4332,7 @@ export class Histogram extends PlotData {
     }
     this.infos = this.get_infos();
     this.refresh_max_frequency();
+    if (buttons_ON) this.refresh_buttons_coords();
   }
 
 
@@ -4354,6 +4357,10 @@ export class Histogram extends PlotData {
     this.draw_histogram();
     this.draw_rubberbands();
 
+    if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
+      this.refresh_buttons_coords();
+      this.draw_buttons();
+    }
 
     if (this.multiplot_manipulation) {
       this.draw_manipulable_rect();
@@ -4363,6 +4370,12 @@ export class Histogram extends PlotData {
 
 
   draw_from_context(hidden) {};
+
+
+  draw_buttons() {
+    this.reset_rect_y = 10;
+    Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
+  }
 
 
   draw_rubberbands() {
@@ -4566,12 +4579,15 @@ export class Histogram extends PlotData {
       click_on_x_axis = Shape.isInRect(mouse1X, mouse2Y, this.decalage_axis_x + this.X, this.height - this.decalage_axis_y - 10 + this.Y,
                         this.width - this.decalage_axis_x, 20);
       click_on_y_axis = Shape.isInRect(mouse1X, mouse1Y, this.decalage_axis_x - 10 + this.X, this.Y, 20, this.height - this.decalage_axis_y);
+      let click_on_reset = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.reset_rect_y + this.Y,
+                                      this.button_w, this.button_h);
       if (click_on_x_axis) {
         [click_on_x_band, left, right] = this.is_in_x_rubberband(mouse1X, mouse1Y);
       }
       if (click_on_y_axis) {
         [click_on_y_band, up, down] = this.is_in_y_rubberband(mouse1X, mouse1Y);
       }
+      if (click_on_reset) this.reset_scales();
     });
 
     canvas.addEventListener('mousemove', e => {

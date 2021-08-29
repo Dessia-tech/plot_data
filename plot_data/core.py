@@ -951,17 +951,21 @@ class Histogram(PlotDataObject):
     :param axis: axis style customization. The number of points cannot\
     be changed for a histogram
     :type axis: Axis
+    :param graduation_nb: the number of graduations on the x axis. Default = 6.\
+    This parameter doesn't make sense for a non float x axis.
+    :type graduation_nb: float
     :param edge_style: histogram rectangles edge style
     :type edge_style: EdgeStyle
     :param surface_style: histogram rectangle surface style
     :type surface_style: SurfaceStyle
     """
 
-    def __init__(self, x_variable: str, elements=None, axis: Axis = None,
+    def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, name: str = ''):
         self.x_variable = x_variable
         self.elements = elements
         self.axis = axis
+        self.graduation_nb = graduation_nb
         self.edge_style = edge_style
         self.surface_style = surface_style
         PlotDataObject.__init__(self, type_='histogram', name=name)

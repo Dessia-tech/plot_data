@@ -4098,6 +4098,7 @@ export class PlotScatter extends PlotData {
   }
 }
 
+
 /** A class thtat inherits from PlotData and is specific for drawing ParallelPlots  */
 export class ParallelPlot extends PlotData {
 
@@ -4267,7 +4268,7 @@ export class Histogram extends PlotData {
   surface_style: SurfaceStyle;
   x_variable: Attribute;
   axis: Axis;
-  x_nb_points: number = 6;
+  graduation_nb: number;
   infos = {};
   min_abs: number = 0;
   max_abs: number = 0;
@@ -4294,6 +4295,7 @@ export class Histogram extends PlotData {
     }
     this.type_ = data['type_'];
     this.elements = data['elements'];
+    this.graduation_nb = data['graduation_nb'] || 6;
     let name = data['x_variable'];
     let type_ = TypeOf(this.elements[0][name]);
 
@@ -4428,8 +4430,8 @@ export class Histogram extends PlotData {
       this.min_abs = Math.floor(min / d) * d;
       this.max_abs = Math.ceil(max / d) * d;
       let step;
-      if (this.x_nb_points !== 1) {
-        step = (this.max_abs - this.min_abs) / (this.x_nb_points - 1);
+      if (this.graduation_nb !== 1) {
+        step = (this.max_abs - this.min_abs) / (this.graduation_nb - 1);
         let current_x = this.min_abs;
         while (current_x < this.max_abs) {
           let next_x = current_x + step;

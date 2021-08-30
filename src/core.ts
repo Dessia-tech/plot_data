@@ -27,8 +27,8 @@ export class MultiplePlots {
   clicked_index_list:number[]=[];
   clickedPlotIndex:number=-1;
   last_index:number=-1;
-  small_length_nbObjects: number = 0;
-  big_length_nbObjects: number = 0;
+  small_length_nb_objects: number = 0;
+  big_length_nb_objects: number = 0;
   manipulation_bool:boolean=false;
   transbutton_x:number=0; transbutton_y:number=0; transbutton_w:number=0; transbutton_h:number=0;
   selectDependency_bool:boolean=false;
@@ -942,18 +942,18 @@ export class MultiplePlots {
       sortedDisplayedObjectList.push(this.objectList[sorted_list[i]]);
     }
     var j = 0;
-    while (j < sorted_list.length - this.small_length_nbObjects + 1) {
-      let sub = List.subarray(sortedDisplayedObjectList, j, j + this.small_length_nbObjects);
+    while (j < sorted_list.length - this.small_length_nb_objects + 1) {
+      let sub = List.subarray(sortedDisplayedObjectList, j, j + this.small_length_nb_objects);
       sub = sort.sortObjsByAttribute(sub, small_coord);
       let permutations = sort.permutations;
       let permuted = [];
-      for (let k=0; k<this.small_length_nbObjects; k++) {
+      for (let k=0; k<this.small_length_nb_objects; k++) {
         permuted.push(sorted_list[j + permutations[k]]);
       }
-      for (let k=0; k<this.small_length_nbObjects; k++) {
+      for (let k=0; k<this.small_length_nb_objects; k++) {
         sorted_list[j + k] = permuted[k];
       }
-      j = j + this.small_length_nbObjects;
+      j = j + this.small_length_nb_objects;
     }
     return sorted_list;
   }
@@ -1012,18 +1012,18 @@ export class MultiplePlots {
       [big_coord, small_coord, big_length, small_length] = [small_coord, big_coord, small_length, big_length];
     }
     var nbObjectsDisplayed = this.to_display_plots.length;
-    this.small_length_nbObjects = Math.min(Math.ceil(nbObjectsDisplayed/2), Math.floor(Math.sqrt(nbObjectsDisplayed)));
-    this.big_length_nbObjects = Math.ceil(nbObjectsDisplayed/this.small_length_nbObjects);
+    this.small_length_nb_objects = Math.min(Math.ceil(nbObjectsDisplayed/2), Math.floor(Math.sqrt(nbObjectsDisplayed)));
+    this.big_length_nb_objects = Math.ceil(nbObjectsDisplayed/this.small_length_nb_objects);
     this.sorted_list = this.getSortedList();
-    // let big_length_step = this[big_length]/big_length_nbObjects;
-    // let small_length_step = this[small_length]/small_length_nbObjects;
+    // let big_length_step = this[big_length]/big_length_nb_objects;
+    // let small_length_step = this[small_length]/small_length_nb_objects;
     let blank_space = this.padding || 0.01*this[small_length];
-    let big_length_step = (this[big_length] - (this.big_length_nbObjects + 1)*blank_space)/this.big_length_nbObjects;
-    let small_length_step = (this[small_length] - (this.small_length_nbObjects + 1)*blank_space)/this.small_length_nbObjects;
+    let big_length_step = (this[big_length] - (this.big_length_nb_objects + 1)*blank_space)/this.big_length_nb_objects;
+    let small_length_step = (this[small_length] - (this.small_length_nb_objects + 1)*blank_space)/this.small_length_nb_objects;
 
-    for (let i=0; i<this.big_length_nbObjects - 1; i++) {
-      for (let j=0; j<this.small_length_nbObjects; j++) {
-        var current_index = i*this.small_length_nbObjects + j; //current_index in sorted_list
+    for (let i=0; i<this.big_length_nb_objects - 1; i++) {
+      for (let j=0; j<this.small_length_nb_objects; j++) {
+        var current_index = i*this.small_length_nb_objects + j; //current_index in sorted_list
 
         // The three following lines are useful for primitive group containers only
         let obj:any = this.objectList[this.sorted_list[current_index]];
@@ -1056,8 +1056,8 @@ export class MultiplePlots {
       let old_small_coord = obj[small_coord];
       let old_big_coord = obj[big_coord];
 
-      this.objectList[this.sorted_list[last_index + j]][big_coord] = (this.big_length_nbObjects - 1)*big_length_step 
-                                                                     + this.big_length_nbObjects*blank_space;
+      this.objectList[this.sorted_list[last_index + j]][big_coord] = (this.big_length_nb_objects - 1)*big_length_step 
+                                                                     + this.big_length_nb_objects*blank_space;
       this.objectList[this.sorted_list[last_index + j]][small_coord] = j*last_small_length_step + (j+1)*blank_space;
       this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
@@ -1147,9 +1147,9 @@ export class MultiplePlots {
     var real_min = Math.min(realCoord_min, realCoord_max);
     var real_max = Math.max(realCoord_min, realCoord_max);
     this.objectList[obj_index].add_to_rubberbands_dep([obj.axis_list[rubber_index]['name'], [real_min, real_max]]);
-    this.objectList[obj_index].isDrawing_rubber_band = true;
+    this.objectList[obj_index].is_drawing_rubber_band = true;
     this.mouse_move_pp_communication();
-    this.objectList[obj_index].isDrawing_rubber_band = false;
+    this.objectList[obj_index].is_drawing_rubber_band = false;
   }
 
   mouse_move_scatter_communication() {
@@ -1336,7 +1336,7 @@ export class MultiplePlots {
   get_drawing_rubberbands_obj_index(type_):number {
     for (let i=0; i<this.nbObjects; i++) {
       let obj = this.objectList[i];
-      if (obj.isDrawing_rubber_band === true && obj.type_ === type_) {
+      if (obj.is_drawing_rubber_band === true && obj.type_ === type_) {
         return i;
       }
     }
@@ -1825,12 +1825,12 @@ export abstract class PlotData {
   scaleY:number=1;
   scroll_x:number=0;
   scroll_y:number=0;
-  initial_last_mouse1X:number=0;
-  initial_last_mouse1Y:number=0;
+  initial_originX:number=0;
+  initial_originY:number=0;
   initial_width:number=0;
   initial_height:number = 0;
-  last_mouse1X:number=0;
-  last_mouse1Y:number=0;
+  originX:number=0;
+  originY:number=0;
   settings_on:boolean=false;
   colour_to_plot_data:any={};
   select_on_mouse:any;
@@ -1950,7 +1950,7 @@ export abstract class PlotData {
 
   isSelecting:boolean=false;
   selection_coords:[number, number][]=[];
-  isDrawing_rubber_band:boolean=false;
+  is_drawing_rubber_band:boolean=false;
   rubberbands_dep:[string, [number, number]][]=[];
 
   point_families:PointFamily[]=[];
@@ -2032,30 +2032,30 @@ export abstract class PlotData {
       this.init_scaleY = 0.95*(this.height - this.decalage_axis_y - 2*this.pointLength)/(this.maxY - this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
-      this.last_mouse1X = this.width/2 - (this.maxX + this.minX)*this.scaleX/2 + this.decalage_axis_x/2;
-      this.last_mouse1Y = this.height/2 - (this.maxY + this.minY)*this.scaleY/2 - this.decalage_axis_y/2 + this.pointLength/2;
+      this.originX = this.width/2 - (this.maxX + this.minX)*this.scaleX/2 + this.decalage_axis_x/2;
+      this.originY = this.height/2 - (this.maxY + this.minY)*this.scaleY/2 - this.decalage_axis_y/2 + this.pointLength/2;
 
     } else if ((this.axis_ON) && (this.graph_ON)) { // rescale + avoid axis and graph buttons on top of canvas
       this.init_scaleX = 0.95*(this.width-this.decalage_axis_x)/(this.maxX - this.minX);
       this.init_scaleY = 0.95*(this.height - this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/(this.maxY - this.minY);
       this.scaleX = this.init_scaleX;
       this.scaleY = this.init_scaleY;
-      this.last_mouse1X = this.width/2 - (this.maxX + this.minX)*this.scaleX/2 + this.decalage_axis_x/2;
-      this.last_mouse1Y = this.height/2 - (this.maxY + this.minY)*this.scaleY/2 - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/2;
+      this.originX = this.width/2 - (this.maxX + this.minX)*this.scaleX/2 + this.decalage_axis_x/2;
+      this.originY = this.height/2 - (this.maxY + this.minY)*this.scaleY/2 - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/2;
 
     } else if (this.type_ === 'histogram') {
       this.init_scale = 0.95*(this.width - this.decalage_axis_x)/(this['max_abs'] - this['min_abs']);
       this.scale = this.init_scale; 
-      this.last_mouse1X = this.decalage_axis_x - this.scale*this['min_abs'];
+      this.originX = this.decalage_axis_x - this.scale*this['min_abs'];
     } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
       this.init_scaleX = this.init_scale;
       this.init_scaleY = this.init_scale;
-      this.last_mouse1X = - this.scaleX * this.minX;
-      this.last_mouse1Y = - this.scaleY * this.minY;
-      // this.last_mouse1X = (this.width/2 - (this.maxX - this.minX)*this.scaleX/2)/this.scaleX - this.minX;
-      // this.last_mouse1Y = (this.height/2 - (this.maxY - this.minY)*this.scaleY/2)/this.scaleY - this.minY;
+      this.originX = - this.scaleX * this.minX;
+      this.originY = - this.scaleY * this.minY;
+      // this.originX = (this.width/2 - (this.maxX - this.minX)*this.scaleX/2)/this.scaleX - this.minX;
+      // this.originY = (this.height/2 - (this.maxY - this.minY)*this.scaleY/2)/this.scaleY - this.minY;
     }
   }
 
@@ -3094,7 +3094,7 @@ export abstract class PlotData {
     this.refresh_scatter_point_family();
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
-    if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
+    if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.originX, this.originY);}
     this.draw();
   }
 
@@ -3116,7 +3116,7 @@ export abstract class PlotData {
     this.refresh_scatter_point_family();
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
-    if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.last_mouse1X, this.last_mouse1Y);}
+    if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.originX, this.originY);}
     this.draw();
   }
 
@@ -3190,17 +3190,17 @@ export abstract class PlotData {
 
   scatter_to_real_coords(sc_coord:number, coord_type:string) {
     if (coord_type == 'x') {
-      return (sc_coord - this.last_mouse1X - this.X)/this.scaleX;
+      return (sc_coord - this.originX - this.X)/this.scaleX;
     } else {
-      return - ((sc_coord - this.last_mouse1Y - this.Y)/this.scaleY);
+      return - ((sc_coord - this.originY - this.Y)/this.scaleY);
     }
   }
 
   real_to_scatter_coords(real_coord:number, coord_type:string):number { //coord_type : 'x' or 'y'
     if (coord_type == 'x') {
-      return this.scaleX*real_coord + this.last_mouse1X + this.X;
+      return this.scaleX*real_coord + this.originX + this.X;
     } else {
-      return -this.scaleY*real_coord + this.last_mouse1Y + this.Y;
+      return -this.scaleY*real_coord + this.originY + this.Y;
     }
   }
 
@@ -3422,8 +3422,8 @@ export abstract class PlotData {
     mouse2X = e.offsetX;
     mouse2Y = e.offsetY;
     isDrawing = true;
-    this.initial_last_mouse1X = this.last_mouse1X;
-    this.initial_last_mouse1Y = this.last_mouse1Y;
+    this.initial_originX = this.originX;
+    this.initial_originY = this.originY;
     var click_on_selectw_border = false; var up=false; var down=false; var left=false; var right=false;
     if (e.ctrlKey) Interactions.click_on_clear_action(this);
     if (this.select_bool) {
@@ -3443,8 +3443,8 @@ export abstract class PlotData {
         canvas.style.cursor = 'move';
         mouse_moving = true;
 
-        this.last_mouse1X = this.initial_last_mouse1X + mouse2X - mouse1X;
-        this.last_mouse1Y = this.initial_last_mouse1Y + mouse2Y - mouse1Y;
+        this.originX = this.initial_originX + mouse2X - mouse1X;
+        this.originY = this.initial_originY + mouse2Y - mouse1Y;
         this.draw();
       } else {
         if (this.select_bool) {
@@ -3561,7 +3561,7 @@ export abstract class PlotData {
       var isDrawing = false;
       mouse_moving = false;
       this.isSelecting = false;
-      this.isDrawing_rubber_band = false;
+      this.is_drawing_rubber_band = false;
       return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 
@@ -3575,22 +3575,22 @@ export abstract class PlotData {
         if (event>0) {
           this.scaleX = this.scaleX*this.fusion_coeff;
           this.scroll_x++;
-          this.last_mouse1X = this.width/2 + this.fusion_coeff * (this.last_mouse1X - this.width/2);
+          this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
         } else if (event<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
           this.scroll_x--;
-          this.last_mouse1X = this.width/2 + 1/this.fusion_coeff * (this.last_mouse1X - this.width/2);
+          this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
         }
 
     } else if ((mouse3X<=this.decalage_axis_x + this.X) && (mouse3Y<this.height - this.decalage_axis_y + this.Y) && this.axis_ON) {
         if (event>0) {
           this.scaleY = this.scaleY*this.fusion_coeff;
           this.scroll_y++;
-          this.last_mouse1Y = this.height/2 + this.fusion_coeff * (this.last_mouse1Y - this.height/2);
+          this.originY = this.height/2 + this.fusion_coeff * (this.originY - this.height/2);
         } else if (event<0) {
           this.scaleY = this.scaleY/this.fusion_coeff;
           this.scroll_y--;
-          this.last_mouse1Y = this.height/2 + 1/this.fusion_coeff * (this.last_mouse1Y - this.height/2);
+          this.originY = this.height/2 + 1/this.fusion_coeff * (this.originY - this.height/2);
         }
 
     } else {
@@ -3599,8 +3599,8 @@ export abstract class PlotData {
         this.scaleY = this.scaleY*coeff;
         this.scroll_x = this.scroll_x + event;
         this.scroll_y = this.scroll_y + event;
-        this.last_mouse1X = mouse3X - this.X + coeff * (this.last_mouse1X - mouse3X + this.X);
-        this.last_mouse1Y = mouse3Y - this.Y + coeff * (this.last_mouse1Y - mouse3Y + this.Y);
+        this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
+        this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
       }
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
@@ -3618,16 +3618,16 @@ export abstract class PlotData {
       [mouse3X, mouse3Y, click_on_axis] = Interactions.mouse_up_axis_interversion(mouse1X, mouse1Y, e, this);
     } else if (click_on_name && !mouse_moving) {
       Interactions.select_title_action(selected_name_index, this);
-    } else if (this.isDrawing_rubber_band || is_resizing) {
+    } else if (this.is_drawing_rubber_band || is_resizing) {
       is_resizing = Interactions.rubber_band_size_check(selected_axis_index, this);
     }
     if (click_on_disp) {
       Interactions.change_disposition_action(this);
     }
-    this.isDrawing_rubber_band = false;
+    this.is_drawing_rubber_band = false;
     mouse_moving = false;
     isDrawing = false;
-    this.last_mouse1X = 0;
+    this.originX = 0;
     return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing];
   }
 
@@ -3959,7 +3959,7 @@ export class PlotContour extends PlotData {
     this.context.closePath();
     for (let i=0; i<this.plot_datas.length; i++) {
       let d = this.plot_datas[i];
-      this.draw_primitivegroup(hidden, this.last_mouse1X, this.last_mouse1Y, this.scaleX, this.scaleY, d);
+      this.draw_primitivegroup(hidden, this.originX, this.originY, this.scaleX, this.scaleY, d);
     }
 
     if (this.dep_mouse_over) {
@@ -4060,8 +4060,8 @@ export class PlotScatter extends PlotData {
     this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
     this.context.clip();
     this.context.closePath();
-    this.draw_graph2D(this.plotObject, hidden, this.last_mouse1X, this.last_mouse1Y);
-    this.draw_scatterplot(this.plotObject, hidden, this.last_mouse1X, this.last_mouse1Y);
+    this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
+    this.draw_scatterplot(this.plotObject, hidden, this.originX, this.originY);
     if (this.permanent_window) {
       this.draw_selection_rectangle();
     }
@@ -4218,11 +4218,7 @@ export class ParallelPlot extends PlotData {
 
   draw_initial() {
     this.init_scale = 1;
-    // this.scale = 1;
-    // this.scaleX = 1;
-    // this.scaleY = 1;
-    this.last_mouse1X = 0;
-    // this.last_mouse1Y = 0;
+    this.originX = 0;
     this.draw();
   }
 
@@ -4236,10 +4232,10 @@ export class ParallelPlot extends PlotData {
     this.context.rect(this.X-1, this.Y-1, this.width+2, this.height + 2);
     this.context.clip();
     this.context.closePath();
-    this.draw_rubber_bands(this.last_mouse1X);
+    this.draw_rubber_bands(this.originX);
     var nb_axis = this.axis_list.length;
     this.draw_parallel_coord_lines();
-    this.draw_parallel_axis(nb_axis, this.last_mouse1X);
+    this.draw_parallel_axis(nb_axis, this.originX);
     if (this.buttons_ON) {
       this.refresh_pp_buttons_coords();
       Buttons.disp_button(this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h, '10px Arial', this);
@@ -4493,13 +4489,13 @@ export class Histogram extends PlotData {
     let keys = Object.keys(this.infos);
     this.y_step = this.get_y_step();
     if (this.discrete) {
-      this.axis.draw_histogram_x_axis(this.context, this.scale, this.init_scale, this.last_mouse1X, this.width,
+      this.axis.draw_histogram_x_axis(this.context, this.scale, this.init_scale, this.originX, this.width,
                                       this.height, this.x_variable.list, this.decalage_axis_x, this.decalage_axis_y,
                                       this.scroll_x, this.X, this.Y, this.x_variable.name);
     } else {
       let {x1, x2} = this.string_to_coordinate(keys[0]);
       let x_step = x2 - x1;
-      this.axis.draw_horizontal_axis(this.context, this.last_mouse1X, this.scale,
+      this.axis.draw_horizontal_axis(this.context, this.originX, this.scale,
                                      this.width, this.height, this.init_scale, this.minX, this.maxX,
                                      this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
                                      this.X, this.Y, this.x_variable.name, x_step);
@@ -4603,7 +4599,7 @@ export class Histogram extends PlotData {
       mouse2Y = e.offsetY;
       if (isDrawing) {
         if (click_on_x_axis) {
-          this.isDrawing_rubber_band = true;
+          this.is_drawing_rubber_band = true;
           if (click_on_x_band) {
             let tx = this.display_to_real_length(mouse2X - old_mouse2X, 'x')
             if (left || right) {
@@ -4628,7 +4624,7 @@ export class Histogram extends PlotData {
           }
           this.get_selected_keys();
         } else {
-          this.last_mouse1X += mouse2X - old_mouse2X;
+          this.originX += mouse2X - old_mouse2X;
         }
       }
       this.draw();
@@ -4649,7 +4645,7 @@ export class Histogram extends PlotData {
         this.get_selected_keys();
       }
       reset_parameters();
-      this.isDrawing_rubber_band = false;
+      this.is_drawing_rubber_band = false;
       this.draw();
     });
 
@@ -4661,7 +4657,7 @@ export class Histogram extends PlotData {
       let event = -Math.sign(e.deltaY);
       if (event >= 0) zoom_coeff = 1.2; else zoom_coeff = 1/1.2;
       this.scale = this.scale * zoom_coeff;
-      this.last_mouse1X = mouse2X - this.X + zoom_coeff * (this.last_mouse1X - mouse2X + this.X);
+      this.originX = mouse2X - this.X + zoom_coeff * (this.originX - mouse2X + this.X);
       this.draw();
     });
 
@@ -4809,9 +4805,9 @@ export class Histogram extends PlotData {
     if (type_ === 'x') {
       if (this.discrete) {
         let grad_beg_x = this.decalage_axis_x / this.scale;
-        return this.scale * (grad_beg_x + real) + this.last_mouse1X + this.X;
+        return this.scale * (grad_beg_x + real) + this.originX + this.X;
       } else {
-        return this.scale * real + this.last_mouse1X + this.X;
+        return this.scale * real + this.originX + this.X;
       }
     } else if (type_ === 'y') {
       let grad_beg_y = this.height - this.decalage_axis_y;
@@ -4839,9 +4835,9 @@ export class Histogram extends PlotData {
     if (type_ === 'x') {
       if (this.discrete) {
         let grad_beg_x = this.decalage_axis_x / this.scale;
-        return (display - this.last_mouse1X - this.X) / this.scale - grad_beg_x;
+        return (display - this.originX - this.X) / this.scale - grad_beg_x;
       } else {
-        return (display - this.last_mouse1X - this.X) / this.scale;
+        return (display - this.originX - this.X) / this.scale;
       }
     } else if (type_ === 'y') {
       let grad_beg_y = this.height - this.decalage_axis_y;
@@ -5012,7 +5008,7 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     var old_scaleX = this.scaleX;
     this.scaleX = this.scaleX*zoom_coeff_x;
-    this.last_mouse1X = this.last_mouse1X - ((container_center_x - this.X)/old_scaleX - (container_center_x - this.X)/this.scaleX);
+    this.originX = this.originX - ((container_center_x - this.X)/old_scaleX - (container_center_x - this.X)/this.scaleX);
     this.scroll_x = 0;
     this.refresh_MinMax();
     
@@ -5027,7 +5023,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       var old_scaleY = this.scaleY;
       this.scaleY = this.scaleY*zoom_coeff_y;
-      this.last_mouse1Y = this.last_mouse1Y - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
+      this.originY = this.originY - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
       this.scroll_y = 0;
     }
     
@@ -5237,13 +5233,13 @@ export class PrimitiveGroupContainer extends PlotData {
   draw_layout_axis() {
     if (this.primitive_groups.length !== 0) {
       if (this.layout_mode == 'one_axis') {
-        this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
+        this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
             this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
       } else if (this.layout_mode == 'two_axis') {
-        this.layout_axis.draw_sc_horizontal_axis(this.context, this.last_mouse1X, this.scaleX, this.width, this.height,
+        this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
           this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
 
-        this.layout_axis.draw_sc_vertical_axis(this.context, this.last_mouse1Y, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
+        this.layout_axis.draw_sc_vertical_axis(this.context, this.originY, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
           this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.height);
 
       }
@@ -5261,13 +5257,13 @@ export class PrimitiveGroupContainer extends PlotData {
     }
     var sorted_list = this.getSortedList();
     var nb_primitives = this.primitive_groups.length;
-    let small_length_nbObjects = Math.min(Math.ceil(nb_primitives/2), Math.floor(Math.sqrt(nb_primitives)));
-    let big_length_nbObjects = Math.ceil(nb_primitives/small_length_nbObjects);
-    let big_length_step = this[big_length]/big_length_nbObjects;
-    let small_length_step = this[small_length]/small_length_nbObjects;
-    for (let i=0; i<big_length_nbObjects - 1; i++) {
-      for (let j=0; j<small_length_nbObjects; j++) {
-        var current_index = i*small_length_nbObjects + j; //current_index in sorted_list
+    let small_length_nb_objects = Math.min(Math.ceil(nb_primitives/2), Math.floor(Math.sqrt(nb_primitives)));
+    let big_length_nb_objects = Math.ceil(nb_primitives/small_length_nb_objects);
+    let big_length_step = this[big_length]/big_length_nb_objects;
+    let small_length_step = this[small_length]/small_length_nb_objects;
+    for (let i=0; i<big_length_nb_objects - 1; i++) {
+      for (let j=0; j<small_length_nb_objects; j++) {
+        var current_index = i*small_length_nb_objects + j; //current_index in sorted_list
         this.primitive_groups[sorted_list[current_index]][big_coord] = i*big_length_step + this[big_coord];
         this.primitive_groups[sorted_list[current_index]][small_coord] = j*small_length_step + this[small_coord];
         this.primitive_groups[sorted_list[current_index]][big_length] = big_length_step;
@@ -5278,7 +5274,7 @@ export class PrimitiveGroupContainer extends PlotData {
     let remaining_obj = nb_primitives - last_index;
     let last_small_length_step = this[small_length]/remaining_obj;
     for (let j=0; j<remaining_obj; j++) {
-      this.primitive_groups[sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step + this[big_coord];
+      this.primitive_groups[sorted_list[last_index + j]][big_coord] = (big_length_nb_objects - 1)*big_length_step + this[big_coord];
       this.primitive_groups[sorted_list[last_index + j]][small_coord] = j*last_small_length_step + this[small_coord];
       this.primitive_groups[sorted_list[last_index + j]][big_length] = big_length_step;
       this.primitive_groups[sorted_list[last_index + j]][small_length] = last_small_length_step;
@@ -5384,7 +5380,7 @@ export class PrimitiveGroupContainer extends PlotData {
     var name = this.layout_attributes[0].name;
     var type_ = this.layout_attributes[0].type_;
     this.scaleX = 1; this.scaleY = 1;
-    this.last_mouse1X = 0; this.last_mouse1Y = 0;
+    this.originX = 0; this.originY = 0;
     if (type_ !== 'float') {
       var real_xs = [];
       var y_incs = Array(nb_primitive_groups).fill(0);
@@ -5402,7 +5398,7 @@ export class PrimitiveGroupContainer extends PlotData {
         real_x = List.get_index_of_element(this.elements_dict[i.toString()][name], this.layout_attributes[0].list);
         if (List.is_include(real_x, real_xs)) {y_incs[i] += - this.primitive_groups[i].height;} else {real_xs.push(real_x);}
       }
-      var center_x = this.scaleX*real_x + this.last_mouse1X;
+      var center_x = this.scaleX*real_x + this.originX;
       this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
       this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
       if (type_ !== 'float') this.primitive_groups[i].Y += y_incs[i];
@@ -5434,7 +5430,7 @@ export class PrimitiveGroupContainer extends PlotData {
     this.layout_axis = Axis.deserialize(serialized_axis);
     var nb_primitive_groups = this.primitive_groups.length;
     this.scaleX = 1; this.scaleY = 1;
-    this.last_mouse1X = 0; this.last_mouse1Y = 0;
+    this.originX = 0; this.originY = 0;
     for (let i=0; i<nb_primitive_groups; i++) {
       this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
       this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
@@ -5446,7 +5442,7 @@ export class PrimitiveGroupContainer extends PlotData {
       } else {
         real_x = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[0].name], this.layout_attributes[0].list);
       }
-      var center_x = this.scaleX*real_x + this.last_mouse1X;
+      var center_x = this.scaleX*real_x + this.originX;
       this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
 
       if (this.layout_attributes[1].type_ == 'float') {
@@ -5457,7 +5453,7 @@ export class PrimitiveGroupContainer extends PlotData {
       } else {
         real_y = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[1].name], this.layout_attributes[1].list);
       }
-      var center_y = -this.scaleX*real_y + this.last_mouse1Y;
+      var center_y = -this.scaleX*real_y + this.originY;
       this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height/2;
     }
     if (this.primitive_groups.length >= 2) this.reset_scales();
@@ -5474,8 +5470,8 @@ export class PrimitiveGroupContainer extends PlotData {
     for (let i=0; i<this.primitive_groups.length; i++) {
       this.translatePrimitive(i, tx, ty);
     }
-    this.last_mouse1X = this.last_mouse1X + tx/this.scaleX;
-    this.last_mouse1Y = this.last_mouse1Y + ty/this.scaleY;
+    this.originX = this.originX + tx/this.scaleX;
+    this.originY = this.originY + ty/this.scaleY;
   }
 
 
@@ -5512,8 +5508,8 @@ export class PrimitiveGroupContainer extends PlotData {
     this.resetAllObjects();
     var old_scaleX = this.scaleX; var old_scaleY = this.scaleY;
     this.scaleX = this.scaleX*zoom_coeff; this.scaleY = this.scaleY*zoom_coeff;
-    this.last_mouse1X = this.last_mouse1X - ((mouse3X - this.X)/old_scaleX - (mouse3X - this.X)/this.scaleX);
-    this.last_mouse1Y = this.last_mouse1Y - ((mouse3Y - this.Y)/old_scaleY - (mouse3Y - this.Y)/this.scaleY);
+    this.originX = this.originX - ((mouse3X - this.X)/old_scaleX - (mouse3X - this.X)/this.scaleX);
+    this.originY = this.originY - ((mouse3Y - this.Y)/old_scaleY - (mouse3Y - this.Y)/this.scaleY);
     this.draw();
   }
 
@@ -5532,7 +5528,7 @@ export class PrimitiveGroupContainer extends PlotData {
     this.resetAllObjects();
     var old_scaleX = this.scaleX;
     this.scaleX = this.scaleX*zoom_coeff;
-    this.last_mouse1X = this.last_mouse1X - ((container_center_x - this.X)/old_scaleX - (container_center_x - this.X)/this.scaleX);
+    this.originX = this.originX - ((container_center_x - this.X)/old_scaleX - (container_center_x - this.X)/this.scaleX);
     this.draw();
   }
 
@@ -5551,7 +5547,7 @@ export class PrimitiveGroupContainer extends PlotData {
     this.resetAllObjects();
     var old_scaleY = this.scaleY;
     this.scaleY = this.scaleY*zoom_coeff;
-    this.last_mouse1Y = this.last_mouse1Y - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
+    this.originY = this.originY - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
     this.draw();
   }
 
@@ -5854,8 +5850,8 @@ export class Interactions {
         let graph = plot_data.plotObject.graphs[i];
         for (let j=0; j<graph.point_list.length; j++) {
           let point = graph.point_list[j];
-          var x = plot_data.scaleX*point.cx + plot_data.last_mouse1X + plot_data.X;
-          var y = plot_data.scaleY*point.cy + plot_data.last_mouse1Y + plot_data.Y;
+          var x = plot_data.scaleX*point.cx + plot_data.originX + plot_data.X;
+          var y = plot_data.scaleY*point.cy + plot_data.originY + plot_data.Y;
           var in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
           if ((in_rect===true) && !List.is_include(point, plot_data.select_on_click)) {
             plot_data.select_on_click.push(point);
@@ -5869,8 +5865,8 @@ export class Interactions {
 
     } else if (plot_data.plotObject['type_'] == 'scatterplot') {
       for (var j=0; j<plot_data.scatter_point_list.length; j++) {
-        var x = plot_data.scaleX*plot_data.scatter_point_list[j].cx + plot_data.last_mouse1X + plot_data.X;
-        var y = plot_data.scaleY*plot_data.scatter_point_list[j].cy + plot_data.last_mouse1Y + plot_data.Y;
+        var x = plot_data.scaleX*plot_data.scatter_point_list[j].cx + plot_data.originX + plot_data.X;
+        var y = plot_data.scaleY*plot_data.scatter_point_list[j].cy + plot_data.originY + plot_data.Y;
         in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
         if ((in_rect===true) && !List.is_include(plot_data.scatter_point_list[j], plot_data.select_on_click)) {
           plot_data.select_on_click.push(plot_data.scatter_point_list[j]);
@@ -5895,9 +5891,9 @@ export class Interactions {
       plot_data.scaleY = plot_data.scaleY*zoom_coeff_y;
 
       let mouseX = Math.min(mouse1X, mouse2X);
-      plot_data.last_mouse1X = zoom_coeff_x * (plot_data.X + plot_data.last_mouse1X - mouseX);
+      plot_data.originX = zoom_coeff_x * (plot_data.X + plot_data.originX - mouseX);
       let mouseY = Math.min(mouse1Y, mouse2Y);
-      plot_data.last_mouse1Y = zoom_coeff_y * (plot_data.Y + plot_data.last_mouse1Y - mouseY);
+      plot_data.originY = zoom_coeff_y * (plot_data.Y + plot_data.originY - mouseY);
     }
   }
 
@@ -5969,8 +5965,8 @@ export class Interactions {
     let zoom_coeff = 1.2;
     plot_data.scaleX = plot_data.scaleX*zoom_coeff;
     plot_data.scaleY = plot_data.scaleY*zoom_coeff;
-    plot_data.last_mouse1X = plot_data.width/2 + zoom_coeff * (plot_data.last_mouse1X - plot_data.width/2);
-    plot_data.last_mouse1Y = plot_data.height/2 + zoom_coeff * (plot_data.last_mouse1Y - plot_data.height/2);
+    plot_data.originX = plot_data.width/2 + zoom_coeff * (plot_data.originX - plot_data.width/2);
+    plot_data.originY = plot_data.height/2 + zoom_coeff * (plot_data.originY - plot_data.height/2);
     plot_data.reset_scroll();
   }
 
@@ -5978,8 +5974,8 @@ export class Interactions {
     var zoom_coeff = 1/1.2;
     plot_data.scaleX = plot_data.scaleX*zoom_coeff;
     plot_data.scaleY = plot_data.scaleY*zoom_coeff;
-    plot_data.last_mouse1X = plot_data.width/2 + zoom_coeff * (plot_data.last_mouse1X - plot_data.width/2);
-    plot_data.last_mouse1Y = plot_data.height/2 + zoom_coeff * (plot_data.last_mouse1Y - plot_data.height/2);
+    plot_data.originX = plot_data.width/2 + zoom_coeff * (plot_data.originX - plot_data.width/2);
+    plot_data.originY = plot_data.height/2 + zoom_coeff * (plot_data.originY - plot_data.height/2);
     plot_data.reset_scroll();
   }
 
@@ -5990,10 +5986,10 @@ export class Interactions {
     var mouse2Y = e.offsetY;
     if (plot_data.vertical === true) {
       var axis_x = plot_data.axis_x_start + plot_data.move_index*plot_data.x_step;
-      plot_data.last_mouse1X = mouse2X - axis_x
+      plot_data.originX = mouse2X - axis_x
     } else {
       var axis_y = plot_data.axis_y_start + plot_data.move_index*plot_data.y_step;
-      plot_data.last_mouse1X = mouse2Y - axis_y;
+      plot_data.originX = mouse2Y - axis_y;
     }
     plot_data.draw();
     var is_inside_canvas = (mouse2X>=plot_data.X) && (mouse2X<=plot_data.width + plot_data.X) && (mouse2Y>=plot_data.Y) && (mouse2Y<=plot_data.height + plot_data.Y);
@@ -6009,7 +6005,7 @@ export class Interactions {
   public static create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, plot_data:any) {
     var mouse2X = e.offsetX;
     var mouse2Y = e.offsetY;
-    plot_data.isDrawing_rubber_band = true;
+    plot_data.is_drawing_rubber_band = true;
     if (plot_data.vertical) {
       var min = Math.max(Math.min((mouse1Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end), (mouse2Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end)), 0);
       var max = Math.min(Math.max((mouse1Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end), (mouse2Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end)), 1);
@@ -6031,7 +6027,7 @@ export class Interactions {
   public static rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e, plot_data:any) {
     var mouse2X = e.offsetX;
     var mouse2Y = e.offsetY;
-    plot_data.isDrawing_rubber_band = true;
+    plot_data.is_drawing_rubber_band = true;
     if (plot_data.vertical) {
       var deltaY = (mouse2Y - mouse1Y)/(plot_data.axis_y_start - plot_data.axis_y_end);
       var new_min = Math.max(plot_data.rubber_last_min + deltaY, 0);
@@ -6056,7 +6052,7 @@ export class Interactions {
     var mouse2Y = e.offsetY;
     var axis_index = selected_border[0];
     var border_number = selected_border[1];
-    plot_data.isDrawing_rubber_band = true;
+    plot_data.is_drawing_rubber_band = true;
     if (plot_data.vertical) {
       var deltaY = (mouse2Y - mouse1Y)/(plot_data.axis_y_start - plot_data.axis_y_end);
       if (border_number == 0) {

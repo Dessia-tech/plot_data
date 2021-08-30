@@ -444,8 +444,7 @@ export class MultiplePlots {
   remove_all_primitive_groups_from_container(container_index) {
     var obj:any = this.objectList[container_index];
     obj.reinitialize_all();
-    obj.draw(true, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
-    obj.draw(false, obj.last_mouse1X, obj.last_mouse1Y, obj.scaleX, obj.scaleY, obj.X, obj.Y);
+    obj.draw();
   }
 
   remove_plot(index) {
@@ -1522,8 +1521,7 @@ export class MultiplePlots {
             for (let j=0; j<container.primitive_groups.length; j++) {
                 container.primitive_groups[j].dep_mouse_over = element_index_list.includes(Number(primitive_to_point_index[j]));
             }
-            container.draw(false, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);
-            container.draw(true, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);        
+            container.draw();        
           }
         } else {
           for (let i=0; i<this.nbObjects; i++) {
@@ -1531,8 +1529,7 @@ export class MultiplePlots {
             let container:any = this.objectList[i];
             for (let j=0; j<container.primitive_groups.length; j++) {
               container.primitive_groups[j].dep_mouse_over = false;
-              container.draw(false, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);
-              container.draw(true, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);  
+              container.draw();  
             }
           }
         }
@@ -1544,8 +1541,7 @@ export class MultiplePlots {
         let container:any = this.objectList[i];
         for (let j=0; j<container.primitive_groups.length; j++) {
           container.primitive_groups[j].dep_mouse_over = false;
-          container.draw(false, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);
-          container.draw(true, container.last_mouse1X, container.last_mouse1Y, container.scaleX, container.scaleY, container.X, container.Y);  
+          container.draw();  
         }
       }
     }
@@ -5999,8 +5995,7 @@ export class Interactions {
       var axis_y = plot_data.axis_y_start + plot_data.move_index*plot_data.y_step;
       plot_data.last_mouse1X = mouse2Y - axis_y;
     }
-    plot_data.draw(false, plot_data.last_mouse1X, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, plot_data.last_mouse1X, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
+    plot_data.draw();
     var is_inside_canvas = (mouse2X>=plot_data.X) && (mouse2X<=plot_data.width + plot_data.X) && (mouse2Y>=plot_data.Y) && (mouse2Y<=plot_data.height + plot_data.Y);
     var mouse_move = true;
     if (!is_inside_canvas) {
@@ -6029,8 +6024,7 @@ export class Interactions {
     var real_max = Math.max(realCoord_min, realCoord_max);
 
     plot_data.add_to_rubberbands_dep([plot_data.axis_list[selected_axis_index]['name'], [real_min, real_max]]);
-    plot_data.draw(false, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
+    plot_data.draw();
     return [mouse2X, mouse2Y];
   }
 
@@ -6053,8 +6047,7 @@ export class Interactions {
     let to_add_min = Math.min(real_new_min, real_new_max);
     let to_add_max = Math.max(real_new_min, real_new_max);
     plot_data.add_to_rubberbands_dep([plot_data.axis_list[selected_band_index]['name'], [to_add_min, to_add_max]]);
-    plot_data.draw(false, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
+    plot_data.draw();
     return [mouse2X, mouse2Y];
   }
 
@@ -6093,8 +6086,7 @@ export class Interactions {
     var to_add_min = Math.min(real_new_min, real_new_max);
     var to_add_max = Math.max(real_new_min, real_new_max);
     plot_data.add_to_rubberbands_dep([plot_data.axis_list[axis_index]['name'], [to_add_min, to_add_max]]);
-    plot_data.draw(false, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
+    plot_data.draw();
     var is_resizing = true;
     return [border_number, mouse2X, mouse2Y, is_resizing];
   }
@@ -6150,8 +6142,7 @@ export class Interactions {
       plot_data.invert_rubber_bands([selected_name_index]);
     }
     plot_data.refresh_axis_coords();
-    plot_data.draw(false, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
+    plot_data.draw();
   }
 
   public static change_disposition_action(plot_data:any) {
@@ -6159,16 +6150,14 @@ export class Interactions {
     plot_data.refresh_axis_bounds(plot_data.axis_list.length);
     plot_data.invert_rubber_bands('all');
 
-    plot_data.draw(false, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
+    plot_data.draw();
   }
 
   public static rubber_band_size_check(selected_band_index, plot_data:any) {
     if (plot_data.rubber_bands[selected_band_index].length != 0 && Math.abs(plot_data.rubber_bands[selected_band_index][0] - plot_data.rubber_bands[selected_band_index][1])<=0.02) {
       plot_data.rubber_bands[selected_band_index] = [];
     }
-    plot_data.draw(false, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, 0, 0, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
+    plot_data.draw();
     var is_resizing = false;
     return is_resizing;
   }
@@ -6180,10 +6169,7 @@ export class Interactions {
     plot_data.refresh_to_display_list(plot_data.elements);
     plot_data.refresh_displayable_attributes(); //No need to refresh attribute_booleans as inverting axis doesn't affect its values
     plot_data.refresh_axis_coords();
-    var mvx = 0;
-    var mvy = 0;
-    plot_data.draw(false, mvx, mvy, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
-    plot_data.draw(true, mvx, mvy, plot_data.scaleX, plot_data.scaleY, plot_data.X, plot_data.Y);
+    plot_data.draw();
   }
 
   public static initialize_click_on_bands(mouse1X, mouse1Y, plot_data:any) {

@@ -27,6 +27,8 @@ export class MultiplePlots {
   clicked_index_list:number[]=[];
   clickedPlotIndex:number=-1;
   last_index:number=-1;
+  small_length_nbObjects: number = 0;
+  big_length_nbObjects: number = 0;
   manipulation_bool:boolean=false;
   transbutton_x:number=0; transbutton_y:number=0; transbutton_w:number=0; transbutton_h:number=0;
   selectDependency_bool:boolean=false;
@@ -941,11 +943,18 @@ export class MultiplePlots {
       sortedDisplayedObjectList.push(this.objectList[sorted_list[i]]);
     }
     var j = 0;
-    while (j<sorted_list.length - 1) {
-      if (sortedDisplayedObjectList[j+1][small_coord] < sortedDisplayedObjectList[j][small_coord]) {
-        List.switchElements(sorted_list, j, j+1);
+    while (j < sorted_list.length - this.small_length_nbObjects + 1) {
+      let sub = List.subarray(sortedDisplayedObjectList, j, j + this.small_length_nbObjects);
+      sub = sort.sortObjsByAttribute(sub, small_coord);
+      let permutations = sort.permutations;
+      let permuted = [];
+      for (let k=0; k<this.small_length_nbObjects; k++) {
+        permuted.push(sorted_list[j + permutations[k]]);
       }
-      j = j+2;
+      for (let k=0; k<this.small_length_nbObjects; k++) {
+        sorted_list[j + k] = permuted[k];
+      }
+      j = j + this.small_length_nbObjects;
     }
     return sorted_list;
   }
@@ -1003,19 +1012,19 @@ export class MultiplePlots {
     if (this.width < this.height) {
       [big_coord, small_coord, big_length, small_length] = [small_coord, big_coord, small_length, big_length];
     }
-    this.sorted_list = this.getSortedList();
     var nbObjectsDisplayed = this.to_display_plots.length;
-    let small_length_nbObjects = Math.min(Math.ceil(nbObjectsDisplayed/2), Math.floor(Math.sqrt(nbObjectsDisplayed)));
-    let big_length_nbObjects = Math.ceil(nbObjectsDisplayed/small_length_nbObjects);
+    this.small_length_nbObjects = Math.min(Math.ceil(nbObjectsDisplayed/2), Math.floor(Math.sqrt(nbObjectsDisplayed)));
+    this.big_length_nbObjects = Math.ceil(nbObjectsDisplayed/this.small_length_nbObjects);
+    this.sorted_list = this.getSortedList();
     // let big_length_step = this[big_length]/big_length_nbObjects;
     // let small_length_step = this[small_length]/small_length_nbObjects;
     let blank_space = this.padding || 0.01*this[small_length];
-    let big_length_step = (this[big_length] - (big_length_nbObjects + 1)*blank_space)/big_length_nbObjects;
-    let small_length_step = (this[small_length] - (small_length_nbObjects + 1)*blank_space)/small_length_nbObjects;
+    let big_length_step = (this[big_length] - (this.big_length_nbObjects + 1)*blank_space)/this.big_length_nbObjects;
+    let small_length_step = (this[small_length] - (this.small_length_nbObjects + 1)*blank_space)/this.small_length_nbObjects;
 
-    for (let i=0; i<big_length_nbObjects - 1; i++) {
-      for (let j=0; j<small_length_nbObjects; j++) {
-        var current_index = i*small_length_nbObjects + j; //current_index in sorted_list
+    for (let i=0; i<this.big_length_nbObjects - 1; i++) {
+      for (let j=0; j<this.small_length_nbObjects; j++) {
+        var current_index = i*this.small_length_nbObjects + j; //current_index in sorted_list
 
         // The three following lines are useful for primitive group containers only
         let obj:any = this.objectList[this.sorted_list[current_index]];
@@ -1048,8 +1057,8 @@ export class MultiplePlots {
       let old_small_coord = obj[small_coord];
       let old_big_coord = obj[big_coord];
 
-      this.objectList[this.sorted_list[last_index + j]][big_coord] = (big_length_nbObjects - 1)*big_length_step 
-                                                                     + big_length_nbObjects*blank_space;
+      this.objectList[this.sorted_list[last_index + j]][big_coord] = (this.big_length_nbObjects - 1)*big_length_step 
+                                                                     + this.big_length_nbObjects*blank_space;
       this.objectList[this.sorted_list[last_index + j]][small_coord] = j*last_small_length_step + (j+1)*blank_space;
       this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
       this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
@@ -8643,6 +8652,7 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
  */
 export class Sort {
   nbPermutations:number = 0;
+  permutations: number[] = [];
   constructor(){};
 
   MergeSort(items: number[]): number[] {
@@ -8699,6 +8709,10 @@ export class Sort {
     }
     var attribute_type = TypeOf(list[0][attribute_name]);
     var list_copy = Array.from(list);
+
+    this.permutations = [];
+    for (let i=0; i<list.length; i++) this.permutations.push(i);
+
     if (attribute_type == 'float') {
       for (let i=0; i<list_copy.length-1; i++) {
         let min = i;
@@ -8712,6 +8726,7 @@ export class Sort {
         }
         if (min != i) {
           list_copy = List.move_elements(min, i, list_copy);
+          this.permutations = List.move_elements(min, i, this.permutations);
         }
       }
       return list_copy;
@@ -8796,6 +8811,15 @@ export class List {
   //   }
   //   return no_duplicates
   // }
+
+/**
+ * 
+ * @returns a sub-array from i to j-1 included. Ex : subarray([0,1,2,3], 1, 3) = [1,2]
+ */
+  public static subarray(list, i, j) { 
+    return list.slice(i, j)
+  }
+
 
   /**
    * @returns the input list without its duplicates.

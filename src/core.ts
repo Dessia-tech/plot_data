@@ -1,10 +1,3 @@
-import { info } from "console";
-import { type } from "os";
-import { relative } from "path";
-import { Context } from "typedoc/dist/lib/converter";
-import { createUnparsedSourceFile, isExternalModuleNameRelative, isJsxFragment } from "typescript";
-import { serialize } from "v8";
-
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
 
@@ -43,7 +36,7 @@ export class MultiplePlots {
   initial_mouseY:number=0;
   sorted_list:number[]=[];
   display_order:number[]=[];
-  displayable_attributes:Attribute[]=[];
+  all_attributes:Attribute[]=[];
   selected_point_index:number[]=[];
   dep_selected_points_index:number[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
   point_families:PointFamily[]=[];
@@ -67,7 +60,7 @@ export class MultiplePlots {
     this.dataObjects = data['plots'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
     var elements = data['elements'];
-    if (elements) {this.initialize_displayable_attributes();}
+    if (elements) {this.initialize_all_attributes();}
     this.nbObjects = this.dataObjects.length;
     this.initialize_sizes();
     this.define_canvas(canvas_id);
@@ -87,7 +80,7 @@ export class MultiplePlots {
           this.initializeObjectContext(newObject);
           let association = this.dataObjects[i]['association'];
           newObject = this.initialize_containers_dicts(newObject, association['associated_elements']);
-          newObject = this.call_layout(newObject, association['to_disp_attribute_names']);
+          newObject = this.call_layout(newObject, association['attribute_names']);
         }
       } else if (object_type_ === 'histogram') {
         this.dataObjects[i]['elements'] = elements;
@@ -131,15 +124,15 @@ export class MultiplePlots {
     }
   }
 
-  initialize_displayable_attributes() {
-    this.displayable_attributes = [];
+  initialize_all_attributes() {
+    this.all_attributes = [];
     var attribute_names = Object.getOwnPropertyNames(this.data['elements'][0]);
     var exceptions = ['name', 'package_version', 'object_class'];
     for (let i=0; i<attribute_names.length; i++) {
       if (!(List.is_include(attribute_names[i], exceptions))) {
         let name = attribute_names[i];
         let type_ = TypeOf(this.data['elements'][0][name]);
-        this.displayable_attributes.push(new Attribute(name, type_));
+        this.all_attributes.push(new Attribute(name, type_));
       }
     }
   }
@@ -297,7 +290,7 @@ export class MultiplePlots {
   }
 
   get_attribute(name:string) {
-    for (let attribute of this.displayable_attributes) {
+    for (let attribute of this.all_attributes) {
       if (attribute.name === name) {
         return attribute;
       }
@@ -311,9 +304,9 @@ export class MultiplePlots {
     var DEFAULT_AXIS = {nb_points_x:10, nb_points_y:10, graduation_style: graduation_style, axis_style: axis_style, arrow_on: false, grid_on: true, type_:'axis', name:''};
     var surface_style = {color_fill: string_to_rgb('lightblue'), opacity:0.75, hatching:undefined};
     var text_style = {text_color: string_to_rgb('black'), font_size:10, font_style:'sans-serif', text_align_x:'start', text_align_y:'alphabetic', name:''};
-    var DEFAULT_TOOLTIP = {to_disp_attribute_names:[attr_x.name, attr_y.name], surface_style:surface_style, text_style:text_style, tooltip_radius:5, type_:'tooltip', name:''};
+    var DEFAULT_TOOLTIP = {attribute_names:[attr_x.name, attr_y.name], surface_style:surface_style, text_style:text_style, tooltip_radius:5, type_:'tooltip', name:''};
     var point_style = {color_fill:string_to_rgb('lightblue'), color_stroke:string_to_rgb('grey'), stroke_width:0.5, size:2, shape:'circle', name:''};
-    var new_scatter = {tooltip:DEFAULT_TOOLTIP, to_disp_attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
+    var new_scatter = {tooltip:DEFAULT_TOOLTIP, attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
                        elements:this.data['elements'], axis:DEFAULT_AXIS, type_:'scatterplot', name:'', package_version: this.data['package_version']};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
@@ -322,12 +315,12 @@ export class MultiplePlots {
   }
 
   add_parallelplot(attributes:Attribute[]) {
-    var to_disp_attribute_names = [];
+    var attribute_names = [];
     for (let i=0; i<attributes.length; i++) {
-      to_disp_attribute_names.push(attributes[i].name);
+      attribute_names.push(attributes[i].name);
     }
     var edge_style = {line_width:0.5, color_stroke:string_to_rgb('black'), dashline:[], name:''};
-    var pp_data = {edge_style:edge_style, disposition: 'vertical', to_disp_attribute_names:to_disp_attribute_names,
+    var pp_data = {edge_style:edge_style, disposition: 'vertical', attribute_names:attribute_names,
                   rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:'', package_version:this.data['package_version']};
     var DEFAULT_WIDTH = 560;
     var DEFAULT_HEIGHT = 300;
@@ -403,7 +396,7 @@ export class MultiplePlots {
     var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, this.buttons_ON, 0, 0, this.canvas_id);
     if (attribute_names !== null) {
       new_plot_data = this.initialize_containers_dicts(new_plot_data, associated_points);
-      let displayable_names = Array.from(this.displayable_attributes, attribute => attribute.name);
+      let displayable_names = Array.from(this.all_attributes, attribute => attribute.name);
       for (let name of attribute_names) {
         if (!displayable_names.includes(name)) {
           throw new Error('add_primitive_group_container(): ' + name + " isn't a valid attribute");
@@ -1900,7 +1893,7 @@ export abstract class PlotData {
   zoom_box_h:number=0;
   clear_point_button_y:number=0;
 
-  displayable_attributes:Attribute[]=[];
+  all_attributes:Attribute[]=[];
   attribute_booleans:boolean[]=[];
   axis_list:Attribute[]=[];
   to_display_list:any[]=[];
@@ -2261,9 +2254,9 @@ export abstract class PlotData {
   draw_axis(mvx, mvy, scaleX, scaleY, d:Axis) { // Only used by graph2D
     if (d['type_'] == 'axis'){
       d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][0]);
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][0]);
       d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['to_disp_attribute_names'][1]);
+        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][1]);
       this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
       this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     }
@@ -2346,7 +2339,7 @@ export abstract class PlotData {
       }
       for (let i=0; i<d.graphs.length; i++) {
         let graph: Dataset = d.graphs[i];
-        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, graph.elements, false, d.to_disp_attribute_names);
+        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, graph.elements, false, d.attribute_names);
       }
     }
   }
@@ -2391,7 +2384,7 @@ export abstract class PlotData {
           this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
         }
       }
-      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_point_list, d.point_list, d.elements, this.mergeON, d.to_disp_attribute_names);
+      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_point_list, d.point_list, d.elements, this.mergeON, d.attribute_names);
     }
   }
 
@@ -2962,10 +2955,10 @@ export abstract class PlotData {
 
   refresh_attribute_booleans() {
     this.attribute_booleans = [];
-    for (let i=0; i<this.displayable_attributes.length; i++) {
+    for (let i=0; i<this.all_attributes.length; i++) {
       let isDisplayed = false;
       for (let j=0; j<this.axis_list.length; j++) {
-        if (this.displayable_attributes[i].name == this.axis_list[j].name) {
+        if (this.all_attributes[i].name == this.axis_list[j].name) {
           isDisplayed = true;
           break;
         }
@@ -2974,27 +2967,27 @@ export abstract class PlotData {
     }
   }
 
-  refresh_displayable_attributes():void { //Orders displayable_attributes so that displayed axis are placed on top of the list
-    var new_displayable_attributes:Attribute[] = [];
+  refresh_all_attributes():void { //Orders all_attributes so that displayed axis are placed on top of the list
+    var new_all_attributes:Attribute[] = [];
     for (let i=0; i<this.axis_list.length; i++) {
-      for (let j=0; j<this.displayable_attributes.length; j++) {
-        if (this.axis_list[i].name == this.displayable_attributes[j].name) {
-          new_displayable_attributes.push(this.displayable_attributes[j]);
-          this.displayable_attributes = List.remove_at_index(j, this.displayable_attributes);
+      for (let j=0; j<this.all_attributes.length; j++) {
+        if (this.axis_list[i].name == this.all_attributes[j].name) {
+          new_all_attributes.push(this.all_attributes[j]);
+          this.all_attributes = List.remove_at_index(j, this.all_attributes);
         }
       }
     }
-    for (let i=0; i<this.displayable_attributes.length; i++) {
-      new_displayable_attributes.push(this.displayable_attributes[i]);
+    for (let i=0; i<this.all_attributes.length; i++) {
+      new_all_attributes.push(this.all_attributes[i]);
     }
-    this.displayable_attributes = new_displayable_attributes;
+    this.all_attributes = new_all_attributes;
   }
 
-  add_to_axis_list(to_disp_attribute_names:string[]) {
-    for (let i=0; i<to_disp_attribute_names.length; i++) {
-      for (let j=0; j<this.displayable_attributes.length; j++) {
-        if (to_disp_attribute_names[i] == this.displayable_attributes[j]['name']) {
-          this.axis_list.push(this.displayable_attributes[j]);
+  add_to_axis_list(attribute_names:string[]) {
+    for (let i=0; i<attribute_names.length; i++) {
+      for (let j=0; j<this.all_attributes.length; j++) {
+        if (attribute_names[i] == this.all_attributes[j]['name']) {
+          this.axis_list.push(this.all_attributes[j]);
         }
       }
     }
@@ -3024,7 +3017,7 @@ export abstract class PlotData {
     }
     this.add_to_axis_list([name]);
     this.refresh_axis_bounds(this.axis_list.length);
-    this.refresh_displayable_attributes();
+    this.refresh_all_attributes();
     this.refresh_attribute_booleans();
     this.rubber_bands.push([]);
     this.refresh_to_display_list(this.elements);
@@ -3047,7 +3040,7 @@ export abstract class PlotData {
     this.refresh_to_display_list(this.elements);
     this.rubber_bands = List.remove_at_index(i, this.rubber_bands);
     this.refresh_axis_bounds(this.axis_list.length);
-    this.refresh_displayable_attributes();
+    this.refresh_all_attributes();
     this.refresh_attribute_booleans();
     this.draw();
   }
@@ -3057,7 +3050,7 @@ export abstract class PlotData {
   }
 
   get_scatterplot_displayable_axis():Attribute[] {
-    return this.plotObject.displayable_attributes;
+    return this.plotObject.all_attributes;
   }
 
   reset_scatter_point_families() {
@@ -3079,10 +3072,10 @@ export abstract class PlotData {
   set_scatterplot_x_axis(attribute_name:string):void {
     var isAttributeInList:boolean = false;
     var attribute:Attribute;
-    for (let i=0; i<this.plotObject.displayable_attributes.length; i++) {
-      if (this.plotObject.displayable_attributes[i].name == attribute_name) {
+    for (let i=0; i<this.plotObject.all_attributes.length; i++) {
+      if (this.plotObject.all_attributes[i].name == attribute_name) {
         isAttributeInList = true;
-        attribute = this.plotObject.displayable_attributes[i];
+        attribute = this.plotObject.all_attributes[i];
       }
     }
     if (isAttributeInList === false) {
@@ -3101,10 +3094,10 @@ export abstract class PlotData {
   set_scatterplot_y_axis(attribute_name:string):void {
     var isAttributeInList:boolean = false;
     var attribute:Attribute;
-    for (let i=0; i<this.plotObject.displayable_attributes.length; i++) {
-      if (this.plotObject.displayable_attributes[i].name == attribute_name) {
+    for (let i=0; i<this.plotObject.all_attributes.length; i++) {
+      if (this.plotObject.all_attributes[i].name == attribute_name) {
         isAttributeInList = true;
-        attribute = this.plotObject.displayable_attributes[i];
+        attribute = this.plotObject.all_attributes[i];
       }
     }
     if (isAttributeInList === false) {
@@ -3121,12 +3114,12 @@ export abstract class PlotData {
   }
 
   add_to_tooltip(tooltip:Tooltip, str:string): Tooltip {
-    tooltip.to_disp_attribute_names.push(str);
+    tooltip.attribute_names.push(str);
     return tooltip;
   }
 
   remove_from_tooltip(tooltip:Tooltip, str:string): Tooltip {
-    tooltip.to_disp_attribute_names = List.remove_element(str, tooltip.to_disp_attribute_names);
+    tooltip.attribute_names = List.remove_element(str, tooltip.attribute_names);
     return tooltip;
   }
 
@@ -3318,7 +3311,7 @@ export abstract class PlotData {
     });
     this.axis_list = new_axis_list;
     this.refresh_to_display_list(this.elements);
-    this.refresh_displayable_attributes();
+    this.refresh_all_attributes();
     this.refresh_attribute_booleans();
   }
 
@@ -4088,7 +4081,7 @@ export class PlotScatter extends PlotData {
       Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
 
       if (this.plotObject.type_ == 'scatterplot') {
-        // TODO To check, this in args is weird
+        // TODO To check, 'this' in args is weird
         Buttons.merge_button(this.button_x, this.merge_y, this.button_w, this.button_h, '10px Arial', this);
       }
 
@@ -4128,7 +4121,7 @@ export class ParallelPlot extends PlotData {
     data = set_default_values(data, default_dict_);
     this.elements = data['elements'];
     this.edge_style = EdgeStyle.deserialize(data['edge_style']);
-    var to_disp_attribute_names = data['to_disp_attribute_names'];
+    var attribute_names = data['attribute_names'];
     if (data['disposition'] == 'vertical') {
       this.vertical = true;
     } else if (data['disposition'] == 'horizontal') {
@@ -4136,14 +4129,14 @@ export class ParallelPlot extends PlotData {
     } else {
       throw new Error('Axis disposition must be vertical or horizontal');
     }
-    this.initialize_displayable_attributes();
+    this.initialize_all_attributes();
     this.initialize_attributes_list();
-    this.add_to_axis_list(to_disp_attribute_names);
+    this.add_to_axis_list(attribute_names);
     this.initialize_data_lists();
     var nb_axis = this.axis_list.length;
     if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
     this.refresh_to_display_list(this.elements);
-    this.refresh_displayable_attributes();
+    this.refresh_all_attributes();
     this.refresh_attribute_booleans();
     this.refresh_axis_bounds(nb_axis);
     this.refresh_axis_coords();
@@ -4169,23 +4162,23 @@ export class ParallelPlot extends PlotData {
     }
   }
 
-  initialize_displayable_attributes() {
+  initialize_all_attributes() {
     var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
     var exceptions = ['name', 'package_version', 'object_class'];
     for (let i=0; i<attribute_names.length; i++) {
       if (!(List.is_include(attribute_names[i], exceptions))) {
         let name = attribute_names[i];
         let type_ = TypeOf(this.elements[0][name]);
-        this.displayable_attributes.push(new Attribute(name, type_));
+        this.all_attributes.push(new Attribute(name, type_));
       }
     }
   }
 
-  initialize_attributes_list() { //Initialize 'list' and 'alias' of displayable_attributes's elements'
-    for (var i=0; i<this.displayable_attributes.length; i++) {
-      var attribute_name = this.displayable_attributes[i]['name'];
-      this.displayable_attributes[i]['alias'] = this.displayable_attributes[i]['name'];
-      var type_ = this.displayable_attributes[i]['type_'];
+  initialize_attributes_list() { //Initialize 'list' and 'alias' of all_attributes's elements'
+    for (var i=0; i<this.all_attributes.length; i++) {
+      var attribute_name = this.all_attributes[i]['name'];
+      this.all_attributes[i]['alias'] = this.all_attributes[i]['name'];
+      var type_ = this.all_attributes[i]['type_'];
       if (type_ == 'float') {
         var min = this.elements[0][attribute_name];
         var max = this.elements[0][attribute_name];
@@ -4198,7 +4191,7 @@ export class ParallelPlot extends PlotData {
             max = elt;
           }
         }
-        this.displayable_attributes[i]['list'] = [min, max];
+        this.all_attributes[i]['list'] = [min, max];
       } else { //ie string
         var list = [];
         for (var j=0; j<this.elements.length; j++) {
@@ -4211,7 +4204,7 @@ export class ParallelPlot extends PlotData {
             list.push(elt);
           }
         }
-        this.displayable_attributes[i]['list'] = list;
+        this.all_attributes[i]['list'] = list;
       }
     }
   }
@@ -5006,9 +4999,8 @@ export class PrimitiveGroupContainer extends PlotData {
       primitive_center_x = container_center_x + zoom_coeff_x*(primitive_center_x - container_center_x);
       this.primitive_groups[i].X = primitive_center_x - this.primitive_groups[i].width/2;
     }
-    var old_scaleX = this.scaleX;
     this.scaleX = this.scaleX*zoom_coeff_x;
-    this.originX = this.originX - ((container_center_x - this.X)/old_scaleX - (container_center_x - this.X)/this.scaleX);
+    this.originX = this.width/2 + zoom_coeff_x * (this.originX - this.width/2);
     this.scroll_x = 0;
     this.refresh_MinMax();
     
@@ -5021,9 +5013,8 @@ export class PrimitiveGroupContainer extends PlotData {
         primitive_center_y = container_center_y + zoom_coeff_y*(primitive_center_y - container_center_y);
         this.primitive_groups[i].Y = primitive_center_y - this.primitive_groups[i].height/2;
       }
-      var old_scaleY = this.scaleY;
       this.scaleY = this.scaleY*zoom_coeff_y;
-      this.originY = this.originY - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
+      this.originY = this.height/2 + zoom_coeff_y * (this.originY - this.height/2);
       this.scroll_y = 0;
     }
     
@@ -5063,13 +5054,7 @@ export class PrimitiveGroupContainer extends PlotData {
       let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
       this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
     }
-    this.draw_from_context(true);
-    this.draw_from_context(false);
-  }
-
-
-  draw_from_context(hidden) {
-    this.define_context(hidden);
+    this.context = this.context_show;
     this.context.save();
     this.draw_empty_canvas(this.context);
     if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
@@ -5080,7 +5065,6 @@ export class PrimitiveGroupContainer extends PlotData {
         this.draw_coordinate_lines();
       }
       for (let index of this.display_order) {
-        let prim = this.primitive_groups[index];
         this.primitive_groups[index].draw();
       }
     }
@@ -5095,6 +5079,9 @@ export class PrimitiveGroupContainer extends PlotData {
     if (this.buttons_ON) { this.draw_buttons(); }
     this.context.restore();
   }
+
+
+  draw_from_context(hidden) {}
 
 
   redraw_object() {
@@ -5470,8 +5457,8 @@ export class PrimitiveGroupContainer extends PlotData {
     for (let i=0; i<this.primitive_groups.length; i++) {
       this.translatePrimitive(i, tx, ty);
     }
-    this.originX = this.originX + tx/this.scaleX;
-    this.originY = this.originY + ty/this.scaleY;
+    this.originX = this.originX + tx;
+    this.originY = this.originY + ty;
   }
 
 
@@ -5506,10 +5493,9 @@ export class PrimitiveGroupContainer extends PlotData {
       this.primitive_groups[i].height = this.primitive_groups[i].height*zoom_coeff;
     }
     this.resetAllObjects();
-    var old_scaleX = this.scaleX; var old_scaleY = this.scaleY;
     this.scaleX = this.scaleX*zoom_coeff; this.scaleY = this.scaleY*zoom_coeff;
-    this.originX = this.originX - ((mouse3X - this.X)/old_scaleX - (mouse3X - this.X)/this.scaleX);
-    this.originY = this.originY - ((mouse3Y - this.Y)/old_scaleY - (mouse3Y - this.Y)/this.scaleY);
+    this.originX = mouse3X - this.X + zoom_coeff * (this.originX - mouse3X + this.X);
+    this.originY = mouse3Y - this.Y + zoom_coeff * (this.originY - mouse3Y + this.Y);
     this.draw();
   }
 
@@ -5526,9 +5512,8 @@ export class PrimitiveGroupContainer extends PlotData {
       this.primitive_groups[i].X = primitive_center_x - this.primitive_groups[i].width/2;
     }
     this.resetAllObjects();
-    var old_scaleX = this.scaleX;
     this.scaleX = this.scaleX*zoom_coeff;
-    this.originX = this.originX - ((container_center_x - this.X)/old_scaleX - (container_center_x - this.X)/this.scaleX);
+    this.originX = this.width/2 + zoom_coeff * (this.originX - this.width/2);
     this.draw();
   }
 
@@ -5545,9 +5530,8 @@ export class PrimitiveGroupContainer extends PlotData {
       this.primitive_groups[i].Y = primitive_center_y - this.primitive_groups[i].height/2;
     }
     this.resetAllObjects();
-    var old_scaleY = this.scaleY;
     this.scaleY = this.scaleY*zoom_coeff;
-    this.originY = this.originY - ((container_center_y - this.Y)/old_scaleY - (container_center_y - this.Y)/this.scaleY);
+    this.originY = this.height/2 + zoom_coeff * (this.originY - this.height/2);
     this.draw();
   }
 
@@ -6163,7 +6147,7 @@ export class Interactions {
     plot_data.rubber_bands = List.move_elements(old_index, new_index, plot_data.rubber_bands);
     plot_data.inverted_axis_list = List.move_elements(old_index, new_index, plot_data.inverted_axis_list);
     plot_data.refresh_to_display_list(plot_data.elements);
-    plot_data.refresh_displayable_attributes(); //No need to refresh attribute_booleans as inverting axis doesn't affect its values
+    plot_data.refresh_all_attributes(); //No need to refresh attribute_booleans as inverting axis doesn't affect its values
     plot_data.refresh_axis_coords();
     plot_data.draw();
   }
@@ -6434,8 +6418,8 @@ export class MultiplotCom {
 
 
   public static histogram_to_scatter_communication(histogram, scatter) {
-    let scatter_x = scatter.plotObject.to_disp_attribute_names[0];
-    let scatter_y = scatter.plotObject.to_disp_attribute_names[1];
+    let scatter_x = scatter.plotObject.attribute_names[0];
+    let scatter_y = scatter.plotObject.attribute_names[1];
     if (histogram.x_variable.name === scatter_x) {
       scatter.perm_window_x = histogram.x_rubberband[0];
       scatter.perm_window_y = -scatter.minY;
@@ -7416,7 +7400,7 @@ export class Axis {
 }
 
 export class Tooltip {
-  constructor(public to_disp_attribute_names:string[],
+  constructor(public attribute_names:string[],
               public surface_style:SurfaceStyle,
               public text_style:TextStyle,
               public tooltip_radius:number=10,
@@ -7463,8 +7447,8 @@ export class Tooltip {
   initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt): [string[], number] {
     var textfills = ['Information'];
     var text_max_length = context.measureText('Information').width;
-    for (let i=0; i<this.to_disp_attribute_names.length; i++) {
-      let attribute_name = this.to_disp_attribute_names[i];
+    for (let i=0; i<this.attribute_names.length; i++) {
+      let attribute_name = this.attribute_names[i];
       let attribute_type = TypeOf(elt[attribute_name]);
       if (attribute_type == 'float') {
         var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digit évidemment pas définie lorsque l'axe des x est un string...
@@ -7485,8 +7469,8 @@ export class Tooltip {
   initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point: Point2D, initial_point_list, elements, axes): [string[], number] {
     var textfills = ['Information'];
     var text_max_length = context.measureText('Information').width;
-    for (let i=0; i<this.to_disp_attribute_names.length; i++) {
-      let attribute_name = this.to_disp_attribute_names[i];
+    for (let i=0; i<this.attribute_names.length; i++) {
+      let attribute_name = this.attribute_names[i];
       let attribute_type = TypeOf(elements[0][attribute_name]);
       if (attribute_type == 'float') { 
         if (attribute_name === axes[0]) {
@@ -7599,7 +7583,7 @@ export class Dataset {
   point_list:Point2D[]=[];
   segments:LineSegment2D[];
 
-  constructor(public to_disp_attribute_names:string[],
+  constructor(public attribute_names:string[],
               public edge_style:EdgeStyle,
               public tooltip:Tooltip,
               public point_style:PointStyle,
@@ -7616,7 +7600,7 @@ export class Dataset {
     for (let i=0; i<this.elements.length; i++) {
       let coord = [];
       for (let j=0; j<2; j++) {
-        coord.push(Math.pow(-1, j)*this.elements[i][this.to_disp_attribute_names[j]]);
+        coord.push(Math.pow(-1, j)*this.elements[i][this.attribute_names[j]]);
       }
       this.point_list.push(new Point2D(coord[0], coord[1], this.point_style, 'point', ''));
     } 
@@ -7637,13 +7621,13 @@ export class Dataset {
     var default_point_style = {color_fill:string_to_rgb('lightviolet'), color_stroke:string_to_rgb('grey'),
                                shape:'circle', size:2, name:'', type_:'tooltip'};
     var tooltip_text_style = {font_size: 10, font_style: 'sans-serif', text_align_x:'center', text_color:string_to_rgb('white')};
-    var default_dict_ = {tooltip:{attributes: serialized['to_disp_attribute_names'], text_style: tooltip_text_style}, edge_style:default_edge_style, point_style:default_point_style,
+    var default_dict_ = {tooltip:{attributes: serialized['attribute_names'], text_style: tooltip_text_style}, edge_style:default_edge_style, point_style:default_point_style,
                           display_step:1};
     serialized = set_default_values(serialized, default_dict_)
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
     var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
     var point_style = PointStyle.deserialize(serialized['point_style']);
-    return new Dataset(serialized['to_disp_attribute_names'],
+    return new Dataset(serialized['attribute_names'],
                        edge_style,
                        tooltip,
                        point_style,
@@ -7657,7 +7641,7 @@ export class Dataset {
 
 export class Graph2D {
   constructor(public graphs: Dataset[],
-              public to_disp_attribute_names:string[],
+              public attribute_names:string[],
               public axis: Axis,
               public type_: string='graph2d',
               public name: string='') {}
@@ -7667,13 +7651,13 @@ export class Graph2D {
     serialized = set_default_values(serialized, default_dict_);
     var graphs:Dataset[] = [];
     for (let i=0; i<serialized['graphs'].length; i++) {
-      serialized['graphs'][i]['to_disp_attribute_names'] = serialized['to_disp_attribute_names'];
+      serialized['graphs'][i]['attribute_names'] = serialized['attribute_names'];
       graphs.push(Dataset.deserialize(serialized['graphs'][i]));
     }
     var axis = Axis.deserialize(serialized['axis']);
 
     return new Graph2D(graphs,
-                       serialized['to_disp_attribute_names'],
+                       serialized['attribute_names'],
                        axis,
                        serialized['type_'],
                        serialized['name']);
@@ -7684,18 +7668,18 @@ export class Graph2D {
 export class Scatter {
 
   point_list:Point2D[]=[];
-  displayable_attributes:Attribute[]=[];
+  all_attributes:Attribute[]=[];
   lists:any[]=[];
   to_display_attributes:Attribute[]=[];
 
   constructor(public tooltip:Tooltip,
-              public to_disp_attribute_names:string[],
+              public attribute_names:string[],
               public point_style:PointStyle,
               public elements: any[],
               public axis:Axis,
               public type_:string,
               public name:string) {
-    this.initialize_displayable_attributes();
+    this.initialize_all_attributes();
     this.initialize_to_display_attributes();
     this.initialize_lists();
     this.initialize_point_list(elements);
@@ -7703,14 +7687,14 @@ export class Scatter {
 
   public static deserialize(serialized) {
     let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')};
-    let default_tooltip = {attributes: serialized['to_disp_attribute_names']};
+    let default_tooltip = {attributes: serialized['attribute_names']};
     var default_dict_ = {point_style:default_point_style, tooltip: default_tooltip};
     serialized = set_default_values(serialized, default_dict_);
     var axis = Axis.deserialize(serialized['axis']);
     var tooltip = Tooltip.deserialize(serialized['tooltip']);
     var point_style = PointStyle.deserialize(serialized['point_style']);
     return new Scatter(tooltip,
-                       serialized['to_disp_attribute_names'],
+                       serialized['attribute_names'],
                        point_style,
                        serialized['elements'],
                        axis,
@@ -7718,24 +7702,24 @@ export class Scatter {
                        serialized['name']);
   }
 
-  initialize_displayable_attributes() {
+  initialize_all_attributes() {
     var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
     var exceptions = ['package_version', 'object_class'];
     for (let i=0; i<attribute_names.length; i++) {
       let name = attribute_names[i];
       if (!List.is_include(name, exceptions)) {
         let type_ = TypeOf(this.elements[0][name]);
-        this.displayable_attributes.push(new Attribute(name, type_)); 
+        this.all_attributes.push(new Attribute(name, type_)); 
       }
     }
   }
 
   initialize_to_display_attributes() {
-    for (let i=0; i<this.to_disp_attribute_names.length; i++) {
-      var name = this.to_disp_attribute_names[i];
-      for (let j=0; j<this.displayable_attributes.length; j++) {
-        if (name == this.displayable_attributes[j]['name']) {
-          this.to_display_attributes.push(this.displayable_attributes[j]);
+    for (let i=0; i<this.attribute_names.length; i++) {
+      var name = this.attribute_names[i];
+      for (let j=0; j<this.all_attributes.length; j++) {
+        if (name == this.all_attributes[j]['name']) {
+          this.to_display_attributes.push(this.all_attributes[j]);
           break;
         }
       }

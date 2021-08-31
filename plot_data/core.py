@@ -527,12 +527,12 @@ class Dataset(PlotDataObject):
     :param display_step: a value that limits the number of points \
     displayed.
     :type display_step: int
-    :param to_disp_attribute_names: [attribute_x, attribute_y] where \
+    :param attribute_names: [attribute_x, attribute_y] where \
     attribute_x is the attribute displayed on x-axis and attribute_y \
     is the attribute displayed on y-axis.
-    :type to_disp_attribute_names: [str, str]
+    :type attribute_names: [str, str]
     """
-    to_disp_attribute_names = None
+    attribute_names = None
 
     def __init__(self, elements=None,
                  edge_style: EdgeStyle = None, tooltip: Tooltip = None,
@@ -569,7 +569,7 @@ class Graph2D(PlotDataObject):
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable:str,
                  axis: Axis = None, name: str = ''):
         self.graphs = graphs
-        self.to_disp_attribute_names = [x_variable, y_variable]
+        self.attribute_names = [x_variable, y_variable]
         if axis is None:
             self.axis = Axis()
         else:
@@ -579,7 +579,7 @@ class Graph2D(PlotDataObject):
     def mpl_plot(self):
         # axs = plt.subplots(len(self.graphs))
         _, ax = plt.subplots()
-        xname, yname = self.to_disp_attribute_names[:2]
+        xname, yname = self.attribute_names[:2]
         for dataset in self.graphs:
             x = []
             y = []
@@ -619,7 +619,7 @@ class Scatter(PlotDataObject):
                  elements: List[Any] = None, axis: Axis = None,
                  name: str = ''):
         self.tooltip = tooltip
-        self.to_disp_attribute_names = [x_variable, y_variable]
+        self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style
         if not elements:
             self.elements = []
@@ -862,13 +862,13 @@ class PrimitiveGroupsContainer(PlotDataObject):
         self.sizes = sizes
         self.coords = coords
         if x_variable or y_variable:
-            to_disp_attribute_names = []
+            attribute_names = []
             if x_variable:
-                to_disp_attribute_names.append(x_variable)
+                attribute_names.append(x_variable)
             if y_variable:
-                to_disp_attribute_names.append(y_variable)
+                attribute_names.append(y_variable)
             self.association = {'associated_elements': associated_elements,
-                                'to_disp_attribute_names': to_disp_attribute_names}
+                                'attribute_names': attribute_names}
         PlotDataObject.__init__(self, type_='primitivegroupcontainer',
                                 name=name)
 
@@ -901,7 +901,7 @@ class ParallelPlot(PlotDataObject):
         self.elements = elements
         self.edge_style = edge_style
         self.disposition = disposition
-        self.to_disp_attribute_names = axes
+        self.attribute_names = axes
         self.rgbs = rgbs
         PlotDataObject.__init__(self, type_='parallelplot', name=name)
 

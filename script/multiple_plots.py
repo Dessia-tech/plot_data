@@ -58,10 +58,13 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
                                                                associated_elements=[1, 2, 3, 4],
                                                                x_variable='x', y_variable='y')
 
+histogram = plot_data.Histogram(x_variable='x')
 
 # Creating the multiplot
 plots = [parallelplot1, parallelplot2, scatterplot1,
-         scatterplot2, scatterplot3, graph2d, primitive_group_container]
+         scatterplot2, scatterplot3, graph2d, primitive_group_container,
+         histogram]
+
 
 multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
                                     initial_view_on=True)

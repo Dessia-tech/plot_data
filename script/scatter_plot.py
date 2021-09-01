@@ -41,7 +41,7 @@ point_style = plot_data.PointStyle(color_fill=colors.LIGHTGREEN,
                                    color_stroke=colors.VIOLET,
                                    stroke_width=0.5,
                                    size=2,  # 1, 2, 3 or 4
-                                   shape='circle')  # 'circle', 'square' or 'crux'
+                                   shape='square')  # 'circle', 'square' or 'crux'
 
 # Finally, axis can be personalized too
 graduation_style = plot_data.TextStyle(text_color=colors.BLUE, font_size=10,

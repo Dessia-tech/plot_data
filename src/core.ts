@@ -55,7 +55,7 @@ export class MultiplePlots {
 
 
   constructor(public data: any[], public width:number, public height:number, public buttons_ON: boolean, public canvas_id: string) {
-    var requirement = '0.6.0';
+    var requirement = '0.6.1';
     check_package_version(data['package_version'], requirement);
     this.dataObjects = data['plots'];
     this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
@@ -4106,7 +4106,7 @@ export class ParallelPlot extends PlotData {
               public is_in_multiplot = false) {
     super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     if (!is_in_multiplot) {
-      var requirement = '0.6.0';
+      var requirement = '0.6.1';
       check_package_version(data['package_version'], requirement);
     }
     this.type_ = 'parallelplot';
@@ -4286,7 +4286,7 @@ export class Histogram extends PlotData {
               public is_in_multiplot: boolean = false) {
     super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     if (!is_in_multiplot) {
-      var requirement = '0.6.0';
+      var requirement = '0.6.1';
       check_package_version(data['package_version'], requirement);
     }
     this.type_ = data['type_'];
@@ -9211,7 +9211,7 @@ export function equals(a, b) {
 
 
 const empty_container = {'name': '',
-'package_version': '0.6.0',
+'package_version': '0.6.1',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};
 

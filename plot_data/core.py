@@ -527,12 +527,12 @@ class Dataset(PlotDataObject):
     :param display_step: a value that limits the number of points \
     displayed.
     :type display_step: int
-    :param to_disp_attribute_names: [attribute_x, attribute_y] where \
+    :param attribute_names: [attribute_x, attribute_y] where \
     attribute_x is the attribute displayed on x-axis and attribute_y \
     is the attribute displayed on y-axis.
-    :type to_disp_attribute_names: [str, str]
+    :type attribute_names: [str, str]
     """
-    to_disp_attribute_names = None
+    attribute_names = None
 
     def __init__(self, elements=None,
                  edge_style: EdgeStyle = None, tooltip: Tooltip = None,
@@ -569,7 +569,7 @@ class Graph2D(PlotDataObject):
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable:str,
                  axis: Axis = None, name: str = ''):
         self.graphs = graphs
-        self.to_disp_attribute_names = [x_variable, y_variable]
+        self.attribute_names = [x_variable, y_variable]
         if axis is None:
             self.axis = Axis()
         else:
@@ -579,7 +579,7 @@ class Graph2D(PlotDataObject):
     def mpl_plot(self):
         # axs = plt.subplots(len(self.graphs))
         _, ax = plt.subplots()
-        xname, yname = self.to_disp_attribute_names[:2]
+        xname, yname = self.attribute_names[:2]
         for dataset in self.graphs:
             x = []
             y = []
@@ -619,7 +619,7 @@ class Scatter(PlotDataObject):
                  elements: List[Any] = None, axis: Axis = None,
                  name: str = ''):
         self.tooltip = tooltip
-        self.to_disp_attribute_names = [x_variable, y_variable]
+        self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style
         if not elements:
             self.elements = []
@@ -862,13 +862,13 @@ class PrimitiveGroupsContainer(PlotDataObject):
         self.sizes = sizes
         self.coords = coords
         if x_variable or y_variable:
-            to_disp_attribute_names = []
+            attribute_names = []
             if x_variable:
-                to_disp_attribute_names.append(x_variable)
+                attribute_names.append(x_variable)
             if y_variable:
-                to_disp_attribute_names.append(y_variable)
+                attribute_names.append(y_variable)
             self.association = {'associated_elements': associated_elements,
-                                'to_disp_attribute_names': to_disp_attribute_names}
+                                'attribute_names': attribute_names}
         PlotDataObject.__init__(self, type_='primitivegroupcontainer',
                                 name=name)
 
@@ -901,7 +901,7 @@ class ParallelPlot(PlotDataObject):
         self.elements = elements
         self.edge_style = edge_style
         self.disposition = disposition
-        self.to_disp_attribute_names = axes
+        self.attribute_names = axes
         self.rgbs = rgbs
         PlotDataObject.__init__(self, type_='parallelplot', name=name)
 
@@ -938,6 +938,37 @@ class PointFamily(PlotDataObject):
         self.color = point_color
         self.point_index = point_index
         PlotDataObject.__init__(self, type_=None, name=name)
+
+
+class Histogram(PlotDataObject):
+    """
+    The Histogram object. This class can be instantiated in Multiplot.
+
+    :param x_variable: The name of x variable
+    :type x_variable: str
+    :param elements: A list of vectors.
+    :type elements: list(dict)
+    :param axis: axis style customization. The number of points cannot\
+    be changed for a histogram
+    :type axis: Axis
+    :param graduation_nb: the number of graduations on the x axis. Default = 6.\
+    This parameter doesn't make sense for a non float x axis.
+    :type graduation_nb: float
+    :param edge_style: histogram rectangles edge style
+    :type edge_style: EdgeStyle
+    :param surface_style: histogram rectangle surface style
+    :type surface_style: SurfaceStyle
+    """
+
+    def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
+                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, name: str = ''):
+        self.x_variable = x_variable
+        self.elements = elements
+        self.axis = axis
+        self.graduation_nb = graduation_nb
+        self.edge_style = edge_style
+        self.surface_style = surface_style
+        PlotDataObject.__init__(self, type_='histogram', name=name)
 
 
 class MultiplePlots(PlotDataObject):
@@ -1014,17 +1045,21 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         template = templates.multiplot_template
     elif plot_type == 'primitivegroupcontainer':
         template = templates.primitive_group_container_template
+    elif plot_type == 'histogram':
+        template = templates.histogram_template
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
     lib_path = 'https://cdn.dessia.tech/js/plot-data/latest/core.js'
     if debug_mode:
         # core_path = os.sep + os.path.join(
-        #     *sys.modules[__name__].__file__.split(os.sep)[:-2], 'lib',
+        #     *sys.modules[__name__].__file__.split('/')[:-2], 'lib',
         #     'core.js')
+        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['lib', 'core.js'])
+
         # I added the line below since the one above that I commented didn't work for me on Windows 10.
         # I'm going to fix it later on and if I forget to remove it, feel free to do so. Jeremie
-        core_path = 'C:\\Users\\jch1\\Documents\\Github\\plot_data\\lib\\core.js'
+        # core_path = 'C:\\Users\\jch1\\Documents\\Github\\plot_data\\lib\\core.js'
 
         if not os.path.isfile(core_path):
             print('Local compiled core.js not found, fall back to CDN')

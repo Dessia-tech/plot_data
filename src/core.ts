@@ -4265,6 +4265,7 @@ export class Histogram extends PlotData {
   x_variable: Attribute;
   axis: Axis;
   graduation_nb: number;
+  initial_graduation_nb: number;
   infos = {};
   min_abs: number = 0;
   max_abs: number = 0;
@@ -4292,6 +4293,7 @@ export class Histogram extends PlotData {
     this.type_ = data['type_'];
     this.elements = data['elements'];
     this.graduation_nb = data['graduation_nb'] || 6;
+    this.initial_graduation_nb = this.graduation_nb;
     let name = data['x_variable'];
     let type_ = TypeOf(this.elements[0][name]);
 
@@ -4337,6 +4339,7 @@ export class Histogram extends PlotData {
 
 
   draw() {
+    this.refresh_graduation_nb();
     this.context = this.context_show;
     this.context.save();
     this.draw_empty_canvas(this.context);
@@ -4495,6 +4498,11 @@ export class Histogram extends PlotData {
     }
     this.axis.draw_histogram_y_axis(this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x, 
       this.decalage_axis_y, this.X, this.Y, 'Frequency', this.y_step, this.coeff);
+  }
+
+
+  refresh_graduation_nb() {
+    this.graduation_nb = Math.ceil(this.scale/this.init_scale * this.initial_graduation_nb);
   }
 
 

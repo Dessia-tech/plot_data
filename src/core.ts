@@ -1,3 +1,5 @@
+var fs = import('fs');
+
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
 
@@ -28,6 +30,7 @@ export class MultiplePlots {
   selectDep_x:number=0; selectDep_y:number=0; selectDep_w:number=0; selectDep_h:number=0;
   view_bool:boolean=false;
   view_button_x:number=0; view_button_y:number=0; view_button_w:number=0; view_button_h:number=0;
+  export_button_x=0; export_button_y=0; export_button_w=0; export_button_h=0;
   initial_objectsX:number[]=[];
   initial_objectsY:number[]=[];
   initial_object_width:number[]=[];
@@ -188,6 +191,10 @@ export class MultiplePlots {
     this.view_button_y = this.height - 25;
     this.view_button_w = 35;
     this.view_button_h = 20;
+    this.export_button_x = 130;
+    this.export_button_y = this.height - 25;
+    this.export_button_w = 35;
+    this.export_button_h = 20;
   }
 
   store_dimensions() {
@@ -219,10 +226,16 @@ export class MultiplePlots {
     }
   }
 
+  draw_export_button(): void {
+    Shape.createButton(this.export_button_x, this.export_button_y, this.export_button_w, this.export_button_h, this.context_show,
+                       'export', '10px sans-serif');
+  }
+
   draw_buttons():void {
     this.draw_manipulation_button();
     this.draw_selection_dependency_button();
     this.draw_clean_view_button();
+    this.draw_export_button();
   }
 
   click_on_view_action() {
@@ -235,13 +248,20 @@ export class MultiplePlots {
     }
   }
 
-  click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view) {
+  click_on_export() {
+    console.log(fs)
+  }
+
+  click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view,
+                         click_on_export) {
     if (click_on_translation_button) {
       this.manipulation_bool_action();
     } else if (click_on_selectDep_button) {
       this.selectDep_action();
     } else if (click_on_view) {
       this.click_on_view_action();
+    } else if (click_on_export) {
+      this.click_on_export();
     }
     this.redrawAllObjects();
   }
@@ -554,7 +574,11 @@ export class MultiplePlots {
          this.context_hidden.putImageData(this.hidden_datas[display_index], obj.X, obj.Y);
       }
     }
-    if (this.buttons_ON) { this.draw_buttons(); }
+    if (this.buttons_ON) { 
+      this.context.beginPath();
+      this.draw_buttons(); 
+      this.context.closePath();
+    }
   }
 
   store_datas() {
@@ -1691,9 +1715,10 @@ export class MultiplePlots {
       var click_on_manip_button = Shape.isInRect(mouse3X, mouse3Y, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
       var click_on_selectDep_button = Shape.isInRect(mouse3X, mouse3Y, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
       var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
+      var click_on_export = Shape.isInRect(mouse3X, mouse3Y, this.export_button_x, this.export_button_y, this.export_button_w, this.export_button_h);
       var click_on_multi_button = click_on_manip_button || click_on_selectDep_button || click_on_view;
       if (click_on_multi_button) {
-        this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view);
+        this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
       }
 
       if (mouse_moving === false) {

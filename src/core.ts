@@ -95,12 +95,13 @@ export class MultiplePlots {
       this.objectList.push(newObject);
     }
 
+    if (elements) {this.initialize_point_families();}
+
     for (let i=0; i<this.nbObjects; i++) {
       this.objectList[i].draw_initial();
       this.display_order.push(i);
       this.to_display_plots.push(i);
     }
-    if (elements) {this.initialize_point_families();}
     this.mouse_interaction();
 
     if (buttons_ON) {
@@ -1291,21 +1292,21 @@ export class MultiplePlots {
       if (obj.type_ == 'scatterplot') {
         let temp_select_on_click = List.getListEltFromIndex(this.dep_selected_points_index, obj.plotObject.point_list);
         this.objectList[i].select_on_click = [];
-        for (let j=0; j<obj.scatter_point_list.length; j++) {
-          let scatter_point_list_j = obj.scatter_point_list[j];
+        for (let j=0; j<obj.scatter_points.length; j++) {
+          let scatter_points_j = obj.scatter_points[j];
           let is_inside = false;
-          for (let k=0; k<scatter_point_list_j.points_inside.length; k++) {
-            if (List.is_include(scatter_point_list_j.points_inside[k], temp_select_on_click)) {
+          for (let k=0; k<scatter_points_j.points_inside.length; k++) {
+            if (List.is_include(scatter_points_j.points_inside[k], temp_select_on_click)) {
               is_inside = true;
-              if (!scatter_point_list_j.selected) {
-                this.objectList[i].select_on_click.push(obj.scatter_point_list[j]);
-                this.objectList[i].scatter_point_list[j].selected = true;
+              if (!scatter_points_j.selected) {
+                this.objectList[i].select_on_click.push(obj.scatter_points[j]);
+                this.objectList[i].scatter_points[j].selected = true;
                 break;
               } 
             }
           }
-          if (!is_inside && this.objectList[i].scatter_point_list[j].selected) {
-            this.objectList[i].scatter_point_list[j].selected = false;
+          if (!is_inside && this.objectList[i].scatter_points[j].selected) {
+            this.objectList[i].scatter_points[j].selected = false;
           }
         }
       } else if (obj.type_ == 'parallelplot') {
@@ -1471,7 +1472,7 @@ export class MultiplePlots {
       if (this.objectList[i].type_ === 'scatterplot') {
         let obj = this.objectList[i];
         let selected_point = obj.plotObject.point_list[point_index];
-        let sc_point_list = obj.scatter_point_list;
+        let sc_point_list = obj.scatter_points;
         if (obj.mergeON) {
           for (let j=0; j<sc_point_list.length; j++) {
             let point = sc_point_list[j];
@@ -1918,7 +1919,7 @@ export abstract class PlotData {
   decalage_axis_x = 50;
   decalage_axis_y = 20;
   last_point_list:any[]=[];
-  scatter_point_list:Point2D[]=[];
+  scatter_points:Point2D[]=[];
   scatter_init_points:Point2D[]=[];
   refresh_point_list_bool:boolean=true;
   sc_interpolation_ON: boolean=false;
@@ -2395,23 +2396,22 @@ export abstract class PlotData {
       this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.to_display_attributes);
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
-        if (!this.point_list_equals(refreshed_points, this.scatter_point_list)) {
-          this.scatter_point_list = refreshed_points;
+        if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
+          this.scatter_points = refreshed_points;
           //refresh_point_families
         }
-
         this.refresh_point_list_bool = false;
       } else if (this.mergeON === false) {
-        if (!this.point_list_equals(this.scatter_point_list, d.point_list)) {
-          this.scatter_point_list = d.point_list;
+        if (!this.point_list_equals(this.scatter_points, d.point_list)) {
+          this.scatter_points = d.point_list;
         }
       }
       if ((this.scroll_x % 5 != 0) && (this.scroll_y % 5 != 0)) {
         this.refresh_point_list_bool = true;
       }
       if (this.point_families.length == 0) {
-        for (var i=0; i<this.scatter_point_list.length; i++) {
-          var point:Point2D = this.scatter_point_list[i];
+        for (var i=0; i<this.scatter_points.length; i++) {
+          var point:Point2D = this.scatter_points[i];
           this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
         }
       } else {
@@ -2419,18 +2419,18 @@ export abstract class PlotData {
         for (let i=0; i<point_order.length; i++) {
           for (let j=0; j<point_order[i].length; j++) {
             let index = point_order[i][j];
-            let point:Point2D = this.scatter_point_list[index];
+            let point:Point2D = this.scatter_points[index];
             this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
           }
         }
       }
 
       for (var i=0; i<this.tooltip_list.length; i++) {
-        if (!List.is_include(this.tooltip_list[i],this.scatter_point_list)) {
+        if (!List.is_include(this.tooltip_list[i],this.scatter_points)) {
           this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
         }
       }
-      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_point_list, d.point_list, d.elements, this.mergeON, d.attribute_names);
+      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON, d.attribute_names);
     }
   }
 
@@ -2439,8 +2439,8 @@ export abstract class PlotData {
     for (let i=0; i<this.point_families.length; i++) {
       point_order.push([]);
     }
-    for (let i=0; i<this.scatter_point_list.length; i++) {
-      let point_point_families = this.scatter_point_list[i].point_families;
+    for (let i=0; i<this.scatter_points.length; i++) {
+      let point_point_families = this.scatter_points[i].point_families;
       for (let j=0; j<point_point_families.length; j++) {
         let point_family_index_in_list = List.get_index_of_element(point_point_families[j], this.point_families);
         point_order[point_family_index_in_list].push(i);
@@ -3042,8 +3042,8 @@ export abstract class PlotData {
   add_points_to_selection(index_list:number[]) {
     for (let index of index_list) {
       let point = this.plotObject.point_list[index];
-      for (let i=0; i<this.scatter_point_list.length; i++) {
-        if (List.is_include(point, this.scatter_point_list[i].points_inside) && !List.is_include(point, this.select_on_click)) {
+      for (let i=0; i<this.scatter_points.length; i++) {
+        if (List.is_include(point, this.scatter_points[i].points_inside) && !List.is_include(point, this.select_on_click)) {
           this.select_on_click.push(point);
           this.plotObject.point_list[index].selected = true;
           this.latest_selected_points.push(point);
@@ -3133,7 +3133,7 @@ export abstract class PlotData {
     this.refresh_scatter_point_family();
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
-    if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.originX, this.originY);}
+    if (this.mergeON) {this.scatter_points = this.refresh_point_list(this.plotObject.point_list, this.originX, this.originY);}
     this.draw();
   }
 
@@ -3155,7 +3155,7 @@ export abstract class PlotData {
     this.refresh_scatter_point_family();
     this.refresh_MinMax(this.plotObject.point_list);
     this.reset_scales();
-    if (this.mergeON) {this.scatter_point_list = this.refresh_point_list(this.plotObject.point_list, this.originX, this.originY);}
+    if (this.mergeON) {this.scatter_points = this.refresh_point_list(this.plotObject.point_list, this.originX, this.originY);}
     this.draw();
   }
 
@@ -3443,7 +3443,7 @@ export abstract class PlotData {
     if (this.type_ == 'scatterplot') {
       for (let i=0; i<this.plotObject.point_list.length; i++) {
         this.plotObject.point_list[i].selected = false;
-        if (this.scatter_point_list[i]) {this.scatter_point_list[i].selected = false;}
+        if (this.scatter_points[i]) {this.scatter_points[i].selected = false;}
       }
     } else if (this.type_ == 'graph2d') {
       for (let i=0; i<this.plotObject.graphs.length; i++) {
@@ -4086,8 +4086,8 @@ export class PlotScatter extends PlotData {
   }
 
   draw() {
-    this.draw_from_context(true);
     this.draw_from_context(false);
+    this.draw_from_context(true);
   }
 
   draw_from_context(hidden) {
@@ -5902,16 +5902,16 @@ export class Interactions {
       }
 
     } else if (plot_data.plotObject['type_'] == 'scatterplot') {
-      for (var j=0; j<plot_data.scatter_point_list.length; j++) {
-        var x = plot_data.scaleX*plot_data.scatter_point_list[j].cx + plot_data.originX + plot_data.X;
-        var y = plot_data.scaleY*plot_data.scatter_point_list[j].cy + plot_data.originY + plot_data.Y;
+      for (var j=0; j<plot_data.scatter_points.length; j++) {
+        var x = plot_data.scaleX*plot_data.scatter_points[j].cx + plot_data.originX + plot_data.X;
+        var y = plot_data.scaleY*plot_data.scatter_points[j].cy + plot_data.originY + plot_data.Y;
         in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
-        if ((in_rect===true) && !List.is_include(plot_data.scatter_point_list[j], plot_data.select_on_click)) {
-          plot_data.select_on_click.push(plot_data.scatter_point_list[j]);
-          plot_data.scatter_point_list[j].selected = true;
-          plot_data.latest_selected_points.push(plot_data.scatter_point_list[j]);
+        if ((in_rect===true) && !List.is_include(plot_data.scatter_points[j], plot_data.select_on_click)) {
+          plot_data.select_on_click.push(plot_data.scatter_points[j]);
+          plot_data.scatter_points[j].selected = true;
+          plot_data.latest_selected_points.push(plot_data.scatter_points[j]);
         } else if (!in_rect) {
-          plot_data.scatter_point_list[j].selected = false;
+          plot_data.scatter_points[j].selected = false;
         }
       }
     }
@@ -6360,26 +6360,26 @@ export class MultiplotCom {
       var new_select_on_click = [];
       let min = to_select[0][1][0];
       let max = to_select[0][1][1];
-      for (let i=0; i<plot_data.scatter_point_list.length; i++) {
-        plot_data.scatter_point_list[i].selected = false;
+      for (let i=0; i<plot_data.scatter_points.length; i++) {
+        plot_data.scatter_points[i].selected = false;
         if (axis_numbers[0] == 0) {
           plot_data.perm_window_x = Math.max(min, plot_data.minX);
           plot_data.perm_window_w = Math.min(max, plot_data.maxX) - plot_data.perm_window_x;
           plot_data.perm_window_y = Math.abs(plot_data.minY);
           plot_data.perm_window_h = Math.abs(plot_data.maxY - plot_data.perm_window_y);
-          var bool = (plot_data.scatter_point_list[i].cx >= min) && (plot_data.scatter_point_list[i].cx <= max);
+          var bool = (plot_data.scatter_points[i].cx >= min) && (plot_data.scatter_points[i].cx <= max);
         } else {
           plot_data.perm_window_x = plot_data.minX;
           plot_data.perm_window_w = plot_data.maxX - plot_data.perm_window_x;
           plot_data.perm_window_y = max;
           plot_data.perm_window_h = max - min;
-          var bool = (-plot_data.scatter_point_list[i].cy >= min) && (-plot_data.scatter_point_list[i].cy <= max);
+          var bool = (-plot_data.scatter_points[i].cy >= min) && (-plot_data.scatter_points[i].cy <= max);
         }
         if (bool === true) {
-          new_select_on_click.push(plot_data.scatter_point_list[i]);
-          plot_data.scatter_point_list[i].selected = true;
+          new_select_on_click.push(plot_data.scatter_points[i]);
+          plot_data.scatter_points[i].selected = true;
         } else {
-          plot_data.scatter_point_list[i].selected = false;
+          plot_data.scatter_points[i].selected = false;
         }
       }
       plot_data.select_on_click = new_select_on_click;
@@ -6391,9 +6391,9 @@ export class MultiplotCom {
       let max1 = to_select[0][1][1];
       let min2 = to_select[1][1][0];
       let max2 = to_select[1][1][1];
-      for (let i=0; i<plot_data.scatter_point_list.length; i++) {
-        plot_data.scatter_point_list[i].selected = false;
-        let point = plot_data.scatter_point_list[i];
+      for (let i=0; i<plot_data.scatter_points.length; i++) {
+        plot_data.scatter_points[i].selected = false;
+        let point = plot_data.scatter_points[i];
         if (axis_numbers[0] == 0) {
           plot_data.perm_window_x = Math.max(min1, plot_data.minX);
           plot_data.perm_window_w = Math.min(max1, plot_data.maxX) - plot_data.perm_window_x;
@@ -6413,8 +6413,8 @@ export class MultiplotCom {
           var bool2 = (-point.cy >= min2) && (-point.cy <= max2);
         }
         if (bool1 && bool2) {
-          plot_data.scatter_point_list[i].selected = true;
-          new_select_on_click.push(plot_data.scatter_point_list[i]);
+          plot_data.scatter_points[i].selected = true;
+          new_select_on_click.push(plot_data.scatter_points[i]);
         }
       }
       plot_data.select_on_click = new_select_on_click;

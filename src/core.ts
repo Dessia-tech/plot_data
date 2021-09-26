@@ -1,5 +1,3 @@
-var fs = import('fs');
-
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
 
@@ -53,6 +51,8 @@ export class MultiplePlots {
   settings_on_initial_heights:number[]=[];
   obj_settings_on:number=-1;
   view_on_disposition:boolean = false; //True if layout disposition, turns false if you move the subplots
+ 
+  click_on_button: boolean = false;
 
   public padding: number;
 
@@ -249,7 +249,6 @@ export class MultiplePlots {
   }
 
   click_on_export() {
-    console.log(fs)
   }
 
   click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view,
@@ -491,7 +490,8 @@ export class MultiplePlots {
     return index_list;
   }
 
-  getLastObjectIndex(x,y):number { // if several plots are selected, returns the last one's index
+  getLastObjectIndex(x, y):number { // if several plots are selected, returns the last one's index
+    if (this.is_on_button(x, y)) return -1;
     var index = -1;
     for (let i=0; i<this.nbObjects; i++) {
       let display_index = this.display_order[i];
@@ -575,9 +575,7 @@ export class MultiplePlots {
       }
     }
     if (this.buttons_ON) { 
-      this.context.beginPath();
       this.draw_buttons(); 
-      this.context.closePath();
     }
   }
 
@@ -1418,6 +1416,7 @@ export class MultiplePlots {
   }
 
   settings_padding(index, coef=1) {
+    if (!this.view_bool) return;
     var obj = this.objectList[index];
     this.clear_object(index);
     var center_x = obj.X + obj.width/2;
@@ -1441,6 +1440,7 @@ export class MultiplePlots {
       this.settings_padding(this.clickedPlotIndex);
     }
     obj.draw();
+    this.draw_buttons();
   }
 
   single_click_manage_settings_on(object_index:number): void {
@@ -1455,6 +1455,7 @@ export class MultiplePlots {
       if (this.view_on_disposition) this.settings_padding(object_index);
       obj1.draw();  
     }
+    this.draw_buttons();
   }
 
 
@@ -1614,6 +1615,15 @@ export class MultiplePlots {
   }
 
 
+  is_on_button(mouseX, mouseY) {
+    var click_on_manip_button = Shape.isInRect(mouseX, mouseY, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
+    var click_on_selectDep_button = Shape.isInRect(mouseX, mouseY, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
+    var click_on_view = Shape.isInRect(mouseX, mouseY, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
+    var click_on_export = Shape.isInRect(mouseX, mouseY, this.export_button_x, this.export_button_y, this.export_button_w, this.export_button_h);
+    return click_on_manip_button || click_on_selectDep_button || click_on_view || click_on_export;
+  }
+
+
   mouse_interaction(): void {
     var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
     var isDrawing = false;
@@ -1705,6 +1715,7 @@ export class MultiplePlots {
             this.mouse_over_primitive_group();
             this.mouse_over_scatter_plot();
           }
+          this.draw_buttons();
         }
       }
     });
@@ -1716,8 +1727,8 @@ export class MultiplePlots {
       var click_on_selectDep_button = Shape.isInRect(mouse3X, mouse3Y, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
       var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
       var click_on_export = Shape.isInRect(mouse3X, mouse3Y, this.export_button_x, this.export_button_y, this.export_button_w, this.export_button_h);
-      var click_on_multi_button = click_on_manip_button || click_on_selectDep_button || click_on_view;
-      if (click_on_multi_button) {
+      this.click_on_button = click_on_manip_button || click_on_selectDep_button || click_on_view;
+      if (this.click_on_button) {
         this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
       }
 
@@ -2038,6 +2049,16 @@ export abstract class PlotData {
       this.minY = Math.min(this.minY, point.minY);
       this.maxY = Math.max(this.maxY, point.maxY);
       this.colour_to_plot_data[point.mouse_selection_color] = point;
+    }
+    if (this.minX === this.maxX) {
+      let val = this.minX;
+      this.minX = Math.min(0, 2*val);
+      this.maxX = Math.max(0, 2*val);
+    }
+    if (this.minY === this.maxY) {
+      let val = this.minY;
+      this.minY = Math.min(0, 2*val);
+      this.maxY = Math.max(0, 2*val);
     }
   }
 

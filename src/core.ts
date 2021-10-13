@@ -4035,7 +4035,7 @@ export class PlotScatter extends PlotData {
       }
       this.isParallelPlot = false;
       if (this.mergeON && alert_count === 0) {
-        merge_alert();
+        // merge_alert();
       }
   }
 

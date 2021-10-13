@@ -1133,12 +1133,15 @@ def bounding_box(plot_datas: Subclass[PlotDataObject]):
 
 
 def get_current_version() -> str:
-    package = sys.modules[sys.modules[__name__].__package__]
-    version = package.__version__
+    try:
+        package = sys.modules[sys.modules[__name__].__package__]
+        version = package.__version__
 
-    splitted_version = version.split(".")
-    if len(splitted_version) > 3:
-        splitted_version.pop()
-        splitted_version[2] = str(int(splitted_version[2]) - 1)
-    formatted_version = "v" + ".".join(splitted_version)
-    return formatted_version
+        splitted_version = version.split(".")
+        if len(splitted_version) > 3:
+            splitted_version.pop()
+            splitted_version[2] = str(int(splitted_version[2]) - 1)
+        formatted_version = "v" + ".".join(splitted_version)
+        return formatted_version
+    except Exception:
+        return 'latest'

@@ -1055,7 +1055,7 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         # core_path = os.sep + os.path.join(
         #     *sys.modules[__name__].__file__.split('/')[:-2], 'lib',
         #     'core.js')
-        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['lib', 'core.js'])
+        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['dist', 'plot-data.js'])
 
         # I added the line below since the one above that I commented didn't work for me on Windows 10.
         # I'm going to fix it later on and if I forget to remove it, feel free to do so. Jeremie

@@ -1050,7 +1050,9 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
-    lib_path = 'https://cdn.dessia.tech/js/plot-data/latest/core.js'
+    version = get_current_version()
+    cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/core.js'
+    lib_path = cdn_url.format(version)
     if debug_mode:
         # core_path = os.sep + os.path.join(
         #     *sys.modules[__name__].__file__.split('/')[:-2], 'lib',
@@ -1128,3 +1130,15 @@ def bounding_box(plot_datas: Subclass[PlotDataObject]):
             ymin, ymax = min(ymin, bb[2]), max(ymax, bb[3])
 
     return xmin, xmax, ymin, ymax
+
+
+def get_current_version() -> str:
+    package = sys.modules[sys.modules[__name__].__package__]
+    version = package.__version__
+
+    splitted_version = version.split(".")
+    if len(splitted_version) > 3:
+        splitted_version.pop()
+        splitted_version[2] = str(int(splitted_version[2]) - 1)
+    formatted_version = "v" + ".".join(splitted_version)
+    return formatted_version

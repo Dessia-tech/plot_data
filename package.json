@@ -11,6 +11,10 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json"
   },
+  "exports": {
+    "." : "./plot-data.js",
+    "./base/": ["./base/constants.js", "./base/functions.js", "./base/shape.js"]
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Dessia-tech/plot_data.git"

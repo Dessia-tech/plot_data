@@ -1133,6 +1133,7 @@ def bounding_box(plot_datas: Subclass[PlotDataObject]):
 
 
 def get_current_link(version: str = None) -> Tuple[str, str]:
+    filename = "core.js"
     try:
         package = sys.modules[sys.modules[__name__].__package__]
         if version is None:
@@ -1145,8 +1146,6 @@ def get_current_link(version: str = None) -> Tuple[str, str]:
         formatted_version = "v" + ".".join(splitted_version)
         if formatted_version == 'v0.6.2':
             filename = "plot-data.js"
-        else:
-            filename = "core.js"
         return formatted_version, filename
     except Exception:
-        return 'latest', 'core.js'
+        return 'latest', filename

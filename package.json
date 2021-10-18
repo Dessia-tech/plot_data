@@ -1,19 +1,14 @@
 {
   "name": "plot-data",
-  "version": "0.1.10-24-g9721279",
+  "version": "0.7.12",
   "description": "",
-  "main": "lib/core.js",
-  "prepublish": "tsc",
-  "types": "lib/core.d.ts",
+  "main": "./lib/plot-data.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json"
-  },
-  "exports": {
-    "." : "./plot-data.js",
-    "./base/": ["./base/constants.js", "./base/functions.js", "./base/shape.js"]
   },
   "repository": {
     "type": "git",
@@ -47,6 +42,7 @@
     "webpack-cli": "^4.9.0"
   },
   "dependencies": {
+    "commitlint": "^13.2.1",
     "fast-deep-equal": "^3.1.3",
     "ignore-errors": "^2.0.0",
     "n": "^7.5.0"

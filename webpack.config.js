@@ -1,24 +1,25 @@
 // Generated using webpack-cli https://github.com/webpack/webpack-cli
 
-const path = require("path");
+import * as path from 'path';
+import { fileURLToPath } from "url";
 
-const isProduction = process.env.NODE_ENV == "production";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const config = {
-  entry: "./src/core.ts",
+
+export default {
+  mode: "development",
+  entry: "./src/plot-data.ts",
   output: {
-    path: path.resolve(__dirname, "dist"),
     filename: "plot-data.js",
-    library: {
-      name: "PlotData",
-      type: "umd",
-      umdNamedDefine: true
-    }
+    path: path.resolve(__dirname, "lib"),
+    // library: {
+    //   type: "module"
+    // },
+    clean: true
   },
-  plugins: [
-    // Add your plugins here
-    // Learn more about plugins from https://webpack.js.org/configuration/plugins/
-  ],
+  experiments: {
+    outputModule: true
+  },
   module: {
     rules: [
       {
@@ -37,14 +38,8 @@ const config = {
   },
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
-  },
-};
+    alias : {
 
-module.exports = () => {
-  if (isProduction) {
-    config.mode = "production";
-  } else {
-    config.mode = "development";
+    }
   }
-  return config;
-};
+}

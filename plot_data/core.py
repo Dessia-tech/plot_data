@@ -1050,7 +1050,7 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
-    version, filename = get_current_link()
+    version, folder, filename = get_current_link()
     cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/{}'
     lib_path = cdn_url.format(version, filename)
     if debug_mode:
@@ -1132,7 +1132,8 @@ def bounding_box(plot_datas: Subclass[PlotDataObject]):
     return xmin, xmax, ymin, ymax
 
 
-def get_current_link(version: str = None) -> Tuple[str, str]:
+def get_current_link(version: str = None) -> Tuple[str, str, str]:
+    folder = "lib"
     filename = "core.js"
     try:
         package = sys.modules[sys.modules[__name__].__package__]
@@ -1145,7 +1146,8 @@ def get_current_link(version: str = None) -> Tuple[str, str]:
             splitted_version[2] = str(int(splitted_version[2]) - 1)
         formatted_version = "v" + ".".join(splitted_version)
         if formatted_version == 'v0.6.2':
+            folder = "dist"
             filename = "plot-data.js"
-        return formatted_version, filename
+        return formatted_version, folder, filename
     except Exception:
-        return 'latest', filename
+        return 'latest', folder, filename

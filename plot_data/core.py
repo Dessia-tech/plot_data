@@ -1054,14 +1054,7 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/{}'
     lib_path = cdn_url.format(version, filename)
     if debug_mode:
-        # core_path = os.sep + os.path.join(
-        #     *sys.modules[__name__].__file__.split('/')[:-2], 'lib',
-        #     'core.js')
-        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['dist', 'plot-data.js'])
-
-        # I added the line below since the one above that I commented didn't work for me on Windows 10.
-        # I'm going to fix it later on and if I forget to remove it, feel free to do so. Jeremie
-        # core_path = 'C:\\Users\\jch1\\Documents\\Github\\plot_data\\lib\\core.js'
+        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
 
         if not os.path.isfile(core_path):
             print('Local compiled core.js not found, fall back to CDN')

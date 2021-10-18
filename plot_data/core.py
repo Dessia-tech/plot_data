@@ -1074,8 +1074,6 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     else:
         with open(page_name + '.html', 'wb') as file:
             file.write(s.encode('utf-8'))
-
-        # webbrowser.open('file://'+page_name+'.html')
         webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
 

@@ -6053,10 +6053,10 @@ export class Interactions {
     var mouse2Y = e.offsetY;
     plot_data.is_drawing_rubber_band = true;
     if (plot_data.vertical) {
-      var min = Math.max(Math.min((mouse1Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end), (mouse2Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end)), 0);
+      var min = Math.max(Math.min((mouse1Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end), (mouse2Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end)), -0.01);
       var max = Math.min(Math.max((mouse1Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end), (mouse2Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end)), 1);
     } else {
-      var min = Math.max(Math.min((mouse1X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start), (mouse2X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start)), 0);
+      var min = Math.max(Math.min((mouse1X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start), (mouse2X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start)), -0.01);
       var max = Math.min(Math.max((mouse1X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start), (mouse2X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start)), 1);
     }
     plot_data.rubber_bands[selected_axis_index] = [min, max];
@@ -6076,16 +6076,20 @@ export class Interactions {
     plot_data.is_drawing_rubber_band = true;
     if (plot_data.vertical) {
       var deltaY = (mouse2Y - mouse1Y)/(plot_data.axis_y_start - plot_data.axis_y_end);
-      var new_min = Math.max(plot_data.rubber_last_min + deltaY, 0);
+      var new_min = Math.max(plot_data.rubber_last_min + deltaY, -0.01);
       var new_max = Math.min(plot_data.rubber_last_max + deltaY, 1);
     } else {
       var deltaX = (mouse2X - mouse1X)/(plot_data.axis_x_end - plot_data.axis_x_start);
-      var new_min = Math.max(plot_data.rubber_last_min + deltaX, 0);
+      var new_min = Math.max(plot_data.rubber_last_min + deltaX, -0.01);
       var new_max = Math.min(plot_data.rubber_last_max + deltaX, 1);
     }
     plot_data.rubber_bands[selected_band_index] = [new_min, new_max];
-    let real_new_min = plot_data.axis_to_real_coords(new_min, plot_data.axis_list[selected_band_index]['type_'], plot_data.axis_list[selected_band_index]['list'], plot_data.inverted_axis_list[selected_band_index]);
-    let real_new_max = plot_data.axis_to_real_coords(new_max, plot_data.axis_list[selected_band_index]['type_'], plot_data.axis_list[selected_band_index]['list'], plot_data.inverted_axis_list[selected_band_index]);
+    let real_new_min = plot_data.axis_to_real_coords(new_min, plot_data.axis_list[selected_band_index]['type_'], 
+                                                     plot_data.axis_list[selected_band_index]['list'], 
+                                                     plot_data.inverted_axis_list[selected_band_index]);
+    let real_new_max = plot_data.axis_to_real_coords(new_max, plot_data.axis_list[selected_band_index]['type_'], 
+                                                     plot_data.axis_list[selected_band_index]['list'], 
+                                                     plot_data.inverted_axis_list[selected_band_index]);
     let to_add_min = Math.min(real_new_min, real_new_max);
     let to_add_max = Math.max(real_new_min, real_new_max);
     plot_data.add_to_rubberbands_dep([plot_data.axis_list[selected_band_index]['name'], [to_add_min, to_add_max]]);
@@ -6102,19 +6106,19 @@ export class Interactions {
     if (plot_data.vertical) {
       var deltaY = (mouse2Y - mouse1Y)/(plot_data.axis_y_start - plot_data.axis_y_end);
       if (border_number == 0) {
-        var new_min = Math.min(Math.max(plot_data.rubber_last_min + deltaY, 0), 1);
+        var new_min = Math.min(Math.max(plot_data.rubber_last_min + deltaY, -0.01), 1);
         plot_data.rubber_bands[axis_index][0] = new_min;
       } else {
-        var new_max = Math.min(Math.max(plot_data.rubber_last_max + deltaY, 0), 1);
+        var new_max = Math.min(Math.max(plot_data.rubber_last_max + deltaY, -0.01), 1);
         plot_data.rubber_bands[axis_index][1] = new_max;
       }
     } else {
       var deltaX = (mouse2X - mouse1X)/(plot_data.axis_x_end - plot_data.axis_x_start);
       if (border_number == 0) {
-        var new_min = Math.min(Math.max(plot_data.rubber_last_min + deltaX, 0), 1);
+        var new_min = Math.min(Math.max(plot_data.rubber_last_min + deltaX, -0.01), 1);
         plot_data.rubber_bands[axis_index][0] = new_min;
       } else {
-        var new_max = Math.min(Math.max(plot_data.rubber_last_max + deltaX, 0), 1);
+        var new_max = Math.min(Math.max(plot_data.rubber_last_max + deltaX, -0.01), 1);
         plot_data.rubber_bands[axis_index][1] = new_max;
       }
     }
@@ -6123,8 +6127,14 @@ export class Interactions {
       border_number = 1 - border_number;
       [plot_data.rubber_last_min, plot_data.rubber_last_max] = [plot_data.rubber_last_max, plot_data.rubber_last_min];
     }
-    var real_new_min = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][0], plot_data.axis_list[axis_index]['type_'], plot_data.axis_list[axis_index]['list'], plot_data.inverted_axis_list[axis_index]);
-    var real_new_max = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][1], plot_data.axis_list[axis_index]['type_'], plot_data.axis_list[axis_index]['list'], plot_data.inverted_axis_list[axis_index]);
+    var real_new_min = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][0], 
+                                                     plot_data.axis_list[axis_index]['type_'], 
+                                                     plot_data.axis_list[axis_index]['list'], 
+                                                     plot_data.inverted_axis_list[axis_index]);
+    var real_new_max = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][1], 
+                                                     plot_data.axis_list[axis_index]['type_'], 
+                                                     plot_data.axis_list[axis_index]['list'], 
+                                                     plot_data.inverted_axis_list[axis_index]);
     var to_add_min = Math.min(real_new_min, real_new_max);
     var to_add_max = Math.max(real_new_min, real_new_max);
     plot_data.add_to_rubberbands_dep([plot_data.axis_list[axis_index]['name'], [to_add_min, to_add_max]]);

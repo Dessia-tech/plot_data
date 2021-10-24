@@ -42,8 +42,8 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
             edge_style = plot_data.EdgeStyle(color_stroke=color)
             surface_style = plot_data.SurfaceStyle(color_fill=color)
             if shape == '.':
-                prim = plot_data.Point2D(x, y, size=4, color_fill=color,
-                                         color_stroke=color)
+                point_style = plot_data.PointStyle(color_fill=color, color_stroke=color, size=4)
+                prim = plot_data.Point2D(x, y, point_style=point_style)
             elif shape == 'o':
                 prim = plot_data.Circle2D(
                         x, y, r,

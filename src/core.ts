@@ -1020,6 +1020,14 @@ export class MultiplePlots {
   }
 
   clean_view():void {
+    if (this.nbObjects === 1) {
+      let obj = this.objectList[0];
+      obj.X = 0;
+      obj.Y = 0;
+      obj.width = this.width;
+      obj.height = this.height;
+      return;
+    }
     var big_coord = 'X';
     var small_coord = 'Y';
     var big_length = 'width';

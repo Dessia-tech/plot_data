@@ -7,14 +7,14 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 
 export default {
-  mode: "development",
+  mode: "production",
   entry: "./src/plot-data.ts",
   output: {
     filename: "plot-data.js",
     path: path.resolve(__dirname, "lib"),
-    // library: {
-    //   type: "module"
-    // },
+    library: {
+      type: "module"
+    },
     clean: true
   },
   experiments: {

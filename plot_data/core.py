@@ -1050,16 +1050,11 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
-    lib_path = 'https://cdn.dessia.tech/js/plot-data/latest/core.js'
+    version, folder, filename = get_current_link()
+    cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/{}'
+    lib_path = cdn_url.format(version, filename)
     if debug_mode:
-        # core_path = os.sep + os.path.join(
-        #     *sys.modules[__name__].__file__.split('/')[:-2], 'lib',
-        #     'core.js')
-        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + ['lib', 'core.js'])
-
-        # I added the line below since the one above that I commented didn't work for me on Windows 10.
-        # I'm going to fix it later on and if I forget to remove it, feel free to do so. Jeremie
-        # core_path = 'C:\\Users\\jch1\\Documents\\Github\\plot_data\\lib\\core.js'
+        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
 
         if not os.path.isfile(core_path):
             print('Local compiled core.js not found, fall back to CDN')
@@ -1079,8 +1074,6 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     else:
         with open(page_name + '.html', 'wb') as file:
             file.write(s.encode('utf-8'))
-
-        # webbrowser.open('file://'+page_name+'.html')
         webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
 
@@ -1128,3 +1121,24 @@ def bounding_box(plot_datas: Subclass[PlotDataObject]):
             ymin, ymax = min(ymin, bb[2]), max(ymax, bb[3])
 
     return xmin, xmax, ymin, ymax
+
+
+def get_current_link(version: str = None) -> Tuple[str, str, str]:
+    folder = "lib"
+    filename = "core.js"
+    try:
+        package = sys.modules[sys.modules[__name__].__package__]
+        if version is None:
+            version = package.__version__
+
+        splitted_version = version.split(".")
+        if len(splitted_version) > 3:
+            splitted_version.pop()
+            splitted_version[2] = str(int(splitted_version[2]) - 1)
+        formatted_version = "v" + ".".join(splitted_version)
+        if formatted_version == 'v0.6.2':
+            folder = "dist"
+            filename = "plot-data.js"
+        return formatted_version, folder, filename
+    except Exception:
+        return 'latest', folder, filename

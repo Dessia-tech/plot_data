@@ -7622,10 +7622,8 @@ export class Tooltip {
       var current_y = tp_y + 0.75*this.text_style.font_size;
       for (var i=0; i<textfills.length; i++) {
         if (i == 0) {
-          context.fillStyle = string_to_rgb('white');
           context.font = 'bold ' + this.text_style.font;
           context.fillText(textfills[0], tp_x + tp_width/2, current_y);
-          context.fillStyle = this.text_style.text_color;
           context.font = this.text_style.font;
           current_y += this.text_style.font_size * 1.1;
         } else {

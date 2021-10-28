@@ -14,7 +14,7 @@ steps:
   - npm install
   - npm run-script build
   - npm install typedoc
-  - npx typedoc src/core.ts --out doc/build/typescript/
+  - npx typedoc src/plot-data.ts --out doc/build/typescript/
 
 - name: upload npm
   image: plugins/npm

@@ -2,11 +2,11 @@ import { Shape } from "./base/shape";
 import { string_to_hex } from "./base/functions";
 import { string_to_hex_dict } from "./base/constants";
 
+// export { Shape, string_to_hex, string_to_hex_dict};
 
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
 
-export { Shape, string_to_hex, string_to_hex_dict};
 
 /** 
  * MultiplePlots takes a list of elements (dictionaries) that represent vectors and displays it throught different representations

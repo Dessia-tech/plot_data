@@ -1144,8 +1144,13 @@ def get_current_link(version: str = None) -> Tuple[str, str, str]:
         if formatted_version == 'v0.6.2':
             folder = "dist"
             filename = "plot-data.js"
-        if int(splitted_version[0]) >= 0 and int(splitted_version[1]) >= 7:
+        if formatted_version == "v0.7.0":
             folder = "lib"
+            filename = "plot-data.js"
+        if int(splitted_version[0]) >= 0\
+                and int(splitted_version[1]) >= 7\
+                and int(splitted_version[1]) >= 1:
+            folder = "libdev"
             filename = "plot-data.js"
         return formatted_version, folder, filename
     except Exception:

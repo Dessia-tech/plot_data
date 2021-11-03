@@ -37,7 +37,7 @@ steps:
     password:
       from_secret: ssh_drone_password
     target: /var/www/cdn/js/plot-data/sid/
-    source: lib/*
+    source: libdev/*
     strip_components: 1
     rm: true
 
@@ -51,7 +51,7 @@ steps:
     password:
       from_secret: ssh_drone_password
     target: /var/www/cdn/js/plot-data/${DRONE_TAG}/
-    source: lib/*
+    source: libdev/*
     strip_components: 1
 
 - name: upload to cdn latest
@@ -64,7 +64,7 @@ steps:
     password:
       from_secret: ssh_drone_password
     target: /var/www/cdn/js/plot-data/latest/
-    source: lib/*
+    source: libdev/*
     strip_components: 1
     rm: true
 

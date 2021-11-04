@@ -1011,6 +1011,7 @@ class MultiplePlots(PlotDataObject):
 
 def plot_canvas(plot_data_object: Subclass[PlotDataObject],
                 debug_mode: bool = False, canvas_id: str = 'canvas',
+                force_version: str = None,
                 width: int = 750, height: int = 400, page_name: str = None):
     """
     Creates a html file and plots input data in web browser
@@ -1050,14 +1051,18 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
-    version, folder, filename = get_current_link()
+    if force_version is not None:
+        version, folder, filename = get_current_link(version=force_version)
+    else:
+        version, folder, filename = get_current_link()
     cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/{}'
     lib_path = cdn_url.format(version, filename)
     if debug_mode:
         core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
 
         if not os.path.isfile(core_path):
-            print('Local compiled core.js not found, fall back to CDN')
+            msg = 'Local compiled {} not found, fall back to CDN'
+            print(msg.format(core_path))
         else:
             lib_path = core_path
 
@@ -1138,6 +1143,14 @@ def get_current_link(version: str = None) -> Tuple[str, str, str]:
         formatted_version = "v" + ".".join(splitted_version)
         if formatted_version == 'v0.6.2':
             folder = "dist"
+            filename = "plot-data.js"
+        if formatted_version == "v0.7.0":
+            folder = "lib"
+            filename = "plot-data.js"
+        if int(splitted_version[0]) >= 0\
+                and int(splitted_version[1]) >= 7\
+                and int(splitted_version[1]) >= 1:
+            folder = "libdev"
             filename = "plot-data.js"
         return formatted_version, folder, filename
     except Exception:

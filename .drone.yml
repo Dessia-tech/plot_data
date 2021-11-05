@@ -12,7 +12,8 @@ steps:
   - version=`git describe --tags`
   - npm version $${version}
   - npm install
-  - npm run-script build
+  - npm run build
+  - npm run dev
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
 

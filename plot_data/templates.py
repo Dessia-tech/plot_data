@@ -139,11 +139,11 @@ primitive_group_container_template = Template('''
     <script src=$core_path ></script>
     
     <script type="text/javascript">
-        var width = 750,
+        var width = 750;
         var height = 400;
     
         var data = $data;
-        var number_plot_data = data.length
+        var number_plot_data = data.length;
     
         var globalWidth = 1500;
         var globalHeight = 800;

@@ -2464,6 +2464,7 @@ export class Interactions {
     this.move_axis(plot_data.move_index, new_index, plot_data);
     plot_data.move_index = -1;
     var click_on_axis = false;
+    plot_data.draw();
     return [mouse3X, mouse3Y, click_on_axis];
   }
 

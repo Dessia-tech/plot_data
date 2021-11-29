@@ -5,7 +5,7 @@ const path = require("path");
 const isProduction = process.env.NODE_ENV == "production";
 
 const config = {
-  entry: "./src/plot-data.ts",
+  entry: "./src/core.ts",
   output: {
     path: path.resolve(__dirname, "libdev"),
     filename: "plot-data.js",
@@ -16,7 +16,7 @@ const config = {
     }
   },
   plugins: [
-    // Add your plugins here
+    // Add your plugins here 
     // Learn more about plugins from https://webpack.js.org/configuration/plugins/
   ],
   module: {

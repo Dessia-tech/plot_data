@@ -842,7 +842,7 @@ export class MultiplePlots {
           this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
         }
       }
-  
+      
       if (equals(all_index, this.dep_selected_points_index) && !bool) {
         this.dep_selected_points_index = [];
       }
@@ -1966,6 +1966,7 @@ export class MultiplotCom {
           }
         }
         plot_data.select_on_click = new_select_on_click;
+        plot_data.refresh_selected_point_index();
       }
     }
   

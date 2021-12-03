@@ -213,14 +213,25 @@ export abstract class PlotData {
     this.draw();
   }
 
-  refresh_MinMax(point_list):void {
+  refresh_MinMax(point_list, log_scale_x: boolean = false, log_scale_y: boolean = false):void {
     this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
     for (var j=0; j<point_list.length; j++) {
       var point = point_list[j];
-      this.minX = Math.min(this.minX, point.minX);
-      this.maxX = Math.max(this.maxX, point.maxX);
-      this.minY = Math.min(this.minY, point.minY);
-      this.maxY = Math.max(this.maxY, point.maxY);
+      if (log_scale_x) {
+        this.minX = Math.min(this.minX, Math.log10(point.minX));
+        this.maxX = Math.max(this.maxX, Math.log10(point.maxX));
+      } else {
+        this.minX = Math.min(this.minX, point.minX);
+        this.maxX = Math.max(this.maxX, point.maxX);
+      }
+
+      if (log_scale_y) {
+        this.minY = Math.min(this.minY, -Math.log10(-point.minY));
+        this.maxY = Math.max(this.maxY, -Math.log10(-point.maxY));
+      } else {
+        this.minY = Math.min(this.minY, point.minY);
+        this.maxY = Math.max(this.maxY, point.maxY);
+      }
       this.colour_to_plot_data[point.mouse_selection_color] = point;
     }
     if (this.minX === this.maxX) {
@@ -412,7 +423,7 @@ export abstract class PlotData {
     }
   }
 
-  draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
+  draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D, log_scale_x, log_scale_y) {
     if (d['type_'] == 'point') {
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
@@ -455,14 +466,18 @@ export abstract class PlotData {
           this.context.fillStyle = this.color_surface_on_mouse;
         }
       }
-      var x = scaleX*d.cx+ mvx;
-      var y = scaleY*d.cy + mvy;
+      let cx = d.cx, cy = d.cy;
+      if (log_scale_x) cx = Math.log10(cx);
+      if (log_scale_y) cy = -Math.log10(-cy);
+
+      var x = scaleX*cx+ mvx;
+      var y = scaleY*cy + mvy;
       this.pointLength = d.size;
 
       var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
       if (is_inside_canvas === true) {
         this.context.beginPath();
-        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, log_scale_x, log_scale_y);
         this.context.fill();
         this.context.stroke();
         this.context.closePath();
@@ -470,20 +485,21 @@ export abstract class PlotData {
     }
   }
 
-  draw_axis(mvx, mvy, scaleX, scaleY, d:Axis) { // Only used by graph2D
-    if (d['type_'] == 'axis'){
-      d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][0]);
-      d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][1]);
-      this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
-      this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
-    }
+  draw_axis(mvx, mvy, scaleX, scaleY, d:Axis, log_scale_x, log_scale_y) { // Only used by graph2D
+    d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
+      this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][0], log_scale_x);
+
+    d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
+      this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][1], log_scale_y);
+
+    this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
+    this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
   }
 
-  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d:Axis, lists, to_display_attributes) {
+  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d:Axis, lists, to_display_attributes, log_scale_x, log_scale_y) {
     d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, 
-      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, this.height);
+      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, 
+      this.height, log_scale_x, log_scale_y);
     this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
     this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     this.context.closePath();
@@ -516,18 +532,15 @@ export abstract class PlotData {
     return min_dist;
   }
 
-  draw_dataset(d:Dataset, hidden, mvx, mvy) {
+  draw_dataset(d:Dataset, hidden, mvx, mvy, log_scale_x, log_scale_y) {
     if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
       this.context.setLineDash(d.edge_style.dashline);
       this.context.strokeStyle = d.edge_style.color_stroke;
       this.context.lineWidth = d.edge_style.line_width;
       for (var i=0; i<d.segments.length; i++) {
-        if (i==0) {
-          d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
-        } else {
-          d.segments[i].draw(this.context, false, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
-        }
+        let hidden = i===0;
+        d.segments[i].draw(this.context, hidden, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y, log_scale_x, log_scale_y);
       }
       this.context.stroke();
       this.context.setLineDash([]);
@@ -541,7 +554,7 @@ export abstract class PlotData {
       }
       for (var i=0; i<d.point_list.length; i=i+step) {
         var point = d.point_list[i];
-        this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+        this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point, log_scale_x, log_scale_y);
       }
     } else if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
@@ -551,10 +564,10 @@ export abstract class PlotData {
 
   draw_graph2D(d:Graph2D, hidden, mvx, mvy) {
     if (d['type_'] == 'graph2d') {
-      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
+      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.log_scale_x, d.log_scale_y);
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
-        this.draw_dataset(graph, hidden, mvx, mvy);
+        this.draw_dataset(graph, hidden, mvx, mvy, d.log_scale_x, d.log_scale_y);
       }
       for (let i=0; i<d.graphs.length; i++) {
         let graph: Dataset = d.graphs[i];
@@ -565,7 +578,7 @@ export abstract class PlotData {
 
   draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
     if (d['type_'] == 'scatterplot') {
-      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.to_display_attributes);
+      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.to_display_attributes, d.log_scale_x, d.log_scale_y);
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
         if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
@@ -584,7 +597,7 @@ export abstract class PlotData {
       if (this.point_families.length == 0) {
         for (var i=0; i<this.scatter_points.length; i++) {
           var point:Point2D = this.scatter_points[i];
-          this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+          this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point, d.log_scale_x, d.log_scale_y);
         }
       } else {
         var point_order = this.get_point_order();
@@ -592,7 +605,7 @@ export abstract class PlotData {
           for (let j=0; j<point_order[i].length; j++) {
             let index = point_order[i][j];
             let point:Point2D = this.scatter_points[index];
-            this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+            this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point, d.log_scale_x, d.log_scale_y);
           }
         }
       }

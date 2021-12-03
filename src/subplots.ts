@@ -137,14 +137,7 @@ export class PlotScatter extends PlotData {
             this.graph_to_display.push(true);
             this.graph_name_list.push(graph.name);
             graph.id = i;
-            for (let j=0; j<graph.point_list.length; j++) {
-              var point = graph.point_list[j];
-              if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
-              if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
-              if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
-              if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
-              this.colour_to_plot_data[point.mouse_selection_color] = point;
-            }
+            this.refresh_MinMax(graph.point_list, data['log_scale_x'], data['log_scale_y']);
           }
           this.nb_graph = this.plotObject.graphs.length;
         } else if (data['type_'] == 'scatterplot') {
@@ -155,7 +148,7 @@ export class PlotScatter extends PlotData {
           this.plot_datas['value'] = [this.plotObject];
           this.pointLength = this.plotObject.point_list[0].size;
           this.scatter_init_points = this.plotObject.point_list;
-          this.refresh_MinMax(this.plotObject.point_list);
+          this.refresh_MinMax(this.plotObject.point_list, data['log_scale_x'], data['log_scale_y']);
         }
         this.isParallelPlot = false;
         if (this.mergeON && alert_count === 0) {
@@ -748,7 +741,8 @@ export class PrimitiveGroupContainer extends PlotData {
       if (this.primitive_groups.length !== 0) {
         if (this.layout_mode == 'one_axis') {
           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
-              this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
+              this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, 
+              this.decalage_axis_y, this.X, this.Y, this.width);
         } else if (this.layout_mode == 'two_axis') {
           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
             this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
@@ -1527,7 +1521,7 @@ export class Histogram extends PlotData {
         this.axis.draw_horizontal_axis(this.context, this.originX, this.scale,
                                        this.width, this.height, this.init_scale, this.minX, this.maxX,
                                        this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
-                                       this.X, this.Y, this.x_variable.name, x_step);
+                                       this.X, this.Y, this.x_variable.name, false, x_step);
       }
       this.axis.draw_histogram_y_axis(this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x, 
         this.decalage_axis_y, this.X, this.Y, 'Frequency', this.y_step, this.coeff);

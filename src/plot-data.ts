@@ -55,6 +55,8 @@ export abstract class PlotData {
   y_nb_digits:number = 0;
   multiplot_manipulation:boolean=false;
   fusion_coeff:number=1.2;
+  log_scale_x: boolean = false;
+  log_scale_y: boolean = true;
 
   plotObject:any;
   plot_datas:object={};
@@ -213,11 +215,11 @@ export abstract class PlotData {
     this.draw();
   }
 
-  refresh_MinMax(point_list, log_scale_x: boolean = false, log_scale_y: boolean = false):void {
+  refresh_MinMax(point_list):void {
     this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
     for (var j=0; j<point_list.length; j++) {
       var point = point_list[j];
-      if (log_scale_x) {
+      if (this.log_scale_x) {
         this.minX = Math.min(this.minX, Math.log10(point.minX));
         this.maxX = Math.max(this.maxX, Math.log10(point.maxX));
       } else {
@@ -225,7 +227,7 @@ export abstract class PlotData {
         this.maxX = Math.max(this.maxX, point.maxX);
       }
 
-      if (log_scale_y) {
+      if (this.log_scale_y) {
         this.minY = Math.min(this.minY, -Math.log10(-point.minY));
         this.maxY = Math.max(this.maxY, -Math.log10(-point.maxY));
       } else {
@@ -423,7 +425,7 @@ export abstract class PlotData {
     }
   }
 
-  draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D, log_scale_x, log_scale_y) {
+  draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
     if (d['type_'] == 'point') {
       if (hidden) {
         this.context.fillStyle = d.mouse_selection_color;
@@ -467,8 +469,8 @@ export abstract class PlotData {
         }
       }
       let cx = d.cx, cy = d.cy;
-      if (log_scale_x) cx = Math.log10(cx);
-      if (log_scale_y) cy = -Math.log10(-cy);
+      if (this.log_scale_x) cx = Math.log10(cx);
+      if (this.log_scale_y) cy = -Math.log10(-cy);
 
       var x = scaleX*cx+ mvx;
       var y = scaleY*cy + mvy;
@@ -477,7 +479,7 @@ export abstract class PlotData {
       var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
       if (is_inside_canvas === true) {
         this.context.beginPath();
-        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, log_scale_x, log_scale_y);
+        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
         this.context.fill();
         this.context.stroke();
         this.context.closePath();
@@ -509,7 +511,9 @@ export abstract class PlotData {
   draw_tooltip(d:Tooltip, mvx, mvy, point_list, initial_point_list, elements, mergeON, axes:any[]) {
     if (d['type_'] == 'tooltip') {
       this.tooltip_ON = true;
-      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, initial_point_list, elements, mergeON, axes);
+      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, 
+        this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
+        this.log_scale_x, this.log_scale_y);
     }
   }
 
@@ -532,7 +536,7 @@ export abstract class PlotData {
     return min_dist;
   }
 
-  draw_dataset(d:Dataset, hidden, mvx, mvy, log_scale_x, log_scale_y) {
+  draw_dataset(d:Dataset, hidden, mvx, mvy) {
     if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
       this.context.setLineDash(d.edge_style.dashline);
@@ -540,7 +544,8 @@ export abstract class PlotData {
       this.context.lineWidth = d.edge_style.line_width;
       for (var i=0; i<d.segments.length; i++) {
         let hidden = i===0;
-        d.segments[i].draw(this.context, hidden, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y, log_scale_x, log_scale_y);
+        d.segments[i].draw(this.context, hidden, mvx, mvy, this.scaleX, this.scaleY, 
+          this.X, this.Y, this.log_scale_x, this.log_scale_y);
       }
       this.context.stroke();
       this.context.setLineDash([]);
@@ -554,7 +559,8 @@ export abstract class PlotData {
       }
       for (var i=0; i<d.point_list.length; i=i+step) {
         var point = d.point_list[i];
-        this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point, log_scale_x, log_scale_y);
+        this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, 
+          point);
       }
     } else if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
@@ -564,21 +570,23 @@ export abstract class PlotData {
 
   draw_graph2D(d:Graph2D, hidden, mvx, mvy) {
     if (d['type_'] == 'graph2d') {
-      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.log_scale_x, d.log_scale_y);
+      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, this.log_scale_x, this.log_scale_y);
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
-        this.draw_dataset(graph, hidden, mvx, mvy, d.log_scale_x, d.log_scale_y);
+        this.draw_dataset(graph, hidden, mvx, mvy);
       }
       for (let i=0; i<d.graphs.length; i++) {
         let graph: Dataset = d.graphs[i];
-        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, graph.elements, false, d.attribute_names);
+        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, 
+          graph.elements, false, d.attribute_names);
       }
     }
   }
 
   draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
     if (d['type_'] == 'scatterplot') {
-      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.to_display_attributes, d.log_scale_x, d.log_scale_y);
+      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, 
+        d.lists, d.to_display_attributes, this.log_scale_x, this.log_scale_y);
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
         if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
@@ -597,7 +605,7 @@ export abstract class PlotData {
       if (this.point_families.length == 0) {
         for (var i=0; i<this.scatter_points.length; i++) {
           var point:Point2D = this.scatter_points[i];
-          this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point, d.log_scale_x, d.log_scale_y);
+          this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
         }
       } else {
         var point_order = this.get_point_order();
@@ -605,7 +613,7 @@ export abstract class PlotData {
           for (let j=0; j<point_order[i].length; j++) {
             let index = point_order[i][j];
             let point:Point2D = this.scatter_points[index];
-            this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point, d.log_scale_x, d.log_scale_y);
+            this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
           }
         }
       }
@@ -615,7 +623,8 @@ export abstract class PlotData {
           this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
         }
       }
-      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON, d.attribute_names);
+      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON, 
+        d.attribute_names);
     }
   }
 
@@ -2188,8 +2197,13 @@ export class Interactions {
         let graph = plot_data.plotObject.graphs[i];
         for (let j=0; j<graph.point_list.length; j++) {
           let point = graph.point_list[j];
-          var x = plot_data.scaleX*point.cx + plot_data.originX + plot_data.X;
-          var y = plot_data.scaleY*point.cy + plot_data.originY + plot_data.Y;
+
+          let cx = point.cx, cy = point.cy;
+          if (plot_data.log_scale_x) cx = Math.log10(cx);
+          if (plot_data.log_scale_y) cy = -Math.log10(-cy);
+
+          var x = plot_data.scaleX*cx + plot_data.originX + plot_data.X;
+          var y = plot_data.scaleY*cy + plot_data.originY + plot_data.Y;
           var in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
           if ((in_rect===true) && !List.is_include(point, plot_data.select_on_click)) {
             plot_data.select_on_click.push(point);
@@ -2203,14 +2217,20 @@ export class Interactions {
 
     } else if (plot_data.plotObject['type_'] == 'scatterplot') {
       for (var j=0; j<plot_data.scatter_points.length; j++) {
-        var x = plot_data.scaleX*plot_data.scatter_points[j].cx + plot_data.originX + plot_data.X;
-        var y = plot_data.scaleY*plot_data.scatter_points[j].cy + plot_data.originY + plot_data.Y;
+
+        let cx = plot_data.scatter_points[j].cx;
+        let cy = plot_data.scatter_points[j].cy;
+        if (plot_data.log_scale_x) cx = Math.log10(cx);
+        if (plot_data.log_scale_y) cy = -Math.log10(-cy);
+
+        var x = plot_data.scaleX*cx + plot_data.originX + plot_data.X;
+        var y = plot_data.scaleY*cy + plot_data.originY + plot_data.Y;
         in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
         if ((in_rect===true) && !List.is_include(plot_data.scatter_points[j], plot_data.select_on_click)) {
           plot_data.select_on_click.push(plot_data.scatter_points[j]);
           plot_data.scatter_points[j].selected = true;
           plot_data.latest_selected_points.push(plot_data.scatter_points[j]);
-        } else if (!in_rect) {
+        } else if (!in_rect) { 
           plot_data.scatter_points[j].selected = false;
         }
       }

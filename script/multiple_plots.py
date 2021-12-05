@@ -1,8 +1,10 @@
-# An example of MultiplePlots instantiation. It draws and allows interactions between
-# different plots in one canvas, including scatterplots, parallelplots,
-# primitive_groups and primitive_group_containers.
-# The plots are created using necessary parameters only. For more details about
-# customization and optional parameters, feel free read the plots' specific scripts.
+"""
+An example of MultiplePlots instantiation. It draws and allows interactions between
+different plots in one canvas, including scatterplots, parallelplots,
+primitive_groups and primitive_group_containers.
+The plots are created using necessary parameters only. For more details about
+customization and optional parameters, feel free read the plots' specific scripts.
+"""
 
 import plot_data
 import plot_data.colors as colors
@@ -10,8 +12,11 @@ from test_objects.primitive_group_test import primitive_group
 from test_objects.graph_test import graph2d
 import random
 
-elements = []  # a list of vectors (dictionaries) that are displayed
-# through different representations such as parallel plots and scatter plots
+"""
+a list of vectors (dictionaries) that are displayed
+through different representations such as parallel plots and scatter plots
+"""
+elements = []
 
 nb_elements = 50
 available_colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]
@@ -24,11 +29,11 @@ for i in range(nb_elements):
                      'color': random_color,
                      'direction': random_direction})
 
-# ParallelPlot
+""" ParallelPlot """
 parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color', 'direction'])
 parallelplot2 = plot_data.ParallelPlot(axes=['x', 'color'])
 
-# Scatterplots
+"""Scatterplots"""
 scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
 
 scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
@@ -37,7 +42,7 @@ scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
 
 scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 
-# PrimitiveGroupContainers
+"""PrimitiveGroupContainers"""
 contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
                                                     plot_data.LineSegment2D([1, 2], [2, 2]),
                                                     plot_data.LineSegment2D([2, 2], [2, 1]),
@@ -60,12 +65,10 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 
 histogram = plot_data.Histogram(x_variable='x')
 
-# Creating the multiplot
+"""Creating the multiplot"""
 plots = [parallelplot1, parallelplot2, scatterplot1,
          scatterplot2, scatterplot3, graph2d, primitive_group_container,
          histogram]
-
-# plots = [parallelplot1, scatterplot1]
 
 multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
                                     initial_view_on=True)

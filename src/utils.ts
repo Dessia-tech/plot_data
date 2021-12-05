@@ -617,10 +617,10 @@ export class Tooltip {
                          serialized['name']);
     }
   
-    isTooltipInsideCanvas(point, mvx, mvy, scaleX, scaleY, canvasWidth, canvasHeight) {
-      var x = scaleX*point.cx + mvx;
-      var y = scaleY*point.cy + mvy;
-      var length = 100*point.size;
+    isTooltipInsideCanvas(cx, cy, size, mvx, mvy, scaleX, scaleY, canvasWidth, canvasHeight) {
+      var x = scaleX*cx + mvx;
+      var y = scaleY*cy + mvy;
+      var length = 100*size;
       return (x+length>=0) && (x-length<=canvasWidth) && (y+length>=0) && (y-length<=canvasHeight);
     }
   
@@ -684,7 +684,9 @@ export class Tooltip {
       return [textfills, text_max_length];
     }
   
-    draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes) {
+    draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, 
+      X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, 
+      mergeON, axes, log_scale_x, log_scale_y) {
       var textfills = [];
       var text_max_length = 0;
       context.font = this.text_style.font;
@@ -701,8 +703,9 @@ export class Tooltip {
   
       if (textfills.length > 0) {
         var tp_height = textfills.length*this.text_style.font_size*1.25;
-        var cx = point.cx;
-        var cy = point.cy;
+        var cx = point.cx, cy = point.cy;
+        if (log_scale_x) cx = Math.log10(cx);
+        if (log_scale_y) cy = -Math.log10(-cy);
         var point_size = point.point_style.size;
         var decalage = 2.5*point_size + 15;
         var tp_x = scaleX*cx + mvx + decalage + X;
@@ -759,10 +762,21 @@ export class Tooltip {
   
     }
   
-    manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes) {
+    manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, 
+      X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes, 
+      log_scale_x, log_scale_y) {
+
       for (var i=0; i<tooltip_list.length; i++) {
-        if (tooltip_list[i] && this.isTooltipInsideCanvas(tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height)) {
-          this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes);
+        let cx = tooltip_list[i].cx, cy = tooltip_list[i].cy;
+        if (log_scale_x) cx = Math.log10(cx);
+        if (log_scale_y) cy = -Math.log10(-cy);
+        if (tooltip_list[i] && this.isTooltipInsideCanvas(cx, cy, tooltip_list[i].size, mvx, mvy, 
+          scaleX, scaleY, canvas_width, canvas_height)) {
+
+          this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, 
+            X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
+            log_scale_x, log_scale_y);
+
         }
       }
     }

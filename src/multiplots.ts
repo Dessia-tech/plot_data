@@ -2048,6 +2048,6 @@ export class MultiplotCom {
 
 
 const empty_container = {'name': '',
-'package_version': '0.6.1',
+'package_version': '0.6.2',
 'primitive_groups': [],
 'type_': 'primitivegroupcontainer'};

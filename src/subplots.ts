@@ -124,7 +124,9 @@ export class PlotScatter extends PlotData {
         }
         if (this.buttons_ON) {
           this.refresh_buttons_coords();
-        }
+        }        
+        this.log_scale_x = data['log_scale_x'];
+        this.log_scale_y = data['log_scale_y'];
         if (data['type_'] == 'graph2d') {
           this.type_ = 'graph2d';
           this.graph_ON = true;
@@ -137,7 +139,7 @@ export class PlotScatter extends PlotData {
             this.graph_to_display.push(true);
             this.graph_name_list.push(graph.name);
             graph.id = i;
-            this.refresh_MinMax(graph.point_list, data['log_scale_x'], data['log_scale_y']);
+            this.refresh_MinMax(graph.point_list);
           }
           this.nb_graph = this.plotObject.graphs.length;
         } else if (data['type_'] == 'scatterplot') {
@@ -148,7 +150,7 @@ export class PlotScatter extends PlotData {
           this.plot_datas['value'] = [this.plotObject];
           this.pointLength = this.plotObject.point_list[0].size;
           this.scatter_init_points = this.plotObject.point_list;
-          this.refresh_MinMax(this.plotObject.point_list, data['log_scale_x'], data['log_scale_y']);
+          this.refresh_MinMax(this.plotObject.point_list);
         }
         this.isParallelPlot = false;
         if (this.mergeON && alert_count === 0) {

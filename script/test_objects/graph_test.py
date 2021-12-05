@@ -26,7 +26,7 @@ custom_dataset = plot_data.Dataset(elements=elements1, name='I = f(t)',
 
 
 # Now let's create another dataset for the purpose of this exercice
-T2 = np.linspace(0, 20, 100)
+T2 = np.linspace(1, 20, 100)
 I2 = [100*(2+np.cos(t)) for t in T2]
 elements2 = []
 for k in range(1, len(T2)):
@@ -35,5 +35,5 @@ for k in range(1, len(T2)):
 dataset2 = plot_data.Dataset(elements=elements2, name='I2 = f(t)')
 
 
-graph2d = plot_data.Graph2D(graphs=[dataset2],
+graph2d = plot_data.Graph2D(graphs=[dataset2], log_scale_x=True, log_scale_y=True,
                             x_variable='time', y_variable='electric current')

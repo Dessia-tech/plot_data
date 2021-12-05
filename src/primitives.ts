@@ -268,8 +268,6 @@ export class Graph2D {
     constructor(public graphs: Dataset[],
                 public attribute_names:string[],
                 public axis: Axis,
-                public log_scale_x: boolean = false,
-                public log_scale_y: boolean = false,
                 public type_: string='graph2d',
                 public name: string='') {}
   
@@ -286,8 +284,6 @@ export class Graph2D {
       return new Graph2D(graphs,
                          serialized['attribute_names'],
                          axis,
-                         serialized['log_scale_x'],
-                         serialized['log_scale_y'],
                          serialized['type_'],
                          serialized['name']);
     }
@@ -615,8 +611,6 @@ export class Scatter {
               public point_style:PointStyle,
               public elements: any[],
               public axis:Axis,
-              public log_scale_x: boolean = false,
-              public log_scale_y: boolean = false,
               public type_:string,
               public name:string) {
     this.initialize_all_attributes();
@@ -638,8 +632,6 @@ export class Scatter {
                        point_style,
                        serialized['elements'],
                        axis,
-                       serialized['log_scale_x'],
-                       serialized['log_scale_y'],
                        serialized['type_'],
                        serialized['name']);
   }

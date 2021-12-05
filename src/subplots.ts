@@ -139,7 +139,8 @@ export class PlotScatter extends PlotData {
             this.graph_to_display.push(true);
             this.graph_name_list.push(graph.name);
             graph.id = i;
-            this.refresh_MinMax(graph.point_list);
+            this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
+            this.refresh_MinMax(graph.point_list, true);
           }
           this.nb_graph = this.plotObject.graphs.length;
         } else if (data['type_'] == 'scatterplot') {
@@ -209,6 +210,10 @@ export class PlotScatter extends PlotData {
   
         //draw clear point button
         Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
+
+        // Draw log scale buttons
+        Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
+          "10px Arial", this);
       }
       if (this.multiplot_manipulation) {
         this.draw_manipulable_rect();

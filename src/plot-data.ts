@@ -103,6 +103,8 @@ export abstract class PlotData {
   zoom_box_w:number=0;
   zoom_box_h:number=0;
   clear_point_button_y:number=0;
+  xlog_button_y: number = 0;
+  ylog_button_y: number = 0;
 
   all_attributes:Attribute[]=[];
   attribute_booleans:boolean[]=[];
@@ -215,8 +217,10 @@ export abstract class PlotData {
     this.draw();
   }
 
-  refresh_MinMax(point_list):void {
-    this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
+  refresh_MinMax(point_list, is_graph2D=false):void {
+    if (!is_graph2D) {
+      this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
+    }
     for (var j=0; j<point_list.length; j++) {
       var point = point_list[j];
       if (this.log_scale_x) {
@@ -1191,6 +1195,8 @@ export abstract class PlotData {
     this.merge_y = this.select_y + this.button_h + 5;
     this.perm_button_y = this.merge_y + this.button_h + 5;
     this.clear_point_button_y = this.perm_button_y + this.button_h + 5;
+    this.xlog_button_y = this.clear_point_button_y + this.button_h + 5;
+    this.ylog_button_y = this.xlog_button_y + this.button_h + 5;
   }
 
   refresh_attribute_booleans() {
@@ -1743,6 +1749,8 @@ export abstract class PlotData {
     var click_on_merge = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.merge_y + this.Y, this.button_w, this.button_h);
     var click_on_perm = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.perm_button_y + this.Y, this.button_w, this.button_h);
     var click_on_clear = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.clear_point_button_y + this.Y, this.button_w, this.button_h);
+    var click_on_xlog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.xlog_button_y + this.Y, this.button_w, this.button_h);
+    var click_on_ylog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.ylog_button_y + this.Y, this.button_w, this.button_h);
 
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
@@ -1752,7 +1760,7 @@ export abstract class PlotData {
     }
     this.click_on_button = false;
     this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select 
-    || click_on_graph || click_on_merge || click_on_perm || click_on_clear;
+    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog;
 
     if (mouse_moving) {
       if (this.zw_bool) {
@@ -1787,6 +1795,10 @@ export abstract class PlotData {
           Interactions.click_on_perm_action(this);
         } else if (click_on_clear) {
           Interactions.click_on_clear_action(this);
+        } else if (click_on_xlog) {
+          Interactions.click_on_xlog_action(this);
+        } else if (click_on_ylog) {
+          Interactions.click_on_ylog_action(this);
         }
       }
       Interactions.reset_zoom_box(this);
@@ -2337,6 +2349,34 @@ export class Interactions {
     plot_data.reset_scroll();
   }
 
+  public static click_on_xlog_action(plot_data) {
+    plot_data.log_scale_x = !plot_data.log_scale_x;
+    if (plot_data.type_ === 'scatterplot') {
+      plot_data.refresh_MinMax(plot_data.plotObject.point_list);
+    } else { //graph2D
+      plot_data.minX = Infinity; plot_data.maxX = -Infinity; plot_data.minY = Infinity; plot_data.maxY = -Infinity;
+      for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
+        let graph = plot_data.plotObject.graphs[i];
+        plot_data.refresh_MinMax(graph.point_list, true);
+      }
+    }
+    this.click_on_reset_action(plot_data);
+  }
+
+  public static click_on_ylog_action(plot_data) {
+    plot_data.log_scale_y = !plot_data.log_scale_y;
+    if (plot_data.type_ === 'scatterplot') {
+      plot_data.refresh_MinMax(plot_data.plotObject.point_list);
+    } else { //graph2D
+      plot_data.minX = Infinity; plot_data.maxX = -Infinity; plot_data.minY = Infinity; plot_data.maxY = -Infinity;
+      for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
+        let graph = plot_data.plotObject.graphs[i];
+        plot_data.refresh_MinMax(graph.point_list, true);
+      }
+    }
+    this.click_on_reset_action(plot_data);
+  }
+
   public static mouse_move_axis_inversion(isDrawing, e, selected_name_index, plot_data:any) {
     isDrawing = true;
     plot_data.move_index = selected_name_index;
@@ -2717,6 +2757,11 @@ export class Buttons {
 
   public static clear_point_button(x, y, w, h, police, plot_data:PlotData) {
     Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, 'Clear', police);
+  }
+
+  public static log_scale_buttons(x, y1, y2, w, h, police, plot_data:PlotData) {
+    Shape.createButton(x + plot_data.X, y1 + plot_data.Y, w, h, plot_data.context, 'xlog', police);
+    Shape.createButton(x + plot_data.X, y2 + plot_data.Y, w, h, plot_data.context, 'ylog', police);
   }
 }
 

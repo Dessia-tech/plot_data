@@ -7,7 +7,7 @@ import numpy as np
 
 k = 0
 
-T1 = np.linspace(0, 20, 20)
+T1 = np.linspace(1, 20, 20)
 I1 = [t ** 2 for t in T1]
 elements1 = []
 for k in range(len(T1)):

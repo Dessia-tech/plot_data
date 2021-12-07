@@ -21,7 +21,7 @@ import * as plotdata from 'plot-data';
 
 ```
 npm i
-npm run-script build
+npm run dev
 ```
 
 ## Documentation

@@ -390,6 +390,7 @@ export class PrimitiveGroupContainer extends PlotData {
     layout_axis:Axis;
     layout_attributes:Attribute[]=[];
     selected_primitive:number=-1;
+    custom_sizes:boolean=false;
   
     constructor(public data:any,
                 public width: number,
@@ -408,6 +409,7 @@ export class PrimitiveGroupContainer extends PlotData {
       var serialized = data['primitive_groups'];
       var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
       var initial_sizes = data['sizes'] || Array(serialized.length).fill([560, 300]);
+      if (data['sizes']) this.custom_sizes = true;
       for (let i=0; i<serialized.length; i++) { // Warning: is_in_multiplot is set to true for primitive groups
         this.primitive_groups.push(new PlotContour(serialized[i], initial_sizes[i][0], initial_sizes[i][1], buttons_ON, X+initial_coords[i][0], Y+initial_coords[i][1], canvas_id, true));
         this.display_order.push(i);
@@ -491,20 +493,27 @@ export class PrimitiveGroupContainer extends PlotData {
   
     reset_sizes() {
       var nb_primitives = this.primitive_groups.length;
-      if (nb_primitives === 1) {
-        var primitive_width = this.width/3;
-        var primitive_height = this.height/3;
-      } else {
-        var primitive_width = this.width/(1.2*nb_primitives);
-        var primitive_height = this.height/(1.2*nb_primitives);
+      if (!this.custom_sizes) {
+        if (nb_primitives === 1) {
+          var primitive_width = this.width/3;
+          var primitive_height = this.height/3;
+        } else {
+          primitive_width = this.width/nb_primitives;
+          primitive_height = this.height/nb_primitives;
+        } 
       }
       for (let i=0; i<nb_primitives; i++) {
         let center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
         let center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
-        this.primitive_groups[i].width = primitive_width;
-        this.primitive_groups[i].height = primitive_height;
-        this.primitive_groups[i].X = center_x - primitive_width/2;
-        this.primitive_groups[i].Y = center_y - primitive_height/2;
+        if (this.custom_sizes) {
+          this.primitive_groups[i].width = Math.min(this.data['sizes'][i][0], this.width);
+          this.primitive_groups[i].height = Math.min(this.data['sizes'][i][1], this.height);
+        } else {
+          this.primitive_groups[i].width = primitive_width;
+          this.primitive_groups[i].height = primitive_height;
+        }
+        this.primitive_groups[i].X = center_x - this.primitive_groups[i].width/2;
+        this.primitive_groups[i].Y = center_y - this.primitive_groups[i].height/2;
       }
     }
   

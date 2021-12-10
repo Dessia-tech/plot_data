@@ -408,8 +408,11 @@ export class PrimitiveGroupContainer extends PlotData {
       this.type_ = 'primitivegroupcontainer';
       var serialized = data['primitive_groups'];
       var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
+      if (data['sizes']) {
+        this.custom_sizes = true;
+        if (data['sizes'].length === 1) data['sizes'] = Array(serialized.length).fill(data['sizes'][0]);
+      }
       var initial_sizes = data['sizes'] || Array(serialized.length).fill([560, 300]);
-      if (data['sizes']) this.custom_sizes = true;
       for (let i=0; i<serialized.length; i++) { // Warning: is_in_multiplot is set to true for primitive groups
         this.primitive_groups.push(new PlotContour(serialized[i], initial_sizes[i][0], initial_sizes[i][1], buttons_ON, X+initial_coords[i][0], Y+initial_coords[i][1], canvas_id, true));
         this.display_order.push(i);

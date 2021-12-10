@@ -872,6 +872,8 @@ class PrimitiveGroupsContainer(PlotDataObject):
             if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
         self.primitive_groups = primitive_groups
+        if sizes is not None and type(sizes[0]) == int:
+            sizes = [sizes]
         self.sizes = sizes
         self.coords = coords
         if x_variable or y_variable:

@@ -410,7 +410,6 @@ export class PrimitiveGroupContainer extends PlotData {
       var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
       if (data['sizes']) {
         this.custom_sizes = true;
-        if (data['sizes'].length === 1) data['sizes'] = Array(serialized.length).fill(data['sizes'][0]);
       }
       var initial_sizes = data['sizes'] || Array(serialized.length).fill([560, 300]);
       for (let i=0; i<serialized.length; i++) { // Warning: is_in_multiplot is set to true for primitive groups

@@ -873,7 +873,7 @@ class PrimitiveGroupsContainer(PlotDataObject):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
         self.primitive_groups = primitive_groups
         if sizes is not None and type(sizes[0]) == int:
-            sizes = [sizes]
+            sizes = [sizes] * len(primitive_groups)
         self.sizes = sizes
         self.coords = coords
         if x_variable or y_variable:

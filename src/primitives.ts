@@ -3,6 +3,7 @@ import { string_to_rgb, rgb_to_string } from "./color_conversion";
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
+import { serialize } from "v8";
 
 
 /**
@@ -418,14 +419,19 @@ export class LineSegment2D {
                                serialized['name']);
     }
   
-    draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
+    draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y, log_scale_x=false, log_scale_y=false) {
       context.lineWidth = this.edge_style.line_width;
       context.strokeStyle = this.edge_style.color_stroke;
       context.setLineDash(this.edge_style.dashline);
+
+      let x = this.data[0], y = this.data[1];
+      if (log_scale_x) x = Math.log10(x);
+      if (log_scale_y) y = -Math.log10(-y);
+
       if (first_elem) {
-        context.moveTo(scaleX*this.data[0] + mvx + X, scaleY*this.data[1] + mvy + Y);
+        context.moveTo(scaleX*x + mvx + X, scaleY*y + mvy + Y);
       }
-      context.lineTo(scaleX*this.data[2] + mvx + X, scaleY*this.data[3] + mvy + Y);
+      context.lineTo(scaleX*x + mvx + X, scaleY*y + mvy + Y);
     }
 }
 
@@ -498,15 +504,23 @@ export class Point2D {
                            serialized['name']);
       }
   
-      draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
+      draw(context, mvx, mvy, scaleX, scaleY, X, Y, log_scale_x, log_scale_y) {
+        let cx = this.cx;
+        let cy = this.cy;
+        if (log_scale_x) {
+          cx = Math.log10(cx);
+        }
+        if (log_scale_y) {
+          cy = -Math.log10(-cy);
+        }
           if (this.point_style.shape == 'circle') {
-            context.arc(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, 10*this.size, 0, 2*Math.PI);
+            context.arc(scaleX*cx + mvx + X, scaleY*cy + mvy + Y, 10*this.size, 0, 2*Math.PI);
             context.stroke();
           } else if (this.point_style.shape == 'square') {
-            context.rect(scaleX*this.cx + mvx - this.size + X, scaleY*this.cy + mvy - 10*this.size + Y, 10*this.size*2, 10* this.size*2);
+            context.rect(scaleX*cx + mvx - this.size + X, scaleY*cy + mvy - 10*this.size + Y, 10*this.size*2, 10* this.size*2);
             context.stroke();
           } else if (this.point_style.shape == 'crux') {
-            context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, 10*this.size, this.size);
+            context.rect(scaleX*cx + mvx + X, scaleY*cy + mvy + Y, 10*this.size, this.size);
             context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, -10*this.size, this.size);
             context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, this.size, 10*this.size);
             context.rect(scaleX*this.cx + mvx + X, scaleY*this.cy + mvy + Y, this.size, -10* this.size);

@@ -124,7 +124,9 @@ export class PlotScatter extends PlotData {
         }
         if (this.buttons_ON) {
           this.refresh_buttons_coords();
-        }
+        }        
+        this.log_scale_x = data['log_scale_x'];
+        this.log_scale_y = data['log_scale_y'];
         if (data['type_'] == 'graph2d') {
           this.type_ = 'graph2d';
           this.graph_ON = true;
@@ -137,14 +139,8 @@ export class PlotScatter extends PlotData {
             this.graph_to_display.push(true);
             this.graph_name_list.push(graph.name);
             graph.id = i;
-            for (let j=0; j<graph.point_list.length; j++) {
-              var point = graph.point_list[j];
-              if (isNaN(this.minX)) {this.minX = point.minX} else {this.minX = Math.min(this.minX, point.minX)};
-              if (isNaN(this.maxX)) {this.maxX = point.maxX} else {this.maxX = Math.max(this.maxX, point.maxX)};
-              if (isNaN(this.minY)) {this.minY = point.minY} else {this.minY = Math.min(this.minY, point.minY)};
-              if (isNaN(this.maxY)) {this.maxY = point.maxY} else {this.maxY = Math.max(this.maxY, point.maxY)};
-              this.colour_to_plot_data[point.mouse_selection_color] = point;
-            }
+            this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
+            this.refresh_MinMax(graph.point_list, true);
           }
           this.nb_graph = this.plotObject.graphs.length;
         } else if (data['type_'] == 'scatterplot') {
@@ -214,6 +210,10 @@ export class PlotScatter extends PlotData {
   
         //draw clear point button
         Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
+
+        // Draw log scale buttons
+        Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
+          "10px Arial", this);
       }
       if (this.multiplot_manipulation) {
         this.draw_manipulable_rect();
@@ -390,6 +390,7 @@ export class PrimitiveGroupContainer extends PlotData {
     layout_axis:Axis;
     layout_attributes:Attribute[]=[];
     selected_primitive:number=-1;
+    custom_sizes:boolean=false;
   
     constructor(public data:any,
                 public width: number,
@@ -407,6 +408,9 @@ export class PrimitiveGroupContainer extends PlotData {
       this.type_ = 'primitivegroupcontainer';
       var serialized = data['primitive_groups'];
       var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
+      if (data['sizes']) {
+        this.custom_sizes = true;
+      }
       var initial_sizes = data['sizes'] || Array(serialized.length).fill([560, 300]);
       for (let i=0; i<serialized.length; i++) { // Warning: is_in_multiplot is set to true for primitive groups
         this.primitive_groups.push(new PlotContour(serialized[i], initial_sizes[i][0], initial_sizes[i][1], buttons_ON, X+initial_coords[i][0], Y+initial_coords[i][1], canvas_id, true));
@@ -491,20 +495,27 @@ export class PrimitiveGroupContainer extends PlotData {
   
     reset_sizes() {
       var nb_primitives = this.primitive_groups.length;
-      if (nb_primitives === 1) {
-        var primitive_width = this.width/3;
-        var primitive_height = this.height/3;
-      } else {
-        var primitive_width = this.width/(1.2*nb_primitives);
-        var primitive_height = this.height/(1.2*nb_primitives);
+      if (!this.custom_sizes) {
+        if (nb_primitives === 1) {
+          var primitive_width = this.width/3;
+          var primitive_height = this.height/3;
+        } else {
+          primitive_width = this.width/nb_primitives;
+          primitive_height = this.height/nb_primitives;
+        } 
       }
       for (let i=0; i<nb_primitives; i++) {
         let center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
         let center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
-        this.primitive_groups[i].width = primitive_width;
-        this.primitive_groups[i].height = primitive_height;
-        this.primitive_groups[i].X = center_x - primitive_width/2;
-        this.primitive_groups[i].Y = center_y - primitive_height/2;
+        if (this.custom_sizes) {
+          this.primitive_groups[i].width = Math.min(this.data['sizes'][i][0], this.width);
+          this.primitive_groups[i].height = Math.min(this.data['sizes'][i][1], this.height);
+        } else {
+          this.primitive_groups[i].width = primitive_width;
+          this.primitive_groups[i].height = primitive_height;
+        }
+        this.primitive_groups[i].X = center_x - this.primitive_groups[i].width/2;
+        this.primitive_groups[i].Y = center_y - this.primitive_groups[i].height/2;
       }
     }
   
@@ -748,7 +759,8 @@ export class PrimitiveGroupContainer extends PlotData {
       if (this.primitive_groups.length !== 0) {
         if (this.layout_mode == 'one_axis') {
           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
-              this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
+              this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, 
+              this.decalage_axis_y, this.X, this.Y, this.width);
         } else if (this.layout_mode == 'two_axis') {
           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
             this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
@@ -1527,7 +1539,7 @@ export class Histogram extends PlotData {
         this.axis.draw_horizontal_axis(this.context, this.originX, this.scale,
                                        this.width, this.height, this.init_scale, this.minX, this.maxX,
                                        this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
-                                       this.X, this.Y, this.x_variable.name, x_step);
+                                       this.X, this.Y, this.x_variable.name, false, x_step);
       }
       this.axis.draw_histogram_y_axis(this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x, 
         this.decalage_axis_y, this.X, this.Y, 'Frequency', this.y_step, this.coeff);

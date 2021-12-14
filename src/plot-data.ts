@@ -55,6 +55,8 @@ export abstract class PlotData {
   y_nb_digits:number = 0;
   multiplot_manipulation:boolean=false;
   fusion_coeff:number=1.2;
+  log_scale_x: boolean = false;
+  log_scale_y: boolean = true;
 
   plotObject:any;
   plot_datas:object={};
@@ -101,6 +103,8 @@ export abstract class PlotData {
   zoom_box_w:number=0;
   zoom_box_h:number=0;
   clear_point_button_y:number=0;
+  xlog_button_y: number = 0;
+  ylog_button_y: number = 0;
 
   all_attributes:Attribute[]=[];
   attribute_booleans:boolean[]=[];
@@ -213,14 +217,27 @@ export abstract class PlotData {
     this.draw();
   }
 
-  refresh_MinMax(point_list):void {
-    this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
+  refresh_MinMax(point_list, is_graph2D=false):void {
+    if (!is_graph2D) {
+      this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
+    }
     for (var j=0; j<point_list.length; j++) {
       var point = point_list[j];
-      this.minX = Math.min(this.minX, point.minX);
-      this.maxX = Math.max(this.maxX, point.maxX);
-      this.minY = Math.min(this.minY, point.minY);
-      this.maxY = Math.max(this.maxY, point.maxY);
+      if (this.log_scale_x) {
+        this.minX = Math.min(this.minX, Math.log10(point.minX));
+        this.maxX = Math.max(this.maxX, Math.log10(point.maxX));
+      } else {
+        this.minX = Math.min(this.minX, point.minX);
+        this.maxX = Math.max(this.maxX, point.maxX);
+      }
+
+      if (this.log_scale_y) {
+        this.minY = Math.min(this.minY, -Math.log10(-point.minY));
+        this.maxY = Math.max(this.maxY, -Math.log10(-point.maxY));
+      } else {
+        this.minY = Math.min(this.minY, point.minY);
+        this.maxY = Math.max(this.maxY, point.maxY);
+      }
       this.colour_to_plot_data[point.mouse_selection_color] = point;
     }
     if (this.minX === this.maxX) {
@@ -455,14 +472,18 @@ export abstract class PlotData {
           this.context.fillStyle = this.color_surface_on_mouse;
         }
       }
-      var x = scaleX*d.cx+ mvx;
-      var y = scaleY*d.cy + mvy;
+      let cx = d.cx, cy = d.cy;
+      if (this.log_scale_x) cx = Math.log10(cx);
+      if (this.log_scale_y) cy = -Math.log10(-cy);
+
+      var x = scaleX*cx+ mvx;
+      var y = scaleY*cy + mvy;
       this.pointLength = d.size;
 
       var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
       if (is_inside_canvas === true) {
         this.context.beginPath();
-        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
         this.context.fill();
         this.context.stroke();
         this.context.closePath();
@@ -470,20 +491,21 @@ export abstract class PlotData {
     }
   }
 
-  draw_axis(mvx, mvy, scaleX, scaleY, d:Axis) { // Only used by graph2D
-    if (d['type_'] == 'axis'){
-      d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][0]);
-      d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
-        this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][1]);
-      this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
-      this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
-    }
+  draw_axis(mvx, mvy, scaleX, scaleY, d:Axis, log_scale_x, log_scale_y) { // Only used by graph2D
+    d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x, 
+      this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][0], log_scale_x);
+
+    d.draw_vertical_axis(this.context, mvy, scaleY, this.width, this.height, this.init_scaleY, this.minY, this.maxY, this.scroll_y,
+      this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][1], log_scale_y);
+
+    this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
+    this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
   }
 
-  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d:Axis, lists, to_display_attributes) {
+  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d:Axis, lists, to_display_attributes, log_scale_x, log_scale_y) {
     d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, 
-      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, this.height);
+      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, 
+      this.height, log_scale_x, log_scale_y);
     this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
     this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     this.context.closePath();
@@ -493,7 +515,9 @@ export abstract class PlotData {
   draw_tooltip(d:Tooltip, mvx, mvy, point_list, initial_point_list, elements, mergeON, axes:any[]) {
     if (d['type_'] == 'tooltip') {
       this.tooltip_ON = true;
-      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, initial_point_list, elements, mergeON, axes);
+      d.manage_tooltip(this.context, mvx, mvy, this.scaleX, this.scaleY, this.width, this.height, this.tooltip_list, 
+        this.X, this.Y, this.x_nb_digits, this.y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
+        this.log_scale_x, this.log_scale_y);
     }
   }
 
@@ -523,11 +547,9 @@ export abstract class PlotData {
       this.context.strokeStyle = d.edge_style.color_stroke;
       this.context.lineWidth = d.edge_style.line_width;
       for (var i=0; i<d.segments.length; i++) {
-        if (i==0) {
-          d.segments[i].draw(this.context, true, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
-        } else {
-          d.segments[i].draw(this.context, false, mvx, mvy, this.scaleX, this.scaleY, this.X, this.Y);
-        }
+        let hidden = i===0;
+        d.segments[i].draw(this.context, hidden, mvx, mvy, this.scaleX, this.scaleY, 
+          this.X, this.Y, this.log_scale_x, this.log_scale_y);
       }
       this.context.stroke();
       this.context.setLineDash([]);
@@ -541,7 +563,8 @@ export abstract class PlotData {
       }
       for (var i=0; i<d.point_list.length; i=i+step) {
         var point = d.point_list[i];
-        this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+        this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, 
+          point);
       }
     } else if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
@@ -551,21 +574,23 @@ export abstract class PlotData {
 
   draw_graph2D(d:Graph2D, hidden, mvx, mvy) {
     if (d['type_'] == 'graph2d') {
-      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis);
+      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, this.log_scale_x, this.log_scale_y);
       for (let i=0; i<d.graphs.length; i++) {
         let graph = d.graphs[i];
         this.draw_dataset(graph, hidden, mvx, mvy);
       }
       for (let i=0; i<d.graphs.length; i++) {
         let graph: Dataset = d.graphs[i];
-        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, graph.elements, false, d.attribute_names);
+        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, 
+          graph.elements, false, d.attribute_names);
       }
     }
   }
 
   draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
     if (d['type_'] == 'scatterplot') {
-      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, d.lists, d.to_display_attributes);
+      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, 
+        d.lists, d.to_display_attributes, this.log_scale_x, this.log_scale_y);
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
         if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
@@ -602,7 +627,8 @@ export abstract class PlotData {
           this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
         }
       }
-      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON, d.attribute_names);
+      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON, 
+        d.attribute_names);
     }
   }
 
@@ -1169,6 +1195,8 @@ export abstract class PlotData {
     this.merge_y = this.select_y + this.button_h + 5;
     this.perm_button_y = this.merge_y + this.button_h + 5;
     this.clear_point_button_y = this.perm_button_y + this.button_h + 5;
+    this.xlog_button_y = this.clear_point_button_y + this.button_h + 5;
+    this.ylog_button_y = this.xlog_button_y + this.button_h + 5;
   }
 
   refresh_attribute_booleans() {
@@ -1721,6 +1749,8 @@ export abstract class PlotData {
     var click_on_merge = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.merge_y + this.Y, this.button_w, this.button_h);
     var click_on_perm = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.perm_button_y + this.Y, this.button_w, this.button_h);
     var click_on_clear = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.clear_point_button_y + this.Y, this.button_w, this.button_h);
+    var click_on_xlog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.xlog_button_y + this.Y, this.button_w, this.button_h);
+    var click_on_ylog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.ylog_button_y + this.Y, this.button_w, this.button_h);
 
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
@@ -1730,7 +1760,7 @@ export abstract class PlotData {
     }
     this.click_on_button = false;
     this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select 
-    || click_on_graph || click_on_merge || click_on_perm || click_on_clear;
+    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog;
 
     if (mouse_moving) {
       if (this.zw_bool) {
@@ -1765,6 +1795,10 @@ export abstract class PlotData {
           Interactions.click_on_perm_action(this);
         } else if (click_on_clear) {
           Interactions.click_on_clear_action(this);
+        } else if (click_on_xlog) {
+          Interactions.click_on_xlog_action(this);
+        } else if (click_on_ylog) {
+          Interactions.click_on_ylog_action(this);
         }
       }
       Interactions.reset_zoom_box(this);
@@ -2175,8 +2209,13 @@ export class Interactions {
         let graph = plot_data.plotObject.graphs[i];
         for (let j=0; j<graph.point_list.length; j++) {
           let point = graph.point_list[j];
-          var x = plot_data.scaleX*point.cx + plot_data.originX + plot_data.X;
-          var y = plot_data.scaleY*point.cy + plot_data.originY + plot_data.Y;
+
+          let cx = point.cx, cy = point.cy;
+          if (plot_data.log_scale_x) cx = Math.log10(cx);
+          if (plot_data.log_scale_y) cy = -Math.log10(-cy);
+
+          var x = plot_data.scaleX*cx + plot_data.originX + plot_data.X;
+          var y = plot_data.scaleY*cy + plot_data.originY + plot_data.Y;
           var in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
           if ((in_rect===true) && !List.is_include(point, plot_data.select_on_click)) {
             plot_data.select_on_click.push(point);
@@ -2190,14 +2229,20 @@ export class Interactions {
 
     } else if (plot_data.plotObject['type_'] == 'scatterplot') {
       for (var j=0; j<plot_data.scatter_points.length; j++) {
-        var x = plot_data.scaleX*plot_data.scatter_points[j].cx + plot_data.originX + plot_data.X;
-        var y = plot_data.scaleY*plot_data.scatter_points[j].cy + plot_data.originY + plot_data.Y;
+
+        let cx = plot_data.scatter_points[j].cx;
+        let cy = plot_data.scatter_points[j].cy;
+        if (plot_data.log_scale_x) cx = Math.log10(cx);
+        if (plot_data.log_scale_y) cy = -Math.log10(-cy);
+
+        var x = plot_data.scaleX*cx + plot_data.originX + plot_data.X;
+        var y = plot_data.scaleY*cy + plot_data.originY + plot_data.Y;
         in_rect = Shape.isInRect(x, y, sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h);
         if ((in_rect===true) && !List.is_include(plot_data.scatter_points[j], plot_data.select_on_click)) {
           plot_data.select_on_click.push(plot_data.scatter_points[j]);
           plot_data.scatter_points[j].selected = true;
           plot_data.latest_selected_points.push(plot_data.scatter_points[j]);
-        } else if (!in_rect) {
+        } else if (!in_rect) { 
           plot_data.scatter_points[j].selected = false;
         }
       }
@@ -2302,6 +2347,34 @@ export class Interactions {
     plot_data.originX = plot_data.width/2 + zoom_coeff * (plot_data.originX - plot_data.width/2);
     plot_data.originY = plot_data.height/2 + zoom_coeff * (plot_data.originY - plot_data.height/2);
     plot_data.reset_scroll();
+  }
+
+  public static click_on_xlog_action(plot_data) {
+    plot_data.log_scale_x = !plot_data.log_scale_x;
+    if (plot_data.type_ === 'scatterplot') {
+      plot_data.refresh_MinMax(plot_data.plotObject.point_list);
+    } else { //graph2D
+      plot_data.minX = Infinity; plot_data.maxX = -Infinity; plot_data.minY = Infinity; plot_data.maxY = -Infinity;
+      for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
+        let graph = plot_data.plotObject.graphs[i];
+        plot_data.refresh_MinMax(graph.point_list, true);
+      }
+    }
+    this.click_on_reset_action(plot_data);
+  }
+
+  public static click_on_ylog_action(plot_data) {
+    plot_data.log_scale_y = !plot_data.log_scale_y;
+    if (plot_data.type_ === 'scatterplot') {
+      plot_data.refresh_MinMax(plot_data.plotObject.point_list);
+    } else { //graph2D
+      plot_data.minX = Infinity; plot_data.maxX = -Infinity; plot_data.minY = Infinity; plot_data.maxY = -Infinity;
+      for (let i=0; i<plot_data.plotObject.graphs.length; i++) {
+        let graph = plot_data.plotObject.graphs[i];
+        plot_data.refresh_MinMax(graph.point_list, true);
+      }
+    }
+    this.click_on_reset_action(plot_data);
   }
 
   public static mouse_move_axis_inversion(isDrawing, e, selected_name_index, plot_data:any) {
@@ -2684,6 +2757,11 @@ export class Buttons {
 
   public static clear_point_button(x, y, w, h, police, plot_data:PlotData) {
     Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, 'Clear', police);
+  }
+
+  public static log_scale_buttons(x, y1, y2, w, h, police, plot_data:PlotData) {
+    Shape.createButton(x + plot_data.X, y1 + plot_data.Y, w, h, plot_data.context, 'xlog', police);
+    Shape.createButton(x + plot_data.X, y2 + plot_data.Y, w, h, plot_data.context, 'ylog', police);
   }
 }
 

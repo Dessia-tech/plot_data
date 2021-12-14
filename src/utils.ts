@@ -76,6 +76,68 @@ export class Axis {
   
       context.stroke();
     }
+
+    draw_horizontal_log_graduations(context, mvx, scaleX, minX, maxX, axis_y_start, axis_y_end, font_size, X, canvas_width) {
+      context.textAlign = 'center';
+      let delta = scaleX;
+      let numbers = [1];
+      if (delta >= canvas_width/3 && delta <= canvas_width/2) {
+        numbers = [1, 5];
+      } else if (delta > canvas_width/2 && delta <= 3/4*canvas_width) {
+        numbers = [1, 2, 5];
+      } else if (delta > 3/4*canvas_width) {
+        numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+      }
+      let start_pow = Math.floor(minX);
+      let end_pow = Math.ceil(maxX);
+      for (let power=start_pow; power <= end_pow; power++) {
+        for (let num of numbers) {
+          let x_coord = num * Math.pow(10, power);
+          if (this.grid_on === true) {
+            context.strokeStyle = 'lightgrey';
+            Shape.drawLine(context, [[scaleX * Math.log10(x_coord) + mvx + X, axis_y_start], [scaleX * Math.log10(x_coord) + mvx + X, axis_y_end + 3]]);
+          } else {
+            Shape.drawLine(context, [[scaleX * Math.log10(x_coord) + mvx + X, axis_y_end - 3], [scaleX*Math.log10(x_coord) + mvx + X, axis_y_end + 3]]);
+          }
+          context.fillText(x_coord, scaleX*Math.log10(x_coord) + mvx + X, axis_y_end + font_size);
+        }
+      } 
+      context.stroke();
+    }
+
+
+    draw_vertical_log_graduations(context, mvy, scaleY, minY, maxY, axis_x_start, axis_x_end, axis_y_end, canvas_height, Y) {
+      context.textAlign = 'end';
+      context.textBaseline = 'middle';
+
+      let delta = scaleY;
+      let numbers = [1];
+      if (delta >= canvas_height/3 && delta <= canvas_height/2) {
+        numbers = [1, 5];
+      } else if (delta > canvas_height/2 && delta <= 3/4*canvas_height) {
+        numbers = [1, 2, 5];
+      } else if (delta > 3/4*canvas_height) {
+        numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+      }
+
+      let start_pow = Math.floor(-minY);
+      let end_pow = Math.ceil(-maxY);
+
+      for (let power=start_pow; power<=end_pow; power++) {
+        for (let num of numbers) {
+          let y_coord = num * Math.pow(10, power);
+          if (this.grid_on === true) {
+            context.strokeStyle = 'lightgrey';
+            Shape.drawLine(context, [[axis_x_start - 3, -scaleY * Math.log10(y_coord) + mvy + Y], [axis_x_end, -scaleY* Math.log10(y_coord) + mvy + Y]]);
+          } else {
+            Shape.drawLine(context, [[axis_x_start - 3, -scaleY * Math.log10(y_coord) + mvy + Y], [axis_x_start + 3, -scaleY * Math.log10(y_coord) + mvy + Y]]);
+          }
+          context.fillText(y_coord, axis_x_start - 5, -scaleY * Math.log10(y_coord) + mvy + Y);
+        }
+      }
+      context.stroke();
+    }
+
   
     draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y, coeff=0.88) {
       let scale = (coeff*height - decalage_axis_y) / max_frequency;
@@ -93,7 +155,8 @@ export class Axis {
     }
   
   
-    draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, x_step?) {
+    draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, 
+      decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, log_scale_x, x_step?) {
       context.beginPath();
       context.strokeStyle = this.axis_style.color_stroke;
       context.lineWidth = this.axis_style.line_width;
@@ -120,12 +183,19 @@ export class Axis {
       context.fillText(to_disp_attribute_name, axis_x_end - 5, axis_y_end - 10);
       // draw_horizontal_graduations
       context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end, this.x_step, this.graduation_style.font_size, X, width);
+      if (log_scale_x) {
+        this.draw_horizontal_log_graduations(context, mvx, scaleX, minX, maxX, axis_y_start, axis_y_end, 
+          this.graduation_style.font_size, X, width);
+      } else {
+        this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end, 
+          this.x_step, this.graduation_style.font_size, X, width);
+      }
       context.closePath();
     }
   
   
-    draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, y_step?) {
+    draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, 
+      scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, log_scale_y, y_step?) {
       context.beginPath();
       context.strokeStyle = this.axis_style.color_stroke;
       context.lineWidth = this.axis_style.line_width;
@@ -151,7 +221,11 @@ export class Axis {
       context.fillStyle = this.graduation_style.text_color;
       context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
       context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      this.draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, this.y_step, Y);
+      if (log_scale_y) {
+        this.draw_vertical_log_graduations(context, mvy, scaleY, minY, maxY, axis_x_start, axis_x_end, axis_y_end, height, Y)
+      } else {
+        this.draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, this.y_step, Y);
+      }
       context.closePath();
     }
   
@@ -229,12 +303,18 @@ export class Axis {
       context.closePath();
     }
   
-    draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, canvas_height) {
-      this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0], scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width);
-      this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1], scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height);
+    draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, 
+      to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, canvas_height,
+      log_scale_x, log_scale_y) {
+      
+      this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0], 
+        scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, log_scale_x);
+      this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1], 
+        scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height, log_scale_y);
     }
   
-    draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute:Attribute, scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width) {
+    draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute:Attribute, 
+      scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, log_scale_x=false) {
       // Drawing the coordinate system
       context.beginPath();
       context.strokeStyle = this.axis_style.color_stroke;
@@ -260,12 +340,22 @@ export class Axis {
       context.stroke();
       //Graduations
       context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X, canvas_width);  
+      if (log_scale_x) {
+        if (TypeOf(list[0]) === 'string') {
+          throw new Error("Cannot use log scale on a non float axis");
+        }
+        this.draw_horizontal_log_graduations(context, mvx, scaleX, Math.log10(list[0]), Math.log10(list[1]), axis_y_start,
+          axis_y_end, this.graduation_style.font_size, X, width);
+      } else {
+        this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, 
+          axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X, canvas_width);  
+      }
       context.stroke();
       context.closePath();  
     }
   
-    draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height) {
+    draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y, 
+      decalage_axis_x, decalage_axis_y, X, Y, canvas_height, log_scale_y=false) {
       // Drawing the coordinate system
       context.beginPath();
       context.strokeStyle = this.axis_style.color_stroke;
@@ -290,7 +380,16 @@ export class Axis {
   
       //Graduations
       context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, to_display_attribute, scroll_y, Y, canvas_height);
+      if (log_scale_y) {
+        if (TypeOf(list[0]) === 'string') {
+          throw new Error("Cannot use log scale on a non float axis.")
+        }
+        this.draw_vertical_log_graduations(context, mvy, scaleY, -Math.log10(list[0]), -Math.log10(list[1]), 
+        axis_x_start, axis_x_end, axis_y_end, canvas_height, Y);
+      } else {
+        this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, 
+          axis_y_end, list, to_display_attribute, scroll_y, Y, canvas_height);
+      }
       context.stroke();
       context.closePath();
     }
@@ -518,10 +617,10 @@ export class Tooltip {
                          serialized['name']);
     }
   
-    isTooltipInsideCanvas(point, mvx, mvy, scaleX, scaleY, canvasWidth, canvasHeight) {
-      var x = scaleX*point.cx + mvx;
-      var y = scaleY*point.cy + mvy;
-      var length = 100*point.size;
+    isTooltipInsideCanvas(cx, cy, size, mvx, mvy, scaleX, scaleY, canvasWidth, canvasHeight) {
+      var x = scaleX*cx + mvx;
+      var y = scaleY*cy + mvy;
+      var length = 100*size;
       return (x+length>=0) && (x-length<=canvasWidth) && (y+length>=0) && (y-length<=canvasHeight);
     }
   
@@ -585,7 +684,9 @@ export class Tooltip {
       return [textfills, text_max_length];
     }
   
-    draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes) {
+    draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, 
+      X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, 
+      mergeON, axes, log_scale_x, log_scale_y) {
       var textfills = [];
       var text_max_length = 0;
       context.font = this.text_style.font;
@@ -602,8 +703,9 @@ export class Tooltip {
   
       if (textfills.length > 0) {
         var tp_height = textfills.length*this.text_style.font_size*1.25;
-        var cx = point.cx;
-        var cy = point.cy;
+        var cx = point.cx, cy = point.cy;
+        if (log_scale_x) cx = Math.log10(cx);
+        if (log_scale_y) cy = -Math.log10(-cy);
         var point_size = point.point_style.size;
         var decalage = 2.5*point_size + 15;
         var tp_x = scaleX*cx + mvx + decalage + X;
@@ -660,10 +762,21 @@ export class Tooltip {
   
     }
   
-    manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes) {
+    manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, 
+      X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes, 
+      log_scale_x, log_scale_y) {
+
       for (var i=0; i<tooltip_list.length; i++) {
-        if (tooltip_list[i] && this.isTooltipInsideCanvas(tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height)) {
-          this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes);
+        let cx = tooltip_list[i].cx, cy = tooltip_list[i].cy;
+        if (log_scale_x) cx = Math.log10(cx);
+        if (log_scale_y) cy = -Math.log10(-cy);
+        if (tooltip_list[i] && this.isTooltipInsideCanvas(cx, cy, tooltip_list[i].size, mvx, mvy, 
+          scaleX, scaleY, canvas_width, canvas_height)) {
+
+          this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, 
+            X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
+            log_scale_x, log_scale_y);
+
         }
       }
     }

@@ -564,16 +564,23 @@ class Graph2D(PlotDataObject):
     :param axis: an object containing all information needed for \
     drawing axis
     :type axis: Axis
+    :param log_scale_x: True or False
+    :type log_scale_x: bool
+    :param log_scale_y: True or False
+    :type log_scale_y: bool
     """
 
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable:str,
-                 axis: Axis = None, name: str = ''):
+                 axis: Axis = None, log_scale_x: bool = None,
+                 log_scale_y: bool = None, name: str = ''):
         self.graphs = graphs
         self.attribute_names = [x_variable, y_variable]
         if axis is None:
             self.axis = Axis()
         else:
             self.axis = axis
+        self.log_scale_x = log_scale_x
+        self.log_scale_y = log_scale_y
         PlotDataObject.__init__(self, type_='graph2d', name=name)
 
     def mpl_plot(self):
@@ -611,12 +618,17 @@ class Scatter(PlotDataObject):
     :param axis: an object containing all information needed for \
     drawing axis
     :type axis: Axis
+    :param log_scale_x: True or False
+    :type log_scale_x: bool
+    :param log_scale_y: True or False
+    :type log_scale_y: bool
     """
 
     def __init__(self, x_variable: str, y_variable: str,
                  tooltip: Tooltip = None,
                  point_style: PointStyle = None,
                  elements: List[Any] = None, axis: Axis = None,
+                 log_scale_x: bool = None, log_scale_y: bool = None,
                  name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
@@ -629,7 +641,8 @@ class Scatter(PlotDataObject):
             self.axis = Axis()
         else:
             self.axis = axis
-
+        self.log_scale_x = log_scale_x
+        self.log_scale_y = log_scale_y
         PlotDataObject.__init__(self, type_='scatterplot', name=name)
 
 
@@ -859,6 +872,8 @@ class PrimitiveGroupsContainer(PlotDataObject):
             if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
         self.primitive_groups = primitive_groups
+        if sizes is not None and type(sizes[0]) == int:
+            sizes = [sizes] * len(primitive_groups)
         self.sizes = sizes
         self.coords = coords
         if x_variable or y_variable:

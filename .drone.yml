@@ -23,8 +23,8 @@ steps:
       event: tag
   settings:
     username: dessia
-    password:
-      from_secret: npm_password
+    token:
+      from_secret: npm_token
     email: root@dessia.tech
 
 - name: upload to cdn sid

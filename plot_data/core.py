@@ -876,14 +876,15 @@ class PrimitiveGroupsContainer(PlotDataObject):
             sizes = [sizes] * len(primitive_groups)
         self.sizes = sizes
         self.coords = coords
-        if x_variable or y_variable:
-            attribute_names = []
-            if x_variable:
-                attribute_names.append(x_variable)
-            if y_variable:
-                attribute_names.append(y_variable)
-            self.association = {'associated_elements': associated_elements,
-                                'attribute_names': attribute_names}
+        if associated_elements:
+            self.association = {'associated_elements': associated_elements}
+            if x_variable or y_variable:
+                attribute_names = []
+                if x_variable:
+                    attribute_names.append(x_variable)
+                if y_variable:
+                    attribute_names.append(y_variable)
+                self.association['attribute_names'] = attribute_names
         PlotDataObject.__init__(self, type_='primitivegroupcontainer',
                                 name=name)
 

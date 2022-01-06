@@ -1028,7 +1028,8 @@ class MultiplePlots(PlotDataObject):
 def plot_canvas(plot_data_object: Subclass[PlotDataObject],
                 debug_mode: bool = False, canvas_id: str = 'canvas',
                 force_version: str = None,
-                width: int = 750, height: int = 400, page_name: str = None):
+                width: int = 750, height: int = 400, page_name: str = None,
+                display: bool = True):
     """
     Creates a html file and plots input data in web browser
 
@@ -1090,12 +1091,14 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         with open(temp_file, 'wb') as file:
             file.write(s.encode('utf-8'))
 
-        webbrowser.open('file://' + temp_file)
+        if display:
+            webbrowser.open('file://' + temp_file)
         print('file://' + temp_file)
     else:
         with open(page_name + '.html', 'wb') as file:
             file.write(s.encode('utf-8'))
-        webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
+        if display:
+            webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
 
 

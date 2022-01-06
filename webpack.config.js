@@ -20,6 +20,7 @@ export default {
   experiments: {
     outputModule: true
   },
+  target:"node",
   module: {
     rules: [
       {
@@ -39,7 +40,7 @@ export default {
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
     alias : {
-
+      
     }
   }
 }

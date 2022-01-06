@@ -8,9 +8,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default {
   mode: "production",
-  entry: "./src/plot-data.ts",
+  entry: "./src/core.ts",
   output: {
-    filename: "plot-data.js",
+    filename: "core.js",
     path: path.resolve(__dirname, "lib"),
     library: {
       type: "module"

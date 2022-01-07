@@ -876,14 +876,15 @@ class PrimitiveGroupsContainer(PlotDataObject):
             sizes = [sizes] * len(primitive_groups)
         self.sizes = sizes
         self.coords = coords
-        if x_variable or y_variable:
-            attribute_names = []
-            if x_variable:
-                attribute_names.append(x_variable)
-            if y_variable:
-                attribute_names.append(y_variable)
-            self.association = {'associated_elements': associated_elements,
-                                'attribute_names': attribute_names}
+        if associated_elements:
+            self.association = {'associated_elements': associated_elements}
+            if x_variable or y_variable:
+                attribute_names = []
+                if x_variable:
+                    attribute_names.append(x_variable)
+                if y_variable:
+                    attribute_names.append(y_variable)
+                self.association['attribute_names'] = attribute_names
         PlotDataObject.__init__(self, type_='primitivegroupcontainer',
                                 name=name)
 
@@ -1027,7 +1028,8 @@ class MultiplePlots(PlotDataObject):
 def plot_canvas(plot_data_object: Subclass[PlotDataObject],
                 debug_mode: bool = False, canvas_id: str = 'canvas',
                 force_version: str = None,
-                width: int = 750, height: int = 400, page_name: str = None):
+                width: int = 750, height: int = 400, page_name: str = None,
+                display: bool = True):
     """
     Creates a html file and plots input data in web browser
 
@@ -1089,12 +1091,14 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         with open(temp_file, 'wb') as file:
             file.write(s.encode('utf-8'))
 
-        webbrowser.open('file://' + temp_file)
+        if display:
+            webbrowser.open('file://' + temp_file)
         print('file://' + temp_file)
     else:
         with open(page_name + '.html', 'wb') as file:
             file.write(s.encode('utf-8'))
-        webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
+        if display:
+            webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
 
 

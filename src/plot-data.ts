@@ -4,6 +4,7 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rgb_strToVector } from "./color_conversion";
+import { MultiplePlots } from "./multiplots";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -12,6 +13,7 @@ import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rg
  */  
 export abstract class PlotData {
   type_:string;
+  name:string = "";
   context_show:any;
   context_hidden:any;
   context:any;
@@ -187,6 +189,7 @@ export abstract class PlotData {
     public is_in_multiplot: boolean = false) {
       this.initial_width = width;
       this.initial_height = height;
+      this.name = data["name"];
     }
 
 
@@ -2804,5 +2807,3 @@ export class Buttons {
     Shape.createButton(x + plot_data.X, y2 + plot_data.Y, w, h, plot_data.context, 'ylog', police);
   }
 }
-
-

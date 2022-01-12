@@ -2046,6 +2046,73 @@ export class MultiplotCom {
 }
 
 
+export function save_multiplot(multiplot: MultiplePlots) {
+  let temp_objs = [], sizes = [], coords = [];
+  for (let obj of multiplot.objectList) {
+    coords.push([obj.X, obj.Y]);
+    sizes.push([obj.width, obj.height]);
+
+    let obj_to_dict = [];
+    obj_to_dict.push(["name", obj.name],
+                     ["type_", obj.type_]);
+    if (obj.type_ === "scatterplot") {
+      obj_to_dict.push(["scaleX", obj.scaleX],
+                      ["scaleY", obj.scaleY],
+                      ["originX", obj.originX],
+                      ["originY", obj.originY],
+                      ["selected_point_index", obj.selected_point_index],
+                      ["selection_window", [obj.perm_window_x, obj.perm_button_y, obj.perm_window_w, obj.perm_window_h]],
+                      ["interpolation_colors", obj.interpolation_colors]);
+    } else if (obj.type_ === "parallelplot") {
+      let names = [];
+      for (let axis of obj.axis_list) names.push(axis.name);
+      obj_to_dict.push(["attribute_names", names],
+                     ["rubber_bands", obj.rubber_bands],
+                     ["inversions", obj.inverted_axis_list],
+                     ["interpolation_colors", obj.interpolation_colors],
+                     ["vertical", obj.vertical]);
+    }
+    temp_objs.push(Object.fromEntries(obj_to_dict));
+  }
+
+  let dict_ = {"coords": coords,
+               "sizes": sizes,
+               "dep_selected_point_index": multiplot.dep_selected_points_index,
+               "plots": temp_objs,
+               "initial_view_on": false};
+  return dict_;
+}
+
+
+export function load_multiplot(dict_, elements, width, height, buttons_ON, canvas_id) {
+  MyObject.add_properties(dict_, ["elements", elements]);
+  var multiplot = new MultiplePlots(dict_, width, height, buttons_ON, canvas_id);
+  let temp_objs = dict_["plots"];
+  let nbObjects = temp_objs.length;
+  for (let i=0; i<nbObjects; i++) {
+    let obj = multiplot.objectList[i];
+    if (obj.type_ === "scatterplot") {
+      obj.scaleX = temp_objs[i]["scaleX"];
+      obj.scaleY = temp_objs[i]["scaleY"];
+      obj.originX = temp_objs[i]["originX"];
+      obj.originY = temp_objs[i]["originY"];
+      obj.selected_point_index = temp_objs[i]["selected_point_index"];
+      obj.perm_window_x = temp_objs[i]["selection_window"][0];
+      obj.perm_window_y = temp_objs[i]["selection_window"][1];
+      obj.perm_window_w = temp_objs[i]["selection_window"][2];
+      obj.perm_window_h = temp_objs[i]["selection_window"][3];
+      obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
+    } else if (obj.type_ === "parallelplot") {
+      obj.rubber_bands = temp_objs[i]["rubber_bands"];
+      obj.inverted_axis_list = temp_objs[i]["inversions"];
+      obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
+      obj.vertical = temp_objs[i]["vertical"];
+    }
+  }
+  multiplot.redrawAllObjects();
+}
+
+
 const empty_container = {'name': '',
 'package_version': '0.6.2',
 'primitive_groups': [],

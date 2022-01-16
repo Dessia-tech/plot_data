@@ -37,6 +37,7 @@ export default {
       // Learn more about loaders from https://webpack.js.org/loaders/
     ],
   },
+  target: false,
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
     alias : {

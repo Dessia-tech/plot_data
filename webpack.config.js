@@ -1,6 +1,5 @@
 // Generated using webpack-cli https://github.com/webpack/webpack-cli
 
-import { NONAME } from 'dns';
 import * as path from 'path';
 import { fileURLToPath } from "url";
 
@@ -21,7 +20,6 @@ export default {
   experiments: {
     outputModule: true
   },
-  target:"node",
   module: {
     rules: [
       {
@@ -38,11 +36,10 @@ export default {
       // Learn more about loaders from https://webpack.js.org/loaders/
     ],
   },
-  target: False,
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
     alias : {
-      
+
     }
   }
 }

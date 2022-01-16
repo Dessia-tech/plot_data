@@ -23,7 +23,7 @@ export class MultiplePlots {
     initial_coords:[number, number][];
     points:Point2D[]=[];
     sizes:Window[]=[];
-    move_plot_index:number=-1;
+    move_plot_index:number=-1; 
     clicked_index_list:number[]=[];
     clickedPlotIndex:number=-1;
     last_index:number=-1;

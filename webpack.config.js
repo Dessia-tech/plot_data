@@ -20,7 +20,6 @@ export default {
   experiments: {
     outputModule: true
   },
-  target:"node",
   module: {
     rules: [
       {
@@ -37,11 +36,10 @@ export default {
       // Learn more about loaders from https://webpack.js.org/loaders/
     ],
   },
-  target: false,
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
     alias : {
-      
+
     }
   }
 }

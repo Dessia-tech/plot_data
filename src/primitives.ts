@@ -424,14 +424,20 @@ export class LineSegment2D {
       context.strokeStyle = this.edge_style.color_stroke;
       context.setLineDash(this.edge_style.dashline);
 
-      let x = this.data[0], y = this.data[1];
-      if (log_scale_x) x = Math.log10(x);
-      if (log_scale_y) y = -Math.log10(-y);
-
+      let x1 = this.data[0], y1 = this.data[1];
+      let x2 = this.data[2], y2 = this.data[3];
+      if (log_scale_x) {
+        x1 = Math.log10(x1);
+        x2 = Math.log10(x2);
+      } 
+      if (log_scale_y) {
+        y1 = -Math.log10(-y1);
+        y2 = -Math.log10(-y2);
+      } 
       if (first_elem) {
-        context.moveTo(scaleX*x + mvx + X, scaleY*y + mvy + Y);
+        context.moveTo(scaleX*x1 + mvx + X, scaleY*y1 + mvy + Y);
       }
-      context.lineTo(scaleX*x + mvx + X, scaleY*y + mvy + Y);
+      context.lineTo(scaleX*x2 + mvx + X, scaleY*y2 + mvy + Y);
     }
 }
 

@@ -1581,6 +1581,20 @@ export abstract class PlotData {
   }
 
 
+  refresh_selected_points_from_indices() {
+    this.select_on_click = [];
+    for (let index of this.selected_point_index) {
+      if (this.plotObject['type_'] === "graph2D") {
+
+      } else if (this.plotObject["type_"] === "scatterplot") {
+        let point = this.plotObject.point_list[index];
+        point.selected = true;
+        this.select_on_click.push(point);
+      }
+    }
+  }
+
+
   refresh_selected_point_index() {  //selected_point_index : index of selected points in the initial point list
     this.selected_point_index = [];
     for (let i=0; i<this.select_on_click.length; i++) {

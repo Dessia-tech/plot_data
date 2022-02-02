@@ -124,8 +124,6 @@ multiplot_template = Template('''
         var multiplot = new PlotData.MultiplePlots(
             data, width, height, true, $canvas_id.id
         );
-        // var s = PlotData.save_multiplot(multiplot);
-        // PlotData.load_multiplot(s, data["elements"], width, height, true, $canvas_id.id);
     </script>
 </div>
 ''')

@@ -1,6 +1,6 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
-import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort } from './utils';
+import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, download } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
@@ -120,20 +120,6 @@ export class MultiplePlots {
         this.store_dimensions();
       }
       // this.save_canvas();
-    }
-
-
-    download(filename, text) {
-      var element = document.createElement('a');
-      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-      element.setAttribute('download', filename);
-    
-      element.style.display = 'none';
-      document.body.appendChild(element);
-    
-      element.click();
-    
-      document.body.removeChild(element);
     }
 
   
@@ -264,7 +250,7 @@ export class MultiplePlots {
     }
   
     click_on_export_action() {
-      this.download("selected_points", "[" + this.dep_selected_points_index.toString() + "]");
+      download("selected_points", "[" + this.dep_selected_points_index.toString() + "]");
     }
   
     click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view,
@@ -2070,7 +2056,7 @@ export function save_multiplot(multiplot: MultiplePlots) {
                       ["originX", obj.originX],
                       ["originY", obj.originY],
                       ["selected_point_index", obj.selected_point_index],
-                      ["selection_window", [obj.perm_window_x, obj.perm_button_y, obj.perm_window_w, obj.perm_window_h]],
+                      ["selection_window", [obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h]],
                       ["interpolation_colors", obj.interpolation_colors]);
     } else if (obj.type_ === "parallelplot") {
       let names = [];
@@ -2084,22 +2070,29 @@ export function save_multiplot(multiplot: MultiplePlots) {
     temp_objs.push(Object.fromEntries(obj_to_dict));
   }
 
-  let dict_ = {"coords": coords,
+  let dict_ = {"data": multiplot.data,
+               "coords": coords,
                "sizes": sizes,
                "dep_selected_point_index": multiplot.dep_selected_points_index,
                "plots": temp_objs,
-               "initial_view_on": false};
+               "canvas_id": multiplot.canvas_id};
   return dict_;
 }
 
 
-export function load_multiplot(dict_, elements, width, height, buttons_ON, canvas_id) {
+export function load_multiplot(dict_, elements, width, height, buttons_ON, canvas_id?) {
   MyObject.add_properties(dict_, ["elements", elements]);
-  var multiplot = new MultiplePlots(dict_, width, height, buttons_ON, canvas_id);
+  var multiplot = new MultiplePlots(dict_["data"], width, height, buttons_ON, canvas_id || dict_["canvas_id"]);
   let temp_objs = dict_["plots"];
   let nbObjects = temp_objs.length;
+  let coords = dict_["coords"];
+  let sizes = dict_["sizes"];
   for (let i=0; i<nbObjects; i++) {
     let obj = multiplot.objectList[i];
+    obj.X = coords[i][0];
+    obj.Y = coords[i][1];
+    obj.width = sizes[i][0];
+    obj.height = sizes[i][1];
     if (obj.type_ === "scatterplot") {
       obj.scaleX = temp_objs[i]["scaleX"];
       obj.scaleY = temp_objs[i]["scaleY"];
@@ -2111,6 +2104,8 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
       obj.perm_window_w = temp_objs[i]["selection_window"][2];
       obj.perm_window_h = temp_objs[i]["selection_window"][3];
       obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
+
+      obj.refresh_selected_points_from_indices();
     } else if (obj.type_ === "parallelplot") {
       obj.rubber_bands = temp_objs[i]["rubber_bands"];
       obj.inverted_axis_list = temp_objs[i]["inversions"];
@@ -2118,7 +2113,9 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
       obj.vertical = temp_objs[i]["vertical"];
     }
   }
+  multiplot.dep_selected_points_index = dict_["dep_selected_points_index"];
   multiplot.redrawAllObjects();
+  return multiplot;
 }
 
 

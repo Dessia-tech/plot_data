@@ -153,6 +153,7 @@ export class TextStyle {
                 public text_align_y:string='alphabetic',
                 public bold:boolean=false,
                 public italic:boolean=false,
+                public angle: number = 0,
                 public name:string='') {
       if (text_color === undefined) {
         text_color = string_to_hex('black');
@@ -182,6 +183,7 @@ export class TextStyle {
                               serialized['text_align_y'],
                               serialized['bold'],
                               serialized['italic'],
+                              serialized["angle"],
                               serialized['name']);
     }
   

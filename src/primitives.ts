@@ -4,6 +4,7 @@ import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
 import { serialize } from "v8";
+import { createTextChangeRange } from "typescript";
 
 
 /**
@@ -755,7 +756,7 @@ export class Text {
 
   public static deserialize(serialized) {
     var default_text_style = {font_size:12, font_style:'sans-serif', text_color:string_to_rgb('black'),
-                              text_align_x:'start', text_align_y:'alphabetic', name:''};
+                              text_align_x:'start', text_align_y:'alphabetic', angle:0, name:''};
     var default_dict_ = {text_style:default_text_style};
     serialized = set_default_values(serialized, default_dict_);
     var text_style = TextStyle.deserialize(serialized['text_style']);
@@ -777,13 +778,26 @@ export class Text {
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;
+    let angle = this.text_style.angle;
+    if (angle === 0) {
+      this.write(context, scaleX*this.position_x + mvx + X, scaleY*this.position_y + mvy + Y, scaleX, font_size);
+    } else {
+      context.translate(scaleX*this.position_x + mvx + X, scaleY*this.position_y + mvy + Y);
+      context.rotate(Math.PI/180 * angle);
+      this.write(context, 0, 0, scaleX, font_size);
+      context.rotate(-Math.PI/180 * angle);
+      context.translate(-scaleX*this.position_x - mvx - X, -scaleY*this.position_y - mvy - Y);
+    }
+  }
+
+  write(context, x, y, scaleX, font_size) {
     if (this.max_width) {
       var cut_texts = this.cutting_text(context, scaleX*this.max_width);
       for (let i=0; i<cut_texts.length; i++) {
-        context.fillText(cut_texts[i], scaleX*this.position_x + mvx + X, scaleY*this.position_y + mvy + i*font_size + Y);
+        context.fillText(cut_texts[i], x, y + i * font_size);
       }
     } else {
-      context.fillText(this.comment, scaleX*this.position_x + mvx + X, scaleY*this.position_y + mvy + Y);
+      context.fillText(this.comment, x, y);
     }
   }
 

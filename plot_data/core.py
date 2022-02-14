@@ -56,7 +56,7 @@ class PlotDataObject(DessiaObject):
         Redefines DessiaObject's to_dict() in order to remove keys where
         value is None.
         """
-        dict_ = DessiaObject.to_dict(self)
+        dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
         new_dict_ = delete_none_from_dict(dict_)
         return new_dict_

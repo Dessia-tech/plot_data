@@ -214,7 +214,6 @@ export abstract class PlotData {
   draw_initial(): void {
     this.reset_scales();
     this.draw();
-    this.draw();
   }
 
   refresh_MinMax(point_list, is_graph2D=false):void {
@@ -1049,6 +1048,7 @@ export abstract class PlotData {
     this.pp_selected_index = Array.from(Array(this.to_display_list.length).keys());
   }
 
+  // Update the selected lines
   refresh_pp_selected() {
     this.pp_selected = [];
     this.pp_selected_index = [];
@@ -1991,7 +1991,6 @@ export abstract class PlotData {
       });
 
     }
-
   }
 
   get_nb_points_inside_canvas(list_points, mvx, mvy) { //given the fact that list_point ([[x0,y0],...,[xn,yn]]) x is in an increasing order

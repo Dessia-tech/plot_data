@@ -908,11 +908,7 @@ export class MultiplePlots {
           Interactions.reset_permanent_window(this.objectList[i])
         } else if (obj.type_ == 'parallelplot') {
           obj.reset_pp_selected();
-          obj.rubber_bands = [];
-          obj.rubberbands_dep = [];
-          for (let j=0; j<obj.axis_list.length; j++) {
-            obj.rubber_bands.push([]);
-          }
+          obj.reset_rubberbands();
         } else if (obj.type_ === 'histogram') {
           obj.reset_x_rubberband(); 
         }

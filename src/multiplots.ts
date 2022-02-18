@@ -264,7 +264,20 @@ export class MultiplePlots {
     }
   
     click_on_export_action() {
-      this.download("selected_points", "[" + this.dep_selected_points_index.toString() + "]");
+      let text = "Indices: [" + this.dep_selected_points_index.toString() + "]\n\n";
+      text = text + "Points: \n";
+      let keys = Object.keys(this.data["elements"][0]);
+      for (let i of this.dep_selected_points_index) {
+        let element = this.data["elements"][i];
+        text = text + "{";
+        for (let key of keys) {
+          text = text + key + ":" + element[key].toString() + ", ";
+        }
+        text = text.slice(0, -2);
+        text = text + "}\n";
+      }
+
+      this.download("selected_points", text);
     }
   
     click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view,

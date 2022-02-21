@@ -1074,6 +1074,15 @@ export abstract class PlotData {
   }
 
 
+  //reset parallel plot's rubber bands
+  reset_rubberbands() {
+    this.rubber_bands = [];
+    this.rubberbands_dep = [];
+    for (let j=0; j<this.axis_list.length; j++) {
+      this.rubber_bands.push([]);
+    }
+  }
+
 
   from_to_display_list_to_elements(i) {
     return this.display_list_to_elements_dict[i.toString()];
@@ -1988,6 +1997,17 @@ export abstract class PlotData {
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
         mouse_moving = false;
+      });
+
+
+      canvas.addEventListener("click", e => {
+        if (this.interaction_ON && this.isParallelPlot) {
+          if (e.ctrlKey) {
+            this.reset_pp_selected();
+            this.reset_rubberbands();
+            this.draw();
+          }
+        }
       });
 
     }

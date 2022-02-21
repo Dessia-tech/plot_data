@@ -56,7 +56,7 @@ class PlotDataObject(DessiaObject):
         Redefines DessiaObject's to_dict() in order to remove keys where
         value is None.
         """
-        dict_ = DessiaObject.to_dict(self)
+        dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
         new_dict_ = delete_none_from_dict(dict_)
         return new_dict_
@@ -167,6 +167,12 @@ class TextStyle(DessiaObject):
     "ideographic" or "bottom". More info on \
     https://www.w3schools.com/tags/canvas_textbaseline.asp
     :type text_align_y: str
+    :param bold:
+    :type bold: bool
+    :param italic:
+    :type italic: bool
+    :param angle: Text angle in degrees. The angle is clockwise.
+    :type angle: float
     """
 
     def __init__(self, text_color: colors.Color = None,
@@ -174,7 +180,7 @@ class TextStyle(DessiaObject):
                  font_style: str = None,
                  text_align_x: str = None, text_align_y: str = None,
                  bold: bool = None, italic: bool = None,
-                 name: str = ''):
+                 angle: float = None, name: str = ''):
         self.text_color = text_color
         self.font_size = font_size
         self.font_style = font_style
@@ -182,6 +188,7 @@ class TextStyle(DessiaObject):
         self.text_align_y = text_align_y
         self.bold = bold
         self.italic = italic
+        self.angle = angle
         DessiaObject.__init__(self, name=name)
 
 

@@ -250,7 +250,20 @@ export class MultiplePlots {
     }
   
     click_on_export_action() {
-      download("selected_points", "[" + this.dep_selected_points_index.toString() + "]");
+      let text = "Indices: [" + this.dep_selected_points_index.toString() + "]\n\n";
+      text = text + "Points: \n";
+      let keys = Object.keys(this.data["elements"][0]);
+      for (let i of this.dep_selected_points_index) {
+        let element = this.data["elements"][i];
+        text = text + "{";
+        for (let key of keys) {
+          text = text + key + ":" + element[key].toString() + ", ";
+        }
+        text = text.slice(0, -2);
+        text = text + "}\n";
+      }
+
+      download("selected_points", text);
     }
   
     click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view,
@@ -894,11 +907,7 @@ export class MultiplePlots {
           Interactions.reset_permanent_window(this.objectList[i])
         } else if (obj.type_ == 'parallelplot') {
           obj.reset_pp_selected();
-          obj.rubber_bands = [];
-          obj.rubberbands_dep = [];
-          for (let j=0; j<obj.axis_list.length; j++) {
-            obj.rubber_bands.push([]);
-          }
+          obj.reset_rubberbands();
         } else if (obj.type_ === 'histogram') {
           obj.reset_x_rubberband(); 
         }

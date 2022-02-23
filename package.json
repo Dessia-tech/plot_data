@@ -11,6 +11,11 @@
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json"
   },
+  "browser": {
+    "fs": false,
+    "path": false,
+    "os": false
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Dessia-tech/plot_data.git"
@@ -39,6 +44,7 @@
   "dependencies": {
     "commitlint": "^13.2.1",
     "fast-deep-equal": "^3.1.3",
+    "fs": "^0.0.1-security",
     "html-webpack-plugin": "^5.5.0",
     "ignore-errors": "^2.0.0",
     "ts-loader": "^9.2.6",

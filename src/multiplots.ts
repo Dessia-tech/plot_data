@@ -1,6 +1,6 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
-import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort } from './utils';
+import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, download } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
@@ -23,19 +23,20 @@ export class MultiplePlots {
     initial_coords:[number, number][];
     points:Point2D[]=[];
     sizes:Window[]=[];
-    move_plot_index:number=-1;
+    move_plot_index:number=-1; 
     clicked_index_list:number[]=[];
     clickedPlotIndex:number=-1;
     last_index:number=-1;
     small_length_nb_objects: number = 0;
     big_length_nb_objects: number = 0;
     manipulation_bool:boolean=false;
-    transbutton_x:number=0; transbutton_y:number=0; transbutton_w:number=0; transbutton_h:number=0;
+    button_y:number=0; button_w:number=0; button_h:number = 0;
+    transbutton_x:number=0;
     selectDependency_bool:boolean=false;
-    selectDep_x:number=0; selectDep_y:number=0; selectDep_w:number=0; selectDep_h:number=0;
+    selectDep_x:number=0;
     view_bool:boolean=false;
-    view_button_x:number=0; view_button_y:number=0; view_button_w:number=0; view_button_h:number=0;
-    export_button_x=0; export_button_y=0; export_button_w=0; export_button_h=0;
+    view_button_x:number=0;
+    export_button_x:number=0; 
     initial_objectsX:number[]=[];
     initial_objectsY:number[]=[];
     initial_object_width:number[]=[];
@@ -101,7 +102,6 @@ export class MultiplePlots {
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       }
-  
       if (elements) {this.initialize_point_families();}
   
       for (let i=0; i<this.nbObjects; i++) {
@@ -110,7 +110,7 @@ export class MultiplePlots {
         this.to_display_plots.push(i);
       }
       this.mouse_interaction();
-  
+
       if (buttons_ON) {
         this.initializeButtons();
         this.draw_buttons();
@@ -121,6 +121,7 @@ export class MultiplePlots {
       }
       // this.save_canvas();
     }
+
   
     initialize_sizes() {
       var temp_sizes = this.data['sizes'];
@@ -187,22 +188,13 @@ export class MultiplePlots {
   
   
     initializeButtons():void {
+      this.button_y = this.height - 25;
+      this.button_w = 45;
+      this.button_h = 20;
       this.transbutton_x = 5;
-      this.transbutton_y = this.height - 25;
-      this.transbutton_w = 35;
-      this.transbutton_h = 20;
-      this.selectDep_x = 45;
-      this.selectDep_y = this.height - 25;
-      this.selectDep_w = 40;
-      this.selectDep_h = 20;
-      this.view_button_x = 90;
-      this.view_button_y = this.height - 25;
-      this.view_button_w = 35;
-      this.view_button_h = 20;
-      this.export_button_x = 130;
-      this.export_button_y = this.height - 25;
-      this.export_button_w = 35;
-      this.export_button_h = 20;
+      this.selectDep_x = this.transbutton_x + this.button_w + 5;
+      this.view_button_x = this.selectDep_x + this.button_w + 5;
+      this.export_button_x = this.view_button_x + this.button_w + 5;
     }
   
     store_dimensions() {
@@ -215,27 +207,27 @@ export class MultiplePlots {
     }
   
     draw_manipulation_button():void {
-        Shape.createButton(this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h, this.context_show, this.manipulation_bool.toString(), '12px sans-serif');
+        Shape.createButton(this.transbutton_x, this.button_y, this.button_w, this.button_h, this.context_show, this.manipulation_bool.toString(), '12px sans-serif');
     }
   
     draw_selection_dependency_button():void {
       if (this.selectDependency_bool === true) {
-        Shape.createButton(this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h, this.context_show, "Dep ON", '10px sans-serif');
+        Shape.createButton(this.selectDep_x, this.button_y, this.button_w, this.button_h, this.context_show, "Dep ON", '10px sans-serif');
       } else {
-        Shape.createButton(this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h, this.context_show, "Dep OFF", '10px sans-serif');
+        Shape.createButton(this.selectDep_x, this.button_y, this.button_w, this.button_h, this.context_show, "Dep OFF", '10px sans-serif');
       }
     }
   
     draw_clean_view_button():void {
       if (this.view_bool) {
-        Shape.createButton(this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h, this.context_show, 'ViewON', '10px sans-serif');
+        Shape.createButton(this.view_button_x, this.button_y, this.button_w, this.button_h, this.context_show, 'ViewON', '10px sans-serif');
       } else {
-        Shape.createButton(this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h, this.context_show, 'ViewOFF', '10px sans-serif');
+        Shape.createButton(this.view_button_x, this.button_y, this.button_w, this.button_h, this.context_show, 'ViewOFF', '10px sans-serif');
       }
     }
   
     draw_export_button(): void {
-      Shape.createButton(this.export_button_x, this.export_button_y, this.export_button_w, this.export_button_h, this.context_show,
+      Shape.createButton(this.export_button_x, this.button_y, this.button_w, this.button_h, this.context_show,
                          'export', '10px sans-serif');
     }
   
@@ -244,6 +236,7 @@ export class MultiplePlots {
       this.draw_selection_dependency_button();
       this.draw_clean_view_button();
       this.draw_export_button();
+
     }
   
     click_on_view_action() {
@@ -256,7 +249,21 @@ export class MultiplePlots {
       }
     }
   
-    click_on_export() {
+    click_on_export_action() {
+      let text = "Indices: [" + this.dep_selected_points_index.toString() + "]\n\n";
+      text = text + "Points: \n";
+      let keys = Object.keys(this.data["elements"][0]);
+      for (let i of this.dep_selected_points_index) {
+        let element = this.data["elements"][i];
+        text = text + "{";
+        for (let key of keys) {
+          text = text + key + ":" + element[key].toString() + ", ";
+        }
+        text = text.slice(0, -2);
+        text = text + "}\n";
+      }
+
+      download("selected_points", text);
     }
   
     click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view,
@@ -268,7 +275,7 @@ export class MultiplePlots {
       } else if (click_on_view) {
         this.click_on_view_action();
       } else if (click_on_export) {
-        this.click_on_export();
+        this.click_on_export_action();
       }
       this.redrawAllObjects();
     }
@@ -900,11 +907,7 @@ export class MultiplePlots {
           Interactions.reset_permanent_window(this.objectList[i])
         } else if (obj.type_ == 'parallelplot') {
           obj.reset_pp_selected();
-          obj.rubber_bands = [];
-          obj.rubberbands_dep = [];
-          for (let j=0; j<obj.axis_list.length; j++) {
-            obj.rubber_bands.push([]);
-          }
+          obj.reset_rubberbands();
         } else if (obj.type_ === 'histogram') {
           obj.reset_x_rubberband(); 
         }
@@ -1632,10 +1635,10 @@ export class MultiplePlots {
   
   
     is_on_button(mouseX, mouseY) {
-      var click_on_manip_button = Shape.isInRect(mouseX, mouseY, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
-      var click_on_selectDep_button = Shape.isInRect(mouseX, mouseY, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
-      var click_on_view = Shape.isInRect(mouseX, mouseY, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
-      var click_on_export = Shape.isInRect(mouseX, mouseY, this.export_button_x, this.export_button_y, this.export_button_w, this.export_button_h);
+      var click_on_manip_button = Shape.isInRect(mouseX, mouseY, this.transbutton_x, this.button_y, this.button_w, this.button_h);
+      var click_on_selectDep_button = Shape.isInRect(mouseX, mouseY, this.selectDep_x, this.button_y, this.button_w, this.button_h);
+      var click_on_view = Shape.isInRect(mouseX, mouseY, this.view_button_x, this.button_y, this.button_w, this.button_h);
+      var click_on_export = Shape.isInRect(mouseX, mouseY, this.export_button_x, this.button_y, this.button_w, this.button_h);
       return click_on_manip_button || click_on_selectDep_button || click_on_view || click_on_export;
     }
   
@@ -1739,11 +1742,11 @@ export class MultiplePlots {
       this.canvas.addEventListener('mouseup', e => {
         mouse3X = e.offsetX;
         mouse3Y = e.offsetY;
-        var click_on_manip_button = Shape.isInRect(mouse3X, mouse3Y, this.transbutton_x, this.transbutton_y, this.transbutton_w, this.transbutton_h);
-        var click_on_selectDep_button = Shape.isInRect(mouse3X, mouse3Y, this.selectDep_x, this.selectDep_y, this.selectDep_w, this.selectDep_h);
-        var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.view_button_y, this.view_button_w, this.view_button_h);
-        var click_on_export = Shape.isInRect(mouse3X, mouse3Y, this.export_button_x, this.export_button_y, this.export_button_w, this.export_button_h);
-        this.click_on_button = click_on_manip_button || click_on_selectDep_button || click_on_view;
+        var click_on_manip_button = Shape.isInRect(mouse3X, mouse3Y, this.transbutton_x, this.button_y, this.button_w, this.button_h);
+        var click_on_selectDep_button = Shape.isInRect(mouse3X, mouse3Y, this.selectDep_x, this.button_y, this.button_w, this.button_h);
+        var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.button_y, this.button_w, this.button_h);
+        var click_on_export = Shape.isInRect(mouse3X, mouse3Y, this.export_button_x, this.button_y, this.button_w, this.button_h);
+        this.click_on_button = click_on_manip_button || click_on_selectDep_button || click_on_view || click_on_export;
         if (this.click_on_button) {
           this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
         }
@@ -2044,6 +2047,84 @@ export class MultiplotCom {
         histogram.get_selected_keys();
       }
     }
+}
+
+
+export function save_multiplot(multiplot: MultiplePlots) {
+  let temp_objs = [], sizes = [], coords = [];
+  for (let obj of multiplot.objectList) {
+    coords.push([obj.X, obj.Y]);
+    sizes.push([obj.width, obj.height]);
+
+    let obj_to_dict = [];
+    obj_to_dict.push(["name", obj.name],
+                     ["type_", obj.type_]);
+    if (obj.type_ === "scatterplot") {
+      obj_to_dict.push(["scaleX", obj.scaleX],
+                      ["scaleY", obj.scaleY],
+                      ["originX", obj.originX],
+                      ["originY", obj.originY],
+                      ["selected_point_index", obj.selected_point_index],
+                      ["selection_window", [obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h]],
+                      ["interpolation_colors", obj.interpolation_colors]);
+    } else if (obj.type_ === "parallelplot") {
+      let names = [];
+      for (let axis of obj.axis_list) names.push(axis.name);
+      obj_to_dict.push(["attribute_names", names],
+                     ["rubber_bands", obj.rubber_bands],
+                     ["inversions", obj.inverted_axis_list],
+                     ["interpolation_colors", obj.interpolation_colors],
+                     ["vertical", obj.vertical]);
+    }
+    temp_objs.push(Object.fromEntries(obj_to_dict));
+  }
+
+  let dict_ = {"data": multiplot.data,
+               "coords": coords,
+               "sizes": sizes,
+               "dep_selected_point_index": multiplot.dep_selected_points_index,
+               "plots": temp_objs,
+               "canvas_id": multiplot.canvas_id};
+  return dict_;
+}
+
+
+export function load_multiplot(dict_, elements, width, height, buttons_ON, canvas_id?) {
+  MyObject.add_properties(dict_, ["elements", elements]);
+  var multiplot = new MultiplePlots(dict_["data"], width, height, buttons_ON, canvas_id || dict_["canvas_id"]);
+  let temp_objs = dict_["plots"];
+  let nbObjects = temp_objs.length;
+  let coords = dict_["coords"];
+  let sizes = dict_["sizes"];
+  for (let i=0; i<nbObjects; i++) {
+    let obj = multiplot.objectList[i];
+    obj.X = coords[i][0];
+    obj.Y = coords[i][1];
+    obj.width = sizes[i][0];
+    obj.height = sizes[i][1];
+    if (obj.type_ === "scatterplot") {
+      obj.scaleX = temp_objs[i]["scaleX"];
+      obj.scaleY = temp_objs[i]["scaleY"];
+      obj.originX = temp_objs[i]["originX"];
+      obj.originY = temp_objs[i]["originY"];
+      obj.selected_point_index = temp_objs[i]["selected_point_index"];
+      obj.perm_window_x = temp_objs[i]["selection_window"][0];
+      obj.perm_window_y = temp_objs[i]["selection_window"][1];
+      obj.perm_window_w = temp_objs[i]["selection_window"][2];
+      obj.perm_window_h = temp_objs[i]["selection_window"][3];
+      obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
+
+      obj.refresh_selected_points_from_indices();
+    } else if (obj.type_ === "parallelplot") {
+      obj.rubber_bands = temp_objs[i]["rubber_bands"];
+      obj.inverted_axis_list = temp_objs[i]["inversions"];
+      obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
+      obj.vertical = temp_objs[i]["vertical"];
+    }
+  }
+  multiplot.dep_selected_points_index = dict_["dep_selected_points_index"];
+  multiplot.redrawAllObjects();
+  return multiplot;
 }
 
 

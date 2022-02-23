@@ -4,6 +4,7 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rgb_strToVector } from "./color_conversion";
+import { MultiplePlots } from "./multiplots";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -12,6 +13,7 @@ import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rg
  */  
 export abstract class PlotData {
   type_:string;
+  name:string = "";
   context_show:any;
   context_hidden:any;
   context:any;
@@ -187,6 +189,7 @@ export abstract class PlotData {
     public is_in_multiplot: boolean = false) {
       this.initial_width = width;
       this.initial_height = height;
+      this.name = data["name"];
     }
 
 
@@ -213,7 +216,6 @@ export abstract class PlotData {
 
   draw_initial(): void {
     this.reset_scales();
-    this.draw();
     this.draw();
   }
 
@@ -1049,6 +1051,7 @@ export abstract class PlotData {
     this.pp_selected_index = Array.from(Array(this.to_display_list.length).keys());
   }
 
+  // Update the selected lines
   refresh_pp_selected() {
     this.pp_selected = [];
     this.pp_selected_index = [];
@@ -1073,6 +1076,15 @@ export abstract class PlotData {
     }
   }
 
+
+  //reset parallel plot's rubber bands
+  reset_rubberbands() {
+    this.rubber_bands = [];
+    this.rubberbands_dep = [];
+    for (let j=0; j<this.axis_list.length; j++) {
+      this.rubber_bands.push([]);
+    }
+  }
 
 
   from_to_display_list_to_elements(i) {
@@ -1372,13 +1384,13 @@ export abstract class PlotData {
   draw_selection_rectangle() {
       var sc_perm_window_x = Math.min(Math.max(this.real_to_scatter_coords(this.perm_window_x, 'x'), this.X), this.width + this.X);
       var sc_perm_window_y = Math.min(Math.max(this.real_to_scatter_coords(this.perm_window_y, 'y'), this.Y), this.height + this.Y);
-      var sc_perm_window_w = Math.min(this.real_to_scatter_length(this.perm_window_w, 'x'), this.width + this.X - sc_perm_window_x);
-      var sc_perm_window_h = Math.min(this.real_to_scatter_length(this.perm_window_h, 'y'), this.height + this.Y - sc_perm_window_y);
+      var sc_perm_window_w = Math.min(this.real_to_scatter_length(this.perm_window_w, 'x', this.perm_window_x), this.width + this.X - sc_perm_window_x);
+      var sc_perm_window_h = Math.min(this.real_to_scatter_length(this.perm_window_h, 'y', this.perm_window_y), this.height + this.Y - sc_perm_window_y);
       if (this.real_to_scatter_coords(this.perm_window_x, 'x') < this.X) {
-        sc_perm_window_w = Math.min(Math.max(this.real_to_scatter_length(this.perm_window_w, 'x') - this.real_to_scatter_length(this.scatter_to_real_coords(this.X, 'x') - this.perm_window_x, 'x'), 0), this.width);
+        sc_perm_window_w = Math.min(Math.max(this.real_to_scatter_length(this.perm_window_w, 'x', this.perm_window_x) - this.real_to_scatter_length(this.scatter_to_real_coords(this.X, 'x') - this.perm_window_x, 'x', this.perm_window_x), 0), this.width);
       }
       if (this.real_to_scatter_coords(this.perm_window_y, 'y') < this.Y) {
-        sc_perm_window_h = Math.min(Math.max(this.real_to_scatter_length(this.perm_window_h, 'y') + this.real_to_scatter_length(this.scatter_to_real_coords(this.Y, 'y') - this.perm_window_y, 'y'), 0), this.height);
+        sc_perm_window_h = Math.min(Math.max(this.real_to_scatter_length(this.perm_window_h, 'y', this.perm_window_y) + this.real_to_scatter_length(this.scatter_to_real_coords(this.Y, 'y') - this.perm_window_y, 'y', this.perm_window_y), 0), this.height);
       }
       Shape.rect(sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h, this.context_show, 'No', 'black', 1, 1, [5,5]);
       Shape.rect(sc_perm_window_x, sc_perm_window_y, sc_perm_window_w, sc_perm_window_h, this.context_hidden, 'No', 'black', 1, 1, [5,5]);
@@ -1413,32 +1425,48 @@ export abstract class PlotData {
     }
   }
 
-  scatter_to_real_length(sc_length:number, coord_type:string) {
+  scatter_to_real_length(sc_length:number, coord_type:string, start_coord?:number) {
     if (coord_type == 'x') {
-      return sc_length/this.scaleX;
+      if (this.log_scale_x) {
+        return start_coord * (Math.pow(10,sc_length/this.scaleX) - 1);
+      }
+      return sc_length / this.scaleX;
     }
+    if (this.log_scale_y) {
+      return start_coord * (Math.pow(10, sc_length/this.scaleY) - 1);
+    } 
     return sc_length/this.scaleY;
   }
 
-  real_to_scatter_length(real_length:number, coord_type:string) {
+  real_to_scatter_length(real_length:number, coord_type:string, start_coord?:number) {
     if (coord_type == 'x') {
+      if (this.log_scale_x) {
+        return this.scaleX*Math.log10((start_coord + real_length)/start_coord);
+      } 
       return this.scaleX*real_length;
     }
+    if (this.log_scale_y) {
+      return this.scaleY*Math.log10((start_coord + real_length) / start_coord);
+    } 
     return this.scaleY*real_length;
   }
 
   scatter_to_real_coords(sc_coord:number, coord_type:string) {
     if (coord_type == 'x') {
+      if (this.log_scale_x) return Math.pow(10, (sc_coord - this.originX - this.X)/this.scaleX);
       return (sc_coord - this.originX - this.X)/this.scaleX;
     } else {
+      if (this.log_scale_y) return Math.pow(10, - ((sc_coord - this.originY - this.Y)/this.scaleY));
       return - ((sc_coord - this.originY - this.Y)/this.scaleY);
     }
   }
 
   real_to_scatter_coords(real_coord:number, coord_type:string):number { //coord_type : 'x' or 'y'
     if (coord_type == 'x') {
+      if (this.log_scale_x) return this.scaleX*Math.log10(real_coord) + this.originX + this.X;
       return this.scaleX*real_coord + this.originX + this.X;
     } else {
+      if (this.log_scale_y) return -this.scaleY*Math.log10(real_coord) + this.originY + this.Y;
       return -this.scaleY*real_coord + this.originY + this.Y;
     }
   }
@@ -1559,6 +1587,20 @@ export abstract class PlotData {
     this.refresh_to_display_list(this.elements);
     this.refresh_all_attributes();
     this.refresh_attribute_booleans();
+  }
+
+
+  refresh_selected_points_from_indices() {
+    this.select_on_click = [];
+    for (let index of this.selected_point_index) {
+      if (this.plotObject['type_'] === "graph2D") {
+
+      } else if (this.plotObject["type_"] === "scatterplot") {
+        let point = this.plotObject.point_list[index];
+        point.selected = true;
+        this.select_on_click.push(point);
+      }
+    }
   }
 
 
@@ -1696,10 +1738,34 @@ export abstract class PlotData {
           }
           Interactions.selection_window_action(this);
           this.refresh_selected_point_index();
-          let abs_min = this.scatter_to_real_coords(Math.min(this.real_to_scatter_coords(this.perm_window_x, 'x'), this.real_to_scatter_coords(this.perm_window_x + this.perm_window_w, 'x')), 'x');
-          let abs_max = this.scatter_to_real_coords(Math.max(this.real_to_scatter_coords(this.perm_window_x, 'x'), this.real_to_scatter_coords(this.perm_window_x + this.perm_window_w, 'x')), 'x');
-          let ord_min = this.scatter_to_real_coords(Math.max(this.real_to_scatter_coords(this.perm_window_y, 'y'), this.real_to_scatter_coords(this.perm_window_y, 'y') + this.real_to_scatter_length(this.perm_window_h, 'y')), 'y');
-          let ord_max = this.scatter_to_real_coords(Math.min(this.real_to_scatter_coords(this.perm_window_y, 'y'), this.real_to_scatter_coords(this.perm_window_y, 'y') + this.real_to_scatter_length(this.perm_window_h, 'y')), 'y');
+          let abs_min = this.scatter_to_real_coords(
+            Math.min(
+              this.real_to_scatter_coords(this.perm_window_x, 'x'), 
+              this.real_to_scatter_coords(this.perm_window_x + this.perm_window_w, 'x')), 
+              'x');
+          let abs_max = this.scatter_to_real_coords(
+            Math.max(
+              this.real_to_scatter_coords(this.perm_window_x, 'x'), 
+              this.real_to_scatter_coords(this.perm_window_x + this.perm_window_w, 'x')), 
+              'x');
+          let ord_min = this.scatter_to_real_coords(
+            Math.max(
+              this.real_to_scatter_coords(this.perm_window_y, 'y'), 
+              this.real_to_scatter_coords(this.perm_window_y - this.perm_window_h, 'y')), 
+              'y');
+          let ord_max = this.scatter_to_real_coords(
+            Math.min(
+              this.real_to_scatter_coords(this.perm_window_y, 'y'), 
+              this.real_to_scatter_coords(this.perm_window_y - this.perm_window_h, 'y')), 
+              'y');
+          // if (this.log_scale_x) {
+          //   abs_min = Math.pow(10, abs_min);
+          //   abs_max = Math.pow(10, abs_max);
+          // }
+          // if (this.log_scale_y) {
+          //   ord_min = Math.pow(10, ord_min);
+          //   ord_max = Math.pow(10, ord_max);
+          // }
           this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
         } 
         this.zoom_box_x = Math.min(mouse1X, mouse2X);
@@ -1950,8 +2016,18 @@ export abstract class PlotData {
         mouse_moving = false;
       });
 
-    }
 
+      canvas.addEventListener("click", e => {
+        if (this.interaction_ON && this.isParallelPlot) {
+          if (e.ctrlKey) {
+            this.reset_pp_selected();
+            this.reset_rubberbands();
+            this.draw();
+          }
+        }
+      });
+
+    }
   }
 
   get_nb_points_inside_canvas(list_points, mvx, mvy) { //given the fact that list_point ([[x0,y0],...,[xn,yn]]) x is in an increasing order
@@ -2144,8 +2220,8 @@ export class Interactions {
     var thickness = 15;
     var sc_perm_window_x = plot_data.real_to_scatter_coords(plot_data.perm_window_x, 'x');
     var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
-    var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
-    var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
+    var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x', plot_data.perm_window_x);
+    var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y', plot_data.perm_window_y);
     var up:boolean = Shape.isInRect(mouseX, mouseY, sc_perm_window_x - thickness/2, sc_perm_window_y - thickness/2, sc_perm_window_w + thickness, thickness);
     var down:boolean =  Shape.isInRect(mouseX, mouseY, sc_perm_window_x - thickness/2, sc_perm_window_y + sc_perm_window_h - thickness/2, sc_perm_window_w + thickness, thickness);
     var left:boolean = Shape.isInRect(mouseX, mouseY, sc_perm_window_x - thickness/2, sc_perm_window_y - thickness/2, thickness, sc_perm_window_h + thickness);
@@ -2184,8 +2260,8 @@ export class Interactions {
     if ((temp_w <= 5) || (temp_h <= 5)) return;
     plot_data.perm_window_x = plot_data.scatter_to_real_coords(Math.min(mouse1X, mouse2X), 'x');
     plot_data.perm_window_y = plot_data.scatter_to_real_coords(Math.min(mouse1Y, mouse2Y), 'y');
-    plot_data.perm_window_w = plot_data.scatter_to_real_length(temp_w, 'x');
-    plot_data.perm_window_h = plot_data.scatter_to_real_length(temp_h, 'y');
+    plot_data.perm_window_w = plot_data.scatter_to_real_length(temp_w, 'x', plot_data.perm_window_x);
+    plot_data.perm_window_h = plot_data.scatter_to_real_length(temp_h, 'y', plot_data.perm_window_y);
   }
 
 
@@ -2193,8 +2269,8 @@ export class Interactions {
 
     var sc_perm_window_x = plot_data.real_to_scatter_coords(plot_data.perm_window_x, 'x');
     var sc_perm_window_y = plot_data.real_to_scatter_coords(plot_data.perm_window_y, 'y');
-    var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x');
-    var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y');
+    var sc_perm_window_w = plot_data.real_to_scatter_length(plot_data.perm_window_w, 'x', plot_data.perm_window_x);
+    var sc_perm_window_h = plot_data.real_to_scatter_length(plot_data.perm_window_h, 'y', plot_data.perm_window_y);
     
     if (Math.abs(sc_perm_window_w) <= 5 || Math.abs(sc_perm_window_h) <= 5) return;
 
@@ -2764,5 +2840,3 @@ export class Buttons {
     Shape.createButton(x + plot_data.X, y2 + plot_data.Y, w, h, plot_data.context, 'ylog', police);
   }
 }
-
-

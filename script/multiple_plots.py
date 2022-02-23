@@ -31,7 +31,7 @@ for i in range(nb_elements):
 
 """ ParallelPlot """
 parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color', 'direction'])
-parallelplot2 = plot_data.ParallelPlot(axes=['x', 'color'])
+parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color'])
 
 """Scatterplots"""
 scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
@@ -66,9 +66,11 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 histogram = plot_data.Histogram(x_variable='x')
 
 """Creating the multiplot"""
-plots = [parallelplot1, parallelplot2, scatterplot1,
-         scatterplot2, scatterplot3, graph2d, primitive_group_container,
-         histogram]
+# plots = [parallelplot1, parallelplot2, scatterplot1,
+#          scatterplot2, scatterplot3, graph2d, primitive_group_container,
+#          histogram]
+
+plots = [parallelplot1, scatterplot1]
 
 multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
                                     initial_view_on=True)

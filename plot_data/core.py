@@ -56,7 +56,7 @@ class PlotDataObject(DessiaObject):
         Redefines DessiaObject's to_dict() in order to remove keys where
         value is None.
         """
-        dict_ = DessiaObject.to_dict(self)
+        dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
         new_dict_ = delete_none_from_dict(dict_)
         return new_dict_
@@ -167,6 +167,12 @@ class TextStyle(DessiaObject):
     "ideographic" or "bottom". More info on \
     https://www.w3schools.com/tags/canvas_textbaseline.asp
     :type text_align_y: str
+    :param bold:
+    :type bold: bool
+    :param italic:
+    :type italic: bool
+    :param angle: Text angle in degrees. The angle is clockwise.
+    :type angle: float
     """
 
     def __init__(self, text_color: colors.Color = None,
@@ -174,7 +180,7 @@ class TextStyle(DessiaObject):
                  font_style: str = None,
                  text_align_x: str = None, text_align_y: str = None,
                  bold: bool = None, italic: bool = None,
-                 name: str = ''):
+                 angle: float = None, name: str = ''):
         self.text_color = text_color
         self.font_size = font_size
         self.font_style = font_style
@@ -182,6 +188,7 @@ class TextStyle(DessiaObject):
         self.text_align_y = text_align_y
         self.bold = bold
         self.italic = italic
+        self.angle = angle
         DessiaObject.__init__(self, name=name)
 
 
@@ -876,14 +883,15 @@ class PrimitiveGroupsContainer(PlotDataObject):
             sizes = [sizes] * len(primitive_groups)
         self.sizes = sizes
         self.coords = coords
-        if x_variable or y_variable:
-            attribute_names = []
-            if x_variable:
-                attribute_names.append(x_variable)
-            if y_variable:
-                attribute_names.append(y_variable)
-            self.association = {'associated_elements': associated_elements,
-                                'attribute_names': attribute_names}
+        if associated_elements:
+            self.association = {'associated_elements': associated_elements}
+            if x_variable or y_variable:
+                attribute_names = []
+                if x_variable:
+                    attribute_names.append(x_variable)
+                if y_variable:
+                    attribute_names.append(y_variable)
+                self.association['attribute_names'] = attribute_names
         PlotDataObject.__init__(self, type_='primitivegroupcontainer',
                                 name=name)
 
@@ -1027,7 +1035,8 @@ class MultiplePlots(PlotDataObject):
 def plot_canvas(plot_data_object: Subclass[PlotDataObject],
                 debug_mode: bool = False, canvas_id: str = 'canvas',
                 force_version: str = None,
-                width: int = 750, height: int = 400, page_name: str = None):
+                width: int = 750, height: int = 400, page_name: str = None,
+                display: bool = True):
     """
     Creates a html file and plots input data in web browser
 
@@ -1089,12 +1098,14 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         with open(temp_file, 'wb') as file:
             file.write(s.encode('utf-8'))
 
-        webbrowser.open('file://' + temp_file)
+        if display:
+            webbrowser.open('file://' + temp_file)
         print('file://' + temp_file)
     else:
         with open(page_name + '.html', 'wb') as file:
             file.write(s.encode('utf-8'))
-        webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
+        if display:
+            webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
 
 

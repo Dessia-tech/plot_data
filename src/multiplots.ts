@@ -528,7 +528,6 @@ export class MultiplePlots {
       this.context_hidden.beginPath();
       obj.draw_empty_canvas(this.context_hidden);
       this.context_hidden.closePath();
-  
     }
   
     clearAll():void {
@@ -2075,6 +2074,13 @@ export function save_multiplot(multiplot: MultiplePlots) {
                      ["inversions", obj.inverted_axis_list],
                      ["interpolation_colors", obj.interpolation_colors],
                      ["vertical", obj.vertical]);
+    } else if (obj.type_ === "histogram") {
+      obj_to_dict.push(["graduation_nb", obj["graduation_nb"]],
+                        ["x_variable", obj["x_variable"]],
+                        ["x_rubberband", obj["x_rubberband"]],
+                        ["y_rubberband", obj["y_rubberband"]],
+                        ["scale", obj.scale],
+                        ["originX", obj.originX]);
     }
     temp_objs.push(Object.fromEntries(obj_to_dict));
   }
@@ -2115,11 +2121,20 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
       obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
 
       obj.refresh_selected_points_from_indices();
+
     } else if (obj.type_ === "parallelplot") {
       obj.rubber_bands = temp_objs[i]["rubber_bands"];
       obj.inverted_axis_list = temp_objs[i]["inversions"];
       obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
       obj.vertical = temp_objs[i]["vertical"];
+
+    } else if (obj.type_ === "histogram") {
+      obj["graduation_nb"] = temp_objs[i]["graduation_nb"];
+      obj["x_variable"] = temp_objs[i]["x_variable"];
+      obj["x_rubberband"] = temp_objs[i]["x_rubberband"];
+      obj["y_rubberband"] = temp_objs[i]["y_rubberband"];
+      obj.scale = temp_objs[i]["scale"];
+      obj.originX = temp_objs[i]["originX"];
     }
   }
   multiplot.dep_selected_points_index = dict_["dep_selected_points_index"];

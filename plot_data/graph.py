@@ -5,8 +5,8 @@ import plot_data
 class NetworkxGraph(plot_data.PrimitiveGroup):
     """
     Each node of self.graph can contain its settings in the node.data \
-    dictionnary. Keys can be :
-    'color' with format 'rgb(xr, xg, xb)', xr, xg, xb are intergers between \
+    dictionary. Keys can be :
+    'color' with format 'rgb(xr, xg, xb)', xr, xg, xb are integers between \
     0 and 255.
     'shape', choose between '.' for Point2D, 'o' for Circle2D, 's' for bigger \
     Circle2D.
@@ -69,3 +69,6 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
             primitives.append(text)
 
         return primitives
+
+    def to_plot_data(self):
+        return plot_data.PrimitiveGroup(self.primitives)

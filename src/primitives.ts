@@ -1,10 +1,8 @@
 
-import { string_to_rgb, rgb_to_string } from "./color_conversion";
+import { string_to_rgb, rgb_to_string, string_to_hex, rgb_to_hex, hex_to_rgb } from "./color_conversion";
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
-import { serialize } from "v8";
-import { createTextChangeRange } from "typescript";
 
 
 /**
@@ -837,4 +835,30 @@ export class Text {
     return cut_texts;
   }
 
+}
+
+
+export class Heatmap {
+
+  constructor(size: number[] = [3,3],
+              colors: string[] = [string_to_hex("blue"), string_to_hex("yellow"), string_to_hex("red")],
+              edge_style: EdgeStyle = new EdgeStyle(1, string_to_hex("white"), [], ""),
+              name: string = "") {}
+    
+
+  public static deserialize(serialized) {
+    let default_colors = [string_to_rgb("blue"), string_to_rgb("yellow"), string_to_rgb("red")];
+    let default_dict = {edge_style: new EdgeStyle(1, string_to_hex("white"), [], ""),
+                        colors: default_colors};
+    serialized = set_default_values(default_dict, serialized);
+    let edge_style = EdgeStyle.deserialize(serialized["edge_style"]);
+    let colors = [];
+    for (let i=0; i<serialized["colors"].length; i++) {
+      colors.push(rgb_to_hex(serialized["colors"][i]));
+    }
+    return new Heatmap(serialized["size"],
+                       colors,
+                       edge_style,
+                       serialized["name"]);
+  }
 }

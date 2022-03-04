@@ -128,7 +128,7 @@ export function rgb_interpolation([r1, g1, b1], [r2, g2, b2], n:number): string[
   return color_list;
 }
 
-export function rgb_interpolations(rgbs:[number, number, number][], nb_pts:number): string[] {
+export function get_interpolation_colors(rgbs:[number, number, number][], nb_pts:number): string[] {
   var nb_seg = rgbs.length - 1;
   var arr = [];
   var color_list = [];
@@ -143,6 +143,22 @@ export function rgb_interpolations(rgbs:[number, number, number][], nb_pts:numbe
     }
   }
   return color_list;
+}
+
+export function heatmap_color(density, max_density, colors) {
+  let step = 1/(colors.length - 1);
+  let colors_rgb = colors.map(hex => hex_to_rgb(hex));
+  let norm_val = density/max_density;
+  let q = Math.floor(norm_val/step);
+  let cm = q*step;
+  let val = (norm_val - cm) / step;
+  let color1 = colors_rgb[q];
+  let color2 = colors_rgb[q+1];
+  let r = (1-val)*color1[0] + val*color2[0];
+  let g = (1-val)*color1[1] + val*color2[1];
+  let b = (1-val)*color1[2] + val*color2[2];
+  let rgb = "rgb(" + r.toString + "," + g.toString() + "," + b.toString() + ")";
+  return rgb_to_hex(rgb);
 }
 
 export function rgb_strToVector(rgb:string): [number, number, number] {

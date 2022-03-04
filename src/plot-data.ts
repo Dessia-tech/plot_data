@@ -1,10 +1,9 @@
 import { string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
-import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rgb_strToVector } from "./color_conversion";
-import { MultiplePlots } from "./multiplots";
+import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -59,6 +58,8 @@ export abstract class PlotData {
   fusion_coeff:number=1.2;
   log_scale_x: boolean = false;
   log_scale_y: boolean = true;
+  heatmap: Heatmap;
+  heatmap_view: boolean = false;
 
   plotObject:any;
   plot_datas:object={};
@@ -587,6 +588,10 @@ export abstract class PlotData {
           graph.elements, false, d.attribute_names);
       }
     }
+  }
+
+  draw_heatmap() {
+    
   }
 
   draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
@@ -1126,7 +1131,7 @@ export abstract class PlotData {
 
   refresh_interpolation_colors(): void {
     this.interpolation_colors = [];
-    this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
+    this.interpolation_colors = get_interpolation_colors(this.rgbs, this.to_display_list.length);
   }
 
   add_to_hexs(hex:string): void {

@@ -221,6 +221,9 @@ export class PlotScatter extends PlotData {
         // Draw log scale buttons
         Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
           "10px Arial", this);
+        
+        // Draw Heatmap button
+        Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
       }
       if (this.multiplot_manipulation) {
         this.draw_manipulable_rect();

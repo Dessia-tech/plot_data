@@ -108,6 +108,7 @@ export abstract class PlotData {
   clear_point_button_y:number=0;
   xlog_button_y: number = 0;
   ylog_button_y: number = 0;
+  heatmap_button_y: number = 0;
 
   all_attributes:Attribute[]=[];
   attribute_booleans:boolean[]=[];
@@ -1256,6 +1257,7 @@ export abstract class PlotData {
     this.clear_point_button_y = this.perm_button_y + this.button_h + 5;
     this.xlog_button_y = this.clear_point_button_y + this.button_h + 5;
     this.ylog_button_y = this.xlog_button_y + this.button_h + 5;
+    this.heatmap_button_y = this.ylog_button_y + this.button_h + 5;
   }
 
   refresh_attribute_booleans() {
@@ -1864,6 +1866,7 @@ export abstract class PlotData {
     var click_on_clear = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.clear_point_button_y + this.Y, this.button_w, this.button_h);
     var click_on_xlog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.xlog_button_y + this.Y, this.button_w, this.button_h);
     var click_on_ylog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.ylog_button_y + this.Y, this.button_w, this.button_h);
+    var click_on_heatmap = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.heatmap_button_y, this.button_w, this.button_h);
 
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
@@ -1873,7 +1876,7 @@ export abstract class PlotData {
     }
     this.click_on_button = false;
     this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select 
-    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog;
+    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog || click_on_heatmap;
 
     if (mouse_moving) {
       if (this.zw_bool) {
@@ -1912,6 +1915,8 @@ export abstract class PlotData {
           Interactions.click_on_xlog_action(this);
         } else if (click_on_ylog) {
           Interactions.click_on_ylog_action(this);
+        } else if (click_on_heatmap) {
+          Interactions.click_on_heatmap_action(this);
         }
       }
       Interactions.reset_zoom_box(this);
@@ -2500,6 +2505,10 @@ export class Interactions {
     this.click_on_reset_action(plot_data);
   }
 
+  public static click_on_heatmap_action(plot_data) {
+    plot_data.heatmap_view = ! plot_data.heatmap_view;
+  }
+
   public static mouse_move_axis_inversion(isDrawing, e, selected_name_index, plot_data:any) {
     isDrawing = true;
     plot_data.move_index = selected_name_index;
@@ -2885,5 +2894,9 @@ export class Buttons {
   public static log_scale_buttons(x, y1, y2, w, h, police, plot_data:PlotData) {
     Shape.createButton(x + plot_data.X, y1 + plot_data.Y, w, h, plot_data.context, 'xlog', police);
     Shape.createButton(x + plot_data.X, y2 + plot_data.Y, w, h, plot_data.context, 'ylog', police);
+  }
+
+  public static heatmap_button(x, y, w, h, police, plot_data:PlotData) {
+    Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, "heat", police);
   }
 }

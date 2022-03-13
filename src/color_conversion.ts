@@ -62,6 +62,7 @@ export function hexToRgbObj(hex):Object { // Returns an object {r: ..., g: ..., 
   } : null;
 }
 
+
 export function hex_to_rgb(hex:string): string {
   // var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   var result = [hex[1]+hex[2], hex[3]+hex[4], hex[5]+hex[6]];
@@ -147,17 +148,17 @@ export function get_interpolation_colors(rgbs:[number, number, number][], nb_pts
 
 export function heatmap_color(density, max_density, colors) {
   let step = 1/(colors.length - 1);
-  let colors_rgb = colors.map(hex => hex_to_rgb(hex));
+  let colors_rgb = colors.map(hex => rgb_strToVector(hex_to_rgb(hex)));
   let norm_val = density/max_density;
   let q = Math.floor(norm_val/step);
   let cm = q*step;
   let val = (norm_val - cm) / step;
   let color1 = colors_rgb[q];
   let color2 = colors_rgb[q+1];
-  let r = (1-val)*color1[0] + val*color2[0];
-  let g = (1-val)*color1[1] + val*color2[1];
-  let b = (1-val)*color1[2] + val*color2[2];
-  let rgb = "rgb(" + r.toString + "," + g.toString() + "," + b.toString() + ")";
+  let r = Math.floor((1-val)*color1[0] + val*color2[0]);
+  let g = Math.floor((1-val)*color1[1] + val*color2[1]);
+  let b = Math.floor((1-val)*color1[2] + val*color2[2]);
+  let rgb = "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ")";
   return rgb_to_hex(rgb);
 }
 

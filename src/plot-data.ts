@@ -1,4 +1,4 @@
-import { string_to_hex } from "./color_conversion";
+import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
@@ -361,136 +361,130 @@ export abstract class PlotData {
   }
 
   draw_contour(hidden, mvx, mvy, scaleX, scaleY, d:Contour2D) {
-    if (d['type_'] == 'contour') {
-      if (hidden) {
-        this.context.fillStyle = d.mouse_selection_color;
-      } else {
-        this.context.strokeStyle = d.edge_style.color_stroke;
-        this.context.lineWidth = d.edge_style.line_width;
-        this.context.setLineDash(d.edge_style.dashline);
-        this.context.fillStyle = d.surface_style.color_fill;
-        this.context.globalAlpha = d.surface_style.opacity;
-        this.context.fill();
-        this.context.globalAlpha = 1;
-        if (d.surface_style.hatching != null) {
-          this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
-        }
-        if (this.select_on_mouse == d) {
-          this.context.fillStyle = this.color_surface_on_mouse;
-        }
-        for (var j = 0; j < this.select_on_click.length; j++) {
-          var z = this.select_on_click[j];
-          if (z == d) {
-            this.context.fillStyle = this.color_surface_on_click;
-          }
-        }
-      }
-      for (var j = 0; j < d.plot_data_primitives.length; j++) {
-        let elem = d.plot_data_primitives[j];
-        if (j == 0) var first_elem = true; else first_elem = false;
-        if (elem.type_ == 'linesegment2d') elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
-        else elem.contour_draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
-      }
-      this.context.stroke();
+    if (hidden) {
+      this.context.fillStyle = d.mouse_selection_color;
+    } else {
+      this.context.strokeStyle = d.edge_style.color_stroke;
+      this.context.lineWidth = d.edge_style.line_width;
+      this.context.setLineDash(d.edge_style.dashline);
+      this.context.fillStyle = d.surface_style.color_fill;
+      this.context.globalAlpha = d.surface_style.opacity;
       this.context.fill();
-      this.context.setLineDash([]);
+      this.context.globalAlpha = 1;
+      if (d.surface_style.hatching != null) {
+        this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
+      }
+      if (this.select_on_mouse == d) {
+        this.context.fillStyle = this.color_surface_on_mouse;
+      }
+      for (var j = 0; j < this.select_on_click.length; j++) {
+        var z = this.select_on_click[j];
+        if (z == d) {
+          this.context.fillStyle = this.color_surface_on_click;
+        }
+      }
     }
+    for (var j = 0; j < d.plot_data_primitives.length; j++) {
+      let elem = d.plot_data_primitives[j];
+      if (j == 0) var first_elem = true; else first_elem = false;
+      if (elem.type_ == 'linesegment2d') elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+      else elem.contour_draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+    }
+    this.context.stroke();
+    this.context.fill();
+    this.context.setLineDash([]);
   }
 
   draw_circle(hidden, mvx, mvy, scaleX, scaleY, d:Circle2D) {
-    if (d['type_'] == 'circle') {
-      if (hidden) {
-        this.context.fillStyle = d.mouse_selection_color;
-        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
-      } else {
-        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
-        this.context.strokeStyle = d.edge_style.color_stroke;
-        this.context.setLineDash(d.edge_style.dashline);
-        this.context.lineWidth = d.edge_style.line_width;
-        this.context.stroke();
-        this.context.fillStyle = d.surface_style.color_fill;
-        this.context.globalAlpha = d.surface_style.opacity;
+    if (hidden) {
+      this.context.fillStyle = d.mouse_selection_color;
+      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+    } else {
+      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+      this.context.strokeStyle = d.edge_style.color_stroke;
+      this.context.setLineDash(d.edge_style.dashline);
+      this.context.lineWidth = d.edge_style.line_width;
+      this.context.stroke();
+      this.context.fillStyle = d.surface_style.color_fill;
+      this.context.globalAlpha = d.surface_style.opacity;
+      this.context.fill();
+      this.context.globalAlpha = 1;
+      if (d.surface_style.hatching != null) {
+        this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
         this.context.fill();
-        this.context.globalAlpha = 1;
-        if (d.surface_style.hatching != null) {
-          this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
-          this.context.fill();
-        }
-        if (this.select_on_mouse == d) {
-          this.context.fillStyle = this.color_surface_on_mouse;
+      }
+      if (this.select_on_mouse == d) {
+        this.context.fillStyle = this.color_surface_on_mouse;
 
+      }
+      for (var j = 0; j < this.select_on_click.length; j++) {
+        var z = this.select_on_click[j];
+        if (z == d) {
+          this.context.fillStyle = this.color_surface_on_click;
         }
-        for (var j = 0; j < this.select_on_click.length; j++) {
-          var z = this.select_on_click[j];
-          if (z == d) {
+      }
+    }
+    this.context.fill();
+    this.context.setLineDash([]);
+  }
+
+  draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
+    if (hidden) {
+      this.context.fillStyle = d.mouse_selection_color;
+    } else {
+      if (this.plotObject.type_ == 'scatterplot') {
+        if (this.sc_interpolation_ON) {
+          if (d.selected || List.contains_undefined(this.select_on_click)) {
+            this.context.fillStyle = d.point_style.color_fill;
+          } else {
+            this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
+          }
+        } else {
+          this.context.fillStyle = this.plotObject.point_style.color_fill;
+          if (d.point_families.length != 0) {
+            this.context.fillStyle = d.point_families[d.point_families.length - 1].color;
+          }
+        }
+      } else { // graph2d
+        this.context.fillStyle = d.point_style.color_fill;
+      }
+      this.context.lineWidth = d.point_style.stroke_width;
+      this.context.strokeStyle = d.point_style.color_stroke;
+      var shape = d.point_style.shape;
+
+      if (shape == 'crux') {
+        this.context.strokeStyle = d.point_style.color_fill;
+      }
+      if (d.selected) {
+        if (shape == 'crux') {
+          this.context.strokeStyle = this.color_surface_on_click;
+        } else {
+          if (this.sc_interpolation_ON) {
+            this.context.fillStyle = d.point_style.color_fill;
+          } else {
             this.context.fillStyle = this.color_surface_on_click;
           }
         }
       }
-      this.context.fill();
-      this.context.setLineDash([]);
+      if ((this.select_on_mouse === d) || (this.primitive_mouse_over_point === d)) {
+        this.context.fillStyle = this.color_surface_on_mouse;
+      }
     }
-  }
+    let cx = d.cx, cy = d.cy;
+    if (this.log_scale_x) cx = Math.log10(cx);
+    if (this.log_scale_y) cy = -Math.log10(-cy);
 
-  draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
-    if (d['type_'] == 'point') {
-      if (hidden) {
-        this.context.fillStyle = d.mouse_selection_color;
-      } else {
-        if (this.plotObject.type_ == 'scatterplot') {
-          if (this.sc_interpolation_ON) {
-            if (d.selected || List.contains_undefined(this.select_on_click)) {
-              this.context.fillStyle = d.point_style.color_fill;
-            } else {
-              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
-            }
-          } else {
-            this.context.fillStyle = this.plotObject.point_style.color_fill;
-            if (d.point_families.length != 0) {
-              this.context.fillStyle = d.point_families[d.point_families.length - 1].color;
-            }
-          }
-        } else { // graph2d
-          this.context.fillStyle = d.point_style.color_fill;
-        }
-        this.context.lineWidth = d.point_style.stroke_width;
-        this.context.strokeStyle = d.point_style.color_stroke;
-        var shape = d.point_style.shape;
+    var x = scaleX*cx+ mvx;
+    var y = scaleY*cy + mvy;
+    this.pointLength = d.size;
 
-        if (shape == 'crux') {
-          this.context.strokeStyle = d.point_style.color_fill;
-        }
-        if (d.selected) {
-          if (shape == 'crux') {
-            this.context.strokeStyle = this.color_surface_on_click;
-          } else {
-            if (this.sc_interpolation_ON) {
-              this.context.fillStyle = d.point_style.color_fill;
-            } else {
-              this.context.fillStyle = this.color_surface_on_click;
-            }
-          }
-        }
-        if ((this.select_on_mouse === d) || (this.primitive_mouse_over_point === d)) {
-          this.context.fillStyle = this.color_surface_on_mouse;
-        }
-      }
-      let cx = d.cx, cy = d.cy;
-      if (this.log_scale_x) cx = Math.log10(cx);
-      if (this.log_scale_y) cy = -Math.log10(-cy);
-
-      var x = scaleX*cx+ mvx;
-      var y = scaleY*cy + mvy;
-      this.pointLength = d.size;
-
-      var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
-      if (is_inside_canvas === true) {
-        this.context.beginPath();
-        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
-        this.context.fill();
-        this.context.stroke();
-        this.context.closePath();
-      }
+    var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
+    if (is_inside_canvas === true) {
+      this.context.beginPath();
+      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
+      this.context.fill();
+      this.context.stroke();
+      this.context.closePath();
     }
   }
 
@@ -590,8 +584,56 @@ export abstract class PlotData {
     }
   }
 
-  draw_heatmap() {
-    
+  get_heatmap_table(scatter) {
+    let table = [];
+    let w = this.heatmap.size[0];
+    let h = this.heatmap.size[1];
+    for (let i=0; i<h; i++) {
+      table.push(Array(w).fill(0));
+    }
+    let wstep = this.width/w;
+    let hstep = this.height/h;
+
+    for (let point of scatter.point_list) {
+      let x = this.real_to_scatter_coords(point.cx, "x");
+      let y = this.real_to_scatter_coords(-point.cy, "y");
+      if (x<0 || x>this.width || y<0 || y>this.height) {
+        continue;
+      }
+      let kx = Math.floor(x/wstep);
+      let ky = Math.floor(y/hstep);
+      table[kx][ky]++;
+    }
+    return table;
+  }
+
+  draw_heatmap(hidden) {
+    if (hidden) return;
+    let scatter = this.plotObject;
+    let table = this.get_heatmap_table(scatter);
+    let w = this.heatmap.size[0];
+    let h = this.heatmap.size[1];
+    let wstep = this.width/w;
+    let hstep = this.height/h;
+    let max_density = scatter.point_list.length;
+    for (let i=1; i<w; i++) {
+      this.context.moveTo(i*wstep, 0);
+      this.context.lineTo(i*wstep, this.height);
+      this.context.stroke();
+    }
+    for (let i=1; i<h; i++) {
+      this.context.moveTo(0, i*hstep);
+      this.context.lineTo(this.width, i*hstep);
+      this.context.stroke();
+    }
+    for (let i=0; i<w; i++) {
+      for (let j=0; j<h; j++) {
+        let density = table[i][j];
+        let color = heatmap_color(density, max_density, this.heatmap.colors);
+        this.context.fillStyle = color;
+        this.context.fillRect(i*wstep, j*hstep, wstep, hstep);
+      }
+    }
   }
 
   draw_scatterplot(d:Scatter, hidden, mvx, mvy) {

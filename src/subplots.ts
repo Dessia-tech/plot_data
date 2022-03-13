@@ -178,7 +178,7 @@ export class PlotScatter extends PlotData {
       this.context.closePath();
       this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
       if (this.heatmap_view) {
-        // draw_heatmap()
+        this.draw_heatmap(hidden);
       } else {
         this.draw_scatterplot(this.plotObject, hidden, this.originX, this.originY);
         if (this.permanent_window) {

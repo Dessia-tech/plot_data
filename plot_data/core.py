@@ -617,7 +617,7 @@ class Heatmap(DessiaObject):
     :param edge_style: The areas separating lines settings
     :type edge_style: EdgeStyle
     """
-    def __init__(self, size: Tuple[int, int]=None, colors:List[Color]=None, edge_style:EdgeStyle=None, name:str=''):
+    def __init__(self, size: Tuple[int, int]=None, colors:List[colors.Color]=None, edge_style:EdgeStyle=None, name:str=''):
         self.size = size
         self.colors = colors
         self.edge_style = edge_style

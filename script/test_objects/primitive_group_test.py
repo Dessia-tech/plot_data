@@ -62,6 +62,8 @@ label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surfac
 
 labels = plot_data.MultipleLabels(labels=[label1, label2])
 
+wire = plot_data.Wire([[15, 0], [15,10], [20,10]])
+
 primitives = [contour, line, arc,
-              circle, text, labels]
+              circle, text, labels, wire]
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)

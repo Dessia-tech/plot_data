@@ -1,10 +1,9 @@
 import { string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Wire } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rgb_strToVector } from "./color_conversion";
-import { MultiplePlots } from "./multiplots";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -36,7 +35,7 @@ export abstract class PlotData {
   originX:number=0;
   originY:number=0;
   settings_on:boolean=false;
-  colour_to_plot_data:any={};
+  color_to_plot_data:any={};
   select_on_mouse:any;
   primitive_mouse_over_point:Point2D;
   select_on_click:any[]=[];
@@ -240,7 +239,7 @@ export abstract class PlotData {
         this.minY = Math.min(this.minY, point.minY);
         this.maxY = Math.max(this.maxY, point.maxY);
       }
-      this.colour_to_plot_data[point.mouse_selection_color] = point;
+      this.color_to_plot_data[point.hidden_color] = point;
     }
     if (this.minX === this.maxX) {
       let val = this.minX;
@@ -334,35 +333,57 @@ export abstract class PlotData {
         var is_inside_canvas = (pr_x+pr_w>=0) && (pr_x<=this.width) &&
           (pr_y+pr_h>0) && (pr_y<=this.height);
         if (need_check.includes(d.primitives[i].type_) && !is_inside_canvas) continue;
-        if (d.primitives[i].type_ == 'contour') {
+        if (d.primitives[i].type_ === 'contour') {
           this.draw_contour(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if (d.primitives[i].type_ == 'arc') {
+        } else if (d.primitives[i].type_ === 'arc') {
           d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
-        } else if (d.primitives[i].type_ == 'text') {
+        } else if (d.primitives[i].type_ === 'text') {
           d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
-        } else if (d.primitives[i].type_ == 'circle') {
+        } else if (d.primitives[i].type_ === 'circle') {
           this.draw_circle(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if (d.primitives[i].type_ == 'linesegment2d') {
+        } else if (d.primitives[i].type_ === 'linesegment2d') {
           d.primitives[i].draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
           this.context.setLineDash([]);
-        } else if (d.primitives[i].type_ == 'line2d') {
+        } else if (d.primitives[i].type_ === 'line2d') {
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.width, this.height);
         } else if (d.primitives[i].type_ === 'multiplelabels') {
           d.primitives[i].draw(this.context, this.width, this.X, this.Y);
+        } else if (d.primitives[i].type_ === "wire") {
+          this.draw_wire(hidden, d.primitives[i]);
         }
         this.context.closePath(); 
       }
     }
   }
 
+
+  draw_wire(hidden: boolean, wire: Wire) {
+    if (hidden) {
+      this.context.strokeStyle = rgb_to_hex(wire.hidden_color);
+      this.context.lineWidth = 3 * wire.edge_style.line_width;
+    } else {
+      if (this.select_on_mouse === wire) {
+        this.context.strokeStyle = string_to_hex("yellow");
+        this.context.lineWidth = 3 * wire.edge_style.line_width;
+      } else {
+        this.context.strokeStyle = wire.edge_style.color_stroke;
+        this.context.setLineDash(wire.edge_style.dashline);
+        this.context.lineWidth = wire.edge_style.line_width;
+      }
+    }
+    wire.draw(this.context, this.scaleX, this.scaleY, this.originX, this.originY, this.X, this.Y);
+    this.context.setLineDash([]);
+  }
+
+  
   draw_contour(hidden, mvx, mvy, scaleX, scaleY, d:Contour2D) {
     if (d['type_'] == 'contour') {
       if (hidden) {
-        this.context.fillStyle = d.mouse_selection_color;
+        this.context.fillStyle = d.hidden_color;
       } else {
         this.context.strokeStyle = d.edge_style.color_stroke;
         this.context.lineWidth = d.edge_style.line_width;
@@ -399,7 +420,7 @@ export abstract class PlotData {
   draw_circle(hidden, mvx, mvy, scaleX, scaleY, d:Circle2D) {
     if (d['type_'] == 'circle') {
       if (hidden) {
-        this.context.fillStyle = d.mouse_selection_color;
+        this.context.fillStyle = d.hidden_color;
         d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
       } else {
         d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
@@ -432,64 +453,62 @@ export abstract class PlotData {
   }
 
   draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
-    if (d['type_'] == 'point') {
-      if (hidden) {
-        this.context.fillStyle = d.mouse_selection_color;
-      } else {
-        if (this.plotObject.type_ == 'scatterplot') {
-          if (this.sc_interpolation_ON) {
-            if (d.selected || List.contains_undefined(this.select_on_click)) {
-              this.context.fillStyle = d.point_style.color_fill;
-            } else {
-              this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
-            }
+    if (hidden) {
+      this.context.fillStyle = d.hidden_color;
+    } else {
+      if (this.plotObject.type_ == 'scatterplot') {
+        if (this.sc_interpolation_ON) {
+          if (d.selected || List.contains_undefined(this.select_on_click)) {
+            this.context.fillStyle = d.point_style.color_fill;
           } else {
-            this.context.fillStyle = this.plotObject.point_style.color_fill;
-            if (d.point_families.length != 0) {
-              this.context.fillStyle = d.point_families[d.point_families.length - 1].color;
-            }
+            this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
           }
-        } else { // graph2d
-          this.context.fillStyle = d.point_style.color_fill;
+        } else {
+          this.context.fillStyle = this.plotObject.point_style.color_fill;
+          if (d.point_families.length != 0) {
+            this.context.fillStyle = d.point_families[d.point_families.length - 1].color;
+          }
         }
-        this.context.lineWidth = d.point_style.stroke_width;
-        this.context.strokeStyle = d.point_style.color_stroke;
-        var shape = d.point_style.shape;
+      } else { // graph2d
+        this.context.fillStyle = d.point_style.color_fill;
+      }
+      this.context.lineWidth = d.point_style.stroke_width;
+      this.context.strokeStyle = d.point_style.color_stroke;
+      var shape = d.point_style.shape;
 
+      if (shape == 'crux') {
+        this.context.strokeStyle = d.point_style.color_fill;
+      }
+      if (d.selected) {
         if (shape == 'crux') {
-          this.context.strokeStyle = d.point_style.color_fill;
-        }
-        if (d.selected) {
-          if (shape == 'crux') {
-            this.context.strokeStyle = this.color_surface_on_click;
+          this.context.strokeStyle = this.color_surface_on_click;
+        } else {
+          if (this.sc_interpolation_ON) {
+            this.context.fillStyle = d.point_style.color_fill;
           } else {
-            if (this.sc_interpolation_ON) {
-              this.context.fillStyle = d.point_style.color_fill;
-            } else {
-              this.context.fillStyle = this.color_surface_on_click;
-            }
+            this.context.fillStyle = this.color_surface_on_click;
           }
         }
-        if ((this.select_on_mouse === d) || (this.primitive_mouse_over_point === d)) {
-          this.context.fillStyle = this.color_surface_on_mouse;
-        }
       }
-      let cx = d.cx, cy = d.cy;
-      if (this.log_scale_x) cx = Math.log10(cx);
-      if (this.log_scale_y) cy = -Math.log10(-cy);
-
-      var x = scaleX*cx+ mvx;
-      var y = scaleY*cy + mvy;
-      this.pointLength = d.size;
-
-      var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
-      if (is_inside_canvas === true) {
-        this.context.beginPath();
-        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
-        this.context.fill();
-        this.context.stroke();
-        this.context.closePath();
+      if ((this.select_on_mouse === d) || (this.primitive_mouse_over_point === d)) {
+        this.context.fillStyle = this.color_surface_on_mouse;
       }
+    }
+    let cx = d.cx, cy = d.cy;
+    if (this.log_scale_x) cx = Math.log10(cx);
+    if (this.log_scale_y) cy = -Math.log10(-cy);
+
+    var x = scaleX*cx+ mvx;
+    var y = scaleY*cy + mvy;
+    this.pointLength = d.size;
+
+    var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
+    if (is_inside_canvas === true) {
+      this.context.beginPath();
+      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
+      this.context.fill();
+      this.context.stroke();
+      this.context.closePath();
     }
   }
 
@@ -1640,7 +1659,7 @@ export abstract class PlotData {
   selecting_point_action(mouse1X, mouse1Y) {
     var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-    var click_plot_data = this.colour_to_plot_data[colKey];
+    var click_plot_data = this.color_to_plot_data[colKey];
     if (click_plot_data) {
       if (click_plot_data.selected) {
         this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
@@ -1758,14 +1777,6 @@ export abstract class PlotData {
               this.real_to_scatter_coords(this.perm_window_y, 'y'), 
               this.real_to_scatter_coords(this.perm_window_y - this.perm_window_h, 'y')), 
               'y');
-          // if (this.log_scale_x) {
-          //   abs_min = Math.pow(10, abs_min);
-          //   abs_max = Math.pow(10, abs_max);
-          // }
-          // if (this.log_scale_y) {
-          //   ord_min = Math.pow(10, ord_min);
-          //   ord_max = Math.pow(10, ord_max);
-          // }
           this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
         } 
         this.zoom_box_x = Math.min(mouse1X, mouse2X);
@@ -1788,7 +1799,7 @@ export abstract class PlotData {
       var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
       var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
       var old_select_on_mouse = this.select_on_mouse;
-      this.select_on_mouse = this.colour_to_plot_data[colKey];
+      this.select_on_mouse = this.color_to_plot_data[colKey];
       if (this.select_on_mouse !== old_select_on_mouse) {
         this.draw();
       }
@@ -2145,7 +2156,7 @@ export abstract class PlotData {
           point_list_copy = List.remove_element(point_list_copy[i], point_list_copy);
           point_list_copy = List.remove_element(point_list_copy[j-1], point_list_copy);
           point_list_copy.push(point);
-          this.colour_to_plot_data[point.mouse_selection_color] = point;
+          this.color_to_plot_data[point.hidden_color] = point;
           bool = true;
           break;
         } else {

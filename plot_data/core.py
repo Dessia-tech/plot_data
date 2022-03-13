@@ -353,6 +353,20 @@ class LineSegment(LineSegment2D):
                       DeprecationWarning)
 
 
+class Wire(PlotDataObject):
+    """
+    A set of connected lines. It also provides highlighting feature.
+    :param lines: [(x1, y1), ..., (xn,yn)]
+    :type lines: List[Tuple[float, float]]
+    :param edge_style: Line settings
+    :type edge_style: EdgeStyle
+    """
+    def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None, name: str = ""):
+        self.lines = lines
+        self.edge_style = edge_style
+        PlotDataObject.__init__(self, type_="wire", name=name)
+
+
 class Circle2D(PlotDataObject):
     """
     A circle. It is a primitive and can be instantiated by PrimitiveGroup.
@@ -811,11 +825,11 @@ class PrimitiveGroup(PlotDataObject):
     :param primitives: a list of Contour2D, Arc2D, LineSegment2D, \
     Circle2D, Line2D or MultipleLabels
     :type primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D, MultipleLabels]]
+    Circle2D, Line2D, MultipleLabels, Wire]]
     """
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
-                                              Circle2D, Line2D]],
+                                              Circle2D, Line2D, Wire]],
                  name: str = ''):
         self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)

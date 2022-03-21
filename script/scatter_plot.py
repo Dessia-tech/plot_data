@@ -16,8 +16,9 @@ for i in range(50):
                      })
 
 
+heatmap = plot_data.Heatmap((4,2), colors=[colors.VIOLET, colors.GREEN, colors.ROSE])
 scatterplot = plot_data.Scatter(elements=elements,
-                                x_variable='mass', y_variable='length')
+                                x_variable='mass', y_variable='length', heatmap=heatmap)
 
 # The previous scripts shows the simplest way of creating a scatterplot.
 # However, many options are available for further customization

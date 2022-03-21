@@ -596,8 +596,8 @@ export abstract class PlotData {
     let hstep = this.height/h;
 
     for (let point of scatter.point_list) {
-      let x = this.real_to_scatter_coords(point.cx, "x");
-      let y = this.real_to_scatter_coords(-point.cy, "y");
+      let x = this.real_to_scatter_coords(point.cx, "x") - this.X;
+      let y = this.real_to_scatter_coords(-point.cy, "y") - this.Y;
       if (x<0 || x>this.width || y<0 || y>this.height) {
         continue;
       }
@@ -606,6 +606,34 @@ export abstract class PlotData {
       table[kx][ky]++;
     }
     return table;
+  }
+
+  draw_gradient_axis(max_density) {
+    let start = 0.75 * this.height + this.Y;
+    let end = 0.25 * this.height + this.Y;
+    let x = 0.03 * this.width + this.X;
+    let nb_rect = this.heatmap.colors.length - 1;
+    let h = (end - start) / nb_rect;
+    let w = Math.max(0.015 * this.width, 15);
+    for (let i=0; i<nb_rect; i++) {
+      var gradient = this.context.createLinearGradient(x, start + i*h, x, start + (i+1)*h);
+      gradient.addColorStop(0, this.heatmap.colors[i]);
+      gradient.addColorStop(1, this.heatmap.colors[i+1]);
+      this.context.fillStyle = gradient;
+      this.context.fillRect(x, start + i*h, w, h);
+    }
+    this.context.strokeStyle = "black";
+    this.context.lineWidth = 1;
+    this.context.strokeRect(x, start, w, end - start);
+
+    this.context.fillStyle = string_to_hex("black");
+    this.context.font = "12px sans-serif";
+    this.context.textBaseline = "middle";
+
+    let step = max_density / nb_rect;
+    for (let i=0; i<this.heatmap.colors.length; i++) {
+      this.context.fillText(Math.floor(i*step), x + w + 5, start + i*h);
+    }
   }
 
   draw_heatmap(hidden) {
@@ -618,13 +646,13 @@ export abstract class PlotData {
     let hstep = this.height/h;
     let max_density = scatter.point_list.length;
     for (let i=1; i<w; i++) {
-      this.context.moveTo(i*wstep, 0);
-      this.context.lineTo(i*wstep, this.height);
+      this.context.moveTo(i*wstep + this.X, this.Y);
+      this.context.lineTo(i*wstep + this.X, this.height + this.Y);
       this.context.stroke();
     }
     for (let i=1; i<h; i++) {
-      this.context.moveTo(0, i*hstep);
-      this.context.lineTo(this.width, i*hstep);
+      this.context.moveTo(this.X, i*hstep + this.Y);
+      this.context.lineTo(this.width + this.X, i*hstep + this.Y);
       this.context.stroke();
     }
     for (let i=0; i<w; i++) {
@@ -632,9 +660,10 @@ export abstract class PlotData {
         let density = table[i][j];
         let color = heatmap_color(density, max_density, this.heatmap.colors);
         this.context.fillStyle = color;
-        this.context.fillRect(i*wstep, j*hstep, wstep, hstep);
+        this.context.fillRect(i*wstep + this.X, j*hstep + this.Y, wstep, hstep);
       }
     }
+    this.draw_gradient_axis(max_density);
   }
 
   draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
@@ -1807,14 +1836,6 @@ export abstract class PlotData {
               this.real_to_scatter_coords(this.perm_window_y, 'y'), 
               this.real_to_scatter_coords(this.perm_window_y - this.perm_window_h, 'y')), 
               'y');
-          // if (this.log_scale_x) {
-          //   abs_min = Math.pow(10, abs_min);
-          //   abs_max = Math.pow(10, abs_max);
-          // }
-          // if (this.log_scale_y) {
-          //   ord_min = Math.pow(10, ord_min);
-          //   ord_max = Math.pow(10, ord_max);
-          // }
           this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
         } 
         this.zoom_box_x = Math.min(mouse1X, mouse2X);
@@ -1866,7 +1887,7 @@ export abstract class PlotData {
     var click_on_clear = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.clear_point_button_y + this.Y, this.button_w, this.button_h);
     var click_on_xlog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.xlog_button_y + this.Y, this.button_w, this.button_h);
     var click_on_ylog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.ylog_button_y + this.Y, this.button_w, this.button_h);
-    var click_on_heatmap = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.heatmap_button_y, this.button_w, this.button_h);
+    var click_on_heatmap = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.heatmap_button_y + this.Y, this.button_w, this.button_h);
 
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {

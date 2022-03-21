@@ -674,7 +674,7 @@ class Scatter(PlotDataObject):
             self.axis = axis
         self.log_scale_x = log_scale_x
         self.log_scale_y = log_scale_y
-        self.Heatmap = heatmap
+        self.heatmap = heatmap
         self.heatmap_view = heatmap_view
         PlotDataObject.__init__(self, type_='scatterplot', name=name)
 

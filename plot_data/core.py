@@ -818,18 +818,20 @@ class MultipleLabels(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplelabels', name=name)
 
 
+primitive2D = Union[Contour2D, Arc2D, LineSegment2D, \
+    Circle2D, Line2D, MultipleLabels, Wire]
+
+
 class PrimitiveGroup(PlotDataObject):
     """
     A class for drawing multiple primitives and contours inside a canvas.
 
     :param primitives: a list of Contour2D, Arc2D, LineSegment2D, \
     Circle2D, Line2D or MultipleLabels
-    :type primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D, MultipleLabels, Wire]]
+    :type primitives: List[primitive2D]
     """
 
-    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
-                                              Circle2D, Line2D, Wire]],
+    def __init__(self, primitives: List[primitive2D],
                  name: str = ''):
         self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)

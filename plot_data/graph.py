@@ -22,7 +22,7 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                                           primitives=primitives,
                                           name=name)
 
-    def _to_primitives(self, text_style: plot_data.TextStyle = None):
+    def _to_primitives(self):
         r = 0.04
         primitives = []
         pos = nx.kamada_kawai_layout(self.graph)
@@ -61,10 +61,9 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
             else:
                 raise NotImplementedError
             primitives.append(prim)
-            if text_style is None:
-                text_style = plot_data.TextStyle(text_color='rgb(0,0,0)',
-                                                 text_align_x='center',
-                                                 text_align_y='middle')
+            text_style = plot_data.TextStyle(text_color='rgb(0,0,0)',
+                                             text_align_x='center',
+                                             text_align_y='middle')
             text = plot_data.Text(name, x, y, text_style=text_style)
             primitives.append(text)
 

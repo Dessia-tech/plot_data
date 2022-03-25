@@ -603,10 +603,11 @@ export abstract class PlotData {
       }
       let kx = Math.floor(x/wstep);
       let ky = Math.floor(y/hstep);
-      table[kx][ky]++;
+      table[ky][kx]++;
     }
     return table;
   }
+
 
   draw_gradient_axis(max_density) {
     let start = 0.75 * this.height + this.Y;
@@ -657,7 +658,7 @@ export abstract class PlotData {
     }
     for (let i=0; i<w; i++) {
       for (let j=0; j<h; j++) {
-        let density = table[i][j];
+        let density = table[j][i];
         let color = heatmap_color(density, max_density, this.heatmap.colors);
         this.context.fillStyle = color;
         this.context.fillRect(i*wstep + this.X, j*hstep + this.Y, wstep, hstep);

@@ -150,7 +150,7 @@ export function heatmap_color(density, max_density, colors) {
   let step = 1/(colors.length - 1);
   let colors_rgb = colors.map(hex => rgb_strToVector(hex_to_rgb(hex)));
   let norm_val = density/max_density;
-  let q = Math.floor(norm_val/step);
+  let q = Math.min(Math.floor(norm_val/step), colors.length - 2);
   let cm = q*step;
   let val = (norm_val - cm) / step;
   let color1 = colors_rgb[q];

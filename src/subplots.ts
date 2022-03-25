@@ -154,7 +154,7 @@ export class PlotScatter extends PlotData {
           this.scatter_init_points = this.plotObject.point_list;
           this.refresh_MinMax(this.plotObject.point_list);
           this.heatmap_view = data["heatmap_view"] || false;
-          if (data["heatmap"]) {this.heatmap = data["heatmap"]} else {this.heatmap = new Heatmap();}
+          if (data["heatmap"]) {this.heatmap = Heatmap.deserialize(data["heatmap"])} else {this.heatmap = new Heatmap();}
         }
         this.isParallelPlot = false;
         if (this.mergeON && alert_count === 0) {

@@ -849,7 +849,7 @@ export class Heatmap {
     let default_colors = [string_to_rgb("blue"), string_to_rgb("yellow"), string_to_rgb("red")];
     let default_dict = {edge_style: new EdgeStyle(1, string_to_hex("white"), [], ""),
                         colors: default_colors};
-    serialized = set_default_values(default_dict, serialized);
+    serialized = set_default_values(serialized, default_dict);
     let edge_style = EdgeStyle.deserialize(serialized["edge_style"]);
     let colors = [];
     for (let i=0; i<serialized["colors"].length; i++) {

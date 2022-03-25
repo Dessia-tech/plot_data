@@ -4,6 +4,7 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rgb_strToVector } from "./color_conversion";
+import { MultiplePlots } from "./multiplots";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -12,6 +13,7 @@ import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rg
  */  
 export abstract class PlotData {
   type_:string;
+  name:string = "";
   context_show:any;
   context_hidden:any;
   context:any;
@@ -187,6 +189,7 @@ export abstract class PlotData {
     public is_in_multiplot: boolean = false) {
       this.initial_width = width;
       this.initial_height = height;
+      this.name = data["name"];
     }
 
 
@@ -1074,6 +1077,15 @@ export abstract class PlotData {
   }
 
 
+  //reset parallel plot's rubber bands
+  reset_rubberbands() {
+    this.rubber_bands = [];
+    this.rubberbands_dep = [];
+    for (let j=0; j<this.axis_list.length; j++) {
+      this.rubber_bands.push([]);
+    }
+  }
+
 
   from_to_display_list_to_elements(i) {
     return this.display_list_to_elements_dict[i.toString()];
@@ -1578,6 +1590,20 @@ export abstract class PlotData {
   }
 
 
+  refresh_selected_points_from_indices() {
+    this.select_on_click = [];
+    for (let index of this.selected_point_index) {
+      if (this.plotObject['type_'] === "graph2D") {
+
+      } else if (this.plotObject["type_"] === "scatterplot") {
+        let point = this.plotObject.point_list[index];
+        point.selected = true;
+        this.select_on_click.push(point);
+      }
+    }
+  }
+
+
   refresh_selected_point_index() {  //selected_point_index : index of selected points in the initial point list
     this.selected_point_index = [];
     for (let i=0; i<this.select_on_click.length; i++) {
@@ -1988,6 +2014,17 @@ export abstract class PlotData {
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
         mouse_moving = false;
+      });
+
+
+      canvas.addEventListener("click", e => {
+        if (this.interaction_ON && this.isParallelPlot) {
+          if (e.ctrlKey) {
+            this.reset_pp_selected();
+            this.reset_rubberbands();
+            this.draw();
+          }
+        }
       });
 
     }
@@ -2803,5 +2840,3 @@ export class Buttons {
     Shape.createButton(x + plot_data.X, y2 + plot_data.Y, w, h, plot_data.context, 'ylog', police);
   }
 }
-
-

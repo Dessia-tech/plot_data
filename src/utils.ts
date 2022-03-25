@@ -1032,3 +1032,17 @@ export function drawLines(ctx, pts, first_elem) {
     if (first_elem) ctx.moveTo(pts[0], pts[1]);
     for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
 }
+
+
+export function download(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}

@@ -1,6 +1,6 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
-import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort } from './utils';
+import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, download } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
@@ -120,20 +120,6 @@ export class MultiplePlots {
         this.store_dimensions();
       }
       // this.save_canvas();
-    }
-
-
-    download(filename, text) {
-      var element = document.createElement('a');
-      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
-      element.setAttribute('download', filename);
-    
-      element.style.display = 'none';
-      document.body.appendChild(element);
-    
-      element.click();
-    
-      document.body.removeChild(element);
     }
 
   
@@ -264,7 +250,20 @@ export class MultiplePlots {
     }
   
     click_on_export_action() {
-      this.download("selected_points", "[" + this.dep_selected_points_index.toString() + "]");
+      let text = "Indices: [" + this.dep_selected_points_index.toString() + "]\n\n";
+      text = text + "Points: \n";
+      let keys = Object.keys(this.data["elements"][0]);
+      for (let i of this.dep_selected_points_index) {
+        let element = this.data["elements"][i];
+        text = text + "{";
+        for (let key of keys) {
+          text = text + key + ":" + element[key].toString() + ", ";
+        }
+        text = text.slice(0, -2);
+        text = text + "}\n";
+      }
+
+      download("selected_points", text);
     }
   
     click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view,
@@ -529,7 +528,6 @@ export class MultiplePlots {
       this.context_hidden.beginPath();
       obj.draw_empty_canvas(this.context_hidden);
       this.context_hidden.closePath();
-  
     }
   
     clearAll():void {
@@ -908,11 +906,7 @@ export class MultiplePlots {
           Interactions.reset_permanent_window(this.objectList[i])
         } else if (obj.type_ == 'parallelplot') {
           obj.reset_pp_selected();
-          obj.rubber_bands = [];
-          obj.rubberbands_dep = [];
-          for (let j=0; j<obj.axis_list.length; j++) {
-            obj.rubber_bands.push([]);
-          }
+          obj.reset_rubberbands();
         } else if (obj.type_ === 'histogram') {
           obj.reset_x_rubberband(); 
         }
@@ -2052,6 +2046,100 @@ export class MultiplotCom {
         histogram.get_selected_keys();
       }
     }
+}
+
+
+export function save_multiplot(multiplot: MultiplePlots) {
+  let temp_objs = [], sizes = [], coords = [];
+  for (let obj of multiplot.objectList) {
+    coords.push([obj.X, obj.Y]);
+    sizes.push([obj.width, obj.height]);
+
+    let obj_to_dict = [];
+    obj_to_dict.push(["name", obj.name],
+                     ["type_", obj.type_]);
+    if (obj.type_ === "scatterplot") {
+      obj_to_dict.push(["scaleX", obj.scaleX],
+                      ["scaleY", obj.scaleY],
+                      ["originX", obj.originX],
+                      ["originY", obj.originY],
+                      ["selected_point_index", obj.selected_point_index],
+                      ["selection_window", [obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h]],
+                      ["interpolation_colors", obj.interpolation_colors]);
+    } else if (obj.type_ === "parallelplot") {
+      let names = [];
+      for (let axis of obj.axis_list) names.push(axis.name);
+      obj_to_dict.push(["attribute_names", names],
+                     ["rubber_bands", obj.rubber_bands],
+                     ["inversions", obj.inverted_axis_list],
+                     ["interpolation_colors", obj.interpolation_colors],
+                     ["vertical", obj.vertical]);
+    } else if (obj.type_ === "histogram") {
+      obj_to_dict.push(["graduation_nb", obj["graduation_nb"]],
+                        ["x_variable", obj["x_variable"]],
+                        ["x_rubberband", obj["x_rubberband"]],
+                        ["y_rubberband", obj["y_rubberband"]],
+                        ["scale", obj.scale],
+                        ["originX", obj.originX]);
+    }
+    temp_objs.push(Object.fromEntries(obj_to_dict));
+  }
+
+  let dict_ = {"data": multiplot.data,
+               "coords": coords,
+               "sizes": sizes,
+               "dep_selected_point_index": multiplot.dep_selected_points_index,
+               "plots": temp_objs,
+               "canvas_id": multiplot.canvas_id};
+  return dict_;
+}
+
+
+export function load_multiplot(dict_, elements, width, height, buttons_ON, canvas_id?) {
+  MyObject.add_properties(dict_, ["elements", elements]);
+  var multiplot = new MultiplePlots(dict_["data"], width, height, buttons_ON, canvas_id || dict_["canvas_id"]);
+  let temp_objs = dict_["plots"];
+  let nbObjects = temp_objs.length;
+  let coords = dict_["coords"];
+  let sizes = dict_["sizes"];
+  for (let i=0; i<nbObjects; i++) {
+    let obj = multiplot.objectList[i];
+    obj.X = coords[i][0];
+    obj.Y = coords[i][1];
+    obj.width = sizes[i][0];
+    obj.height = sizes[i][1];
+    if (obj.type_ === "scatterplot") {
+      obj.scaleX = temp_objs[i]["scaleX"];
+      obj.scaleY = temp_objs[i]["scaleY"];
+      obj.originX = temp_objs[i]["originX"];
+      obj.originY = temp_objs[i]["originY"];
+      obj.selected_point_index = temp_objs[i]["selected_point_index"];
+      obj.perm_window_x = temp_objs[i]["selection_window"][0];
+      obj.perm_window_y = temp_objs[i]["selection_window"][1];
+      obj.perm_window_w = temp_objs[i]["selection_window"][2];
+      obj.perm_window_h = temp_objs[i]["selection_window"][3];
+      obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
+
+      obj.refresh_selected_points_from_indices();
+
+    } else if (obj.type_ === "parallelplot") {
+      obj.rubber_bands = temp_objs[i]["rubber_bands"];
+      obj.inverted_axis_list = temp_objs[i]["inversions"];
+      obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
+      obj.vertical = temp_objs[i]["vertical"];
+
+    } else if (obj.type_ === "histogram") {
+      obj["graduation_nb"] = temp_objs[i]["graduation_nb"];
+      obj["x_variable"] = temp_objs[i]["x_variable"];
+      obj["x_rubberband"] = temp_objs[i]["x_rubberband"];
+      obj["y_rubberband"] = temp_objs[i]["y_rubberband"];
+      obj.scale = temp_objs[i]["scale"];
+      obj.originX = temp_objs[i]["originX"];
+    }
+  }
+  multiplot.dep_selected_points_index = dict_["dep_selected_points_index"];
+  multiplot.redrawAllObjects();
+  return multiplot;
 }
 
 

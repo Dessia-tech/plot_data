@@ -1,5 +1,5 @@
 
-import { string_to_rgb, rgb_to_string } from "./color_conversion";
+import { string_to_rgb, rgb_to_string, string_to_hex } from "./color_conversion";
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
@@ -835,6 +835,7 @@ export class Wire {
   maxY: number = -Infinity;
   constructor(public lines: number[][],
               public edge_style: EdgeStyle,
+              public tooltip?: Tooltip,
               public type_: string = "wire",
               public name: string = "" ) {
                 this.hidden_color = genColor();
@@ -847,7 +848,15 @@ export class Wire {
     let default_dict_ = {edge_style: default_edge_style};
     serialized = set_default_values(serialized, default_dict_);
     let edge_style = EdgeStyle.deserialize(serialized["edge_style"]);
-    return new Wire(lines, edge_style, "wire", serialized["name"]);
+
+    if (serialized["text"]) {
+      let surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, undefined);
+      let text_style = new TextStyle(string_to_hex("black"), 12, "Calibri");
+      let tooltip = new Tooltip(surface_style, text_style, undefined, serialized["text"]);
+      return new Wire(lines, edge_style, tooltip, "wire", serialized["name"]);
+    }
+     
+    return new Wire(lines, edge_style, undefined, "wire", serialized["name"]);
   }
             
 

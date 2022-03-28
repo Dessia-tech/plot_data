@@ -354,6 +354,7 @@ export abstract class PlotData {
           d.primitives[i].draw(this.context, this.width, this.X, this.Y);
         } else if (d.primitives[i].type_ === "wire") {
           this.draw_wire(hidden, d.primitives[i]);
+          // tooltips drawn in mouse_move_interaction()
         }
         this.context.closePath(); 
       }
@@ -368,7 +369,7 @@ export abstract class PlotData {
     } else {
       if (this.select_on_mouse === wire) {
         this.context.strokeStyle = string_to_hex("yellow");
-        this.context.lineWidth = 3 * wire.edge_style.line_width;
+        this.context.lineWidth = Math.max(3 * wire.edge_style.line_width, 3);
       } else {
         this.context.strokeStyle = wire.edge_style.color_stroke;
         this.context.setLineDash(wire.edge_style.dashline);
@@ -1736,9 +1737,9 @@ export abstract class PlotData {
   }
 
   mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right) {
+    mouse2X = e.offsetX;
+    mouse2Y = e.offsetY;
     if (isDrawing === true) {
-      mouse2X = e.offsetX;
-      mouse2Y = e.offsetY;
       if (!(this.zw_bool||this.select_bool)) {
         canvas.style.cursor = 'move';
         mouse_moving = true;
@@ -1802,6 +1803,11 @@ export abstract class PlotData {
       this.select_on_mouse = this.color_to_plot_data[colKey];
       if (this.select_on_mouse !== old_select_on_mouse) {
         this.draw();
+      } else if (this.select_on_mouse && this.select_on_mouse["type_"] === "wire"
+      && this.select_on_mouse["tooltip"]) {
+        this.draw();
+        this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale, 
+        this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
       }
     }
     var is_inside_canvas = (mouse2X>=this.X) && (mouse2X<=this.width + this.X) && (mouse2Y>=this.Y) && (mouse2Y<=this.height + this.Y);

@@ -361,9 +361,11 @@ class Wire(PlotDataObject):
     :param edge_style: Line settings
     :type edge_style: EdgeStyle
     """
-    def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None, name: str = ""):
+    def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None,
+                 text: str = None, name: str = ""):
         self.lines = lines
         self.edge_style = edge_style
+        self.text = text
         PlotDataObject.__init__(self, type_="wire", name=name)
 
 
@@ -512,11 +514,13 @@ class Tooltip(PlotDataObject):
     :type tooltip_radius: float
     """
 
-    def __init__(self, attributes: List[str],
+    def __init__(self, attributes: List[str] = None,
+                 text: str = None,
                  surface_style: SurfaceStyle = None,
                  text_style: TextStyle = None, tooltip_radius: float = None,
                  name: str = ''):
         self.attributes = attributes
+        self.text = text
         self.surface_style = surface_style
         if surface_style is None:
             self.surface_style = SurfaceStyle(color_fill=colors.LIGHTBLUE,

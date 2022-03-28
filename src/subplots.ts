@@ -62,7 +62,6 @@ export class PlotContour extends PlotData {
     draw() {
       this.draw_from_context(true);
       this.draw_from_context(false);
-  
     }
   
     draw_from_context(hidden) {

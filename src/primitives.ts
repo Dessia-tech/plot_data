@@ -189,7 +189,7 @@ export class Contour2D {
       }
       if (serialized["text"]) {
         let surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, undefined);
-        let text_style = new TextStyle(string_to_hex("black"), 12, "Calibri");
+        let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
         let tooltip = new Tooltip(surface_style, text_style, undefined, serialized["text"]);
         return new Contour2D(plot_data_primitives,
           edge_style,
@@ -857,7 +857,7 @@ export class Wire {
 
     if (serialized["text"]) {
       let surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, undefined);
-      let text_style = new TextStyle(string_to_hex("black"), 12, "Calibri");
+      let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
       let tooltip = new Tooltip(surface_style, text_style, undefined, serialized["text"]);
       return new Wire(lines, edge_style, tooltip, "wire", serialized["name"]);
     }

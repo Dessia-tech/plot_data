@@ -1803,8 +1803,8 @@ export abstract class PlotData {
       this.select_on_mouse = this.color_to_plot_data[colKey];
       if (this.select_on_mouse !== old_select_on_mouse) {
         this.draw();
-      } else if (this.select_on_mouse && this.select_on_mouse["type_"] === "wire"
-      && this.select_on_mouse["tooltip"]) {
+      } else if (this.select_on_mouse && (this.select_on_mouse["type_"] === "wire" 
+      || this.select_on_mouse["type_"] === "contour") && this.select_on_mouse["tooltip"]) {
         this.draw();
         this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale, 
         this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);

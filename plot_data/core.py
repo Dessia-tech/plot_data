@@ -750,14 +750,17 @@ class Contour2D(PlotDataObject):
     :type edge_style: EdgeStyle
     :param surface_style: for customizing the interior of the contour
     :type surface_style: SurfaceStyle
+    :param text: A message that is displayed in a tooltip
+    :type text: str
     """
 
     def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]],
                  edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, name: str = ''):
+                 surface_style: SurfaceStyle = None, text: str = None, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
+        self.text = text
         PlotDataObject.__init__(self, type_='contour', name=name)
 
     def bounding_box(self):

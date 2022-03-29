@@ -151,6 +151,7 @@ export class Contour2D {
     constructor(public plot_data_primitives:any,
                 public edge_style:EdgeStyle,
                 public surface_style:SurfaceStyle,
+                public tooltip: Tooltip,
                 public type_:string='contour',
                 public name:string) {
         for (var i = 0; i < this.plot_data_primitives.length; i++) {
@@ -180,22 +181,27 @@ export class Contour2D {
           new_line.edge_style = edge_style;
           plot_data_primitives.push(new_line);
         }
-        // if (d['type_'] == 'circle') {
-        //   let new_circle = Circle2D.deserialize(d);
-        //   new_circle.edge_style = edge_style;
-        //   new_circle.surface_style = surface_style;
-        //   plot_data_primitives.push(new_circle);
-        // }
         if (d['type_'] == 'arc') {
           let new_arc = Arc2D.deserialize(d);
           new_arc.edge_style = edge_style;
           plot_data_primitives.push(new_arc);
         }
-  
+      }
+      if (serialized["text"]) {
+        let surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, undefined);
+        let text_style = new TextStyle(string_to_hex("black"), 12, "Calibri");
+        let tooltip = new Tooltip(surface_style, text_style, undefined, serialized["text"]);
+        return new Contour2D(plot_data_primitives,
+          edge_style,
+          surface_style,
+          tooltip,
+          serialized['type_'],
+          serialized['name']);
       }
       return new Contour2D(plot_data_primitives,
                                     edge_style,
                                     surface_style,
+                                    undefined,
                                     serialized['type_'],
                                     serialized['name']);
     }
@@ -855,7 +861,6 @@ export class Wire {
       let tooltip = new Tooltip(surface_style, text_style, undefined, serialized["text"]);
       return new Wire(lines, edge_style, tooltip, "wire", serialized["name"]);
     }
-     
     return new Wire(lines, edge_style, undefined, "wire", serialized["name"]);
   }
             

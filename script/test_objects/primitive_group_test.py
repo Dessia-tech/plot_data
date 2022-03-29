@@ -29,7 +29,8 @@ contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([0, 
                                                                             [rectangle_size, 0]),
                                                     plot_data.LineSegment2D([rectangle_size, 0], [0, 0])],
                               edge_style=edge_style,
-                              surface_style=surface_style)
+                              surface_style=surface_style,
+                              text="It's a square")
 
 # LineSegment2D
 line = plot_data.LineSegment2D(point1=[4, 0], point2=[6, 2], edge_style=edge_style)
@@ -62,7 +63,7 @@ label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surfac
 
 labels = plot_data.MultipleLabels(labels=[label1, label2])
 
-wire = plot_data.Wire([[15, 0], [15,10], [20,10]], text="Insert a message")
+wire = plot_data.Wire([[15, 0], [15,10], [20,10]], text="It is a wire")
 
 primitives = [contour, line, arc,
               circle, text, labels, wire]

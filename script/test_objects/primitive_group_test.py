@@ -41,7 +41,7 @@ circle_surface_style = plot_data.SurfaceStyle(color_fill=colors.YELLOW, opacity=
                                               hatching=plot_data.HatchingSet())
 
 circle = plot_data.Circle2D(cx=5, cy=10, r=5, edge_style=circle_edge_style,
-                            surface_style=circle_surface_style)
+                            surface_style=circle_surface_style, text="Circle")
 
 # Text
 text = plot_data.Text(comment='Hello', position_x=6, position_y=9,

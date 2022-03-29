@@ -104,6 +104,7 @@ export class Circle2D {
                 public r:number,
                 public edge_style:EdgeStyle,
                 public surface_style:SurfaceStyle,
+                public tooltip: Tooltip,
                 public type_:string='circle',
                 public name:string) {
         this.minX = this.cx - this.r;
@@ -121,12 +122,28 @@ export class Circle2D {
         serialized = set_default_values(serialized, default_dict_);
         var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
         var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
+
+        if (serialized["text"]) {
+          let tooltip_surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, undefined);
+          let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
+          let tooltip = new Tooltip(tooltip_surface_style, text_style, undefined, serialized["text"]);
+          return new Circle2D(serialized['data'],
+                              serialized['cx'],
+                              -serialized['cy'],
+                              serialized['r'],
+                              edge_style,
+                              surface_style,
+                              tooltip,
+                              serialized['type_'],
+                              serialized['name']);
+        }
         return new Circle2D(serialized['data'],
                                     serialized['cx'],
                                     -serialized['cy'],
                                     serialized['r'],
                                     edge_style,
                                     surface_style,
+                                    undefined,
                                     serialized['type_'],
                                     serialized['name']);
     }
@@ -188,9 +205,9 @@ export class Contour2D {
         }
       }
       if (serialized["text"]) {
-        let surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, undefined);
+        let tooltip_surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, undefined);
         let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
-        let tooltip = new Tooltip(surface_style, text_style, undefined, serialized["text"]);
+        let tooltip = new Tooltip(tooltip_surface_style, text_style, undefined, serialized["text"]);
         return new Contour2D(plot_data_primitives,
           edge_style,
           surface_style,

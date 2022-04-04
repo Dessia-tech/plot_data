@@ -653,6 +653,17 @@ class Scatter(PlotDataObject):
         PlotDataObject.__init__(self, type_='scatterplot', name=name)
 
 
+class ScatterMatrix(PlotDataObject):
+    def __init__(self, elements: List[Any] = None, axes: List[str] = None,
+                 point_style: PointStyle = None, surface_style: SurfaceStyle = None,
+                 name: str = ""):
+        self.elements = elements
+        self.axes = axes
+        self.point_style = point_style
+        self.surface_style = surface_style
+        PlotDataObject.__init__(self, type_="scattermatrix", name=name)
+
+
 class Arc2D(PlotDataObject):
     """
     A class for drawing arcs. Arc2D is a primitive and can be \
@@ -1072,6 +1083,8 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         template = templates.primitive_group_container_template
     elif plot_type == 'histogram':
         template = templates.histogram_template
+    elif plot_type == "scattermatrix":
+        template = templates.scatter_matrix_template
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
@@ -1130,7 +1143,7 @@ TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'graphs2D': Graph2D, 'linesegment2d': LineSegment,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
-                 'primitivegroup': PrimitiveGroup}
+                 'primitivegroup': PrimitiveGroup, "scattermatrix": ScatterMatrix}
 
 
 def bounding_box(plot_datas: Subclass[PlotDataObject]):

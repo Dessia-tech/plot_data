@@ -15,4 +15,4 @@ graph.add_edge(3, 1)
 
 plotdata_nx_graph = plot_data.graph.NetworkxGraph(graph)
 
-plot_data.plot_canvas(plotdata_nx_graph)
+plot_data.plot_canvas(plotdata_nx_graph, debug_mode=True)

@@ -231,17 +231,22 @@ class Text(PlotDataObject):
     :param max_width: Set a maximum length for the text. If the text \
     is longer than max_width, it is split into several lines.
     :type max_width: float
+    :param multi_lines: This parameter is only useful when max_width parameter is set \
+    In that case, you can choose between squishing the text in one line or writing on \
+    multiple lines.
+    :type multi_lines: bool
     """
 
     def __init__(self, comment: str, position_x: float, position_y: float,
                  text_style: TextStyle = None, text_scaling: bool = None,
-                 max_width: float = None, name: str = ''):
+                 max_width: float = None, multi_lines: bool = True, name: str = ''):
         self.comment = comment
         self.text_style = text_style
         self.position_x = position_x
         self.position_y = position_y
         self.text_scaling = text_scaling
         self.max_width = max_width
+        self.multi_lines = multi_lines
         PlotDataObject.__init__(self, type_='text', name=name)
 
     def mpl_plot(self, ax=None, color='k', alpha=1.):

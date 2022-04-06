@@ -755,7 +755,8 @@ export class Text {
               public position_y:number,
               public text_style:TextStyle,
               public text_scaling:boolean=true,
-              public max_width,
+              public max_width?: number,
+              public multi_lines?: boolean,
               public type_:string='text',
               public name:string='') {
                 this.minX = position_x;
@@ -776,6 +777,7 @@ export class Text {
                     text_style,
                     serialized['text_scaling'],
                     serialized['max_width'],
+                    serialized["multi_lines"],
                     serialized['type_'],
                     serialized['name']);
   }
@@ -802,9 +804,17 @@ export class Text {
 
   write(context, x, y, scaleX, font_size) {
     if (this.max_width) {
-      var cut_texts = this.cutting_text(context, scaleX*this.max_width);
-      for (let i=0; i<cut_texts.length; i++) {
-        context.fillText(cut_texts[i], x, y + i * font_size);
+      if (this.multi_lines) {
+        var cut_texts = this.cutting_text(context, scaleX*this.max_width);
+        for (let i=0; i<cut_texts.length; i++) {
+          context.fillText(cut_texts[i], x, y + i * font_size);
+        }
+      } else {
+        let init_size = context.measureText(this.comment).width;
+        this.text_style.font_size = scaleX * this.max_width/init_size * this.text_style.font_size;
+        this.text_style.refresh_font();
+        context.font = this.text_style.font;
+        context.fillText(this.comment, x, y);
       }
     } else {
       context.fillText(this.comment, x, y);

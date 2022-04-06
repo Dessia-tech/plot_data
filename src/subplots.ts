@@ -26,7 +26,6 @@ export class PlotContour extends PlotData {
         var requirement = '0.6.0';
         check_package_version(data['package_version'], requirement);
       }
-
       this.plot_datas = [];
       this.type_ = 'primitivegroup';
       var d = this.data;

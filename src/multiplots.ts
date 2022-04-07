@@ -32,7 +32,7 @@ export class MultiplePlots {
     manipulation_bool:boolean=false;
     button_y:number=0; button_w:number=0; button_h:number = 0;
     transbutton_x:number=0;
-    selectDependency_bool:boolean=false;
+    selectDependency_bool:boolean=true;
     selectDep_x:number=0;
     view_bool:boolean=false;
     view_button_x:number=0;

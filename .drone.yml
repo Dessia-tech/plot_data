@@ -5,7 +5,7 @@ name: default
 
 steps:
 - name: npm update tag from git, build
-  image: node:15
+  image: node:16
   commands:
   - git fetch --tags
   - npm config set git-tag-version=false 

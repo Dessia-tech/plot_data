@@ -1921,27 +1921,21 @@ export class ScatterMatrix extends PlotData {
     public canvas_id: string,
     public is_in_multiplot = false) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      // this.decalage_axis_x = 0.02 * width;
-      // this.decalage_axis_y = 0.02 * height;
-      this.decalage_axis_x = 0;
-      this.decalage_axis_y = 0;
       this.elements = data["elements"];
       let axes = data["axes"] || Object.getOwnPropertyNames(this.elements[0]);
-      let x_step = (width - this.decalage_axis_x) / axes.length;
-      let y_step = (height - this.decalage_axis_y) / axes.length;
+      let x_step = width / axes.length;
+      let y_step = height / axes.length;
       for (let i=0; i<axes.length; i++) {
         for (let j=0; j<axes.length; j++) {
           if (i === j) {
             let data1 = {x_variable: axes[i], elements: this.elements, graduation_nb: 4, 
               package_version: data["package_version"], type_: "histogram"};
-            var obj: any = new Histogram(data1, x_step, y_step, false, this.decalage_axis_x + i*x_step,
-              this.decalage_axis_y + j*y_step, "hist"+i);
+            var obj: any = new Histogram(data1, x_step, y_step, false, i*x_step, j*y_step, "hist"+i);
           } else {
             let data1 = {attribute_names: [axes[i], axes[j]], elements: this.elements, 
               type_: "scatterplot", package_version: data["package_version"], 
               axis: {nb_points_x: 5, nb_points_y: 5, grid_on: false}};
-            obj = new PlotScatter(data1, x_step, y_step, false, this.decalage_axis_x + i*x_step, 
-              this.decalage_axis_y + j*y_step, "scatter" + i + j);
+            obj = new PlotScatter(data1, x_step, y_step, false, i*x_step, j*y_step, "scatter" + i + j);
           }
           this.plots.push(obj);
         }

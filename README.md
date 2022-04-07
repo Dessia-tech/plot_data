@@ -21,8 +21,13 @@ import * as plotdata from 'plot-data';
 
 ```
 npm i
-npm run-script build
+npm run dev
 ```
+
+## Documentation
+
+Python: https://documentation.dessia.tech/plot_data/python/ <br>
+Typescript: https://documentation.dessia.tech/plot_data/typescript/
 
 ## Changelog
 

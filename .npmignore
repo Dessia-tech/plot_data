@@ -2,6 +2,7 @@
 /plot_data
 /script
 /src
+/doc
 .drone.yml
 .prettierrc
 CHANGELOG.md
@@ -9,3 +10,4 @@ ISSUE_TEMPLATE.md
 setup.py
 tsconfig.json
 tslint.json
+commitlint.config.js

@@ -12,7 +12,10 @@ steps:
   - version=`git describe --tags --abbrev=0`
   - npm version $${version:1}
   - npm install
-  - npm run-script build
+  - npm run build
+  - npm run dev
+  - npm install typedoc
+  - npx typedoc src/plot-data.ts --out doc/build/typescript/
 
 - name: upload npm
   image: plugins/npm
@@ -20,13 +23,14 @@ steps:
       event: tag
   settings:
     username: dessia
-    password:
-      from_secret: npm_password
+    token:
+      from_secret: npm_token
     email: root@dessia.tech
 
-- name: upload to cdn latest
+- name: upload to cdn sid
   image: appleboy/drone-scp
   when:
+      branch: master
       event: push
   settings:
     host: magenta.dessia.tech
@@ -34,7 +38,7 @@ steps:
     password:
       from_secret: ssh_drone_password
     target: /var/www/cdn/js/plot-data/sid/
-    source: lib/*
+    source: libdev/*
     strip_components: 1
     rm: true
 
@@ -47,19 +51,54 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
-    target: /var/www/cdn/js/plot-data/{$DRONE_TAG}/
-    source: lib/*
+    target: /var/www/cdn/js/plot-data/${DRONE_TAG}/
+    source: libdev/*
     strip_components: 1
+
+- name: upload to cdn latest
+  image: appleboy/drone-scp
+  when:
+      event: tag
+  settings:
+    host: magenta.dessia.tech
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+    target: /var/www/cdn/js/plot-data/latest/
+    source: libdev/*
+    strip_components: 1
+    rm: true
+
+
+- name: upload_doc_typescript
+  image: appleboy/drone-scp
+  when:
+    branch: master
+    event: push
+  settings:
+    host: austerlitz.dessia.tech
+    target: /var/www/documentation/plot_data/typescript
+    source: doc/build/typescript/*
+    strip_components: 3
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+
+
 
 - name: install, build doc run scripts
   image: python:3.8
   commands:
+  - pip install sphinx sphinx_rtd_theme
   - python setup.py install
+  - cd doc
+  - make html
 
-- name: develop
-  image: python:3.8
-  commands:
-  - python setup.py develop
+
+#- name: develop
+#  image: python:3.8
+#  commands:
+#  - python setup.py develop
 
 - name: sdist
   image: python:3.8
@@ -75,6 +114,20 @@ steps:
     username: dessia_tech
     password:
         from_secret: pypi_password
+
+- name: upload_doc_python
+  image: appleboy/drone-scp
+  when:
+    branch: master
+    event: push
+  settings:
+    host: austerlitz.dessia.tech
+    target: /var/www/documentation/plot_data/python
+    source: doc/build/html/*
+    strip_components: 3
+    username: drone
+    password:
+      from_secret: ssh_drone_password
 
 - name: notify by email
   when:

@@ -31,7 +31,8 @@ class Color(dc.DessiaObject):
         :return: a Color object
         :rtype: Color
         """
-        return cls(hsv_to_rgb(h, s, v))
+        red, green, blue = hsv_to_rgb(h, s, v)
+        return cls(red=red, green=green, blue=blue)
 
     def __str__(self):
         """

@@ -16,23 +16,23 @@ MIN_NOTE = 9.10
 # RATCHET_NOTE = 0.4
 # RATCHET_ERRORS = 3
 
-UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error']
+UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error',  'missing-final-newline', 'trailing-newlines']
 
 MAX_ERROR_BY_TYPE = {
                      'protected-access': 26,
-                     'invalid-name': 19,
-                     'consider-using-f-string': 10,
+                     'invalid-name': 18,
+                     'consider-using-f-string': 2,
                      'no-else-return': 17,
                      'arguments-differ': 12,
                      'no-member': 1,
-                     'too-many-locals': 14,
+                     'too-many-locals': 2,
                      'wrong-import-order': 10,
-                     'too-many-branches': 9,
+                     'too-many-branches': 1,
                      'unused-import': 1,
-                     'unused-argument': 6,
+                     'unused-argument': 1,
                      'cyclic-import': 11,
                      'no-self-use': 6,
-                     'unused-variable': 6,
+                     'unused-variable': 1,
                      'trailing-whitespace': 11,
                      'empty-docstring': 7,
                      'missing-module-docstring': 9,
@@ -49,7 +49,7 @@ MAX_ERROR_BY_TYPE = {
                      'consider-iterating-dictionary': 4,
                      'attribute-defined-outside-init': 3,
                      'simplifiable-if-expression': 3,
-                     'broad-except': 3,
+                     'broad-except': 1,
                      'consider-using-get': 2,
                      'undefined-loop-variable': 2,
                      'consider-using-with': 2,
@@ -64,10 +64,12 @@ MAX_ERROR_BY_TYPE = {
                      'use-maxsplit-arg': 1,
                      'duplicate-code': 1,
                      # No tolerance errors
-                     'redefined-builtin': 0,
+                     'too-many-function-args': 1,
+                     'unexpected-keyword-arg': 1,
+                     'redefined-builtin': 1,
                      'arguments-renamed': 0,
                      'ungrouped-imports': 0,
-                     'super-init-not-called': 0,
+                     'super-init-not-called': 1,
                      'superfluous-parens': 0,
                      'unused-wildcard-import': 0,
                      'consider-using-enumerate': 0,
@@ -75,7 +77,7 @@ MAX_ERROR_BY_TYPE = {
                      'function-redefined': 0,
                      'inconsistent-return-statements': 0,
                      'unexpected-special-method-signature': 0,
-                     'too-many-lines': 0,
+                     'too-many-lines': 1,
                      'bare-except': 1,
                      'unspecified-encoding': 0,
                      'no-else-raise': 0,

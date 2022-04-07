@@ -1,29 +1,29 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 28 14:07:37 2017
-
-@author: steven
+Definition of language and plots
 """
 
 import os
-import numpy as npy
-import math
 import sys
+import math
 import json
 import tempfile
 import webbrowser
+import warnings
+from typing import List, Tuple, Any, Union
+
+import numpy as npy
+
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
+from matplotlib import patches
+
 from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
 from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
-import warnings
 
-import plot_data.templates as templates
-
-from typing import List, Tuple, Any, Union
-import plot_data.colors as colors
+from plot_data import templates
+from plot_data import colors
 
 npy.seterr(divide='raise')
 
@@ -34,7 +34,7 @@ def delete_none_from_dict(dict1):
     """
     dict2 = {}
     for key, value in dict1.items():
-        if type(value) == dict:
+        if isinstance(value, dict):
             dict2[key] = delete_none_from_dict(value)
         else:
             if value is not None:
@@ -884,7 +884,7 @@ class PrimitiveGroupsContainer(PlotDataObject):
             if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
         self.primitive_groups = primitive_groups
-        if sizes is not None and type(sizes[0]) == int:
+        if sizes is not None and isinstance(sizes[0], int):
             sizes = [sizes] * len(primitive_groups)
         self.sizes = sizes
         self.coords = coords
@@ -1067,7 +1067,7 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     plot_type = data['type_']
     if plot_type == 'primitivegroup':
         template = templates.contour_template
-    elif plot_type == 'scatterplot' or plot_type == 'graph2d':
+    elif plot_type in ('scatterplot', 'graph2d'):
         template = templates.scatter_template
     elif plot_type == 'parallelplot':
         template = templates.parallelplot_template

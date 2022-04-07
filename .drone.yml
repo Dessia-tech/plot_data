@@ -84,7 +84,19 @@ steps:
     password:
       from_secret: ssh_drone_password
 
+- name: check code complexity, docs & code quality
+  image: python:3.9
+  commands:
+  - pip install radon pydocstyle pylint
+  - ./code_quality.sh
+  - python code_pylint.py
 
+- name: check pep8 formatting
+  image: python:3.9
+  commands:
+    - git fetch --tags
+    - pip3 install -U pip autopep8
+    - bash code_pep8.sh
 
 - name: install, build doc run scripts
   image: python:3.8
@@ -94,11 +106,6 @@ steps:
   - cd doc
   - make html
 
-
-#- name: develop
-#  image: python:3.8
-#  commands:
-#  - python setup.py develop
 
 - name: sdist
   image: python:3.8
@@ -129,15 +136,3 @@ steps:
     password:
       from_secret: ssh_drone_password
 
-- name: notify by email
-  when:
-    status:
-    - failure
-  image: drillster/drone-email
-  settings:
-    host: mail.dessia.tech
-    username: technical@dessia.tech
-    password:
-     from_secret: email_password
-    from: technical@dessia.tech
-    recipients: [ root@dessia.tech ]

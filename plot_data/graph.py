@@ -1,12 +1,14 @@
 import networkx as nx
+import numpy as np
+
 import plot_data
 
 
 class NetworkxGraph(plot_data.PrimitiveGroup):
     """
     Each node of self.graph can contain its settings in the node.data \
-    dictionnary. Keys can be :
-    'color' with format 'rgb(xr, xg, xb)', xr, xg, xb are intergers between \
+    dictionary. Keys can be :
+    'color' with format 'rgb(xr, xg, xb)', xr, xg, xb are integers between \
     0 and 255.
     'shape', choose between '.' for Point2D, 'o' for Circle2D, 's' for bigger \
     Circle2D.
@@ -22,7 +24,7 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                                           primitives=primitives,
                                           name=name)
 
-    def _to_primitives(self):
+    def _to_primitives(self, text_style: plot_data.TextStyle = None):
         r = 0.04
         primitives = []
         pos = nx.kamada_kawai_layout(self.graph)
@@ -62,10 +64,15 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                 raise NotImplementedError
             primitives.append(prim)
 
-            text_style = plot_data.TextStyle(text_color='rgb(0,0,0)',
-                                             text_align_x='center',
-                                             text_align_y='middle')
-            text = plot_data.Text(name, x, y, text_style=text_style)
+            if text_style is None:
+                text_style = plot_data.TextStyle(text_color='rgb(0,0,0)',
+                                                 text_align_x='center',
+                                                 text_align_y='middle')
+            text = plot_data.Text(name, x, y, text_style=text_style, max_width=2*r, multi_lines=False)
             primitives.append(text)
 
         return primitives
+
+
+    def to_plot_data(self):
+        return plot_data.PrimitiveGroup(self.primitives)

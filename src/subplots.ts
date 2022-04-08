@@ -26,7 +26,6 @@ export class PlotContour extends PlotData {
         var requirement = '0.6.0';
         check_package_version(data['package_version'], requirement);
       }
-
       this.plot_datas = [];
       this.type_ = 'primitivegroup';
       var d = this.data;
@@ -1345,7 +1344,7 @@ export class Histogram extends PlotData {
         var requirement = '0.6.1';
         check_package_version(data['package_version'], requirement);
       }
-      this.type_ = data['type_'];
+      this.type_ = "histogram";
       this.elements = data['elements'];
       this.graduation_nb = data['graduation_nb'] || 6;
       this.initial_graduation_nb = this.graduation_nb;
@@ -1405,9 +1404,9 @@ export class Histogram extends PlotData {
       this.context.closePath();
   
       this.infos = this.get_infos();
-      this.draw_axis();
       this.draw_histogram();
       this.draw_rubberbands();
+      this.draw_axis();
   
       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
         this.refresh_buttons_coords();

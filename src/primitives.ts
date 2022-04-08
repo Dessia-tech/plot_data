@@ -123,10 +123,10 @@ export class Circle2D {
         var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
         var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
 
-        if (serialized["text"]) {
+        if (serialized["tooltip"]) {
           let tooltip_surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
           let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
-          let tooltip = new Tooltip(tooltip_surface_style, text_style, null, serialized["text"]);
+          let tooltip = new Tooltip(tooltip_surface_style, text_style, null, serialized["tooltip"]);
           return new Circle2D(serialized['data'],
                               serialized['cx'],
                               -serialized['cy'],
@@ -204,10 +204,10 @@ export class Contour2D {
           plot_data_primitives.push(new_arc);
         }
       }
-      if (serialized["text"]) {
+      if (serialized["tooltip"]) {
         let tooltip_surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
         let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
-        let tooltip = new Tooltip(tooltip_surface_style, text_style, null, serialized["text"]);
+        let tooltip = new Tooltip(tooltip_surface_style, text_style, null, serialized["tooltip"]);
         return new Contour2D(plot_data_primitives,
           edge_style,
           surface_style,
@@ -882,10 +882,10 @@ export class Wire {
     serialized = set_default_values(serialized, default_dict_);
     let edge_style = EdgeStyle.deserialize(serialized["edge_style"]);
 
-    if (serialized["text"]) {
+    if (serialized["tooltip"]) {
       let surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
       let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
-      let tooltip = new Tooltip(surface_style, text_style, null, serialized["text"]);
+      let tooltip = new Tooltip(surface_style, text_style, null, serialized["tooltip"]);
       return new Wire(lines, edge_style, tooltip, "wire", serialized["name"]);
     }
     return new Wire(lines, edge_style, null, "wire", serialized["name"]);

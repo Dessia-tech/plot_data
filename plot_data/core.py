@@ -365,12 +365,14 @@ class Wire(PlotDataObject):
     :type lines: List[Tuple[float, float]]
     :param edge_style: Line settings
     :type edge_style: EdgeStyle
+    :param tooltip: a message that is displayed in a tooltip
+    :type tooltip: str
     """
     def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None,
-                 text: str = None, name: str = ""):
+                 tooltip: str = None, name: str = ""):
         self.lines = lines
         self.edge_style = edge_style
-        self.text = text
+        self.tooltip = tooltip
         PlotDataObject.__init__(self, type_="wire", name=name)
 
 
@@ -388,21 +390,21 @@ class Circle2D(PlotDataObject):
     :type edge_style: EdgeStyle
     :param surface_style: customization of the circle's interior
     :type surface_style: SurfaceStyle
-    :param text: tooltip message
-    :type text: str
+    :param tooltip: tooltip message
+    :type tooltip: str
     """
 
     def __init__(self, cx: float, cy: float, r: float,
                  edge_style: EdgeStyle = None,
                  surface_style: SurfaceStyle = None,
-                 text: str = None,
+                 tooltip: str = None,
                  name: str = ''):
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.r = r
         self.cx = cx
         self.cy = cy
-        self.text = text
+        self.tooltip = tooltip
         PlotDataObject.__init__(self, type_='circle', name=name)
 
     def bounding_box(self):
@@ -759,17 +761,17 @@ class Contour2D(PlotDataObject):
     :type edge_style: EdgeStyle
     :param surface_style: for customizing the interior of the contour
     :type surface_style: SurfaceStyle
-    :param text: A message that is displayed in a tooltip
-    :type text: str
+    :param tooltip: A message that is displayed in a tooltip
+    :type tooltip: str
     """
 
     def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]],
                  edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, text: str = None, name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
-        self.text = text
+        self.tooltip = tooltip
         PlotDataObject.__init__(self, type_='contour', name=name)
 
     def bounding_box(self):

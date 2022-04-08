@@ -30,7 +30,7 @@ contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([0, 
                                                     plot_data.LineSegment2D([rectangle_size, 0], [0, 0])],
                               edge_style=edge_style,
                               surface_style=surface_style,
-                              text="It's a square")
+                              tooltip="It's a square")
 
 # LineSegment2D
 line = plot_data.LineSegment2D(point1=[4, 0], point2=[6, 2], edge_style=edge_style)
@@ -41,7 +41,7 @@ circle_surface_style = plot_data.SurfaceStyle(color_fill=colors.YELLOW, opacity=
                                               hatching=plot_data.HatchingSet())
 
 circle = plot_data.Circle2D(cx=5, cy=10, r=5, edge_style=circle_edge_style,
-                            surface_style=circle_surface_style, text="Circle")
+                            surface_style=circle_surface_style, tooltip="Circle")
 
 # Text
 text = plot_data.Text(comment='Hello', position_x=6, position_y=9,
@@ -63,7 +63,7 @@ label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surfac
 
 labels = plot_data.MultipleLabels(labels=[label1, label2])
 
-wire = plot_data.Wire([[15, 0], [15,10], [20,10]], text="It is a wire")
+wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire")
 
 primitives = [contour, line, arc,
               circle, text, labels, wire]

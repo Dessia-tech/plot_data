@@ -850,7 +850,7 @@ export class Text {
 
 export class Heatmap {
   constructor(public size: number[] = [3,3],
-              public colors: string[] = [string_to_hex("blue"), string_to_hex("yellow"), string_to_hex("red")],
+              public colors: string[] = [string_to_hex("yellow"), string_to_hex("orange"), string_to_hex("red")],
               public edge_style: EdgeStyle = new EdgeStyle(1, string_to_hex("white"), [], ""),
               public name: string = "") {}
     

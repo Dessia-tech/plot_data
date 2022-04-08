@@ -2,7 +2,7 @@ import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
-import { Shape, List, MyMath } from "./toolbox";
+import { Shape, List, MyMath, MyObject } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
 
 
@@ -500,10 +500,11 @@ export abstract class PlotData {
     this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
   }
 
-  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d:Axis, lists, to_display_attributes, log_scale_x, log_scale_y) {
-    d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, 
-      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, 
-      this.height, log_scale_x, log_scale_y);
+  draw_scatterplot_axis(d:Axis, lists, to_display_attributes) {
+    d.draw_scatter_axis(this.context, this.originX, this.originY, this.scaleX, this.scaleY, this.width, this.height, 
+      this.init_scaleX, this.init_scaleY, lists, to_display_attributes, this.scroll_x, this.scroll_y, 
+      this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, 
+      this.height, this.log_scale_x, this.log_scale_y);
     this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
     this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     this.context.closePath();
@@ -610,30 +611,31 @@ export abstract class PlotData {
 
 
   draw_gradient_axis(max_density) {
-    let start = 0.75 * this.height + this.Y;
-    let end = 0.25 * this.height + this.Y;
-    let x = 0.03 * this.width + this.X;
+    let start = 0.25 * this.width + this.X;
+    let end = 0.75 * this.width + this.X;
+    let y = 0.03 * this.height + this.Y;
     let nb_rect = this.heatmap.colors.length - 1;
-    let h = (end - start) / nb_rect;
-    let w = Math.max(0.015 * this.width, 15);
+    let w = (end - start) / nb_rect;
+    let h = Math.max(0.015 * this.height, 15);
     for (let i=0; i<nb_rect; i++) {
-      var gradient = this.context.createLinearGradient(x, start + i*h, x, start + (i+1)*h);
+      var gradient = this.context.createLinearGradient(start + i*w, y, start + (i+1)*w, y);
       gradient.addColorStop(0, this.heatmap.colors[i]);
       gradient.addColorStop(1, this.heatmap.colors[i+1]);
       this.context.fillStyle = gradient;
-      this.context.fillRect(x, start + i*h, w, h);
+      this.context.fillRect(start + i*w, y, w, h);
     }
     this.context.strokeStyle = "black";
     this.context.lineWidth = 1;
-    this.context.strokeRect(x, start, w, end - start);
+    this.context.strokeRect(start, y, end - start, h);
 
     this.context.fillStyle = string_to_hex("black");
     this.context.font = "12px sans-serif";
-    this.context.textBaseline = "middle";
+    this.context.textAlign = "center";
+    this.context.textBaseline = "hanging";
 
     let step = max_density / nb_rect;
     for (let i=0; i<this.heatmap.colors.length; i++) {
-      this.context.fillText(Math.floor(i*step), x + w + 5, start + i*h);
+      this.context.fillText(Math.floor(i*step), start + i*w, y + h + 5);
     }
   }
 
@@ -665,17 +667,19 @@ export abstract class PlotData {
       }
     }
     this.draw_gradient_axis(max_density);
+    let temp = scatter.axis.grid_on;
+    scatter.axis.grid_on = false;
+    this.draw_scatterplot_axis(scatter.axis, scatter.lists, scatter.to_display_attributes);
+    scatter.axis.grid_on = temp;
   }
 
   draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
     if (d['type_'] == 'scatterplot') {
-      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, 
-        d.lists, d.to_display_attributes, this.log_scale_x, this.log_scale_y);
+      this.draw_scatterplot_axis(d.axis, d.lists, d.to_display_attributes);
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
         if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
           this.scatter_points = refreshed_points;
-          //refresh_point_families
         }
         this.refresh_point_list_bool = false;
       } else if (this.mergeON === false) {

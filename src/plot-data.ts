@@ -58,8 +58,6 @@ export abstract class PlotData {
   fusion_coeff:number=1.2;
   log_scale_x: boolean = false;
   log_scale_y: boolean = true;
-  heatmap: Heatmap;
-  heatmap_view: boolean = false;
 
   plotObject:any;
   plot_datas:object={};
@@ -179,6 +177,11 @@ export abstract class PlotData {
   primitive_dict:any={};
   elements_dict:any={};
   dep_mouse_over:boolean=false;
+
+  // Heatmap
+  heatmap: Heatmap;
+  heatmap_view: boolean = false;
+  selected_area: number[];
 
   public constructor(
     public data:any,
@@ -666,6 +669,13 @@ export abstract class PlotData {
         this.context.fillRect(i*wstep + this.X, j*hstep + this.Y, wstep, hstep);
       }
     }
+    if (this.selected_area) {
+      this.context.strokeStyle = string_to_hex("blue");
+      this.context.lineWidth = 2;
+      this.context.strokeRect(this.selected_area[0]*wstep + this.X, this.selected_area[1]*hstep + this.Y,
+        wstep, hstep);
+    }
+
     this.draw_gradient_axis(max_density);
     let temp = scatter.axis.grid_on;
     scatter.axis.grid_on = false;
@@ -1761,6 +1771,23 @@ export abstract class PlotData {
     if (this.type_ == 'scatterplot') {this.refresh_latest_selected_points_index();}
   }
 
+  refresh_selected_area(mouse1X, mouse1Y) {
+    let w = this.heatmap.size[0];
+    let h = this.heatmap.size[1];
+
+    let w_step = this.width/w;
+    let h_step = this.height/h;
+
+    let i = Math.floor((mouse1X - this.X)/w_step);
+    let j = Math.floor((mouse1Y - this.Y)/h_step);
+
+    if (this.selected_area && this.selected_area[0]===i && this.selected_area[1]===j) {
+      this.selected_area = null;
+    } else {
+      this.selected_area = [i, j];
+    }
+  }
+
   reset_select_on_click() {
     this.select_on_click = [];
     this.selected_point_index = [];
@@ -1943,6 +1970,11 @@ export abstract class PlotData {
           Interactions.click_on_ylog_action(this);
         } else if (click_on_heatmap) {
           Interactions.click_on_heatmap_action(this);
+        } else {
+          if (this.heatmap_view) {
+            this.refresh_selected_area(mouse1X, mouse1Y);
+            console.log(this.selected_area)
+          }
         }
       }
       Interactions.reset_zoom_box(this);

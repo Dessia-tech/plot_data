@@ -154,7 +154,7 @@ export class MultiplePlots {
       for (let i=0; i<this.data['elements'].length; i++) {
         point_index.push(i);
       }
-      let new_point_family = new PointFamily(string_to_hex('red'), point_index, 'Initial family');
+      let new_point_family = new PointFamily(string_to_hex('grey'), point_index, 'Initial family');
       this.add_point_family(new_point_family);
       if (this.data['point_families'] != undefined) {
         for (let i=0; i<this.data['point_families'].length; i++) {
@@ -1196,11 +1196,17 @@ export class MultiplePlots {
     }
 
     mouse_up_scatter_communication() {
-      let scatter = this.objectList[this.clickedPlotIndex];
+      let clicked_point_index = [];
+      for (let i=0; i<this.nbObjects; i++) {
+        let obj = this.objectList[i];
+        if (obj.type_ === "scatterplot") {
+          clicked_point_index = List.union(clicked_point_index, obj.clicked_point_index);
+        }
+      }
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if (obj.type_ === "parallelplot") {
-          obj.clicked_point_index = scatter.clicked_point_index;
+          obj.clicked_point_index = clicked_point_index;
         }
       }
     }

@@ -484,6 +484,7 @@ export class Point2D {
     points_inside:Point2D[] = [this];
     point_families:PointFamily[]=[];
     selected:boolean=false;
+    clicked:boolean=false;
   
     constructor(public cx:number,
                 public cy:number,

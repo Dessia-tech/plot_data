@@ -44,7 +44,9 @@ export abstract class PlotData {
   selected_point_index:any[]=[];
   clicked_point_index:any[]=[];
   color_surface_on_mouse:string=string_to_hex('lightskyblue');
-  color_surface_on_click:string=string_to_hex('blue');
+  color_surface_selected:string=string_to_hex('blue');
+  color_surface_on_click:string=string_to_hex("red");
+  
   pointLength:number=0;
   tooltip_ON:boolean = false;
   axis_ON:boolean = false;
@@ -384,7 +386,7 @@ export abstract class PlotData {
         for (var j = 0; j < this.select_on_click.length; j++) {
           var z = this.select_on_click[j];
           if (z == d) {
-            this.context.fillStyle = this.color_surface_on_click;
+            this.context.fillStyle = this.color_surface_selected;
           }
         }
       }
@@ -426,7 +428,7 @@ export abstract class PlotData {
         for (var j = 0; j < this.select_on_click.length; j++) {
           var z = this.select_on_click[j];
           if (z == d) {
-            this.context.fillStyle = this.color_surface_on_click;
+            this.context.fillStyle = this.color_surface_selected;
           }
         }
       }
@@ -463,7 +465,7 @@ export abstract class PlotData {
         if (shape == 'crux') {
           this.context.strokeStyle = d.point_style.color_fill;
         }
-        if (d.selected) {
+        if (d.clicked) {
           if (shape == 'crux') {
             this.context.strokeStyle = this.color_surface_on_click;
           } else {
@@ -471,6 +473,16 @@ export abstract class PlotData {
               this.context.fillStyle = d.point_style.color_fill;
             } else {
               this.context.fillStyle = this.color_surface_on_click;
+            }
+          }
+        } else if (d.selected) {
+          if (shape == 'crux') {
+            this.context.strokeStyle = this.color_surface_selected;
+          } else {
+            if (this.sc_interpolation_ON) {
+              this.context.fillStyle = d.point_style.color_fill;
+            } else {
+              this.context.fillStyle = this.color_surface_selected;
             }
           }
         }
@@ -1688,13 +1700,13 @@ export abstract class PlotData {
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
     var click_plot_data = this.colour_to_plot_data[colKey];
     if (click_plot_data) {
-      if (click_plot_data.selected) {
+      if (click_plot_data.clicked) {
         this.clicked_points = List.remove_element(click_plot_data, this.clicked_points);
-        click_plot_data.selected = false;
+        click_plot_data.clicked = false;
         this.latest_selected_points = [];
       } else {
         this.clicked_points.push(click_plot_data);
-        click_plot_data.selected = true;
+        click_plot_data.clicked = true;
         this.latest_selected_points = [click_plot_data];
       }
     } 
@@ -1728,16 +1740,21 @@ export abstract class PlotData {
     this.select_on_click = [];
     this.clicked_points = [];
     this.selected_point_index = [];
+    this.clicked_point_index = [];
     this.tooltip_list = [];
     if (this.type_ == 'scatterplot') {
       for (let i=0; i<this.plotObject.point_list.length; i++) {
         this.plotObject.point_list[i].selected = false;
-        if (this.scatter_points[i]) {this.scatter_points[i].selected = false;}
+        if (this.scatter_points[i]) {
+          this.scatter_points[i].selected = false;
+          this.scatter_points[i].clicked = false;
+        }
       }
     } else if (this.type_ == 'graph2d') {
       for (let i=0; i<this.plotObject.graphs.length; i++) {
         for (let j=0; j<this.plotObject.graphs[i].point_list.length; j++) {
           this.plotObject.graphs[i].point_list[j].selected = false;
+          this.plotObject.graphs[i].point_list[j].clicked = false;
         }
       }
     }

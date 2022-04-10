@@ -1194,6 +1194,16 @@ export class MultiplePlots {
         this.scatter_communication(selection_coords, to_display_attributes, isSelectingObjIndex);
       }
     }
+
+    mouse_up_scatter_communication() {
+      let scatter = this.objectList[this.clickedPlotIndex];
+      for (let i=0; i<this.nbObjects; i++) {
+        let obj = this.objectList[i];
+        if (obj.type_ === "parallelplot") {
+          obj.clicked_point_index = scatter.clicked_point_index;
+        }
+      }
+    }
   
     scatter_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], isSelectingObjIndex:number):void { //process received data from a scatterplot and send it to the other objects
       for (let i=0; i<selection_coords.length; i++) {
@@ -1777,6 +1787,8 @@ export class MultiplePlots {
                 if (obj.x_rubberband.length === 0) {
                   this.reset_all_selected_points();
                 }
+              } else if (type_ === "scatterplot") {
+                this.mouse_up_scatter_communication();
               }
             }
           }

@@ -4,7 +4,6 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rgb_strToVector } from "./color_conversion";
-import { MultiplePlots } from "./multiplots";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -37,7 +36,9 @@ export abstract class PlotData {
   originY:number=0;
   settings_on:boolean=false;
   colour_to_plot_data:any={};
+  points_to_indices:any={};
   select_on_mouse:any;
+  select_on_mouse_indices:number[]=[];
   primitive_mouse_over_point:Point2D;
   select_on_click:any[]=[]; // For scatter and graph2D, it corresponds points selected bythe selection window
   clicked_points:any[]=[];
@@ -1649,12 +1650,12 @@ export abstract class PlotData {
       if ((this.plotObject['type_'] == 'scatterplot') && this.select_on_click[i]) {
         let clicked_points = this.select_on_click[i].points_inside;
         for (let j=0; j<clicked_points.length; j++) {
-          this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
+          this.selected_point_index.push(clicked_points[j].index);
         }
       } else if (this.plotObject['type_'] == 'graph2D') {
         for (let j=0; j<this.plotObject.graphs.length; j++) {
           if ((List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) && this.select_on_click[i]) {
-            this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
+            this.selected_point_index.push([this.select_on_click[i], j]);
           }
         }
       }
@@ -1853,6 +1854,13 @@ export abstract class PlotData {
       var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
       var old_select_on_mouse = this.select_on_mouse;
       this.select_on_mouse = this.colour_to_plot_data[colKey];
+      if (this.select_on_mouse) {
+        this.select_on_mouse_indices = [];
+        let points_inside = this.select_on_mouse.points_inside;
+        for (let point of points_inside) {
+          this.select_on_mouse_indices.push(point.index);
+        }
+      }
       if (this.select_on_mouse !== old_select_on_mouse) {
         this.draw();
       }
@@ -2195,16 +2203,16 @@ export abstract class PlotData {
         var xj = this.scaleX*point_list_copy[j].cx + mvx;
         var yj = this.scaleY*point_list_copy[j].cy + mvy;
         if (this.distance([xi,yi], [xj,yj])< 10*(point_list_copy[i].size + point_list_copy[j].size)) {
-          var new_cx = (point_list_copy[i].cx + point_list_copy[j].cx)/2;
-          var new_cy = (point_list_copy[i].cy + point_list_copy[j].cy)/2;
+          var point_i = point_list_copy[i];
+          var point_j = point_list_copy[j];
+          var new_cx = (point_i.cx + point_j.cx)/2;
+          var new_cy = (point_i.cy + point_j.cy)/2;
           var point = new Point2D(new_cx, new_cy, point_list_copy[i].point_style, 'point', '');
           point.points_inside = point_list_copy[i].points_inside.concat(point_list_copy[j].points_inside);
           point.point_families = List.union(point_list_copy[i].point_families, point_list_copy[j].point_families);
           point.selected = point_list_copy[i].selected || point_list_copy[j].selected;
           var size_coeff = 1.15;
           point.size = point_list_copy[max_size_index].size*size_coeff;
-          var point_i = point_list_copy[i];
-          var point_j = point_list_copy[j];
           this.delete_clicked_points([point_i, point_j]);
           this.delete_tooltip([point_i, point_j]);
           point_list_copy = List.remove_element(point_list_copy[i], point_list_copy);

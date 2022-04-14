@@ -921,7 +921,7 @@ export class MultiplePlots {
         if (list.includes(i)) continue;
         let obj = this.objectList[i];
         if (obj.type_ == 'scatterplot') {
-          this.objectList[i].reset_select_on_click();
+          this.objectList[i].reset_select_on_click(false);
           Interactions.reset_permanent_window(this.objectList[i])
         } else if (obj.type_ == 'parallelplot') {
           this.objectList[i].reset_pp_selected();
@@ -1553,6 +1553,16 @@ export class MultiplePlots {
     }
   
     mouse_over_scatter_plot() {
+      if (this.move_plot_index !== -1 && this.objectList[this.move_plot_index].type_ === "scatterplot") {
+        for (let i=0; i<this.nbObjects; i++) {
+          let obj = this.objectList[i];
+          if (obj.type_ === "parallelplot") {
+            obj.select_on_mouse_indices = this.objectList[this.move_plot_index].select_on_mouse_indices;            
+            obj.draw();
+          }
+        }
+      }
+
       if (!this.has_primitive_group_container) return;
       var bool = false;
       if (this.move_plot_index !== -1) {

@@ -147,8 +147,6 @@ export abstract class PlotData {
   hexs:string[];
   pp_selected:any[]=[];
   pp_selected_index:number[]=[];
-  pp_clicked:any[]=[];
-  pp_over:any[];
   click_on_button:boolean=false;
   vertical_axis_coords:number[][]=[];
   horizontal_axis_coords:number[][]=[];
@@ -1018,12 +1016,15 @@ export abstract class PlotData {
     this.display_list_to_elements_dict = Object.fromEntries(entries);
   }
 
-  pp_color_management(index:number, selected:boolean, clicked:boolean) {
+  pp_color_management(index:number, selected:boolean, clicked:boolean, over:boolean) {
     if (List.isListOfEmptyList(this.rubber_bands)) {
       selected = true;
     }
     if (this.selected_axis_name == '') {
-      if (clicked) {
+      if (over) {
+        this.context.strokeStyle = string_to_hex("yellow");
+        this.context.lineWidth = 3*this.edge_style.line_width;
+      } else if (clicked) {
         this.context.strokeStyle = string_to_hex("red");
         this.context.lineWidth = 3*this.edge_style.line_width;
       } else if (selected) {
@@ -1034,7 +1035,10 @@ export abstract class PlotData {
         this.context.lineWidth = this.edge_style.line_width;
       }
     } else {
-      if (clicked) {
+      if (over) {
+        this.context.strokeStyle = string_to_hex("yellow");
+        this.context.lineWidth = 3 * this.edge_style.line_width;
+      } else if (clicked) {
         this.context.strokeStyle = string_to_hex("black");
         this.context.lineWidth = 3 * this.edge_style.line_width;
       } else if (selected) {
@@ -1051,18 +1055,29 @@ export abstract class PlotData {
   draw_parallel_coord_lines() {
     var selected_seg_lists = [];
     var clicked_seg_lists = [];
+    var over_seg_lists = [];
     this.context.lineWidth = this.edge_style.line_width;
     for (let i=0; i<this.to_display_list.length; i++) {
+      let selected = true
       if (this.vertical) { var seg_list = this.vertical_axis_coords[i]; } else { var seg_list = this.horizontal_axis_coords[i]; }
-      let selected = List.is_include(this.to_display_list[i], this.pp_selected);
+      for (let j=0; j<this.axis_list.length; j++) {
+        var inside_band = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
+        if (!inside_band) {
+          selected = false;
+          break;
+        }
+      }
       let clicked = List.is_include(this.from_to_display_list_to_elements(i), this.clicked_point_index);
-      if (clicked) {
+      let over = List.is_include(this.from_to_display_list_to_elements(i), this.select_on_mouse_indices);
+      if (over) {
+        over_seg_lists.push({seg_list:seg_list, index:i});
+      } else if (clicked) {
         clicked_seg_lists.push({seg_list:seg_list, index:i});
       } else if (selected) {
         selected_seg_lists.push({seg_list:seg_list, index:i});
       } else {
         this.context.beginPath();
-        this.pp_color_management(i, false, false);
+        this.pp_color_management(i, false, false, false);
         Shape.drawLine(this.context, seg_list);
         this.context.stroke();
         this.context.closePath();
@@ -1070,14 +1085,21 @@ export abstract class PlotData {
     }
     for (let seg_dict of selected_seg_lists) {
       this.context.beginPath();
-      this.pp_color_management(seg_dict.index, true, false);
+      this.pp_color_management(seg_dict.index, true, false, false);
       Shape.drawLine(this.context, seg_dict.seg_list);
       this.context.stroke();
       this.context.closePath();
     }
     for (let seg_dict of clicked_seg_lists) {
       this.context.beginPath();
-      this.pp_color_management(seg_dict.index, false, true);
+      this.pp_color_management(seg_dict.index, false, true, false);
+      Shape.drawLine(this.context, seg_dict.seg_list);
+      this.context.stroke();
+      this.context.closePath();
+    }
+    for (let seg_dict of over_seg_lists) {
+      this.context.beginPath();
+      this.pp_color_management(seg_dict.index, false, false, true);
       Shape.drawLine(this.context, seg_dict.seg_list);
       this.context.stroke();
       this.context.closePath();
@@ -1086,6 +1108,7 @@ export abstract class PlotData {
 
   reset_pp_selected() {
     this.pp_selected = this.to_display_list;
+    this.clicked_point_index = [];
     this.pp_selected_index = Array.from(Array(this.to_display_list.length).keys());
   }
 
@@ -1093,7 +1116,6 @@ export abstract class PlotData {
   refresh_pp_selected() {
     this.pp_selected = [];
     this.pp_selected_index = [];
-    this.pp_clicked = [];
     if (this.vertical) { var axis_coords = this.vertical_axis_coords; } else { axis_coords = this.horizontal_axis_coords; }
     for (let i=0; i<this.to_display_list.length; i++) {
       var selected:boolean = true;
@@ -1101,10 +1123,7 @@ export abstract class PlotData {
       for (let j=0; j<this.axis_list.length; j++) {
         var selected = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
       }
-      var clicked = List.is_include(this.from_to_display_list_to_elements(i), this.clicked_point_index);
-      if (clicked) {
-        this.pp_clicked.push(this.to_display_list[i]);
-      } else if (selected) {
+      if (selected) {
         this.pp_selected.push(this.to_display_list[i]);
         this.pp_selected_index.push(this.from_to_display_list_to_elements(i));
       }
@@ -1737,18 +1756,20 @@ export abstract class PlotData {
     if (this.type_ == 'scatterplot') {this.refresh_latest_selected_points_index();}
   }
 
-  reset_select_on_click() {
+  reset_select_on_click(reset_clicked_points:boolean=true) {
     this.select_on_click = [];
-    this.clicked_points = [];
     this.selected_point_index = [];
-    this.clicked_point_index = [];
+    if (reset_clicked_points) {
+      this.clicked_points = [];
+      this.clicked_point_index = [];
+    }
     this.tooltip_list = [];
     if (this.type_ == 'scatterplot') {
       for (let i=0; i<this.plotObject.point_list.length; i++) {
         this.plotObject.point_list[i].selected = false;
         if (this.scatter_points[i]) {
           this.scatter_points[i].selected = false;
-          this.scatter_points[i].clicked = false;
+          if (reset_clicked_points) this.scatter_points[i].clicked = false;
         }
       }
     } else if (this.type_ == 'graph2d') {
@@ -1854,8 +1875,8 @@ export abstract class PlotData {
       var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
       var old_select_on_mouse = this.select_on_mouse;
       this.select_on_mouse = this.colour_to_plot_data[colKey];
+      this.select_on_mouse_indices = [];
       if (this.select_on_mouse) {
-        this.select_on_mouse_indices = [];
         let points_inside = this.select_on_mouse.points_inside;
         for (let point of points_inside) {
           this.select_on_mouse_indices.push(point.index);

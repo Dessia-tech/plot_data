@@ -336,6 +336,7 @@ export class Axis {
       context.strokeStyle = this.axis_style.color_stroke;    
       context.font = 'bold 20px Arial';
       context.textAlign = 'end';
+      context.textBaseline = "alphabetic";
       context.fillText(to_display_attribute['name'], axis_x_end - 5, axis_y_end - 10);
       context.stroke();
       //Graduations
@@ -373,8 +374,10 @@ export class Axis {
       Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
   
       context.fillStyle = this.graduation_style.text_color;
-      context.strokeStyle = this.axis_style.color_stroke;    context.font = 'bold 20px Arial';
+      context.strokeStyle = this.axis_style.color_stroke;    
+      context.font = 'bold 20px Arial';
       context.textAlign = 'start';
+      context.textBaseline = "alphabetic";
       context.fillText(to_display_attribute['name'], axis_x_start + 5, axis_y_start + 20);
       context.stroke();
   
@@ -413,14 +416,13 @@ export class Axis {
           if (this.grid_on === true) {
             Shape.drawLine(context, [[scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_start], [scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end + 3]]);
           } else {
-            Shape.drawLine(context, [[scaleX*(grad_beg_x + i*this.x_step + mvx) + X, axis_y_end - 3], [scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end + 3]]);
+            Shape.drawLine(context, [[scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end - 3], [scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end + 3]]);
           }
-          context.fillText(MyMath.round(grad_beg_x + i*this.x_step, x_nb_digits), scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end + this.graduation_style.font_size);
-          i++;
+          context.fillText(MyMath.round(grad_beg_x + i*this.x_step, x_nb_digits), scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end + this.graduation_style.font_size);          i++;
         }
       } else {
         for (let i=0; i<list.length; i++) {
-          if ((scaleX*(i + mvx) + X > axis_x_start) && (scaleX*(i + mvx) + X < axis_x_end - 9)) {
+          if ((scaleX*i + mvx + X > axis_x_start) && (scaleX*i + mvx + X < axis_x_end - 9)) {
             if (this.grid_on === true) {
               Shape.drawLine(context, [[scaleX*i + mvx + X, axis_y_start], [scaleX*i + mvx + X, axis_y_end + 3]]);
             } else {

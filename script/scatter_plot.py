@@ -71,5 +71,5 @@ customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='shape'
                                            heatmap=heatmap)
 
 # if debug_mode is True, set it to False
-plot_data.plot_canvas(plot_data_object=customized_scatterplot, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=scatterplot, debug_mode=True)
 

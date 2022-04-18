@@ -1876,7 +1876,7 @@ export abstract class PlotData {
       var old_select_on_mouse = this.select_on_mouse;
       this.select_on_mouse = this.colour_to_plot_data[colKey];
       this.select_on_mouse_indices = [];
-      if (this.select_on_mouse) {
+      if (this.select_on_mouse && this.select_on_mouse["type_"] === "point") {
         let points_inside = this.select_on_mouse.points_inside;
         for (let point of points_inside) {
           this.select_on_mouse_indices.push(point.index);

@@ -436,7 +436,7 @@ export class MultiplePlots {
             throw new Error('add_primitive_group_container(): ' + name + " isn't a valid attribute");
           }
         }
-      } 
+      }
       this.initialize_new_plot_data(new_plot_data);
       try {
         new_plot_data = this.call_layout(new_plot_data, attribute_names);
@@ -449,7 +449,6 @@ export class MultiplePlots {
         let obj = this.objectList[this.nbObjects - 1];
         obj.draw();
       }
-      
       return this.nbObjects - 1;
     }
   
@@ -742,7 +741,11 @@ export class MultiplePlots {
       this.manipulation_bool = false;
       this.view_bool = false;
       for (let i=0; i<this.nbObjects; i++) {
-        this.objectList[i].multiplot_manipulation = this.manipulation_bool;
+        let obj: any = this.objectList[i];
+        obj.multiplot_manipulation = this.manipulation_bool;
+        if (!this.selectDependency_bool && obj.type_ === "primitivegroupcontainer") {
+          obj.reset_selection();
+        }
       }
     }
   
@@ -909,6 +912,8 @@ export class MultiplePlots {
           obj.reset_rubberbands();
         } else if (obj.type_ === 'histogram') {
           obj.reset_x_rubberband(); 
+        } else if (obj.type_ === "primitivegroupcontainer") {
+          obj.reset_selection();
         }
       }
       this.redrawAllObjects();
@@ -1226,8 +1231,12 @@ export class MultiplePlots {
       }
   
       for (let i=0; i<this.nbObjects; i++) {
-        if ((this.objectList[i]['type_'] == 'scatterplot') && (i != isSelectingObjIndex)) {
+        let obj: any = this.objectList[i];
+        if ((obj.type_ === 'scatterplot') && (i != isSelectingObjIndex)) {
           MultiplotCom.sc_to_sc_communication(selection_coords, to_display_attributes, this.objectList[i]);
+        } else if (obj.type_ === "primitivegroupcontainer") {
+          obj.selected_point_index = this.objectList[isSelectingObjIndex].selected_point_index;
+          obj.select_primitive_groups();
         }
       }
       this.refresh_dep_selected_points_index();
@@ -1245,6 +1254,7 @@ export class MultiplePlots {
     }
   
     pp_communication(rubberbands_dep:[string, [number, number]][]):void { //process received data from a parallelplot and send it to the other objects
+      let primitive_indices = [];
       for (let i=0; i<this.nbObjects; i++) {
         var obj:PlotData = this.objectList[i];
         var axis_numbers:number[] = [];
@@ -1270,10 +1280,18 @@ export class MultiplePlots {
               MultiplotCom.pp_to_histogram_communication(rubberband_dep, obj);
             }
           }
+        } else if (obj.type_ === "primitivegroupcontainer") {
+          primitive_indices.push(i);
         }
       }
       this.refresh_dep_selected_points_index();
       this.refresh_selected_object_from_index();
+
+      for (let index of primitive_indices) {
+        let obj: any = this.objectList[index];
+        obj.selected_point_index = this.dep_selected_points_index;
+        obj.select_primitive_groups();
+      }
     }
   
   
@@ -1286,6 +1304,7 @@ export class MultiplePlots {
   
     histogram_communication(index) {
       let histogram = this.objectList[index];
+      let primitive_indices = [];
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if (obj.type_ === 'scatterplot') {
@@ -1294,10 +1313,18 @@ export class MultiplePlots {
           MultiplotCom.histogram_to_pp_communication(histogram, obj);
         } else if (obj.type_ === 'histogram') {
           MultiplotCom.histogram_to_histogram_communication(histogram, obj);
+        } else if (obj.type_ === "primitivegroupcontainer") {
+          primitive_indices.push(i);
         }
       }
       this.refresh_dep_selected_points_index();
       this.refresh_selected_object_from_index();
+
+      for (let index of primitive_indices) {
+        let obj: any = this.objectList[index];
+        obj.selected_point_index = this.dep_selected_points_index;
+        obj.select_primitive_groups();
+      }
     }
   
   

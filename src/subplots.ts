@@ -13,6 +13,7 @@ var alert_count = 0;
  */
 export class PlotContour extends PlotData {
     plot_datas:any;
+    selected: boolean = true;
     public constructor(public data:any,
                        public width: number,
                        public height: number,
@@ -603,7 +604,9 @@ export class PrimitiveGroupContainer extends PlotData {
           this.draw_coordinate_lines();
         }
         for (let index of this.display_order) {
-          this.primitive_groups[index].draw();
+          if (this.primitive_groups[index].selected) {
+            this.primitive_groups[index].draw();
+          }
         }
       }
   
@@ -620,6 +623,22 @@ export class PrimitiveGroupContainer extends PlotData {
   
   
     draw_from_context(hidden) {}
+
+
+    reset_selection() {
+      for (let i=0; i<this.primitive_groups.length; i++) {
+        this.primitive_groups[i].selected = true;
+      }
+    }
+
+
+    select_primitive_groups() {
+      let reverse_primitive_dict = Object.fromEntries(Object.entries(this.primitive_dict).map(val => [val[1], val[0]]));
+      for (let i=0; i<this.primitive_groups.length; i++) {
+        let index = Number(reverse_primitive_dict[i]);
+        this.primitive_groups[i].selected = List.is_include(index, this.selected_point_index);
+      }
+    }
   
   
     redraw_object() {
@@ -652,12 +671,14 @@ export class PrimitiveGroupContainer extends PlotData {
       this.context.strokeStyle = string_to_hex('grey');
       if (this.layout_mode == 'one_axis') {
         for (let primitive of this.primitive_groups) {
+          if (!primitive.selected) continue;
           let x = primitive.X + primitive.width/2;
           let y = primitive.Y + primitive.height;
           Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y + this.Y]]);
         }
       } else if (this.layout_mode == 'two_axis') {
         for (let primitive of this.primitive_groups) {
+          if (!primitive.selected) continue;
           let x = primitive.X + primitive.width/2;
           let y = primitive.Y + primitive.height/2;
           Shape.drawLine(this.context, [[this.decalage_axis_x + this.X, y], [x, y], [x, this.height - this.decalage_axis_y + this.Y]]);

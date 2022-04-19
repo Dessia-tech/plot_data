@@ -38,13 +38,13 @@ export class PlotContour extends PlotData {
           if (primitive.type_ === 'multiplelabels') {
             multiple_labels_index = i;
           } else {
-            if (isNaN(this.minX)) {this.minX = primitive.minX} else {this.minX = Math.min(this.minX, primitive.minX)};
-            if (isNaN(this.maxX)) {this.maxX = primitive.maxX} else {this.maxX = Math.max(this.maxX, primitive.maxX)};
-            if (isNaN(this.minY)) {this.minY = primitive.minY} else {this.minY = Math.min(this.minY, primitive.minY)};
-            if (isNaN(this.maxY)) {this.maxY = primitive.maxY} else {this.maxY = Math.max(this.maxY, primitive.maxY)};
-            if ((primitive.type_ == 'contour') || (primitive.type_ == 'circle')) {
-              this.colour_to_plot_data[primitive.mouse_selection_color] = primitive;
-            }
+            this.minX = Math.min(this.minX, primitive.minX);
+            this.maxX = Math.max(this.maxX, primitive.maxX);
+            this.minY = Math.min(this.minY, primitive.minY);
+            this.maxY = Math.max(this.maxY, primitive.maxY);
+            if (["contour", "circle", "wire"].includes(primitive.type_)) {
+              this.color_to_plot_data[primitive.hidden_color] = primitive;
+            } 
           }
         }
         if (multiple_labels_index !== -1) { // So that labels are drawn at last
@@ -61,7 +61,6 @@ export class PlotContour extends PlotData {
     draw() {
       this.draw_from_context(true);
       this.draw_from_context(false);
-  
     }
   
     draw_from_context(hidden) {

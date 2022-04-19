@@ -1,8 +1,8 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
-import { Shape, List, MyMath, MyObject } from "./toolbox";
+import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
 
 
@@ -35,7 +35,7 @@ export abstract class PlotData {
   originX:number=0;
   originY:number=0;
   settings_on:boolean=false;
-  colour_to_plot_data:any={};
+  color_to_plot_data:any={};
   select_on_mouse:any;
   primitive_mouse_over_point:Point2D;
   select_on_click:any[]=[];
@@ -245,7 +245,7 @@ export abstract class PlotData {
         this.minY = Math.min(this.minY, point.minY);
         this.maxY = Math.max(this.maxY, point.maxY);
       }
-      this.colour_to_plot_data[point.mouse_selection_color] = point;
+      this.color_to_plot_data[point.hidden_color] = point;
     }
     if (this.minX === this.maxX) {
       let val = this.minX;
@@ -339,34 +339,57 @@ export abstract class PlotData {
         var is_inside_canvas = (pr_x+pr_w>=0) && (pr_x<=this.width) &&
           (pr_y+pr_h>0) && (pr_y<=this.height);
         if (need_check.includes(d.primitives[i].type_) && !is_inside_canvas) continue;
-        if (d.primitives[i].type_ == 'contour') {
+        if (d.primitives[i].type_ === 'contour') {
           this.draw_contour(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if (d.primitives[i].type_ == 'arc') {
+        } else if (d.primitives[i].type_ === 'arc') {
           d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
-        } else if (d.primitives[i].type_ == 'text') {
+        } else if (d.primitives[i].type_ === 'text') {
           d.primitives[i].init_scale = this.init_scale;
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
-        } else if (d.primitives[i].type_ == 'circle') {
+        } else if (d.primitives[i].type_ === 'circle') {
           this.draw_circle(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
-        } else if (d.primitives[i].type_ == 'linesegment2d') {
+        } else if (d.primitives[i].type_ === 'linesegment2d') {
           d.primitives[i].draw(this.context, true, mvx, mvy, scaleX, scaleY, this.X, this.Y);
           this.context.stroke();
           this.context.setLineDash([]);
-        } else if (d.primitives[i].type_ == 'line2d') {
+        } else if (d.primitives[i].type_ === 'line2d') {
           d.primitives[i].draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.width, this.height);
         } else if (d.primitives[i].type_ === 'multiplelabels') {
           d.primitives[i].draw(this.context, this.width, this.X, this.Y);
+        } else if (d.primitives[i].type_ === "wire") {
+          this.draw_wire(hidden, d.primitives[i]);
+          // tooltips drawn in mouse_move_interaction()
         }
         this.context.closePath(); 
       }
     }
   }
 
+
+  draw_wire(hidden: boolean, wire: Wire) {
+    if (hidden) {
+      this.context.strokeStyle = rgb_to_hex(wire.hidden_color);
+      this.context.lineWidth = 3 * wire.edge_style.line_width;
+    } else {
+      if (this.select_on_mouse === wire) {
+        this.context.strokeStyle = string_to_hex("yellow");
+        this.context.lineWidth = Math.max(3 * wire.edge_style.line_width, 3);
+      } else {
+        this.context.strokeStyle = wire.edge_style.color_stroke;
+        this.context.setLineDash(wire.edge_style.dashline);
+        this.context.lineWidth = wire.edge_style.line_width;
+      }
+    }
+    wire.draw(this.context, this.scaleX, this.scaleY, this.originX, this.originY, this.X, this.Y);
+    this.context.setLineDash([]);
+  }
+
+  
   draw_contour(hidden, mvx, mvy, scaleX, scaleY, d:Contour2D) {
     if (hidden) {
-      this.context.fillStyle = d.mouse_selection_color;
+      this.context.fillStyle = d.hidden_color;
     } else {
       this.context.strokeStyle = d.edge_style.color_stroke;
       this.context.lineWidth = d.edge_style.line_width;
@@ -401,7 +424,7 @@ export abstract class PlotData {
 
   draw_circle(hidden, mvx, mvy, scaleX, scaleY, d:Circle2D) {
     if (hidden) {
-      this.context.fillStyle = d.mouse_selection_color;
+      this.context.fillStyle = d.hidden_color;
       d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
     } else {
       d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
@@ -434,7 +457,7 @@ export abstract class PlotData {
 
   draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
     if (hidden) {
-      this.context.fillStyle = d.mouse_selection_color;
+      this.context.fillStyle = d.hidden_color;
     } else {
       if (this.plotObject.type_ == 'scatterplot') {
         if (this.sc_interpolation_ON) {
@@ -1733,7 +1756,7 @@ export abstract class PlotData {
   selecting_point_action(mouse1X, mouse1Y) {
     var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-    var click_plot_data = this.colour_to_plot_data[colKey];
+    var click_plot_data = this.color_to_plot_data[colKey];
     if (click_plot_data) {
       if (click_plot_data.selected) {
         this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
@@ -1827,9 +1850,9 @@ export abstract class PlotData {
   }
 
   mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right) {
+    mouse2X = e.offsetX;
+    mouse2Y = e.offsetY;
     if (isDrawing === true) {
-      mouse2X = e.offsetX;
-      mouse2Y = e.offsetY;
       if (!(this.zw_bool||this.select_bool)) {
         canvas.style.cursor = 'move';
         mouse_moving = true;
@@ -1890,9 +1913,14 @@ export abstract class PlotData {
       var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
       var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
       var old_select_on_mouse = this.select_on_mouse;
-      this.select_on_mouse = this.colour_to_plot_data[colKey];
+      this.select_on_mouse = this.color_to_plot_data[colKey];
       if (this.select_on_mouse !== old_select_on_mouse) {
         this.draw();
+      } else if (this.select_on_mouse && ["wire", "contour", "circle"].includes(this.select_on_mouse["type_"]) 
+                && this.select_on_mouse["tooltip"]) {
+        this.draw();
+        this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale, 
+        this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
       }
     }
     var is_inside_canvas = (mouse2X>=this.X) && (mouse2X<=this.width + this.X) && (mouse2Y>=this.Y) && (mouse2Y<=this.height + this.Y);
@@ -2255,7 +2283,7 @@ export abstract class PlotData {
           point_list_copy = List.remove_element(point_list_copy[i], point_list_copy);
           point_list_copy = List.remove_element(point_list_copy[j-1], point_list_copy);
           point_list_copy.push(point);
-          this.colour_to_plot_data[point.mouse_selection_color] = point;
+          this.color_to_plot_data[point.hidden_color] = point;
           bool = true;
           break;
         } else {

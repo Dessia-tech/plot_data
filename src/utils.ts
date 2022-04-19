@@ -594,9 +594,10 @@ export class Sort {
 
 
 export class Tooltip {
-    constructor(public attribute_names:string[],
-                public surface_style:SurfaceStyle,
+    constructor(public surface_style:SurfaceStyle,
                 public text_style:TextStyle,
+                public attribute_names?:string[],
+                public message?: Text,
                 public tooltip_radius:number=10,
                 public type_:string='tooltip',
                 public name:string='') {
@@ -611,9 +612,10 @@ export class Tooltip {
       var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
       var text_style = TextStyle.deserialize(serialized['text_style']);
   
-      return new Tooltip(serialized['attributes'],
-                         surface_style,
+      return new Tooltip(surface_style,
                          text_style,
+                         serialized['attributes'],
+                         serialized["text"],
                          serialized['tooltip_radius'],
                          serialized['type_'],
                          serialized['name']);
@@ -742,7 +744,7 @@ export class Tooltip {
         context.textAlign = 'center';
         context.textBaseline = 'middle';
   
-        var x_start = tp_x + 1/10*tp_width;
+        // var x_start = tp_x + 1/10*tp_width;
   
         var current_y = tp_y + 0.75*this.text_style.font_size;
         for (var i=0; i<textfills.length; i++) {
@@ -781,6 +783,46 @@ export class Tooltip {
 
         }
       }
+    }
+
+
+    draw_primitive_tooltip(context, scale, mvx, mvy, X, Y, x, y, canvas_width, canvas_height) {
+      context.font = this.text_style.font;
+      var tp_height = this.text_style.font_size*1.25;
+      var tp_x = x + 5
+      var tp_y = y - 1/2*tp_height;
+      var text_length = context.measureText(this.message).width;
+      var tp_width = text_length*1.3;
+      
+      // Bec
+      // var point1 = [tp_x + 5, y];
+      // var point2 = [tp_x, y + 15];
+      // var point3 = [tp_x, y - 15];
+
+      if (tp_x + tp_width  > canvas_width + X) {
+        tp_x = x - tp_width;
+        // point1 = [tp_x + tp_width, y + 15];
+        // point2 = [tp_x + tp_width, y - 15];
+        // point3 = [tp_x + tp_width, y];
+      }
+      if (tp_y < Y) {
+        tp_y = y;
+      }
+      if (tp_y + tp_height > canvas_height + Y) {
+        tp_y = y - tp_height;
+      }
+
+      // context.beginPath();
+      // Shape.drawLine(context, [point1, point2, point3]);
+      // context.stroke();
+      // context.fill();
+
+      Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('black'), 0.5,
+      this.surface_style.opacity, []);
+      context.fillStyle = this.text_style.text_color;
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      context.fillText(this.message, tp_x + tp_width/2, tp_y + tp_height/2);
     }
 }
 

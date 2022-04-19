@@ -1915,3 +1915,63 @@ export class Histogram extends PlotData {
     }
   
 }
+
+
+export class ScatterMatrix extends PlotData {
+  plots = [];
+
+  constructor(public data:any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot = false) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.elements = data["elements"];
+      let axes = data["axes"] || Object.getOwnPropertyNames(this.elements[0]);
+      let x_step = width / axes.length;
+      let y_step = height / axes.length;
+      for (let i=0; i<axes.length; i++) {
+        for (let j=0; j<axes.length; j++) {
+          if (i === j) {
+            let data1 = {x_variable: axes[i], elements: this.elements, graduation_nb: 4, 
+              package_version: data["package_version"], type_: "histogram"};
+            var obj: any = new Histogram(data1, x_step, y_step, false, i*x_step, j*y_step, "hist"+i);
+          } else {
+            let data1 = {attribute_names: [axes[i], axes[j]], elements: this.elements, 
+              type_: "scatterplot", package_version: data["package_version"], 
+              axis: {nb_points_x: 5, nb_points_y: 5, grid_on: false}};
+            obj = new PlotScatter(data1, x_step, y_step, false, i*x_step, j*y_step, "scatter" + i + j);
+          }
+          this.plots.push(obj);
+        }
+      }
+  }
+
+  define_canvas(canvas_id: string): void {
+    super.define_canvas(canvas_id);
+    for (let i=0; i<this.plots.length; i++) {
+      this.plots[i].context_hidden = this.context_hidden;
+      this.plots[i].context_show = this.context_show;
+    }
+  }
+
+  draw_initial(): void {
+    for (let i=0; i<this.plots.length; i++) {
+      this.plots[i].draw_initial();
+    }
+  }
+
+  draw() {
+    this.draw_from_context(true);
+    this.draw_from_context(false);
+  }
+
+  draw_from_context(hidden: any) {
+    for (let i=0; i<this.plots.length; i++) {
+      this.plots[i].draw_from_context(hidden);
+    }
+  }
+}

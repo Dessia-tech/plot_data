@@ -96,7 +96,7 @@ export class PointStyle {
       if (shape === undefined) {
         shape = 'circle';
       }
-     }
+    }
   
     public static deserialize(serialized) {
       let default_dict_ = {color_fill:string_to_hex('lightviolet'), color_stroke:string_to_hex('lightgrey'),
@@ -164,11 +164,15 @@ export class TextStyle {
       if (font_style === undefined) {
         font_style = 'sans-serif';
       }
+      this.refresh_font();
+    }
+
+    refresh_font() {
       this.option = '';
-      if (bold && !italic) this.option = 'bold ';
-      else if (italic && !bold) this.option = 'italic ';
-      else if (italic && bold) this.option = 'bold italic ';
-      this.font = this.option + font_size.toString() + 'px ' + font_style;
+      if (this.bold && !this.italic) this.option = 'bold ';
+      else if (this.italic && !this.bold) this.option = 'italic ';
+      else if (this.italic && this.bold) this.option = 'bold italic ';
+      this.font = this.option + this.font_size.toString() + 'px ' + this.font_style;
     }
   
     public static deserialize(serialized) {

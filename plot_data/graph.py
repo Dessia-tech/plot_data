@@ -63,7 +63,6 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
             else:
                 raise NotImplementedError
             primitives.append(prim)
-
             if text_style is None:
                 text_style = plot_data.TextStyle(text_color='rgb(0,0,0)',
                                                  text_align_x='center',

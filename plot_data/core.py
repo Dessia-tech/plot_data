@@ -635,6 +635,24 @@ class Graph2D(PlotDataObject):
         return ax
 
 
+class Heatmap(DessiaObject):
+    """
+    Heatmap is a scatter plot's view. This class contains the Heatmap's parameters.
+    :param size: A tuple of two integers corresponding to the number of squares on the horizontal and vertical sides.
+    :type size: Tuple[int, int]
+    :param colors: The list of colors ranging from low density to high density, e.g. colors=[colors.BLUE, colors.RED] \
+    so the low density areas tend to be blue while higher density areas tend to be red.
+    :type colors: List[Colors]
+    :param edge_style: The areas separating lines settings
+    :type edge_style: EdgeStyle
+    """
+    def __init__(self, size: Tuple[int, int]=None, colors:List[colors.Color]=None, edge_style:EdgeStyle=None, name:str=''):
+        self.size = size
+        self.colors = colors
+        self.edge_style = edge_style
+        DessiaObject.__init__(self, name=name)
+
+
 class Scatter(PlotDataObject):
     """
     A class for drawing scatter plots.
@@ -658,6 +676,11 @@ class Scatter(PlotDataObject):
     :type log_scale_x: bool
     :param log_scale_y: True or False
     :type log_scale_y: bool
+    :param heatmap: Heatmap view settings
+    :type heatmap: Heatmap
+    :param heatmap_view: Heatmap view when loading the object. If set \
+    to False, you'd still be able to enable it using the button.
+    :type heatmap_view: bool
     """
 
     def __init__(self, x_variable: str, y_variable: str,
@@ -665,6 +688,7 @@ class Scatter(PlotDataObject):
                  point_style: PointStyle = None,
                  elements: List[Any] = None, axis: Axis = None,
                  log_scale_x: bool = None, log_scale_y: bool = None,
+                 heatmap: Heatmap = None, heatmap_view: bool = None,
                  name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
@@ -679,6 +703,8 @@ class Scatter(PlotDataObject):
             self.axis = axis
         self.log_scale_x = log_scale_x
         self.log_scale_y = log_scale_y
+        self.heatmap = heatmap
+        self.heatmap_view = heatmap_view
         PlotDataObject.__init__(self, type_='scatterplot', name=name)
 
 

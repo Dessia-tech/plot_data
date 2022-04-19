@@ -1,5 +1,5 @@
 
-import { string_to_rgb, rgb_to_string, string_to_hex } from "./color_conversion";
+import { string_to_rgb, rgb_to_string, string_to_hex, rgb_to_hex } from "./color_conversion";
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
@@ -857,6 +857,28 @@ export class Text {
     return cut_texts;
   }
 
+}
+
+
+export class Heatmap {
+  constructor(public size: number[] = [3,3],
+              public colors: string[] = [string_to_hex("yellow"), string_to_hex("orange"), string_to_hex("red")],
+              public edge_style: EdgeStyle = new EdgeStyle(1, string_to_hex("white"), [], ""),
+              public name: string = "") {}
+    
+
+  public static deserialize(serialized) {
+    let default_colors = [string_to_rgb("blue"), string_to_rgb("yellow"), string_to_rgb("red")];
+    let default_dict = {edge_style: new EdgeStyle(1, string_to_hex("white"), [], ""),
+                        colors: default_colors};
+    serialized = set_default_values(serialized, default_dict);
+    let edge_style = EdgeStyle.deserialize(serialized["edge_style"]);
+    let colors = [];
+    for (let i=0; i<serialized["colors"].length; i++) {
+      colors.push(rgb_to_hex(serialized["colors"][i]));
+    }
+    return new Heatmap(serialized["size"], colors, edge_style, serialized["name"]);
+  }
 }
 
 

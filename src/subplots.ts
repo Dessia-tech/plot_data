@@ -1,9 +1,9 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
-import { PrimitiveGroup } from "./primitives";
+import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, rgb_interpolations, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
 
 
@@ -151,6 +151,8 @@ export class PlotScatter extends PlotData {
           this.pointLength = this.plotObject.point_list[0].size;
           this.scatter_init_points = this.plotObject.point_list;
           this.refresh_MinMax(this.plotObject.point_list);
+          this.heatmap_view = data["heatmap_view"] || false;
+          if (data["heatmap"]) {this.heatmap = Heatmap.deserialize(data["heatmap"])} else {this.heatmap = new Heatmap();}
         }
         this.isParallelPlot = false;
         if (this.mergeON && alert_count === 0) {
@@ -173,12 +175,16 @@ export class PlotScatter extends PlotData {
       this.context.clip();
       this.context.closePath();
       this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
-      this.draw_scatterplot(this.plotObject, hidden, this.originX, this.originY);
-      if (this.permanent_window) {
-        this.draw_selection_rectangle();
-      }
-      if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
-        this.draw_zoom_rectangle();
+      if (this.heatmap_view) {
+        this.draw_heatmap(hidden);
+      } else {
+        this.draw_scatterplot(this.plotObject, hidden, this.originX, this.originY);
+        if (this.permanent_window) {
+          this.draw_selection_rectangle();
+        }
+        if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+          this.draw_zoom_rectangle();
+        }
       }
   
       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
@@ -213,6 +219,9 @@ export class PlotScatter extends PlotData {
         // Draw log scale buttons
         Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
           "10px Arial", this);
+        
+        // Draw Heatmap button
+        Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
       }
       if (this.multiplot_manipulation) {
         this.draw_manipulable_rect();
@@ -265,7 +274,7 @@ export class ParallelPlot extends PlotData {
       this.refresh_axis_coords();
       this.isParallelPlot = true;
       this.rgbs = data['rgbs'];
-      this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
+      this.interpolation_colors = get_interpolation_colors(this.rgbs, this.to_display_list.length);
       this.initialize_hexs();
       this.initialize_display_list_to_elements_dict();
       this.refresh_pp_selected();

@@ -1,9 +1,9 @@
-import { string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Wire } from "./primitives";
+import { heatmap_color, string_to_hex } from "./color_conversion";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
-import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, rgb_interpolations, rgb_strToVector } from "./color_conversion";
+import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -106,6 +106,7 @@ export abstract class PlotData {
   clear_point_button_y:number=0;
   xlog_button_y: number = 0;
   ylog_button_y: number = 0;
+  heatmap_button_y: number = 0;
 
   all_attributes:Attribute[]=[];
   attribute_booleans:boolean[]=[];
@@ -176,6 +177,11 @@ export abstract class PlotData {
   primitive_dict:any={};
   elements_dict:any={};
   dep_mouse_over:boolean=false;
+
+  // Heatmap
+  heatmap: Heatmap;
+  heatmap_view: boolean = false;
+  selected_area: number[];
 
   public constructor(
     public data:any,
@@ -382,75 +388,71 @@ export abstract class PlotData {
 
   
   draw_contour(hidden, mvx, mvy, scaleX, scaleY, d:Contour2D) {
-    if (d['type_'] == 'contour') {
-      if (hidden) {
-        this.context.fillStyle = d.hidden_color;
-      } else {
-        this.context.strokeStyle = d.edge_style.color_stroke;
-        this.context.lineWidth = d.edge_style.line_width;
-        this.context.setLineDash(d.edge_style.dashline);
-        this.context.fillStyle = d.surface_style.color_fill;
-        this.context.globalAlpha = d.surface_style.opacity;
-        this.context.fill();
-        this.context.globalAlpha = 1;
-        if (d.surface_style.hatching != null) {
-          this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
-        }
-        if (this.select_on_mouse == d) {
-          this.context.fillStyle = this.color_surface_on_mouse;
-        }
-        for (var j = 0; j < this.select_on_click.length; j++) {
-          var z = this.select_on_click[j];
-          if (z == d) {
-            this.context.fillStyle = this.color_surface_on_click;
-          }
-        }
-      }
-      for (var j = 0; j < d.plot_data_primitives.length; j++) {
-        let elem = d.plot_data_primitives[j];
-        if (j == 0) var first_elem = true; else first_elem = false;
-        if (elem.type_ == 'linesegment2d') elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
-        else elem.contour_draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
-      }
-      this.context.stroke();
+    if (hidden) {
+      this.context.fillStyle = d.hidden_color;
+    } else {
+      this.context.strokeStyle = d.edge_style.color_stroke;
+      this.context.lineWidth = d.edge_style.line_width;
+      this.context.setLineDash(d.edge_style.dashline);
+      this.context.fillStyle = d.surface_style.color_fill;
+      this.context.globalAlpha = d.surface_style.opacity;
       this.context.fill();
-      this.context.setLineDash([]);
+      this.context.globalAlpha = 1;
+      if (d.surface_style.hatching != null) {
+        this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
+      }
+      if (this.select_on_mouse == d) {
+        this.context.fillStyle = this.color_surface_on_mouse;
+      }
+      for (var j = 0; j < this.select_on_click.length; j++) {
+        var z = this.select_on_click[j];
+        if (z == d) {
+          this.context.fillStyle = this.color_surface_on_click;
+        }
+      }
     }
+    for (var j = 0; j < d.plot_data_primitives.length; j++) {
+      let elem = d.plot_data_primitives[j];
+      if (j == 0) var first_elem = true; else first_elem = false;
+      if (elem.type_ == 'linesegment2d') elem.draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+      else elem.contour_draw(this.context, first_elem,  mvx, mvy, scaleX, scaleY, this.X, this.Y);
+    }
+    this.context.stroke();
+    this.context.fill();
+    this.context.setLineDash([]);
   }
 
   draw_circle(hidden, mvx, mvy, scaleX, scaleY, d:Circle2D) {
-    if (d['type_'] == 'circle') {
-      if (hidden) {
-        this.context.fillStyle = d.hidden_color;
-        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
-      } else {
-        d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
-        this.context.strokeStyle = d.edge_style.color_stroke;
-        this.context.setLineDash(d.edge_style.dashline);
-        this.context.lineWidth = d.edge_style.line_width;
-        this.context.stroke();
-        this.context.fillStyle = d.surface_style.color_fill;
-        this.context.globalAlpha = d.surface_style.opacity;
+    if (hidden) {
+      this.context.fillStyle = d.hidden_color;
+      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+    } else {
+      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y);
+      this.context.strokeStyle = d.edge_style.color_stroke;
+      this.context.setLineDash(d.edge_style.dashline);
+      this.context.lineWidth = d.edge_style.line_width;
+      this.context.stroke();
+      this.context.fillStyle = d.surface_style.color_fill;
+      this.context.globalAlpha = d.surface_style.opacity;
+      this.context.fill();
+      this.context.globalAlpha = 1;
+      if (d.surface_style.hatching != null) {
+        this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
         this.context.fill();
-        this.context.globalAlpha = 1;
-        if (d.surface_style.hatching != null) {
-          this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
-          this.context.fill();
-        }
-        if (this.select_on_mouse == d) {
-          this.context.fillStyle = this.color_surface_on_mouse;
+      }
+      if (this.select_on_mouse == d) {
+        this.context.fillStyle = this.color_surface_on_mouse;
 
-        }
-        for (var j = 0; j < this.select_on_click.length; j++) {
-          var z = this.select_on_click[j];
-          if (z == d) {
-            this.context.fillStyle = this.color_surface_on_click;
-          }
+      }
+      for (var j = 0; j < this.select_on_click.length; j++) {
+        var z = this.select_on_click[j];
+        if (z == d) {
+          this.context.fillStyle = this.color_surface_on_click;
         }
       }
-      this.context.fill();
-      this.context.setLineDash([]);
     }
+    this.context.fill();
+    this.context.setLineDash([]);
   }
 
   draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
@@ -524,10 +526,11 @@ export abstract class PlotData {
     this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
   }
 
-  draw_scatterplot_axis(mvx, mvy, scaleX, scaleY, d:Axis, lists, to_display_attributes, log_scale_x, log_scale_y) {
-    d.draw_scatter_axis(this.context, mvx, mvy, scaleX, scaleY, this.width, this.height, this.init_scaleX, this.init_scaleY, lists, 
-      to_display_attributes, this.scroll_x, this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, 
-      this.height, log_scale_x, log_scale_y);
+  draw_scatterplot_axis(d:Axis, lists, to_display_attributes) {
+    d.draw_scatter_axis(this.context, this.originX, this.originY, this.scaleX, this.scaleY, this.width, this.height, 
+      this.init_scaleX, this.init_scaleY, lists, to_display_attributes, this.scroll_x, this.scroll_y, 
+      this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width, 
+      this.height, this.log_scale_x, this.log_scale_y);
     this.x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.x_step)));
     this.y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(d.y_step)));
     this.context.closePath();
@@ -609,15 +612,107 @@ export abstract class PlotData {
     }
   }
 
+  get_heatmap_table(scatter) {
+    let table = [];
+    let w = this.heatmap.size[0];
+    let h = this.heatmap.size[1];
+    for (let i=0; i<h; i++) {
+      table.push(Array(w).fill(0));
+    }
+    let wstep = this.width/w;
+    let hstep = this.height/h;
+
+    for (let point of scatter.point_list) {
+      let x = this.real_to_scatter_coords(point.cx, "x") - this.X;
+      let y = this.real_to_scatter_coords(-point.cy, "y") - this.Y;
+      if (x<0 || x>this.width || y<0 || y>this.height) {
+        continue;
+      }
+      let kx = Math.floor(x/wstep);
+      let ky = Math.floor(y/hstep);
+      table[ky][kx]++;
+    }
+    return table;
+  }
+
+
+  draw_gradient_axis(max_density) {
+    let start = 0.25 * this.width + this.X;
+    let end = 0.75 * this.width + this.X;
+    let y = 0.03 * this.height + this.Y;
+    let nb_rect = this.heatmap.colors.length - 1;
+    let w = (end - start) / nb_rect;
+    let h = Math.max(0.015 * this.height, 15);
+    for (let i=0; i<nb_rect; i++) {
+      var gradient = this.context.createLinearGradient(start + i*w, y, start + (i+1)*w, y);
+      gradient.addColorStop(0, this.heatmap.colors[i]);
+      gradient.addColorStop(1, this.heatmap.colors[i+1]);
+      this.context.fillStyle = gradient;
+      this.context.fillRect(start + i*w, y, w, h);
+    }
+    this.context.strokeStyle = "black";
+    this.context.lineWidth = 1;
+    this.context.strokeRect(start, y, end - start, h);
+
+    this.context.fillStyle = string_to_hex("black");
+    this.context.font = "12px sans-serif";
+    this.context.textAlign = "center";
+    this.context.textBaseline = "hanging";
+
+    let step = max_density / nb_rect;
+    for (let i=0; i<this.heatmap.colors.length; i++) {
+      this.context.fillText(Math.floor(i*step), start + i*w, y + h + 5);
+    }
+  }
+
+  draw_heatmap(hidden) {
+    if (hidden) return;
+    let scatter = this.plotObject;
+    let table = this.get_heatmap_table(scatter);
+    let w = this.heatmap.size[0];
+    let h = this.heatmap.size[1];
+    let wstep = this.width/w;
+    let hstep = this.height/h;
+    let max_density = scatter.point_list.length;
+    for (let i=1; i<w; i++) {
+      this.context.moveTo(i*wstep + this.X, this.Y);
+      this.context.lineTo(i*wstep + this.X, this.height + this.Y);
+      this.context.stroke();
+    }
+    for (let i=1; i<h; i++) {
+      this.context.moveTo(this.X, i*hstep + this.Y);
+      this.context.lineTo(this.width + this.X, i*hstep + this.Y);
+      this.context.stroke();
+    }
+    for (let i=0; i<w; i++) {
+      for (let j=0; j<h; j++) {
+        let density = table[j][i];
+        let color = heatmap_color(density, max_density, this.heatmap.colors);
+        this.context.fillStyle = color;
+        this.context.fillRect(i*wstep + this.X, j*hstep + this.Y, wstep, hstep);
+      }
+    }
+    if (this.selected_area) {
+      this.context.strokeStyle = string_to_hex("blue");
+      this.context.lineWidth = 2;
+      this.context.strokeRect(this.selected_area[0]*wstep + this.X, this.selected_area[1]*hstep + this.Y,
+        wstep, hstep);
+    }
+
+    this.draw_gradient_axis(max_density);
+    let temp = scatter.axis.grid_on;
+    scatter.axis.grid_on = false;
+    this.draw_scatterplot_axis(scatter.axis, scatter.lists, scatter.to_display_attributes);
+    scatter.axis.grid_on = temp;
+  }
+
   draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
     if (d['type_'] == 'scatterplot') {
-      this.draw_scatterplot_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, 
-        d.lists, d.to_display_attributes, this.log_scale_x, this.log_scale_y);
+      this.draw_scatterplot_axis(d.axis, d.lists, d.to_display_attributes);
       if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
         let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
         if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
           this.scatter_points = refreshed_points;
-          //refresh_point_families
         }
         this.refresh_point_list_bool = false;
       } else if (this.mergeON === false) {
@@ -1146,7 +1241,7 @@ export abstract class PlotData {
 
   refresh_interpolation_colors(): void {
     this.interpolation_colors = [];
-    this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
+    this.interpolation_colors = get_interpolation_colors(this.rgbs, this.to_display_list.length);
   }
 
   add_to_hexs(hex:string): void {
@@ -1229,6 +1324,7 @@ export abstract class PlotData {
     this.clear_point_button_y = this.perm_button_y + this.button_h + 5;
     this.xlog_button_y = this.clear_point_button_y + this.button_h + 5;
     this.ylog_button_y = this.xlog_button_y + this.button_h + 5;
+    this.heatmap_button_y = this.ylog_button_y + this.button_h + 5;
   }
 
   refresh_attribute_booleans() {
@@ -1698,6 +1794,23 @@ export abstract class PlotData {
     if (this.type_ == 'scatterplot') {this.refresh_latest_selected_points_index();}
   }
 
+  refresh_selected_area(mouse1X, mouse1Y) {
+    let w = this.heatmap.size[0];
+    let h = this.heatmap.size[1];
+
+    let w_step = this.width/w;
+    let h_step = this.height/h;
+
+    let i = Math.floor((mouse1X - this.X)/w_step);
+    let j = Math.floor((mouse1Y - this.Y)/h_step);
+
+    if (this.selected_area && this.selected_area[0]===i && this.selected_area[1]===j) {
+      this.selected_area = null;
+    } else {
+      this.selected_area = [i, j];
+    }
+  }
+
   reset_select_on_click() {
     this.select_on_click = [];
     this.selected_point_index = [];
@@ -1834,6 +1947,7 @@ export abstract class PlotData {
     var click_on_clear = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.clear_point_button_y + this.Y, this.button_w, this.button_h);
     var click_on_xlog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.xlog_button_y + this.Y, this.button_w, this.button_h);
     var click_on_ylog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.ylog_button_y + this.Y, this.button_w, this.button_h);
+    var click_on_heatmap = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.heatmap_button_y + this.Y, this.button_w, this.button_h);
 
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
@@ -1843,7 +1957,7 @@ export abstract class PlotData {
     }
     this.click_on_button = false;
     this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select 
-    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog;
+    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog || click_on_heatmap;
 
     if (mouse_moving) {
       if (this.zw_bool) {
@@ -1882,6 +1996,13 @@ export abstract class PlotData {
           Interactions.click_on_xlog_action(this);
         } else if (click_on_ylog) {
           Interactions.click_on_ylog_action(this);
+        } else if (click_on_heatmap) {
+          Interactions.click_on_heatmap_action(this);
+        } else {
+          if (this.heatmap_view) {
+            this.refresh_selected_area(mouse1X, mouse1Y);
+            console.log(this.selected_area)
+          }
         }
       }
       Interactions.reset_zoom_box(this);
@@ -2470,6 +2591,10 @@ export class Interactions {
     this.click_on_reset_action(plot_data);
   }
 
+  public static click_on_heatmap_action(plot_data) {
+    plot_data.heatmap_view = ! plot_data.heatmap_view;
+  }
+
   public static mouse_move_axis_inversion(isDrawing, e, selected_name_index, plot_data:any) {
     isDrawing = true;
     plot_data.move_index = selected_name_index;
@@ -2855,5 +2980,9 @@ export class Buttons {
   public static log_scale_buttons(x, y1, y2, w, h, police, plot_data:PlotData) {
     Shape.createButton(x + plot_data.X, y1 + plot_data.Y, w, h, plot_data.context, 'xlog', police);
     Shape.createButton(x + plot_data.X, y2 + plot_data.Y, w, h, plot_data.context, 'ylog', police);
+  }
+
+  public static heatmap_button(x, y, w, h, police, plot_data:PlotData) {
+    Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, "heat", police);
   }
 }

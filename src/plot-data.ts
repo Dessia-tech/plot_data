@@ -2095,7 +2095,6 @@ export abstract class PlotData {
         } else {
           if (this.heatmap_view) {
             this.refresh_selected_area(mouse1X, mouse1Y);
-            console.log(this.selected_area)
           }
         }
       }

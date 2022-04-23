@@ -447,7 +447,6 @@ export abstract class PlotData {
       }
       if (this.select_on_mouse == d) {
         this.context.fillStyle = this.color_surface_on_mouse;
-        }
         for (var j = 0; j < this.select_on_click.length; j++) {
           var z = this.select_on_click[j];
           if (z == d) {
@@ -2001,7 +2000,7 @@ export abstract class PlotData {
       var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
       var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
       var old_select_on_mouse = this.select_on_mouse;
-      this.select_on_mouse = this.colour_to_plot_data[colKey];
+      this.select_on_mouse = this.color_to_plot_data[colKey];
       this.select_on_mouse_indices = [];
       if (this.select_on_mouse && this.select_on_mouse["type_"] === "point") {
         let points_inside = this.select_on_mouse.points_inside;

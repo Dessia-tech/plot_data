@@ -1,9 +1,9 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
-import { PrimitiveGroup } from "./primitives";
+import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, rgb_interpolations, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
 
 
@@ -39,13 +39,13 @@ export class PlotContour extends PlotData {
           if (primitive.type_ === 'multiplelabels') {
             multiple_labels_index = i;
           } else {
-            if (isNaN(this.minX)) {this.minX = primitive.minX} else {this.minX = Math.min(this.minX, primitive.minX)};
-            if (isNaN(this.maxX)) {this.maxX = primitive.maxX} else {this.maxX = Math.max(this.maxX, primitive.maxX)};
-            if (isNaN(this.minY)) {this.minY = primitive.minY} else {this.minY = Math.min(this.minY, primitive.minY)};
-            if (isNaN(this.maxY)) {this.maxY = primitive.maxY} else {this.maxY = Math.max(this.maxY, primitive.maxY)};
-            if ((primitive.type_ == 'contour') || (primitive.type_ == 'circle')) {
-              this.colour_to_plot_data[primitive.mouse_selection_color] = primitive;
-            }
+            this.minX = Math.min(this.minX, primitive.minX);
+            this.maxX = Math.max(this.maxX, primitive.maxX);
+            this.minY = Math.min(this.minY, primitive.minY);
+            this.maxY = Math.max(this.maxY, primitive.maxY);
+            if (["contour", "circle", "wire"].includes(primitive.type_)) {
+              this.color_to_plot_data[primitive.hidden_color] = primitive;
+            } 
           }
         }
         if (multiple_labels_index !== -1) { // So that labels are drawn at last
@@ -62,7 +62,6 @@ export class PlotContour extends PlotData {
     draw() {
       this.draw_from_context(true);
       this.draw_from_context(false);
-  
     }
   
     draw_from_context(hidden) {
@@ -153,6 +152,8 @@ export class PlotScatter extends PlotData {
           this.pointLength = this.plotObject.point_list[0].size;
           this.scatter_init_points = this.plotObject.point_list;
           this.refresh_MinMax(this.plotObject.point_list);
+          this.heatmap_view = data["heatmap_view"] || false;
+          if (data["heatmap"]) {this.heatmap = Heatmap.deserialize(data["heatmap"])} else {this.heatmap = new Heatmap();}
         }
         this.isParallelPlot = false;
         if (this.mergeON && alert_count === 0) {
@@ -175,12 +176,16 @@ export class PlotScatter extends PlotData {
       this.context.clip();
       this.context.closePath();
       this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
-      this.draw_scatterplot(this.plotObject, hidden, this.originX, this.originY);
-      if (this.permanent_window) {
-        this.draw_selection_rectangle();
-      }
-      if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
-        this.draw_zoom_rectangle();
+      if (this.heatmap_view) {
+        this.draw_heatmap(hidden);
+      } else {
+        this.draw_scatterplot(this.plotObject, hidden, this.originX, this.originY);
+        if (this.permanent_window) {
+          this.draw_selection_rectangle();
+        }
+        if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+          this.draw_zoom_rectangle();
+        }
       }
   
       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
@@ -215,6 +220,9 @@ export class PlotScatter extends PlotData {
         // Draw log scale buttons
         Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
           "10px Arial", this);
+        
+        // Draw Heatmap button
+        Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
       }
       if (this.multiplot_manipulation) {
         this.draw_manipulable_rect();
@@ -267,7 +275,7 @@ export class ParallelPlot extends PlotData {
       this.refresh_axis_coords();
       this.isParallelPlot = true;
       this.rgbs = data['rgbs'];
-      this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
+      this.interpolation_colors = get_interpolation_colors(this.rgbs, this.to_display_list.length);
       this.initialize_hexs();
       this.initialize_display_list_to_elements_dict();
       this.refresh_pp_selected();
@@ -1927,4 +1935,64 @@ export class Histogram extends PlotData {
       }
     }
   
+}
+
+
+export class ScatterMatrix extends PlotData {
+  plots = [];
+
+  constructor(public data:any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot = false) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.elements = data["elements"];
+      let axes = data["axes"] || Object.getOwnPropertyNames(this.elements[0]);
+      let x_step = width / axes.length;
+      let y_step = height / axes.length;
+      for (let i=0; i<axes.length; i++) {
+        for (let j=0; j<axes.length; j++) {
+          if (i === j) {
+            let data1 = {x_variable: axes[i], elements: this.elements, graduation_nb: 4, 
+              package_version: data["package_version"], type_: "histogram"};
+            var obj: any = new Histogram(data1, x_step, y_step, false, i*x_step, j*y_step, "hist"+i);
+          } else {
+            let data1 = {attribute_names: [axes[i], axes[j]], elements: this.elements, 
+              type_: "scatterplot", package_version: data["package_version"], 
+              axis: {nb_points_x: 5, nb_points_y: 5, grid_on: false}};
+            obj = new PlotScatter(data1, x_step, y_step, false, i*x_step, j*y_step, "scatter" + i + j);
+          }
+          this.plots.push(obj);
+        }
+      }
+  }
+
+  define_canvas(canvas_id: string): void {
+    super.define_canvas(canvas_id);
+    for (let i=0; i<this.plots.length; i++) {
+      this.plots[i].context_hidden = this.context_hidden;
+      this.plots[i].context_show = this.context_show;
+    }
+  }
+
+  draw_initial(): void {
+    for (let i=0; i<this.plots.length; i++) {
+      this.plots[i].draw_initial();
+    }
+  }
+
+  draw() {
+    this.draw_from_context(true);
+    this.draw_from_context(false);
+  }
+
+  draw_from_context(hidden: any) {
+    for (let i=0; i<this.plots.length; i++) {
+      this.plots[i].draw_from_context(hidden);
+    }
+  }
 }

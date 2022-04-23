@@ -59,13 +59,16 @@ axis = plot_data.Axis(nb_points_x=7, nb_points_y=5,
 # they want to be displayed.
 tooltip = plot_data.Tooltip(attributes=['mass', 'length', 'shape', 'color'])
 
+# Heatmap settings
+heatmap = plot_data.Heatmap([4,2], colors=[colors.YELLOW, colors.ORANGE, colors.RED])
 
 # Now, here is the new scatterplot
 customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='shape',
                                            point_style=point_style,
                                            elements=elements,
                                            axis=axis,
-                                           tooltip=tooltip)
+                                           tooltip=tooltip,
+                                           heatmap=heatmap)
 
 # if debug_mode is True, set it to False
 plot_data.plot_canvas(plot_data_object=scatterplot, debug_mode=True)

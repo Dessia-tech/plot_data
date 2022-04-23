@@ -96,7 +96,7 @@ export class PointStyle {
       if (shape === undefined) {
         shape = 'circle';
       }
-     }
+    }
   
     public static deserialize(serialized) {
       let default_dict_ = {color_fill:string_to_hex('lightviolet'), color_stroke:string_to_hex('lightgrey'),

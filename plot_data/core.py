@@ -358,6 +358,24 @@ class LineSegment(LineSegment2D):
                       DeprecationWarning)
 
 
+class Wire(PlotDataObject):
+    """
+    A set of connected lines. It also provides highlighting feature.
+    :param lines: [(x1, y1), ..., (xn,yn)]
+    :type lines: List[Tuple[float, float]]
+    :param edge_style: Line settings
+    :type edge_style: EdgeStyle
+    :param tooltip: a message that is displayed in a tooltip
+    :type tooltip: str
+    """
+    def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None,
+                 tooltip: str = None, name: str = ""):
+        self.lines = lines
+        self.edge_style = edge_style
+        self.tooltip = tooltip
+        PlotDataObject.__init__(self, type_="wire", name=name)
+
+
 class Circle2D(PlotDataObject):
     """
     A circle. It is a primitive and can be instantiated by PrimitiveGroup.
@@ -372,17 +390,21 @@ class Circle2D(PlotDataObject):
     :type edge_style: EdgeStyle
     :param surface_style: customization of the circle's interior
     :type surface_style: SurfaceStyle
+    :param tooltip: tooltip message
+    :type tooltip: str
     """
 
     def __init__(self, cx: float, cy: float, r: float,
                  edge_style: EdgeStyle = None,
                  surface_style: SurfaceStyle = None,
+                 tooltip: str = None,
                  name: str = ''):
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.r = r
         self.cx = cx
         self.cy = cy
+        self.tooltip = tooltip
         PlotDataObject.__init__(self, type_='circle', name=name)
 
     def bounding_box(self):
@@ -503,11 +525,13 @@ class Tooltip(PlotDataObject):
     :type tooltip_radius: float
     """
 
-    def __init__(self, attributes: List[str],
+    def __init__(self, attributes: List[str] = None,
+                 text: str = None,
                  surface_style: SurfaceStyle = None,
                  text_style: TextStyle = None, tooltip_radius: float = None,
                  name: str = ''):
         self.attributes = attributes
+        self.text = text
         self.surface_style = surface_style
         if surface_style is None:
             self.surface_style = SurfaceStyle(color_fill=colors.LIGHTBLUE,
@@ -611,6 +635,24 @@ class Graph2D(PlotDataObject):
         return ax
 
 
+class Heatmap(DessiaObject):
+    """
+    Heatmap is a scatter plot's view. This class contains the Heatmap's parameters.
+    :param size: A tuple of two integers corresponding to the number of squares on the horizontal and vertical sides.
+    :type size: Tuple[int, int]
+    :param colors: The list of colors ranging from low density to high density, e.g. colors=[colors.BLUE, colors.RED] \
+    so the low density areas tend to be blue while higher density areas tend to be red.
+    :type colors: List[Colors]
+    :param edge_style: The areas separating lines settings
+    :type edge_style: EdgeStyle
+    """
+    def __init__(self, size: Tuple[int, int]=None, colors:List[colors.Color]=None, edge_style:EdgeStyle=None, name:str=''):
+        self.size = size
+        self.colors = colors
+        self.edge_style = edge_style
+        DessiaObject.__init__(self, name=name)
+
+
 class Scatter(PlotDataObject):
     """
     A class for drawing scatter plots.
@@ -634,6 +676,11 @@ class Scatter(PlotDataObject):
     :type log_scale_x: bool
     :param log_scale_y: True or False
     :type log_scale_y: bool
+    :param heatmap: Heatmap view settings
+    :type heatmap: Heatmap
+    :param heatmap_view: Heatmap view when loading the object. If set \
+    to False, you'd still be able to enable it using the button.
+    :type heatmap_view: bool
     """
 
     def __init__(self, x_variable: str, y_variable: str,
@@ -641,6 +688,7 @@ class Scatter(PlotDataObject):
                  point_style: PointStyle = None,
                  elements: List[Any] = None, axis: Axis = None,
                  log_scale_x: bool = None, log_scale_y: bool = None,
+                 heatmap: Heatmap = None, heatmap_view: bool = None,
                  name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
@@ -655,7 +703,20 @@ class Scatter(PlotDataObject):
             self.axis = axis
         self.log_scale_x = log_scale_x
         self.log_scale_y = log_scale_y
+        self.heatmap = heatmap
+        self.heatmap_view = heatmap_view
         PlotDataObject.__init__(self, type_='scatterplot', name=name)
+
+
+class ScatterMatrix(PlotDataObject):
+    def __init__(self, elements: List[Any] = None, axes: List[str] = None,
+                 point_style: PointStyle = None, surface_style: SurfaceStyle = None,
+                 name: str = ""):
+        self.elements = elements
+        self.axes = axes
+        self.point_style = point_style
+        self.surface_style = surface_style
+        PlotDataObject.__init__(self, type_="scattermatrix", name=name)
 
 
 class Arc2D(PlotDataObject):
@@ -737,14 +798,17 @@ class Contour2D(PlotDataObject):
     :type edge_style: EdgeStyle
     :param surface_style: for customizing the interior of the contour
     :type surface_style: SurfaceStyle
+    :param tooltip: A message that is displayed in a tooltip
+    :type tooltip: str
     """
 
     def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]],
                  edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
+        self.tooltip = tooltip
         PlotDataObject.__init__(self, type_='contour', name=name)
 
     def bounding_box(self):
@@ -816,11 +880,11 @@ class PrimitiveGroup(PlotDataObject):
     :param primitives: a list of Contour2D, Arc2D, LineSegment2D, \
     Circle2D, Line2D or MultipleLabels
     :type primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D, MultipleLabels]]
+    Circle2D, Line2D, MultipleLabels, Wire]]
     """
 
-    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
-                                              Circle2D, Line2D]],
+    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
+    Circle2D, Line2D, MultipleLabels, Wire]],
                  name: str = ''):
         self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)
@@ -1077,6 +1141,8 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         template = templates.primitive_group_container_template
     elif plot_type == 'histogram':
         template = templates.histogram_template
+    elif plot_type == "scattermatrix":
+        template = templates.scatter_matrix_template
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
@@ -1135,7 +1201,7 @@ TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'graphs2D': Graph2D, 'linesegment2d': LineSegment,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
-                 'primitivegroup': PrimitiveGroup}
+                 'primitivegroup': PrimitiveGroup, "scattermatrix": ScatterMatrix}
 
 
 def bounding_box(plot_datas: Subclass[PlotDataObject]):

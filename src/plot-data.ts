@@ -186,7 +186,7 @@ export abstract class PlotData {
   // Heatmap
   heatmap: Heatmap;
   heatmap_view: boolean = false;
-  selected_area: number[];
+  selected_areas: number[][];
 
   public constructor(
     public data:any,
@@ -707,11 +707,17 @@ export abstract class PlotData {
         this.context.fillRect(i*wstep + this.X, j*hstep + this.Y, wstep, hstep);
       }
     }
-    if (this.selected_area) {
-      this.context.strokeStyle = string_to_hex("blue");
-      this.context.lineWidth = 2;
-      this.context.strokeRect(this.selected_area[0]*wstep + this.X, this.selected_area[1]*hstep + this.Y,
-        wstep, hstep);
+    // The following loops could have been included in the previous one but drawing selection rectangles
+    // after the heatmap makes the result more aesthetic
+    for (let i=0; i<w; i++) {
+      for (let j=0; j<h; j++) {
+        if (this.selected_areas[i][j] === 1) {
+          this.context.strokeStyle = string_to_hex("blue");
+          this.context.lineWidth = 2;
+          this.context.strokeRect(i*wstep + this.X, j*hstep + this.Y,
+            wstep, hstep);
+        }
+      }
     }
 
     this.draw_gradient_axis(max_density);
@@ -1873,7 +1879,7 @@ export abstract class PlotData {
   }
 
 
-  refresh_selected_area(mouse1X, mouse1Y) {
+  refresh_selected_areas(mouse1X, mouse1Y) {
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
 
@@ -1883,11 +1889,7 @@ export abstract class PlotData {
     let i = Math.floor((mouse1X - this.X)/w_step);
     let j = Math.floor((mouse1Y - this.Y)/h_step);
 
-    if (this.selected_area && this.selected_area[0]===i && this.selected_area[1]===j) {
-      this.selected_area = null;
-    } else {
-      this.selected_area = [i, j];
-    }
+    this.selected_areas[i][j] = 1 - this.selected_areas[i][j];
   }
 
   reset_select_on_click(reset_clicked_points:boolean=true) {
@@ -2094,7 +2096,8 @@ export abstract class PlotData {
           Interactions.click_on_heatmap_action(this);
         } else {
           if (this.heatmap_view) {
-            this.refresh_selected_area(mouse1X, mouse1Y);
+            this.refresh_selected_areas(mouse1X, mouse1Y);
+            Interactions.refresh_heatmap_selected_points(this);
           }
         }
       }
@@ -2557,6 +2560,32 @@ export class Interactions {
     }
     plot_data.refresh_selected_point_index();
     if (plot_data.type_ == 'scatterplot') {plot_data.refresh_latest_selected_points_index();}
+  }
+
+
+  public static refresh_heatmap_selected_points(plot_data) {
+    plot_data.select_on_click = [];
+
+    let heatmap = plot_data.heatmap;
+    let w = heatmap.size[0];
+    let h = heatmap.size[1];
+
+    let w_step = plot_data.width/w;
+    let h_step = plot_data.height/h;
+    for (let k=0; k<plot_data.plotObject.point_list.length; k++) {
+      let point = plot_data.plotObject.point_list[k];
+      let x = plot_data.scaleX*point.cx + plot_data.originX + plot_data.X;
+      let y = plot_data.scaleY*point.cy + plot_data.originY + plot_data.Y;
+      let i = Math.floor((x - plot_data.X)/w_step);
+      let j = Math.floor((y - plot_data.Y)/h_step);
+      if (plot_data.selected_areas[i][j] === 1) {
+        point.selected = true;
+        plot_data.select_on_click.push(point);
+      } else {
+        point.selected = false;
+      }
+    }
+    plot_data.refresh_selected_point_index();
   }
 
   public static zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, plot_data:PlotData) {

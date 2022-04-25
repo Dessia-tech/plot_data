@@ -486,25 +486,20 @@ export abstract class PlotData {
       if (shape == 'crux') {
         this.context.strokeStyle = d.point_style.color_fill;
       }
-      if (d.selected) {
+      if (d.clicked) {
         if (shape == 'crux') {
-          this.context.strokeStyle = d.point_style.color_fill;
+          this.context.strokeStyle = this.color_surface_on_click;
+        } else {
+          this.context.fillStyle = this.color_surface_on_click;
         }
-        if (d.clicked) {
-          if (shape == 'crux') {
-            this.context.strokeStyle = this.color_surface_on_click;
+      } else if (d.selected) {
+        if (shape == 'crux') {
+          this.context.strokeStyle = this.color_surface_selected;
+        } else {
+          if (this.sc_interpolation_ON) {
+            this.context.fillStyle = d.point_style.color_fill;
           } else {
-            this.context.fillStyle = this.color_surface_on_click;
-          }
-        } else if (d.selected) {
-          if (shape == 'crux') {
-            this.context.strokeStyle = this.color_surface_selected;
-          } else {
-            if (this.sc_interpolation_ON) {
-              this.context.fillStyle = d.point_style.color_fill;
-            } else {
-              this.context.fillStyle = this.color_surface_selected;
-            }
+            this.context.fillStyle = this.color_surface_selected;
           }
         }
       }

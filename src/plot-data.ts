@@ -40,12 +40,15 @@ export abstract class PlotData {
   select_on_mouse_indices:number[]=[];
   primitive_mouse_over_point:Point2D;
   select_on_click:any[]=[]; // For scatter and graph2D, it corresponds points selected bythe selection window
+  heatmap_selected_points:any[]=[];
+  heatmap_selected_points_indices:number[]=[];
   clicked_points:any[]=[];
   selected_point_index:any[]=[];
   clicked_point_index:any[]=[];
   color_surface_on_mouse:string=string_to_hex('lightskyblue');
   color_surface_selected:string=string_to_hex('blue');
   color_surface_on_click:string=string_to_hex("red");
+  color_heatmap_selection:string=string_to_hex("violet");
   
   pointLength:number=0;
   tooltip_ON:boolean = false;
@@ -491,6 +494,12 @@ export abstract class PlotData {
           this.context.strokeStyle = this.color_surface_on_click;
         } else {
           this.context.fillStyle = this.color_surface_on_click;
+        }
+      } else if (d.selected_by_heatmap) {
+        if (shape === "crux") {
+          this.context.strokeStyle = this.color_heatmap_selection;
+        } else {
+          this.context.fillStyle = this.color_heatmap_selection;
         }
       } else if (d.selected) {
         if (shape == 'crux') {
@@ -1798,6 +1807,16 @@ export abstract class PlotData {
     }
   }
 
+  refresh_heatmap_selected_point_indices() {
+    this.heatmap_selected_points_indices = [];
+    for (let i=0; i<this.heatmap_selected_points.length; i++) {
+      let points_inside = this.heatmap_selected_points[i].points_inside;
+      for (let j=0; j<points_inside.length; j++) {
+        this.heatmap_selected_points_indices.push(points_inside[j].index);
+      }
+    }
+  }
+
 
   refresh_clicked_point_index() {  //selected_clicked_index : index of selected points in the initial point list
     this.clicked_point_index = [];
@@ -2559,7 +2578,7 @@ export class Interactions {
 
 
   public static refresh_heatmap_selected_points(plot_data) {
-    plot_data.select_on_click = [];
+    plot_data.heatmap_selected_points = [];
 
     let heatmap = plot_data.heatmap;
     let w = heatmap.size[0];
@@ -2567,20 +2586,20 @@ export class Interactions {
 
     let w_step = plot_data.width/w;
     let h_step = plot_data.height/h;
-    for (let k=0; k<plot_data.plotObject.point_list.length; k++) {
-      let point = plot_data.plotObject.point_list[k];
+    for (let k=0; k<plot_data.scatter_points.length; k++) {
+      let point = plot_data.scatter_points[k];
       let x = plot_data.scaleX*point.cx + plot_data.originX + plot_data.X;
       let y = plot_data.scaleY*point.cy + plot_data.originY + plot_data.Y;
       let i = Math.floor((x - plot_data.X)/w_step);
       let j = Math.floor((y - plot_data.Y)/h_step);
       if (plot_data.selected_areas[i][j] === 1) {
-        point.selected = true;
-        plot_data.select_on_click.push(point);
+        point.selected_by_heatmap = true;
+        plot_data.heatmap_selected_points.push(point);
       } else {
-        point.selected = false;
+        point.selected_by_heatmap = false;
       }
     }
-    plot_data.refresh_selected_point_index();
+    plot_data.refresh_heatmap_selected_point_indices();
   }
 
   public static zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, plot_data:PlotData) {

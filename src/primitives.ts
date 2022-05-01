@@ -507,6 +507,7 @@ export class Point2D {
     point_families:PointFamily[]=[];
     selected:boolean=false;
     clicked:boolean=false;
+    selected_by_heatmap:boolean = false;
     index:number=-1;
   
     constructor(public cx:number,

@@ -48,7 +48,7 @@ export abstract class PlotData {
   color_surface_on_mouse:string=string_to_hex('lightskyblue');
   color_surface_selected:string=string_to_hex('blue');
   color_surface_on_click:string=string_to_hex("red");
-  color_heatmap_selection:string=string_to_hex("violet");
+  color_heatmap_selection:string=string_to_hex("brown");
   
   pointLength:number=0;
   tooltip_ON:boolean = false;
@@ -1141,7 +1141,7 @@ export abstract class PlotData {
     this.display_list_to_elements_dict = Object.fromEntries(entries);
   }
 
-  pp_color_management(index:number, selected:boolean, clicked:boolean, over:boolean) {
+  pp_color_management(index:number, selected:boolean, clicked:boolean, over:boolean, heatmap_select:boolean) {
     if (List.isListOfEmptyList(this.rubber_bands)) {
       selected = true;
     }
@@ -1151,6 +1151,9 @@ export abstract class PlotData {
         this.context.lineWidth = 3*this.edge_style.line_width;
       } else if (clicked) {
         this.context.strokeStyle = string_to_hex("red");
+        this.context.lineWidth = 3*this.edge_style.line_width;
+      } else if (heatmap_select) {
+        this.context.strokeStyle = this.color_heatmap_selection;
         this.context.lineWidth = 3*this.edge_style.line_width;
       } else if (selected) {
         this.context.strokeStyle = this.edge_style.color_stroke;
@@ -1181,6 +1184,7 @@ export abstract class PlotData {
     var selected_seg_lists = [];
     var clicked_seg_lists = [];
     var over_seg_lists = [];
+    var heatmap_seg_lists = [];
     this.context.lineWidth = this.edge_style.line_width;
     for (let i=0; i<this.to_display_list.length; i++) {
       let selected = true
@@ -1192,39 +1196,53 @@ export abstract class PlotData {
           break;
         }
       }
-      let clicked = List.is_include(this.from_to_display_list_to_elements(i), this.clicked_point_index);
-      let over = List.is_include(this.from_to_display_list_to_elements(i), this.select_on_mouse_indices);
+      let element_index = this.from_to_display_list_to_elements(i);
+      let clicked = List.is_include(element_index, this.clicked_point_index);
+      let over = List.is_include(element_index, this.select_on_mouse_indices);
+      let selected_by_heatmap = List.is_include(element_index, this.heatmap_selected_points_indices);
+
+      // Priority : Mouse over > Click > Heatmap selection > Rubber band selection 
       if (over) {
         over_seg_lists.push({seg_list:seg_list, index:i});
       } else if (clicked) {
         clicked_seg_lists.push({seg_list:seg_list, index:i});
+      } else if (selected_by_heatmap) {
+        heatmap_seg_lists.push({seg_list:seg_list, index:i});
       } else if (selected) {
         selected_seg_lists.push({seg_list:seg_list, index:i});
       } else {
         this.context.beginPath();
-        this.pp_color_management(i, false, false, false);
+        this.pp_color_management(i, false, false, false, false);
         Shape.drawLine(this.context, seg_list);
         this.context.stroke();
         this.context.closePath();
       }
     }
+
     for (let seg_dict of selected_seg_lists) {
       this.context.beginPath();
-      this.pp_color_management(seg_dict.index, true, false, false);
+      this.pp_color_management(seg_dict.index, true, false, false, false);
+      Shape.drawLine(this.context, seg_dict.seg_list);
+      this.context.stroke();
+      this.context.closePath();
+    }
+    for (let seg_dict of heatmap_seg_lists) {
+      this.context.beginPath();
+      this.pp_color_management(seg_dict.index, false, false, false, true);
       Shape.drawLine(this.context, seg_dict.seg_list);
       this.context.stroke();
       this.context.closePath();
     }
     for (let seg_dict of clicked_seg_lists) {
       this.context.beginPath();
-      this.pp_color_management(seg_dict.index, false, true, false);
+      this.pp_color_management(seg_dict.index, false, true, false, false);
       Shape.drawLine(this.context, seg_dict.seg_list);
       this.context.stroke();
       this.context.closePath();
     }
     for (let seg_dict of over_seg_lists) {
       this.context.beginPath();
-      this.pp_color_management(seg_dict.index, false, false, true);
+      this.pp_color_management(seg_dict.index, false, false, true, false);
       Shape.drawLine(this.context, seg_dict.seg_list);
       this.context.stroke();
       this.context.closePath();
@@ -1814,6 +1832,13 @@ export abstract class PlotData {
       for (let j=0; j<points_inside.length; j++) {
         this.heatmap_selected_points_indices.push(points_inside[j].index);
       }
+    }
+  }
+
+  // Refreshes value of selected_by_heatmap attributes (Point2D)
+  refresh_selected_by_heatmap() {
+    for (let i=0; i<this.scatter_points.length; i++) {
+      this.scatter_points[i].selected_by_heatmap = List.is_include(this.scatter_points[i], this.heatmap_selected_points);
     }
   }
 

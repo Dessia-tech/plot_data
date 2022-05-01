@@ -1201,17 +1201,31 @@ export class MultiplePlots {
     }
 
     mouse_up_scatter_communication() {
-      let clicked_point_index = [];
-      for (let i=0; i<this.nbObjects; i++) {
-        let obj = this.objectList[i];
-        if (obj.type_ === "scatterplot") {
-          clicked_point_index = List.union(clicked_point_index, obj.clicked_point_index);
+      if (this.objectList[this.clickedPlotIndex].heatmap_view) {
+        let clicked_object = this.objectList[this.clickedPlotIndex];
+        for (let i=0; i<this.nbObjects; i++) {
+          let obj = this.objectList[i];
+          if (i === this.clickedPlotIndex) continue;
+          if (obj.type_ === "scatterplot") {
+            // obj.heatmap_selected_points = clicked_object.heatmap_selected_points;
+            // obj.refresh_selected_by_heatmap();
+          } else if (obj.type_ === "parallelplot") {
+            obj.heatmap_selected_points_indices = clicked_object.heatmap_selected_points_indices;
+          }
         }
-      }
-      for (let i=0; i<this.nbObjects; i++) {
-        let obj = this.objectList[i];
-        if (obj.type_ === "parallelplot") {
-          obj.clicked_point_index = clicked_point_index;
+      } else {
+        let clicked_point_index = [];
+        for (let i=0; i<this.nbObjects; i++) {
+          let obj = this.objectList[i];
+          if (obj.type_ === "scatterplot") {
+            clicked_point_index = List.union(clicked_point_index, obj.clicked_point_index);
+          }
+        }
+        for (let i=0; i<this.nbObjects; i++) {
+          let obj = this.objectList[i];
+          if (obj.type_ === "parallelplot") {
+            obj.clicked_point_index = clicked_point_index;
+          }
         }
       }
     }

@@ -17,6 +17,9 @@ surface_style = plot_data.SurfaceStyle(color_fill=colors.WHITE, opacity=1,
 # Creating several primitives. plot_data() functions are used to convert
 # a volmdlr object into a plot_data object
 
+# Point2D
+point = plot_data.Point2D(0.1, 0.2)
+
 # arc
 arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=npy.pi / 2)
 
@@ -65,6 +68,6 @@ labels = plot_data.MultipleLabels(labels=[label1, label2])
 
 wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire")
 
-primitives = [contour, line, arc,
+primitives = [point, contour, line, arc,
               circle, text, labels, wire]
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)

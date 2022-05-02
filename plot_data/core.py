@@ -72,6 +72,9 @@ class PlotDataObject(DessiaObject):
                                                compute_for='class')
         return DessiaObject.dict_to_object(dict_=dict_, force_generic=True)
 
+    def plot_data(self):
+        raise NotImplementedError('It is strange to call plot_data method from a plot_data object.'
+                                  f' Check the class {self.__class__.__name__} you are calling')
 
 class HatchingSet(DessiaObject):
     """

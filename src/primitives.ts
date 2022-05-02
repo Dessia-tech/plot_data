@@ -1,4 +1,3 @@
-
 import { string_to_rgb, rgb_to_string, string_to_hex, rgb_to_hex } from "./color_conversion";
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
@@ -249,7 +248,9 @@ export class Dataset {
         for (let j=0; j<2; j++) {
           coord.push(Math.pow(-1, j)*this.elements[i][this.attribute_names[j]]);
         }
-        this.point_list.push(new Point2D(coord[0], coord[1], this.point_style, 'point', ''));
+        let point = new Point2D(coord[0], coord[1], this.point_style, 'point', '');
+        point.index = i;
+        this.point_list.push(point);
       } 
     }
   
@@ -505,6 +506,9 @@ export class Point2D {
     points_inside:Point2D[] = [this];
     point_families:PointFamily[]=[];
     selected:boolean=false;
+    clicked:boolean=false;
+    selected_by_heatmap:boolean = false;
+    index:number=-1;
   
     constructor(public cx:number,
                 public cy:number,
@@ -735,7 +739,9 @@ export class Scatter {
       } else {
         cy = - List.get_index_of_element(elt1.toString(), this.lists[1]);
       }
-      this.point_list.push(new Point2D(cx, cy, MyObject.copy(this.point_style)));
+      let point = new Point2D(cx, cy, MyObject.copy(this.point_style));
+      point.index = i;
+      this.point_list.push(point);
     }
   }
 

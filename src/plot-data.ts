@@ -37,11 +37,19 @@ export abstract class PlotData {
   settings_on:boolean=false;
   color_to_plot_data:any={};
   select_on_mouse:any;
+  select_on_mouse_indices:number[]=[];
   primitive_mouse_over_point:Point2D;
-  select_on_click:any[]=[];
+  select_on_click:any[]=[]; // For scatter and graph2D, it corresponds points selected bythe selection window
+  heatmap_selected_points:any[]=[];
+  heatmap_selected_points_indices:number[]=[];
+  clicked_points:any[]=[];
   selected_point_index:any[]=[];
+  clicked_point_index:any[]=[];
   color_surface_on_mouse:string=string_to_hex('lightskyblue');
-  color_surface_on_click:string=string_to_hex('blue');
+  color_surface_selected:string=string_to_hex('blue');
+  color_surface_on_click:string=string_to_hex("red");
+  color_heatmap_selection:string=string_to_hex("brown");
+  
   pointLength:number=0;
   tooltip_ON:boolean = false;
   axis_ON:boolean = false;
@@ -181,7 +189,7 @@ export abstract class PlotData {
   // Heatmap
   heatmap: Heatmap;
   heatmap_view: boolean = false;
-  selected_area: number[];
+  selected_areas: number[][];
 
   public constructor(
     public data:any,
@@ -442,12 +450,11 @@ export abstract class PlotData {
       }
       if (this.select_on_mouse == d) {
         this.context.fillStyle = this.color_surface_on_mouse;
-
-      }
-      for (var j = 0; j < this.select_on_click.length; j++) {
-        var z = this.select_on_click[j];
-        if (z == d) {
-          this.context.fillStyle = this.color_surface_on_click;
+        for (var j = 0; j < this.select_on_click.length; j++) {
+          var z = this.select_on_click[j];
+          if (z == d) {
+            this.context.fillStyle = this.color_surface_selected;
+          }
         }
       }
     }
@@ -482,14 +489,26 @@ export abstract class PlotData {
       if (shape == 'crux') {
         this.context.strokeStyle = d.point_style.color_fill;
       }
-      if (d.selected) {
+      if (d.clicked) {
         if (shape == 'crux') {
           this.context.strokeStyle = this.color_surface_on_click;
+        } else {
+          this.context.fillStyle = this.color_surface_on_click;
+        }
+      } else if (d.selected_by_heatmap) {
+        if (shape === "crux") {
+          this.context.strokeStyle = this.color_heatmap_selection;
+        } else {
+          this.context.fillStyle = this.color_heatmap_selection;
+        }
+      } else if (d.selected) {
+        if (shape == 'crux') {
+          this.context.strokeStyle = this.color_surface_selected;
         } else {
           if (this.sc_interpolation_ON) {
             this.context.fillStyle = d.point_style.color_fill;
           } else {
-            this.context.fillStyle = this.color_surface_on_click;
+            this.context.fillStyle = this.color_surface_selected;
           }
         }
       }
@@ -692,11 +711,17 @@ export abstract class PlotData {
         this.context.fillRect(i*wstep + this.X, j*hstep + this.Y, wstep, hstep);
       }
     }
-    if (this.selected_area) {
-      this.context.strokeStyle = string_to_hex("blue");
-      this.context.lineWidth = 2;
-      this.context.strokeRect(this.selected_area[0]*wstep + this.X, this.selected_area[1]*hstep + this.Y,
-        wstep, hstep);
+    // The following loops could have been included in the previous one but drawing selection rectangles
+    // after the heatmap makes the result more aesthetic
+    for (let i=0; i<w; i++) {
+      for (let j=0; j<h; j++) {
+        if (this.selected_areas[i][j] === 1) {
+          this.context.strokeStyle = string_to_hex("blue");
+          this.context.lineWidth = 2;
+          this.context.strokeRect(i*wstep + this.X, j*hstep + this.Y,
+            wstep, hstep);
+        }
+      }
     }
 
     this.draw_gradient_axis(max_density);
@@ -1116,21 +1141,40 @@ export abstract class PlotData {
     this.display_list_to_elements_dict = Object.fromEntries(entries);
   }
 
-  pp_color_management(index:number, selected:boolean) {
+  pp_color_management(index:number, selected:boolean, clicked:boolean, over:boolean, heatmap_select:boolean) {
     if (List.isListOfEmptyList(this.rubber_bands)) {
       selected = true;
     }
     if (this.selected_axis_name == '') {
-      if (selected === true) {
+      if (over) {
+        this.context.strokeStyle = string_to_hex("yellow");
+        this.context.lineWidth = 3*this.edge_style.line_width;
+      } else if (clicked) {
+        this.context.strokeStyle = string_to_hex("red");
+        this.context.lineWidth = 3*this.edge_style.line_width;
+      } else if (heatmap_select) {
+        this.context.strokeStyle = this.color_heatmap_selection;
+        this.context.lineWidth = 3*this.edge_style.line_width;
+      } else if (selected) {
         this.context.strokeStyle = this.edge_style.color_stroke;
+        this.context.lineWidth = this.edge_style.line_width;
       } else {
         this.context.strokeStyle = string_to_hex('lightgrey');
+        this.context.lineWidth = this.edge_style.line_width;
       }
     } else {
-      if (selected === true) {
+      if (over) {
+        this.context.strokeStyle = string_to_hex("yellow");
+        this.context.lineWidth = 3 * this.edge_style.line_width;
+      } else if (clicked) {
+        this.context.strokeStyle = string_to_hex("black");
+        this.context.lineWidth = 3 * this.edge_style.line_width;
+      } else if (selected) {
         this.context.strokeStyle = rgb_to_hex(this.interpolation_colors[index]);
+        this.context.lineWidth = this.edge_style.line_width;
       } else {
         this.context.strokeStyle = rgb_to_hex(tint_rgb(this.interpolation_colors[index], 0.8));
+        this.context.lineWidth = this.edge_style.line_width;
       }
     }
   }
@@ -1138,23 +1182,67 @@ export abstract class PlotData {
 
   draw_parallel_coord_lines() {
     var selected_seg_lists = [];
+    var clicked_seg_lists = [];
+    var over_seg_lists = [];
+    var heatmap_seg_lists = [];
     this.context.lineWidth = this.edge_style.line_width;
     for (let i=0; i<this.to_display_list.length; i++) {
+      let selected = true
       if (this.vertical) { var seg_list = this.vertical_axis_coords[i]; } else { var seg_list = this.horizontal_axis_coords[i]; }
-      let selected = List.is_include(this.to_display_list[i], this.pp_selected);
-      if (!selected) {
+      for (let j=0; j<this.axis_list.length; j++) {
+        var inside_band = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
+        if (!inside_band) {
+          selected = false;
+          break;
+        }
+      }
+      let element_index = this.from_to_display_list_to_elements(i);
+      let clicked = List.is_include(element_index, this.clicked_point_index);
+      let over = List.is_include(element_index, this.select_on_mouse_indices);
+      let selected_by_heatmap = List.is_include(element_index, this.heatmap_selected_points_indices);
+
+      // Priority : Mouse over > Click > Heatmap selection > Rubber band selection 
+      if (over) {
+        over_seg_lists.push({seg_list:seg_list, index:i});
+      } else if (clicked) {
+        clicked_seg_lists.push({seg_list:seg_list, index:i});
+      } else if (selected_by_heatmap) {
+        heatmap_seg_lists.push({seg_list:seg_list, index:i});
+      } else if (selected) {
+        selected_seg_lists.push({seg_list:seg_list, index:i});
+      } else {
         this.context.beginPath();
-        this.pp_color_management(i, selected);
+        this.pp_color_management(i, false, false, false, false);
         Shape.drawLine(this.context, seg_list);
         this.context.stroke();
         this.context.closePath();
-      } else {
-        selected_seg_lists.push({seg_list:seg_list, index:i});
       }
     }
+
     for (let seg_dict of selected_seg_lists) {
       this.context.beginPath();
-      this.pp_color_management(seg_dict.index, true);
+      this.pp_color_management(seg_dict.index, true, false, false, false);
+      Shape.drawLine(this.context, seg_dict.seg_list);
+      this.context.stroke();
+      this.context.closePath();
+    }
+    for (let seg_dict of heatmap_seg_lists) {
+      this.context.beginPath();
+      this.pp_color_management(seg_dict.index, false, false, false, true);
+      Shape.drawLine(this.context, seg_dict.seg_list);
+      this.context.stroke();
+      this.context.closePath();
+    }
+    for (let seg_dict of clicked_seg_lists) {
+      this.context.beginPath();
+      this.pp_color_management(seg_dict.index, false, true, false, false);
+      Shape.drawLine(this.context, seg_dict.seg_list);
+      this.context.stroke();
+      this.context.closePath();
+    }
+    for (let seg_dict of over_seg_lists) {
+      this.context.beginPath();
+      this.pp_color_management(seg_dict.index, false, false, true, false);
       Shape.drawLine(this.context, seg_dict.seg_list);
       this.context.stroke();
       this.context.closePath();
@@ -1163,6 +1251,7 @@ export abstract class PlotData {
 
   reset_pp_selected() {
     this.pp_selected = this.to_display_list;
+    this.clicked_point_index = [];
     this.pp_selected_index = Array.from(Array(this.to_display_list.length).keys());
   }
 
@@ -1175,11 +1264,7 @@ export abstract class PlotData {
       var selected:boolean = true;
       var seg_list = axis_coords[i];
       for (let j=0; j<this.axis_list.length; j++) {
-        var inside_band = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
-        if (!inside_band) {
-          selected = false;
-          break;
-        }
+        var selected = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
       }
       if (selected) {
         this.pp_selected.push(this.to_display_list[i]);
@@ -1204,6 +1289,7 @@ export abstract class PlotData {
 
   from_to_display_list_to_elements(i) {
     return this.display_list_to_elements_dict[i.toString()];
+
   }
 
 
@@ -1727,12 +1813,49 @@ export abstract class PlotData {
       if ((this.plotObject['type_'] == 'scatterplot') && this.select_on_click[i]) {
         let clicked_points = this.select_on_click[i].points_inside;
         for (let j=0; j<clicked_points.length; j++) {
-          this.selected_point_index.push(List.get_index_of_element(clicked_points[j], this.plotObject.point_list));
+          this.selected_point_index.push(clicked_points[j].index);
         }
       } else if (this.plotObject['type_'] == 'graph2D') {
         for (let j=0; j<this.plotObject.graphs.length; j++) {
           if ((List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) && this.select_on_click[i]) {
-            this.selected_point_index.push([List.get_index_of_element(this.select_on_click[i], this.plotObject.graphs[j].point_list), j]);
+            this.selected_point_index.push([this.select_on_click[i], j]);
+          }
+        }
+      }
+    }
+  }
+
+  refresh_heatmap_selected_point_indices() {
+    this.heatmap_selected_points_indices = [];
+    for (let i=0; i<this.heatmap_selected_points.length; i++) {
+      let points_inside = this.heatmap_selected_points[i].points_inside;
+      for (let j=0; j<points_inside.length; j++) {
+        this.heatmap_selected_points_indices.push(points_inside[j].index);
+      }
+    }
+  }
+
+  // Refreshes value of selected_by_heatmap attributes (Point2D)
+  refresh_selected_by_heatmap() {
+    for (let i=0; i<this.scatter_points.length; i++) {
+      this.scatter_points[i].selected_by_heatmap = List.is_include(this.scatter_points[i], this.heatmap_selected_points);
+    }
+  }
+
+
+  refresh_clicked_point_index() {  //selected_clicked_index : index of selected points in the initial point list
+    this.clicked_point_index = [];
+    for (let i=0; i<this.clicked_points.length; i++) {
+      if (this.clicked_points[i] === undefined) continue;
+      if ((this.plotObject['type_'] == 'scatterplot') && this.clicked_points[i]) {
+        let true_clicked_points = this.clicked_points[i].points_inside;
+        for (let j=0; j<true_clicked_points.length; j++) {
+          this.clicked_point_index.push(List.get_index_of_element(true_clicked_points[j], this.plotObject.point_list));
+        }
+      } else if (this.plotObject['type_'] == 'graph2D') {
+        for (let j=0; j<this.plotObject.graphs.length; j++) {
+          if ((List.is_include(this.clicked_points[i], this.plotObject.graphs[j].point_list)) && this.clicked_points[i]) {
+            this.clicked_point_index.push([List.get_index_of_element(this.clicked_points[i], this.plotObject.graphs[j].point_list), j]);
           }
         }
       }
@@ -1758,13 +1881,13 @@ export abstract class PlotData {
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
     var click_plot_data = this.color_to_plot_data[colKey];
     if (click_plot_data) {
-      if (click_plot_data.selected) {
-        this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
-        click_plot_data.selected = false;
+      if (click_plot_data.clicked) {
+        this.clicked_points = List.remove_element(click_plot_data, this.clicked_points);
+        click_plot_data.clicked = false;
         this.latest_selected_points = [];
       } else {
-        this.select_on_click.push(click_plot_data);
-        click_plot_data.selected = true;
+        this.clicked_points.push(click_plot_data);
+        click_plot_data.clicked = true;
         this.latest_selected_points = [click_plot_data];
       }
     } 
@@ -1790,11 +1913,12 @@ export abstract class PlotData {
     //   this.latest_selected_points = [];
     //   Interactions.reset_permanent_window(this);
     // }
-    this.refresh_selected_point_index();
+    this.refresh_clicked_point_index();
     if (this.type_ == 'scatterplot') {this.refresh_latest_selected_points_index();}
   }
 
-  refresh_selected_area(mouse1X, mouse1Y) {
+
+  refresh_selected_areas(mouse1X, mouse1Y) {
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
 
@@ -1804,26 +1928,30 @@ export abstract class PlotData {
     let i = Math.floor((mouse1X - this.X)/w_step);
     let j = Math.floor((mouse1Y - this.Y)/h_step);
 
-    if (this.selected_area && this.selected_area[0]===i && this.selected_area[1]===j) {
-      this.selected_area = null;
-    } else {
-      this.selected_area = [i, j];
-    }
+    this.selected_areas[i][j] = 1 - this.selected_areas[i][j];
   }
 
-  reset_select_on_click() {
+  reset_select_on_click(reset_clicked_points:boolean=true) {
     this.select_on_click = [];
     this.selected_point_index = [];
+    if (reset_clicked_points) {
+      this.clicked_points = [];
+      this.clicked_point_index = [];
+    }
     this.tooltip_list = [];
     if (this.type_ == 'scatterplot') {
       for (let i=0; i<this.plotObject.point_list.length; i++) {
         this.plotObject.point_list[i].selected = false;
-        if (this.scatter_points[i]) {this.scatter_points[i].selected = false;}
+        if (this.scatter_points[i]) {
+          this.scatter_points[i].selected = false;
+          if (reset_clicked_points) this.scatter_points[i].clicked = false;
+        }
       }
     } else if (this.type_ == 'graph2d') {
       for (let i=0; i<this.plotObject.graphs.length; i++) {
         for (let j=0; j<this.plotObject.graphs[i].point_list.length; j++) {
           this.plotObject.graphs[i].point_list[j].selected = false;
+          this.plotObject.graphs[i].point_list[j].clicked = false;
         }
       }
     }
@@ -1914,6 +2042,13 @@ export abstract class PlotData {
       var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
       var old_select_on_mouse = this.select_on_mouse;
       this.select_on_mouse = this.color_to_plot_data[colKey];
+      this.select_on_mouse_indices = [];
+      if (this.select_on_mouse && this.select_on_mouse["type_"] === "point") {
+        let points_inside = this.select_on_mouse.points_inside;
+        for (let point of points_inside) {
+          this.select_on_mouse_indices.push(point.index);
+        }
+      }
       if (this.select_on_mouse !== old_select_on_mouse) {
         this.draw();
       } else if (this.select_on_mouse && ["wire", "contour", "circle"].includes(this.select_on_mouse["type_"]) 
@@ -2000,8 +2135,8 @@ export abstract class PlotData {
           Interactions.click_on_heatmap_action(this);
         } else {
           if (this.heatmap_view) {
-            this.refresh_selected_area(mouse1X, mouse1Y);
-            console.log(this.selected_area)
+            this.refresh_selected_areas(mouse1X, mouse1Y);
+            Interactions.refresh_heatmap_selected_points(this);
           }
         }
       }
@@ -2073,6 +2208,7 @@ export abstract class PlotData {
     if (click_on_disp) {
       Interactions.change_disposition_action(this);
     }
+    this.refresh_pp_selected();
     this.is_drawing_rubber_band = false;
     mouse_moving = false;
     isDrawing = false;
@@ -2268,16 +2404,16 @@ export abstract class PlotData {
         var xj = this.scaleX*point_list_copy[j].cx + mvx;
         var yj = this.scaleY*point_list_copy[j].cy + mvy;
         if (this.distance([xi,yi], [xj,yj])< 10*(point_list_copy[i].size + point_list_copy[j].size)) {
-          var new_cx = (point_list_copy[i].cx + point_list_copy[j].cx)/2;
-          var new_cy = (point_list_copy[i].cy + point_list_copy[j].cy)/2;
+          var point_i = point_list_copy[i];
+          var point_j = point_list_copy[j];
+          var new_cx = (point_i.cx + point_j.cx)/2;
+          var new_cy = (point_i.cy + point_j.cy)/2;
           var point = new Point2D(new_cx, new_cy, point_list_copy[i].point_style, 'point', '');
           point.points_inside = point_list_copy[i].points_inside.concat(point_list_copy[j].points_inside);
           point.point_families = List.union(point_list_copy[i].point_families, point_list_copy[j].point_families);
           point.selected = point_list_copy[i].selected || point_list_copy[j].selected;
           var size_coeff = 1.15;
           point.size = point_list_copy[max_size_index].size*size_coeff;
-          var point_i = point_list_copy[i];
-          var point_j = point_list_copy[j];
           this.delete_clicked_points([point_i, point_j]);
           this.delete_tooltip([point_i, point_j]);
           point_list_copy = List.remove_element(point_list_copy[i], point_list_copy);
@@ -2463,6 +2599,32 @@ export class Interactions {
     }
     plot_data.refresh_selected_point_index();
     if (plot_data.type_ == 'scatterplot') {plot_data.refresh_latest_selected_points_index();}
+  }
+
+
+  public static refresh_heatmap_selected_points(plot_data) {
+    plot_data.heatmap_selected_points = [];
+
+    let heatmap = plot_data.heatmap;
+    let w = heatmap.size[0];
+    let h = heatmap.size[1];
+
+    let w_step = plot_data.width/w;
+    let h_step = plot_data.height/h;
+    for (let k=0; k<plot_data.scatter_points.length; k++) {
+      let point = plot_data.scatter_points[k];
+      let x = plot_data.scaleX*point.cx + plot_data.originX + plot_data.X;
+      let y = plot_data.scaleY*point.cy + plot_data.originY + plot_data.Y;
+      let i = Math.floor((x - plot_data.X)/w_step);
+      let j = Math.floor((y - plot_data.Y)/h_step);
+      if (plot_data.selected_areas[i][j] === 1) {
+        point.selected_by_heatmap = true;
+        plot_data.heatmap_selected_points.push(point);
+      } else {
+        point.selected_by_heatmap = false;
+      }
+    }
+    plot_data.refresh_heatmap_selected_point_indices();
   }
 
   public static zoom_window_action(mouse1X, mouse1Y, mouse2X, mouse2Y, scale_ceil, plot_data:PlotData) {

@@ -1,10 +1,7 @@
-
-import { string_to_rgb, rgb_to_string } from "./color_conversion";
+import { string_to_rgb, rgb_to_string, string_to_hex, rgb_to_hex } from "./color_conversion";
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
-import { serialize } from "v8";
-import { createTextChangeRange } from "typescript";
 
 
 /**
@@ -98,7 +95,7 @@ export class Circle2D {
     maxX:number=0;
     minY:number=0;
     maxY:number=0;
-    mouse_selection_color:any;
+    hidden_color:any;
   
     constructor(public data:any,
                 public cx:number,
@@ -106,6 +103,7 @@ export class Circle2D {
                 public r:number,
                 public edge_style:EdgeStyle,
                 public surface_style:SurfaceStyle,
+                public tooltip: Tooltip,
                 public type_:string='circle',
                 public name:string) {
         this.minX = this.cx - this.r;
@@ -113,7 +111,7 @@ export class Circle2D {
         this.minY = this.cy - this.r;
         this.maxY = this.cy + this.r;
   
-      this.mouse_selection_color = genColor();
+      this.hidden_color = genColor();
     }
   
     public static deserialize(serialized) {
@@ -123,12 +121,28 @@ export class Circle2D {
         serialized = set_default_values(serialized, default_dict_);
         var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
         var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
+
+        if (serialized["tooltip"]) {
+          let tooltip_surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
+          let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
+          let tooltip = new Tooltip(tooltip_surface_style, text_style, null, serialized["tooltip"]);
+          return new Circle2D(serialized['data'],
+                              serialized['cx'],
+                              -serialized['cy'],
+                              serialized['r'],
+                              edge_style,
+                              surface_style,
+                              tooltip,
+                              serialized['type_'],
+                              serialized['name']);
+        }
         return new Circle2D(serialized['data'],
                                     serialized['cx'],
                                     -serialized['cy'],
                                     serialized['r'],
                                     edge_style,
                                     surface_style,
+                                    null,
                                     serialized['type_'],
                                     serialized['name']);
     }
@@ -148,11 +162,12 @@ export class Contour2D {
     maxX:number=0;
     minY:number=0;
     maxY:number=0;
-    mouse_selection_color:any;
+    hidden_color:any;
   
     constructor(public plot_data_primitives:any,
                 public edge_style:EdgeStyle,
                 public surface_style:SurfaceStyle,
+                public tooltip: Tooltip,
                 public type_:string='contour',
                 public name:string) {
         for (var i = 0; i < this.plot_data_primitives.length; i++) {
@@ -162,7 +177,7 @@ export class Contour2D {
           this.minY = Math.min(this.minY, d.minY);
           this.maxY = Math.max(this.maxY, d.maxY);
         }
-        this.mouse_selection_color = genColor();
+        this.hidden_color = genColor();
   
     }
   
@@ -182,22 +197,27 @@ export class Contour2D {
           new_line.edge_style = edge_style;
           plot_data_primitives.push(new_line);
         }
-        // if (d['type_'] == 'circle') {
-        //   let new_circle = Circle2D.deserialize(d);
-        //   new_circle.edge_style = edge_style;
-        //   new_circle.surface_style = surface_style;
-        //   plot_data_primitives.push(new_circle);
-        // }
         if (d['type_'] == 'arc') {
           let new_arc = Arc2D.deserialize(d);
           new_arc.edge_style = edge_style;
           plot_data_primitives.push(new_arc);
         }
-  
+      }
+      if (serialized["tooltip"]) {
+        let tooltip_surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
+        let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
+        let tooltip = new Tooltip(tooltip_surface_style, text_style, null, serialized["tooltip"]);
+        return new Contour2D(plot_data_primitives,
+          edge_style,
+          surface_style,
+          tooltip,
+          serialized['type_'],
+          serialized['name']);
       }
       return new Contour2D(plot_data_primitives,
                                     edge_style,
                                     surface_style,
+                                    null,
                                     serialized['type_'],
                                     serialized['name']);
     }
@@ -228,7 +248,9 @@ export class Dataset {
         for (let j=0; j<2; j++) {
           coord.push(Math.pow(-1, j)*this.elements[i][this.attribute_names[j]]);
         }
-        this.point_list.push(new Point2D(coord[0], coord[1], this.point_style, 'point', ''));
+        let point = new Point2D(coord[0], coord[1], this.point_style, 'point', '');
+        point.index = i;
+        this.point_list.push(point);
       } 
     }
   
@@ -478,12 +500,15 @@ export class Point2D {
     maxX:number=0;
     minY:number=0;
     maxY:number=0;
-    mouse_selection_color:any;
+    hidden_color:any;
     size:number;
     k:number=1;
     points_inside:Point2D[] = [this];
     point_families:PointFamily[]=[];
     selected:boolean=false;
+    clicked:boolean=false;
+    selected_by_heatmap:boolean = false;
+    index:number=-1;
   
     constructor(public cx:number,
                 public cy:number,
@@ -499,7 +524,7 @@ export class Point2D {
         this.minY = this.cy;
         this.maxY = this.cy;
   
-        this.mouse_selection_color = genColor();
+        this.hidden_color = genColor();
       }
   
       public static deserialize(serialized) {
@@ -582,22 +607,11 @@ export class PrimitiveGroup {
     public static deserialize(serialized) {
       var primitives:any[] = [];
       var temp = serialized['primitives'];
+      let classes = {"contour": Contour2D, "text": Text, "linesegment2d": LineSegment2D,
+                    "arc": Arc2D, "circle": Circle2D, "line2d": Line2D, 
+                    "multiplelabels": MultipleLabels, "wire": Wire};
       for (let i=0; i<temp.length; i++) {
-        if (temp[i]['type_'] == 'contour') {
-          primitives.push(Contour2D.deserialize(temp[i]));
-        } else if (temp[i]['type_'] == 'text') {
-          primitives.push(Text.deserialize(temp[i]));
-        } else if (temp[i]['type_'] == 'linesegment2d') {
-          primitives.push(LineSegment2D.deserialize(temp[i]));
-        } else if (temp[i]['type_'] == 'arc') {
-          primitives.push(Arc2D.deserialize(temp[i]));
-        } else if (temp[i]['type_'] == 'circle') {
-          primitives.push(Circle2D.deserialize(temp[i]));
-        } else if (temp[i]['type_'] == 'line2d') {
-          primitives.push(Line2D.deserialize(temp[i]));
-        } else if (temp[i]['type_'] == 'multiplelabels') {
-          primitives.push(MultipleLabels.deserialize(temp[i]));
-        }
+        primitives.push(classes[temp[i]["type_"]].deserialize(temp[i]));
       }
       return new PrimitiveGroup(primitives,
                               serialized['type_'],
@@ -725,7 +739,9 @@ export class Scatter {
       } else {
         cy = - List.get_index_of_element(elt1.toString(), this.lists[1]);
       }
-      this.point_list.push(new Point2D(cx, cy, MyObject.copy(this.point_style)));
+      let point = new Point2D(cx, cy, MyObject.copy(this.point_style));
+      point.index = i;
+      this.point_list.push(point);
     }
   }
 
@@ -737,7 +753,7 @@ export class Text {
   maxX:number=-Infinity;
   minY:number=Infinity;
   maxY:number=-Infinity;
-  mouse_selection_color:any;
+  hidden_color:any;
   init_scale:number=0;
 
   constructor(public comment:string,
@@ -745,7 +761,8 @@ export class Text {
               public position_y:number,
               public text_style:TextStyle,
               public text_scaling:boolean=true,
-              public max_width,
+              public max_width?: number,
+              public multi_lines?: boolean,
               public type_:string='text',
               public name:string='') {
                 this.minX = position_x;
@@ -766,6 +783,7 @@ export class Text {
                     text_style,
                     serialized['text_scaling'],
                     serialized['max_width'],
+                    serialized["multi_lines"],
                     serialized['type_'],
                     serialized['name']);
   }
@@ -774,7 +792,7 @@ export class Text {
     if (this.text_scaling) var font_size = this.text_style.font_size * scaleX/this.init_scale;
     else font_size = this.text_style.font_size;
 
-    context.font = font_size.toString() + 'px ' + this.text_style.font_style;
+    context.font = this.text_style.font;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;
@@ -792,9 +810,17 @@ export class Text {
 
   write(context, x, y, scaleX, font_size) {
     if (this.max_width) {
-      var cut_texts = this.cutting_text(context, scaleX*this.max_width);
-      for (let i=0; i<cut_texts.length; i++) {
-        context.fillText(cut_texts[i], x, y + i * font_size);
+      if (this.multi_lines) {
+        var cut_texts = this.cutting_text(context, scaleX*this.max_width);
+        for (let i=0; i<cut_texts.length; i++) {
+          context.fillText(cut_texts[i], x, y + i * font_size);
+        }
+      } else {
+        let init_size = context.measureText(this.comment).width;
+        this.text_style.font_size = scaleX * this.max_width/init_size * this.text_style.font_size;
+        this.text_style.refresh_font();
+        context.font = this.text_style.font;
+        context.fillText(this.comment, x, y);
       }
     } else {
       context.fillText(this.comment, x, y);
@@ -837,4 +863,68 @@ export class Text {
     return cut_texts;
   }
 
+}
+
+
+export class Heatmap {
+  constructor(public size: number[] = [3,3],
+              public colors: string[] = [string_to_hex("yellow"), string_to_hex("orange"), string_to_hex("red")],
+              public edge_style: EdgeStyle = new EdgeStyle(1, string_to_hex("white"), [], ""),
+              public name: string = "") {}
+    
+
+  public static deserialize(serialized) {
+    let default_colors = [string_to_rgb("blue"), string_to_rgb("yellow"), string_to_rgb("red")];
+    let default_dict = {edge_style: new EdgeStyle(1, string_to_hex("white"), [], ""),
+                        colors: default_colors};
+    serialized = set_default_values(serialized, default_dict);
+    let edge_style = EdgeStyle.deserialize(serialized["edge_style"]);
+    let colors = [];
+    for (let i=0; i<serialized["colors"].length; i++) {
+      colors.push(rgb_to_hex(serialized["colors"][i]));
+    }
+    return new Heatmap(serialized["size"], colors, edge_style, serialized["name"]);
+  }
+}
+
+
+export class Wire {
+  hidden_color: string;
+  minX: number = Infinity;
+  maxX: number = -Infinity;
+  minY: number = Infinity;
+  maxY: number = -Infinity;
+  constructor(public lines: number[][],
+              public edge_style: EdgeStyle,
+              public tooltip?: Tooltip,
+              public type_: string = "wire",
+              public name: string = "" ) {
+                this.hidden_color = genColor();
+              }
+      
+  
+  public static deserialize(serialized) {
+    let lines = serialized["lines"].map(l => [l[0], -l[1]]);
+    let default_edge_style = {line_width: 1, color_stroke: string_to_rgb("grey"), dashline: []};
+    let default_dict_ = {edge_style: default_edge_style};
+    serialized = set_default_values(serialized, default_dict_);
+    let edge_style = EdgeStyle.deserialize(serialized["edge_style"]);
+
+    if (serialized["tooltip"]) {
+      let surface_style = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
+      let text_style = new TextStyle(string_to_hex("black"), 14, "Calibri");
+      let tooltip = new Tooltip(surface_style, text_style, null, serialized["tooltip"]);
+      return new Wire(lines, edge_style, tooltip, "wire", serialized["name"]);
+    }
+    return new Wire(lines, edge_style, null, "wire", serialized["name"]);
+  }
+            
+
+  draw(context, scaleX, scaleY, mvx, mvy, X, Y) {
+    context.moveTo(scaleX*this.lines[0][0] + mvx + X, scaleY*this.lines[0][1] + mvy + Y);
+    for (let line of this.lines) {
+      context.lineTo(scaleX*line[0] + mvx + X, scaleY*line[1] + mvy + Y);
+    }
+    context.stroke();
+  }
 }

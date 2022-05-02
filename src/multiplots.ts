@@ -32,7 +32,7 @@ export class MultiplePlots {
     manipulation_bool:boolean=false;
     button_y:number=0; button_w:number=0; button_h:number = 0;
     transbutton_x:number=0;
-    selectDependency_bool:boolean=false;
+    selectDependency_bool:boolean=true;
     selectDep_x:number=0;
     view_bool:boolean=false;
     view_button_x:number=0;
@@ -154,7 +154,7 @@ export class MultiplePlots {
       for (let i=0; i<this.data['elements'].length; i++) {
         point_index.push(i);
       }
-      let new_point_family = new PointFamily(string_to_hex('red'), point_index, 'Initial family');
+      let new_point_family = new PointFamily(string_to_hex('grey'), point_index, 'Initial family');
       this.add_point_family(new_point_family);
       if (this.data['point_families'] != undefined) {
         for (let i=0; i<this.data['point_families'].length; i++) {
@@ -436,7 +436,7 @@ export class MultiplePlots {
             throw new Error('add_primitive_group_container(): ' + name + " isn't a valid attribute");
           }
         }
-      } 
+      }
       this.initialize_new_plot_data(new_plot_data);
       try {
         new_plot_data = this.call_layout(new_plot_data, attribute_names);
@@ -449,7 +449,6 @@ export class MultiplePlots {
         let obj = this.objectList[this.nbObjects - 1];
         obj.draw();
       }
-      
       return this.nbObjects - 1;
     }
   
@@ -528,7 +527,6 @@ export class MultiplePlots {
       this.context_hidden.beginPath();
       obj.draw_empty_canvas(this.context_hidden);
       this.context_hidden.closePath();
-  
     }
   
     clearAll():void {
@@ -743,7 +741,11 @@ export class MultiplePlots {
       this.manipulation_bool = false;
       this.view_bool = false;
       for (let i=0; i<this.nbObjects; i++) {
-        this.objectList[i].multiplot_manipulation = this.manipulation_bool;
+        let obj: any = this.objectList[i];
+        obj.multiplot_manipulation = this.manipulation_bool;
+        if (!this.selectDependency_bool && obj.type_ === "primitivegroupcontainer") {
+          obj.reset_selection();
+        }
       }
     }
   
@@ -910,6 +912,8 @@ export class MultiplePlots {
           obj.reset_rubberbands();
         } else if (obj.type_ === 'histogram') {
           obj.reset_x_rubberband(); 
+        } else if (obj.type_ === "primitivegroupcontainer") {
+          obj.reset_selection();
         }
       }
       this.redrawAllObjects();
@@ -922,7 +926,7 @@ export class MultiplePlots {
         if (list.includes(i)) continue;
         let obj = this.objectList[i];
         if (obj.type_ == 'scatterplot') {
-          this.objectList[i].reset_select_on_click();
+          this.objectList[i].reset_select_on_click(false);
           Interactions.reset_permanent_window(this.objectList[i])
         } else if (obj.type_ == 'parallelplot') {
           this.objectList[i].reset_pp_selected();
@@ -1195,6 +1199,36 @@ export class MultiplePlots {
         this.scatter_communication(selection_coords, to_display_attributes, isSelectingObjIndex);
       }
     }
+
+    mouse_up_scatter_communication() {
+      if (this.objectList[this.clickedPlotIndex].heatmap_view) {
+        let clicked_object = this.objectList[this.clickedPlotIndex];
+        for (let i=0; i<this.nbObjects; i++) {
+          let obj = this.objectList[i];
+          if (i === this.clickedPlotIndex) continue;
+          if (obj.type_ === "scatterplot") {
+            // obj.heatmap_selected_points = clicked_object.heatmap_selected_points;
+            // obj.refresh_selected_by_heatmap();
+          } else if (obj.type_ === "parallelplot") {
+            obj.heatmap_selected_points_indices = clicked_object.heatmap_selected_points_indices;
+          }
+        }
+      } else {
+        let clicked_point_index = [];
+        for (let i=0; i<this.nbObjects; i++) {
+          let obj = this.objectList[i];
+          if (obj.type_ === "scatterplot") {
+            clicked_point_index = List.union(clicked_point_index, obj.clicked_point_index);
+          }
+        }
+        for (let i=0; i<this.nbObjects; i++) {
+          let obj = this.objectList[i];
+          if (obj.type_ === "parallelplot") {
+            obj.clicked_point_index = clicked_point_index;
+          }
+        }
+      }
+    }
   
     scatter_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], isSelectingObjIndex:number):void { //process received data from a scatterplot and send it to the other objects
       for (let i=0; i<selection_coords.length; i++) {
@@ -1211,8 +1245,12 @@ export class MultiplePlots {
       }
   
       for (let i=0; i<this.nbObjects; i++) {
-        if ((this.objectList[i]['type_'] == 'scatterplot') && (i != isSelectingObjIndex)) {
+        let obj: any = this.objectList[i];
+        if ((obj.type_ === 'scatterplot') && (i != isSelectingObjIndex)) {
           MultiplotCom.sc_to_sc_communication(selection_coords, to_display_attributes, this.objectList[i]);
+        } else if (obj.type_ === "primitivegroupcontainer") {
+          obj.selected_point_index = this.objectList[isSelectingObjIndex].selected_point_index;
+          obj.select_primitive_groups();
         }
       }
       this.refresh_dep_selected_points_index();
@@ -1230,6 +1268,7 @@ export class MultiplePlots {
     }
   
     pp_communication(rubberbands_dep:[string, [number, number]][]):void { //process received data from a parallelplot and send it to the other objects
+      let primitive_indices = [];
       for (let i=0; i<this.nbObjects; i++) {
         var obj:PlotData = this.objectList[i];
         var axis_numbers:number[] = [];
@@ -1255,10 +1294,18 @@ export class MultiplePlots {
               MultiplotCom.pp_to_histogram_communication(rubberband_dep, obj);
             }
           }
+        } else if (obj.type_ === "primitivegroupcontainer") {
+          primitive_indices.push(i);
         }
       }
       this.refresh_dep_selected_points_index();
       this.refresh_selected_object_from_index();
+
+      for (let index of primitive_indices) {
+        let obj: any = this.objectList[index];
+        obj.selected_point_index = this.dep_selected_points_index;
+        obj.select_primitive_groups();
+      }
     }
   
   
@@ -1271,6 +1318,7 @@ export class MultiplePlots {
   
     histogram_communication(index) {
       let histogram = this.objectList[index];
+      let primitive_indices = [];
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if (obj.type_ === 'scatterplot') {
@@ -1279,10 +1327,18 @@ export class MultiplePlots {
           MultiplotCom.histogram_to_pp_communication(histogram, obj);
         } else if (obj.type_ === 'histogram') {
           MultiplotCom.histogram_to_histogram_communication(histogram, obj);
+        } else if (obj.type_ === "primitivegroupcontainer") {
+          primitive_indices.push(i);
         }
       }
       this.refresh_dep_selected_points_index();
       this.refresh_selected_object_from_index();
+
+      for (let index of primitive_indices) {
+        let obj: any = this.objectList[index];
+        obj.selected_point_index = this.dep_selected_points_index;
+        obj.select_primitive_groups();
+      }
     }
   
   
@@ -1538,6 +1594,16 @@ export class MultiplePlots {
     }
   
     mouse_over_scatter_plot() {
+      if (this.move_plot_index !== -1 && this.objectList[this.move_plot_index].type_ === "scatterplot") {
+        for (let i=0; i<this.nbObjects; i++) {
+          let obj = this.objectList[i];
+          if (obj.type_ === "parallelplot") {
+            obj.select_on_mouse_indices = this.objectList[this.move_plot_index].select_on_mouse_indices;            
+            obj.draw();
+          }
+        }
+      }
+
       if (!this.has_primitive_group_container) return;
       var bool = false;
       if (this.move_plot_index !== -1) {
@@ -1778,6 +1844,8 @@ export class MultiplePlots {
                 if (obj.x_rubberband.length === 0) {
                   this.reset_all_selected_points();
                 }
+              } else if (type_ === "scatterplot") {
+                this.mouse_up_scatter_communication();
               }
             }
           }
@@ -2075,6 +2143,13 @@ export function save_multiplot(multiplot: MultiplePlots) {
                      ["inversions", obj.inverted_axis_list],
                      ["interpolation_colors", obj.interpolation_colors],
                      ["vertical", obj.vertical]);
+    } else if (obj.type_ === "histogram") {
+      obj_to_dict.push(["graduation_nb", obj["graduation_nb"]],
+                        ["x_variable", obj["x_variable"]],
+                        ["x_rubberband", obj["x_rubberband"]],
+                        ["y_rubberband", obj["y_rubberband"]],
+                        ["scale", obj.scale],
+                        ["originX", obj.originX]);
     }
     temp_objs.push(Object.fromEntries(obj_to_dict));
   }
@@ -2115,11 +2190,20 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
       obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
 
       obj.refresh_selected_points_from_indices();
+
     } else if (obj.type_ === "parallelplot") {
       obj.rubber_bands = temp_objs[i]["rubber_bands"];
       obj.inverted_axis_list = temp_objs[i]["inversions"];
       obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
       obj.vertical = temp_objs[i]["vertical"];
+
+    } else if (obj.type_ === "histogram") {
+      obj["graduation_nb"] = temp_objs[i]["graduation_nb"];
+      obj["x_variable"] = temp_objs[i]["x_variable"];
+      obj["x_rubberband"] = temp_objs[i]["x_rubberband"];
+      obj["y_rubberband"] = temp_objs[i]["y_rubberband"];
+      obj.scale = temp_objs[i]["scale"];
+      obj.originX = temp_objs[i]["originX"];
     }
   }
   multiplot.dep_selected_points_index = dict_["dep_selected_points_index"];

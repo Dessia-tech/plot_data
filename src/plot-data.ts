@@ -1,9 +1,10 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
+import { type } from "os";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -79,6 +80,7 @@ export abstract class PlotData {
   reset_rect_y:number=0;
   select_bool:boolean=false;
   select_y:number=0;
+  csv_button_y:number=0;
   sort_list_points:any[]=[];
   graph_to_display:boolean[]=[];
   graph1_button_x:number=0;
@@ -1411,6 +1413,7 @@ export abstract class PlotData {
     this.xlog_button_y = this.clear_point_button_y + this.button_h + 5;
     this.ylog_button_y = this.xlog_button_y + this.button_h + 5;
     this.heatmap_button_y = this.ylog_button_y + this.button_h + 5;
+    this.csv_button_y = this.merge_y;
   }
 
   refresh_attribute_booleans() {
@@ -2090,7 +2093,7 @@ export abstract class PlotData {
     var click_on_xlog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.xlog_button_y + this.Y, this.button_w, this.button_h);
     var click_on_ylog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.ylog_button_y + this.Y, this.button_w, this.button_h);
     var click_on_heatmap = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.heatmap_button_y + this.Y, this.button_w, this.button_h);
-
+    var click_on_csv = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.csv_button_y + this.Y, this.button_w, this.button_h);
     var text_spacing_sum_i = 0;
     for (var i=0; i<this.nb_graph; i++) {
       var click_on_graph_i = Shape.isInRect(mouse1X, mouse1Y, this.graph1_button_x + i*this.graph1_button_w + text_spacing_sum_i + this.X, this.graph1_button_y + this.Y, this.graph1_button_w, this.graph1_button_h);
@@ -2099,7 +2102,8 @@ export abstract class PlotData {
     }
     this.click_on_button = false;
     this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select 
-    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog || click_on_heatmap;
+    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog || click_on_heatmap
+    || click_on_csv;
 
     if (mouse_moving) {
       if (this.zw_bool) {
@@ -2128,7 +2132,7 @@ export abstract class PlotData {
         } else if (click_on_graph) {
           Interactions.graph_button_action(mouse1X, mouse1Y, this);
 
-        } else if (click_on_merge) {
+        } else if (click_on_merge && this.type_ === "scatterplot") {
           Interactions.click_on_merge_action(this);
         } else if (click_on_perm) {
           Interactions.click_on_perm_action(this);
@@ -2140,6 +2144,8 @@ export abstract class PlotData {
           Interactions.click_on_ylog_action(this);
         } else if (click_on_heatmap) {
           Interactions.click_on_heatmap_action(this);
+        } else if (click_on_csv && this.type_ === "graph2d") {
+          Interactions.click_on_csv_action(this);
         } else {
           if (this.heatmap_view) {
             this.refresh_selected_areas(mouse1X, mouse1Y);
@@ -2583,7 +2589,6 @@ export class Interactions {
           }
         }
       }
-
     } else if (plot_data.plotObject['type_'] == 'scatterplot') {
       for (var j=0; j<plot_data.scatter_points.length; j++) {
 
@@ -2762,6 +2767,28 @@ export class Interactions {
 
   public static click_on_heatmap_action(plot_data) {
     plot_data.heatmap_view = ! plot_data.heatmap_view;
+  }
+
+  public static click_on_csv_action(plot_data) {
+    let graph = plot_data.plotObject;
+    let rows = [];
+    for (let dataset of graph.graphs) {
+      rows.push([dataset.attribute_names]);
+    }
+    for (let point of plot_data.select_on_click) {
+      rows[point.dataset_index].push([point.cx, point.cy]);
+    }
+    for (let i=0; i<rows.length; i++) {
+      if (rows[i].length === 1) {
+        continue;
+      }
+      let filename = graph.graphs[i].name;
+      if (filename === "") {
+        filename = "graph" + i.toString();
+      }
+      filename = filename + ".csv";
+      export_to_csv(rows[i], filename);
+    }
   }
 
   public static mouse_move_axis_inversion(isDrawing, e, selected_name_index, plot_data:any) {
@@ -3153,5 +3180,9 @@ export class Buttons {
 
   public static heatmap_button(x, y, w, h, police, plot_data:PlotData) {
     Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, "heat", police);
+  }
+
+  public static csv_button(x, y, w, h, police, plot_data:PlotData) {
+    Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, "csv", police);
   }
 }

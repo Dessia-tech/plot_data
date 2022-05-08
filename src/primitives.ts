@@ -236,9 +236,10 @@ export class Dataset {
                 public elements:any[],
                 public display_step:number,
                 public type_:string,
-                public name:string) {
+                public name:string,
+                public index: number = -1) {
       this.initialize_point_list();
-      this.initialize_segments();
+      this.initialize_segments();    
     }
   
     initialize_point_list() {
@@ -250,6 +251,7 @@ export class Dataset {
         }
         let point = new Point2D(coord[0], coord[1], this.point_style, 'point', '');
         point.index = i;
+        point.dataset_index = this.index;
         this.point_list.push(point);
       } 
     }
@@ -282,7 +284,8 @@ export class Dataset {
                          serialized['elements'],
                          serialized['display_step'],
                          serialized['type_'],
-                         serialized['name']);
+                         serialized['name'],
+                         serialized["index"]);
     }
 }
 
@@ -300,6 +303,7 @@ export class Graph2D {
       var graphs:Dataset[] = [];
       for (let i=0; i<serialized['graphs'].length; i++) {
         serialized['graphs'][i]['attribute_names'] = serialized['attribute_names'];
+        serialized["graphs"][i]["index"] = i;
         graphs.push(Dataset.deserialize(serialized['graphs'][i]));
       }
       var axis = Axis.deserialize(serialized['axis']);
@@ -508,7 +512,8 @@ export class Point2D {
     selected:boolean=false;
     clicked:boolean=false;
     selected_by_heatmap:boolean = false;
-    index:number=-1;
+    index:number=-1; // index in scatter plot's elements
+    dataset_index:number=-1;
   
     constructor(public cx:number,
                 public cy:number,

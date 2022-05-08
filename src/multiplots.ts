@@ -1207,8 +1207,8 @@ export class MultiplePlots {
           let obj = this.objectList[i];
           if (i === this.clickedPlotIndex) continue;
           if (obj.type_ === "scatterplot") {
-            // obj.heatmap_selected_points = clicked_object.heatmap_selected_points;
-            // obj.refresh_selected_by_heatmap();
+            obj.heatmap_selected_points_indices = clicked_object.heatmap_selected_points_indices;
+            obj.refresh_selected_by_heatmap();
           } else if (obj.type_ === "parallelplot") {
             obj.heatmap_selected_points_indices = clicked_object.heatmap_selected_points_indices;
           }

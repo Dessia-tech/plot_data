@@ -1838,7 +1838,14 @@ export abstract class PlotData {
   // Refreshes value of selected_by_heatmap attributes (Point2D)
   refresh_selected_by_heatmap() {
     for (let i=0; i<this.scatter_points.length; i++) {
-      this.scatter_points[i].selected_by_heatmap = List.is_include(this.scatter_points[i], this.heatmap_selected_points);
+      let bool = false;
+      for (let point_inside of this.scatter_points[i].points_inside) {
+        if (List.is_include(point_inside.index, this.heatmap_selected_points_indices)) {
+          bool = true;
+          break;
+        }
+      }
+      this.scatter_points[i].selected_by_heatmap = bool;
     }
   }
 

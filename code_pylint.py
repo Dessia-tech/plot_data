@@ -16,7 +16,7 @@ MIN_NOTE = 9.10
 # RATCHET_NOTE = 0.4
 # RATCHET_ERRORS = 3
 
-UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error',  'missing-final-newline', 'trailing-newlines']
+UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline', 'trailing-newlines']
 
 MAX_ERROR_BY_TYPE = {
                      'protected-access': 26,

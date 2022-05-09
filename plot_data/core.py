@@ -76,6 +76,7 @@ class PlotDataObject(DessiaObject):
         raise NotImplementedError('It is strange to call plot_data method from a plot_data object.'
                                   f' Check the class {self.__class__.__name__} you are calling')
 
+
 class HatchingSet(DessiaObject):
     """
     A class for setting hatchings on a surface.
@@ -371,6 +372,7 @@ class Wire(PlotDataObject):
     :param tooltip: a message that is displayed in a tooltip
     :type tooltip: str
     """
+
     def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None,
                  tooltip: str = None, name: str = ""):
         self.lines = lines
@@ -609,7 +611,7 @@ class Graph2D(PlotDataObject):
     :type log_scale_y: bool
     """
 
-    def __init__(self, graphs: List[Dataset], x_variable: str, y_variable:str,
+    def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str,
                  axis: Axis = None, log_scale_x: bool = None,
                  log_scale_y: bool = None, name: str = ''):
         self.graphs = graphs
@@ -650,8 +652,9 @@ class Heatmap(DessiaObject):
     :param edge_style: The areas separating lines settings
     :type edge_style: EdgeStyle
     """
-    def __init__(self, size: Tuple[int, int]=None, colors: List[pltd_colors.Color]=None,
-                 edge_style:EdgeStyle=None, name:str=''):
+
+    def __init__(self, size: Tuple[int, int] = None, colors: List[pltd_colors.Color] = None,
+                 edge_style: EdgeStyle = None, name: str = ''):
         self.size = size
         self.colors = colors
         self.edge_style = edge_style
@@ -825,8 +828,8 @@ class Contour2D(PlotDataObject):
         for plot_data_primitive in self.plot_data_primitives:
             if hasattr(plot_data_primitive, 'bounding_box'):
                 bb = plot_data_primitive.bounding_box()
-                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax,bb[1]), \
-                                         min(ymin, bb[2]), max(ymax, bb[3])
+                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax, bb[1]), \
+                    min(ymin, bb[2]), max(ymax, bb[3])
 
         return xmin, xmax, ymin, ymax
 
@@ -888,8 +891,8 @@ class PrimitiveGroup(PlotDataObject):
     Circle2D, Line2D, MultipleLabels, Wire]]
     """
 
-    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D, MultipleLabels, Wire]],
+    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
+                                              Circle2D, Line2D, MultipleLabels, Wire]],
                  name: str = ''):
         self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)

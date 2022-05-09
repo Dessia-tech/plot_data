@@ -17,6 +17,9 @@ surface_style = plot_data.SurfaceStyle(color_fill=colors.WHITE, opacity=1,
 # Creating several primitives. plot_data() functions are used to convert
 # a volmdlr object into a plot_data object
 
+# Point2D
+point = plot_data.Point2D(0.1, 0.2)
+
 # arc
 arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=npy.pi / 2)
 
@@ -29,7 +32,8 @@ contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([0, 
                                                                             [rectangle_size, 0]),
                                                     plot_data.LineSegment2D([rectangle_size, 0], [0, 0])],
                               edge_style=edge_style,
-                              surface_style=surface_style)
+                              surface_style=surface_style,
+                              tooltip="It's a square")
 
 # LineSegment2D
 line = plot_data.LineSegment2D(point1=[4, 0], point2=[6, 2], edge_style=edge_style)
@@ -40,7 +44,7 @@ circle_surface_style = plot_data.SurfaceStyle(color_fill=colors.YELLOW, opacity=
                                               hatching=plot_data.HatchingSet())
 
 circle = plot_data.Circle2D(cx=5, cy=10, r=5, edge_style=circle_edge_style,
-                            surface_style=circle_surface_style)
+                            surface_style=circle_surface_style, tooltip="Circle")
 
 # Text
 text = plot_data.Text(comment='Hello', position_x=6, position_y=9,
@@ -62,6 +66,8 @@ label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surfac
 
 labels = plot_data.MultipleLabels(labels=[label1, label2])
 
-primitives = [contour, line, arc,
-              circle, text, labels]
+wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire")
+
+primitives = [point, contour, line, arc,
+              circle, text, labels, wire]
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)

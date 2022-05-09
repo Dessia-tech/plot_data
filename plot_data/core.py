@@ -23,7 +23,7 @@ from dessia_common.typings import Subclass
 from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 
 from plot_data import templates
-from plot_data import colors
+from plot_data import pltd_colors
 
 npy.seterr(divide='raise')
 
@@ -114,7 +114,7 @@ class EdgeStyle(DessiaObject):
     :type dashline: List[float]
     """
 
-    def __init__(self, line_width: float = None, color_stroke: colors.Color = None,
+    def __init__(self, line_width: float = None, color_stroke: pltd_colors.Color = None,
                  dashline: List[int] = None, name: str = ''):
         self.line_width = line_width
         self.color_stroke = color_stroke
@@ -122,7 +122,7 @@ class EdgeStyle(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=colors.BLACK)
+DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=pltd_colors.BLACK)
 
 
 class PointStyle(DessiaObject):
@@ -157,7 +157,7 @@ class TextStyle(DessiaObject):
     A class for customizing Text.
 
     :param text_color: the text's color
-    :type text_color: colors.Colors
+    :type text_color: pltd_colors.Colors
     :param font_size: the font size
     :type font_size: float
     :param font_style: 'Arial', 'Verdana', 'Times New Roman', 'Courier \
@@ -178,7 +178,7 @@ class TextStyle(DessiaObject):
     :type angle: float
     """
 
-    def __init__(self, text_color: colors.Color = None,
+    def __init__(self, text_color: pltd_colors.Color = None,
                  font_size: float = None,
                  font_style: str = None,
                  text_align_x: str = None, text_align_y: str = None,
@@ -346,7 +346,7 @@ class LineSegment2D(PlotDataObject):
         if self.edge_style and self.edge_style.color_stroke:
             color = self.edge_style.color_stroke.rgb
         else:
-            color = colors.BLACK.rgb
+            color = pltd_colors.BLACK.rgb
         ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
                 color=color)
         return ax
@@ -500,10 +500,10 @@ class Axis(PlotDataObject):
         self.nb_points_y = nb_points_y
         self.graduation_style = graduation_style
         if graduation_style is None:
-            self.graduation_style = TextStyle(text_color=colors.GREY)
+            self.graduation_style = TextStyle(text_color=pltd_colors.GREY)
         self.axis_style = axis_style
         if axis_style is None:
-            self.axis_style = EdgeStyle(color_stroke=colors.LIGHTGREY)
+            self.axis_style = EdgeStyle(color_stroke=pltd_colors.LIGHTGREY)
         self.arrow_on = arrow_on
         self.grid_on = grid_on
         PlotDataObject.__init__(self, type_='axis', name=name)
@@ -537,11 +537,11 @@ class Tooltip(PlotDataObject):
         self.text = text
         self.surface_style = surface_style
         if surface_style is None:
-            self.surface_style = SurfaceStyle(color_fill=colors.LIGHTBLUE,
+            self.surface_style = SurfaceStyle(color_fill=pltd_colors.LIGHTBLUE,
                                               opacity=0.75)
         self.text_style = text_style
         if text_style is None:
-            self.text_style = TextStyle(text_color=colors.BLACK, font_size=10)
+            self.text_style = TextStyle(text_color=pltd_colors.BLACK, font_size=10)
         self.tooltip_radius = tooltip_radius
         PlotDataObject.__init__(self, type_='tooltip', name=name)
 
@@ -643,13 +643,14 @@ class Heatmap(DessiaObject):
     Heatmap is a scatter plot's view. This class contains the Heatmap's parameters.
     :param size: A tuple of two integers corresponding to the number of squares on the horizontal and vertical sides.
     :type size: Tuple[int, int]
-    :param colors: The list of colors ranging from low density to high density, e.g. colors=[colors.BLUE, colors.RED] \
+    :param colors: The list of colors ranging from low density to high density, e.g. colors=[pltd_colors.BLUE, pltd_colors.RED] \
     so the low density areas tend to be blue while higher density areas tend to be red.
     :type colors: List[Colors]
     :param edge_style: The areas separating lines settings
     :type edge_style: EdgeStyle
     """
-    def __init__(self, size: Tuple[int, int]=None, colors:List[colors.Color]=None, edge_style:EdgeStyle=None, name:str=''):
+    def __init__(self, size: Tuple[int, int]=None, colors: List[pltd_colors.Color]=None,
+                 edge_style:EdgeStyle=None, name:str=''):
         self.size = size
         self.colors = colors
         self.edge_style = edge_style
@@ -778,7 +779,7 @@ class Arc2D(PlotDataObject):
         if self.edge_style:
             edgecolor = self.edge_style.color_stroke
         else:
-            edgecolor = colors.BLACK.rgb
+            edgecolor = pltd_colors.BLACK.rgb
 
         ax.add_patch(
             patches.Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,

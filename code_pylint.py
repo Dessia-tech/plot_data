@@ -43,7 +43,7 @@ MAX_ERROR_BY_TYPE = {
                      'too-many-return-statements': 8,
                      'raise-missing-from': 6,
                      'consider-merging-isinstance': 6,
-                     'abstract-method': 6,
+                     'abstract-method': 25,
                      'import-outside-toplevel': 7,
                      'too-many-instance-attributes': 4,
                      'consider-iterating-dictionary': 4,

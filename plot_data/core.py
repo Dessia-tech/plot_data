@@ -643,7 +643,8 @@ class Heatmap(DessiaObject):
     Heatmap is a scatter plot's view. This class contains the Heatmap's parameters.
     :param size: A tuple of two integers corresponding to the number of squares on the horizontal and vertical sides.
     :type size: Tuple[int, int]
-    :param colors: The list of colors ranging from low density to high density, e.g. colors=[pltd_colors.BLUE, pltd_colors.RED] \
+    :param colors: The list of colors ranging from low density to high density, \
+    e.g. colors=[pltd_colors.BLUE, pltd_colors.RED] \
     so the low density areas tend to be blue while higher density areas tend to be red.
     :type colors: List[Colors]
     :param edge_style: The areas separating lines settings

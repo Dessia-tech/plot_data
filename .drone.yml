@@ -15,6 +15,14 @@ steps:
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
 
+- name: python install, build doc run scripts
+  image: python:3.8
+  commands:
+  - pip install sphinx sphinx_rtd_theme
+  - python setup.py install
+  - cd doc
+  - make html
+
 - name: upload npm
   image: plugins/npm
   when:
@@ -95,15 +103,6 @@ steps:
     - git fetch --tags
     - pip3 install -U pip autopep8
     - bash code_pep8.sh
-
-- name: install, build doc run scripts
-  image: python:3.8
-  commands:
-  - pip install sphinx sphinx_rtd_theme
-  - python setup.py install
-  - cd doc
-  - make html
-
 
 - name: sdist
   image: python:3.8

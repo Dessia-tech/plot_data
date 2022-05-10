@@ -1224,9 +1224,9 @@ def bounding_box(plot_datas: Subclass[PlotDataObject]):
     :rtype: float, float, float, float
     """
     xmin, xmax, ymin, ymax = math.inf, -math.inf, math.inf, -math.inf
-    for plot_data in plot_datas:
-        if hasattr(plot_data, 'bounding_box'):
-            bb = plot_data.bounding_box()
+    for plot in plot_datas:
+        if hasattr(plot, 'bounding_box'):
+            bb = plot.bounding_box()
             xmin, xmax = min(xmin, bb[0]), max(xmax, bb[1])
             ymin, ymax = min(ymin, bb[2]), max(ymax, bb[3])
 

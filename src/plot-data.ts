@@ -192,6 +192,8 @@ export abstract class PlotData {
   heatmap: Heatmap;
   heatmap_view: boolean = false;
   selected_areas: number[][];
+  heatmap_table;
+  first_time: boolean = true;
 
   public constructor(
     public data:any,
@@ -633,7 +635,7 @@ export abstract class PlotData {
     }
   }
 
-  get_heatmap_table(scatter) {
+  refresh_heatmap_table(scatter) {
     let table = [];
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
@@ -653,7 +655,7 @@ export abstract class PlotData {
       let ky = Math.floor(y/hstep);
       table[ky][kx]++;
     }
-    return table;
+    this.heatmap_table = table;
   }
 
 
@@ -689,7 +691,10 @@ export abstract class PlotData {
   draw_heatmap(hidden) {
     if (hidden) return;
     let scatter = this.plotObject;
-    let table = this.get_heatmap_table(scatter);
+    if (this.first_time) {
+      this.refresh_heatmap_table(scatter);
+      this.first_time = false;
+    }
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
     let wstep = this.width/w;
@@ -707,7 +712,7 @@ export abstract class PlotData {
     }
     for (let i=0; i<w; i++) {
       for (let j=0; j<h; j++) {
-        let density = table[j][i];
+        let density = this.heatmap_table[j][i];
         let color = heatmap_color(density, max_density, this.heatmap.colors);
         this.context.fillStyle = color;
         this.context.fillRect(i*wstep + this.X, j*hstep + this.Y, wstep, hstep);
@@ -2629,7 +2634,8 @@ export class Interactions {
       let y = plot_data.scaleY*point.cy + plot_data.originY + plot_data.Y;
       let i = Math.floor((x - plot_data.X)/w_step);
       let j = Math.floor((y - plot_data.Y)/h_step);
-      if (plot_data.selected_areas[i][j] === 1) {
+      let is_in_canvas = i>=0 && i<w && j>=0 && j<h;
+      if (is_in_canvas && plot_data.selected_areas[i][j] === 1) {
         point.selected_by_heatmap = true;
         plot_data.heatmap_selected_points.push(point);
       } else {
@@ -2767,6 +2773,9 @@ export class Interactions {
 
   public static click_on_heatmap_action(plot_data) {
     plot_data.heatmap_view = ! plot_data.heatmap_view;
+    if (plot_data.heatmap_view) {
+      plot_data.refresh_heatmap_table(plot_data.plotObject);
+    }
   }
 
   public static click_on_csv_action(plot_data) {

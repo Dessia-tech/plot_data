@@ -4,7 +4,6 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv 
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
-import { type } from "os";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -373,6 +372,8 @@ export abstract class PlotData {
         } else if (d.primitives[i].type_ === "wire") {
           this.draw_wire(hidden, d.primitives[i]);
           // tooltips drawn in mouse_move_interaction()
+        } else if (d.primitives[i].type_ === "point") {
+          this.draw_point(hidden, d.primitives[i])
         }
         this.context.closePath(); 
       }
@@ -419,7 +420,7 @@ export abstract class PlotData {
       for (var j = 0; j < this.select_on_click.length; j++) {
         var z = this.select_on_click[j];
         if (z == d) {
-          this.context.fillStyle = this.color_surface_on_click;
+          this.context.fillStyle = this.color_surface_selected;
         }
       }
     }
@@ -454,11 +455,11 @@ export abstract class PlotData {
       }
       if (this.select_on_mouse == d) {
         this.context.fillStyle = this.color_surface_on_mouse;
-        for (var j = 0; j < this.select_on_click.length; j++) {
-          var z = this.select_on_click[j];
-          if (z == d) {
-            this.context.fillStyle = this.color_surface_selected;
-          }
+      }
+      for (var j = 0; j < this.select_on_click.length; j++) {
+        var z = this.select_on_click[j];
+        if (z == d) {
+          this.context.fillStyle = this.color_surface_selected;
         }
       }
     }
@@ -466,7 +467,7 @@ export abstract class PlotData {
     this.context.setLineDash([]);
   }
 
-  draw_point(hidden, mvx, mvy, scaleX, scaleY, d:Point2D) {
+  draw_point(hidden, d:Point2D) {
     if (hidden) {
       this.context.fillStyle = d.hidden_color;
     } else {
@@ -524,14 +525,14 @@ export abstract class PlotData {
     if (this.log_scale_x) cx = Math.log10(cx);
     if (this.log_scale_y) cy = -Math.log10(-cy);
 
-    var x = scaleX*cx+ mvx;
-    var y = scaleY*cy + mvy;
+    var x = this.scaleX*cx+ this.originX;
+    var y = this.scaleY*cy + this.originY;
     this.pointLength = d.size;
 
     var is_inside_canvas = ((x + this.pointLength>=0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
     if (is_inside_canvas === true) {
       this.context.beginPath();
-      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
+      d.draw(this.context, this.originX, this.originY, this.scaleX, this.scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
       this.context.fill();
       this.context.stroke();
       this.context.closePath();
@@ -611,8 +612,7 @@ export abstract class PlotData {
       }
       for (var i=0; i<d.point_list.length; i=i+step) {
         var point = d.point_list[i];
-        this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, 
-          point);
+        this.draw_point(hidden, point);
       }
     } else if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
@@ -758,7 +758,7 @@ export abstract class PlotData {
       if (this.point_families.length == 0) {
         for (var i=0; i<this.scatter_points.length; i++) {
           var point:Point2D = this.scatter_points[i];
-          this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+          this.draw_point(hidden, point);
         }
       } else {
         var point_order = this.get_point_order();
@@ -766,7 +766,7 @@ export abstract class PlotData {
           for (let j=0; j<point_order[i].length; j++) {
             let index = point_order[i][j];
             let point:Point2D = this.scatter_points[index];
-            this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+            this.draw_point(hidden, point);
           }
         }
       }
@@ -1896,14 +1896,28 @@ export abstract class PlotData {
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
     var click_plot_data = this.color_to_plot_data[colKey];
     if (click_plot_data) {
-      if (click_plot_data.clicked) {
-        this.clicked_points = List.remove_element(click_plot_data, this.clicked_points);
-        click_plot_data.clicked = false;
-        this.latest_selected_points = [];
+      if (this.type_ === "primitivegroup") {
+        if (this.select_on_click.includes(click_plot_data)) {
+          this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
+          if (click_plot_data.type_ === "point") {
+            click_plot_data.selected = false;
+          }
+        } else {
+          this.select_on_click.push(click_plot_data);
+          if (click_plot_data.type_ === "point") {
+            click_plot_data.selected = true;
+          }
+        }
       } else {
-        this.clicked_points.push(click_plot_data);
-        click_plot_data.clicked = true;
-        this.latest_selected_points = [click_plot_data];
+        if (click_plot_data.clicked) {
+          this.clicked_points = List.remove_element(click_plot_data, this.clicked_points);
+          click_plot_data.clicked = false;
+          this.latest_selected_points = [];
+        } else {
+          this.clicked_points.push(click_plot_data);
+          click_plot_data.clicked = true;
+          this.latest_selected_points = [click_plot_data];
+        }
       }
     } 
     // else { 

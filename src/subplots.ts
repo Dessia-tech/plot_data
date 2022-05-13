@@ -43,7 +43,7 @@ export class PlotContour extends PlotData {
             this.maxX = Math.max(this.maxX, primitive.maxX);
             this.minY = Math.min(this.minY, primitive.minY);
             this.maxY = Math.max(this.maxY, primitive.maxY);
-            if (["contour", "circle", "wire"].includes(primitive.type_)) {
+            if (["contour", "circle", "wire", "point"].includes(primitive.type_)) {
               this.color_to_plot_data[primitive.hidden_color] = primitive;
             } 
           }

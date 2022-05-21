@@ -614,7 +614,7 @@ export class PrimitiveGroup {
       var temp = serialized['primitives'];
       let classes = {"contour": Contour2D, "text": Text, "linesegment2d": LineSegment2D,
                     "arc": Arc2D, "circle": Circle2D, "line2d": Line2D, 
-                    "multiplelabels": MultipleLabels, "wire": Wire};
+                    "multiplelabels": MultipleLabels, "wire": Wire, "point": Point2D};
       for (let i=0; i<temp.length; i++) {
         primitives.push(classes[temp[i]["type_"]].deserialize(temp[i]));
       }

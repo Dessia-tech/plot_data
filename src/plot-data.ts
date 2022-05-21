@@ -796,6 +796,23 @@ export abstract class PlotData {
     return point_order;
   }
 
+  get_extremas_wrappers(min, max) {
+    var unit = Math.pow(10, Math.floor(Math.log10(max - min)));
+    let max_unit = (max - min) / unit;
+    if (max_unit <=1) {
+      var grad_step = unit / 10;
+    } else if (max_unit <= 2) {
+      grad_step = unit / 5;
+    } else if (max_unit <= 5) {
+      grad_step = unit / 2;
+    } else {
+      grad_step = unit;
+    }
+    let minW = grad_step * Math.floor(min/grad_step);
+    let maxW = grad_step * Math.ceil(max/grad_step);
+    return [minW, maxW, grad_step];
+  }
+
   draw_vertical_parallel_axis(nb_axis:number, mvx:number) {
     for (var i=0; i<nb_axis; i++) {
       if (i == this.move_index) {
@@ -832,14 +849,19 @@ export abstract class PlotData {
           this.context.textBaseline = 'middle';
           this.context.fillText(current_grad, current_x - 5, current_y);
         } else {
-          var grad_step = (max - min)/(this.axisNbGrad - 1);
-          var y_step = (this.axis_y_end - this.axis_y_start)/(this.axisNbGrad - 1);
-          for (var j=0; j<this.axisNbGrad; j++) {
+          let minW, maxW, grad_step;
+          [minW, maxW, grad_step] = this.get_extremas_wrappers(min, max);
+          let nb_graduations = (maxW - minW) / grad_step;
+          var y_step = (this.axis_y_end - this.axis_y_start) / nb_graduations;
+          for (let j=0; j<nb_graduations + 1; j++) {
             var current_y = this.axis_y_start + j*y_step;
-            if (this.inverted_axis_list[i] === true) {
-              var current_grad:any = MyMath.round(max - j*grad_step, 3);
+            if (this.inverted_axis_list[i]) {
+              var current_grad:any = maxW - j*grad_step;
             } else {
-              current_grad = MyMath.round(min + j*grad_step, 3);
+              current_grad = minW + j*grad_step;
+            }
+            if (Math.log10(max - min) < 0) {
+              current_grad = MyMath.round(current_grad, -Math.floor(Math.log10(max-min) - 1));
             }
             Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
             this.context.textAlign = 'end';
@@ -912,14 +934,19 @@ export abstract class PlotData {
           let current_grad = min;
           this.context.fillText(current_grad, current_x, current_y - 5);
         } else {
-          var grad_step = (max - min)/(this.axisNbGrad - 1);
-          var x_step = (this.axis_x_end - this.axis_x_start)/(this.axisNbGrad - 1);
-          for (var j=0; j<this.axisNbGrad; j++) {
+          let minW, maxW, grad_step;
+          [minW, maxW, grad_step] = this.get_extremas_wrappers(min, max);
+          let nb_graduations = (maxW - minW) / grad_step;
+          var x_step = (this.axis_x_end - this.axis_x_start) / nb_graduations;
+          for (let j=0; j<nb_graduations + 1; j++) {
             var current_x = this.axis_x_start + j*x_step;
-            if (this.inverted_axis_list[i] === true) {
-              var current_grad:any = MyMath.round(max - j*grad_step, 3);
+            if (this.inverted_axis_list[i]) {
+              var current_grad = maxW - j*grad_step;
             } else {
-              current_grad = MyMath.round(min + j*grad_step, 3);
+              current_grad = minW + j*grad_step;
+            }
+            if (Math.log10(max - min) < 0) {
+              current_grad = MyMath.round(current_grad, -Math.floor(Math.log10(max-min) - 1));
             }
             Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
             this.context.textAlign = 'center';
@@ -1013,15 +1040,17 @@ export abstract class PlotData {
       if (min == max) {
         var current_axis_coord = (axis_coord_start + axis_coord_end)/2;
       } else {
-        var delta_y = elt - min;
-        var delta_axis_coord = (axis_coord_end - axis_coord_start) * delta_y/(max - min);
+        let minW, maxW, grad_step;
+        [minW, maxW, grad_step] = this.get_extremas_wrappers(min, max);
+        var delta_y = elt - minW;
+        var delta_axis_coord = (axis_coord_end - axis_coord_start) * delta_y/(maxW - minW);
         if (inverted === true) {
           var current_axis_coord = axis_coord_end - delta_axis_coord;
         } else {
           current_axis_coord = axis_coord_start + delta_axis_coord;
         }
       }
-    } else {
+    } else { // string
       var color = elt;
       if (current_list.length == 1) {
         current_axis_coord = (axis_coord_start + axis_coord_end)/2;

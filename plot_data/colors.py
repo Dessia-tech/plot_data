@@ -22,24 +22,25 @@ class Color(dc.DessiaObject):
         :rtype: Color
         """
         hex_code = hex_code.replace('#', '')
-        r, g, b = (int(hex_code[i:i + 2], 16)/255. for i in (0, 2, 4))
+        r, g, b = (int(hex_code[i:i + 2], 16) / 255. for i in (0, 2, 4))
         return cls(r, g, b)
 
     @classmethod
-    def from_hsv(cls, h:float, s:float, v:float):
+    def from_hsv(cls, h: float, s: float, v: float):
         """
         :return: a Color object
         :rtype: Color
         """
-        return cls(hsv_to_rgb(h, s, v))
+        red, green, blue = hsv_to_rgb(h, s, v)
+        return cls(red=red, green=green, blue=blue)
 
     def __str__(self):
         """
         :return: a string rgb(r, g, b) in rgb255
         """
-        return 'rgb({},{},{})'.format(round(self.red*255),
-                                      round(self.green*255),
-                                      round(self.blue*255))
+        return 'rgb({},{},{})'.format(round(self.red * 255),
+                                      round(self.green * 255),
+                                      round(self.blue * 255))
 
     def to_dict(self):
         return str(self)
@@ -51,7 +52,7 @@ class Color(dc.DessiaObject):
         """
         if not d.startswith('rgb('):
             raise ValueError('Color should be string starting with rgb(')
-        return cls(*(int(v)/255. for v in d[4:-1].split(',')))
+        return cls(*(int(v) / 255. for v in d[4:-1].split(',')))
 
 
 RED = Color.dict_to_object('rgb(247,0,0)')

@@ -47,7 +47,7 @@ circle = plot_data.Circle2D(cx=5, cy=10, r=5, edge_style=circle_edge_style,
                             surface_style=circle_surface_style, tooltip="Circle")
 
 # Text
-text = plot_data.Text(comment='Hello', position_x=6, position_y=9,
+text = plot_data.Text(comment='Hello', position_x=6, position_y=9, text_scaling=True,
                       text_style=plot_data.TextStyle(text_color=colors.RED,
                                                      font_size=12,
                                                      font_style='sans-serif')

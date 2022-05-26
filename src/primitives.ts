@@ -794,10 +794,13 @@ export class Text {
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    if (this.text_scaling) var font_size = this.text_style.font_size * scaleX/this.init_scale;
-    else font_size = this.text_style.font_size;
+    if (this.text_scaling) {
+      var font_size = this.text_style.font_size * scaleX/this.init_scale;
+    } else {
+      font_size = this.text_style.font_size;
+    } 
 
-    context.font = this.text_style.font;
+    context.font = font_size + "px " + this.text_style.font_style;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;

@@ -755,6 +755,11 @@ export abstract class PlotData {
       if ((this.scroll_x % 5 != 0) && (this.scroll_y % 5 != 0)) {
         this.refresh_point_list_bool = true;
       }
+
+      this.context.save();
+      this.context.rect(this.decalage_axis_x + this.X, this.Y, 
+        this.width - this.decalage_axis_x, this.height - this.decalage_axis_y);
+      this.context.clip();
       if (this.point_families.length == 0) {
         for (var i=0; i<this.scatter_points.length; i++) {
           var point:Point2D = this.scatter_points[i];
@@ -770,6 +775,7 @@ export abstract class PlotData {
           }
         }
       }
+      this.context.restore();
 
       for (var i=0; i<this.tooltip_list.length; i++) {
         if (!List.is_include(this.tooltip_list[i],this.scatter_points)) {

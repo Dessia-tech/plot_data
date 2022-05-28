@@ -192,7 +192,6 @@ export abstract class PlotData {
   heatmap_view: boolean = false;
   selected_areas: number[][];
   heatmap_table;
-  first_time: boolean = true;
 
   public constructor(
     public data:any,
@@ -642,13 +641,13 @@ export abstract class PlotData {
     for (let i=0; i<h; i++) {
       table.push(Array(w).fill(0));
     }
-    let wstep = this.width/w;
-    let hstep = this.height/h;
+    let wstep = (this.width - this.decalage_axis_x)/w;
+    let hstep = (this.height - this.decalage_axis_y)/h;
 
     for (let point of scatter.point_list) {
       let x = this.real_to_scatter_coords(point.cx, "x") - this.X;
       let y = this.real_to_scatter_coords(-point.cy, "y") - this.Y;
-      if (x<0 || x>this.width || y<0 || y>this.height) {
+      if (x<this.decalage_axis_x || x>this.width || y<0 || y>this.height - this.decalage_axis_y) {
         continue;
       }
       let kx = Math.floor(x/wstep);
@@ -691,22 +690,19 @@ export abstract class PlotData {
   draw_heatmap(hidden) {
     if (hidden) return;
     let scatter = this.plotObject;
-    if (this.first_time) {
-      this.refresh_heatmap_table(scatter);
-      this.first_time = false;
-    }
+    this.refresh_heatmap_table(scatter);
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
-    let wstep = this.width/w;
-    let hstep = this.height/h;
+    let wstep = (this.width - this.decalage_axis_x)/w;
+    let hstep = (this.height - this.decalage_axis_y)/h;
     let max_density = scatter.point_list.length;
     for (let i=1; i<w; i++) {
       this.context.moveTo(i*wstep + this.X, this.Y);
-      this.context.lineTo(i*wstep + this.X, this.height + this.Y);
+      this.context.lineTo(i*wstep + this.X, this.height + this.Y - this.decalage_axis_y);
       this.context.stroke();
     }
     for (let i=1; i<h; i++) {
-      this.context.moveTo(this.X, i*hstep + this.Y);
+      this.context.moveTo(this.X + this.decalage_axis_x, i*hstep + this.Y);
       this.context.lineTo(this.width + this.X, i*hstep + this.Y);
       this.context.stroke();
     }
@@ -715,7 +711,7 @@ export abstract class PlotData {
         let density = this.heatmap_table[j][i];
         let color = heatmap_color(density, max_density, this.heatmap.colors);
         this.context.fillStyle = color;
-        this.context.fillRect(i*wstep + this.X, j*hstep + this.Y, wstep, hstep);
+        this.context.fillRect(i*wstep + this.X + this.decalage_axis_x, j*hstep + this.Y, wstep, hstep);
       }
     }
     // The following loops could have been included in the previous one but drawing selection rectangles
@@ -725,7 +721,7 @@ export abstract class PlotData {
         if (this.selected_areas[i][j] === 1) {
           this.context.strokeStyle = string_to_hex("blue");
           this.context.lineWidth = 2;
-          this.context.strokeRect(i*wstep + this.X, j*hstep + this.Y,
+          this.context.strokeRect(i*wstep + this.X + this.decalage_axis_x, j*hstep + this.Y,
             wstep, hstep);
         }
       }
@@ -1986,10 +1982,12 @@ export abstract class PlotData {
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
 
-    let w_step = this.width/w;
-    let h_step = this.height/h;
+    let w_step = (this.width - this.decalage_axis_x)/w;
+    let h_step = (this.height - this.decalage_axis_y)/h;
 
-    let i = Math.floor((mouse1X - this.X)/w_step);
+    if (mouse1X - this.X < this.decalage_axis_x || mouse1Y - this.Y > this.height - this.decalage_axis_y) return;
+
+    let i = Math.floor((mouse1X - this.X - this.decalage_axis_x)/w_step);
     let j = Math.floor((mouse1Y - this.Y)/h_step);
 
     this.selected_areas[i][j] = 1 - this.selected_areas[i][j];

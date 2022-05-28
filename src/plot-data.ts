@@ -641,12 +641,12 @@ export abstract class PlotData {
     for (let i=0; i<h; i++) {
       table.push(Array(w).fill(0));
     }
-    let wstep = (this.width - this.decalage_axis_x)/w;
-    let hstep = (this.height - this.decalage_axis_y)/h;
+    let wstep = this.real_to_scatter_length(this.maxX - this.minX, "x")/w;
+    let hstep = this.real_to_scatter_length(this.maxY - this.minY, "y")/h;
 
     for (let point of scatter.point_list) {
-      let x = this.real_to_scatter_coords(point.cx, "x") - this.X;
-      let y = this.real_to_scatter_coords(-point.cy, "y") - this.Y;
+      let x = this.real_to_scatter_length(point.cx - this.minX, "x");
+      let y = this.real_to_scatter_length(-point.cy + this.minY, "y");
       if (x<this.decalage_axis_x || x>this.width || y<0 || y>this.height - this.decalage_axis_y) {
         continue;
       }
@@ -693,26 +693,38 @@ export abstract class PlotData {
     this.refresh_heatmap_table(scatter);
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
-    let wstep = (this.width - this.decalage_axis_x)/w;
-    let hstep = (this.height - this.decalage_axis_y)/h;
+    let wstep = this.real_to_scatter_length(this.maxX - this.minX, "x")/w;
+    let hstep = this.real_to_scatter_length(this.maxY - this.minY, "y")/h;
     let max_density = scatter.point_list.length;
-    for (let i=1; i<w; i++) {
-      this.context.moveTo(i*wstep + this.X, this.Y);
-      this.context.lineTo(i*wstep + this.X, this.height + this.Y - this.decalage_axis_y);
-      this.context.stroke();
-    }
-    for (let i=1; i<h; i++) {
-      this.context.moveTo(this.X + this.decalage_axis_x, i*hstep + this.Y);
-      this.context.lineTo(this.width + this.X, i*hstep + this.Y);
-      this.context.stroke();
-    }
+    let x1 = this.real_to_scatter_coords(this.minX, "x");
+    let x2 = this.real_to_scatter_coords(this.maxX, "x");
+    let y1 = this.real_to_scatter_coords(-this.minY, "y");
+    let y2 = this.real_to_scatter_coords(-this.maxY, "y");
+
+    this.context.beginPath();
+    this.context.save();
+    this.context.rect(this.decalage_axis_x + this.X, this.Y, 
+      this.width - this.decalage_axis_x, this.height - this.decalage_axis_y);
+    this.context.clip();
+
     for (let i=0; i<w; i++) {
       for (let j=0; j<h; j++) {
         let density = this.heatmap_table[j][i];
         let color = heatmap_color(density, max_density, this.heatmap.colors);
         this.context.fillStyle = color;
-        this.context.fillRect(i*wstep + this.X + this.decalage_axis_x, j*hstep + this.Y, wstep, hstep);
+        this.context.fillRect(x1 + i*wstep, y1 + j*hstep, wstep, hstep);
       }
+    }
+
+    for (let i=1; i<w; i++) {
+      this.context.moveTo(x1 + i*wstep, y1);
+      this.context.lineTo(x1 + i*wstep, y2);
+      this.context.stroke();
+    }
+    for (let i=1; i<h; i++) {
+      this.context.moveTo(x1, y1 + i*hstep);
+      this.context.lineTo(x2, y1 + i*hstep);
+      this.context.stroke();
     }
     // The following loops could have been included in the previous one but drawing selection rectangles
     // after the heatmap makes the result more aesthetic
@@ -721,12 +733,13 @@ export abstract class PlotData {
         if (this.selected_areas[i][j] === 1) {
           this.context.strokeStyle = string_to_hex("blue");
           this.context.lineWidth = 2;
-          this.context.strokeRect(i*wstep + this.X + this.decalage_axis_x, j*hstep + this.Y,
-            wstep, hstep);
+          this.context.strokeRect(x1 + i*wstep, y1 + j*hstep, wstep, hstep);
         }
       }
     }
 
+    this.context.restore();
+    this.context.closePath();
     this.draw_gradient_axis(max_density);
     let temp = scatter.axis.grid_on;
     scatter.axis.grid_on = false;
@@ -1982,13 +1995,18 @@ export abstract class PlotData {
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
 
-    let w_step = (this.width - this.decalage_axis_x)/w;
-    let h_step = (this.height - this.decalage_axis_y)/h;
+    let w_step = this.real_to_scatter_length(this.maxX - this.minX, "x")/w;
+    let h_step = this.real_to_scatter_length(this.maxY - this.minY, "y")/h;
 
-    if (mouse1X - this.X < this.decalage_axis_x || mouse1Y - this.Y > this.height - this.decalage_axis_y) return;
+    let x1 = this.real_to_scatter_coords(this.minX, "x");
+    let y1 = this.real_to_scatter_coords(-this.minY, "y");
+    let x2 = this.real_to_scatter_coords(this.maxX, "x");
+    let y2 = this.real_to_scatter_coords(-this.maxY, "y");
 
-    let i = Math.floor((mouse1X - this.X - this.decalage_axis_x)/w_step);
-    let j = Math.floor((mouse1Y - this.Y)/h_step);
+    if (mouse1X < x1 || mouse1X > x2 || mouse1Y < y1 || mouse1Y > y2) return;
+
+    let i = Math.floor((mouse1X - x1)/w_step);
+    let j = Math.floor((mouse1Y - y1)/h_step);
 
     this.selected_areas[i][j] = 1 - this.selected_areas[i][j];
   }
@@ -2673,16 +2691,20 @@ export class Interactions {
     let w = heatmap.size[0];
     let h = heatmap.size[1];
 
-    let w_step = plot_data.width/w;
-    let h_step = plot_data.height/h;
+    // Since the heatmap size is considered to be the bounding box, one or many points might be on 
+    // the edge, resulting on out of bound errors. The idea here is then to increase the heatmap 
+    // size by a non significant amount
+    let w_step = plot_data.real_to_scatter_length(1.0001 * (plot_data.maxX - plot_data.minX), "x")/w;
+    let h_step = plot_data.real_to_scatter_length(1.0001 * (plot_data.maxY - plot_data.minY), "y")/h;
+    let x1 = plot_data.real_to_scatter_coords(plot_data.minX, "x");
+    let y1 = plot_data.real_to_scatter_coords(-plot_data.minY, "y");
     for (let k=0; k<plot_data.scatter_points.length; k++) {
       let point = plot_data.scatter_points[k];
-      let x = plot_data.scaleX*point.cx + plot_data.originX + plot_data.X;
-      let y = plot_data.scaleY*point.cy + plot_data.originY + plot_data.Y;
-      let i = Math.floor((x - plot_data.X)/w_step);
-      let j = Math.floor((y - plot_data.Y)/h_step);
-      let is_in_canvas = i>=0 && i<w && j>=0 && j<h;
-      if (is_in_canvas && plot_data.selected_areas[i][j] === 1) {
+      let x = plot_data.real_to_scatter_coords(point.cx, "x");
+      let y = plot_data.real_to_scatter_coords(-point.cy, "y");
+      let i = Math.floor((x - x1)/w_step);
+      let j = Math.floor((y - y1)/h_step);
+      if (plot_data.selected_areas[i][j] === 1) {
         point.selected_by_heatmap = true;
         plot_data.heatmap_selected_points.push(point);
       } else {

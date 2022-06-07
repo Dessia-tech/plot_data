@@ -1,3 +1,4 @@
+import { ListenOptions } from "net";
 import { string_to_hex } from "./color_conversion";
 import { equals } from "./utils";
 
@@ -155,6 +156,73 @@ export class Shape {
       context.lineWidth = line_width;
       context.globalAlpha = opacity;
       context.rect(x,y,w,h);
+      if (color_fill != 'No') { context.fill(); }
+      if (color_stroke != 'No') { context.stroke(); }
+      context.closePath();
+      context.globalAlpha = 1;
+      context.setLineDash([]);
+    }
+
+    /**
+     * Draws a triangle on canvas.
+     * @param xa the triangle's node a x coordinate
+     * @param ya the triangle's node a y coordinate
+     * @param xb the triangle's node b x coordinate
+     * @param yb the triangle's node b y coordinate
+     * @param xc the triangle's node c x coordinate
+     * @param yc the triangle's node c y coordinate
+     * @param context canvas' context
+     * @param color_fill the rectangle's fill color. Can be set to 'No' if the rectangle
+     doesn't have to be filled.
+     * @param color_stroke its stroke color. It can be set to 'No' if a contour isn't needed.
+     * @param line_width its contour's line width.
+     * @param opacity The opacity inside (from 0 to 1).
+     * @param dashline contour's dashline ([] for no dashline). A pattern list [a_0,..., a_n] where a_i represents the number of filled pixels is i%2 == 0
+     and the number of empty pixels if i%2 != 0. 
+     */
+     public static triangle(xa, ya, xb, yb, xc, yc, context, color_fill='No', color_stroke=string_to_hex('black'), line_width=1, opacity=1, dashline=[]) {
+      context.beginPath();
+      context.setLineDash(dashline);
+      context.fillStyle = color_fill;
+      context.strokeStyle = color_stroke;
+      context.lineWidth = line_width;
+      context.globalAlpha = opacity;
+      context.drawLine([[xa, ya], [xb, yb], [xc, yc], [xa, ya]]);
+      if (color_fill != 'No') { context.fill(); }
+      if (color_stroke != 'No') { context.stroke(); }
+      context.closePath();
+      context.globalAlpha = 1;
+      context.setLineDash([]);
+    }
+
+    /**
+     * Draws an round triangle on canvas.
+     * @param xa the triangle's node a x coordinate
+     * @param ya the triangle's node a y coordinate
+     * @param xb the triangle's node b x coordinate
+     * @param yb the triangle's node b y coordinate
+     * @param xc the triangle's node c x coordinate
+     * @param yc the triangle's node c y coordinate
+     * @param radius the radius of the arc on triangle
+     * @param context canvas' context
+     * @param color_fill the rectangle's fill color. Can be set to 'No' if the rectangle
+     doesn't have to be filled.
+     * @param color_stroke its stroke color. It can be set to 'No' if a contour isn't needed.
+     * @param line_width its contour's line width.
+     * @param opacity The opacity inside (from 0 to 1).
+     * @param dashline contour's dashline ([] for no dashline). A pattern list [a_0,..., a_n] where a_i represents the number of filled pixels is i%2 == 0
+     and the number of empty pixels if i%2 != 0. 
+     */
+     public static roundTriangle(xa, ya, xb, yb, xc, yc, radius, context, color_fill='No', color_stroke=string_to_hex('black'), line_width=1, opacity=1, dashline=[]) {
+      context.beginPath();
+      context.setLineDash(dashline);
+      context.fillStyle = color_fill;
+      context.strokeStyle = color_stroke;
+      context.lineWidth = line_width;
+      context.globalAlpha = opacity;
+      context.drawLine([[xa, ya], [xb, yb]]);
+      context.arcTo(xb, yb, xc, yc, radius);
+      context.drawLine([[xc, yc], [xa, ya]]);
       if (color_fill != 'No') { context.fill(); }
       if (color_stroke != 'No') { context.stroke(); }
       context.closePath();

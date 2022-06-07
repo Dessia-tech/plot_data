@@ -1,5 +1,5 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire, PieChart } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
@@ -771,6 +771,64 @@ export abstract class PlotData {
       }
       this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON, 
         d.attribute_names);
+    }
+  }
+
+
+  draw_piechart(d:PieChart, hidden, mvx, mvy) {
+    if (d['type_'] == 'piechart') {
+      var r:Circle2D = new Circle2D(d, this.width/this.scaleX/2, this.height/this.scaleY/2, 
+                                    5, d.edge_style, d.surface_style, d.tooltip, this.type_, this.name);
+      
+      this.context.beginPath();
+      this.draw_circle(hidden, mvx, mvy, this.scaleX, this.scaleY, r);
+      this.context.fill();
+      this.context.stroke();
+      this.context.closePath();
+      console.log(d)
+      /* for (var i=0; i<this.tooltip_list.length; i++){
+        roundTriangle(xa, ya, xb, yb, xc, yc, 
+                      radius, context, color_fill='No', 
+                      color_stroke=string_to_hex('black'), 
+                      line_width=1, opacity=1, dashline=[]);
+        } */
+      // if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
+      //   let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
+      //   if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
+      //     this.scatter_points = refreshed_points;
+      //   }
+      //   this.refresh_point_list_bool = false;
+      // } else if (this.mergeON === false) {
+      //   if (!this.point_list_equals(this.scatter_points, d.point_list)) {
+      //     this.scatter_points = d.point_list;
+      //   }
+      // }
+      // if ((this.scroll_x % 5 != 0) && (this.scroll_y % 5 != 0)) {
+      //   this.refresh_point_list_bool = true;
+      // }
+      // if (this.point_families.length == 0) {
+      //   for (var i=0; i<this.scatter_points.length; i++) {
+      //     var point:Point2D = this.scatter_points[i];
+      //     this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+      //   }
+      // } else {
+      //   var point_order = this.get_point_order();
+      //   for (let i=0; i<point_order.length; i++) {
+      //     for (let j=0; j<point_order[i].length; j++) {
+      //       let index = point_order[i][j];
+      //       let point:Point2D = this.scatter_points[index];
+      //       this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+      //     }
+      //   }
+      // }
+
+      // for (var i=0; i<this.tooltip_list.length; i++) {
+      //   if (!List.is_include(this.tooltip_list[i],this.scatter_points)) {
+      //     this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
+      //   }
+      // }
+      // this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON, 
+      //   d.attribute_names);
     }
   }
 

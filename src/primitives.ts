@@ -748,6 +748,133 @@ export class Scatter {
 }
 
 
+export class PieChart {
+
+  point_list:Point2D[]=[];
+  all_attributes:Attribute[]=[];
+  lists:any[]=[];
+  to_display_attributes:Attribute[]=[];
+
+  constructor(public tooltip:Tooltip,
+              public attribute_names:string[],
+              public point_style:PointStyle,
+              public surface_style:SurfaceStyle,
+              public edge_style:EdgeStyle,
+              public elements: any[],
+              public axis:Axis,
+              public type_:string,
+              public name:string) {
+    this.initialize_all_attributes();
+    this.initialize_to_display_attributes();
+    this.initialize_lists();
+    this.initialize_point_list(elements);
+  }
+
+  public static deserialize(serialized) {
+    let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')};
+    let default_tooltip = {attributes: serialized['attribute_names']};
+    var default_dict_ = {point_style:default_point_style, tooltip: default_tooltip};
+    serialized = set_default_values(serialized, default_dict_);
+    var axis = Axis.deserialize(serialized['axis']);
+    var tooltip = Tooltip.deserialize(serialized['tooltip']);
+    var point_style = PointStyle.deserialize(serialized['point_style']);
+    var surface_style = SurfaceStyle.deserialize(serialized['surface_style'])
+    var edge_style = EdgeStyle.deserialize(serialized['edge_style'])
+    return new PieChart(tooltip,
+                       serialized['attribute_names'],
+                       point_style,
+                       surface_style,
+                       edge_style,
+                       serialized['elements'],
+                       axis,
+                       serialized['type_'],
+                       serialized['name']);
+  }
+
+  initialize_all_attributes() {
+    var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
+    var exceptions = ['package_version', 'object_class'];
+    for (let i=0; i<attribute_names.length; i++) {
+      let name = attribute_names[i];
+      if (!List.is_include(name, exceptions)) {
+        let type_ = TypeOf(this.elements[0][name]);
+        this.all_attributes.push(new Attribute(name, type_)); 
+      }
+    }
+  }
+
+  initialize_to_display_attributes() {
+    for (let i=0; i<this.attribute_names.length; i++) {
+      var name = this.attribute_names[i];
+      for (let j=0; j<this.all_attributes.length; j++) {
+        if (name == this.all_attributes[j]['name']) {
+          this.to_display_attributes.push(this.all_attributes[j]);
+          break;
+        }
+      }
+    }
+  }
+
+  initialize_lists() {
+    this.lists = [];
+    for (let i=0; i<this.to_display_attributes.length; i++) {
+      var value = [];
+      var name = this.to_display_attributes[i].name;
+      let type_ = this.to_display_attributes[i].type_;
+      if (type_ == 'float') {
+        let min = this.elements[0][name];
+        let max = this.elements[0][name];
+        for (let j=0; j<this.elements.length; j++) {
+          let elt = this.elements[j][name];
+          if (elt>max) {
+            max = elt;
+          }
+          if (elt<min) {
+            min = elt;
+          }
+        }
+        this.lists.push([min, max]);
+      } else if (type_ == 'color') {
+        for (let j=0; j<this.elements.length; j++) {
+          let elt_color = rgb_to_string(this.elements[j][name]);
+          if (!List.is_include(elt_color, value)) {
+            value.push(elt_color);
+          }
+        }
+        this.lists.push(value);
+      } else {
+        for (let j=0; j<this.elements.length; j++) {
+          let elt = this.elements[j][name].toString();
+          if (!List.is_include(elt, value)) {
+            value.push(elt);
+          }
+        }
+        this.lists.push(value);
+      }
+    }
+  }
+
+  initialize_point_list(elements) {
+    this.point_list = [];
+    for (let i=0; i<this.elements.length; i++) {
+      var elt0 = elements[i][this.to_display_attributes[0]['name']];
+      //var elt1 = elements[i][this.to_display_attributes[1]['name']];
+      if (this.to_display_attributes[0]['type_'] == 'float') {
+        var cx = elt0;
+      } else if (this.to_display_attributes[0]['type_'] == 'color') {
+        cx = List.get_index_of_element(rgb_to_string(elt0), this.lists[0]);
+      } else {
+        cx = List.get_index_of_element(elt0.toString(), this.lists[0]);
+      }
+      let point = new Point2D(cx, 5, MyObject.copy(this.point_style));
+      point.index = i;
+      this.point_list.push(point);
+    }
+  }
+
+}
+
+
 export class Text {
   minX:number=Infinity;
   maxX:number=-Infinity;

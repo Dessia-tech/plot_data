@@ -2,7 +2,7 @@ import { PlotData, Buttons, Interactions } from "./plot-data";
 import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
-import { Graph2D, Scatter } from "./primitives";
+import { Graph2D, Scatter, PieChart } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
 
@@ -237,6 +237,125 @@ export class PlotScatter extends PlotData {
       }
       this.context.restore();
     }
+}
+
+
+/** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
+ */
+ export class PlotPieChart extends PlotData {
+  public constructor(public data:any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot = false) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      if (!is_in_multiplot) {
+        var requirement = '0.6.0';
+        check_package_version(data['package_version'], requirement);
+      }
+      if (this.buttons_ON) {
+        this.refresh_buttons_coords();
+      }    
+      this.log_scale_x = data['log_scale_x'];
+      this.log_scale_y = data['log_scale_y'];
+      if (data['type_'] == 'piechart') {
+        this.type_ = 'piechart';
+        this.axis_ON = false;
+        this.mergeON = true;
+        console.log(data)
+        this.plotObject = PieChart.deserialize(data);
+        this.plot_datas['value'] = [this.plotObject];
+        this.pointLength = this.plotObject.point_list[0].size;
+        this.scatter_init_points = this.plotObject.point_list;
+        this.refresh_MinMax(this.plotObject.point_list);
+        this.heatmap_view = data["heatmap_view"] || false;
+        if (data["heatmap"]) {this.heatmap = Heatmap.deserialize(data["heatmap"])} else {this.heatmap = new Heatmap();}
+        this.selected_areas = [];
+        for (let i=0; i<this.heatmap.size[0]; i++) {
+          let temp = [];
+          for (let j=0; j<this.heatmap.size[1]; j++) {
+            temp.push(0);
+          }
+          this.selected_areas.push(temp);
+        }
+      }
+      this.isParallelPlot = false;
+      if (this.mergeON && alert_count === 0) {
+        // merge_alert();
+      }
+  }
+
+  draw() {
+    this.draw_from_context(false);
+    this.draw_from_context(true);
+  }
+
+  draw_from_context(hidden) {
+    this.define_context(hidden);
+    this.context.save();
+    this.draw_empty_canvas(this.context);
+    if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
+    this.context.beginPath();
+    this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
+    this.context.clip();
+    this.context.closePath();
+    this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
+    if (this.heatmap_view) {
+      this.draw_heatmap(hidden);
+    } else {
+      this.draw_piechart(this.plotObject, hidden, this.originX, this.originY);
+      if (this.permanent_window) {
+        this.draw_selection_rectangle();
+      }
+      if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+        this.draw_zoom_rectangle();
+      }
+    }
+
+    if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
+      this.refresh_buttons_coords();
+
+      //Drawing the zooming button
+      Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
+
+      //Drawing the button for zooming window selection
+      Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
+
+      //Drawing the reset button
+      Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
+
+      //Drawing the selection button
+      Buttons.selection_button(this.button_x, this.select_y, this.button_w, this.button_h, this);
+
+      //Drawing the enable/disable graph button
+      Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
+
+      if (this.plotObject.type_ == 'scatterplot') {
+        // TODO To check, 'this' in args is weird
+        Buttons.merge_button(this.button_x, this.merge_y, this.button_w, this.button_h, '10px Arial', this);
+      }
+
+      //draw permanent window button
+      Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
+
+      //draw clear point button
+      Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
+
+      // Draw log scale buttons
+      Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
+        "10px Arial", this);
+      
+      // Draw Heatmap button
+      Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
+    }
+    if (this.multiplot_manipulation) {
+      this.draw_manipulable_rect();
+    }
+    this.context.restore();
+  }
 }
 
 

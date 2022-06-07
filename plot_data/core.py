@@ -710,8 +710,60 @@ class Scatter(PlotDataObject):
         self.heatmap_view = heatmap_view
         PlotDataObject.__init__(self, type_='scatterplot', name=name)
         
+        
+# class PieChart(PlotDataObject):
+#     """
+#     A class for drawing scatter plots.
 
-class Pie(PlotDataObject):
+#     :param elements: A list of vectors. Vectors must have the same \
+#     attributes (ie the same keys)
+#     :type elements: List[dict]
+#     :param x_variable: variable that you want to display on x axis
+#     :type x_variable: str
+#     :param y_variable: variable that you want to display on y axis
+#     :type y_variable: str
+#     :param tooltip: an object containing all information needed for \
+#     drawing tooltips
+#     :type tooltip: Tooltip
+#     :param point_style: for points' customization
+#     :type point_style: PointStyle
+#     :param axis: an object containing all information needed for \
+#     drawing axis
+#     :type axis: Axis
+#     :param log_scale_x: True or False
+#     :type log_scale_x: bool
+#     :param log_scale_y: True or False
+#     :type log_scale_y: bool
+#     :param heatmap: Heatmap view settings
+#     :type heatmap: Heatmap
+#     :param heatmap_view: Heatmap view when loading the object. If set \
+#     to False, you'd still be able to enable it using the button.
+#     :type heatmap_view: bool
+#     """
+
+#     def __init__(self, x_variable: str, y_variable: str,
+#                   tooltip: Tooltip = None,
+#                   point_style: PointStyle = None,
+#                   elements: List[Any] = None, axis: Axis = None,
+#                   heatmap: Heatmap = None, heatmap_view: bool = None,
+#                   name: str = ''):
+#         self.tooltip = tooltip
+#         self.attribute_names = [x_variable, y_variable]
+#         self.point_style = point_style
+#         if not elements:
+#             self.elements = []
+#         else:
+#             self.elements = elements
+#         if not axis:
+#             self.axis = Axis()
+#         else:
+#             self.axis = axis
+#         self.heatmap = heatmap
+#         self.heatmap_view = heatmap_view
+#         PlotDataObject.__init__(self, type_='piechart', name=name)
+        
+
+class PieChart(PlotDataObject):
     """
     A class for drawing pie plots.
 
@@ -728,14 +780,14 @@ class Pie(PlotDataObject):
     """
 
     def __init__(self, x_variable: str, elements: List[Any] = None,
-                 tooltip: Tooltip = None,
-                 point_style: PointStyle = None,
-                 edge_style: EdgeStyle = None,
-                 axis: Axis = None,
-                 name: str = ''):
+                  tooltip: Tooltip = None,
+                  point_style: PointStyle = None,
+                  edge_style: EdgeStyle = None,
+                  axis: Axis = None,
+                  name: str = ''):
         
         self.tooltip = tooltip
-        self.x_variable = x_variable
+        self.attribute_names = [x_variable]
         self.point_style = point_style
         if not elements:
             self.elements = []
@@ -745,7 +797,7 @@ class Pie(PlotDataObject):
             self.axis = Axis()
         else:
             self.axis = axis
-        PlotDataObject.__init__(self, type_='pieplot', name=name)
+        PlotDataObject.__init__(self, type_='piechart', name=name)
 
 
 class ScatterMatrix(PlotDataObject):
@@ -1183,6 +1235,8 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         template = templates.histogram_template
     elif plot_type == "scattermatrix":
         template = templates.scatter_matrix_template
+    elif plot_type == "piechart":
+        template = templates.piechart_template
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 

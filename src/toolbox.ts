@@ -187,7 +187,7 @@ export class Shape {
       context.strokeStyle = color_stroke;
       context.lineWidth = line_width;
       context.globalAlpha = opacity;
-      context.drawLine([[xa, ya], [xb, yb], [xc, yc], [xa, ya]]);
+      this.drawLine(context, [[xa, ya], [xb, yb], [xc, yc], [xa, ya]]);
       if (color_fill != 'No') { context.fill(); }
       if (color_stroke != 'No') { context.stroke(); }
       context.closePath();
@@ -220,9 +220,9 @@ export class Shape {
       context.strokeStyle = color_stroke;
       context.lineWidth = line_width;
       context.globalAlpha = opacity;
-      context.drawLine([[xa, ya], [xb, yb]]);
+      this.drawLine(context, [[xa, ya], [xb, yb]]);
       context.arcTo(xb, yb, xc, yc, radius);
-      context.drawLine([[xc, yc], [xa, ya]]);
+      this.drawLine(context, [[xc, yc], [xa, ya]]);
       if (color_fill != 'No') { context.fill(); }
       if (color_stroke != 'No') { context.stroke(); }
       context.closePath();

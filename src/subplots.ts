@@ -265,7 +265,6 @@ export class PlotScatter extends PlotData {
         this.type_ = 'piechart';
         this.axis_ON = false;
         this.mergeON = true;
-        console.log(data)
         this.plotObject = PieChart.deserialize(data);
         this.plot_datas['value'] = [this.plotObject];
         this.pointLength = this.plotObject.point_list[0].size;

@@ -777,37 +777,59 @@ export abstract class PlotData {
 
   draw_piechart(d: PieChart, hidden: CanvasRenderingContext2D, mvx: number, mvy: number): void {
     if (d['type_'] == 'piechart') {
-      const radius: number = 5;
+      const radius: number = 10;
       const center: Array<number> = [this.width/this.scaleX/2, this.height/this.scaleY/2]
       const r: Circle2D = new Circle2D(d, center[0], center[1], radius, d.edge_style, d.surface_style, d.tooltip, this.type_, this.name);
       let total: number = 0;
       let normed_ratio: number = 2*Math.PI;
-      let arc_angle: number = Math.PI/2;
+   /*    let test_dict: any = d.elements.slice(0, 5)
+      
+      console.log(test_dict)
+      test_dict[0]['mass'] = 1;
+      test_dict[1]['mass'] = 2;
+      test_dict[2]['mass'] = 1;
+      test_dict[3]['mass'] = 2;
+      test_dict[4]['mass'] = 1;
+ */
+      let color_ratio: number = 360/d.elements.length;
 
       d.elements.forEach(element => {
         total += element[d.attribute_names[0]]
       });
 
       normed_ratio /= total
-
-      /* this.context.beginPath();
+      this.context.beginPath();
       this.draw_circle(hidden, mvx, mvy, this.scaleX, this.scaleY, r);
       this.context.fill();
       this.context.stroke();
-      this.context.closePath(); */
+      this.context.closePath();
+
 
       let pivot: Array<number> = [mvx + center[0]*this.scaleX, mvy + (center[1])*this.scaleY]
-      let init_coords: Array<number> = [mvx + center[0]*this.scaleX, mvy + (center[1] + radius)*this.scaleY]
-      let next_coords: Array<number> = [0, 0]
+      let init_angle: number = Math.PI/2;
+      let next_angle: number = init_angle;
+      this.context.strokeStyle = 'hsl(0, 0%, 50%)';
+      this.context.lineWidth = 1;
       for (let i=0; i<d.elements.length; i++){
-        arc_angle -= d.elements[i][d.attribute_names[0]] * normed_ratio
-        next_coords = [pivot[0] + (radius * Math.cos(arc_angle)) * this.scaleX, pivot[1] + (radius * Math.sin(arc_angle)) * this.scaleY];
-        console.log(d.elements[i], d.elements[i][d.attribute_names[0]]);
-        Shape.roundTriangle(pivot[0], pivot[1], init_coords[0], init_coords[1], next_coords[0], next_coords[1], 
+        this.context.fillStyle = 'hsl('+ i*color_ratio +', 50%, 50%, 50%)';
+        //this.context.fillStyle = 'hsl('+ Math.random()*360 +', 50%, 50%, 50%)';
+
+        this.context.beginPath();
+        this.context.moveTo(pivot[0], pivot[1]);
+        next_angle += d.elements[i][d.attribute_names[0]] * normed_ratio;
+        this.context.arc(pivot[0], pivot[1], radius*this.scaleX, init_angle, next_angle);
+        init_angle = next_angle;
+        this.context.closePath();
+        this.context.stroke();
+        this.context.fill();
+        
+
+
+        /* Shape.roundTriangle(pivot[0], pivot[1], init_coords[0], init_coords[1], next_coords[0], next_coords[1], 
                             radius, this.context, 'No', 
                             string_to_hex('black'), 
                             1, 1, []);
-        init_coords = next_coords;
+        init_coords = next_coords; */
       }
       
       // if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){

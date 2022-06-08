@@ -242,7 +242,7 @@ export class PlotScatter extends PlotData {
 
 /** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
  */
- export class PlotPieChart extends PlotData {
+export class PlotPieChart extends PlotData {
   public constructor(public data:any,
     public width: number,
     public height: number,
@@ -289,7 +289,7 @@ export class PlotScatter extends PlotData {
 
   draw() {
     this.draw_from_context(false);
-    this.draw_from_context(true);
+    //this.draw_from_context(true);
   }
 
   draw_from_context(hidden) {

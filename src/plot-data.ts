@@ -779,18 +779,13 @@ export abstract class PlotData {
     this.interaction_ON = true;
     if (d['type_'] == 'piechart') {
       const radius: number = 5;
-      const center: Array<number> = [this.width/this.scaleX/2, this.height/this.scaleY/2]
-      let pivot: Array<number> = [mvx + center[0]*this.scaleX, mvy + (center[1])*this.scaleY]
-      let initAngle: number = Math.PI/2;
-      let endAngle: number = initAngle;
+      const center: Array<number> = [this.width/this.scaleX/2, this.height/this.scaleY/2];
       let colorRadius: number = 0;
       let colorRatio: number = 360/d.piePartsList.length;
 
-      this.context.lineWidth = 1;
-      // Fonctionne pour afficher
+      this.context.lineWidth = 0.5;
+
       for (let part of d.piePartsList){
-        this.context.beginPath();
-        this.context.moveTo(pivot[0], pivot[1]);
         part.centerX = center[0];
         part.centerY = center[1];
         part.radius = radius;
@@ -803,28 +798,22 @@ export abstract class PlotData {
         } else{
           colorRadius += colorRatio;
           if (this.select_on_mouse === part){
-            this.context.strokeStyle = this.color_surface_on_mouse;
+            this.context.strokeStyle = "gray"; //this.color_surface_on_mouse;
             this.context.fillStyle = this.color_surface_on_mouse;
           } else if (this.select_on_click.includes(part)){
             this.context.strokeStyle = this.color_surface_on_click;
             this.context.fillStyle = this.color_surface_on_click;
           } else{
-          this.context.strokeStyle = 'hsl('+ colorRadius +', 50%, 50%, 50%)';
+          this.context.strokeStyle = "gray"; //'hsl('+ colorRadius +', 50%, 50%, 50%)';
           this.context.fillStyle = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
           }
         }
-
         part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
-        this.context.closePath();
-        this.context.stroke();
-        this.context.fill();
-        initAngle = endAngle;
       }
       console.log(this.select_on_mouse, this.select_on_click)
       
     this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
       d.attribute_names);
-
     }
   }
 

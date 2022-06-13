@@ -1066,7 +1066,7 @@ export class PieChart {
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
 
-    /* let test_dict: any = elements.slice(0, 5)
+    let test_dict: any = elements.slice(0, 5)
     test_dict[0]['mass'] = 1;
     test_dict[1]['mass'] = 2;
     test_dict[2]['mass'] = 1;
@@ -1085,8 +1085,8 @@ export class PieChart {
       this.piePartsList.push(partI)
       initAngle = nextAngle;
     }
- */
-    elements.forEach(element => {
+
+    /* elements.forEach(element => {
       total += element[this.attribute_names[0]]
     });
 
@@ -1097,7 +1097,7 @@ export class PieChart {
       let partI = new PiePart(0, 0, 10, initAngle, nextAngle, true);
       this.piePartsList.push(partI)
       initAngle = nextAngle;
-    }
+    } */
   }
 }
 
@@ -1151,11 +1151,17 @@ export class PieChart {
   }
 
   draw(context, mvx, mvy, scale, X, Y) {
-    context.arc(scale*this.centerX + mvx + X, 
-                scale*this.centerY + mvy + Y, 
+    let translatedCenter: Array<number> = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
+    context.beginPath();
+    context.moveTo(translatedCenter[0], translatedCenter[1]);
+    context.arc(translatedCenter[0], 
+                translatedCenter[1], 
                 scale*this.radius, 
                 this.initAngle, 
                 this.endAngle, 
                 this.anticlockwise);
+    context.closePath();
+    context.stroke();
+    context.fill();
   }
 }  

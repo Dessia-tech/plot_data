@@ -2,7 +2,7 @@ import { PlotData, Buttons, Interactions } from "./plot-data";
 import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
-import { Graph2D, Scatter, PieChart, PiePart } from "./primitives";
+import { Graph2D, Scatter, PieChart } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
 
@@ -261,8 +261,7 @@ export class PlotPieChart extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }    
-      this.log_scale_x = data['log_scale_x'];
-      this.log_scale_y = data['log_scale_y'];
+      this.log_scale_y = false;
       if (data['type_'] == 'piechart') {
         this.type_ = 'piechart';
         this.axis_ON = false;

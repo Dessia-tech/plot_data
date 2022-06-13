@@ -928,7 +928,7 @@ class PrimitiveGroup(PlotDataObject):
     Circle2D, Line2D, MultipleLabels, Wire]]
     """
 
-    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
+    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
                                               Circle2D, Line2D, MultipleLabels, Wire]],
                  name: str = ''):
         self.primitives = primitives

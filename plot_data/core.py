@@ -372,7 +372,7 @@ class Wire(PlotDataObject):
     :param tooltip: a message that is displayed in a tooltip
     :type tooltip: str
     """
-    
+
     def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None,
                  tooltip: str = None, name: str = ""):
         self.lines = lines
@@ -652,9 +652,9 @@ class Heatmap(DessiaObject):
     :param edge_style: The areas separating lines settings
     :type edge_style: EdgeStyle
     """
-    
+
     def __init__(self, size: Tuple[int, int] = None, colors: List[plot_data.colors.Color] = None,
-             edge_style: EdgeStyle = None, name: str = ''):
+                 edge_style: EdgeStyle = None, name: str = ''):
         self.size = size
         self.colors = colors
         self.edge_style = edge_style
@@ -929,7 +929,7 @@ class PrimitiveGroup(PlotDataObject):
     """
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D, MultipleLabels, Wire]],
+                                              Circle2D, Line2D, MultipleLabels, Wire]],
                  name: str = ''):
         self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)

@@ -2,7 +2,7 @@ import { PlotData, Buttons, Interactions } from "./plot-data";
 import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
-import { Graph2D, Scatter, PieChart } from "./primitives";
+import { Graph2D, Scatter, PieChart, PiePart } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
 
@@ -243,14 +243,16 @@ export class PlotScatter extends PlotData {
 /** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
  */
 export class PlotPieChart extends PlotData {
-  public constructor(public data:any,
+  public constructor(
+    public data:any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
     public X: number,
     public Y: number,
     public canvas_id: string,
-    public is_in_multiplot = false) {
+    public is_in_multiplot = false
+    ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (!is_in_multiplot) {
         var requirement = '0.6.0';
@@ -270,26 +272,17 @@ export class PlotPieChart extends PlotData {
         this.pointLength = this.plotObject.point_list[0].size;
         this.scatter_init_points = this.plotObject.point_list;
         this.refresh_MinMax(this.plotObject.point_list);
-        this.heatmap_view = data["heatmap_view"] || false;
-        if (data["heatmap"]) {this.heatmap = Heatmap.deserialize(data["heatmap"])} else {this.heatmap = new Heatmap();}
         this.selected_areas = [];
-        for (let i=0; i<this.heatmap.size[0]; i++) {
-          let temp = [];
-          for (let j=0; j<this.heatmap.size[1]; j++) {
-            temp.push(0);
-          }
-          this.selected_areas.push(temp);
-        }
       }
       this.isParallelPlot = false;
       if (this.mergeON && alert_count === 0) {
         // merge_alert();
       }
-  }
+    }
 
   draw() {
     this.draw_from_context(false);
-    //this.draw_from_context(true);
+    this.draw_from_context(true);
   }
 
   draw_from_context(hidden) {
@@ -301,17 +294,13 @@ export class PlotPieChart extends PlotData {
     this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
     this.context.clip();
     this.context.closePath();
-    this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
-    if (this.heatmap_view) {
-      this.draw_heatmap(hidden);
-    } else {
-      this.draw_piechart(this.plotObject, hidden, this.originX, this.originY);
-      if (this.permanent_window) {
-        this.draw_selection_rectangle();
-      }
-      if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
-        this.draw_zoom_rectangle();
-      }
+    //this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
+    this.drawPiechart(this.plotObject, hidden, this.originX, this.originY);
+    if (this.permanent_window) {
+      this.draw_selection_rectangle();
+    }
+    if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+      this.draw_zoom_rectangle();
     }
 
     if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {

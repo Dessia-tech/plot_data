@@ -775,102 +775,57 @@ export abstract class PlotData {
   }
 
 
-  draw_piechart(d: PieChart, hidden: CanvasRenderingContext2D, mvx: number, mvy: number): void {
+  drawPiechart(d: PieChart, hidden: boolean, mvx: number, mvy: number): void {
+    this.interaction_ON = true;
     if (d['type_'] == 'piechart') {
-      const radius: number = 10;
+      const radius: number = 5;
       const center: Array<number> = [this.width/this.scaleX/2, this.height/this.scaleY/2]
-      const r: Circle2D = new Circle2D(d, center[0], center[1], radius, d.edge_style, d.surface_style, d.tooltip, this.type_, this.name);
-      let total: number = 0;
-      let normed_ratio: number = 2*Math.PI;
-   /*    let test_dict: any = d.elements.slice(0, 5)
-      
-      console.log(test_dict)
-      test_dict[0]['mass'] = 1;
-      test_dict[1]['mass'] = 2;
-      test_dict[2]['mass'] = 1;
-      test_dict[3]['mass'] = 2;
-      test_dict[4]['mass'] = 1;
- */
-      let color_ratio: number = 360/d.elements.length;
-
-      d.elements.forEach(element => {
-        total += element[d.attribute_names[0]]
-      });
-
-      normed_ratio /= total
-      this.context.beginPath();
-      this.draw_circle(hidden, mvx, mvy, this.scaleX, this.scaleY, r);
-      this.context.fill();
-      this.context.stroke();
-      this.context.closePath();
-
-
       let pivot: Array<number> = [mvx + center[0]*this.scaleX, mvy + (center[1])*this.scaleY]
-      let init_angle: number = Math.PI/2;
-      let next_angle: number = init_angle;
-      this.context.strokeStyle = 'hsl(0, 0%, 50%)';
-      this.context.lineWidth = 1;
-      for (let i=0; i<d.elements.length; i++){
-        this.context.fillStyle = 'hsl('+ i*color_ratio +', 50%, 50%, 50%)';
-        //this.context.fillStyle = 'hsl('+ Math.random()*360 +', 50%, 50%, 50%)';
+      let initAngle: number = Math.PI/2;
+      let endAngle: number = initAngle;
+      let colorRadius: number = 0;
+      let colorRatio: number = 360/d.piePartsList.length;
 
+      this.context.lineWidth = 1;
+      // Fonctionne pour afficher
+      for (let part of d.piePartsList){
         this.context.beginPath();
         this.context.moveTo(pivot[0], pivot[1]);
-        next_angle += d.elements[i][d.attribute_names[0]] * normed_ratio;
-        this.context.arc(pivot[0], pivot[1], radius*this.scaleX, init_angle, next_angle);
-        init_angle = next_angle;
+        part.centerX = center[0];
+        part.centerY = center[1];
+        part.radius = radius;
+
+        this.color_to_plot_data[part.hidden_color] = part;
+
+        if (hidden){
+          this.context.strokeStyle = part.hidden_color;
+          this.context.fillStyle = this.context.strokeStyle;
+        } else{
+          colorRadius += colorRatio;
+          if (this.select_on_mouse === part){
+            this.context.strokeStyle = this.color_surface_on_mouse;
+            this.context.fillStyle = this.color_surface_on_mouse;
+          } else if (this.select_on_click.includes(part)){
+            this.context.strokeStyle = this.color_surface_on_click;
+            this.context.fillStyle = this.color_surface_on_click;
+          } else{
+          this.context.strokeStyle = 'hsl('+ colorRadius +', 50%, 50%, 50%)';
+          this.context.fillStyle = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
+          }
+        }
+
+        part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
         this.context.closePath();
         this.context.stroke();
         this.context.fill();
-        
-
-
-        /* Shape.roundTriangle(pivot[0], pivot[1], init_coords[0], init_coords[1], next_coords[0], next_coords[1], 
-                            radius, this.context, 'No', 
-                            string_to_hex('black'), 
-                            1, 1, []);
-        init_coords = next_coords; */
+        initAngle = endAngle;
       }
+      console.log(this.select_on_mouse, this.select_on_click)
       
-      // if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
-      //   let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
-      //   if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
-      //     this.scatter_points = refreshed_points;
-      //   }
-      //   this.refresh_point_list_bool = false;
-      // } else if (this.mergeON === false) {
-      //   if (!this.point_list_equals(this.scatter_points, d.point_list)) {
-      //     this.scatter_points = d.point_list;
-      //   }
-      // }
-      // if ((this.scroll_x % 5 != 0) && (this.scroll_y % 5 != 0)) {
-      //   this.refresh_point_list_bool = true;
-      // }
-      // if (this.point_families.length == 0) {
-      //   for (var i=0; i<this.scatter_points.length; i++) {
-      //     var point:Point2D = this.scatter_points[i];
-      //     this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
-      //   }
-      // } else {
-      //   var point_order = this.get_point_order();
-      //   for (let i=0; i<point_order.length; i++) {
-      //     for (let j=0; j<point_order[i].length; j++) {
-      //       let index = point_order[i][j];
-      //       let point:Point2D = this.scatter_points[index];
-      //       this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
-      //     }
-      //   }
-      // }
+    this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
+      d.attribute_names);
 
-      // for (var i=0; i<this.tooltip_list.length; i++) {
-      //   if (!List.is_include(this.tooltip_list[i],this.scatter_points)) {
-      //     this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
-      //   }
-      // }
-      // this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON, 
-      //   d.attribute_names);
     }
-    return
   }
 
   get_point_order() {

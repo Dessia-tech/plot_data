@@ -109,6 +109,7 @@ export class MultiplePlots {
         this.display_order.push(i);
         this.to_display_plots.push(i);
       }
+      
       this.mouse_interaction();
 
       if (buttons_ON) {

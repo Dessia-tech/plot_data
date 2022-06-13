@@ -25,7 +25,7 @@ for i in range(50):
 
 
 piechart = plot_data.PieChart(elements=elements,
-                                x_variable='mass')
+                                x_variable='mass') 
 
 # piechart = plot_data.PieChart(elements=elements,
 #                                 x_variable='shape', y_variable='length')

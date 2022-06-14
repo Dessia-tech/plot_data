@@ -934,7 +934,7 @@ export class Wire {
 export class PieChart {
 
   point_list:Point2D[]=[];
-  piePartsList: PiePart[]=[];
+  piePartsList: Array<PiePart>=[];
   all_attributes:Attribute[]=[];
   lists:any[]=[];
   to_display_attributes:Attribute[]=[];
@@ -1061,7 +1061,7 @@ export class PieChart {
   }
 
   definePieParts(elements){
-    let total: number = 0;
+    let sumElements: number = 0;
     let normedRatio: number = 2*Math.PI;
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
@@ -1074,10 +1074,10 @@ export class PieChart {
     test_dict[4]['mass'] = 1;
 
     test_dict.forEach(element => {
-      total += element[this.attribute_names[0]]
+      sumElements += element[this.attribute_names[0]]
     });
 
-    normedRatio /= total
+    normedRatio /= sumElements
 
     for (let i=0; i<test_dict.length; i++){
       nextAngle -= test_dict[i][this.attribute_names[0]] * normedRatio;
@@ -1111,6 +1111,7 @@ export class PieChart {
   maxY:number=0;
   init_scale:number=0;
   hidden_color:string='';
+  color:string='black';
   selected:boolean=false;
   clicked:boolean=false;
 

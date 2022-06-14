@@ -243,6 +243,10 @@ export class PlotScatter extends PlotData {
 /** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
  */
 export class PlotPieChart extends PlotData {
+  clickedParts: Array<boolean> = [];
+  //mouseHandler: MouseHandler = null;
+  canvas: HTMLCanvasElement = null;
+  readOnly: boolean = true;
   public constructor(
     public data:any,
     public width: number,
@@ -272,6 +276,7 @@ export class PlotPieChart extends PlotData {
         this.scatter_init_points = this.plotObject.point_list;
         this.refresh_MinMax(this.plotObject.point_list);
         this.selected_areas = [];
+        this.clickedParts = this.initClickedParts();
       }
       this.isParallelPlot = false;
       if (this.mergeON && alert_count === 0) {
@@ -282,6 +287,10 @@ export class PlotPieChart extends PlotData {
   draw() {
     this.draw_from_context(false);
     this.draw_from_context(true);
+  }
+
+  initClickedParts() {
+    return Array(this.plotObject.pieParts.length).fill(false)
   }
 
   draw_from_context(hidden) {
@@ -343,6 +352,194 @@ export class PlotPieChart extends PlotData {
     }
     this.context.restore();
   }
+
+  // mouseListener() {
+  //   this.mouseHandler = new MouseHandler()
+  //   // function isWheelEvent(e) { return e.button === 1 || e.buttons === 4 }
+
+  //   this.canvas.addEventListener("contextmenu", (e) => { this.handleMouseRightClick(e) })
+  //   this.canvas.addEventListener("dblclick", (e) => { this.handleMouseDoubleClick(e) })
+  //   this.canvas.addEventListener("mousedown", (e) => { if (e.buttons != 2) this.handleMouseDown(e) })
+  //   this.canvas.addEventListener("mousemove", (e) => { this.handleMouseMove(e) })
+  //   this.canvas.addEventListener("mouseup", (e) => { this.handleMouseUp(e) })
+  //   this.canvas.addEventListener("mouseleave", (e) => { this.handleMouseLeave(e) })
+  //   this.canvas.addEventListener("mouseenter", (e) => { this.handleMouseEnter(e) })
+  //   this.canvas.addEventListener("wheel", (e) => { this.handleWheel(e) })
+  // }
+
+  // handleMouseDoubleClick(e) {
+  //   const dblClickedPort = this.mouseHandler.port
+  //   const dblClickedNodeIndex = this.mouseHandler.nodeIndex
+  //   /* if (!this.readOnly) {
+  //     if (dblClickedPort != null) {
+  //       if (dblClickedPort instanceof OutputPort) {
+  //         this.setWorkflowOutput(dblClickedPort)
+  //       }
+  //       else if (dblClickedPort instanceof InputPort) {
+  //         this.switchUseDefaultValue(dblClickedPort)
+  //       }
+  //     }
+  //   }
+  //   if (dblClickedNodeIndex != null && this.workflow.isBlockIndex(dblClickedNodeIndex) && dblClickedPort === null) {
+  //     this.dbleClickOnNode.emit(dblClickedNodeIndex)
+  //   } */
+  // }
+
+  // handleMouseRightClick(e: MouseEvent) {
+  //   /* this.setContextMenu() */
+  //   this.mouseHandler.rightClickedPort = this.mouseHandler.port
+  //   e.preventDefault()
+  // }
+
+  // handleMouseDown(e) {
+  //   /* if (this.libWorkflowService.addNBVEnabled.value) {
+  //     this.addNBV()
+  //     return;
+  //   } */
+
+
+  //   this.mouseHandler.performMouseDown()
+  //   this.initialize_initial_block_positions();
+
+
+  //   if (this.mouseHandler.clickedNodeIndex != null) {
+  //     this.workflow.updateDisplayOrder(this.mouseHandler.clickedNodeIndex);
+  //     this.initializeResizeNode()
+
+  //     if (this.readOnly) return
+
+  //     if (this.mouseHandler.clickedPort) {
+  //       TempPipe.startDrawing(this.workflow, this.mouseHandler.clickedPort)
+  //       return
+  //     }
+
+  //     if (this.mouseHandler.node?.removeCircle?.isMouseOver(this.mouseHandler.mouseDown))
+  //       this.removeNode(this.mouseHandler.clickedNodeIndex)
+
+  //     return
+  //   }
+
+  //   //mouseDown not on a Node
+  //   if (this.mouseHandler.pipe?.isMouseOnRemoveCircle(this.mouseHandler.mouseDown) && !this.readOnly) {
+  //     this.removePipe(this.mouseHandler.pipe)
+  //     return
+  //   }
+
+  //   if (e.ctrlKey) {
+  //     this.unselectAllNodes();
+  //     return
+  //   }
+
+  //   if (!this.selectMode) {
+  //     this.initializeTranslateAll()
+  //     return
+  //   }
+  // }
+
+
+
+  // handleMouseMove(e) {
+  //   this.mouseHandler.mouseMove = new Coordinates(e.offsetX, e.offsetY);
+  //   this.mouseHandler.initializeMouseOver(this.workflow, this.context, this.hidden_context, this.scale, this.origin)
+
+  //   this.computeVertexDirections()
+  //   this.canvas.style.cursor = this.computeCursorStyle();
+
+  //   if (!this.mouseHandler.mouseIsDown) { //TODO : useless ? 
+  //     this.redraw_all()
+  //     return
+  //   }
+
+  //   if (this.mouseHandler.clickedNodeIndex == null) {
+  //     (this.selectMode) ?
+  //       this.performRubberBandSelection() :
+  //       this.performTranslateAll()
+  //     return
+  //   }
+
+  //   // Mouse is down && clicked on a Node
+
+  //   if (this.workflow.temp_pipe) {
+  //     this.updateTempPipeDrawing(this.mouseHandler.mouseMove);
+  //     return
+  //   }
+
+  //   if (this.mouseHandler.port)
+  //     return
+
+  //   if (this.mouseHandler.vertex_infos) {
+  //     this.resizeNode(this.mouseHandler.mouseDown, this.mouseHandler.mouseMove);
+  //     return
+  //   }
+
+  //   this.mouseHandler.isPerformingTranslation = true
+  //   const translation: Coordinates = new Coordinates((this.mouseHandler.mouseMove.x - this.mouseHandler.mouseDown.x), (this.mouseHandler.mouseMove.y - this.mouseHandler.mouseDown.y))
+  //   this.workflow.selectedNodes.includes(this.mouseHandler.clickedNodeIndex) ?
+  //     this.translateSelectedNodes(translation) :
+  //     this.translateNode(this.mouseHandler.clickedNodeIndex, translation)
+
+  //   return
+  // }
+
+  // handleMouseUp(e) {
+  //   if (!this.mouseHandler.mouseDown)
+  //     return
+
+  //   this.mouseHandler.mouseUp = new Coordinates(e.offsetX, e.offsetY);
+  //   const mouseDidNotMove: boolean = Math.abs(this.mouseHandler.mouseDown.x - this.mouseHandler.mouseUp.x) < 5 && Math.abs(this.mouseHandler.mouseDown.y - this.mouseHandler.mouseUp.y) < 5
+
+  //   if (this.workflow.temp_pipe) {
+  //     mouseDidNotMove ?
+  //       this.endTempPipeDrawing() :
+  //       this.add_temp_pipe_to_workflow(this.mouseHandler.port);
+  //   }
+
+  //   if (this.mouseHandler.isPerformingTranslation)
+  //     this.storeStateBeforeTranslation()
+
+  //   if (mouseDidNotMove) {
+  //     // click on the only selectedNode
+  //     if (this.workflow.selectedNodes.length == 1 && this.workflow.selectedNodes.top() == this.mouseHandler.nodeIndex)
+  //       this.unselectNode(this.mouseHandler.nodeIndex)
+  //     else {
+  //       if (!e.ctrlKey)
+  //         this.unselectAllNodes()
+  //       if (this.mouseHandler.nodeIndex != null)
+  //         this.selectUnselectNode(this.mouseHandler.nodeIndex)
+  //     }
+  //   }
+
+  //   this.mouseHandler.performMouseUp()
+  //   this.redraw_all();
+
+  //   if (this.canvas.style.cursor === "grabbing")
+  //     this.canvas.style.cursor = "grab"
+  // }
+
+  // handleMouseLeave(e) {
+  //   if (this.mouseHandler.mouseIsDown)
+  //     document.addEventListener("mouseup", () => {
+  //       this.mouseHandler.performMouseUp()
+  //       this.endTempPipeDrawing()
+  //     })
+  // }
+
+  // handleMouseEnter(e) {
+  //   this.mouseHandler.mouseMove = new Coordinates(e.offsetX, e.offsetY);
+  //   if (this.workflow.temp_pipe)
+  //     this.updateTempPipeDrawing(this.mouseHandler.mouseMove)
+  // }
+
+  // // --- Wheel ---
+  // handleWheel(e) {
+  //   if (e.ctrlKey) {
+  //     e.preventDefault();
+  //     let wheelPosition = new Coordinates(e.offsetX, e.offsetY);
+
+  //     var event = -e.deltaY / Math.abs(e.deltaY);
+  //     this.zoom_elements(wheelPosition, event);
+  //   }
+  // }
 }
 
 

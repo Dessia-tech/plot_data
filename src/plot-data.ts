@@ -781,11 +781,11 @@ export abstract class PlotData {
       const radius: number = this.height / this.scaleY * 0.4;
       const center: Array<number> = [this.width / this.scaleX / 2, this.height / this.scaleY / 2];
       let colorRadius: number = 0;
-      let colorRatio: number = 360 / d.piePartsList.length;
-
+      let colorRatio: number = 360 / d.pieParts.length;
+      let i =0
       this.context.lineWidth = 0.5;
 
-      for (let part of d.piePartsList) {
+      for (let part of d.pieParts.reverse()) {
         part.centerX = center[0];
         part.centerY = center[1];
         part.radius = radius;
@@ -798,23 +798,28 @@ export abstract class PlotData {
           this.context.fillStyle = part.hidden_color;
         } else {
           if (part.clicked){
-            d.piePartsList.forEach(piepart => piepart.clicked = false);
-            this.clicked_points = [part];
+            d.pieParts.forEach(piepart => piepart.clicked = false);
+            //this.clicked_points = [part];
+            part.clicked = true;
           }
-          if (this.clicked_points.includes(part) && this.select_on_mouse !== part) {
-            part.color = this.color_surface_on_click;
-          } else if (this.clicked_points.includes(part) && this.select_on_mouse === part) {
-            part.color = this.color_surface_on_mouse;
-          } else if (!this.clicked_points.includes(part) && this.select_on_mouse === part) { 
-            part.color = this.color_surface_on_mouse;
+          if (part.clicked && this.select_on_mouse !== part) {
+            this.context.fillStyle = this.color_surface_on_click;
+            this.context.strokeStyle = this.color_surface_on_click;
+          } else if (part.clicked && this.select_on_mouse === part) {
+            this.context.fillStyle = this.color_surface_on_mouse;
+            this.context.strokeStyle = this.color_surface_on_mouse;
+          } else if (!part.clicked && this.select_on_mouse === part) { 
+            this.context.fillStyle  = this.color_surface_on_mouse;
+            this.context.strokeStyle  = this.color_surface_on_mouse;
           } else {
-            part.color = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
+            this.context.fillStyle  = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
+            this.context.strokeStyle  = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
           } 
           this.context.fillStyle = part.color;
           this.context.strokeStyle = part.color;
+          i++;
         }
         part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
-        console.log(part.hidden_color, part.selected)
       }
       this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
         d.attribute_names);

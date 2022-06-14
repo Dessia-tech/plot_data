@@ -934,7 +934,7 @@ export class Wire {
 export class PieChart {
 
   point_list:Point2D[]=[];
-  piePartsList: Array<PiePart>=[];
+  pieParts: Array<PiePart>=[];
   all_attributes:Attribute[]=[];
   lists:any[]=[];
   to_display_attributes:Attribute[]=[];
@@ -955,7 +955,7 @@ export class PieChart {
     this.initialize_lists();
     this.initialize_point_list(elements);
     this.definePieParts(elements);
-    //console.log('partlist', this.piePartsList)
+    //console.log('partlist', this.pieParts)
   }
 
   public static deserialize(serialized) {
@@ -1082,7 +1082,7 @@ export class PieChart {
     for (let i=0; i<test_dict.length; i++){
       nextAngle -= test_dict[i][this.attribute_names[0]] * normedRatio;
       let partI = new PiePart(0, 0, 10, initAngle, nextAngle, true);
-      this.piePartsList.push(partI)
+      this.pieParts.push(partI)
       initAngle = nextAngle;
     }
 
@@ -1095,7 +1095,7 @@ export class PieChart {
     for (let i=0; i<elements.length; i++){
       nextAngle -= elements[i][this.attribute_names[0]] * normedRatio;
       let partI = new PiePart(0, 0, 10, initAngle, nextAngle, true);
-      this.piePartsList.push(partI)
+      this.pieParts.push(partI)
       initAngle = nextAngle;
     } */
   }
@@ -1105,18 +1105,14 @@ export class PieChart {
  * A class for drawing Pie parts.
  */
  export class PiePart {
-  minX:number=0;
-  maxX:number=0;
-  minY:number=0;
-  maxY:number=0;
-  init_scale:number=0;
   hidden_color:string='';
-  color:string='black';
-  selected:boolean=false;
-  clicked:boolean=false;
+  isMouseOver: boolean = false;
+  isSelected: boolean = false;
+  path: Path2D = null;
+  clicked: boolean = false;
+  color: string = '';
 
   /**
-   * 
    * @param centerX the center x coordinate
    * @param centerY the center y coordinate
    * @param radius radius
@@ -1131,10 +1127,6 @@ export class PieChart {
               public endAngle:number,
               public anticlockwise:boolean = true,
               public name:string = '') {
-      this.minX = this.centerX - this.radius;
-      this.maxX = this.centerX + this.radius;
-      this.minY = this.centerY - this.radius;
-      this.maxY = this.centerY + this.radius;
       this.hidden_color = genColor();
   }
 
@@ -1151,18 +1143,186 @@ export class PieChart {
                      serialized['name']);
   }
 
-  draw(context, mvx, mvy, scale, X, Y) {
+  buildPath(mvx, mvy, scale, X, Y) {
     let translatedCenter: Array<number> = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
-    context.beginPath();
-    context.moveTo(translatedCenter[0], translatedCenter[1]);
-    context.arc(translatedCenter[0], 
+    this.path = new Path2D();
+    this.path.moveTo(translatedCenter[0], translatedCenter[1]);
+    this.path.arc(translatedCenter[0], 
                 translatedCenter[1], 
                 scale*this.radius, 
                 this.initAngle, 
                 this.endAngle, 
                 this.anticlockwise);
-    context.closePath();
-    context.stroke();
-    context.fill();
   }
+
+  draw(context, mvx, mvy, scale, X, Y) {
+    this.buildPath(mvx, mvy, scale, X, Y);
+    context.stroke(this.path);
+    context.fill(this.path);
+  }
+
+/*   isMouseInPartShape(scale: number, origin: Coordinates, px: Coordinates) {
+    let partPath = this.position.toCanvasCoordinates(scale, origin)
+    return Shape.isInRect(
+      px.x,
+      px.y,
+      nodeCoordinates.x,
+      nodeCoordinates.y,
+      this.width * scale,
+      this.height * scale)
+  } */
 }  
+
+
+// export class MouseHandler {
+//   mouseDown: Coordinates = null
+//   mouseMove: Coordinates = null
+//   mouseUp: Coordinates = null
+
+//   originBeforeTranslation: Coordinates = null
+//   isPerformingTranslation: boolean = false
+//   mouseIsDown: boolean = false
+
+// /*   vertex_infos: VertexDirections = null
+//  */
+//   clickedNodeIndex: number = null
+//   partIndex: number = null
+//   part: PiePart = null
+
+//   /* clickedPort: Port = null
+//   rightClickedPort: Port = null
+//   port: Port = null
+//   node: Node = null
+//   pipe: Pipe = null
+//  */
+
+//   constructor() { }
+
+//   performMouseDown() {
+//     this.mouseDown = this.mouseMove
+//     this.mouseIsDown = true
+//     this.mouseUp = null
+//     this.clickedNodeIndex = this.partIndex
+//     //this.clickedPort = this.port
+//   }
+
+//   performMouseUp() {
+//     this.mouseDown = null
+//     this.mouseIsDown = false
+//     this.clickedNodeIndex = null
+//     /* this.clickedPort = null
+//     this.rightClickedPort = null */
+//     this.originBeforeTranslation = null
+//     this.isPerformingTranslation = false
+//   }
+
+
+//   initializeMouseOver(piechart: PieChart, context: CanvasRenderingContext2D, hidden_context: CanvasRenderingContext2D, scale: number, origin: Coordinates) {
+//     this.partIndex = this.getNodeIndexByMouseCoordinates(piechart, scale, origin)
+//     this.part = null
+//     /* this.port = null
+//     this.pipe = null */
+
+//     piechart.pieParts.forEach((part: PiePart, partIndex: number) => {
+//       // Node handling
+//       part.isMouseOver = (partIndex == this.partIndex)
+//       if (part.isMouseOver)
+//         this.part = part
+
+//       /* // Ports handling :
+//       part.ports.forEach((port: Port) => {
+//         if (!part.isMouseOver) {
+//           port.isMouseOver = false
+//           return
+//         }
+
+//         port.isMouseOver = port.isMouseInPortShape(scale, origin, this.mouseMove)
+//         if (port.isMouseOver)
+//           this.port = port
+//       }) */
+//     })
+
+//     /* // Pipes handling :
+//     piechart.pipes.forEach(
+//       (pipe) => pipe.isMouseOver = false
+//     )
+//     this.pipe = this.getPipeUnderMouse(piechart, hidden_context)
+//     if (this.pipe)
+//       this.pipe.isMouseOver = true */
+//   }
+
+//   getPartUnderMouse(piechart: PieChart, hidden_context: CanvasRenderingContext2D): PiePart {
+//     var col = hidden_context.getImageData(this.mouseMove.x, this.mouseMove.y, 1, 1).data;
+//     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
+//     return piechart.color_to_pipe[colKey]
+//   }
+
+//   /** @returns:  Index of last node in workflow.display_order on mouse position, null if mouse in void */
+//   getNodeIndexByMouseCoordinates(piechart: PieChart, scale: number, origin: Coordinates): number { //TODO : Should be a mouseHandler method ?
+//     for (let i = piechart.display_order.length - 1; i >= 0; i--) {
+//       const nodeIndex = piechart.display_order[i]
+//       let part = piechart.pieParts[nodeIndex]
+//       if (part.isMouseInNodeShape(scale, origin, this.mouseMove))
+//         return nodeIndex
+//     }
+//     return null
+//   }
+
+// }
+
+
+export class Coordinates {
+  x: number
+  y: number
+
+  constructor(x = 0, y = 0) {
+    this.x = x
+    this.y = y
+  }
+
+  *[Symbol.iterator]() {
+    let positionAsArray = [this.x, this.y]
+    for (let item of positionAsArray) yield item
+  }
+
+  toPosition(scale: number, originCoordinates: Coordinates) {
+    return new Position((this.x - originCoordinates.x) / scale, (this.y - originCoordinates.y) / scale)
+  }
+
+  copy() {
+    return new Coordinates(this.x, this.y)
+  }
+}
+
+
+type PositionJson = number[]
+export class Position {
+  x: number
+  y: number
+
+  constructor(x = 0, y = 0) {
+    this.x = x
+    this.y = y
+  }
+
+  serialize() {
+    return [this.x, this.y]
+  }
+
+  static deserialize(serialized: PositionJson) {
+    return new Position(serialized[0], serialized[1])
+  }
+
+  *[Symbol.iterator]() {
+    let positionAsArray = [this.x, this.y]
+    for (let item of positionAsArray) yield item
+  }
+
+  toCanvasCoordinates(scale: number, origin: Coordinates) {
+    return new Coordinates(origin.x + scale * this.x, origin.y + scale * this.y)
+  }
+
+  copy(): Position {
+    return new Position(this.x, this.y)
+  }
+}

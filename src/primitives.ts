@@ -1108,7 +1108,7 @@ export class PieChart {
   hidden_color:string='';
   isMouseOver: boolean = false;
   isSelected: boolean = false;
-  path: Path2D = null;
+  path: Path2D = new Path2D();
   clicked: boolean = false;
   color: string = '';
 
@@ -1145,7 +1145,6 @@ export class PieChart {
 
   buildPath(mvx, mvy, scale, X, Y) {
     let translatedCenter: Array<number> = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
-    this.path = new Path2D();
     this.path.moveTo(translatedCenter[0], translatedCenter[1]);
     this.path.arc(translatedCenter[0], 
                 translatedCenter[1], 

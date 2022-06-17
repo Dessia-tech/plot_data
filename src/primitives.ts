@@ -2,6 +2,7 @@ import { string_to_rgb, rgb_to_string, string_to_hex, rgb_to_hex } from "./color
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
+import { ContextExclusionPlugin } from "webpack";
 
 
 /**
@@ -933,11 +934,11 @@ export class Wire {
 // NOUVELLES FONCTIONNALITES EN VUE D'UN REFACTOR
 export class PieChart {
 
-  point_list:Point2D[]=[];
+  point_list: Point2D[]=[];
   pieParts: Array<PiePart>=[];
-  all_attributes:Attribute[]=[];
-  lists:any[]=[];
-  to_display_attributes:Attribute[]=[];
+  all_attributes: Attribute[]=[];
+  lists: any[]=[];
+  to_display_attributes: Attribute[]=[];
 
   constructor(public tooltip:Tooltip,
               public attribute_names:string[],
@@ -950,12 +951,10 @@ export class PieChart {
               public name:string) {
     
     this.initialize_all_attributes();
-    this.to_display_attributes.push(this.all_attributes[2])
     this.initialize_to_display_attributes();
     this.initialize_lists();
     this.initialize_point_list(elements);
     this.definePieParts(elements);
-    //console.log('partlist', this.pieParts)
   }
 
   public static deserialize(serialized) {
@@ -1046,7 +1045,6 @@ export class PieChart {
     this.point_list = [];
     for (let i=0; i<this.elements.length; i++) {
       var elt0 = elements[i][this.to_display_attributes[0]['name']];
-      //var elt1 = elements[i][this.to_display_attributes[1]['name']];
       if (this.to_display_attributes[0]['type_'] == 'float') {
         var cx = elt0;
       } else if (this.to_display_attributes[0]['type_'] == 'color') {
@@ -1104,11 +1102,11 @@ export class PieChart {
 /**
  * A class for drawing Pie parts.
  */
- export class PiePart {
+ export class PiePart{
   hidden_color:string='';
   isMouseOver: boolean = false;
   isSelected: boolean = false;
-  path: Path2D = new Path2D();
+  path: Path2D;
   clicked: boolean = false;
   color: string = '';
 
@@ -1127,23 +1125,11 @@ export class PieChart {
               public endAngle:number,
               public anticlockwise:boolean = true,
               public name:string = '') {
-      this.hidden_color = genColor();
-  }
-
-  public static deserialize(serialized) {
-    var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
-    var default_dict_ = {edge_style:default_edge_style};
-    serialized = set_default_values(serialized, default_dict_);
-    return new PiePart(serialized['centerX'],
-                     -serialized['centerY'],
-                     serialized['radius'],
-                     -serialized['initAngle'],
-                     -serialized['endAngle'],
-                     serialized['anticlockwise'],
-                     serialized['name']);
+      this.hidden_color = genColor();   
   }
 
   buildPath(mvx, mvy, scale, X, Y) {
+    this.path = new Path2D();
     let translatedCenter: Array<number> = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
     this.path.moveTo(translatedCenter[0], translatedCenter[1]);
     this.path.arc(translatedCenter[0], 
@@ -1160,168 +1146,7 @@ export class PieChart {
     context.fill(this.path);
   }
 
-/*   isMouseInPartShape(scale: number, origin: Coordinates, px: Coordinates) {
-    let partPath = this.position.toCanvasCoordinates(scale, origin)
-    return Shape.isInRect(
-      px.x,
-      px.y,
-      nodeCoordinates.x,
-      nodeCoordinates.y,
-      this.width * scale,
-      this.height * scale)
-  } */
+  // isMouseInPart(context: CanvasRenderingContext2D, px: Coordinates) {
+  //   return context.isPointInStroke(this.path, px.x, px.y) || context.isPointInPath(this.path, px.x, px.y)
+  // }
 }  
-
-
-// export class MouseHandler {
-//   mouseDown: Coordinates = null
-//   mouseMove: Coordinates = null
-//   mouseUp: Coordinates = null
-
-//   originBeforeTranslation: Coordinates = null
-//   isPerformingTranslation: boolean = false
-//   mouseIsDown: boolean = false
-
-// /*   vertex_infos: VertexDirections = null
-//  */
-//   clickedNodeIndex: number = null
-//   partIndex: number = null
-//   part: PiePart = null
-
-//   /* clickedPort: Port = null
-//   rightClickedPort: Port = null
-//   port: Port = null
-//   node: Node = null
-//   pipe: Pipe = null
-//  */
-
-//   constructor() { }
-
-//   performMouseDown() {
-//     this.mouseDown = this.mouseMove
-//     this.mouseIsDown = true
-//     this.mouseUp = null
-//     this.clickedNodeIndex = this.partIndex
-//     //this.clickedPort = this.port
-//   }
-
-//   performMouseUp() {
-//     this.mouseDown = null
-//     this.mouseIsDown = false
-//     this.clickedNodeIndex = null
-//     /* this.clickedPort = null
-//     this.rightClickedPort = null */
-//     this.originBeforeTranslation = null
-//     this.isPerformingTranslation = false
-//   }
-
-
-//   initializeMouseOver(piechart: PieChart, context: CanvasRenderingContext2D, hidden_context: CanvasRenderingContext2D, scale: number, origin: Coordinates) {
-//     this.partIndex = this.getNodeIndexByMouseCoordinates(piechart, scale, origin)
-//     this.part = null
-//     /* this.port = null
-//     this.pipe = null */
-
-//     piechart.pieParts.forEach((part: PiePart, partIndex: number) => {
-//       // Node handling
-//       part.isMouseOver = (partIndex == this.partIndex)
-//       if (part.isMouseOver)
-//         this.part = part
-
-//       /* // Ports handling :
-//       part.ports.forEach((port: Port) => {
-//         if (!part.isMouseOver) {
-//           port.isMouseOver = false
-//           return
-//         }
-
-//         port.isMouseOver = port.isMouseInPortShape(scale, origin, this.mouseMove)
-//         if (port.isMouseOver)
-//           this.port = port
-//       }) */
-//     })
-
-//     /* // Pipes handling :
-//     piechart.pipes.forEach(
-//       (pipe) => pipe.isMouseOver = false
-//     )
-//     this.pipe = this.getPipeUnderMouse(piechart, hidden_context)
-//     if (this.pipe)
-//       this.pipe.isMouseOver = true */
-//   }
-
-//   getPartUnderMouse(piechart: PieChart, hidden_context: CanvasRenderingContext2D): PiePart {
-//     var col = hidden_context.getImageData(this.mouseMove.x, this.mouseMove.y, 1, 1).data;
-//     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-//     return piechart.color_to_pipe[colKey]
-//   }
-
-//   /** @returns:  Index of last node in workflow.display_order on mouse position, null if mouse in void */
-//   getNodeIndexByMouseCoordinates(piechart: PieChart, scale: number, origin: Coordinates): number { //TODO : Should be a mouseHandler method ?
-//     for (let i = piechart.display_order.length - 1; i >= 0; i--) {
-//       const nodeIndex = piechart.display_order[i]
-//       let part = piechart.pieParts[nodeIndex]
-//       if (part.isMouseInNodeShape(scale, origin, this.mouseMove))
-//         return nodeIndex
-//     }
-//     return null
-//   }
-
-// }
-
-
-export class Coordinates {
-  x: number
-  y: number
-
-  constructor(x = 0, y = 0) {
-    this.x = x
-    this.y = y
-  }
-
-  *[Symbol.iterator]() {
-    let positionAsArray = [this.x, this.y]
-    for (let item of positionAsArray) yield item
-  }
-
-  toPosition(scale: number, originCoordinates: Coordinates) {
-    return new Position((this.x - originCoordinates.x) / scale, (this.y - originCoordinates.y) / scale)
-  }
-
-  copy() {
-    return new Coordinates(this.x, this.y)
-  }
-}
-
-
-type PositionJson = number[]
-export class Position {
-  x: number
-  y: number
-
-  constructor(x = 0, y = 0) {
-    this.x = x
-    this.y = y
-  }
-
-  serialize() {
-    return [this.x, this.y]
-  }
-
-  static deserialize(serialized: PositionJson) {
-    return new Position(serialized[0], serialized[1])
-  }
-
-  *[Symbol.iterator]() {
-    let positionAsArray = [this.x, this.y]
-    for (let item of positionAsArray) yield item
-  }
-
-  toCanvasCoordinates(scale: number, origin: Coordinates) {
-    return new Coordinates(origin.x + scale * this.x, origin.y + scale * this.y)
-  }
-
-  copy(): Position {
-    return new Position(this.x, this.y)
-  }
-}

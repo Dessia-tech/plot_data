@@ -244,9 +244,9 @@ export class PlotScatter extends PlotData {
  */
 export class PlotPieChart extends PlotData {
   clickedParts: Array<boolean> = [];
-  //mouseHandler: MouseHandler = null;
   canvas: HTMLCanvasElement = null;
   readOnly: boolean = true;
+  
   public constructor(
     public data:any,
     public width: number,
@@ -272,8 +272,7 @@ export class PlotPieChart extends PlotData {
         this.mergeON = true;
         this.plotObject = PieChart.deserialize(data);
         this.plot_datas['value'] = [this.plotObject];
-        this.pointLength = this.plotObject.point_list[0].size;
-        this.scatter_init_points = this.plotObject.point_list;
+        //this.refresh_MinMax();
         this.refresh_MinMax(this.plotObject.point_list);
         this.selected_areas = [];
         this.clickedParts = this.initClickedParts();
@@ -282,7 +281,16 @@ export class PlotPieChart extends PlotData {
       if (this.mergeON && alert_count === 0) {
         // merge_alert();
       }
+      //this.mouseListener()
     }
+
+
+  // refresh_MinMax(): void {
+  //   this.minX = 0;
+  //   this.maxX = this.height;
+  //   this.minY = 0;
+  //   this.maxY = this.width;    
+  // }
 
   draw() {
     this.draw_from_context(false);
@@ -357,8 +365,8 @@ export class PlotPieChart extends PlotData {
   //   this.mouseHandler = new MouseHandler()
   //   // function isWheelEvent(e) { return e.button === 1 || e.buttons === 4 }
 
-  //   this.canvas.addEventListener("contextmenu", (e) => { this.handleMouseRightClick(e) })
-  //   this.canvas.addEventListener("dblclick", (e) => { this.handleMouseDoubleClick(e) })
+  //   //this.canvas.addEventListener("contextmenu", (e) => { this.handleMouseRightClick(e) })
+  //   //this.canvas.addEventListener("dblclick", (e) => { this.handleMouseDoubleClick(e) })
   //   this.canvas.addEventListener("mousedown", (e) => { if (e.buttons != 2) this.handleMouseDown(e) })
   //   this.canvas.addEventListener("mousemove", (e) => { this.handleMouseMove(e) })
   //   this.canvas.addEventListener("mouseup", (e) => { this.handleMouseUp(e) })
@@ -367,29 +375,29 @@ export class PlotPieChart extends PlotData {
   //   this.canvas.addEventListener("wheel", (e) => { this.handleWheel(e) })
   // }
 
-  // handleMouseDoubleClick(e) {
-  //   const dblClickedPort = this.mouseHandler.port
-  //   const dblClickedNodeIndex = this.mouseHandler.nodeIndex
-  //   /* if (!this.readOnly) {
-  //     if (dblClickedPort != null) {
-  //       if (dblClickedPort instanceof OutputPort) {
-  //         this.setWorkflowOutput(dblClickedPort)
-  //       }
-  //       else if (dblClickedPort instanceof InputPort) {
-  //         this.switchUseDefaultValue(dblClickedPort)
-  //       }
-  //     }
-  //   }
-  //   if (dblClickedNodeIndex != null && this.workflow.isBlockIndex(dblClickedNodeIndex) && dblClickedPort === null) {
-  //     this.dbleClickOnNode.emit(dblClickedNodeIndex)
-  //   } */
-  // }
+  // // handleMouseDoubleClick(e) {
+  // //   const dblClickedPort = this.mouseHandler.port
+  // //   const dblClickedNodeIndex = this.mouseHandler.partIndex
+  // //   /* if (!this.readOnly) {
+  // //     if (dblClickedPort != null) {
+  // //       if (dblClickedPort instanceof OutputPort) {
+  // //         this.setWorkflowOutput(dblClickedPort)
+  // //       }
+  // //       else if (dblClickedPort instanceof InputPort) {
+  // //         this.switchUseDefaultValue(dblClickedPort)
+  // //       }
+  // //     }
+  // //   }
+  // //   if (dblClickedNodeIndex != null && this.workflow.isBlockIndex(dblClickedNodeIndex) && dblClickedPort === null) {
+  // //     this.dbleClickOnNode.emit(dblClickedNodeIndex)
+  // //   } */
+  // // }
 
-  // handleMouseRightClick(e: MouseEvent) {
-  //   /* this.setContextMenu() */
-  //   this.mouseHandler.rightClickedPort = this.mouseHandler.port
-  //   e.preventDefault()
-  // }
+  // // handleMouseRightClick(e: MouseEvent) {
+  // //   /* this.setContextMenu() */
+  // //   this.mouseHandler.rightClickedPort = this.mouseHandler.port
+  // //   e.preventDefault()
+  // // }
 
   // handleMouseDown(e) {
   //   /* if (this.libWorkflowService.addNBVEnabled.value) {
@@ -403,7 +411,7 @@ export class PlotPieChart extends PlotData {
 
 
   //   if (this.mouseHandler.clickedNodeIndex != null) {
-  //     this.workflow.updateDisplayOrder(this.mouseHandler.clickedNodeIndex);
+  //     this.plotObject.updateDisplayOrder(this.mouseHandler.clickedNodeIndex);
   //     this.initializeResizeNode()
 
   //     if (this.readOnly) return
@@ -440,7 +448,7 @@ export class PlotPieChart extends PlotData {
 
   // handleMouseMove(e) {
   //   this.mouseHandler.mouseMove = new Coordinates(e.offsetX, e.offsetY);
-  //   this.mouseHandler.initializeMouseOver(this.workflow, this.context, this.hidden_context, this.scale, this.origin)
+  //   this.mouseHandler.initializeMouseOver(this.pieChart, this.context, this.hidden_context, this.scale, this.origin)
 
   //   this.computeVertexDirections()
   //   this.canvas.style.cursor = this.computeCursorStyle();

@@ -778,14 +778,13 @@ export abstract class PlotData {
   drawPiechart(d: PieChart, hidden: boolean, mvx: number, mvy: number): void {
     this.interaction_ON = true;
     if (d['type_'] == 'piechart') {
-      const radius: number = this.height / this.scaleY * 0.4;
-      const center: Array<number> = [this.width / this.scaleX / 2, this.height / this.scaleY / 2];
+      const radius: number = this.height / this.init_scaleY * 0.45;
+      const center: Array<number> = [this.width / this.init_scaleX / 1.9, this.height / this.init_scaleY / 2];
       let colorRadius: number = 0;
       let colorRatio: number = 360 / d.pieParts.length;
-      let i =0
       this.context.lineWidth = 0.5;
 
-      for (let part of d.pieParts.reverse()) {
+      for (let part of d.pieParts) {
         part.centerX = center[0];
         part.centerY = center[1];
         part.radius = radius;
@@ -799,7 +798,6 @@ export abstract class PlotData {
         } else {
           if (part.clicked){
             d.pieParts.forEach(piepart => piepart.clicked = false);
-            //this.clicked_points = [part];
             part.clicked = true;
           }
           if (part.clicked && this.select_on_mouse !== part) {
@@ -817,7 +815,6 @@ export abstract class PlotData {
           } 
           this.context.fillStyle = part.color;
           this.context.strokeStyle = part.color;
-          i++;
         }
         part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
       }

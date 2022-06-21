@@ -2,7 +2,7 @@ import { PlotData, Buttons, Interactions } from "./plot-data";
 import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
-import { Graph2D, Scatter, PieChart } from "./primitives";
+import { Graph2D, Scatter, PieChart, PiePart } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
 
@@ -270,12 +270,11 @@ export class PlotPieChart extends PlotData {
         this.axis_ON = false;
         this.mergeON = true;
         this.plotObject = PieChart.deserialize(data);
-        console.log(data)
-        console.log(PieChart.deserialize(data))
         this.plot_datas['value'] = [this.plotObject];
         this.refresh_MinMax();
         this.selected_areas = [];
-        this.clickedParts = this.initClickedParts();
+        // this.clickedParts = this.initClickedParts(); // for the mousehandling in next releases
+        this.color_to_plot_data = this.initHiddenColors()
       }
       if (this.mergeON && alert_count === 0) {
         // merge_alert();
@@ -294,8 +293,15 @@ export class PlotPieChart extends PlotData {
     this.draw_from_context(true);
   }
 
-  initClickedParts(): Array<boolean> {
-    return Array(this.plotObject.pieParts.length).fill(false)
+  // initClickedParts(): Array<boolean> { // for the mousehandling in next releases
+  //   return Array(this.plotObject.pieParts.length).fill(false)
+  // }
+
+  initHiddenColors(): {[key: string]: PiePart} {
+    let hiddenColorsList: {[key: string]: PiePart} = {}
+    this.plotObject.pieParts.forEach(
+          part => {hiddenColorsList[part.hidden_color] = part;})
+    return hiddenColorsList
   }
 
   draw_from_context(hidden: boolean): void {

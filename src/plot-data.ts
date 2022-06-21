@@ -777,52 +777,42 @@ export abstract class PlotData {
 
 
   drawPiechart(d: PieChart, hidden: boolean, mvx: number, mvy: number): void {
-    this.interaction_ON = true;
-    if (d['type_'] == 'piechart') {
-      const radius: number = this.height;
-      const center: Array<number> = [this.width / this.init_scaleX / 2, this.height / this.init_scaleY / 2];
-      let colorRadius: number = 0;
-      let colorRatio: number = 360 / d.pieParts.length;
-      this.context.lineWidth = 0.5;
+    const radius: number = this.height;
+    const center: [number, number] = [this.width / this.init_scaleX / 2, this.height / this.init_scaleY / 2];
+    const colorRatio: number = 360 / d.pieParts.length;
+    let colorRadius: number = 0;
+    this.context.lineWidth = 0.5;
 
-      for (let part of d.pieParts) {
-        part.centerX = center[0];
-        part.centerY = center[1];
-        part.radius = radius;
-        colorRadius += colorRatio;
+    for (let part of d.pieParts) {
+      part.centerX = center[0];
+      part.centerY = center[1];
+      part.radius = radius;
+      colorRadius += colorRatio;
 
-        this.color_to_plot_data[part.hidden_color] = part;
-
-        if (hidden) {
-          this.context.strokeStyle = part.hidden_color;
-          this.context.fillStyle = part.hidden_color;
-        } else {
-          if (part.clicked){
-            d.pieParts.forEach(piepart => piepart.clicked = false);
-            part.clicked = true;
-          }
-          if (part.clicked && this.select_on_mouse !== part) {
-            this.context.fillStyle = this.color_surface_on_click;
-            this.context.strokeStyle = this.color_surface_on_click;
-          } else if (part.clicked && this.select_on_mouse === part) {
-            this.context.fillStyle = this.color_surface_on_mouse;
-            this.context.strokeStyle = this.color_surface_on_mouse;
-          } else if (!part.clicked && this.select_on_mouse === part) { 
-            this.context.fillStyle  = this.color_surface_on_mouse;
-            this.context.strokeStyle  = this.color_surface_on_mouse;
-          } else {
-            this.context.fillStyle  = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
-            this.context.strokeStyle  = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
-          } 
-          this.context.fillStyle = part.color;
-          this.context.strokeStyle = part.color;
+      if (hidden) {
+        this.context.strokeStyle = part.hidden_color;
+        this.context.fillStyle = part.hidden_color;
+      } else {
+        if (part.clicked){
+          d.pieParts.forEach(piepart => piepart.clicked = false);
+          part.clicked = true;
         }
-        part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
+        if (part.clicked && this.select_on_mouse !== part) {
+          part.color = this.color_surface_on_click;
+
+        } else if (this.select_on_mouse === part) {
+          part.color = this.color_surface_on_mouse;
+          
+        } else {
+          part.color  = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
+        } 
+        this.context.fillStyle = part.color;
+        this.context.strokeStyle = part.color;
       }
-      // this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
-      //   d.attributeNames);
+      part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
     }
   }
+
 
   get_point_order() {
     var point_order = [];

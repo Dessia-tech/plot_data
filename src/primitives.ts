@@ -932,46 +932,51 @@ export class Wire {
 
 export class PieChart {
   pieParts: Array<PiePart>=[];
-  attribute_names: Attribute[]=[];
+  attributeNames: Attribute[]=[]; // kept for a future release but useless now
 
   constructor(public tooltip:Tooltip,
-              public trim_variable:string,
-              public elements: any[],
+              public slicingVariable:string,
+              public dataSamples: any[],
               public type_:string,
               public name:string) {
-    this.definePieParts(elements);
+    this.definePieParts(dataSamples);
   }
 
-  public static deserialize(serialized) {
+  public static deserialize(serialized): PieChart {
     let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')};
-    let default_tooltip = {attributes: serialized['trim_variable']};
+    let default_tooltip = {attributes: serialized['slicing_variable']};
     let default_dict_ = {point_style:default_point_style, tooltip: default_tooltip};
     serialized = set_default_values(serialized, default_dict_);
     let tooltip = Tooltip.deserialize(serialized['tooltip']);
     return new PieChart(tooltip,
-                        serialized['trim_variable'],
-                        serialized['elements'],
+                        serialized['slicing_variable'],
+                        serialized['data_samples'],
                         serialized['type_'],
                         serialized['name']);
   }
 
-  definePieParts(elements){
-    let sumElements: number = 0;
+  computeTotalSample(dataSamples: Object[]): number {
+    let sumSamples: number = 0;
     let normedRatio: number = 2*Math.PI;
+
+    dataSamples.forEach(sample => {
+      sumSamples += sample[this.slicingVariable]
+    });
+    normedRatio /= sumSamples;
+    return normedRatio
+  }
+
+  definePieParts(dataSamples: Object[]): void {
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
 
-    elements.forEach(element => {
-      sumElements += element[this.trim_variable]
-    });
-    normedRatio /= sumElements
-    
-    for (let i=0; i<elements.length; i++){
-      nextAngle -= elements[i][this.trim_variable] * normedRatio;
+    let normedRatio = this.computeTotalSample(dataSamples);
+    dataSamples.forEach(sample => {
+      nextAngle -= sample[this.slicingVariable] * normedRatio;
       let partI = new PiePart(0, 0, 10, initAngle, nextAngle, true);
-      this.pieParts.push(partI)
+      this.pieParts.push(partI);
       initAngle = nextAngle;
-    }
+    })
   }
 }
 
@@ -1004,7 +1009,7 @@ export class PieChart {
       this.hidden_color = genColor();   
   }
 
-  buildPath(mvx, mvy, scale, X, Y) {
+  buildPath(mvx, mvy, scale, X, Y): void {
     let translatedCenter: Array<number> = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
     this.path = new Path2D();
     this.path.moveTo(translatedCenter[0], translatedCenter[1]);
@@ -1016,13 +1021,9 @@ export class PieChart {
                 this.anticlockwise);
   }
 
-  draw(context, mvx, mvy, scale, X, Y) {
+  draw(context, mvx, mvy, scale, X, Y): void {
     this.buildPath(mvx, mvy, scale, X, Y);
     context.stroke(this.path);
     context.fill(this.path);
   }
-
-  // isMouseInPart(context: CanvasRenderingContext2D, px: Coordinates) {
-  //   return context.isPointInStroke(this.path, px.x, px.y) || context.isPointInPath(this.path, px.x, px.y)
-  // }
 }  

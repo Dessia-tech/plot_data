@@ -732,16 +732,16 @@ class PieChart(PlotDataObject):
     :type point_style: PointStyle
     """
 
-    def __init__(self, trim_variable: str, elements: List[Any] = None,
+    def __init__(self, slicing_variable: str, data_samples: List[Any] = None,
                   tooltip: Tooltip = None,
                   name: str = ''):
         
         self.tooltip = tooltip
-        self.trim_variable = trim_variable
-        if not elements:
-            self.elements = []
+        self.slicing_variable = slicing_variable
+        if not data_samples:
+            self.data_samples = []
         else:
-            self.elements = elements
+            self.data_samples = data_samples
             
         PlotDataObject.__init__(self, type_='piechart', name=name)
 

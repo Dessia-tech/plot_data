@@ -1,5 +1,5 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire, PieChart, PiePart } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire, PieChart } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
@@ -820,7 +820,7 @@ export abstract class PlotData {
         part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
       }
       // this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
-      //   d.attribute_names);
+      //   d.attributeNames);
     }
   }
 

@@ -1083,19 +1083,21 @@ export class PieChart {
       this.pieParts.push(partI)
       initAngle = nextAngle;
     }
+    // if (typeof elements[0][this.attribute_names[0]] != Number){
+    //   elements.forEach(element => {
+    //     sumElements += element[this.attribute_names[0]]
+    // })} else {
+    //   sumElements = elements.length
+    // }
 
-    /* elements.forEach(element => {
-      total += element[this.attribute_names[0]]
-    });
+    // normedRatio /= sumElements
 
-    normedRatio /= total
-
-    for (let i=0; i<elements.length; i++){
-      nextAngle -= elements[i][this.attribute_names[0]] * normedRatio;
-      let partI = new PiePart(0, 0, 10, initAngle, nextAngle, true);
-      this.pieParts.push(partI)
-      initAngle = nextAngle;
-    } */
+    // for (let i=0; i<elements.length; i++){
+    //   nextAngle -= elements[i][this.attribute_names[0]] * normedRatio;
+    //   let partI = new PiePart(0, 0, 10, initAngle, nextAngle, true);
+    //   this.pieParts.push(partI)
+    //   initAngle = nextAngle;
+    // }
   }
 }
 

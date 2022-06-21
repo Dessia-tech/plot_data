@@ -268,12 +268,12 @@ export class PlotPieChart extends PlotData {
       this.log_scale_y = false;
       if (data['type_'] == 'piechart') {
         this.type_ = 'piechart';
-        this.axis_ON = false;
+        this.axis_ON = true;
         this.mergeON = true;
         this.plotObject = PieChart.deserialize(data);
         this.plot_datas['value'] = [this.plotObject];
-        //this.refresh_MinMax();
-        this.refresh_MinMax(this.plotObject.point_list);
+        this.refresh_MinMax();
+        //this.refresh_MinMax(this.plotObject.point_list);
         this.selected_areas = [];
         this.clickedParts = this.initClickedParts();
       }
@@ -285,12 +285,12 @@ export class PlotPieChart extends PlotData {
     }
 
 
-  // refresh_MinMax(): void {
-  //   this.minX = 0;
-  //   this.maxX = this.height;
-  //   this.minY = 0;
-  //   this.maxY = this.width;    
-  // }
+  refresh_MinMax(): void {
+    this.minX = 0;
+    this.maxX = this.height;
+    this.minY = 0;
+    this.maxY = this.width;    
+  }
 
   draw() {
     this.draw_from_context(false);

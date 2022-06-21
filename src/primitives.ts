@@ -984,7 +984,7 @@ export class PieChart {
  * A class for drawing Pie parts.
  */
  export class PiePart{
-  hidden_color:string='';
+  hidden_color:string = '';
   isMouseOver: boolean = false;
   isSelected: boolean = false;
   path: Path2D;
@@ -1009,8 +1009,15 @@ export class PieChart {
       this.hidden_color = genColor();   
   }
 
-  buildPath(mvx, mvy, scale, X, Y): void {
-    let translatedCenter: Array<number> = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
+  buildPath(mvx: number, mvy: number, scale: number, X: number, Y: number): void {
+    /**
+     * @param mvx x coordinate of the local frame in the canvas
+     * @param mvy y coordinate of the local frame in the canvas
+     * @param scale ratio applied on data coordinates to manage mouse scrolling
+     * @param X x coordinate of the absolute frame (the canvas' one)
+     * @param Y y coordinate of the absolute frame (the canvas' one)
+     */
+    const translatedCenter: [number, number] = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
     this.path = new Path2D();
     this.path.moveTo(translatedCenter[0], translatedCenter[1]);
     this.path.arc(translatedCenter[0], 
@@ -1021,7 +1028,7 @@ export class PieChart {
                 this.anticlockwise);
   }
 
-  draw(context, mvx, mvy, scale, X, Y): void {
+  draw(context: CanvasRenderingContext2D, mvx: number, mvy: number, scale: number, X: number, Y: number): void {
     this.buildPath(mvx, mvy, scale, X, Y);
     context.stroke(this.path);
     context.fill(this.path);

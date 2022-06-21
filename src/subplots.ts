@@ -298,7 +298,7 @@ export class PlotPieChart extends PlotData {
     return Array(this.plotObject.pieParts.length).fill(false)
   }
 
-  draw_from_context(hidden): void {
+  draw_from_context(hidden: boolean): void {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas(this.context);

@@ -291,6 +291,7 @@ export abstract class PlotData {
       this.init_scale = 0.95 * (this.width - this.decalage_axis_x) / (this['max_abs'] - this['min_abs']);
       this.scale = this.init_scale;
       this.originX = this.decalage_axis_x - this.scale * this['min_abs'];
+
     } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
@@ -778,8 +779,8 @@ export abstract class PlotData {
   drawPiechart(d: PieChart, hidden: boolean, mvx: number, mvy: number): void {
     this.interaction_ON = true;
     if (d['type_'] == 'piechart') {
-      const radius: number = this.height / this.init_scaleY * 0.45;
-      const center: Array<number> = [this.width / this.init_scaleX / 1.9, this.height / this.init_scaleY / 2];
+      const radius: number = this.height;
+      const center: Array<number> = [this.width / this.init_scaleX / 2, this.height / this.init_scaleY / 2];
       let colorRadius: number = 0;
       let colorRatio: number = 360 / d.pieParts.length;
       this.context.lineWidth = 0.5;
@@ -818,8 +819,8 @@ export abstract class PlotData {
         }
         part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
       }
-      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
-        d.attribute_names);
+      // this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
+      //   d.attribute_names);
     }
   }
 

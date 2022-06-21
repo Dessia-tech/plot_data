@@ -24,12 +24,12 @@ for i in range(50):
                      })
 
 
-piechart = plot_data.PieChart(elements=elements,
-                                x_variable='mass') 
+piechart1 = plot_data.PieChart(elements=elements,
+                                trim_variable='mass')
 
-# piechart = plot_data.PieChart(elements=elements,
-#                                 x_variable='shape', y_variable='length')
+piechart2 = plot_data.PieChart(elements=elements,
+                                trim_variable='length')
 
 
-
-plot_data.plot_canvas(plot_data_object=piechart, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=piechart1, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=piechart2, debug_mode=True)

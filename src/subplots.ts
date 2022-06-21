@@ -271,26 +271,25 @@ export class PlotPieChart extends PlotData {
         this.axis_ON = false;
         this.mergeON = true;
         this.plotObject = PieChart.deserialize(data);
+        console.log(data)
+        console.log(PieChart.deserialize(data))
         this.plot_datas['value'] = [this.plotObject];
-        //this.refresh_MinMax();
-        this.refresh_MinMax(this.plotObject.point_list);
+        this.refresh_MinMax();
         this.selected_areas = [];
         this.clickedParts = this.initClickedParts();
       }
-      this.isParallelPlot = false;
       if (this.mergeON && alert_count === 0) {
         // merge_alert();
       }
-      //this.mouseListener()
     }
 
 
-  // refresh_MinMax(): void {
-  //   this.minX = 0;
-  //   this.maxX = this.height;
-  //   this.minY = 0;
-  //   this.maxY = this.width;    
-  // }
+  refresh_MinMax(): void {
+    this.minX = 0;
+    this.maxX = this.height;
+    this.minY = 0;
+    this.maxY = this.width;
+  }
 
   draw() {
     this.draw_from_context(false);

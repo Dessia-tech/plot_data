@@ -720,11 +720,11 @@ class PieChart(PlotDataObject):
     """
     A class for drawing pie plots.
 
-    :param elements: A list of vectors. Vectors must have the same \
-    attributes (ie the same keys)
+    :param elements: [{'name_param_1': any,..., 'name_param_p': any},...,
+                      {'name_param_1': any,..., 'name_param_p': any}]
     :type elements: List[dict]
-    :param x_variable: variable that you want to display on x axis
-    :type x_variable: str
+    :param trim_variable: variable that you want to use to fill pie parts
+    :type trim_variable: str
     :param tooltip: an object containing all information needed for \
     drawing tooltips
     :type tooltip: Tooltip
@@ -732,24 +732,17 @@ class PieChart(PlotDataObject):
     :type point_style: PointStyle
     """
 
-    def __init__(self, x_variable: str, elements: List[Any] = None,
+    def __init__(self, trim_variable: str, elements: List[Any] = None,
                   tooltip: Tooltip = None,
-                  point_style: PointStyle = None,
-                  edge_style: EdgeStyle = None,
-                  axis: Axis = None,
                   name: str = ''):
         
         self.tooltip = tooltip
-        self.attribute_names = [x_variable]
-        self.point_style = point_style
+        self.trim_variable = trim_variable
         if not elements:
             self.elements = []
         else:
             self.elements = elements
-        if not axis:
-            self.axis = Axis()
-        else:
-            self.axis = axis
+            
         PlotDataObject.__init__(self, type_='piechart', name=name)
 
 

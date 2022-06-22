@@ -254,8 +254,8 @@ export class PlotPieChart extends PlotData {
     public X: number,
     public Y: number,
     public canvas_id: string,
-    public is_in_multiplot = false
-    ) {
+    public is_in_multiplot = false)
+    {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (!is_in_multiplot) {
         let requirement = '0.6.0';
@@ -264,19 +264,20 @@ export class PlotPieChart extends PlotData {
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }    
-      this.log_scale_y = false;
+        this.log_scale_y = false;
         this.mergeON = true;
-      this.selected_areas = [];
-        this.plotObject = PieChart.deserialize(data);
+        this.selected_areas = [];
         this.refresh_MinMax();
+        this.plotObject = PieChart.deserialize(data);
+        this.plotObject.pieParts = this.plotObject.definePieParts([0, 0], this.height * 0.475);
         this.color_to_plot_data = this.initHiddenColors()
-      }
+    }
 
   refresh_MinMax(): void {
-    this.minX = 0;
-    this.maxX = this.height;
-    this.minY = 0;
-    this.maxY = this.width;
+    this.minX = -this.width / 2;
+    this.maxX = this.width / 2;
+    this.minY = -this.height / 2;
+    this.maxY = this.height / 2;
   }
 
   draw(): void {

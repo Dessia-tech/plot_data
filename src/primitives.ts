@@ -936,9 +936,7 @@ export class PieChart {
   constructor(public slicingVariable: string,
               public dataSamples: Map<string, any>,
               public name: string
-              ) {
-                this.pieParts = this.definePieParts();
-              }
+              ) {}
 
   public static deserialize(serialized): PieChart { // TODO : clarify this
     return new PieChart(serialized['slicing_variable'],
@@ -957,7 +955,7 @@ export class PieChart {
     return normedRatio
   }
 
-  private definePieParts(): PiePart[] {
+  definePieParts(center: [number, number], radius: number): PiePart[] {
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
     let pieParts: PiePart[] = [];
@@ -965,18 +963,16 @@ export class PieChart {
     let normedRatio = this.computeTotalSample();
     this.dataSamples.forEach(sample => { 
       nextAngle -= sample[this.slicingVariable] * normedRatio;
-      pieParts.push(new PiePart(0, 0, 10, initAngle, nextAngle, true));
+      pieParts.push(new PiePart(center[0], center[1], radius, initAngle, nextAngle, true));
       initAngle = nextAngle;
     })
     return pieParts
   }
 }
 
-/**
- * A class for drawing Pie parts.
- */
- export class PiePart{
-  hidden_color:string = '';
+
+export class PiePart {
+  hidden_color: string = '';
   isMouseOver: boolean = false;
   isSelected: boolean = false;
   path: Path2D;
@@ -991,39 +987,44 @@ export class PieChart {
    * @param endAngle in radian
    * @param anticlockwise true or false whether you want the arc the be drawn anticlockwise or not.
    */
-  constructor(public centerX:number,
-              public centerY:number,
-              public radius:number,
-              public initAngle:number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
-              public endAngle:number,
-              public anticlockwise:boolean = true,
-              public name:string = ''
-              ) {
-                this.hidden_color = genColor();
-              }
+  constructor(
+    public centerX: number,
+    public centerY: number,
+    public radius: number,
+    public initAngle: number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
+    public endAngle: number,
+    public anticlockwise: boolean = true,
+    public name: string = '') 
+    {
+      this.hidden_color = genColor();
+      this.path = this.buildPath();
+    }
 
-  private buildPath(mvx: number, mvy: number, scale: number, X: number, Y: number): void {
+  private buildPath(): Path2D {
+    const path = new Path2D();
+    path.moveTo(this.centerX, this.centerY);
+    path.arc(
+      this.centerX,
+      this.centerY,
+      this.radius,
+      this.initAngle,
+      this.endAngle,
+      this.anticlockwise);
+    return path
+  }
+
+  draw(context: CanvasRenderingContext2D, mvx: number, mvy: number, scale: number, X: number, Y: number): void {
     /**
      * @param mvx x coordinate of the local frame in the canvas
      * @param mvy y coordinate of the local frame in the canvas
      * @param scale ratio applied on data coordinates to manage mouse scrolling
-     * @param X x coordinate of the offset of the drawing zone in the plot_data object, 0 if not drawn in multiplot
-     * @param Y y coordinate of the offset of the drawing zone in the plot_data object, 0 if not drawn in multiplot
+     * @param X x coordinate of the absolute frame (the canvas' one)
+     * @param Y y coordinate of the absolute frame (the canvas' one)
      */
-    const translatedCenter: [number, number] = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
-    this.path = new Path2D();
-    this.path.moveTo(translatedCenter[0], translatedCenter[1]);
-    this.path.arc(translatedCenter[0], 
-                translatedCenter[1], 
-                scale*this.radius, 
-                this.initAngle, 
-                this.endAngle, 
-                this.anticlockwise);
-  }
-
-  draw(context: CanvasRenderingContext2D, mvx: number, mvy: number, scale: number, X: number, Y: number): void {
-    this.buildPath(mvx, mvy, scale, X, Y);
+    const matrix = context.getTransform();
+    context.transform(scale, 0, 0, scale, mvx + X, mvy + Y);
     context.stroke(this.path);
     context.fill(this.path);
+    context.setTransform(matrix);
   }
-}  
+}

@@ -4,8 +4,6 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
-import { PlotPieChart } from "./subplots";
-
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
  * for that purpose. It is inherited by more specific data-visualization objects such as
@@ -778,16 +776,11 @@ export abstract class PlotData {
 
 
   drawPiechart(d: PieChart, hidden: boolean, mvx: number, mvy: number): void {
-    const radius: number = this.height;
-    const center: [number, number] = [this.width / this.init_scaleX / 2, this.height / this.init_scaleY / 2];
     const colorRatio: number = 360 / d.pieParts.length;
     let colorRadius: number = 0;
     this.context.lineWidth = 0.5;
 
     for (let part of d.pieParts) {
-      part.centerX = center[0];
-      part.centerY = center[1];
-      part.radius = radius;
       colorRadius += colorRatio;
 
       if (hidden) {

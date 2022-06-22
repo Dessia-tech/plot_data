@@ -720,23 +720,17 @@ class PieChart(PlotDataObject):
     """
     A class for drawing pie plots.
 
-    :param elements: [{'name_param_1': any,..., 'name_param_p': any},...,
-                      {'name_param_1': any,..., 'name_param_p': any}]
-    :type elements: List[dict]
-    :param trim_variable: variable that you want to use to fill pie parts
-    :type trim_variable: str
-    :param tooltip: an object containing all information needed for \
-    drawing tooltips
-    :type tooltip: Tooltip
-    :param point_style: for points' customization
-    :type point_style: PointStyle
+    :param data_samples: [{'name_param_1': any,..., 'name_param_p': any},...,
+                          {'name_param_1': any,..., 'name_param_p': any}]
+    :type data_samples: List[dict]
+    :param slicing_variable: variable that you want to use to fill pie parts
+    :type slicing_variable: str
     """
 
-    def __init__(self, slicing_variable: str, data_samples: List[Any] = None,
-                  tooltip: Tooltip = None,
-                  name: str = ''):
+    def __init__(self, slicing_variable: str, 
+                 data_samples: List[Any] = None,
+                 name: str = ''):
         
-        self.tooltip = tooltip
         self.slicing_variable = slicing_variable
         if not data_samples:
             self.data_samples = []

@@ -44,7 +44,7 @@ export class PlotContour extends PlotData {
             this.minY = Math.min(this.minY, primitive.minY);
             this.maxY = Math.max(this.maxY, primitive.maxY);
             if (["contour", "circle", "wire"].includes(primitive.type_)) {
-              this.color_to_plot_data[primitive.hidden_color] = primitive;
+              this.color_to_plot_data.set(primitive.hidden_color, primitive);
             } 
           }
         }
@@ -265,21 +265,12 @@ export class PlotPieChart extends PlotData {
         this.refresh_buttons_coords();
       }    
       this.log_scale_y = false;
-      if (data['type_'] == 'piechart') {
-        this.type_ = 'piechart';
-        this.axis_ON = false;
         this.mergeON = true;
+      this.selected_areas = [];
         this.plotObject = PieChart.deserialize(data);
-        this.plot_datas['value'] = [this.plotObject];
         this.refresh_MinMax();
-        this.selected_areas = [];
-        // this.clickedParts = this.initClickedParts(); // for the mousehandling in next releases
         this.color_to_plot_data = this.initHiddenColors()
       }
-      if (this.mergeON && alert_count === 0) {
-        // merge_alert();
-      }
-    }
 
   refresh_MinMax(): void {
     this.minX = 0;
@@ -293,14 +284,10 @@ export class PlotPieChart extends PlotData {
     this.draw_from_context(true);
   }
 
-  // initClickedParts(): Array<boolean> { // for the mousehandling in next releases
-  //   return Array(this.plotObject.pieParts.length).fill(false)
-  // }
-
-  initHiddenColors(): {[key: string]: PiePart} {
-    let hiddenColorsList: {[key: string]: PiePart} = {}
+  private initHiddenColors(): Map<string,PiePart> {
+    let hiddenColorsList: Map<string,PiePart> = new Map();
     this.plotObject.pieParts.forEach(
-          part => {hiddenColorsList[part.hidden_color] = part;})
+      part => {hiddenColorsList.set(part.hidden_color, part);})
     return hiddenColorsList
   }
 
@@ -308,7 +295,11 @@ export class PlotPieChart extends PlotData {
     this.define_context(hidden);
     this.context.save();
     this.draw_empty_canvas(this.context);
-    if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
+    if (this.settings_on) {
+      this.draw_settings_rect();
+    } else {
+      this.draw_rect();
+    }
     this.context.beginPath();
     this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
     this.context.clip();
@@ -338,11 +329,6 @@ export class PlotPieChart extends PlotData {
 
       //Drawing the enable/disable graph button
       Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
-
-      if (this.plotObject.type_ == 'scatterplot') {
-        // TODO To check, 'this' in args is weird
-        Buttons.merge_button(this.button_x, this.merge_y, this.button_w, this.button_h, '10px Arial', this);
-      }
 
       //draw permanent window button
       Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);

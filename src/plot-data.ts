@@ -4,6 +4,7 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
+import { PlotPieChart } from "./subplots";
 
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
@@ -35,7 +36,7 @@ export abstract class PlotData {
   originX: number = 0;
   originY: number = 0;
   settings_on: boolean = false;
-  color_to_plot_data: any = {};
+  color_to_plot_data: Map<string, any> = new Map();
   select_on_mouse: any;
   select_on_mouse_indices: number[] = [];
   primitive_mouse_over_point: Point2D;
@@ -253,7 +254,7 @@ export abstract class PlotData {
         this.minY = Math.min(this.minY, point.minY);
         this.maxY = Math.max(this.maxY, point.maxY);
       }
-      this.color_to_plot_data[point.hidden_color] = point;
+      this.color_to_plot_data.set(point.hidden_color, point);
     }
     if (this.minX === this.maxX) {
       let val = this.minX;
@@ -802,7 +803,7 @@ export abstract class PlotData {
 
         } else if (this.select_on_mouse === part) {
           part.color = this.color_surface_on_mouse;
-          
+
         } else {
           part.color  = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
         } 
@@ -1919,7 +1920,7 @@ export abstract class PlotData {
   selecting_point_action(mouse1X, mouse1Y) {
     var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-    var click_plot_data = this.color_to_plot_data[colKey];
+    var click_plot_data = this.color_to_plot_data.get(colKey);
     if (click_plot_data) {
       if (click_plot_data.clicked) {
         this.clicked_points = List.remove_element(click_plot_data, this.clicked_points);
@@ -2081,7 +2082,7 @@ export abstract class PlotData {
       var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
       var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
       var old_select_on_mouse = this.select_on_mouse;
-      this.select_on_mouse = this.color_to_plot_data[colKey];
+      this.select_on_mouse = this.color_to_plot_data.get(colKey);
       this.select_on_mouse_indices = [];
       if (this.select_on_mouse && this.select_on_mouse["type_"] === "point") {
         let points_inside = this.select_on_mouse.points_inside;
@@ -2459,7 +2460,7 @@ export abstract class PlotData {
           point_list_copy = List.remove_element(point_list_copy[i], point_list_copy);
           point_list_copy = List.remove_element(point_list_copy[j - 1], point_list_copy);
           point_list_copy.push(point);
-          this.color_to_plot_data[point.hidden_color] = point;
+          this.color_to_plot_data.set(point.hidden_color, point);
           bool = true;
           break;
         } else {

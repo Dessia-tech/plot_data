@@ -932,51 +932,43 @@ export class Wire {
 
 export class PieChart {
   pieParts: Array<PiePart>=[];
-  attributeNames: Attribute[]=[]; // kept for a future release but useless now
 
-  constructor(public tooltip:Tooltip,
-              public slicingVariable:string,
-              public dataSamples: any[],
-              public type_:string,
-              public name:string) {
-    this.definePieParts(dataSamples);
-  }
+  constructor(public slicingVariable: string,
+              public dataSamples: Map<string, any>,
+              public name: string
+              ) {
+                this.pieParts = this.definePieParts();
+              }
 
-  public static deserialize(serialized): PieChart {
-    let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')};
-    let default_tooltip = {attributes: serialized['slicing_variable']};
-    let default_dict_ = {point_style:default_point_style, tooltip: default_tooltip};
-    serialized = set_default_values(serialized, default_dict_);
-    let tooltip = Tooltip.deserialize(serialized['tooltip']);
-    return new PieChart(tooltip,
-                        serialized['slicing_variable'],
+  public static deserialize(serialized): PieChart { // TODO : clarify this
+    return new PieChart(serialized['slicing_variable'],
                         serialized['data_samples'],
-                        serialized['type_'],
                         serialized['name']);
   }
 
-  computeTotalSample(dataSamples: Object[]): number {
+  private computeTotalSample(): number {
     let sumSamples: number = 0;
     let normedRatio: number = 2*Math.PI;
 
-    dataSamples.forEach(sample => {
+    this.dataSamples.forEach(sample => {
       sumSamples += sample[this.slicingVariable]
     });
     normedRatio /= sumSamples;
     return normedRatio
   }
 
-  definePieParts(dataSamples: Object[]): void {
+  private definePieParts(): PiePart[] {
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
+    let pieParts: PiePart[] = [];
 
-    let normedRatio = this.computeTotalSample(dataSamples);
-    dataSamples.forEach(sample => {
+    let normedRatio = this.computeTotalSample();
+    this.dataSamples.forEach(sample => { 
       nextAngle -= sample[this.slicingVariable] * normedRatio;
-      let partI = new PiePart(0, 0, 10, initAngle, nextAngle, true);
-      this.pieParts.push(partI);
+      pieParts.push(new PiePart(0, 0, 10, initAngle, nextAngle, true));
       initAngle = nextAngle;
     })
+    return pieParts
   }
 }
 
@@ -1005,17 +997,18 @@ export class PieChart {
               public initAngle:number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
               public endAngle:number,
               public anticlockwise:boolean = true,
-              public name:string = '') {
-      this.hidden_color = genColor();   
-  }
+              public name:string = ''
+              ) {
+                this.hidden_color = genColor();
+              }
 
-  buildPath(mvx: number, mvy: number, scale: number, X: number, Y: number): void {
+  private buildPath(mvx: number, mvy: number, scale: number, X: number, Y: number): void {
     /**
      * @param mvx x coordinate of the local frame in the canvas
      * @param mvy y coordinate of the local frame in the canvas
      * @param scale ratio applied on data coordinates to manage mouse scrolling
-     * @param X x coordinate of the absolute frame (the canvas' one)
-     * @param Y y coordinate of the absolute frame (the canvas' one)
+     * @param X x coordinate of the offset of the drawing zone in the plot_data object, 0 if not drawn in multiplot
+     * @param Y y coordinate of the offset of the drawing zone in the plot_data object, 0 if not drawn in multiplot
      */
     const translatedCenter: [number, number] = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
     this.path = new Path2D();

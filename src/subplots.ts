@@ -2,7 +2,7 @@ import { PlotData, Buttons, Interactions } from "./plot-data";
 import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
-import { Graph2D, Scatter, PieChart } from "./primitives";
+import { Graph2D, Scatter, PieChart, PiePart } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
 
@@ -44,7 +44,7 @@ export class PlotContour extends PlotData {
             this.minY = Math.min(this.minY, primitive.minY);
             this.maxY = Math.max(this.maxY, primitive.maxY);
             if (["contour", "circle", "wire"].includes(primitive.type_)) {
-              this.color_to_plot_data[primitive.hidden_color] = primitive;
+              this.color_to_plot_data.set(primitive.hidden_color, primitive);
             } 
           }
         }
@@ -239,315 +239,145 @@ export class PlotScatter extends PlotData {
     }
 }
 
-
 /** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
  */
-export class PlotPieChart extends PlotData {
-  clickedParts: Array<boolean> = [];
-  canvas: HTMLCanvasElement = null;
-  readOnly: boolean = true;
-  
+export class PlotPieChart extends PlotData {  
   public constructor(
-    public data:any,
+    public data: Array<Object>,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
     public X: number,
     public Y: number,
     public canvas_id: string,
-    public is_in_multiplot = false
-    ) {
+    public is_in_multiplot = false)
+    {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (!is_in_multiplot) {
-        var requirement = '0.6.0';
+        let requirement = '0.6.0';
         check_package_version(data['package_version'], requirement);
       }
       if (this.buttons_ON) {
         this.refresh_buttons_coords();
       }    
-      this.log_scale_y = false;
-      if (data['type_'] == 'piechart') {
-        this.type_ = 'piechart';
-        this.axis_ON = true;
+        this.log_scale_y = false;
         this.mergeON = true;
-        this.plotObject = PieChart.deserialize(data);
-        this.plot_datas['value'] = [this.plotObject];
-        this.refresh_MinMax();
-        //this.refresh_MinMax(this.plotObject.point_list);
         this.selected_areas = [];
-        this.clickedParts = this.initClickedParts();
-      }
-      this.isParallelPlot = false;
-      if (this.mergeON && alert_count === 0) {
-        // merge_alert();
-      }
-      //this.mouseListener()
+        this.refresh_MinMax();
+        this.plotObject = PieChart.deserialize(data);
+        this.plotObject.pieParts = this.plotObject.definePieParts(this.height * 0.475);
+        this.color_to_plot_data = this.initHiddenColors()
     }
 
+  private initHiddenColors(): Map<string,PiePart> {
+    let hiddenColorsList: Map<string,PiePart> = new Map();
+    this.plotObject.pieParts.forEach(
+      part => {hiddenColorsList.set(part.hidden_color, part);})
+    return hiddenColorsList
+  }
 
   refresh_MinMax(): void {
-    this.minX = 0;
-    this.maxX = this.height;
-    this.minY = 0;
-    this.maxY = this.width;    
+    this.minX = -this.width / 2;
+    this.maxX = this.width / 2;
+    this.minY = -this.height / 2;
+    this.maxY = this.height / 2;
   }
 
-  draw() {
-    this.draw_from_context(false);
-    this.draw_from_context(true);
-  }
-
-  initClickedParts() {
-    return Array(this.plotObject.pieParts.length).fill(false)
-  }
-
-  draw_from_context(hidden) {
-    this.define_context(hidden);
-    this.context.save();
-    this.draw_empty_canvas(this.context);
-    if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
-    this.context.beginPath();
-    this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
-    this.context.clip();
-    this.context.closePath();
-    //this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
-    this.drawPiechart(this.plotObject, hidden, this.originX, this.originY);
-    if (this.permanent_window) {
-      this.draw_selection_rectangle();
-    }
-    if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
-      this.draw_zoom_rectangle();
-    }
-
-    if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
-      this.refresh_buttons_coords();
-
-      //Drawing the zooming button
-      Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
-
-      //Drawing the button for zooming window selection
-      Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
-
-      //Drawing the reset button
-      Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
-
-      //Drawing the selection button
-      Buttons.selection_button(this.button_x, this.select_y, this.button_w, this.button_h, this);
-
-      //Drawing the enable/disable graph button
-      Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
-
-      if (this.plotObject.type_ == 'scatterplot') {
-        // TODO To check, 'this' in args is weird
-        Buttons.merge_button(this.button_x, this.merge_y, this.button_w, this.button_h, '10px Arial', this);
+  private drawPiechart(d: PieChart, mvx: number, mvy: number): void {
+    this.context_hidden.lineWidth = 0.5 / this.scaleX;
+    this.context_show.lineWidth = 0.5 / this.scaleY;
+    for (let part of d.pieParts) {
+      if (part.clicked) {
+        d.pieParts.forEach(piepart => piepart.clicked = false);
+        part.clicked = true;
       }
+      this.context_show.fillStyle = part.assignColor(this.select_on_mouse);
+      this.context_show.strokeStyle = this.context_show.fillStyle
+      this.context_hidden.strokeStyle = part.hidden_color;
+      this.context_hidden.fillStyle = part.hidden_color;
 
-      //draw permanent window button
-      Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
+      part.draw(this.context_show, mvx, mvy, this.scaleX, this.X, this.Y);
+      part.draw(this.context_hidden, mvx, mvy, this.scaleX, this.X, this.Y);
+  }
+}
 
-      //draw clear point button
-      Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
-
-      // Draw log scale buttons
-      Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
-        "10px Arial", this);
-      
-      // Draw Heatmap button
-      Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
-    }
-    if (this.multiplot_manipulation) {
-      this.draw_manipulable_rect();
-    }
-    this.context.restore();
+  draw(): void {
+    this.drawCanvas()
+    this.drawPiechart(this.plotObject, this.originX, this.originY);
+    this.drawSiders();
+    this.context_hidden.restore();
+    this.context_show.restore();
   }
 
-  // mouseListener() {
-  //   this.mouseHandler = new MouseHandler()
-  //   // function isWheelEvent(e) { return e.button === 1 || e.buttons === 4 }
+  private drawCanvas(): void {
+    for (let context of [this.context_show, this.context_hidden]) {
+      context.save()
+      this.draw_empty_canvas(context);
+      this.context = context;
+      if (this.settings_on) {
+        this.draw_settings_rect();
+      } else {
+        this.draw_rect();
+      }
+      context.beginPath();
+      context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
+      context.clip();
+      context.closePath();
+    }
+  }
 
-  //   //this.canvas.addEventListener("contextmenu", (e) => { this.handleMouseRightClick(e) })
-  //   //this.canvas.addEventListener("dblclick", (e) => { this.handleMouseDoubleClick(e) })
-  //   this.canvas.addEventListener("mousedown", (e) => { if (e.buttons != 2) this.handleMouseDown(e) })
-  //   this.canvas.addEventListener("mousemove", (e) => { this.handleMouseMove(e) })
-  //   this.canvas.addEventListener("mouseup", (e) => { this.handleMouseUp(e) })
-  //   this.canvas.addEventListener("mouseleave", (e) => { this.handleMouseLeave(e) })
-  //   this.canvas.addEventListener("mouseenter", (e) => { this.handleMouseEnter(e) })
-  //   this.canvas.addEventListener("wheel", (e) => { this.handleWheel(e) })
-  // }
+  private drawSiders(): void {
+    for (let context of [this.context_hidden, this.context_show]) {
+      this.context = context;
+      if (this.permanent_window) {
+        this.draw_selection_rectangle();
+      }
+      if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+        this.draw_zoom_rectangle();
+      }
+      if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
+        this.drawButtons();
+      }
+      if (this.multiplot_manipulation) {
+        this.draw_manipulable_rect();
+      } 
+    }
+  }
 
-  // // handleMouseDoubleClick(e) {
-  // //   const dblClickedPort = this.mouseHandler.port
-  // //   const dblClickedNodeIndex = this.mouseHandler.partIndex
-  // //   /* if (!this.readOnly) {
-  // //     if (dblClickedPort != null) {
-  // //       if (dblClickedPort instanceof OutputPort) {
-  // //         this.setWorkflowOutput(dblClickedPort)
-  // //       }
-  // //       else if (dblClickedPort instanceof InputPort) {
-  // //         this.switchUseDefaultValue(dblClickedPort)
-  // //       }
-  // //     }
-  // //   }
-  // //   if (dblClickedNodeIndex != null && this.workflow.isBlockIndex(dblClickedNodeIndex) && dblClickedPort === null) {
-  // //     this.dbleClickOnNode.emit(dblClickedNodeIndex)
-  // //   } */
-  // // }
+  private drawButtons(): void {
+    this.refresh_buttons_coords();
+    //Drawing the zooming button
+    Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
 
-  // // handleMouseRightClick(e: MouseEvent) {
-  // //   /* this.setContextMenu() */
-  // //   this.mouseHandler.rightClickedPort = this.mouseHandler.port
-  // //   e.preventDefault()
-  // // }
+    //Drawing the button for zooming window selection
+    Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
 
-  // handleMouseDown(e) {
-  //   /* if (this.libWorkflowService.addNBVEnabled.value) {
-  //     this.addNBV()
-  //     return;
-  //   } */
+    //Drawing the reset button
+    Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
 
+    //Drawing the selection button
+    Buttons.selection_button(this.button_x, this.select_y, this.button_w, this.button_h, this);
 
-  //   this.mouseHandler.performMouseDown()
-  //   this.initialize_initial_block_positions();
+    //Drawing the enable/disable graph button
+    Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
 
+    //draw permanent window button
+    Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
 
-  //   if (this.mouseHandler.clickedNodeIndex != null) {
-  //     this.plotObject.updateDisplayOrder(this.mouseHandler.clickedNodeIndex);
-  //     this.initializeResizeNode()
+    //draw clear point button
+    Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
 
-  //     if (this.readOnly) return
+    // Draw log scale buttons
+    Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
+      "10px Arial", this);
+    
+    // Draw Heatmap button
+    Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
+  }
 
-  //     if (this.mouseHandler.clickedPort) {
-  //       TempPipe.startDrawing(this.workflow, this.mouseHandler.clickedPort)
-  //       return
-  //     }
-
-  //     if (this.mouseHandler.node?.removeCircle?.isMouseOver(this.mouseHandler.mouseDown))
-  //       this.removeNode(this.mouseHandler.clickedNodeIndex)
-
-  //     return
-  //   }
-
-  //   //mouseDown not on a Node
-  //   if (this.mouseHandler.pipe?.isMouseOnRemoveCircle(this.mouseHandler.mouseDown) && !this.readOnly) {
-  //     this.removePipe(this.mouseHandler.pipe)
-  //     return
-  //   }
-
-  //   if (e.ctrlKey) {
-  //     this.unselectAllNodes();
-  //     return
-  //   }
-
-  //   if (!this.selectMode) {
-  //     this.initializeTranslateAll()
-  //     return
-  //   }
-  // }
-
-
-
-  // handleMouseMove(e) {
-  //   this.mouseHandler.mouseMove = new Coordinates(e.offsetX, e.offsetY);
-  //   this.mouseHandler.initializeMouseOver(this.pieChart, this.context, this.hidden_context, this.scale, this.origin)
-
-  //   this.computeVertexDirections()
-  //   this.canvas.style.cursor = this.computeCursorStyle();
-
-  //   if (!this.mouseHandler.mouseIsDown) { //TODO : useless ? 
-  //     this.redraw_all()
-  //     return
-  //   }
-
-  //   if (this.mouseHandler.clickedNodeIndex == null) {
-  //     (this.selectMode) ?
-  //       this.performRubberBandSelection() :
-  //       this.performTranslateAll()
-  //     return
-  //   }
-
-  //   // Mouse is down && clicked on a Node
-
-  //   if (this.workflow.temp_pipe) {
-  //     this.updateTempPipeDrawing(this.mouseHandler.mouseMove);
-  //     return
-  //   }
-
-  //   if (this.mouseHandler.port)
-  //     return
-
-  //   if (this.mouseHandler.vertex_infos) {
-  //     this.resizeNode(this.mouseHandler.mouseDown, this.mouseHandler.mouseMove);
-  //     return
-  //   }
-
-  //   this.mouseHandler.isPerformingTranslation = true
-  //   const translation: Coordinates = new Coordinates((this.mouseHandler.mouseMove.x - this.mouseHandler.mouseDown.x), (this.mouseHandler.mouseMove.y - this.mouseHandler.mouseDown.y))
-  //   this.workflow.selectedNodes.includes(this.mouseHandler.clickedNodeIndex) ?
-  //     this.translateSelectedNodes(translation) :
-  //     this.translateNode(this.mouseHandler.clickedNodeIndex, translation)
-
-  //   return
-  // }
-
-  // handleMouseUp(e) {
-  //   if (!this.mouseHandler.mouseDown)
-  //     return
-
-  //   this.mouseHandler.mouseUp = new Coordinates(e.offsetX, e.offsetY);
-  //   const mouseDidNotMove: boolean = Math.abs(this.mouseHandler.mouseDown.x - this.mouseHandler.mouseUp.x) < 5 && Math.abs(this.mouseHandler.mouseDown.y - this.mouseHandler.mouseUp.y) < 5
-
-  //   if (this.workflow.temp_pipe) {
-  //     mouseDidNotMove ?
-  //       this.endTempPipeDrawing() :
-  //       this.add_temp_pipe_to_workflow(this.mouseHandler.port);
-  //   }
-
-  //   if (this.mouseHandler.isPerformingTranslation)
-  //     this.storeStateBeforeTranslation()
-
-  //   if (mouseDidNotMove) {
-  //     // click on the only selectedNode
-  //     if (this.workflow.selectedNodes.length == 1 && this.workflow.selectedNodes.top() == this.mouseHandler.nodeIndex)
-  //       this.unselectNode(this.mouseHandler.nodeIndex)
-  //     else {
-  //       if (!e.ctrlKey)
-  //         this.unselectAllNodes()
-  //       if (this.mouseHandler.nodeIndex != null)
-  //         this.selectUnselectNode(this.mouseHandler.nodeIndex)
-  //     }
-  //   }
-
-  //   this.mouseHandler.performMouseUp()
-  //   this.redraw_all();
-
-  //   if (this.canvas.style.cursor === "grabbing")
-  //     this.canvas.style.cursor = "grab"
-  // }
-
-  // handleMouseLeave(e) {
-  //   if (this.mouseHandler.mouseIsDown)
-  //     document.addEventListener("mouseup", () => {
-  //       this.mouseHandler.performMouseUp()
-  //       this.endTempPipeDrawing()
-  //     })
-  // }
-
-  // handleMouseEnter(e) {
-  //   this.mouseHandler.mouseMove = new Coordinates(e.offsetX, e.offsetY);
-  //   if (this.workflow.temp_pipe)
-  //     this.updateTempPipeDrawing(this.mouseHandler.mouseMove)
-  // }
-
-  // // --- Wheel ---
-  // handleWheel(e) {
-  //   if (e.ctrlKey) {
-  //     e.preventDefault();
-  //     let wheelPosition = new Coordinates(e.offsetX, e.offsetY);
-
-  //     var event = -e.deltaY / Math.abs(e.deltaY);
-  //     this.zoom_elements(wheelPosition, event);
-  //   }
-  // }
+  draw_from_context(hidden: any) {
+    return
+  }
 }
 
 

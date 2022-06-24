@@ -1,10 +1,9 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire, PieChart, PiePart } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
-
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods 
  * for that purpose. It is inherited by more specific data-visualization objects such as
@@ -35,7 +34,7 @@ export abstract class PlotData {
   originX: number = 0;
   originY: number = 0;
   settings_on: boolean = false;
-  color_to_plot_data: any = {};
+  color_to_plot_data: Map<string, any> = new Map();
   select_on_mouse: any;
   select_on_mouse_indices: number[] = [];
   primitive_mouse_over_point: Point2D;
@@ -253,7 +252,7 @@ export abstract class PlotData {
         this.minY = Math.min(this.minY, point.minY);
         this.maxY = Math.max(this.maxY, point.maxY);
       }
-      this.color_to_plot_data[point.hidden_color] = point;
+      this.color_to_plot_data.set(point.hidden_color, point);
     }
     if (this.minX === this.maxX) {
       let val = this.minX;
@@ -291,6 +290,7 @@ export abstract class PlotData {
       this.init_scale = 0.95 * (this.width - this.decalage_axis_x) / (this['max_abs'] - this['min_abs']);
       this.scale = this.init_scale;
       this.originX = this.decalage_axis_x - this.scale * this['min_abs'];
+
     } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
@@ -768,55 +768,6 @@ export abstract class PlotData {
         if (!List.is_include(this.tooltip_list[i], this.scatter_points)) {
           this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
         }
-      }
-      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
-        d.attribute_names);
-    }
-  }
-
-
-  drawPiechart(d: PieChart, hidden: boolean, mvx: number, mvy: number): void {
-    this.interaction_ON = true;
-    if (d['type_'] == 'piechart') {
-      const radius: number = this.height / this.init_scaleY * 0.45;
-      const center: Array<number> = [this.width / this.init_scaleX / 1.9, this.height / this.init_scaleY / 2];
-      let colorRadius: number = 0;
-      let colorRatio: number = 360 / d.pieParts.length;
-      this.context.lineWidth = 0.5;
-
-      for (let part of d.pieParts) {
-        part.centerX = center[0];
-        part.centerY = center[1];
-        part.radius = radius;
-        colorRadius += colorRatio;
-
-        this.color_to_plot_data[part.hidden_color] = part;
-
-        if (hidden) {
-          this.context.strokeStyle = part.hidden_color;
-          this.context.fillStyle = part.hidden_color;
-        } else {
-          if (part.clicked){
-            d.pieParts.forEach(piepart => piepart.clicked = false);
-            part.clicked = true;
-          }
-          if (part.clicked && this.select_on_mouse !== part) {
-            this.context.fillStyle = this.color_surface_on_click;
-            this.context.strokeStyle = this.color_surface_on_click;
-          } else if (part.clicked && this.select_on_mouse === part) {
-            this.context.fillStyle = this.color_surface_on_mouse;
-            this.context.strokeStyle = this.color_surface_on_mouse;
-          } else if (!part.clicked && this.select_on_mouse === part) { 
-            this.context.fillStyle  = this.color_surface_on_mouse;
-            this.context.strokeStyle  = this.color_surface_on_mouse;
-          } else {
-            this.context.fillStyle  = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
-            this.context.strokeStyle  = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
-          } 
-          this.context.fillStyle = part.color;
-          this.context.strokeStyle = part.color;
-        }
-        part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
       }
       this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
         d.attribute_names);
@@ -1928,7 +1879,7 @@ export abstract class PlotData {
   selecting_point_action(mouse1X, mouse1Y) {
     var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-    var click_plot_data = this.color_to_plot_data[colKey];
+    var click_plot_data = this.color_to_plot_data.get(colKey);
     if (click_plot_data) {
       if (click_plot_data.clicked) {
         this.clicked_points = List.remove_element(click_plot_data, this.clicked_points);
@@ -2090,7 +2041,7 @@ export abstract class PlotData {
       var col = this.context_hidden.getImageData(mouseX, mouseY, 1, 1).data;
       var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
       var old_select_on_mouse = this.select_on_mouse;
-      this.select_on_mouse = this.color_to_plot_data[colKey];
+      this.select_on_mouse = this.color_to_plot_data.get(colKey);
       this.select_on_mouse_indices = [];
       if (this.select_on_mouse && this.select_on_mouse["type_"] === "point") {
         let points_inside = this.select_on_mouse.points_inside;
@@ -2468,7 +2419,7 @@ export abstract class PlotData {
           point_list_copy = List.remove_element(point_list_copy[i], point_list_copy);
           point_list_copy = List.remove_element(point_list_copy[j - 1], point_list_copy);
           point_list_copy.push(point);
-          this.color_to_plot_data[point.hidden_color] = point;
+          this.color_to_plot_data.set(point.hidden_color, point);
           bool = true;
           break;
         } else {

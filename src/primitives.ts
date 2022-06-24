@@ -930,225 +930,113 @@ export class Wire {
 }
 
 
-
-// NOUVELLES FONCTIONNALITES EN VUE D'UN REFACTOR
 export class PieChart {
-
-  point_list: Point2D[]=[];
   pieParts: Array<PiePart>=[];
-  all_attributes: Attribute[]=[];
-  lists: any[]=[];
-  to_display_attributes: Attribute[]=[];
 
-  constructor(public tooltip:Tooltip,
-              public attribute_names:string[],
-              public point_style:PointStyle,
-              public surface_style:SurfaceStyle,
-              public edge_style:EdgeStyle,
-              public elements: any[],
-              public axis:Axis,
-              public type_:string,
-              public name:string) {
-    
-    this.initialize_all_attributes();
-    this.initialize_to_display_attributes();
-    this.initialize_lists();
-    this.initialize_point_list(elements);
-    this.definePieParts(elements);
+  constructor(public slicingVariable: string,
+              public dataSamples: Array<Object>,
+              public name: string
+              ) {}
+
+  public static deserialize(serialized): PieChart { // TODO : clarify this
+    return new PieChart(serialized['slicing_variable'],
+                        serialized['data_samples'],
+                        serialized['name']);
   }
 
-  public static deserialize(serialized) {
-    let default_point_style = {color_fill: string_to_rgb('lightviolet'), color_stroke: string_to_rgb('lightgrey')};
-    let default_tooltip = {attributes: serialized['attribute_names']};
-    var default_dict_ = {point_style:default_point_style, tooltip: default_tooltip};
-    serialized = set_default_values(serialized, default_dict_);
-    var axis = Axis.deserialize(serialized['axis']);
-    var tooltip = Tooltip.deserialize(serialized['tooltip']);
-    var point_style = PointStyle.deserialize(serialized['point_style']);
-    var surface_style = SurfaceStyle.deserialize(serialized['surface_style'])
-    var edge_style = EdgeStyle.deserialize(serialized['edge_style'])
-    return new PieChart(tooltip,
-                       serialized['attribute_names'],
-                       point_style,
-                       surface_style,
-                       edge_style,
-                       serialized['elements'],
-                       axis,
-                       serialized['type_'],
-                       serialized['name']);
-  }
-
-  initialize_all_attributes() {
-    var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
-    var exceptions = ['package_version', 'object_class'];
-    for (let i=0; i<attribute_names.length; i++) {
-      let name = attribute_names[i];
-      if (!List.is_include(name, exceptions)) {
-        let type_ = TypeOf(this.elements[0][name]);
-        this.all_attributes.push(new Attribute(name, type_)); 
-      }
-    }
-  }
-
-  initialize_to_display_attributes() {
-    for (let i=0; i<this.attribute_names.length; i++) {
-      var name = this.attribute_names[i];
-      for (let j=0; j<this.all_attributes.length; j++) {
-        if (name == this.all_attributes[j]['name']) {
-          this.to_display_attributes.push(this.all_attributes[j]);
-          break;
-        }
-      }
-    }
-  }
-
-  initialize_lists() {
-    this.lists = [];
-    for (let i=0; i<this.to_display_attributes.length; i++) {
-      var value = [];
-      var name = this.to_display_attributes[i].name;
-      let type_ = this.to_display_attributes[i].type_;
-      if (type_ == 'float') {
-        let min = this.elements[0][name];
-        let max = this.elements[0][name];
-        for (let j=0; j<this.elements.length; j++) {
-          let elt = this.elements[j][name];
-          if (elt>max) {
-            max = elt;
-          }
-          if (elt<min) {
-            min = elt;
-          }
-        }
-        this.lists.push([min, max]);
-      } else if (type_ == 'color') {
-        for (let j=0; j<this.elements.length; j++) {
-          let elt_color = rgb_to_string(this.elements[j][name]);
-          if (!List.is_include(elt_color, value)) {
-            value.push(elt_color);
-          }
-        }
-        this.lists.push(value);
-      } else {
-        for (let j=0; j<this.elements.length; j++) {
-          let elt = this.elements[j][name].toString();
-          if (!List.is_include(elt, value)) {
-            value.push(elt);
-          }
-        }
-        this.lists.push(value);
-      }
-    }
-  }
-
-  initialize_point_list(elements) {
-    this.point_list = [];
-    for (let i=0; i<this.elements.length; i++) {
-      var elt0 = elements[i][this.to_display_attributes[0]['name']];
-      if (this.to_display_attributes[0]['type_'] == 'float') {
-        var cx = elt0;
-      } else if (this.to_display_attributes[0]['type_'] == 'color') {
-        cx = List.get_index_of_element(rgb_to_string(elt0), this.lists[0]);
-      } else {
-        cx = List.get_index_of_element(elt0.toString(), this.lists[0]);
-      }
-      let point = new Point2D(cx, 5, MyObject.copy(this.point_style));
-      point.index = i;
-      this.point_list.push(point);
-    }
-  }
-
-  definePieParts(elements){
-    let sumElements: number = 0;
+  private computeNormedRatio(): number {
+    let sumSamples: number = 0;
     let normedRatio: number = 2*Math.PI;
+
+    this.dataSamples.forEach(sample => {
+      sumSamples += sample[this.slicingVariable]
+    });
+    normedRatio /= sumSamples;
+    return normedRatio
+  }
+
+  definePieParts(radius: number): PiePart[] {
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
+    const colorRatio: number = 360 / this.dataSamples.length;
+    let colorRadius: number = 0;
+    let pieParts: PiePart[] = [];
 
-    let test_dict: any = elements.slice(0, 5)
-    test_dict[0]['mass'] = 1;
-    test_dict[1]['mass'] = 2;
-    test_dict[2]['mass'] = 1;
-    test_dict[3]['mass'] = 2;
-    test_dict[4]['mass'] = 1;
+    let normedRatio = this.computeNormedRatio();
+    this.dataSamples.forEach(sample => { 
+      colorRadius += colorRatio;
+      nextAngle -= sample[this.slicingVariable] * normedRatio;
 
-    test_dict.forEach(element => {
-      sumElements += element[this.attribute_names[0]]
-    });
+      let newPart = new PiePart(radius, initAngle, nextAngle, 'hsl('+ colorRadius +', 50%, 50%, 90%)');
+      pieParts.push(newPart);
 
-    normedRatio /= sumElements
-
-    for (let i=0; i<test_dict.length; i++){
-      nextAngle -= test_dict[i][this.attribute_names[0]] * normedRatio;
-      let partI = new PiePart(0, 0, 10, initAngle, nextAngle, true);
-      this.pieParts.push(partI)
       initAngle = nextAngle;
-    }
-    // if (typeof elements[0][this.attribute_names[0]] != Number){
-    //   elements.forEach(element => {
-    //     sumElements += element[this.attribute_names[0]]
-    // })} else {
-    //   sumElements = elements.length
-    // }
-
-    // normedRatio /= sumElements
-
-    // for (let i=0; i<elements.length; i++){
-    //   nextAngle -= elements[i][this.attribute_names[0]] * normedRatio;
-    //   let partI = new PiePart(0, 0, 10, initAngle, nextAngle, true);
-    //   this.pieParts.push(partI)
-    //   initAngle = nextAngle;
-    // }
+    })
+    return pieParts
   }
 }
 
-/**
- * A class for drawing Pie parts.
- */
- export class PiePart{
-  hidden_color:string='';
-  isMouseOver: boolean = false;
-  isSelected: boolean = false;
+export class PiePart {
+  hidden_color: string = '';
   path: Path2D;
   clicked: boolean = false;
-  color: string = '';
+  readonly overfliedColor: string = string_to_hex('lightskyblue');
+  readonly selectedColor: string = string_to_hex("red");
+  readonly center: [number, number] = [0, 0];
 
   /**
-   * @param centerX the center x coordinate
-   * @param centerY the center y coordinate
+   * @param center the center coordinates [x, y]
    * @param radius radius
    * @param initAngle in radian
    * @param endAngle in radian
-   * @param anticlockwise true or false whether you want the arc the be drawn anticlockwise or not.
    */
-  constructor(public centerX:number,
-              public centerY:number,
-              public radius:number,
-              public initAngle:number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
-              public endAngle:number,
-              public anticlockwise:boolean = true,
-              public name:string = '') {
-      this.hidden_color = genColor();   
+  constructor(
+    public radius: number,
+    public initAngle: number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
+    public endAngle: number,
+    public color: string = '') 
+    {
+      this.hidden_color = genColor();
+      this.path = this.buildPath();
+    }
+
+  private buildPath(): Path2D {
+    const path = new Path2D();
+    path.moveTo(this.center[0], this.center[1]);
+    path.arc(
+      this.center[0],
+      this.center[1],
+      this.radius,
+      this.initAngle,
+      this.endAngle,
+      true);
+    return path
   }
 
-  buildPath(mvx, mvy, scale, X, Y) {
-    this.path = new Path2D();
-    let translatedCenter: Array<number> = [scale*this.centerX + mvx + X, scale*this.centerY + mvy + Y];
-    this.path.moveTo(translatedCenter[0], translatedCenter[1]);
-    this.path.arc(translatedCenter[0], 
-                translatedCenter[1], 
-                scale*this.radius, 
-                this.initAngle, 
-                this.endAngle, 
-                this.anticlockwise);
-  }
-
-  draw(context, mvx, mvy, scale, X, Y) {
-    this.buildPath(mvx, mvy, scale, X, Y);
+  draw(context: CanvasRenderingContext2D, mvx: number, mvy: number, scale: number, X: number, Y: number): void {
+    /**
+     * @param mvx x coordinate of the local frame in the canvas (center of the screen relatively to the canvas' high left corner)
+     * @param mvy y coordinate of the local frame in the canvas (center of the screen relatively to the canvas' high left corner)
+     * @param scale ratio applied on data coordinates to manage mouse scrolling
+     * @param X x coordinate of the offset of the drawing zone (0 if not in multiplot)
+     * @param Y y coordinate of the offset of the drawing zone (0 if not in multiplot)
+     */
+    const matrix = context.getTransform();
+    context.transform(scale, 0, 0, scale, mvx + X, mvy + Y);
     context.stroke(this.path);
     context.fill(this.path);
+    context.setTransform(matrix);
   }
 
-  // isMouseInPart(context: CanvasRenderingContext2D, px: Coordinates) {
-  //   return context.isPointInStroke(this.path, px.x, px.y) || context.isPointInPath(this.path, px.x, px.y)
-  // }
-}  
+  assignColor(select_on_mouse: PiePart): string {
+    let color: string = this.color;
+    if (this.clicked && select_on_mouse !== this) {
+      color = this.selectedColor;
+    } else if (this.clicked && select_on_mouse === this) {
+      color = this.selectedColor;
+    } else if (!this.clicked && select_on_mouse === this) {
+      color = this.overfliedColor;
+    }
+    return color
+  }
+}

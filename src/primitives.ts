@@ -934,7 +934,7 @@ export class PieChart {
   pieParts: Array<PiePart>=[];
 
   constructor(public slicingVariable: string,
-              public dataSamples: Map<string, any>,
+              public dataSamples: Array<Object>,
               public name: string
               ) {}
 
@@ -944,7 +944,7 @@ export class PieChart {
                         serialized['name']);
   }
 
-  private computeTotalSample(): number {
+  private computeNormedRatio(): number {
     let sumSamples: number = 0;
     let normedRatio: number = 2*Math.PI;
 
@@ -955,46 +955,47 @@ export class PieChart {
     return normedRatio
   }
 
-  definePieParts(center: [number, number], radius: number): PiePart[] {
+  definePieParts(radius: number): PiePart[] {
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
+    const colorRatio: number = 360 / this.dataSamples.length;
+    let colorRadius: number = 0;
     let pieParts: PiePart[] = [];
 
-    let normedRatio = this.computeTotalSample();
+    let normedRatio = this.computeNormedRatio();
     this.dataSamples.forEach(sample => { 
+      colorRadius += colorRatio;
       nextAngle -= sample[this.slicingVariable] * normedRatio;
-      pieParts.push(new PiePart(center[0], center[1], radius, initAngle, nextAngle, true));
+
+      let newPart = new PiePart(radius, initAngle, nextAngle);
+      newPart.color = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
+      pieParts.push(newPart);
+
       initAngle = nextAngle;
     })
     return pieParts
   }
 }
 
-
 export class PiePart {
   hidden_color: string = '';
-  isMouseOver: boolean = false;
-  isSelected: boolean = false;
   path: Path2D;
   clicked: boolean = false;
   color: string = '';
+  readonly overfliedColor: string = string_to_hex('lightskyblue');
+  readonly selectedColor: string = string_to_hex("red");
+  readonly center: [number, number] = [0, 0];
 
   /**
-   * @param centerX the center x coordinate
-   * @param centerY the center y coordinate
+   * @param center the center coordinates [x, y]
    * @param radius radius
    * @param initAngle in radian
    * @param endAngle in radian
-   * @param anticlockwise true or false whether you want the arc the be drawn anticlockwise or not.
    */
   constructor(
-    public centerX: number,
-    public centerY: number,
     public radius: number,
     public initAngle: number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
-    public endAngle: number,
-    public anticlockwise: boolean = true,
-    public name: string = '') 
+    public endAngle: number) 
     {
       this.hidden_color = genColor();
       this.path = this.buildPath();
@@ -1002,29 +1003,41 @@ export class PiePart {
 
   private buildPath(): Path2D {
     const path = new Path2D();
-    path.moveTo(this.centerX, this.centerY);
+    path.moveTo(this.center[0], this.center[1]);
     path.arc(
-      this.centerX,
-      this.centerY,
+      this.center[0],
+      this.center[1],
       this.radius,
       this.initAngle,
       this.endAngle,
-      this.anticlockwise);
+      true);
     return path
   }
 
   draw(context: CanvasRenderingContext2D, mvx: number, mvy: number, scale: number, X: number, Y: number): void {
     /**
-     * @param mvx x coordinate of the local frame in the canvas
-     * @param mvy y coordinate of the local frame in the canvas
+     * @param mvx x coordinate of the local frame in the canvas (center of the screen relatively to the canvas' high left corner)
+     * @param mvy y coordinate of the local frame in the canvas (center of the screen relatively to the canvas' high left corner)
      * @param scale ratio applied on data coordinates to manage mouse scrolling
-     * @param X x coordinate of the absolute frame (the canvas' one)
-     * @param Y y coordinate of the absolute frame (the canvas' one)
+     * @param X x coordinate of the offset of the drawing zone (0 if not in multiplot)
+     * @param Y y coordinate of the offset of the drawing zone (0 if not in multiplot)
      */
     const matrix = context.getTransform();
     context.transform(scale, 0, 0, scale, mvx + X, mvy + Y);
     context.stroke(this.path);
     context.fill(this.path);
     context.setTransform(matrix);
+  }
+
+  assignColor(select_on_mouse: PiePart): string {
+    let color: string = this.color;
+    if (this.clicked && select_on_mouse !== this) {
+      color = this.selectedColor;
+    } else if (this.clicked && select_on_mouse === this) {
+      color = this.selectedColor;
+    } else if (!this.clicked && select_on_mouse === this) {
+      color = this.overfliedColor;
+    }
+    return color
   }
 }

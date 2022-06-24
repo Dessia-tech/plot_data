@@ -241,13 +241,9 @@ export class PlotScatter extends PlotData {
 
 /** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
  */
-export class PlotPieChart extends PlotData {
-  clickedParts: Array<boolean> = [];
-  canvas: HTMLCanvasElement = null;
-  readOnly: boolean = true;
-  
+export class PlotPieChart extends PlotData {  
   public constructor(
-    public data:any,
+    public data: Array<Object>,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -269,21 +265,9 @@ export class PlotPieChart extends PlotData {
         this.selected_areas = [];
         this.refresh_MinMax();
         this.plotObject = PieChart.deserialize(data);
-        this.plotObject.pieParts = this.plotObject.definePieParts([0, 0], this.height * 0.475);
+        this.plotObject.pieParts = this.plotObject.definePieParts(this.height * 0.475);
         this.color_to_plot_data = this.initHiddenColors()
     }
-
-  refresh_MinMax(): void {
-    this.minX = -this.width / 2;
-    this.maxX = this.width / 2;
-    this.minY = -this.height / 2;
-    this.maxY = this.height / 2;
-  }
-
-  draw(): void {
-    this.draw_from_context(false);
-    this.draw_from_context(true);
-  }
 
   private initHiddenColors(): Map<string,PiePart> {
     let hiddenColorsList: Map<string,PiePart> = new Map();
@@ -292,62 +276,107 @@ export class PlotPieChart extends PlotData {
     return hiddenColorsList
   }
 
-  draw_from_context(hidden: boolean): void {
-    this.define_context(hidden);
-    this.context.save();
-    this.draw_empty_canvas(this.context);
-    if (this.settings_on) {
-      this.draw_settings_rect();
-    } else {
-      this.draw_rect();
+  refresh_MinMax(): void {
+    this.minX = -this.width / 2;
+    this.maxX = this.width / 2;
+    this.minY = -this.height / 2;
+    this.maxY = this.height / 2;
+  }
+
+  private drawPiechart(d: PieChart, mvx: number, mvy: number): void {
+    this.context_hidden.lineWidth = 0.5 / this.scaleX;
+    this.context_show.lineWidth = 0.5 / this.scaleY;
+    for (let part of d.pieParts) {
+      if (part.clicked) {
+        d.pieParts.forEach(piepart => piepart.clicked = false);
+        part.clicked = true;
+      }
+      this.context_show.fillStyle = part.assignColor(this.select_on_mouse);
+      this.context_show.strokeStyle = this.context_show.fillStyle
+      this.context_hidden.strokeStyle = part.hidden_color;
+      this.context_hidden.fillStyle = part.hidden_color;
+
+      part.draw(this.context_show, mvx, mvy, this.scaleX, this.X, this.Y);
+      part.draw(this.context_hidden, mvx, mvy, this.scaleX, this.X, this.Y);
+  }
+}
+
+  draw(): void {
+    this.drawCanvas()
+    this.drawPiechart(this.plotObject, this.originX, this.originY);
+    this.drawSiders();
+    this.context_hidden.restore();
+    this.context_show.restore();
+  }
+
+  private drawCanvas(): void {
+    for (let context of [this.context_show, this.context_hidden]) {
+      context.save()
+      this.draw_empty_canvas(context);
+      this.context = context;
+      if (this.settings_on) {
+        this.draw_settings_rect();
+      } else {
+        this.draw_rect();
+      }
+      context.beginPath();
+      context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
+      context.clip();
+      context.closePath();
     }
-    this.context.beginPath();
-    this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
-    this.context.clip();
-    this.context.closePath();
-    this.drawPiechart(this.plotObject, hidden, this.originX, this.originY);
-    if (this.permanent_window) {
-      this.draw_selection_rectangle();
+  }
+
+  private drawSiders(): void {
+    for (let context of [this.context_hidden, this.context_show]) {
+      this.context = context;
+      if (this.permanent_window) {
+        this.draw_selection_rectangle();
+      }
+      if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+        this.draw_zoom_rectangle();
+      }
+      if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
+        this.drawButtons();
+      }
+      if (this.multiplot_manipulation) {
+        this.draw_manipulable_rect();
+      } 
     }
-    if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
-      this.draw_zoom_rectangle();
-    }
+  }
 
-    if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
-      this.refresh_buttons_coords();
+  private drawButtons(): void {
+    this.refresh_buttons_coords();
+    //Drawing the zooming button
+    Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
 
-      //Drawing the zooming button
-      Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
+    //Drawing the button for zooming window selection
+    Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
 
-      //Drawing the button for zooming window selection
-      Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
+    //Drawing the reset button
+    Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
 
-      //Drawing the reset button
-      Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
+    //Drawing the selection button
+    Buttons.selection_button(this.button_x, this.select_y, this.button_w, this.button_h, this);
 
-      //Drawing the selection button
-      Buttons.selection_button(this.button_x, this.select_y, this.button_w, this.button_h, this);
+    //Drawing the enable/disable graph button
+    Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
 
-      //Drawing the enable/disable graph button
-      Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
+    //draw permanent window button
+    Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
 
-      //draw permanent window button
-      Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
+    //draw clear point button
+    Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
 
-      //draw clear point button
-      Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
+    // Draw log scale buttons
+    Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
+      "10px Arial", this);
+    
+    // Draw Heatmap button
+    Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
+  }
 
-      // Draw log scale buttons
-      Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
-        "10px Arial", this);
-      
-      // Draw Heatmap button
-      Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
-    }
-    if (this.multiplot_manipulation) {
-      this.draw_manipulable_rect();
-    }
-    this.context.restore();
+  draw_from_context(hidden: any) {
+    return
   }
 }
 

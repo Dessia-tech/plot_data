@@ -1,5 +1,5 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire, PieChart } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
@@ -773,40 +773,6 @@ export abstract class PlotData {
         d.attribute_names);
     }
   }
-
-
-  drawPiechart(d: PieChart, hidden: boolean, mvx: number, mvy: number): void {
-    const colorRatio: number = 360 / d.pieParts.length;
-    let colorRadius: number = 0;
-    this.context.lineWidth = 0.5;
-
-    for (let part of d.pieParts) {
-      colorRadius += colorRatio;
-
-      if (hidden) {
-        this.context.strokeStyle = part.hidden_color;
-        this.context.fillStyle = part.hidden_color;
-      } else {
-        if (part.clicked){
-          d.pieParts.forEach(piepart => piepart.clicked = false);
-          part.clicked = true;
-        }
-        if (part.clicked && this.select_on_mouse !== part) {
-          part.color = this.color_surface_on_click;
-
-        } else if (this.select_on_mouse === part) {
-          part.color = this.color_surface_on_mouse;
-
-        } else {
-          part.color  = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
-        } 
-        this.context.fillStyle = part.color;
-        this.context.strokeStyle = part.color;
-      }
-      part.draw(this.context, mvx, mvy, this.scaleX, this.X, this.Y);
-    }
-  }
-
 
   get_point_order() {
     var point_order = [];

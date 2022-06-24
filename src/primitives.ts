@@ -980,6 +980,8 @@ export class PiePart {
   hidden_color: string = '';
   path: Path2D;
   clicked: boolean = false;
+  selected: boolean = false;
+  points_inside: PiePart[] = [this];
   readonly overfliedColor: string = string_to_hex('lightskyblue');
   readonly selectedColor: string = string_to_hex("red");
   readonly center: [number, number] = [0, 0];
@@ -992,7 +994,7 @@ export class PiePart {
    */
   constructor(
     public radius: number,
-    public initAngle: number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
+    public initAngle: number, // Warning : X axis is from top to bottom then trigonometric 
     public endAngle: number,
     public color: string = '') 
     {
@@ -1031,9 +1033,17 @@ export class PiePart {
   assignColor(select_on_mouse: PiePart): string {
     let color: string = this.color;
     if (this.clicked && select_on_mouse !== this) {
-      color = this.selectedColor;
+      if (select_on_mouse != undefined) {
+        if (select_on_mouse.clicked) {
+          this.clicked = false
+        } else {
+          color = this.selectedColor;
+        }
+      } else {
+        color = this.selectedColor;
+      } 
     } else if (this.clicked && select_on_mouse === this) {
-      color = this.selectedColor;
+      color = this.overfliedColor;
     } else if (!this.clicked && select_on_mouse === this) {
       color = this.overfliedColor;
     }

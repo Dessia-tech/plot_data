@@ -1,5 +1,5 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire, PieChart } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
@@ -169,7 +169,7 @@ export abstract class PlotData {
   rubberbands_dep: [string, [number, number]][] = [];
 
   point_families: PointFamily[] = [];
-  latest_selected_points: Point2D[] = [];
+  latest_selected_points: any[] = [];
   latest_selected_points_index: number[] = [];
 
   // primitive_group_container's attributes
@@ -1858,18 +1858,29 @@ export abstract class PlotData {
             this.clicked_point_index.push([List.get_index_of_element(this.clicked_points[i], this.plotObject.graphs[j].point_list), j]);
           }
         }
+      } else if ((this.plotObject instanceof PieChart) && this.clicked_points[i]) {
+        let true_clicked_points = this.clicked_points[i].points_inside;
+        for (let j = 0; j < true_clicked_points.length; j++) {
+          this.clicked_point_index.push(List.get_index_of_element(true_clicked_points[j], this.plotObject.pieParts));
+        }
       }
     }
   }
 
 
   refresh_latest_selected_points_index() {
+    let elements_list: Array<any>;
     this.latest_selected_points_index = [];
+    if (this.plotObject instanceof PieChart) {
+      elements_list = this.plotObject.pieParts;
+    } else {
+      elements_list = this.plotObject.point_list;
+    }
     for (let i = 0; i < this.latest_selected_points.length; i++) {
       let selected_point = this.latest_selected_points[i];
       if (selected_point != undefined) {
         for (let j = 0; j < selected_point.points_inside.length; j++) {
-          let point_index = List.get_index_of_element(selected_point.points_inside[j], this.plotObject.point_list);
+          let point_index = List.get_index_of_element(selected_point.points_inside[j], elements_list);
           this.latest_selected_points_index.push(point_index);
         }
       }
@@ -1914,7 +1925,7 @@ export abstract class PlotData {
     //   Interactions.reset_permanent_window(this);
     // }
     this.refresh_clicked_point_index();
-    if (this.type_ == 'scatterplot') { this.refresh_latest_selected_points_index(); }
+    if (this.type_ == 'scatterplot' || this.plotObject instanceof PieChart) { this.refresh_latest_selected_points_index(); }
   }
 
 
@@ -1954,7 +1965,15 @@ export abstract class PlotData {
           this.plotObject.graphs[i].point_list[j].clicked = false;
         }
       }
-    }
+    } else if (this.plotObject instanceof PieChart) {
+      for (let i = 0; i < this.plotObject.pieParts.length; i++) {
+        this.plotObject.pieParts[i].selected = false;
+        if (this.plotObject.pieParts[i]) {
+          this.plotObject.pieParts[i].selected = false;
+          if (reset_clicked_points) this.plotObject.pieParts[i].clicked = false;
+        }
+      }
+    } 
   }
 
 

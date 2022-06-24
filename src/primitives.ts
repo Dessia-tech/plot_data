@@ -967,8 +967,7 @@ export class PieChart {
       colorRadius += colorRatio;
       nextAngle -= sample[this.slicingVariable] * normedRatio;
 
-      let newPart = new PiePart(radius, initAngle, nextAngle);
-      newPart.color = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
+      let newPart = new PiePart(radius, initAngle, nextAngle, 'hsl('+ colorRadius +', 50%, 50%, 90%)');
       pieParts.push(newPart);
 
       initAngle = nextAngle;
@@ -981,7 +980,6 @@ export class PiePart {
   hidden_color: string = '';
   path: Path2D;
   clicked: boolean = false;
-  color: string = '';
   readonly overfliedColor: string = string_to_hex('lightskyblue');
   readonly selectedColor: string = string_to_hex("red");
   readonly center: [number, number] = [0, 0];
@@ -995,7 +993,8 @@ export class PiePart {
   constructor(
     public radius: number,
     public initAngle: number, // Warning: canvas' angles are clockwise-oriented. For example: pi/2 rad is below -pi/2 rad.
-    public endAngle: number) 
+    public endAngle: number,
+    public color: string = '') 
     {
       this.hidden_color = genColor();
       this.path = this.buildPath();

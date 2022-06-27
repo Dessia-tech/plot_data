@@ -169,7 +169,7 @@ export abstract class PlotData {
   rubberbands_dep: [string, [number, number]][] = [];
 
   point_families: PointFamily[] = [];
-  latest_selected_points: any[] = [];
+  latest_selected_points: Point2D[] = [];
   latest_selected_points_index: number[] = [];
 
   // primitive_group_container's attributes

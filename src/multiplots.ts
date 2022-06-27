@@ -87,7 +87,6 @@ export class MultiplePlots {
           newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
         } else if (object_type_ === 'piechart') {
           newObject = new PlotPieChart(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-          console.log(this.dataObjects instanceof PlotPieChart)
         } else if (object_type_ === 'primitivegroupcontainer') {
           newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           if (this.dataObjects[i]['association']) {

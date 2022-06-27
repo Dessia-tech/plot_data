@@ -283,18 +283,22 @@ export class PlotPieChart extends PlotData {
   }
 
   private drawPiechart(mvx: number, mvy: number): void {
-    this.context_hidden.lineWidth = 0.5 / this.scaleX;
-    this.context_show.lineWidth = 0.5 / this.scaleY;
-    console.log(this.clicked_points)
-    for (let part of this.plotObject.pieParts) {
-      this.context_show.fillStyle = part.assignColor(this.select_on_mouse);
-      this.context_show.strokeStyle = this.context_show.fillStyle
-      this.context_hidden.strokeStyle = part.hidden_color;
-      this.context_hidden.fillStyle = part.hidden_color;
-
-      part.draw(this.context_show, mvx, mvy, this.scaleX, this.X, this.Y);
-      part.draw(this.context_hidden, mvx, mvy, this.scaleX, this.X, this.Y);
-    }
+    // Anything related to mouse handling should be done in a specific class and will be the purpose of a future release
+    const matrix = this.context.getTransform();
+    [this.context_show, this.context_hidden].forEach((context, i) => {
+      context.transform(this.scaleX, 0, 0, this.scaleX, mvx + this.X, mvy + this.Y);
+      context.lineWidth = 0.5 / this.scaleX;
+      for (let part of this.plotObject.pieParts) {
+        if (i == 0) {
+          context.fillStyle = part.assignColor(this.select_on_mouse);
+        } else {
+          context.fillStyle = part.hidden_color;
+        }
+        context.strokeStyle = this.context_show.fillStyle
+        part.draw(context, mvx, mvy, this.scaleX, this.X, this.Y);
+      }
+      context.setTransform(matrix);
+    })   
   }
 
   draw(): void {

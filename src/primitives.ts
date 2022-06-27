@@ -934,7 +934,7 @@ export class PieChart {
   pieParts: Array<PiePart>=[];
 
   constructor(public slicingVariable: string,
-              public dataSamples: Array<Object>,
+              public dataSamples: Array<Object>, // TODO : try to put Map<string, any>
               public name: string
               ) {}
 
@@ -944,7 +944,7 @@ export class PieChart {
                         serialized['name']);
   }
 
-  private computeNormedRatio(): number {
+  private get normedRatio(): number {
     let sumSamples: number = 0;
     let normedRatio: number = 2*Math.PI;
 
@@ -958,14 +958,13 @@ export class PieChart {
   definePieParts(radius: number): PiePart[] {
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
-    const colorRatio: number = 360 / this.dataSamples.length;
+    const colorRatio: number = 360 / this.dataSamples.length; // QUESTION : should it be readonly up in class definition ?
     let colorRadius: number = 0;
     let pieParts: PiePart[] = [];
 
-    let normedRatio = this.computeNormedRatio();
     this.dataSamples.forEach(sample => { 
       colorRadius += colorRatio;
-      nextAngle -= sample[this.slicingVariable] * normedRatio;
+      nextAngle -= sample[this.slicingVariable] * this.normedRatio;
 
       let newPart = new PiePart(radius, initAngle, nextAngle, 'hsl('+ colorRadius +', 50%, 50%, 90%)');
       pieParts.push(newPart);
@@ -984,13 +983,13 @@ export class PiePart {
   points_inside: PiePart[] = [this];
   readonly overfliedColor: string = string_to_hex('lightskyblue');
   readonly selectedColor: string = string_to_hex("red");
-  readonly center: [number, number] = [0, 0];
+  readonly center = { x: 0, y : 0 };
 
   /**
-   * @param center the center coordinates [x, y]
    * @param radius radius
    * @param initAngle in radian
    * @param endAngle in radian
+   * @param color default color of part
    */
   constructor(
     public radius: number,
@@ -1004,10 +1003,10 @@ export class PiePart {
 
   private buildPath(): Path2D {
     const path = new Path2D();
-    path.moveTo(this.center[0], this.center[1]);
+    path.moveTo(this.center.x, this.center.y);
     path.arc(
-      this.center[0],
-      this.center[1],
+      this.center.x,
+      this.center.y,
       this.radius,
       this.initAngle,
       this.endAngle,
@@ -1015,19 +1014,12 @@ export class PiePart {
     return path
   }
 
-  draw(context: CanvasRenderingContext2D, mvx: number, mvy: number, scale: number, X: number, Y: number): void {
+  draw(context: CanvasRenderingContext2D): void {
     /**
-     * @param mvx x coordinate of the local frame in the canvas (center of the screen relatively to the canvas' high left corner)
-     * @param mvy y coordinate of the local frame in the canvas (center of the screen relatively to the canvas' high left corner)
-     * @param scale ratio applied on data coordinates to manage mouse scrolling
-     * @param X x coordinate of the offset of the drawing zone (0 if not in multiplot)
-     * @param Y y coordinate of the offset of the drawing zone (0 if not in multiplot)
+     * @param context Context in which to draw
      */
-    const matrix = context.getTransform();
-    context.transform(scale, 0, 0, scale, mvx + X, mvy + Y);
     context.stroke(this.path);
     context.fill(this.path);
-    context.setTransform(matrix);
   }
 
   assignColor(select_on_mouse: PiePart): string {
@@ -1050,3 +1042,5 @@ export class PiePart {
     return color
   }
 }
+
+

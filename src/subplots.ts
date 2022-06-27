@@ -44,7 +44,7 @@ export class PlotContour extends PlotData {
           this.minY = Math.min(this.minY, primitive.minY);
           this.maxY = Math.max(this.maxY, primitive.maxY);
           if (["contour", "circle", "wire"].includes(primitive.type_)) {
-            this.color_to_plot_data.set(primitive.hidden_color, primitive);
+            this.color_to_plot_data[primitive.hidden_color] = primitive;
           }
         }
       }
@@ -268,10 +268,10 @@ export class PlotPieChart extends PlotData {
     this.color_to_plot_data = this.initHiddenColors()
   }
 
-  private initHiddenColors(): Map<string, PiePart> {
-    let hiddenColorsList: Map<string, PiePart> = new Map();
+  private initHiddenColors(): any {
+    let hiddenColorsList = {};
     this.plotObject.pieParts.forEach(
-      part => { hiddenColorsList.set(part.hidden_color, part); })
+      part => { hiddenColorsList[part.hidden_color] = part; })
     return hiddenColorsList
   }
 

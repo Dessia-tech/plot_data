@@ -1,6 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
-import { Heatmap, PrimitiveGroup } from "./primitives";
+import { Heatmap, PrimitiveGroup, DataSample } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter, PieChart, PiePart } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
@@ -243,7 +243,7 @@ export class PlotScatter extends PlotData {
  */
 export class PlotPieChart extends PlotData {
   public constructor(
-    public data: Array<Object>,
+    public data: DataSample[],
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -295,10 +295,10 @@ export class PlotPieChart extends PlotData {
           context.fillStyle = part.hidden_color;
         }
         context.strokeStyle = this.context_show.fillStyle
-        part.draw(context, mvx, mvy, this.scaleX, this.X, this.Y);
+        part.draw(context);
       }
       context.setTransform(matrix);
-    })   
+    })
   }
 
   draw(): void {

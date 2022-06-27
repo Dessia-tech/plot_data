@@ -929,12 +929,12 @@ export class Wire {
   }
 }
 
-
+export type DataSample = Map<string, any>
 export class PieChart {
   pieParts: Array<PiePart>=[];
 
   constructor(public slicingVariable: string,
-              public dataSamples: Array<Object>, // TODO : try to put Map<string, any>
+              public dataSamples: DataSample[],
               public name: string
               ) {}
 
@@ -956,9 +956,9 @@ export class PieChart {
   }
 
   definePieParts(radius: number): PiePart[] {
+    const colorRatio: number = 360 / this.dataSamples.length;
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
-    const colorRatio: number = 360 / this.dataSamples.length; // QUESTION : should it be readonly up in class definition ?
     let colorRadius: number = 0;
     let pieParts: PiePart[] = [];
 
@@ -981,8 +981,6 @@ export class PiePart {
   clicked: boolean = false;
   selected: boolean = false;
   points_inside: PiePart[] = [this];
-  readonly overfliedColor: string = string_to_hex('lightskyblue');
-  readonly selectedColor: string = string_to_hex("red");
   readonly center = { x: 0, y : 0 };
 
   /**
@@ -993,7 +991,7 @@ export class PiePart {
    */
   constructor(
     public radius: number,
-    public initAngle: number, // Warning : X axis is from top to bottom then trigonometric 
+    public initAngle: number, // Warning : X axis is from top to bottom then trigonometric sense is inverted
     public endAngle: number,
     public color: string = '') 
     {
@@ -1029,15 +1027,15 @@ export class PiePart {
         if (select_on_mouse.clicked) {
           this.clicked = false
         } else {
-          color = this.selectedColor;
+          color = string_to_hex("red");
         }
       } else {
-        color = this.selectedColor;
+        color = string_to_hex("red");
       } 
     } else if (this.clicked && select_on_mouse === this) {
-      color = this.overfliedColor;
+      color = string_to_hex('lightskyblue');
     } else if (!this.clicked && select_on_mouse === this) {
-      color = this.overfliedColor;
+      color = string_to_hex('lightskyblue');
     }
     return color
   }

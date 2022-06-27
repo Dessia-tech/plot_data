@@ -1,6 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
-import { Heatmap, PrimitiveGroup } from "./primitives";
+import { Heatmap, PrimitiveGroup, DataSample } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter, PieChart, PiePart } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
@@ -44,7 +44,7 @@ export class PlotContour extends PlotData {
           this.minY = Math.min(this.minY, primitive.minY);
           this.maxY = Math.max(this.maxY, primitive.maxY);
           if (["contour", "circle", "wire"].includes(primitive.type_)) {
-            this.color_to_plot_data.set(primitive.hidden_color, primitive);
+            this.color_to_plot_data[primitive.hidden_color] = primitive;
           }
         }
       }
@@ -243,7 +243,7 @@ export class PlotScatter extends PlotData {
  */
 export class PlotPieChart extends PlotData {
   public constructor(
-    public data: Array<Object>,
+    public data: DataSample[],
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -268,10 +268,10 @@ export class PlotPieChart extends PlotData {
     this.color_to_plot_data = this.initHiddenColors()
   }
 
-  private initHiddenColors(): Map<string, PiePart> {
-    let hiddenColorsList: Map<string, PiePart> = new Map();
+  private initHiddenColors(): any {
+    let hiddenColorsList = {};
     this.plotObject.pieParts.forEach(
-      part => { hiddenColorsList.set(part.hidden_color, part); })
+      part => { hiddenColorsList[part.hidden_color] = part; })
     return hiddenColorsList
   }
 
@@ -283,18 +283,22 @@ export class PlotPieChart extends PlotData {
   }
 
   private drawPiechart(mvx: number, mvy: number): void {
-    this.context_hidden.lineWidth = 0.5 / this.scaleX;
-    this.context_show.lineWidth = 0.5 / this.scaleY;
-    console.log(this.clicked_points)
-    for (let part of this.plotObject.pieParts) {
-      this.context_show.fillStyle = part.assignColor(this.select_on_mouse);
-      this.context_show.strokeStyle = this.context_show.fillStyle
-      this.context_hidden.strokeStyle = part.hidden_color;
-      this.context_hidden.fillStyle = part.hidden_color;
-
-      part.draw(this.context_show, mvx, mvy, this.scaleX, this.X, this.Y);
-      part.draw(this.context_hidden, mvx, mvy, this.scaleX, this.X, this.Y);
-    }
+    // Anything related to mouse handling should be done in a specific class and will be the purpose of a future release
+    const matrix = this.context.getTransform();
+    [this.context_show, this.context_hidden].forEach((context, i) => {
+      context.transform(this.scaleX, 0, 0, this.scaleX, mvx + this.X, mvy + this.Y);
+      context.lineWidth = 0.5 / this.scaleX;
+      for (let part of this.plotObject.pieParts) {
+        if (i == 0) {
+          context.fillStyle = part.assignColor(this.select_on_mouse);
+        } else {
+          context.fillStyle = part.hidden_color;
+        }
+        context.strokeStyle = this.context_show.fillStyle
+        part.draw(context);
+      }
+      context.setTransform(matrix);
+    })
   }
 
   draw(): void {
@@ -773,7 +777,6 @@ export class PrimitiveGroupContainer extends PlotData {
     if (this.buttons_ON) { this.draw_buttons(); }
     this.context.restore();
   }
-
 
   draw_from_context(hidden) { }
 

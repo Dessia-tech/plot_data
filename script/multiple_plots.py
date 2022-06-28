@@ -16,7 +16,7 @@ import random
 a list of vectors (dictionaries) that are displayed
 through different representations such as parallel plots and scatter plots
 """
-elements = []
+data_samples = []
 
 nb_elements = 50
 available_colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]
@@ -24,7 +24,7 @@ directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
     random_color = available_colors[random.randint(0, len(available_colors) - 1)]
     random_direction = directions[random.randint(0, len(directions) - 1)]
-    elements.append({'x': random.uniform(0, 200),
+    data_samples.append({'x': random.uniform(0, 200),
                      'y': random.uniform(0, 100),
                      'color': random_color,
                      'direction': random_direction})
@@ -35,12 +35,14 @@ parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color'])
 
 """Scatterplots"""
 scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
+piechart1 = plot_data.PieChart(data_samples=data_samples,
+                               slicing_variable='mass')
 
 scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes
                                                                                     # points' appearance
 
-scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
+# scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 
 """PrimitiveGroupContainers"""
 contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
@@ -72,7 +74,7 @@ plots = [piechart1, parallelplot1, parallelplot2, scatterplot1,
 
 # plots = [scatterplot1, scatterplot2]
 
-multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
+multiplot = plot_data.MultiplePlots(plots=plots, elements=data_samples,
                                     initial_view_on=True)
 
 # Display

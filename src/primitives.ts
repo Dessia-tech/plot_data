@@ -936,7 +936,10 @@ export class PieChart {
   constructor(public slicingVariable: string,
               public dataSamples: DataSample[],
               public name: string
-              ) {}
+              )
+              {
+                this.pieParts = this.definePieParts();
+              }
 
   public static deserialize(serialized): PieChart { // TODO : clarify this
     return new PieChart(serialized['slicing_variable'],
@@ -955,7 +958,7 @@ export class PieChart {
     return normedRatio
   }
 
-  definePieParts(radius: number): PiePart[] {
+  definePieParts(): PiePart[] {
     const colorRatio: number = 360 / this.dataSamples.length;
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
@@ -966,7 +969,7 @@ export class PieChart {
       colorRadius += colorRatio;
       nextAngle -= sample[this.slicingVariable] * this.normedRatio;
 
-      let newPart = new PiePart(radius, initAngle, nextAngle, 'hsl('+ colorRadius +', 50%, 50%, 90%)');
+      let newPart = new PiePart(initAngle, nextAngle, 'hsl('+ colorRadius +', 50%, 50%, 90%)');
       pieParts.push(newPart);
 
       initAngle = nextAngle;
@@ -982,15 +985,14 @@ export class PiePart {
   selected: boolean = false;
   points_inside: PiePart[] = [this];
   readonly center = { x: 0, y : 0 };
+  readonly radius = 1;
 
   /**
-   * @param radius radius
    * @param initAngle in radian
    * @param endAngle in radian
    * @param color default color of part
    */
   constructor(
-    public radius: number,
     public initAngle: number, // Warning : X axis is from top to bottom then trigonometric sense is inverted
     public endAngle: number,
     public color: string = '') 

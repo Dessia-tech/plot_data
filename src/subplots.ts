@@ -264,7 +264,6 @@ export class PlotPieChart extends PlotData {
     this.selected_areas = [];
     this.refresh_MinMax();
     this.plotObject = PieChart.deserialize(data);
-    this.plotObject.pieParts = this.plotObject.definePieParts(this.height * 0.475);
     this.color_to_plot_data = this.initHiddenColors()
   }
 
@@ -284,10 +283,12 @@ export class PlotPieChart extends PlotData {
 
   private drawPiechart(): void {
     // Anything related to mouse handling should be done in a specific class and will be the purpose of a future release
+    const radiusPieScale = this.height * 0.475;
     const matrix = this.context.getTransform();
+
     [this.context_show, this.context_hidden].forEach((context, i) => {
-      context.transform(this.scaleX, 0, 0, this.scaleX, this.originX + this.X, this.originY + this.Y);
-      context.lineWidth = 0.5 / this.scaleX;
+      context.transform(this.scaleX * radiusPieScale, 0, 0, this.scaleX * radiusPieScale, this.originX + this.X, this.originY + this.Y);
+      context.lineWidth = 0.5 / this.scaleX / radiusPieScale;
       for (let part of this.plotObject.pieParts) {
         if (i == 0) {
           context.fillStyle = part.assignColor(this.select_on_mouse);

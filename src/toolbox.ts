@@ -1,3 +1,4 @@
+import { ListenOptions } from "net";
 import { string_to_hex } from "./color_conversion";
 import { equals } from "./utils";
 
@@ -160,21 +161,6 @@ export class Shape {
       context.closePath();
       context.globalAlpha = 1;
       context.setLineDash([]);
-    }
-  
-    /**
-     * 
-     * @param x The point's x coordinate
-     * @param y The point's y coordinate
-     * @param cx The circle's center x-coordinate
-     * @param cy Thre circle's center y-coordinate
-     * @param r The circle's radius
-     */
-    public static isInCircle(x, y, cx, cy, r) {
-      var delta_x2 = Math.pow(x - cx, 2);
-      var delta_y2 = Math.pow(y - cy, 2);
-      var distance = Math.sqrt(delta_x2 + delta_y2);
-      return distance <= r;
     }
 }
 

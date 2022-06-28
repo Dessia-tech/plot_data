@@ -1,7 +1,7 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, download } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, PlotPieChart } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
 
@@ -85,6 +85,8 @@ export class MultiplePlots {
           newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
         } else if (object_type_ === 'primitivegroup') {
           newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+        } else if (object_type_ === 'piechart') {
+          newObject = new PlotPieChart(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
         } else if (object_type_ === 'primitivegroupcontainer') {
           newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           if (this.dataObjects[i]['association']) {
@@ -109,6 +111,7 @@ export class MultiplePlots {
         this.display_order.push(i);
         this.to_display_plots.push(i);
       }
+
       this.mouse_interaction();
 
       if (buttons_ON) {
@@ -1053,27 +1056,30 @@ export class MultiplePlots {
       this.small_length_nb_objects = Math.min(Math.ceil(nbObjectsDisplayed/2), Math.floor(Math.sqrt(nbObjectsDisplayed)));
       this.big_length_nb_objects = Math.ceil(nbObjectsDisplayed/this.small_length_nb_objects);
       this.sorted_list = this.getSortedList();
-      // let big_length_step = this[big_length]/big_length_nb_objects;
-      // let small_length_step = this[small_length]/small_length_nb_objects;
+      // let big_length_step = this[big_length]/this.big_length_nb_objects;
+      // let small_length_step = this[small_length]/this.small_length_nb_objects;
       let blank_space = this.padding || 0.01*this[small_length];
       let big_length_step = (this[big_length] - (this.big_length_nb_objects + 1)*blank_space)/this.big_length_nb_objects;
       let small_length_step = (this[small_length] - (this.small_length_nb_objects + 1)*blank_space)/this.small_length_nb_objects;
-  
       for (let i=0; i<this.big_length_nb_objects - 1; i++) {
         for (let j=0; j<this.small_length_nb_objects; j++) {
           var current_index = i*this.small_length_nb_objects + j; //current_index in sorted_list
-  
+
           // The three following lines are useful for primitive group containers only
           let obj:any = this.objectList[this.sorted_list[current_index]];
           let old_small_coord = obj[small_coord];
           let old_big_coord = obj[big_coord];
-  
+          
           this.objectList[this.sorted_list[current_index]][big_coord] = i*big_length_step + (i+1)*blank_space;
           this.objectList[this.sorted_list[current_index]][small_coord] = j*small_length_step + (j+1)*blank_space;
-  
           this.objectList[this.sorted_list[current_index]][big_length] = big_length_step;
           this.objectList[this.sorted_list[current_index]][small_length] = small_length_step;
-  
+
+          if (this.objectList[this.sorted_list[current_index]] instanceof PlotPieChart){
+            this.objectList[this.sorted_list[current_index]]["origin" + big_coord] = big_length_step / 2;
+            this.objectList[this.sorted_list[current_index]]["origin" + small_coord] = small_length_step / 2;
+          }
+
           if (obj.type_ === 'primitivegroupcontainer') {
             for (let k=0; k<obj.primitive_groups.length; k++) {
               obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
@@ -1100,6 +1106,11 @@ export class MultiplePlots {
         this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
         this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
   
+        if (this.objectList[this.sorted_list[last_index + j]] instanceof PlotPieChart){
+          this.objectList[this.sorted_list[last_index + j]]["origin" + big_coord] = big_length_step / 2;
+          this.objectList[this.sorted_list[last_index + j]]["origin" + small_coord] = last_small_length_step / 2;
+        }
+        
         if (obj.type_ === 'primitivegroupcontainer') {
           for (let k=0; k<obj.primitive_groups.length; k++) {
             obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;

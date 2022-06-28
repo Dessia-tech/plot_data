@@ -716,6 +716,30 @@ class Scatter(PlotDataObject):
         PlotDataObject.__init__(self, type_='scatterplot', name=name)
 
 
+class PieChart(PlotDataObject):
+    """
+    A class for drawing pie plots.
+
+    :param data_samples: [{'name_param_1': any,..., 'name_param_p': any},...,
+                          {'name_param_1': any,..., 'name_param_p': any}]
+    :type data_samples: List[dict]
+    :param slicing_variable: variable that you want to use to fill pie parts
+    :type slicing_variable: str
+    """
+
+    def __init__(self, slicing_variable: str, 
+                 data_samples: List[Any] = None,
+                 name: str = ''):
+        
+        self.slicing_variable = slicing_variable
+        if not data_samples:
+            self.data_samples = []
+        else:
+            self.data_samples = data_samples
+            
+        PlotDataObject.__init__(self, type_='piechart', name=name)
+
+
 class ScatterMatrix(PlotDataObject):
     def __init__(self, elements: List[Any] = None, axes: List[str] = None,
                  point_style: PointStyle = None, surface_style: SurfaceStyle = None,
@@ -1151,6 +1175,8 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         template = templates.histogram_template
     elif plot_type == "scattermatrix":
         template = templates.scatter_matrix_template
+    elif plot_type == "piechart":
+        template = templates.piechart_template
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 

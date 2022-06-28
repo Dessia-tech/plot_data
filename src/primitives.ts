@@ -2,6 +2,7 @@ import { string_to_rgb, rgb_to_string, string_to_hex, rgb_to_hex } from "./color
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
+import { ContextExclusionPlugin } from "webpack";
 
 
 /**
@@ -747,7 +748,6 @@ export class Scatter {
 
 }
 
-
 export class Text {
   minX:number=Infinity;
   maxX:number=-Infinity;
@@ -928,3 +928,119 @@ export class Wire {
     context.stroke();
   }
 }
+
+export type DataSample = Map<string, any>
+export class PieChart {
+  pieParts: Array<PiePart>=[];
+
+  constructor(public slicingVariable: string,
+              public dataSamples: DataSample[],
+              public name: string
+              )
+              {
+                this.pieParts = this.definePieParts();
+              }
+
+  public static deserialize(serialized): PieChart { // TODO : clarify this
+    return new PieChart(serialized['slicing_variable'],
+                        serialized['data_samples'],
+                        serialized['name']);
+  }
+
+  private get normedRatio(): number {
+    let sumSamples: number = 0;
+    let normedRatio: number = 2*Math.PI;
+
+    this.dataSamples.forEach(sample => {
+      sumSamples += sample[this.slicingVariable]
+    });
+    normedRatio /= sumSamples;
+    return normedRatio
+  }
+
+  definePieParts(): PiePart[] {
+    const colorRatio: number = 360 / this.dataSamples.length;
+    let initAngle: number = Math.PI/2;
+    let nextAngle: number = initAngle;
+    let colorRadius: number = 0;
+    let pieParts: PiePart[] = [];
+
+    this.dataSamples.forEach(sample => { 
+      colorRadius += colorRatio;
+      nextAngle -= sample[this.slicingVariable] * this.normedRatio;
+
+      let newPart = new PiePart(initAngle, nextAngle, 'hsl('+ colorRadius +', 50%, 50%, 90%)');
+      pieParts.push(newPart);
+
+      initAngle = nextAngle;
+    })
+    return pieParts
+  }
+}
+
+export class PiePart {
+  hidden_color: string = '';
+  path: Path2D;
+  clicked: boolean = false;
+  selected: boolean = false;
+  points_inside: PiePart[] = [this];
+  readonly center = { x: 0, y : 0 };
+  readonly radius = 1;
+
+  /**
+   * @param initAngle in radian
+   * @param endAngle in radian
+   * @param color default color of part
+   */
+  constructor(
+    public initAngle: number, // Warning : X axis is from top to bottom then trigonometric sense is inverted
+    public endAngle: number,
+    public color: string = '') 
+    {
+      this.hidden_color = genColor();
+      this.path = this.buildPath();
+    }
+
+  private buildPath(): Path2D {
+    const path = new Path2D();
+    path.moveTo(this.center.x, this.center.y);
+    path.arc(
+      this.center.x,
+      this.center.y,
+      this.radius,
+      this.initAngle,
+      this.endAngle,
+      true);
+    return path
+  }
+
+  draw(context: CanvasRenderingContext2D): void {
+    /**
+     * @param context Context in which to draw
+     */
+    context.stroke(this.path);
+    context.fill(this.path);
+  }
+
+  assignColor(select_on_mouse: PiePart): string {
+    let color: string = this.color;
+    if (this.clicked && select_on_mouse !== this) {
+      if (select_on_mouse != undefined) {
+        if (select_on_mouse.clicked) {
+          this.clicked = false
+        } else {
+          color = string_to_hex("red");
+        }
+      } else {
+        color = string_to_hex("red");
+      } 
+    } else if (this.clicked && select_on_mouse === this) {
+      color = string_to_hex('lightskyblue');
+    } else if (!this.clicked && select_on_mouse === this) {
+      color = string_to_hex('lightskyblue');
+    }
+    return color
+  }
+}
+
+

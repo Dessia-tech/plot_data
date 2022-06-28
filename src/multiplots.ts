@@ -183,6 +183,7 @@ export class MultiplePlots {
       var ratio = new_width/old_width;
       this.height = new_height;
       for (let i=0; i<this.nbObjects; i++) {
+        console.log(ratio, this.objectList[i].X)
         this.objectList[i].X = this.objectList[i].X * ratio;
         this.objectList[i].Y = this.objectList[i].Y * ratio;
       }
@@ -1062,16 +1063,15 @@ export class MultiplePlots {
       let blank_space = this.padding || 0.01*this[small_length];
       let big_length_step = (this[big_length] - (this.big_length_nb_objects + 1)*blank_space)/this.big_length_nb_objects;
       let small_length_step = (this[small_length] - (this.small_length_nb_objects + 1)*blank_space)/this.small_length_nb_objects;
-  
       for (let i=0; i<this.big_length_nb_objects - 1; i++) {
         for (let j=0; j<this.small_length_nb_objects; j++) {
           var current_index = i*this.small_length_nb_objects + j; //current_index in sorted_list
-  
+
           // The three following lines are useful for primitive group containers only
           let obj:any = this.objectList[this.sorted_list[current_index]];
           let old_small_coord = obj[small_coord];
           let old_big_coord = obj[big_coord];
-  
+
           this.objectList[this.sorted_list[current_index]][big_coord] = i*big_length_step + (i+1)*blank_space;
           this.objectList[this.sorted_list[current_index]][small_coord] = j*small_length_step + (j+1)*blank_space;
   

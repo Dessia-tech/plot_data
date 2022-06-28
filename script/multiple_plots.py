@@ -71,12 +71,27 @@ histogram = plot_data.Histogram(x_variable='x')
 """Creating the multiplot"""
 plots = [parallelplot1, parallelplot2, scatterplot1,
          scatterplot2, piechart1, graph2d, primitive_group_container,
+         histogram, graph2d, primitive_group_container,
          histogram]
-
-# plots = [scatterplot1, scatterplot2]
 
 multiplot = plot_data.MultiplePlots(plots=plots, elements=data_samples,
                                     initial_view_on=True)
 
 # Display
 plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
+
+plots2 = [piechart1, piechart1, piechart1,
+         piechart1, piechart1, piechart1, piechart1,
+         piechart1, piechart1,piechart1, piechart1, piechart1,
+                  piechart1, piechart1, piechart1, piechart1,
+                  piechart1, piechart1,piechart1, piechart1, piechart1,
+                           piechart1, piechart1, piechart1, piechart1,
+                           piechart1, piechart1]
+
+multiplot2 = plot_data.MultiplePlots(plots=plots2, elements=data_samples,
+                                    initial_view_on=True)
+
+# Display
+plot_data.plot_canvas(plot_data_object=multiplot2, debug_mode=True)
+
+

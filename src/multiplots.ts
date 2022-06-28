@@ -1075,10 +1075,15 @@ export class MultiplePlots {
 
           this.objectList[this.sorted_list[current_index]][big_coord] = i*big_length_step + (i+1)*blank_space;
           this.objectList[this.sorted_list[current_index]][small_coord] = j*small_length_step + (j+1)*blank_space;
-  
+          if (this.objectList[this.sorted_list[current_index]]["type_"] == 'piechart'){
+            console.log(this.objectList[this.sorted_list[current_index]].plotObject.pieParts[0].radius)
+          }
           this.objectList[this.sorted_list[current_index]][big_length] = big_length_step;
           this.objectList[this.sorted_list[current_index]][small_length] = small_length_step;
-  
+          if (this.objectList[this.sorted_list[current_index]]["type_"] == 'piechart'){
+            console.log(this.objectList[this.sorted_list[current_index]].plotObject.pieParts[0].radius)
+          }
+          
           if (obj.type_ === 'primitivegroupcontainer') {
             for (let k=0; k<obj.primitive_groups.length; k++) {
               obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;

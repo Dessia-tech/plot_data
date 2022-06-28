@@ -1109,7 +1109,7 @@ export class MultiplePlots {
   
         if (this.objectList[this.sorted_list[last_index + j]] instanceof PlotPieChart){
           this.objectList[this.sorted_list[last_index + j]]["origin" + big_coord] = big_length_step / 2;
-          this.objectList[this.sorted_list[last_index + j]]["origin" + small_coord] = small_length_step / 2;
+          this.objectList[this.sorted_list[last_index + j]]["origin" + small_coord] = last_small_length_step / 2;
         }
         
         if (obj.type_ === 'primitivegroupcontainer') {

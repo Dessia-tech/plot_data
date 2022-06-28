@@ -82,17 +82,25 @@ multiplot = plot_data.MultiplePlots(plots=plots, elements=data_samples,
 # Display
 plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
 
-plots2 = [piechart1, piechart1, piechart1,
-         piechart1, piechart1, piechart1,
-                  piechart1, piechart1, piechart1,
-                           piechart1, piechart1, piechart1,
-                                    piechart1, piechart1, piechart1,
-                                             piechart1]
+plots2 = [piechart1, piechart1, piechart1, piechart1, piechart1, piechart1,
+          piechart1, piechart1, piechart1, piechart1, piechart1, piechart1,
+          piechart1, piechart1, piechart1, piechart1, piechart1]
 
 multiplot2 = plot_data.MultiplePlots(plots=plots2, elements=data_samples,
                                     initial_view_on=True)
 
 # Display
 plot_data.plot_canvas(plot_data_object=multiplot2, debug_mode=True)
+
+
+plots3 = [scatterplot2, scatterplot2, scatterplot2, scatterplot2, scatterplot2, scatterplot2,
+          scatterplot2, scatterplot2, scatterplot2, scatterplot2]
+
+multiplot3 = plot_data.MultiplePlots(plots=plots3, elements=data_samples,
+                                    initial_view_on=True)
+
+# Display
+plot_data.plot_canvas(plot_data_object=multiplot3, debug_mode=True)
+
 
 

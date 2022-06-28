@@ -35,6 +35,8 @@ parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color'])
 
 """Scatterplots"""
 scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
+piechart1 = plot_data.PieChart(data_samples=data_samples,
+                               slicing_variable='mass')
 
 scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes

@@ -282,11 +282,11 @@ export class PlotPieChart extends PlotData {
     this.maxY = this.height / 2;
   }
 
-  private drawPiechart(mvx: number, mvy: number): void {
+  private drawPiechart(): void {
     // Anything related to mouse handling should be done in a specific class and will be the purpose of a future release
     const matrix = this.context.getTransform();
     [this.context_show, this.context_hidden].forEach((context, i) => {
-      context.transform(this.scaleX, 0, 0, this.scaleX, mvx + this.X, mvy + this.Y);
+      context.transform(this.scaleX, 0, 0, this.scaleX, this.originX + this.X, this.originY + this.Y);
       context.lineWidth = 0.5 / this.scaleX;
       for (let part of this.plotObject.pieParts) {
         if (i == 0) {
@@ -303,7 +303,7 @@ export class PlotPieChart extends PlotData {
 
   draw(): void {
     this.drawCanvas()
-    this.drawPiechart(this.originX, this.originY);
+    this.drawPiechart();
     this.drawSiders();
     this.context_hidden.restore();
     this.context_show.restore();

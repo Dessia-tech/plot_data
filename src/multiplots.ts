@@ -101,6 +101,7 @@ export class MultiplePlots {
         }
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
+        console.log(newObject)
       }
       if (elements) {this.initialize_point_families();}
   

@@ -950,15 +950,27 @@ export class PieChart {
   private get normedRatio(): number {
     let sumSamples: number = 0;
     let normedRatio: number = 2*Math.PI;
-
-    this.dataSamples.forEach(sample => {
-      sumSamples += sample[this.slicingVariable]
-    });
+    
+    if (typeof this.dataSamples[0][this.slicingVariable] == 'number') {
+      this.dataSamples.forEach(sample => { sumSamples += sample[this.slicingVariable] });
+    } else if (typeof this.dataSamples[0][this.slicingVariable] == 'string') {
+      sumSamples = this.dataSamples.length;
+    }
     normedRatio /= sumSamples;
     return normedRatio
   }
 
   definePieParts(): PiePart[] {
+    if (typeof this.dataSamples[0][this.slicingVariable] == 'number') {
+      return this.numberParts
+    } else if (typeof this.dataSamples[0][this.slicingVariable] == 'string') {
+      return this.stringParts
+    } else {
+      throw new Error(typeof this.dataSamples[0][this.slicingVariable] + ' type is not implemented to compute PieParts.');
+    }
+  }
+
+  private get numberParts(): PiePart[] {
     const colorRatio: number = 360 / this.dataSamples.length;
     let initAngle: number = Math.PI/2;
     let nextAngle: number = initAngle;
@@ -974,6 +986,34 @@ export class PieChart {
 
       initAngle = nextAngle;
     })
+    return pieParts
+  }
+
+  private get stringParts(): PiePart[] {
+    let initAngle: number = Math.PI/2;
+    let nextAngle: number = initAngle;
+    let colorRadius: number = 0;
+    let pieParts: PiePart[] = [];
+    let partPortions: Map<string, number> = new Map();
+
+    for (let sample of this.dataSamples) {
+      if (partPortions.has(sample[this.slicingVariable])){
+        partPortions.set(sample[this.slicingVariable], partPortions.get(sample[this.slicingVariable]) + 1)
+      } else {
+        partPortions.set(sample[this.slicingVariable], 1)
+      }
+    }
+
+    const colorRatio: number = 360 / partPortions.size;
+    for (let portion of partPortions.values()){
+      colorRadius += colorRatio;
+      nextAngle -= portion * this.normedRatio;
+
+      let newPart = new PiePart(initAngle, nextAngle, 'hsl('+ colorRadius +', 50%, 50%, 90%)');
+      pieParts.push(newPart);
+
+      initAngle = nextAngle;
+    }
     return pieParts
   }
 }

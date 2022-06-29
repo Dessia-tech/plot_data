@@ -28,7 +28,7 @@ piechart1 = plot_data.PieChart(data_samples=data_samples,
                                slicing_variable='mass')
 
 piechart2 = plot_data.PieChart(data_samples=data_samples,
-                               slicing_variable='length')
+                               slicing_variable='color')
 
 
 plot_data.plot_canvas(plot_data_object=piechart1, debug_mode=True)

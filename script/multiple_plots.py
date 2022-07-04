@@ -44,7 +44,7 @@ scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
 
 # scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 piechart1 = plot_data.PieChart(data_samples=data_samples,
-                               slicing_variable='x')
+                               slicing_variable='direction')
 
 
 """PrimitiveGroupContainers"""

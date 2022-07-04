@@ -1187,7 +1187,7 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/{}'
     lib_path = cdn_url.format(version, filename)
     if debug_mode:
-        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
+        core_path = os.sep.join(__file__.split(os.sep)[:-2] + [folder, filename])
 
         if not os.path.isfile(core_path):
             msg = 'Local compiled {} not found, fall back to CDN'

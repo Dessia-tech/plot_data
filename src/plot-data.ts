@@ -1909,8 +1909,9 @@ export abstract class PlotData {
       let is_in_tooltip_list = List.is_include(click_plot_data, this.tooltip_list);
       if (is_in_tooltip_list && !click_plot_data.selected) {
         this.tooltip_list = List.remove_element(click_plot_data, this.tooltip_list);
-      } else if (!is_in_tooltip_list && click_plot_data.selected) {
+      } else if (!is_in_tooltip_list && click_plot_data.clicked) {
         this.tooltip_list.push(click_plot_data);
+
       }
     }
 

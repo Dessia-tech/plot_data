@@ -727,16 +727,16 @@ class PieChart(PlotDataObject):
     :type slicing_variable: str
     """
 
-    def __init__(self, slicing_variable: str, 
+    def __init__(self, slicing_variable: str,
                  data_samples: List[Any] = None,
                  name: str = ''):
-        
+
         self.slicing_variable = slicing_variable
         if not data_samples:
             self.data_samples = []
         else:
             self.data_samples = data_samples
-            
+
         PlotDataObject.__init__(self, type_='piechart', name=name)
 
 

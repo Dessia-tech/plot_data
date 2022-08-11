@@ -25,9 +25,9 @@ for i in range(nb_samples):
     random_color = available_colors[random.randint(0, len(available_colors) - 1)]
     random_direction = directions[random.randint(0, len(directions) - 1)]
     data_samples.append({'x': random.uniform(0, 200),
-                     'y': random.uniform(0, 100),
-                     'color': random_color,
-                     'direction': random_direction})
+                         'y': random.uniform(0, 100),
+                         'color': random_color,
+                         'direction': random_direction})
 
 """ ParallelPlot """
 parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color', 'direction'])

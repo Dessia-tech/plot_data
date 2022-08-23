@@ -8,7 +8,7 @@ COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
 for i in range(50):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
-    elements.append({'mass': random.uniform(0, 50),
+    elements.append({'mass': random.uniform(0, 0.05),
                      'length': random.uniform(0, 100),
                      'shape': random_shape,
                      'color': random_color

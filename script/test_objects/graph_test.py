@@ -35,5 +35,5 @@ for k in range(1, len(T2)):
 dataset2 = plot_data.Dataset(elements=elements2, name='I2 = f(t)')
 
 
-graph2d = plot_data.Graph2D(graphs=[dataset2], log_scale_x=True, log_scale_y=True,
+graph2d = plot_data.Graph2D(graphs=[dataset1, dataset2],
                             x_variable='time', y_variable='electric current')

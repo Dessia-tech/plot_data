@@ -67,11 +67,10 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                 text_style = plot_data.TextStyle(text_color='rgb(0,0,0)',
                                                  text_align_x='center',
                                                  text_align_y='middle')
-            text = plot_data.Text(name, x, y, text_style=text_style, max_width=2*r, multi_lines=False)
+            text = plot_data.Text(name, x, y, text_style=text_style, max_width=2 * r, multi_lines=False)
             primitives.append(text)
 
         return primitives
-
 
     def to_plot_data(self):
         return plot_data.PrimitiveGroup(self.primitives)

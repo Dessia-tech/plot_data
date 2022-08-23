@@ -236,9 +236,10 @@ export class Dataset {
                 public elements:any[],
                 public display_step:number,
                 public type_:string,
-                public name:string) {
+                public name:string,
+                public index: number = -1) {
       this.initialize_point_list();
-      this.initialize_segments();
+      this.initialize_segments();    
     }
   
     initialize_point_list() {
@@ -250,6 +251,7 @@ export class Dataset {
         }
         let point = new Point2D(coord[0], coord[1], this.point_style, 'point', '');
         point.index = i;
+        point.dataset_index = this.index;
         this.point_list.push(point);
       } 
     }
@@ -282,7 +284,8 @@ export class Dataset {
                          serialized['elements'],
                          serialized['display_step'],
                          serialized['type_'],
-                         serialized['name']);
+                         serialized['name'],
+                         serialized["index"]);
     }
 }
 
@@ -300,6 +303,7 @@ export class Graph2D {
       var graphs:Dataset[] = [];
       for (let i=0; i<serialized['graphs'].length; i++) {
         serialized['graphs'][i]['attribute_names'] = serialized['attribute_names'];
+        serialized["graphs"][i]["index"] = i;
         graphs.push(Dataset.deserialize(serialized['graphs'][i]));
       }
       var axis = Axis.deserialize(serialized['axis']);
@@ -508,7 +512,8 @@ export class Point2D {
     selected:boolean=false;
     clicked:boolean=false;
     selected_by_heatmap:boolean = false;
-    index:number=-1;
+    index:number=-1; // index in scatter plot's elements
+    dataset_index:number=-1;
   
     constructor(public cx:number,
                 public cy:number,
@@ -609,7 +614,7 @@ export class PrimitiveGroup {
       var temp = serialized['primitives'];
       let classes = {"contour": Contour2D, "text": Text, "linesegment2d": LineSegment2D,
                     "arc": Arc2D, "circle": Circle2D, "line2d": Line2D, 
-                    "multiplelabels": MultipleLabels, "wire": Wire};
+                    "multiplelabels": MultipleLabels, "wire": Wire, "point": Point2D};
       for (let i=0; i<temp.length; i++) {
         primitives.push(classes[temp[i]["type_"]].deserialize(temp[i]));
       }
@@ -789,10 +794,13 @@ export class Text {
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    if (this.text_scaling) var font_size = this.text_style.font_size * scaleX/this.init_scale;
-    else font_size = this.text_style.font_size;
+    if (this.text_scaling) {
+      var font_size = this.text_style.font_size * scaleX/this.init_scale;
+    } else {
+      font_size = this.text_style.font_size;
+    } 
 
-    context.font = this.text_style.font;
+    context.font = font_size + "px " + this.text_style.font_style;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;

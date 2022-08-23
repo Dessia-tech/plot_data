@@ -43,7 +43,7 @@ export class PlotContour extends PlotData {
             this.maxX = Math.max(this.maxX, primitive.maxX);
             this.minY = Math.min(this.minY, primitive.minY);
             this.maxY = Math.max(this.maxY, primitive.maxY);
-            if (["contour", "circle", "wire"].includes(primitive.type_)) {
+            if (["contour", "circle", "wire", "point"].includes(primitive.type_)) {
               this.color_to_plot_data[primitive.hidden_color] = primitive;
             } 
           }
@@ -215,8 +215,11 @@ export class PlotScatter extends PlotData {
         Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
   
         if (this.plotObject.type_ == 'scatterplot') {
-          // TODO To check, 'this' in args is weird
           Buttons.merge_button(this.button_x, this.merge_y, this.button_w, this.button_h, '10px Arial', this);
+          // Draw Heatmap button
+          Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
+        } else if (this.plotObject.type_ === "graph2d") {
+          Buttons.csv_button(this.button_x, this.csv_button_y, this.button_w, this.button_h, "12px Arial", this);
         }
   
         //draw permanent window button
@@ -229,8 +232,6 @@ export class PlotScatter extends PlotData {
         Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
           "10px Arial", this);
         
-        // Draw Heatmap button
-        Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
       }
       if (this.multiplot_manipulation) {
         this.draw_manipulable_rect();

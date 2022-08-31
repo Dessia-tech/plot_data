@@ -1095,7 +1095,7 @@ class MultiplePlots(PlotDataObject):
     """
 
     def __init__(self, plots: List[Subclass[PlotDataObject]],
-                 sizes: List[Window] = None, elements: List[any] = None,
+                 sizes: List[Window] = None, elements = None,
                  coords: List[Tuple[float, float]] = None,
                  point_families: List[PointFamily] = None,
                  initial_view_on: bool = None,

@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 
 from dessia_common import DessiaObject, full_classname
-from dessia_common.typings import Subclass
 from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 
 from plot_data import templates
@@ -64,7 +63,7 @@ class PlotDataObject(DessiaObject):
     @classmethod
     def dict_to_object(cls, dict_):
         """
-        :rtype: Subclass[PlotDataObject]
+        :rtype: PlotDataObject
         """
         type_ = dict_['type_']
         object_class = TYPE_TO_CLASS[type_]
@@ -1078,7 +1077,7 @@ class MultiplePlots(PlotDataObject):
 
     :param plots: a list of plots (Scatter, ParallelPlot, \
     PrimitiveGroup, PrimitiveGroupContainer, Graph2D)
-    :type plots: List[Subclass[PlotDataObject]]
+    :type plots: List[PlotDataObject]
     :param sizes: [size0,...,size_n] where size_i = [width_i, length_i]\
      is the size of plots[i]
     :type sizes: List[Tuple[float, float]]
@@ -1094,7 +1093,7 @@ class MultiplePlots(PlotDataObject):
     :type initial_view_on: bool
     """
 
-    def __init__(self, plots: List[Subclass[PlotDataObject]],
+    def __init__(self, plots: List[PlotDataObject],
                  sizes: List[Window] = None, elements: List[any] = None,
                  coords: List[Tuple[float, float]] = None,
                  point_families: List[PointFamily] = None,
@@ -1109,17 +1108,15 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_data_object: Subclass[PlotDataObject],
-                debug_mode: bool = False, canvas_id: str = 'canvas',
-                force_version: str = None,
-                width: int = 750, height: int = 400, page_name: str = None,
-                display: bool = True):
+def plot_canvas(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
+                force_version: str = None, width: int = 750, height: int = 400,
+                page_name: str = None, display: bool = True):
     """
     Creates a html file and plots input data in web browser
 
     :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
      MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
-    :type plot_data_object: Subclass[PlotDataObject]
+    :type plot_data_object: PlotDataObject
     :param debug_mode: uses local library if True, uses typescript \
     library from cdn if False
     :type debug_mode: bool
@@ -1212,13 +1209,13 @@ TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'primitivegroup': PrimitiveGroup, "scattermatrix": ScatterMatrix}
 
 
-def bounding_box(plot_datas: Subclass[PlotDataObject]):
+def bounding_box(plot_datas: List[PlotDataObject]):
     """
     Calls input plot_datas' bounding_box method, if it has one.
 
     :param plot_datas: The target object the bounding_box method has to\
      be called from
-    :type plot_datas: Subclass[PlotDataObject]
+    :type plot_datas: PlotDataObject
 
     :return: a bounding box
     :rtype: float, float, float, float

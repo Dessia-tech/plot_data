@@ -16,7 +16,6 @@ elements = []
 axes = ['cost', 'mass', 'wiring_length']
 
 for i in range(100):
-    
     elements.append({'mass': 52+ 47*random.random(),
                      'cost': 231 + 89*random.random(),
                      'wiring_length': 8.9 + 3.1*random.random()})

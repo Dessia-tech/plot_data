@@ -71,3 +71,7 @@ wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire")
 primitives = [point, contour, line, arc,
               circle, text, labels, wire]
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
+
+container = plot_data.PrimitiveGroupsContainer([primitive_group])
+
+plot_data.plot_canvas(container)

@@ -1025,8 +1025,8 @@ class ParallelPlot(PlotDataObject):
         self.elements = elements
         self.edge_style = edge_style
         self.disposition = disposition
-        self.attribute_names = axes
-        self.rgbs = rgbs
+        self.attribute_names = axes # TODO: Seems unused
+        self.rgbs = rgbs # TODO: Seems unused
         PlotDataObject.__init__(self, type_='parallelplot', name=name)
 
 

@@ -825,10 +825,6 @@ export class Text {
           context.fillText(cut_texts[i], x, y + (i - height_offset) * font_size);
         }
       } else {
-        let init_size = context.measureText(this.comment).width;
-        this.text_style.font_size = scaleX * this.max_width/init_size * this.text_style.font_size;
-        this.text_style.refresh_font();
-        context.font = this.text_style.font;
         context.fillText(this.comment, x, y);
       }
     } else {

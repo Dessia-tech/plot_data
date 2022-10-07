@@ -777,8 +777,7 @@ export class Text {
   }
 
   public static deserialize(serialized) {
-    var default_text_style = {font_size:12, font_style:'sans-serif', text_color:string_to_rgb('black'),
-                              text_align_x:'start', text_align_y:'alphabetic', angle:0, name:''};
+    let default_text_style = this.mix_conditions(serialized)
     var default_dict_ = {text_style:default_text_style};
     serialized = set_default_values(serialized, default_dict_);
     var text_style = TextStyle.deserialize(serialized['text_style']);
@@ -793,12 +792,25 @@ export class Text {
                     serialized['name']);
   }
 
+  private static mix_conditions(serialized){
+    let default_text_style = {font_size: null, font_style: 'sans-serif', text_color: string_to_rgb('black'),
+                              text_align_x: 'start', text_align_y: 'alphabetic', angle: 0, name: ''};
+    if (serialized['text_style']) {
+      if (!serialized['text_style']['font_size'] && !serialized['max_width']) {
+        default_text_style['font_size'] = 12
+      }
+    }
+    return default_text_style
+  }
+
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
+    console.log(this.text_style)
+    let font_size: number = 0;
     if (this.text_scaling) {
-      var font_size = this.text_style.font_size * scaleX/this.init_scale;
+      font_size = this.text_style.font_size * scaleX/this.init_scale;
     } else {
       font_size = this.text_style.font_size;
-    } 
+    }
 
     context.font = font_size + "px " + this.text_style.font_style;
     context.fillStyle = this.text_style.text_color;

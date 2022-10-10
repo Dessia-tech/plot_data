@@ -781,7 +781,7 @@ export class Text {
     var default_dict_ = {text_style:defaultTextStyle};
     serialized = set_default_values(serialized, default_dict_);
     var text_style = TextStyle.deserialize(serialized['text_style']);
-    if (!serialized['text_style']['font_size']){
+    if (!serialized['text_style']['font_size'] && serialized['max_width'] && !serialized['multi_lines']){
       text_style['font_size'] = null
     }
     return new Text(serialized['comment'],
@@ -810,9 +810,7 @@ export class Text {
     let tmp_context: CanvasRenderingContext2D = context
     let pxMaxWidth: number = max_width * scale
     tmp_context.font = "1px " + this.text_style.font_style;
-    console.log(pxMaxWidth, tmp_context.measureText(comment).width)
-    let lenRatio: number = pxMaxWidth / (tmp_context.measureText(comment).width);
-    return lenRatio
+    return pxMaxWidth / (tmp_context.measureText(comment).width)
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {

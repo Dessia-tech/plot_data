@@ -619,8 +619,8 @@ export class PrimitiveGroup {
         primitives.push(classes[temp[i]["type_"]].deserialize(temp[i]));
       }
       return new PrimitiveGroup(primitives,
-                              serialized['type_'],
-                              serialized['name']);
+                                serialized['type_'],
+                                serialized['name']);
     }
 }
 
@@ -777,10 +777,13 @@ export class Text {
   }
 
   public static deserialize(serialized) {
-    let default_text_style = this.mix_conditions(serialized)
-    var default_dict_ = {text_style:default_text_style};
+    let defaultTextStyle = Text.mixConditions(serialized)
+    var default_dict_ = {text_style:defaultTextStyle};
     serialized = set_default_values(serialized, default_dict_);
     var text_style = TextStyle.deserialize(serialized['text_style']);
+    if (!serialized['text_style']['font_size']){
+      text_style['font_size'] = null
+    }
     return new Text(serialized['comment'],
                     serialized['position_x'],
                     -serialized['position_y'],
@@ -792,26 +795,35 @@ export class Text {
                     serialized['name']);
   }
 
-  private static mix_conditions(serialized){
-    let default_text_style = {font_size: null, font_style: 'sans-serif', text_color: string_to_rgb('black'),
-                              text_align_x: 'start', text_align_y: 'alphabetic', angle: 0, name: ''};
+  private static mixConditions(serialized) {
+    let defaultTextStyle = {font_size: null, font_style: 'sans-serif', text_color: string_to_rgb('black'),
+                            text_align_x: 'start', text_align_y: 'alphabetic', angle: 0, name: ''};
     if (serialized['text_style']) {
       if (!serialized['text_style']['font_size'] && !serialized['max_width']) {
-        default_text_style['font_size'] = 12
+        defaultTextStyle['font_size'] = 12
       }
+    return defaultTextStyle
     }
-    return default_text_style
+  }
+
+  private automaticFontSize(context, comment, max_width, scale) {
+    let tmp_context: CanvasRenderingContext2D = context
+    let pxMaxWidth: number = max_width * scale
+    tmp_context.font = "1px " + this.text_style.font_style;
+    console.log(pxMaxWidth, tmp_context.measureText(comment).width)
+    let lenRatio: number = pxMaxWidth / (tmp_context.measureText(comment).width);
+    return lenRatio
   }
 
   draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    console.log(this.text_style)
-    let font_size: number = 0;
-    if (this.text_scaling) {
-      font_size = this.text_style.font_size * scaleX/this.init_scale;
-    } else {
-      font_size = this.text_style.font_size;
+    let font_size: number = this.text_style.font_size;
+    if (this.text_style.font_size === null) {
+      font_size = this.automaticFontSize(context, this.comment, this.max_width, this.init_scale)
     }
-
+    if (this.text_scaling) {
+      font_size = font_size * scaleX/this.init_scale;
+    }
+ 
     context.font = font_size + "px " + this.text_style.font_style;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,

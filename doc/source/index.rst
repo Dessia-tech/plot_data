@@ -55,7 +55,7 @@ For the typescript doc see: https://documentation.dessia.tech/plot_data/typescri
 .. autoclass:: plot_data.Tooltip
   :members:
 
-.. autoclass:: plot_data.Dataset
+.. autoclass:: plot_data.DataSet
   :members:
 
 .. autoclass:: plot_data.Graph2D

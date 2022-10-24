@@ -224,7 +224,7 @@ export class Contour2D {
 }
 
 
-export class Dataset {
+export class DataSet {
     id:number=0;
     point_list:Point2D[]=[];
     segments:LineSegment2D[];
@@ -277,7 +277,7 @@ export class Dataset {
       var tooltip = Tooltip.deserialize(serialized['tooltip']);
       var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
       var point_style = PointStyle.deserialize(serialized['point_style']);
-      return new Dataset(serialized['attribute_names'],
+      return new DataSet(serialized['attribute_names'],
                          edge_style,
                          tooltip,
                          point_style,
@@ -291,7 +291,7 @@ export class Dataset {
 
 
 export class Graph2D {
-    constructor(public graphs: Dataset[],
+    constructor(public graphs: DataSet[],
                 public attribute_names:string[],
                 public axis: Axis,
                 public type_: string='graph2d',
@@ -300,11 +300,11 @@ export class Graph2D {
     public static deserialize(serialized) {
       var default_dict_ = {axis:{}};
       serialized = set_default_values(serialized, default_dict_);
-      var graphs:Dataset[] = [];
+      var graphs:DataSet[] = [];
       for (let i=0; i<serialized['graphs'].length; i++) {
         serialized['graphs'][i]['attribute_names'] = serialized['attribute_names'];
         serialized["graphs"][i]["index"] = i;
-        graphs.push(Dataset.deserialize(serialized['graphs'][i]));
+        graphs.push(DataSet.deserialize(serialized['graphs'][i]));
       }
       var axis = Axis.deserialize(serialized['axis']);
   

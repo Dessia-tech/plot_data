@@ -1,5 +1,5 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, DataSet, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
@@ -588,7 +588,7 @@ export abstract class PlotData {
     return min_dist;
   }
 
-  draw_dataset(d:Dataset, hidden, mvx, mvy) {
+  draw_dataset(d:DataSet, hidden, mvx, mvy) {
     if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === true)) {
       this.context.beginPath();
       this.context.setLineDash(d.edge_style.dashline);
@@ -627,7 +627,7 @@ export abstract class PlotData {
         this.draw_dataset(graph, hidden, mvx, mvy);
       }
       for (let i=0; i<d.graphs.length; i++) {
-        let graph: Dataset = d.graphs[i];
+        let graph: DataSet = d.graphs[i];
         this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list, 
           graph.elements, false, d.attribute_names);
       }

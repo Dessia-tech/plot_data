@@ -515,10 +515,10 @@ class Tooltip(PlotDataObject):
     """
     A class that contains information for drawing a tooltip when \
     clicking on points.
-    A tooltip object is instantiated by Scatter and Dataset classes.
+    A tooltip object is instantiated by Scatter and DataSet classes.
 
     :param attributes: a list containing the attributes \
-    you want to display. Attributes must be taken from Dataset's or \
+    you want to display. Attributes must be taken from DataSet's or \
     Scatter's elements.
     :type attributes: List[str]
     :param surface_style: for customizing the tooltip's interior
@@ -548,11 +548,11 @@ class Tooltip(PlotDataObject):
         PlotDataObject.__init__(self, type_='tooltip', name=name)
 
 
-class Dataset(PlotDataObject):
+class DataSet(PlotDataObject):
     """
     Numerous points are joined by line segments to display a \
     mathematical curve.
-    Datasets are instantiated by Graph2D to display multiple datasets \
+    DataSets are instantiated by Graph2D to display multiple datasets \
     on one canvas.
 
     :param elements: A list of vectors. Vectors must have the same \
@@ -593,11 +593,11 @@ class Dataset(PlotDataObject):
 
 class Graph2D(PlotDataObject):
     """
-    Takes one or several Datasets as input and displays them all in \
+    Takes one or several DataSets as input and displays them all in \
     one canvas.
 
-    :param graphs: a list of Datasets
-    :type graphs: List[Dataset]
+    :param graphs: a list of DataSets
+    :type graphs: List[DataSet]
     :param x_variable: variable that you want to display on x axis
     :type x_variable: str
     :param y_variable: variable that you want to display on y axis
@@ -611,7 +611,7 @@ class Graph2D(PlotDataObject):
     :type log_scale_y: bool
     """
 
-    def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str,
+    def __init__(self, graphs: List[DataSet], x_variable: str, y_variable: str,
                  axis: Axis = None, log_scale_x: bool = None,
                  log_scale_y: bool = None, name: str = ''):
         self.graphs = graphs
@@ -1205,7 +1205,7 @@ def get_csv_vectors(filepath):
 
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
-                 'contour': Contour2D, 'graph2D': Dataset,
+                 'contour': Contour2D, 'graph2D': DataSet,
                  'graphs2D': Graph2D, 'linesegment2d': LineSegment,
                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,

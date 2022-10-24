@@ -12,7 +12,7 @@ I1 = [t ** 2 for t in T1]
 elements1 = []
 for k in range(len(T1)):
     elements1.append({'time': T1[k], 'electric current': I1[k]})
-dataset1 = plot_data.Dataset(elements=elements1, name='I1 = f(t)')
+dataset1 = plot_data.DataSet(elements=elements1, name='I1 = f(t)')
 
 
 # The previous line instantiates a dataset with limited arguments but
@@ -20,7 +20,7 @@ dataset1 = plot_data.Dataset(elements=elements1, name='I1 = f(t)')
 point_style = plot_data.PointStyle(color_fill=RED, color_stroke=BLACK)
 edge_style = plot_data.EdgeStyle(color_stroke=BLUE, dashline=[10, 5])
 
-custom_dataset = plot_data.Dataset(elements=elements1, name='I = f(t)',
+custom_dataset = plot_data.DataSet(elements=elements1, name='I = f(t)',
                                    point_style=point_style,
                                    edge_style=edge_style)
 
@@ -32,7 +32,7 @@ elements2 = []
 for k in range(1, len(T2)):
     elements2.append({'time': T2[k], 'electric current': I2[k]})
 
-dataset2 = plot_data.Dataset(elements=elements2, name='I2 = f(t)')
+dataset2 = plot_data.DataSet(elements=elements2, name='I2 = f(t)')
 
 
 graph2d = plot_data.Graph2D(graphs=[dataset1, dataset2],

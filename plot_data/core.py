@@ -20,7 +20,8 @@ from matplotlib import patches
 
 from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
-from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
+import dessia_common.files as dcf
+from dessia_common.vectored_objects import Catalog, ParetoSettings
 
 from plot_data import templates
 import plot_data.colors
@@ -1188,20 +1189,33 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         print(page_name + '.html')
 
 
-def get_csv_vectors(filepath):
+def get_csv_vectors(file: dcf.StringFile, end: int = None, remove_duplicates: bool = False):
     """
-    :param filepath: the csv file's relative path, starting from the \
-    script's path.
-    :type filepath: str
+    Generates plot_data vectors from a given .csv file, with automatic naming of values
 
-    :return: a list of vectors (ie a list of dictionaries) that can be \
-    set to multiple_plots' or parallelplot's elements for example.
+    :param file: the csv file's relative path, starting from the script's path. Example: '../plot_data/data/data.csv'
+    :type file: str
+
+    :param end: the last row to take from csv file
+    :type end: int, `optional`, defaults to None
+
+    :param remove_duplicates: whether to remove duplicates or not
+    :type remove_duplicates: bool, `optional`, defaults to `False`
+
+    :return: a list of vectors (i.e. a list of dictionaries) that can be set to multiple_plots' or parallelplot's
+    elements for example.
     :rtype: List[dict]
+
     """
-    lines, variables = from_csv(filename=filepath)
-    catalog = Catalog(array=lines, variables=variables,
-                      pareto_settings=ParetoSettings({}, enabled=False))
-    return catalog
+    array = npy.genfromtxt(file, dtype=None, delimiter=',', names=True, encoding=None)
+    variables = list(array.dtype.fields.keys())
+    lines = []
+    for i, line in enumerate(array):
+        if end is not None and i >= end:
+            break
+        if not remove_duplicates or (remove_duplicates and line.tolist() not in lines):
+            lines.append({variable: value for variable, value in zip(variables, line.tolist())})
+    return lines
 
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute

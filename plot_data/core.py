@@ -21,7 +21,6 @@ from matplotlib import patches
 from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
 import dessia_common.files as dcf
-from dessia_common.vectored_objects import Catalog, ParetoSettings
 
 from plot_data import templates
 import plot_data.colors

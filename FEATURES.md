@@ -2,7 +2,11 @@
 Features to directly load data.
 
 ## CSV Reader
-
+../script/csv_reader.py
+    - Works with Catalog class (vectored_object)
+    - Would have to work with a Dataset ? 
+    - It looks like a class constructor. Maybe we should implement it another way, like a method that read csv
+    and produces a plot_data, without importing any DessiaObject
 
 
 # Handled Shapes / Primitives

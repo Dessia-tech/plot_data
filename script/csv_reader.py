@@ -15,8 +15,7 @@ points = [{var: catalog.get_value_by_name(line, var)
 
 plots = [parallel_plot, scatter_plot]
 
-multipleplots = plot_data.MultiplePlots(elements=points, plots=plots,
-                                        initial_view_on=True)
+multipleplots = plot_data.MultiplePlots(elements=points, plots=plots, initial_view_on=True)
 
 # If debug_mode == True, set it to False
-plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=False)

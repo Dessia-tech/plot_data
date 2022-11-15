@@ -1092,9 +1092,8 @@ class MultiplePlots(PlotDataObject):
     otherwise
     :type initial_view_on: bool
     """
-
     def __init__(self, plots: List[PlotDataObject],
-                 sizes: List[Window] = None, elements: List[any] = None,
+                 sizes: List[Window] = None, elements: List[Any] = None,
                  coords: List[Tuple[float, float]] = None,
                  point_families: List[PointFamily] = None,
                  initial_view_on: bool = None,
@@ -1215,7 +1214,7 @@ def bounding_box(plot_datas: List[PlotDataObject]):
 
     :param plot_datas: The target object the bounding_box method has to\
      be called from
-    :type plot_datas: PlotDataObject
+    :type plot_datas: List[PlotDataObject]
 
     :return: a bounding box
     :rtype: float, float, float, float

@@ -2,7 +2,7 @@
 # one canvas and is useful for displaying numerical functions
 
 import plot_data
-from plot_data.colors import *
+from plot_data.colors import RED, BLUE, BLACK
 import numpy as np
 
 k = 0
@@ -15,14 +15,11 @@ for k in range(len(T1)):
 dataset1 = plot_data.Dataset(elements=elements1, name='I1 = f(t)')
 
 
-# The previous line instantiates a dataset with limited arguments but
-# several customizations are available
+# The previous line instantiates a dataset with limited arguments but several customizations are available
 point_style = plot_data.PointStyle(color_fill=RED, color_stroke=BLACK)
 edge_style = plot_data.EdgeStyle(color_stroke=BLUE, dashline=[10, 5])
 
-custom_dataset = plot_data.Dataset(elements=elements1, name='I = f(t)',
-                                   point_style=point_style,
-                                   edge_style=edge_style)
+custom_dataset = plot_data.Dataset(elements=elements1, name='I = f(t)', point_style=point_style, edge_style=edge_style)
 
 
 # Now let's create another dataset for the purpose of this exercice
@@ -35,5 +32,4 @@ for k in range(1, len(T2)):
 dataset2 = plot_data.Dataset(elements=elements2, name='I2 = f(t)')
 
 
-graph2d = plot_data.Graph2D(graphs=[dataset1, dataset2],
-                            x_variable='time', y_variable='electric current')
+graph2d = plot_data.Graph2D(graphs=[dataset1, dataset2], x_variable='time', y_variable='electric current')

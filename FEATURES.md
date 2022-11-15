@@ -13,6 +13,9 @@ Handled shapes or primitives in plot_data.
 ## Circle2D
 ## Contour2D
 ## Graph2D
+File location: `../script/graph2D.py`
+   - Init scale does not work correctly: when two graphs are plotted in the same plot, only considers one of them (which one ?)
+
 ## Label
 ## Line2D
 ## LineSegment2D
@@ -50,4 +53,6 @@ Handled styles in plot_data.
 ## TextStyle
 ## SurfaceStyle
 ## Color
+
+
 

@@ -2,8 +2,8 @@
 Features to directly load data.
 
 ## CSV Reader
-../script/csv_reader.py
-    - Works with no imports of Dessia modules
+File location: `../script/csv_reader.py`
+   - Works with no imports of Dessia modules
 
 # Handled Shapes / Primitives
 Handled shapes or primitives in plot_data.

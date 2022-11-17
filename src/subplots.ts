@@ -558,8 +558,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.scaleX = this.scaleX*zoom_coeff_x;
       this.originX = this.width/2 + zoom_coeff_x * (this.originX - this.width/2);
       this.scroll_x = 0;
-      this.refresh_MinMax();
-      
+      this.refresh_MinMax();      
   
       if (this.layout_mode === 'two_axis') { // Then the algo does the same with the y-axis
         let zoom_coeff_y = (this.height - this.decalage_axis_y)/(this.maxY - this.minY);

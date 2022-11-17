@@ -55,20 +55,27 @@ Features that allow to plot data on specific diagram, automatically
 ## Graph2D
 ## ParallelPlot
 ## Histogram
+File location: `../script/histogram.py`
+   - Y limit is the total number of elements. Should be the total +5%
+
 ## PrimitiveGroupContainer
 ## Contour
 
 
 
 # Styles
-Handled styles in plot_data.
+Handled styles in plot_data. Not tested formaly in tests files but ponctually tested with Plots and Shapes. 
+Need to write tests scripts that test all styles unitary. These files would also serve the styles definitions in the future documentation.
 
 ## HatchingSet
 ## EdgeStyle
+   - Handles dashline, color and line width
+
 ## PointStyle
 ## TextStyle
 ## SurfaceStyle
 ## Color
+   - Handles name (eg BLACK), hsv and hexa declaration
 
 
 

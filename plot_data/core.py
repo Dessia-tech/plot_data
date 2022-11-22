@@ -20,7 +20,6 @@ from matplotlib import patches
 
 from dessia_common import DessiaObject, full_classname
 from dessia_common.typings import Subclass
-from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 
 from plot_data import templates
 import plot_data.colors
@@ -1198,10 +1197,8 @@ def get_csv_vectors(filepath):
     set to multiple_plots' or parallelplot's elements for example.
     :rtype: List[dict]
     """
-    lines, variables = from_csv(filename=filepath)
-    catalog = Catalog(array=lines, variables=variables,
-                      pareto_settings=ParetoSettings({}, enabled=False))
-    return catalog
+    raise NotImplementedError("get_csv_vectors function is not implemented anymore"
+                              "as dessia_common's vectored_objects as been removed")
 
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute

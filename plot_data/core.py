@@ -18,7 +18,7 @@ import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
-from dessia_common import DessiaObject, full_classname
+from dessia_common.core import DessiaObject, full_classname
 from dessia_common.typings import Subclass
 
 from plot_data import templates

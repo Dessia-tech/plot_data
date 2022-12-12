@@ -11,7 +11,7 @@ import json
 import tempfile
 import webbrowser
 import warnings
-from typing import List, Tuple, Any, Union
+from typing import List, Tuple, Any, Union, Dict
 
 import numpy as npy
 
@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 
 from dessia_common.core import DessiaObject, full_classname
-from dessia_common.typings import Subclass
+from dessia_common.typings import JsonSerializable
 
 from plot_data import templates
 import plot_data.colors
@@ -50,10 +50,9 @@ class PlotDataObject(DessiaObject):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
 
-    def to_dict(self):
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
         """
-        Redefines DessiaObject's to_dict() in order to remove keys where
-        value is None.
+        Redefines DessiaObject's to_dict() in order to not use pointers and remove keys where value is None.
         """
         dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
@@ -61,19 +60,28 @@ class PlotDataObject(DessiaObject):
         return new_dict_
 
     @classmethod
-    def dict_to_object(cls, dict_):
-        """
-        :rtype: Subclass[PlotDataObject]
-        """
+    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
+                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'DessiaObject':
+        """ Reset object_class in order to instantiate right object. """
         type_ = dict_['type_']
         object_class = TYPE_TO_CLASS[type_]
-        dict_['object_class'] = full_classname(object_=object_class,
-                                               compute_for='class')
+        dict_['object_class'] = full_classname(object_=object_class, compute_for='class')
         return DessiaObject.dict_to_object(dict_=dict_, force_generic=True)
 
     def plot_data(self):
         raise NotImplementedError('It is strange to call plot_data method from a plot_data object.'
                                   f' Check the class {self.__class__.__name__} you are calling')
+
+
+class Sample(PlotDataObject):
+    def __init__(self, values, path: str = "#", name: str = ""):
+        self.values = values
+        self.path = path
+
+        PlotDataObject.__init__(self, type_="sample", name=name)
+
+    def plot_data(self):
+        raise NotImplementedError("Method plot_data is not defined for class Sample.")
 
 
 class HatchingSet(DessiaObject):
@@ -690,20 +698,15 @@ class Scatter(PlotDataObject):
     :type heatmap_view: bool
     """
 
-    def __init__(self, x_variable: str, y_variable: str,
-                 tooltip: Tooltip = None,
-                 point_style: PointStyle = None,
-                 elements: List[Any] = None, axis: Axis = None,
-                 log_scale_x: bool = None, log_scale_y: bool = None,
-                 heatmap: Heatmap = None, heatmap_view: bool = None,
-                 name: str = ''):
+    def __init__(self, x_variable: str, y_variable: str, tooltip: Tooltip = None, point_style: PointStyle = None,
+                 elements: List[Sample] = None, axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None,
+                 heatmap: Heatmap = None, heatmap_view: bool = None, name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style
-        if not elements:
-            self.elements = []
-        else:
-            self.elements = elements
+        if elements is None:
+            elements = []
+        self.elements = elements
         if not axis:
             self.axis = Axis()
         else:
@@ -978,7 +981,7 @@ class ParallelPlot(PlotDataObject):
 
     :param elements: a list of vectors. Vectors must have the same \
     attributes (ie the same keys)
-    :type elements: List[dict]
+    :type elements: List[Sample]
     :param edge_style: for customizing lines
     :type edge_style: EdgeStyle
     :param disposition: either 'vertical' or 'horizontal' depending on \
@@ -992,11 +995,8 @@ class ParallelPlot(PlotDataObject):
     :type rgbs: List[Tuple[int, int, int]]
     """
 
-    def __init__(self, elements=None, edge_style: EdgeStyle = None,
-                 disposition: str = None,
-                 axes: List[str] = None,
-                 rgbs: List[Tuple[int, int, int]] = None,
-                 name: str = ''):
+    def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, disposition: str = None,
+                 axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, name: str = ''):
         self.elements = elements
         self.edge_style = edge_style
         self.disposition = disposition
@@ -1077,13 +1077,13 @@ class MultiplePlots(PlotDataObject):
 
     :param plots: a list of plots (Scatter, ParallelPlot, \
     PrimitiveGroup, PrimitiveGroupContainer, Graph2D)
-    :type plots: List[Subclass[PlotDataObject]]
+    :type plots: List[PlotDataObject]
     :param sizes: [size0,...,size_n] where size_i = [width_i, length_i]\
      is the size of plots[i]
-    :type sizes: List[Tuple[float, float]]
+    :type sizes: List[Window]
     :param elements: a list of vectors. All vectors must have the same \
     attributes (ie the same keys)
-    :type elements: List[dict]
+    :type elements: List[Sample]
     :param coords: same as sizes but for plots' coordinates.
     :type coords: List[Tuple[float, float]]
     :param point_families: a list of point families
@@ -1093,12 +1093,9 @@ class MultiplePlots(PlotDataObject):
     :type initial_view_on: bool
     """
 
-    def __init__(self, plots: List[Subclass[PlotDataObject]],
-                 sizes: List[Window] = None, elements: List[Any] = None,
-                 coords: List[Tuple[float, float]] = None,
-                 point_families: List[PointFamily] = None,
-                 initial_view_on: bool = None,
-                 name: str = ''):
+    def __init__(self, plots: List[PlotDataObject], sizes: List[Window] = None, elements: List[Sample] = None,
+                 coords: List[Tuple[float, float]] = None, point_families: List[PointFamily] = None,
+                 initial_view_on: bool = None, name: str = ''):
         self.elements = elements
         self.plots = plots
         self.sizes = sizes
@@ -1108,7 +1105,7 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_data_object: Subclass[PlotDataObject],
+def plot_canvas(plot_data_object: PlotDataObject,
                 debug_mode: bool = False, canvas_id: str = 'canvas',
                 force_version: str = None,
                 width: int = 750, height: int = 400, page_name: str = None,
@@ -1118,7 +1115,7 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
 
     :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
      MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
-    :type plot_data_object: Subclass[PlotDataObject]
+    :type plot_data_object: PlotDataObject
     :param debug_mode: uses local library if True, uses typescript \
     library from cdn if False
     :type debug_mode: bool
@@ -1209,13 +1206,13 @@ TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'primitivegroup': PrimitiveGroup, "scattermatrix": ScatterMatrix}
 
 
-def bounding_box(plot_datas: Subclass[PlotDataObject]):
+def bounding_box(plot_datas: List[PlotDataObject]):
     """
     Calls input plot_datas' bounding_box method, if it has one.
 
     :param plot_datas: The target object the bounding_box method has to\
      be called from
-    :type plot_datas: Subclass[PlotDataObject]
+    :type plot_datas: List[PlotDataObject]
 
     :return: a bounding box
     :rtype: float, float, float, float

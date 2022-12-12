@@ -40,7 +40,7 @@ steps:
     target: /var/www/cdn/js/plot-data/sid/
     source: libdev/*
     strip_components: 1
-    rm: true
+    overwrite: true
 
 - name: upload to cdn version
   image: appleboy/drone-scp
@@ -54,6 +54,7 @@ steps:
     target: /var/www/cdn/js/plot-data/${DRONE_TAG}/
     source: libdev/*
     strip_components: 1
+    overwrite: true
 
 - name: upload to cdn latest
   image: appleboy/drone-scp
@@ -67,7 +68,7 @@ steps:
     target: /var/www/cdn/js/plot-data/latest/
     source: libdev/*
     strip_components: 1
-    rm: true
+    overwrite: true
 
 
 - name: upload_doc_typescript
@@ -83,6 +84,7 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
+    overwrite: true
 
 
 
@@ -93,12 +95,6 @@ steps:
   - python setup.py install
   - cd doc
   - make html
-
-
-#- name: develop
-#  image: python:3.8
-#  commands:
-#  - python setup.py develop
 
 - name: sdist
   image: python:3.8

@@ -5,17 +5,23 @@ name: default
 
 steps:
 - name: npm update tag from git, build
-  image: node:14
+  image: node:16
   commands:
   - git fetch --tags
-  - npm config set git-tag-version=false 
-  - version=`git describe --tags`
-  - npm version $${version}
+  - bash set_version.sh
   - npm install
   - npm run build
   - npm run dev
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
+
+- name: python install, build doc run scripts
+  image: python:3.8
+  commands:
+  - pip install sphinx sphinx_rtd_theme
+  - python setup.py install
+  - cd doc
+  - make html
 
 - name: upload npm
   image: plugins/npm
@@ -86,15 +92,19 @@ steps:
       from_secret: ssh_drone_password
     overwrite: true
 
-
-
-- name: install, build doc run scripts
-  image: python:3.8
+- name: check code complexity, docs & code quality
+  image: python:3.9
   commands:
-  - pip install sphinx sphinx_rtd_theme
-  - python setup.py install
-  - cd doc
-  - make html
+  - pip install radon pydocstyle pylint
+  - ./code_quality.sh
+  - python code_pylint.py
+
+- name: check pep8 formatting
+  image: python:3.9
+  commands:
+    - git fetch --tags
+    - pip3 install -U pip autopep8
+    - bash code_pep8.sh
 
 - name: sdist
   image: python:3.8
@@ -125,15 +135,3 @@ steps:
     password:
       from_secret: ssh_drone_password
 
-- name: notify by email
-  when:
-    status:
-    - failure
-  image: drillster/drone-email
-  settings:
-    host: mail.dessia.tech
-    username: technical@dessia.tech
-    password:
-     from_secret: email_password
-    from: technical@dessia.tech
-    recipients: [ root@dessia.tech ]

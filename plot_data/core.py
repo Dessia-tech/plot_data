@@ -1,29 +1,28 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Tue Feb 28 14:07:37 2017
-
-@author: steven
+Definition of language and plots
 """
 
 import os
-import numpy as npy
-import math
 import sys
+import math
 import json
 import tempfile
 import webbrowser
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from dessia_common import DessiaObject, full_classname
-from dessia_common.typings import Subclass
-from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 import warnings
-
-import plot_data.templates as templates
-
 from typing import List, Tuple, Any, Union
-import plot_data.colors as colors
+
+import numpy as npy
+
+import matplotlib.pyplot as plt
+from matplotlib import patches
+
+from dessia_common.core import DessiaObject, full_classname
+from dessia_common.typings import Subclass
+
+from plot_data import templates
+import plot_data.colors
 
 npy.seterr(divide='raise')
 
@@ -34,7 +33,7 @@ def delete_none_from_dict(dict1):
     """
     dict2 = {}
     for key, value in dict1.items():
-        if type(value) == dict:
+        if isinstance(value, dict):
             dict2[key] = delete_none_from_dict(value)
         else:
             if value is not None:
@@ -76,6 +75,7 @@ class PlotDataObject(DessiaObject):
         raise NotImplementedError('It is strange to call plot_data method from a plot_data object.'
                                   f' Check the class {self.__class__.__name__} you are calling')
 
+
 class HatchingSet(DessiaObject):
     """
     A class for setting hatchings on a surface.
@@ -114,7 +114,7 @@ class EdgeStyle(DessiaObject):
     :type dashline: List[float]
     """
 
-    def __init__(self, line_width: float = None, color_stroke: colors.Color = None,
+    def __init__(self, line_width: float = None, color_stroke: plot_data.colors.Color = None,
                  dashline: List[int] = None, name: str = ''):
         self.line_width = line_width
         self.color_stroke = color_stroke
@@ -122,7 +122,7 @@ class EdgeStyle(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=colors.BLACK)
+DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=plot_data.colors.BLACK)
 
 
 class PointStyle(DessiaObject):
@@ -157,7 +157,7 @@ class TextStyle(DessiaObject):
     A class for customizing Text.
 
     :param text_color: the text's color
-    :type text_color: colors.Colors
+    :type text_color: plot_data.colors.Colors
     :param font_size: the font size
     :type font_size: float
     :param font_style: 'Arial', 'Verdana', 'Times New Roman', 'Courier \
@@ -178,7 +178,7 @@ class TextStyle(DessiaObject):
     :type angle: float
     """
 
-    def __init__(self, text_color: colors.Color = None,
+    def __init__(self, text_color: plot_data.colors.Color = None,
                  font_size: float = None,
                  font_style: str = None,
                  text_align_x: str = None, text_align_y: str = None,
@@ -346,7 +346,7 @@ class LineSegment2D(PlotDataObject):
         if self.edge_style and self.edge_style.color_stroke:
             color = self.edge_style.color_stroke.rgb
         else:
-            color = colors.BLACK.rgb
+            color = plot_data.colors.BLACK.rgb
         ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
                 color=color)
         return ax
@@ -371,6 +371,7 @@ class Wire(PlotDataObject):
     :param tooltip: a message that is displayed in a tooltip
     :type tooltip: str
     """
+
     def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None,
                  tooltip: str = None, name: str = ""):
         self.lines = lines
@@ -500,10 +501,10 @@ class Axis(PlotDataObject):
         self.nb_points_y = nb_points_y
         self.graduation_style = graduation_style
         if graduation_style is None:
-            self.graduation_style = TextStyle(text_color=colors.GREY)
+            self.graduation_style = TextStyle(text_color=plot_data.colors.GREY)
         self.axis_style = axis_style
         if axis_style is None:
-            self.axis_style = EdgeStyle(color_stroke=colors.LIGHTGREY)
+            self.axis_style = EdgeStyle(color_stroke=plot_data.colors.LIGHTGREY)
         self.arrow_on = arrow_on
         self.grid_on = grid_on
         PlotDataObject.__init__(self, type_='axis', name=name)
@@ -537,11 +538,11 @@ class Tooltip(PlotDataObject):
         self.text = text
         self.surface_style = surface_style
         if surface_style is None:
-            self.surface_style = SurfaceStyle(color_fill=colors.LIGHTBLUE,
+            self.surface_style = SurfaceStyle(color_fill=plot_data.colors.LIGHTBLUE,
                                               opacity=0.75)
         self.text_style = text_style
         if text_style is None:
-            self.text_style = TextStyle(text_color=colors.BLACK, font_size=10)
+            self.text_style = TextStyle(text_color=plot_data.colors.BLACK, font_size=10)
         self.tooltip_radius = tooltip_radius
         PlotDataObject.__init__(self, type_='tooltip', name=name)
 
@@ -609,7 +610,7 @@ class Graph2D(PlotDataObject):
     :type log_scale_y: bool
     """
 
-    def __init__(self, graphs: List[Dataset], x_variable: str, y_variable:str,
+    def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str,
                  axis: Axis = None, log_scale_x: bool = None,
                  log_scale_y: bool = None, name: str = ''):
         self.graphs = graphs
@@ -643,13 +644,16 @@ class Heatmap(DessiaObject):
     Heatmap is a scatter plot's view. This class contains the Heatmap's parameters.
     :param size: A tuple of two integers corresponding to the number of squares on the horizontal and vertical sides.
     :type size: Tuple[int, int]
-    :param colors: The list of colors ranging from low density to high density, e.g. colors=[colors.BLUE, colors.RED] \
+    :param colors: The list of colors ranging from low density to high density, \
+    e.g. colors=[plot_data.colors.BLUE, plot_data.colors.RED] \
     so the low density areas tend to be blue while higher density areas tend to be red.
     :type colors: List[Colors]
     :param edge_style: The areas separating lines settings
     :type edge_style: EdgeStyle
     """
-    def __init__(self, size: Tuple[int, int]=None, colors:List[colors.Color]=None, edge_style:EdgeStyle=None, name:str=''):
+
+    def __init__(self, size: Tuple[int, int] = None, colors: List[plot_data.colors.Color] = None,
+                 edge_style: EdgeStyle = None, name: str = ''):
         self.size = size
         self.colors = colors
         self.edge_style = edge_style
@@ -778,7 +782,7 @@ class Arc2D(PlotDataObject):
         if self.edge_style:
             edgecolor = self.edge_style.color_stroke
         else:
-            edgecolor = colors.BLACK.rgb
+            edgecolor = plot_data.colors.BLACK.rgb
 
         ax.add_patch(
             patches.Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
@@ -823,8 +827,8 @@ class Contour2D(PlotDataObject):
         for plot_data_primitive in self.plot_data_primitives:
             if hasattr(plot_data_primitive, 'bounding_box'):
                 bb = plot_data_primitive.bounding_box()
-                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax,bb[1]), \
-                                         min(ymin, bb[2]), max(ymax, bb[3])
+                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax, bb[1]), \
+                    min(ymin, bb[2]), max(ymax, bb[3])
 
         return xmin, xmax, ymin, ymax
 
@@ -883,11 +887,11 @@ class PrimitiveGroup(PlotDataObject):
     :param primitives: a list of Contour2D, Arc2D, LineSegment2D, \
     Circle2D, Line2D or MultipleLabels
     :type primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D, MultipleLabels, Wire]]
+    Circle2D, Line2D, MultipleLabels, Wire, Point2D]]
     """
 
-    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D, MultipleLabels, Wire]],
+    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
+                                              Circle2D, Line2D, MultipleLabels, Wire, Point2D]],
                  name: str = ''):
         self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)
@@ -951,7 +955,7 @@ class PrimitiveGroupsContainer(PlotDataObject):
             if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
         self.primitive_groups = primitive_groups
-        if sizes is not None and type(sizes[0]) == int:
+        if sizes is not None and isinstance(sizes[0], int):
             sizes = [sizes] * len(primitive_groups)
         self.sizes = sizes
         self.coords = coords
@@ -1090,7 +1094,7 @@ class MultiplePlots(PlotDataObject):
     """
 
     def __init__(self, plots: List[Subclass[PlotDataObject]],
-                 sizes: List[Window] = None, elements: List[any] = None,
+                 sizes: List[Window] = None, elements: List[Any] = None,
                  coords: List[Tuple[float, float]] = None,
                  point_families: List[PointFamily] = None,
                  initial_view_on: bool = None,
@@ -1134,7 +1138,7 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     plot_type = data['type_']
     if plot_type == 'primitivegroup':
         template = templates.contour_template
-    elif plot_type == 'scatterplot' or plot_type == 'graph2d':
+    elif plot_type in ('scatterplot', 'graph2d'):
         template = templates.scatter_template
     elif plot_type == 'parallelplot':
         template = templates.parallelplot_template
@@ -1193,10 +1197,8 @@ def get_csv_vectors(filepath):
     set to multiple_plots' or parallelplot's elements for example.
     :rtype: List[dict]
     """
-    lines, variables = from_csv(filename=filepath)
-    catalog = Catalog(array=lines, variables=variables,
-                      pareto_settings=ParetoSettings({}, enabled=False))
-    return catalog
+    raise NotImplementedError("get_csv_vectors function is not implemented anymore"
+                              "as dessia_common's vectored_objects as been removed")
 
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
@@ -1219,9 +1221,9 @@ def bounding_box(plot_datas: Subclass[PlotDataObject]):
     :rtype: float, float, float, float
     """
     xmin, xmax, ymin, ymax = math.inf, -math.inf, math.inf, -math.inf
-    for plot_data in plot_datas:
-        if hasattr(plot_data, 'bounding_box'):
-            bb = plot_data.bounding_box()
+    for plot in plot_datas:
+        if hasattr(plot, 'bounding_box'):
+            bb = plot.bounding_box()
             xmin, xmax = min(xmin, bb[0]), max(xmax, bb[1])
             ymin, ymax = min(ymin, bb[2]), max(ymax, bb[3])
 

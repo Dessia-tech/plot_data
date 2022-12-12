@@ -236,9 +236,10 @@ export class Dataset {
                 public elements:any[],
                 public display_step:number,
                 public type_:string,
-                public name:string) {
+                public name:string,
+                public index: number = -1) {
       this.initialize_point_list();
-      this.initialize_segments();
+      this.initialize_segments();    
     }
   
     initialize_point_list() {
@@ -250,6 +251,7 @@ export class Dataset {
         }
         let point = new Point2D(coord[0], coord[1], this.point_style, 'point', '');
         point.index = i;
+        point.dataset_index = this.index;
         this.point_list.push(point);
       } 
     }
@@ -282,7 +284,8 @@ export class Dataset {
                          serialized['elements'],
                          serialized['display_step'],
                          serialized['type_'],
-                         serialized['name']);
+                         serialized['name'],
+                         serialized["index"]);
     }
 }
 
@@ -300,6 +303,7 @@ export class Graph2D {
       var graphs:Dataset[] = [];
       for (let i=0; i<serialized['graphs'].length; i++) {
         serialized['graphs'][i]['attribute_names'] = serialized['attribute_names'];
+        serialized["graphs"][i]["index"] = i;
         graphs.push(Dataset.deserialize(serialized['graphs'][i]));
       }
       var axis = Axis.deserialize(serialized['axis']);
@@ -508,7 +512,8 @@ export class Point2D {
     selected:boolean=false;
     clicked:boolean=false;
     selected_by_heatmap:boolean = false;
-    index:number=-1;
+    index:number=-1; // index in scatter plot's elements
+    dataset_index:number=-1;
   
     constructor(public cx:number,
                 public cy:number,
@@ -609,13 +614,13 @@ export class PrimitiveGroup {
       var temp = serialized['primitives'];
       let classes = {"contour": Contour2D, "text": Text, "linesegment2d": LineSegment2D,
                     "arc": Arc2D, "circle": Circle2D, "line2d": Line2D, 
-                    "multiplelabels": MultipleLabels, "wire": Wire};
+                    "multiplelabels": MultipleLabels, "wire": Wire, "point": Point2D};
       for (let i=0; i<temp.length; i++) {
         primitives.push(classes[temp[i]["type_"]].deserialize(temp[i]));
       }
       return new PrimitiveGroup(primitives,
-                              serialized['type_'],
-                              serialized['name']);
+                                serialized['type_'],
+                                serialized['name']);
     }
 }
 
@@ -772,11 +777,13 @@ export class Text {
   }
 
   public static deserialize(serialized) {
-    var default_text_style = {font_size:12, font_style:'sans-serif', text_color:string_to_rgb('black'),
-                              text_align_x:'start', text_align_y:'alphabetic', angle:0, name:''};
-    var default_dict_ = {text_style:default_text_style};
+    let defaultTextStyle = Text.mixConditions(serialized)
+    var default_dict_ = {text_style:defaultTextStyle};
     serialized = set_default_values(serialized, default_dict_);
     var text_style = TextStyle.deserialize(serialized['text_style']);
+    if (!serialized['text_style']['font_size'] && serialized['max_width'] && !serialized['multi_lines']){
+      text_style['font_size'] = null
+    }
     return new Text(serialized['comment'],
                     serialized['position_x'],
                     -serialized['position_y'],
@@ -788,11 +795,34 @@ export class Text {
                     serialized['name']);
   }
 
-  draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
-    if (this.text_scaling) var font_size = this.text_style.font_size * scaleX/this.init_scale;
-    else font_size = this.text_style.font_size;
+  private static mixConditions(serialized) {
+    let defaultTextStyle = {font_size: null, font_style: 'sans-serif', text_color: string_to_rgb('black'),
+                            text_align_x: 'start', text_align_y: 'alphabetic', angle: 0, name: ''};
+    if (serialized['text_style']) {
+      if (!serialized['text_style']['font_size'] && !serialized['max_width']) {
+        defaultTextStyle['font_size'] = 12
+      }
+    return defaultTextStyle
+    }
+  }
 
-    context.font = this.text_style.font;
+  private automaticFontSize(context, comment, max_width, scale) {
+    let tmp_context: CanvasRenderingContext2D = context
+    let pxMaxWidth: number = max_width * scale
+    tmp_context.font = "1px " + this.text_style.font_style;
+    return pxMaxWidth / (tmp_context.measureText(comment).width)
+  }
+
+  draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
+    let font_size: number = this.text_style.font_size;
+    if (this.text_style.font_size === null) {
+      font_size = this.automaticFontSize(context, this.comment, this.max_width, this.init_scale)
+    }
+    if (this.text_scaling) {
+      font_size = font_size * scaleX/this.init_scale;
+    }
+ 
+    context.font = font_size + "px " + this.text_style.font_style;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
     context.textBaseline = this.text_style.text_align_y;
@@ -812,14 +842,11 @@ export class Text {
     if (this.max_width) {
       if (this.multi_lines) {
         var cut_texts = this.cutting_text(context, scaleX*this.max_width);
+        let height_offset: number = (cut_texts.length - 1) / 2;
         for (let i=0; i<cut_texts.length; i++) {
-          context.fillText(cut_texts[i], x, y + i * font_size);
+          context.fillText(cut_texts[i], x, y + (i - height_offset) * font_size);
         }
       } else {
-        let init_size = context.measureText(this.comment).width;
-        this.text_style.font_size = scaleX * this.max_width/init_size * this.text_style.font_size;
-        this.text_style.refresh_font();
-        context.font = this.text_style.font;
         context.fillText(this.comment, x, y);
       }
     } else {

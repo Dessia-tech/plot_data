@@ -1,6 +1,6 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
-import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, download } from './utils';
+import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
@@ -263,7 +263,7 @@ export class MultiplePlots {
         text = text + "}\n";
       }
 
-      download("selected_points", text);
+      export_to_txt("selected_points", text);
     }
   
     click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view,
@@ -1207,8 +1207,8 @@ export class MultiplePlots {
           let obj = this.objectList[i];
           if (i === this.clickedPlotIndex) continue;
           if (obj.type_ === "scatterplot") {
-            // obj.heatmap_selected_points = clicked_object.heatmap_selected_points;
-            // obj.refresh_selected_by_heatmap();
+            obj.heatmap_selected_points_indices = clicked_object.heatmap_selected_points_indices;
+            obj.refresh_selected_by_heatmap(); 
           } else if (obj.type_ === "parallelplot") {
             obj.heatmap_selected_points_indices = clicked_object.heatmap_selected_points_indices;
           }

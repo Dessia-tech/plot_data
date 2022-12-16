@@ -1,6 +1,6 @@
 
 
-import dessia_common as dc
+import dessia_common.core as dc
 from matplotlib.colors import hsv_to_rgb
 
 

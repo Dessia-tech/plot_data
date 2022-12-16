@@ -18,9 +18,8 @@ import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
-from dessia_common import DessiaObject, full_classname
+from dessia_common.core import DessiaObject, full_classname
 from dessia_common.typings import Subclass
-from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
 
 from plot_data import templates
 import plot_data.colors
@@ -1186,23 +1185,6 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         if display:
             webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
-
-
-def get_csv_vectors(filepath):
-    """
-    :param filepath: the csv file's relative path, starting from the \
-    script's path.
-    :type filepath: str
-
-    :return: a list of vectors (ie a list of dictionaries) that can be \
-    set to multiple_plots' or parallelplot's elements for example.
-    :rtype: List[dict]
-    """
-    lines, variables = from_csv(filename=filepath)
-    catalog = Catalog(array=lines, variables=variables,
-                      pareto_settings=ParetoSettings({}, enabled=False))
-    return catalog
-
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'contour': Contour2D, 'graph2D': Dataset,

@@ -1186,6 +1186,19 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
             webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
 
+def get_csv_vectors(filepath):
+    """
+    :param filepath: the csv file's relative path, starting from the \
+    script's path.
+    :type filepath: str
+
+    :return: a list of vectors (ie a list of dictionaries) that can be \
+    set to multiple_plots' or parallelplot's elements for example.
+    :rtype: List[dict]
+    """
+    raise NotImplementedError("get_csv_vectors function is not implemented anymore"
+                              "as dessia_common's vectored_objects as been removed")
+
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'contour': Contour2D, 'graph2D': Dataset,
                  'graphs2D': Graph2D, 'linesegment2d': LineSegment,

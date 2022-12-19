@@ -18,11 +18,18 @@ import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
-from dessia_common.core import DessiaObject, full_classname
+from dessia_common.core import DessiaObject
 from dessia_common.typings import Subclass
 
 from plot_data import templates
 import plot_data.colors
+
+try:
+    # dessia_common >= 0.12.0
+    from dessia_common.utils.types import full_classname
+except ImportError:
+    # dessia_common < 0.12.0. Considering removing the whole full_classname import to reduce dc dependency.
+    from dessia_common.core import full_classname
 
 npy.seterr(divide='raise')
 
@@ -67,8 +74,7 @@ class PlotDataObject(DessiaObject):
         """
         type_ = dict_['type_']
         object_class = TYPE_TO_CLASS[type_]
-        dict_['object_class'] = full_classname(object_=object_class,
-                                               compute_for='class')
+        dict_['object_class'] = full_classname(object_=object_class, compute_for='class')
         return DessiaObject.dict_to_object(dict_=dict_, force_generic=True)
 
     def plot_data(self):

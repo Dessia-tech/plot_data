@@ -18,11 +18,18 @@ import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
-from dessia_common.core import DessiaObject, full_classname
 from dessia_common.typings import JsonSerializable
+from dessia_common.core import DessiaObject
 
 from plot_data import templates
 import plot_data.colors
+
+try:
+    # dessia_common >= 0.12.0
+    from dessia_common.utils.types import full_classname
+except ImportError:
+    # dessia_common < 0.12.0. Considering removing the whole full_classname import to reduce dc dependency.
+    from dessia_common.core import full_classname
 
 npy.seterr(divide='raise')
 

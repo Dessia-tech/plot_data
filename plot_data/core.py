@@ -89,13 +89,14 @@ class Sample(PlotDataObject):
         PlotDataObject.__init__(self, type_="sample", name=name)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
-        dict_ = {"reference_path": self.reference_path, "name": self.name}
+        dict_ = PlotDataObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path)
+        dict_.update({"reference_path": self.reference_path, "name": self.name})
         dict_.update(self.values)
         return dict_
 
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'DessiaObject':
+                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'Sample':
         reference_path = dict_.pop("reference_path")
         name = dict_.pop("name")
         return cls(values=dict_, reference_path=reference_path, name=name)
@@ -926,7 +927,8 @@ class PrimitiveGroup(PlotDataObject):
         ax = self.primitives[0].mpl_plot(ax=ax)
         for primitive in self.primitives[1:]:
             primitive.mpl_plot(ax=ax)
-        ax.set_aspect('equal')
+        if equal_aspect:
+            ax.set_aspect('equal')
         return ax
 
     def bounding_box(self):

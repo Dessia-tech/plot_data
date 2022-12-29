@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 
 from dessia_common.typings import JsonSerializable
-from dessia_common.serialization import serialize
 from dessia_common.core import DessiaObject
 
 from plot_data import templates
@@ -31,6 +30,13 @@ try:
 except ImportError:
     # dessia_common < 0.12.0. Considering removing the whole full_classname import to reduce dc dependency.
     from dessia_common.core import full_classname
+
+try:
+    # dessia_common >= 0.12.0
+    from dessia_common.serialization import serialize
+except ImportError
+    # dessia_common < 0.12.0.
+    from dessia_common.utils.serialization import serialize
 
 npy.seterr(divide='raise')
 

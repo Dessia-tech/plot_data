@@ -34,7 +34,7 @@ except ImportError:
 try:
     # dessia_common >= 0.12.0
     from dessia_common.serialization import serialize
-except ImportError
+except ImportError:
     # dessia_common < 0.12.0.
     from dessia_common.utils.serialization import serialize
 

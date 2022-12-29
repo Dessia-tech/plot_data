@@ -86,6 +86,7 @@ class Sample(PlotDataObject):
     """
     Graph Point.
     """
+
     def __init__(self, values, reference_path: str = "#", name: str = ""):
         self.values = values
         self.reference_path = reference_path

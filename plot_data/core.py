@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 from matplotlib import patches
 
 from dessia_common.typings import JsonSerializable
+from dessia_common.serialization import serialize
 from dessia_common.core import DessiaObject
 
 from plot_data import templates
@@ -35,9 +36,7 @@ npy.seterr(divide='raise')
 
 
 def delete_none_from_dict(dict1):
-    """
-    Delete input dictionary's keys where value is None.
-    """
+    """ Delete input dictionary's keys where value is None. """
     dict2 = {}
     for key, value in dict1.items():
         if isinstance(value, dict):
@@ -49,18 +48,14 @@ def delete_none_from_dict(dict1):
 
 
 class PlotDataObject(DessiaObject):
-    """
-    Abstract interface for DessiaObject implementation in module
-    """
+    """ Abstract interface for DessiaObject implementation in module. """
 
     def __init__(self, type_: str, name: str = '', **kwargs):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
-        """
-        Redefines DessiaObject's to_dict() in order to not use pointers and remove keys where value is None.
-        """
+        """ Redefines DessiaObject's to_dict() in order to not use pointers and remove keys where value is None. """
         dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
         new_dict_ = delete_none_from_dict(dict_)
@@ -82,6 +77,9 @@ class PlotDataObject(DessiaObject):
 
 
 class Sample(PlotDataObject):
+    """
+    Graph Point.
+    """
     def __init__(self, values, reference_path: str = "#", name: str = ""):
         self.values = values
         self.reference_path = reference_path
@@ -89,17 +87,29 @@ class Sample(PlotDataObject):
         PlotDataObject.__init__(self, type_="sample", name=name)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
+        """
+        Overwrite generic to_dict.
+
+        TODO Check if it can be generic (probably)
+        """
         dict_ = PlotDataObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path)
         dict_.update({"reference_path": self.reference_path, "name": self.name})
-        dict_.update(self.values)
+        dict_.update(serialize(self.values))
+        # TODO Keeping values at dict_ level before refactor, should be removed after and use dict_["values"] instead
         return dict_
 
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
                        pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'Sample':
-        reference_path = dict_.pop("reference_path")
-        name = dict_.pop("name")
-        return cls(values=dict_, reference_path=reference_path, name=name)
+        """
+        Overwrite generic dict_to_object.
+
+        TODO Check if it can be generic (probably)
+        """
+        reference_path = dict_["reference_path"]
+        name = dict_["name"]
+        values = dict_["values"]
+        return cls(values=values, reference_path=reference_path, name=name)
 
     def plot_data(self):
         raise NotImplementedError("Method plot_data is not defined for class Sample.")
@@ -693,30 +703,17 @@ class Scatter(PlotDataObject):
     """
     A class for drawing scatter plots.
 
-    :param elements: A list of vectors. Vectors must have the same \
-    attributes (ie the same keys)
-    :type elements: List[dict]
+    :param elements: A list of vectors. Vectors must have the same attributes (ie the same keys)
     :param x_variable: variable that you want to display on x axis
-    :type x_variable: str
     :param y_variable: variable that you want to display on y axis
-    :type y_variable: str
-    :param tooltip: an object containing all information needed for \
-    drawing tooltips
-    :type tooltip: Tooltip
+    :param tooltip: an object containing all information needed for drawing tooltips
     :param point_style: for points' customization
-    :type point_style: PointStyle
-    :param axis: an object containing all information needed for \
-    drawing axis
-    :type axis: Axis
+    :param axis: an object containing all information needed for drawing axis
     :param log_scale_x: True or False
-    :type log_scale_x: bool
     :param log_scale_y: True or False
-    :type log_scale_y: bool
     :param heatmap: Heatmap view settings
-    :type heatmap: Heatmap
-    :param heatmap_view: Heatmap view when loading the object. If set \
-    to False, you'd still be able to enable it using the button.
-    :type heatmap_view: bool
+    :param heatmap_view: Heatmap view when loading the object.
+        If set to False, you'd still be able to enable it using the button.
     """
 
     def __init__(self, x_variable: str, y_variable: str, tooltip: Tooltip = None, point_style: PointStyle = None,
@@ -727,7 +724,18 @@ class Scatter(PlotDataObject):
         self.point_style = point_style
         if elements is None:
             elements = []
-        self.elements = elements
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type {type(element)} cannot be used as a ScatterPlot data element.")
+        self.elements = sampled_elements
         if not axis:
             self.axis = Axis()
         else:
@@ -1001,25 +1009,31 @@ class ParallelPlot(PlotDataObject):
     """
     Draws a parallel coordinates plot.
 
-    :param elements: a list of vectors. Vectors must have the same \
-    attributes (ie the same keys)
-    :type elements: List[Sample]
+    :param elements: a list of vectors. Vectors must have the same attributes (ie the same keys)
     :param edge_style: for customizing lines
-    :type edge_style: EdgeStyle
-    :param disposition: either 'vertical' or 'horizontal' depending on \
-    how you want the initial disposition to be.
-    :type disposition: str
-    :param axes: a list on attribute names you want \
-    to display as axis on this parallel plot.
-    :type axes: List[str]
-    :param rgbs: a list of rgb255 colors for color interpolation. Color\
-     interpolation is enabled when clicking on an axis.
-    :type rgbs: List[Tuple[int, int, int]]
+    :param disposition: either 'vertical' or 'horizontal'
+        depending on how you want the initial disposition to be.
+    :param axes: a list on attribute names you want to display as axis on this parallel plot.
+    :param rgbs: a list of rgb255 colors for color interpolation.
+        Color interpolation is enabled when clicking on an axis.
     """
 
     def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, disposition: str = None,
                  axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, name: str = ''):
-        self.elements = elements
+        if elements is None:
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type {type(element)} cannot be used as a ParrallelPlot data element.")
+        self.elements = sampled_elements
         self.edge_style = edge_style
         self.disposition = disposition
         self.attribute_names = axes
@@ -1031,11 +1045,8 @@ class Attribute(PlotDataObject):
     """
     Represents an attribute.
 
-    :param type_: The attribute's type (in that case, values are either\
-     'float', 'color' or 'string')
-    :type type_: str
+    :param type_: The attribute's type (in that case, values are either 'float', 'color' or 'string')
     :param name: The attribute's name
-    :type name: str
     """
 
     def __init__(self, type_: str, name: str):
@@ -1044,14 +1055,10 @@ class Attribute(PlotDataObject):
 
 class PointFamily(PlotDataObject):
     """
-    A class that defines a point family. This class can be used in \
-    MultiplePlots to create families of points.
+    A class that defines a point family. This class can be used in MultiplePlots to create families of points.
 
     :param point_color: a color that is proper to this family (rgb255)
-    :type point_color: str
-    :param point_index: a list containing the point's index from \
-    MultiplePlots.elements
-    :type point_index: List[int]
+    :param point_index: a list containing the point's index from MultiplePlots.elements
     """
 
     def __init__(self, point_color: str, point_index: List[int],
@@ -1094,31 +1101,33 @@ class Histogram(PlotDataObject):
 
 class MultiplePlots(PlotDataObject):
     """
-    A class for drawing multiple PlotDataObjects (except MultiplePlots)\
-     in one canvas.
+    A class for drawing multiple PlotDataObjects (except MultiplePlots) in one canvas.
 
-    :param plots: a list of plots (Scatter, ParallelPlot, \
-    PrimitiveGroup, PrimitiveGroupContainer, Graph2D)
-    :type plots: List[PlotDataObject]
-    :param sizes: [size0,...,size_n] where size_i = [width_i, length_i]\
-     is the size of plots[i]
-    :type sizes: List[Window]
-    :param elements: a list of vectors. All vectors must have the same \
-    attributes (ie the same keys)
-    :type elements: List[Sample]
+    :param plots: a list of plots (Scatter, ParallelPlot,  PrimitiveGroup, PrimitiveGroupContainer, Graph2D)
+    :param sizes: [size0,...,size_n] where size_i = [width_i, length_i] is the size of plots[i]
+    :param elements: a list of vectors. All vectors must have the same attributes (ie the same keys)
     :param coords: same as sizes but for plots' coordinates.
-    :type coords: List[Tuple[float, float]]
     :param point_families: a list of point families
-    :type point_families: List[PointFamily]
-    :param initial_view_on: True for enabling initial layout, False \
-    otherwise
-    :type initial_view_on: bool
+    :param initial_view_on: True for enabling initial layout, False  otherwise
     """
 
     def __init__(self, plots: List[PlotDataObject], sizes: List[Window] = None, elements: List[Sample] = None,
                  coords: List[Tuple[float, float]] = None, point_families: List[PointFamily] = None,
                  initial_view_on: bool = None, name: str = ''):
-        self.elements = elements
+        if elements is None:
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type '{type(element)}' cannot be used as a MultiPlot data element.")
+        self.elements = sampled_elements
         self.plots = plots
         self.sizes = sizes
         self.coords = coords

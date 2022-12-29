@@ -73,31 +73,32 @@ class PlotDataObject(DessiaObject):
         type_ = dict_['type_']
         object_class = TYPE_TO_CLASS[type_]
         dict_['object_class'] = full_classname(object_=object_class, compute_for='class')
-        return DessiaObject.dict_to_object(dict_=dict_, force_generic=True)
+        return DessiaObject.dict_to_object(dict_=dict_, force_generic=True, global_dict=global_dict,
+                                           pointers_memo=pointers_memo, path=path)
 
     def plot_data(self):
-        raise NotImplementedError('It is strange to call plot_data method from a plot_data object.'
-                                  f' Check the class {self.__class__.__name__} you are calling')
+        raise NotImplementedError("It is strange to call plot_data method from a plot_data object."
+                                  f" Check the class '{self.__class__.__name__}' you are calling")
 
 
 class Sample(PlotDataObject):
-    def __init__(self, values, path: str = "#", name: str = ""):
+    def __init__(self, values, reference_path: str = "#", name: str = ""):
         self.values = values
-        self.path = path
+        self.reference_path = reference_path
 
         PlotDataObject.__init__(self, type_="sample", name=name)
 
     def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
-        dict_ = {"path": self.path, "name": self.name}
+        dict_ = {"reference_path": self.reference_path, "name": self.name}
         dict_.update(self.values)
         return dict_
 
     @classmethod
     def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
                        pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'DessiaObject':
-        path = dict_.pop("path")
+        reference_path = dict_.pop("reference_path")
         name = dict_.pop("name")
-        return cls(values=dict_, path=path, name=name)
+        return cls(values=dict_, reference_path=reference_path, name=name)
 
     def plot_data(self):
         raise NotImplementedError("Method plot_data is not defined for class Sample.")

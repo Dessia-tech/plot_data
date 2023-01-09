@@ -9,9 +9,7 @@ parallel_plot = plot_data.ParallelPlot(axes=axes)
 scatter_plot = plot_data.Scatter(x_variable='price_wather', y_variable='length_wather')
 
 catalog = plot_data.get_csv_vectors('../plot_data/data/data.csv')
-points = [{var: catalog.get_value_by_name(line, var)
-           for var in axes}
-          for line in catalog.array]
+points = [{var: catalog.get_value_by_name(line, var) for var in axes} for line in catalog.array]
 
 plots = [parallel_plot, scatter_plot]
 

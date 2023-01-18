@@ -18,7 +18,7 @@ import numpy as npy
 import matplotlib.pyplot as plt
 from matplotlib import patches
 
-from dessia_common.core import DessiaObject, full_classname
+from dessia_common.core import DessiaObject
 from dessia_common.typings import JsonSerializable
 import dessia_common.files as dcf
 
@@ -1241,21 +1241,8 @@ def get_csv_vectors(file: dcf.StringFile, end: int = None, remove_duplicates: bo
     :rtype: List[dict]
 
     """
-<<<<<<< HEAD
-    array = npy.genfromtxt(file, dtype=None, delimiter=',', names=True, encoding=None)
-    variables = list(array.dtype.fields.keys())
-    lines = []
-    for i, line in enumerate(array):
-        if end is not None and i >= end:
-            break
-        if not remove_duplicates or (remove_duplicates and line.tolist() not in lines):
-            lines.append({variable: value for variable, value in zip(variables, line.tolist())})
-    return lines
-=======
     raise NotImplementedError("get_csv_vectors function is not implemented anymore"
                               "as dessia_common's vectored_objects as been removed")
->>>>>>> origin/master
-
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'contour': Contour2D, 'graph2D': Dataset,

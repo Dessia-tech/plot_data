@@ -12,8 +12,7 @@ for i in range(50):
     elements.append({'mass': random.uniform(0, 50),
                      'length': random.uniform(0, 100),
                      'shape': random_shape,
-                     'color': random_color
-                     })
+                     'color': random_color})
 
 
 scatterplot = plot_data.Scatter(elements=elements,

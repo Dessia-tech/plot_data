@@ -9,7 +9,9 @@
     "strictPropertyInitialization": false,
     "strictNullChecks": false,
     "allowJs": true,
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "lib": ["DOM", "es2019"],
+    "types": ["cypress"]
   },
   "include": ["src"],
   "exclude": ["node_modules", "**/__tests__/*"]

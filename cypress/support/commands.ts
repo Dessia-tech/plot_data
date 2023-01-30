@@ -1,3 +1,5 @@
+import compareSnapshotCommand from 'cypress-visual-regression/dist/command';
+
 /// <reference types="cypress" />
 // ***********************************************
 // This example commands.ts shows you how to
@@ -35,3 +37,5 @@
 //     }
 //   }
 // }
+
+compareSnapshotCommand({capture: 'fullPage'});

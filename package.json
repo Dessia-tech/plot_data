@@ -5,7 +5,7 @@
   "main": "./lib/core.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx cypress run --env type=actual",
     "dev": "webpack --config webpack-dev.config.cjs",
     "build": "webpack --config webpack.config.js",
     "format": "prettier --write \"src/**/*.ts\"",

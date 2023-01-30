@@ -5,6 +5,7 @@
   "main": "./lib/core.js",
   "type": "module",
   "scripts": {
+    "base-test": "npx cypress run --env type=base",
     "test": "npx cypress run --env type=actual",
     "dev": "webpack --config webpack-dev.config.cjs",
     "build": "webpack --config webpack.config.js",

@@ -7,7 +7,7 @@ export default defineConfig({
     trashAssetsBeforeRuns: true,
     video: false,
     failSilently: false,
-    type: 'actual' //'actual',
+    type: 'actual' //'base',
   },
   e2e: {
     setupNodeEvents(on, config) {

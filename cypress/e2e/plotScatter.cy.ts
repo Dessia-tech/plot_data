@@ -1,6 +1,7 @@
 import { htmlString } from '../templates/plotScatter.template';
 import { HtmlWriter } from '../support/HtmlWriter';
 import { plotScatterData } from '../data_src/plotScatter.data';
+import { PlotData } from '../../libdev/plot-data';
 
 describe('template spec', () => {
   const fileName = "plotScatter"

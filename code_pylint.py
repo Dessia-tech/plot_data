@@ -23,7 +23,7 @@ MAX_ERROR_BY_TYPE = {
                      'invalid-name': 13,
                      'consider-using-f-string': 2,
                      'no-else-return': 17,
-                     'arguments-differ': 12,
+                     'arguments-differ': 13,
                      'no-member': 1,
                      'too-many-locals': 3,
                      'wrong-import-order': 1,

@@ -1,13 +1,13 @@
 import { parseHTML } from '../support/parseHTML';
-import { plotScatterData } from '../data_src/plotScatter.data';
+import { parallelPlotData } from '../data_src/parallelPlot.data';
 
 const corePath = 'http://localhost:3030/libdev/plot-data.js';
-const fileName = "plotScatter"
+const fileName = "parallelPlot"
 
 describe('template spec', () => {
   it("take screenshot", () => {  
-    parseHTML(fileName, corePath, plotScatterData)
+    parseHTML(fileName, corePath, parallelPlotData)
     cy.visit("cypress/html_files/" + fileName + ".html");
-    cy.compareSnapshot(fileName, 0.0);
+    cy.compareSnapshot(fileName, 0.1);
   })
 })

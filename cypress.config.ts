@@ -1,5 +1,6 @@
 import { defineConfig } from "cypress";
 import getCompareSnapshotsPlugin from "cypress-visual-regression/dist/plugin";
+import fs from 'fs'
 
 export default defineConfig({
   env: {

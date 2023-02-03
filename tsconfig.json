@@ -13,6 +13,6 @@
     "lib": ["DOM", "es2019"],
     "types": ["cypress", "cypress-visual-regression", "node"]
   },
-  "include": ["src"],
+  "include": ["src", "cypress/**/*.ts"],
   "exclude": ["node_modules", "**/__tests__/*"]
 }

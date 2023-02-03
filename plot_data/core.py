@@ -26,13 +26,6 @@ import plot_data.colors
 
 try:
     # dessia_common >= 0.12.0
-    from dessia_common.utils.types import full_classname
-except ImportError:
-    # dessia_common < 0.12.0. Considering removing the whole full_classname import to reduce dc dependency.
-    from dessia_common.core import full_classname
-
-try:
-    # dessia_common >= 0.12.0
     from dessia_common.serialization import serialize
 except ImportError:
     # dessia_common < 0.12.0.

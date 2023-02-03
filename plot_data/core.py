@@ -73,7 +73,7 @@ class PlotDataObject(DessiaObject):
         """ Reset object_class in order to instantiate right object. """
         type_ = dict_['type_']
         object_class = TYPE_TO_CLASS[type_]
-        dict_['object_class'] = full_classname(object_=object_class, compute_for='class')
+        dict_["object_class"] = f"{object_class.__module__}.{object_class.__name__}"
         return DessiaObject.dict_to_object(dict_=dict_, force_generic=True, global_dict=global_dict,
                                            pointers_memo=pointers_memo, path=path)
 

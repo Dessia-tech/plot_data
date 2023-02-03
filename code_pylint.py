@@ -49,7 +49,7 @@ MAX_ERROR_BY_TYPE = {
                      'consider-iterating-dictionary': 4,
                      'attribute-defined-outside-init': 3,
                      'simplifiable-if-expression': 3,
-                     'broad-except': 1,
+                     'broad-exception-caught': 1,
                      'consider-using-get': 2,
                      'undefined-loop-variable': 2,
                      'consider-using-with': 2,

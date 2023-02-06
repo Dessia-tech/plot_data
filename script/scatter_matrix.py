@@ -17,3 +17,4 @@ for i in range(50):
 
 scatter_matrix = plot_data.ScatterMatrix(elements=elements)
 plot_data.plot_canvas(scatter_matrix, True)
+plot_data.plot_canvas(scatter_matrix, True, page_name="scattermatrix.template")

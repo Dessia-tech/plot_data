@@ -77,3 +77,4 @@ multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
 
 # Display
 plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True, page_name="multiplot.template")

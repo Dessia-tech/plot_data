@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <script src=$core_path></script>
+  </head>
+  <body>
+    <div id="app">
+        <canvas id="canvas" width="490" height="490"
+                    style="border: 1px solid black;">
+        </canvas>
+
+        <!-- Sets the basepath for the library if not in same directory -->
+        <script src=$core_path></script>
+
+        <script type="text/javascript">
+            var width = 0.95*window.innerWidth;
+            var height = Math.max(0.95*window.innerHeight, 350);
+
+            var data = {"package_version": "0.10.10.dev3", "name": "", "elements": [{"mass": 14.824625400108538, "length": 42.10595724445299, "shape": "triangle", "color": "rgb(0,193,18)"}, {"mass": 20.24805388197619, "length": 44.63889499182974, "shape": "triangle", "color": "rgb(0,193,18)"}, {"mass": 24.269828189128184, "length": 83.76228544455337, "shape": "square", "color": "rgb(247,0,0)"}, {"mass": 4.3266047379166785, "length": 75.18936706479008, "shape": "square", "color": "rgb(0,193,18)"}, {"mass": 3.9163789838701946, "length": 75.17653031766216, "shape": "triangle", "color": "rgb(244,255,0)"}, {"mass": 22.03431708973588, "length": 49.866327591188245, "shape": "triangle", "color": "rgb(0,19,254)"}, {"mass": 15.281360602097676, "length": 8.21345302989267, "shape": "round", "color": "rgb(244,255,0)"}, {"mass": 13.870983965519152, "length": 71.2708852719953, "shape": "square", "color": "rgb(244,255,0)"}, {"mass": 48.98633709869866, "length": 90.64665100287105, "shape": "square", "color": "rgb(247,0,0)"}, {"mass": 48.25151073373351, "length": 75.9745413572888, "shape": "round", "color": "rgb(0,193,18)"}, {"mass": 10.38711036403932, "length": 14.554018847924644, "shape": "triangle", "color": "rgb(0,19,254)"}, {"mass": 12.717726440540101, "length": 78.71509997853595, "shape": "round", "color": "rgb(247,0,0)"}, {"mass": 13.077025434507716, "length": 90.79813975054202, "shape": "triangle", "color": "rgb(247,0,0)"}, {"mass": 19.366395673698488, "length": 44.083269979432416, "shape": "ellipse", "color": "rgb(244,255,0)"}, {"mass": 46.709138717808166, "length": 21.815619677663445, "shape": "round", "color": "rgb(0,19,254)"}, {"mass": 19.451762857903056, "length": 2.4560160825821686, "shape": "square", "color": "rgb(0,193,18)"}, {"mass": 9.595558094336615, "length": 58.233771035785864, "shape": "square", "color": "rgb(0,193,18)"}, {"mass": 40.94403054765519, "length": 44.16470629173339, "shape": "triangle", "color": "rgb(0,193,18)"}, {"mass": 28.997715410372464, "length": 12.434097280162437, "shape": "square", "color": "rgb(0,19,254)"}, {"mass": 40.187041311163, "length": 32.80235692393557, "shape": "round", "color": "rgb(0,19,254)"}, {"mass": 44.795055750895294, "length": 38.494626665395096, "shape": "round", "color": "rgb(0,19,254)"}, {"mass": 7.5366357917030395, "length": 33.39057217005319, "shape": "ellipse", "color": "rgb(0,193,18)"}, {"mass": 9.141796954552339, "length": 95.25470182776307, "shape": "round", "color": "rgb(0,193,18)"}, {"mass": 35.548593166989015, "length": 50.15073192613186, "shape": "ellipse", "color": "rgb(244,255,0)"}, {"mass": 30.87177182352519, "length": 48.26108595593972, "shape": "triangle", "color": "rgb(244,255,0)"}, {"mass": 0.36973731517558894, "length": 83.40188679484739, "shape": "round", "color": "rgb(247,0,0)"}, {"mass": 47.459694065747264, "length": 87.14794086878392, "shape": "round", "color": "rgb(247,0,0)"}, {"mass": 3.8619016233632064, "length": 20.373343130491417, "shape": "ellipse", "color": "rgb(0,193,18)"}, {"mass": 6.0606267949026185, "length": 68.6189528294566, "shape": "round", "color": "rgb(244,255,0)"}, {"mass": 18.252745410205744, "length": 56.07470278060027, "shape": "ellipse", "color": "rgb(0,19,254)"}, {"mass": 6.276453103611263, "length": 13.743980494486753, "shape": "round", "color": "rgb(247,0,0)"}, {"mass": 16.39427055489568, "length": 82.53896373229198, "shape": "round", "color": "rgb(0,19,254)"}, {"mass": 39.776492460861085, "length": 78.01664976656666, "shape": "square", "color": "rgb(244,255,0)"}, {"mass": 4.2569231160282435, "length": 44.504218784712094, "shape": "ellipse", "color": "rgb(0,193,18)"}, {"mass": 7.129338109966393, "length": 13.703597128935396, "shape": "round", "color": "rgb(0,193,18)"}, {"mass": 24.508889359657882, "length": 52.858284895602125, "shape": "ellipse", "color": "rgb(244,255,0)"}, {"mass": 17.272848804684916, "length": 25.979994043250176, "shape": "square", "color": "rgb(244,255,0)"}, {"mass": 20.80422518879673, "length": 83.78668431230766, "shape": "round", "color": "rgb(244,255,0)"}, {"mass": 27.740953433085686, "length": 13.581184050482342, "shape": "ellipse", "color": "rgb(244,255,0)"}, {"mass": 44.255909639524155, "length": 3.0286748347872594, "shape": "triangle", "color": "rgb(244,255,0)"}, {"mass": 46.91679029252272, "length": 73.38120940132356, "shape": "ellipse", "color": "rgb(0,193,18)"}, {"mass": 41.0110314406765, "length": 33.947223857895146, "shape": "round", "color": "rgb(0,19,254)"}, {"mass": 9.40212392215557, "length": 30.16963035320661, "shape": "ellipse", "color": "rgb(244,255,0)"}, {"mass": 7.415928538767441, "length": 73.35291698277987, "shape": "ellipse", "color": "rgb(244,255,0)"}, {"mass": 20.533336015925975, "length": 98.12957292531858, "shape": "ellipse", "color": "rgb(244,255,0)"}, {"mass": 17.55565390224081, "length": 23.13217837785474, "shape": "round", "color": "rgb(247,0,0)"}, {"mass": 5.850701887049064, "length": 43.84546631128473, "shape": "square", "color": "rgb(0,19,254)"}, {"mass": 40.70938883207539, "length": 62.087115916082446, "shape": "round", "color": "rgb(247,0,0)"}, {"mass": 30.22349259142269, "length": 42.941476263739986, "shape": "square", "color": "rgb(247,0,0)"}, {"mass": 45.42473336472743, "length": 26.96263886732355, "shape": "round", "color": "rgb(244,255,0)"}], "type_": "scattermatrix"};
+            var number_plot_data = data.length
+
+            var plot_data = new PlotData.ScatterMatrix(
+                data, width, height, true, 0, 0, canvas.id
+            );
+            plot_data.define_canvas(canvas.id);
+            plot_data.draw_initial();
+            plot_data.mouse_interaction(plot_data.isParallelPlot);
+        </script>
+    </div>
+  </body>
+</html>

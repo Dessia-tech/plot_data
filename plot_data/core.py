@@ -1260,6 +1260,33 @@ def write_html(plot_data_object: PlotDataObject, debug_mode: bool = False, canva
 def plot_canvas(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
                   force_version: str = None, width: int = 750, height: int = 400, page_name: str = None,
                   display: bool = True):
+    """
+    Creates a html file and plots input data in web browser.
+
+    :param plot_data_object:
+        a PlotDataObject(ie Scatter, ParallelPlot, MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
+    :type plot_data_object: PlotDataObject
+
+    :param debug_mode:
+        uses local library if True, uses typescript library from cdn if False
+    :type debug_mode: bool
+
+    :param canvas_id:
+        set canvas' id, ie name
+    :type canvas_id: str
+
+    :param width:
+        set the canvas' width:
+    :type width: str
+
+    :param height:
+        set the canvas' height
+    :type height: str
+
+    :param page_name:
+        set the created html file's name
+    :type page_name: str
+    """
     html_string = write_html(plot_data_object=plot_data_object, debug_mode=debug_mode, canvas_id=canvas_id,
                              force_version=force_version, width=width, height=height, page_name=page_name)
 

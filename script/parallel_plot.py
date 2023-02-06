@@ -1,5 +1,5 @@
 import plot_data
-from plot_data.colors import *
+from plot_data.colors import RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET
 import random
 
 elements = []

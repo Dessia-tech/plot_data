@@ -12,6 +12,7 @@ import tempfile
 import webbrowser
 import warnings
 from typing import List, Tuple, Any, Union, Dict
+from string import Template
 
 import numpy as npy
 
@@ -1143,83 +1144,140 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_data_object: PlotDataObject,
-                debug_mode: bool = False, canvas_id: str = 'canvas',
-                force_version: str = None,
-                width: int = 750, height: int = 400, page_name: str = None,
-                display: bool = True):
-    """
-    Creates a html file and plots input data in web browser
+# def plot_canvas(plot_data_object: PlotDataObject,
+#                 debug_mode: bool = False, canvas_id: str = 'canvas',
+#                 force_version: str = None,
+#                 width: int = 750, height: int = 400, page_name: str = None,
+#                 display: bool = True):
+#     """
+#     Creates a html file and plots input data in web browser
 
-    :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
-     MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
-    :type plot_data_object: PlotDataObject
-    :param debug_mode: uses local library if True, uses typescript \
-    library from cdn if False
-    :type debug_mode: bool
-    :param canvas_id: set canvas' id, ie name
-    :type canvas_id: str
-    :param width: set the canvas' width:
-    :type width: str
-    :param height: set the canvas' height
-    :type height: str
-    :param page_name: set the created html file's name
-    :type page_name: str
-    """
-    first_letter = canvas_id[0]
-    if not isinstance(first_letter, str):
+#     :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
+#      MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
+#     :type plot_data_object: PlotDataObject
+#     :param debug_mode: uses local library if True, uses typescript \
+#     library from cdn if False
+#     :type debug_mode: bool
+#     :param canvas_id: set canvas' id, ie name
+#     :type canvas_id: str
+#     :param width: set the canvas' width:
+#     :type width: str
+#     :param height: set the canvas' height
+#     :type height: str
+#     :param page_name: set the created html file's name
+#     :type page_name: str
+#     """
+#     first_letter = canvas_id[0]
+#     if not isinstance(first_letter, str):
+#         raise ValueError('canvas_id argument must not start with a number')
+#     data = plot_data_object.to_dict()
+#     plot_type = data['type_']
+#     if plot_type == 'primitivegroup':
+#         template = templates.contour_template
+#     elif plot_type in ('scatterplot', 'graph2d'):
+#         template = templates.scatter_template
+#     elif plot_type == 'parallelplot':
+#         template = templates.parallelplot_template
+#     elif plot_type == 'multiplot':
+#         template = templates.multiplot_template
+#     elif plot_type == 'primitivegroupcontainer':
+#         template = templates.primitive_group_container_template
+#     elif plot_type == 'histogram':
+#         template = templates.histogram_template
+#     elif plot_type == "scattermatrix":
+#         template = templates.scatter_matrix_template
+#     else:
+#         raise NotImplementedError('Type {} not implemented'.format(plot_type))
+
+
+#     if force_version is not None:
+#         version, folder, filename = get_current_link(version=force_version)
+#     else:
+#         version, folder, filename = get_current_link()
+#     cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/{}'
+#     lib_path = cdn_url.format(version, filename)
+#     if debug_mode:
+#         core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
+
+#         if not os.path.isfile(core_path):
+#             msg = 'Local compiled {} not found, fall back to CDN'
+#             print(msg.format(core_path))
+#         else:
+#             lib_path = core_path
+
+#     s = template.substitute(data=json.dumps(data), core_path=lib_path,
+#                             canvas_id=canvas_id, width=width, height=height)
+#     if page_name is None:
+#         temp_file = tempfile.mkstemp(suffix='.html')[1]
+
+#         with open(temp_file, 'wb') as file:
+#             file.write(s.encode('utf-8'))
+
+#         if display:
+#             webbrowser.open('file://' + temp_file)
+#         print('file://' + temp_file)
+#     else:
+#         with open(page_name + '.html', 'wb') as file:
+#             file.write(s.encode('utf-8'))
+#         if display:
+#             webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
+#         print(page_name + '.html')
+
+
+def write_html(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
+              force_version: str = None, width: int = 750, height: int = 400, page_name: str = ''):
+    if canvas_id[0].isdigit():
         raise ValueError('canvas_id argument must not start with a number')
+
     data = plot_data_object.to_dict()
-    plot_type = data['type_']
-    if plot_type == 'primitivegroup':
-        template = templates.contour_template
-    elif plot_type in ('scatterplot', 'graph2d'):
-        template = templates.scatter_template
-    elif plot_type == 'parallelplot':
-        template = templates.parallelplot_template
-    elif plot_type == 'multiplot':
-        template = templates.multiplot_template
-    elif plot_type == 'primitivegroupcontainer':
-        template = templates.primitive_group_container_template
-    elif plot_type == 'histogram':
-        template = templates.histogram_template
-    elif plot_type == "scattermatrix":
-        template = templates.scatter_matrix_template
-    else:
-        raise NotImplementedError('Type {} not implemented'.format(plot_type))
+    local_path = os.path.dirname(os.getcwd())
+    templates_path = f"{local_path}/plot_data/html_templates/"
 
-    if force_version is not None:
-        version, folder, filename = get_current_link(version=force_version)
-    else:
-        version, folder, filename = get_current_link()
-    cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/{}'
-    lib_path = cdn_url.format(version, filename)
+    try:
+        template = templates_path + data['type_'].lower() + ".template.html"
+        with open(template, 'r') as file:
+            html_string = Template(file.read())
+    except FileNotFoundError:
+        raise NotImplementedError(f"{data['type_']} not implemented.")
+
+    version, folder, filename = get_current_link(version=force_version)
+    lib_path = f"https://cdn.dessia.tech/js/plot-data/{version}/{filename}"
+
     if debug_mode:
-        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
+        core_path = f"{local_path}/{folder}/{filename}"
+        if os.path.isfile(core_path):
+            if page_name is not None and ".template" in page_name:
+                return html_string.substitute(data=json.dumps(data), core_path="$core_path", canvas_id=canvas_id,
+                                              width=width, height=height)
+            return html_string.substitute(data=json.dumps(data), core_path=core_path, canvas_id=canvas_id, width=width,
+                                          height=height)
+        print(f"Local compiled {core_path} not found, fall back to CDN")
 
-        if not os.path.isfile(core_path):
-            msg = 'Local compiled {} not found, fall back to CDN'
-            print(msg.format(core_path))
+    return html_string.substitute(data=json.dumps(data), core_path=lib_path, canvas_id=canvas_id, width=width,
+                                  height=height)
+
+
+def plot_canvas(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
+                  force_version: str = None, width: int = 750, height: int = 400, page_name: str = None,
+                  display: bool = True):
+    html_string = write_html(plot_data_object=plot_data_object, debug_mode=debug_mode, canvas_id=canvas_id,
+                             force_version=force_version, width=width, height=height, page_name=page_name)
+
+    if page_name is not None:
+        if ".template" in page_name and debug_mode == True:
+            file_name = f"{os.path.dirname(os.getcwd())}/cypress/html_templates/{page_name}.html"
+            display = False
         else:
-            lib_path = core_path
+            file_name = f"{os.getcwd()}/{page_name}.html"
 
-    s = template.substitute(data=json.dumps(data), core_path=lib_path,
-                            canvas_id=canvas_id, width=width, height=height)
-    if page_name is None:
-        temp_file = tempfile.mkstemp(suffix='.html')[1]
-
-        with open(temp_file, 'wb') as file:
-            file.write(s.encode('utf-8'))
-
-        if display:
-            webbrowser.open('file://' + temp_file)
-        print('file://' + temp_file)
     else:
-        with open(page_name + '.html', 'wb') as file:
-            file.write(s.encode('utf-8'))
-        if display:
-            webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
-        print(page_name + '.html')
+        file_name = tempfile.mkstemp(suffix='.html')[1]
+
+    with open(file_name, 'wb') as file:
+        file.write(html_string.encode('utf-8'))
+    if display:
+        webbrowser.open('file://' + file_name)
+    print(file_name)
 
 
 def get_csv_vectors(filepath):

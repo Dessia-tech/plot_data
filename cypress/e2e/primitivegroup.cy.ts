@@ -1,12 +1,9 @@
-import { parseHTML } from '../support/parseHTML';
+import { htmlSnapshotsDiff } from '../support/htmlSnapshotsDiff';
 
-const corePath = 'http://localhost:3030/libdev/plot-data.js';
 const fileName = "primitivegroup"
 
 describe(fileName + ' spec', () => {
-  it("take screenshot", () => {  
-    parseHTML(fileName, corePath)
-    cy.visit("cypress/html_files/" + fileName + ".html");
-    cy.compareSnapshot(fileName, 0.1);
+  it("should be the same image as from snapshots/base", () => { 
+    htmlSnapshotsDiff(fileName);
   })
 })

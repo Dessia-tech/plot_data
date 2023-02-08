@@ -1964,6 +1964,7 @@ export abstract class PlotData {
 
   selecting_point_action(mouse1X, mouse1Y) {
     var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
+    // console.log(mouse1X, mouse1Y)
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
     var click_plot_data = this.color_to_plot_data[colKey];
     if (click_plot_data) {

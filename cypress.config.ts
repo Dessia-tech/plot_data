@@ -1,6 +1,5 @@
 import { defineConfig } from "cypress";
 import getCompareSnapshotsPlugin from "cypress-visual-regression/dist/plugin";
-import fs from 'fs'
 
 export default defineConfig({
   env: {
@@ -11,6 +10,7 @@ export default defineConfig({
     type: 'actual' //'base',
   },
   e2e: {
+    experimentalStudio : true,
     setupNodeEvents(on, config) {
       getCompareSnapshotsPlugin(on, config);
     },

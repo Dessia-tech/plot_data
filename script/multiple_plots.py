@@ -8,7 +8,6 @@ customization and optional parameters, feel free read the plots' specific script
 
 import plot_data
 import plot_data.colors as colors
-from test_objects.primitive_group_test import primitive_group
 from test_objects.graph_test import graph2d
 import random
 

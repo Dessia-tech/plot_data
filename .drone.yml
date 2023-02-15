@@ -106,6 +106,12 @@ steps:
     - pip3 install -U pip autopep8
     - bash code_pep8.sh
 
+- name: test typescript code
+  image: appleboy/drone-scp
+  commands:
+    - npm run test
+
+
 - name: sdist
   image: python:3.8
   commands:

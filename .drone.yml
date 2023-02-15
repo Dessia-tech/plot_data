@@ -16,6 +16,7 @@ steps:
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
 
 - name: Cypress run
+  image: cypress/base
   uses: cypress-io/github-action@v5.x.x # use the explicit version number
   with:
     build: npm run dev

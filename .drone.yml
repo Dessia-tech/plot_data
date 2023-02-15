@@ -19,9 +19,7 @@ steps:
   image: cypress/base
   commands:
     - npm ci
-    - npm install cypress --save-dev
-    - npm install http-server --save-dev
-    - npm run ci-test
+    - npm run test
 
 - name: python install, build doc run scripts
   image: python:3.8

@@ -19,7 +19,7 @@ steps:
   image: cypress/browsers:node12.14.1-chrome85-ff81
   commands:
   - npm ci
-  - npm run start:ci &
+  - npm run start &
   - npx cypress run --browser firefox
 
 - name: python install, build doc run scripts

@@ -14,11 +14,11 @@ steps:
   - npm run dev
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
-  - npm run test
 
 - name: test typescript code
   image: node:16
   commands:
+    - npm install
     - npm run test
 
 - name: python install, build doc run scripts

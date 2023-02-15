@@ -15,9 +15,7 @@ steps:
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
 
-name: Cypress Tests
-on: [push]
-jobs:
+- name: Cypress Tests
   cypress-run:
     runs-on: ubuntu-latest
     steps:

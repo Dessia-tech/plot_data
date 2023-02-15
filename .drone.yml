@@ -1,4 +1,20 @@
 ---
+name: Cypress Tests
+on: [push]
+jobs:
+  cypress-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      # Install NPM dependencies, cache them correctly
+      # and run all Cypress tests
+      - name: Cypress run
+        uses: cypress-io/github-action@v5.x.x # use the explicit version number
+        with:
+          build: npm run dev
+          start: npm start
+
 kind: pipeline
 type: docker
 name: default
@@ -14,20 +30,6 @@ steps:
   - npm run dev
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
-
-- name: Cypress Tests
-  cypress-run:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      # Install NPM dependencies, cache them correctly
-      # and run all Cypress tests
-      - name: Cypress run
-        uses: cypress-io/github-action@v5.x.x # use the explicit version number
-        with:
-          build: npm run dev
-          start: npm start
 
 - name: python install, build doc run scripts
   image: python:3.8

@@ -16,10 +16,10 @@ steps:
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
 
 - name: test typescript code
-  image: cypress/base:12.5.1
+  image: cypress/base
   commands:
-    - npm ci
-    - npm run test
+    - npm install cypress --save-dev
+    - cypress run
 
 - name: python install, build doc run scripts
   image: python:3.8

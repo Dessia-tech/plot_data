@@ -19,7 +19,7 @@ steps:
   image: cypress/base
   commands:
     - npm install cypress --save-dev
-    - cypress run
+    - npm run cy:run-base
 
 - name: python install, build doc run scripts
   image: python:3.8

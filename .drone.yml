@@ -14,9 +14,10 @@ steps:
   - npm run dev
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
+  - npm run test
 
 - name: test typescript code
-  image: appleboy/drone-scp
+  image: node:16
   commands:
     - npm run test
 

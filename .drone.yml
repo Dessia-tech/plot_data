@@ -18,8 +18,10 @@ steps:
 - name: test typescript code
   image: cypress/base
   commands:
+    - npm ci
     - npm install cypress --save-dev
-    - npm run cy:run-base
+    - npm install http-server --save-dev
+    - npm run test
 
 - name: python install, build doc run scripts
   image: python:3.8

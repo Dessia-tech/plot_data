@@ -20,7 +20,7 @@ steps:
   uses: cypress-io/github-action@v5.x.x # use the explicit version number
   commands:
   - npm run dev
-  - npm run start-server-and-test start http-get://localhost:3030 cy:run-actual
+  - npm run cy:run-actual
 
 - name: python install, build doc run scripts
   image: python:3.8

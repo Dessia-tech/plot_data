@@ -18,7 +18,8 @@ steps:
 - name: test typescript code
   image: node:16
   commands:
-    - npm install
+    - npm install 
+    - npm install cypress
     - npm run test
 
 - name: python install, build doc run scripts

@@ -16,6 +16,7 @@
     "cy:run-actual": "node ./cypress_run_report.cjs",
     "cy:run-open": "cypress open --env type=actual",
     "test": "npm run dev & start-server-and-test start http-get://localhost:3030 cy:run-actual",
+    "ci-test": "npm run build & start-server-and-test start http-get://localhost:3030 cy:run-actual",
     "base-test": "npm run dev & start-server-and-test start http-get://localhost:3030 cy:run-base",
     "cyopen": "npm run dev & start-server-and-test start http-get://localhost:3030 cy:run-open"
   },

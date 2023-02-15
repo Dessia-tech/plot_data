@@ -1,0 +1,105 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 1,
+    "passes": 1,
+    "pending": 0,
+    "failures": 0,
+    "start": "2023-02-15T12:15:24.038Z",
+    "end": "2023-02-15T12:15:24.642Z",
+    "duration": 604,
+    "testsRegistered": 1,
+    "passPercent": 100,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "ef6bca67-54ac-467c-940e-3572c8fcea7a",
+      "title": "",
+      "fullFile": "cypress/e2e/histogram.cy.ts",
+      "file": "cypress/e2e/histogram.cy.ts",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "f52de5bf-fd2c-4dc8-9f94-f87a2b6d7191",
+          "title": "HISTOGRAM CANVAS",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "Unchanged raw canvas",
+              "fullTitle": "HISTOGRAM CANVAS Unchanged raw canvas",
+              "timedOut": null,
+              "duration": 595,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
+              "pending": false,
+              "context": null,
+              "code": "cy.compareSnapshot(fileName + \".raw\", 0.0);",
+              "err": {},
+              "uuid": "ee1f69e6-ac53-4755-8473-a0c21b136f38",
+              "parentUUID": "f52de5bf-fd2c-4dc8-9f94-f87a2b6d7191",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [
+            "ee1f69e6-ac53-4755-8473-a0c21b136f38"
+          ],
+          "failures": [],
+          "pending": [],
+          "skipped": [],
+          "duration": 595,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.0.1"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "mochawesome",
+        "saveHtml": false,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "cypress/results",
+        "overwrite": false,
+        "html": false,
+        "json": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}

@@ -74,3 +74,6 @@ primitives = [point, contour, line, arc,
               circle, text, labels, wire, point]
 
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
+plot_data.plot_canvas(primitive_group)
+plot_data.write_json_for_tests(primitive_group, "primitivegroup.data")
+

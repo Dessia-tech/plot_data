@@ -1306,6 +1306,14 @@ def plot_canvas(plot_data_object: PlotDataObject, debug_mode: bool = False, canv
         webbrowser.open('file://' + file_name)
     print(file_name)
 
+def write_json_for_tests(plot_data_object: PlotDataObject, json_name: str):
+    version, folder, filename = get_current_link()
+    dirname = "/".join(os.path.dirname(__file__).split("/")[:-1] + ["cypress/data_src"])
+    data = plot_data_object.to_dict()
+    json_data = json.dumps(data)
+    with open(f"{dirname}/{json_name}.json", "wb") as file:
+        file.write(json_data.encode('utf-8'))
+    return
 
 def get_csv_vectors(filepath):
     """

@@ -43,5 +43,5 @@ customized_parallelplot = plot_data.ParallelPlot(elements=elements,
 
 # if debug_mode == True, set it to False
 plot_data.plot_canvas(plot_data_object=parallelplot, debug_mode=True)
-plot_data.plot_canvas(plot_data_object=parallelplot, debug_mode=True, page_name = "parallelplot.template")
+plot_data.write_json_for_tests(parallelplot, "parallelPlot.data")
 

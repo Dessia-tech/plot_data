@@ -1,9 +1,11 @@
-import { htmlWriter } from "./htmlWriter";
+import { htmlWriter } from "./HtmlWriter";
 
-export function parseHTML(fileName: string, corePath: string) {
-    cy.readFile('./cypress/html_templates/' + fileName.toLowerCase() + '.template.html').then((str) => {
-      const templateString = str;
-      const htmlFile = htmlWriter(templateString, corePath);
-      cy.writeFile("cypress/html_files/" + fileName + ".html", htmlFile, 'utf-8');
-    })
+const corePath = 'http://localhost:3030/libdev/plot-data.js';
+
+export function parseHTML(fileName: string, data: any) {
+  cy.readFile('./cypress/templates/' + fileName + '.template.html').then((str) => {
+    const templateString = str;
+    const htmlFile = htmlWriter(templateString, corePath, data);
+    cy.writeFile("cypress/html_files/" + fileName + ".html", htmlFile, 'utf-8');
+  })
 }

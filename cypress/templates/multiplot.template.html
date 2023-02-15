@@ -1,0 +1,26 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <script src=$core_path></script>
+  </head>
+  <body>
+    <div id="app">
+        <canvas id="canvas" width="490" height="490"
+                    style="border: 1px solid black;">
+        </canvas>
+
+        <script type="text/javascript">
+            var width = 0.95*window.innerWidth;
+            var height = Math.max(0.95*window.innerHeight, 350);
+
+            var data = $data;
+            var number_plot_data = data.length;
+
+            var multiplot = new PlotData.MultiplePlots(
+                data, width, height, true, canvas.id
+            );
+        </script>
+    </div>
+  </body>
+</html>

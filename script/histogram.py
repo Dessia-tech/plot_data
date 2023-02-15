@@ -19,5 +19,4 @@ histogram = plot_data.Histogram(x_variable='mass',
                                 elements=elements)
 
 plot_data.plot_canvas(plot_data_object=histogram, debug_mode=True)
-plot_data.plot_canvas(plot_data_object=histogram, debug_mode=True, page_name="histogram.template")
-
+plot_data.write_json_for_tests(histogram, "histogram.data")

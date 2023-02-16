@@ -19,12 +19,8 @@ steps:
   image: cypress/browsers:latest
   stage: build
   script:
-    - npm install cypress -g
-
-- name: Cypress run
-  image: cypress/browsers:latest
-  commands:
-  - npm run test
+    - npm install
+    - npm run test
 
 - name: python install, build doc run scripts
   image: python:3.8

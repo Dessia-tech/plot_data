@@ -4,4 +4,4 @@ from test_objects.graph_test import graph2d
 # make MultiplePlots.py' imports more convenient
 
 plot_data.plot_canvas(plot_data_object=graph2d, canvas_id='canvas', debug_mode=True)
-plot_data.plot_canvas(plot_data_object=graph2d, canvas_id='canvas', debug_mode=True, page_name='graph2d.template')
+plot_data.write_json_for_tests(graph2d, "graph2d.data")

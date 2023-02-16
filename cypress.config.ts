@@ -6,7 +6,7 @@ export default defineConfig({
   reporterOptions: {
     reportDir: 'cypress/results',
     overwrite: false,
-    html: false,
+    html: true,
     json: true,
   },
   env: {

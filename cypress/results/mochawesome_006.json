@@ -1,0 +1,109 @@
+{
+  "stats": {
+    "suites": 1,
+    "tests": 1,
+    "passes": 0,
+    "pending": 0,
+    "failures": 1,
+    "start": "2023-02-16T09:41:54.111Z",
+    "end": "2023-02-16T09:41:58.316Z",
+    "duration": 4205,
+    "testsRegistered": 1,
+    "passPercent": 0,
+    "pendingPercent": 0,
+    "other": 0,
+    "hasOther": false,
+    "skipped": 0,
+    "hasSkipped": false
+  },
+  "results": [
+    {
+      "uuid": "86e67c70-7392-40a9-af68-9b9a98cf5716",
+      "title": "",
+      "fullFile": "cypress/e2e/scattermatrix.cy.ts",
+      "file": "cypress/e2e/scattermatrix.cy.ts",
+      "beforeHooks": [],
+      "afterHooks": [],
+      "tests": [],
+      "suites": [
+        {
+          "uuid": "9be8f51a-4637-40ab-8d5b-22fcc8e91e70",
+          "title": "scattermatrix spec",
+          "fullFile": "",
+          "file": "",
+          "beforeHooks": [],
+          "afterHooks": [],
+          "tests": [
+            {
+              "title": "should be the same image as from snapshots/base",
+              "fullTitle": "scattermatrix spec should be the same image as from snapshots/base",
+              "timedOut": null,
+              "duration": 4151,
+              "state": "failed",
+              "speed": null,
+              "pass": false,
+              "fail": true,
+              "pending": false,
+              "context": null,
+              "code": "Object(_support_htmlSnapshotsDiff__WEBPACK_IMPORTED_MODULE_0__[\"htmlSnapshotsDiff\"])(fileName);",
+              "err": {
+                "message": "AssertionError: Timed out retrying after 4000ms: `cy.readFile(\"./cypress/templates/scattermatrix.template.html\")` failed because the file does not exist at the following path:\n\n`/home/louzoun/Documents/git/plot_data/cypress/templates/scattermatrix.template.html`\n\nhttps://on.cypress.io/readfile",
+                "estack": "AssertionError: Timed out retrying after 4000ms: `cy.readFile(\"./cypress/templates/scattermatrix.template.html\")` failed because the file does not exist at the following path:\n\n`/home/louzoun/Documents/git/plot_data/cypress/templates/scattermatrix.template.html`\n\nhttps://on.cypress.io/readfile\n    at parseHTML (webpack:///./cypress/support/parseHTML.ts:6:5)\n    at htmlSnapshotsDiff (webpack:///./cypress/support/htmlSnapshotsDiff.ts:6:14)\n    at Context.eval (webpack:///./cypress/e2e/scattermatrix.cy.ts:7:22)",
+                "diff": null
+              },
+              "uuid": "d9a87ce6-efd2-4d4e-b3e2-385b8309cc7a",
+              "parentUUID": "9be8f51a-4637-40ab-8d5b-22fcc8e91e70",
+              "isHook": false,
+              "skipped": false
+            }
+          ],
+          "suites": [],
+          "passes": [],
+          "failures": [
+            "d9a87ce6-efd2-4d4e-b3e2-385b8309cc7a"
+          ],
+          "pending": [],
+          "skipped": [],
+          "duration": 4151,
+          "root": false,
+          "rootEmpty": false,
+          "_timeout": 2000
+        }
+      ],
+      "passes": [],
+      "failures": [],
+      "pending": [],
+      "skipped": [],
+      "duration": 0,
+      "root": true,
+      "rootEmpty": true,
+      "_timeout": 2000
+    }
+  ],
+  "meta": {
+    "mocha": {
+      "version": "7.0.1"
+    },
+    "mochawesome": {
+      "options": {
+        "quiet": false,
+        "reportFilename": "mochawesome",
+        "saveHtml": true,
+        "saveJson": true,
+        "consoleReporter": "spec",
+        "useInlineDiffs": false,
+        "code": true
+      },
+      "version": "7.1.3"
+    },
+    "marge": {
+      "options": {
+        "reportDir": "cypress/results",
+        "overwrite": false,
+        "html": true,
+        "json": true
+      },
+      "version": "6.2.0"
+    }
+  }
+}

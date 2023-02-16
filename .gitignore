@@ -129,4 +129,5 @@ dmypy.json
 volmdlr/templates/core.ts
 
 volmdlr/core_compiled.c
-
+cypress/videos
+cypress/screenshots

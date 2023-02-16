@@ -17,7 +17,6 @@ steps:
 
 - name: Test typescript with cypress
   image: cypress/included:latest
-  stage: build
   commands:
     - npm install
     - npm run test

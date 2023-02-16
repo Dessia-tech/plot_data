@@ -19,7 +19,7 @@ steps:
   image: cypress/browsers:latest
   stage: build
   script:
-    - npm ci
+    - npm install cypress -g
 
 - name: Cypress run
   image: cypress/browsers:latest

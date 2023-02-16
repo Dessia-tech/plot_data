@@ -15,10 +15,16 @@ steps:
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
 
+install:
+  image: cypress/browsers:latest
+  stage: build
+  script:
+    - npm ci
+
 - name: Cypress run
   image: cypress/browsers:latest
   commands:
-  - npx cypress run --browser firefox
+  - npm run test
 
 - name: python install, build doc run scripts
   image: python:3.8

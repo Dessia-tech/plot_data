@@ -54,6 +54,24 @@ describe("MULTIPLOT TESTS", () => {
               
       })
     })
+    it("should return a list of 10 points", () => {
+      cy.window().then((win) => {
+        let multiplot = win.eval('multiplot')
+              
+      })
+    })
+    it("should return a list of 10 points", () => {
+      cy.window().then((win) => {
+        let multiplot = win.eval('multiplot')
+              
+      })
+    })
+    it("should return a list of 10 points", () => {
+      cy.window().then((win) => {
+        let multiplot = win.eval('multiplot')
+              
+      })
+    })
   })
 })
 

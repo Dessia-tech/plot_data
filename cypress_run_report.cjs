@@ -5,9 +5,20 @@ const generator = require('mochawesome-report-generator')
 
 async function runTests() {
   await fse.remove('cypress/results') // remove the report folder
-  await cypress.run({
-    browser:"firefox"
+
+  await cypress.run({browser:"firefox"})
+  .then(result => {
+    if (result.failures) {
+      console.error('Could not execute tests')
+      console.error(result.message)
+      process.exit(result.failures)
+    }
+    process.exit(result.totalFailed)
+  }).catch(err => {
+    console.error(err.message)
+    process.exit(1)
   })
+
   const jsonReport = await merge({
     files: ['cypress/results/*.json'],
   })

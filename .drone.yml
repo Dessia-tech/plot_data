@@ -15,6 +15,20 @@ steps:
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
 
+- name: install, run scripts and build doc
+  image: python:3.8
+  commands:
+  - git fetch --tags
+  - python setup.py install
+#  - python scripts/dessia_object.py
+  - pip install sphinx sphinx-rtd-theme coverage volmdlr nbformat nbconvert
+  - pip install dessia_common --no-cache-dir
+  - cd ../scripts
+  - coverage run --source plot_data ci_tests.py
+  - coverage report
+  - coverage html
+  - python coverage.py
+
 - name: Test typescript with cypress
   image: cypress/included:12.6.0
   commands:

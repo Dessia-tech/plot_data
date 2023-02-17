@@ -5,9 +5,9 @@
     "passes": 1,
     "pending": 0,
     "failures": 0,
-    "start": "2023-02-16T09:41:16.471Z",
-    "end": "2023-02-16T09:41:17.222Z",
-    "duration": 751,
+    "start": "2023-02-17T10:08:28.194Z",
+    "end": "2023-02-17T10:08:28.706Z",
+    "duration": 512,
     "testsRegistered": 1,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,17 +18,17 @@
   },
   "results": [
     {
-      "uuid": "9dfb85ac-7f75-4f8d-92ff-f20223d683ff",
+      "uuid": "fba5d35a-084d-4b13-bf4f-243bd4f448d8",
       "title": "",
-      "fullFile": "cypress/e2e/histogram.cy.ts",
-      "file": "cypress/e2e/histogram.cy.ts",
+      "fullFile": "cypress/e2e/graph2d.cy.ts",
+      "file": "cypress/e2e/graph2d.cy.ts",
       "beforeHooks": [],
       "afterHooks": [],
       "tests": [],
       "suites": [
         {
-          "uuid": "6e067d36-5ccc-40b3-89b7-3f47a67faa88",
-          "title": "HISTOGRAM CANVAS",
+          "uuid": "8ad44e88-c742-424d-964e-ca1812a4ca38",
+          "title": "GRAPH2D CANVAS",
           "fullFile": "",
           "file": "",
           "beforeHooks": [],
@@ -36,9 +36,9 @@
           "tests": [
             {
               "title": "Unchanged raw canvas",
-              "fullTitle": "HISTOGRAM CANVAS Unchanged raw canvas",
+              "fullTitle": "GRAPH2D CANVAS Unchanged raw canvas",
               "timedOut": null,
-              "duration": 728,
+              "duration": 497,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,20 +47,20 @@
               "context": null,
               "code": "cy.compareSnapshot(fileName + \".raw\", 0.0);",
               "err": {},
-              "uuid": "62992f6f-8173-46c5-a148-21b4f8c2dfe3",
-              "parentUUID": "6e067d36-5ccc-40b3-89b7-3f47a67faa88",
+              "uuid": "8a2dda96-d25f-4034-bca2-db4d0c18a434",
+              "parentUUID": "8ad44e88-c742-424d-964e-ca1812a4ca38",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "62992f6f-8173-46c5-a148-21b4f8c2dfe3"
+            "8a2dda96-d25f-4034-bca2-db4d0c18a434"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 728,
+          "duration": 497,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

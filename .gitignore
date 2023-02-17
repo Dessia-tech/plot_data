@@ -134,3 +134,4 @@ cypress/screenshots
 cypress/html_files
 cypress/data_src
 cypress/results
+cypress/snapshots/diff

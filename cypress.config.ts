@@ -2,6 +2,8 @@ import { defineConfig } from "cypress";
 import getCompareSnapshotsPlugin from "cypress-visual-regression/dist/plugin";
 
 export default defineConfig({
+  viewportWidth: 1280,
+  viewportHeight: 720,
   reporter: 'mochawesome',
   reporterOptions: {
     reportDir: 'cypress/results',

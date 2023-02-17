@@ -52,7 +52,7 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
-    target: /var/www/cdn/tests/plot_data/$DRONE_BRANCH
+    target: /var/www/cdn/tests/plot_data/${DRONE_BRANCH}
     source: cypress/results/*
     strip_components: 2
     overwrite: true

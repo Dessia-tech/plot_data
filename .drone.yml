@@ -23,7 +23,7 @@ steps:
 #  - python scripts/dessia_object.py
   - pip install sphinx sphinx-rtd-theme coverage nbformat nbconvert
   - pip install dessia_common --no-cache-dir
-  - cd ../script
+  - cd ./script
   - coverage run --source plot_data ci_tests.py
   - coverage report
   - coverage html

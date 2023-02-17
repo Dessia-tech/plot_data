@@ -18,7 +18,7 @@ steps:
 - name: Test typescript with cypress
   image: cypress/included:12.6.0
   commands:
-    - cypress install
+    - ./node_modules/.bin/cypress install --force
     - npm install
     - npm run test
 

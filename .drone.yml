@@ -43,9 +43,11 @@ steps:
 
 - name: upload cypress reports to cdn
   image: appleboy/drone-scp
-  status:
-  - success
-  - failure
+  when:
+    status:
+    - success
+    - failure
+  ignore: failure
   settings:
     host: magenta.dessia.tech
     username: drone

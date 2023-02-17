@@ -21,6 +21,9 @@ steps:
     - ./node_modules/.bin/cypress install --force
     - npm install
     - npm run test
+  volumes:
+  - name: jsons
+    path: /drone/src/cypress/data_src
 
 - name: python install, build doc run scripts
   image: python:3.8
@@ -141,4 +144,21 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
+
+- name: upload cypress to wordpress
+  image: appleboy/drone-scp
+  settings:
+    host: magenta.dessia.tech
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+    target: /var/www/cdn/tests/plot_data/$DRONE_BRANCH
+    source: cypress/results/*
+    strip_components: 2
+    overwrite: true
+
+volumes:
+- name: jsons
+  temp: {}
+
 

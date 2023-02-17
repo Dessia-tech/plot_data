@@ -1,9 +1,9 @@
 import sys
 import os
 import unittest
+import plot_data
 
 path = "/".join(os.path.dirname(__file__).split("/")[:-1] + ["cypress/data_src"])
-print(sys.argv)
 if sys.argv:
     path = sys.argv[1]
     if path.startswith("--path"):
@@ -31,4 +31,5 @@ for script_name in scripts:
 
 # This needs to be executed once all "assert-tests" have been run + once all unittests are defined
 if __name__ == "__main__":
-    unittest.main(verbosity=3)
+    unittest.main(verbosity=3, argv=[path])
+    print("truc2")

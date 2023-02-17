@@ -26,6 +26,9 @@ steps:
   - coverage run --source plot_data ci_tests.py --path="/drone/src/cypress/data_src"
   - coverage report
   - coverage html
+  volumes:
+  - name: jsons
+    path: /drone/src/cypress/data_src
   # - python coverage.py
 
 - name: Test typescript with cypress

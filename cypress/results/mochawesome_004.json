@@ -5,9 +5,9 @@
     "passes": 1,
     "pending": 0,
     "failures": 0,
-    "start": "2023-02-17T10:39:08.845Z",
-    "end": "2023-02-17T10:39:09.521Z",
-    "duration": 676,
+    "start": "2023-02-17T15:38:32.310Z",
+    "end": "2023-02-17T15:38:32.834Z",
+    "duration": 524,
     "testsRegistered": 1,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "4d103c18-3603-4153-a16f-ad90e0474e23",
+      "uuid": "e24305ef-6b5a-4a92-a076-720518ccb16d",
       "title": "",
       "fullFile": "cypress/e2e/plotscatter.cy.ts",
       "file": "cypress/e2e/plotscatter.cy.ts",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "9f1fefc7-7129-43fa-8a31-f84757f5c30c",
+          "uuid": "c5d75a65-7b79-4535-b252-4bd75fb2f2b6",
           "title": "PLOT SCATTER CANVAS",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "Unchanged raw canvas",
               "fullTitle": "PLOT SCATTER CANVAS Unchanged raw canvas",
               "timedOut": null,
-              "duration": 643,
+              "duration": 504,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,20 +47,20 @@
               "context": null,
               "code": "cy.compareSnapshot(fileName + \".raw\", 0.0);",
               "err": {},
-              "uuid": "6207570e-2a98-4ac3-86d6-56367667cf6b",
-              "parentUUID": "9f1fefc7-7129-43fa-8a31-f84757f5c30c",
+              "uuid": "83ad1c8f-a6f5-49ec-aee6-adadf38bcd7b",
+              "parentUUID": "c5d75a65-7b79-4535-b252-4bd75fb2f2b6",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "6207570e-2a98-4ac3-86d6-56367667cf6b"
+            "83ad1c8f-a6f5-49ec-aee6-adadf38bcd7b"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 643,
+          "duration": 504,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

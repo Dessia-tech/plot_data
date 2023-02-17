@@ -2,14 +2,14 @@
   "stats": {
     "suites": 1,
     "tests": 1,
-    "passes": 0,
+    "passes": 1,
     "pending": 0,
-    "failures": 1,
-    "start": "2023-02-17T10:39:10.764Z",
-    "end": "2023-02-17T10:39:14.920Z",
-    "duration": 4156,
+    "failures": 0,
+    "start": "2023-02-17T15:38:33.860Z",
+    "end": "2023-02-17T15:38:34.324Z",
+    "duration": 464,
     "testsRegistered": 1,
-    "passPercent": 0,
+    "passPercent": 100,
     "pendingPercent": 0,
     "other": 0,
     "hasOther": false,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "6aeda058-9c8e-479c-a841-a54191c243db",
+      "uuid": "c3de18c7-2874-4ef7-8035-6c50ea1cad8c",
       "title": "",
       "fullFile": "cypress/e2e/primitivegroup.cy.ts",
       "file": "cypress/e2e/primitivegroup.cy.ts",
@@ -27,44 +27,40 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "a8acbbc6-ebd3-4241-80f2-9cd2fa3b2ff6",
-          "title": "primitivegroup spec",
+          "uuid": "d036a58e-3651-434f-9004-c0cb84af6dbc",
+          "title": "PLOT PRIMITIVE GROUP CANVAS",
           "fullFile": "",
           "file": "",
           "beforeHooks": [],
           "afterHooks": [],
           "tests": [
             {
-              "title": "should be the same image as from snapshots/base",
-              "fullTitle": "primitivegroup spec should be the same image as from snapshots/base",
+              "title": "Unchanged raw canvas",
+              "fullTitle": "PLOT PRIMITIVE GROUP CANVAS Unchanged raw canvas",
               "timedOut": null,
-              "duration": 4114,
-              "state": "failed",
-              "speed": null,
-              "pass": false,
-              "fail": true,
+              "duration": 450,
+              "state": "passed",
+              "speed": "fast",
+              "pass": true,
+              "fail": false,
               "pending": false,
               "context": null,
-              "code": "Object(_support_htmlSnapshotsDiff__WEBPACK_IMPORTED_MODULE_0__[\"htmlSnapshotsDiff\"])(fileName);",
-              "err": {
-                "message": "AssertionError: Timed out retrying after 4000ms: `cy.readFile(\"./cypress/templates/primitivegroup.template.html\")` failed because the file does not exist at the following path:\n\n`/home/tanguy/Documents/Codes/plot_data/cypress/templates/primitivegroup.template.html`\n\nhttps://on.cypress.io/readfile",
-                "estack": "AssertionError: Timed out retrying after 4000ms: `cy.readFile(\"./cypress/templates/primitivegroup.template.html\")` failed because the file does not exist at the following path:\n\n`/home/tanguy/Documents/Codes/plot_data/cypress/templates/primitivegroup.template.html`\n\nhttps://on.cypress.io/readfile\n    at parseHTML (webpack:///./cypress/support/parseHTML.ts:6:5)\n    at htmlSnapshotsDiff (webpack:///./cypress/support/htmlSnapshotsDiff.ts:6:14)\n    at ./cypress/e2e/primitivegroup.cy.ts/ (webpack:///./cypress/e2e/primitivegroup.cy.ts:7:22)\n    at ../driver/src/cypress/cy.ts/setRunnable/runnable.fn (http://localhost:40517/__cypress/runner/cypress_runner.js:151367:43)\n    at callFn (http://localhost:40517/__cypress/runner/cypress_runner.js:104963:21)\n    at ../driver/src/cypress/runner.ts/create/onRunnableRun (http://localhost:40517/__cypress/runner/cypress_runner.js:158380:30)\n    at finallyHandler (http://localhost:40517/__cypress/runner/cypress_runner.js:5468:23)\n    at tryCatcher (http://localhost:40517/__cypress/runner/cypress_runner.js:8914:23)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromiseFromHandler (http://localhost:40517/__cypress/runner/cypress_runner.js:6849:31)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise (http://localhost:40517/__cypress/runner/cypress_runner.js:6906:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise0 (http://localhost:40517/__cypress/runner/cypress_runner.js:6951:10)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromises (http://localhost:40517/__cypress/runner/cypress_runner.js:7031:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._fulfill (http://localhost:40517/__cypress/runner/cypress_runner.js:6975:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise (http://localhost:40517/__cypress/runner/cypress_runner.js:6919:21)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise0 (http://localhost:40517/__cypress/runner/cypress_runner.js:6951:10)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromises (http://localhost:40517/__cypress/runner/cypress_runner.js:7031:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._fulfill (http://localhost:40517/__cypress/runner/cypress_runner.js:6975:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._resolveCallback (http://localhost:40517/__cypress/runner/cypress_runner.js:6769:57)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromiseFromHandler (http://localhost:40517/__cypress/runner/cypress_runner.js:6861:17)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise (http://localhost:40517/__cypress/runner/cypress_runner.js:6906:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise0 (http://localhost:40517/__cypress/runner/cypress_runner.js:6951:10)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromises (http://localhost:40517/__cypress/runner/cypress_runner.js:7031:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._fulfill (http://localhost:40517/__cypress/runner/cypress_runner.js:6975:18)\n    at ../../node_modules/bluebird/js/release/promise_array.js/module.exports/PromiseArray.prototype._resolve (http://localhost:40517/__cypress/runner/cypress_runner.js:7248:19)\n    at ../../node_modules/bluebird/js/release/promise_array.js/module.exports/PromiseArray.prototype._promiseFulfilled (http://localhost:40517/__cypress/runner/cypress_runner.js:7266:14)\n    at ../../node_modules/bluebird/js/release/promise_array.js/module.exports/PromiseArray.prototype._iterate (http://localhost:40517/__cypress/runner/cypress_runner.js:7236:31)\n    at init (http://localhost:40517/__cypress/runner/cypress_runner.js:7200:10)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise (http://localhost:40517/__cypress/runner/cypress_runner.js:6903:21)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise0 (http://localhost:40517/__cypress/runner/cypress_runner.js:6951:10)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromises (http://localhost:40517/__cypress/runner/cypress_runner.js:7031:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._fulfill (http://localhost:40517/__cypress/runner/cypress_runner.js:6975:18)\n    at ../../node_modules/bluebird/js/release/promise_array.js/module.exports/PromiseArray.prototype._resolve (http://localhost:40517/__cypress/runner/cypress_runner.js:7248:19)\n    at ../../node_modules/bluebird/js/release/promise_array.js/module.exports/PromiseArray.prototype._promiseFulfilled (http://localhost:40517/__cypress/runner/cypress_runner.js:7266:14)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise (http://localhost:40517/__cypress/runner/cypress_runner.js:6911:26)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise0 (http://localhost:40517/__cypress/runner/cypress_runner.js:6951:10)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromises (http://localhost:40517/__cypress/runner/cypress_runner.js:7031:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._fulfill (http://localhost:40517/__cypress/runner/cypress_runner.js:6975:18)\n    at ../../node_modules/bluebird/js/release/promise_array.js/module.exports/PromiseArray.prototype._resolve (http://localhost:40517/__cypress/runner/cypress_runner.js:7248:19)\n    at ../../node_modules/bluebird/js/release/map.js/module.exports/MappingPromiseArray.prototype._promiseFulfilled (http://localhost:40517/__cypress/runner/cypress_runner.js:6074:18)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise (http://localhost:40517/__cypress/runner/cypress_runner.js:6911:26)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromise0 (http://localhost:40517/__cypress/runner/cypress_runner.js:6951:10)\n    at ../../node_modules/bluebird/js/release/promise.js/</module.exports/Promise.prototype._settlePromises (http://localhost:40517/__cypress/runner/cypress_runner.js:7031:18)\n    at _drainQueueStep (http://localhost:40517/__cypress/runner/cypress_runner.js:3621:12)\n    at _drainQueue (http://localhost:40517/__cypress/runner/cypress_runner.js:3614:24)\n    at ../../node_modules/bluebird/js/release/async.js/</Async.prototype._drainQueues (http://localhost:40517/__cypress/runner/cypress_runner.js:3630:16)\n    at ../../node_modules/bluebird/js/release/async.js/</Async/this.drainQueues (http://localhost:40517/__cypress/runner/cypress_runner.js:3500:14)",
-                "diff": null
-              },
-              "uuid": "b78a36bb-8d88-401d-8c94-cc72d17d1d2a",
-              "parentUUID": "a8acbbc6-ebd3-4241-80f2-9cd2fa3b2ff6",
+              "code": "cy.compareSnapshot(fileName + \".raw\", 0.0);",
+              "err": {},
+              "uuid": "0e3608e2-6209-4c0e-9b50-29237786c482",
+              "parentUUID": "d036a58e-3651-434f-9004-c0cb84af6dbc",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
-          "passes": [],
-          "failures": [
-            "b78a36bb-8d88-401d-8c94-cc72d17d1d2a"
+          "passes": [
+            "0e3608e2-6209-4c0e-9b50-29237786c482"
           ],
+          "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 4114,
+          "duration": 450,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

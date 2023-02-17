@@ -5,7 +5,7 @@
   </head>
   <body>
     <div id="app">
-        <canvas id="$canvas_id" width="490" height="490"
+        <canvas id="canvas" width="490" height="490"
                     style="border: 1px solid black;">
         </canvas>
 
@@ -19,9 +19,9 @@
             var globalWidth = 1500;
             var globalHeight = 800;
             var primitive_group_container = new PlotData.PrimitiveGroupContainer(
-                data, globalWidth, globalHeight, true, 0, 0, $canvas_id.id
+                data, globalWidth, globalHeight, true, 0, 0, "canvas"
             );
-            primitive_group_container.define_canvas($canvas_id.id);
+            primitive_group_container.define_canvas("canvas");
             primitive_group_container.draw_initial();
             primitive_group_container.mouse_interaction(
                 primitive_group_container.isParallelPlot

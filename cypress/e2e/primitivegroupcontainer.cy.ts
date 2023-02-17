@@ -1,9 +1,18 @@
-import { htmlSnapshotsDiff } from '../support/htmlSnapshotsDiff';
+import { parseHTML } from '../support/parseHTML';
+import primitiveGroupContainerData from '../data_src/primitivegroupcontainer.data.json';
 
 const fileName = "primitivegroupcontainer"
 
-describe(fileName + ' spec', () => {
-  it("should be the same image as from snapshots/base", () => { 
-    htmlSnapshotsDiff(fileName);
+before(() => {
+  parseHTML(fileName, primitiveGroupContainerData)
+})
+
+describe('PLOT PRIMITIVE GROUP CONTAINER CANVAS', () => {
+  beforeEach(() => {
+    cy.visit("cypress/html_files/" + fileName + ".html");
+  })
+
+  it("Unchanged raw canvas", () => {  
+    cy.compareSnapshot(fileName + ".raw", 0.0);
   })
 })

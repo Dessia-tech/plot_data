@@ -5,9 +5,9 @@
     "passes": 1,
     "pending": 0,
     "failures": 0,
-    "start": "2023-02-17T10:38:54.336Z",
-    "end": "2023-02-17T10:38:55.008Z",
-    "duration": 672,
+    "start": "2023-02-17T15:38:22.376Z",
+    "end": "2023-02-17T15:38:23.095Z",
+    "duration": 719,
     "testsRegistered": 1,
     "passPercent": 100,
     "pendingPercent": 0,
@@ -18,7 +18,7 @@
   },
   "results": [
     {
-      "uuid": "8524dbd2-8303-4810-823a-3f87210ffbcc",
+      "uuid": "95dac315-a927-4cd1-918a-4bf5cd02c314",
       "title": "",
       "fullFile": "cypress/e2e/histogram.cy.ts",
       "file": "cypress/e2e/histogram.cy.ts",
@@ -27,7 +27,7 @@
       "tests": [],
       "suites": [
         {
-          "uuid": "7dd662ac-f3e0-4fab-832d-5571d60f4877",
+          "uuid": "4f92ecef-9f20-424e-9b6b-a434ddf0b9a5",
           "title": "HISTOGRAM CANVAS",
           "fullFile": "",
           "file": "",
@@ -38,7 +38,7 @@
               "title": "Unchanged raw canvas",
               "fullTitle": "HISTOGRAM CANVAS Unchanged raw canvas",
               "timedOut": null,
-              "duration": 659,
+              "duration": 701,
               "state": "passed",
               "speed": "fast",
               "pass": true,
@@ -47,20 +47,20 @@
               "context": null,
               "code": "cy.compareSnapshot(fileName + \".raw\", 0.0);",
               "err": {},
-              "uuid": "917b6a82-4f4a-4278-87df-614c59d00538",
-              "parentUUID": "7dd662ac-f3e0-4fab-832d-5571d60f4877",
+              "uuid": "fea30240-ccb7-4ccf-ba5c-dddeee21d242",
+              "parentUUID": "4f92ecef-9f20-424e-9b6b-a434ddf0b9a5",
               "isHook": false,
               "skipped": false
             }
           ],
           "suites": [],
           "passes": [
-            "917b6a82-4f4a-4278-87df-614c59d00538"
+            "fea30240-ccb7-4ccf-ba5c-dddeee21d242"
           ],
           "failures": [],
           "pending": [],
           "skipped": [],
-          "duration": 659,
+          "duration": 701,
           "root": false,
           "rootEmpty": false,
           "_timeout": 2000

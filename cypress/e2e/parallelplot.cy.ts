@@ -1,5 +1,5 @@
 import { parseHTML } from '../support/parseHTML';
-import parallelPlotData from '../data_src/parallelPlot.data.json';
+import parallelPlotData from '../data_src/parallelplot.data.json';
 
 const fileName = "parallelplot"
 

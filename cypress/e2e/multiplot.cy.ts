@@ -13,18 +13,18 @@ describe('MULTIPLOT CANVAS', () => {
     cy.visit("cypress/html_files/" + fileName + ".html");
   })
 
-  it("Unchanged raw canvas", () => {  
+  it("should draw the canvas", () => {  
     cy.compareSnapshot(fileName + ".raw", 0.0);
   })
 
-  it("Remove primitive group from container in multiplot", () => {  
+  it("should remove primitive group from container in multiplot", () => {  
     cy.window().then((win) => {
       win.eval('multiplot').remove_all_primitive_groups_from_container(6);
       cy.compareSnapshot(fileName + ".remove_primitive_group", 0.0);
     })
   })
   
-  it("Add primitive group container in multiplot", () => {  
+  it("should add primitive group container in multiplot", () => {  
     cy.window().its('multiplot').then((multiplot) => {
       multiplot.add_primitive_group_container(primitiveGroupContainerData, [], null)
       cy.wrap('multiplot').as('multiplot')
@@ -32,7 +32,7 @@ describe('MULTIPLOT CANVAS', () => {
     })
   })
 
-  it("Should reorder all plots in canvas", () => {
+  it("should reorder all plots in canvas", () => {
     cy.window().then((win) => {
       let multiplot = win.eval('multiplot')
       multiplot.add_primitive_group_container(primitiveGroupContainerData, [], null)
@@ -44,4 +44,8 @@ describe('MULTIPLOT CANVAS', () => {
       cy.compareSnapshot(fileName + ".reordered_plots", 0.0);
     }) 
   })
+
+
+
+
 })

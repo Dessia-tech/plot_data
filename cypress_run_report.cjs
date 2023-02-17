@@ -8,15 +8,13 @@ async function runTests() {
   let failures = null
   let totalFailed = null
   let message = null
-  
+
   await fse.remove('cypress/results') // remove the report folder
  
   await cypress.run({browser:"firefox"})
   .then(result => {
-    if (result.failures) {
-      failures = result.failures
-      message = result.message
-    }
+    failures = result.failures
+    message = result.message
     totalFailed = result.totalFailed
   }).catch(err => {
     console.error(err.message)
@@ -26,6 +24,7 @@ async function runTests() {
   const jsonReport = await merge({
     files: ['cypress/results/*.json'],
   })
+
   await generator.create(
     jsonReport, 
     options = {
@@ -33,6 +32,7 @@ async function runTests() {
       reportDir: 'cypress/results'
     }
     )
+
   if (failures) {
     console.error('Could not execute tests')
     console.error(message)

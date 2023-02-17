@@ -6,6 +6,7 @@ export default defineConfig({
   viewportHeight: 720,
   reporter: 'mochawesome',
   reporterOptions: {
+    embeddedScreenshots: true,
     reportDir: 'cypress/results',
     overwrite: false,
     html: true,

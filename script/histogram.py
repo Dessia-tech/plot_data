@@ -15,8 +15,7 @@ for i in range(50):
                      })
 
 
-histogram = plot_data.Histogram(x_variable='mass',
+plot_data_object = plot_data.Histogram(x_variable='mass',
                                 elements=elements)
 
-plot_data.plot_canvas(plot_data_object=histogram, debug_mode=True)
-plot_data.write_json_for_tests(histogram, "histogram.data")
+plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

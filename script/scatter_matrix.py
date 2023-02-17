@@ -15,6 +15,5 @@ for i in range(50):
                      'color': random_color
                      })
 
-scatter_matrix = plot_data.ScatterMatrix(elements=elements)
-plot_data.plot_canvas(scatter_matrix, True)
-plot_data.plot_canvas(scatter_matrix, True, page_name="scattermatrix.template")
+plot_data_object = plot_data.ScatterMatrix(elements=elements)
+plot_data.plot_canvas(plot_data_object, True)

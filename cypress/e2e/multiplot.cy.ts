@@ -46,5 +46,14 @@ describe("MULTIPLOT TESTS", () => {
       }) 
     })
   })
+
+  describe('MULTIPLOT FRONTEND INTERFACE', () => {
+    it("should return a list of 10 points", () => {
+      cy.window().then((win) => {
+        let multiplot = win.eval('multiplot')
+              
+      })
+    })
+  })
 })
 

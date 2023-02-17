@@ -1216,13 +1216,12 @@ def plot_canvas(plot_data_object: PlotDataObject,
             webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
 
-
-def write_json_for_tests(plot_data_object: PlotDataObject, json_name: str):
-    version, folder, filename = get_current_link()
-    dirname = "/".join(os.path.dirname(__file__).split("/")[:-1] + ["cypress/data_src"])
+def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
+    if not json_path.endswith(".json"):
+        raise ValueError("Not ending with .json")
     data = plot_data_object.to_dict()
     json_data = json.dumps(data)
-    with open(f"{dirname}/{json_name}.json", "wb") as file:
+    with open(json_path, "wb") as file:
         file.write(json_data.encode('utf-8'))
     return
 

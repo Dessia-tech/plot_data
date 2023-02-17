@@ -1,7 +1,7 @@
 import { parseHTML } from '../support/parseHTML';
 import parallelPlotData from '../data_src/parallelPlot.data.json';
 
-const fileName = "parallelPlot"
+const fileName = "parallelplot"
 
 before(() => {
   parseHTML(fileName, parallelPlotData)

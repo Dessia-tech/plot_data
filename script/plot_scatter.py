@@ -15,7 +15,7 @@ for i in range(50):
                      'color': random_color})
 
 
-scatterplot = plot_data.Scatter(elements=elements,
+plot_data_object = plot_data.Scatter(elements=elements,
                                 x_variable='mass', y_variable='length')
 
 # The previous scripts shows the simplest way of creating a scatterplot.
@@ -70,7 +70,6 @@ customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='shape'
                                            heatmap=heatmap)
 
 # if debug_mode is True, set it to False
-plot_data.plot_canvas(plot_data_object=scatterplot, debug_mode=True)
-plot_data.write_json_for_tests(scatterplot, "plotscatter.data")
+plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
 
 

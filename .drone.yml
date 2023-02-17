@@ -46,7 +46,6 @@ steps:
   status:
   - success
   - failure
-  failure: ignore
   settings:
     host: magenta.dessia.tech
     username: drone

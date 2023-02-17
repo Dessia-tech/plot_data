@@ -21,8 +21,9 @@ steps:
     - ./node_modules/.bin/cypress install --force
     - npm install
     - npm run test
-
-
+  volumes:
+  - name: jsons
+    path: /drone/src/cypress/data_src
 
 - name: python install, build doc run scripts
   image: python:3.8
@@ -155,4 +156,9 @@ steps:
     source: cypress/results/*
     strip_components: 2
     overwrite: true
+
+volumes:
+- name: jsons
+  temp: {}
+
 

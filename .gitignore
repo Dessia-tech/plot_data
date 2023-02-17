@@ -131,3 +131,6 @@ volmdlr/templates/core.ts
 volmdlr/core_compiled.c
 cypress/videos
 cypress/screenshots
+cypress/html_files
+cypress/data_src
+cypress/results

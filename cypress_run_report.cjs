@@ -14,7 +14,7 @@ async function runTests() {
   await generator.create(
     jsonReport, 
     options = {
-      reportFilename: "report", 
+      reportFilename: "index", 
       reportDir: 'cypress/results'
     }
     )

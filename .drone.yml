@@ -21,7 +21,7 @@ steps:
   - git fetch --tags
   - python setup.py install
 #  - python scripts/dessia_object.py
-  - pip install sphinx sphinx-rtd-theme coverage volmdlr nbformat nbconvert
+  - pip install sphinx sphinx-rtd-theme coverage nbformat nbconvert
   - pip install dessia_common --no-cache-dir
   - cd ../scripts
   - coverage run --source plot_data ci_tests.py

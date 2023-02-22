@@ -58,7 +58,7 @@ steps:
     password:
       from_secret: ssh_drone_password
     target: /var/www/cdn/tests/plot_data/${DRONE_BRANCH}
-    source: cypress/screenshots/*/*(failed).png
+    source: cypress/screenshots/*
     strip_components: 2
     overwrite: true
 

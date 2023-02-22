@@ -45,23 +45,6 @@ steps:
   # - name: screenshots
   #   path: /drone/src/cypress/screenshots
 
-- name: upload cypress images diffs to cdn
-  image: appleboy/drone-scp
-  when:
-    status:
-    - success
-    - failure
-  ignore: failure
-  settings:
-    host: magenta.dessia.tech
-    username: drone
-    password:
-      from_secret: ssh_drone_password
-    target: /var/www/cdn/tests/plot_data/${DRONE_BRANCH}
-    source: cypress/screenshots/*/*(failed).png
-    strip_components: 2
-    overwrite: true
-
 - name: upload cypress reports to cdn
   image: appleboy/drone-scp
   when:

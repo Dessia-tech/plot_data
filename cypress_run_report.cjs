@@ -33,12 +33,12 @@ async function runTests() {
     }
     )
 
-  // if (failures) {
-  //   console.error('Could not execute tests')
-  //   console.error(message)
-  //   process.exit(failures)
-  // }
-  process.exit() //totalFailed)
+  if (failures) {
+    console.error('Could not execute tests')
+    console.error(message)
+    process.exit(failures)
+  }
+  process.exit(totalFailed)
 }
 
 runTests()

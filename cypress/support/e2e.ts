@@ -22,6 +22,7 @@ Cypress.on('test:after:run', (test, runnable) => {
         // Cypress.config('screenshotsFolder')
         // const screenshot = `${"screenshots"}/${Cypress.spec.name
         // }/${runnable.parent.title} -- ${test.title} (failed).png`;
+        // const screenshot = `${"screenshots"}/${runnable.parent.title} -- ${test.title} (failed).png`;
         const screenshot = `${"screenshots"}/${runnable.parent.title} -- ${test.title} (failed).png`;
         addContext({ test }, screenshot);
     }

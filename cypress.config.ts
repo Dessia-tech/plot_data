@@ -1,6 +1,5 @@
 import { defineConfig } from "cypress";
 import getCompareSnapshotsPlugin from "cypress-visual-regression/dist/plugin";
-import addContext from 'mochawesome/addContext';
 import fs from 'fs'
 import path from 'path'
 

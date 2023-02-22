@@ -62,8 +62,6 @@ steps:
     strip_components: 2
     overwrite: true
 
-
-
 - name: python install, build doc run scripts
   image: python:3.8
   commands:

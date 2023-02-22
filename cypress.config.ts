@@ -4,7 +4,7 @@ import fs from 'fs'
 import path from 'path'
 
 export default defineConfig({
-  viewportWidth: 1000,
+  viewportWidth: 1280,
   viewportHeight: 720,
   reporter: 'mochawesome',
   reporterOptions: {

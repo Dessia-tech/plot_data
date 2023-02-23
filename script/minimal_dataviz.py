@@ -10,6 +10,7 @@ import plot_data
 import plot_data.colors as colors
 import random
 
+random.seed(7)
 
 elements = []
 

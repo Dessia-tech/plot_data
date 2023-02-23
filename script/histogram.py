@@ -2,6 +2,8 @@ import plot_data
 import plot_data.colors as colors
 import random
 
+random.seed(8)
+
 elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']
 COLORS = [colors.RED, colors.BLUE, colors.GREEN, colors.YELLOW, colors.ORANGE, colors.VIOLET]

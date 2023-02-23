@@ -26,14 +26,14 @@ export default defineConfig({
     setupNodeEvents(on, config) {
       getCompareSnapshotsPlugin(on, config);
 
-      on('before:browser:launch', (browser, launchOptions) => {
-        // if (browser.name === 'chrome') {
-        //   launchOptions.args.push('--disable-dev-shm-usage')
-        // }
-        // launchOptions.args.push('--disable-dev-shm-usage')
-        launchOptions.args['--disable-dev-shm-usage'] = true;
-        return launchOptions
-      })
+      // on('before:browser:launch', (browser, launchOptions) => {
+      //   // if (browser.name === 'chrome') {
+      //   //   launchOptions.args.push('--disable-dev-shm-usage')
+      //   // }
+      //   // launchOptions.args.push('--disable-dev-shm-usage')
+      //   launchOptions.args['--disable-dev-shm-usage'] = true;
+      //   return launchOptions
+      // })
 
       on('after:screenshot', (details) => {
         var newPath =  details.path

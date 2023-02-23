@@ -33,7 +33,6 @@ steps:
 
 - name: Test typescript with cypress
   image: cypress/included:12.6.0
-  options: --ipc=host
   commands:
     - ./node_modules/.bin/cypress install --force
     - npm install

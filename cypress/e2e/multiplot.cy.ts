@@ -10,6 +10,7 @@ before(() => {
 
 describe("MULTIPLOT TESTS", () => {
   beforeEach(() => {
+    cy.viewport(1280, 720)
     cy.visit("cypress/html_files/" + fileName + ".html");
     cy.wait(500)
   })

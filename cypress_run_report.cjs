@@ -14,7 +14,8 @@ async function runTests() {
   await cypress.run({
     browser:"electron",
     viewportWidth: 1280,
-    viewportHeight: 720
+    viewportHeight: 720,
+    launchOptions:'--disable-dev-shm-usage'
   }).then(result => {
     failures = result.failures
     message = result.message

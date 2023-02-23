@@ -30,7 +30,8 @@ export default defineConfig({
         // if (browser.name === 'chrome') {
         //   launchOptions.args.push('--disable-dev-shm-usage')
         // }
-        launchOptions.args.push('--disable-dev-shm-usage')
+        // launchOptions.args.push('--disable-dev-shm-usage')
+        launchOptions.args['--disable-dev-shm-usage'] = true;
         return launchOptions
       })
 

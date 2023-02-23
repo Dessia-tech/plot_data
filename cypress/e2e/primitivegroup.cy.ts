@@ -10,6 +10,7 @@ before(() => {
 describe('PLOT PRIMITIVE GROUP CANVAS', () => {
   beforeEach(() => {
     cy.visit("cypress/html_files/" + fileName + ".html");
+    cy.wait(500)
   })
 
   it("Unchanged raw canvas", () => {  

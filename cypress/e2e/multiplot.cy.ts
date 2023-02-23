@@ -11,6 +11,7 @@ before(() => {
 describe("MULTIPLOT TESTS", () => {
   beforeEach(() => {
     cy.visit("cypress/html_files/" + fileName + ".html");
+    cy.wait(500)
   })
 
   it("should draw the canvas", () => {  

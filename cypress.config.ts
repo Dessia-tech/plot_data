@@ -4,8 +4,8 @@ import fs from 'fs'
 import path from 'path'
 
 export default defineConfig({
-  viewportWidth: 1920,
-  viewportHeight: 1280,
+  viewportWidth: 1280,
+  viewportHeight: 720,
   reporter: 'mochawesome',
   reporterOptions: {
     embeddedScreenshots: true,
@@ -25,6 +25,14 @@ export default defineConfig({
     experimentalStudio : true,
     setupNodeEvents(on, config) {
       getCompareSnapshotsPlugin(on, config);
+
+      on('before:browser:launch', (browser, launchOptions) => {
+        // if (browser.name === 'chrome') {
+        //   launchOptions.args.push('--disable-dev-shm-usage')
+        // }
+        launchOptions.args.push('--disable-dev-shm-usage')
+        return launchOptions
+      })
 
       on('after:screenshot', (details) => {
         var newPath =  details.path

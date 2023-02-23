@@ -3,6 +3,7 @@ import plot_data.colors as colors
 import random
 # A script showing scatter plots instantiations.
 
+random.seed(2)
 elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']
 COLORS = [colors.RED, colors.BLUE, colors.GREEN, colors.YELLOW, colors.ORANGE, colors.VIOLET]

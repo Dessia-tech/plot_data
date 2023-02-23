@@ -11,8 +11,11 @@ async function runTests() {
 
   await fse.remove('cypress/results') // remove the report folder
  
-  await cypress.run({browser:"electron"})
-  .then(result => {
+  await cypress.run({
+    browser:"electron",
+    viewportWidth: 1280,
+    viewportHeight: 720
+  }).then(result => {
     failures = result.failures
     message = result.message
     totalFailed = result.totalFailed

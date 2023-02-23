@@ -37,30 +37,26 @@ steps:
     - ./node_modules/.bin/cypress install --force
     - npm install
     - npm run test
-    - ls -la /drone/src/cypress
-    - ls -la /drone/src/cypress/screenshots
   volumes:
   - name: jsons
     path: /drone/src/cypress/data_src
-  # - name: screenshots
-  #   path: /drone/src/cypress/screenshots
 
-- name: upload cypress images diffs to cdn
-  image: appleboy/drone-scp
-  when:
-    status:
-    - success
-    - failure
-  ignore: failure
-  settings:
-    host: magenta.dessia.tech
-    username: drone
-    password:
-      from_secret: ssh_drone_password
-    target: /var/www/cdn/tests/plot_data/${DRONE_BRANCH}
-    source: cypress/screenshots/*
-    strip_components: 2
-    overwrite: true
+# - name: upload cypress images diffs to cdn
+#   image: appleboy/drone-scp
+#   when:
+#     status:
+#     - success
+#     - failure
+#   ignore: failure
+#   settings:
+#     host: magenta.dessia.tech
+#     username: drone
+#     password:
+#       from_secret: ssh_drone_password
+#     target: /var/www/cdn/tests/plot_data/${DRONE_BRANCH}
+#     source: cypress/screenshots/*
+#     strip_components: 2
+#     overwrite: true
 
 - name: upload cypress reports to cdn
   image: appleboy/drone-scp

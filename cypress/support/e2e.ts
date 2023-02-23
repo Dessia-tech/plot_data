@@ -23,8 +23,9 @@ Cypress.on('test:after:run', (test, runnable) => {
         // const screenshot = `${"screenshots"}/${Cypress.spec.name
         // }/${runnable.parent.title} -- ${test.title} (failed).png`;
         // const screenshot = `${"screenshots"}/${runnable.parent.title} -- ${test.title} (failed).png`;
-        const screenshot = `${"screenshots"}/${runnable.parent.title} -- ${test.title} (failed).png`;
-        addContext({ test }, screenshot);
+        const screenshot = `${runnable.parent.title} -- ${test.title}`;
+        addContext({ test }, "screenshots/" + screenshot + " (failed).png");
+        addContext({ test }, `diff/${Cypress.spec.name}/` + screenshot + "-diff.png");
     }
 });
 

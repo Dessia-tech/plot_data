@@ -3,9 +3,12 @@ import getCompareSnapshotsPlugin from "cypress-visual-regression/dist/plugin";
 import fs from 'fs'
 import path from 'path'
 
+const HEIGHT: number = 720;
+const WIDTH: number = 1280;
+
 export default defineConfig({
-  viewportWidth: 1280,
-  viewportHeight: 720,
+  viewportWidth: WIDTH,
+  viewportHeight: HEIGHT,
   reporter: 'mochawesome',
   reporterOptions: {
     embeddedScreenshots: true,
@@ -15,6 +18,7 @@ export default defineConfig({
     json: true,
   },
   env: {
+    SNAPSHOT_DIFF_DIRECTORY: "./cypress/results/diff",
     screenshotsFolder: './cypress/snapshots/actual',
     trashAssetsBeforeRuns: true,
     video: false,
@@ -32,7 +36,7 @@ export default defineConfig({
         // }
         // launchOptions.args.push('--disable-dev-shm-usage')
         // launchOptions.args['--disable-dev-shm-usage'] = true;
-        launchOptions.args.push('--window-size=1280,720')
+        launchOptions.args.push(`--window-size=${WIDTH},${HEIGHT}`)
         return launchOptions
       })
 

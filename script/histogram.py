@@ -2,7 +2,7 @@ import plot_data
 import plot_data.colors as colors
 import random
 
-random.seed(8)
+random.seed(8003)
 
 elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']

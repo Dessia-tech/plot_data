@@ -61,6 +61,7 @@ steps:
 - name: upload cypress reports to cdn
   image: appleboy/drone-scp
   when:
+    event: push
     status:
     - success
     - failure

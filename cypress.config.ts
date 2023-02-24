@@ -31,11 +31,6 @@ export default defineConfig({
       getCompareSnapshotsPlugin(on, config);
 
       on('before:browser:launch', (browser, launchOptions) => {
-        // if (browser.name === 'chrome') {
-        //   launchOptions.args.push('--disable-dev-shm-usage')
-        // }
-        // launchOptions.args.push('--disable-dev-shm-usage')
-        // launchOptions.args['--disable-dev-shm-usage'] = true;
         launchOptions.args.push(`--window-size=${WIDTH + 10},${HEIGHT + 10}`)
         return launchOptions
       })

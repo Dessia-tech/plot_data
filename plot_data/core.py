@@ -1214,6 +1214,7 @@ def plot_canvas(plot_data_object: PlotDataObject,
             webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
 
+
 def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
     if not json_path.endswith(".json"):
         raise ValueError("Not ending with .json")
@@ -1221,6 +1222,7 @@ def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
     json_data = json.dumps(data)
     with open(json_path, "wb") as file:
         file.write(json_data.encode('utf-8'))
+
 
 def get_csv_vectors(filepath):
     """

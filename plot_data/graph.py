@@ -1,6 +1,7 @@
 import networkx as nx
 import plot_data
 
+
 class NetworkxGraph(plot_data.PrimitiveGroup):
     """
     Each node of self.graph can contain its settings in the node.data \

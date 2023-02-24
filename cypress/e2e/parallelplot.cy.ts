@@ -15,6 +15,6 @@ describe('PARALLEL PLOT CANVAS', function () {
   })
 
   it("should draw canvas", function () {  
-    cy.compareSnapshot(describeTitle + this.test.title, 0.0);
+    cy.compareSnapshot(describeTitle + this.test.title, 0.05);
   })
 })

@@ -3,8 +3,8 @@ import getCompareSnapshotsPlugin from "cypress-visual-regression/dist/plugin";
 import fs from 'fs'
 import path from 'path'
 
-const HEIGHT: number = 720;
-const WIDTH: number = 1280;
+const HEIGHT: number = 710;
+const WIDTH: number = 1270;
 
 export default defineConfig({
   viewportWidth: WIDTH,
@@ -36,7 +36,7 @@ export default defineConfig({
         // }
         // launchOptions.args.push('--disable-dev-shm-usage')
         // launchOptions.args['--disable-dev-shm-usage'] = true;
-        launchOptions.args.push(`--window-size=${WIDTH},${HEIGHT}`)
+        launchOptions.args.push(`--window-size=${WIDTH + 10},${HEIGHT + 10}`)
         return launchOptions
       })
 

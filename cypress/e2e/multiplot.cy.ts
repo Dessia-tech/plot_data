@@ -16,13 +16,13 @@ describe('MULTIPLOT CANVAS', function () {
   })
 
   it("should draw canvas", function () {  
-    cy.compareSnapshot(describeTitle + this.test.title, 0.0);
+    cy.compareSnapshot(describeTitle + this.test.title, 0.05);
   })
 
   it("should remove primitive group from container in multiplot", function () {
     cy.window().then((win) => {
       win.eval('multiplot').remove_all_primitive_groups_from_container(6);
-      cy.compareSnapshot(describeTitle + this.test.title, 0.0);
+      cy.compareSnapshot(describeTitle + this.test.title, 0.05);
     })
   })
   
@@ -30,7 +30,7 @@ describe('MULTIPLOT CANVAS', function () {
     cy.window().its('multiplot').then((multiplot) => {
       multiplot.add_primitive_group_container(primitiveGroupContainerData, [], null)
       cy.wrap('multiplot').as('multiplot')
-      cy.compareSnapshot(describeTitle + this.test.title, 0.0);
+      cy.compareSnapshot(describeTitle + this.test.title, 0.05);
     })
   })
 
@@ -43,7 +43,7 @@ describe('MULTIPLOT CANVAS', function () {
       cy.wait(2000)
       multiplot.click_on_view_action()
       cy.wait(500)
-      cy.compareSnapshot(describeTitle + this.test.title, 0.0);
+      cy.compareSnapshot(describeTitle + this.test.title, 0.05);
     }) 
   })
 

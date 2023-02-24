@@ -1,24 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-      <script src=$core_path></script>
-  </head>
-  <body>
+    <head>
+        <script src=$core_path></script>
+    </head>
     <div id="app">
-        <canvas id="canvas" width="490" height="490"
-                    style="border: 1px solid black;">
+        <canvas id="canvas" width="490" height="490" style="border: 1px solid black;">
         </canvas>
 
         <script type="text/javascript">
             var width = 0.95*window.innerWidth;
             var height = Math.max(0.95*window.innerHeight, 350);
-
             var data = $data;
             var number_plot_data = data.length
-
-            var plot_data = new PlotData.ParallelPlot(
-                data, width, height, true, 0, 0, "canvas"
-            );
+            var plot_data = new PlotData.ParallelPlot(data, width, height, true, 0, 0, "canvas");
             plot_data.define_canvas("canvas");
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);

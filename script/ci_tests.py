@@ -20,7 +20,8 @@ scripts = [
     "primitive_group_container.py",
     "scatter_matrix.py",
     "plot_scatter.py",
-    "primitive_group.py"
+    "primitive_group.py",
+    "simple_shapes.py"
 ]
 
 for script_name in scripts:

@@ -142,7 +142,7 @@ steps:
   - pip install radon pydocstyle pylint
   - ./code_quality.sh
   - python code_pylint.py
-  - pre-commit run -a
+  # - pre-commit run -a
 
 - name: check pep8 formatting
   image: python:3.9

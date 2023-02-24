@@ -22,10 +22,7 @@
 
 
 * **Please tell us about your environment:**
-  
-  - branch: 
-  - commit:  
-  - python version: 
 
-
-
+  - branch:
+  - commit:
+  - python version:

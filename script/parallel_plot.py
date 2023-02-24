@@ -1,6 +1,7 @@
-import plot_data
-from plot_data.colors import RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET
 import random
+
+import plot_data
+from plot_data.colors import BLUE, GREEN, ORANGE, RED, VIOLET, YELLOW
 
 random.seed(4)
 

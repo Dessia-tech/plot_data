@@ -10,7 +10,7 @@ async function runTests() {
   let message = null
 
   await fse.remove('cypress/results') // remove the report folder
- 
+
   await cypress.run({
     browser:"firefox"
     // viewportWidth: 1280,
@@ -30,9 +30,9 @@ async function runTests() {
   })
 
   await generator.create(
-    jsonReport, 
+    jsonReport,
     options = {
-      reportFilename: "index", 
+      reportFilename: "index",
       reportDir: 'cypress/results'
     }
     )

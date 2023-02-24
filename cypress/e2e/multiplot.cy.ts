@@ -15,7 +15,7 @@ describe('MULTIPLOT CANVAS', function () {
     cy.wait(500)
   })
 
-  it("should draw canvas", function () {  
+  it("should draw canvas", function () {
     cy.compareSnapshot(describeTitle + this.test.title, 0.05);
   })
 
@@ -25,8 +25,8 @@ describe('MULTIPLOT CANVAS', function () {
       cy.compareSnapshot(describeTitle + this.test.title, 0.05);
     })
   })
-  
-  it("should add primitive group container in multiplot", function () {  
+
+  it("should add primitive group container in multiplot", function () {
     cy.window().its('multiplot').then((multiplot) => {
       multiplot.add_primitive_group_container(primitiveGroupContainerData, [], null)
       cy.wrap('multiplot').as('multiplot')
@@ -44,34 +44,33 @@ describe('MULTIPLOT CANVAS', function () {
       multiplot.click_on_view_action()
       cy.wait(500)
       cy.compareSnapshot(describeTitle + this.test.title, 0.05);
-    }) 
+    })
   })
 
   // describe('MULTIPLOT FRONTEND INTERFACE', () => {
   //   it("should return a list of 10 points", () => {
   //     cy.window().then((win) => {
   //       let multiplot = win.eval('multiplot')
-              
+
   //     })
   //   })
   //   it("should return a list of 10 points", () => {
   //     cy.window().then((win) => {
   //       let multiplot = win.eval('multiplot')
-              
+
   //     })
   //   })
   //   it("should return a list of 10 points", () => {
   //     cy.window().then((win) => {
   //       let multiplot = win.eval('multiplot')
-              
+
   //     })
   //   })
   //   it("should return a list of 10 points", () => {
   //     cy.window().then((win) => {
   //       let multiplot = win.eval('multiplot')
-              
+
   //     })
   //   })
   // })
 })
-

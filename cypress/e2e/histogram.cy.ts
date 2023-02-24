@@ -14,7 +14,7 @@ describe('HISTOGRAM CANVAS', function () {
     cy.wait(500)
   })
 
-  it("should draw canvas", function () {  
+  it("should draw canvas", function () {
     cy.compareSnapshot(describeTitle + this.test.title, 0.05);
   })
 })

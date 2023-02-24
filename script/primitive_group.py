@@ -25,7 +25,3 @@ plot_data_object = plot_data.PrimitiveGroup(primitives=[circle1, contour, circle
 
 # if debug_mode is True, set it to False
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
-
-
-
-

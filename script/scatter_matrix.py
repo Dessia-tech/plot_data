@@ -1,6 +1,8 @@
+import random
+
 import plot_data
 import plot_data.colors as colors
-import random
+
 # A script showing scatter plots instantiations.
 
 random.seed(1)

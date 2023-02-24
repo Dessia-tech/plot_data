@@ -136,12 +136,13 @@ steps:
       from_secret: ssh_drone_password
     overwrite: true
 
-- name: check code complexity, docs & code quality
+- name: check code complexity, docs & code quality pre-commit
   image: python:3.9
   commands:
   - pip install radon pydocstyle pylint
   - ./code_quality.sh
   - python code_pylint.py
+  - pre-commit run -a
 
 - name: check pep8 formatting
   image: python:3.9
@@ -182,5 +183,3 @@ steps:
 volumes:
 - name: jsons
   temp: {}
-
-

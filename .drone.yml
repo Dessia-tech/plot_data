@@ -95,8 +95,7 @@ steps:
 - name: check code complexity, docs & code quality pre-commit
   image: python:3.9
   commands:
-  - pip install radon pydocstyle pylint
-  - ./code_quality.sh
+  - pip install pylint==2.16.2 pre-commit
   - python code_pylint.py
   - pre-commit run -a
 

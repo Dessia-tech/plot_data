@@ -699,7 +699,6 @@ export class Tooltip {
       mergeON, axes, log_scale_x, log_scale_y) {
       var textfills = [];
       var text_max_length = 0;
-      console.log(mvx, mvy)
       context.font = this.text_style.font;
       [x_nb_digits, y_nb_digits] = this.refresh_nb_digits(x_nb_digits, y_nb_digits);
       if (point.isPointInList(point_list)) {

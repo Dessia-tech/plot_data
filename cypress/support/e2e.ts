@@ -16,6 +16,7 @@
 // Import commands.js using ES2015 syntax:
 import './commands'
 import addContext from 'mochawesome/addContext';
+import 'cypress-real-events/support'
 
 Cypress.on('test:after:run', (test, runnable) => {
     if (test.state === 'failed') {

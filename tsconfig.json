@@ -11,7 +11,7 @@
     "allowJs": true,
     "moduleResolution": "node",
     "lib": ["DOM", "es2019"],
-    "types": ["cypress", "cypress-visual-regression", "node"]
+    "types": ["cypress", "cypress-visual-regression", "node", "cypress-real-events"]
   },
   "include": ["src", "cypress/**/*.ts"],
   "exclude": ["node_modules", "**/__tests__/*"]

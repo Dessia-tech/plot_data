@@ -19,16 +19,11 @@ import addContext from 'mochawesome/addContext';
 
 Cypress.on('test:after:run', (test, runnable) => {
     if (test.state === 'failed') {
-        // Cypress.config('screenshotsFolder')
-        // const screenshot = `${"screenshots"}/${Cypress.spec.name
-        // }/${runnable.parent.title} -- ${test.title} (failed).png`;
-        // const screenshot = `${"screenshots"}/${runnable.parent.title} -- ${test.title} (failed).png`;
         const screenshot = `${runnable.parent.title} -- ${test.title}`;
         addContext({ test }, "screenshots/" + screenshot + " (failed).png");
         addContext({ test }, `diff/${Cypress.spec.name}/` + screenshot + "-diff.png");
     }
 });
-
 
 // Alternatively you can use CommonJS syntax:
 // require('./commands')

@@ -12,7 +12,6 @@ import tempfile
 import webbrowser
 import warnings
 from typing import List, Tuple, Any, Union, Dict
-from string import Template
 
 import numpy as npy
 
@@ -1182,7 +1181,6 @@ def plot_canvas(plot_data_object: PlotDataObject,
     else:
         raise NotImplementedError('Type {} not implemented'.format(plot_type))
 
-
     if force_version is not None:
         version, folder, filename = get_current_link(version=force_version)
     else:
@@ -1223,7 +1221,6 @@ def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
     json_data = json.dumps(data)
     with open(json_path, "wb") as file:
         file.write(json_data.encode('utf-8'))
-    return
 
 def get_csv_vectors(filepath):
     """

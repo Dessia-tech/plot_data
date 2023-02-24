@@ -1,8 +1,5 @@
 import networkx as nx
-import numpy as np
-
 import plot_data
-
 
 class NetworkxGraph(plot_data.PrimitiveGroup):
     """

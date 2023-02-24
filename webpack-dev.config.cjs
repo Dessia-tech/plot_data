@@ -16,7 +16,7 @@ const config = {
     }
   },
   plugins: [
-    // Add your plugins here 
+    // Add your plugins here
     // Learn more about plugins from https://webpack.js.org/configuration/plugins/
   ],
   module: {

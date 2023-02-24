@@ -2,8 +2,9 @@
 # primitive_group: an object that contains multiple primitives. A primitive
 # is either a Circle2D, a LineSegment, a Contour2D, an Arc2D or a Text
 
-import plot_data
 import numpy as npy
+
+import plot_data
 import plot_data.colors as colors
 
 # defining a couple style objects

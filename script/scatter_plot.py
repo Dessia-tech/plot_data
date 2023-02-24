@@ -1,6 +1,8 @@
+import random
+
 import plot_data
 import plot_data.colors as colors
-import random
+
 # A script showing scatter plots instantiations.
 
 elements = []
@@ -71,4 +73,3 @@ customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='shape'
 
 # if debug_mode is True, set it to False
 plot_data.plot_canvas(plot_data_object=scatterplot, debug_mode=True)
-

@@ -1,7 +1,8 @@
 import random
 
 import plot_data
-from plot_data.colors import RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET, GREY, LIGHTVIOLET, LIGHTGREEN, ROSE
+from plot_data.colors import (BLUE, GREEN, GREY, LIGHTGREEN, LIGHTVIOLET,
+                              ORANGE, RED, ROSE, VIOLET, YELLOW)
 
 # A script showing scatter plots instantiations.
 

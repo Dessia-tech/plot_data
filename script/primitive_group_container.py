@@ -3,6 +3,7 @@
 # LineSegment and Text)
 
 from primitive_group import primitive_groups
+
 import plot_data
 
 plot_data_object = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups)

@@ -2,39 +2,39 @@ import { parseHTML } from '../support/parseHTML';
 import multiplotData from '../data_src/multiplot.data.json';
 import primitiveGroupContainerData from '../data_src/primitivegroupcontainer.data.json';
 
-const fileName = "multiplot"
+const featureName = "multiplot"
 
 before(() => {
-  parseHTML(fileName, multiplotData)
+  parseHTML(featureName, multiplotData)
 })
 
-describe("MULTIPLOT TESTS", () => {
+describe('PLOT SCATTER MATRIX CANVAS', function () {
+  const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.viewport(1280, 720)
-    cy.visit("cypress/html_files/" + fileName + ".html");
+    cy.visit("cypress/html_files/" + featureName + ".html");
     cy.wait(500)
   })
 
-  it("should draw the canvas", () => {  
-    cy.compareSnapshot(fileName + ".raw", 0.0);
+  it("Unchanged raw canvas", function () {  
+    cy.compareSnapshot(describeTitle + this.test.title, 0.0);
   })
 
-  it("should remove primitive group from container in multiplot", () => {  
+  it("should remove primitive group from container in multiplot", function () {
     cy.window().then((win) => {
       win.eval('multiplot').remove_all_primitive_groups_from_container(6);
-      cy.compareSnapshot(fileName + ".remove_primitive_group", 0.0);
+      cy.compareSnapshot(describeTitle + this.test.title, 0.0);
     })
   })
   
-  it("should add primitive group container in multiplot", () => {  
+  it("should add primitive group container in multiplot", function () {  
     cy.window().its('multiplot').then((multiplot) => {
       multiplot.add_primitive_group_container(primitiveGroupContainerData, [], null)
       cy.wrap('multiplot').as('multiplot')
-      cy.compareSnapshot(fileName + ".add_primitive_group", 0.0);
+      cy.compareSnapshot(describeTitle + this.test.title, 0.0);
     })
   })
 
-  it("should reorder all plots in canvas", () => {
+  it("should reorder all plots in canvas", function () {
     cy.window().then((win) => {
       let multiplot = win.eval('multiplot')
       multiplot.add_primitive_group_container(primitiveGroupContainerData, [], null)
@@ -43,7 +43,7 @@ describe("MULTIPLOT TESTS", () => {
       cy.wait(2000)
       multiplot.click_on_view_action()
       cy.wait(500)
-      cy.compareSnapshot(fileName + ".reordered_plots", 0.0);
+      cy.compareSnapshot(describeTitle + this.test.title, 0.0);
     }) 
   })
 

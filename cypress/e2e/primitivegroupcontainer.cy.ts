@@ -1,19 +1,20 @@
 import { parseHTML } from '../support/parseHTML';
 import primitiveGroupContainerData from '../data_src/primitivegroupcontainer.data.json';
 
-const fileName = "primitivegroupcontainer"
+const featureName = "primitivegroupcontainer"
 
 before(() => {
-  parseHTML(fileName, primitiveGroupContainerData)
+  parseHTML(featureName, primitiveGroupContainerData)
 })
 
-describe('PLOT PRIMITIVE GROUP CONTAINER CANVAS', () => {
+describe('PLOT SCATTER MATRIX CANVAS', function () {
+  const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.visit("cypress/html_files/" + fileName + ".html");
+    cy.visit("cypress/html_files/" + featureName + ".html");
     cy.wait(500)
   })
 
-  it("Unchanged raw canvas", () => {  
-    cy.compareSnapshot(fileName + ".raw", 0.0);
+  it("Unchanged raw canvas", function () {  
+    cy.compareSnapshot(describeTitle + this.test.title, 0.0);
   })
 })

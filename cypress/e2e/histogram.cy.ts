@@ -1,20 +1,20 @@
 import { parseHTML } from '../support/parseHTML';
 import histogramData from '../data_src/histogram.data.json';
 
-const fileName = "histogram"
+const featureName = "histogram"
 
 before(() => {
-  parseHTML(fileName, histogramData)
+  parseHTML(featureName, histogramData)
 })
 
-describe('HISTOGRAM CANVAS', () => {
+describe('PLOT SCATTER MATRIX CANVAS', function () {
+  const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.viewport(1280, 720)
-    cy.visit("cypress/html_files/" + fileName + ".html");
+    cy.visit("cypress/html_files/" + featureName + ".html");
     cy.wait(500)
   })
 
-  it("Unchanged raw canvas", () => {  
-    cy.compareSnapshot(fileName + ".raw", 0.0);
+  it("Unchanged raw canvas", function () {  
+    cy.compareSnapshot(describeTitle + this.test.title, 0.0);
   })
 })

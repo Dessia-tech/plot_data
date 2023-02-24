@@ -8,14 +8,13 @@ before(() => {
 })
 
 describe('PLOT SCATTER MATRIX CANVAS', function () {
-  const describeTitle = this.title
+  const describeTitle = this.title + ' -- '
   beforeEach(() => {
     cy.visit("cypress/html_files/" + featureName + ".html");
     cy.wait(500)
   })
 
   it("Unchanged raw canvas", function () {  
-    var fileName = describeTitle + ' -- ' + this.test.title
-    cy.compareSnapshot(fileName, 0.0);
+    cy.compareSnapshot(describeTitle + this.test.title, 0.0);
   })
 })

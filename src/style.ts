@@ -76,7 +76,7 @@ export class HatchingSet {
  */
 export class PointStyle {
     constructor(public color_fill: string,
-                public color_stroke: string, 
+                public color_stroke: string,
                 public stroke_width: number,
                 public size: number,
                 public shape: string,
@@ -97,7 +97,7 @@ export class PointStyle {
         shape = 'circle';
       }
     }
-  
+
     public static deserialize(serialized) {
       let default_dict_ = {color_fill:string_to_hex('lightviolet'), color_stroke:string_to_hex('lightgrey'),
                                  stroke_width:0.5, size:2, shape:'circle', name:''};
@@ -121,12 +121,12 @@ export class SurfaceStyle {
                 public hatching:HatchingSet) {
       if (color_fill === undefined) {
         color_fill = string_to_hex('black');
-      } 
+      }
       if (opacity === undefined) {
         opacity = 1;
       }
     }
-              
+
     public static deserialize(serialized) {
       let default_dict_ = {color_fill:string_to_rgb('white'), opacity:1, hatching:null};
       serialized = set_default_values(serialized, default_dict_);
@@ -174,9 +174,9 @@ export class TextStyle {
       else if (this.italic && this.bold) this.option = 'bold italic ';
       this.font = this.option + this.font_size.toString() + 'px ' + this.font_style;
     }
-  
+
     public static deserialize(serialized) {
-      let default_dict_ = {text_color:string_to_rgb('black'), font_size:12, 
+      let default_dict_ = {text_color:string_to_rgb('black'), font_size:12,
                            font_style:'sans-serif', text_align_x:'start',
                            text_align_y: 'alphabetic', name:''};
       serialized = set_default_values(serialized,default_dict_);
@@ -190,10 +190,8 @@ export class TextStyle {
                               serialized["angle"],
                               serialized['name']);
     }
-  
+
     get_font_from_size(font_size:number): string {
       return this.font = this.option + font_size.toString() + 'px ' + this.font_style;
     }
 }
-
-

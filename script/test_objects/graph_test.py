@@ -1,9 +1,10 @@
 # An example of Graph2D instantiation. It draws one or several datasets on
 # one canvas and is useful for displaying numerical functions
 
+import numpy as np
+
 import plot_data
 from plot_data.colors import *
-import numpy as np
 
 k = 0
 

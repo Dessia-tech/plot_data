@@ -23,6 +23,7 @@ author = 'DessiA Technologies SAS'
 
 # The full version, including alpha/beta/rc tags
 import plot_data
+
 release = plot_data.__version__
 
 

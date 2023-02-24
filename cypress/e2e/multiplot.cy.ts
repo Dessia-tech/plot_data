@@ -8,14 +8,14 @@ before(() => {
   parseHTML(featureName, multiplotData)
 })
 
-describe('PLOT SCATTER MATRIX CANVAS', function () {
+describe('MULTIPLOT CANVAS', function () {
   const describeTitle = this.title + ' -- '
   beforeEach(() => {
     cy.visit("cypress/html_files/" + featureName + ".html");
     cy.wait(500)
   })
 
-  it("Unchanged raw canvas", function () {  
+  it("should draw canvas", function () {  
     cy.compareSnapshot(describeTitle + this.test.title, 0.0);
   })
 

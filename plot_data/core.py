@@ -23,11 +23,15 @@ import plot_data.colors
 from plot_data import templates
 
 try:
-    # dessia_common >= 0.12.0
-    from dessia_common.utils.types import full_classname
+    # dessia_common >= 0.13.0
+    from dessia_common.utils.helpers import full_classname
 except ImportError:
-    # dessia_common < 0.12.0. Considering removing the whole full_classname import to reduce dc dependency.
-    from dessia_common.core import full_classname
+    try:
+        # dessia_common >= 0.12.0
+        from dessia_common.utils.types import full_classname
+    except ImportError:
+        # dessia_common < 0.12.0. Considering removing the whole full_classname import to reduce dc dependency.
+        from dessia_common.core import full_classname
 
 try:
     # dessia_common >= 0.12.0

@@ -19,4 +19,3 @@ repos:
       - id: requirements-txt-fixer
       - id: check-merge-conflict
       - id: end-of-file-fixer
-

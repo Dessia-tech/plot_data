@@ -106,6 +106,16 @@ steps:
     - pip3 install -U pip autopep8
     - bash code_pep8.sh
 
+- name: check changelog update
+  image: python:3.8
+  when:
+    event: pull_request
+    branch:
+      - master
+      - dev
+  commands:
+    - bash code_changelog.sh
+
 - name: sdist
   image: python:3.8
   commands:

@@ -62,7 +62,7 @@ class PlotDataObject(DessiaObject):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """ Redefines DessiaObject's to_dict() in order to not use pointers and remove keys where value is None. """
         dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
@@ -95,13 +95,13 @@ class Sample(PlotDataObject):
 
         PlotDataObject.__init__(self, type_="sample", name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """
         Overwrite generic to_dict.
 
         TODO Check if it can be generic (probably)
         """
-        dict_ = PlotDataObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path)
+        dict_ = PlotDataObject.to_dict(self, *args, **kwargs)
         dict_.update({"reference_path": self.reference_path, "name": self.name})
         dict_.update(serialize(self.values))
         # TODO Keeping values at dict_ level before refactor, should be removed after and use dict_["values"] instead

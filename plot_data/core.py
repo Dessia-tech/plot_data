@@ -175,6 +175,14 @@ class EdgeStyle(DessiaObject):
         self.dashline = dashline
         DessiaObject.__init__(self, name=name)
 
+    def mpl_arguments(self):
+        args = {}
+        if self.color_stroke:
+            args['edgecolor'] = self.color_stroke.rgb
+        if self.line_width:
+            args['linewidth'] = self.line_width
+        return args
+
 
 class PointStyle(DessiaObject):
     """
@@ -273,6 +281,16 @@ class SurfaceStyle(DessiaObject):
         self.hatching = hatching
         DessiaObject.__init__(self, name=name)
 
+    def mpl_arguments(self):
+        args = {}
+        if self.color_fill:
+            args['facecolor'] = self.color_fill.rgb
+        if self.hatching:
+            args['hatch'] = "\\"
+        if self.opacity > 0:
+            args['alpha'] = self.opacity
+            args['fill'] = True
+        return args
 
 DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=plot_data.colors.BLACK)
 DEFAULT_POINTSTYLE = PointStyle(color_stroke=plot_data.colors.BLACK, color_fill=plot_data.colors.WHITE)
@@ -362,7 +380,7 @@ class Line2D(PlotDataObject):
             style = edge_style
         if style is None:
             style = DEFAULT_EDGESTYLE
-        
+
         color = style.color_stroke.rgb
         dashes = style.dashline
 
@@ -509,22 +527,21 @@ class Circle2D(PlotDataObject):
         if not ax:
             _, ax = plt.subplots()
         if self.edge_style:
-            edgecolor = self.edge_style.color_stroke.rgb
-            # dashes = DEFAULT_EDGESTYLE.dashline
+            edge_style = self.edge_style
         else:
-            edgecolor = DEFAULT_EDGESTYLE.color_stroke.rgb
+            edge_style = DEFAULT_EDGESTYLE
             # dashes = DEFAULT_EDGESTYLE.dashline
+        args = edge_style.mpl_arguments()
+
         if self.surface_style:
-            facecolor = self.surface_style.color_fill.rgb
-            surface_alpha = self.surface_style.opacity
+            surface_style = self.surface_style
         else:
-            facecolor = None
-            surface_alpha = 0
+            surface_style = DEFAULT_SURFACESTYLE
+
+        args.update(surface_style.mpl_arguments())
 
         ax.add_patch(patches.Circle((self.cx, self.cy), self.r,
-                                    edgecolor=edgecolor,
-                                    facecolor=facecolor,
-                                    fill=surface_alpha > 0))
+                                    **args))
         return ax
 
 
@@ -563,9 +580,6 @@ class Point2D(PlotDataObject):
             style = self.point_style
         else:
             style = DEFAULT_POINTSTYLE
-            
-        
-            
 
         ax.plot([self.cx], [self.cy], marker='o', **style.mpl_arguments())
         return ax

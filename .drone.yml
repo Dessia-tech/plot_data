@@ -20,7 +20,6 @@ steps:
   commands:
   - git fetch --tags
   - python setup.py install
-#  - python scripts/dessia_object.py
   - pip install coverage #sphinx sphinx-rtd-theme coverage nbformat nbconvert
   - cd ./script
   - coverage run --source plot_data ci_tests.py --path="/drone/src/cypress/data_src"
@@ -29,7 +28,6 @@ steps:
   volumes:
   - name: jsons
     path: /drone/src/cypress/data_src
-  # - python coverage.py
 
 - name: Test typescript with cypress
   image: cypress/included:12.6.0

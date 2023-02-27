@@ -1,17 +1,16 @@
 import { parseHTML } from '../support/parseHTML';
 import histogramData from '../data_src/histogram.data.json';
 
-const featureName = "histogram"
+const FEATURE_NAME = "histogram"
 
 before(() => {
-  parseHTML(featureName, histogramData)
+  parseHTML(FEATURE_NAME, histogramData)
 })
 
 describe('HISTOGRAM CANVAS', function () {
   const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.visit("cypress/html_files/" + featureName + ".html");
-    cy.wait(500)
+    cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
   })
 
   it("should draw canvas", function () {

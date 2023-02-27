@@ -1,17 +1,16 @@
 import { parseHTML } from '../support/parseHTML';
 import simpleshapesData from '../data_src/simpleshapes.data.json';
 
-const featureName = "simpleshapes"
+const FEATURE_NAME = "simpleshapes"
 
 before(() => {
-  parseHTML(featureName, simpleshapesData)
+  parseHTML(FEATURE_NAME, simpleshapesData)
 })
 
 describe('SIMPLE SHAPES CANVAS', function () {
   const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.visit("cypress/html_files/" + featureName + ".html");
-    cy.wait(500)
+    cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
   })
 
   it("should draw canvas", function () {

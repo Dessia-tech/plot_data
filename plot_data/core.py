@@ -1215,7 +1215,8 @@ def plot_canvas(plot_data_object: PlotDataObject,
 
 def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
     if not json_path.endswith(".json"):
-        raise ValueError("Not ending with .json")
+        json_path += ".json"
+        print("Added '.json' at the end of json_path variable.")
     data = plot_data_object.to_dict()
     json_data = json.dumps(data)
     with open(json_path, "wb") as file:

@@ -2,17 +2,16 @@ import { parseHTML } from '../support/parseHTML';
 import multiplotData from '../data_src/multiplot.data.json';
 import primitiveGroupContainerData from '../data_src/primitivegroupcontainer.data.json';
 
-const featureName = "multiplot"
+const FEATURE_NAME = "multiplot"
 
 before(() => {
-  parseHTML(featureName, multiplotData)
+  parseHTML(FEATURE_NAME, multiplotData)
 })
 
 describe('MULTIPLOT CANVAS', function () {
   const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.visit("cypress/html_files/" + featureName + ".html");
-    cy.wait(500)
+    cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
   })
 
   it("should draw canvas", function () {
@@ -38,11 +37,8 @@ describe('MULTIPLOT CANVAS', function () {
     cy.window().then((win) => {
       let multiplot = win.eval('multiplot')
       multiplot.add_primitive_group_container(primitiveGroupContainerData, [], null)
-      cy.wait(500)
       multiplot.click_on_view_action()
-      cy.wait(2000)
       multiplot.click_on_view_action()
-      cy.wait(500)
       cy.compareSnapshot(describeTitle + this.test.title, 0.05);
     })
   })

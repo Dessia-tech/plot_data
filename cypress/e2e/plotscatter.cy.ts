@@ -1,17 +1,16 @@
 import { parseHTML } from '../support/parseHTML';
 import plotScatterData from '../data_src/plotscatter.data.json';
 
-const featureName = "plotscatter"
+const FEATURE_NAME = "plotscatter"
 
 before(() => {
-  parseHTML(featureName, plotScatterData)
+  parseHTML(FEATURE_NAME, plotScatterData)
 })
 
 describe('PLOT SCATTER CANVAS', function () {
   const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.visit("cypress/html_files/" + featureName + ".html");
-    cy.wait(500)
+    cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
   })
 
   it("should draw canvas", function () {

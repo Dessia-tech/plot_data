@@ -1,17 +1,16 @@
 import { parseHTML } from '../support/parseHTML';
 import primitiveGroupData from '../data_src/primitivegroup.data.json';
 
-const featureName = "primitivegroup"
+const FEATURE_NAME = "primitivegroup"
 
 before(() => {
-  parseHTML(featureName, primitiveGroupData)
+  parseHTML(FEATURE_NAME, primitiveGroupData)
 })
 
 describe('PRIMITIVE GROUP CANVAS', function () {
   const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.visit("cypress/html_files/" + featureName + ".html");
-    cy.wait(500)
+    cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
   })
 
   it("should draw canvas", function () {

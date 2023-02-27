@@ -1,17 +1,16 @@
 import { parseHTML } from '../support/parseHTML';
 import graph2dData from '../data_src/graph2d.data.json';
 
-const featureName = "graph2d"
+const FEATURE_NAME = "graph2d"
 
 before(() => {
-  parseHTML(featureName, graph2dData)
+  parseHTML(FEATURE_NAME, graph2dData)
 })
 
 describe('GRAPH2D CANVAS', function () {
   const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.visit("cypress/html_files/" + featureName + ".html");
-    cy.wait(500)
+    cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
   })
 
   it("should draw canvas", function () {

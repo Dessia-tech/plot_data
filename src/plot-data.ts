@@ -338,7 +338,6 @@ export abstract class PlotData {
   }
 
   draw_primitivegroup(hidden, mvx, mvy, scaleX, scaleY, d:PrimitiveGroup) {
-    console.log(this.X, this.Y, mvx, mvy)
     var need_check = ['contour', 'arc', 'circle', 'linesegment2d'];
     if (d['type_'] == 'primitivegroup') {
       for (let i=0; i<d.primitives.length; i++) {
@@ -454,7 +453,6 @@ export abstract class PlotData {
         this.context.fill();
       }
       if (this.select_on_mouse == d) {
-        console.log(this.select_on_mouse)
         this.context.fillStyle = this.color_surface_on_mouse;
       }
       for (var j = 0; j < this.select_on_click.length; j++) {
@@ -1965,12 +1963,9 @@ export abstract class PlotData {
   }
 
   selecting_point_action(mouse1X, mouse1Y) {
-    console.log(mouse1X, mouse1Y)
     var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
-    // console.log(mouse1X, mouse1Y)
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
     var click_plot_data = this.color_to_plot_data[colKey];
-    console.log(click_plot_data)
     if (click_plot_data) {
       if (this.type_ === "primitivegroup") {
         if (this.select_on_click.includes(click_plot_data)) {

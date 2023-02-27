@@ -90,6 +90,7 @@ class PlotDataObject(DessiaObject):
         warnings.warn(f'class {self.__class__.__name__} does not implement mpl_plot, not plotting.')
         return ax
 
+
 class Sample(PlotDataObject):
     """
     Graph Point.
@@ -292,6 +293,7 @@ class SurfaceStyle(DessiaObject):
             args['fill'] = True
         return args
 
+
 DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=plot_data.colors.BLACK)
 DEFAULT_POINTSTYLE = PointStyle(color_stroke=plot_data.colors.BLACK, color_fill=plot_data.colors.WHITE)
 DEFAULT_TEXTSTYLE = TextStyle(text_color=plot_data.colors.BLACK)
@@ -383,7 +385,6 @@ class Line2D(PlotDataObject):
 
         color = style.color_stroke.rgb
         dashes = style.dashline
-
 
         ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]),
                   color=color, dashes=dashes)
@@ -481,6 +482,7 @@ class Wire(PlotDataObject):
             color = DEFAULT_EDGESTYLE.color_stroke.rgb
         ax.plot([p[0] for p in self.lines], [p[1] for p in self.lines], color=color)
         return ax
+
 
 class Circle2D(PlotDataObject):
     """
@@ -583,6 +585,7 @@ class Point2D(PlotDataObject):
 
         ax.plot([self.cx], [self.cy], marker='o', **style.mpl_arguments())
         return ax
+
 
 class Axis(PlotDataObject):
     """
@@ -944,6 +947,7 @@ class Contour2D(PlotDataObject):
         for primitive in self.plot_data_primitives:
             ax = primitive.mpl_plot(ax=ax, edge_style=self.edge_style)
         return ax
+
 
 class Label(PlotDataObject):
     """

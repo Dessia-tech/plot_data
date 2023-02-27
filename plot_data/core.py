@@ -83,6 +83,12 @@ class PlotDataObject(DessiaObject):
         raise NotImplementedError("It is strange to call plot_data method from a plot_data object."
                                   f" Check the class '{self.__class__.__name__}' you are calling")
 
+    def mpl_plot(self, ax=None):
+        """
+        Overloading of dessia object mpl_plot
+        """
+        warnings.warn(f'class {self.__class__.__name__} does not implement mpl_plot, not plotting.')
+        return ax
 
 class Sample(PlotDataObject):
     """
@@ -170,9 +176,6 @@ class EdgeStyle(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=plot_data.colors.BLACK)
-
-
 class PointStyle(DessiaObject):
     """
     A class for customizing Point2D.
@@ -198,6 +201,14 @@ class PointStyle(DessiaObject):
         self.size = size  # 1, 2, 3 or 4
         self.shape = shape
         DessiaObject.__init__(self, name=name)
+
+    def mpl_arguments(self):
+        args = {}
+        if self.color_fill:
+            args['color'] = self.color_fill.rgb
+        if self.color_stroke:
+            args['markeredgecolor'] = self.color_stroke.rgb
+        return args
 
 
 class TextStyle(DessiaObject):
@@ -261,6 +272,12 @@ class SurfaceStyle(DessiaObject):
         self.opacity = opacity
         self.hatching = hatching
         DessiaObject.__init__(self, name=name)
+
+
+DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=plot_data.colors.BLACK)
+DEFAULT_POINTSTYLE = PointStyle(color_stroke=plot_data.colors.BLACK, color_fill=plot_data.colors.WHITE)
+DEFAULT_TEXTSTYLE = TextStyle(text_color=plot_data.colors.BLACK)
+DEFAULT_SURFACESTYLE = SurfaceStyle()
 
 
 class Text(PlotDataObject):
@@ -333,22 +350,26 @@ class Line2D(PlotDataObject):
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='line2d', name=name)
 
-    def mpl_plot(self, ax=None):
+    def mpl_plot(self, ax=None, edge_style=None):
         """
         Plots using matplotlib.
         """
         if ax is None:
             _, ax = plt.subplots()
 
-        if not self.edge_style:
-            color = DEFAULT_EDGESTYLE.color_stroke.rgb
-            dashes = DEFAULT_EDGESTYLE.dashline
-        else:
-            color = self.edge_style.color_stroke.rgb
-            dashes = self.edge_style.dashline
+        style = self.edge_style
+        if edge_style:
+            style = edge_style
+        if style is None:
+            style = DEFAULT_EDGESTYLE
+        
+        color = style.color_stroke.rgb
+        dashes = style.dashline
+
 
         ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]),
                   color=color, dashes=dashes)
+        return ax
 
 
 class LineSegment2D(PlotDataObject):
@@ -384,19 +405,24 @@ class LineSegment2D(PlotDataObject):
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
 
-    def mpl_plot(self, ax=None):
+    def mpl_plot(self, ax=None, edge_style=None):
         """
         Plots using matplotlib.
         """
         if not ax:
             _, ax = plt.subplots()
 
-        if self.edge_style and self.edge_style.color_stroke:
-            color = self.edge_style.color_stroke.rgb
-        else:
-            color = plot_data.colors.BLACK.rgb
+        style = self.edge_style
+        if edge_style:
+            style = edge_style
+        if style is None:
+            style = DEFAULT_EDGESTYLE
+
+        color = style.color_stroke.rgb
+        dashes = style.dashline
+
         ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
-                color=color)
+                color=color, dashes=dashes)
         return ax
 
 
@@ -427,6 +453,16 @@ class Wire(PlotDataObject):
         self.tooltip = tooltip
         PlotDataObject.__init__(self, type_="wire", name=name)
 
+    def mpl_plot(self, ax=None):
+        """
+        Plots using matplotlib
+        """
+        if self.edge_style:
+            color = self.edge_style.color_stroke.rgb
+        else:
+            color = DEFAULT_EDGESTYLE.color_stroke.rgb
+        ax.plot([p[0] for p in self.lines], [p[1] for p in self.lines], color=color)
+        return ax
 
 class Circle2D(PlotDataObject):
     """
@@ -474,12 +510,12 @@ class Circle2D(PlotDataObject):
             _, ax = plt.subplots()
         if self.edge_style:
             edgecolor = self.edge_style.color_stroke.rgb
-            dashes = DEFAULT_EDGESTYLE.dashline
+            # dashes = DEFAULT_EDGESTYLE.dashline
         else:
             edgecolor = DEFAULT_EDGESTYLE.color_stroke.rgb
-            dashes = DEFAULT_EDGESTYLE.dashline
+            # dashes = DEFAULT_EDGESTYLE.dashline
         if self.surface_style:
-            facecolor = self.surface_style.color_fill
+            facecolor = self.surface_style.color_fill.rgb
             surface_alpha = self.surface_style.opacity
         else:
             facecolor = None
@@ -519,6 +555,20 @@ class Point2D(PlotDataObject):
         """
         return self.cx, self.cx, self.cy, self.cy
 
+    def mpl_plot(self, ax=None):
+        if ax is None:
+            _, ax = plt.subplots()
+
+        if self.point_style:
+            style = self.point_style
+        else:
+            style = DEFAULT_POINTSTYLE
+            
+        
+            
+
+        ax.plot([self.cx], [self.cy], marker='o', **style.mpl_arguments())
+        return ax
 
 class Axis(PlotDataObject):
     """
@@ -878,9 +928,8 @@ class Contour2D(PlotDataObject):
         Plots using matplotlib
         """
         for primitive in self.plot_data_primitives:
-            ax = primitive.mpl_plot(ax=ax)
+            ax = primitive.mpl_plot(ax=ax, edge_style=self.edge_style)
         return ax
-
 
 class Label(PlotDataObject):
     """
@@ -941,12 +990,19 @@ class PrimitiveGroup(PlotDataObject):
         """
         Plots using matplotlib
         """
-        ax = self.primitives[0].mpl_plot(ax=ax)
-        for primitive in self.primitives[1:]:
-            primitive.mpl_plot(ax=ax)
-        if equal_aspect:
+        for primitive in self.primitives:
+            ax = primitive.mpl_plot(ax=ax)
+        if equal_aspect and ax:
             ax.set_aspect('equal')
         return ax
+
+    def save_to_image(self, filepath, remove_axis=True):
+        ax = self.mpl_plot()
+        if remove_axis:
+            ax.set_axis_off()
+            ax.figure.savefig(filepath, bbox_inches='tight', pad_inches=0)
+        else:
+            ax.figure.savefig(filepath)
 
     def bounding_box(self):
         """

@@ -34,7 +34,4 @@ for k in range(1, len(T2)):
     elements2.append({'time': T2[k], 'electric current': I2[k]})
 
 dataset2 = plot_data.Dataset(elements=elements2, name='I2 = f(t)')
-
-
-graph2d = plot_data.Graph2D(graphs=[custom_dataset],
-                            x_variable='time', y_variable='electric current')
+graph2d = plot_data.Graph2D(graphs=[dataset1, dataset2], x_variable='time', y_variable='electric current')

@@ -680,7 +680,7 @@ class Dataset(PlotDataObject):
     """
     attribute_names = None
 
-    def __init__(self, elements=None,
+    def __init__(self, elements: List[Sample] = None,
                  edge_style: EdgeStyle = None, tooltip: Tooltip = None,
                  point_style: PointStyle = None,
                  display_step: int = 1, name: str = ''):
@@ -689,9 +689,19 @@ class Dataset(PlotDataObject):
         self.tooltip = tooltip
         self.point_style = point_style
         if elements is None:
-            self.elements = []
-        else:
-            self.elements = elements
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type {type(element)} cannot be used as a Dataset data element.")
+        self.elements = sampled_elements
         self.display_step = display_step
         PlotDataObject.__init__(self, type_='dataset', name=name)
 
@@ -815,10 +825,23 @@ class Scatter(PlotDataObject):
 
 
 class ScatterMatrix(PlotDataObject):
-    def __init__(self, elements: List[Any] = None, axes: List[str] = None,
+    def __init__(self, elements: List[Sample] = None, axes: List[str] = None,
                  point_style: PointStyle = None, surface_style: SurfaceStyle = None,
                  name: str = ""):
-        self.elements = elements
+        if elements is None:
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type {type(element)} cannot be used as a ScatterMatrix data element.")
+        self.elements = sampled_elements
         self.axes = axes
         self.point_style = point_style
         self.surface_style = surface_style

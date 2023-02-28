@@ -770,10 +770,10 @@ export class Text {
               public multi_lines?: boolean,
               public type_:string='text',
               public name:string='') {
-                this.minX = position_x;
-                this.maxX = position_x;
-                this.minY = position_y;
-                this.maxY = position_y;
+    this.minX = position_x -0.5;
+    this.maxX = position_x + 0.5;
+    this.minY = position_y - 0.5;
+    this.maxY = position_y + 0.5;
   }
 
   public static deserialize(serialized) {

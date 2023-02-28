@@ -74,4 +74,4 @@ point2 = plot_data.Point2D(15, 10, plot_data.PointStyle(color_fill=colors.ORANGE
 primitives = [point1, contour, line, arc, circle, text, labels, wire, point2]
 
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
-plot_data.plot_canvas(primitive_group)
+# plot_data.plot_canvas(primitive_group, debug_mode=True)

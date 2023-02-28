@@ -72,8 +72,7 @@ plots = [parallelplot1, parallelplot2, scatterplot1,
 
 # plots = [scatterplot1, scatterplot2]
 
-plot_data_object = plot_data.MultiplePlots(plots=plots, elements=elements,
-                                           initial_view_on=True)
+plot_data_object = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 
 # Display
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

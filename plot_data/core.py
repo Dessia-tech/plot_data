@@ -15,7 +15,16 @@ from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as npy
+
+try:
+    # dessia_common >= 0.12.0
+    from dessia_common.serialization import serialize
+except ImportError:
+    # dessia_common < 0.12.0.
+    from dessia_common.utils.serialization import serialize
+    
 from dessia_common.core import DessiaObject
+
 from dessia_common.typings import JsonSerializable
 from matplotlib import patches
 

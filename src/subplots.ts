@@ -2100,7 +2100,14 @@ export class ScatterMatrix extends PlotData {
     public canvas_id: string,
     public is_in_multiplot = false) {
     super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-    this.elements = data["elements"];
+    if (data["elements"][0]["type_"] == "sample") {
+      this.elements = []
+      for (var element of data["elements"]) {
+        this.elements.push(element.values)
+      }
+    } else {
+      this.elements = data["elements"];
+    }
     let axes = data["axes"] || Object.getOwnPropertyNames(this.elements[0]);
     let x_step = width / axes.length;
     let y_step = height / axes.length;

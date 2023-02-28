@@ -24,7 +24,7 @@ scripts = [
     "plot_scatter.py",
     "primitive_group.py",
     "simple_shapes.py",
-    "pie_chart.py"
+    "pie_chart.py",
     "text_scaling.py"
 ]
 

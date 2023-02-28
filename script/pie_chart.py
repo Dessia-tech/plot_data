@@ -27,9 +27,9 @@ for i in range(50):
 piechart1 = plot_data.PieChart(data_samples=data_samples,
                                slicing_variable='mass')
 
-piechart2 = plot_data.PieChart(data_samples=data_samples,
+plot_data_object = plot_data.PieChart(data_samples=data_samples,
                                slicing_variable='length')
 
 
 plot_data.plot_canvas(plot_data_object=piechart1, debug_mode=True)
-plot_data.plot_canvas(plot_data_object=piechart2, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

@@ -7,9 +7,7 @@ Created on Thu Sep 29 15:46:57 2022
 """
 
 import plot_data
-from volmdlr import Point2D
-from volmdlr.edges import LineSegment2D
-from volmdlr.wires import Contour2D
+from plot_data.core import LineSegment2D, Contour2D
 
 
 class Box:
@@ -21,26 +19,24 @@ class Box:
         self.font_size = font_size
         self.name = name
 
-    def contour(self):
-        edge1 = LineSegment2D(Point2D(-self.length/2, -self.height/2),
-                              Point2D(self.length/2, -self.height/2))
-        edge2 = LineSegment2D(Point2D(self.length / 2, -self.height / 2),
-                              Point2D(self.length / 2, self.height / 2))
-        edge3 = LineSegment2D(Point2D(self.length / 2, self.height / 2),
-                              Point2D(-self.length / 2, self.height / 2))
-        edge4 = LineSegment2D(Point2D(-self.length / 2, self.height / 2),
-                              Point2D(-self.length / 2, -self.height / 2))
-        return Contour2D([edge1, edge2, edge3, edge4])
+    def contour(self, pos_y=0):
+        edge1 = LineSegment2D([-self.length/2, -self.height/2 + pos_y],
+                              [self.length/2, -self.height/2 + pos_y])
+        edge2 = LineSegment2D([self.length / 2, -self.height / 2 + pos_y],
+                              [self.length / 2, self.height / 2 + pos_y])
+        edge3 = LineSegment2D([self.length / 2, self.height / 2 + pos_y],
+                              [-self.length / 2, self.height / 2 + pos_y])
+        edge4 = LineSegment2D([-self.length / 2, self.height / 2 + pos_y],
+                              [-self.length / 2, -self.height / 2 + pos_y])
+        return Contour2D(plot_data_primitives=[edge1, edge2, edge3, edge4])
 
     def plot_data(self, pos_y=0.):
-        contour = self.contour()
-        contour.translation_inplace(Point2D(0, pos_y))
-        plot_data_contour = contour.plot_data()
+        plot_data_contour = self.contour(pos_y)
 
         text_style = plot_data.TextStyle(text_color='rgb(0, 0, 0)',
-                                         font_size=self.font_size,
-                                         text_align_x='center',
-                                         text_align_y='middle')
+                                          font_size=self.font_size,
+                                          text_align_x='center',
+                                          text_align_y='middle')
         text = plot_data.Text(comment=self.name, position_x=0.,
                               position_y=pos_y, text_style=text_style,
                               text_scaling=True, max_width=self.length,

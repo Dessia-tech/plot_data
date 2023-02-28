@@ -24,13 +24,6 @@ from plot_data import templates
 
 try:
     # dessia_common >= 0.12.0
-    from dessia_common.utils.types import full_classname
-except ImportError:
-    # dessia_common < 0.12.0. Considering removing the whole full_classname import to reduce dc dependency.
-    from dessia_common.core import full_classname
-
-try:
-    # dessia_common >= 0.12.0
     from dessia_common.serialization import serialize
 except ImportError:
     # dessia_common < 0.12.0.
@@ -71,7 +64,7 @@ class PlotDataObject(DessiaObject):
         """ Reset object_class in order to instantiate right object. """
         type_ = dict_['type_']
         object_class = TYPE_TO_CLASS[type_]
-        dict_['object_class'] = full_classname(object_=object_class, compute_for='class')
+        dict_["object_class"] = f"{object_class.__module__}.{object_class.__name__}"
         return DessiaObject.dict_to_object(dict_=dict_, force_generic=True, global_dict=global_dict,
                                            pointers_memo=pointers_memo, path=path)
 
@@ -1150,7 +1143,7 @@ def plot_canvas(plot_data_object: PlotDataObject,
     Creates a html file and plots input data in web browser
 
     :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
-     MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
+      MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
     :type plot_data_object: PlotDataObject
     :param debug_mode: uses local library if True, uses typescript \
     library from cdn if False
@@ -1218,6 +1211,16 @@ def plot_canvas(plot_data_object: PlotDataObject,
         if display:
             webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
+
+
+def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
+    if not json_path.endswith(".json"):
+        json_path += ".json"
+        print("Added '.json' at the end of json_path variable.")
+    data = plot_data_object.to_dict()
+    json_data = json.dumps(data)
+    with open(json_path, "wb") as file:
+        file.write(json_data.encode('utf-8'))
 
 
 def get_csv_vectors(filepath):

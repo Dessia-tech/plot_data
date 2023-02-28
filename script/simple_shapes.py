@@ -5,7 +5,8 @@ Created on Wed Mar 14 15:32:37 2018
 
 @author: Steven Masfaraud masfaraud@dessia.tech
 """
-from test_objects.primitive_group_test import primitive_group
+from test_objects.primitive_group_test import \
+    primitive_group as plot_data_object
 
 import plot_data
 
@@ -13,5 +14,4 @@ import plot_data
 # to make MultiplePlots' more convenient
 
 # if debug mode is True, set it to False
-plot_data.plot_canvas(plot_data_object=primitive_group,
-                      debug_mode=True)
+plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

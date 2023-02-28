@@ -5,6 +5,8 @@ import plot_data.colors as colors
 
 # A script showing scatter plots instantiations.
 
+random.seed(1)
+
 elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']
 COLORS = [colors.RED, colors.BLUE, colors.GREEN, colors.YELLOW, colors.ORANGE, colors.VIOLET]
@@ -17,5 +19,5 @@ for i in range(50):
                      'color': random_color
                      })
 
-scatter_matrix = plot_data.ScatterMatrix(elements=elements)
-plot_data.plot_canvas(scatter_matrix, True)
+plot_data_object = plot_data.ScatterMatrix(elements=elements)
+plot_data.plot_canvas(plot_data_object, True)

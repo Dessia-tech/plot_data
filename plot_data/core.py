@@ -4,25 +4,23 @@
 Definition of language and plots
 """
 
+import json
+import math
 import os
 import sys
-import math
-import json
 import tempfile
-import webbrowser
 import warnings
-from typing import List, Tuple, Any, Union, Dict
-
-import numpy as npy
+import webbrowser
+from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
+import numpy as npy
+from dessia_common.core import DessiaObject
+from dessia_common.typings import JsonSerializable
 from matplotlib import patches
 
-from dessia_common.typings import JsonSerializable
-from dessia_common.core import DessiaObject
-
-from plot_data import templates
 import plot_data.colors
+from plot_data import templates
 
 try:
     # dessia_common >= 0.12.0
@@ -1168,7 +1166,7 @@ def plot_canvas(plot_data_object: PlotDataObject,
     Creates a html file and plots input data in web browser
 
     :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
-     MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
+      MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
     :type plot_data_object: PlotDataObject
     :param debug_mode: uses local library if True, uses typescript \
     library from cdn if False
@@ -1236,6 +1234,16 @@ def plot_canvas(plot_data_object: PlotDataObject,
         if display:
             webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
+
+
+def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
+    if not json_path.endswith(".json"):
+        json_path += ".json"
+        print("Added '.json' at the end of json_path variable.")
+    data = plot_data_object.to_dict()
+    json_data = json.dumps(data)
+    with open(json_path, "wb") as file:
+        file.write(json_data.encode('utf-8'))
 
 
 def get_csv_vectors(filepath):

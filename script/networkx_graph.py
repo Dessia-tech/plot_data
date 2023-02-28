@@ -1,7 +1,7 @@
 import networkx as nx
-import plot_data.graph
-import plot_data
 
+import plot_data
+import plot_data.graph
 
 graph = nx.Graph()
 

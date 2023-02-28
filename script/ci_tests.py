@@ -25,6 +25,7 @@ scripts = [
     "primitive_group.py",
     "simple_shapes.py",
     "pie_chart.py"
+    "text_scaling.py"
 ]
 
 for script_name in scripts:

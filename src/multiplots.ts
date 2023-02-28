@@ -9,9 +9,9 @@ var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
 
 
-/** 
+/**
  * MultiplePlots takes a list of elements (dictionaries) that represent vectors and displays it throught different representations
- * such as ParallelPlot or ScatterPlot. On top of that, each element can be represented by a PrimitiveGroup or a Graph2D. 
+ * such as ParallelPlot or ScatterPlot. On top of that, each element can be represented by a PrimitiveGroup or a Graph2D.
  */
 export class MultiplePlots {
     context_show:any;
@@ -23,7 +23,7 @@ export class MultiplePlots {
     initial_coords:[number, number][];
     points:Point2D[]=[];
     sizes:Window[]=[];
-    move_plot_index:number=-1; 
+    move_plot_index:number=-1;
     clicked_index_list:number[]=[];
     clickedPlotIndex:number=-1;
     last_index:number=-1;
@@ -36,7 +36,7 @@ export class MultiplePlots {
     selectDep_x:number=0;
     view_bool:boolean=false;
     view_button_x:number=0;
-    export_button_x:number=0; 
+    export_button_x:number=0;
     initial_objectsX:number[]=[];
     initial_objectsY:number[]=[];
     initial_object_width:number[]=[];
@@ -55,16 +55,16 @@ export class MultiplePlots {
     hidden_datas:any[]=[];
     canvas:any;
     // Subplot dimensions before redimensioning due to settings enabled
-    settings_on_initial_widths:number[]=[]; 
+    settings_on_initial_widths:number[]=[];
     settings_on_initial_heights:number[]=[];
     obj_settings_on:number=-1;
     view_on_disposition:boolean = false; //True if layout disposition, turns false if you move the subplots
-   
+
     click_on_button: boolean = false;
-  
+
     public padding: number;
-  
-  
+
+
     constructor(public data: any[], public width:number, public height:number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
       check_package_version(data['package_version'], requirement);
@@ -103,7 +103,7 @@ export class MultiplePlots {
         this.objectList.push(newObject);
       }
       if (elements) {this.initialize_point_families();}
-  
+
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].draw_initial();
         this.display_order.push(i);
@@ -122,7 +122,7 @@ export class MultiplePlots {
       // this.save_canvas();
     }
 
-  
+
     initialize_sizes() {
       var temp_sizes = this.data['sizes'];
       if (temp_sizes) {
@@ -135,7 +135,7 @@ export class MultiplePlots {
         }
       }
     }
-  
+
     initialize_all_attributes() {
       this.all_attributes = [];
       var attribute_names = Object.getOwnPropertyNames(this.data['elements'][0]);
@@ -148,7 +148,7 @@ export class MultiplePlots {
         }
       }
     }
-  
+
     initialize_point_families() {
       let point_index = [];
       for (let i=0; i<this.data['elements'].length; i++) {
@@ -163,16 +163,16 @@ export class MultiplePlots {
         }
       }
     }
-  
-  
+
+
     change_point_family_order(index1:number, index2:number) {
       List.switchElements(this.point_families, index1, index2);
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].point_families = this.point_families;
       }
     }
-  
-  
+
+
     resize_multiplot(new_width:number, new_height:number): void {
       var old_width = this.width;
       this.width = new_width;
@@ -185,8 +185,8 @@ export class MultiplePlots {
       this.define_canvas(this.canvas_id);
       // this.redrawAllObjects();
     }
-  
-  
+
+
     initializeButtons():void {
       this.button_y = this.height - 25;
       this.button_w = 45;
@@ -196,7 +196,7 @@ export class MultiplePlots {
       this.view_button_x = this.selectDep_x + this.button_w + 5;
       this.export_button_x = this.view_button_x + this.button_w + 5;
     }
-  
+
     store_dimensions() {
       this.settings_on_initial_widths = [];
       this.settings_on_initial_heights = [];
@@ -205,11 +205,11 @@ export class MultiplePlots {
         this.settings_on_initial_heights.push(obj.height);
       }
     }
-  
+
     draw_manipulation_button():void {
         Shape.createButton(this.transbutton_x, this.button_y, this.button_w, this.button_h, this.context_show, this.manipulation_bool.toString(), '12px sans-serif');
     }
-  
+
     draw_selection_dependency_button():void {
       if (this.selectDependency_bool === true) {
         Shape.createButton(this.selectDep_x, this.button_y, this.button_w, this.button_h, this.context_show, "Dep ON", '10px sans-serif');
@@ -217,7 +217,7 @@ export class MultiplePlots {
         Shape.createButton(this.selectDep_x, this.button_y, this.button_w, this.button_h, this.context_show, "Dep OFF", '10px sans-serif');
       }
     }
-  
+
     draw_clean_view_button():void {
       if (this.view_bool) {
         Shape.createButton(this.view_button_x, this.button_y, this.button_w, this.button_h, this.context_show, 'ViewON', '10px sans-serif');
@@ -225,12 +225,12 @@ export class MultiplePlots {
         Shape.createButton(this.view_button_x, this.button_y, this.button_w, this.button_h, this.context_show, 'ViewOFF', '10px sans-serif');
       }
     }
-  
+
     draw_export_button(): void {
       Shape.createButton(this.export_button_x, this.button_y, this.button_w, this.button_h, this.context_show,
                          'export', '10px sans-serif');
     }
-  
+
     draw_buttons():void {
       this.draw_manipulation_button();
       this.draw_selection_dependency_button();
@@ -238,7 +238,7 @@ export class MultiplePlots {
       this.draw_export_button();
 
     }
-  
+
     click_on_view_action() {
       this.view_bool = !this.view_bool;
       this.manipulation_bool = this.view_bool;
@@ -248,7 +248,7 @@ export class MultiplePlots {
         this.store_dimensions();
       }
     }
-  
+
     click_on_export_action() {
       let text = "Indices: [" + this.dep_selected_points_index.toString() + "]\n\n";
       text = text + "Points: \n";
@@ -265,7 +265,7 @@ export class MultiplePlots {
 
       export_to_txt("selected_points", text);
     }
-  
+
     click_on_button_action(click_on_translation_button, click_on_selectDep_button, click_on_view,
                            click_on_export) {
       if (click_on_translation_button) {
@@ -279,7 +279,7 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-  
+
     initializeObjectContext(object:PlotData):void {
       object.context_show = this.context_show;
       object.context_hidden = this.context_hidden;
@@ -290,7 +290,7 @@ export class MultiplePlots {
         }
       }
     }
-  
+
     define_canvas(canvas_id: string):void {
       this.canvas = document.getElementById(canvas_id);
       this.canvas.width = this.width;
@@ -302,10 +302,10 @@ export class MultiplePlots {
           hiddenCanvas.height = this.height;
       this.context_hidden = hiddenCanvas.getContext("2d");
     }
-  
+
     initialize_new_plot_data(new_plot_data:PlotData) {
       this.initializeObjectContext(new_plot_data);
-      new_plot_data.point_families = this.point_families;    
+      new_plot_data.point_families = this.point_families;
       if (new_plot_data.type_ == 'scatterplot') {
         for (let family of this.point_families) {
           for (let index of family.point_index) {
@@ -322,7 +322,7 @@ export class MultiplePlots {
       new_plot_data.interaction_ON = false;
       // this.redrawAllObjects();
     }
-  
+
     get_attribute(name:string) {
       for (let attribute of this.all_attributes) {
         if (attribute.name === name) {
@@ -331,9 +331,9 @@ export class MultiplePlots {
       }
       throw new Error('get_attribute(): ' + name + ' is not an attribute');
     }
-  
+
     add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-      var graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', text_align_x:'center', text_align_y:'alphabetic', name:''}; 
+      var graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', text_align_x:'center', text_align_y:'alphabetic', name:''};
       var axis_style = {line_width:0.5, color_stroke:string_to_rgb('grey'), dashline:[], name:''};
       var DEFAULT_AXIS = {nb_points_x:10, nb_points_y:10, graduation_style: graduation_style, axis_style: axis_style, arrow_on: false, grid_on: true, type_:'axis', name:''};
       var surface_style = {color_fill: string_to_rgb('lightblue'), opacity:0.75, hatching:undefined};
@@ -347,7 +347,7 @@ export class MultiplePlots {
       var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
       this.initialize_new_plot_data(new_plot_data);
     }
-  
+
     add_parallelplot(attributes:Attribute[]) {
       var attribute_names = [];
       for (let i=0; i<attributes.length; i++) {
@@ -361,13 +361,13 @@ export class MultiplePlots {
       var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
       this.initialize_new_plot_data(new_plot_data);
     }
-  
+
     add_primitivegroup(serialized:string, point_index:number): void {
       var plot_data = new PlotContour(serialized, 560, 300, this.buttons_ON, 0, 0, this.canvas_id);
       this.primitive_dict[point_index.toString()] = this.nbObjects;
       this.initialize_new_plot_data(plot_data);
     }
-  
+
     remove_primitivegroup(point_index): void { // point_index can be a number as well as a string (ex: 1 or '1') since it is converted into string anyway
       var keys = Object.getOwnPropertyNames(this.primitive_dict);
       if (!List.is_include(point_index.toString(), keys)) { throw new Error('remove_primitivegroup() : input point is not associated with any primitive group');}
@@ -381,8 +381,8 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-  
-  
+
+
     remove_all_primitivegroups() {
       var points_index:string[] = Object.getOwnPropertyNames(this.primitive_dict);
       for (let index of points_index) {
@@ -390,8 +390,8 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-  
-    initialize_containers_dicts(new_plot_data, associated_points:number[]) { 
+
+    initialize_containers_dicts(new_plot_data, associated_points:number[]) {
       var primitive_entries = [];
       var elements_entries = [];
       if (associated_points.length !== new_plot_data.primitive_groups.length) {
@@ -406,7 +406,7 @@ export class MultiplePlots {
       new_plot_data.elements_dict = Object.fromEntries(elements_entries);
       return new_plot_data;
     }
-  
+
     call_layout(new_plot_data, attribute_names:string[]=null) {
       if (equals(attribute_names, [])) attribute_names = null;
       if (attribute_names === null) {
@@ -424,8 +424,8 @@ export class MultiplePlots {
       }
       return new_plot_data;
     }
-  
-  
+
+
     add_primitive_group_container(serialized=empty_container, associated_points:number[]=[], attribute_names:string[]=null): number { // layout options : 'regular', [<attribute>] or [<attribute1>, <attribute2>]
       var new_plot_data:PrimitiveGroupContainer = new PrimitiveGroupContainer(serialized, 560, 300, this.buttons_ON, 0, 0, this.canvas_id);
       if (attribute_names !== null) {
@@ -451,13 +451,13 @@ export class MultiplePlots {
       }
       return this.nbObjects - 1;
     }
-  
+
     add_primitive_group_to_container(serialized, container_index, point_index) {
       let obj:any = this.objectList[container_index];
       obj.elements_dict = MyObject.add_properties(obj.elements_dict, [obj.primitive_groups.length, this.data['elements'][point_index]]);
       obj.add_primitive_group(serialized, point_index); // primitive_dict updated inside this function
     }
-  
+
     remove_primitive_group_from_container(point_index, container_index) {
       let obj:any = this.objectList[container_index];
       try {
@@ -466,13 +466,13 @@ export class MultiplePlots {
         console.warn('WARNING - remove_primitive_group_from_container() : point n°' + point_index + " may not be associated with any primitive_group");
       }
     }
-  
+
     remove_all_primitive_groups_from_container(container_index) {
       var obj:any = this.objectList[container_index];
       obj.reinitialize_all();
       obj.draw();
     }
-  
+
     remove_plot(index) {
       this.objectList = List.remove_at_index(index, this.objectList);
       this.nbObjects--;
@@ -488,10 +488,10 @@ export class MultiplePlots {
           this.to_display_plots[i]--;
         }
       }
-      this.clickedPlotIndex = -1; 
+      this.clickedPlotIndex = -1;
       this.move_plot_index = -1;
     }
-  
+
     getObjectIndex(x, y): number[] {
       var index_list = [];
       for (let i=0; i<this.nbObjects; i++) {
@@ -503,7 +503,7 @@ export class MultiplePlots {
       }
       return index_list;
     }
-  
+
     getLastObjectIndex(x, y):number { // if several plots are selected, returns the last one's index
       if (this.is_on_button(x, y)) return -1;
       var index = -1;
@@ -518,7 +518,7 @@ export class MultiplePlots {
       }
       return index;
     }
-  
+
     clear_object(index) {
       var obj = this.objectList[index];
       this.context_show.beginPath();
@@ -528,7 +528,7 @@ export class MultiplePlots {
       obj.draw_empty_canvas(this.context_hidden);
       this.context_hidden.closePath();
     }
-  
+
     clearAll():void {
       this.context_show.beginPath();
       this.context_show.clearRect(0, 0, this.width, this.height);
@@ -539,7 +539,7 @@ export class MultiplePlots {
       this.context_hidden.stroke();
       this.context_hidden.closePath();
     }
-  
+
     show_plot(index:number) {
       if (List.is_include(index, this.to_display_plots)) {
         throw new Error('Plot n°' + index.toString() + ' already shown');
@@ -547,7 +547,7 @@ export class MultiplePlots {
       this.to_display_plots.push(index);
       this.redrawAllObjects();
     }
-  
+
     hide_plot(index:number) {
       if (!(List.is_include(index, this.to_display_plots))) {
         throw new Error('Plot n°' + index.toString() + ' already hidden');
@@ -555,7 +555,7 @@ export class MultiplePlots {
       this.to_display_plots = List.remove_element(index, this.to_display_plots);
       this.redrawAllObjects();
     }
-  
+
     redrawAllObjects():void {
       this.clearAll();
       if (this.clickedPlotIndex != -1) {
@@ -574,7 +574,7 @@ export class MultiplePlots {
         this.draw_buttons();
       }
     }
-  
+
     redraw_object() {
       this.store_datas();
       this.clearAll();
@@ -587,11 +587,11 @@ export class MultiplePlots {
            this.context_hidden.putImageData(this.hidden_datas[display_index], obj.X, obj.Y);
         }
       }
-      if (this.buttons_ON) { 
-        this.draw_buttons(); 
+      if (this.buttons_ON) {
+        this.draw_buttons();
       }
     }
-  
+
     store_datas() {
       this.shown_datas = []; this.hidden_datas = [];
       for (let i=0; i<this.nbObjects; i++) {
@@ -600,7 +600,7 @@ export class MultiplePlots {
         this.hidden_datas.push(this.context_hidden.getImageData(obj.X, obj.Y, obj.width, obj.height));
       }
     }
-  
+
     isZwSelectBoolOn():boolean {
       for (let i=0; i<this.nbObjects; i++) {
         if ((this.objectList[i].zw_bool === true) || (this.objectList[i].select_bool === true)) {
@@ -609,7 +609,7 @@ export class MultiplePlots {
       }
       return false;
     }
-  
+
     translateSelectedObject(move_plot_index, tx, ty):void {
       var obj:any = this.objectList[move_plot_index]
       obj.X = obj.X + tx;
@@ -623,14 +623,14 @@ export class MultiplePlots {
         }
       }
     }
-  
+
     translateAllObjects(tx, ty) {
       for (let i=0; i<this.nbObjects; i++) {
         this.translateSelectedObject(i, tx, ty);
       }
       this.redrawAllObjects();
     }
-  
+
     setAllInteractionsToOff():void {
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].interaction_ON = false;
@@ -641,19 +641,19 @@ export class MultiplePlots {
         }
       }
     }
-  
+
     setAllInterpolationToOFF(): void {
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].sc_interpolation_ON = false;
       }
     }
-  
+
     refreshAllManipulableBool() {
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].multiplot_manipulation = this.manipulation_bool;
       }
     }
-  
+
     manipulation_bool_action():void {
       this.manipulation_bool = !this.manipulation_bool;
       this.refreshAllManipulableBool();
@@ -662,13 +662,13 @@ export class MultiplePlots {
         this.view_bool = false;
       }
     }
-  
+
     refresh_objects_point_families() {
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].point_families = this.point_families;
       }
     }
-  
+
     add_point_family(point_family:PointFamily): void {
       this.point_families.push(point_family);
       var point_index = point_family.point_index;
@@ -682,7 +682,7 @@ export class MultiplePlots {
       this.refresh_objects_point_families();
       this.redrawAllObjects();
     }
-  
+
     remove_point_family(index:number): void {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
@@ -692,21 +692,21 @@ export class MultiplePlots {
               this.objectList[i].plotObject.point_list[j].point_families = List.remove_element(this.point_families[index],
                                                           this.objectList[i].plotObject.point_list[j].point_families);
             }
-          } 
+          }
         }
       }
       this.point_families = List.remove_at_index(index, this.point_families);
       this.refresh_objects_point_families();
       this.redrawAllObjects();
     }
-  
+
     add_points_to_family(points_index_to_add:number[], family_index:number): void {
       for (let i=0; i<points_index_to_add.length; i++) {
         if (points_index_to_add[i] !== undefined) {
           this.point_families[family_index].point_index.push(points_index_to_add[i]);
           for (let j=0; j<this.nbObjects; j++) {
             if (this.objectList[j].type_ == 'scatterplot') {
-              if (!(List.is_include(this.point_families[family_index], 
+              if (!(List.is_include(this.point_families[family_index],
                 this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families))) {
                   this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families.push(this.point_families[family_index]);
                 }
@@ -717,7 +717,7 @@ export class MultiplePlots {
       this.refresh_objects_point_families();
       this.redrawAllObjects();
     }
-  
+
     remove_points_from_family(points_index_to_remove:number[], family_index:number): void {
       this.point_families[family_index].point_index = List.remove_selection(points_index_to_remove, this.point_families[family_index].point_index);
       for (let i=0; i<points_index_to_remove.length; i++) {
@@ -735,7 +735,7 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-  
+
     selectDep_action():void {
       this.selectDependency_bool = !this.selectDependency_bool;
       this.manipulation_bool = false;
@@ -748,7 +748,7 @@ export class MultiplePlots {
         }
       }
     }
-  
+
     delete_unwanted_vertex(vertex_infos) {
       var i = 0;
       while (i < vertex_infos.length) {
@@ -773,7 +773,7 @@ export class MultiplePlots {
       }
       return vertex_infos;
     }
-  
+
     initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] {
       var thickness = 15;
       var vertex_infos = [];
@@ -792,7 +792,7 @@ export class MultiplePlots {
       var clickOnVertex = !(vertex_infos.length == 0);
       return [clickOnVertex, vertex_infos];
     }
-  
+
     reorder_resize_style(resize_style) {
       var resize_dict = ['n', 'ns', 'ne', 'nwse', 'nw', 'e', 'ew', 's', 'se', 'sw', 'w'];
       for (let i=0; i<resize_dict.length; i++) {
@@ -803,7 +803,7 @@ export class MultiplePlots {
       }
       return resize_style;
     }
-  
+
     setCursorStyle(mouse2X, mouse2Y):void {
       if (this.move_plot_index != -1) {
         var thickness = 15;
@@ -829,7 +829,7 @@ export class MultiplePlots {
         this.canvas.style.cursor = 'default';
       }
     }
-  
+
     refresh_dep_selected_points_index() {
       var all_index = [];
       this.dep_selected_points_index = [];
@@ -851,17 +851,17 @@ export class MultiplePlots {
           this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
         }
       }
-      
+
       if (equals(all_index, this.dep_selected_points_index) && !bool) {
         this.dep_selected_points_index = [];
       }
     }
-  
+
     initializeMouseXY(mouse1X, mouse1Y):void {
       this.initial_mouseX = mouse1X;
       this.initial_mouseY = mouse1Y;
     }
-  
+
     initializeObjectXY():void {
       this.initial_objectsX = [];
       this.initial_objectsY = [];
@@ -870,7 +870,7 @@ export class MultiplePlots {
         this.initial_objectsY.push(this.objectList[i].Y);
       }
     }
-  
+
     initialize_objects_hw():void {
       this.initial_object_width = [];
       this.initial_object_height = [];
@@ -879,7 +879,7 @@ export class MultiplePlots {
         this.initial_object_height[i] = this.objectList[i].height;
       }
     }
-  
+
     resetAllObjects():void {
       this.dep_selected_points_index = [];
       this.selected_point_index = [];
@@ -898,7 +898,7 @@ export class MultiplePlots {
         }
       }
     }
-  
+
     reset_all_selected_points() {
       this.dep_selected_points_index = [];
       this.selected_point_index = [];
@@ -911,14 +911,14 @@ export class MultiplePlots {
           obj.reset_pp_selected();
           obj.reset_rubberbands();
         } else if (obj.type_ === 'histogram') {
-          obj.reset_x_rubberband(); 
+          obj.reset_x_rubberband();
         } else if (obj.type_ === "primitivegroupcontainer") {
           obj.reset_selection();
         }
       }
       this.redrawAllObjects();
     }
-  
+
     reset_selected_points_except(list:number[]) {
       this.dep_selected_points_index = [];
       this.selected_point_index = [];
@@ -939,8 +939,8 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-  
-  
+
+
     refresh_selected_point_index() {
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
@@ -953,7 +953,7 @@ export class MultiplePlots {
       }
       this.selected_point_index = List.remove_duplicates(this.selected_point_index);
     }
-  
+
     getSortedList() {
       var big_coord = 'X';
       var small_coord = 'Y';
@@ -987,7 +987,7 @@ export class MultiplePlots {
       }
       return sorted_list;
     }
-  
+
     clear_objects_selected_points(object_index:number) {
       if (this.selectDependency_bool) {
         for (let i=0; i<this.nbObjects; i++) {
@@ -1003,8 +1003,8 @@ export class MultiplePlots {
         this.objectList[object_index].latest_selected_points_index = [];
       }
     }
-  
-    
+
+
     select_points_manually(index_list:number[], object_index:number): void {
       if (this.objectList[object_index].type_ != 'scatterplot') {throw new Error('selected object must be a scatterplot');}
       this.clear_objects_selected_points(object_index);
@@ -1032,7 +1032,7 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-  
+
     clean_view():void {
       if (this.nbObjects === 1) {
         let obj = this.objectList[0];
@@ -1058,29 +1058,29 @@ export class MultiplePlots {
       let blank_space = this.padding || 0.01*this[small_length];
       let big_length_step = (this[big_length] - (this.big_length_nb_objects + 1)*blank_space)/this.big_length_nb_objects;
       let small_length_step = (this[small_length] - (this.small_length_nb_objects + 1)*blank_space)/this.small_length_nb_objects;
-  
+
       for (let i=0; i<this.big_length_nb_objects - 1; i++) {
         for (let j=0; j<this.small_length_nb_objects; j++) {
           var current_index = i*this.small_length_nb_objects + j; //current_index in sorted_list
-  
+
           // The three following lines are useful for primitive group containers only
           let obj:any = this.objectList[this.sorted_list[current_index]];
           let old_small_coord = obj[small_coord];
           let old_big_coord = obj[big_coord];
-  
+
           this.objectList[this.sorted_list[current_index]][big_coord] = i*big_length_step + (i+1)*blank_space;
           this.objectList[this.sorted_list[current_index]][small_coord] = j*small_length_step + (j+1)*blank_space;
-  
+
           this.objectList[this.sorted_list[current_index]][big_length] = big_length_step;
           this.objectList[this.sorted_list[current_index]][small_length] = small_length_step;
-  
+
           if (obj.type_ === 'primitivegroupcontainer') {
             for (let k=0; k<obj.primitive_groups.length; k++) {
               obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
-              obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord; 
+              obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord;
             }
           }
-  
+
         }
       }
       let last_index = current_index + 1;
@@ -1088,31 +1088,31 @@ export class MultiplePlots {
       // let last_small_length_step = this[small_length]/remaining_obj;
       let last_small_length_step = (this[small_length] - (remaining_obj + 1)*blank_space)/remaining_obj;
       for (let j=0; j<remaining_obj; j++) {
-  
+
         // The three following lines are useful for primitive group containers only
         let obj:any = this.objectList[this.sorted_list[last_index + j]];
         let old_small_coord = obj[small_coord];
         let old_big_coord = obj[big_coord];
-  
-        this.objectList[this.sorted_list[last_index + j]][big_coord] = (this.big_length_nb_objects - 1)*big_length_step 
+
+        this.objectList[this.sorted_list[last_index + j]][big_coord] = (this.big_length_nb_objects - 1)*big_length_step
                                                                        + this.big_length_nb_objects*blank_space;
         this.objectList[this.sorted_list[last_index + j]][small_coord] = j*last_small_length_step + (j+1)*blank_space;
         this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
         this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
-  
+
         if (obj.type_ === 'primitivegroupcontainer') {
           for (let k=0; k<obj.primitive_groups.length; k++) {
             obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
-            obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord; 
+            obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord;
           }
         }
-  
+
       }
       this.resetAllObjects();
       this.redrawAllObjects();
       this.view_on_disposition = true;
     }
-  
+
     resizeObject(vertex_infos, tx, ty):void {
       var widthSizeLimit = 100;
       var heightSizeLimit = 100;
@@ -1149,7 +1149,7 @@ export class MultiplePlots {
             this.objectList[vertex_object_index].width = widthSizeLimit;
           }
         }
-  
+
         if (this.objectList[vertex_object_index].type_ == 'primitivegroupcontainer') {
           let obj:any = this.objectList[vertex_object_index];
           if (vertex_infos[i].left) {
@@ -1166,7 +1166,7 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-  
+
     getSelectionONObject():number {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
@@ -1176,7 +1176,7 @@ export class MultiplePlots {
       }
       return -1;
     }
-  
+
     add_to_rubberbands_manual(obj_index, rubber_index:number, min:number, max:number): void {
       var obj = this.objectList[obj_index];
       this.objectList[obj_index].rubber_bands[rubber_index] = [min, max];
@@ -1189,7 +1189,7 @@ export class MultiplePlots {
       this.mouse_move_pp_communication();
       this.objectList[obj_index].is_drawing_rubber_band = false;
     }
-  
+
     mouse_move_scatter_communication() {
       let isSelectingObjIndex = this.getSelectionONObject();
       if (isSelectingObjIndex != -1) {
@@ -1208,7 +1208,7 @@ export class MultiplePlots {
           if (i === this.clickedPlotIndex) continue;
           if (obj.type_ === "scatterplot") {
             obj.heatmap_selected_points_indices = clicked_object.heatmap_selected_points_indices;
-            obj.refresh_selected_by_heatmap(); 
+            obj.refresh_selected_by_heatmap();
           } else if (obj.type_ === "parallelplot") {
             obj.heatmap_selected_points_indices = clicked_object.heatmap_selected_points_indices;
           }
@@ -1229,7 +1229,7 @@ export class MultiplePlots {
         }
       }
     }
-  
+
     scatter_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], isSelectingObjIndex:number):void { //process received data from a scatterplot and send it to the other objects
       for (let i=0; i<selection_coords.length; i++) {
         for (let j=0; j<this.nbObjects; j++) {
@@ -1243,7 +1243,7 @@ export class MultiplePlots {
           }
         }
       }
-  
+
       for (let i=0; i<this.nbObjects; i++) {
         let obj: any = this.objectList[i];
         if ((obj.type_ === 'scatterplot') && (i != isSelectingObjIndex)) {
@@ -1256,8 +1256,8 @@ export class MultiplePlots {
       this.refresh_dep_selected_points_index();
       this.refresh_selected_object_from_index();
     }
-  
-  
+
+
     mouse_move_pp_communication() {
       let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
       if (isDrawingRubberObjIndex != -1) {
@@ -1266,7 +1266,7 @@ export class MultiplePlots {
         this.pp_communication(rubberbands_dep);
       }
     }
-  
+
     pp_communication(rubberbands_dep:[string, [number, number]][]):void { //process received data from a parallelplot and send it to the other objects
       let primitive_indices = [];
       for (let i=0; i<this.nbObjects; i++) {
@@ -1307,15 +1307,15 @@ export class MultiplePlots {
         obj.select_primitive_groups();
       }
     }
-  
-  
+
+
     mouse_move_histogram_communication() {
       let index = this.get_drawing_rubberbands_obj_index('histogram');
       if (index === -1) return;
       this.histogram_communication(index);
     }
-  
-  
+
+
     histogram_communication(index) {
       let histogram = this.objectList[index];
       let primitive_indices = [];
@@ -1340,8 +1340,8 @@ export class MultiplePlots {
         obj.select_primitive_groups();
       }
     }
-  
-  
+
+
     dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]):void {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
@@ -1358,7 +1358,7 @@ export class MultiplePlots {
         }
       }
     }
-  
+
     refresh_selected_object_from_index(): void {
       for (let i=0; i<this.nbObjects; i++) {
         if (i === this.clickedPlotIndex) continue;
@@ -1376,7 +1376,7 @@ export class MultiplePlots {
                   this.objectList[i].select_on_click.push(obj.scatter_points[j]);
                   this.objectList[i].scatter_points[j].selected = true;
                   break;
-                } 
+                }
               }
             }
             if (!is_inside && this.objectList[i].scatter_points[j].selected) {
@@ -1402,8 +1402,8 @@ export class MultiplePlots {
         }
       }
     }
-  
-  
+
+
     manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
       this.move_plot_index = this.getLastObjectIndex(mouse2X, mouse2Y);
       var l = []
@@ -1422,7 +1422,7 @@ export class MultiplePlots {
         this.last_index = this.move_plot_index;
       }
     }
-  
+
     get_drawing_rubberbands_obj_index(type_):number {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
@@ -1432,7 +1432,7 @@ export class MultiplePlots {
       }
       return -1;
     }
-  
+
     get_selected_axis_info(): [string, boolean, boolean, string[], boolean] {
       var isSelectingppAxis = false;
       var selected_axis_name = '';
@@ -1458,7 +1458,7 @@ export class MultiplePlots {
       }
       return [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis];
     }
-  
+
     zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
       if (event > 0) {var zoom_coeff = 1.1} else {var zoom_coeff = 1/1.1}
       for (let i=0; i<this.nbObjects; i++) {
@@ -1479,8 +1479,8 @@ export class MultiplePlots {
       }
       this.resetAllObjects();
     }
-  
-  
+
+
     get_settings_on_object() {
       for (let i=0; i<this.nbObjects; i++) {
         if (this.objectList[i].settings_on) {
@@ -1489,7 +1489,7 @@ export class MultiplePlots {
       }
       return -1;
     }
-  
+
     settings_padding(index, coef=1) {
       if (!this.view_bool) return;
       var obj = this.objectList[index];
@@ -1502,8 +1502,8 @@ export class MultiplePlots {
       obj.Y = center_y - obj.height/2;
       if (obj.type_ === 'parallelplot') obj.refresh_axis_coords();
     }
-  
-  
+
+
     dbl_click_manage_settings_on(object_index:number): void {
       this.obj_settings_on = this.get_settings_on_object();
       var obj = this.objectList[this.clickedPlotIndex];
@@ -1517,30 +1517,30 @@ export class MultiplePlots {
       obj.draw();
       this.draw_buttons();
     }
-  
+
     single_click_manage_settings_on(object_index:number): void {
       var obj_settings_on = this.get_settings_on_object();
-      if ((obj_settings_on !== -1) && (obj_settings_on !== object_index)) { 
+      if ((obj_settings_on !== -1) && (obj_settings_on !== object_index)) {
         this.objectList[obj_settings_on].settings_on = false;
         this.objectList[object_index].settings_on = true;
         let obj = this.objectList[obj_settings_on];
         this.settings_padding(obj_settings_on);
-        obj.draw();  
+        obj.draw();
         let obj1 = this.objectList[object_index];
         if (this.view_on_disposition) this.settings_padding(object_index);
-        obj1.draw();  
+        obj1.draw();
       }
       this.draw_buttons();
     }
-  
-  
+
+
     manage_selected_point_index_changes(old_selected_index:number[]) {
       if (!equals(old_selected_index, this.selected_point_index)) {
         var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.dep_selected_points_index } });
         this.canvas.dispatchEvent(evt);
       }
     }
-  
+
     color_associated_scatter_point(point_index) { // used by mouse_over_primitive_group() to select points inside scatterplots
       for (let i=0; i<this.nbObjects; i++) {
         if (this.objectList[i].type_ === 'scatterplot') {
@@ -1554,7 +1554,7 @@ export class MultiplePlots {
               for (let k=0; k<point.points_inside.length; k++) {
                 if (point.points_inside[k] === selected_point) {
                   obj.primitive_mouse_over_point = point;
-                  bool = true; 
+                  bool = true;
                   break;
                 }
               }
@@ -1563,12 +1563,12 @@ export class MultiplePlots {
           } else {
             obj.primitive_mouse_over_point = obj.plotObject.point_list[point_index];
           }
-          obj.draw();      
+          obj.draw();
         }
       }
     }
-  
-  
+
+
     mouse_over_primitive_group() {
       var bool = false;
       if (this.move_plot_index !== -1) {
@@ -1579,7 +1579,7 @@ export class MultiplePlots {
             let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(obj.primitive_dict), list => list.reverse()));
             let point_index = Number(primitive_to_point_index[obj.selected_primitive]);
             this.color_associated_scatter_point(point_index);
-          } 
+          }
         }
       }
       if (!bool) {
@@ -1587,18 +1587,18 @@ export class MultiplePlots {
           if (this.objectList[i].type_ === 'scatterplot') {
             let obj = this.objectList[i];
             obj.primitive_mouse_over_point = undefined;
-            obj.draw(); 
+            obj.draw();
           }
         }
       }
     }
-  
+
     mouse_over_scatter_plot() {
       if (this.move_plot_index !== -1 && this.objectList[this.move_plot_index].type_ === "scatterplot") {
         for (let i=0; i<this.nbObjects; i++) {
           let obj = this.objectList[i];
           if (obj.type_ === "parallelplot") {
-            obj.select_on_mouse_indices = this.objectList[this.move_plot_index].select_on_mouse_indices;            
+            obj.select_on_mouse_indices = this.objectList[this.move_plot_index].select_on_mouse_indices;
             obj.draw();
           }
         }
@@ -1620,11 +1620,11 @@ export class MultiplePlots {
             for (let i=0; i<this.nbObjects; i++) {
               if (this.objectList[i].type_ !== 'primitivegroupcontainer') continue;
               let container:any = this.objectList[i];
-              let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(container.primitive_dict), list => list.reverse()));  
+              let primitive_to_point_index = Object.fromEntries(Array.from(Object.entries(container.primitive_dict), list => list.reverse()));
               for (let j=0; j<container.primitive_groups.length; j++) {
                   container.primitive_groups[j].dep_mouse_over = element_index_list.includes(Number(primitive_to_point_index[j]));
               }
-              container.draw();        
+              container.draw();
             }
           } else {
             for (let i=0; i<this.nbObjects; i++) {
@@ -1632,7 +1632,7 @@ export class MultiplePlots {
               let container:any = this.objectList[i];
               for (let j=0; j<container.primitive_groups.length; j++) {
                 container.primitive_groups[j].dep_mouse_over = false;
-                container.draw();  
+                container.draw();
               }
             }
           }
@@ -1644,14 +1644,14 @@ export class MultiplePlots {
           let container:any = this.objectList[i];
           for (let j=0; j<container.primitive_groups.length; j++) {
             container.primitive_groups[j].dep_mouse_over = false;
-            container.draw();  
+            container.draw();
           }
         }
       }
-      
+
     }
-  
-  
+
+
     has_primitive_group_container() {
       for (let i=0; i<this.objectList.length; i++) {
         let obj:any = this.objectList[i];
@@ -1663,8 +1663,8 @@ export class MultiplePlots {
       }
       return false;
     }
-  
-  
+
+
     save_canvas() {
       if (current_save <= multiplot_saves.length - 2) {
         multiplot_saves = List.remove_at_indices(current_save + 1, multiplot_saves.length - 1, multiplot_saves);
@@ -1675,11 +1675,11 @@ export class MultiplePlots {
       }
       current_save = multiplot_saves.length - 1;
     }
-    
-  
+
+
     restore_previous_canvas() {
       if (current_save === 0) return;
-      current_save--; 
+      current_save--;
       Object.assign(this, multiplot_saves[current_save]);
       this.define_canvas(this.canvas_id);
       for (let i=0; i<this.nbObjects; i++) {
@@ -1687,7 +1687,7 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-  
+
     restore_next_canvas() {
       if (current_save === multiplot_saves.length - 1) return;
       current_save++;
@@ -1698,8 +1698,8 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-  
-  
+
+
     is_on_button(mouseX, mouseY) {
       var click_on_manip_button = Shape.isInRect(mouseX, mouseY, this.transbutton_x, this.button_y, this.button_w, this.button_h);
       var click_on_selectDep_button = Shape.isInRect(mouseX, mouseY, this.selectDep_x, this.button_y, this.button_w, this.button_h);
@@ -1707,8 +1707,8 @@ export class MultiplePlots {
       var click_on_export = Shape.isInRect(mouseX, mouseY, this.export_button_x, this.button_y, this.button_w, this.button_h);
       return click_on_manip_button || click_on_selectDep_button || click_on_view || click_on_export;
     }
-  
-  
+
+
     mouse_interaction(): void {
       var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
       var isDrawing = false;
@@ -1717,17 +1717,17 @@ export class MultiplePlots {
       var clickOnVertex:boolean = false;
       var old_selected_index;
       var double_click = false;
-  
-  
+
+
       // For canvas to read keyboard inputs.
       // this.canvas.setAttribute('tabindex', '0');
-      // this.canvas.focus(); 
-  
+      // this.canvas.focus();
+
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
       }
       this.setAllInteractionsToOff();
-  
+
       this.canvas.addEventListener('mousedown', e => {
         isDrawing = true;
         mouse1X = e.offsetX;
@@ -1754,7 +1754,7 @@ export class MultiplePlots {
           }
         }
       });
-  
+
       this.canvas.addEventListener('mousemove', e => {
         var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
         mouse2X = e.offsetX; mouse2Y = e.offsetY;
@@ -1804,7 +1804,7 @@ export class MultiplePlots {
           }
         }
       });
-  
+
       this.canvas.addEventListener('mouseup', e => {
         mouse3X = e.offsetX;
         mouse3Y = e.offsetY;
@@ -1816,11 +1816,11 @@ export class MultiplePlots {
         if (this.click_on_button) {
           this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
         }
-  
+
         if (mouse_moving === false) {
           if (this.selectDependency_bool) {
             if (this.clickedPlotIndex !== -1) {
-              let type_ = this.objectList[this.clickedPlotIndex].type_ 
+              let type_ = this.objectList[this.clickedPlotIndex].type_
               if (type_ === 'parallelplot') {
                 var selected_axis_name: string, vertical: boolean, inverted: boolean;
                 var hexs: string[], isSelectingppAxis: boolean;
@@ -1859,10 +1859,10 @@ export class MultiplePlots {
         this.redrawAllObjects();
         isDrawing = false;
         mouse_moving = false;
-        // this.save_canvas(); 
+        // this.save_canvas();
       });
-  
-  
+
+
       this.canvas.addEventListener('wheel', e => {
         e.preventDefault();
         var mouse3X = e.offsetX;
@@ -1876,13 +1876,13 @@ export class MultiplePlots {
           this.redraw_object();
         }
       });
-  
+
       this.canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
         mouse_moving = false;
       });
-  
-  
+
+
       this.canvas.addEventListener('dblclick', e => {
         if (this.clickedPlotIndex !== -1) {
           this.dbl_click_manage_settings_on(this.clickedPlotIndex);
@@ -1890,7 +1890,7 @@ export class MultiplePlots {
         }
         double_click = true;
       });
-  
+
       this.canvas.addEventListener('click', e => {
         setTimeout(() => {
           if (this.clickedPlotIndex !== -1 && !double_click) {
@@ -1900,11 +1900,11 @@ export class MultiplePlots {
         }, 100);
         double_click = false;
       });
-  
+
       this.canvas.addEventListener('selectionchange', (e:any) => {
       });
-  
-  
+
+
     // Not working well actually, but I let it here in case somebody wants to give it a try
       // canvas.addEventListener('keydown', e => {
       //   if (e.ctrlKey) {
@@ -1933,7 +1933,7 @@ export class MultiplotCom {
       plot_data.add_to_rubberbands_dep([attribute['name'], [coordinates[0], coordinates[1]]]);
       plot_data.refresh_pp_selected();
     }
-  
+
     public static sc_to_sc_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], plot_data:PlotData) {
       let obj_to_display_attributes = plot_data.plotObject.to_display_attributes;
       if (equals(obj_to_display_attributes, to_display_attributes) || equals(obj_to_display_attributes, List.reverse(to_display_attributes))) {
@@ -1973,7 +1973,7 @@ export class MultiplotCom {
       }
       Interactions.selection_window_action(plot_data);
     }
-  
+
     public static pp_to_sc_communication(to_select:[string, [number, number]][], axis_numbers:number[], plot_data:PlotData):void {
       if (to_select.length == 1) {
         var new_select_on_click = [];
@@ -2003,7 +2003,7 @@ export class MultiplotCom {
         }
         plot_data.select_on_click = new_select_on_click;
         plot_data.refresh_selected_point_index();
-  
+
       } else if (to_select.length == 2) {
         var new_select_on_click = [];
         let min1 = to_select[0][1][0];
@@ -2040,7 +2040,7 @@ export class MultiplotCom {
         plot_data.refresh_selected_point_index();
       }
     }
-  
+
     public static pp_to_pp_communication(rubberbands_dep:[string, [number, number]][], plot_data:PlotData) {
       for (let i=0; i<rubberbands_dep.length; i++) {
         let received_rubber = rubberbands_dep[i];
@@ -2060,15 +2060,15 @@ export class MultiplotCom {
         }
       }
     }
-  
-  
+
+
     public static histogram_to_histogram_communication(histogram1, histogram2) {
       if (histogram1.x_variable.name !== histogram2.x_variable.name) return;
       histogram2.x_rubberband = histogram1.x_rubberband;
       histogram2.get_selected_keys();
     }
-  
-  
+
+
     public static histogram_to_pp_communication(histogram, parallel_plot) {
       let index = -1;
       for (let i=0; i<parallel_plot.axis_list.length; i++) {
@@ -2077,20 +2077,20 @@ export class MultiplotCom {
           break;
         }
       }
-      if (index === -1) return; 
+      if (index === -1) return;
       let x_variable = histogram.x_variable;
       let x_rubberband = histogram.x_rubberband;
-      let axis_coord1 = parallel_plot.real_to_axis_coord(x_rubberband[0], x_variable.type_, x_variable.list, 
+      let axis_coord1 = parallel_plot.real_to_axis_coord(x_rubberband[0], x_variable.type_, x_variable.list,
                                                           parallel_plot.inverted_axis_list[index]);
       axis_coord1 = Math.max(Math.min(axis_coord1, 1), 0);
       let axis_coord2 = parallel_plot.real_to_axis_coord(x_rubberband[1], x_variable.type_, x_variable.list,
                                                           parallel_plot.inverted_axis_list[index]);
       axis_coord2 = Math.max(Math.min(axis_coord2, 1), 0);
       parallel_plot.rubber_bands[index] = [Math.min(axis_coord1, axis_coord2), Math.max(axis_coord1, axis_coord2)];
-      parallel_plot.add_to_rubberbands_dep([x_variable.name, [x_rubberband[0], x_rubberband[1]]]);    
+      parallel_plot.add_to_rubberbands_dep([x_variable.name, [x_rubberband[0], x_rubberband[1]]]);
     }
-  
-  
+
+
     public static histogram_to_scatter_communication(histogram, scatter) {
       let scatter_x = scatter.plotObject.attribute_names[0];
       let scatter_y = scatter.plotObject.attribute_names[1];
@@ -2107,8 +2107,8 @@ export class MultiplotCom {
       }
       Interactions.selection_window_action(scatter)
     }
-  
-  
+
+
     public static pp_to_histogram_communication(rubberband_dep: [string, [number, number]], histogram) {
       if (histogram.x_variable.name === rubberband_dep[0]) {
         histogram.x_rubberband = rubberband_dep[1];

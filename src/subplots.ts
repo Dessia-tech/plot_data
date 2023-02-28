@@ -8,7 +8,7 @@ import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
 
 
 var alert_count = 0;
-/** 
+/**
  * A class that inherits from PlotData and is specific for drawing PrimitiveGroups.
  */
 export class PlotContour extends PlotData {
@@ -30,7 +30,7 @@ export class PlotContour extends PlotData {
       this.plot_datas = [];
       this.type_ = 'primitivegroup';
       var d = this.data;
-      if (d['type_'] == 'primitivegroup') { 
+      if (d['type_'] == 'primitivegroup') {
         var a = PrimitiveGroup.deserialize(d);
         this.plot_datas.push(a);
         let multiple_labels_index = -1;
@@ -45,25 +45,25 @@ export class PlotContour extends PlotData {
             this.maxY = Math.max(this.maxY, primitive.maxY);
             if (["contour", "circle", "wire", "point"].includes(primitive.type_)) {
               this.color_to_plot_data[primitive.hidden_color] = primitive;
-            } 
+            }
           }
         }
         if (multiple_labels_index !== -1) { // So that labels are drawn at last
           a.primitives = List.move_elements(multiple_labels_index, a.primitives.length - 1, a.primitives);
         }
       }
-  
+
       if (buttons_ON) this.refresh_buttons_coords();
       this.plotObject = this.plot_datas[0];
       this.isParallelPlot = false;
       this.interaction_ON = true;
     }
-  
+
     draw() {
       this.draw_from_context(true);
       this.draw_from_context(false);
     }
-  
+
     draw_from_context(hidden) {
       this.define_context(hidden);
       this.context.save();
@@ -77,27 +77,27 @@ export class PlotContour extends PlotData {
         let d = this.plot_datas[i];
         this.draw_primitivegroup(hidden, this.originX, this.originY, this.scaleX, this.scaleY, d);
       }
-  
+
       if (this.dep_mouse_over) {
         this.draw_mouse_over_rect();
       } else if (this.multiplot_manipulation) {
         this.draw_manipulable_rect();
       }
-      
+
       if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
         this.draw_zoom_rectangle();
       }
       this.context.restore();
-  
+
       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
-  
+
         this.refresh_buttons_coords();
         //Drawing the zooming button
         Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
-  
+
         //Drawing the button for zooming window selection
         Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
-  
+
         //Drawing the reset button
         Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
       }
@@ -106,7 +106,7 @@ export class PlotContour extends PlotData {
 
 
 
-/** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
+/** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds
  */
 export class PlotScatter extends PlotData {
     public constructor(public data:any,
@@ -124,7 +124,7 @@ export class PlotScatter extends PlotData {
         }
         if (this.buttons_ON) {
           this.refresh_buttons_coords();
-        }        
+        }
         this.log_scale_x = data['log_scale_x'];
         this.log_scale_y = data['log_scale_y'];
         if (data['type_'] == 'graph2d') {
@@ -168,12 +168,12 @@ export class PlotScatter extends PlotData {
           // merge_alert();
         }
     }
-  
+
     draw() {
       this.draw_from_context(false);
       this.draw_from_context(true);
     }
-  
+
     draw_from_context(hidden) {
       this.define_context(hidden);
       this.context.save();
@@ -195,25 +195,25 @@ export class PlotScatter extends PlotData {
           this.draw_zoom_rectangle();
         }
       }
-  
+
       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
         this.refresh_buttons_coords();
-  
+
         //Drawing the zooming button
         Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
-  
+
         //Drawing the button for zooming window selection
         Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
-  
+
         //Drawing the reset button
         Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
-  
+
         //Drawing the selection button
         Buttons.selection_button(this.button_x, this.select_y, this.button_w, this.button_h, this);
-  
+
         //Drawing the enable/disable graph button
         Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
-  
+
         if (this.plotObject.type_ == 'scatterplot') {
           Buttons.merge_button(this.button_x, this.merge_y, this.button_w, this.button_h, '10px Arial', this);
           // Draw Heatmap button
@@ -221,17 +221,17 @@ export class PlotScatter extends PlotData {
         } else if (this.plotObject.type_ === "graph2d") {
           Buttons.csv_button(this.button_x, this.csv_button_y, this.button_w, this.button_h, "12px Arial", this);
         }
-  
+
         //draw permanent window button
         Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
-  
+
         //draw clear point button
         Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
 
         // Draw log scale buttons
         Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
           "10px Arial", this);
-        
+
       }
       if (this.multiplot_manipulation) {
         this.draw_manipulable_rect();
@@ -289,21 +289,21 @@ export class ParallelPlot extends PlotData {
       this.initialize_display_list_to_elements_dict();
       this.refresh_pp_selected();
     }
-  
+
     refresh_pp_buttons_coords() {
       this.disp_x = this.width - 35;
       this.disp_y = this.height - 25;
       this.disp_w = 30;
       this.disp_h = 20;
     }
-  
+
     initialize_display_list_to_elements_dict() {
       this.display_list_to_elements_dict = {};
       for (let i=0; i<this.elements.length; i++) {
         this.display_list_to_elements_dict[i.toString()] = i;
       }
     }
-  
+
     initialize_all_attributes() {
       var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
       var exceptions = ['name', 'package_version', 'object_class'];
@@ -315,7 +315,7 @@ export class ParallelPlot extends PlotData {
         }
       }
     }
-  
+
     initialize_attributes_list() { //Initialize 'list' and 'alias' of all_attributes's elements'
       for (var i=0; i<this.all_attributes.length; i++) {
         var attribute_name = this.all_attributes[i]['name'];
@@ -350,13 +350,13 @@ export class ParallelPlot extends PlotData {
         }
       }
     }
-  
+
     draw_initial() {
       this.init_scale = 1;
       this.originX = 0;
       this.draw();
     }
-  
+
     draw() {
       this.refresh_axis_bounds(this.axis_list.length);
       this.context = this.context_show;
@@ -380,18 +380,18 @@ export class ParallelPlot extends PlotData {
       }
       this.context.restore();
     }
-  
-  
+
+
     draw_from_context(hidden) {};
-  
-  
+
+
     initialize_data_lists() {
       for (let i=0; i<this.axis_list.length; i++) {
         this.inverted_axis_list.push(false);
         this.rubber_bands.push([]);
       }
     }
-  
+
     initialize_hexs() {
       this.hexs = [];
       this.interpolation_colors.forEach(rgb => {
@@ -409,7 +409,7 @@ export class PrimitiveGroupContainer extends PlotData {
     layout_attributes:Attribute[]=[];
     selected_primitive:number=-1;
     custom_sizes:boolean=false;
-  
+
     constructor(public data:any,
                 public width: number,
                 public height: number,
@@ -435,27 +435,27 @@ export class PrimitiveGroupContainer extends PlotData {
         this.display_order.push(i);
       }
     }
-  
-  
+
+
     define_canvas(canvas_id) {
       super.define_canvas(canvas_id);
       this.initialize_primitive_groups_contexts();
     }
-  
+
     initialize_primitive_groups_contexts() {
       for (let i=0; i<this.primitive_groups.length; i++) {
         this.primitive_groups[i].context_hidden = this.context_hidden;
         this.primitive_groups[i].context_show = this.context_show;
       }
     }
-  
+
     reinitialize_all() {
       this.elements_dict = {};
       this.primitive_dict = {};
       this.primitive_groups = [];
       this.display_order = [];
     }
-  
+
     refresh_buttons_coords() {
       this.button_w = 40;
       this.button_h = 20;
@@ -463,14 +463,14 @@ export class PrimitiveGroupContainer extends PlotData {
       this.manip_button_x = 5 + this.X;
       this.reset_button_x = this.manip_button_x + this.button_w + 5;
     }
-  
+
     draw_buttons() {
       this.refresh_buttons_coords();
       this.draw_manipulation_button();
       this.draw_reset_button();
     }
-  
-  
+
+
     draw_manipulation_button() {
       if (this.manipulation_bool) {
         Shape.createButton(this.manip_button_x, this.button_y, this.button_w, this.button_h, this.context, 'ON', '10px sans-serif');
@@ -478,11 +478,11 @@ export class PrimitiveGroupContainer extends PlotData {
         Shape.createButton(this.manip_button_x, this.button_y, this.button_w, this.button_h, this.context, 'OFF', '10px sans-serif');
       }
     }
-  
+
     draw_reset_button() {
       Shape.createButton(this.reset_button_x, this.button_y, this.button_w, this.button_h, this.context, 'reset', '10px sans-serif');
     }
-  
+
     click_on_button_check(mouse1X, mouse1Y) {
       if (Shape.isInRect(mouse1X, mouse1Y, this.manip_button_x, this.button_y, this.button_w, this.button_h)) {
         this.click_on_manipulation_action();
@@ -490,7 +490,7 @@ export class PrimitiveGroupContainer extends PlotData {
         this.reset_action();
       }
     }
-  
+
     click_on_manipulation_action() {
       this.manipulation_bool = !this.manipulation_bool;
       for (let i=0; i<this.primitive_groups.length; i++) {
@@ -500,7 +500,7 @@ export class PrimitiveGroupContainer extends PlotData {
         this.setAllInteractionsToOff();
       }
     }
-  
+
     reset_action() {
       if (this.primitive_groups.length !== 0) {
         if (this.layout_mode == 'regular') {
@@ -510,7 +510,7 @@ export class PrimitiveGroupContainer extends PlotData {
         }
       }
     }
-  
+
     reset_sizes() {
       var nb_primitives = this.primitive_groups.length;
       if (!this.custom_sizes) {
@@ -520,7 +520,7 @@ export class PrimitiveGroupContainer extends PlotData {
         } else {
           primitive_width = this.width/nb_primitives;
           primitive_height = this.height/nb_primitives;
-        } 
+        }
       }
       for (let i=0; i<nb_primitives; i++) {
         let center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
@@ -536,7 +536,7 @@ export class PrimitiveGroupContainer extends PlotData {
         this.primitive_groups[i].Y = center_y - this.primitive_groups[i].height/2;
       }
     }
-  
+
     refresh_MinMax() {
       this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
       for (let primitive of this.primitive_groups) {
@@ -546,7 +546,7 @@ export class PrimitiveGroupContainer extends PlotData {
         this.maxY = Math.max(this.maxY, primitive.Y + primitive.height);
       }
     }
-  
+
     refresh_spacing() {
       var zoom_coeff_x = (this.width - this.decalage_axis_x)/(this.maxX - this.minX);
       var container_center_x = this.X + this.width/2;
@@ -558,8 +558,8 @@ export class PrimitiveGroupContainer extends PlotData {
       this.scaleX = this.scaleX*zoom_coeff_x;
       this.originX = this.width/2 + zoom_coeff_x * (this.originX - this.width/2);
       this.scroll_x = 0;
-      this.refresh_MinMax();      
-  
+      this.refresh_MinMax();
+
       if (this.layout_mode === 'two_axis') { // Then the algo does the same with the y-axis
         let zoom_coeff_y = (this.height - this.decalage_axis_y)/(this.maxY - this.minY);
         var container_center_y = this.Y + this.height/2;
@@ -572,10 +572,10 @@ export class PrimitiveGroupContainer extends PlotData {
         this.originY = this.height/2 + zoom_coeff_y * (this.originY - this.height/2);
         this.scroll_y = 0;
       }
-      
+
       this.resetAllObjects();
     }
-  
+
     translate_inside_canvas() {
       if (this.layout_mode == 'one_axis') {
         this.translateAllPrimitives(-this.minX + this.X, this.height/2 - this.minY + this.Y);
@@ -584,7 +584,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       this.draw();
     }
-  
+
     reset_scales() {
       this.reset_sizes();
       if (this.primitive_groups.length >= 2) {
@@ -597,13 +597,13 @@ export class PrimitiveGroupContainer extends PlotData {
       this.refresh_MinMax();
       this.translate_inside_canvas();
     }
-  
+
     draw_initial() {
       for (let i=0; i<this.primitive_groups.length; i++) {
         this.primitive_groups[i].draw_initial();
       }
     }
-  
+
     draw() {
       if (this.clickedPlotIndex != -1) {
         let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
@@ -625,19 +625,19 @@ export class PrimitiveGroupContainer extends PlotData {
           }
         }
       }
-  
-      if (this.multiplot_manipulation) { 
-        this.draw_manipulable_rect(); 
-      } else { 
+
+      if (this.multiplot_manipulation) {
+        this.draw_manipulable_rect();
+      } else {
         this.context.strokeStyle = this.initial_rect_color_stroke;
         this.context.lineWidth = this.initial_rect_line_width;
-        this.context.strokeRect(this.X, this.Y, this.width, this.height); 
+        this.context.strokeRect(this.X, this.Y, this.width, this.height);
       }
       if (this.buttons_ON) { this.draw_buttons(); }
       this.context.restore();
     }
-  
-  
+
+
     draw_from_context(hidden) {}
 
 
@@ -655,8 +655,8 @@ export class PrimitiveGroupContainer extends PlotData {
         this.primitive_groups[i].selected = List.is_include(index, this.selected_point_index);
       }
     }
-  
-  
+
+
     redraw_object() {
       this.store_datas();
       this.draw_empty_canvas(this.context);
@@ -671,7 +671,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       if (this.buttons_ON) { this.draw_buttons(); }
     }
-  
+
     store_datas() {
       this.shown_datas = []; this.hidden_datas = [];
       for (let i=0; i<this.primitive_groups.length; i++) {
@@ -680,7 +680,7 @@ export class PrimitiveGroupContainer extends PlotData {
         this.hidden_datas.push(this.context_hidden.getImageData(obj.X, obj.Y, obj.width, obj.height));
       }
     }
-  
+
     draw_coordinate_lines() {
       this.context.lineWidth = 0.5;
       this.context.setLineDash([5,5]);
@@ -703,23 +703,23 @@ export class PrimitiveGroupContainer extends PlotData {
       this.context.stroke();
       this.context.setLineDash([]);
     }
-  
-  
+
+
     /**
      * Calls the layout function of a PrimitiveGroupContainer whose layout_mode and axis are already set.
      */
-    refresh_layout() { 
+    refresh_layout() {
       if (this.layout_mode === 'one_axis') {
         this.multiplot_one_axis_layout(this.layout_attributes[0]);
       } else if (this.layout_mode === 'two_axis') {
         this.multiplot_two_axis_layout(this.layout_attributes);
       }
     }
-  
-  
+
+
     add_primitive_group(serialized, point_index) {
       var new_plot_data = new PlotContour(serialized, 560, 300, this.buttons_ON, this.X, this.Y, this.canvas_id);
-      new_plot_data.context_hidden = this.context_hidden; 
+      new_plot_data.context_hidden = this.context_hidden;
       new_plot_data.context_show = this.context_show;
       this.primitive_groups.push(new_plot_data);
       this.display_order.push(this.primitive_groups.length - 1);
@@ -730,9 +730,9 @@ export class PrimitiveGroupContainer extends PlotData {
       this.refresh_layout();
       this.reset_action();
       this.draw();
-    } 
-  
-  
+    }
+
+
     remove_primitive_group(point_index) {
       var primitive_index = this.primitive_dict[point_index.toString()];
       this.primitive_groups = List.remove_at_index(primitive_index, this.primitive_groups);
@@ -760,15 +760,15 @@ export class PrimitiveGroupContainer extends PlotData {
       this.reset_action();
       this.draw();
     }
-  
-  
+
+
     setAllInteractionsToOff() {
       for (let i=0; i<this.primitive_groups.length; i++) {
         this.primitive_groups[i].interaction_ON = false;
       }
     }
-  
-  
+
+
     manage_mouse_interactions(selected_primitive:number):void {
       for (let i=0; i<this.primitive_groups.length; i++) {
         if (i == selected_primitive) {
@@ -778,8 +778,8 @@ export class PrimitiveGroupContainer extends PlotData {
         }
       }
     }
-  
-  
+
+
     get_selected_primitive(mouse2X, mouse2Y) {
       var selected_index = -1;
       for (let index of this.display_order) {
@@ -790,26 +790,26 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       return selected_index;
     }
-  
-  
+
+
     draw_layout_axis() {
       if (this.primitive_groups.length !== 0) {
         if (this.layout_mode == 'one_axis') {
           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
-              this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, 
+              this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x,
               this.decalage_axis_y, this.X, this.Y, this.width);
         } else if (this.layout_mode == 'two_axis') {
           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
             this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
-  
+
           this.layout_axis.draw_sc_vertical_axis(this.context, this.originY, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
             this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.height);
-  
+
         }
       }
     }
-  
-  
+
+
     regular_layout():void {
       var big_coord = 'X';
       var small_coord = 'Y';
@@ -845,8 +845,8 @@ export class PrimitiveGroupContainer extends PlotData {
       this.resetAllObjects();
       this.draw();
     }
-  
-  
+
+
     getSortedList() {
       var big_coord = 'X';
       var small_coord = 'Y';
@@ -857,7 +857,7 @@ export class PrimitiveGroupContainer extends PlotData {
       var nb_primitives = this.primitive_groups.length;
       for (let i=0; i<nb_primitives; i++) {
         let sorted_index = List.get_index_of_element(sortedObjectList[i], this.primitive_groups);
-        sorted_list.push(sorted_index); 
+        sorted_list.push(sorted_index);
       }
       var sortedDisplayedObjectList = [];
       for (let i=0; i<sorted_list.length; i++) {
@@ -872,7 +872,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       return sorted_list;
     }
-  
+
     initialize_list(attribute:Attribute) {
       var elements_dict_values = Object.values(this.elements_dict);
       var value = [];
@@ -913,18 +913,18 @@ export class PrimitiveGroupContainer extends PlotData {
           }
         }
         return value;
-      } 
+      }
     }
-  
+
     is_element_dict_empty() {
       return Object.keys(this.elements_dict).length === 0;
     }
-  
+
     multiplot_one_axis_layout(attribute:Attribute) {
       this.refresh_one_axis_layout_list(attribute);
       this.one_axis_layout();
     }
-  
+
     refresh_one_axis_layout_list(attribute:Attribute) {
       this.layout_mode = 'one_axis';
       if (!this.is_element_dict_empty()) {
@@ -932,8 +932,8 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       this.layout_attributes = [attribute];
     }
-  
-  
+
+
     one_axis_layout() {
       var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
       var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
@@ -956,7 +956,7 @@ export class PrimitiveGroupContainer extends PlotData {
         } else if (this.layout_attributes[0].type_ == 'color') {
           real_x = List.get_index_of_element(rgb_to_string(this.elements_dict[i.toString()][name]), this.layout_attributes[0].list);
           if (List.is_include(real_x, real_xs)) { y_incs[i] += - this.primitive_groups[i].height; } else {real_xs.push(real_x);}
-  
+
         } else {
           real_x = List.get_index_of_element(this.elements_dict[i.toString()][name], this.layout_attributes[0].list);
           if (List.is_include(real_x, real_xs)) {y_incs[i] += - this.primitive_groups[i].height;} else {real_xs.push(real_x);}
@@ -970,7 +970,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.resetAllObjects();
       this.draw();
     }
-  
+
     refresh_two_axis_layout_list(attributes:Attribute[]) {
       this.layout_mode = 'two_axis';
       if (!this.is_element_dict_empty()) {
@@ -979,13 +979,13 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       this.layout_attributes = attributes;
     }
-  
+
     multiplot_two_axis_layout(attributes:Attribute[]) {
       this.refresh_two_axis_layout_list(attributes);
       this.two_axis_layout();
     }
-  
-  
+
+
     two_axis_layout() {
       var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
       var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
@@ -1007,7 +1007,7 @@ export class PrimitiveGroupContainer extends PlotData {
         }
         var center_x = this.scaleX*real_x + this.originX;
         this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
-  
+
         if (this.layout_attributes[1].type_ == 'float') {
           var real_y = this.elements_dict[i.toString()][this.layout_attributes[1].name];
         } else if (this.layout_attributes[1].type_ == 'color') {
@@ -1023,12 +1023,12 @@ export class PrimitiveGroupContainer extends PlotData {
       this.resetAllObjects();
       this.draw();
     }
-  
+
     translatePrimitive(index, tx, ty) {
       this.primitive_groups[index].X = this.primitive_groups[index].X + tx;
       this.primitive_groups[index].Y = this.primitive_groups[index].Y + ty;
     }
-  
+
     translateAllPrimitives(tx, ty) {
       for (let i=0; i<this.primitive_groups.length; i++) {
         this.translatePrimitive(i, tx, ty);
@@ -1036,14 +1036,14 @@ export class PrimitiveGroupContainer extends PlotData {
       this.originX = this.originX + tx;
       this.originY = this.originY + ty;
     }
-  
-  
+
+
     resetAllObjects() {
       for (let i=0; i<this.primitive_groups.length; i++) {
         this.primitive_groups[i].reset_scales();
       }
     }
-  
+
     zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
       if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
         this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
@@ -1055,7 +1055,7 @@ export class PrimitiveGroupContainer extends PlotData {
         this.regular_zoom_elements(mouse3X, mouse3Y, event);
       }
     }
-  
+
     regular_zoom_elements(mouse3X, mouse3Y, event) {
       if (event > 0) {
         var zoom_coeff = 1.1;
@@ -1074,7 +1074,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.originY = mouse3Y - this.Y + zoom_coeff * (this.originY - mouse3Y + this.Y);
       this.draw();
     }
-  
+
     x_zoom_elements(event) {
       if (event > 0) {
         var zoom_coeff = 1.1;
@@ -1092,7 +1092,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.originX = this.width/2 + zoom_coeff * (this.originX - this.width/2);
       this.draw();
     }
-  
+
     y_zoom_elements(event) {
       if (event > 0) {
         var zoom_coeff = 1.1;
@@ -1110,7 +1110,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.originY = this.height/2 + zoom_coeff * (this.originY - this.height/2);
       this.draw();
     }
-  
+
     manage_scroll(mouse3X, mouse3Y, event) {
       if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
         this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
@@ -1125,7 +1125,7 @@ export class PrimitiveGroupContainer extends PlotData {
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
     }
-  
+
     delete_unwanted_vertex(vertex_infos) {
       var i = 0;
       while (i < vertex_infos.length) {
@@ -1150,7 +1150,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       return vertex_infos;
     }
-  
+
     initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] {
       var thickness = 15;
       var vertex_infos = [];
@@ -1169,7 +1169,7 @@ export class PrimitiveGroupContainer extends PlotData {
       var clickOnVertex = !(vertex_infos.length == 0);
       return [clickOnVertex, vertex_infos];
     }
-  
+
     resizeObject(vertex_infos, deltaX, deltaY):void {
       var widthSizeLimit = 100;
       var heightSizeLimit = 100;
@@ -1208,7 +1208,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       this.draw();
     }
-  
+
     reorder_resize_style(resize_style) {
       var resize_dict = ['n', 'ns', 'ne', 'nwse', 'nw', 'e', 'ew', 's', 'se', 'sw', 'w'];
       for (let i=0; i<resize_dict.length; i++) {
@@ -1219,7 +1219,7 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       return resize_style;
     }
-  
+
     setCursorStyle(mouse2X, mouse2Y, canvas, selected_primitive):void {
       if (selected_primitive != -1) {
         var thickness = 15;
@@ -1246,8 +1246,8 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       this.draw();
     }
-  
-  
+
+
     mouse_interaction() {
       var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
       var nbObjects:number = this.primitive_groups.length;
@@ -1257,12 +1257,12 @@ export class PrimitiveGroupContainer extends PlotData {
       var isDrawing = false;
       var vertex_infos:Object;
       var clickOnVertex:boolean = false;
-  
+
       for (let i=0; i<nbObjects; i++) {
         this.primitive_groups[i].mouse_interaction(this.primitive_groups[i].isParallelPlot);
       }
       this.setAllInteractionsToOff();
-  
+
       canvas.addEventListener('mousedown', e => {
         isDrawing = true;
         if (this.interaction_ON) {
@@ -1278,7 +1278,7 @@ export class PrimitiveGroupContainer extends PlotData {
           }
         }
       });
-  
+
       canvas.addEventListener('mousemove', e => {
         if (this.interaction_ON) {
           var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
@@ -1312,14 +1312,14 @@ export class PrimitiveGroupContainer extends PlotData {
           isDrawing = false;
         }
       });
-  
+
       canvas.addEventListener('mouseup', e => {
         if (this.interaction_ON) {
           isDrawing = false;
           this.draw();
         }
       });
-  
+
       canvas.addEventListener('wheel', e => {
         if (this.interaction_ON) {
           e.preventDefault();
@@ -1331,7 +1331,7 @@ export class PrimitiveGroupContainer extends PlotData {
           }
         }
       });
-  
+
       canvas.addEventListener('mouseleave', e => {
         this.clickedPlotIndex = -1;
         this.selected_primitive = -1;
@@ -1358,7 +1358,7 @@ export class Histogram extends PlotData {
     coeff:number=0.88;
     y_step: number = 0;
     selected_keys = [];
-  
+
     constructor(public data:any,
                 public width: number,
                 public height: number,
@@ -1378,10 +1378,10 @@ export class Histogram extends PlotData {
       this.initial_graduation_nb = this.graduation_nb;
       let name = data['x_variable'];
       let type_ = TypeOf(this.elements[0][name]);
-  
+
       this.discrete = false;
       if (type_ !== 'float') this.discrete = true;
-  
+
       this.x_variable = new Attribute(name, type_);
       const axis = data['axis'] || {grid_on: false};
       this.axis = Axis.deserialize(axis);
@@ -1412,14 +1412,14 @@ export class Histogram extends PlotData {
       this.refresh_max_frequency();
       if (buttons_ON) this.refresh_buttons_coords();
     }
-  
-  
+
+
     draw_initial() {
       this.reset_scales();
       this.draw();
     }
-  
-  
+
+
     draw() {
       this.refresh_graduation_nb();
       this.context = this.context_show;
@@ -1430,33 +1430,33 @@ export class Histogram extends PlotData {
       this.context.rect(this.X-1, this.Y-1, this.width+2, this.height + 2);
       this.context.clip();
       this.context.closePath();
-  
+
       this.infos = this.get_infos();
       this.draw_histogram();
       this.draw_rubberbands();
       this.draw_axis();
-  
+
       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
         this.refresh_buttons_coords();
         this.draw_buttons();
       }
-  
+
       if (this.multiplot_manipulation) {
         this.draw_manipulable_rect();
       }
       this.context.restore();
     };
-  
-  
+
+
     draw_from_context(hidden) {};
-  
-  
+
+
     draw_buttons() {
       this.reset_rect_y = 10;
       Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
     }
-  
-  
+
+
     draw_rubberbands() {
       this.context.beginPath();
       if (this.x_rubberband.length !== 0) {
@@ -1467,18 +1467,18 @@ export class Histogram extends PlotData {
       }
       this.context.closePath();
     }
-  
-  
+
+
     draw_x_rubberband() {
       let grad_beg_y = this.height - this.decalage_axis_y;
       let h = 20;
       let x1d = this.real_to_display(this.x_rubberband[0], 'x');
       let x2d = this.real_to_display(this.x_rubberband[1], 'x');
       let w = x2d - x1d;
-      Shape.rect(x1d, grad_beg_y - h/2 + this.Y, w, h, this.context, string_to_hex('lightrose'), 
+      Shape.rect(x1d, grad_beg_y - h/2 + this.Y, w, h, this.context, string_to_hex('lightrose'),
                  string_to_hex('lightgrey'), 0.5, 0.6);
     }
-  
+
     draw_y_rubberband() {
       let w = 20;
       let y1d = this.real_to_display(this.y_rubberband[0], 'y');
@@ -1487,15 +1487,15 @@ export class Histogram extends PlotData {
       Shape.rect(this.decalage_axis_x - w/2 + this.X, y1d, w, h, this.context, string_to_hex('lightrose'),
                  string_to_hex('lightgrey'), 0.5, 0.6);
     }
-  
-  
+
+
     coordinate_to_string(x1, x2?) {
       if (this.discrete) {
         return this.x_variable.list[x1];
       }
       return x1.toString() + '_' + x2.toString();
     }
-  
+
     string_to_coordinate(str) {
       if (this.discrete) {
         return {x1: List.get_index_of_element(str, this.x_variable.list)};
@@ -1503,16 +1503,16 @@ export class Histogram extends PlotData {
       let l = str.split('_');
       return {x1: Number(l[0]), x2: Number(l[1])};
     }
-  
-  
+
+
     refresh_max_frequency() {
       let keys = Object.keys(this.infos);
       for (let key of keys) {
         this.max_frequency = Math.max(this.infos[key].length, this.max_frequency);
       }
     }
-  
-    
+
+
     get_infos() {
       let infos = {}, temp_infos = [];
       if (this.x_variable.type_ === 'float') {
@@ -1561,8 +1561,8 @@ export class Histogram extends PlotData {
       }
       return infos;
     }
-  
-  
+
+
     draw_axis() {
       let keys = Object.keys(this.infos);
       this.y_step = this.get_y_step();
@@ -1578,16 +1578,16 @@ export class Histogram extends PlotData {
                                        this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
                                        this.X, this.Y, this.x_variable.name, false, x_step);
       }
-      this.axis.draw_histogram_y_axis(this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x, 
+      this.axis.draw_histogram_y_axis(this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x,
         this.decalage_axis_y, this.X, this.Y, 'Frequency', this.y_step, this.coeff);
     }
-  
-  
+
+
     refresh_graduation_nb() {
       this.graduation_nb = Math.ceil(this.scale/this.init_scale * this.initial_graduation_nb);
     }
-  
-  
+
+
     get_y_step() {
       if (this.max_frequency <= 10) {
         return 1;
@@ -1598,8 +1598,8 @@ export class Histogram extends PlotData {
       }
       return Math.floor(this.max_frequency / 10);
     }
-  
-  
+
+
     draw_histogram() {
       let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
       let keys = Object.keys(this.infos);
@@ -1608,19 +1608,19 @@ export class Histogram extends PlotData {
       let line_width = this.edge_style.line_width;
       let opacity = this.surface_style.opacity;
       let dashline = this.edge_style.dashline;
-  
+
       if (this.discrete) {
         // var grad_beg_x = this.decalage_axis_x/this.scale + 1/4;
         let w = 1/2;
         for (let i=0; i<keys.length; i++) {
           this.context.beginPath();
-          let color_fill = this.surface_style.color_fill; 
+          let color_fill = this.surface_style.color_fill;
           if (this.selected_keys.includes(keys[i])) {
             color_fill = string_to_hex('lightyellow');
           }
           let f = this.infos[keys[i]].length;
           let current_x = this.real_to_display(i, 'x');
-          Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context, 
+          Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context,
                      color_fill, color_stroke, line_width, opacity, dashline);
           this.context.closePath();
         }
@@ -1634,7 +1634,7 @@ export class Histogram extends PlotData {
             color_fill = string_to_hex('lightyellow');
           }
           let {x1} = this.string_to_coordinate(key);
-          let current_x = this.real_to_display(x1, 'x'); 
+          let current_x = this.real_to_display(x1, 'x');
           let f = this.infos[key].length;
           Shape.rect(current_x, grad_beg_y, this.scale*w,
                      -scaleY*f, this.context, color_fill, color_stroke, line_width, opacity, dashline);
@@ -1642,7 +1642,7 @@ export class Histogram extends PlotData {
         }
       }
     }
-  
+
     mouse_interaction() {
       var mouse1X=0, mouse1Y=0, mouse2X=0, mouse2Y=0;
       var isDrawing=false, mouse_moving=false;
@@ -1652,8 +1652,8 @@ export class Histogram extends PlotData {
       var click_on_x_band = false;
       var click_on_y_band = false;
       var up = false, down = false;
-      var left = false, right = false; 
-  
+      var left = false, right = false;
+
       canvas.addEventListener('mousedown', e => {
         if (!this.interaction_ON) return;
         isDrawing = true;
@@ -1673,7 +1673,7 @@ export class Histogram extends PlotData {
         }
         if (click_on_reset) this.reset_scales();
       });
-  
+
       canvas.addEventListener('mousemove', e => {
         if (!this.interaction_ON) return;
         let old_mouse2X = mouse2X, old_mouse2Y = mouse2Y;
@@ -1712,7 +1712,7 @@ export class Histogram extends PlotData {
         }
         this.draw();
       });
-  
+
       canvas.addEventListener('mouseup', e => {
         if (!this.interaction_ON) return;
         if (mouse_moving) {
@@ -1731,8 +1731,8 @@ export class Histogram extends PlotData {
         this.is_drawing_rubber_band = false;
         this.draw();
       });
-  
-  
+
+
       canvas.addEventListener('wheel', e => {
         if (!this.interaction_ON) return;
         e.preventDefault();
@@ -1743,8 +1743,8 @@ export class Histogram extends PlotData {
         this.originX = mouse2X - this.X + zoom_coeff * (this.originX - mouse2X + this.X);
         this.draw();
       });
-  
-  
+
+
       function reset_parameters() {
         isDrawing = false;
         mouse_moving = false;
@@ -1758,21 +1758,21 @@ export class Histogram extends PlotData {
         right = false;
       }
     }
-  
-  
+
+
     set_x_rubberband(mouse1X, mouse2X) {
       let x1 = this.display_to_real(mouse1X, 'x');
       let x2 = this.display_to_real(mouse2X, 'x');
       this.x_rubberband = [Math.min(x1, x2), Math.max(x1, x2)];
     }
-  
+
     set_y_rubberband(mouse1Y, mouse2Y) {
       let y1 = this.display_to_real(mouse1Y, 'y');
       let y2 = this.display_to_real(mouse2Y, 'y');
       this.y_rubberband = [Math.min(y1, y2), Math.max(y1, y2)];
     }
-  
-  
+
+
     is_in_x_rubberband(x, y) {
       let h = 20;
       let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
@@ -1781,14 +1781,14 @@ export class Histogram extends PlotData {
       let x2 = this.real_to_display(this.x_rubberband[1], 'x');
       let w = x2 - x1;
       let click_on_x_band = Shape.isInRect(x, y, x1, y1, w, h);
-  
+
       let vertex_w = 5;
       let left = Shape.isInRect(x, y, x1, y1, vertex_w, h);
       let right = Shape.isInRect(x, y, x2, y1, -vertex_w, h);
       return [click_on_x_band, left, right];
     }
-  
-  
+
+
     is_in_y_rubberband(x, y) {
       let w = 20;
       let x1 = this.X + this.decalage_axis_x - w/2;
@@ -1796,14 +1796,14 @@ export class Histogram extends PlotData {
       let y2 = this.real_to_display(this.y_rubberband[1], 'y');
       let h = y2 - y1;
       let click_on_y_band = Shape.isInRect(x, y, x1, y1, w, h);
-  
+
       let vertex_h = 5;
       let down = Shape.isInRect(x, y, x1, y1, w, -vertex_h);
       let up = Shape.isInRect(x, y, x1, y2, w, vertex_h);
       return [click_on_y_band, up, down];
     }
-  
-  
+
+
     translate_rubberband(t, type_) {
       if (type_ === 'x') {
         this.x_rubberband = [this.x_rubberband[0] + t, this.x_rubberband[1] + t];
@@ -1813,8 +1813,8 @@ export class Histogram extends PlotData {
         throw new Error("translate_rubberband(): type_ must be 'x' or 'y'");
       }
     }
-  
-  
+
+
     resize_rubberband(t, up, down, left, right) {
       if (up) {
         this.y_rubberband[1] += t;
@@ -1826,27 +1826,27 @@ export class Histogram extends PlotData {
         this.x_rubberband[1] += t;
       }
     }
-  
-  
+
+
     reorder_rubberbands() {
       if (this.x_rubberband.length !== 0) {
         this.x_rubberband = [Math.min(this.x_rubberband[0], this.x_rubberband[1]),
         Math.max(this.x_rubberband[0], this.x_rubberband[1])];
       }
       if (this.y_rubberband.length !== 0) {
-        this.y_rubberband = [Math.min(this.y_rubberband[0], this.y_rubberband[1]), 
+        this.y_rubberband = [Math.min(this.y_rubberband[0], this.y_rubberband[1]),
         Math.max(this.y_rubberband[0], this.y_rubberband[1])];
       }
     }
-  
-  
+
+
     reset_x_rubberband() {
       this.x_rubberband = [];
       this.selected_keys = [];
       this.selected_point_index = [];
     }
-  
-  
+
+
     get_selected_keys() {
       this.selected_keys = [];
       this.selected_point_index = [];
@@ -1882,8 +1882,8 @@ export class Histogram extends PlotData {
       let sort = new Sort();
       this.selected_point_index = sort.MergeSort(this.selected_point_index);
     }
-  
-  
+
+
     real_to_display(real: number, type_) { // type_ = 'x' or 'y'
       if (type_ === 'x') {
         if (this.discrete) {
@@ -1900,8 +1900,8 @@ export class Histogram extends PlotData {
         throw new Error("real_to_display(): type_ must be 'x' or 'y'");
       }
     }
-  
-  
+
+
     real_to_display_length(real: number, type_) {
       if (type_ === 'x') {
         return this.scale * real;
@@ -1912,8 +1912,8 @@ export class Histogram extends PlotData {
         throw new Error("real_to_display_length(): type_ must be 'x' or 'y'");
       }
     }
-  
-  
+
+
     display_to_real(display: number, type_) {
       if (type_ === 'x') {
         if (this.discrete) {
@@ -1930,8 +1930,8 @@ export class Histogram extends PlotData {
         throw new Error("display_to_real(): type_ must be 'x' or 'y'");
       }
     }
-  
-  
+
+
     display_to_real_length(display: number, type_) {
       if (type_ === 'x') {
         return display / this.scale;
@@ -1942,7 +1942,7 @@ export class Histogram extends PlotData {
         throw new Error("display_to_real_length(): type_ must be 'x' or 'y'")
       }
     }
-  
+
 }
 
 
@@ -1958,19 +1958,26 @@ export class ScatterMatrix extends PlotData {
     public canvas_id: string,
     public is_in_multiplot = false) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.elements = data["elements"];
+      if (data["elements"][0]["type_"] == "sample") {
+        this.elements = []
+        for (var element of data["elements"]) {
+          this.elements.push(element.values)
+        }
+      } else {
+        this.elements = data["elements"];
+      }
       let axes = data["axes"] || Object.getOwnPropertyNames(this.elements[0]);
       let x_step = width / axes.length;
       let y_step = height / axes.length;
       for (let i=0; i<axes.length; i++) {
         for (let j=0; j<axes.length; j++) {
           if (i === j) {
-            let data1 = {x_variable: axes[i], elements: this.elements, graduation_nb: 4, 
+            let data1 = {x_variable: axes[i], elements: this.elements, graduation_nb: 4,
               package_version: data["package_version"], type_: "histogram"};
             var obj: any = new Histogram(data1, x_step, y_step, false, i*x_step, j*y_step, "hist"+i);
           } else {
-            let data1 = {attribute_names: [axes[i], axes[j]], elements: this.elements, 
-              type_: "scatterplot", package_version: data["package_version"], 
+            let data1 = {attribute_names: [axes[i], axes[j]], elements: this.elements,
+              type_: "scatterplot", package_version: data["package_version"],
               axis: {nb_points_x: 5, nb_points_y: 5, grid_on: false}};
             obj = new PlotScatter(data1, x_step, y_step, false, i*x_step, j*y_step, "scatter" + i + j);
           }

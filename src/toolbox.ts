@@ -1,7 +1,7 @@
 import { string_to_hex } from "./color_conversion";
 import { equals } from "./utils";
 
-/** 
+/**
  * A generic toolbox class that contains numerous geometrical static functions.
  * The functions often require a context, which is got from a canvas element.
  */
@@ -17,9 +17,9 @@ export class Shape {
         context.lineTo(list[i][0], list[i][1]);
       }
     }
-  
+
     /**
-     * Draws a crux 
+     * Draws a crux
      * @param cx center x coordinate of the crux
      * @param cy center y coordinate of the crux
      * @param length half the lengh of the crux
@@ -30,10 +30,10 @@ export class Shape {
       this.drawLine(context, [[cx, cy], [cx, cy - length]]);
       this.drawLine(context, [[cx, cy], [cx, cy + length]]);
     }
-  
-  
+
+
     /**
-     * 
+     *
      * @param x x coordinate of the top-left corner
      * @param y y coordinate od the top_left corner
      * @param w width
@@ -52,7 +52,7 @@ export class Shape {
       context.strokeStyle = color_stroke;
       context.lineWidth = line_width;
       context.globalAlpha = opacity;
-  
+
       context.moveTo(x+radius, y);
       context.lineTo(r-radius, y);
       context.quadraticCurveTo(r, y, r, y+radius);
@@ -62,14 +62,14 @@ export class Shape {
       context.quadraticCurveTo(x, b, x, b-radius);
       context.lineTo(x, y+radius);
       context.quadraticCurveTo(x, y, x+radius, y);
-  
+
       if (color_fill != 'No') { context.fill(); }
       if (color_stroke != 'No') { context.stroke(); }
       context.globalAlpha = 1;
       context.setLineDash([]);
     }
-  
-  
+
+
     /**
      * @returns true if (x, y) is in the rectangle, false otherwise
      * @param x the point's x coordinate
@@ -90,7 +90,7 @@ export class Shape {
         return ((x>=rect_x + rect_w) && (x<=rect_x) && (y>=rect_y + rect_h) && (y<=rect_y));
       }
     }
-  
+
     public static createButton(x, y, w, h, context, text, police) {
       context.beginPath();
       context.fillStyle = 'white';
@@ -108,7 +108,7 @@ export class Shape {
       context.fill();
       context.closePath();
     }
-  
+
     public static createGraphButton(x, y, w, h, context, text, police, color_fill, strikeout) {
       context.beginPath();
       context.fillStyle = color_fill;
@@ -131,7 +131,7 @@ export class Shape {
       }
       context.closePath();
     }
-  
+
     /**
      * Draws a rectangle on canvas.
      * @param x the rectangle's top-left x coordinate
@@ -145,7 +145,7 @@ export class Shape {
      * @param line_width its contour's line width.
      * @param opacity The opacity inside (from 0 to 1).
      * @param dashline contour's dashline ([] for no dashline). A pattern list [a_0,..., a_n] where a_i represents the number of filled pixels is i%2 == 0
-     and the number of empty pixels if i%2 != 0. 
+     and the number of empty pixels if i%2 != 0.
      */
     public static rect(x, y, w, h, context, color_fill='No', color_stroke=string_to_hex('black'), line_width=1, opacity=1, dashline=[]) {
       context.beginPath();
@@ -161,9 +161,9 @@ export class Shape {
       context.globalAlpha = 1;
       context.setLineDash([]);
     }
-  
+
     /**
-     * 
+     *
      * @param x The point's x coordinate
      * @param y The point's y coordinate
      * @param cx The circle's center x-coordinate
@@ -217,11 +217,11 @@ export class MyObject {
     }
     // Optional: support for some standard constructors (extend as desired)
     if (obj instanceof Map)
-        Array.from(obj, ([key, val]) => result.set(this.deepClone(key, hash), 
+        Array.from(obj, ([key, val]) => result.set(this.deepClone(key, hash),
         this.deepClone(val, hash)) );
     else if (obj instanceof Set)
         Array.from(obj, (key) => result.add(this.deepClone(key, hash)) );
-    // Register in hash    
+    // Register in hash
     hash.set(obj, result);
     // Clone and assign enumerable own properties recursively
     return Object.assign(result, ...Object.keys(obj).map (
@@ -259,10 +259,10 @@ export class MyObject {
   // }
 
 /**
- * 
+ *
  * @returns a sub-array from i to j-1 included. Ex : subarray([0,1,2,3], 1, 3) = [1,2]
  */
-  public static subarray(list, i, j) { 
+  public static subarray(list, i, j) {
     return list.slice(i, j)
   }
 
@@ -465,7 +465,7 @@ export class MyObject {
   /**
    * Checks whether list is a list of empty list, ie [[], [],..., []]
    */
-  public static isListOfEmptyList(list:any[]): boolean { 
+  public static isListOfEmptyList(list:any[]): boolean {
     for (let i=0; i<list.length; i++) {
       if (list[i].length !== 0) {
         return false;
@@ -525,7 +525,7 @@ export class MyObject {
       }
     }
     return union_list;
-  } 
+  }
 
 
   /**
@@ -547,7 +547,7 @@ export class MyObject {
  export class MyMath {
 
   /**
-   * ex: round(1.12345, 2) = 1.12 
+   * ex: round(1.12345, 2) = 1.12
    */
   public static round(x:number, n:number) {
     return Math.round(x*Math.pow(10,n)) / Math.pow(10,n);

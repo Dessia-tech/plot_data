@@ -13,9 +13,9 @@ export class Arc2D {
     minY:number=0;
     maxY:number=0;
     init_scale:number=0;
-  
+
     /**
-     * 
+     *
      * @param cx the center x coordinate
      * @param cy the center y coordinate
      * @param r radius
@@ -40,11 +40,11 @@ export class Arc2D {
         this.maxX = this.cx + this.r;
         this.minY = this.cy - this.r;
         this.maxY = this.cy + this.r;
-  
+
         this.start_angle = this.start_angle % Math.PI;
         this.end_angle = this.end_angle % Math.PI;
     }
-  
+
     public static deserialize(serialized) {
       var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
       var default_dict_ = {edge_style:default_edge_style};
@@ -61,19 +61,19 @@ export class Arc2D {
                        serialized['type_'],
                        serialized['name']);
     }
-  
+
     draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
       context.lineWidth = this.edge_style.line_width;
       context.color_stroke = this.edge_style.color_stroke;
-      context.arc(scaleX*this.cx + mvx + X, 
-                  scaleY*this.cy + mvy + Y, 
-                  scaleX*this.r, 
-                  this.start_angle, 
-                  this.end_angle, 
+      context.arc(scaleX*this.cx + mvx + X,
+                  scaleY*this.cy + mvy + Y,
+                  scaleX*this.r,
+                  this.start_angle,
+                  this.end_angle,
                   this.anticlockwise);
     }
-  
-  
+
+
     contour_draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
       context.lineWidth = this.edge_style.line_width;
       context.strokeStyle = this.edge_style.color_stroke;
@@ -87,7 +87,7 @@ export class Arc2D {
       var numOfSegments = 16;
       drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
     }
-}  
+}
 
 
 export class Circle2D {
@@ -96,7 +96,7 @@ export class Circle2D {
     minY:number=0;
     maxY:number=0;
     hidden_color:any;
-  
+
     constructor(public data:any,
                 public cx:number,
                 public cy:number,
@@ -110,10 +110,10 @@ export class Circle2D {
         this.maxX = this.cx + this.r;
         this.minY = this.cy - this.r;
         this.maxY = this.cy + this.r;
-  
+
       this.hidden_color = genColor();
     }
-  
+
     public static deserialize(serialized) {
         var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:1, name:''};
         var default_surface_style = {color_fill:string_to_rgb('white'), hatching:null, opacity:0};
@@ -146,15 +146,15 @@ export class Circle2D {
                                     serialized['type_'],
                                     serialized['name']);
     }
-  
+
     draw(context, mvx, mvy, scaleX, scaleY, X, Y) {
       context.arc(scaleX*this.cx+ mvx + X, scaleY*this.cy + mvy + Y, scaleX*this.r, 0, 2*Math.PI);
     }
-  
+
 }
 
 
-/** 
+/**
  * @param plot_data_primitives A set of primitives (LineSegment2D, Arc2D) that draw a closed polygon.
  */
 export class Contour2D {
@@ -163,7 +163,7 @@ export class Contour2D {
     minY:number=0;
     maxY:number=0;
     hidden_color:any;
-  
+
     constructor(public plot_data_primitives:any,
                 public edge_style:EdgeStyle,
                 public surface_style:SurfaceStyle,
@@ -178,9 +178,9 @@ export class Contour2D {
           this.maxY = Math.max(this.maxY, d.maxY);
         }
         this.hidden_color = genColor();
-  
+
     }
-  
+
     public static deserialize(serialized) {
       var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:1};
       var default_surface_style = {color_fill:string_to_rgb('white'), hatching:null, opacity:1};
@@ -228,7 +228,7 @@ export class Dataset {
     id:number=0;
     point_list:Point2D[]=[];
     segments:LineSegment2D[];
-  
+
     constructor(public attribute_names:string[],
                 public edge_style:EdgeStyle,
                 public tooltip:Tooltip,
@@ -239,9 +239,9 @@ export class Dataset {
                 public name:string,
                 public index: number = -1) {
       this.initialize_point_list();
-      this.initialize_segments();    
+      this.initialize_segments();
     }
-  
+
     initialize_point_list() {
       this.point_list = [];
       for (let i=0; i<this.elements.length; i++) {
@@ -253,9 +253,9 @@ export class Dataset {
         point.index = i;
         point.dataset_index = this.index;
         this.point_list.push(point);
-      } 
+      }
     }
-  
+
     initialize_segments() {
       this.segments = [];
       for (let i=0; i<this.point_list.length - 1; i++) {
@@ -265,7 +265,7 @@ export class Dataset {
         this.segments.push(new LineSegment2D(data, this.edge_style, 'line', ''));
       }
     }
-  
+
     public static deserialize(serialized) {
       var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
       var default_point_style = {color_fill:string_to_rgb('lightviolet'), color_stroke:string_to_rgb('grey'),
@@ -296,7 +296,7 @@ export class Graph2D {
                 public axis: Axis,
                 public type_: string='graph2d',
                 public name: string='') {}
-  
+
     public static deserialize(serialized) {
       var default_dict_ = {axis:{}};
       serialized = set_default_values(serialized, default_dict_);
@@ -307,7 +307,7 @@ export class Graph2D {
         graphs.push(Dataset.deserialize(serialized['graphs'][i]));
       }
       var axis = Axis.deserialize(serialized['axis']);
-  
+
       return new Graph2D(graphs,
                          serialized['attribute_names'],
                          axis,
@@ -324,8 +324,8 @@ export class Label {
                 public rectangle_edge_style: EdgeStyle,
                 public type_:string = 'label',
                 public name:string = '') {}
-    
-  
+
+
     public static deserialize(serialized) {
       var text_style = TextStyle.deserialize(serialized['text_style']);
       var rectangle_surface_style = SurfaceStyle.deserialize(serialized['rectangle_surface_style']);
@@ -336,7 +336,7 @@ export class Label {
                        serialized['type_'],
                        serialized['name']);
     }
-  
+
     draw(context, decalage_x, decalage_y, rect_w) {
       var rect_h = this.text_style.font_size;
       Shape.rect(decalage_x, decalage_y, rect_w, rect_h, context, this.rectangle_surface_style.color_fill,
@@ -356,7 +356,7 @@ export class Line2D {
     maxX:number=0;
     minY:number=0;
     maxY:number=0;
-  
+
     constructor(public data:number[],
                 public edge_style:EdgeStyle,
                 public type_:string='line2d',
@@ -366,7 +366,7 @@ export class Line2D {
       this.minY = Math.min(-this.data[1], -this.data[3]);
       this.maxY = Math.max(-this.data[1], -this.data[3]);
     }
-  
+
     public static deserialize(serialized) {
       var default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:1, name:''};
       var default_dict_ = {edge_style:default_edge_style};
@@ -377,7 +377,7 @@ export class Line2D {
                         serialized['type_'],
                         serialized['name']);
     }
-  
+
     draw(context, mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height) {
       context.lineWidth = this.edge_style.line_width;
       context.strokeStyle = this.edge_style.color_stroke;
@@ -389,18 +389,18 @@ export class Line2D {
       context.stroke();
       context.setLineDash([]);
     }
-  
+
     get_side_points(mvx, mvy, scaleX, scaleY, X, Y, canvas_width, canvas_height) {
       var x1 = scaleX*this.data[0] + mvx + X;
       var y1 = -scaleY*this.data[1] + mvy + Y;
       var x2 = scaleX*this.data[2] + mvx + X;
       var y2 = -scaleY*this.data[3] + mvy + Y;
-  
+
       if (y1 === y2) {
         return [X, y1, canvas_width + X, y2];
       } else if (x1 === x2) {
         return [x1, Y, x2, canvas_height + Y];
-      } 
+      }
       let canvas_angle = Math.atan(canvas_height/canvas_width);
       let angle = Math.abs(Math.atan((y2 - y1)/(x2 - x1)));
       let a = (y2 - y1)/(x2 - x1);
@@ -413,7 +413,7 @@ export class Line2D {
       let x_bottom = x1 + (canvas_height + Y - y1)/a;
       return [x_top, 0, x_bottom, canvas_height];
     }
-  
+
 }
 
 
@@ -422,7 +422,7 @@ export class LineSegment2D {
     maxX:number=0;
     minY:number=0;
     maxY:number=0;
-  
+
     constructor(public data:any,
                 public edge_style:EdgeStyle,
                 public type_:string='linesegment2d',
@@ -432,7 +432,7 @@ export class LineSegment2D {
         this.minY = Math.min(this.data[1], this.data[3]);
         this.maxY = Math.max(this.data[1], this.data[3]);
     }
-  
+
     public static deserialize(serialized) {
       var default_edge_style = {color_stroke:string_to_rgb('grey'), dashline:[], line_width:0.5, name:''};
       var default_dict_ = {edge_style:default_edge_style};
@@ -445,7 +445,7 @@ export class LineSegment2D {
                                serialized['type_'],
                                serialized['name']);
     }
-  
+
     draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y, log_scale_x=false, log_scale_y=false) {
       context.lineWidth = this.edge_style.line_width;
       context.strokeStyle = this.edge_style.color_stroke;
@@ -456,11 +456,11 @@ export class LineSegment2D {
       if (log_scale_x) {
         x1 = Math.log10(x1);
         x2 = Math.log10(x2);
-      } 
+      }
       if (log_scale_y) {
         y1 = -Math.log10(-y1);
         y2 = -Math.log10(-y2);
-      } 
+      }
       if (first_elem) {
         context.moveTo(scaleX*x1 + mvx + X, scaleY*y1 + mvy + Y);
       }
@@ -473,7 +473,7 @@ export class MultipleLabels {
     constructor(public labels:Label[],
                 public type_:string='multiplelabels',
                 public name:string='') {}
-        
+
     public static deserialize(serialized) {
       let labels = [];
       for (let serialized_label of serialized['labels']) {
@@ -483,7 +483,7 @@ export class MultipleLabels {
                                 serialized['type_'],
                                 serialized['name']);
     }
-  
+
     draw(context, canvas_width, X, Y) {
       var rect_w = canvas_width*0.04;
       var decalage_x = 5 + X, decalage_y = 5 + Y;
@@ -514,7 +514,7 @@ export class Point2D {
     selected_by_heatmap:boolean = false;
     index:number=-1; // index in scatter plot's elements
     dataset_index:number=-1;
-  
+
     constructor(public cx:number,
                 public cy:number,
                 public point_style: PointStyle,
@@ -528,10 +528,10 @@ export class Point2D {
         this.maxX = this.cx;
         this.minY = this.cy;
         this.maxY = this.cy;
-  
+
         this.hidden_color = genColor();
       }
-  
+
       public static deserialize(serialized) {
         var point_style = PointStyle.deserialize(serialized['point_style']);
         return new Point2D(serialized['cx'],
@@ -540,7 +540,7 @@ export class Point2D {
                            serialized['type_'],
                            serialized['name']);
       }
-  
+
       draw(context, mvx, mvy, scaleX, scaleY, X, Y, log_scale_x, log_scale_y) {
         let cx = this.cx;
         let cy = this.cy;
@@ -566,19 +566,19 @@ export class Point2D {
           } else {
             throw new Error(this.point_style.shape + ' is not a valid point shape.');
           }
-  
+
       }
-  
+
       copy() {
         return new Point2D(this.cx, this.cy, this.point_style, this.type_, this.name);
       }
-  
+
       equals(point:Point2D): boolean {
         return (this.cx == point.cx) && (this.cy == point.cy) && (this.point_style.shape == point.point_style.shape)
                 && (this.size == point.size) && (this.point_style.color_fill == point.point_style.color_fill) && (this.point_style.color_stroke == point.point_style.color_stroke)
                 && (this.point_style.stroke_width == point.point_style.stroke_width);
       }
-  
+
       getPointIndex(point_list:Point2D[]) {
         for (let i=0; i<point_list.length; i++) {
           if (this.equals(point_list[i])) {
@@ -587,7 +587,7 @@ export class Point2D {
         }
         throw new Error('Point2D.getPointIndex() : not in list');
       }
-  
+
       isPointInList(point_list:Point2D[]) {
         for (let i=0; i<point_list.length; i++) {
           if (this.equals(point_list[i])) {
@@ -599,7 +599,7 @@ export class Point2D {
 }
 
 
-/** 
+/**
  * A class that allows you to draw multiple primitives in one canvas.
  * @param primitives A list of primitives, ie. Contour2D, Text, LineSegment2D, Arc2D, Circle2D or Line2D
  */
@@ -608,12 +608,12 @@ export class PrimitiveGroup {
                 public type_: string,
                 public name:string) {
                 }
-  
+
     public static deserialize(serialized) {
       var primitives:any[] = [];
       var temp = serialized['primitives'];
       let classes = {"contour": Contour2D, "text": Text, "linesegment2d": LineSegment2D,
-                    "arc": Arc2D, "circle": Circle2D, "line2d": Line2D, 
+                    "arc": Arc2D, "circle": Circle2D, "line2d": Line2D,
                     "multiplelabels": MultipleLabels, "wire": Wire, "point": Point2D};
       for (let i=0; i<temp.length; i++) {
         primitives.push(classes[temp[i]["type_"]].deserialize(temp[i]));
@@ -669,7 +669,7 @@ export class Scatter {
       let name = attribute_names[i];
       if (!List.is_include(name, exceptions)) {
         let type_ = TypeOf(this.elements[0][name]);
-        this.all_attributes.push(new Attribute(name, type_)); 
+        this.all_attributes.push(new Attribute(name, type_));
       }
     }
   }
@@ -821,7 +821,7 @@ export class Text {
     if (this.text_scaling) {
       font_size = font_size * scaleX/this.init_scale;
     }
- 
+
     context.font = font_size + "px " + this.text_style.font_style;
     context.fillStyle = this.text_style.text_color;
     context.textAlign = this.text_style.text_align_x,
@@ -898,7 +898,7 @@ export class Heatmap {
               public colors: string[] = [string_to_hex("yellow"), string_to_hex("orange"), string_to_hex("red")],
               public edge_style: EdgeStyle = new EdgeStyle(1, string_to_hex("white"), [], ""),
               public name: string = "") {}
-    
+
 
   public static deserialize(serialized) {
     let default_colors = [string_to_rgb("blue"), string_to_rgb("yellow"), string_to_rgb("red")];
@@ -928,8 +928,8 @@ export class Wire {
               public name: string = "" ) {
                 this.hidden_color = genColor();
               }
-      
-  
+
+
   public static deserialize(serialized) {
     let lines = serialized["lines"].map(l => [l[0], -l[1]]);
     let default_edge_style = {line_width: 1, color_stroke: string_to_rgb("grey"), dashline: []};
@@ -945,7 +945,7 @@ export class Wire {
     }
     return new Wire(lines, edge_style, null, "wire", serialized["name"]);
   }
-            
+
 
   draw(context, scaleX, scaleY, mvx, mvy, X, Y) {
     context.moveTo(scaleX*this.lines[0][0] + mvx + X, scaleY*this.lines[0][1] + mvy + Y);

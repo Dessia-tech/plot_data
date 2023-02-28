@@ -5,11 +5,19 @@
   "main": "./lib/core.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "webpack --config webpack-dev.config.cjs",
     "build": "webpack --config webpack.config.js",
     "format": "prettier --write \"src/**/*.ts\"",
-    "lint": "tslint -p tsconfig.json"
+    "lint": "tslint -p tsconfig.json",
+    "start": "http-server -a localhost -p 3030",
+    "merge_reports": "mochawesome-merge cypress/results/*.json > cypress/results/full_report.json",
+    "generate_mochawesome_report": "marge cypress/results/full_report.json --reportDir cypress/results",
+    "cy:run-base": "cypress run --env type=base --browser firefox",
+    "cy:run-actual": "node ./cypress_run_report.cjs",
+    "cy:run-open": "cypress open --env type=actual",
+    "test": "npm run dev & start-server-and-test start http-get://localhost:3030 cy:run-actual",
+    "base-test": "npm run dev & start-server-and-test start http-get://localhost:3030 cy:run-base",
+    "cyopen": "npm run dev & start-server-and-test start http-get://localhost:3030 cy:run-open"
   },
   "browser": {
     "fs": false,
@@ -33,9 +41,22 @@
   "devDependencies": {
     "@commitlint/cli": "^11.0.0",
     "@commitlint/config-conventional": "^11.0.0",
+    "@cypress/webpack-preprocessor": "^5.16.1",
+    "@types/mocha": "^10.0.1",
     "@types/node": "^14.17.23",
     "browserify": "^17.0.0",
+    "cypress": "^12.4.1",
+    "cypress-localstorage-commands": "^2.2.2",
+    "cypress-real-events": "^1.7.6",
+    "cypress-visual-regression": "^2.1.0",
+    "http-server": "14.1.1",
+    "import": "^0.0.6",
+    "jasmine": "^4.5.0",
+    "mochawesome": "^7.1.3",
+    "mochawesome-merge": "^4.2.2",
     "prettier": "^2.4.1",
+    "start-server-and-test": "^1.15.3",
+    "ts-node": "^10.9.1",
     "tslint": "^6.1.3",
     "tslint-config-prettier": "^1.18.0",
     "typescript": "^4.4.4",
@@ -48,7 +69,7 @@
     "html-webpack-plugin": "^5.5.0",
     "ignore-errors": "^2.0.0",
     "ts-loader": "^9.2.6",
-    "webpack": "^5.60.0"
+    "webpack": "^5.75.0"
   },
   "husky": {
     "hooks": {

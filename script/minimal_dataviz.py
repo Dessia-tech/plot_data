@@ -6,17 +6,16 @@ Created on Thu Feb 11 07:38:30 2021
 @author: steven
 """
 
-import plot_data
-import plot_data.colors as colors
 import random
 
+random.seed(7)
 
 elements = []
 
 axes = ['cost', 'mass', 'wiring_length']
 
 for i in range(100):
-    
+
     elements.append({'mass': 52+ 47*random.random(),
                      'cost': 231 + 89*random.random(),
                      'wiring_length': 8.9 + 3.1*random.random()})

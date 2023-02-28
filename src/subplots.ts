@@ -8,7 +8,7 @@ import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
 
 
 var alert_count = 0;
-/** 
+/**
  * A class that inherits from PlotData and is specific for drawing PrimitiveGroups.
  */
 export class PlotContour extends PlotData {
@@ -239,7 +239,7 @@ export class PlotScatter extends PlotData {
   }
 }
 
-/** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
+/** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds
  */
 export class PlotPieChart extends PlotData {
   public constructor(

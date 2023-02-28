@@ -1,103 +1,106 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire, PieChart } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
 
-/** PlotData is the key class for displaying data. It contains numerous parameters and methods 
+const HIDDEN_OFFSET = 15;
+
+/** PlotData is the key class for displaying data. It contains numerous parameters and methods
  * for that purpose. It is inherited by more specific data-visualization objects such as
- * PlotScatter, PlotContour, ParallelPlot and PrimitiveGroupContainer 
+ * PlotScatter, PlotContour, ParallelPlot and PrimitiveGroupContainer
  */
 export abstract class PlotData {
-  type_: string;
-  name: string = "";
-  context_show: any;
-  context_hidden: any;
-  context: any;
-  minX: number = Infinity;
-  maxX: number = -Infinity;
-  minY: number = Infinity;
-  maxY: number = -Infinity;
-  init_scale: number = 1;
-  init_scaleX: number = 1;
-  init_scaleY: number = 1;
-  scale: number = 1;
-  scaleX: number = 1;
-  scaleY: number = 1;
-  scroll_x: number = 0;
-  scroll_y: number = 0;
-  initial_originX: number = 0;
-  initial_originY: number = 0;
-  initial_width: number = 0;
-  initial_height: number = 0;
-  originX: number = 0;
-  originY: number = 0;
-  settings_on: boolean = false;
-  color_to_plot_data: any = {};
-  select_on_mouse: any;
-  select_on_mouse_indices: number[] = [];
-  primitive_mouse_over_point: Point2D;
-  select_on_click: any[] = []; // For scatter and graph2D, it corresponds points selected bythe selection window
-  heatmap_selected_points: any[] = [];
-  heatmap_selected_points_indices: number[] = [];
-  clicked_points: any[] = [];
-  selected_point_index: any[] = [];
-  clicked_point_index: any[] = [];
-  color_surface_on_mouse: string = string_to_hex('lightskyblue');
-  color_surface_selected: string = string_to_hex('blue');
-  color_surface_on_click: string = string_to_hex("red");
-  color_heatmap_selection: string = string_to_hex("brown");
+  type_:string;
+  name:string = "";
+  context_show:any;
+  context_hidden:any;
+  context:any;
+  minX:number=Infinity;
+  maxX:number=-Infinity;
+  minY:number=Infinity;
+  maxY:number=-Infinity;
+  init_scale:number=1;
+  init_scaleX:number=1;
+  init_scaleY:number=1;
+  scale:number=1;
+  scaleX:number=1;
+  scaleY:number=1;
+  scroll_x:number=0;
+  scroll_y:number=0;
+  initial_originX:number=0;
+  initial_originY:number=0;
+  initial_width:number=0;
+  initial_height:number = 0;
+  originX:number=0;
+  originY:number=0;
+  settings_on:boolean=false;
+  color_to_plot_data:any={};
+  select_on_mouse:any;
+  select_on_mouse_indices:number[]=[];
+  primitive_mouse_over_point:Point2D;
+  select_on_click:any[]=[]; // For scatter and graph2D, it corresponds points selected bythe selection window
+  heatmap_selected_points:any[]=[];
+  heatmap_selected_points_indices:number[]=[];
+  clicked_points:any[]=[];
+  selected_point_index:any[]=[];
+  clicked_point_index:any[]=[];
+  color_surface_on_mouse:string=string_to_hex('lightskyblue');
+  color_surface_selected:string=string_to_hex('blue');
+  color_surface_on_click:string=string_to_hex("red");
+  color_heatmap_selection:string=string_to_hex("brown");
 
-  pointLength: number = 0;
-  tooltip_ON: boolean = false;
-  axis_ON: boolean = false;
-  link_object_ON: boolean = false;
-  index_first_in: number;
-  index_last_in: number;
-  nb_points_in: number;
-  graph_ON: boolean = false;
-  isParallelPlot: boolean = false;
-  interaction_ON: boolean = true;
-  x_nb_digits: number = 0;
-  y_nb_digits: number = 0;
-  multiplot_manipulation: boolean = false;
-  fusion_coeff: number = 1.2;
+  pointLength:number=0;
+  tooltip_ON:boolean = false;
+  axis_ON:boolean = false;
+  link_object_ON:boolean = false;
+  index_first_in:number;
+  index_last_in:number;
+  nb_points_in:number;
+  graph_ON:boolean=false;
+  isParallelPlot:boolean=false;
+  interaction_ON:boolean = true;
+  x_nb_digits:number = 0;
+  y_nb_digits:number = 0;
+  multiplot_manipulation:boolean=false;
+  fusion_coeff:number=1.2;
   log_scale_x: boolean = false;
   log_scale_y: boolean = true;
 
-  plotObject: any;
-  plot_datas: object = {};
-  tooltip_list: any[] = [];
-  button_x: number = 0;
-  button_w: number = 0;
-  button_h: number = 0;
-  zoom_rect_y: number = 0;
-  zw_bool: boolean = false;
-  zw_y: number = 0;
-  reset_rect_y: number = 0;
-  select_bool: boolean = false;
-  select_y: number = 0;
-  sort_list_points: any[] = [];
-  graph_to_display: boolean[] = [];
-  graph1_button_x: number = 0;
-  graph1_button_y: number = 0;
-  graph1_button_w: number = 0;
-  graph1_button_h: number = 0;
-  nb_graph: number = 0;
-  mergeON: boolean = false;
-  merge_y: number = 0;
-  permanent_window: boolean = true;
-  perm_button_y: number = 0;
-  perm_window_x: number = 0;
-  perm_window_y: number = 0;
-  perm_window_w: number = 0;
-  perm_window_h: number = 0;
-  initial_permW: number = 0;
-  initial_permH: number = 0;
-  graph_colorlist: string[] = [];
-  graph_name_list: string[] = [];
-  graph_text_spacing_list: number[] = [];
+  plotObject:any;
+  plot_datas:object={};
+  tooltip_list:any[]=[];
+  button_x:number=0;
+  button_w:number=0;
+  button_h:number=0;
+  zoom_rect_y:number=0;
+  zw_bool:boolean=false;
+  zw_y:number=0;
+  reset_rect_y:number=0;
+  select_bool:boolean=false;
+  select_y:number=0;
+  csv_button_y:number=0;
+  sort_list_points:any[]=[];
+  graph_to_display:boolean[]=[];
+  graph1_button_x:number=0;
+  graph1_button_y:number=0;
+  graph1_button_w:number=0;
+  graph1_button_h:number=0;
+  nb_graph:number = 0;
+  mergeON:boolean=false;
+  merge_y:number=0;
+  permanent_window:boolean=true;
+  perm_button_y:number=0;
+  perm_window_x:number=0;
+  perm_window_y:number=0;
+  perm_window_w:number=0;
+  perm_window_h:number=0;
+  initial_permW:number=0;
+  initial_permH:number=0;
+  graph_colorlist:string[]=[];
+  graph_name_list:string[]=[];
+  graph_text_spacing_list:number[]=[];
   decalage_axis_x = 50;
   decalage_axis_y = 20;
   last_point_list: any[] = [];
@@ -189,6 +192,7 @@ export abstract class PlotData {
   heatmap: Heatmap;
   heatmap_view: boolean = false;
   selected_areas: number[][];
+  heatmap_table;
 
   public constructor(
     public data: any,
@@ -287,10 +291,9 @@ export abstract class PlotData {
       this.originY = this.height / 2 - (this.maxY + this.minY) * this.scaleY / 2 - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5)) / 2;
 
     } else if (this.type_ === 'histogram') {
-      this.init_scale = 0.95 * (this.width - this.decalage_axis_x) / (this['max_abs'] - this['min_abs']);
+      this.init_scale = 0.95*(this.width - this.decalage_axis_x)/(this['max_abs'] - this['min_abs']);
       this.scale = this.init_scale;
-      this.originX = this.decalage_axis_x - this.scale * this['min_abs'];
-
+      this.originX = this.decalage_axis_x - this.scale*this['min_abs'];
     } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
@@ -340,12 +343,12 @@ export abstract class PlotData {
     if (d['type_'] == 'primitivegroup') {
       for (let i = 0; i < d.primitives.length; i++) {
         this.context.beginPath();
-        let pr_x = scaleX * d.primitives[i].minX + mvx;
-        let pr_y = scaleY * d.primitives[i].minY + mvy;
-        let pr_w = scaleX * (d.primitives[i].maxX - d.primitives[i].minX);
-        let pr_h = scaleY * (d.primitives[i].maxY - d.primitives[i].minY);
-        var is_inside_canvas = (pr_x + pr_w >= 0) && (pr_x <= this.width) &&
-          (pr_y + pr_h > 0) && (pr_y <= this.height);
+        let pr_x=scaleX*d.primitives[i].minX + mvx;
+        let pr_y=scaleY*d.primitives[i].minY + mvy;
+        let pr_w=scaleX*(d.primitives[i].maxX - d.primitives[i].minX);
+        let pr_h=scaleY*(d.primitives[i].maxY - d.primitives[i].minY);
+        var is_inside_canvas = (pr_x+pr_w>=0) && (pr_x<=this.width) &&
+          (pr_y+pr_h>0) && (pr_y<=this.height);
         if (need_check.includes(d.primitives[i].type_) && !is_inside_canvas) continue;
         if (d.primitives[i].type_ === 'contour') {
           this.draw_contour(hidden, mvx, mvy, scaleX, scaleY, d.primitives[i]);
@@ -369,6 +372,8 @@ export abstract class PlotData {
         } else if (d.primitives[i].type_ === "wire") {
           this.draw_wire(hidden, d.primitives[i]);
           // tooltips drawn in mouse_move_interaction()
+        } else if (d.primitives[i].type_ === "point") {
+          this.draw_point(hidden, d.primitives[i])
         }
         this.context.closePath();
       }
@@ -379,7 +384,7 @@ export abstract class PlotData {
   draw_wire(hidden: boolean, wire: Wire) {
     if (hidden) {
       this.context.strokeStyle = rgb_to_hex(wire.hidden_color);
-      this.context.lineWidth = 3 * wire.edge_style.line_width;
+      this.context.lineWidth = wire.edge_style.line_width + HIDDEN_OFFSET;
     } else {
       if (this.select_on_mouse === wire) {
         this.context.strokeStyle = string_to_hex("yellow");
@@ -415,7 +420,7 @@ export abstract class PlotData {
       for (var j = 0; j < this.select_on_click.length; j++) {
         var z = this.select_on_click[j];
         if (z == d) {
-          this.context.fillStyle = this.color_surface_on_click;
+          this.context.fillStyle = this.color_surface_selected;
         }
       }
     }
@@ -450,11 +455,11 @@ export abstract class PlotData {
       }
       if (this.select_on_mouse == d) {
         this.context.fillStyle = this.color_surface_on_mouse;
-        for (var j = 0; j < this.select_on_click.length; j++) {
-          var z = this.select_on_click[j];
-          if (z == d) {
-            this.context.fillStyle = this.color_surface_selected;
-          }
+      }
+      for (var j = 0; j < this.select_on_click.length; j++) {
+        var z = this.select_on_click[j];
+        if (z == d) {
+          this.context.fillStyle = this.color_surface_selected;
         }
       }
     }
@@ -462,7 +467,7 @@ export abstract class PlotData {
     this.context.setLineDash([]);
   }
 
-  draw_point(hidden, mvx, mvy, scaleX, scaleY, d: Point2D) {
+  draw_point(hidden, d:Point2D) {
     if (hidden) {
       this.context.fillStyle = d.hidden_color;
     } else {
@@ -520,21 +525,21 @@ export abstract class PlotData {
     if (this.log_scale_x) cx = Math.log10(cx);
     if (this.log_scale_y) cy = -Math.log10(-cy);
 
-    var x = scaleX * cx + mvx;
-    var y = scaleY * cy + mvy;
+    var x = this.scaleX*cx+ this.originX;
+    var y = this.scaleY*cy + this.originY;
     this.pointLength = d.size;
 
     var is_inside_canvas = ((x + this.pointLength >= 0) && (x - this.pointLength <= this.width) && (y + this.pointLength >= 0) && (y - this.pointLength <= this.height));
     if (is_inside_canvas === true) {
       this.context.beginPath();
-      d.draw(this.context, mvx, mvy, scaleX, scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
+      d.draw(this.context, this.originX, this.originY, this.scaleX, this.scaleY, this.X, this.Y, this.log_scale_x, this.log_scale_y);
       this.context.fill();
       this.context.stroke();
       this.context.closePath();
     }
   }
 
-  draw_axis(mvx, mvy, scaleX, scaleY, d: Axis, log_scale_x, log_scale_y) { // Only used by graph2D
+  draw_axis(mvx, mvy, scaleX, scaleY, d:Axis, log_scale_x, log_scale_y) { // Only used by graph2D
     d.draw_horizontal_axis(this.context, mvx, scaleX, this.width, this.height, this.init_scaleX, this.minX, this.maxX, this.scroll_x,
       this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.plotObject['attribute_names'][0], log_scale_x);
 
@@ -545,7 +550,7 @@ export abstract class PlotData {
     this.y_nb_digits = Math.max(0, 1 - Math.floor(Math.log10(d.y_step)));
   }
 
-  draw_scatterplot_axis(d: Axis, lists, to_display_attributes) {
+  draw_scatterplot_axis(d:Axis, lists, to_display_attributes) {
     d.draw_scatter_axis(this.context, this.originX, this.originY, this.scaleX, this.scaleY, this.width, this.height,
       this.init_scaleX, this.init_scaleY, lists, to_display_attributes, this.scroll_x, this.scroll_y,
       this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width,
@@ -590,8 +595,8 @@ export abstract class PlotData {
       this.context.setLineDash(d.edge_style.dashline);
       this.context.strokeStyle = d.edge_style.color_stroke;
       this.context.lineWidth = d.edge_style.line_width;
-      for (var i = 0; i < d.segments.length; i++) {
-        let hidden = i === 0;
+      for (var i=0; i<d.segments.length; i++) {
+        let hidden = i===0;
         d.segments[i].draw(this.context, hidden, mvx, mvy, this.scaleX, this.scaleY,
           this.X, this.Y, this.log_scale_x, this.log_scale_y);
       }
@@ -607,8 +612,7 @@ export abstract class PlotData {
       }
       for (var i = 0; i < d.point_list.length; i = i + step) {
         var point = d.point_list[i];
-        this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY,
-          point);
+        this.draw_point(hidden, point);
       }
     } else if ((d['type_'] == 'dataset') && (this.graph_to_display[d.id] === false)) {
       this.delete_clicked_points(d.point_list);
@@ -631,27 +635,25 @@ export abstract class PlotData {
     }
   }
 
-  get_heatmap_table(scatter) {
+  refresh_heatmap_table(scatter) {
     let table = [];
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
     for (let i = 0; i < h; i++) {
       table.push(Array(w).fill(0));
     }
-    let wstep = this.width / w;
-    let hstep = this.height / h;
+    let wstep, hstep;
+    [wstep, hstep] = this.get_heatmap_steps();
 
     for (let point of scatter.point_list) {
-      let x = this.real_to_scatter_coords(point.cx, "x") - this.X;
-      let y = this.real_to_scatter_coords(-point.cy, "y") - this.Y;
-      if (x < 0 || x > this.width || y < 0 || y > this.height) {
-        continue;
-      }
-      let kx = Math.floor(x / wstep);
-      let ky = Math.floor(y / hstep);
+      let x = this.real_to_scatter_length(point.cx - this.minX, "x");
+      let y = this.real_to_scatter_length(-point.cy + this.maxY, "y");
+
+      let kx = Math.floor(x/wstep);
+      let ky = Math.floor(y/hstep);
       table[ky][kx]++;
     }
-    return table;
+    this.heatmap_table = table;
   }
 
 
@@ -684,32 +686,52 @@ export abstract class PlotData {
     }
   }
 
+  get_heatmap_steps() {
+    let w = this.heatmap.size[0];
+    let h = this.heatmap.size[1];
+    let wstep = this.real_to_scatter_length(1.001 * (this.maxX - this.minX), "x")/w;
+    let hstep = this.real_to_scatter_length(1.001 * (this.maxY - this.minY), "y")/h;
+    return [wstep, hstep];
+  }
+
   draw_heatmap(hidden) {
     if (hidden) return;
     let scatter = this.plotObject;
-    let table = this.get_heatmap_table(scatter);
+    this.refresh_heatmap_table(scatter);
     let w = this.heatmap.size[0];
     let h = this.heatmap.size[1];
-    let wstep = this.width / w;
-    let hstep = this.height / h;
+    let wstep, hstep;
+    [wstep, hstep] = this.get_heatmap_steps();
     let max_density = scatter.point_list.length;
-    for (let i = 1; i < w; i++) {
-      this.context.moveTo(i * wstep + this.X, this.Y);
-      this.context.lineTo(i * wstep + this.X, this.height + this.Y);
-      this.context.stroke();
-    }
-    for (let i = 1; i < h; i++) {
-      this.context.moveTo(this.X, i * hstep + this.Y);
-      this.context.lineTo(this.width + this.X, i * hstep + this.Y);
-      this.context.stroke();
-    }
-    for (let i = 0; i < w; i++) {
-      for (let j = 0; j < h; j++) {
-        let density = table[j][i];
+    let x1 = this.real_to_scatter_coords(this.minX, "x");
+    let x2 = this.real_to_scatter_coords(this.maxX, "x");
+    let y1 = this.real_to_scatter_coords(-this.minY, "y");
+    let y2 = this.real_to_scatter_coords(-this.maxY, "y");
+
+    this.context.beginPath();
+    this.context.save();
+    this.context.rect(this.decalage_axis_x + this.X, this.Y,
+      this.width - this.decalage_axis_x, this.height - this.decalage_axis_y);
+    this.context.clip();
+
+    for (let i=0; i<w; i++) {
+      for (let j=0; j<h; j++) {
+        let density = this.heatmap_table[j][i];
         let color = heatmap_color(density, max_density, this.heatmap.colors);
         this.context.fillStyle = color;
-        this.context.fillRect(i * wstep + this.X, j * hstep + this.Y, wstep, hstep);
+        this.context.fillRect(x1 + i*wstep, y1 + j*hstep, wstep, hstep);
       }
+    }
+
+    for (let i=1; i<w; i++) {
+      this.context.moveTo(x1 + i*wstep, y1);
+      this.context.lineTo(x1 + i*wstep, y2);
+      this.context.stroke();
+    }
+    for (let i=1; i<h; i++) {
+      this.context.moveTo(x1, y1 + i*hstep);
+      this.context.lineTo(x2, y1 + i*hstep);
+      this.context.stroke();
     }
     // The following loops could have been included in the previous one but drawing selection rectangles
     // after the heatmap makes the result more aesthetic
@@ -718,12 +740,13 @@ export abstract class PlotData {
         if (this.selected_areas[i][j] === 1) {
           this.context.strokeStyle = string_to_hex("blue");
           this.context.lineWidth = 2;
-          this.context.strokeRect(i * wstep + this.X, j * hstep + this.Y,
-            wstep, hstep);
+          this.context.strokeRect(x1 + i*wstep, y1 + j*hstep, wstep, hstep);
         }
       }
     }
 
+    this.context.restore();
+    this.context.closePath();
     this.draw_gradient_axis(max_density);
     let temp = scatter.axis.grid_on;
     scatter.axis.grid_on = false;
@@ -748,10 +771,15 @@ export abstract class PlotData {
       if ((this.scroll_x % 5 != 0) && (this.scroll_y % 5 != 0)) {
         this.refresh_point_list_bool = true;
       }
+
+      this.context.save();
+      this.context.rect(this.decalage_axis_x + this.X, this.Y,
+        this.width - this.decalage_axis_x, this.height - this.decalage_axis_y);
+      this.context.clip();
       if (this.point_families.length == 0) {
-        for (var i = 0; i < this.scatter_points.length; i++) {
+        for (var i=0; i<this.scatter_points.length; i++) {
           var point: Point2D = this.scatter_points[i];
-          this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+          this.draw_point(hidden, point);
         }
       } else {
         var point_order = this.get_point_order();
@@ -759,10 +787,11 @@ export abstract class PlotData {
           for (let j = 0; j < point_order[i].length; j++) {
             let index = point_order[i][j];
             let point: Point2D = this.scatter_points[index];
-            this.draw_point(hidden, mvx, mvy, this.scaleX, this.scaleY, point);
+            this.draw_point(hidden, point);
           }
         }
       }
+      this.context.restore();
 
       for (var i = 0; i < this.tooltip_list.length; i++) {
         if (!List.is_include(this.tooltip_list[i], this.scatter_points)) {
@@ -789,8 +818,25 @@ export abstract class PlotData {
     return point_order;
   }
 
-  draw_vertical_parallel_axis(nb_axis: number, mvx: number) {
-    for (var i = 0; i < nb_axis; i++) {
+  get_extremas_wrappers(min, max) {
+    var unit = Math.pow(10, Math.floor(Math.log10(max - min)));
+    let max_unit = (max - min) / unit;
+    if (max_unit <=1) {
+      var grad_step = unit / 10;
+    } else if (max_unit <= 2) {
+      grad_step = unit / 5;
+    } else if (max_unit <= 5) {
+      grad_step = unit / 2;
+    } else {
+      grad_step = unit;
+    }
+    let minW = grad_step * Math.floor(min/grad_step);
+    let maxW = grad_step * Math.ceil(max/grad_step);
+    return [minW, maxW, grad_step];
+  }
+
+  draw_vertical_parallel_axis(nb_axis:number, mvx:number) {
+    for (var i=0; i<nb_axis; i++) {
       if (i == this.move_index) {
         var current_x = Math.min(Math.max(this.axis_x_start + i * this.x_step + mvx, this.X), this.X + this.width);
       } else {
@@ -825,14 +871,19 @@ export abstract class PlotData {
           this.context.textBaseline = 'middle';
           this.context.fillText(current_grad, current_x - 5, current_y);
         } else {
-          var grad_step = (max - min) / (this.axisNbGrad - 1);
-          var y_step = (this.axis_y_end - this.axis_y_start) / (this.axisNbGrad - 1);
-          for (var j = 0; j < this.axisNbGrad; j++) {
-            var current_y = this.axis_y_start + j * y_step;
-            if (this.inverted_axis_list[i] === true) {
-              var current_grad: any = MyMath.round(max - j * grad_step, 3);
+          let minW, maxW, grad_step;
+          [minW, maxW, grad_step] = this.get_extremas_wrappers(min, max);
+          let nb_graduations = (maxW - minW) / grad_step;
+          var y_step = (this.axis_y_end - this.axis_y_start) / nb_graduations;
+          for (let j=0; j<nb_graduations + 1; j++) {
+            var current_y = this.axis_y_start + j*y_step;
+            if (this.inverted_axis_list[i]) {
+              var current_grad:any = maxW - j*grad_step;
             } else {
-              current_grad = MyMath.round(min + j * grad_step, 3);
+              current_grad = minW + j*grad_step;
+            }
+            if (Math.log10(max - min) < 0) {
+              current_grad = MyMath.round(current_grad, -Math.floor(Math.log10(max-min) - 1));
             }
             Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
             this.context.textAlign = 'end';
@@ -905,14 +956,19 @@ export abstract class PlotData {
           let current_grad = min;
           this.context.fillText(current_grad, current_x, current_y - 5);
         } else {
-          var grad_step = (max - min) / (this.axisNbGrad - 1);
-          var x_step = (this.axis_x_end - this.axis_x_start) / (this.axisNbGrad - 1);
-          for (var j = 0; j < this.axisNbGrad; j++) {
-            var current_x = this.axis_x_start + j * x_step;
-            if (this.inverted_axis_list[i] === true) {
-              var current_grad: any = MyMath.round(max - j * grad_step, 3);
+          let minW, maxW, grad_step;
+          [minW, maxW, grad_step] = this.get_extremas_wrappers(min, max);
+          let nb_graduations = (maxW - minW) / grad_step;
+          var x_step = (this.axis_x_end - this.axis_x_start) / nb_graduations;
+          for (let j=0; j<nb_graduations + 1; j++) {
+            var current_x = this.axis_x_start + j*x_step;
+            if (this.inverted_axis_list[i]) {
+              var current_grad = maxW - j*grad_step;
             } else {
-              current_grad = MyMath.round(min + j * grad_step, 3);
+              current_grad = minW + j*grad_step;
+            }
+            if (Math.log10(max - min) < 0) {
+              current_grad = MyMath.round(current_grad, -Math.floor(Math.log10(max-min) - 1));
             }
             Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
             this.context.textAlign = 'center';
@@ -999,22 +1055,24 @@ export abstract class PlotData {
     }
   }
 
-  get_coord_on_parallel_plot(attribute_type, current_list, elt, axis_coord_start, axis_coord_end, inverted) { // From [0,1] to axis display coords 
+  get_coord_on_parallel_plot(attribute_type, current_list, elt, axis_coord_start, axis_coord_end, inverted) { // From [0,1] to axis display coords
     if (attribute_type == 'float') {
       var min = current_list[0];
       var max = current_list[1];
       if (min == max) {
         var current_axis_coord = (axis_coord_start + axis_coord_end) / 2;
       } else {
-        var delta_y = elt - min;
-        var delta_axis_coord = (axis_coord_end - axis_coord_start) * delta_y / (max - min);
+        let minW, maxW, grad_step;
+        [minW, maxW, grad_step] = this.get_extremas_wrappers(min, max);
+        var delta_y = elt - minW;
+        var delta_axis_coord = (axis_coord_end - axis_coord_start) * delta_y/(maxW - minW);
         if (inverted === true) {
           var current_axis_coord = axis_coord_end - delta_axis_coord;
         } else {
           current_axis_coord = axis_coord_start + delta_axis_coord;
         }
       }
-    } else {
+    } else { // string
       var color = elt;
       if (current_list.length == 1) {
         current_axis_coord = (axis_coord_start + axis_coord_end) / 2;
@@ -1201,7 +1259,7 @@ export abstract class PlotData {
       let over = List.is_include(element_index, this.select_on_mouse_indices);
       let selected_by_heatmap = List.is_include(element_index, this.heatmap_selected_points_indices);
 
-      // Priority : Mouse over > Click > Heatmap selection > Rubber band selection 
+      // Priority : Mouse over > Click > Heatmap selection > Rubber band selection
       if (over) {
         over_seg_lists.push({ seg_list: seg_list, index: i });
       } else if (clicked) {
@@ -1411,6 +1469,7 @@ export abstract class PlotData {
     this.xlog_button_y = this.clear_point_button_y + this.button_h + 5;
     this.ylog_button_y = this.xlog_button_y + this.button_h + 5;
     this.heatmap_button_y = this.ylog_button_y + this.button_h + 5;
+    this.csv_button_y = this.merge_y;
   }
 
   refresh_attribute_booleans() {
@@ -1825,6 +1884,17 @@ export abstract class PlotData {
     }
   }
 
+  reset_selected_areas() {
+    let w = this.heatmap.size[0];
+    let h = this.heatmap.size[1];
+    for (let i=0; i<h; i++) {
+      for (let j=0; j<w; j++) {
+        this.selected_areas[i][j] = 0;
+      }
+    }
+  }
+
+
   refresh_heatmap_selected_point_indices() {
     this.heatmap_selected_points_indices = [];
     for (let i = 0; i < this.heatmap_selected_points.length; i++) {
@@ -1837,8 +1907,25 @@ export abstract class PlotData {
 
   // Refreshes value of selected_by_heatmap attributes (Point2D)
   refresh_selected_by_heatmap() {
-    for (let i = 0; i < this.scatter_points.length; i++) {
-      this.scatter_points[i].selected_by_heatmap = List.is_include(this.scatter_points[i], this.heatmap_selected_points);
+    this.reset_selected_areas();
+    let wstep, hstep;
+    [wstep, hstep] = this.get_heatmap_steps();
+    for (let i=0; i<this.scatter_points.length; i++) {
+      let bool = false;
+      for (let point_inside of this.scatter_points[i].points_inside) {
+        if (List.is_include(point_inside.index, this.heatmap_selected_points_indices)) {
+          bool = true;
+          break;
+        }
+      }
+      this.scatter_points[i].selected_by_heatmap = bool;
+      if (bool) {
+        let x = this.real_to_scatter_length(this.scatter_points[i].cx - this.minX, "x");
+        let y = this.real_to_scatter_length(-this.scatter_points[i].cy + this.maxY, "y");
+        let kx = Math.floor(x/wstep);
+        let ky = Math.floor(y/hstep);
+        this.selected_areas[kx][ky] = 1;
+      }
     }
   }
 
@@ -1879,8 +1966,8 @@ export abstract class PlotData {
     for (let i = 0; i < this.latest_selected_points.length; i++) {
       let selected_point = this.latest_selected_points[i];
       if (selected_point != undefined) {
-        for (let j = 0; j < selected_point.points_inside.length; j++) {
-          let point_index = List.get_index_of_element(selected_point.points_inside[j], elements_list);
+        for (let j=0; j<selected_point.points_inside.length; j++) {
+          let point_index = List.get_index_of_element(selected_point.points_inside[j], this.plotObject.point_list);
           this.latest_selected_points_index.push(point_index);
         }
       }
@@ -1892,18 +1979,32 @@ export abstract class PlotData {
     var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
     var click_plot_data = this.color_to_plot_data[colKey];
     if (click_plot_data) {
-      if (click_plot_data.clicked) {
-        this.clicked_points = List.remove_element(click_plot_data, this.clicked_points);
-        click_plot_data.clicked = false;
-        this.latest_selected_points = [];
+      if (this.type_ === "primitivegroup") {
+        if (this.select_on_click.includes(click_plot_data)) {
+          this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
+          if (click_plot_data.type_ === "point") {
+            click_plot_data.selected = false;
+          }
+        } else {
+          this.select_on_click.push(click_plot_data);
+          if (click_plot_data.type_ === "point") {
+            click_plot_data.selected = true;
+          }
+        }
       } else {
-        this.clicked_points.push(click_plot_data);
-        click_plot_data.clicked = true;
-        this.latest_selected_points = [click_plot_data];
+        if (click_plot_data.clicked) {
+          this.clicked_points = List.remove_element(click_plot_data, this.clicked_points);
+          click_plot_data.clicked = false;
+          this.latest_selected_points = [];
+        } else {
+          this.clicked_points.push(click_plot_data);
+          click_plot_data.clicked = true;
+          this.latest_selected_points = [click_plot_data];
+        }
       }
     }
-    // else { 
-    // this.select_on_click.push(click_plot_data); // used to add undefined to select_on_click
+    // else {
+      // this.select_on_click.push(click_plot_data); // used to add undefined to select_on_click
     // }
     if (this.tooltip_ON && click_plot_data) {
       let is_in_tooltip_list = List.is_include(click_plot_data, this.tooltip_list);
@@ -1930,14 +2031,18 @@ export abstract class PlotData {
 
 
   refresh_selected_areas(mouse1X, mouse1Y) {
-    let w = this.heatmap.size[0];
-    let h = this.heatmap.size[1];
+    let wstep, hstep;
+    [wstep, hstep] = this.get_heatmap_steps();
 
-    let w_step = this.width / w;
-    let h_step = this.height / h;
+    let x1 = this.real_to_scatter_coords(this.minX, "x");
+    let y1 = this.real_to_scatter_coords(-this.minY, "y");
+    let x2 = this.real_to_scatter_coords(this.maxX, "x");
+    let y2 = this.real_to_scatter_coords(-this.maxY, "y");
 
-    let i = Math.floor((mouse1X - this.X) / w_step);
-    let j = Math.floor((mouse1Y - this.Y) / h_step);
+    if (mouse1X < x1 || mouse1X > x2 || mouse1Y < y1 || mouse1Y > y2) return;
+
+    let i = Math.floor((mouse1X - x1)/wstep);
+    let j = Math.floor((mouse1Y - y1)/hstep);
 
     this.selected_areas[i][j] = 1 - this.selected_areas[i][j];
   }
@@ -2022,22 +2127,22 @@ export abstract class PlotData {
             Math.min(
               this.real_to_scatter_coords(this.perm_window_x, 'x'),
               this.real_to_scatter_coords(this.perm_window_x + this.perm_window_w, 'x')),
-            'x');
+              'x');
           let abs_max = this.scatter_to_real_coords(
             Math.max(
               this.real_to_scatter_coords(this.perm_window_x, 'x'),
               this.real_to_scatter_coords(this.perm_window_x + this.perm_window_w, 'x')),
-            'x');
+              'x');
           let ord_min = this.scatter_to_real_coords(
             Math.max(
               this.real_to_scatter_coords(this.perm_window_y, 'y'),
               this.real_to_scatter_coords(this.perm_window_y - this.perm_window_h, 'y')),
-            'y');
+              'y');
           let ord_max = this.scatter_to_real_coords(
             Math.min(
               this.real_to_scatter_coords(this.perm_window_y, 'y'),
               this.real_to_scatter_coords(this.perm_window_y - this.perm_window_h, 'y')),
-            'y');
+              'y');
           this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
         }
         this.zoom_box_x = Math.min(mouse1X, mouse2X);
@@ -2071,10 +2176,10 @@ export abstract class PlotData {
       if (this.select_on_mouse !== old_select_on_mouse) {
         this.draw();
       } else if (this.select_on_mouse && ["wire", "contour", "circle"].includes(this.select_on_mouse["type_"])
-        && this.select_on_mouse["tooltip"]) {
+                && this.select_on_mouse["tooltip"]) {
         this.draw();
         this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale,
-          this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
+        this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
       }
     }
     var is_inside_canvas = (mouse2X >= this.X) && (mouse2X <= this.width + this.X) && (mouse2Y >= this.Y) && (mouse2Y <= this.height + this.Y);
@@ -2102,7 +2207,7 @@ export abstract class PlotData {
     var click_on_xlog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.xlog_button_y + this.Y, this.button_w, this.button_h);
     var click_on_ylog = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.ylog_button_y + this.Y, this.button_w, this.button_h);
     var click_on_heatmap = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.heatmap_button_y + this.Y, this.button_w, this.button_h);
-
+    var click_on_csv = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.csv_button_y + this.Y, this.button_w, this.button_h);
     var text_spacing_sum_i = 0;
     for (var i = 0; i < this.nb_graph; i++) {
       var click_on_graph_i = Shape.isInRect(mouse1X, mouse1Y, this.graph1_button_x + i * this.graph1_button_w + text_spacing_sum_i + this.X, this.graph1_button_y + this.Y, this.graph1_button_w, this.graph1_button_h);
@@ -2111,7 +2216,8 @@ export abstract class PlotData {
     }
     this.click_on_button = false;
     this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select
-      || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog || click_on_heatmap;
+    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog || click_on_heatmap
+    || click_on_csv;
 
     if (mouse_moving) {
       if (this.zw_bool) {
@@ -2595,7 +2701,6 @@ export class Interactions {
           }
         }
       }
-
     } else if (plot_data.plotObject['type_'] == 'scatterplot') {
       for (var j = 0; j < plot_data.scatter_points.length; j++) {
 
@@ -2628,14 +2733,19 @@ export class Interactions {
     let w = heatmap.size[0];
     let h = heatmap.size[1];
 
-    let w_step = plot_data.width / w;
-    let h_step = plot_data.height / h;
-    for (let k = 0; k < plot_data.scatter_points.length; k++) {
+    // Since the heatmap size is considered to be the bounding box, one or many points might be on
+    // the edge, resulting on out of bound errors. The idea here is then to increase the heatmap
+    // size by a non significant amount
+    let w_step, h_step;
+    [w_step, h_step] = plot_data.get_heatmap_steps();
+    let x1 = plot_data.real_to_scatter_coords(plot_data.minX, "x");
+    let y1 = plot_data.real_to_scatter_coords(-plot_data.minY, "y");
+    for (let k=0; k<plot_data.scatter_points.length; k++) {
       let point = plot_data.scatter_points[k];
-      let x = plot_data.scaleX * point.cx + plot_data.originX + plot_data.X;
-      let y = plot_data.scaleY * point.cy + plot_data.originY + plot_data.Y;
-      let i = Math.floor((x - plot_data.X) / w_step);
-      let j = Math.floor((y - plot_data.Y) / h_step);
+      let x = plot_data.real_to_scatter_coords(point.cx, "x");
+      let y = plot_data.real_to_scatter_coords(-point.cy, "y");
+      let i = Math.floor((x - x1)/w_step);
+      let j = Math.floor((y - y1)/h_step);
       if (plot_data.selected_areas[i][j] === 1) {
         point.selected_by_heatmap = true;
         plot_data.heatmap_selected_points.push(point);
@@ -2685,9 +2795,9 @@ export class Interactions {
 
   public static graph_button_action(mouse1X, mouse1Y, plot_data) {
     var text_spacing_sum_i = 0;
-    for (var i = 0; i < plot_data.nb_graph; i++) {
-      var click_on_graph_i = Shape.isInRect(mouse1X, mouse1Y, plot_data.graph1_button_x + i * plot_data.graph1_button_w + text_spacing_sum_i + plot_data.X,
-        plot_data.graph1_button_y + plot_data.Y, plot_data.graph1_button_w, plot_data.graph1_button_h);
+    for (var i=0; i<plot_data.nb_graph; i++) {
+      var click_on_graph_i = Shape.isInRect(mouse1X, mouse1Y, plot_data.graph1_button_x + i*plot_data.graph1_button_w + text_spacing_sum_i + plot_data.X,
+                             plot_data.graph1_button_y + plot_data.Y, plot_data.graph1_button_w, plot_data.graph1_button_h);
       if (click_on_graph_i === true) {
         plot_data.graph_to_display[i] = !plot_data.graph_to_display[i];
       }
@@ -2773,7 +2883,32 @@ export class Interactions {
   }
 
   public static click_on_heatmap_action(plot_data) {
-    plot_data.heatmap_view = !plot_data.heatmap_view;
+    plot_data.heatmap_view = ! plot_data.heatmap_view;
+    if (plot_data.heatmap_view) {
+      plot_data.refresh_heatmap_table(plot_data.plotObject);
+    }
+  }
+
+  public static click_on_csv_action(plot_data) {
+    let graph = plot_data.plotObject;
+    let rows = [];
+    for (let dataset of graph.graphs) {
+      rows.push([dataset.attribute_names]);
+    }
+    for (let point of plot_data.select_on_click) {
+      rows[point.dataset_index].push([point.cx, point.cy]);
+    }
+    for (let i=0; i<rows.length; i++) {
+      if (rows[i].length === 1) {
+        continue;
+      }
+      let filename = graph.graphs[i].name;
+      if (filename === "") {
+        filename = "graph" + i.toString();
+      }
+      filename = filename + ".csv";
+      export_to_csv(rows[i], filename);
+    }
   }
 
   public static mouse_move_axis_inversion(isDrawing, e, selected_name_index, plot_data: any) {
@@ -2836,11 +2971,11 @@ export class Interactions {
     }
     plot_data.rubber_bands[selected_band_index] = [new_min, new_max];
     let real_new_min = plot_data.axis_to_real_coords(new_min, plot_data.axis_list[selected_band_index]['type_'],
-      plot_data.axis_list[selected_band_index]['list'],
-      plot_data.inverted_axis_list[selected_band_index]);
+                                                     plot_data.axis_list[selected_band_index]['list'],
+                                                     plot_data.inverted_axis_list[selected_band_index]);
     let real_new_max = plot_data.axis_to_real_coords(new_max, plot_data.axis_list[selected_band_index]['type_'],
-      plot_data.axis_list[selected_band_index]['list'],
-      plot_data.inverted_axis_list[selected_band_index]);
+                                                     plot_data.axis_list[selected_band_index]['list'],
+                                                     plot_data.inverted_axis_list[selected_band_index]);
     let to_add_min = Math.min(real_new_min, real_new_max);
     let to_add_max = Math.max(real_new_min, real_new_max);
     plot_data.add_to_rubberbands_dep([plot_data.axis_list[selected_band_index]['name'], [to_add_min, to_add_max]]);
@@ -2879,13 +3014,13 @@ export class Interactions {
       [plot_data.rubber_last_min, plot_data.rubber_last_max] = [plot_data.rubber_last_max, plot_data.rubber_last_min];
     }
     var real_new_min = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][0],
-      plot_data.axis_list[axis_index]['type_'],
-      plot_data.axis_list[axis_index]['list'],
-      plot_data.inverted_axis_list[axis_index]);
+                                                     plot_data.axis_list[axis_index]['type_'],
+                                                     plot_data.axis_list[axis_index]['list'],
+                                                     plot_data.inverted_axis_list[axis_index]);
     var real_new_max = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][1],
-      plot_data.axis_list[axis_index]['type_'],
-      plot_data.axis_list[axis_index]['list'],
-      plot_data.inverted_axis_list[axis_index]);
+                                                     plot_data.axis_list[axis_index]['type_'],
+                                                     plot_data.axis_list[axis_index]['list'],
+                                                     plot_data.inverted_axis_list[axis_index]);
     var to_add_min = Math.min(real_new_min, real_new_max);
     var to_add_max = Math.max(real_new_min, real_new_max);
     plot_data.add_to_rubberbands_dep([plot_data.axis_list[axis_index]['name'], [to_add_min, to_add_max]]);
@@ -3165,5 +3300,9 @@ export class Buttons {
 
   public static heatmap_button(x, y, w, h, police, plot_data: PlotData) {
     Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, "heat", police);
+  }
+
+  public static csv_button(x, y, w, h, police, plot_data:PlotData) {
+    Shape.createButton(x + plot_data.X, y + plot_data.Y, w, h, plot_data.context, "csv", police);
   }
 }

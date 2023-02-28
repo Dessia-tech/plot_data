@@ -4,34 +4,36 @@
 Definition of language and plots
 """
 
+import json
+import math
 import os
 import sys
-import math
-import json
 import tempfile
-import webbrowser
 import warnings
-from typing import List, Tuple, Any, Union
-
-import numpy as npy
+import webbrowser
+from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
+import numpy as npy
+from dessia_common.core import DessiaObject
+from dessia_common.typings import JsonSerializable
 from matplotlib import patches
 
-from dessia_common import DessiaObject, full_classname
-from dessia_common.typings import Subclass
-from dessia_common.vectored_objects import from_csv, Catalog, ParetoSettings
-
-from plot_data import templates
 import plot_data.colors
+from plot_data import templates
+
+try:
+    # dessia_common >= 0.12.0
+    from dessia_common.serialization import serialize
+except ImportError:
+    # dessia_common < 0.12.0.
+    from dessia_common.utils.serialization import serialize
 
 npy.seterr(divide='raise')
 
 
 def delete_none_from_dict(dict1):
-    """
-    Delete input dictionary's keys where value is None.
-    """
+    """ Delete input dictionary's keys where value is None. """
     dict2 = {}
     for key, value in dict1.items():
         if isinstance(value, dict):
@@ -43,38 +45,72 @@ def delete_none_from_dict(dict1):
 
 
 class PlotDataObject(DessiaObject):
-    """
-    Abstract interface for DessiaObject implementation in module
-    """
+    """ Abstract interface for DessiaObject implementation in module. """
 
     def __init__(self, type_: str, name: str = '', **kwargs):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
 
-    def to_dict(self):
-        """
-        Redefines DessiaObject's to_dict() in order to remove keys where
-        value is None.
-        """
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
+        """ Redefines DessiaObject's to_dict() in order to not use pointers and remove keys where value is None. """
         dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
         new_dict_ = delete_none_from_dict(dict_)
         return new_dict_
 
     @classmethod
-    def dict_to_object(cls, dict_):
-        """
-        :rtype: Subclass[PlotDataObject]
-        """
+    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
+                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'DessiaObject':
+        """ Reset object_class in order to instantiate right object. """
         type_ = dict_['type_']
         object_class = TYPE_TO_CLASS[type_]
-        dict_['object_class'] = full_classname(object_=object_class,
-                                               compute_for='class')
-        return DessiaObject.dict_to_object(dict_=dict_, force_generic=True)
+        dict_["object_class"] = f"{object_class.__module__}.{object_class.__name__}"
+        return DessiaObject.dict_to_object(dict_=dict_, force_generic=True, global_dict=global_dict,
+                                           pointers_memo=pointers_memo, path=path)
 
     def plot_data(self):
-        raise NotImplementedError('It is strange to call plot_data method from a plot_data object.'
-                                  f' Check the class {self.__class__.__name__} you are calling')
+        raise NotImplementedError("It is strange to call plot_data method from a plot_data object."
+                                  f" Check the class '{self.__class__.__name__}' you are calling")
+
+
+class Sample(PlotDataObject):
+    """
+    Graph Point.
+    """
+
+    def __init__(self, values, reference_path: str = "#", name: str = ""):
+        self.values = values
+        self.reference_path = reference_path
+
+        PlotDataObject.__init__(self, type_="sample", name=name)
+
+    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
+        """
+        Overwrite generic to_dict.
+
+        TODO Check if it can be generic (probably)
+        """
+        dict_ = PlotDataObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path)
+        dict_.update({"reference_path": self.reference_path, "name": self.name})
+        dict_.update(serialize(self.values))
+        # TODO Keeping values at dict_ level before refactor, should be removed after and use dict_["values"] instead
+        return dict_
+
+    @classmethod
+    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
+                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'Sample':
+        """
+        Overwrite generic dict_to_object.
+
+        TODO Check if it can be generic (probably)
+        """
+        reference_path = dict_["reference_path"]
+        name = dict_["name"]
+        values = dict_["values"]
+        return cls(values=values, reference_path=reference_path, name=name)
+
+    def plot_data(self):
+        raise NotImplementedError("Method plot_data is not defined for class Sample.")
 
 
 class HatchingSet(DessiaObject):
@@ -575,7 +611,7 @@ class Dataset(PlotDataObject):
     """
     attribute_names = None
 
-    def __init__(self, elements=None,
+    def __init__(self, elements: List[Sample] = None,
                  edge_style: EdgeStyle = None, tooltip: Tooltip = None,
                  point_style: PointStyle = None,
                  display_step: int = 1, name: str = ''):
@@ -584,9 +620,19 @@ class Dataset(PlotDataObject):
         self.tooltip = tooltip
         self.point_style = point_style
         if elements is None:
-            self.elements = []
-        else:
-            self.elements = elements
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type {type(element)} cannot be used as a Dataset data element.")
+        self.elements = sampled_elements
         self.display_step = display_step
         PlotDataObject.__init__(self, type_='dataset', name=name)
 
@@ -665,46 +711,39 @@ class Scatter(PlotDataObject):
     """
     A class for drawing scatter plots.
 
-    :param elements: A list of vectors. Vectors must have the same \
-    attributes (ie the same keys)
-    :type elements: List[dict]
+    :param elements: A list of vectors. Vectors must have the same attributes (ie the same keys)
     :param x_variable: variable that you want to display on x axis
-    :type x_variable: str
     :param y_variable: variable that you want to display on y axis
-    :type y_variable: str
-    :param tooltip: an object containing all information needed for \
-    drawing tooltips
-    :type tooltip: Tooltip
+    :param tooltip: an object containing all information needed for drawing tooltips
     :param point_style: for points' customization
-    :type point_style: PointStyle
-    :param axis: an object containing all information needed for \
-    drawing axis
-    :type axis: Axis
+    :param axis: an object containing all information needed for drawing axis
     :param log_scale_x: True or False
-    :type log_scale_x: bool
     :param log_scale_y: True or False
-    :type log_scale_y: bool
     :param heatmap: Heatmap view settings
-    :type heatmap: Heatmap
-    :param heatmap_view: Heatmap view when loading the object. If set \
-    to False, you'd still be able to enable it using the button.
-    :type heatmap_view: bool
+    :param heatmap_view: Heatmap view when loading the object.
+        If set to False, you'd still be able to enable it using the button.
     """
 
-    def __init__(self, x_variable: str, y_variable: str,
-                 tooltip: Tooltip = None,
-                 point_style: PointStyle = None,
-                 elements: List[Any] = None, axis: Axis = None,
-                 log_scale_x: bool = None, log_scale_y: bool = None,
-                 heatmap: Heatmap = None, heatmap_view: bool = None,
-                 name: str = ''):
+    def __init__(self, x_variable: str, y_variable: str, tooltip: Tooltip = None, point_style: PointStyle = None,
+                 elements: List[Sample] = None, axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None,
+                 heatmap: Heatmap = None, heatmap_view: bool = None, name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style
-        if not elements:
-            self.elements = []
-        else:
-            self.elements = elements
+        if elements is None:
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type {type(element)} cannot be used as a ScatterPlot data element.")
+        self.elements = sampled_elements
         if not axis:
             self.axis = Axis()
         else:
@@ -741,10 +780,23 @@ class PieChart(PlotDataObject):
 
 
 class ScatterMatrix(PlotDataObject):
-    def __init__(self, elements: List[Any] = None, axes: List[str] = None,
+    def __init__(self, elements: List[Sample] = None, axes: List[str] = None,
                  point_style: PointStyle = None, surface_style: SurfaceStyle = None,
                  name: str = ""):
-        self.elements = elements
+        if elements is None:
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type {type(element)} cannot be used as a ScatterMatrix data element.")
+        self.elements = sampled_elements
         self.axes = axes
         self.point_style = point_style
         self.surface_style = surface_style
@@ -912,11 +964,11 @@ class PrimitiveGroup(PlotDataObject):
     :param primitives: a list of Contour2D, Arc2D, LineSegment2D, \
     Circle2D, Line2D or MultipleLabels
     :type primitives: List[Union[Contour2D, Arc2D, LineSegment2D, \
-    Circle2D, Line2D, MultipleLabels, Wire]]
+    Circle2D, Line2D, MultipleLabels, Wire, Point2D]]
     """
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
-                                              Circle2D, Line2D, MultipleLabels, Wire]],
+                                              Circle2D, Line2D, MultipleLabels, Wire, Point2D]],
                  name: str = ''):
         self.primitives = primitives
         PlotDataObject.__init__(self, type_='primitivegroup', name=name)
@@ -928,7 +980,8 @@ class PrimitiveGroup(PlotDataObject):
         ax = self.primitives[0].mpl_plot(ax=ax)
         for primitive in self.primitives[1:]:
             primitive.mpl_plot(ax=ax)
-        ax.set_aspect('equal')
+        if equal_aspect:
+            ax.set_aspect('equal')
         return ax
 
     def bounding_box(self):
@@ -1001,28 +1054,31 @@ class ParallelPlot(PlotDataObject):
     """
     Draws a parallel coordinates plot.
 
-    :param elements: a list of vectors. Vectors must have the same \
-    attributes (ie the same keys)
-    :type elements: List[dict]
+    :param elements: a list of vectors. Vectors must have the same attributes (ie the same keys)
     :param edge_style: for customizing lines
-    :type edge_style: EdgeStyle
-    :param disposition: either 'vertical' or 'horizontal' depending on \
-    how you want the initial disposition to be.
-    :type disposition: str
-    :param axes: a list on attribute names you want \
-    to display as axis on this parallel plot.
-    :type axes: List[str]
-    :param rgbs: a list of rgb255 colors for color interpolation. Color\
-     interpolation is enabled when clicking on an axis.
-    :type rgbs: List[Tuple[int, int, int]]
+    :param disposition: either 'vertical' or 'horizontal'
+        depending on how you want the initial disposition to be.
+    :param axes: a list on attribute names you want to display as axis on this parallel plot.
+    :param rgbs: a list of rgb255 colors for color interpolation.
+        Color interpolation is enabled when clicking on an axis.
     """
 
-    def __init__(self, elements=None, edge_style: EdgeStyle = None,
-                 disposition: str = None,
-                 axes: List[str] = None,
-                 rgbs: List[Tuple[int, int, int]] = None,
-                 name: str = ''):
-        self.elements = elements
+    def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, disposition: str = None,
+                 axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, name: str = ''):
+        if elements is None:
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type {type(element)} cannot be used as a ParrallelPlot data element.")
+        self.elements = sampled_elements
         self.edge_style = edge_style
         self.disposition = disposition
         self.attribute_names = axes
@@ -1034,11 +1090,8 @@ class Attribute(PlotDataObject):
     """
     Represents an attribute.
 
-    :param type_: The attribute's type (in that case, values are either\
-     'float', 'color' or 'string')
-    :type type_: str
+    :param type_: The attribute's type (in that case, values are either 'float', 'color' or 'string')
     :param name: The attribute's name
-    :type name: str
     """
 
     def __init__(self, type_: str, name: str):
@@ -1047,14 +1100,10 @@ class Attribute(PlotDataObject):
 
 class PointFamily(PlotDataObject):
     """
-    A class that defines a point family. This class can be used in \
-    MultiplePlots to create families of points.
+    A class that defines a point family. This class can be used in MultiplePlots to create families of points.
 
     :param point_color: a color that is proper to this family (rgb255)
-    :type point_color: str
-    :param point_index: a list containing the point's index from \
-    MultiplePlots.elements
-    :type point_index: List[int]
+    :param point_index: a list containing the point's index from MultiplePlots.elements
     """
 
     def __init__(self, point_color: str, point_index: List[int],
@@ -1097,34 +1146,33 @@ class Histogram(PlotDataObject):
 
 class MultiplePlots(PlotDataObject):
     """
-    A class for drawing multiple PlotDataObjects (except MultiplePlots)\
-     in one canvas.
+    A class for drawing multiple PlotDataObjects (except MultiplePlots) in one canvas.
 
-    :param plots: a list of plots (Scatter, ParallelPlot, \
-    PrimitiveGroup, PrimitiveGroupContainer, Graph2D)
-    :type plots: List[Subclass[PlotDataObject]]
-    :param sizes: [size0,...,size_n] where size_i = [width_i, length_i]\
-     is the size of plots[i]
-    :type sizes: List[Tuple[float, float]]
-    :param elements: a list of vectors. All vectors must have the same \
-    attributes (ie the same keys)
-    :type elements: List[dict]
+    :param plots: a list of plots (Scatter, ParallelPlot,  PrimitiveGroup, PrimitiveGroupContainer, Graph2D)
+    :param sizes: [size0,...,size_n] where size_i = [width_i, length_i] is the size of plots[i]
+    :param elements: a list of vectors. All vectors must have the same attributes (ie the same keys)
     :param coords: same as sizes but for plots' coordinates.
-    :type coords: List[Tuple[float, float]]
     :param point_families: a list of point families
-    :type point_families: List[PointFamily]
-    :param initial_view_on: True for enabling initial layout, False \
-    otherwise
-    :type initial_view_on: bool
+    :param initial_view_on: True for enabling initial layout, False  otherwise
     """
 
-    def __init__(self, plots: List[Subclass[PlotDataObject]],
-                 sizes: List[Window] = None, elements: List[any] = None,
-                 coords: List[Tuple[float, float]] = None,
-                 point_families: List[PointFamily] = None,
-                 initial_view_on: bool = None,
-                 name: str = ''):
-        self.elements = elements
+    def __init__(self, plots: List[PlotDataObject], sizes: List[Window] = None, elements: List[Sample] = None,
+                 coords: List[Tuple[float, float]] = None, point_families: List[PointFamily] = None,
+                 initial_view_on: bool = None, name: str = ''):
+        if elements is None:
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type '{type(element)}' cannot be used as a MultiPlot data element.")
+        self.elements = sampled_elements
         self.plots = plots
         self.sizes = sizes
         self.coords = coords
@@ -1133,7 +1181,7 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_canvas(plot_data_object: Subclass[PlotDataObject],
+def plot_canvas(plot_data_object: PlotDataObject,
                 debug_mode: bool = False, canvas_id: str = 'canvas',
                 force_version: str = None,
                 width: int = 750, height: int = 400, page_name: str = None,
@@ -1142,8 +1190,8 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
     Creates a html file and plots input data in web browser
 
     :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
-     MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
-    :type plot_data_object: Subclass[PlotDataObject]
+      MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
+    :type plot_data_object: PlotDataObject
     :param debug_mode: uses local library if True, uses typescript \
     library from cdn if False
     :type debug_mode: bool
@@ -1214,6 +1262,16 @@ def plot_canvas(plot_data_object: Subclass[PlotDataObject],
         print(page_name + '.html')
 
 
+def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
+    if not json_path.endswith(".json"):
+        json_path += ".json"
+        print("Added '.json' at the end of json_path variable.")
+    data = plot_data_object.to_dict()
+    json_data = json.dumps(data)
+    with open(json_path, "wb") as file:
+        file.write(json_data.encode('utf-8'))
+
+
 def get_csv_vectors(filepath):
     """
     :param filepath: the csv file's relative path, starting from the \
@@ -1224,10 +1282,8 @@ def get_csv_vectors(filepath):
     set to multiple_plots' or parallelplot's elements for example.
     :rtype: List[dict]
     """
-    lines, variables = from_csv(filename=filepath)
-    catalog = Catalog(array=lines, variables=variables,
-                      pareto_settings=ParetoSettings({}, enabled=False))
-    return catalog
+    raise NotImplementedError("get_csv_vectors function is not implemented anymore"
+                              "as dessia_common's vectored_objects as been removed")
 
 
 TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
@@ -1238,13 +1294,13 @@ TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
                  'primitivegroup': PrimitiveGroup, "scattermatrix": ScatterMatrix}
 
 
-def bounding_box(plot_datas: Subclass[PlotDataObject]):
+def bounding_box(plot_datas: List[PlotDataObject]):
     """
     Calls input plot_datas' bounding_box method, if it has one.
 
     :param plot_datas: The target object the bounding_box method has to\
      be called from
-    :type plot_datas: Subclass[PlotDataObject]
+    :type plot_datas: List[PlotDataObject]
 
     :return: a bounding box
     :rtype: float, float, float, float

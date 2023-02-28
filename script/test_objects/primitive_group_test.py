@@ -2,8 +2,9 @@
 # primitive_group: an object that contains multiple primitives. A primitive
 # is either a Circle2D, a LineSegment, a Contour2D, an Arc2D or a Text
 
-import plot_data
 import numpy as npy
+
+import plot_data
 import plot_data.colors as colors
 
 # defining a couple style objects
@@ -47,7 +48,7 @@ circle = plot_data.Circle2D(cx=5, cy=10, r=5, edge_style=circle_edge_style,
                             surface_style=circle_surface_style, tooltip="Circle")
 
 # Text
-text = plot_data.Text(comment='Hello', position_x=6, position_y=9,
+text = plot_data.Text(comment='Hello', position_x=6, position_y=9, text_scaling=True,
                       text_style=plot_data.TextStyle(text_color=colors.RED,
                                                      font_size=12,
                                                      font_style='sans-serif')
@@ -68,6 +69,9 @@ labels = plot_data.MultipleLabels(labels=[label1, label2])
 
 wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire")
 
-primitives = [point, contour, line, arc,
-              circle, text, labels, wire]
+point = plot_data.Point2D(15,10, plot_data.PointStyle(color_fill=colors.ORANGE))
+
+primitives = [point, contour, line, arc, circle, text, labels, wire, point]
+
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
+# plot_data.plot_canvas(primitive_group, debug_mode=True)

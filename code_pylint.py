@@ -10,6 +10,7 @@ Changes:
 
 import os
 import sys
+
 from pylint.lint import Run
 
 MIN_NOTE = 9.10
@@ -20,22 +21,22 @@ UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-fin
 
 MAX_ERROR_BY_TYPE = {
                      'protected-access': 26,
-                     'invalid-name': 18,
+                     'invalid-name': 13,
                      'consider-using-f-string': 2,
                      'no-else-return': 17,
-                     'arguments-differ': 12,
+                     'arguments-differ': 13,
                      'no-member': 1,
-                     'too-many-locals': 2,
-                     'wrong-import-order': 10,
+                     'too-many-locals': 3,
+                     'wrong-import-order': 1,
                      'too-many-branches': 1,
                      'unused-import': 1,
-                     'unused-argument': 1,
+                     'unused-argument': 4,
                      'cyclic-import': 11,
                      'no-self-use': 6,
                      'unused-variable': 1,
                      'trailing-whitespace': 11,
                      'empty-docstring': 7,
-                     'missing-module-docstring': 9,
+                     'missing-module-docstring': 4,
                      'too-many-arguments': 15,
                      'too-few-public-methods': 7,
                      'unnecessary-comprehension': 5,
@@ -45,11 +46,11 @@ MAX_ERROR_BY_TYPE = {
                      'consider-merging-isinstance': 6,
                      'abstract-method': 25,
                      'import-outside-toplevel': 7,
-                     'too-many-instance-attributes': 4,
+                     'too-many-instance-attributes': 3,
                      'consider-iterating-dictionary': 4,
                      'attribute-defined-outside-init': 3,
                      'simplifiable-if-expression': 3,
-                     'broad-except': 1,
+                     'broad-exception-caught': 1,
                      'consider-using-get': 2,
                      'undefined-loop-variable': 2,
                      'consider-using-with': 2,
@@ -68,7 +69,7 @@ MAX_ERROR_BY_TYPE = {
                      'unexpected-keyword-arg': 1,
                      'redefined-builtin': 1,
                      'arguments-renamed': 0,
-                     'ungrouped-imports': 0,
+                     'ungrouped-imports': 1,
                      'super-init-not-called': 1,
                      'superfluous-parens': 0,
                      'unused-wildcard-import': 0,

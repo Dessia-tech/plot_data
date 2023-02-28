@@ -1,6 +1,9 @@
+import random
+
 import plot_data
 import plot_data.colors as colors
-import random
+
+random.seed(8003)
 
 elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']
@@ -15,7 +18,6 @@ for i in range(50):
                      })
 
 
-histogram = plot_data.Histogram(x_variable='mass',
-                                elements=elements)
+plot_data_object = plot_data.Histogram(x_variable='shape', elements=elements)
 
-plot_data.plot_canvas(plot_data_object=histogram, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

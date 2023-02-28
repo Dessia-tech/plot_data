@@ -6,25 +6,27 @@ The plots are created using necessary parameters only. For more details about
 customization and optional parameters, feel free read the plots' specific scripts.
 """
 
+import random
+
+from test_objects.graph_test import graph2d
+
 import plot_data
 import plot_data.colors as colors
-from test_objects.primitive_group_test import primitive_group
-from test_objects.graph_test import graph2d
-import random
+
+random.seed(0)
 
 """
 a list of vectors (dictionaries) that are displayed
 through different representations such as parallel plots and scatter plots
 """
-data_samples = []
-
+elements = []
 nb_elements = 50
 available_colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]
 directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
     random_color = available_colors[random.randint(0, len(available_colors) - 1)]
     random_direction = directions[random.randint(0, len(directions) - 1)]
-    data_samples.append({'x': random.uniform(0, 200),
+    elements.append({'x': random.uniform(0, 200),
                      'y': random.uniform(0, 100),
                      'color': random_color,
                      'direction': random_direction})
@@ -35,7 +37,7 @@ parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color'])
 
 """Scatterplots"""
 scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
-piechart1 = plot_data.PieChart(data_samples=data_samples,
+piechart1 = plot_data.PieChart(data_samples=elements,
                                slicing_variable='mass')
 
 scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
@@ -68,14 +70,13 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 histogram = plot_data.Histogram(x_variable='x')
 
 """Creating the multiplot"""
-plots = [piechart1, parallelplot1, parallelplot2, scatterplot1,
-         scatterplot2, parallelplot1, graph2d, primitive_group_container,
+plots = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, parallelplot1, graph2d, primitive_group_container,
          histogram]
 
 # plots = [scatterplot1, scatterplot2]
 
-multiplot = plot_data.MultiplePlots(plots=plots, elements=data_samples,
-                                    initial_view_on=True)
+plot_data_object = plot_data.MultiplePlots(plots=plots, elements=elements,
+                                           initial_view_on=True)
 
 # Display
-plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

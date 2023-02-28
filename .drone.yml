@@ -15,6 +15,48 @@ steps:
   - npm install typedoc
   - npx typedoc src/plot-data.ts --out doc/build/typescript/
 
+- name: install, run scripts and build doc
+  image: python:3.8
+  commands:
+  - git fetch --tags
+  - python setup.py install
+  - pip install coverage #sphinx sphinx-rtd-theme coverage nbformat nbconvert
+  - cd ./script
+  - coverage run --source plot_data ci_tests.py --path="/drone/src/cypress/data_src"
+  - coverage report
+  - coverage html
+  volumes:
+  - name: jsons
+    path: /drone/src/cypress/data_src
+
+- name: Test typescript with cypress
+  image: cypress/included:12.6.0
+  commands:
+    - ./node_modules/.bin/cypress install --force
+    - npm install
+    - npm run test
+  volumes:
+  - name: jsons
+    path: /drone/src/cypress/data_src
+
+- name: upload cypress reports to cdn
+  image: appleboy/drone-scp
+  when:
+    event: push
+    status:
+    - success
+    - failure
+  ignore: failure
+  settings:
+    host: magenta.dessia.tech
+    username: drone
+    password:
+      from_secret: ssh_drone_password
+    target: /var/www/cdn/tests/plot_data/${DRONE_BRANCH}
+    source: cypress/results/*
+    strip_components: 2
+    overwrite: true
+
 - name: python install, build doc run scripts
   image: python:3.8
   commands:
@@ -46,7 +88,7 @@ steps:
     target: /var/www/cdn/js/plot-data/sid/
     source: libdev/*
     strip_components: 1
-    rm: true
+    overwrite: true
 
 - name: upload to cdn version
   image: appleboy/drone-scp
@@ -60,6 +102,7 @@ steps:
     target: /var/www/cdn/js/plot-data/${DRONE_TAG}/
     source: libdev/*
     strip_components: 1
+    overwrite: true
 
 - name: upload to cdn latest
   image: appleboy/drone-scp
@@ -73,7 +116,7 @@ steps:
     target: /var/www/cdn/js/plot-data/latest/
     source: libdev/*
     strip_components: 1
-    rm: true
+    overwrite: true
 
 
 - name: upload_doc_typescript
@@ -89,13 +132,14 @@ steps:
     username: drone
     password:
       from_secret: ssh_drone_password
+    overwrite: true
 
-- name: check code complexity, docs & code quality
+- name: check code complexity, docs & code quality pre-commit
   image: python:3.9
   commands:
-  - pip install radon pydocstyle pylint
-  - ./code_quality.sh
+  - pip install pylint==2.16.2 pre-commit
   - python code_pylint.py
+  # - pre-commit run -a
 
 - name: check pep8 formatting
   image: python:3.9
@@ -133,3 +177,6 @@ steps:
     password:
       from_secret: ssh_drone_password
 
+volumes:
+- name: jsons
+  temp: {}

@@ -6,11 +6,11 @@ Setup install script for volmdlr
 TODO: upgrade this to v1.1 of dessia common
 """
 
-from setuptools import setup
-
-from os.path import dirname, isdir, join
 import re
+from os.path import dirname, isdir, join
 from subprocess import CalledProcessError, check_output
+
+from setuptools import setup
 
 tag_re = re.compile(r'\btag: %s([0-9][^,]*)\b')
 version_re = re.compile('^Version: (.+)$', re.M)

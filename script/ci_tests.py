@@ -4,6 +4,8 @@ import unittest
 
 import plot_data
 
+# Run in terminal: coverage run --source plot_data ci_tests.py --path="../cypress/data_src"
+
 path = "/".join(os.path.dirname(__file__).split("/")[:-1] + ["cypress/data_src"])
 if sys.argv:
     path = sys.argv[1]
@@ -31,7 +33,7 @@ for script_name in scripts:
     plot_data.write_json_for_tests(plot_data_object, f"{path}/{script_name[:-3].replace('_', '')}.data.json".lower())
 
 
-# This needs to be executed once all "assert-tests" have been run + once all unittests are defined
-if __name__ == "__main__":
-    unittest.main(verbosity=3, argv=[path])
-    print("truc2")
+# # This needs to be executed once all "assert-tests" have been run + once all unittests are defined
+# if __name__ == "__main__":
+#     unittest.main(verbosity=3, argv=[path])
+#     print("truc2")

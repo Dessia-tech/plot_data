@@ -17,6 +17,8 @@ steps:
 
 - name: notify upstream merge failure
   when:
+    event: push
+    branch: master
     status:
     - failure
   image: drillster/drone-email

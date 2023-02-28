@@ -66,5 +66,6 @@ text = plot_data.Text(comment="Ce texte doit s'afficher dans le canvas, pas néc
                       multi_lines=True, text_scaling=False, max_width=20)
 
 ff=[text,text]
-plot_data.plot_canvas(plot_data.PrimitiveGroup(primitives=primitives + ff), debug_mode=True)
+plot_data_object = plot_data.PrimitiveGroup(primitives=primitives + ff)
+plot_data.plot_canvas(plot_data_object, debug_mode=True)
 plot_data.plot_canvas(plot_data.PrimitiveGroup(primitives=ff), debug_mode=True)

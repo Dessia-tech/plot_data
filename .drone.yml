@@ -15,6 +15,19 @@ steps:
   - git merge master
   - git push
 
+- name: notify upstream merge failure
+  when:
+    status:
+    - failure
+  image: drillster/drone-email
+  failure: ignore
+  settings:
+    host: mail.dessia.tech
+    username: technical@dessia.tech
+    password:
+     from_secret: email_password
+    from: technical@dessia.tech
+
 - name: npm update tag from git, build
   image: node:16
   commands:

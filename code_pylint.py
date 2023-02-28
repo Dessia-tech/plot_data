@@ -10,6 +10,7 @@ Changes:
 
 import os
 import sys
+
 from pylint.lint import Run
 
 MIN_NOTE = 9.10

@@ -4,25 +4,23 @@
 Definition of language and plots
 """
 
+import json
+import math
 import os
 import sys
-import math
-import json
 import tempfile
-import webbrowser
 import warnings
-from typing import List, Tuple, Any, Union, Dict
-
-import numpy as npy
+import webbrowser
+from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
+import numpy as npy
+from dessia_common.core import DessiaObject
+from dessia_common.typings import JsonSerializable
 from matplotlib import patches
 
-from dessia_common.typings import JsonSerializable
-from dessia_common.core import DessiaObject
-
-from plot_data import templates
 import plot_data.colors
+from plot_data import templates
 
 try:
     # dessia_common >= 0.12.0

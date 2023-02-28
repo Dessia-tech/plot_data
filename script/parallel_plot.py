@@ -1,6 +1,7 @@
+import random
+
 import plot_data
 from plot_data.colors import *
-import random
 
 elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']
@@ -43,4 +44,3 @@ customized_parallelplot = plot_data.ParallelPlot(elements=elements,
 
 # if debug_mode == True, set it to False
 plot_data.plot_canvas(plot_data_object=parallelplot, debug_mode=True)
-

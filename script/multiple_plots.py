@@ -6,10 +6,12 @@ The plots are created using necessary parameters only. For more details about
 customization and optional parameters, feel free read the plots' specific scripts.
 """
 
+import random
+
+from test_objects.graph_test import graph2d
+
 import plot_data
 import plot_data.colors as colors
-from test_objects.graph_test import graph2d
-import random
 
 """
 a list of vectors (dictionaries) that are displayed

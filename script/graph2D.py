@@ -1,5 +1,7 @@
-import plot_data
 from test_objects.graph_test import graph2d
+
+import plot_data
+
 # The graph's definition has been moved to test_objects.graph_test.py to
 # make MultiplePlots.py' imports more convenient
 

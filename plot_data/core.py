@@ -1143,7 +1143,7 @@ def plot_canvas(plot_data_object: PlotDataObject,
     Creates a html file and plots input data in web browser
 
     :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
-     MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
+      MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
     :type plot_data_object: PlotDataObject
     :param debug_mode: uses local library if True, uses typescript \
     library from cdn if False
@@ -1211,6 +1211,16 @@ def plot_canvas(plot_data_object: PlotDataObject,
         if display:
             webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
         print(page_name + '.html')
+
+
+def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
+    if not json_path.endswith(".json"):
+        json_path += ".json"
+        print("Added '.json' at the end of json_path variable.")
+    data = plot_data_object.to_dict()
+    json_data = json.dumps(data)
+    with open(json_path, "wb") as file:
+        file.write(json_data.encode('utf-8'))
 
 
 def get_csv_vectors(filepath):

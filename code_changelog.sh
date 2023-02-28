@@ -9,5 +9,3 @@ if [ "$lines" -eq 0 ]
   echo -e "\nCHANGELOG.md has not been updated. Update it for the PR to be accepted in CI.\n"
   exit 1
 fi
-
-

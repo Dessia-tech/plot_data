@@ -5,6 +5,7 @@ import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
 
+const HIDDEN_OFFSET = 15;
 
 /** PlotData is the key class for displaying data. It contains numerous parameters and methods
  * for that purpose. It is inherited by more specific data-visualization objects such as
@@ -383,7 +384,7 @@ export abstract class PlotData {
   draw_wire(hidden: boolean, wire: Wire) {
     if (hidden) {
       this.context.strokeStyle = rgb_to_hex(wire.hidden_color);
-      this.context.lineWidth = 3 * wire.edge_style.line_width;
+      this.context.lineWidth = wire.edge_style.line_width + HIDDEN_OFFSET;
     } else {
       if (this.select_on_mouse === wire) {
         this.context.strokeStyle = string_to_hex("yellow");

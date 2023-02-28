@@ -381,9 +381,10 @@ export abstract class PlotData {
 
 
   draw_wire(hidden: boolean, wire: Wire) {
+    const HIDDEN_OFFSET = 15;
     if (hidden) {
       this.context.strokeStyle = rgb_to_hex(wire.hidden_color);
-      this.context.lineWidth = 3 * wire.edge_style.line_width;
+      this.context.lineWidth = wire.edge_style.line_width + HIDDEN_OFFSET;
     } else {
       if (this.select_on_mouse === wire) {
         this.context.strokeStyle = string_to_hex("yellow");

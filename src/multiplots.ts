@@ -1263,12 +1263,58 @@ export class MultiplePlots {
       if (isDrawingRubberObjIndex != -1) {
         let isDrawingPP = this.objectList[isDrawingRubberObjIndex];
         let rubberbands_dep = isDrawingPP.rubberbands_dep;
-        this.pp_communication(rubberbands_dep);
+        this.pp_communication(rubberbands_dep, isDrawingPP);
       }
     }
 
-    pp_communication(rubberbands_dep:[string, [number, number]][]):void { //process received data from a parallelplot and send it to the other objects
+    pp_communication(rubberbands_dep:[string, [number, number]][], actualPP: PlotData):void { //process received data from a parallelplot and send it to the other objects
       let primitive_indices = [];
+
+      let selectedSamples = [];
+      let selectedIndices = [];
+      this.data["elements"].forEach((sample, elementIndex) => {
+        // Compatibility with Sample
+        if (Object.keys(sample).includes("values")) {
+          var sampleValues = sample["values"]
+        } else {
+          var sampleValues = sample
+        }
+        var inRubberBand = 0;
+        rubberbands_dep.forEach((rubberBand) => {
+          // Because values can be string or number
+          if (typeof sampleValues[rubberBand[0]] !== 'number') {
+            actualPP.axis_list.forEach((axis) => {
+              if (axis["name"] == rubberBand[0]) {
+                var realValue = sampleValues[rubberBand[0]]
+                // Because there is a color conversion from rgb to string name
+                if (realValue.includes('rgb') && !axis["list"].includes('rgb')) {
+                  realValue = rgb_to_string(sampleValues[rubberBand[0]]);
+                }
+                // Check value
+                if (axis["list"].indexOf(realValue) >= rubberBand[1][0] &&
+                axis["list"].indexOf(realValue) <= rubberBand[1][1]) {
+                  inRubberBand += 1;
+                }
+              }
+            })
+          } else {
+            // Check value
+            if (sampleValues[rubberBand[0]] >= rubberBand[1][0] &&
+              sampleValues[rubberBand[0]] <= rubberBand[1][1]) {
+                inRubberBand += 1;
+              }
+            }
+          })
+          if (inRubberBand == rubberbands_dep.length) {
+            selectedSamples.push(sampleValues)
+            selectedIndices.push(elementIndex)
+          }
+        })
+      console.log(selectedIndices)
+      console.log(selectedSamples)
+
+
+
       for (let i=0; i<this.nbObjects; i++) {
         var obj:PlotData = this.objectList[i];
         var axis_numbers:number[] = [];
@@ -1295,6 +1341,7 @@ export class MultiplePlots {
             }
           }
         } else if (obj.type_ === "primitivegroupcontainer") {
+          // console.log(obj)
           primitive_indices.push(i);
         }
       }
@@ -1305,6 +1352,7 @@ export class MultiplePlots {
         let obj: any = this.objectList[index];
         obj.selected_point_index = this.dep_selected_points_index;
         obj.select_primitive_groups();
+        // console.log(obj.selected_point_index)
       }
     }
 
@@ -1837,7 +1885,7 @@ export class MultiplePlots {
                     this.setAllInterpolationToOFF();
                   }
                   this.reset_selected_points_except([this.clickedPlotIndex]);
-                  this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep);
+                  this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep, this.objectList[this.clickedPlotIndex]);
                 }
               } else if (type_ === 'histogram') {
                 let obj: any = this.objectList[this.clickedPlotIndex];

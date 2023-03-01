@@ -68,13 +68,16 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 histogram = plot_data.Histogram(x_variable='x')
 
 """Creating the multiplot"""
-plots = [parallelplot1, parallelplot2, scatterplot1,
-         scatterplot2, scatterplot3, graph2d, primitive_group_container,
-         histogram]
+plots = [parallelplot1, graph2d, primitive_group_container]
+plots2 = [parallelplot1, parallelplot2, scatterplot1,
+          scatterplot2, scatterplot3, graph2d, primitive_group_container,
+          histogram]
 
 # plots = [scatterplot1, scatterplot2]
 
 plot_data_object = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
+multiplot = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True)
 
 # Display
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)

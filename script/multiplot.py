@@ -37,12 +37,14 @@ parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color'])
 
 """Scatterplots"""
 scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
+piechart1 = plot_data.PieChart(data_samples=elements,
+                               slicing_variable='mass')
 
 scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes
                                                                                     # points' appearance
 
-scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
+# scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 
 """PrimitiveGroupContainers"""
 contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
@@ -68,8 +70,7 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 histogram = plot_data.Histogram(x_variable='x')
 
 """Creating the multiplot"""
-plots = [parallelplot1, parallelplot2, scatterplot1,
-         scatterplot2, scatterplot3, graph2d, primitive_group_container,
+plots = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, parallelplot1, graph2d, primitive_group_container,
          histogram]
 
 # plots = [scatterplot1, scatterplot2]

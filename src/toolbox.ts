@@ -1,3 +1,4 @@
+import { ListenOptions } from "net";
 import { string_to_hex } from "./color_conversion";
 import { equals } from "./utils";
 

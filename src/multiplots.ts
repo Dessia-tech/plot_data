@@ -83,7 +83,7 @@ export class MultiplePlots {
         } else if (object_type_ === 'parallelplot') {
           this.dataObjects[i]['elements'] = elements;
           newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-        } else if (object_type_ === 'primitivegroup') {
+         } else if (object_type_ === 'primitivegroup') {
           newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
         } else if (object_type_ === 'primitivegroupcontainer') {
           newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
@@ -101,6 +101,7 @@ export class MultiplePlots {
         }
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
+        console.log(newObject)
       }
       if (elements) {this.initialize_point_families();}
 
@@ -109,6 +110,7 @@ export class MultiplePlots {
         this.display_order.push(i);
         this.to_display_plots.push(i);
       }
+      
       this.mouse_interaction();
 
       if (buttons_ON) {

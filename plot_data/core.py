@@ -22,7 +22,7 @@ try:
 except ImportError:
     # dessia_common < 0.12.0.
     from dessia_common.utils.serialization import serialize
-    
+
 from dessia_common.core import DessiaObject
 
 from dessia_common.typings import JsonSerializable

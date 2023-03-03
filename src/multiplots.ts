@@ -1275,34 +1275,36 @@ export class MultiplePlots {
       // console.log(this.data["elements"])
       this.data["elements"].forEach((sample, elementIndex) => {
         var inRubberBand = 0;
-        rubberbands_dep.forEach((rubberBand) => {
-          var nameBand = rubberBand[0]
-          // Because values can be string or number
-          if (typeof sample[nameBand] !== 'number') {
-            actualPP.axis_list.forEach((axis) => {
-              if (axis["name"] == nameBand) {
-                var realValue = sample[nameBand]
-                // Because there is a color conversion from rgb to string name
-                if (realValue.includes('rgb') && !axis["list"].includes('rgb')) {
-                  realValue = rgb_to_string(sample[nameBand]);
+        if (rubberbands_dep.length !==0 ) {
+          rubberbands_dep.forEach((rubberBand) => {
+            var nameBand = rubberBand[0]
+            // Because values can be string or number
+            if (typeof sample[nameBand] !== 'number') {
+              actualPP.axis_list.forEach((axis) => {
+                if (axis["name"] == nameBand) {
+                  var realValue = sample[nameBand]
+                  // Because there is a color conversion from rgb to string name
+                  if (realValue.includes('rgb') && !axis["list"].includes('rgb')) {
+                    realValue = rgb_to_string(sample[nameBand]);
+                  }
+                  // Check value
+                  if (axis["list"].indexOf(realValue) >= rubberBand[1][0] &&
+                  axis["list"].indexOf(realValue) <= rubberBand[1][1]) {
+                    inRubberBand += 1;
+                  }
                 }
-                // Check value
-                if (axis["list"].indexOf(realValue) >= rubberBand[1][0] &&
-                axis["list"].indexOf(realValue) <= rubberBand[1][1]) {
-                  inRubberBand += 1;
-                }
+              })
+            } else {
+              // Check value
+              if (sample[nameBand] >= rubberBand[1][0] && sample[nameBand] <= rubberBand[1][1]) {
+                inRubberBand += 1;
               }
-            })
-          } else {
-            // Check value
-            if (sample[nameBand] >= rubberBand[1][0] && sample[nameBand] <= rubberBand[1][1]) {
-              inRubberBand += 1;
             }
+          })
+          if (inRubberBand == rubberbands_dep.length) {
+            selectedSamples.push(sample)
+            selectedIndices.push(elementIndex)
           }
-        })
-        if (inRubberBand == rubberbands_dep.length) {
-          selectedSamples.push(sample)
-          selectedIndices.push(elementIndex)
         }
       })
 
@@ -1366,12 +1368,27 @@ export class MultiplePlots {
           }
           
         } else if (subplot.type_ === "parallelplot") {
-          console.log(subplot.rubber_bands)
-          // rubberBandsInPlot.forEach((rubberBand) => {
-          //   var axisIndices = subplotData.attribute_names.indexOf(rubberBand[0])
-          //   subplot.rubber_bands[axisIndices] = [Math.min(rubberBand[1]), Math.max(rubberBand[1])];
-          //   // subplot.add_to_rubberbands_dep(rubberBand);
-          // })
+          rubberBandsInPlot.forEach((rubberBand) => {
+            var axisIndices = subplotData.attribute_names.indexOf(rubberBand[0])
+            let received_real_min = rubberBand[1][0];
+            let received_real_max = rubberBand[1][1];
+            let temp_received_axis_min = subplot.real_to_axis_coord(
+              received_real_min, 
+              subplot.axis_list[axisIndices]['type_'], 
+              subplot.axis_list[axisIndices]['list'], 
+              subplot.inverted_axis_list[axisIndices]
+              );
+            let temp_received_axis_max = subplot.real_to_axis_coord(
+              received_real_max, 
+              subplot.axis_list[axisIndices]['type_'], 
+              subplot.axis_list[axisIndices]['list'], 
+              subplot.inverted_axis_list[axisIndices]
+              );
+            let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
+            let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
+            subplot.rubber_bands[axisIndices] = [received_axis_min, received_axis_max];
+            subplot.add_to_rubberbands_dep(rubberBand);
+          })
 
         } else if (subplot.type_ === "histogram") {
 
@@ -1414,8 +1431,8 @@ export class MultiplePlots {
       //     primitive_indices.push(i);
       //   }
       // }
-      // this.refresh_dep_selected_points_index();
-      // this.refresh_selected_object_from_index();
+      this.refresh_dep_selected_points_index();
+      this.refresh_selected_object_from_index();
 
       // for (let index of primitive_indices) {
       //   let obj: any = this.objectList[index];

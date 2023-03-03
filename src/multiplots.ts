@@ -1268,11 +1268,8 @@ export class MultiplePlots {
     }
 
     pp_communication(rubberbands_dep:[string, [number, number]][], actualPP: PlotData):void { //process received data from a parallelplot and send it to the other objects
-      let primitive_indices = [];
       let selectedSamples = [];
       let selectedIndices = [];
-      let axisNumbers = [];
-      // console.log(this.data["elements"])
       this.data["elements"].forEach((sample, elementIndex) => {
         var inRubberBand = 0;
         if (rubberbands_dep.length !==0 ) {
@@ -1327,7 +1324,7 @@ export class MultiplePlots {
             }
           }
         })
-        if (subplot.type_ === "scatterplot") {
+        if (subplot instanceof PlotScatter && subplot.type_ !== "graph2d") {
           if (WAS_MERGE_ON == true) {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
@@ -1364,10 +1361,10 @@ export class MultiplePlots {
           subplot.refresh_selected_point_index();
           if (WAS_MERGE_ON == true) {
             Interactions.click_on_merge_action(subplot)
-            subplot.draw()
+            subplot.draw();
           }
           
-        } else if (subplot.type_ === "parallelplot") {
+        } else if (subplot instanceof ParallelPlot) {
           rubberBandsInPlot.forEach((rubberBand) => {
             var axisIndices = subplotData.attribute_names.indexOf(rubberBand[0])
             let received_real_min = rubberBand[1][0];
@@ -1390,56 +1387,20 @@ export class MultiplePlots {
             subplot.add_to_rubberbands_dep(rubberBand);
           })
 
-        } else if (subplot.type_ === "histogram") {
+        } else if (subplot instanceof Histogram) {
+          rubberBandsInPlot.forEach((rubberBand) => {
+            subplot.x_rubberband = rubberBand[1];
+          })
+          if (rubberBandsInPlot.length == 0) {
+            subplot.x_rubberband = [];
+          }
+          subplot.get_selected_keys();
 
-        } else if (subplot.type_ === "primitivegroupcontainer") {
-
+        } else if (subplot instanceof PrimitiveGroupContainer) {
+          subplot.selected_point_index = selectedIndices
+          subplot.select_primitive_groups();
         }
       })
-
-
-
-
-      // for (let i=0; i<this.nbObjects; i++) {
-      //   var obj:PlotData = this.objectList[i];
-      //   var axis_numbers:number[] = [];
-        // if (obj.type_ === 'scatterplot') {
-        //   var to_select:[string, [number, number]][] = [];
-        //   for (let j=0; j<rubberbands_dep.length; j++) {
-        //     for (let k=0; k<obj.plotObject.to_display_attributes.length; k++) {
-        //       if (rubberbands_dep[j][0] == obj.plotObject.to_display_attributes[k]['name']) {
-        //         to_select.push(rubberbands_dep[j]);
-        //         axis_numbers.push(k);
-        //       }
-        //     }
-        //   }
-        //   MultiplotCom.pp_to_sc_communication(to_select, axis_numbers, this.objectList[i]); //, selectedSamples);
-        // } 
-      //   if (obj.type_ === 'parallelplot') {
-      //     MultiplotCom.pp_to_pp_communication(rubberbands_dep, this.objectList[i]);
-      //   } else if (obj.type_ === 'histogram') {
-      //     if (rubberbands_dep.length === 0) {
-      //       let histogram: any = obj;
-      //       histogram.reset_x_rubberband();
-      //     } else {
-      //       for (let rubberband_dep of rubberbands_dep) {
-      //         MultiplotCom.pp_to_histogram_communication(rubberband_dep, obj);
-      //       }
-      //     }
-      //   } else if (obj.type_ === "primitivegroupcontainer") {
-      //     // console.log(obj)
-      //     primitive_indices.push(i);
-      //   }
-      // }
-      this.refresh_dep_selected_points_index();
-      this.refresh_selected_object_from_index();
-
-      // for (let index of primitive_indices) {
-      //   let obj: any = this.objectList[index];
-      //   obj.selected_point_index = this.dep_selected_points_index;
-      //   obj.select_primitive_groups();
-      //   // console.log(obj.selected_point_index)
-      // }
     }
 
 
@@ -2108,27 +2069,6 @@ export class MultiplotCom {
       Interactions.selection_window_action(plot_data);
     }
 
-    public static pp_to_pp_communication(rubberbands_dep:[string, [number, number]][], plot_data:PlotData) {
-      for (let i=0; i<rubberbands_dep.length; i++) {
-        let received_rubber = rubberbands_dep[i];
-        let received_name = received_rubber[0];
-        for (let j=0; j<plot_data.axis_list.length; j++) {
-          if (received_name == plot_data.axis_list[j]['name']) {
-            let received_real_min = received_rubber[1][0];
-            let received_real_max = received_rubber[1][1];
-            let temp_received_axis_min = plot_data.real_to_axis_coord(received_real_min, plot_data.axis_list[j]['type_'], plot_data.axis_list[j]['list'], plot_data.inverted_axis_list[j]);
-            let temp_received_axis_max = plot_data.real_to_axis_coord(received_real_max, plot_data.axis_list[j]['type_'], plot_data.axis_list[j]['list'], plot_data.inverted_axis_list[j]);
-            let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
-            let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
-            plot_data.rubber_bands[j] = [received_axis_min, received_axis_max];
-            plot_data.add_to_rubberbands_dep(rubberbands_dep[i]);
-            break;
-          }
-        }
-      }
-    }
-
-
     public static histogram_to_histogram_communication(histogram1, histogram2) {
       if (histogram1.x_variable.name !== histogram2.x_variable.name) return;
       histogram2.x_rubberband = histogram1.x_rubberband;
@@ -2173,14 +2113,6 @@ export class MultiplotCom {
         scatter.perm_window_h = histogram.x_rubberband[1] - histogram.x_rubberband[0];
       }
       Interactions.selection_window_action(scatter)
-    }
-
-
-    public static pp_to_histogram_communication(rubberband_dep: [string, [number, number]], histogram) {
-      if (histogram.x_variable.name === rubberband_dep[0]) {
-        histogram.x_rubberband = rubberband_dep[1];
-        histogram.get_selected_keys();
-      }
     }
 }
 

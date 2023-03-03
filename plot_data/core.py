@@ -14,6 +14,7 @@ import webbrowser
 from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
 import numpy as npy
 
 try:
@@ -215,6 +216,15 @@ class PointStyle(DessiaObject):
             args['markeredgecolor'] = self.color_stroke.rgb
         return args
 
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        obj = DessiaObject.dict_to_object(dict_, *args, **kwargs)
+        if obj.color_fill:
+            obj.color_fill = plot_data.colors.Color.dict_to_object(obj.color_fill)
+        if obj.color_stroke:
+            obj.color_stroke = plot_data.colors.Color.dict_to_object(obj.color_stroke)
+        return obj
+
 
 class TextStyle(DessiaObject):
     """
@@ -258,6 +268,12 @@ class TextStyle(DessiaObject):
         self.angle = angle
         DessiaObject.__init__(self, name=name)
 
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        obj = DessiaObject.dict_to_object(dict_, force_generic=True, *args, **kwargs)
+        if obj.text_color:
+            obj.text_color = plot_data.colors.Color.dict_to_object(obj.text_color)
+        return obj
 
 class SurfaceStyle(DessiaObject):
     """
@@ -271,12 +287,20 @@ class SurfaceStyle(DessiaObject):
     :type hatching: HatchingSet
     """
 
-    def __init__(self, color_fill: str = None, opacity: float = None,
+    def __init__(self, color_fill: str = None, opacity: float = 1.,
                  hatching: HatchingSet = None, name: str = ''):
+        # TODO: migrate from str to Color object
         self.color_fill = color_fill
         self.opacity = opacity
         self.hatching = hatching
         DessiaObject.__init__(self, name=name)
+
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        obj = DessiaObject.dict_to_object(dict_, force_generic=True, *args, **kwargs)
+        if obj.color_fill:
+            obj.color_fill = plot_data.colors.Color.dict_to_object(obj.color_fill)
+        return obj
 
     def mpl_arguments(self):
         args = {}
@@ -284,7 +308,7 @@ class SurfaceStyle(DessiaObject):
             args['facecolor'] = self.color_fill.rgb
         if self.hatching:
             args['hatch'] = "\\"
-        if self.opacity > 0:
+        if self.opacity and self.opacity > 0:
             args['alpha'] = self.opacity
             args['fill'] = True
         return args
@@ -293,7 +317,7 @@ class SurfaceStyle(DessiaObject):
 DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=plot_data.colors.BLACK)
 DEFAULT_POINTSTYLE = PointStyle(color_stroke=plot_data.colors.BLACK, color_fill=plot_data.colors.WHITE)
 DEFAULT_TEXTSTYLE = TextStyle(text_color=plot_data.colors.BLACK)
-DEFAULT_SURFACESTYLE = SurfaceStyle()
+DEFAULT_SURFACESTYLE = SurfaceStyle(color_fill=plot_data.colors.WHITE, opacity=1.)  # Not sure about opacity=1 in TS
 
 
 class Text(PlotDataObject):
@@ -403,7 +427,11 @@ class LineSegment2D(PlotDataObject):
     def __init__(self, point1: List[float], point2: List[float],
                  edge_style: EdgeStyle = None,
                  name: str = ''):
+        # Data is used in typescript
         self.data = point1 + point2
+        self.point1 = point1
+        self.point2 = point2
+
         if edge_style is None:
             self.edge_style = EdgeStyle()
         else:
@@ -420,6 +448,14 @@ class LineSegment2D(PlotDataObject):
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
 
+    def to_dict(self):
+        dict_ = DessiaObject.to_dict(self)
+        dict_['object_class'] = 'plot_data.core.LineSegment2D'# To force migration to linesegment -> linesegment2d
+        return dict_
+
+    def polygon_points(self):
+        return [self.point1, self.point2]
+
     def mpl_plot(self, ax=None, edge_style=None):
         """
         Plots using matplotlib.
@@ -432,7 +468,7 @@ class LineSegment2D(PlotDataObject):
         else:
             edge_style = DEFAULT_EDGESTYLE
 
-        ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
+        ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]],
                 **edge_style.mpl_arguments())
         return ax
 
@@ -440,11 +476,18 @@ class LineSegment2D(PlotDataObject):
 class LineSegment(LineSegment2D):
     def __init__(self, data: List[float], edge_style: EdgeStyle = None,
                  name: str = ''):
-        LineSegment2D.__init__(self, data=data, edge_style=edge_style,
-                               name=name)
+        # When to remove support?
         warnings.warn("LineSegment is deprecated, use LineSegment2D instead",
                       DeprecationWarning)
+        
+        self.data = data
+        LineSegment2D.__init__(self, point1=self.data[:2], point2=self.data[2:], edge_style=edge_style,
+                               name=name)
 
+    def to_dict(self, *args, **kwargs):
+        ls2d = LineSegment2D(point1=self.data[:2], point2=self.data[2:], edge_style=self.edge_style,
+                               name=self.name)
+        return ls2d.to_dict()
 
 class Wire(PlotDataObject):
     """
@@ -469,10 +512,11 @@ class Wire(PlotDataObject):
         Plots using matplotlib
         """
         if self.edge_style:
-            color = self.edge_style.color_stroke.rgb
+            edge_style = self.edge_style
         else:
-            color = DEFAULT_EDGESTYLE.color_stroke.rgb
-        ax.plot([p[0] for p in self.lines], [p[1] for p in self.lines], color=color)
+            edge_style = DEFAULT_EDGESTYLE
+
+        ax.plot([p[0] for p in self.lines], [p[1] for p in self.lines], **edge_style.mpl_arguments())
         return ax
 
 
@@ -955,12 +999,27 @@ class Contour2D(PlotDataObject):
 
         return xmin, xmax, ymin, ymax
 
+    def polygon_points(self):
+        points = []
+        for primitive in self.plot_data_primitives:
+            points.extend(primitive.polygon_points())
+        return points
+
     def mpl_plot(self, ax=None):
         """
         Plots using matplotlib
         """
         for primitive in self.plot_data_primitives:
             ax = primitive.mpl_plot(ax=ax, edge_style=self.edge_style)
+
+        if self.surface_style:
+            surface_style = self.surface_style
+        else:
+            surface_style = DEFAULT_SURFACESTYLE
+
+        if surface_style.color_fill:
+            points = self.polygon_points()
+            ax.add_patch(Polygon(points, closed=True, **surface_style.mpl_arguments()))
         return ax
 
 
@@ -1036,6 +1095,8 @@ class PrimitiveGroup(PlotDataObject):
             ax.figure.savefig(filepath, bbox_inches='tight', pad_inches=0)
         else:
             ax.figure.savefig(filepath)
+        plt.close(ax.figure)
+        
 
     def bounding_box(self):
         """
@@ -1335,14 +1396,6 @@ def get_csv_vectors(filepath):
     """
     raise NotImplementedError("get_csv_vectors function is not implemented anymore"
                               "as dessia_common's vectored_objects as been removed")
-
-
-# TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
-#                  'contour': Contour2D, 'graph2D': Dataset,
-#                  'graphs2D': Graph2D, 'linesegment2d': LineSegment,
-#                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
-#                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
-#                  'primitivegroup': PrimitiveGroup, "scattermatrix": ScatterMatrix}
 
 
 def bounding_box(plot_datas: List[PlotDataObject]):

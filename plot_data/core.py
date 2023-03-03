@@ -167,10 +167,13 @@ class EdgeStyle(DessiaObject):
         self.dashline = dashline
         DessiaObject.__init__(self, name=name)
 
-    def mpl_arguments(self):
+    def mpl_arguments(self, surface=False):
         args = {}
         if self.color_stroke:
-            args['edgecolor'] = self.color_stroke.rgb
+            if surface:
+                args['edgecolor'] = self.color_stroke.rgb
+            else:
+                args['color'] = self.color_stroke.rgb
         if self.line_width:
             args['linewidth'] = self.line_width
         if self.dashline:
@@ -522,7 +525,7 @@ class Circle2D(PlotDataObject):
         else:
             edge_style = DEFAULT_EDGESTYLE
             # dashes = DEFAULT_EDGESTYLE.dashline
-        args = edge_style.mpl_arguments()
+        args = edge_style.mpl_arguments(surface=True)
 
         if self.surface_style:
             surface_style = self.surface_style

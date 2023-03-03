@@ -56,19 +56,19 @@ class PlotDataObject(DessiaObject):
     def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """ Redefines DessiaObject's to_dict() in order to not use pointers and remove keys where value is None. """
         dict_ = DessiaObject.to_dict(self, use_pointers=False)
-        del dict_['object_class']
+        # del dict_['object_class']
         new_dict_ = delete_none_from_dict(dict_)
         return new_dict_
 
-    @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'DessiaObject':
-        """ Reset object_class in order to instantiate right object. """
-        type_ = dict_['type_']
-        object_class = TYPE_TO_CLASS[type_]
-        dict_["object_class"] = f"{object_class.__module__}.{object_class.__name__}"
-        return DessiaObject.dict_to_object(dict_=dict_, force_generic=True, global_dict=global_dict,
-                                           pointers_memo=pointers_memo, path=path)
+    # @classmethod
+    # def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
+    #                    pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'DessiaObject':
+    #     """ Reset object_class in order to instantiate right object. """
+    #     type_ = dict_['type_']
+    #     object_class = TYPE_TO_CLASS[type_]
+    #     dict_["object_class"] = f"{object_class.__module__}.{object_class.__name__}"
+    #     return DessiaObject.dict_to_object(dict_=dict_, force_generic=True, global_dict=global_dict,
+    #                                        pointers_memo=pointers_memo, path=path)
 
     def plot_data(self):
         raise NotImplementedError("It is strange to call plot_data method from a plot_data object."
@@ -173,6 +173,8 @@ class EdgeStyle(DessiaObject):
             args['edgecolor'] = self.color_stroke.rgb
         if self.line_width:
             args['linewidth'] = self.line_width
+        if self.dashline:
+            args['dashes'] = self.dashline
         return args
 
 
@@ -422,17 +424,13 @@ class LineSegment2D(PlotDataObject):
         if not ax:
             _, ax = plt.subplots()
 
-        style = self.edge_style
         if edge_style:
-            style = edge_style
-        if style is None:
-            style = DEFAULT_EDGESTYLE
-
-        color = style.color_stroke.rgb
-        dashes = style.dashline
+            edge_style = self.edge_style
+        else:
+            edge_style = DEFAULT_EDGESTYLE
 
         ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
-                color=color, dashes=dashes)
+                **edge_style.mpl_arguments())
         return ax
 
 

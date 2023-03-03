@@ -275,6 +275,7 @@ class TextStyle(DessiaObject):
             obj.text_color = plot_data.colors.Color.dict_to_object(obj.text_color)
         return obj
 
+
 class SurfaceStyle(DessiaObject):
     """
     A class for customizing surfaces.
@@ -450,7 +451,7 @@ class LineSegment2D(PlotDataObject):
 
     def to_dict(self):
         dict_ = DessiaObject.to_dict(self)
-        dict_['object_class'] = 'plot_data.core.LineSegment2D'# To force migration to linesegment -> linesegment2d
+        dict_['object_class'] = 'plot_data.core.LineSegment2D'  # To force migration to linesegment -> linesegment2d
         return dict_
 
     def polygon_points(self):
@@ -479,15 +480,16 @@ class LineSegment(LineSegment2D):
         # When to remove support?
         warnings.warn("LineSegment is deprecated, use LineSegment2D instead",
                       DeprecationWarning)
-        
+
         self.data = data
         LineSegment2D.__init__(self, point1=self.data[:2], point2=self.data[2:], edge_style=edge_style,
                                name=name)
 
     def to_dict(self, *args, **kwargs):
         ls2d = LineSegment2D(point1=self.data[:2], point2=self.data[2:], edge_style=self.edge_style,
-                               name=self.name)
+                             name=self.name)
         return ls2d.to_dict()
+
 
 class Wire(PlotDataObject):
     """
@@ -1096,7 +1098,6 @@ class PrimitiveGroup(PlotDataObject):
         else:
             ax.figure.savefig(filepath)
         plt.close(ax.figure)
-        
 
     def bounding_box(self):
         """

@@ -1,0 +1,268 @@
+{
+  "object_class": "plot_data.core.PrimitiveGroup",
+  "package_version": "0.11.1.dev26",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "plot_data.core.Contour2D",
+      "package_version": "0.11.1.dev26",
+      "name": "",
+      "plot_data_primitives": [
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.2184633506622506,
+            -0.40599999999921055,
+            0.049999999999189595,
+            -0.40599999999921055
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            0.049999999999189595,
+            -0.40599999999921055,
+            0.049999999999189595,
+            6.292931157000856
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            0.049999999999189595,
+            6.292931157000856,
+            -1.2184633506622506,
+            6.292931157000856
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.2184633506622506,
+            6.292931157000856,
+            -1.2184633506622506,
+            -0.40599999999921055
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        }
+      ],
+      "surface_style": {
+        "object_class": "plot_data.core.SurfaceStyle",
+        "package_version": "0.11.1.dev26",
+        "name": "",
+        "color_fill": "rgb(247,0,0)"
+      },
+      "type_": "contour"
+    },
+    {
+      "object_class": "plot_data.core.Contour2D",
+      "package_version": "0.11.1.dev26",
+      "name": "",
+      "plot_data_primitives": [
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.2184633506622506,
+            -0.049999999999210565,
+            0.049999999999189595,
+            -0.049999999999210565
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            0.049999999999189595,
+            -0.049999999999210565,
+            0.049999999999189595,
+            5.936931157000856
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            0.049999999999189595,
+            5.936931157000856,
+            -1.2184633506622506,
+            5.936931157000856
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.2184633506622506,
+            5.936931157000856,
+            -1.2184633506622506,
+            -0.049999999999210565
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        }
+      ],
+      "surface_style": {
+        "object_class": "plot_data.core.SurfaceStyle",
+        "package_version": "0.11.1.dev26",
+        "name": "",
+        "color_fill": "rgb(0,19,254)"
+      },
+      "type_": "contour"
+    },
+    {
+      "object_class": "plot_data.core.Contour2D",
+      "package_version": "0.11.1.dev26",
+      "name": "",
+      "plot_data_primitives": [
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.1684633506617401,
+            5.886931109548675,
+            -1.1683999962263063,
+            1.0260768970704603e-05
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.1683999962260563,
+            1.0237569240862689e-05,
+            -8.10409429904445e-13,
+            7.894358243302131e-13
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -8.10409429904445e-13,
+            7.894358243302131e-13,
+            -6.337372252485095e-05,
+            5.886920930490532
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -6.337372252529505e-05,
+            5.886920930490531,
+            -1.1684633506622506,
+            5.8869311570008565
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        }
+      ],
+      "type_": "contour"
+    },
+    {
+      "object_class": "plot_data.core.Text",
+      "package_version": "0.11.1.dev26",
+      "name": "",
+      "comment": "0",
+      "text_style": {
+        "object_class": "plot_data.core.TextStyle",
+        "package_version": "0.11.1.dev26",
+        "name": "",
+        "text_color": "rgb(0,0,0)",
+        "font_size": 15,
+        "font_style": "sans-serif",
+        "text_align_x": "center",
+        "bold": true
+      },
+      "position_x": -0.5842316753315305,
+      "position_y": 2.943465578500823,
+      "multi_lines": true,
+      "type_": "text"
+    }
+  ],
+  "type_": "primitivegroup"
+}

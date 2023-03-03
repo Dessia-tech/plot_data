@@ -421,18 +421,22 @@ class LineSegment2D(PlotDataObject):
         """
         if not ax:
             _, ax = plt.subplots()
-
         style = self.edge_style
         if edge_style:
             style = edge_style
         if style is None:
             style = DEFAULT_EDGESTYLE
 
-        color = style.color_stroke.rgb
-        dashes = style.dashline
-
+        if style.color_stroke:
+            color = style.color_stroke.rgb
+        else:
+            color = "blue"
+        if style.dashline:
+            dashes = style.dashline
+        else:
+            dashes = DEFAULT_EDGESTYLE.dashline
         ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
-                color=color, dashes=dashes)
+                color=color)#, dashes=dashes)
         return ax
 
 

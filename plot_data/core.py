@@ -1334,12 +1334,12 @@ def get_csv_vectors(filepath):
                               "as dessia_common's vectored_objects as been removed")
 
 
-TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
-                 'contour': Contour2D, 'graph2D': Dataset,
-                 'graphs2D': Graph2D, 'linesegment2d': LineSegment,
-                 'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
-                 'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
-                 'primitivegroup': PrimitiveGroup, "scattermatrix": ScatterMatrix}
+# TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
+#                  'contour': Contour2D, 'graph2D': Dataset,
+#                  'graphs2D': Graph2D, 'linesegment2d': LineSegment,
+#                  'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
+#                  'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
+#                  'primitivegroup': PrimitiveGroup, "scattermatrix": ScatterMatrix}
 
 
 def bounding_box(plot_datas: List[PlotDataObject]):

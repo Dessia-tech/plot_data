@@ -1184,7 +1184,7 @@ export class MultiplePlots {
       var realCoord_max = obj.axis_to_real_coords(max, obj.axis_list[rubber_index]['type'], obj.axis_list[rubber_index]['list'], obj.inverted_axis_list[rubber_index]);
       var real_min = Math.min(realCoord_min, realCoord_max);
       var real_max = Math.max(realCoord_min, realCoord_max);
-      this.objectList[obj_index].add_to_rubberbands_dep([obj.axis_list[rubber_index]['name'], [real_min, real_max]]);
+      this.objectList[obj_index].add_to_rubberbands_dep(new RubberBand(obj.axis_list[rubber_index]['name'], real_min, real_max));
       this.objectList[obj_index].is_drawing_rubber_band = true;
       this.mouse_move_pp_communication();
       this.objectList[obj_index].is_drawing_rubber_band = false;
@@ -1267,11 +1267,11 @@ export class MultiplePlots {
       }
     }
 
-    pp_communication(deprecatedRubberBands:[string, [number, number]][], actualPP: any):void { //process received data from a parallelplot and send it to the other objects
-      let rubberBands = [];
-      deprecatedRubberBands.forEach((deprecatedRubberBand) => {
-        rubberBands.push(RubberBand.fromFormerFormat(deprecatedRubberBand));
-      })
+    pp_communication(rubberBands: RubberBand[], actualPP: any):void { //process received data from a parallelplot and send it to the other objects
+      // let rubberBands = [];
+      // deprecatedRubberBands.forEach((deprecatedRubberBand) => {
+      //   rubberBands.push(RubberBand.fromFormerFormat(deprecatedRubberBand));
+      // })
 
       let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
 
@@ -1354,15 +1354,16 @@ export class MultiplePlots {
             let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
             let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
             subplot.rubber_bands[axisIndices] = [received_axis_min, received_axis_max];
-            subplot.add_to_rubberbands_dep(deprecatedRubberBands[rubberBandIndex]);
+            subplot.add_to_rubberbands_dep(rubberBands[rubberBandIndex]);
           })
 
         } else if (subplot instanceof Histogram) {
           rubberBandsInPlot.forEach((rubberBand) => {
-            subplot.x_rubberband = [rubberBand.minValue, rubberBand.maxValue];
+            subplot.x_rubberband.minValue = rubberBand.minValue
+            subplot.x_rubberband.maxValue = rubberBand.maxValue;
           })
           if (rubberBandsInPlot.length == 0) {
-            subplot.x_rubberband = [];
+            subplot.x_rubberband.minValue = subplot.x_rubberband.maxValue = 0;
           }
           subplot.get_selected_keys();
 
@@ -1995,7 +1996,7 @@ export class MultiplotCom {
       var min = Math.max(axis_min, 0);
       var max = Math.min(axis_max, 1);
       plot_data.rubber_bands[index] = [min, max];
-      plot_data.add_to_rubberbands_dep([attribute['name'], [coordinates[0], coordinates[1]]]);
+      plot_data.add_to_rubberbands_dep(new RubberBand(attribute['name'], coordinates[0], coordinates[1]));
       plot_data.refresh_pp_selected();
     }
 
@@ -2057,14 +2058,14 @@ export class MultiplotCom {
       if (index === -1) return;
       let x_variable = histogram.x_variable;
       let x_rubberband = histogram.x_rubberband;
-      let axis_coord1 = parallel_plot.real_to_axis_coord(x_rubberband[0], x_variable.type_, x_variable.list,
+      let axis_coord1 = parallel_plot.real_to_axis_coord(x_rubberband.minValue, x_variable.type_, x_variable.list,
                                                           parallel_plot.inverted_axis_list[index]);
       axis_coord1 = Math.max(Math.min(axis_coord1, 1), 0);
-      let axis_coord2 = parallel_plot.real_to_axis_coord(x_rubberband[1], x_variable.type_, x_variable.list,
+      let axis_coord2 = parallel_plot.real_to_axis_coord(x_rubberband.maxValue, x_variable.type_, x_variable.list,
                                                           parallel_plot.inverted_axis_list[index]);
       axis_coord2 = Math.max(Math.min(axis_coord2, 1), 0);
       parallel_plot.rubber_bands[index] = [Math.min(axis_coord1, axis_coord2), Math.max(axis_coord1, axis_coord2)];
-      parallel_plot.add_to_rubberbands_dep([x_variable.name, [x_rubberband[0], x_rubberband[1]]]);
+      parallel_plot.add_to_rubberbands_dep([x_variable.name, [x_rubberband.minValue, x_rubberband.maxValue]]);
     }
 
 
@@ -2072,15 +2073,15 @@ export class MultiplotCom {
       let scatter_x = scatter.plotObject.attribute_names[0];
       let scatter_y = scatter.plotObject.attribute_names[1];
       if (histogram.x_variable.name === scatter_x) {
-        scatter.perm_window_x = histogram.x_rubberband[0];
+        scatter.perm_window_x = histogram.x_rubberband.minValue;
         scatter.perm_window_y = -scatter.minY;
-        scatter.perm_window_w = histogram.x_rubberband[1] - histogram.x_rubberband[0];
+        scatter.perm_window_w = histogram.x_rubberband.maxValue - histogram.x_rubberband.minValue;
         scatter.perm_window_h = scatter.maxY - scatter.minY;
       } else if (histogram.x_variable.name === scatter_y) {
         scatter.perm_window_x = scatter.minX;
-        scatter.perm_window_y = histogram.x_rubberband[1];
+        scatter.perm_window_y = histogram.x_rubberband.maxValue;
         scatter.perm_window_w = scatter.maxX - scatter.minX;
-        scatter.perm_window_h = histogram.x_rubberband[1] - histogram.x_rubberband[0];
+        scatter.perm_window_h = histogram.x_rubberband.maxValue - histogram.x_rubberband.minValue;
       }
       Interactions.selection_window_action(scatter)
     }

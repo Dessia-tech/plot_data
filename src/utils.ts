@@ -1125,6 +1125,19 @@ export class RubberBand {
     return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
   }
 
+  public get length() {
+    return Math.abs(this.maxValue - this.minValue)
+  }
+
+  public draw(originX: number, originY: number, context: CanvasRenderingContext2D, isVertical: boolean) {
+    let smallSize = 20;
+    if (isVertical) {
+      Shape.rect(originX, originY, smallSize, this.maxValue - this.minValue, context, string_to_hex('lightrose'), string_to_hex('lightgrey'), 0.5, 0.6);
+    } else {
+      Shape.rect(originX, originY, this.maxValue - this.minValue, smallSize, context, string_to_hex('lightrose'), string_to_hex('lightgrey'), 0.5, 0.6);
+    }
+  }
+
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
     if (axis.name == this.attributeName) {

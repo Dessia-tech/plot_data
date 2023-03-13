@@ -1,6 +1,6 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
@@ -169,7 +169,7 @@ export abstract class PlotData {
   isSelecting:boolean=false;
   selection_coords:[number, number][]=[];
   is_drawing_rubber_band:boolean=false;
-  rubberbands_dep:[string, [number, number]][]=[];
+  rubberbands_dep: RubberBand[]=[];
 
   point_families:PointFamily[]=[];
   latest_selected_points:Point2D[]=[];
@@ -1752,9 +1752,9 @@ export abstract class PlotData {
     }
   }
 
-  add_to_rubberbands_dep(selection:[string, [number, number]]):void {
+  add_to_rubberbands_dep(selection: RubberBand):void {
     for (let i=0; i<this.rubberbands_dep.length; i++) {
-      if (this.rubberbands_dep[i][0] == selection[0]) {
+      if (this.rubberbands_dep[i].attributeName == selection.attributeName) {
         this.rubberbands_dep[i] = selection;
         return;
       }
@@ -2934,7 +2934,7 @@ export class Interactions {
     var real_min = Math.min(realCoord_min, realCoord_max);
     var real_max = Math.max(realCoord_min, realCoord_max);
 
-    plot_data.add_to_rubberbands_dep([plot_data.axis_list[selected_axis_index]['name'], [real_min, real_max]]);
+    plot_data.add_to_rubberbands_dep(new RubberBand(plot_data.axis_list[selected_axis_index]['name'], real_min, real_max));
     plot_data.draw();
     return [mouse2X, mouse2Y];
   }
@@ -2961,7 +2961,7 @@ export class Interactions {
                                                      plot_data.inverted_axis_list[selected_band_index]);
     let to_add_min = Math.min(real_new_min, real_new_max);
     let to_add_max = Math.max(real_new_min, real_new_max);
-    plot_data.add_to_rubberbands_dep([plot_data.axis_list[selected_band_index]['name'], [to_add_min, to_add_max]]);
+    plot_data.add_to_rubberbands_dep(new RubberBand(plot_data.axis_list[selected_band_index]['name'], to_add_min, to_add_max));
     plot_data.draw();
     return [mouse2X, mouse2Y];
   }
@@ -3006,7 +3006,7 @@ export class Interactions {
                                                      plot_data.inverted_axis_list[axis_index]);
     var to_add_min = Math.min(real_new_min, real_new_max);
     var to_add_max = Math.max(real_new_min, real_new_max);
-    plot_data.add_to_rubberbands_dep([plot_data.axis_list[axis_index]['name'], [to_add_min, to_add_max]]);
+    plot_data.add_to_rubberbands_dep(new RubberBand(plot_data.axis_list[axis_index]['name'], to_add_min, to_add_max));
     plot_data.draw();
     var is_resizing = true;
     return [border_number, mouse2X, mouse2Y, is_resizing];
@@ -3026,7 +3026,7 @@ export class Interactions {
     } else if ((plot_data.rubber_bands[selected_axis_index].length != 0) && !click_on_band && !click_on_border) {
       plot_data.rubber_bands[selected_axis_index] = [];
       for (let i=0; i<plot_data.rubberbands_dep.length; i++) {
-        if (plot_data.rubberbands_dep[i][0] == plot_data.axis_list[selected_axis_index]['name']) {
+        if (plot_data.rubberbands_dep[i].attributeName == plot_data.axis_list[selected_axis_index]['name']) {
           plot_data.rubberbands_dep = List.remove_at_index(i, plot_data.rubberbands_dep);
         }
       }

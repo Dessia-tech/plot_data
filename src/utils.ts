@@ -1121,10 +1121,6 @@ export class RubberBand {
                           serialized['max_value']);
   }
 
-  public static fromFormerFormat(formerFormatValue: [string, [number, number]]) {
-    return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
-  }
-
   public get length() {
     return Math.abs(this.maxValue - this.minValue)
   }

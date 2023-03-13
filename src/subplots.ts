@@ -399,14 +399,9 @@ export class ParallelPlot extends PlotData {
       });
     }
 
-    getObjectsInRubberBands(deprecatedRubberBands:[string, [number, number]][]):number[] { // any to solve types problems from typescript
-      let rubberBands = [];
+    getObjectsInRubberBands(rubberBands: RubberBand[]): number[] { // any to solve types problems from typescript
       let selectedIndices = [];
 
-      deprecatedRubberBands.forEach((deprecatedRubberBand) => {
-        rubberBands.push(RubberBand.fromFormerFormat(deprecatedRubberBand));
-      })
-      
       this.data["elements"].forEach((sample, elementIndex) => {
         var inRubberBand = 0;
         if (rubberBands.length !==0 ) {

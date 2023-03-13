@@ -1,6 +1,6 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
-import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt } from './utils';
+import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
@@ -1267,24 +1267,29 @@ export class MultiplePlots {
       }
     }
 
-    pp_communication(rubberbands_dep:[string, [number, number]][], actualPP: any):void { //process received data from a parallelplot and send it to the other objects
-      let selectedIndices = actualPP.getObjectsInRubberBands(rubberbands_dep);
+    pp_communication(deprecatedRubberBands:[string, [number, number]][], actualPP: any):void { //process received data from a parallelplot and send it to the other objects
+      let rubberBands = [];
+      deprecatedRubberBands.forEach((deprecatedRubberBand) => {
+        rubberBands.push(RubberBand.fromFormerFormat(deprecatedRubberBand));
+      })
+
+      let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
 
       this.objectList.forEach((subplot) => {
         const WAS_MERGE_ON = subplot.mergeON;
         var subplotData = subplot.data
         var rubberBandsInPlot = [];
-        rubberbands_dep.forEach((rubberBand) => {
+        rubberBands.forEach((rubberBand) => {
           if (["scatterplot", "parallelplot", "graph2d"].includes(subplotData.type_)) {
-            if (subplotData.attribute_names.includes(rubberBand[0])) {
+            if (subplotData.attribute_names.includes(rubberBand.attributeName)) {
               rubberBandsInPlot.push(rubberBand);
             }
           } else if (subplotData.type_ === "histogram") {
-            if (subplotData.x_variable === rubberBand[0]) {
+            if (subplotData.x_variable === rubberBand.attributeName) {
               rubberBandsInPlot.push(rubberBand);
             }
           } else if (subplotData.type_ === "primitivegroupcontainer") {
-            if (subplotData.association.attribute_names.includes(rubberBand[0])) {
+            if (subplotData.association.attribute_names.includes(rubberBand.attributeName)) {
               rubberBandsInPlot.push(rubberBand);
             }
           }
@@ -1296,17 +1301,17 @@ export class MultiplePlots {
           }
           let completedAxis = [];
           rubberBandsInPlot.forEach((rubberBand) => {
-            var axisIndex = subplotData.attribute_names.indexOf(rubberBand[0]);
+            var axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
             completedAxis.push(axisIndex)
             if (axisIndex == 0) {
-              subplot.perm_window_x = rubberBand[1][0];
-              subplot.perm_window_w = rubberBand[1][1] - subplot.perm_window_x;
+              subplot.perm_window_x = rubberBand.minValue;
+              subplot.perm_window_w = rubberBand.maxValue - subplot.perm_window_x;
             } else if (axisIndex == 1) {
-              subplot.perm_window_y = rubberBand[1][1];
-              subplot.perm_window_h = subplot.perm_window_y - rubberBand[1][0];
+              subplot.perm_window_y = rubberBand.maxValue;
+              subplot.perm_window_h = subplot.perm_window_y - rubberBand.minValue;
             }
           })
-          if (completedAxis.length < 2 && rubberbands_dep.length !== 0) {
+          if (completedAxis.length < 2 && rubberBands.length !== 0) {
             if (!completedAxis.includes(0)) {
               subplot.perm_window_x = subplot.minX;
               subplot.perm_window_w = subplot.maxX - subplot.perm_window_x;
@@ -1330,10 +1335,10 @@ export class MultiplePlots {
           }
           
         } else if (subplot instanceof ParallelPlot) {
-          rubberBandsInPlot.forEach((rubberBand) => {
-            var axisIndices = subplotData.attribute_names.indexOf(rubberBand[0])
-            let received_real_min = rubberBand[1][0];
-            let received_real_max = rubberBand[1][1];
+          rubberBandsInPlot.forEach((rubberBand, rubberBandIndex) => {
+            var axisIndices = subplotData.attribute_names.indexOf(rubberBand.attributeName)
+            let received_real_min = rubberBand.minValue;
+            let received_real_max = rubberBand.maxValue;
             let temp_received_axis_min = subplot.real_to_axis_coord(
               received_real_min, 
               subplot.axis_list[axisIndices]['type_'], 
@@ -1349,12 +1354,12 @@ export class MultiplePlots {
             let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
             let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
             subplot.rubber_bands[axisIndices] = [received_axis_min, received_axis_max];
-            subplot.add_to_rubberbands_dep(rubberBand);
+            subplot.add_to_rubberbands_dep(deprecatedRubberBands[rubberBandIndex]);
           })
 
         } else if (subplot instanceof Histogram) {
           rubberBandsInPlot.forEach((rubberBand) => {
-            subplot.x_rubberband = rubberBand[1];
+            subplot.x_rubberband = [rubberBand.minValue, rubberBand.maxValue];
           })
           if (rubberBandsInPlot.length == 0) {
             subplot.x_rubberband = [];

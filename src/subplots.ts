@@ -1705,7 +1705,7 @@ export class Histogram extends PlotData {
                 this.translate_rubberband(tx, 'x');
               }
             } else {
-              this.set_x_rubberband(mouse1X, mouse2X);
+              this.set_rubberband(this.x_rubberband, mouse1X, mouse2X, "x");
             }
             this.get_selected_keys();
           } else if (click_on_y_axis) {
@@ -1717,7 +1717,7 @@ export class Histogram extends PlotData {
                 this.translate_rubberband(ty, 'y');
               }
             } else {
-              this.set_y_rubberband(mouse1Y, mouse2Y);
+              this.set_rubberband(this.y_rubberband, mouse1Y, mouse2Y, "y");
             }
             this.get_selected_keys();
           } else {
@@ -1774,21 +1774,17 @@ export class Histogram extends PlotData {
       }
     }
 
-
-    set_x_rubberband(mouse1X, mouse2X) {
-      let x1 = this.display_to_real(mouse1X, 'x');
-      let x2 = this.display_to_real(mouse2X, 'x');
-      this.x_rubberband.minValue = Math.min(x1, x2);
-      this.x_rubberband.maxValue = Math.max(x1, x2);
+    set_rubberbands(mouse1X: number, mouse2X: number, mouse1Y: number, mouse2Y: number) {
+      this.set_rubberband(this.x_rubberband, mouse1X, mouse2X, "x")
+      this.set_rubberband(this.y_rubberband, mouse1Y, mouse2Y, "y")
     }
 
-    set_y_rubberband(mouse1Y, mouse2Y) {
-      let y1 = this.display_to_real(mouse1Y, 'y');
-      let y2 = this.display_to_real(mouse2Y, 'y');
-      this.y_rubberband.minValue = Math.min(y1, y2);
-      this.y_rubberband.maxValue = Math.max(y1, y2);
+    set_rubberband(rubberBand: RubberBand, mouse1: number, mouse2: number, axisType: string) {
+      let firstValue  = this.display_to_real(mouse1, axisType);
+      let secondValue = this.display_to_real(mouse2, axisType);
+      rubberBand.minValue = Math.min(firstValue, secondValue);
+      rubberBand.maxValue = Math.max(firstValue, secondValue);
     }
-
 
     is_in_x_rubberband(x, y) {
       let h = 20;
@@ -1804,7 +1800,6 @@ export class Histogram extends PlotData {
       let right = Shape.isInRect(x, y, x2, y1, -vertex_w, h);
       return [click_on_x_band, left, right];
     }
-
 
     is_in_y_rubberband(x, y) {
       let w = 20;

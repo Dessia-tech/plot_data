@@ -1267,43 +1267,8 @@ export class MultiplePlots {
       }
     }
 
-    pp_communication(rubberbands_dep:[string, [number, number]][], actualPP: PlotData):void { //process received data from a parallelplot and send it to the other objects
-      let selectedSamples = [];
-      let selectedIndices = [];
-      this.data["elements"].forEach((sample, elementIndex) => {
-        var inRubberBand = 0;
-        if (rubberbands_dep.length !==0 ) {
-          rubberbands_dep.forEach((rubberBand) => {
-            var nameBand = rubberBand[0]
-            // Because values can be string or number
-            if (typeof sample[nameBand] !== 'number') {
-              actualPP.axis_list.forEach((axis) => {
-                if (axis["name"] == nameBand) {
-                  var realValue = sample[nameBand]
-                  // Because there is a color conversion from rgb to string name
-                  if (realValue.includes('rgb') && !axis["list"].includes('rgb')) {
-                    realValue = rgb_to_string(sample[nameBand]);
-                  }
-                  // Check value
-                  if (axis["list"].indexOf(realValue) >= rubberBand[1][0] &&
-                  axis["list"].indexOf(realValue) <= rubberBand[1][1]) {
-                    inRubberBand += 1;
-                  }
-                }
-              })
-            } else {
-              // Check value
-              if (sample[nameBand] >= rubberBand[1][0] && sample[nameBand] <= rubberBand[1][1]) {
-                inRubberBand += 1;
-              }
-            }
-          })
-          if (inRubberBand == rubberbands_dep.length) {
-            selectedSamples.push(sample)
-            selectedIndices.push(elementIndex)
-          }
-        }
-      })
+    pp_communication(rubberbands_dep:[string, [number, number]][], actualPP: any):void { //process received data from a parallelplot and send it to the other objects
+      let selectedIndices = actualPP.getObjectsInRubberBands(rubberbands_dep);
 
       this.objectList.forEach((subplot) => {
         const WAS_MERGE_ON = subplot.mergeON;

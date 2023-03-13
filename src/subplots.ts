@@ -1477,50 +1477,31 @@ export class Histogram extends PlotData {
       Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
     }
 
-
     draw_rubberbands() { //ok
       this.context.beginPath();
-      if (this.x_rubberband.length !== 0) {
-        this.draw_rubberband(this.x_rubberband);
-      }
-      if (this.y_rubberband.length !== 0) {
-        this.draw_y_rubberband();
-      }
+      this.draw_rubberband(this.x_rubberband, "x");
+      this.draw_rubberband(this.y_rubberband, "y");
       this.context.closePath();
     }
 
+    draw_rubberband(rubberBand: RubberBand, axisType: string) {
+      const SMALL_SIZE = 20;
+      const COLOR_FILL = string_to_hex('lightrose');
+      const COLOR_STROKE = string_to_hex('lightgrey');
+      const LINE_WIDTH = 0.5;
+      const ALPHA = 0.6;
+      var origin = this.real_to_display(rubberBand.minValue, axisType);
+      var projectedMax = this.real_to_display(rubberBand.maxValue, axisType);
+      var largeSize = projectedMax - origin;
 
-    draw_rubberband(rubberBand: any) {
-      let grad_beg_y = this.height - this.decalage_axis_y;
-      let h = 20;
-      console.log(rubberBand)
-      let x1d = this.real_to_display(rubberBand.minValue, "x");
-      let x2d = this.real_to_display(rubberBand.maxValue, "x");
-      let w = x2d - x1d;
-      // rubberBand.draw(x1d, grad_beg_y - h/2 + this.Y, this.context, false);
-      Shape.rect(x1d, grad_beg_y - h/2 + this.Y, w, h, this.context, string_to_hex('lightrose'),
-                 string_to_hex('lightgrey'), 0.5, 0.6);
+      if (axisType == 'x') {
+        var originY = this.height - this.decalage_axis_y - SMALL_SIZE/2 + this.Y;
+        rubberBand.draw(origin, originY, largeSize, SMALL_SIZE, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+      } else {
+        var originY = this.decalage_axis_x - SMALL_SIZE/2 + this.X;
+        rubberBand.draw(originY, origin, SMALL_SIZE, largeSize, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+      }
     }
-
-    // draw_x_rubberband() {
-    //   let grad_beg_y = this.height - this.decalage_axis_y;
-    //   let h = 20;
-    //   let x1d = this.real_to_display(this.x_rubberband[0], 'x');
-    //   let x2d = this.real_to_display(this.x_rubberband[1], 'x');
-    //   let w = x2d - x1d;
-    //   Shape.rect(x1d, grad_beg_y - h/2 + this.Y, w, h, this.context, string_to_hex('lightrose'),
-    //              string_to_hex('lightgrey'), 0.5, 0.6);
-    // }
-
-    draw_y_rubberband() {
-      let w = 20;
-      let y1d = this.real_to_display(this.y_rubberband.minValue, 'y');
-      let y2d = this.real_to_display(this.y_rubberband.maxValue, 'y');
-      let h = y2d - y1d;
-      Shape.rect(this.decalage_axis_x - w/2 + this.X, y1d, w, h, this.context, string_to_hex('lightrose'),
-                 string_to_hex('lightgrey'), 0.5, 0.6);
-    }
-
 
     coordinate_to_string(x1, x2?) {
       if (this.discrete) {

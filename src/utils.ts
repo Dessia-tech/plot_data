@@ -1129,13 +1129,9 @@ export class RubberBand {
     return Math.abs(this.maxValue - this.minValue)
   }
 
-  public draw(originX: number, originY: number, context: CanvasRenderingContext2D, isVertical: boolean) {
-    let smallSize = 20;
-    if (isVertical) {
-      Shape.rect(originX, originY, smallSize, this.maxValue - this.minValue, context, string_to_hex('lightrose'), string_to_hex('lightgrey'), 0.5, 0.6);
-    } else {
-      Shape.rect(originX, originY, this.maxValue - this.minValue, smallSize, context, string_to_hex('lightrose'), string_to_hex('lightgrey'), 0.5, 0.6);
-    }
+  public draw(originX: number, originY: number, width: number, height: number, context: CanvasRenderingContext2D, 
+    colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
+    Shape.rect(originX, originY, width, height, context, colorFill, colorStroke, lineWidth, alpha);
   }
 
   public includesValue(value: any, axis: Attribute): boolean {

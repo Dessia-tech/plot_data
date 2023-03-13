@@ -1268,11 +1268,6 @@ export class MultiplePlots {
     }
 
     pp_communication(rubberBands: RubberBand[], actualPP: any):void { //process received data from a parallelplot and send it to the other objects
-      // let rubberBands = [];
-      // deprecatedRubberBands.forEach((deprecatedRubberBand) => {
-      //   rubberBands.push(RubberBand.fromFormerFormat(deprecatedRubberBand));
-      // })
-
       let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
 
       this.objectList.forEach((subplot) => {

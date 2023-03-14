@@ -22,7 +22,7 @@ export class Shape {
      * Draws a crux
      * @param cx center x coordinate of the crux
      * @param cy center y coordinate of the crux
-     * @param length half the lengh of the crux
+     * @param length half the length of the crux
      */
     public static crux(context:any, cx:number, cy:number, length:number) {
       this.drawLine(context, [[cx, cy], [cx - length, cy]]);

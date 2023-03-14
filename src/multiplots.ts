@@ -1375,7 +1375,6 @@ export class MultiplePlots {
             rubberBands.forEach((rubberBand) => {
               sumRubberLength += rubberBand.length;
             })
-            console.log(rubberBands, sumRubberLength, selectedIndices.length)
             if (sumRubberLength == 0 && selectedIndices.length == 0) {
               subplot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
             }

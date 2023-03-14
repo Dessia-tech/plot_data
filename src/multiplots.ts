@@ -1267,7 +1267,7 @@ export class MultiplePlots {
       }
     }
 
-    pp_communication(deprecatedRubberBands:[string, [number, number]][], actualPP: any):void { //process received data from a parallelplot and send it to the other objects
+    pp_communication(deprecatedRubberBands:[string, [number, number]][], actualPP: any): void { //process received data from a parallelplot and send it to the other objects
       let rubberBands = [];
       deprecatedRubberBands.forEach((deprecatedRubberBand) => {
         rubberBands.push(RubberBand.fromFormerFormat(deprecatedRubberBand));
@@ -1335,25 +1335,27 @@ export class MultiplePlots {
           }
           
         } else if (subplot instanceof ParallelPlot) {
+          let axisNames = []
+          subplot.axis_list.forEach((axis) => {axisNames.push(axis.name)})
           rubberBandsInPlot.forEach((rubberBand, rubberBandIndex) => {
-            var axisIndices = subplotData.attribute_names.indexOf(rubberBand.attributeName)
+            var axisIndex = axisNames.indexOf(rubberBand.attributeName)
             let received_real_min = rubberBand.minValue;
             let received_real_max = rubberBand.maxValue;
             let temp_received_axis_min = subplot.real_to_axis_coord(
               received_real_min, 
-              subplot.axis_list[axisIndices]['type_'], 
-              subplot.axis_list[axisIndices]['list'], 
-              subplot.inverted_axis_list[axisIndices]
+              subplot.axis_list[axisIndex]['type_'], 
+              subplot.axis_list[axisIndex]['list'], 
+              subplot.inverted_axis_list[axisIndex]
               );
             let temp_received_axis_max = subplot.real_to_axis_coord(
               received_real_max, 
-              subplot.axis_list[axisIndices]['type_'], 
-              subplot.axis_list[axisIndices]['list'], 
-              subplot.inverted_axis_list[axisIndices]
+              subplot.axis_list[axisIndex]['type_'], 
+              subplot.axis_list[axisIndex]['list'], 
+              subplot.inverted_axis_list[axisIndex]
               );
             let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
             let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
-            subplot.rubber_bands[axisIndices] = [received_axis_min, received_axis_max];
+            subplot.rubber_bands[axisIndex] = [received_axis_min, received_axis_max];
             subplot.add_to_rubberbands_dep(deprecatedRubberBands[rubberBandIndex]);
           })
 

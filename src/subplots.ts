@@ -388,7 +388,9 @@ export class ParallelPlot extends PlotData {
     initialize_data_lists() {
       for (let i=0; i<this.axis_list.length; i++) {
         this.inverted_axis_list.push(false);
-        this.rubber_bands.push([]);
+        // this.rubber_bands.push([]);
+        console.log(this.axis_list)
+        this.rubber_bands.push(new RubberBand(this.axis_list[i].name, 0, 0));
       }
     }
 

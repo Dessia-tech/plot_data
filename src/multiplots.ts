@@ -930,11 +930,13 @@ export class MultiplePlots {
           Interactions.reset_permanent_window(this.objectList[i])
         } else if (obj.type_ == 'parallelplot') {
           this.objectList[i].reset_pp_selected();
-          this.objectList[i].rubber_bands = [];
           this.objectList[i].rubberbands_dep = [];
           for (let j=0; j<obj.axis_list.length; j++) {
-            this.objectList[i].rubber_bands.push([]);
+            this.objectList[i].rubber_bands.push(new RubberBand(obj.axis_list[j].name, 0, 0));
           }
+          // this.objectList[i].rubber_bands.forEach((rubberBand) => {
+          //   rubberBand.reset()
+          // })
         }
       }
       this.redrawAllObjects();
@@ -1179,7 +1181,8 @@ export class MultiplePlots {
 
     add_to_rubberbands_manual(obj_index, rubber_index:number, min:number, max:number): void {
       var obj = this.objectList[obj_index];
-      this.objectList[obj_index].rubber_bands[rubber_index] = [min, max];
+      this.objectList[obj_index].rubber_bands[rubber_index].minValue = min;
+      this.objectList[obj_index].rubber_bands[rubber_index].maxValue = max;
       var realCoord_min = obj.axis_to_real_coords(min, obj.axis_list[rubber_index]['type'], obj.axis_list[rubber_index]['list'], obj.inverted_axis_list[rubber_index]);
       var realCoord_max = obj.axis_to_real_coords(max, obj.axis_list[rubber_index]['type'], obj.axis_list[rubber_index]['list'], obj.inverted_axis_list[rubber_index]);
       var real_min = Math.min(realCoord_min, realCoord_max);
@@ -1348,7 +1351,8 @@ export class MultiplePlots {
               );
             let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
             let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
-            subplot.rubber_bands[axisIndices] = [received_axis_min, received_axis_max];
+            subplot.rubber_bands[axisIndices].minValue = received_axis_min;
+            subplot.rubber_bands[axisIndices].maxValue = received_axis_max;
             subplot.add_to_rubberbands_dep(rubberBands[rubberBandIndex]);
           })
 
@@ -1503,6 +1507,7 @@ export class MultiplePlots {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if ((obj.type_ == 'parallelplot') && (obj.isSelectingppAxis)) {
+          console.log(obj)
           isSelectingppAxis = true;
           selected_axis_name = obj.selected_axis_name;
           let att_index = 0;
@@ -1990,7 +1995,8 @@ export class MultiplotCom {
       var axis_max = Math.max(axis_coord0, axis_coord1);
       var min = Math.max(axis_min, 0);
       var max = Math.min(axis_max, 1);
-      plot_data.rubber_bands[index] = [min, max];
+      plot_data.rubber_bands[index].minValue = min;
+      plot_data.rubber_bands[index].maxValue = max;
       plot_data.add_to_rubberbands_dep(new RubberBand(attribute['name'], coordinates[0], coordinates[1]));
       plot_data.refresh_pp_selected();
     }

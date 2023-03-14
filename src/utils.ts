@@ -1121,6 +1121,10 @@ export class RubberBand {
                           serialized['max_value']);
   }
 
+  public static fromFormerFormat(formerFormatValue: [string, [number, number]]): RubberBand {
+    return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
+  }
+
   public get length() {
     return Math.abs(this.maxValue - this.minValue)
   }
@@ -1130,8 +1134,24 @@ export class RubberBand {
     Shape.rect(originX, originY, width, height, context, colorFill, colorStroke, lineWidth, alpha);
   }
 
+  public invert() {
+    var newMax = this.minValue;
+    this.minValue = this.maxValue;
+    this.maxValue = newMax;
+  }
+
+  public reset() {
+    this.minValue = 0;
+    this.maxValue = 0;
+  }
+
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
+
+    if (this.length == 0) {
+      includesValue = true;
+    }
+  
     if (axis.name == this.attributeName) {
       let realValue = value;
       if (typeof realValue == "string") {

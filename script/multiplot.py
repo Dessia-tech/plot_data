@@ -28,12 +28,11 @@ for i in range(nb_elements):
     random_direction = directions[random.randint(0, len(directions) - 1)]
     elements.append({'x': random.uniform(0, 200),
                      'y': random.uniform(0, 100),
-                     'z': random.uniform(0, 50),
                      'color': random_color,
                      'direction': random_direction})
 
 """ ParallelPlot """
-parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'z', 'color', 'direction'])
+parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color', 'direction'])
 parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color'])
 
 """Scatterplots"""

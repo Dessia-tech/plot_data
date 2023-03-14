@@ -1332,20 +1332,11 @@ export abstract class PlotData {
     })
     this.rubberbands_dep = [];
   }
-  // reset_rubberbands() {
-  //   this.rubber_bands = [];
-  //   this.rubberbands_dep = [];
-  //   for (let j=0; j<this.axis_list.length; j++) {
-  //     this.rubber_bands.push(new RubberBand(this.axis_list[j].name, 0, 0));
-  //   }
-  // }
-
 
   from_to_display_list_to_elements(i) {
     return this.display_list_to_elements_dict[i.toString()];
 
   }
-
 
   draw_rubber_bands(mvx) {
     var color_stroke = string_to_hex('white');
@@ -2305,17 +2296,13 @@ export abstract class PlotData {
     var mouseY = e.offsetY;
     var click_on_disp = Shape.isInRect(mouseX, mouseY, this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h);
     if (click_on_axis && !mouse_moving) {
-      console.log("1")
       Interactions.select_axis_action(selected_axis_index, click_on_band, click_on_border, this);
     } else if (click_on_name && mouse_moving) {
       [mouse3X, mouse3Y, click_on_axis] = Interactions.mouse_up_axis_interversion(mouse1X, mouse1Y, e, this);
-      console.log("2")
     } else if (click_on_name && !mouse_moving) {
       Interactions.select_title_action(selected_name_index, this);
-      console.log("3")
     } else if (this.is_drawing_rubber_band || is_resizing) {
       is_resizing = Interactions.rubber_band_size_check(selected_axis_index, this);
-      console.log("4")
     }
     if (click_on_disp) {
       Interactions.change_disposition_action(this);

@@ -73,7 +73,6 @@ export class Axis {
           context.fillText(MyMath.round(grad_beg_y + i*y_step, y_nb_digits), axis_x_start - 5, -scaleY*(grad_beg_y + i*y_step) + mvy + Y);
         i++;
       }
-
       context.stroke();
     }
 

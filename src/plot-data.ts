@@ -1326,19 +1326,19 @@ export abstract class PlotData {
 
 
   //reset parallel plot's rubber bands
-  // reset_rubberbands() {
-  //   this.rubber_bands.forEach((rubberBand) => {
-  //     rubberBand.reset()
-  //   })
-  //   this.rubberbands_dep = [];
-  // }
   reset_rubberbands() {
-    this.rubber_bands = [];
+    this.rubber_bands.forEach((rubberBand) => {
+      rubberBand.reset()
+    })
     this.rubberbands_dep = [];
-    for (let j=0; j<this.axis_list.length; j++) {
-      this.rubber_bands.push(new RubberBand(this.axis_list[j].name, 0, 0));
-    }
   }
+  // reset_rubberbands() {
+  //   this.rubber_bands = [];
+  //   this.rubberbands_dep = [];
+  //   for (let j=0; j<this.axis_list.length; j++) {
+  //     this.rubber_bands.push(new RubberBand(this.axis_list[j].name, 0, 0));
+  //   }
+  // }
 
 
   from_to_display_list_to_elements(i) {
@@ -3083,8 +3083,8 @@ export class Interactions {
 
   public static rubber_band_size_check(selected_band_index, plot_data:any) {
     if (plot_data.rubber_bands[selected_band_index].length <= 0.02) {
-        // plot_data.rubber_bands[selected_band_index].reset();
-        plot_data.rubber_bands[selected_band_index] = new RubberBand(plot_data.rubber_bands[selected_band_index].attributeName, 0, 0);
+        plot_data.rubber_bands[selected_band_index].reset();
+        // plot_data.rubber_bands[selected_band_index] = new RubberBand(plot_data.rubber_bands[selected_band_index].attributeName, 0, 0);
     }
     plot_data.draw();
     var is_resizing = false;

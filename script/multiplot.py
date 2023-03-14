@@ -28,11 +28,12 @@ for i in range(nb_elements):
     random_direction = directions[random.randint(0, len(directions) - 1)]
     elements.append({'x': random.uniform(0, 200),
                      'y': random.uniform(0, 100),
+                     'z': random.uniform(0, 50),
                      'color': random_color,
                      'direction': random_direction})
 
 """ ParallelPlot """
-parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color', 'direction'])
+parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'z', 'color', 'direction'])
 parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color'])
 
 """Scatterplots"""
@@ -68,7 +69,7 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 histogram = plot_data.Histogram(x_variable='x')
 
 """Creating the multiplot"""
-plots = [parallelplot1, graph2d, primitive_group_container]
+plots = [parallelplot1, scatterplot1]
 plots2 = [parallelplot1, parallelplot2, scatterplot1,
          scatterplot2, scatterplot3, graph2d, primitive_group_container,
          histogram]
@@ -80,4 +81,4 @@ plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, init
 
 # Display
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
-# plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)

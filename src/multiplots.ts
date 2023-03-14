@@ -1509,7 +1509,6 @@ export class MultiplePlots {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if ((obj.type_ == 'parallelplot') && (obj.isSelectingppAxis)) {
-          console.log(obj)
           isSelectingppAxis = true;
           selected_axis_name = obj.selected_axis_name;
           let att_index = 0;

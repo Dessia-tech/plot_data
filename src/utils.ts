@@ -1125,6 +1125,10 @@ export class RubberBand {
     return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
   }
 
+  public get length() {
+    return Math.abs(this.maxValue - this.minValue)
+  }
+
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
     if (axis.name == this.attributeName) {

@@ -1369,7 +1369,17 @@ export class MultiplePlots {
           subplot.get_selected_keys();
 
         } else if (subplot instanceof PrimitiveGroupContainer) {
-          subplot.selected_point_index = selectedIndices
+          subplot.selected_point_index = selectedIndices;
+          if (selectedIndices.length == 0) {
+            let sumRubberLength = 0;
+            rubberBands.forEach((rubberBand) => {
+              sumRubberLength += rubberBand.length;
+            })
+            console.log(rubberBands, sumRubberLength, selectedIndices.length)
+            if (sumRubberLength == 0 && selectedIndices.length == 0) {
+              subplot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
+            }
+          }
           subplot.select_primitive_groups();
         }
       })

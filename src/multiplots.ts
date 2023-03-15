@@ -1317,8 +1317,8 @@ export class MultiplePlots {
               subplot.perm_window_w = subplot.maxX - subplot.perm_window_x;
             }
             if (!completedAxis.includes(1)) {
-              subplot.perm_window_y = subplot.maxY;
-              subplot.perm_window_h = subplot.minY - subplot.perm_window_y;
+              subplot.perm_window_y = subplot.minY;
+              subplot.perm_window_h = subplot.perm_window_y - subplot.maxY;
             }
           }
           subplot.scatter_points.forEach((scatterPoint, pointIndex) => {

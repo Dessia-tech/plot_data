@@ -1349,6 +1349,7 @@ export abstract class PlotData {
           var real_minY = this.axis_y_end + minY*(this.axis_y_start - this.axis_y_end);
           var real_maxY = this.axis_y_end + maxY*(this.axis_y_start - this.axis_y_end);
           var current_x = this.axis_x_start + i*this.x_step;
+          console.log(this.rubber_bands[i].minValue, this.rubber_bands[i].maxValue)
           if (i == this.move_index) {
             Shape.rect(current_x - this.bandWidth/2 + mvx, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
           } else {

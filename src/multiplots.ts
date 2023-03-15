@@ -1313,12 +1313,12 @@ export class MultiplePlots {
           })
           if (completedAxis.length < 2 && rubberBands.length !== 0) {
             if (!completedAxis.includes(0)) {
-              subplot.perm_window_x = subplot.minX;
-              subplot.perm_window_w = subplot.maxX - subplot.perm_window_x;
+              subplot.perm_window_x = subplot.plotObject.lists[0][0];
+              subplot.perm_window_w = subplot.plotObject.lists[0][1] - subplot.perm_window_x;
             }
             if (!completedAxis.includes(1)) {
-              subplot.perm_window_y = subplot.minY;
-              subplot.perm_window_h = subplot.perm_window_y - subplot.maxY;
+              subplot.perm_window_y = subplot.plotObject.lists[1][0];
+              subplot.perm_window_h = -(subplot.plotObject.lists[1][1] - subplot.perm_window_y);
             }
           }
           subplot.scatter_points.forEach((scatterPoint, pointIndex) => {

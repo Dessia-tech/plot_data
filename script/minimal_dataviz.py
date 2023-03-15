@@ -8,8 +8,7 @@ Created on Thu Feb 11 07:38:30 2021
 
 import random
 
-import plot_data
-import plot_data.colors as colors
+random.seed(7)
 
 elements = []
 

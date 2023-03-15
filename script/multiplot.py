@@ -15,8 +15,9 @@ import plot_data.colors as colors
 
 # a list of vectors (dictionaries) that are displayed
 # through different representations such as parallel plots and scatter plots
-elements = []
+random.seed(0)
 
+elements = []
 nb_elements = 50
 available_colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]
 directions = ['north', 'south', 'west', 'east']
@@ -71,8 +72,7 @@ plots = [parallelplot1, parallelplot2, scatterplot1,
 
 # plots = [scatterplot1, scatterplot2]
 
-multiplot = plot_data.MultiplePlots(plots=plots, elements=elements,
-                                    initial_view_on=True)
+plot_data_object = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 
 # Display
-plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script src=$core_path></script>
+    </head>
+    <div id="app">
+        <canvas id="canvas" style="border: 1px solid black;"></canvas>
+
+        <script type="text/javascript">
+            var width = 0.95*window.innerWidth;
+            var height = Math.max(0.95*window.innerHeight, 350);
+            var data = $data;
+            var number_plot_data = data.length;
+            var primitive_group_container = new PlotData.PrimitiveGroupContainer(data, width, height, true, 0, 0, "canvas");
+            primitive_group_container.define_canvas("canvas");
+            primitive_group_container.draw_initial();
+            primitive_group_container.mouse_interaction(primitive_group_container.isParallelPlot);
+            primitive_group_container.regular_layout();
+        </script>
+    </div>
+</html>

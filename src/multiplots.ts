@@ -4,6 +4,7 @@ import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, 
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
+import { min } from 'cypress/types/lodash';
 
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
@@ -1313,12 +1314,24 @@ export class MultiplePlots {
           })
           if (completedAxis.length < 2 && rubberBands.length !== 0) {
             if (!completedAxis.includes(0)) {
-              subplot.perm_window_x = subplot.plotObject.lists[0][0];
-              subplot.perm_window_w = subplot.plotObject.lists[0][1] - subplot.perm_window_x;
+              let minValue = subplot.plotObject.lists[0][0];
+              let maxValue = subplot.plotObject.lists[0][1];
+              if (typeof minValue == "string") {
+                minValue = 0;
+                maxValue = subplot.plotObject.lists[0].length - 1;
+              }
+              subplot.perm_window_x = minValue;
+              subplot.perm_window_w = maxValue - subplot.perm_window_x;
             }
             if (!completedAxis.includes(1)) {
-              subplot.perm_window_y = subplot.plotObject.lists[1][0];
-              subplot.perm_window_h = -(subplot.plotObject.lists[1][1] - subplot.perm_window_y);
+              let minValue = subplot.plotObject.lists[1][0];
+              let maxValue = subplot.plotObject.lists[1][1];
+              if (typeof minValue == "string") {
+                minValue = 0;
+                maxValue = subplot.plotObject.lists[1].length - 1;
+              }
+              subplot.perm_window_y = minValue;
+              subplot.perm_window_h = subplot.perm_window_y - maxValue;
             }
           }
           subplot.scatter_points.forEach((scatterPoint, pointIndex) => {

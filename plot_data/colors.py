@@ -43,6 +43,7 @@ class Color(dc.DessiaObject):
                                       round(self.blue * 255))
 
     def to_dict(self, *args, **kwargs):
+        # TODO: change this!!! it cannot be deserialized in generic way
         return str(self)
 
     @classmethod

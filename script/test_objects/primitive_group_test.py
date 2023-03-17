@@ -19,7 +19,7 @@ surface_style = plot_data.SurfaceStyle(color_fill=colors.WHITE, opacity=1,
 # a volmdlr object into a plot_data object
 
 # Point2D
-point = plot_data.Point2D(0.1, 0.2)
+point1 = plot_data.Point2D(0.1, 0.2)
 
 # arc
 arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=npy.pi / 2)
@@ -69,9 +69,9 @@ labels = plot_data.MultipleLabels(labels=[label1, label2])
 
 wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire")
 
-point = plot_data.Point2D(15,10, plot_data.PointStyle(color_fill=colors.ORANGE))
+point2 = plot_data.Point2D(15, 10, plot_data.PointStyle(color_fill=colors.ORANGE))
 
-primitives = [point, contour, line, arc, circle, text, labels, wire, point]
+primitives = [point1, contour, line, arc, circle, text, labels, wire, point2]
 
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 # plot_data.plot_canvas(primitive_group, debug_mode=True)

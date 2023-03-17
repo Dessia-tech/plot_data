@@ -1,5 +1,5 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
-import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex } from "./color_conversion";
+import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 
 export class Axis {
@@ -1109,3 +1109,42 @@ export function export_to_csv(rows, filename="my_data.csv") {
   link.click(); // This will download the data file named "my_data.csv".
   document.body.removeChild(link);
 }
+
+export class RubberBand {
+  constructor(public attributeName: string,
+              public minValue: number, 
+              public maxValue: number) {}
+
+  public static deserialize(serialized) { // A priori not required
+    return new RubberBand(serialized['attribute_name'],
+                          serialized['min_value'],
+                          serialized['max_value']);
+  }
+
+  public static fromFormerFormat(formerFormatValue: [string, [number, number]]) {
+    return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
+  }
+
+  public get length() {
+    return Math.abs(this.maxValue - this.minValue)
+  }
+
+  public includesValue(value: any, axis: Attribute): boolean {
+    let includesValue = false;
+    if (axis.name == this.attributeName) {
+      let realValue = value;
+      if (typeof realValue == "string") {
+        if (realValue.includes('rgb') && !axis.list.includes('rgb')) {
+          realValue = axis.list.indexOf(rgb_to_string(realValue));
+        } else {
+          realValue = axis.list.indexOf(realValue);
+        }
+      }
+      if (realValue >= this.minValue && realValue <= this.maxValue) {
+        includesValue = true;
+      }
+    }
+    return includesValue
+  }
+}
+

@@ -15,10 +15,8 @@ import plot_data.colors as colors
 
 random.seed(0)
 
-"""
-a list of vectors (dictionaries) that are displayed
-through different representations such as parallel plots and scatter plots
-"""
+# a list of vectors (dictionaries) that are displayed
+# through different representations such as parallel plots and scatter plots
 elements = []
 nb_elements = 50
 available_colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]
@@ -31,11 +29,11 @@ for i in range(nb_elements):
                      'color': random_color,
                      'direction': random_direction})
 
-""" ParallelPlot """
+# ParallelPlot
 parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color', 'direction'])
 parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color'])
 
-"""Scatterplots"""
+# Scatterplots
 scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
 
 scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
@@ -44,7 +42,7 @@ scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
 
 scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 
-"""PrimitiveGroupContainers"""
+# PrimitiveGroupContainers
 contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
                                                     plot_data.LineSegment2D([1, 2], [2, 2]),
                                                     plot_data.LineSegment2D([2, 2], [2, 1]),
@@ -67,7 +65,7 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 
 histogram = plot_data.Histogram(x_variable='x')
 
-"""Creating the multiplot"""
+# Creating the multiplot
 plots = [parallelplot1, parallelplot2, scatterplot1,
          scatterplot2, scatterplot3, graph2d, primitive_group_container,
          histogram]

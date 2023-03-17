@@ -27,7 +27,7 @@ steps:
   - coverage html
   - cd ../doc
   - make html
- 
+
   volumes:
   - name: jsons
     path: /drone/src/cypress/data_src

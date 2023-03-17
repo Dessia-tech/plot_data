@@ -1,0 +1,2155 @@
+{
+  "object_class": "plot_data.core.PrimitiveGroup",
+  "package_version": "0.11.1.dev26",
+  "name": "",
+  "primitives": [
+    {
+      "object_class": "plot_data.core.Contour2D",
+      "package_version": "0.11.1.dev26",
+      "name": "",
+      "plot_data_primitives": [
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.892063478318258,
+            -0.4059897624307591,
+            -1.1183999962260562,
+            -0.4059897624307591
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.1183999962260562,
+            -0.4059897624307591,
+            -1.1183999962260562,
+            6.292972063044084
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.1183999962260562,
+            6.292972063044084,
+            -5.892063478318258,
+            6.292972063044084
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.892063478318258,
+            6.292972063044084,
+            -5.892063478318258,
+            -0.4059897624307591
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        }
+      ],
+      "surface_style": {
+        "object_class": "plot_data.core.SurfaceStyle",
+        "package_version": "0.11.1.dev26",
+        "name": "",
+        "color_fill": "rgb(247,0,0)"
+      },
+      "type_": "contour"
+    },
+    {
+      "object_class": "plot_data.core.Contour2D",
+      "package_version": "0.11.1.dev26",
+      "name": "",
+      "plot_data_primitives": [
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.892063478318258,
+            -0.04998976243075914,
+            -1.1183999962260562,
+            -0.04998976243075914
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.1183999962260562,
+            -0.04998976243075914,
+            -1.1183999962260562,
+            5.9369720630440845
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.1183999962260562,
+            5.9369720630440845,
+            -5.892063478318258,
+            5.9369720630440845
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.892063478318258,
+            5.9369720630440845,
+            -5.892063478318258,
+            -0.04998976243075914
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        }
+      ],
+      "surface_style": {
+        "object_class": "plot_data.core.SurfaceStyle",
+        "package_version": "0.11.1.dev26",
+        "name": "",
+        "color_fill": "rgb(0,19,254)"
+      },
+      "type_": "contour"
+    },
+    {
+      "object_class": "plot_data.core.Contour2D",
+      "package_version": "0.11.1.dev26",
+      "name": "",
+      "plot_data_primitives": [
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.1683999962263063,
+            1.0260768970704603e-05,
+            -1.1684633506617401,
+            5.886931109548675
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -1.1684633506622506,
+            5.8869311570008565,
+            -5.842063478318258,
+            5.886972063044085
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.842063478318258,
+            5.886972063044085,
+            -5.84206347830906,
+            5.351119531897307
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.8420634783090595,
+            5.351119531870168,
+            -5.027104579750371,
+            4.731122099299895
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.027104579750371,
+            4.731122099299895,
+            -4.9993429809209635,
+            4.7089510424830126
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.9993429809209635,
+            4.7089510424830126,
+            -4.972526140024034,
+            4.685381644078118
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.972526140024034,
+            4.685381644078118,
+            -4.946848239813884,
+            4.660570238475607
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.946848239813884,
+            4.660570238475607,
+            -4.922369315783781,
+            4.63457629019427
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.922369315783781,
+            4.63457629019427,
+            -4.899145115172164,
+            4.607460951360712
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.899145115172164,
+            4.607460951360712,
+            -4.8772211663417,
+            4.579273344694665
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.8772211663417,
+            4.579273344694665,
+            -4.856649657757317,
+            4.5500199436904145
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.856649657757317,
+            4.550019943690415,
+            -4.837477748808593,
+            4.519830028597327
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.837477748808593,
+            4.519830028597327,
+            -4.819744042300511,
+            4.488763973755903
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.819744042300511,
+            4.488763973755903,
+            -4.803420302771546,
+            4.456748812002574
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.803420301815711,
+            4.456748811916072,
+            -4.7895005057185625,
+            4.426055943422501
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.7895005057185625,
+            4.426055943422501,
+            -4.776776260069582,
+            4.394310677310191
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.776776260069582,
+            4.394310677310191,
+            -4.765702003674383,
+            4.362673855017157
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.765702003674383,
+            4.362673855017157,
+            -4.755949030729614,
+            4.330272140764498
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.755949030729614,
+            4.330272140764498,
+            -4.747656738187083,
+            4.297486192765675
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.747656738187083,
+            4.297486192765675,
+            -4.740843411826761,
+            4.2643751830199355
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.740843411826761,
+            4.2643751830199355,
+            -4.735526676851977,
+            4.231013078738726
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.735526676851977,
+            4.231013078738726,
+            -4.731717261012509,
+            4.197455698119745
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.731717261012509,
+            4.197455698119745,
+            -4.729424932656386,
+            4.163770759373671
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.729424932656386,
+            4.163770759373671,
+            -4.728654972683987,
+            4.129861760458852
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728654972683987,
+            4.129861760458852,
+            -4.728652287885401,
+            3.9041246521399433
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728652287884835,
+            3.9041246521439636,
+            -4.673645234048012,
+            3.421765261102781
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.673645234048012,
+            3.421765261102781,
+            -4.673639455083951,
+            3.0570189989581866
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.673639455084329,
+            3.057018998968399,
+            -4.6742609726353805,
+            3.049159312202676
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.6742609726353805,
+            3.049159312202676,
+            -4.676098417083295,
+            3.0415318907809583
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.676098417083295,
+            3.0415318907809583,
+            -4.6790710595242535,
+            3.0343553110902945
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.679071059524253,
+            3.034355311090294,
+            -4.683165591901219,
+            3.0276618792381766
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.683165591901219,
+            3.0276618792381766,
+            -4.688256845653958,
+            3.0216913833726875
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.6882568456539575,
+            3.021691383372688,
+            -4.694219129726161,
+            3.0165910934315616
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.694219129726161,
+            3.016591093431562,
+            -4.700905458108973,
+            3.0124865330376958
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.700905458108973,
+            3.0124865330376958,
+            -4.708151279961063,
+            3.009478561210274
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.708151279961063,
+            3.009478561210274,
+            -4.71577871255565,
+            3.007641080440967
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.71577871255565,
+            3.0076410804409672,
+            -4.723638622105786,
+            3.0070194234264624
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.723638622105786,
+            3.0070194234264624,
+            -4.728638622175045,
+            3.007019466658169
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728638622175045,
+            3.0070194666581695,
+            -4.7286385320571505,
+            3.0014514800750387
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728638532057098,
+            3.0014514800750622,
+            -4.728809290618777,
+            2.9985349870170293
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728809290618777,
+            2.9985349870170293,
+            -4.7293090534517,
+            2.9956998489114217
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.7293090534517,
+            2.9956998489114217,
+            -4.73015087600579,
+            2.9928879816963203
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.73015087600579,
+            2.99288798169632,
+            -4.731291252400695,
+            2.990244022874981
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.731291252400695,
+            2.990244022874981,
+            -4.732758608332192,
+            2.9877023113952843
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.732758608332192,
+            2.9877023113952843,
+            -4.73447802028119,
+            2.9853926456587816
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.73447802028119,
+            2.9853926456587816,
+            -4.7364710778620855,
+            2.9832774360329406
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.7364710778620855,
+            2.9832774360329406,
+            -4.738696999914222,
+            2.9814072687673563
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.738696999914222,
+            2.981407268767356,
+            -4.741125041222809,
+            2.9798082457954504
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.741125041222809,
+            2.9798082457954504,
+            -4.747712531584409,
+            2.9764970205903376
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.747712531584409,
+            2.9764970205903376,
+            -4.751411739494973,
+            2.9740607945361757
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.751411739494973,
+            2.9740607945361757,
+            -4.7548031274297875,
+            2.971211627159604
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.7548031274297875,
+            2.971211627159604,
+            -4.757840799744622,
+            2.967988002457745
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.757840799744622,
+            2.967988002457745,
+            -4.760483652347692,
+            2.9644334793346627
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.760483652347692,
+            2.9644334793346627,
+            -4.762695994520294,
+            2.960596060583629
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.7626959945202945,
+            2.960596060583629,
+            -4.764447940208992,
+            2.956527647177794
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.764447940208992,
+            2.956527647177794,
+            -4.76571581291888,
+            2.952283286171818
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.76571581291888,
+            2.952283286171818,
+            -4.766482441433796,
+            2.9479203545731076
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.766482441433796,
+            2.9479203545731076,
+            -4.766737568514913,
+            2.9435179752889535
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.766737568515548,
+            2.943517975288698,
+            -4.76648231983043,
+            2.9391155904844104
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.76648231983043,
+            2.9391155904844104,
+            -4.765715488724743,
+            2.934752562646061
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.765715488724743,
+            2.934752562646061,
+            -4.764447504833283,
+            2.9305081708517355
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.764447504833283,
+            2.9305081708517355,
+            -4.762695415232036,
+            2.926439666184297
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.762695415232036,
+            2.926439666184297,
+            -4.760482975796215,
+            2.9226021326121123
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.760482975796215,
+            2.9226021326121123,
+            -4.757839984183273,
+            2.91904746073066
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.757839984183273,
+            2.91904746073066,
+            -4.754802200553417,
+            2.9158237172573997
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.754802200553417,
+            2.9158237172573997,
+            -4.751410721436779,
+            2.9129743863151525
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.751410721436779,
+            2.9129743863151525,
+            -4.747711450773172,
+            2.910538024158509
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.747711450773172,
+            2.910538024158509,
+            -4.741123747073857,
+            2.9072264704638706
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.741123747073858,
+            2.9072264704638706,
+            -4.738718524230422,
+            2.905644405417151
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.738718524230422,
+            2.9056444054171515,
+            -4.736470131346701,
+            2.9037574311638616
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.736470131346701,
+            2.9037574311638616,
+            -4.734494204443108,
+            2.9016628344715967
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.734494204443108,
+            2.9016628344715967,
+            -4.732741667613781,
+            2.8993084687132757
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.732741667613781,
+            2.8993084687132757,
+            -4.731302033786664,
+            2.896814611600739
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.731302033786664,
+            2.896814611600739,
+            -4.730149312129037,
+            2.894146494084467
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.730149312129037,
+            2.894146494084467,
+            -4.72931384729598,
+            2.891361643765232
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.729313847295981,
+            2.891361643765232,
+            -4.728807414378152,
+            2.8884986400965027
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728807414378152,
+            2.8884986400965027,
+            -4.728636604703143,
+            2.8855820387407674
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728636604703143,
+            2.8855820387407674,
+            -4.728636513469058,
+            2.880013691813305
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728636513466486,
+            2.880013691822741,
+            -4.723636498832331,
+            2.880013662642444
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.72363649865281,
+            2.8800136634551894,
+            -4.715776362544621,
+            2.879391778423506
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.715776362544621,
+            2.879391778423506,
+            -4.708148579907205,
+            2.8775538717215796
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.708148579907205,
+            2.877553871721579,
+            -4.700971772067044,
+            2.874580673003713
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.700971772067044,
+            2.874580673003713,
+            -4.694278191000419,
+            2.8704854759508085
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.694278191000419,
+            2.8704854759508085,
+            -4.688307696808127,
+            2.8653935144343845
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.688307696808127,
+            2.8653935144343845,
+            -4.68320742954844,
+            2.8594305059571803
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.68320742954844,
+            2.85943050595718,
+            -4.679102932631631,
+            2.852743585475734
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.679102932631631,
+            2.852743585475734,
+            -4.676094982952786,
+            2.8454971946325243
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.676094982952786,
+            2.8454971946325243,
+            -4.67425745722974,
+            2.8378693430594155
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.67425745722974,
+            2.8378693430594155,
+            -4.673635665729087,
+            2.8300090771067548
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.673635665729446,
+            2.8300090771041844,
+            -4.67362951361768,
+            2.465253509964835
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.6736295136171435,
+            2.4652535099670665,
+            -4.728621299682397,
+            1.9828892073962603
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728621299682397,
+            1.9828892073962603,
+            -4.728617806360978,
+            1.7568785769039028
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.728617806380399,
+            1.7568785769642525,
+            -4.72938684608566,
+            1.7229432391538022
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.72938684608566,
+            1.7229432391538022,
+            -4.731678195301724,
+            1.6892417632207029
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.731678195301724,
+            1.6892417632207029,
+            -4.735486651139597,
+            1.6556784243198712
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.735486651139597,
+            1.6556784243198712,
+            -4.7408024834940266,
+            1.6223224264023424
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.7408024834940266,
+            1.6223224264023424,
+            -4.7476148890978624,
+            1.5892300912763375
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.7476148890978624,
+            1.5892300912763375,
+            -4.755906321575382,
+            1.5564754017094355
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.755906321575382,
+            1.5564754017094355,
+            -4.765658456782868,
+            1.52411691080867
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.765658456782868,
+            1.52411691080867,
+            -4.776731915736607,
+            1.4925296260408587
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.776731915736607,
+            1.4925296260408587,
+            -4.789455345858729,
+            1.4608341914417589
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.789455345858729,
+            1.4608341914417589,
+            -4.803374403384081,
+            1.430186628595804
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.8033743836693175,
+            1.4301866352565367,
+            -4.819699480357084,
+            1.398210705011009
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.819699480357085,
+            1.3982107050110089,
+            -4.8374327417165945,
+            1.367182238301883
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.837432741716595,
+            1.3671822383018828,
+            -4.856604708273472,
+            1.3370247164528133
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.856604708273472,
+            1.337024716452813,
+            -4.8771751058463995,
+            1.3078028456408448
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.8771751058463995,
+            1.3078028456408448,
+            -4.899096981897905,
+            1.2796035079724861
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.899096981897905,
+            1.2796035079724861,
+            -4.922319579319796,
+            1.2524735132402465
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.922319579319796,
+            1.2524735132402465,
+            -4.9467987531861635,
+            1.2264661440242388
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.9467987531861635,
+            1.2264661440242388,
+            -4.972475324408332,
+            1.2016467617705902
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.972475324408332,
+            1.2016467617705902,
+            -4.9992915192496445,
+            1.1780722674927153
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -4.9992915192496445,
+            1.1780722674927153,
+            -5.027052907290004,
+            1.1558990091447612
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.027052907290004,
+            1.1558990091447612,
+            -5.842003073461919,
+            0.535897283221888
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.842003073461919,
+            0.5358972832229543,
+            -5.842000069406396,
+            5.1187843820077454e-05
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        },
+        {
+          "object_class": "plot_data.core.LineSegment",
+          "package_version": "0.11.1.dev26",
+          "name": "",
+          "data": [
+            -5.842000069406396,
+            5.118784382007746e-05,
+            -1.1683999962260563,
+            1.0237569240862689e-05
+          ],
+          "edge_style": {
+            "object_class": "plot_data.core.EdgeStyle",
+            "package_version": "0.11.1.dev26",
+            "name": ""
+          },
+          "type_": "linesegment2d"
+        }
+      ],
+      "type_": "contour"
+    },
+    {
+      "object_class": "plot_data.core.Text",
+      "package_version": "0.11.1.dev26",
+      "name": "",
+      "comment": "1",
+      "text_style": {
+        "object_class": "plot_data.core.TextStyle",
+        "package_version": "0.11.1.dev26",
+        "name": "",
+        "text_color": "rgb(0,0,0)",
+        "font_size": 15,
+        "font_style": "sans-serif",
+        "text_align_x": "center",
+        "bold": true
+      },
+      "position_x": -3.5052317372721573,
+      "position_y": 2.9434911503066625,
+      "multi_lines": true,
+      "type_": "text"
+    }
+  ],
+  "type_": "primitivegroup"
+}

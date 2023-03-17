@@ -14,13 +14,8 @@ import webbrowser
 from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
+from matplotlib.patches import Polygon
 import numpy as npy
-from dessia_common.core import DessiaObject
-from dessia_common.typings import JsonSerializable
-from matplotlib import patches
-
-import plot_data.colors
-from plot_data import templates
 
 try:
     # dessia_common >= 0.12.0
@@ -28,6 +23,14 @@ try:
 except ImportError:
     # dessia_common < 0.12.0.
     from dessia_common.utils.serialization import serialize
+
+from dessia_common.core import DessiaObject
+
+from dessia_common.typings import JsonSerializable
+from matplotlib import patches
+
+import plot_data.colors
+from plot_data import templates
 
 npy.seterr(divide='raise')
 
@@ -51,7 +54,7 @@ class PlotDataObject(DessiaObject):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """ Redefines DessiaObject's to_dict() in order to not use pointers and remove keys where value is None. """
         dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
@@ -64,19 +67,26 @@ class PlotDataObject(DessiaObject):
         new_dict_ = delete_none_from_dict(dict_)
         return new_dict_
 
-    @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'DessiaObject':
-        """ Reset object_class in order to instantiate right object. """
-        type_ = dict_['type_']
-        object_class = TYPE_TO_CLASS[type_]
-        dict_["object_class"] = f"{object_class.__module__}.{object_class.__name__}"
-        return DessiaObject.dict_to_object(dict_=dict_, force_generic=True, global_dict=global_dict,
-                                           pointers_memo=pointers_memo, path=path)
+    # @classmethod
+    # def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
+    #                    pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'DessiaObject':
+    #     """ Reset object_class in order to instantiate right object. """
+    #     type_ = dict_['type_']
+    #     object_class = TYPE_TO_CLASS[type_]
+    #     dict_["object_class"] = f"{object_class.__module__}.{object_class.__name__}"
+    #     return DessiaObject.dict_to_object(dict_=dict_, force_generic=True, global_dict=global_dict,
+    #                                        pointers_memo=pointers_memo, path=path)
 
     def plot_data(self):
         raise NotImplementedError("It is strange to call plot_data method from a plot_data object."
                                   f" Check the class '{self.__class__.__name__}' you are calling")
+
+    def mpl_plot(self, ax=None):
+        """
+        Overloading of dessia object mpl_plot
+        """
+        warnings.warn(f'class {self.__class__.__name__} does not implement mpl_plot, not plotting.')
+        return ax
 
 
 class Sample(PlotDataObject):
@@ -90,13 +100,13 @@ class Sample(PlotDataObject):
 
         PlotDataObject.__init__(self, type_="sample", name=name)
 
-    def to_dict(self, use_pointers: bool = False, memo=None, path: str = '#') -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """
         Overwrite generic to_dict.
 
         TODO Check if it can be generic (probably)
         """
-        dict_ = PlotDataObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path)
+        dict_ = PlotDataObject.to_dict(self, *args, **kwargs)
         dict_.update({"reference_path": self.reference_path, "name": self.name})
         dict_.update(serialize(self.values))
         # TODO Keeping values at dict_ level before refactor, should be removed after and use dict_["values"] instead
@@ -164,8 +174,18 @@ class EdgeStyle(DessiaObject):
         self.dashline = dashline
         DessiaObject.__init__(self, name=name)
 
-
-DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=plot_data.colors.BLACK)
+    def mpl_arguments(self, surface=False):
+        args = {}
+        if self.color_stroke:
+            if surface:
+                args['edgecolor'] = self.color_stroke.rgb
+            else:
+                args['color'] = self.color_stroke.rgb
+        if self.line_width:
+            args['linewidth'] = self.line_width
+        if self.dashline:
+            args['dashes'] = self.dashline
+        return args
 
 
 class PointStyle(DessiaObject):
@@ -193,6 +213,23 @@ class PointStyle(DessiaObject):
         self.size = size  # 1, 2, 3 or 4
         self.shape = shape
         DessiaObject.__init__(self, name=name)
+
+    def mpl_arguments(self):
+        args = {}
+        if self.color_fill:
+            args['color'] = self.color_fill.rgb
+        if self.color_stroke:
+            args['markeredgecolor'] = self.color_stroke.rgb
+        return args
+
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        obj = DessiaObject.dict_to_object(dict_, *args, **kwargs)
+        if obj.color_fill:
+            obj.color_fill = plot_data.colors.Color.dict_to_object(obj.color_fill)
+        if obj.color_stroke:
+            obj.color_stroke = plot_data.colors.Color.dict_to_object(obj.color_stroke)
+        return obj
 
 
 class TextStyle(DessiaObject):
@@ -237,6 +274,13 @@ class TextStyle(DessiaObject):
         self.angle = angle
         DessiaObject.__init__(self, name=name)
 
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        obj = DessiaObject.dict_to_object(dict_, force_generic=True, *args, **kwargs)
+        if obj.text_color:
+            obj.text_color = plot_data.colors.Color.dict_to_object(obj.text_color)
+        return obj
+
 
 class SurfaceStyle(DessiaObject):
     """
@@ -250,12 +294,37 @@ class SurfaceStyle(DessiaObject):
     :type hatching: HatchingSet
     """
 
-    def __init__(self, color_fill: str = None, opacity: float = None,
+    def __init__(self, color_fill: str = None, opacity: float = 1.,
                  hatching: HatchingSet = None, name: str = ''):
+        # TODO: migrate from str to Color object
         self.color_fill = color_fill
         self.opacity = opacity
         self.hatching = hatching
         DessiaObject.__init__(self, name=name)
+
+    @classmethod
+    def dict_to_object(cls, dict_, *args, **kwargs):
+        obj = DessiaObject.dict_to_object(dict_, force_generic=True, *args, **kwargs)
+        if obj.color_fill:
+            obj.color_fill = plot_data.colors.Color.dict_to_object(obj.color_fill)
+        return obj
+
+    def mpl_arguments(self):
+        args = {}
+        if self.color_fill:
+            args['facecolor'] = self.color_fill.rgb
+        if self.hatching:
+            args['hatch'] = "\\"
+        if self.opacity and self.opacity > 0:
+            args['alpha'] = self.opacity
+            args['fill'] = True
+        return args
+
+
+DEFAULT_EDGESTYLE = EdgeStyle(color_stroke=plot_data.colors.BLACK)
+DEFAULT_POINTSTYLE = PointStyle(color_stroke=plot_data.colors.BLACK, color_fill=plot_data.colors.WHITE)
+DEFAULT_TEXTSTYLE = TextStyle(text_color=plot_data.colors.BLACK)
+DEFAULT_SURFACESTYLE = SurfaceStyle(color_fill=plot_data.colors.WHITE, opacity=1.)  # Not sure about opacity=1 in TS
 
 
 class Text(PlotDataObject):
@@ -328,22 +397,25 @@ class Line2D(PlotDataObject):
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='line2d', name=name)
 
-    def mpl_plot(self, ax=None):
+    def mpl_plot(self, ax=None, edge_style=None):
         """
         Plots using matplotlib.
         """
         if ax is None:
             _, ax = plt.subplots()
 
-        if not self.edge_style:
-            color = DEFAULT_EDGESTYLE.color_stroke.rgb
-            dashes = DEFAULT_EDGESTYLE.dashline
-        else:
-            color = self.edge_style.color_stroke.rgb
-            dashes = self.edge_style.dashline
+        style = self.edge_style
+        if edge_style:
+            style = edge_style
+        if style is None:
+            style = DEFAULT_EDGESTYLE
+
+        color = style.color_stroke.rgb
+        dashes = style.dashline
 
         ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]),
                   color=color, dashes=dashes)
+        return ax
 
 
 class LineSegment2D(PlotDataObject):
@@ -362,7 +434,11 @@ class LineSegment2D(PlotDataObject):
     def __init__(self, point1: List[float], point2: List[float],
                  edge_style: EdgeStyle = None,
                  name: str = ''):
+        # Data is used in typescript
         self.data = point1 + point2
+        self.point1 = point1
+        self.point2 = point2
+
         if edge_style is None:
             self.edge_style = EdgeStyle()
         else:
@@ -379,29 +455,46 @@ class LineSegment2D(PlotDataObject):
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
 
-    def mpl_plot(self, ax=None):
+    def to_dict(self):
+        dict_ = DessiaObject.to_dict(self)
+        dict_['object_class'] = 'plot_data.core.LineSegment2D'  # To force migration to linesegment -> linesegment2d
+        return dict_
+
+    def polygon_points(self):
+        return [self.point1, self.point2]
+
+    def mpl_plot(self, ax=None, edge_style=None):
         """
         Plots using matplotlib.
         """
         if not ax:
             _, ax = plt.subplots()
 
-        if self.edge_style and self.edge_style.color_stroke:
-            color = self.edge_style.color_stroke.rgb
+        if edge_style:
+            edge_style = self.edge_style
         else:
-            color = plot_data.colors.BLACK.rgb
-        ax.plot([self.data[0], self.data[2]], [self.data[1], self.data[3]],
-                color=color)
+            edge_style = DEFAULT_EDGESTYLE
+
+        ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]],
+                **edge_style.mpl_arguments())
         return ax
 
 
 class LineSegment(LineSegment2D):
     def __init__(self, data: List[float], edge_style: EdgeStyle = None,
                  name: str = ''):
-        LineSegment2D.__init__(self, data=data, edge_style=edge_style,
-                               name=name)
+        # When to remove support?
         warnings.warn("LineSegment is deprecated, use LineSegment2D instead",
                       DeprecationWarning)
+
+        self.data = data
+        LineSegment2D.__init__(self, point1=self.data[:2], point2=self.data[2:], edge_style=edge_style,
+                               name=name)
+
+    def to_dict(self, *args, **kwargs):
+        ls2d = LineSegment2D(point1=self.data[:2], point2=self.data[2:], edge_style=self.edge_style,
+                             name=self.name)
+        return ls2d.to_dict()
 
 
 class Wire(PlotDataObject):
@@ -421,6 +514,18 @@ class Wire(PlotDataObject):
         self.edge_style = edge_style
         self.tooltip = tooltip
         PlotDataObject.__init__(self, type_="wire", name=name)
+
+    def mpl_plot(self, ax=None):
+        """
+        Plots using matplotlib
+        """
+        if self.edge_style:
+            edge_style = self.edge_style
+        else:
+            edge_style = DEFAULT_EDGESTYLE
+
+        ax.plot([p[0] for p in self.lines], [p[1] for p in self.lines], **edge_style.mpl_arguments())
+        return ax
 
 
 class Circle2D(PlotDataObject):
@@ -468,22 +573,21 @@ class Circle2D(PlotDataObject):
         if not ax:
             _, ax = plt.subplots()
         if self.edge_style:
-            edgecolor = self.edge_style.color_stroke.rgb
-            dashes = DEFAULT_EDGESTYLE.dashline
+            edge_style = self.edge_style
         else:
-            edgecolor = DEFAULT_EDGESTYLE.color_stroke.rgb
-            dashes = DEFAULT_EDGESTYLE.dashline
+            edge_style = DEFAULT_EDGESTYLE
+            # dashes = DEFAULT_EDGESTYLE.dashline
+        args = edge_style.mpl_arguments(surface=True)
+
         if self.surface_style:
-            facecolor = self.surface_style.color_fill
-            surface_alpha = self.surface_style.opacity
+            surface_style = self.surface_style
         else:
-            facecolor = None
-            surface_alpha = 0
+            surface_style = DEFAULT_SURFACESTYLE
+
+        args.update(surface_style.mpl_arguments())
 
         ax.add_patch(patches.Circle((self.cx, self.cy), self.r,
-                                    edgecolor=edgecolor,
-                                    facecolor=facecolor,
-                                    fill=surface_alpha > 0))
+                                    **args))
         return ax
 
 
@@ -513,6 +617,18 @@ class Point2D(PlotDataObject):
         :rtype: float, float, float, float
         """
         return self.cx, self.cx, self.cy, self.cy
+
+    def mpl_plot(self, ax=None):
+        if ax is None:
+            _, ax = plt.subplots()
+
+        if self.point_style:
+            style = self.point_style
+        else:
+            style = DEFAULT_POINTSTYLE
+
+        ax.plot([self.cx], [self.cy], marker='o', **style.mpl_arguments())
+        return ax
 
 
 class Axis(PlotDataObject):
@@ -891,12 +1007,27 @@ class Contour2D(PlotDataObject):
 
         return xmin, xmax, ymin, ymax
 
+    def polygon_points(self):
+        points = []
+        for primitive in self.plot_data_primitives:
+            points.extend(primitive.polygon_points())
+        return points
+
     def mpl_plot(self, ax=None):
         """
         Plots using matplotlib
         """
         for primitive in self.plot_data_primitives:
-            ax = primitive.mpl_plot(ax=ax)
+            ax = primitive.mpl_plot(ax=ax, edge_style=self.edge_style)
+
+        if self.surface_style:
+            surface_style = self.surface_style
+        else:
+            surface_style = DEFAULT_SURFACESTYLE
+
+        if surface_style.color_fill:
+            points = self.polygon_points()
+            ax.add_patch(Polygon(points, closed=True, **surface_style.mpl_arguments()))
         return ax
 
 
@@ -959,12 +1090,20 @@ class PrimitiveGroup(PlotDataObject):
         """
         Plots using matplotlib
         """
-        ax = self.primitives[0].mpl_plot(ax=ax)
-        for primitive in self.primitives[1:]:
-            primitive.mpl_plot(ax=ax)
-        if equal_aspect:
+        for primitive in self.primitives:
+            ax = primitive.mpl_plot(ax=ax)
+        if equal_aspect and ax:
             ax.set_aspect('equal')
         return ax
+
+    def save_to_image(self, filepath, remove_axis=True):
+        ax = self.mpl_plot()
+        if remove_axis:
+            ax.set_axis_off()
+            ax.figure.savefig(filepath, bbox_inches='tight', pad_inches=0)
+        else:
+            ax.figure.savefig(filepath)
+        plt.close(ax.figure)
 
     def bounding_box(self):
         """
@@ -1264,14 +1403,6 @@ def get_csv_vectors(filepath):
     """
     raise NotImplementedError("get_csv_vectors function is not implemented anymore"
                               "as dessia_common's vectored_objects as been removed")
-
-
-TYPE_TO_CLASS = {'arc': Arc2D, 'axis': Axis, 'circle': Circle2D,  # Attribute
-                 'contour': Contour2D, 'graph2D': Dataset,
-                 'graphs2D': Graph2D, 'linesegment2d': LineSegment,
-                 'multiplot': MultiplePlots, 'parallelplot': ParallelPlot,
-                 'point': Point2D, 'scatterplot': Scatter, 'tooltip': Tooltip,
-                 'primitivegroup': PrimitiveGroup, "scattermatrix": ScatterMatrix}
 
 
 def bounding_box(plot_datas: List[PlotDataObject]):

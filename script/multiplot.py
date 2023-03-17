@@ -13,10 +13,10 @@ from test_objects.graph_test import graph2d
 import plot_data
 import plot_data.colors as colors
 
-random.seed(0)
-
 # a list of vectors (dictionaries) that are displayed
 # through different representations such as parallel plots and scatter plots
+random.seed(0)
+
 elements = []
 nb_elements = 50
 available_colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]

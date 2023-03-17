@@ -1111,8 +1111,8 @@ export function export_to_csv(rows, filename="my_data.csv") {
 
 export class RubberBand {
   constructor(public attributeName: string,
-              public minValue: number, 
-              public maxValue: number) {}
+              private _minValue: number, 
+              private _maxValue: number) {}
 
   public static deserialize(serialized) { // A priori not required
     return new RubberBand(serialized['attribute_name'],
@@ -1126,6 +1126,22 @@ export class RubberBand {
 
   public get length() {
     return Math.abs(this.maxValue - this.minValue)
+  }
+
+  public set minValue(value: number) {
+    this._minValue = value;
+  }
+
+  public get minValue() {
+    return this._minValue
+  }
+
+  public set maxValue(value: number) {
+    this._maxValue = value;
+  }
+
+  public get maxValue() {
+    return this._maxValue
   }
 
   public draw(originX: number, originY: number, width: number, height: number, context: CanvasRenderingContext2D, 
@@ -1147,7 +1163,7 @@ export class RubberBand {
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
 
-    if (this.length == 0) {
+    if (this.length <= 0.02) {
       includesValue = true;
     }
   

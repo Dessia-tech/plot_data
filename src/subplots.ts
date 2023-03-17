@@ -1496,9 +1496,15 @@ export class Histogram extends PlotData {
 
       if (axisType == 'x') {
         var originY = this.height - this.decalage_axis_y - SMALL_SIZE/2 + this.Y;
+        // rubberBand.drawnMin = origin;
+        // rubberBand.drawnMax = this.height - this.decalage_axis_y - SMALL_SIZE/2 + this.Y;
+        // rubberBand.draw(largeSize, SMALL_SIZE, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
         rubberBand.draw(origin, originY, largeSize, SMALL_SIZE, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
       } else {
         var originY = this.decalage_axis_x - SMALL_SIZE/2 + this.X;
+        // rubberBand.drawnMin = this.decalage_axis_x - SMALL_SIZE/2 + this.X;
+        // rubberBand.drawnMax = origin;
+        // rubberBand.draw(SMALL_SIZE, largeSize, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
         rubberBand.draw(originY, origin, SMALL_SIZE, largeSize, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
       }
     }

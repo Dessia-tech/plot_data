@@ -931,10 +931,6 @@ export class MultiplePlots {
           Interactions.reset_permanent_window(this.objectList[i])
         } else if (obj.type_ == 'parallelplot') {
           this.objectList[i].reset_pp_selected();
-          this.objectList[i].rubberbands_dep = [];
-          // for (let j=0; j<obj.axis_list.length; j++) {
-          //   this.objectList[i].rubber_bands.push(new RubberBand(obj.axis_list[j].name, 0, 0));
-          // }
           this.objectList[i].rubber_bands.forEach((rubberBand) => {
             rubberBand.reset()
           })
@@ -1180,20 +1176,6 @@ export class MultiplePlots {
       return -1;
     }
 
-    add_to_rubberbands_manual(obj_index, rubber_index:number, min:number, max:number): void {
-      var obj = this.objectList[obj_index];
-      this.objectList[obj_index].rubber_bands[rubber_index].minValue = min;
-      this.objectList[obj_index].rubber_bands[rubber_index].maxValue = max;
-      var realCoord_min = obj.axis_to_real_coords(min, obj.axis_list[rubber_index]['type'], obj.axis_list[rubber_index]['list'], obj.inverted_axis_list[rubber_index]);
-      var realCoord_max = obj.axis_to_real_coords(max, obj.axis_list[rubber_index]['type'], obj.axis_list[rubber_index]['list'], obj.inverted_axis_list[rubber_index]);
-      var real_min = Math.min(realCoord_min, realCoord_max);
-      var real_max = Math.max(realCoord_min, realCoord_max);
-      this.objectList[obj_index].add_to_rubberbands_dep(new RubberBand(obj.axis_list[rubber_index]['name'], real_min, real_max));
-      this.objectList[obj_index].is_drawing_rubber_band = true;
-      this.mouse_move_pp_communication();
-      this.objectList[obj_index].is_drawing_rubber_band = false;
-    }
-
     mouse_move_scatter_communication() {
       let isSelectingObjIndex = this.getSelectionONObject();
       if (isSelectingObjIndex != -1) {
@@ -1266,136 +1248,174 @@ export class MultiplePlots {
       let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
       if (isDrawingRubberObjIndex != -1) {
         let isDrawingPP = this.objectList[isDrawingRubberObjIndex];
-        let rubberbands_dep = isDrawingPP.rubberbands_dep;
-        this.pp_communication(rubberbands_dep, isDrawingPP);
+        this.pp_communication(isDrawingPP.rubber_bands, isDrawingPP);
       }
     }
 
     pp_communication(rubberBands: RubberBand[], actualPP: any) { //process received data from a parallelplot and send it to the other objects
       let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
-
+      console.log(rubberBands)
+      let rubberBandNames = []
+      rubberBands.forEach((rubberBand) => { rubberBandNames.push(rubberBand.attributeName) })
+    
       this.objectList.forEach((subplot) => {
-        const WAS_MERGE_ON = subplot.mergeON;
-        var subplotData = subplot.data
-        var rubberBandsInPlot = [];
-        rubberBands.forEach((rubberBand) => {
-          if (["scatterplot", "parallelplot", "graph2d"].includes(subplotData.type_)) {
-            if (subplotData.attribute_names.includes(rubberBand.attributeName)) {
-              rubberBandsInPlot.push(rubberBand);
-            }
-          } else if (subplotData.type_ === "histogram") {
-            if (subplotData.x_variable === rubberBand.attributeName) {
-              rubberBandsInPlot.push(rubberBand);
-            }
-          } else if (subplotData.type_ === "primitivegroupcontainer") {
-            if (subplotData.association.attribute_names.includes(rubberBand.attributeName)) {
-              rubberBandsInPlot.push(rubberBand);
-            }
-          }
-        })
-        if (subplot instanceof PlotScatter && subplot.type_ !== "graph2d") {
-          if (WAS_MERGE_ON == true) {
-            Interactions.click_on_merge_action(subplot)
-            subplot.draw();
-          }
-          let completedAxis = [];
-          rubberBandsInPlot.forEach((rubberBand) => {
-            var axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
-            completedAxis.push(axisIndex)
-            if (axisIndex == 0) {
-              subplot.perm_window_x = rubberBand.minValue;
-              subplot.perm_window_w = rubberBand.maxValue - subplot.perm_window_x;
-            } else if (axisIndex == 1) {
-              subplot.perm_window_y = rubberBand.maxValue;
-              subplot.perm_window_h = subplot.perm_window_y - rubberBand.minValue;
-            }
-          })
-          if (completedAxis.length < 2 && rubberBands.length !== 0) {
-            if (!completedAxis.includes(0)) {
-              let minValue = subplot.plotObject.lists[0][0];
-              let maxValue = subplot.plotObject.lists[0][1];
-              if (typeof minValue == "string") {
-                minValue = 0;
-                maxValue = subplot.plotObject.lists[0].length - 1;
-              }
-              subplot.perm_window_x = minValue;
-              subplot.perm_window_w = maxValue - subplot.perm_window_x;
-            }
-            if (!completedAxis.includes(1)) {
-              let minValue = subplot.plotObject.lists[1][0];
-              let maxValue = subplot.plotObject.lists[1][1];
-              if (typeof minValue == "string") {
-                minValue = 0;
-                maxValue = subplot.plotObject.lists[1].length - 1;
-              }
-              subplot.perm_window_y = minValue;
-              subplot.perm_window_h = subplot.perm_window_y - maxValue;
-            }
-          }
-          subplot.scatter_points.forEach((scatterPoint, pointIndex) => {
-            scatterPoint.selected = false;
-            if (selectedIndices.includes(pointIndex)) {
-              scatterPoint.selected = true;
-              subplot.select_on_click.push(scatterPoint)
-            }
-          })
-          subplot.refresh_selected_point_index();
-          if (WAS_MERGE_ON == true) {
-            Interactions.click_on_merge_action(subplot)
-            subplot.draw();
-          }
-          
-        } else if (subplot instanceof ParallelPlot) {
-          let axisNames = []
-          subplot.axis_list.forEach((axis) => {axisNames.push(axis.name)})
-          rubberBandsInPlot.forEach((rubberBand, rubberBandIndex) => {
-            var axisIndex = axisNames.indexOf(rubberBand.attributeName)
-            let received_real_min = rubberBand.minValue;
-            let received_real_max = rubberBand.maxValue;
-            let temp_received_axis_min = subplot.real_to_axis_coord(
-              received_real_min, 
-              subplot.axis_list[axisIndex]['type_'], 
-              subplot.axis_list[axisIndex]['list'], 
-              subplot.inverted_axis_list[axisIndex]
-              );
-            let temp_received_axis_max = subplot.real_to_axis_coord(
-              received_real_max, 
-              subplot.axis_list[axisIndex]['type_'], 
-              subplot.axis_list[axisIndex]['list'], 
-              subplot.inverted_axis_list[axisIndex]
-              );
-            let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
-            let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
-            subplot.rubber_bands[axisIndex].minValue = received_axis_min;
-            subplot.rubber_bands[axisIndex].maxValue = received_axis_max;
-            subplot.add_to_rubberbands_dep(rubberBands[rubberBandIndex]);
-          })
+        if (subplot instanceof ParallelPlot) {
+          subplot.rubber_bands.forEach((rubberBand, rubberIndex) => {
+            var actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName) 
+            if (actualRubberIndex != -1) {
+              let received_real_min = rubberBands[actualRubberIndex].minValue;
+              let received_real_max = rubberBands[actualRubberIndex].maxValue;
+              let temp_received_axis_min = subplot.real_to_axis_coord(
+                received_real_min, 
+                subplot.axis_list[rubberIndex]['type_'], 
+                subplot.axis_list[rubberIndex]['list'], 
+                subplot.inverted_axis_list[rubberIndex]
+                );
+              let temp_received_axis_max = subplot.real_to_axis_coord(
+                received_real_max, 
+                subplot.axis_list[rubberIndex]['type_'], 
+                subplot.axis_list[rubberIndex]['list'], 
+                subplot.inverted_axis_list[rubberIndex]
+                );
+              let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
+              let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
+              
+              rubberBand.minValue = received_axis_min;
+              rubberBand.maxValue = received_axis_max; 
 
-        } else if (subplot instanceof Histogram) {
-          rubberBandsInPlot.forEach((rubberBand) => {
-            subplot.x_rubberband.minValue = rubberBand.minValue
-            subplot.x_rubberband.maxValue = rubberBand.maxValue;
-          })
-          if (rubberBandsInPlot.length == 0) {
-            subplot.x_rubberband.minValue = subplot.x_rubberband.maxValue = 0;
-          }
-          subplot.get_selected_keys();
-
-        } else if (subplot instanceof PrimitiveGroupContainer) {
-          subplot.selected_point_index = selectedIndices;
-          if (selectedIndices.length == 0) {
-            let sumRubberLength = 0;
-            rubberBands.forEach((rubberBand) => {
-              sumRubberLength += rubberBand.length;
-            })
-            if (sumRubberLength == 0 && selectedIndices.length == 0) {
-              subplot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
             }
-          }
-          subplot.select_primitive_groups();
+          })
         }
       })
+      actualPP.rubber_bands = rubberBands;
+      actualPP.draw();
+
     }
+
+    // pp_communication(rubberBands: RubberBand[], actualPP: any) { //process received data from a parallelplot and send it to the other objects
+    //   let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
+
+    //   this.objectList.forEach((subplot) => {
+    //     const WAS_MERGE_ON = subplot.mergeON;
+    //     var subplotData = subplot.data
+    //     var rubberBandsInPlot = [];
+    //     rubberBands.forEach((rubberBand) => {
+    //       if (["scatterplot", "parallelplot", "graph2d"].includes(subplotData.type_)) {
+    //         if (subplotData.attribute_names.includes(rubberBand.attributeName)) {
+    //           rubberBandsInPlot.push(rubberBand);
+    //         }
+    //       } else if (subplotData.type_ === "histogram") {
+    //         if (subplotData.x_variable === rubberBand.attributeName) {
+    //           rubberBandsInPlot.push(rubberBand);
+    //         }
+    //       } else if (subplotData.type_ === "primitivegroupcontainer") {
+    //         if (subplotData.association.attribute_names.includes(rubberBand.attributeName)) {
+    //           rubberBandsInPlot.push(rubberBand);
+    //         }
+    //       }
+    //     })
+    //     if (subplot instanceof PlotScatter && subplot.type_ !== "graph2d") {
+    //       if (WAS_MERGE_ON == true) {
+    //         Interactions.click_on_merge_action(subplot)
+    //         subplot.draw();
+    //       }
+    //       let completedAxis = [];
+    //       rubberBandsInPlot.forEach((rubberBand) => {
+    //         var axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
+    //         completedAxis.push(axisIndex)
+    //         if (axisIndex == 0) {
+    //           subplot.perm_window_x = rubberBand.minValue;
+    //           subplot.perm_window_w = rubberBand.maxValue - subplot.perm_window_x;
+    //         } else if (axisIndex == 1) {
+    //           subplot.perm_window_y = rubberBand.maxValue;
+    //           subplot.perm_window_h = subplot.perm_window_y - rubberBand.minValue;
+    //         }
+    //       })
+    //       if (completedAxis.length < 2 && rubberBands.length !== 0) {
+    //         if (!completedAxis.includes(0)) {
+    //           let minValue = subplot.plotObject.lists[0][0];
+    //           let maxValue = subplot.plotObject.lists[0][1];
+    //           if (typeof minValue == "string") {
+    //             minValue = 0;
+    //             maxValue = subplot.plotObject.lists[0].length - 1;
+    //           }
+    //           subplot.perm_window_x = minValue;
+    //           subplot.perm_window_w = maxValue - subplot.perm_window_x;
+    //         }
+    //         if (!completedAxis.includes(1)) {
+    //           let minValue = subplot.plotObject.lists[1][0];
+    //           let maxValue = subplot.plotObject.lists[1][1];
+    //           if (typeof minValue == "string") {
+    //             minValue = 0;
+    //             maxValue = subplot.plotObject.lists[1].length - 1;
+    //           }
+    //           subplot.perm_window_y = minValue;
+    //           subplot.perm_window_h = subplot.perm_window_y - maxValue;
+    //         }
+    //       }
+    //       subplot.scatter_points.forEach((scatterPoint, pointIndex) => {
+    //         scatterPoint.selected = false;
+    //         if (selectedIndices.includes(pointIndex)) {
+    //           scatterPoint.selected = true;
+    //           subplot.select_on_click.push(scatterPoint)
+    //         }
+    //       })
+    //       subplot.refresh_selected_point_index();
+    //       if (WAS_MERGE_ON == true) {
+    //         Interactions.click_on_merge_action(subplot)
+    //         subplot.draw();
+    //       }
+          
+    //     } else if (subplot instanceof ParallelPlot) {
+    //       let axisNames = []
+    //       subplot.axis_list.forEach((axis) => {axisNames.push(axis.name)})
+    //       rubberBandsInPlot.forEach((rubberBand) => {
+    //         var axisIndex = axisNames.indexOf(rubberBand.attributeName)
+    //         let received_real_min = rubberBand.minValue;
+    //         let received_real_max = rubberBand.maxValue;
+    //         let temp_received_axis_min = subplot.real_to_axis_coord(
+    //           received_real_min, 
+    //           subplot.axis_list[axisIndex]['type_'], 
+    //           subplot.axis_list[axisIndex]['list'], 
+    //           subplot.inverted_axis_list[axisIndex]
+    //           );
+    //         let temp_received_axis_max = subplot.real_to_axis_coord(
+    //           received_real_max, 
+    //           subplot.axis_list[axisIndex]['type_'], 
+    //           subplot.axis_list[axisIndex]['list'], 
+    //           subplot.inverted_axis_list[axisIndex]
+    //           );
+    //         let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
+    //         let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
+    //           subplot.rubber_bands[axisIndex].minValue = received_axis_min;
+    //           subplot.rubber_bands[axisIndex].maxValue = received_axis_max;            
+    //        })
+
+    //     } else if (subplot instanceof Histogram) {
+    //       rubberBandsInPlot.forEach((rubberBand) => {
+    //         subplot.x_rubberband.minValue = rubberBand.minValue
+    //         subplot.x_rubberband.maxValue = rubberBand.maxValue;
+    //       })
+    //       if (rubberBandsInPlot.length == 0) {
+    //         subplot.x_rubberband.minValue = subplot.x_rubberband.maxValue = 0;
+    //       }
+    //       subplot.get_selected_keys();
+
+    //     } else if (subplot instanceof PrimitiveGroupContainer) {
+    //       subplot.selected_point_index = selectedIndices;
+    //       if (selectedIndices.length == 0) {
+    //         let sumRubberLength = 0;
+    //         rubberBands.forEach((rubberBand) => {
+    //           sumRubberLength += rubberBand.length;
+    //         })
+    //         if (sumRubberLength == 0 && selectedIndices.length == 0) {
+    //           subplot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
+    //         }
+    //       }
+    //       subplot.select_primitive_groups();
+    //     }
+    //   })
+    // }
 
 
     mouse_move_histogram_communication() {
@@ -1926,7 +1946,7 @@ export class MultiplePlots {
                     this.setAllInterpolationToOFF();
                   }
                   this.reset_selected_points_except([this.clickedPlotIndex]);
-                  this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep, this.objectList[this.clickedPlotIndex]);
+                  this.pp_communication(this.objectList[this.clickedPlotIndex].rubber_bands, this.objectList[this.clickedPlotIndex]);
                 }
               } else if (type_ === 'histogram') {
                 let obj: any = this.objectList[this.clickedPlotIndex];
@@ -2020,7 +2040,6 @@ export class MultiplotCom {
       var max = Math.min(axis_max, 1);
       plot_data.rubber_bands[index].minValue = min;
       plot_data.rubber_bands[index].maxValue = max;
-      plot_data.add_to_rubberbands_dep(new RubberBand(attribute['name'], coordinates[0], coordinates[1]));
       plot_data.refresh_pp_selected();
     }
 
@@ -2090,7 +2109,6 @@ export class MultiplotCom {
       axis_coord2 = Math.max(Math.min(axis_coord2, 1), 0);
       parallel_plot.rubber_bands[index].minValue = Math.min(axis_coord1, axis_coord2);
       parallel_plot.rubber_bands[index].maxValue = Math.max(axis_coord1, axis_coord2);
-      parallel_plot.add_to_rubberbands_dep([x_variable.name, [x_rubberband.minValue, x_rubberband.maxValue]]);
     }
 
 

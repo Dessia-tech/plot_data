@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -241,7 +241,7 @@ export class PlotScatter extends PlotData {
 }
 
 
-/** A class thtat inherits from PlotData and is specific for drawing ParallelPlots  */
+/** A class that inherits from PlotData and is specific for drawing ParallelPlots  */
 export class ParallelPlot extends PlotData {
 
     constructor(public data, public width, public height, public buttons_ON, X, Y, public canvas_id: string,
@@ -397,6 +397,25 @@ export class ParallelPlot extends PlotData {
       this.interpolation_colors.forEach(rgb => {
         this.hexs.push(rgb_to_hex(rgb));
       });
+    }
+
+    getObjectsInRubberBands(rubberBands: RubberBand[]): number[] { // any to solve types problems from typescript
+      let selectedIndices = [];
+
+      this.data["elements"].forEach((sample, elementIndex) => {
+        var inRubberBand = 0;
+        if (rubberBands.length !==0 ) {
+          rubberBands.forEach((rubberBand) => {
+            this.axis_list.forEach((axis) => {
+              inRubberBand += Number(rubberBand.includesValue(sample[rubberBand.attributeName], axis))
+            })
+          })
+          if (inRubberBand == rubberBands.length) {
+            selectedIndices.push(elementIndex)
+          }
+        }
+      })
+      return selectedIndices
     }
 }
 

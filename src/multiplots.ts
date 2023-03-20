@@ -1346,7 +1346,7 @@ export class MultiplePlots {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
           }
-          
+
         } else if (subplot instanceof ParallelPlot) {
           let axisNames = []
           subplot.axis_list.forEach((axis) => {axisNames.push(axis.name)})
@@ -1355,15 +1355,15 @@ export class MultiplePlots {
             let received_real_min = rubberBand.minValue;
             let received_real_max = rubberBand.maxValue;
             let temp_received_axis_min = subplot.real_to_axis_coord(
-              received_real_min, 
-              subplot.axis_list[axisIndex]['type_'], 
-              subplot.axis_list[axisIndex]['list'], 
+              received_real_min,
+              subplot.axis_list[axisIndex]['type_'],
+              subplot.axis_list[axisIndex]['list'],
               subplot.inverted_axis_list[axisIndex]
               );
             let temp_received_axis_max = subplot.real_to_axis_coord(
-              received_real_max, 
-              subplot.axis_list[axisIndex]['type_'], 
-              subplot.axis_list[axisIndex]['list'], 
+              received_real_max,
+              subplot.axis_list[axisIndex]['type_'],
+              subplot.axis_list[axisIndex]['list'],
               subplot.inverted_axis_list[axisIndex]
               );
             let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);

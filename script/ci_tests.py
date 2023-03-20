@@ -12,7 +12,7 @@ path = "/".join(os.path.dirname(__file__).split("/")[:-1] + ["cypress/data_src"]
 if not os.path.exists(path):
     os.makedirs(path)
 
-    
+
 if len(sys.argv) > 1:
     path = sys.argv[1]
     if path.startswith("--path"):

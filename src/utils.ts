@@ -1112,7 +1112,7 @@ export function export_to_csv(rows, filename="my_data.csv") {
 
 export class RubberBand {
   constructor(public attributeName: string,
-              public minValue: number, 
+              public minValue: number,
               public maxValue: number) {}
 
   public static deserialize(serialized) { // A priori not required
@@ -1147,4 +1147,3 @@ export class RubberBand {
     return includesValue
   }
 }
-

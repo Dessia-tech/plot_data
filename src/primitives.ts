@@ -497,7 +497,7 @@ export class MultipleLabels {
 
 export class Point2D {
     /**
-     * minX, maxX, minY, maxY define the bouding box.
+     * minX, maxX, minY, maxY define the bounding box.
      * size is the real size of the point (depends on point_size which value is 1, 2, 3 or 4).
      */
     minX:number=0;

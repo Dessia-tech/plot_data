@@ -46,11 +46,14 @@ steps:
   commands:
   - git fetch --tags
   - python setup.py install
-  - pip install coverage #sphinx sphinx-rtd-theme coverage nbformat nbconvert
+  - pip install coverage sphinx sphinx-rtd-theme
   - cd ./script
   - coverage run --source plot_data ci_tests.py --path="/drone/src/cypress/data_src"
   - coverage report
   - coverage html
+  - cd ../doc
+  - make html
+
   volumes:
   - name: jsons
     path: /drone/src/cypress/data_src
@@ -82,14 +85,6 @@ steps:
     source: cypress/results/*
     strip_components: 2
     overwrite: true
-
-- name: python install, build doc run scripts
-  image: python:3.8
-  commands:
-  - pip install sphinx sphinx_rtd_theme
-  - python setup.py install
-  - cd doc
-  - make html
 
 - name: upload npm
   image: plugins/npm

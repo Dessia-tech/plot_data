@@ -81,6 +81,7 @@ MAX_ERROR_BY_TYPE = {
                      'unexpected-special-method-signature': 0,
                      'too-many-lines': 1,
                      'bare-except': 1,
+                     "broad-exception-caught": 1,
                      'unspecified-encoding': 0,
                      'no-else-raise': 0,
                      'bad-indentation': 0,

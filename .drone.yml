@@ -4,6 +4,32 @@ type: docker
 name: default
 
 steps:
+- name: merge master on dev
+  image: alpine/git
+  when:
+    event: push
+    branch: master
+  commands:
+  - git fetch origin dev
+  - git checkout dev
+  - git merge master
+  - git push
+
+- name: notify upstream merge failure
+  when:
+    event: push
+    branch: master
+    status:
+    - failure
+  image: drillster/drone-email
+  failure: ignore
+  settings:
+    host: mail.dessia.tech
+    username: technical@dessia.tech
+    password:
+     from_secret: email_password
+    from: technical@dessia.tech
+
 - name: npm update tag from git, build
   image: node:16
   commands:
@@ -69,6 +95,16 @@ steps:
     token:
       from_secret: npm_token
     email: root@dessia.tech
+
+- name: check changelog update
+  image: python:3.8
+  when:
+    event: pull_request
+    branch:
+      - master
+      - dev
+  commands:
+    - bash code_changelog.sh
 
 - name: upload to cdn sid
   image: appleboy/drone-scp

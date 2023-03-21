@@ -1110,22 +1110,33 @@ export function export_to_csv(rows, filename="my_data.csv") {
 }
 
 export class RubberBand {
+  axisMin: number = 0;
+  axisMax: number = 0;  
+  realMin: number = 0;
+  realMax: number = 0;
+  smallSize: number = 20;
   constructor(public attributeName: string,
               private _minValue: number, 
-              private _maxValue: number) {}
+              private _maxValue: number,
+              public isVertical: boolean) {}
 
-  public static deserialize(serialized) { // A priori not required
-    return new RubberBand(serialized['attribute_name'],
-                          serialized['min_value'],
-                          serialized['max_value']);
-  }
+  // public static deserialize(serialized) { // A priori not required
+  //   return new RubberBand(serialized['attribute_name'],
+  //                         serialized['min_value'],
+  //                         serialized['max_value'],
+  //                         serialized['vertical']);
+  // }
 
-  public static fromFormerFormat(formerFormatValue: [string, [number, number]]): RubberBand {
-    return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
-  }
+  // public static fromFormerFormat(formerFormatValue: [string, [number, number]]): RubberBand {
+  //   return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
+  // }
 
   public get length() {
     return Math.abs(this.maxValue - this.minValue)
+  }
+
+  public get normedLength() {
+    return Math.abs(this.realMax - this.realMin)
   }
 
   public set minValue(value: number) {
@@ -1144,9 +1155,12 @@ export class RubberBand {
     return this._maxValue
   }
 
-  public draw(originX: number, originY: number, width: number, height: number, context: CanvasRenderingContext2D, 
-    colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
-    Shape.rect(originX, originY, width, height, context, colorFill, colorStroke, lineWidth, alpha);
+  public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
+    if (this.isVertical) {
+      Shape.rect(origin - this.smallSize / 2, this.realMin, this.smallSize, this.normedLength, context, colorFill, colorStroke, lineWidth, alpha);
+    } else {
+      Shape.rect(this.realMin, origin - this.smallSize / 2, this.normedLength, this.smallSize, context, colorFill, colorStroke, lineWidth, alpha);
+    }
   }
 
   public invert() {
@@ -1166,7 +1180,6 @@ export class RubberBand {
     if (this.length <= 0.02) {
       includesValue = true;
     }
-  
     if (axis.name == this.attributeName) {
       let realValue = value;
       if (typeof realValue == "string") {

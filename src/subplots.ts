@@ -388,7 +388,7 @@ export class ParallelPlot extends PlotData {
     initialize_data_lists() {
       for (let i=0; i<this.axis_list.length; i++) {
         this.inverted_axis_list.push(false);
-        this.rubber_bands.push(new RubberBand(this.axis_list[i].name, 0, 0));
+        this.rubber_bands.push(new RubberBand(this.axis_list[i].name, 0, 0, this.vertical));
       }
     }
 
@@ -401,7 +401,7 @@ export class ParallelPlot extends PlotData {
 
     getObjectsInRubberBands(rubberBands: RubberBand[]): number[] {
       let selectedIndices = [];
-
+      console.log(this.data['elements'])
       this.data["elements"].forEach((sample, elementIndex) => {
         var inRubberBand = 0;
         if (rubberBands.length !==0 ) {
@@ -1402,8 +1402,8 @@ export class Histogram extends PlotData {
       if (type_ !== 'float') this.discrete = true;
 
       this.x_variable = new Attribute(name, type_);
-      this.x_rubberband = new RubberBand(this.x_variable.name, 0, 0);
-      this.y_rubberband = new RubberBand("frequency", 0, 0);
+      this.x_rubberband = new RubberBand(this.x_variable.name, 0, 0, false);
+      this.y_rubberband = new RubberBand("frequency", 0, 0, true);
       const axis = data['axis'] || {grid_on: false};
       this.axis = Axis.deserialize(axis);
       let temp_surface_style = data['surface_style'] || {};
@@ -1490,22 +1490,15 @@ export class Histogram extends PlotData {
       const COLOR_STROKE = string_to_hex('lightgrey');
       const LINE_WIDTH = 0.5;
       const ALPHA = 0.6;
-      var origin = this.real_to_display(rubberBand.minValue, axisType);
-      var projectedMax = this.real_to_display(rubberBand.maxValue, axisType);
-      var largeSize = projectedMax - origin;
+      rubberBand.axisMin = this.real_to_display(rubberBand.minValue, axisType);
+      rubberBand.axisMax = this.real_to_display(rubberBand.maxValue, axisType);
 
       if (axisType == 'x') {
-        var originY = this.height - this.decalage_axis_y - SMALL_SIZE/2 + this.Y;
-        // rubberBand.drawnMin = origin;
-        // rubberBand.drawnMax = this.height - this.decalage_axis_y - SMALL_SIZE/2 + this.Y;
-        // rubberBand.draw(largeSize, SMALL_SIZE, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
-        rubberBand.draw(origin, originY, largeSize, SMALL_SIZE, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+        var originY = this.height - this.decalage_axis_y - SMALL_SIZE / 2 + this.Y;
+        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
       } else {
-        var originY = this.decalage_axis_x - SMALL_SIZE/2 + this.X;
-        // rubberBand.drawnMin = this.decalage_axis_x - SMALL_SIZE/2 + this.X;
-        // rubberBand.drawnMax = origin;
-        // rubberBand.draw(SMALL_SIZE, largeSize, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
-        rubberBand.draw(originY, origin, SMALL_SIZE, largeSize, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+        var originY = this.decalage_axis_x - SMALL_SIZE / 2 + this.X;
+        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
       }
     }
 

@@ -1256,40 +1256,39 @@ export class MultiplePlots {
       let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
       console.log(rubberBands)
       let rubberBandNames = []
-      rubberBands.forEach((rubberBand) => { rubberBandNames.push(rubberBand.attributeName) })
+      rubberBands.forEach((rubberBand) => {
+        rubberBandNames.push(rubberBand.attributeName)
+      })
     
       this.objectList.forEach((subplot) => {
         if (subplot instanceof ParallelPlot) {
           subplot.rubber_bands.forEach((rubberBand, rubberIndex) => {
             var actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName) 
             if (actualRubberIndex != -1) {
-              let received_real_min = rubberBands[actualRubberIndex].minValue;
-              let received_real_max = rubberBands[actualRubberIndex].maxValue;
-              let temp_received_axis_min = subplot.real_to_axis_coord(
-                received_real_min, 
-                subplot.axis_list[rubberIndex]['type_'], 
-                subplot.axis_list[rubberIndex]['list'], 
-                subplot.inverted_axis_list[rubberIndex]
-                );
-              let temp_received_axis_max = subplot.real_to_axis_coord(
-                received_real_max, 
-                subplot.axis_list[rubberIndex]['type_'], 
-                subplot.axis_list[rubberIndex]['list'], 
-                subplot.inverted_axis_list[rubberIndex]
-                );
-              let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
-              let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
-              
-              rubberBand.minValue = received_axis_min;
-              rubberBand.maxValue = received_axis_max; 
-
+              // let received_real_min = rubberBands[actualRubberIndex].minValue;
+              // let received_real_max = rubberBands[actualRubberIndex].maxValue;
+              // let temp_received_axis_min = subplot.real_to_axis_coord(
+              //   received_real_min, 
+              //   subplot.axis_list[rubberIndex]['type_'], 
+              //   subplot.axis_list[rubberIndex]['list'], 
+              //   subplot.inverted_axis_list[rubberIndex]
+              // );
+              // let temp_received_axis_max = subplot.real_to_axis_coord(
+              //   received_real_max, 
+              //   subplot.axis_list[rubberIndex]['type_'], 
+              //   subplot.axis_list[rubberIndex]['list'], 
+              //   subplot.inverted_axis_list[rubberIndex]
+              // );
+              // rubberBand.realMin = Math.min(temp_received_axis_min, temp_received_axis_max);
+              // rubberBand.realMax = Math.max(temp_received_axis_min, temp_received_axis_max);
+              rubberBand.minValue = rubberBands[actualRubberIndex].minValue;
+              rubberBand.maxValue = rubberBands[actualRubberIndex].maxValue;
+              // rubberBand.axisMax = Math.max(temp_received_axis_min, temp_received_axis_max);
             }
           })
+          console.log(subplot.rubber_bands)
         }
       })
-      actualPP.rubber_bands = rubberBands;
-      actualPP.draw();
-
     }
 
     // pp_communication(rubberBands: RubberBand[], actualPP: any) { //process received data from a parallelplot and send it to the other objects
@@ -2223,7 +2222,6 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
   multiplot.redrawAllObjects();
   return multiplot;
 }
-
 
 const empty_container = {'name': '',
 'package_version': '0.6.2',

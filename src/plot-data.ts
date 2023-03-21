@@ -1339,33 +1339,30 @@ export abstract class PlotData {
   draw_rubber_bands(mvx) {
     var color_stroke = string_to_hex('white');
     var line_width = 0.1;
-    for (var i=0; i<this.rubber_bands.length; i++) {
-      if (this.rubber_bands[i].length != 0) {
+    this.rubber_bands.forEach((rubberBand, idx) => {
+      if (rubberBand.length != 0) {
         if (this.vertical) {
-          var minY = this.rubber_bands[i].minValue;
-          var maxY = this.rubber_bands[i].maxValue;
-          var real_minY = this.axis_y_end + minY*(this.axis_y_start - this.axis_y_end);
-          var real_maxY = this.axis_y_end + maxY*(this.axis_y_start - this.axis_y_end);
-          var current_x = this.axis_x_start + i*this.x_step;
-          if (i == this.move_index) {
-            Shape.rect(current_x - this.bandWidth/2 + mvx, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
+          rubberBand.realMin = this.axis_y_end + rubberBand.axisMin * (this.axis_y_start - this.axis_y_end);
+          rubberBand.realMax = this.axis_y_end + rubberBand.axisMax * (this.axis_y_start - this.axis_y_end);
+          var current_x = this.axis_x_start + idx * this.x_step;
+          if (idx == this.move_index) {
+            rubberBand.draw(current_x + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
           } else {
-            Shape.rect(current_x - this.bandWidth/2, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
+            rubberBand.draw(current_x, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
           }
         } else {
-          var minX = this.rubber_bands[i].minValue;
-          var maxX = this.rubber_bands[i].maxValue;
-          var real_minX = this.axis_x_start + minX*(this.axis_x_end - this.axis_x_start);
-          var real_maxX = this.axis_x_start + maxX*(this.axis_x_end - this.axis_x_start);
-          var current_y = this.axis_y_start + i*this.y_step;
-          if (i == this.move_index) {
-            Shape.rect(real_minX, current_y - this.bandWidth/2 + mvx, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
+          rubberBand.realMin = this.axis_x_start + rubberBand.axisMin * (this.axis_x_end - this.axis_x_start);
+          rubberBand.realMax = this.axis_x_start + rubberBand.axisMax * (this.axis_x_end - this.axis_x_start);
+          var current_y = this.axis_y_start + idx * this.y_step;
+          if (idx == this.move_index) {
+            rubberBand.draw(current_y + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
           } else {
-            Shape.rect(real_minX, current_y - this.bandWidth/2, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
+            rubberBand.draw(current_y, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
           }
         }
       }
-    }
+    })
+    console.log(this.rubber_bands)
   }
 
   refresh_interpolation_colors(): void {
@@ -1523,7 +1520,7 @@ export abstract class PlotData {
     this.refresh_axis_bounds(this.axis_list.length);
     this.refresh_all_attributes();
     this.refresh_attribute_booleans();
-    this.rubber_bands.push(new RubberBand(name, 0, 0));
+    this.rubber_bands.push(new RubberBand(name, 0, 0, this.vertical));
     this.refresh_to_display_list(this.elements);
     this.draw();
   }
@@ -2912,15 +2909,15 @@ export class Interactions {
     var real_min = Math.min(realCoord_min, realCoord_max);
     var real_max = Math.max(realCoord_min, realCoord_max);
     if (plot_data.is_in_multiplot) {
-      // plot_data.rubber_bands[selected_axis_index].drawnMin = min;
-      // plot_data.rubber_bands[selected_axis_index].drawnMax = max;
-      plot_data.rubber_bands[selected_axis_index].minValue = real_min;
-      plot_data.rubber_bands[selected_axis_index].maxValue = real_max;
-    } else {
+      plot_data.rubber_bands[selected_axis_index].axisMin = real_min;
+      plot_data.rubber_bands[selected_axis_index].axisMax = real_max;
       plot_data.rubber_bands[selected_axis_index].minValue = min;
       plot_data.rubber_bands[selected_axis_index].maxValue = max;
-      // plot_data.rubber_bands[selected_axis_index].drawnMin = real_min;
-      // plot_data.rubber_bands[selected_axis_index].drawnMax = real_max;
+    } else {
+      plot_data.rubber_bands[selected_axis_index].minValue = real_min;
+      plot_data.rubber_bands[selected_axis_index].maxValue = real_max;
+      plot_data.rubber_bands[selected_axis_index].axisMin = min;
+      plot_data.rubber_bands[selected_axis_index].axisMax = max;
     }
     plot_data.draw();
     return [mouse2X, mouse2Y];
@@ -2948,15 +2945,15 @@ export class Interactions {
     let to_add_min = Math.min(real_new_min, real_new_max);
     let to_add_max = Math.max(real_new_min, real_new_max);
     if (plot_data.is_in_multiplot) {
-      // plot_data.rubber_bands[selected_band_index].drawnMin = new_min;
-      // plot_data.rubber_bands[selected_band_index].drawnMax = new_max;
-      plot_data.rubber_bands[selected_band_index].minValue = to_add_min;
-      plot_data.rubber_bands[selected_band_index].maxValue = to_add_max;
-    } else {
+      plot_data.rubber_bands[selected_band_index].axisMin = to_add_min;
+      plot_data.rubber_bands[selected_band_index].axisMax = to_add_max;
       plot_data.rubber_bands[selected_band_index].minValue = new_min;
       plot_data.rubber_bands[selected_band_index].maxValue = new_max;
-      // plot_data.rubber_bands[selected_band_index].drawnMin = to_add_min;
-      // plot_data.rubber_bands[selected_band_index].drawnMax = to_add_max;
+    } else {
+      plot_data.rubber_bands[selected_band_index].minValue = to_add_min;
+      plot_data.rubber_bands[selected_band_index].maxValue = to_add_max;
+      plot_data.rubber_bands[selected_band_index].axisMin = new_min;
+      plot_data.rubber_bands[selected_band_index].axisMax = new_max;
     }
     plot_data.draw();
     return [mouse2X, mouse2Y];
@@ -3003,15 +3000,15 @@ export class Interactions {
     var to_add_min = Math.min(real_new_min, real_new_max);
     var to_add_max = Math.max(real_new_min, real_new_max);
     if (plot_data.is_in_multiplot) {
-      // plot_data.rubber_bands[axis_index].drawnMin = new_min;
-      // plot_data.rubber_bands[axis_index].drawnMax = new_max;
-      plot_data.rubber_bands[axis_index].minValue = to_add_min;
-      plot_data.rubber_bands[axis_index].maxValue = to_add_max;
-    } else {
+      plot_data.rubber_bands[axis_index].axisMin = to_add_min;
+      plot_data.rubber_bands[axis_index].axisMax = to_add_max;
       plot_data.rubber_bands[axis_index].minValue = new_min;
       plot_data.rubber_bands[axis_index].maxValue = new_max;
-      // plot_data.rubber_bands[axis_index].drawnMin = to_add_min;
-      // plot_data.rubber_bands[axis_index].drawnMax = to_add_max;
+    } else {
+      plot_data.rubber_bands[axis_index].minValue = to_add_min;
+      plot_data.rubber_bands[axis_index].maxValue = to_add_max;
+      plot_data.rubber_bands[axis_index].axisMin = new_min;
+      plot_data.rubber_bands[axis_index].axisMax = new_max;
     }
     plot_data.draw();
     var is_resizing = true;
@@ -3070,6 +3067,7 @@ export class Interactions {
 
   public static change_disposition_action(plot_data:any) {
     plot_data.vertical = !plot_data.vertical;
+    plot_data.rubber_bands.forEach((rubberBand) => { rubberBand.isVertical = !rubberBand.isVertical })
     plot_data.refresh_axis_bounds(plot_data.axis_list.length);
     plot_data.invert_rubber_bands('all');
 
@@ -3111,6 +3109,7 @@ export class Interactions {
           var real_minY = plot_data.axis_y_end + min*(plot_data.axis_y_start - plot_data.axis_y_end);
           var real_maxY = plot_data.axis_y_end + max*(plot_data.axis_y_start - plot_data.axis_y_end);
           var current_x = plot_data.axis_x_start + i*plot_data.x_step;
+          console.log(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY - border_size/2, plot_data.bandWidth, border_size)
           var is_in_upper_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_lower_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_maxY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_rubber_band = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY, plot_data.bandWidth, real_maxY - real_minY);

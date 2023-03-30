@@ -1,5 +1,6 @@
 “files”: [“lib/**/*”]
 /cypress
+/build
 /doc
 /lib/cypress
 /libdev

@@ -404,10 +404,8 @@ export class ParallelPlot extends PlotData {
       this.data["elements"].forEach((sample, elementIndex) => {
         var inRubberBand = 0;
         if (rubberBands.length !==0 ) {
-          rubberBands.forEach((rubberBand) => {
-            this.axis_list.forEach((axis) => {
-              inRubberBand += Number(rubberBand.includesValue(sample[rubberBand.attributeName], axis))
-            })
+          rubberBands.forEach((rubberBand, rubberIndex) => {
+            inRubberBand += Number(rubberBand.includesValue(sample[rubberBand.attributeName], this.axis_list[rubberIndex]))
           })
           if (inRubberBand == rubberBands.length) {
             selectedIndices.push(elementIndex)

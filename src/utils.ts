@@ -1115,21 +1115,11 @@ export class RubberBand {
   realMin: number = 0;
   realMax: number = 0;
   smallSize: number = 20;
+  readonly MIN_LENGTH = 0.02;
   constructor(public attributeName: string,
               private _minValue: number, 
               private _maxValue: number,
               public isVertical: boolean) {}
-
-  // public static deserialize(serialized) { // A priori not required
-  //   return new RubberBand(serialized['attribute_name'],
-  //                         serialized['min_value'],
-  //                         serialized['max_value'],
-  //                         serialized['vertical']);
-  // }
-
-  // public static fromFormerFormat(formerFormatValue: [string, [number, number]]): RubberBand {
-  //   return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
-  // }
 
   public get canvasLength() {
     return Math.abs(this.realMax - this.realMin)
@@ -1173,6 +1163,12 @@ export class RubberBand {
     this.axisMax = 1 - newAxisMin;
   }
 
+  public flipValues(): void{
+    [this.axisMin, this.axisMax] = [this.axisMax, this.axisMin];
+    [this.minValue, this.maxValue] = [this.minValue, this.maxValue];
+    [this.realMin, this.realMax] = [this.realMax, this.realMin];
+  }
+
   public reset() {
     this.minValue = 0;
     this.maxValue = 0;
@@ -1184,7 +1180,7 @@ export class RubberBand {
 
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
-    if (this.normedLength <= 0.02) {
+    if (this.normedLength <= this.MIN_LENGTH) {
       includesValue = true;
     }
     if (axis.name == this.attributeName) {

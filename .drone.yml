@@ -4,6 +4,32 @@ type: docker
 name: default
 
 steps:
+- name: merge master on dev
+  image: alpine/git
+  when:
+    event: push
+    branch: master
+  commands:
+  - git fetch origin dev
+  - git checkout dev
+  - git merge master
+  - git push
+
+- name: notify upstream merge failure
+  when:
+    event: push
+    branch: master
+    status:
+    - failure
+  image: drillster/drone-email
+  failure: ignore
+  settings:
+    host: mail.dessia.tech
+    username: technical@dessia.tech
+    password:
+     from_secret: email_password
+    from: technical@dessia.tech
+
 - name: npm update tag from git, build
   image: node:16
   commands:
@@ -20,11 +46,14 @@ steps:
   commands:
   - git fetch --tags
   - python setup.py install
-  - pip install coverage #sphinx sphinx-rtd-theme coverage nbformat nbconvert
+  - pip install coverage sphinx sphinx-rtd-theme
   - cd ./script
   - coverage run --source plot_data ci_tests.py --path="/drone/src/cypress/data_src"
   - coverage report
   - coverage html
+  - cd ../doc
+  - make html
+
   volumes:
   - name: jsons
     path: /drone/src/cypress/data_src
@@ -57,14 +86,6 @@ steps:
     strip_components: 2
     overwrite: true
 
-- name: python install, build doc run scripts
-  image: python:3.8
-  commands:
-  - pip install sphinx sphinx_rtd_theme
-  - python setup.py install
-  - cd doc
-  - make html
-
 - name: upload npm
   image: plugins/npm
   when:
@@ -74,6 +95,16 @@ steps:
     token:
       from_secret: npm_token
     email: root@dessia.tech
+
+- name: check changelog update
+  image: python:3.8
+  when:
+    event: pull_request
+    branch:
+      - master
+      - dev
+  commands:
+    - bash code_changelog.sh
 
 - name: upload to cdn sid
   image: appleboy/drone-scp
@@ -139,7 +170,7 @@ steps:
   commands:
   - pip install pylint==2.16.2 pre-commit
   - python code_pylint.py
-  # - pre-commit run -a
+  - pre-commit run -a
 
 - name: check pep8 formatting
   image: python:3.9

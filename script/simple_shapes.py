@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Wed Mar 14 15:32:37 2018
 
-@author: Steven Masfaraud masfaraud@dessia.tech
 """
 from test_objects.primitive_group_test import \
     primitive_group as plot_data_object
@@ -14,4 +12,8 @@ import plot_data
 # to make MultiplePlots' more convenient
 
 # if debug mode is True, set it to False
+
+plot_data_object.mpl_plot()
+
+plot_data_object.save_to_image('primitive_group.png')
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

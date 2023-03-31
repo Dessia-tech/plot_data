@@ -4,7 +4,7 @@
 import numpy as np
 
 import plot_data
-from plot_data.colors import RED, BLUE, BLACK
+from plot_data.colors import BLACK, BLUE, RED
 
 k = 0
 

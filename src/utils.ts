@@ -1199,4 +1199,3 @@ export class RubberBand {
     return includesValue
   }
 }
-

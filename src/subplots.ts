@@ -1482,19 +1482,18 @@ export class Histogram extends PlotData {
     }
 
     draw_rubberband(rubberBand: RubberBand, axisType: string) {
-      const SMALL_SIZE = 20;
       const COLOR_FILL = string_to_hex('lightrose');
       const COLOR_STROKE = string_to_hex('lightgrey');
       const LINE_WIDTH = 0.5;
       const ALPHA = 0.6;
-      rubberBand.axisMin = this.real_to_display(rubberBand.minValue, axisType);
-      rubberBand.axisMax = this.real_to_display(rubberBand.maxValue, axisType);
-
+      rubberBand.realMin = this.real_to_display(rubberBand.minValue, axisType);
+      rubberBand.realMax = this.real_to_display(rubberBand.maxValue, axisType);
       if (axisType == 'x') {
-        var originY = this.height - this.decalage_axis_y - SMALL_SIZE / 2 + this.Y;
+        var originY = this.height - this.decalage_axis_y + this.Y;
         rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
       } else {
-        var originY = this.decalage_axis_x - SMALL_SIZE / 2 + this.X;
+        var originY = this.decalage_axis_x + this.X;
+        rubberBand.flipValues();
         rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
       }
     }
@@ -1904,12 +1903,13 @@ export class Histogram extends PlotData {
           return this.scale * real + this.originX + this.X;
         }
       } else if (type_ === 'y') {
-        let grad_beg_y = this.height - this.decalage_axis_y;
+        let grad_beg_y = this.height - this.decalage_axis_y /this.scale;
         let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
         return grad_beg_y - scale_y * real + this.Y;
       } else {
         throw new Error("real_to_display(): type_ must be 'x' or 'y'");
       }
+      
     }
 
 

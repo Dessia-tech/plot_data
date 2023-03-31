@@ -2042,7 +2042,6 @@ export class MultiplotCom {
       histogram2.get_selected_keys();
     }
 
-
     public static histogram_to_pp_communication(histogram, parallel_plot) {
       let index = -1;
       for (let i=0; i<parallel_plot.axis_list.length; i++) {
@@ -2060,8 +2059,10 @@ export class MultiplotCom {
       let axis_coord2 = parallel_plot.real_to_axis_coord(x_rubberband.maxValue, x_variable.type_, x_variable.list,
                                                           parallel_plot.inverted_axis_list[index]);
       axis_coord2 = Math.max(Math.min(axis_coord2, 1), 0);
-      parallel_plot.rubber_bands[index].minValue = Math.min(axis_coord1, axis_coord2);
-      parallel_plot.rubber_bands[index].maxValue = Math.max(axis_coord1, axis_coord2);
+      parallel_plot.rubber_bands[index].axisMin = Math.min(axis_coord1, axis_coord2);
+      parallel_plot.rubber_bands[index].axisMax = Math.max(axis_coord1, axis_coord2);
+      parallel_plot.rubber_bands[index].minValue = x_rubberband.minValue;
+      parallel_plot.rubber_bands[index].maxValue = x_rubberband.maxValue;
     }
 
 

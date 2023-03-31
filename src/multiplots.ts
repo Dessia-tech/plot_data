@@ -1349,10 +1349,6 @@ export class MultiplePlots {
             subplot.x_rubberband.axisMin = rubberBand.axisMin;
             subplot.x_rubberband.axisMax = rubberBand.axisMax;
           })
-          if (rubberBandsInPlot.length == 0) {
-            subplot.x_rubberband.minValue = subplot.x_rubberband.maxValue = 0;
-            subplot.x_rubberband.axisMin = subplot.x_rubberband.axisMax = 0;
-          }
           subplot.get_selected_keys();
 
         } else if (subplot instanceof PrimitiveGroupContainer) {

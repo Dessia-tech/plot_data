@@ -1131,12 +1131,16 @@ export class RubberBand {
   //   return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
   // }
 
+  public get canvasLength() {
+    return Math.abs(this.realMax - this.realMin)
+  }
+
   public get length() {
     return Math.abs(this.maxValue - this.minValue)
   }
 
   public get normedLength() {
-    return Math.abs(this.realMax - this.realMin)
+    return Math.abs(this.axisMax - this.axisMin)
   }
 
   public set minValue(value: number) {
@@ -1157,27 +1161,30 @@ export class RubberBand {
 
   public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
     if (this.isVertical) {
-      Shape.rect(origin - this.smallSize / 2, this.realMin, this.smallSize, this.normedLength, context, colorFill, colorStroke, lineWidth, alpha);
+      Shape.rect(origin - this.smallSize / 2, this.realMin, this.smallSize, this.canvasLength, context, colorFill, colorStroke, lineWidth, alpha);
     } else {
-      Shape.rect(this.realMin, origin - this.smallSize / 2, this.normedLength, this.smallSize, context, colorFill, colorStroke, lineWidth, alpha);
+      Shape.rect(this.realMin, origin - this.smallSize / 2, this.canvasLength, this.smallSize, context, colorFill, colorStroke, lineWidth, alpha);
     }
   }
 
   public invert() {
-    var newMax = this.minValue;
-    this.minValue = this.maxValue;
-    this.maxValue = newMax;
+    var newAxisMin = this.axisMin;
+    this.axisMin = 1 - this.axisMax;
+    this.axisMax = 1 - newAxisMin;
   }
 
   public reset() {
     this.minValue = 0;
     this.maxValue = 0;
+    this.axisMin = 0;
+    this.axisMax = 0;
+    this.realMin = 0;
+    this.realMax = 0;
   }
 
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
-
-    if (this.length <= 0.02) {
+    if (this.normedLength <= 0.02) {
       includesValue = true;
     }
     if (axis.name == this.attributeName) {

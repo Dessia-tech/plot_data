@@ -401,7 +401,6 @@ export class ParallelPlot extends PlotData {
 
     getObjectsInRubberBands(rubberBands: RubberBand[]): number[] {
       let selectedIndices = [];
-      console.log(this.data['elements'])
       this.data["elements"].forEach((sample, elementIndex) => {
         var inRubberBand = 0;
         if (rubberBands.length !==0 ) {

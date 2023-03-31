@@ -1254,7 +1254,7 @@ export class MultiplePlots {
 
     pp_communication(rubberBands: RubberBand[], actualPP: any) { //process received data from a parallelplot and send it to the other objects
       let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
-      console.log(rubberBands)
+      // console.log(rubberBands)
       let rubberBandNames = []
       rubberBands.forEach((rubberBand) => {
         rubberBandNames.push(rubberBand.attributeName)
@@ -1286,7 +1286,7 @@ export class MultiplePlots {
               // rubberBand.axisMax = Math.max(temp_received_axis_min, temp_received_axis_max);
             }
           })
-          console.log(subplot.rubber_bands)
+          // console.log(subplot.rubber_bands)
         }
       })
     }

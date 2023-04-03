@@ -150,7 +150,6 @@ export abstract class PlotData {
   interpolation_colors:string[]=[];
   rgbs:[number, number, number][]=[];
   hexs:string[];
-  pp_selected:any[]=[];
   pp_selected_index:number[]=[];
   click_on_button:boolean=false;
   vertical_axis_coords:number[][]=[];

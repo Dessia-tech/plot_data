@@ -1441,7 +1441,6 @@ export class MultiplePlots {
             }
           }
         } else if (obj.type_ == 'parallelplot') {
-          this.objectList[i].pp_selected = [];
           for (let j=0; j<this.dep_selected_points_index.length; j++) {
             var to_display = [];
             for (let k=0; k<obj.axis_list.length; k++) {
@@ -1454,7 +1453,6 @@ export class MultiplePlots {
               }
               to_display.push(elt);
             }
-            this.objectList[i].pp_selected.push(to_display);
           }
         }
       }

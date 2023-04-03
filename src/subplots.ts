@@ -416,18 +416,13 @@ export class ParallelPlot extends PlotData {
     }
 
     refresh_pp_selected() {
-      this.pp_selected = [];
       this.pp_selected_index = this.getObjectsInRubberBands(this.rubber_bands);
-      this.pp_selected_index.forEach((index) => {
-        this.pp_selected.push(this.to_display_list[index])
-      })
       if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
         this.reset_pp_selected();
       }
     }
 
     reset_pp_selected() {
-      this.pp_selected = this.to_display_list;
       this.clicked_point_index = [];
       this.pp_selected_index = Array.from(Array(this.to_display_list.length).keys());
     }

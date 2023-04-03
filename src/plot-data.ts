@@ -1125,11 +1125,8 @@ export abstract class PlotData {
     return axis_coords;
   }
 
-  is_inside_band(real_x, real_y, axis_index): boolean {
-    if (this.vertical === true) {
-      return this.rubber_bands[axis_index].includesValue(real_y, this.axis_list[axis_index])
-    }
-    return this.rubber_bands[axis_index].includesValue(real_x, this.axis_list[axis_index])
+  is_inside_band(value: number, axis_index: number): boolean {
+    return this.rubber_bands[axis_index].includesValue(value, this.axis_list[axis_index])
   }
 
   sort_to_display_list() {
@@ -1237,9 +1234,7 @@ export abstract class PlotData {
       let selected = true
       if (this.vertical) { var seg_list = this.vertical_axis_coords[i]; } else { var seg_list = this.horizontal_axis_coords[i]; }
       for (let j=0; j<this.axis_list.length; j++) {
-        // var inside_band = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
-        var inside_band = this.is_inside_band(this.to_display_list[i][j], this.to_display_list[i][j], j);
-        if (!inside_band) {
+        if (!this.rubber_bands[j].includesValue(this.to_display_list[i][j], this.axis_list[j])) {
           selected = false;
           break;
         }
@@ -1296,36 +1291,7 @@ export abstract class PlotData {
       this.context.closePath();
     }
   }
-
-  reset_pp_selected() {
-    this.pp_selected = this.to_display_list;
-    this.clicked_point_index = [];
-    this.pp_selected_index = Array.from(Array(this.to_display_list.length).keys());
-  }
-
-  // Update the selected lines
-  refresh_pp_selected() {
-    this.pp_selected = [];
-    this.pp_selected_index = [];
-    if (this.vertical) { var axis_coords = this.vertical_axis_coords; } else { axis_coords = this.horizontal_axis_coords; }
-    for (let i=0; i<this.to_display_list.length; i++) {
-      var selected:boolean = true;
-      // var seg_list = axis_coords[i];
-      for (let j=0; j<this.axis_list.length; j++) {
-        // var selected = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
-        var selected = this.is_inside_band(this.to_display_list[i][j], this.to_display_list[i][j], j);
-      }
-      if (selected) {
-        this.pp_selected.push(this.to_display_list[i]);
-        this.pp_selected_index.push(this.from_to_display_list_to_elements(i));
-      }
-    }
-    if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
-      this.reset_pp_selected();
-    }
-  }
-
-
+  
   //reset parallel plot's rubber bands
   reset_rubberbands() {
     this.rubber_bands.forEach((rubberBand) => {
@@ -2279,44 +2245,12 @@ export abstract class PlotData {
       return [mouse3X, mouse3Y];
   }
 
-  mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
-    var mouseX = e.offsetX;
-    var mouseY = e.offsetY;
-    var click_on_disp = Shape.isInRect(mouseX, mouseY, this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h);
-    if (click_on_axis && !mouse_moving) {
-      Interactions.select_axis_action(selected_axis_index, click_on_band, click_on_border, this);
-    } else if (click_on_name && mouse_moving) {
-      [mouse3X, mouse3Y, click_on_axis] = Interactions.mouse_up_axis_interversion(mouse1X, mouse1Y, e, this);
-    } else if (click_on_name && !mouse_moving) {
-      Interactions.select_title_action(selected_name_index, this);
-    } else if (this.is_drawing_rubber_band || is_resizing) {
-      is_resizing = Interactions.rubber_band_size_check(selected_axis_index, this);
-    }
-    if (click_on_disp) {
-      Interactions.change_disposition_action(this);
-    }
-    this.refresh_pp_selected();
-    this.is_drawing_rubber_band = false;
-    mouse_moving = false;
-    isDrawing = false;
-    this.originX = 0;
-    return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing];
-  }
 
   mouse_interaction(is_parallelplot:boolean) {
     if (this.interaction_ON === true) {
       var isDrawing = false;
       var mouse_moving = false;
       var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
-      var click_on_axis:boolean=false;
-      var selected_axis_index:number = -1;
-      var click_on_name:boolean = false;
-      var selected_name_index:number = -1;
-      var click_on_band:boolean = false;
-      var click_on_border:boolean = false;
-      var selected_band_index:number = -1;
-      var selected_border:number[]=[];
-      var is_resizing:boolean=false;
       var click_on_selectw_border:boolean = false;
       var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
 
@@ -2325,44 +2259,18 @@ export abstract class PlotData {
       canvas.addEventListener('mousedown', e => {
         if (this.interaction_ON) {
           [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
-          if (is_parallelplot) {
-            [click_on_axis, selected_axis_index] = Interactions.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis, this);
-            [click_on_name, selected_name_index] = Interactions.initialize_click_on_name(this.axis_list.length, mouse1X, mouse1Y, this);
-            [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
-          }
         }
       });
 
       canvas.addEventListener('mousemove', e => {
         if (this.interaction_ON) {
-          if (is_parallelplot) {
-            this.isSelectingppAxis = false;
-            if (isDrawing) {
-              mouse_moving = true;
-              if (click_on_name) {
-                [mouse2X, mouse2Y, isDrawing, mouse_moving] = Interactions.mouse_move_axis_inversion(isDrawing, e, selected_name_index, this);
-              } else if (click_on_axis && !click_on_band && !click_on_border) {
-                [mouse2X, mouse2Y] = Interactions.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, this);
-              } else if (click_on_band) {
-                [mouse2X, mouse2Y] = Interactions.rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e, this);
-              } else if (click_on_border) {
-                [selected_border[1], mouse2X, mouse2Y, is_resizing] = Interactions.rubber_band_resize(mouse1X, mouse1Y, selected_border, e, this);
-              }
-              this.refresh_pp_selected();
-            }
-          } else {
-            [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
-          }
+          [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
         }
       });
 
       canvas.addEventListener('mouseup', e => {
         if (this.interaction_ON) {
-          if (is_parallelplot) {
-            [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
-          } else {
-            [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
-          }
+          [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
         }
       })
 
@@ -2375,17 +2283,6 @@ export abstract class PlotData {
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
         mouse_moving = false;
-      });
-
-
-      canvas.addEventListener("click", e => {
-        if (this.interaction_ON && this.isParallelPlot) {
-          if (e.ctrlKey) {
-            this.reset_pp_selected();
-            this.reset_rubberbands();
-            this.draw();
-          }
-        }
       });
 
     }
@@ -3001,24 +2898,6 @@ export class Interactions {
 
     var is_resizing = true;
     return [border_number, mouse2X, mouse2Y, is_resizing];
-  }
-
-  public static select_axis_action(selected_axis_index, click_on_band, click_on_border, plot_data:PlotData) {
-    plot_data.isSelectingppAxis = true;
-    if (plot_data.rubber_bands[selected_axis_index].length == 0) {
-      var attribute_name = plot_data.axis_list[selected_axis_index]['name'];
-      if (attribute_name == plot_data.selected_axis_name) {
-        plot_data.selected_axis_name = '';
-      } else {
-        plot_data.selected_axis_name = attribute_name;
-        plot_data.sort_to_display_list(); // à modifier pour trier vertical et horizontal axis coords
-        plot_data.refresh_axis_coords();
-      }
-    } else if ((plot_data.rubber_bands[selected_axis_index].length != 0) && !click_on_band && !click_on_border) {
-      plot_data.rubber_bands[selected_axis_index].reset();
-      plot_data.refresh_pp_selected();
-    }
-    plot_data.draw();
   }
 
   public static mouse_up_axis_interversion(mouse1X, mouse1Y, e, plot_data:any) {

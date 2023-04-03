@@ -1,5 +1,5 @@
 import {PlotData, Interactions} from './plot-data';
-import {Point2D} from './primitives';
+import {Graph2D, Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
@@ -872,7 +872,7 @@ export class MultiplePlots {
       }
     }
 
-    initialize_objects_hw():void {
+    initialize_objects_hw(): void {
       this.initial_object_width = [];
       this.initial_object_height = [];
       for (let i=0; i<this.nbObjects; i++) {
@@ -881,21 +881,20 @@ export class MultiplePlots {
       }
     }
 
-    resetAllObjects():void {
+    resetAllObjects(): void {
       this.dep_selected_points_index = [];
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
-        let type_ = this.objectList[i].type_;
-        if (type_ === 'scatterplot' || type_ === 'graph2d') {
-          Interactions.click_on_reset_action(this.objectList[i]);
-        } else if (type_ === 'contour' || type_ === 'histogram') {
-          this.objectList[i].reset_scales();
-        } else if (type_ == 'primitivegroupcontainer') {
-          let obj:any = this.objectList[i];
-          obj.reset_action();
-        } else if (type_ === 'histogram') {
-          let obj: any = this.objectList[i];
-          obj.reset_x_rubberband();
+        let otherPlot = this.objectList[i];
+        if (otherPlot instanceof PlotScatter) {
+          Interactions.click_on_reset_action(otherPlot);
+        } else if (otherPlot instanceof PlotContour) {
+          otherPlot.reset_scales();
+        } else if (otherPlot instanceof PrimitiveGroupContainer) {
+          otherPlot.reset_action();
+        } else if (otherPlot instanceof Histogram) {
+          otherPlot.reset_scales();
+          otherPlot.reset_x_rubberband();
         }
       }
     }
@@ -904,17 +903,17 @@ export class MultiplePlots {
       this.dep_selected_points_index = [];
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
-        let obj: any = this.objectList[i];
-        if (obj.type_ == 'scatterplot') {
-          obj.reset_select_on_click();
+        let otherPlot: any = this.objectList[i];
+        if (otherPlot instanceof PlotScatter) {
+          otherPlot.reset_select_on_click();
           Interactions.reset_permanent_window(this.objectList[i])
-        } else if (obj.type_ == 'parallelplot') {
-          obj.reset_pp_selected();
-          obj.reset_rubberbands();
-        } else if (obj.type_ === 'histogram') {
-          obj.reset_x_rubberband();
-        } else if (obj.type_ === "primitivegroupcontainer") {
-          obj.reset_selection();
+        } else if (otherPlot instanceof ParallelPlot) {
+          otherPlot.reset_pp_selected();
+          otherPlot.reset_rubberbands();
+        } else if (otherPlot instanceof Histogram) {
+          otherPlot.reset_x_rubberband();
+        } else if (otherPlot instanceof PrimitiveGroupContainer) {
+          otherPlot.reset_selection();
         }
       }
       this.redrawAllObjects();
@@ -926,12 +925,12 @@ export class MultiplePlots {
       for (let i=0; i<this.nbObjects; i++) {
         if (list.includes(i)) continue;
         let obj = this.objectList[i];
-        if (obj.type_ == 'scatterplot') {
-          this.objectList[i].reset_select_on_click(false);
-          Interactions.reset_permanent_window(this.objectList[i])
-        } else if (obj.type_ == 'parallelplot') {
-          this.objectList[i].reset_pp_selected();
-          this.objectList[i].rubber_bands.forEach((rubberBand) => {
+        if (obj instanceof PlotScatter) {
+          obj.reset_select_on_click(false);
+          Interactions.reset_permanent_window(obj)
+        } else if (obj instanceof ParallelPlot) {
+          obj.reset_pp_selected();
+          obj.rubber_bands.forEach((rubberBand) => {
             rubberBand.reset()
           })
         }
@@ -1989,7 +1988,11 @@ export class MultiplotCom {
       var max = Math.min(axis_max, 1);
       plot_data.rubber_bands[index].axisMin = min;
       plot_data.rubber_bands[index].axisMax = max;
-      plot_data.refresh_pp_selected();
+      plot_data.rubber_bands[index].minValue = coordinates[0];
+      plot_data.rubber_bands[index].maxValue = coordinates[1];
+      if (plot_data instanceof ParallelPlot){
+        plot_data.refresh_pp_selected();
+      }
     }
 
     public static sc_to_sc_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], plot_data:PlotData) {

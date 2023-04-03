@@ -1343,10 +1343,10 @@ export class MultiplePlots {
           }
         } else if (subplot instanceof Histogram) {
           rubberBandsInPlot.forEach((rubberBand) => {
-            subplot.x_rubberband.minValue = rubberBand.minValue;
-            subplot.x_rubberband.maxValue = rubberBand.maxValue;
-            subplot.x_rubberband.axisMin = rubberBand.axisMin;
-            subplot.x_rubberband.axisMax = rubberBand.axisMax;
+            subplot.rubber_bands[0].minValue = rubberBand.minValue;
+            subplot.rubber_bands[0].maxValue = rubberBand.maxValue;
+            subplot.rubber_bands[0].axisMin = rubberBand.axisMin;
+            subplot.rubber_bands[0].axisMax = rubberBand.axisMax;
           })
           subplot.get_selected_keys();
 
@@ -1898,7 +1898,7 @@ export class MultiplePlots {
                 }
               } else if (type_ === 'histogram') {
                 let obj: any = this.objectList[this.clickedPlotIndex];
-                if (obj.x_rubberband.length === 0) {
+                if (obj.rubber_bands[0].length === 0) {
                   this.reset_all_selected_points();
                 }
               } else if (type_ === "scatterplot") {
@@ -2037,7 +2037,7 @@ export class MultiplotCom {
 
     public static histogram_to_histogram_communication(histogram1, histogram2) {
       if (histogram1.x_variable.name !== histogram2.x_variable.name) return;
-      histogram2.x_rubberband = histogram1.x_rubberband;
+      histogram2.rubber_bands[0] = histogram1.rubber_bands[0];
       histogram2.get_selected_keys();
     }
 
@@ -2051,7 +2051,7 @@ export class MultiplotCom {
       }
       if (index === -1) return;
       let x_variable = histogram.x_variable;
-      let x_rubberband = histogram.x_rubberband;
+      let x_rubberband = histogram.rubber_bands[0];
       let axis_coord1 = parallel_plot.real_to_axis_coord(x_rubberband.minValue, x_variable.type_, x_variable.list,
                                                           parallel_plot.inverted_axis_list[index]);
       axis_coord1 = Math.max(Math.min(axis_coord1, 1), 0);
@@ -2069,15 +2069,15 @@ export class MultiplotCom {
       let scatter_x = scatter.plotObject.attribute_names[0];
       let scatter_y = scatter.plotObject.attribute_names[1];
       if (histogram.x_variable.name === scatter_x) {
-        scatter.perm_window_x = histogram.x_rubberband.minValue;
+        scatter.perm_window_x = histogram.rubber_bands[0].minValue;
         scatter.perm_window_y = -scatter.minY;
-        scatter.perm_window_w = histogram.x_rubberband.maxValue - histogram.x_rubberband.minValue;
+        scatter.perm_window_w = histogram.rubber_bands[0].maxValue - histogram.rubber_bands[0].minValue;
         scatter.perm_window_h = scatter.maxY - scatter.minY;
       } else if (histogram.x_variable.name === scatter_y) {
         scatter.perm_window_x = scatter.minX;
-        scatter.perm_window_y = histogram.x_rubberband.maxValue;
+        scatter.perm_window_y = histogram.rubber_bands[0].maxValue;
         scatter.perm_window_w = scatter.maxX - scatter.minX;
-        scatter.perm_window_h = histogram.x_rubberband.maxValue - histogram.x_rubberband.minValue;
+        scatter.perm_window_h = histogram.rubber_bands[0].maxValue - histogram.rubber_bands[0].minValue;
       }
       Interactions.selection_window_action(scatter)
     }
@@ -2112,8 +2112,7 @@ export function save_multiplot(multiplot: MultiplePlots) {
     } else if (obj.type_ === "histogram") {
       obj_to_dict.push(["graduation_nb", obj["graduation_nb"]],
                         ["x_variable", obj["x_variable"]],
-                        ["x_rubberband", obj["x_rubberband"]],
-                        ["y_rubberband", obj["y_rubberband"]],
+                        ["rubber_bands", obj["rubber_bands"]],
                         ["scale", obj.scale],
                         ["originX", obj.originX]);
     }
@@ -2166,8 +2165,7 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
     } else if (obj.type_ === "histogram") {
       obj["graduation_nb"] = temp_objs[i]["graduation_nb"];
       obj["x_variable"] = temp_objs[i]["x_variable"];
-      obj["x_rubberband"] = temp_objs[i]["x_rubberband"];
-      obj["y_rubberband"] = temp_objs[i]["y_rubberband"];
+      obj.rubber_bands = temp_objs[i]["rubber_bands"];
       obj.scale = temp_objs[i]["scale"];
       obj.originX = temp_objs[i]["originX"];
     }

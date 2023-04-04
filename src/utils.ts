@@ -1,6 +1,7 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
+import { isNative } from "cypress/types/lodash";
 
 export class Axis {
     color_stroke:any;
@@ -477,6 +478,52 @@ export class Axis {
         }
       }
     }
+}
+
+export class Vertex {
+  public x: number;
+  public y: number;
+  constructor(x: number = 0, y: number = 0) {};
+}
+
+export class newAxis {
+  public origin: Vertex;
+  public end: Vertex;
+  public ticks: number[];
+  constructor(
+    public minValue: number, 
+    public maxValue: number,
+    nTicks: number = 10) {
+      this.ticks = this.computeTicks(nTicks);
+    };
+  
+  public get isVertical() {
+    return this.origin.x == this.end.x;
+  }
+
+  public get drawLength() {
+    if (this.isVertical) {
+      return Math.abs(this.origin.y - this.end.y);
+    }
+    return Math.abs(this.origin.x - this.end.x);
+  }
+
+  public get interval() {
+    if (this.isVertical) {
+      return Math.abs(this.origin.y - this.end.y);
+    }
+    return Math.abs(this.origin.x - this.end.x);
+  }
+
+  private computeTicks(nTicks: number): number[] {
+    var plotMinVal = Math.floor(this.minValue * 10) / 10;
+    var ticks = [];
+    var increment = this.interval / (nTicks-1);
+    for (let idx = 0; idx < nTicks; idx++) {
+        ticks.push(Number((plotMinVal + increment * idx).toPrecision(4)));
+    } 
+    return ticks
+  }
 }
 
 

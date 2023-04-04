@@ -1616,7 +1616,11 @@ export class Histogram extends PlotData {
       if (rubberBand.isVertical) {axisType = 'y'};
       rubberBand.realMin = this.real_to_display(rubberBand.minValue, axisType);
       rubberBand.realMax = this.real_to_display(rubberBand.maxValue, axisType);
-      console.log(this.real_to_display(rubberBand.minValue, 'y'), this.real_to_display(rubberBand.maxValue, 'y'))
+
+      if (rubberBand.minValue >= rubberBand.maxValue) {
+        rubberBand.flipValues();
+      }
+
       if (!rubberBand.isVertical) {
         var originY = this.height - this.decalage_axis_y + this.Y;
         rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
@@ -1939,7 +1943,6 @@ export class Histogram extends PlotData {
       return [click_on_y_band, up, down];
     }
 
-
     translate_rubberband(t, type_) {
       if (type_ === 'x') {
         this.rubber_bands[0].minValue += t;
@@ -1951,7 +1954,6 @@ export class Histogram extends PlotData {
         throw new Error("translate_rubberband(): type_ must be 'x' or 'y'");
       }
     }
-
 
     resize_rubberband(t, up, down, left, right) {
       if (up) {
@@ -1965,16 +1967,14 @@ export class Histogram extends PlotData {
       }
     }
 
-
     reorder_rubberbands() {
-      if (this.rubber_bands[0].length !== 0) {
-        this.rubber_bands[0].minValue = Math.min(this.rubber_bands[0].minValue, this.rubber_bands[0].maxValue);
-        this.rubber_bands[0].maxValue = Math.max(this.rubber_bands[0].minValue, this.rubber_bands[0].maxValue);
-      }
-      if (this.rubber_bands[1].length !== 0) {
-        this.rubber_bands[1].minValue = Math.min(this.rubber_bands[1].minValue, this.rubber_bands[1].maxValue);
-        this.rubber_bands[1].maxValue = Math.max(this.rubber_bands[1].minValue, this.rubber_bands[1].maxValue);
-      }
+      this.rubber_bands.forEach((rubberBand) => {
+        if (rubberBand.length !== 0) {
+          var min = rubberBand.minValue;
+          rubberBand.minValue = Math.min(rubberBand.minValue, rubberBand.maxValue);
+          rubberBand.maxValue = Math.max(min, rubberBand.maxValue);
+        }
+      })
     }
 
 

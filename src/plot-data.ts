@@ -143,7 +143,7 @@ export abstract class PlotData {
   edge_style:EdgeStyle;
   bandWidth:number=30;
   bandColor:string=string_to_hex('lightblue');
-  bandOpacity:number=0.5;
+  bandOpacity:number=1;
   axisNameSize:number=12;
   gradSize:number=10;
   axisNbGrad:number=10;
@@ -1307,19 +1307,20 @@ export abstract class PlotData {
     var color_stroke = string_to_hex('white');
     var line_width = 0.1;
     this.rubber_bands.forEach((rubberBand, idx) => {
-      if (rubberBand.normedLength >= rubberBand.MIN_LENGTH) {
+      if (rubberBand.canvasLength >= rubberBand.MIN_LENGTH) {
         if (this.vertical) {
-          rubberBand.realMin = this.axis_y_end + rubberBand.axisMin * (this.axis_y_start - this.axis_y_end);
-          rubberBand.realMax = this.axis_y_end + rubberBand.axisMax * (this.axis_y_start - this.axis_y_end);
+          // rubberBand.realMin = this.axis_y_end + rubberBand.axisMin * (this.axis_y_start - this.axis_y_end);
+          // rubberBand.realMax = this.axis_y_end + rubberBand.axisMax * (this.axis_y_start - this.axis_y_end);
           var current_x = this.axis_x_start + idx * this.x_step;
+          console.log(rubberBand)
           if (idx == this.move_index) {
             rubberBand.draw(current_x + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
           } else {
             rubberBand.draw(current_x, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
           }
         } else {
-          rubberBand.realMin = this.axis_x_start + rubberBand.axisMin * (this.axis_x_end - this.axis_x_start);
-          rubberBand.realMax = this.axis_x_start + rubberBand.axisMax * (this.axis_x_end - this.axis_x_start);
+          // rubberBand.realMin = this.axis_x_start + rubberBand.axisMin * (this.axis_x_end - this.axis_x_start);
+          // rubberBand.realMax = this.axis_x_start + rubberBand.axisMax * (this.axis_x_end - this.axis_x_start);
           var current_y = this.axis_y_start + idx * this.y_step;
           if (idx == this.move_index) {
             rubberBand.draw(current_y + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
@@ -2796,24 +2797,13 @@ export class Interactions {
     var mouse2X = e.offsetX;
     var mouse2Y = e.offsetY;
     plot_data.is_drawing_rubber_band = true;
-    if (plot_data.vertical) {
-      var min = Math.max(Math.min((mouse1Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end), (mouse2Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end)), -0.01);
-      var max = Math.min(Math.max((mouse1Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end), (mouse2Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end)), 1);
-    } else {
-      var min = Math.max(Math.min((mouse1X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start), (mouse2X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start)), -0.01);
-      var max = Math.min(Math.max((mouse1X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start), (mouse2X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start)), 1);
-    }
-    var realCoord_min = plot_data.axis_to_real_coords(min, plot_data.axis_list[selected_axis_index]['type_'], plot_data.axis_list[selected_axis_index]['list'], plot_data.inverted_axis_list[selected_axis_index]);
-    var realCoord_max = plot_data.axis_to_real_coords(max, plot_data.axis_list[selected_axis_index]['type_'], plot_data.axis_list[selected_axis_index]['list'], plot_data.inverted_axis_list[selected_axis_index]);
-    var real_min = Math.min(realCoord_min, realCoord_max);
-    var real_max = Math.max(realCoord_min, realCoord_max);
-
-    plot_data.rubber_bands[selected_axis_index].minValue = real_min;
-    plot_data.rubber_bands[selected_axis_index].maxValue = real_max;
-    plot_data.rubber_bands[selected_axis_index].axisMin = min;
-    plot_data.rubber_bands[selected_axis_index].axisMax = max;
+    plot_data.rubber_bands[selected_axis_index].updateFromMouse(
+      [mouse1X, mouse1Y], [mouse2X, mouse2Y], 
+      plot_data.axis_list[selected_axis_index], 
+      [plot_data.axis_x_end, plot_data.axis_y_start], // be careful of x_ order
+      [plot_data.axis_x_start, plot_data.axis_y_end], // be careful of x_ order
+      plot_data.inverted_axis_list[selected_axis_index])
     plot_data.draw();
-    
     return [mouse2X, mouse2Y];
   }
 

@@ -1157,6 +1157,48 @@ export class RubberBand {
     }
   }
 
+  // public update(mouse1: number, mouse2: number)
+
+  public realToAxis(axisOrigin: number, axisEnd: number): [number, number] {
+    var axisLength = axisOrigin - axisEnd
+    var axisMin = (this.realMin - axisEnd) / axisLength;
+    var axisMax = (this.realMax - axisEnd) / axisLength;
+    return [axisMin, axisMax]
+  }
+
+  public axisToValue(axisValue: number, axis: Attribute, inverted: boolean): number { //from parallel plot axis coord (between 0 and 1) to real coord (between min_coord and max_coord)
+    if (axis.type_ == 'float') {
+      let real_min = axis.list[0];
+      let real_max = axis.list[1];
+      if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) {
+        return (1 - axisValue) * real_max + axisValue * real_min; //x must be between 0 and 1
+      } else {
+        return axisValue * real_max + (1 - axisValue) * real_min;
+      }
+    } else {
+      let nb_values = axis.list.length;
+      if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) {
+        return (1 - axisValue) * (nb_values - 1);
+      } else {
+        return axisValue * (nb_values - 1);
+      }
+    }
+  }
+
+  public updateFromMouse(
+    mouse1: [number, number], mouse2: [number, number], axis: Attribute, 
+    axisOrigin: number[], axisEnd: number[], inverted: boolean): void {
+      var mouseIdx = Number(this.isVertical);
+      this.realMin = Math.max(Math.min(mouse1[mouseIdx], mouse2[mouseIdx]), axisEnd[mouseIdx]);
+      this.realMax = Math.min(Math.max(mouse1[mouseIdx], mouse2[mouseIdx]), axisOrigin[mouseIdx]);
+      var axisValues = this.realToAxis(axisOrigin[mouseIdx], axisEnd[mouseIdx]);
+      
+      var minValue = this.axisToValue(axisValues[0], axis, inverted);
+      var maxValue = this.axisToValue(axisValues[1], axis, inverted);
+      this.minValue = Math.min(minValue, maxValue);
+      this.maxValue = Math.max(minValue, maxValue);
+  }
+
   public invert() {
     var newAxisMin = this.axisMin;
     this.axisMin = 1 - this.axisMax;

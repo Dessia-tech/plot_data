@@ -1185,18 +1185,27 @@ export class RubberBand {
     }
   }
 
-  public updateFromMouse(
-    mouse1: [number, number], mouse2: [number, number], axis: Attribute, 
+  public updateFromMouse(mouse1: [number, number], mouse2: [number, number], axis: Attribute, 
     axisOrigin: number[], axisEnd: number[], inverted: boolean): void {
       var mouseIdx = Number(this.isVertical);
-      this.realMin = Math.max(Math.min(mouse1[mouseIdx], mouse2[mouseIdx]), axisEnd[mouseIdx]);
-      this.realMax = Math.min(Math.max(mouse1[mouseIdx], mouse2[mouseIdx]), axisOrigin[mouseIdx]);
-      var axisValues = this.realToAxis(axisOrigin[mouseIdx], axisEnd[mouseIdx]);
-      
-      var minValue = this.axisToValue(axisValues[0], axis, inverted);
-      var maxValue = this.axisToValue(axisValues[1], axis, inverted);
-      this.minValue = Math.min(minValue, maxValue);
-      this.maxValue = Math.max(minValue, maxValue);
+      this.newBoundsUpdate(
+        mouse1[mouseIdx], mouse2[mouseIdx], 
+        [axisOrigin[mouseIdx], axisEnd[mouseIdx]],
+        axis, inverted);
+  }
+
+  public newBoundsUpdate(newMin: number, newMax: number, axisBounds: [number, number], 
+    axis: Attribute, inverted: boolean): void {
+      this.realMin = Math.max(Math.min(newMin, newMax), axisBounds[1]);
+      this.realMax = Math.min(Math.max(newMin, newMax), axisBounds[0]);
+      this.updateMinMax(this.realToAxis(axisBounds[0], axisBounds[1]), axis, inverted);
+  }
+
+  public updateMinMax(axisValues: [number, number], axis: Attribute, inverted: boolean): void {
+    var minValue = this.axisToValue(axisValues[0], axis, inverted);
+    var maxValue = this.axisToValue(axisValues[1], axis, inverted);
+    this.minValue = Math.min(minValue, maxValue);
+    this.maxValue = Math.max(minValue, maxValue);
   }
 
   public invert() {

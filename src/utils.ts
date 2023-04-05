@@ -73,7 +73,6 @@ export class Axis {
           context.fillText(MyMath.round(grad_beg_y + i*y_step, y_nb_digits), axis_x_start - 5, -scaleY*(grad_beg_y + i*y_step) + mvy + Y);
         i++;
       }
-
       context.stroke();
     }
 
@@ -1121,7 +1120,7 @@ export class RubberBand {
                           serialized['max_value']);
   }
 
-  public static fromFormerFormat(formerFormatValue: [string, [number, number]]) {
+  public static fromFormerFormat(formerFormatValue: [string, [number, number]]): RubberBand {
     return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
   }
 
@@ -1129,8 +1128,29 @@ export class RubberBand {
     return Math.abs(this.maxValue - this.minValue)
   }
 
+  public draw(originX: number, originY: number, width: number, height: number, context: CanvasRenderingContext2D, 
+    colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
+    Shape.rect(originX, originY, width, height, context, colorFill, colorStroke, lineWidth, alpha);
+  }
+
+  public invert() {
+    var newMax = this.minValue;
+    this.minValue = this.maxValue;
+    this.maxValue = newMax;
+  }
+
+  public reset() {
+    this.minValue = 0;
+    this.maxValue = 0;
+  }
+
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
+
+    if (this.length == 0) {
+      includesValue = true;
+    }
+  
     if (axis.name == this.attributeName) {
       let realValue = value;
       if (typeof realValue == "string") {

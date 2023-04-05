@@ -1115,7 +1115,7 @@ export class RubberBand {
   realMin: number = 0;
   realMax: number = 0;
   smallSize: number = 20;
-  readonly MIN_LENGTH = 0.02;
+  readonly MIN_LENGTH = 3;
   constructor(public attributeName: string,
               private _minValue: number, 
               private _maxValue: number,
@@ -1231,7 +1231,7 @@ export class RubberBand {
 
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
-    if (this.normedLength <= this.MIN_LENGTH) {
+    if (this.canvasLength <= this.MIN_LENGTH) {
       includesValue = true;
     }
     if (axis.name == this.attributeName) {

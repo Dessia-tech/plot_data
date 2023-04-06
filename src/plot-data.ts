@@ -1293,9 +1293,7 @@ export abstract class PlotData {
   
   //reset parallel plot's rubber bands
   reset_rubberbands() {
-    this.rubber_bands.forEach((rubberBand) => {
-      rubberBand.reset()
-    })
+    this.rubber_bands.forEach((rubberBand) => {rubberBand.reset()});
   }
 
   from_to_display_list_to_elements(i) {
@@ -1309,31 +1307,14 @@ export abstract class PlotData {
     this.rubber_bands.forEach((rubberBand, idx) => {
       if (rubberBand.canvasLength >= rubberBand.MIN_LENGTH) {
         if (this.vertical) {
-          // rubberBand.realMin = this.axis_y_end + rubberBand.axisMin * (this.axis_y_start - this.axis_y_end);
-          // rubberBand.realMax = this.axis_y_end + rubberBand.axisMax * (this.axis_y_start - this.axis_y_end);
-          var current_x = this.axis_x_start + idx * this.x_step;
-          console.log(rubberBand)
-          if (idx == this.move_index) {
-            rubberBand.draw(current_x + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
-          } else {
-            rubberBand.draw(current_x, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
-          }
+          var origin = this.axis_x_start + idx * this.x_step;
         } else {
-          // rubberBand.realMin = this.axis_x_start + rubberBand.axisMin * (this.axis_x_end - this.axis_x_start);
-          // rubberBand.realMax = this.axis_x_start + rubberBand.axisMax * (this.axis_x_end - this.axis_x_start);
-          var current_y = this.axis_y_start + idx * this.y_step;
-          if (idx == this.move_index) {
-            rubberBand.draw(current_y + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
-          } else {
-            rubberBand.draw(current_y, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
-          }
+          var origin = this.axis_y_start + idx * this.y_step;
         }
+        rubberBand.draw(origin + mvx * Number(idx == this.move_index), this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
       }
       else {
-        if (!this.is_drawing_rubber_band) {
-          rubberBand.reset()
-          rubberBand.draw(0, this.context, '', '', 0, 0)
-        }
+        if (!this.is_drawing_rubber_band) {rubberBand.reset()}
       }
     })
   }
@@ -1623,22 +1604,8 @@ export abstract class PlotData {
     this.refresh_point_list_bool = true;
   }
 
-  invert_rubber_bands(index_list) {
-    if (index_list == 'all') {
-      for (var i=0; i<this.rubber_bands.length; i++) {
-        if (this.rubber_bands[i].length != 0) {
-          this.rubber_bands[i].invert();
-        }
-      }
-    } else {
-      index_list.forEach((index) => {
-        if (this.rubber_bands[index].length != 0) {
-          this.rubber_bands[index].invert();
-        } else {
-          throw new Error('invert_rubber_bands() : asking to inverted empty array');
-        }
-      })
-    }
+  invert_rubber_bands(index_list: number[], axisBounds: [number, number]) {
+    index_list.forEach((index) => {this.rubber_bands[index].invert(axisBounds)});
   }
 
   scatter_to_real_length(sc_length:number, coord_type:string, start_coord?:number) {
@@ -2861,6 +2828,7 @@ export class Interactions {
       if (mouse3Y>mouse1Y) {
         var new_index = Math.floor((mouse3Y - plot_data.axis_y_start)/plot_data.y_step);
       } else {
+
         var new_index = Math.ceil((mouse3Y - plot_data.axis_y_start)/plot_data.y_step);
       }
     }
@@ -2871,20 +2839,55 @@ export class Interactions {
     return [mouse3X, mouse3Y, click_on_axis];
   }
 
-  public static select_title_action(selected_name_index, plot_data:any) {
+  public static select_title_action(selected_name_index, plot_data: any) {
     plot_data.inverted_axis_list[selected_name_index] = !plot_data.inverted_axis_list[selected_name_index];
+    var axisBounds = [
+      plot_data.axis_x_start + plot_data.axis_x_end, 
+      plot_data.axis_y_start + plot_data.axis_y_end];
     if (plot_data.rubber_bands[selected_name_index].length != 0) {
-      plot_data.invert_rubber_bands([selected_name_index]);
+      plot_data.invert_rubber_bands([selected_name_index], axisBounds);
     }
     plot_data.refresh_axis_coords();
     plot_data.draw();
   }
 
-  public static change_disposition_action(plot_data:any) {
+  public static change_disposition_action(plot_data: any) {
+    let index_list = Array.from(Array(plot_data.rubber_bands.length).keys());   
+    let axisLengths = []
+
+    if (plot_data.vertical) {
+      axisLengths.push(Math.abs(plot_data.axis_y_start - plot_data.axis_y_end));
+      var previousStart = Math.min(plot_data.axis_y_start, plot_data.axis_y_end);
+      let axisBounds = [
+        plot_data.axis_x_start + plot_data.axis_x_end, 
+        plot_data.axis_y_start + plot_data.axis_y_end];
+      plot_data.invert_rubber_bands(index_list, axisBounds);
+    } else {
+      axisLengths.push(Math.abs(plot_data.axis_x_start - plot_data.axis_x_end));
+      var previousStart = Math.min(plot_data.axis_x_start, plot_data.axis_x_end);
+    }
+
     plot_data.vertical = !plot_data.vertical;
-    plot_data.rubber_bands.forEach((rubberBand) => { rubberBand.isVertical = !rubberBand.isVertical })
     plot_data.refresh_axis_bounds(plot_data.axis_list.length);
-    plot_data.invert_rubber_bands('all');
+
+    if (plot_data.vertical) {
+      axisLengths.push(Math.abs(plot_data.axis_y_start - plot_data.axis_y_end));
+      var newStart = Math.min(plot_data.axis_y_start, plot_data.axis_y_end);
+    } else {
+      axisLengths.push(Math.abs(plot_data.axis_x_start - plot_data.axis_x_end));
+      var newStart = Math.min(plot_data.axis_x_start, plot_data.axis_x_end);
+    }
+    plot_data.rubber_bands.forEach((rubberBand) => {
+      rubberBand.switchOrientation(previousStart, newStart, axisLengths);
+    })
+
+    if (plot_data.vertical) {
+      let axisBounds = [
+        plot_data.axis_x_start + plot_data.axis_x_end, 
+        plot_data.axis_y_start + plot_data.axis_y_end];
+      plot_data.invert_rubber_bands(index_list, axisBounds);
+    }
+    
     plot_data.draw();
   }
 

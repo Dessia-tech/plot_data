@@ -241,7 +241,7 @@ export class PlotScatter extends PlotData {
 }
 
 
-/** A class that inherits from PlotData and is specific for drawing ParallelPlots  */
+/** A class that inherits from PlotData and is specific for drawing realToAxiss  */
 export class ParallelPlot extends PlotData {
 
     constructor(public data, public width, public height, public buttons_ON, X, Y, public canvas_id: string,

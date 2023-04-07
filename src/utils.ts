@@ -1114,8 +1114,10 @@ export class RubberBand {
   axisMax: number = 0;  
   realMin: number = 0;
   realMax: number = 0;
+  path: Path2D; // unused for the moment
   readonly SMALL_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
+  readonly BORDER = 5;
   constructor(public attributeName: string,
               private _minValue: number, 
               private _maxValue: number,
@@ -1313,5 +1315,12 @@ export class RubberBand {
       }
     }
     return includesValue
+  }
+
+  public includesMouse(mouseUniCoord: number): [boolean, boolean, boolean] {
+    let isClicked = mouseUniCoord >= this.realMin - this.BORDER && mouseUniCoord <= this.realMax + this.BORDER;
+    let onMinBorder = Math.abs(mouseUniCoord - this.realMin) <= this.BORDER;
+    let onMaxBorder = Math.abs(mouseUniCoord - this.realMax) <= this.BORDER;
+    return [isClicked, onMinBorder, onMaxBorder]
   }
 }

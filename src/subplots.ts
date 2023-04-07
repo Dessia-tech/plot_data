@@ -1808,12 +1808,7 @@ export class Histogram extends PlotData {
         click_on_y_axis = Shape.isInRect(mouse1X, mouse1Y, this.decalage_axis_x - 10 + this.X, this.Y, 20, this.height - this.decalage_axis_y);
         let click_on_reset = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.reset_rect_y + this.Y,
                                         this.button_w, this.button_h);
-        if (click_on_x_axis) {
-          [click_on_x_band, left, right] = this.is_in_x_rubberband(mouse1X, mouse1Y);
-        }
-        if (click_on_y_axis) {
-          [click_on_y_band, up, down] = this.is_in_y_rubberband(mouse1X, mouse1Y);
-        }
+        [click_on_x_band, click_on_y_band, left, right, up, down] = this.locMouseOnBands(mouse1X, mouse1Y);
         if (click_on_reset) this.reset_scales();
       });
 
@@ -1915,33 +1910,10 @@ export class Histogram extends PlotData {
       rubberBand.maxValue = Math.max(firstValue, secondValue);
     }
 
-    is_in_x_rubberband(x, y) {
-      let h = 20;
-      let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
-      let y1 = grad_beg_y - h/2;
-      let x1 = this.real_to_display(this.rubber_bands[0].minValue, 'x');
-      let x2 = this.real_to_display(this.rubber_bands[0].maxValue, 'x');
-      let w = x2 - x1;
-      let click_on_x_band = Shape.isInRect(x, y, x1, y1, w, h);
-
-      let vertex_w = 5;
-      let left = Shape.isInRect(x, y, x1, y1, vertex_w, h);
-      let right = Shape.isInRect(x, y, x2, y1, -vertex_w, h);
-      return [click_on_x_band, left, right];
-    }
-
-    is_in_y_rubberband(x, y) {
-      let w = 20;
-      let x1 = this.X + this.decalage_axis_x - w/2;
-      let y1 = this.real_to_display(this.rubber_bands[1].minValue, 'y');
-      let y2 = this.real_to_display(this.rubber_bands[1].maxValue, 'y');
-      let h = y2 - y1;
-      let click_on_y_band = Shape.isInRect(x, y, x1, y1, w, h);
-
-      let vertex_h = 5;
-      let down = Shape.isInRect(x, y, x1, y1, w, -vertex_h);
-      let up = Shape.isInRect(x, y, x1, y2, w, vertex_h);
-      return [click_on_y_band, up, down];
+    locMouseOnBands(x, y) {
+      const [click_on_x_band, left, right] = this.rubber_bands[0].includesMouse(x)
+      const [click_on_y_band, down, up] = this.rubber_bands[1].includesMouse(y)
+      return [click_on_x_band, click_on_y_band, left, right, down, up];
     }
 
     translate_rubberband(t, type_) {

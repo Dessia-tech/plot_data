@@ -438,7 +438,8 @@ export class ParallelPlot extends PlotData {
       } else if (click_on_name && !mouse_moving) {
         Interactions.select_title_action(selected_name_index, this);
       } else if (this.is_drawing_rubber_band || is_resizing) {
-        is_resizing = Interactions.rubber_band_size_check(selected_axis_index, this);
+        this.draw()
+        is_resizing = false;
       }
       if (click_on_disp) {
         Interactions.change_disposition_action(this);

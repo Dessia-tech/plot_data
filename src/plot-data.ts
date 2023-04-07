@@ -1186,9 +1186,9 @@ export abstract class PlotData {
   }
 
   pp_color_management(index:number, selected:boolean, clicked:boolean, over:boolean, heatmap_select:boolean) {
-    if (List.isListOfEmptyList(this.rubber_bands)) {
-      selected = true;
-    }
+    // if (List.isListOfEmptyList(this.rubber_bands)) {
+    //   selected = true;
+    // }
     if (this.selected_axis_name == '') {
       if (over) {
         this.context.strokeStyle = string_to_hex("yellow");
@@ -2762,8 +2762,8 @@ export class Interactions {
   }
 
   public static create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, plot_data:any) {
-    var mouse2X = e.offsetX;
-    var mouse2Y = e.offsetY;
+    const mouse2X = e.offsetX;
+    const mouse2Y = e.offsetY;
     plot_data.is_drawing_rubber_band = true;
     plot_data.rubber_bands[selected_axis_index].updateFromMouse(
       [mouse1X, mouse1Y], [mouse2X, mouse2Y], 
@@ -2777,30 +2777,30 @@ export class Interactions {
 
   public static initRubberBandChanges(mouse1: [number, number], e: MouseEvent, plot_data:any) {
     plot_data.is_drawing_rubber_band = true;
-    var delta = [(e.offsetX - mouse1[0]), (e.offsetY - mouse1[1])];
-    var newMin = plot_data.rubber_last_min;
-    var newMax = plot_data.rubber_last_max;
-    var axisBounds = [[plot_data.axis_x_end, plot_data.axis_x_start], [plot_data.axis_y_start, plot_data.axis_y_end]];
-    var axisIdx = 0;
+    const delta = [(e.offsetX - mouse1[0]), (e.offsetY - mouse1[1])];
+    const newMin = plot_data.rubber_last_min;
+    const newMax = plot_data.rubber_last_max;
+    const axisBounds = [[plot_data.axis_x_end, plot_data.axis_x_start], [plot_data.axis_y_start, plot_data.axis_y_end]];
+    let axisIdx = 0;
     if (plot_data.vertical) {axisIdx = 1};
     return [delta, newMin, newMax, axisBounds, axisIdx]
   }
 
   public static rubber_band_translation(mouse1X: number, mouse1Y: number, selected_band_index: number, e: MouseEvent, plot_data:any) {
-    var [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data);
+    const [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data);
     plot_data.rubber_bands[selected_band_index].newBoundsUpdate(
       newMin + delta[axisIdx], newMax + delta[axisIdx], axisBounds[axisIdx], 
       plot_data.axis_list[selected_band_index], plot_data.inverted_axis_list[selected_band_index]);
-
     plot_data.draw();
     return [e.offsetX, e.offsetY];
   }
 
   public static rubber_band_resize(mouse1X: number, mouse1Y: number, selected_border, e: MouseEvent, plot_data:any) {
-    var [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data);
-
-    var axis_index = selected_border[0];
-    var border_number = selected_border[1];
+    const axis_index = selected_border[0];
+    const border_number = selected_border[1];
+    const is_resizing = true;
+    let [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data);
+    
     if (border_number == 0) {
       newMin += delta[axisIdx];
     } else {
@@ -2809,10 +2809,7 @@ export class Interactions {
 
     plot_data.rubber_bands[axis_index].newBoundsUpdate(
       newMin, newMax, axisBounds[axisIdx], plot_data.axis_list[axis_index], plot_data.inverted_axis_list[axis_index]);
-
     plot_data.draw();
-
-    var is_resizing = true;
     return [border_number, e.offsetX, e.offsetY, is_resizing];
   }
 
@@ -2842,7 +2839,7 @@ export class Interactions {
 
   public static select_title_action(selected_name_index, plot_data: any) {
     plot_data.inverted_axis_list[selected_name_index] = !plot_data.inverted_axis_list[selected_name_index];
-    var axisBounds = [
+    const axisBounds = [
       plot_data.axis_x_start + plot_data.axis_x_end, 
       plot_data.axis_y_start + plot_data.axis_y_end];
     if (plot_data.rubber_bands[selected_name_index].length != 0) {
@@ -2853,26 +2850,20 @@ export class Interactions {
   }
 
   public static change_disposition_action(plot_data: any) {
-    let wasVertical = plot_data.vertical;
-    let isVertical = !plot_data.vertical;
-    let origin = [plot_data.axis_x_start, plot_data.axis_y_start];
-    let end = [plot_data.axis_x_end, plot_data.axis_y_end];
+    const wasVertical = plot_data.vertical;
+    const isVertical = !plot_data.vertical;
+    const origin = [plot_data.axis_x_start, plot_data.axis_y_start];
+    const end = [plot_data.axis_x_end, plot_data.axis_y_end];
 
     plot_data.vertical = !plot_data.vertical;
     plot_data.refresh_axis_bounds(plot_data.axis_list.length);
     
-    let newOrigin = [plot_data.axis_x_start, plot_data.axis_y_start];
-    let newEnd = [plot_data.axis_x_end, plot_data.axis_y_end];
+    const newOrigin = [plot_data.axis_x_start, plot_data.axis_y_start];
+    const newEnd = [plot_data.axis_x_end, plot_data.axis_y_end];
     plot_data.rubber_bands.forEach((rubberBand) => {
       rubberBand.axisChangeUpdate(origin, end, wasVertical, newOrigin, newEnd, isVertical);
     })
     plot_data.draw();
-  }
-
-  public static rubber_band_size_check(selected_band_index, plot_data:any) {
-    plot_data.draw();
-    var is_resizing = false;
-    return is_resizing;
   }
 
   public static move_axis(old_index, new_index, plot_data:any) {

@@ -1188,6 +1188,18 @@ export class RubberBand {
     }
   }
 
+  public updateFromOther(otherRubberBand: RubberBand, axisOrigin: number, axisEnd: number,
+    axisInverted: boolean, otherAxisInverted: boolean) {
+    this.axisMin = otherRubberBand.axisMin;
+    this.axisMax = otherRubberBand.axisMax;
+    let firstCond = axisInverted != otherAxisInverted && this.isVertical == otherRubberBand.isVertical;
+    let secondCond = axisInverted == otherAxisInverted && this.isVertical != otherRubberBand.isVertical;
+    if (firstCond || secondCond) {this.normedInvert()};
+    this.axisToReal(axisOrigin, axisEnd);
+    this.minValue = otherRubberBand.minValue;
+    this.maxValue = otherRubberBand.maxValue;
+  }
+
   public axisChangeUpdate(origin: number[], end: number[], wasVertical: boolean, 
     newOrigin: number[], newEnd: number[], isVertical: boolean) {
       const bounds = [origin[0] + end[0], origin[1] + end[1]];

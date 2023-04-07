@@ -1288,24 +1288,8 @@ export class MultiplePlots {
                 axisOrigin = subplot.axis_y_end;
                 axisEnd = subplot.axis_y_start;
               }
-
-              rubberBand.axisMin = rubberBands[actualRubberIndex].axisMin;
-              rubberBand.axisMax = rubberBands[actualRubberIndex].axisMax;
-              
-              let firstCond = (
-                subplot.inverted_axis_list[index] != actualPP.inverted_axis_list[actualRubberIndex] &&
-                rubberBand.isVertical == rubberBands[actualRubberIndex].isVertical
-                );
-              let secondCond = (
-                subplot.inverted_axis_list[index] == actualPP.inverted_axis_list[actualRubberIndex] &&
-                rubberBand.isVertical != rubberBands[actualRubberIndex].isVertical
-                );
-              if (firstCond || secondCond) {
-                rubberBand.normedInvert();
-              }
-              rubberBand.axisToReal(axisOrigin, axisEnd);
-              rubberBand.minValue = rubberBands[actualRubberIndex].minValue;
-              rubberBand.maxValue = rubberBands[actualRubberIndex].maxValue;
+              rubberBand.updateFromOther(rubberBands[actualRubberIndex], axisOrigin, axisEnd, 
+                subplot.inverted_axis_list[index], actualPP.inverted_axis_list[actualRubberIndex]);
             }
           })
         } else if (subplot instanceof PlotScatter && subplot.type_ !== "graph2d") {

@@ -18,6 +18,6 @@ for i in range(50):
                      })
 
 
-plot_data_object = plot_data.Histogram(x_variable='shape', elements=elements)
+plot_data_object = plot_data.Histogram(x_variable='mass', elements=elements)
 
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

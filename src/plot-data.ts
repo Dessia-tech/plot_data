@@ -1307,15 +1307,24 @@ export abstract class PlotData {
     var line_width = 0.1;
     this.rubber_bands.forEach((rubberBand, idx) => {
       if (rubberBand.canvasLength >= rubberBand.MIN_LENGTH) {
-        if (this.vertical) {
-          var origin = this.axis_x_start + idx * this.x_step;
+        if (rubberBand.isVertical) {
+          if (this.type_ !== "histogram") {
+            var origin = this.axis_x_start + idx * this.x_step;
+          } else {
+            var origin = this.decalage_axis_x + this.X;
+          }
         } else {
-          var origin = this.axis_y_start + idx * this.y_step;
+          if (this.type_ !== "histogram") {
+            var origin = this.axis_y_start + idx * this.y_step;
+          } else {
+            var origin = this.height - this.decalage_axis_y + this.Y;
+          }
         }
-        rubberBand.draw(origin + mvx * Number(idx == this.move_index), this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
-      }
-      else {
-        if (!this.is_drawing_rubber_band) {rubberBand.reset()}
+        if (idx == this.move_index) {
+          rubberBand.draw(origin + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
+        } else {
+          rubberBand.draw(origin, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
+        }
       }
     })
   }
@@ -2775,19 +2784,20 @@ export class Interactions {
     return [mouse2X, mouse2Y];
   }
 
-  public static initRubberBandChanges(mouse1: [number, number], e: MouseEvent, plot_data:any) {
+  public static initRubberBandChanges(mouse1: [number, number], e: MouseEvent, plot_data:any, isVertical: boolean) {
     plot_data.is_drawing_rubber_band = true;
     const delta = [(e.offsetX - mouse1[0]), (e.offsetY - mouse1[1])];
     const newMin = plot_data.rubber_last_min;
     const newMax = plot_data.rubber_last_max;
     const axisBounds = [[plot_data.axis_x_end, plot_data.axis_x_start], [plot_data.axis_y_start, plot_data.axis_y_end]];
     let axisIdx = 0;
-    if (plot_data.vertical) {axisIdx = 1};
+    if (isVertical) {axisIdx = 1};
     return [delta, newMin, newMax, axisBounds, axisIdx]
   }
 
   public static rubber_band_translation(mouse1X: number, mouse1Y: number, selected_band_index: number, e: MouseEvent, plot_data:any) {
-    const [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data);
+    const isVertical = plot_data.rubber_bands[selected_band_index].isVertical;
+    const [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data, isVertical);
     plot_data.rubber_bands[selected_band_index].newBoundsUpdate(
       newMin + delta[axisIdx], newMax + delta[axisIdx], axisBounds[axisIdx], 
       plot_data.axis_list[selected_band_index], plot_data.inverted_axis_list[selected_band_index]);
@@ -2798,9 +2808,9 @@ export class Interactions {
   public static rubber_band_resize(mouse1X: number, mouse1Y: number, selected_border, e: MouseEvent, plot_data:any) {
     const axis_index = selected_border[0];
     const border_number = selected_border[1];
+    const isVertical = plot_data.rubber_bands[axis_index].isVertical;
     const is_resizing = true;
-    let [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data);
-    
+    let [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data, isVertical);
     if (border_number == 0) {
       newMin += delta[axisIdx];
     } else {
@@ -2826,7 +2836,6 @@ export class Interactions {
       if (mouse3Y>mouse1Y) {
         var new_index = Math.floor((mouse3Y - plot_data.axis_y_start)/plot_data.y_step);
       } else {
-
         var new_index = Math.ceil((mouse3Y - plot_data.axis_y_start)/plot_data.y_step);
       }
     }
@@ -2888,17 +2897,21 @@ export class Interactions {
         var max = plot_data.rubber_bands[i].realMax;
         plot_data.rubber_last_min = min;
         plot_data.rubber_last_max = max;
-        if (plot_data.vertical) {
+        let idx = i;
+        if (plot_data.type_ === 'histogram') {
+          idx = 0;
+        }
+        if (plot_data.rubber_bands[i].isVertical) {
           var real_minY = plot_data.rubber_bands[i].realMin;
           var real_maxY = plot_data.rubber_bands[i].realMax;
-          var current_x = plot_data.axis_x_start + i*plot_data.x_step;
+          var current_x = plot_data.axis_x_start + idx*plot_data.x_step;
           var is_in_upper_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_lower_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_maxY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_rubber_band = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY, plot_data.bandWidth, real_maxY - real_minY);
         } else {
           var real_minX = plot_data.rubber_bands[i].realMin;
           var real_maxX = plot_data.rubber_bands[i].realMax;
-          var current_y = plot_data.axis_y_start + i*plot_data.y_step;
+          var current_y = plot_data.axis_y_start + idx*plot_data.y_step;
           is_in_upper_border = Shape.isInRect(mouse1X, mouse1Y, real_minX - border_size/2, current_y - plot_data.bandWidth/2, border_size, plot_data.bandWidth);
           is_in_lower_border = Shape.isInRect(mouse1X, mouse1Y, real_maxX - border_size/2, current_y - plot_data.bandWidth/2, border_size, plot_data.bandWidth);
           is_in_rubber_band = Shape.isInRect(mouse1X, mouse1Y, real_minX, current_y - plot_data.bandWidth/2, real_maxX - real_minX, plot_data.bandWidth);
@@ -2925,11 +2938,15 @@ export class Interactions {
     click_on_axis = false;
     var selected_axis_index = -1;
     for (var i=0; i<nb_axis; i++) {
-      if (plot_data.vertical === true) {
-        var current_x = plot_data.axis_x_start + i*plot_data.x_step;
+      let idx = i;
+      if (plot_data.type_ === 'histogram') {
+        idx = 0;
+      }
+      if (plot_data.rubber_bands[i].isVertical) {
+        var current_x = plot_data.axis_x_start + idx*plot_data.x_step;
         var bool = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, plot_data.axis_y_end, plot_data.bandWidth, plot_data.axis_y_start - plot_data.axis_y_end);
       } else {
-        var current_y = plot_data.axis_y_start + i*plot_data.y_step;
+        var current_y = plot_data.axis_y_start + idx*plot_data.y_step;
         var bool = Shape.isInRect(mouse1X, mouse1Y, plot_data.axis_x_start, current_y - plot_data.bandWidth/2, plot_data.axis_x_end - plot_data.axis_x_start, plot_data.bandWidth);
       }
       click_on_axis = click_on_axis || bool;

@@ -1487,6 +1487,7 @@ export class Histogram extends PlotData {
     edge_style: EdgeStyle;
     surface_style: SurfaceStyle;
     x_variable: Attribute;
+    y_variable: Attribute;
     axis: Axis;
     graduation_nb: number;
     initial_graduation_nb: number;
@@ -1523,6 +1524,7 @@ export class Histogram extends PlotData {
       if (type_ !== 'float') this.discrete = true;
 
       this.x_variable = new Attribute(name, type_);
+      this.y_variable = new Attribute('frequency', "float");
       this.rubber_bands = [
         new RubberBand(this.x_variable.name, 0, 0, false),
         new RubberBand("frequency", 0, 0, true)
@@ -1554,7 +1556,20 @@ export class Histogram extends PlotData {
       }
       this.infos = this.get_infos();
       this.refresh_max_frequency();
+      this.y_variable.list = [0, this.max_frequency];
       if (buttons_ON) this.refresh_buttons_coords();
+      this.all_attributes = this.initializeAll_attributes_to_remove();
+      this.add_to_axis_list([this.all_attributes[0].name, 'frequency']);
+      this.inverted_axis_list = [false, false];
+    }
+
+    initializeAll_attributes_to_remove() {
+      var xAttr = this.x_variable;
+      xAttr.alias = xAttr.name
+      var yAttr = new Attribute('frequency', 'float')
+      yAttr.list = [0, this.max_frequency];
+      yAttr.alias = 'frequency';
+      return [xAttr, yAttr]
     }
 
 
@@ -1566,6 +1581,7 @@ export class Histogram extends PlotData {
 
     draw() {
       this.refresh_graduation_nb();
+      this.refresh_axis_coords();
       this.context = this.context_show;
       this.context.save();
       this.draw_empty_canvas(this.context);
@@ -1577,7 +1593,8 @@ export class Histogram extends PlotData {
 
       this.infos = this.get_infos();
       this.draw_histogram();
-      this.draw_rubberbands();
+      // this.draw_rubberbands();
+      this.draw_rubber_bands(this.originX);
       this.draw_axis();
 
       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
@@ -1600,37 +1617,37 @@ export class Histogram extends PlotData {
       Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
     }
 
-    draw_rubberbands() { //ok
-      this.context.beginPath();
-      this.rubber_bands.forEach((rubberBand) => {
-        this.draw_rubberband(rubberBand)
-      })
-      this.context.closePath();
-    }
+    // draw_rubberbands() { //ok
+    //   this.context.beginPath();
+    //   this.rubber_bands.forEach((rubberBand) => {
+    //     this.draw_rubberband(rubberBand)
+    //   })
+    //   this.context.closePath();
+    // }
 
-    draw_rubberband(rubberBand: RubberBand) {
-      const COLOR_FILL = string_to_hex('lightrose');
-      const COLOR_STROKE = string_to_hex('lightgrey');
-      const LINE_WIDTH = 0.5;
-      const ALPHA = 0.6;
-      var axisType = 'x';
-      if (rubberBand.isVertical) {axisType = 'y'};
-      rubberBand.realMin = this.real_to_display(rubberBand.minValue, axisType);
-      rubberBand.realMax = this.real_to_display(rubberBand.maxValue, axisType);
+    // draw_rubberband(rubberBand: RubberBand) {
+    //   const COLOR_FILL = string_to_hex('lightrose');
+    //   const COLOR_STROKE = string_to_hex('lightgrey');
+    //   const LINE_WIDTH = 0.5;
+    //   const ALPHA = 0.6;
+    //   var axisType = 'x';
+    //   if (rubberBand.isVertical) {axisType = 'y'};
+    //   rubberBand.realMin = this.real_to_display(rubberBand.minValue, axisType);
+    //   rubberBand.realMax = this.real_to_display(rubberBand.maxValue, axisType);
 
-      if (rubberBand.minValue >= rubberBand.maxValue) {
-        rubberBand.flipValues();
-      }
+    //   if (rubberBand.minValue >= rubberBand.maxValue) {
+    //     rubberBand.flipValues();
+    //   }
 
-      if (!rubberBand.isVertical) {
-        var originY = this.height - this.decalage_axis_y + this.Y;
-        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
-      } else {
-        var originY = this.decalage_axis_x + this.X;
-        rubberBand.flipValues();
-        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
-      }
-    }
+    //   if (!rubberBand.isVertical) {
+    //     var originY = this.height - this.decalage_axis_y + this.Y;
+    //     rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+    //   } else {
+    //     var originY = this.decalage_axis_x + this.X;
+    //     rubberBand.flipValues();
+    //     rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+    //   }
+    // }
 
     coordinate_to_string(x1, x2?) {
       if (this.discrete) {
@@ -1710,9 +1727,10 @@ export class Histogram extends PlotData {
       let keys = Object.keys(this.infos);
       this.y_step = this.get_y_step();
       if (this.discrete) {
-        this.axis.draw_histogram_x_axis(this.context, this.scale, this.init_scale, this.originX, this.width,
-                                        this.height, this.x_variable.list, this.decalage_axis_x, this.decalage_axis_y,
-                                        this.scroll_x, this.X, this.Y, this.x_variable.name);
+        [this.axis_x_start, this.axis_x_end] = this.axis.draw_histogram_x_axis(
+          this.context, this.scale, this.init_scale, this.originX, this.width,
+          this.height, this.x_variable.list, this.decalage_axis_x, this.decalage_axis_y,
+          this.scroll_x, this.X, this.Y, this.x_variable.name);
       } else {
         let {x1, x2} = this.string_to_coordinate(keys[0]);
         let x_step = x2 - x1;
@@ -1721,7 +1739,8 @@ export class Histogram extends PlotData {
                                        this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
                                        this.X, this.Y, this.x_variable.name, false, x_step);
       }
-      this.axis.draw_histogram_y_axis(this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x,
+      [this.axis_y_start, this.axis_y_end] = this.axis.draw_histogram_y_axis(
+        this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x,
         this.decalage_axis_y, this.X, this.Y, 'Frequency', this.y_step, this.coeff);
     }
 
@@ -1787,110 +1806,92 @@ export class Histogram extends PlotData {
     }
 
     mouse_interaction() {
-      var mouse1X=0, mouse1Y=0, mouse2X=0, mouse2Y=0;
-      var isDrawing=false, mouse_moving=false;
-      var canvas = document.getElementById(this.canvas_id);
-      var click_on_x_axis = false;
-      var click_on_y_axis = false;
-      var click_on_x_band = false;
-      var click_on_y_band = false;
-      var up = false, down = false;
-      var left = false, right = false;
-
-      canvas.addEventListener('mousedown', e => {
-        if (!this.interaction_ON) return;
-        isDrawing = true;
-        mouse_moving = false;
-        mouse1X = e.offsetX;
-        mouse1Y = e.offsetY;
-        click_on_x_axis = Shape.isInRect(mouse1X, mouse2Y, this.decalage_axis_x + this.X, this.height - this.decalage_axis_y - 10 + this.Y,
-                          this.width - this.decalage_axis_x, 20);
-        click_on_y_axis = Shape.isInRect(mouse1X, mouse1Y, this.decalage_axis_x - 10 + this.X, this.Y, 20, this.height - this.decalage_axis_y);
-        let click_on_reset = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.reset_rect_y + this.Y,
-                                        this.button_w, this.button_h);
-        [click_on_x_band, click_on_y_band, left, right, up, down] = this.locMouseOnBands(mouse1X, mouse1Y);
-        if (click_on_reset) this.reset_scales();
-      });
-
-      canvas.addEventListener('mousemove', e => {
-        if (!this.interaction_ON) return;
-        let old_mouse2X = mouse2X, old_mouse2Y = mouse2Y;
-        mouse_moving = true;
-        mouse2X = e.offsetX;
-        mouse2Y = e.offsetY;
-        if (isDrawing) {
-          if (click_on_x_axis) {
-            this.is_drawing_rubber_band = true;
-            if (click_on_x_band) {
-              let tx = this.display_to_real_length(mouse2X - old_mouse2X, 'x')
-              if (left || right) {
-                this.resize_rubberband(tx, false, false, left, right);
-              } else {
-                this.translate_rubberband(tx, 'x');
+      if (this.interaction_ON === true) {
+        var isDrawing = false;
+        var mouse_moving = false;
+        var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
+        var click_on_axis:boolean = false;
+        var selected_axis_index:number = -1;
+        var click_on_band:boolean = false;
+        var click_on_border:boolean = false;
+        var selected_band_index:number = -1;
+        var selected_border:number[]=[];
+        var is_resizing:boolean=false;
+        var click_on_selectw_border:boolean = false;
+        var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
+        var canvas = document.getElementById(this.canvas_id);
+  
+        canvas.addEventListener('mousedown', e => {
+          if (this.interaction_ON) {
+            [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
+            [click_on_axis, selected_axis_index] = Interactions.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis, this);
+            [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
+          }
+        });
+  
+        canvas.addEventListener('mousemove', e => {
+          if (this.interaction_ON) {
+            if (isDrawing) {
+              mouse_moving = true;
+              if (click_on_axis && !click_on_band && !click_on_border) {
+                [mouse2X, mouse2Y] = Interactions.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, this);
+              } else if (click_on_band) {
+                [mouse2X, mouse2Y] = Interactions.rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e, this);
+              } else if (click_on_border) {
+                [selected_border[1], mouse2X, mouse2Y, is_resizing] = Interactions.rubber_band_resize(mouse1X, mouse1Y, selected_border, e, this);
               }
-            } else {
-              this.set_rubberband(this.rubber_bands[0], mouse1X, mouse2X, "x");
+              this.get_selected_keys();
             }
-            this.get_selected_keys();
-          } else if (click_on_y_axis) {
-            if (click_on_y_band) {
-              let ty = this.display_to_real_length(mouse2Y - old_mouse2Y, 'y');
-              if (up || down) {
-                this.resize_rubberband(ty, up, down, false, false);
-              } else {
-                this.translate_rubberband(ty, 'y');
-              }
-            } else {
-              this.set_rubberband(this.rubber_bands[1], mouse1Y, mouse2Y, "y");
-            }
-            this.get_selected_keys();
+          }
+        });
+  
+        canvas.addEventListener('mouseup', e => {
+          if (!this.interaction_ON) return;
+          if (mouse_moving) {
+            if (up || down || left || right) {this.reorder_rubberbands()};
           } else {
-            this.originX += mouse2X - old_mouse2X;
+            if (click_on_axis) {this.rubber_bands[selected_axis_index].reset()};
+            this.get_selected_keys();
           }
-        }
-        this.draw();
-      });
-
-      canvas.addEventListener('mouseup', e => {
-        if (!this.interaction_ON) return;
-        if (mouse_moving) {
-          if (up || down || left || right) {
-            this.reorder_rubberbands();
+          reset_parameters();
+          this.is_drawing_rubber_band = false;
+          this.draw();
+        });
+  
+        canvas.addEventListener('mouseleave', e => {
+          isDrawing = false;
+          mouse_moving = false;
+        });
+  
+  
+        canvas.addEventListener("click", e => {
+          if (this.interaction_ON) {
+            if (e.ctrlKey) {
+              // this.reset_pp_selected();
+              this.reset_rubberbands();
+              this.draw();
+            }
           }
-        } else {
-          if (click_on_x_axis) {
-            this.reset_x_rubberband();
-          } else if (click_on_y_axis) {
-            this.rubber_bands[1].minValue = 0;
-            this.rubber_bands[1].maxValue = 0;
-          }
-          this.get_selected_keys();
-        }
-        reset_parameters();
-        this.is_drawing_rubber_band = false;
-        this.draw();
-      });
+        });
 
+        // canvas.addEventListener('wheel', e => {
+        //   if (!this.interaction_ON) return;
+        //   e.preventDefault();
+        //   let zoom_coeff;
+        //   let event = -Math.sign(e.deltaY);
+        //   if (event >= 0) zoom_coeff = 1.2; else zoom_coeff = 1/1.2;
+        //   this.scale = this.scale * zoom_coeff;
+        //   this.originX = mouse2X - this.X + zoom_coeff * (this.originX - mouse2X + this.X);
+        //   this.draw();
+        // });
 
-      canvas.addEventListener('wheel', e => {
-        if (!this.interaction_ON) return;
-        e.preventDefault();
-        let zoom_coeff;
-        let event = -Math.sign(e.deltaY);
-        if (event >= 0) zoom_coeff = 1.2; else zoom_coeff = 1/1.2;
-        this.scale = this.scale * zoom_coeff;
-        this.originX = mouse2X - this.X + zoom_coeff * (this.originX - mouse2X + this.X);
-        this.draw();
-      });
-
-
+      }
       function reset_parameters() {
         isDrawing = false;
         mouse_moving = false;
-        click_on_x_axis = false;
-        click_on_y_axis = false;
-        click_on_x_band = false;
-        click_on_y_band = false;
+        click_on_axis = false;
+        click_on_band = false;
+        click_on_border = false;
         up = false;
         down = false;
         left = false;
@@ -1898,17 +1899,158 @@ export class Histogram extends PlotData {
       }
     }
 
-    set_rubberbands(mouse1X: number, mouse2X: number, mouse1Y: number, mouse2Y: number) {
-      this.set_rubberband(this.rubber_bands[0], mouse1X, mouse2X, "x")
-      this.set_rubberband(this.rubber_bands[1], mouse1Y, mouse2Y, "y")
-    }
+    // mouse_interaction() {
+    //   var mouse1X=0, mouse1Y=0, mouse2X=0, mouse2Y=0;
+    //   var isDrawing=false, mouse_moving=false;
+    //   var canvas = document.getElementById(this.canvas_id);
+    //   var click_on_x_axis = false;
+    //   var click_on_y_axis = false;
+    //   var click_on_x_band = false;
+    //   var click_on_y_band = false;
+    //   var up = false, down = false;
+    //   var left = false, right = false;
 
-    set_rubberband(rubberBand: RubberBand, mouse1: number, mouse2: number, axisType: string) {
-      let firstValue  = this.display_to_real(mouse1, axisType);
-      let secondValue = this.display_to_real(mouse2, axisType);
-      rubberBand.minValue = Math.min(firstValue, secondValue);
-      rubberBand.maxValue = Math.max(firstValue, secondValue);
-    }
+    //   canvas.addEventListener('mousedown', e => {
+    //     if (!this.interaction_ON) return;
+    //     isDrawing = true;
+    //     mouse_moving = false;
+    //     mouse1X = e.offsetX;
+    //     mouse1Y = e.offsetY;
+    //     click_on_x_axis = Shape.isInRect(mouse1X, mouse2Y, this.decalage_axis_x + this.X, this.height - this.decalage_axis_y - 10 + this.Y,
+    //                       this.width - this.decalage_axis_x, 20);
+    //     click_on_y_axis = Shape.isInRect(mouse1X, mouse1Y, this.decalage_axis_x - 10 + this.X, this.Y, 20, this.height - this.decalage_axis_y);
+    //     let click_on_reset = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.reset_rect_y + this.Y,
+    //                                     this.button_w, this.button_h);
+    //     [click_on_x_band, click_on_y_band, left, right, up, down] = this.locMouseOnBands(mouse1X, mouse1Y);
+    //     if (click_on_reset) this.reset_scales();
+    //   });
+
+    //   canvas.addEventListener('mousemove', e => {
+    //     if (!this.interaction_ON) return;
+    //     let old_mouse2X = mouse2X, old_mouse2Y = mouse2Y;
+    //     mouse_moving = true;
+    //     mouse2X = e.offsetX;
+    //     mouse2Y = e.offsetY;
+    //     if (isDrawing) {
+    //       if (click_on_x_axis) {
+    //         this.is_drawing_rubber_band = true;
+    //         if (click_on_x_band) {
+    //           let tx = mouse2X - old_mouse2X //this.display_to_real_length(mouse2X - old_mouse2X, 'x')
+    //           if (left || right) {
+    //             // this.resize_rubberband(tx, false, false, left, right);
+    //             Interactions.rubber_band_resize(mouse1X, mouse1Y, [0, 1 * Number(right)], e, this);
+    //           } else {
+    //             // this.translate_rubberband(tx, 'x');
+    //             Interactions.rubber_band_translation(mouse1X, mouse1Y, 0, e, this);
+    //           }
+    //         } else {
+    //           // this.set_rubberband(this.rubber_bands[0], mouse1X, mouse2X);
+    //           Interactions.create_rubber_band(mouse1X, mouse1Y, 0, e, this);
+    //         }
+    //         this.get_selected_keys();
+    //       } else if (click_on_y_axis) {
+    //         if (click_on_y_band) {
+    //           let ty = mouse2Y - old_mouse2Y //this.display_to_real_length(mouse2Y - old_mouse2Y, 'y');
+    //           if (up || down) {
+    //             // this.resize_rubberband(ty, up, down, false, false);
+    //             Interactions.rubber_band_resize(mouse1X, mouse1Y, [1, 1 * Number(up)], e, this);
+
+    //           } else {
+    //             Interactions.rubber_band_translation(mouse1X, mouse1Y, 1, e, this);
+    //             // this.translate_rubberband(ty, 'y');
+    //           }
+    //         } else {
+    //           // this.set_rubberband(this.rubber_bands[1], mouse1Y, mouse2Y);
+    //           Interactions.create_rubber_band(mouse1X, mouse1Y, 1, e, this);
+    //         }
+    //         this.get_selected_keys();
+    //       } else {
+    //         this.originX += mouse2X - old_mouse2X;
+    //       }
+    //     }
+    //     this.draw();
+    //   });
+
+    //   canvas.addEventListener('mouseup', e => {
+    //     if (!this.interaction_ON) return;
+    //     if (mouse_moving) {
+    //       if (up || down || left || right) {
+    //         this.reorder_rubberbands();
+    //       }
+    //     } else {
+    //       if (click_on_x_axis) {
+    //         this.reset_x_rubberband();
+    //       } else if (click_on_y_axis) {
+    //         this.rubber_bands[1].minValue = 0;
+    //         this.rubber_bands[1].maxValue = 0;
+    //       }
+    //       this.get_selected_keys();
+    //     }
+    //     reset_parameters();
+    //     this.is_drawing_rubber_band = false;
+    //     this.draw();
+    //   });
+
+
+    //   canvas.addEventListener('wheel', e => {
+    //     if (!this.interaction_ON) return;
+    //     e.preventDefault();
+    //     let zoom_coeff;
+    //     let event = -Math.sign(e.deltaY);
+    //     if (event >= 0) zoom_coeff = 1.2; else zoom_coeff = 1/1.2;
+    //     this.scale = this.scale * zoom_coeff;
+    //     this.originX = mouse2X - this.X + zoom_coeff * (this.originX - mouse2X + this.X);
+    //     this.draw();
+    //   });
+
+
+    //   function reset_parameters() {
+    //     isDrawing = false;
+    //     mouse_moving = false;
+    //     click_on_x_axis = false;
+    //     click_on_y_axis = false;
+    //     click_on_x_band = false;
+    //     click_on_y_band = false;
+    //     up = false;
+    //     down = false;
+    //     left = false;
+    //     right = false;
+    //   }
+    // }
+
+    // set_rubberbands(mouse1X: number, mouse2X: number, mouse1Y: number, mouse2Y: number) {
+    //   // if (this.discrete) {
+    //   //   let grad_beg_x = this.decalage_axis_x / this.scale;
+    //   //   return (display - this.originX - this.X) / this.scale - grad_beg_x;
+    //   // } else {
+    //   //   return (display - this.originX - this.X) / this.scale;
+    //   // }
+    //   this.rubber_bands[0].newBoundsUpdate(
+    //     mouse1X, mouse2X, [this.axis_x_start, this.axis_x_end], 
+    //     this.x_variable, false)
+
+    //   this.rubber_bands[1].newBoundsUpdate(
+    //     mouse1Y, mouse2Y, [this.axis_y_start, this.axis_y_end], 
+    //     this.y_variable, false)
+    //   console.log('ok')
+    //   // this.set_rubberband(this.rubber_bands[0], mouse1X, mouse2X, "x")
+    //   // this.set_rubberband(this.rubber_bands[1], mouse1Y, mouse2Y, "y")
+    // }
+
+    // set_rubberband(rubberBand: RubberBand, mouse1: number, mouse2: number) {
+    //   // let firstValue  = this.display_to_real(mouse1, axisType);
+    //   // let secondValue = this.display_to_real(mouse2, axisType);
+    //   // rubberBand.minValue = Math.min(firstValue, secondValue);
+    //   // rubberBand.maxValue = Math.max(firstValue, secondValue);
+    //   let axisBounds = [this.axis_x_end, this.axis_x_start];
+    //   let attribute = this.x_variable;
+    //   if (rubberBand.isVertical) {
+    //     axisBounds = [this.axis_y_end, this.axis_y_start];
+    //     attribute = this.y_variable;
+    //   }
+    //   rubberBand.newBoundsUpdate(mouse1, mouse2, axisBounds, attribute, false);
+    //   console.log(this)
+    // }
 
     locMouseOnBands(x, y) {
       const [click_on_x_band, left, right] = this.rubber_bands[0].includesMouse(x)
@@ -1920,9 +2062,14 @@ export class Histogram extends PlotData {
       if (type_ === 'x') {
         this.rubber_bands[0].minValue += t;
         this.rubber_bands[0].maxValue += t;
+        this.rubber_bands[0].realMin = this.real_to_display(this.rubber_bands[0].minValue, 'x');
+        this.rubber_bands[0].realMax = this.real_to_display(this.rubber_bands[0].maxValue, 'x');
       } else if (type_ === 'y') {;
         this.rubber_bands[1].minValue += t;
         this.rubber_bands[1].maxValue += t;
+        this.rubber_bands[1].realMin = this.real_to_display(this.rubber_bands[1].minValue, 'y');
+        this.rubber_bands[1].realMax = this.real_to_display(this.rubber_bands[1].maxValue, 'y');
+      } else if (type_ === 'y') {;
       } else {
         throw new Error("translate_rubberband(): type_ must be 'x' or 'y'");
       }
@@ -1931,12 +2078,16 @@ export class Histogram extends PlotData {
     resize_rubberband(t, up, down, left, right) {
       if (up) {
         this.rubber_bands[1].maxValue += t;
+        this.rubber_bands[1].realMin = this.real_to_display(this.rubber_bands[1].maxValue, 'y');
       } else if (down) {
         this.rubber_bands[1].minValue += t;
+        this.rubber_bands[1].realMax = this.real_to_display(this.rubber_bands[1].minValue, 'y');
       } else if (left) {
         this.rubber_bands[0].minValue += t;
+        this.rubber_bands[0].realMin = this.real_to_display(this.rubber_bands[0].minValue, 'x');
       } else if (right) {
         this.rubber_bands[0].maxValue += t;
+        this.rubber_bands[0].realMax = this.real_to_display(this.rubber_bands[0].maxValue, 'x');
       }
     }
 

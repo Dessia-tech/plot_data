@@ -272,6 +272,7 @@ export class Axis {
       }
       context.stroke();
       context.closePath();
+      return [axis_x_start, axis_x_end]
     }
 
 
@@ -304,6 +305,7 @@ export class Axis {
       context.font = this.graduation_style.font_size.toString() + 'px Arial';
       this.draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y, coeff);
       context.closePath();
+      return [axis_y_end, axis_y_start]
     }
 
     draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists,
@@ -1160,7 +1162,7 @@ export class RubberBand {
   }
 
   public realToAxis(initAxisCoord: number, endAxisCoord: number): void {
-    var axisLength = initAxisCoord - endAxisCoord
+    var axisLength = Math.abs(initAxisCoord - endAxisCoord);
     this.axisMin = (this.realMin - endAxisCoord) / axisLength;
     this.axisMax = (this.realMax - endAxisCoord) / axisLength;
   }
@@ -1243,7 +1245,7 @@ export class RubberBand {
       this.realToAxis(axisOrigin[mouseIdx], axisEnd[mouseIdx]);
   }
 
-  public newBoundsUpdate(newMin: number, newMax: number, axisBounds: [number, number], 
+  public newBoundsUpdate(newMin: number, newMax: number, axisBounds: number[], 
     axis: Attribute, inverted: boolean): void {
       this.realMin = Math.max(Math.min(newMin, newMax), axisBounds[1]);
       this.realMax = Math.min(Math.max(newMin, newMax), axisBounds[0]);

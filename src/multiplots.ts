@@ -1279,11 +1279,31 @@ export class MultiplePlots {
         })
 
         if (subplot instanceof ParallelPlot) {
-          subplot.rubber_bands.forEach((rubberBand) => {
+          subplot.rubber_bands.forEach((rubberBand, index) => {
             var actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName) 
             if (actualRubberIndex != -1) {
+              let axisOrigin = subplot.axis_x_start;
+              let axisEnd = subplot.axis_x_end;
+              if (subplot.vertical) {
+                axisOrigin = subplot.axis_y_end;
+                axisEnd = subplot.axis_y_start;
+              }
+
               rubberBand.axisMin = rubberBands[actualRubberIndex].axisMin;
               rubberBand.axisMax = rubberBands[actualRubberIndex].axisMax;
+              
+              let firstCond = (
+                subplot.inverted_axis_list[index] != actualPP.inverted_axis_list[actualRubberIndex] &&
+                rubberBand.isVertical == rubberBands[actualRubberIndex].isVertical
+                );
+              let secondCond = (
+                subplot.inverted_axis_list[index] == actualPP.inverted_axis_list[actualRubberIndex] &&
+                rubberBand.isVertical != rubberBands[actualRubberIndex].isVertical
+                );
+              if (firstCond || secondCond) {
+                rubberBand.normedInvert();
+              }
+              rubberBand.axisToReal(axisOrigin, axisEnd);
               rubberBand.minValue = rubberBands[actualRubberIndex].minValue;
               rubberBand.maxValue = rubberBands[actualRubberIndex].maxValue;
             }

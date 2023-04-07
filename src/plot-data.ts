@@ -4,6 +4,7 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv,
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
+import { is } from "cypress/types/bluebird";
 
 const HIDDEN_OFFSET = 15;
 
@@ -2852,49 +2853,23 @@ export class Interactions {
   }
 
   public static change_disposition_action(plot_data: any) {
-    let index_list = Array.from(Array(plot_data.rubber_bands.length).keys());   
-    let axisLengths = []
-
-    if (plot_data.vertical) {
-      axisLengths.push(Math.abs(plot_data.axis_y_start - plot_data.axis_y_end));
-      var previousStart = Math.min(plot_data.axis_y_start, plot_data.axis_y_end);
-      let axisBounds = [
-        plot_data.axis_x_start + plot_data.axis_x_end, 
-        plot_data.axis_y_start + plot_data.axis_y_end];
-      plot_data.invert_rubber_bands(index_list, axisBounds);
-    } else {
-      axisLengths.push(Math.abs(plot_data.axis_x_start - plot_data.axis_x_end));
-      var previousStart = Math.min(plot_data.axis_x_start, plot_data.axis_x_end);
-    }
+    let wasVertical = plot_data.vertical;
+    let isVertical = !plot_data.vertical;
+    let origin = [plot_data.axis_x_start, plot_data.axis_y_start];
+    let end = [plot_data.axis_x_end, plot_data.axis_y_end];
 
     plot_data.vertical = !plot_data.vertical;
     plot_data.refresh_axis_bounds(plot_data.axis_list.length);
-
-    if (plot_data.vertical) {
-      axisLengths.push(Math.abs(plot_data.axis_y_start - plot_data.axis_y_end));
-      var newStart = Math.min(plot_data.axis_y_start, plot_data.axis_y_end);
-    } else {
-      axisLengths.push(Math.abs(plot_data.axis_x_start - plot_data.axis_x_end));
-      var newStart = Math.min(plot_data.axis_x_start, plot_data.axis_x_end);
-    }
-    plot_data.rubber_bands.forEach((rubberBand) => {
-      rubberBand.switchOrientation(previousStart, newStart, axisLengths);
-    })
-
-    if (plot_data.vertical) {
-      let axisBounds = [
-        plot_data.axis_x_start + plot_data.axis_x_end, 
-        plot_data.axis_y_start + plot_data.axis_y_end];
-      plot_data.invert_rubber_bands(index_list, axisBounds);
-    }
     
+    let newOrigin = [plot_data.axis_x_start, plot_data.axis_y_start];
+    let newEnd = [plot_data.axis_x_end, plot_data.axis_y_end];
+    plot_data.rubber_bands.forEach((rubberBand) => {
+      rubberBand.axisChangeUpdate(origin, end, wasVertical, newOrigin, newEnd, isVertical);
+    })
     plot_data.draw();
   }
 
   public static rubber_band_size_check(selected_band_index, plot_data:any) {
-    // if (plot_data.rubber_bands[selected_band_index].length <= 0.02) {
-    //     plot_data.rubber_bands[selected_band_index].reset();
-    // }
     plot_data.draw();
     var is_resizing = false;
     return is_resizing;
@@ -2923,15 +2898,15 @@ export class Interactions {
         plot_data.rubber_last_min = min;
         plot_data.rubber_last_max = max;
         if (plot_data.vertical) {
-          var real_minY = plot_data.rubber_bands[i].realMin; //plot_data.axis_y_end + min*(plot_data.axis_y_start - plot_data.axis_y_end);
-          var real_maxY = plot_data.rubber_bands[i].realMax; //plot_data.axis_y_end + max*(plot_data.axis_y_start - plot_data.axis_y_end);
+          var real_minY = plot_data.rubber_bands[i].realMin;
+          var real_maxY = plot_data.rubber_bands[i].realMax;
           var current_x = plot_data.axis_x_start + i*plot_data.x_step;
           var is_in_upper_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_lower_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_maxY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_rubber_band = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY, plot_data.bandWidth, real_maxY - real_minY);
         } else {
-          var real_minX = plot_data.rubber_bands[i].realMin; //plot_data.axis_x_start + min*(plot_data.axis_x_end - plot_data.axis_x_start);
-          var real_maxX = plot_data.rubber_bands[i].realMax; //plot_data.axis_x_start + max*(plot_data.axis_x_end - plot_data.axis_x_start);
+          var real_minX = plot_data.rubber_bands[i].realMin;
+          var real_maxX = plot_data.rubber_bands[i].realMax;
           var current_y = plot_data.axis_y_start + i*plot_data.y_step;
           is_in_upper_border = Shape.isInRect(mouse1X, mouse1Y, real_minX - border_size/2, current_y - plot_data.bandWidth/2, border_size, plot_data.bandWidth);
           is_in_lower_border = Shape.isInRect(mouse1X, mouse1Y, real_maxX - border_size/2, current_y - plot_data.bandWidth/2, border_size, plot_data.bandWidth);

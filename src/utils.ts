@@ -1114,7 +1114,7 @@ export class RubberBand {
   axisMax: number = 0;  
   realMin: number = 0;
   realMax: number = 0;
-  smallSize: number = 20;
+  readonly SMALL_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
   constructor(public attributeName: string,
               private _minValue: number, 
@@ -1151,17 +1151,22 @@ export class RubberBand {
 
   public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
     if (this.isVertical) {
-      Shape.rect(origin - this.smallSize / 2, this.realMin, this.smallSize, this.canvasLength, context, colorFill, colorStroke, lineWidth, alpha);
+      Shape.rect(origin - this.SMALL_SIZE / 2, this.realMin, this.SMALL_SIZE, this.canvasLength, context, colorFill, colorStroke, lineWidth, alpha);
     } else {
-      Shape.rect(this.realMin, origin - this.smallSize / 2, this.canvasLength, this.smallSize, context, colorFill, colorStroke, lineWidth, alpha);
+      Shape.rect(this.realMin, origin - this.SMALL_SIZE / 2, this.canvasLength, this.SMALL_SIZE, context, colorFill, colorStroke, lineWidth, alpha);
     }
   }
 
-  public realToAxis(axisOrigin: number, axisEnd: number): [number, number] {
-    var axisLength = axisOrigin - axisEnd
-    var axisMin = (this.realMin - axisEnd) / axisLength;
-    var axisMax = (this.realMax - axisEnd) / axisLength;
-    return [axisMin, axisMax]
+  public realToAxis(initAxisCoord: number, endAxisCoord: number): void {
+    var axisLength = initAxisCoord - endAxisCoord
+    this.axisMin = (this.realMin - endAxisCoord) / axisLength;
+    this.axisMax = (this.realMax - endAxisCoord) / axisLength;
+  }
+
+  public axisToReal(initAxisCoord: number, endAxisCoord: number): void {
+    var axisLength = Math.abs(initAxisCoord - endAxisCoord);
+    this.realMin = this.axisMin * axisLength + initAxisCoord;
+    this.realMax = this.axisMax * axisLength + initAxisCoord;
   }
 
   public axisToValue(axisValue: number, axis: Attribute, inverted: boolean): number { //from parallel plot axis coord (between 0 and 1) to real coord (between min_coord and max_coord)
@@ -1183,30 +1188,63 @@ export class RubberBand {
     }
   }
 
+  public axisChangeUpdate(origin: number[], end: number[], wasVertical: boolean, 
+    newOrigin: number[], newEnd: number[], isVertical: boolean) {
+      const bounds = [origin[0] + end[0], origin[1] + end[1]];
+      const newBounds = [newOrigin[0] + newEnd[0], newOrigin[1] + newEnd[1]];
+      const lengths = [Math.abs(origin[0] - end[0]), Math.abs(origin[1] - end[1])];
+      const newLengths = [Math.abs(newOrigin[0] - newEnd[0]), Math.abs(newOrigin[1] - newEnd[1])];
+      
+      let index = 0;
+      let newIndex = 0;
+      if (wasVertical) {
+        index = 1;
+        if (!isVertical) {
+          this.invert(bounds);
+        } 
+      } else {
+        if (isVertical) {
+          newIndex = 1;
+        }
+      }
+
+      const start = Math.min(origin[index], end[index]);
+      const newStart = Math.min(newOrigin[newIndex], newEnd[newIndex]);
+      if (wasVertical != isVertical) {
+        this.switchOrientation(start, newStart, [lengths[index], newLengths[newIndex]]);
+      }
+
+      if (!wasVertical && isVertical) {
+        this.invert(newBounds);
+      }
+  }
+
   public updateFromMouse(mouse1: [number, number], mouse2: [number, number], axis: Attribute, 
-    axisOrigin: number[], axisEnd: number[], inverted: boolean): void {
+    axisOrigin: [number, number], axisEnd: [number, number], inverted: boolean): void {
       var mouseIdx = Number(this.isVertical);
       this.newBoundsUpdate(
         mouse1[mouseIdx], mouse2[mouseIdx], 
         [axisOrigin[mouseIdx], axisEnd[mouseIdx]],
         axis, inverted);
+      this.realToAxis(axisOrigin[mouseIdx], axisEnd[mouseIdx]);
   }
 
   public newBoundsUpdate(newMin: number, newMax: number, axisBounds: [number, number], 
     axis: Attribute, inverted: boolean): void {
       this.realMin = Math.max(Math.min(newMin, newMax), axisBounds[1]);
       this.realMax = Math.min(Math.max(newMin, newMax), axisBounds[0]);
-      this.updateMinMax(this.realToAxis(axisBounds[0], axisBounds[1]), axis, inverted);
+      this.realToAxis(axisBounds[0], axisBounds[1])
+      this.updateMinMax(axis, inverted);
   }
 
-  public updateMinMax(axisValues: [number, number], axis: Attribute, inverted: boolean): void {
-    var minValue = this.axisToValue(axisValues[0], axis, inverted);
-    var maxValue = this.axisToValue(axisValues[1], axis, inverted);
+  public updateMinMax(axis: Attribute, inverted: boolean): void {
+    var minValue = this.axisToValue(this.axisMin, axis, inverted);
+    var maxValue = this.axisToValue(this.axisMax, axis, inverted);
     this.minValue = Math.min(minValue, maxValue);
     this.maxValue = Math.max(minValue, maxValue);
   }
 
-  public invert(axisBounds: [number, number]) {
+  public invert(axisBounds: number[]) {
     var axisIdx = 0;
     if (this.isVertical) {axisIdx = 1};
     var tempMin = this.realMin;
@@ -1214,7 +1252,13 @@ export class RubberBand {
     this.realMax = axisBounds[axisIdx] - tempMin;
   }
 
-  public switchOrientation(previousStart: number, newStart: number, 
+  public normedInvert() {
+    var tempMin = this.axisMin;
+    this.axisMin = 1 - this.axisMax;
+    this.axisMax = 1 - tempMin;
+  }
+
+  public switchOrientation  (previousStart: number, newStart: number, 
     axisLengths: [number, number]) {
     let relativeMin = (this.realMin - previousStart) / axisLengths[0];
     let normedLength = this.canvasLength / axisLengths[0];

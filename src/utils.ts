@@ -6,6 +6,10 @@ export class Axis {
     color_stroke:any;
     x_step:number;
     y_step:number;
+    // xStart: number;
+    // yStart: number;
+    // xEnd: number;
+    // yEnd: number;
 
     constructor(public nb_points_x:number=10,
                 public nb_points_y:number=10,
@@ -54,6 +58,7 @@ export class Axis {
         i++
       }
       context.stroke();
+      // return [scaleX*(grad_beg_x) + mvx + X, scaleX*(grad_beg_x + (i-1)*x_step) + mvx + X]
     }
 
     draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, y_step, Y) {
@@ -187,10 +192,13 @@ export class Axis {
         this.draw_horizontal_log_graduations(context, mvx, scaleX, minX, maxX, axis_y_start, axis_y_end,
           this.graduation_style.font_size, X, width);
       } else {
+        // [this.xStart, this.xEnd] = this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end,
+        //   this.x_step, this.graduation_style.font_size, X, width);
         this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end,
           this.x_step, this.graduation_style.font_size, X, width);
       }
       context.closePath();
+      // return [axis_x_start, axis_x_end]
     }
 
 
@@ -272,7 +280,9 @@ export class Axis {
       }
       context.stroke();
       context.closePath();
-      return [axis_x_start, axis_x_end]
+      // this.xStart = scaleX*(grad_beg_x) + mvx + X;
+      // this.xEnd = scaleX*(grad_beg_x + i - 1) + mvx + X;
+      // return [axis_x_start, axis_x_end]
     }
 
 
@@ -1162,15 +1172,27 @@ export class RubberBand {
   }
 
   public realToAxis(initAxisCoord: number, endAxisCoord: number): void {
-    var axisLength = Math.abs(initAxisCoord - endAxisCoord);
+    const axisLength = Math.abs(initAxisCoord - endAxisCoord);
     this.axisMin = (this.realMin - endAxisCoord) / axisLength;
     this.axisMax = (this.realMax - endAxisCoord) / axisLength;
   }
 
   public axisToReal(initAxisCoord: number, endAxisCoord: number): void {
-    var axisLength = Math.abs(initAxisCoord - endAxisCoord);
+    const axisLength = Math.abs(initAxisCoord - endAxisCoord);
     this.realMin = this.axisMin * axisLength + initAxisCoord;
     this.realMax = this.axisMax * axisLength + initAxisCoord;
+  }
+
+  public valueToAxis(axisOrigin: number, axisEnd: number, inverted: boolean) {
+    let min = this.minValue;
+    let max = this.maxValue;
+    if (inverted) {
+      min = this.maxValue;
+      max = this.minValue;
+    }
+    const axisLength = Math.abs(axisOrigin - axisEnd);
+    this.axisMin = min / axisLength;
+    this.axisMax = max / axisLength;
   }
 
   public axisToValue(axisValue: number, axis: Attribute, inverted: boolean): number { //from parallel plot axis coord (between 0 and 1) to real coord (between min_coord and max_coord)
@@ -1196,12 +1218,12 @@ export class RubberBand {
     axisInverted: boolean, otherAxisInverted: boolean) {
     this.axisMin = otherRubberBand.axisMin;
     this.axisMax = otherRubberBand.axisMax;
-    let firstCond = axisInverted != otherAxisInverted && this.isVertical == otherRubberBand.isVertical;
-    let secondCond = axisInverted == otherAxisInverted && this.isVertical != otherRubberBand.isVertical;
-    if (firstCond || secondCond) {this.normedInvert()};
-    this.axisToReal(axisOrigin, axisEnd);
     this.minValue = otherRubberBand.minValue;
     this.maxValue = otherRubberBand.maxValue;
+    const firstCond = axisInverted != otherAxisInverted && this.isVertical == otherRubberBand.isVertical;
+    const secondCond = axisInverted == otherAxisInverted && this.isVertical != otherRubberBand.isVertical;
+    if (firstCond || secondCond) {this.normedInvert()};
+    this.axisToReal(axisOrigin, axisEnd);
   }
 
   public axisChangeUpdate(origin: number[], end: number[], wasVertical: boolean, 
@@ -1242,7 +1264,6 @@ export class RubberBand {
         mouse1[mouseIdx], mouse2[mouseIdx], 
         [axisOrigin[mouseIdx], axisEnd[mouseIdx]],
         axis, inverted);
-      this.realToAxis(axisOrigin[mouseIdx], axisEnd[mouseIdx]);
   }
 
   public newBoundsUpdate(newMin: number, newMax: number, axisBounds: number[], 

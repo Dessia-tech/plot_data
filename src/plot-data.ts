@@ -2770,15 +2770,33 @@ export class Interactions {
     return [mouse2X, mouse2Y, isDrawing, mouse_move];
   }
 
+  public static prepareAxisBounds(plot_data: any, selected_axis_index: number) {
+    let axisList = new Attribute(plot_data.axis_list[selected_axis_index].name, plot_data.axis_list[selected_axis_index].type_);
+    axisList.list = [];
+    plot_data.axis_list[selected_axis_index].list.forEach((value) => {axisList.list.push(value)});
+
+    if (plot_data.type_ == 'histogram') {
+      if (selected_axis_index == 0) {
+        axisList.type_ = 'float'
+        axisList.list[0] = plot_data.display_to_real(plot_data.axis_x_start, 'x');
+        axisList.list[1] = plot_data.display_to_real(plot_data.axis_x_end, 'x');
+      } else {
+        axisList.list[0] = plot_data.display_to_real(plot_data.axis_y_start, 'y');
+        axisList.list[1] = plot_data.display_to_real(plot_data.axis_y_end, 'y');
+      }
+    }
+    return axisList
+  }
+
   public static create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, plot_data:any) {
     const mouse2X = e.offsetX;
     const mouse2Y = e.offsetY;
     plot_data.is_drawing_rubber_band = true;
+    let axisList = this.prepareAxisBounds(plot_data, selected_axis_index);
+
     plot_data.rubber_bands[selected_axis_index].updateFromMouse(
-      [mouse1X, mouse1Y], [mouse2X, mouse2Y], 
-      plot_data.axis_list[selected_axis_index], 
-      [plot_data.axis_x_end, plot_data.axis_y_start], // be careful of x_ order
-      [plot_data.axis_x_start, plot_data.axis_y_end], // be careful of x_ order
+      [mouse1X, mouse1Y], [mouse2X, mouse2Y], axisList, 
+      [plot_data.axis_x_end, plot_data.axis_y_start], [plot_data.axis_x_start, plot_data.axis_y_end], // be careful of x_ order
       plot_data.inverted_axis_list[selected_axis_index])
     plot_data.draw();
     return [mouse2X, mouse2Y];
@@ -2798,9 +2816,10 @@ export class Interactions {
   public static rubber_band_translation(mouse1X: number, mouse1Y: number, selected_band_index: number, e: MouseEvent, plot_data:any) {
     const isVertical = plot_data.rubber_bands[selected_band_index].isVertical;
     const [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data, isVertical);
+    const axisList = this.prepareAxisBounds(plot_data, selected_band_index);
     plot_data.rubber_bands[selected_band_index].newBoundsUpdate(
       newMin + delta[axisIdx], newMax + delta[axisIdx], axisBounds[axisIdx], 
-      plot_data.axis_list[selected_band_index], plot_data.inverted_axis_list[selected_band_index]);
+      axisList, plot_data.inverted_axis_list[selected_band_index]);
     plot_data.draw();
     return [e.offsetX, e.offsetY];
   }
@@ -2816,9 +2835,9 @@ export class Interactions {
     } else {
       newMax += delta[axisIdx];
     }
-
+    const axisList = this.prepareAxisBounds(plot_data, axis_index);
     plot_data.rubber_bands[axis_index].newBoundsUpdate(
-      newMin, newMax, axisBounds[axisIdx], plot_data.axis_list[axis_index], plot_data.inverted_axis_list[axis_index]);
+      newMin, newMax, axisBounds[axisIdx], axisList, plot_data.inverted_axis_list[axis_index]);
     plot_data.draw();
     return [border_number, e.offsetX, e.offsetY, is_resizing];
   }
@@ -2869,7 +2888,7 @@ export class Interactions {
     
     const newOrigin = [plot_data.axis_x_start, plot_data.axis_y_start];
     const newEnd = [plot_data.axis_x_end, plot_data.axis_y_end];
-    plot_data.rubber_bands.forEach((rubberBand) => {
+    plot_data.rubber_bands.forEach((rubberBand, index) => {
       rubberBand.axisChangeUpdate(origin, end, wasVertical, newOrigin, newEnd, isVertical);
     })
     plot_data.draw();

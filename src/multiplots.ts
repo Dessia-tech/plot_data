@@ -1279,19 +1279,21 @@ export class MultiplePlots {
         })
 
         if (subplot instanceof ParallelPlot) {
-          subplot.rubber_bands.forEach((rubberBand, index) => {
-            var actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName) 
-            if (actualRubberIndex != -1) {
-              let axisOrigin = subplot.axis_x_start;
-              let axisEnd = subplot.axis_x_end;
-              if (subplot.vertical) {
-                axisOrigin = subplot.axis_y_end;
-                axisEnd = subplot.axis_y_start;
+          if (subplot !== actualPP) {
+            subplot.rubber_bands.forEach((rubberBand, index) => {
+              const actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName) 
+              if (actualRubberIndex != -1) {
+                let axisOrigin = subplot.axis_x_start;
+                let axisEnd = subplot.axis_x_end;
+                if (subplot.vertical) {
+                  axisOrigin = subplot.axis_y_end;
+                  axisEnd = subplot.axis_y_start;
+                }
+                rubberBand.updateFromOther(actualPP.rubber_bands[actualRubberIndex], axisOrigin, axisEnd, 
+                  subplot.inverted_axis_list[index], actualPP.inverted_axis_list[actualRubberIndex]);
               }
-              rubberBand.updateFromOther(rubberBands[actualRubberIndex], axisOrigin, axisEnd, 
-                subplot.inverted_axis_list[index], actualPP.inverted_axis_list[actualRubberIndex]);
-            }
-          })
+            })
+          }
         } else if (subplot instanceof PlotScatter && subplot.type_ !== "graph2d") {
           if (WAS_MERGE_ON == true) {
             Interactions.click_on_merge_action(subplot)
@@ -1347,10 +1349,10 @@ export class MultiplePlots {
           }
         } else if (subplot instanceof Histogram) {
           rubberBandsInPlot.forEach((rubberBand) => {
-            subplot.rubber_bands[0].minValue = rubberBand.minValue;
-            subplot.rubber_bands[0].maxValue = rubberBand.maxValue;
-            subplot.rubber_bands[0].axisMin = rubberBand.axisMin;
-            subplot.rubber_bands[0].axisMax = rubberBand.axisMax;
+            let actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
+            subplot.rubber_bands[0].updateFromOther(
+              rubberBand, subplot.axis_x_start, subplot.axis_x_end, false, actualPP.inverted_axis_list[actualRubberIndex]);
+            console.log(subplot.rubber_bands)
           })
           subplot.get_selected_keys();
 
@@ -1896,6 +1898,7 @@ export class MultiplePlots {
                     this.setAllInterpolationToOFF();
                   }
                   this.reset_selected_points_except([this.clickedPlotIndex]);
+                  this.objectList[this.clickedPlotIndex].mouse_interaction(true);
                   this.pp_communication(this.objectList[this.clickedPlotIndex].rubber_bands, this.objectList[this.clickedPlotIndex]);
                 }
               } else if (type_ === 'histogram') {

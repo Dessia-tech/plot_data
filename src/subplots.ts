@@ -264,13 +264,8 @@ export class ParallelPlot extends PlotData {
       this.elements = data['elements'];
       this.edge_style = EdgeStyle.deserialize(data['edge_style']);
       var attribute_names = data['attribute_names'];
-      if (data['disposition'] == 'vertical') {
-        this.vertical = true;
-      } else if (data['disposition'] == 'horizontal') {
-        this.vertical = false;
-      } else {
-        throw new Error('Axis disposition must be vertical or horizontal');
-      }
+      this.vertical = false;
+      if (data['disposition'] == 'vertical') {this.vertical = true};
       this.initialize_all_attributes();
       this.initialize_attributes_list();
       this.add_to_axis_list(attribute_names);
@@ -519,7 +514,6 @@ export class ParallelPlot extends PlotData {
             }
           }
         });
-  
       }
     }
 
@@ -1578,7 +1572,6 @@ export class Histogram extends PlotData {
       this.draw();
     }
 
-
     draw() {
       this.refresh_graduation_nb();
       this.refresh_axis_coords();
@@ -1594,8 +1587,8 @@ export class Histogram extends PlotData {
       this.infos = this.get_infos();
       this.draw_histogram();
       // this.draw_rubberbands();
-      this.draw_rubber_bands(this.originX);
       this.draw_axis();
+      this.draw_rubber_bands(this.originX);
 
       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
         this.refresh_buttons_coords();
@@ -1727,17 +1720,20 @@ export class Histogram extends PlotData {
       let keys = Object.keys(this.infos);
       this.y_step = this.get_y_step();
       if (this.discrete) {
-        [this.axis_x_start, this.axis_x_end] = this.axis.draw_histogram_x_axis(
+        // [this.axis_x_start, this.axis_x_end] = this.axis.draw_histogram_x_axis(
+        this.axis.draw_histogram_x_axis(
           this.context, this.scale, this.init_scale, this.originX, this.width,
           this.height, this.x_variable.list, this.decalage_axis_x, this.decalage_axis_y,
           this.scroll_x, this.X, this.Y, this.x_variable.name);
       } else {
         let {x1, x2} = this.string_to_coordinate(keys[0]);
         let x_step = x2 - x1;
-        this.axis.draw_horizontal_axis(this.context, this.originX, this.scale,
-                                       this.width, this.height, this.init_scale, this.minX, this.maxX,
-                                       this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
-                                       this.X, this.Y, this.x_variable.name, false, x_step);
+        // [this.axis_x_start, this.axis_x_end] = this.axis.draw_horizontal_axis(
+        this.axis.draw_horizontal_axis(
+          this.context, this.originX, this.scale,
+          this.width, this.height, this.init_scale, this.minX, this.maxX,
+          this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
+          this.X, this.Y, this.x_variable.name, false, x_step);
       }
       [this.axis_y_start, this.axis_y_end] = this.axis.draw_histogram_y_axis(
         this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x,
@@ -1763,46 +1759,42 @@ export class Histogram extends PlotData {
 
 
     draw_histogram() {
-      let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
-      let keys = Object.keys(this.infos);
-      let scaleY = (0.88*this.height - this.decalage_axis_y) / this.max_frequency;
       let color_stroke = this.edge_style.color_stroke;
+      let color_fill = this.surface_style.color_fill;
+      let selectedColor = string_to_hex('lightyellow');
       let line_width = this.edge_style.line_width;
       let opacity = this.surface_style.opacity;
       let dashline = this.edge_style.dashline;
+      let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
+      let keys = Object.keys(this.infos);
+      let scaleY = (0.88*this.height - this.decalage_axis_y) / this.max_frequency;
+      let current_x = 0;
+      let f = 0;
+      let w = 0.5;
 
-      if (this.discrete) {
-        // var grad_beg_x = this.decalage_axis_x/this.scale + 1/4;
-        let w = 1/2;
-        for (let i=0; i<keys.length; i++) {
-          this.context.beginPath();
-          let color_fill = this.surface_style.color_fill;
-          if (this.selected_keys.includes(keys[i])) {
-            color_fill = string_to_hex('lightyellow');
-          }
-          let f = this.infos[keys[i]].length;
-          let current_x = this.real_to_display(i, 'x');
-          Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context,
-                     color_fill, color_stroke, line_width, opacity, dashline);
-          this.context.closePath();
-        }
-      } else {
+      if (!this.discrete) {
         let {x1, x2} = this.string_to_coordinate(keys[0]);
-        let w = x2 - x1;
-        for (let key of keys) {
-          this.context.beginPath();
-          let color_fill = this.surface_style.color_fill;
-          if (this.selected_keys.includes(key)) {
-            color_fill = string_to_hex('lightyellow');
-          }
-          let {x1} = this.string_to_coordinate(key);
-          let current_x = this.real_to_display(x1, 'x');
-          let f = this.infos[key].length;
-          Shape.rect(current_x, grad_beg_y, this.scale*w,
-                     -scaleY*f, this.context, color_fill, color_stroke, line_width, opacity, dashline);
-          this.context.closePath();
-        }
+        w = x2 - x1;
       }
+
+      keys.forEach((key, idx) => {
+        if (this.selected_keys.includes(key)) {
+          color_fill = selectedColor;
+        } else {
+          color_fill = this.surface_style.color_fill;
+        }
+        f = this.infos[key].length;
+        if (!this.discrete) {
+          let {x1} = this.string_to_coordinate(key);
+          current_x = this.real_to_display(x1, 'x');
+        } else {
+          current_x = this.real_to_display(idx, 'x');
+        }
+        this.context.beginPath();
+        Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context,
+          color_fill, color_stroke, line_width, opacity, dashline);
+        this.context.closePath();
+      })
     }
 
     mouse_interaction() {
@@ -1820,13 +1812,15 @@ export class Histogram extends PlotData {
         var click_on_selectw_border:boolean = false;
         var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
         var canvas = document.getElementById(this.canvas_id);
-  
+
         canvas.addEventListener('mousedown', e => {
           if (this.interaction_ON) {
             [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
             [click_on_axis, selected_axis_index] = Interactions.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis, this);
             [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
           }
+          // console.log(mouse1X, mouse1Y)
+
         });
   
         canvas.addEventListener('mousemove', e => {

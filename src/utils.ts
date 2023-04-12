@@ -1347,3 +1347,81 @@ export class RubberBand {
     return [isClicked, onMinBorder, onMaxBorder]
   }
 }
+
+export class Vertex {
+  public x: number;
+  public y: number;
+  constructor(x: number = 0, y: number = 0) {
+    this.x = x;
+    this.y = y;
+  };
+
+  public add(other: Vertex): Vertex {
+    return new Vertex(this.x + other.x, this.y + other.y)
+  }
+
+  public subtract(other: Vertex): Vertex {
+    return new Vertex(this.x - other.x, this.y - other.y)
+  }
+}
+
+export class newAxis {
+  public ticks: number[];
+  readonly minValue: number;
+  readonly maxValue: number;
+  readonly dataType: string;
+  constructor(
+    vector: any[],
+    public origin: Vertex,
+    public end: Vertex,
+    nTicks: number = 10) {
+      this.dataType = typeof vector[0];
+      [this.minValue, this.maxValue] = this.computeMinMax(vector);
+      this.ticks = this.computeTicks(nTicks);
+    };
+
+  public get isVertical() {
+    return this.origin.x == this.end.x;
+  }
+
+  public get drawLength() {
+    if (this.isVertical) {
+      return Math.abs(this.origin.y - this.end.y);
+    }
+    return Math.abs(this.origin.x - this.end.x);
+  }
+
+  public get interval() {
+    if (this.isVertical) {
+      return Math.abs(this.origin.y - this.end.y);
+    }
+    return Math.abs(this.origin.x - this.end.x);
+  }
+
+  public static stringsToValues(vector: any[]): number[] {
+    let uniques = vector.filter((value, index, array) => array.indexOf(value) === index); // unique values
+    let numericVector = [];
+    vector.forEach((value) => numericVector.push(uniques.indexOf(value)));
+    return numericVector
+  }
+
+  private computeMinMax(vector: any[]) {
+    let newVector = vector;
+    if (typeof vector[0] == 'string') {newVector = newAxis.stringsToValues(vector)};
+    return [Math.min(...newVector), Math.max(...newVector)]
+  }
+
+  private computeTicks(nTicks: number): number[] {
+    if (this.dataType == 'string') {
+      return Array.from(Array(this.maxValue + 1).keys())
+    }
+    var plotMinVal = Math.floor(this.minValue * 10) / 10;
+    var ticks = [];
+    var increment = this.interval / (nTicks-1);
+    for (let idx = 0; idx < nTicks; idx++) {
+        ticks.push(Number((plotMinVal + increment * idx).toPrecision(4)));
+    } 
+    return ticks
+  }
+}
+

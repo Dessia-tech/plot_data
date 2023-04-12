@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1476,6 +1476,86 @@ export class PrimitiveGroupContainer extends PlotData {
     }
 }
 
+
+
+
+export class BasePlot extends PlotData {
+  axes: newAxis[] = [];
+  dataTypes: string[];
+  origin: Vertex;
+  size: Vertex; 
+  readonly features: Map<string, number[]>;
+  constructor(
+    public data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.origin = new Vertex(X, Y);
+      this.size = new Vertex(width, height);
+      this.features = this.unpackData(data);
+    }
+
+  private unpackData(data: any): Map<string, number[]> {
+    let unpackedData = new Map<string, number[]>();
+    Object.keys(data.elements[0]).forEach((feature) => {
+      let vector = [];
+      data.elements.forEach((element) => {vector.push(element[feature])});
+      unpackedData.set(feature, vector);
+    });
+    return unpackedData
+  }
+
+  public draw() {}
+
+  public draw_from_context(hidden: any) {}
+}
+
+
+export class OrthonormalPlot extends BasePlot {
+  xAxis: newAxis;
+  yAxis: newAxis;
+  xFeature: string;
+  yFeature: string;
+  readonly N_X_TICKS = 10;
+  readonly N_Y_TICKS = 10;
+  readonly OFFSET = new Vertex(50, 20);
+  readonly MARGIN = new Vertex(50, 20);
+  constructor(
+    public data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      [this.xFeature, this.yFeature] = [data.x_variable, data.y_variable];
+      [this.xAxis, this.yAxis] = this.setAxes();
+      console.log(this.xAxis)
+    }
+
+  private setAxes(): newAxis[] {
+    const frameOrigin = this.origin.add(this.OFFSET);
+    const xEnd = new Vertex(frameOrigin.x + this.size.x - this.MARGIN.x, frameOrigin.y);
+    const yEnd = new Vertex(frameOrigin.x, frameOrigin.y + this.size.y - this.MARGIN.y);
+    return [
+      this.setAxis(this.xFeature, frameOrigin, xEnd, this.N_X_TICKS), 
+      this.setAxis(this.xFeature, frameOrigin, yEnd, this.N_Y_TICKS)]
+  }
+
+  private setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number): newAxis {
+    return new newAxis(this.features.get(feature), origin, end, nTicks)
+  }
+
+}
 
 export class Histogram extends PlotData {
     edge_style: EdgeStyle;

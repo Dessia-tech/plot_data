@@ -1243,26 +1243,23 @@ export class MultiplePlots {
       this.refresh_selected_object_from_index();
     }
 
-
     mouse_move_pp_communication() {
-      let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
+      const isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
       if (isDrawingRubberObjIndex != -1) {
-        let isDrawingPP = this.objectList[isDrawingRubberObjIndex];
+        const isDrawingPP = this.objectList[isDrawingRubberObjIndex];
         this.pp_communication(isDrawingPP.rubber_bands, isDrawingPP);
       }
     }
 
-    pp_communication(rubberBands: RubberBand[], actualPP: any) { //process received data from a parallelplot and send it to the other objects
-      let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
-      let rubberBandNames = []
-      rubberBands.forEach((rubberBand) => {
-        rubberBandNames.push(rubberBand.attributeName)
-      })
+    pp_communication(rubberBands: RubberBand[], currentPP: any) { // process received data from a parallelplot and send it to the other objects
+      const selectedIndices = currentPP.getObjectsInRubberBands(rubberBands);
+      let rubberBandNames = [];
+      rubberBands.forEach((rubberBand) => rubberBandNames.push(rubberBand.attributeName));
     
       this.objectList.forEach((subplot) => {
         const WAS_MERGE_ON = subplot.mergeON;
-        var subplotData = subplot.data
-        var rubberBandsInPlot = [];
+        const subplotData = subplot.data;
+        let rubberBandsInPlot = [];
         rubberBands.forEach((rubberBand) => {
           if (["scatterplot", "parallelplot", "graph2d"].includes(subplotData.type_)) {
             if (subplotData.attribute_names.includes(rubberBand.attributeName)) {
@@ -1281,12 +1278,12 @@ export class MultiplePlots {
 
         if (subplot instanceof ParallelPlot) {
           subplot.rubber_bands.forEach((rubberBand) => {
-            var actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName) 
-            if (actualRubberIndex != -1) {
-              rubberBand.axisMin = rubberBands[actualRubberIndex].axisMin;
-              rubberBand.axisMax = rubberBands[actualRubberIndex].axisMax;
-              rubberBand.minValue = rubberBands[actualRubberIndex].minValue;
-              rubberBand.maxValue = rubberBands[actualRubberIndex].maxValue;
+            const currentRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
+            if (currentRubberIndex != -1) {
+              rubberBand.axisMin = rubberBands[currentRubberIndex].axisMin;
+              rubberBand.axisMax = rubberBands[currentRubberIndex].axisMax;
+              rubberBand.minValue = rubberBands[currentRubberIndex].minValue;
+              rubberBand.maxValue = rubberBands[currentRubberIndex].maxValue;
             }
           })
         } else if (subplot instanceof PlotScatter && subplot.type_ !== "graph2d") {
@@ -1296,10 +1293,8 @@ export class MultiplePlots {
           }
           let completedAxis = [];
           rubberBandsInPlot.forEach((rubberBand) => {
-            var axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
-            if (rubberBand.length != 0) {
-              completedAxis.push(axisIndex)
-            }
+            const axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
+            if (rubberBand.length != 0) {completedAxis.push(axisIndex)};
             if (axisIndex == 0) {
               subplot.perm_window_x = rubberBand.minValue;
               subplot.perm_window_w = rubberBand.maxValue - subplot.perm_window_x;
@@ -1355,9 +1350,7 @@ export class MultiplePlots {
           subplot.selected_point_index = selectedIndices;
           if (selectedIndices.length == 0) {
             let sumRubberLength = 0;
-            rubberBands.forEach((rubberBand) => {
-              sumRubberLength += rubberBand.length;
-            })
+            rubberBands.forEach((rubberBand) => {sumRubberLength += rubberBand.length})
             if (sumRubberLength == 0 && selectedIndices.length == 0) {
               subplot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
             }

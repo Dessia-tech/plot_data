@@ -952,7 +952,7 @@ export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
     //
     _pts = pts.slice(0);
 
-    // The algorithm require a previous and next point to the actual point array.
+    // The algorithm require a previous and next point to the current point array.
     // Check if we will draw closed or open curve.
     // If closed, copy end points to beginning and first points to end
     // If open, duplicate first points to befinning, end points to end

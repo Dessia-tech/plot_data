@@ -1126,10 +1126,8 @@ export abstract class PlotData {
   }
 
   is_inside_band(real_x, real_y, axis_index): boolean {
-    if (this.vertical === true) {
-      return this.rubber_bands[axis_index].includesValue(real_y, this.axis_list[axis_index])
-    }
-    return this.rubber_bands[axis_index].includesValue(real_x, this.axis_list[axis_index])
+    const value = this.vertical ? real_y : real_x;
+    return this.rubber_bands[axis_index].includesValue(value, this.axis_list[axis_index])
   }
 
   sort_to_display_list() {
@@ -1237,7 +1235,6 @@ export abstract class PlotData {
       let selected = true
       if (this.vertical) { var seg_list = this.vertical_axis_coords[i]; } else { var seg_list = this.horizontal_axis_coords[i]; }
       for (let j=0; j<this.axis_list.length; j++) {
-        // var inside_band = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
         var inside_band = this.is_inside_band(this.to_display_list[i][j], this.to_display_list[i][j], j);
         if (!inside_band) {
           selected = false;
@@ -1310,9 +1307,7 @@ export abstract class PlotData {
     if (this.vertical) { var axis_coords = this.vertical_axis_coords; } else { axis_coords = this.horizontal_axis_coords; }
     for (let i=0; i<this.to_display_list.length; i++) {
       var selected:boolean = true;
-      // var seg_list = axis_coords[i];
       for (let j=0; j<this.axis_list.length; j++) {
-        // var selected = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
         var selected = this.is_inside_band(this.to_display_list[i][j], this.to_display_list[i][j], j);
       }
       if (selected) {
@@ -2290,7 +2285,8 @@ export abstract class PlotData {
     } else if (click_on_name && !mouse_moving) {
       Interactions.select_title_action(selected_name_index, this);
     } else if (this.is_drawing_rubber_band || is_resizing) {
-      is_resizing = Interactions.rubber_band_size_check(selected_axis_index, this);
+      this.draw();
+      is_resizing = false; //Interactions.rubber_band_size_check(this);
     }
     if (click_on_disp) {
       Interactions.change_disposition_action(this);
@@ -3060,16 +3056,7 @@ export class Interactions {
     plot_data.invert_rubber_bands('all');
     plot_data.draw();
   }
-
-  public static rubber_band_size_check(selected_band_index, plot_data:any) {
-    // if (plot_data.rubber_bands[selected_band_index].length <= 0.02) {
-    //     plot_data.rubber_bands[selected_band_index].reset();
-    // }
-    plot_data.draw();
-    var is_resizing = false;
-    return is_resizing;
-  }
-
+  
   public static move_axis(old_index, new_index, plot_data:any) {
     plot_data.axis_list = List.move_elements(old_index, new_index, plot_data.axis_list);
     plot_data.rubber_bands = List.move_elements(old_index, new_index, plot_data.rubber_bands);
@@ -3178,19 +3165,19 @@ export class Interactions {
 
 export class Buttons {
   public static zoom_button(x, y, w, h, plot_data:PlotData) {
-    var actualX = x + plot_data.X;
-    var actualY = y + plot_data.Y;
+    var currentX = x + plot_data.X;
+    var currentY = y + plot_data.Y;
     plot_data.context.strokeStyle = 'black';
     plot_data.context.beginPath();
     plot_data.context.lineWidth = 2;
     plot_data.context.fillStyle = 'white';
-    plot_data.context.rect(actualX, actualY, w, h);
-    plot_data.context.rect(actualX, actualY + h, w, h);
-    plot_data.context.moveTo(actualX, actualY+h);
-    plot_data.context.lineTo(actualX+w, actualY+h);
-    Shape.crux(plot_data.context, actualX+w/2, actualY+h/2, h/3);
-    plot_data.context.moveTo(actualX + w/2 - h/3, actualY + 3*h/2);
-    plot_data.context.lineTo(actualX + w/2 + h/3, actualY + 3*h/2);
+    plot_data.context.rect(currentX, currentY, w, h);
+    plot_data.context.rect(currentX, currentY + h, w, h);
+    plot_data.context.moveTo(currentX, currentY + h);
+    plot_data.context.lineTo(currentX + w, currentY + h);
+    Shape.crux(plot_data.context, currentX + w/2, currentY + h/2, h/3);
+    plot_data.context.moveTo(currentX + w/2 - h/3, currentY + 3*h/2);
+    plot_data.context.lineTo(currentX + w/2 + h/3, currentY + 3*h/2);
     plot_data.context.fill();
     plot_data.context.stroke();
     plot_data.context.closePath();

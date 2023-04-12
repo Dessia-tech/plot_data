@@ -4,7 +4,6 @@ import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, 
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
-import { min } from 'cypress/types/lodash';
 
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
@@ -1255,7 +1254,7 @@ export class MultiplePlots {
       const selectedIndices = currentPP.getObjectsInRubberBands(rubberBands);
       let rubberBandNames = [];
       rubberBands.forEach((rubberBand) => rubberBandNames.push(rubberBand.attributeName));
-    
+
       this.objectList.forEach((subplot) => {
         const WAS_MERGE_ON = subplot.mergeON;
         const subplotData = subplot.data;

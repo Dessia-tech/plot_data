@@ -1111,13 +1111,13 @@ export function export_to_csv(rows, filename="my_data.csv") {
 
 export class RubberBand {
   axisMin: number = 0;
-  axisMax: number = 0;  
+  axisMax: number = 0;
   realMin: number = 0;
   realMax: number = 0;
   smallSize: number = 20;
   readonly MIN_LENGTH = 0.02;
   constructor(public attributeName: string,
-              private _minValue: number, 
+              private _minValue: number,
               private _maxValue: number,
               public isVertical: boolean) {}
 

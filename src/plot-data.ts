@@ -1735,7 +1735,7 @@ export abstract class PlotData {
 
     }
   }
-  
+
   get_nb_intersections(attrNum1, attrNum2) { //get the number of segment intersections given two axis index from the initial axis_list
     var compareList = [];
     var firstElts = []
@@ -2913,7 +2913,7 @@ export class Interactions {
     plot_data.rubber_bands[selected_axis_index].axisMin = min;
     plot_data.rubber_bands[selected_axis_index].axisMax = max;
     plot_data.draw();
-    
+
     return [mouse2X, mouse2Y];
   }
 
@@ -2931,15 +2931,15 @@ export class Interactions {
     plot_data.rubber_bands[selected_band_index].axisMax = Math.min(plot_data.rubber_last_max + delta, 1);
 
     var realCoord_min = plot_data.axis_to_real_coords(
-      plot_data.rubber_bands[selected_band_index].axisMin, 
-      plot_data.axis_list[selected_band_index]['type_'], 
-      plot_data.axis_list[selected_band_index]['list'], 
+      plot_data.rubber_bands[selected_band_index].axisMin,
+      plot_data.axis_list[selected_band_index]['type_'],
+      plot_data.axis_list[selected_band_index]['list'],
       plot_data.inverted_axis_list[selected_band_index]
       );
     var realCoord_max = plot_data.axis_to_real_coords(
       plot_data.rubber_bands[selected_band_index].axisMax,
-      plot_data.axis_list[selected_band_index]['type_'], 
-      plot_data.axis_list[selected_band_index]['list'], 
+      plot_data.axis_list[selected_band_index]['type_'],
+      plot_data.axis_list[selected_band_index]['list'],
       plot_data.inverted_axis_list[selected_band_index]
       );
 
@@ -2990,7 +2990,7 @@ export class Interactions {
                                                      plot_data.inverted_axis_list[axis_index]);
     var to_add_min = Math.min(real_new_min, real_new_max);
     var to_add_max = Math.max(real_new_min, real_new_max);
-    
+
     plot_data.rubber_bands[axis_index].minValue = to_add_min;
     plot_data.rubber_bands[axis_index].maxValue = to_add_max;
     plot_data.draw();
@@ -3056,7 +3056,7 @@ export class Interactions {
     plot_data.invert_rubber_bands('all');
     plot_data.draw();
   }
-  
+
   public static move_axis(old_index, new_index, plot_data:any) {
     plot_data.axis_list = List.move_elements(old_index, new_index, plot_data.axis_list);
     plot_data.rubber_bands = List.move_elements(old_index, new_index, plot_data.rubber_bands);

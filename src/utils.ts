@@ -964,7 +964,7 @@ export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
     //
     _pts = pts.slice(0);
 
-    // The algorithm require a previous and next point to the actual point array.
+    // The algorithm require a previous and next point to the current point array.
     // Check if we will draw closed or open curve.
     // If closed, copy end points to beginning and first points to end
     // If open, duplicate first points to befinning, end points to end
@@ -1123,7 +1123,7 @@ export function export_to_csv(rows, filename="my_data.csv") {
 
 export class RubberBand {
   axisMin: number = 0;
-  axisMax: number = 0;  
+  axisMax: number = 0;
   realMin: number = 0;
   realMax: number = 0;
   path: Path2D; // unused for the moment
@@ -1131,7 +1131,7 @@ export class RubberBand {
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;
   constructor(public attributeName: string,
-              private _minValue: number, 
+              private _minValue: number,
               private _maxValue: number,
               public isVertical: boolean) {}
 

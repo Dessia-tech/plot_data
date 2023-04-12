@@ -1942,7 +1942,7 @@ export class Histogram extends PlotData {
       } else {
         throw new Error("real_to_display(): type_ must be 'x' or 'y'");
       }
-      
+
     }
 
 

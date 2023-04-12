@@ -4,7 +4,6 @@ import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, 
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
-import { min } from 'cypress/types/lodash';
 
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
@@ -1242,26 +1241,23 @@ export class MultiplePlots {
       this.refresh_selected_object_from_index();
     }
 
-
     mouse_move_pp_communication() {
-      let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
+      const isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
       if (isDrawingRubberObjIndex != -1) {
-        let isDrawingPP = this.objectList[isDrawingRubberObjIndex];
+        const isDrawingPP = this.objectList[isDrawingRubberObjIndex];
         this.pp_communication(isDrawingPP.rubber_bands, isDrawingPP);
       }
     }
 
-    pp_communication(rubberBands: RubberBand[], actualPP: any) { //process received data from a parallelplot and send it to the other objects
-      let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
-      let rubberBandNames = []
-      rubberBands.forEach((rubberBand) => {
-        rubberBandNames.push(rubberBand.attributeName)
-      })
-    
+    pp_communication(rubberBands: RubberBand[], currentPP: any) { // process received data from a parallelplot and send it to the other objects
+      const selectedIndices = currentPP.getObjectsInRubberBands(rubberBands);
+      let rubberBandNames = [];
+      rubberBands.forEach((rubberBand) => rubberBandNames.push(rubberBand.attributeName));
+
       this.objectList.forEach((subplot) => {
         const WAS_MERGE_ON = subplot.mergeON;
-        var subplotData = subplot.data
-        var rubberBandsInPlot = [];
+        const subplotData = subplot.data;
+        let rubberBandsInPlot = [];
         rubberBands.forEach((rubberBand) => {
           if (["scatterplot", "parallelplot", "graph2d"].includes(subplotData.type_)) {
             if (subplotData.attribute_names.includes(rubberBand.attributeName)) {
@@ -1279,7 +1275,7 @@ export class MultiplePlots {
         })
 
         if (subplot instanceof ParallelPlot) {
-          if (subplot !== actualPP) {
+          if (subplot !== currentPP) {
             subplot.rubber_bands.forEach((rubberBand, index) => {
               const actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName) 
               if (actualRubberIndex != -1) {
@@ -1289,8 +1285,8 @@ export class MultiplePlots {
                   axisOrigin = subplot.axis_y_end;
                   axisEnd = subplot.axis_y_start;
                 }
-                rubberBand.updateFromOther(actualPP.rubber_bands[actualRubberIndex], axisOrigin, axisEnd, 
-                  subplot.inverted_axis_list[index], actualPP.inverted_axis_list[actualRubberIndex]);
+                rubberBand.updateFromOther(currentPP.rubber_bands[actualRubberIndex], axisOrigin, axisEnd, 
+                  subplot.inverted_axis_list[index], currentPP.inverted_axis_list[actualRubberIndex]);
               }
             })
           }
@@ -1301,10 +1297,8 @@ export class MultiplePlots {
           }
           let completedAxis = [];
           rubberBandsInPlot.forEach((rubberBand) => {
-            var axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
-            if (rubberBand.length != 0) {
-              completedAxis.push(axisIndex)
-            }
+            const axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
+            if (rubberBand.length != 0) {completedAxis.push(axisIndex)};
             if (axisIndex == 0) {
               subplot.perm_window_x = rubberBand.minValue;
               subplot.perm_window_w = rubberBand.maxValue - subplot.perm_window_x;
@@ -1351,7 +1345,7 @@ export class MultiplePlots {
           rubberBandsInPlot.forEach((rubberBand) => {
             let actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
             subplot.rubber_bands[0].updateFromOther(
-              rubberBand, subplot.axis_x_start, subplot.axis_x_end, false, actualPP.inverted_axis_list[actualRubberIndex]);
+              rubberBand, subplot.axis_x_start, subplot.axis_x_end, false, currentPP.inverted_axis_list[actualRubberIndex]);
           })
           subplot.get_selected_keys();
 
@@ -1359,9 +1353,7 @@ export class MultiplePlots {
           subplot.selected_point_index = selectedIndices;
           if (selectedIndices.length == 0) {
             let sumRubberLength = 0;
-            rubberBands.forEach((rubberBand) => {
-              sumRubberLength += rubberBand.length;
-            })
+            rubberBands.forEach((rubberBand) => {sumRubberLength += rubberBand.length})
             if (sumRubberLength == 0 && selectedIndices.length == 0) {
               subplot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
             }

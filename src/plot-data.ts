@@ -1125,9 +1125,6 @@ export abstract class PlotData {
     return axis_coords;
   }
 
-  is_inside_band(value: number, axis_index: number): boolean {
-    return this.rubber_bands[axis_index].includesValue(value, this.axis_list[axis_index])
-  }
 
   sort_to_display_list() {
     if (List.is_name_include(this.selected_axis_name, this.axis_list)) {
@@ -1683,7 +1680,7 @@ export abstract class PlotData {
 
     }
   }
-  
+
   get_nb_intersections(attrNum1, attrNum2) { //get the number of segment intersections given two axis index from the initial axis_list
     var compareList = [];
     var firstElts = []
@@ -3010,19 +3007,19 @@ export class Interactions {
 
 export class Buttons {
   public static zoom_button(x, y, w, h, plot_data:PlotData) {
-    var actualX = x + plot_data.X;
-    var actualY = y + plot_data.Y;
+    var currentX = x + plot_data.X;
+    var currentY = y + plot_data.Y;
     plot_data.context.strokeStyle = 'black';
     plot_data.context.beginPath();
     plot_data.context.lineWidth = 2;
     plot_data.context.fillStyle = 'white';
-    plot_data.context.rect(actualX, actualY, w, h);
-    plot_data.context.rect(actualX, actualY + h, w, h);
-    plot_data.context.moveTo(actualX, actualY+h);
-    plot_data.context.lineTo(actualX+w, actualY+h);
-    Shape.crux(plot_data.context, actualX+w/2, actualY+h/2, h/3);
-    plot_data.context.moveTo(actualX + w/2 - h/3, actualY + 3*h/2);
-    plot_data.context.lineTo(actualX + w/2 + h/3, actualY + 3*h/2);
+    plot_data.context.rect(currentX, currentY, w, h);
+    plot_data.context.rect(currentX, currentY + h, w, h);
+    plot_data.context.moveTo(currentX, currentY + h);
+    plot_data.context.lineTo(currentX + w, currentY + h);
+    Shape.crux(plot_data.context, currentX + w/2, currentY + h/2, h/3);
+    plot_data.context.moveTo(currentX + w/2 - h/3, currentY + 3*h/2);
+    plot_data.context.lineTo(currentX + w/2 + h/3, currentY + 3*h/2);
     plot_data.context.fill();
     plot_data.context.stroke();
     plot_data.context.closePath();

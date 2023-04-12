@@ -144,7 +144,7 @@ export abstract class PlotData {
   edge_style:EdgeStyle;
   bandWidth:number=30;
   bandColor:string=string_to_hex('lightblue');
-  bandOpacity:number=1;
+  bandOpacity:number=0.5;
   axisNameSize:number=12;
   gradSize:number=10;
   axisNbGrad:number=10;

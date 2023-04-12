@@ -1493,6 +1493,8 @@ export class Histogram extends PlotData {
     coeff:number=0.88;
     y_step: number = 0;
     selected_keys = [];
+    bandColor: string = string_to_hex('lightrose');
+    bandOpacity: number = 0.5;
 
     constructor(public data:any,
                 public width: number,

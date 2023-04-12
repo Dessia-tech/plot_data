@@ -2888,7 +2888,7 @@ export class Interactions {
     
     const newOrigin = [plot_data.axis_x_start, plot_data.axis_y_start];
     const newEnd = [plot_data.axis_x_end, plot_data.axis_y_end];
-    plot_data.rubber_bands.forEach((rubberBand, index) => {
+    plot_data.rubber_bands.forEach((rubberBand) => {
       rubberBand.axisChangeUpdate(origin, end, wasVertical, newOrigin, newEnd, isVertical);
     })
     plot_data.draw();

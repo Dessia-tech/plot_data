@@ -1352,7 +1352,6 @@ export class MultiplePlots {
             let actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
             subplot.rubber_bands[0].updateFromOther(
               rubberBand, subplot.axis_x_start, subplot.axis_x_end, false, actualPP.inverted_axis_list[actualRubberIndex]);
-            console.log(subplot.rubber_bands)
           })
           subplot.get_selected_keys();
 

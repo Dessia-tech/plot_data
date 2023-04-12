@@ -1295,7 +1295,7 @@ export class RubberBand {
     this.axisMax = 1 - tempMin;
   }
 
-  public switchOrientation  (previousStart: number, newStart: number, 
+  public switchOrientation(previousStart: number, newStart: number, 
     axisLengths: [number, number]) {
     let relativeMin = (this.realMin - previousStart) / axisLengths[0];
     let normedLength = this.canvasLength / axisLengths[0];

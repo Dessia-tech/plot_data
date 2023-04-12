@@ -388,7 +388,7 @@ export class ParallelPlot extends PlotData {
     initialize_data_lists() {
       for (let i=0; i<this.axis_list.length; i++) {
         this.inverted_axis_list.push(false);
-        this.rubber_bands.push(new RubberBand(this.axis_list[i].name, 0, 0));
+        this.rubber_bands.push(new RubberBand(this.axis_list[i].name, 0, 0, this.vertical));
       }
     }
 
@@ -401,14 +401,11 @@ export class ParallelPlot extends PlotData {
 
     getObjectsInRubberBands(rubberBands: RubberBand[]): number[] {
       let selectedIndices = [];
-
       this.data["elements"].forEach((sample, elementIndex) => {
         var inRubberBand = 0;
         if (rubberBands.length !==0 ) {
-          rubberBands.forEach((rubberBand) => {
-            this.axis_list.forEach((axis) => {
-              inRubberBand += Number(rubberBand.includesValue(sample[rubberBand.attributeName], axis))
-            })
+          rubberBands.forEach((rubberBand, rubberIndex) => {
+            inRubberBand += Number(rubberBand.includesValue(sample[rubberBand.attributeName], this.axis_list[rubberIndex]))
           })
           if (inRubberBand == rubberBands.length) {
             selectedIndices.push(elementIndex)
@@ -1402,8 +1399,8 @@ export class Histogram extends PlotData {
       if (type_ !== 'float') this.discrete = true;
 
       this.x_variable = new Attribute(name, type_);
-      this.x_rubberband = new RubberBand(this.x_variable.name, 0, 0);
-      this.y_rubberband = new RubberBand("frequency", 0, 0);
+      this.x_rubberband = new RubberBand(this.x_variable.name, 0, 0, false);
+      this.y_rubberband = new RubberBand("frequency", 0, 0, true);
       const axis = data['axis'] || {grid_on: false};
       this.axis = Axis.deserialize(axis);
       let temp_surface_style = data['surface_style'] || {};
@@ -1485,21 +1482,19 @@ export class Histogram extends PlotData {
     }
 
     draw_rubberband(rubberBand: RubberBand, axisType: string) {
-      const SMALL_SIZE = 20;
       const COLOR_FILL = string_to_hex('lightrose');
       const COLOR_STROKE = string_to_hex('lightgrey');
       const LINE_WIDTH = 0.5;
       const ALPHA = 0.6;
-      var origin = this.real_to_display(rubberBand.minValue, axisType);
-      var projectedMax = this.real_to_display(rubberBand.maxValue, axisType);
-      var largeSize = projectedMax - origin;
-
+      rubberBand.realMin = this.real_to_display(rubberBand.minValue, axisType);
+      rubberBand.realMax = this.real_to_display(rubberBand.maxValue, axisType);
       if (axisType == 'x') {
-        var originY = this.height - this.decalage_axis_y - SMALL_SIZE/2 + this.Y;
-        rubberBand.draw(origin, originY, largeSize, SMALL_SIZE, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+        var originY = this.height - this.decalage_axis_y + this.Y;
+        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
       } else {
-        var originY = this.decalage_axis_x - SMALL_SIZE/2 + this.X;
-        rubberBand.draw(originY, origin, SMALL_SIZE, largeSize, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+        var originY = this.decalage_axis_x + this.X;
+        rubberBand.flipValues();
+        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
       }
     }
 
@@ -1908,12 +1903,13 @@ export class Histogram extends PlotData {
           return this.scale * real + this.originX + this.X;
         }
       } else if (type_ === 'y') {
-        let grad_beg_y = this.height - this.decalage_axis_y;
+        let grad_beg_y = this.height - this.decalage_axis_y /this.scale;
         let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
         return grad_beg_y - scale_y * real + this.Y;
       } else {
         throw new Error("real_to_display(): type_ must be 'x' or 'y'");
       }
+
     }
 
 

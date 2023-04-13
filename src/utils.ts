@@ -1367,6 +1367,9 @@ export class Vertex {
 
 export class newAxis {
   public ticks: number[];
+  public path: Path2D;
+  public lineWidth: number = 2;
+  public strokeStyle: string = string_to_hex('black');
   readonly minValue: number;
   readonly maxValue: number;
   readonly DATA_TYPE: string;
@@ -1381,6 +1384,7 @@ export class newAxis {
       [this.minValue, this.maxValue] = this.computeMinMax(vector);
       this.ticks = this.computeTicks();
       this.nTicks = this.ticks.length;
+      this.path = this.buildPath();
       console.log(this)
     };
 
@@ -1409,6 +1413,19 @@ export class newAxis {
     return Math.abs(this.maxValue - this.minValue);
   }
 
+  private buildPath(): Path2D {
+    const path = new Path2D();
+    path.moveTo(this.origin.x, this.origin.y);
+    path.lineTo(this.end.x, this.end.y);
+    return path
+  }
+
+  public draw(context: CanvasRenderingContext2D) {
+    context.lineWidth = this.lineWidth;
+    context.strokeStyle = this.strokeStyle;
+    context.stroke(this.path);
+  }
+
   public static stringsToValues(vector: any[]): number[] {
     let uniques = vector.filter((value, index, array) => array.indexOf(value) === index); // unique values
     let numericVector = [];
@@ -1422,40 +1439,31 @@ export class newAxis {
     return [Math.min(...newVector), Math.max(...newVector)]
   }
 
+  private marginedBounds(): [number, number] {
+    return [this.minValue * (1 - Math.sign(this.minValue) * this.MARGIN_RATIO), this.maxValue * (1 + this.MARGIN_RATIO)]
+  }
+
+  private static nearestFive(value: number): number {
+    const tenPower = Math.floor(Math.log10(Math.abs(value)));
+    const normedValue = Math.floor(value / Math.pow(10, tenPower - 2));
+    const fiveMultiple = Math.floor(normedValue / 50);
+    return (50 * fiveMultiple) * Math.pow(10, tenPower - 2);
+  }
+
   private computeTicks(): number[] {
-    this._nTicks = this.nTicks;
     if (this.DATA_TYPE == 'string') {
       return Array.from(Array(this.maxValue + 2).keys());
     }
-    const plotMaxVal = this.computeMaxTick();
-    const plotMinVal = this.computeMinTick();
-    const INCREMENT = this.computeIncrement(plotMinVal, plotMaxVal);
-    let ticks = [plotMinVal];
-    let idx = 0.5;
-    while (ticks.slice(-1)[0] <= this.maxValue && idx < 20) {
-      ticks.push(Number((plotMinVal + INCREMENT * idx).toPrecision(4)));
-      idx += 0.5;
+    const [minValue, maxValue] = this.marginedBounds();
+    const nTicks = 10;
+    const increment = newAxis.nearestFive((maxValue - minValue) / nTicks);
+    const remainder = minValue % increment;
+    let initTick = minValue - remainder;
+    let ticks = [initTick];
+    while (ticks.slice(-1)[0] <= this.maxValue) {
+      ticks.push(Number((ticks.slice(-1)[0] + increment).toPrecision(4)));
     }
     return ticks
-  }
-
-  private computeMaxTick(): number {
-    const TEN_POWER = Math.floor(Math.log10(Math.abs(this.maxValue)));
-    const UNIT = Math.pow(10, TEN_POWER - 1);
-    return Math.floor(this.maxValue * (1 + this.MARGIN_RATIO) / UNIT) * UNIT;
-  }
-
-  private computeIncrement(minValue: number, maxValue: number): number {
-    const DIFF_UNIT = Math.floor(Math.log10(Math.abs(maxValue - minValue)));
-    const INCREMENT = Math.pow(10, DIFF_UNIT);
-    return INCREMENT
-  }
-
-  private computeMinTick() {
-    const tenPower = Math.floor(Math.log10(Math.abs(this.minValue)));
-    const normedValue = Math.floor(this.minValue / Math.pow(10, tenPower - 2));
-    const fiveMultiple = Math.floor(normedValue / 50) - 1;
-    return (50 * fiveMultiple) * Math.pow(10, tenPower - 2);
   }
 }
 

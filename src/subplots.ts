@@ -1480,10 +1480,10 @@ export class PrimitiveGroupContainer extends PlotData {
 
 
 export class BasePlot extends PlotData {
-  axes: newAxis[] = [];
-  dataTypes: string[];
-  origin: Vertex;
-  size: Vertex; 
+  public axes: newAxis[] = [];
+  public origin: Vertex;
+  public size: Vertex;
+  private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, number[]>;
   constructor(
     public data: any,
@@ -1511,21 +1511,62 @@ export class BasePlot extends PlotData {
     return unpackedData
   }
 
-  public draw() {}
+  public set axisStyle(newAxisStyle: Map<string, any>) {
+    newAxisStyle.forEach((value, key) => {
+      this._axisStyle.set(key, value);
+    })
+  }
 
-  public draw_from_context(hidden: any) {}
+  public get axisStyle() {
+    return this._axisStyle
+  }
+
+  private drawCanvas(): void {
+    for (let context of [this.context_show, this.context_hidden]) {
+      context.save()
+      this.draw_empty_canvas(context);
+      this.context = context;
+      if (this.settings_on) {
+        this.draw_settings_rect();
+      } else {
+        this.draw_rect();
+      }
+      context.beginPath();
+      context.rect(this.X, this.Y, this.width, this.height);
+      context.clip();
+      context.closePath();
+    }
+  }
+
+  private drawAxes(): void {
+    [this.context_show, this.context_hidden].forEach((context, i) => {
+      context.transform(1, 0, 0, -1, 0, this.Y + this.height);
+      this.axes.forEach((axis) => {
+        this.axisStyle.forEach((value, key) => axis[key] = value);
+        axis.draw(context);
+      })
+    })
+  }
+
+  public draw(): void {
+    this.drawCanvas()
+    this.drawAxes()
+    this.context_hidden.restore();
+    this.context_show.restore();
+  }
+
+  public draw_from_context(hidden: any) {
+    return
+  }
 }
 
-
 export class FramePlot extends BasePlot {
-  xAxis: newAxis;
-  yAxis: newAxis;
   xFeature: string;
   yFeature: string;
   readonly NX_TICKS = 10;
   readonly NY_TICKS = 35;
-  readonly OFFSET = new Vertex(50, 20);
-  readonly MARGIN = new Vertex(50, 20);
+  readonly OFFSET = new Vertex(50, 50); // new Vertex(50, 20);
+  readonly MARGIN = this.OFFSET.add(new Vertex(50, 50)); // new Vertex(50, 20);
   constructor(
     public data: any,
     public width: number,
@@ -1538,8 +1579,7 @@ export class FramePlot extends BasePlot {
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       [this.xFeature, this.yFeature] = [data.x_variable, data.y_variable];
-      [this.xAxis, this.yAxis] = this.setAxes();
-      console.log(this.xAxis, this.yAxis)
+      this.axes = this.setAxes();
     }
 
   private setAxes(): newAxis[] {

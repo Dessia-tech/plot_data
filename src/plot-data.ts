@@ -2234,6 +2234,7 @@ export abstract class PlotData {
         if (this.interaction_ON) {
           [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
         }
+        console.log(mouse1X, mouse1Y)
       });
 
       canvas.addEventListener('mousemove', e => {

@@ -1369,59 +1369,93 @@ export class newAxis {
   public ticks: number[];
   readonly minValue: number;
   readonly maxValue: number;
-  readonly dataType: string;
+  readonly DATA_TYPE: string;
+  readonly DEFAULT_N_TICKS = 10;
+  readonly MARGIN_RATIO = 0.1;
   constructor(
     vector: any[],
     public origin: Vertex,
     public end: Vertex,
-    nTicks: number = 10) {
-      this.dataType = typeof vector[0];
+    private _nTicks: number = undefined) {
+      this.DATA_TYPE = typeof vector[0];
       [this.minValue, this.maxValue] = this.computeMinMax(vector);
-      this.ticks = this.computeTicks(nTicks);
+      this.ticks = this.computeTicks();
+      this.nTicks = this.ticks.length;
+      console.log(this)
     };
 
-  public get isVertical() {
+  public get nTicks(): number {
+    if (this.DATA_TYPE == 'string') {return this.maxValue};
+    if (this._nTicks) {return this._nTicks};
+    return this.DEFAULT_N_TICKS
+  }
+
+  public set nTicks(value: number) {
+    this._nTicks = value
+  }
+
+  public get isVertical(): boolean {
     return this.origin.x == this.end.x;
   }
 
-  public get drawLength() {
+  public get drawLength(): number {
     if (this.isVertical) {
       return Math.abs(this.origin.y - this.end.y);
     }
     return Math.abs(this.origin.x - this.end.x);
   }
 
-  public get interval() {
-    if (this.isVertical) {
-      return Math.abs(this.origin.y - this.end.y);
-    }
-    return Math.abs(this.origin.x - this.end.x);
+  public get interval(): number {
+    return Math.abs(this.maxValue - this.minValue);
   }
 
   public static stringsToValues(vector: any[]): number[] {
     let uniques = vector.filter((value, index, array) => array.indexOf(value) === index); // unique values
     let numericVector = [];
-    vector.forEach((value) => numericVector.push(uniques.indexOf(value)));
+    vector.forEach((value) => numericVector.push(uniques.indexOf(value) + 1));
     return numericVector
   }
 
-  private computeMinMax(vector: any[]) {
+  private computeMinMax(vector: any[]): number[] {
     let newVector = vector;
     if (typeof vector[0] == 'string') {newVector = newAxis.stringsToValues(vector)};
     return [Math.min(...newVector), Math.max(...newVector)]
   }
 
-  private computeTicks(nTicks: number): number[] {
-    if (this.dataType == 'string') {
-      return Array.from(Array(this.maxValue + 1).keys())
+  private computeTicks(): number[] {
+    this._nTicks = this.nTicks;
+    if (this.DATA_TYPE == 'string') {
+      return Array.from(Array(this.maxValue + 2).keys());
     }
-    var plotMinVal = Math.floor(this.minValue * 10) / 10;
-    var ticks = [];
-    var increment = this.interval / (nTicks-1);
-    for (let idx = 0; idx < nTicks; idx++) {
-        ticks.push(Number((plotMinVal + increment * idx).toPrecision(4)));
-    } 
+    const plotMaxVal = this.computeMaxTick();
+    const plotMinVal = this.computeMinTick();
+    const INCREMENT = this.computeIncrement(plotMinVal, plotMaxVal);
+    let ticks = [plotMinVal];
+    let idx = 0.5;
+    while (ticks.slice(-1)[0] <= this.maxValue && idx < 20) {
+      ticks.push(Number((plotMinVal + INCREMENT * idx).toPrecision(4)));
+      idx += 0.5;
+    }
     return ticks
+  }
+
+  private computeMaxTick(): number {
+    const TEN_POWER = Math.floor(Math.log10(Math.abs(this.maxValue)));
+    const UNIT = Math.pow(10, TEN_POWER - 1);
+    return Math.floor(this.maxValue * (1 + this.MARGIN_RATIO) / UNIT) * UNIT;
+  }
+
+  private computeIncrement(minValue: number, maxValue: number): number {
+    const DIFF_UNIT = Math.floor(Math.log10(Math.abs(maxValue - minValue)));
+    const INCREMENT = Math.pow(10, DIFF_UNIT);
+    return INCREMENT
+  }
+
+  private computeMinTick() {
+    const tenPower = Math.floor(Math.log10(Math.abs(this.minValue)));
+    const normedValue = Math.floor(this.minValue / Math.pow(10, tenPower - 2));
+    const fiveMultiple = Math.floor(normedValue / 50) - 1;
+    return (50 * fiveMultiple) * Math.pow(10, tenPower - 2);
   }
 }
 

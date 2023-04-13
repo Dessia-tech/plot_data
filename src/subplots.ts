@@ -1517,13 +1517,13 @@ export class BasePlot extends PlotData {
 }
 
 
-export class OrthonormalPlot extends BasePlot {
+export class FramePlot extends BasePlot {
   xAxis: newAxis;
   yAxis: newAxis;
   xFeature: string;
   yFeature: string;
-  readonly N_X_TICKS = 10;
-  readonly N_Y_TICKS = 10;
+  readonly NX_TICKS = 10;
+  readonly NY_TICKS = 35;
   readonly OFFSET = new Vertex(50, 20);
   readonly MARGIN = new Vertex(50, 20);
   constructor(
@@ -1539,7 +1539,7 @@ export class OrthonormalPlot extends BasePlot {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       [this.xFeature, this.yFeature] = [data.x_variable, data.y_variable];
       [this.xAxis, this.yAxis] = this.setAxes();
-      console.log(this.xAxis)
+      console.log(this.xAxis, this.yAxis)
     }
 
   private setAxes(): newAxis[] {
@@ -1547,11 +1547,11 @@ export class OrthonormalPlot extends BasePlot {
     const xEnd = new Vertex(frameOrigin.x + this.size.x - this.MARGIN.x, frameOrigin.y);
     const yEnd = new Vertex(frameOrigin.x, frameOrigin.y + this.size.y - this.MARGIN.y);
     return [
-      this.setAxis(this.xFeature, frameOrigin, xEnd, this.N_X_TICKS), 
-      this.setAxis(this.xFeature, frameOrigin, yEnd, this.N_Y_TICKS)]
+      this.setAxis(this.xFeature, frameOrigin, xEnd), 
+      this.setAxis(this.xFeature, frameOrigin, yEnd, this.NY_TICKS)]
   }
 
-  private setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number): newAxis {
+  private setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
     return new newAxis(this.features.get(feature), origin, end, nTicks)
   }
 

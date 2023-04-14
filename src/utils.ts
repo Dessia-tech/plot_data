@@ -1356,12 +1356,160 @@ export class Vertex {
     this.y = y;
   };
 
-  public add(other: Vertex): Vertex {
-    return new Vertex(this.x + other.x, this.y + other.y)
+  get coordinates() {return new Vertex(this.x, this.y)}
+
+  public add(other: Vertex): Vertex {return new Vertex(this.x + other.x, this.y + other.y)}
+  
+  public norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
+
+  public subtract(other: Vertex): Vertex {return new Vertex(this.x - other.x, this.y - other.y)}
+
+  public transform(matrix: DOMMatrix) {
+    this.x = matrix.a * this.x + matrix.c * this.y + matrix.e;
+    this.y = matrix.b * this.x + matrix.d * this.y + matrix.f;
+  }
+}
+
+export class newShape {
+  public path: Path2D = new Path2D();
+  public lineWidth: number = 1;
+  public strokeStyle: string = string_to_hex('black');
+  public fillStyle: string = string_to_hex('black');
+  constructor() {};
+  
+  public draw(context: CanvasRenderingContext2D) {
+    context.lineWidth = this.lineWidth;
+    context.strokeStyle = this.strokeStyle;
+    context.fillStyle = this.fillStyle;
+    context.stroke(this.path);
+  }
+}
+
+export class newCircle extends newShape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public radius: number = 1
+  ) {
+    super();
+    this.path = this.buildPath();
   }
 
-  public subtract(other: Vertex): Vertex {
-    return new Vertex(this.x - other.x, this.y - other.y)
+  public buildPath(): Path2D {
+    const path = this.path;
+    path.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
+    return path
+  }
+}
+
+export class newSquare extends newShape {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0)
+  ) {
+    super();
+    this.path = this.buildPath();
+  }
+
+  public buildPath(): Path2D {
+    const path = this.path;
+    path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
+    return path
+  }
+}
+
+export class Mark extends newShape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1
+  ) {
+    super();
+    this.path = this.buildPath();
+  }
+
+  public buildPath(): Path2D {
+    const path = this.path;
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x - halfSize, this.center.y);
+    path.lineTo(this.center.x + halfSize, this.center.y);
+    path.moveTo(this.center.x, this.center.y - halfSize);
+    path.lineTo(this.center.x, this.center.y + halfSize);
+    return path
+  }
+}
+
+export class Cross extends Mark {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1
+  ) {
+    super();
+  }
+
+  public buildPath(): Path2D {
+    const path = this.path;
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+    path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
+    path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
+    return path
+  }
+}
+
+export class newPoint2D extends Vertex {
+  public path: Path2D;
+  private _hovered: boolean = false;
+  private _clicked: boolean = false;
+  private _selected: boolean = false;
+  private _size: number = 2;
+  private _color: string = string_to_hex('blue');
+  readonly CIRCLES = ['o', 'circle', 'round'];
+  readonly MARKERS = ['+', 'crux', 'mark'];
+  readonly CROSSES = ['x', 'cross', 'oblique'];
+  readonly SQUARES = ['square'];
+  constructor(x: number = 0, y: number = 0, private _shape: string = 'circle') {
+    super(x, y);
+    // this.path = this.buildPath();
+  };
+
+  get clicked(): boolean {return this._clicked};
+    
+  set clicked(value: boolean) {this._clicked = value};
+
+  get color(): string {return this._color};
+    
+  set color(value: string) {this._color = value};
+
+  get drawnShape() {
+    if (this.CIRCLES.indexOf(this.shape) > -1) {return new newCircle(this.coordinates, this.size)};
+    if (this.MARKERS.indexOf(this.shape) > -1) {return new Mark(this.coordinates, this.size)};
+    if (this.CROSSES.indexOf(this.shape) > -1) {return new Cross(this.coordinates, this.size)};
+    if (this.SQUARES.indexOf(this.shape) > -1) {return new newSquare(this.coordinates, new Vertex(this.size, this.size))};
+  }
+
+  get hovered(): boolean {return this._hovered};
+    
+  set hovered(value: boolean) {this._hovered = value};
+
+  get size(): number {return this._size};
+    
+  set size(value: number) {this._size = value};
+
+  get selected(): boolean {return this._selected};
+    
+  set selected(value: boolean) {this._selected = value};
+
+  get shape(): string {return this._shape};
+    
+  set shape(value: string) {this._shape = value};
+
+  private buildPath(): Path2D {return this.drawnShape.path};
+
+  public draw(context: CanvasRenderingContext2D) {
+    this.path = this.buildPath();
+    context.fillStyle = this.color;
+    context.strokeStyle = this.color;
+    context.stroke(this.path);
   }
 }
 
@@ -1374,6 +1522,7 @@ export class newAxis {
   private _marginRatio: number = 0.1;
   private _minValue: number;
   private _maxValue: number;
+  private _transformMatrix: DOMMatrix = new DOMMatrix([1, 0, 1, 0, 0, 0]);
   readonly dataType: string;
   readonly DEFAULT_N_TICKS = 10;
   constructor(
@@ -1388,37 +1537,51 @@ export class newAxis {
       this.ticks = this.computeTicks();
       if (this.dataType != 'string') {this.labels = this.numericLabels()};
       this.path = this.buildPath();
-      console.log(this)
     };
-
-  public get isVertical(): boolean {return this.origin.x == this.end.x};
-
-  public set marginRatio(value: number) {this._marginRatio = value};
-
-  public get marginRatio(): number {return this._marginRatio};
-
-  public set minValue(value: number) {this._minValue = value};
-
-  public get minValue(): number {return this._minValue};
-
-  public set maxValue(value: number) {this._maxValue = value};
-
-  public get maxValue(): number {return this._maxValue};
-
-  public set nTicks(value: number) {this._nTicks = value};
-
-  public get nTicks(): number {
-    if (this.dataType == 'string') {return this.maxValue};
-    if (this._nTicks) {return this._nTicks};
-    return this.DEFAULT_N_TICKS
-  }
 
   public get drawLength(): number {
     if (this.isVertical) {return Math.abs(this.origin.y - this.end.y)};
     return Math.abs(this.origin.x - this.end.x);
   }
 
-  public get interval(): number {return Math.abs(this.maxValue - this.minValue)};
+  get interval(): number {return Math.abs(this.maxValue - this.minValue)};
+
+  get isVertical(): boolean {return this.origin.x == this.end.x};
+
+  set marginRatio(value: number) {this._marginRatio = value};
+
+  get marginRatio(): number {return this._marginRatio};
+
+  set maxValue(value: number) {this._maxValue = value};
+
+  get maxValue(): number {return this._maxValue};
+
+  set minValue(value: number) {this._minValue = value};
+
+  get minValue(): number {return this._minValue};
+
+  set nTicks(value: number) {this._nTicks = value};
+
+  get nTicks(): number {
+    if (this.dataType == 'string') {return this.maxValue};
+    if (this._nTicks) {return this._nTicks};
+    return this.DEFAULT_N_TICKS
+  }
+
+  set transformMatrix(newTransformMatrix: DOMMatrix) {this._transformMatrix = newTransformMatrix};
+
+  get transformMatrix(): DOMMatrix {return this._transformMatrix};
+
+  private static nearestFive(value: number): number {
+    const tenPower = Math.floor(Math.log10(Math.abs(value)));
+    const normedValue = Math.floor(value / Math.pow(10, tenPower - 2));
+    const fiveMultiple = Math.floor(normedValue / 50);
+    return (50 * fiveMultiple) * Math.pow(10, tenPower - 2);
+  }
+
+  public static uniqueValues(vector: string[]): string[] {
+    return vector.filter((value, index, array) => array.indexOf(value) === index)
+  }
 
   private buildPath(): Path2D {
     const path = new Path2D();
@@ -1427,14 +1590,54 @@ export class newAxis {
     return path
   }
 
+  private computeMinMax(vector: any[]): number[] {
+    let newVector = vector;
+    if (typeof vector[0] == 'string') {newVector = this.stringsToValues(vector)};
+    return [Math.min(...newVector), Math.max(...newVector)]
+  }
+
+  private computeTicks(): number[] {
+    if (this.dataType == 'string') {return Array.from(Array(this.maxValue + 1).keys())};
+    const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+    const remainder = this.minValue % increment;
+    let ticks = [this.minValue - remainder];
+    while (ticks.slice(-1)[0] <= this.maxValue) {
+      ticks.push(Number((ticks.slice(-1)[0] + increment).toPrecision(4)));
+    }
+    return ticks
+  }
+
+  private getValueToDrawMatrix() {
+    const scale = this.drawLength / this.interval;
+    return new DOMMatrix([scale, 0, 0, scale, this.origin.x - this.minValue * Number(!this.isVertical) * scale, this.origin.y - this.minValue * Number(this.isVertical) * scale]);
+  }
+
+  private marginedBounds(minValue: number, maxValue: number): [number, number] {
+    if (this.dataType == 'string') {return [minValue - 1, maxValue + 1]};
+    return [minValue * (1 - Math.sign(minValue) * this.marginRatio), 
+            maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
+  }
+
   public draw(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
     context.stroke(this.path);
+    this.drawTicks(context);
   }
 
-  public static uniqueValues(vector: string[]): string[] {
-    return vector.filter((value, index, array) => array.indexOf(value) === index)
+  public drawTicks(context: CanvasRenderingContext2D) {
+    const HTMatrix = this.getValueToDrawMatrix();
+    const vertical = this.isVertical;
+    const ticksCoords = [];
+    this.ticks.forEach((tick) => {
+      const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical));
+      // const point = new newPoint2D(tick * Number(!vertical) + this.origin.x, tick * Number(vertical) + this.origin.y);
+      
+      point.transform(HTMatrix);
+      ticksCoords.push(point);
+      point.draw(context);
+      if (this.isVertical){console.log(point)}
+    })
   }
 
   public numericLabels(): string[] {
@@ -1447,36 +1650,6 @@ export class newAxis {
     let numericVector = [];
     vector.forEach((value) => numericVector.push(this.labels.indexOf(value) + 1));
     return numericVector
-  }
-
-  private computeMinMax(vector: any[]): number[] {
-    let newVector = vector;
-    if (typeof vector[0] == 'string') {newVector = this.stringsToValues(vector)};
-    return [Math.min(...newVector), Math.max(...newVector)]
-  }
-
-  private marginedBounds(minValue: number, maxValue: number): [number, number] {
-    if (this.dataType == 'string') {return [minValue - 1, maxValue + 1]};
-    return [minValue * (1 - Math.sign(minValue) * this.marginRatio), 
-            maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
-  }
-
-  private static nearestFive(value: number): number {
-    const tenPower = Math.floor(Math.log10(Math.abs(value)));
-    const normedValue = Math.floor(value / Math.pow(10, tenPower - 2));
-    const fiveMultiple = Math.floor(normedValue / 50);
-    return (50 * fiveMultiple) * Math.pow(10, tenPower - 2);
-  }
-
-  private computeTicks(): number[] {
-    if (this.dataType == 'string') {return Array.from(Array(this.maxValue + 1).keys())};
-    const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
-    const remainder = this.minValue % increment;
-    let ticks = [this.minValue - remainder];
-    while (ticks.slice(-1)[0] <= this.maxValue) {
-      ticks.push(Number((ticks.slice(-1)[0] + increment).toPrecision(4)));
-    }
-    return ticks
   }
 }
 

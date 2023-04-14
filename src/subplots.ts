@@ -1484,7 +1484,7 @@ export class BasePlot extends PlotData {
   public origin: Vertex;
   public size: Vertex;
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
-  readonly features: Map<string, number[]>;
+  readonly features: Map<string, any[]>;
   constructor(
     public data: any,
     public width: number,
@@ -1501,24 +1501,20 @@ export class BasePlot extends PlotData {
       this.features = this.unpackData(data);
     }
 
-  private unpackData(data: any): Map<string, number[]> {
-    let unpackedData = new Map<string, number[]>();
+  set axisStyle(newAxisStyle: Map<string, any>) {
+    newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value));
+  }
+
+  get axisStyle() {return this._axisStyle};
+  
+  private unpackData(data: any): Map<string, any[]> {
+    let unpackedData = new Map<string, any[]>();
     Object.keys(data.elements[0]).forEach((feature) => {
       let vector = [];
       data.elements.forEach((element) => {vector.push(element[feature])});
       unpackedData.set(feature, vector);
     });
     return unpackedData
-  }
-
-  public set axisStyle(newAxisStyle: Map<string, any>) {
-    newAxisStyle.forEach((value, key) => {
-      this._axisStyle.set(key, value);
-    })
-  }
-
-  public get axisStyle() {
-    return this._axisStyle
   }
 
   private drawCanvas(): void {
@@ -1543,6 +1539,7 @@ export class BasePlot extends PlotData {
       context.transform(1, 0, 0, -1, 0, this.Y + this.height);
       this.axes.forEach((axis) => {
         this.axisStyle.forEach((value, key) => axis[key] = value);
+        axis.transformMatrix 
         axis.draw(context);
       })
     })
@@ -1594,7 +1591,6 @@ export class FramePlot extends BasePlot {
   private setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
     return new newAxis(this.features.get(feature), origin, end, nTicks)
   }
-
 }
 
 export class Histogram extends PlotData {

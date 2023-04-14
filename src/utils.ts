@@ -1370,48 +1370,55 @@ export class newAxis {
   public path: Path2D;
   public lineWidth: number = 2;
   public strokeStyle: string = string_to_hex('black');
-  readonly minValue: number;
-  readonly maxValue: number;
-  readonly DATA_TYPE: string;
+  public labels: string[];
+  private _marginRatio: number = 0.1;
+  private _minValue: number;
+  private _maxValue: number;
+  readonly dataType: string;
   readonly DEFAULT_N_TICKS = 10;
-  readonly MARGIN_RATIO = 0.1;
   constructor(
     vector: any[],
     public origin: Vertex,
     public end: Vertex,
     private _nTicks: number = undefined) {
-      this.DATA_TYPE = typeof vector[0];
-      [this.minValue, this.maxValue] = this.computeMinMax(vector);
+      this.dataType = typeof vector[0];
+      if (this.dataType == 'string') {this.labels = newAxis.uniqueValues(vector)};
+      const [minValue, maxValue] = this.computeMinMax(vector);
+      [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
-      this.nTicks = this.ticks.length;
+      if (this.dataType != 'string') {this.labels = this.numericLabels()};
       this.path = this.buildPath();
       console.log(this)
     };
 
+  public get isVertical(): boolean {return this.origin.x == this.end.x};
+
+  public set marginRatio(value: number) {this._marginRatio = value};
+
+  public get marginRatio(): number {return this._marginRatio};
+
+  public set minValue(value: number) {this._minValue = value};
+
+  public get minValue(): number {return this._minValue};
+
+  public set maxValue(value: number) {this._maxValue = value};
+
+  public get maxValue(): number {return this._maxValue};
+
+  public set nTicks(value: number) {this._nTicks = value};
+
   public get nTicks(): number {
-    if (this.DATA_TYPE == 'string') {return this.maxValue};
+    if (this.dataType == 'string') {return this.maxValue};
     if (this._nTicks) {return this._nTicks};
     return this.DEFAULT_N_TICKS
   }
 
-  public set nTicks(value: number) {
-    this._nTicks = value
-  }
-
-  public get isVertical(): boolean {
-    return this.origin.x == this.end.x;
-  }
-
   public get drawLength(): number {
-    if (this.isVertical) {
-      return Math.abs(this.origin.y - this.end.y);
-    }
+    if (this.isVertical) {return Math.abs(this.origin.y - this.end.y)};
     return Math.abs(this.origin.x - this.end.x);
   }
 
-  public get interval(): number {
-    return Math.abs(this.maxValue - this.minValue);
-  }
+  public get interval(): number {return Math.abs(this.maxValue - this.minValue)};
 
   private buildPath(): Path2D {
     const path = new Path2D();
@@ -1426,21 +1433,32 @@ export class newAxis {
     context.stroke(this.path);
   }
 
-  public static stringsToValues(vector: any[]): number[] {
-    let uniques = vector.filter((value, index, array) => array.indexOf(value) === index); // unique values
+  public static uniqueValues(vector: string[]): string[] {
+    return vector.filter((value, index, array) => array.indexOf(value) === index)
+  }
+
+  public numericLabels(): string[] {
+    let numericLabels = []
+    this.ticks.forEach((tick) => numericLabels.push(String(tick)));
+    return numericLabels
+  }
+
+  public stringsToValues(vector: any[]): number[] {
     let numericVector = [];
-    vector.forEach((value) => numericVector.push(uniques.indexOf(value) + 1));
+    vector.forEach((value) => numericVector.push(this.labels.indexOf(value) + 1));
     return numericVector
   }
 
   private computeMinMax(vector: any[]): number[] {
     let newVector = vector;
-    if (typeof vector[0] == 'string') {newVector = newAxis.stringsToValues(vector)};
+    if (typeof vector[0] == 'string') {newVector = this.stringsToValues(vector)};
     return [Math.min(...newVector), Math.max(...newVector)]
   }
 
-  private marginedBounds(): [number, number] {
-    return [this.minValue * (1 - Math.sign(this.minValue) * this.MARGIN_RATIO), this.maxValue * (1 + this.MARGIN_RATIO)]
+  private marginedBounds(minValue: number, maxValue: number): [number, number] {
+    if (this.dataType == 'string') {return [minValue - 1, maxValue + 1]};
+    return [minValue * (1 - Math.sign(minValue) * this.marginRatio), 
+            maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
 
   private static nearestFive(value: number): number {
@@ -1451,15 +1469,10 @@ export class newAxis {
   }
 
   private computeTicks(): number[] {
-    if (this.DATA_TYPE == 'string') {
-      return Array.from(Array(this.maxValue + 2).keys());
-    }
-    const [minValue, maxValue] = this.marginedBounds();
-    const nTicks = 10;
-    const increment = newAxis.nearestFive((maxValue - minValue) / nTicks);
-    const remainder = minValue % increment;
-    let initTick = minValue - remainder;
-    let ticks = [initTick];
+    if (this.dataType == 'string') {return Array.from(Array(this.maxValue + 1).keys())};
+    const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+    const remainder = this.minValue % increment;
+    let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) {
       ticks.push(Number((ticks.slice(-1)[0] + increment).toPrecision(4)));
     }

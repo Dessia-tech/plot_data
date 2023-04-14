@@ -1560,10 +1560,10 @@ export class BasePlot extends PlotData {
 export class FramePlot extends BasePlot {
   xFeature: string;
   yFeature: string;
-  readonly NX_TICKS = 10;
-  readonly NY_TICKS = 35;
+  readonly NX_TICKS = 40;
+  readonly NY_TICKS = 10;
   readonly OFFSET = new Vertex(50, 50); // new Vertex(50, 20);
-  readonly MARGIN = this.OFFSET.add(new Vertex(50, 50)); // new Vertex(50, 20);
+  readonly MARGIN = this.OFFSET.add(new Vertex(20, 20)); // new Vertex(50, 20);
   constructor(
     public data: any,
     public width: number,
@@ -1584,7 +1584,7 @@ export class FramePlot extends BasePlot {
     const xEnd = new Vertex(frameOrigin.x + this.size.x - this.MARGIN.x, frameOrigin.y);
     const yEnd = new Vertex(frameOrigin.x, frameOrigin.y + this.size.y - this.MARGIN.y);
     return [
-      this.setAxis(this.xFeature, frameOrigin, xEnd), 
+      this.setAxis(this.xFeature, frameOrigin, xEnd, this.NX_TICKS), 
       this.setAxis(this.xFeature, frameOrigin, yEnd, this.NY_TICKS)]
   }
 

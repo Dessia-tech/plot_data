@@ -1571,6 +1571,8 @@ export class newAxis {
   private _marginRatio: number = 0.1;
   private _minValue: number;
   private _maxValue: number;
+  private _previousMin: number;
+  private _previousMax: number;
   private _transformMatrix: DOMMatrix = new DOMMatrix([1, 0, 1, 0, 0, 0]);
   readonly dataType: string;
   readonly DEFAULT_N_TICKS = 10;
@@ -1586,6 +1588,7 @@ export class newAxis {
       if (this.dataType == 'string') {this.labels = [''].concat(newAxis.uniqueValues(vector))};
       const [minValue, maxValue] = this.computeMinMax(vector);
       [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
+      [this._previousMin, this._previousMax] = [this.minValue, this.maxValue];
       this.ticks = this.computeTicks();
       if (this.dataType != 'string') {this.labels = this.numericLabels()};
       this.path = this.buildPath();
@@ -1656,6 +1659,8 @@ export class newAxis {
     while (ticks.slice(-1)[0] <= this.maxValue) {
       ticks.push(Number((ticks.slice(-1)[0] + increment).toPrecision(4)));
     }
+    if (ticks.slice(0)[0] < this.minValue) {ticks.splice(0, 1)}; 
+    if (ticks.slice(-1)[0] > this.maxValue) {ticks.splice(-1, 1)}; 
     return ticks
   }
 
@@ -1678,13 +1683,12 @@ export class newAxis {
     context.strokeStyle = this.strokeStyle;
     context.stroke(this.path);
     const ticksCoords = this.drawTicks(context);
-    console.log(ticksCoords)
   }
 
   private drawTicks(context: CanvasRenderingContext2D) {
     const canvasHTMatrix = context.getTransform();
-    const HTMatrix = this.getValueToDrawMatrix();
-    const pointHTMatrix = canvasHTMatrix.multiply(HTMatrix);
+    this.transformMatrix = this.getValueToDrawMatrix();
+    const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     context.resetTransform();
     const vertical = this.isVertical;
     const ticksCoords = [];
@@ -1730,10 +1734,28 @@ export class newAxis {
     return numericLabels
   }
 
+  public saveLoc(): void {
+    this._previousMin = this.minValue;
+    this._previousMax = this.maxValue;
+  }
+
   public stringsToValues(vector: any[]): number[] {
     let numericVector = [];
     vector.forEach((value) => numericVector.push(this.labels.indexOf(value) + 1));
     return numericVector
+  }
+
+  public updateScale(scaling: number, translation: Vertex): void {
+    let offset = translation.x;
+    if (this.isVertical) {offset = translation.y};
+    this.minValue = this._previousMin + offset / this.transformMatrix.a;
+    this.maxValue = this._previousMax + offset / this.transformMatrix.a;
+    this.updateTicks();
+  }
+
+  private updateTicks(): void {
+    this.ticks = this.computeTicks();
+    if (this.dataType != 'string') {this.labels = this.numericLabels()};
   }
 }
 

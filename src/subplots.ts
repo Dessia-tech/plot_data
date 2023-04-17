@@ -1483,6 +1483,7 @@ export class BasePlot extends PlotData {
   public axes: newAxis[] = [];
   public origin: Vertex;
   public size: Vertex;
+  public translation: Vertex = new Vertex(0, 0);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   constructor(
@@ -1499,6 +1500,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(X, Y);
       this.size = new Vertex(width, height);
       this.features = this.unpackData(data);
+      this.scaleX = this.scaleY = 1;
     }
 
   set axisStyle(newAxisStyle: Map<string, any>) {
@@ -1536,10 +1538,10 @@ export class BasePlot extends PlotData {
 
   private drawAxes(): void {
     [this.context_show, this.context_hidden].forEach((context, i) => {
-      context.transform(1, 0, 0, -1, 0, this.Y + this.height);
+      context.transform(1, 0, 0, -1, this.X, this.Y + this.height);
       this.axes.forEach((axis) => {
         this.axisStyle.forEach((value, key) => axis[key] = value);
-        axis.transformMatrix 
+        axis.updateScale(this.scaleX, this.translation);
         axis.draw(context);
       })
     })
@@ -1552,16 +1554,64 @@ export class BasePlot extends PlotData {
     this.context_show.restore();
   }
 
+  draw_initial(): void {
+    this.draw();
+  }
+
   public draw_from_context(hidden: any) {
     return
+  }
+
+  mouse_interaction(is_parallelplot:boolean) {
+    if (this.interaction_ON === true) {
+      var isDrawing = false;
+      var mouse_moving = false;
+      var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
+      var click_on_selectw_border:boolean = false;
+      var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
+
+      var canvas = document.getElementById(this.canvas_id);
+
+      canvas.addEventListener('mousedown', e => {
+        if (this.interaction_ON) {
+          [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
+          this.axes.forEach(axis => {axis.saveLoc()});
+        }
+      });
+
+      canvas.addEventListener('mousemove', e => {
+        if (this.interaction_ON) {
+          [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
+          this.translation = new Vertex(mouse1X - mouse2X, mouse1Y - mouse2Y);
+        }
+      });
+
+      canvas.addEventListener('mouseup', e => {
+        if (this.interaction_ON) {
+          [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
+        }
+      })
+
+      canvas.addEventListener('wheel', e => {
+        if (!is_parallelplot && this.interaction_ON) {
+          [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
+        }
+      });
+
+      canvas.addEventListener('mouseleave', e => {
+        isDrawing = false;
+        mouse_moving = false;
+      });
+
+    }
   }
 }
 
 export class FramePlot extends BasePlot {
   xFeature: string;
   yFeature: string;
-  readonly NX_TICKS = 40;
-  readonly NY_TICKS = 10;
+  readonly NX_TICKS = 10;
+  readonly NY_TICKS = 5;
   readonly OFFSET = new Vertex(50, 50); // new Vertex(50, 20);
   readonly MARGIN = this.OFFSET.add(new Vertex(20, 20)); // new Vertex(50, 20);
   constructor(

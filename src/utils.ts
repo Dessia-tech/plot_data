@@ -1573,6 +1573,8 @@ export class newAxis {
   private _maxValue: number;
   private _previousMin: number;
   private _previousMax: number;
+  private _initMin: number;
+  private _initMax: number;
   private _transformMatrix: DOMMatrix = new DOMMatrix([1, 0, 1, 0, 0, 0]);
   readonly dataType: string;
   readonly DEFAULT_N_TICKS = 10;
@@ -1588,7 +1590,7 @@ export class newAxis {
       if (this.dataType == 'string') {this.labels = [''].concat(newAxis.uniqueValues(vector))};
       const [minValue, maxValue] = this.computeMinMax(vector);
       [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
-      [this._previousMin, this._previousMax] = [this.minValue, this.maxValue];
+      [this._initMin, this._initMax] = [this._previousMin, this._previousMax] = [this.minValue, this.maxValue];
       this.ticks = this.computeTicks();
       if (this.dataType != 'string') {this.labels = this.numericLabels()};
       this.path = this.buildPath();
@@ -1745,11 +1747,13 @@ export class newAxis {
     return numericVector
   }
 
-  public updateScale(scaling: number, translation: Vertex): void {
+  public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {
     let offset = translation.x;
-    if (this.isVertical) {offset = translation.y};
-    this.minValue = this._previousMin + offset / this.transformMatrix.a;
-    this.maxValue = this._previousMax + offset / this.transformMatrix.a;
+    let scale = scaling.x;
+    let center = viewPoint.x;
+    if (this.isVertical) {offset = translation.y ; scale = scaling.y ; center = viewPoint.y};
+    this.minValue = this._previousMin / scale + offset / this.transformMatrix.a;
+    this.maxValue = this._previousMax / scale + offset / this.transformMatrix.a;
     this.updateTicks();
   }
 

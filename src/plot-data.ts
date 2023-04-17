@@ -2011,7 +2011,7 @@ export abstract class PlotData {
 
         this.originX = this.initial_originX + mouse2X - mouse1X;
         this.originY = this.initial_originY + mouse2Y - mouse1Y;
-        this.draw();
+        // this.draw();
       } else {
         if (this.select_bool) {
           this.isSelecting = true;
@@ -2049,7 +2049,7 @@ export abstract class PlotData {
         this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
         this.zoom_box_w = Math.abs(mouse2X - mouse1X);
         this.zoom_box_h = Math.abs(mouse2Y - mouse1Y);
-        this.draw();
+        // this.draw();
 
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
@@ -2215,7 +2215,7 @@ export abstract class PlotData {
       }
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
-      this.draw();
+      // this.draw();
       return [mouse3X, mouse3Y];
   }
 

@@ -1477,8 +1477,6 @@ export class PrimitiveGroupContainer extends PlotData {
 }
 
 
-
-
 export class BasePlot extends PlotData {
   public axes: newAxis[] = [];
   public origin: Vertex;
@@ -1528,11 +1526,8 @@ export class BasePlot extends PlotData {
       context.save()
       this.draw_empty_canvas(context);
       this.context = context;
-      if (this.settings_on) {
-        this.draw_settings_rect();
-      } else {
-        this.draw_rect();
-      }
+      if (this.settings_on) {this.draw_settings_rect()} 
+      else {this.draw_rect()}
       context.beginPath();
       context.rect(this.X, this.Y, this.width, this.height);
       context.clip();
@@ -1541,7 +1536,7 @@ export class BasePlot extends PlotData {
   }
 
   private drawAxes(): void {
-    [this.context_show, this.context_hidden].forEach((context, i) => {
+    [this.context_show, this.context_hidden].forEach(context => {
       context.setTransform(this._canvasMatrix);
       this.axes.forEach((axis) => {
         this.axisStyle.forEach((value, key) => axis[key] = value);
@@ -1612,7 +1607,6 @@ export class BasePlot extends PlotData {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
           this.viewPoint.transform(this._canvasMatrix.inverse())
-          console.log(this.viewPoint)
           this.draw();
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];
@@ -1649,7 +1643,6 @@ export class FramePlot extends BasePlot {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       [this.xFeature, this.yFeature] = [data.x_variable, data.y_variable];
       this.axes = this.setAxes();
-      console.log(this.axes)
     }
 
   private setAxes(): newAxis[] {
@@ -1663,6 +1656,32 @@ export class FramePlot extends BasePlot {
 
   private setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
     return new newAxis(this.features.get(feature), origin, end, nTicks)
+  }
+}
+
+export class newHistogram extends FramePlot {
+  constructor(
+    public data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.yFeature = 'Frequency';
+      this.computeBars(this.features.get(this.xFeature));
+    }
+
+  private computeBars(vector: number[]) {
+    const xTicks = this.axes[0].ticks;
+    let index = 0;
+    vector.forEach(value => {
+      value = 1;
+    });
+    console.log(vector)
   }
 }
 

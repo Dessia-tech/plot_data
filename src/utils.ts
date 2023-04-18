@@ -1437,6 +1437,28 @@ export class Mark extends newShape {
   }
 }
 
+export class HalfLine extends newShape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super();
+    this.path = this.buildPath();
+  }
+
+  public buildPath(): Path2D {
+    const path = this.path;
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x, this.center.y);
+    if (this.orientation == 'up') {path.lineTo(this.center.x, this.center.y + halfSize)}
+    else if (this.orientation == 'down') {path.lineTo(this.center.x, this.center.y - halfSize)}
+    else if (this.orientation == 'left') {path.lineTo(this.center.x - halfSize, this.center.y)}
+    else if (this.orientation == 'right') {path.lineTo(this.center.x + halfSize, this.center.y)}
+    return path
+  }
+}
+
 export class Cross extends newShape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
@@ -1465,7 +1487,6 @@ export class Triangle extends newShape {
   ) {
     super();
     this.path = this.buildPath();
-    console.log(this.path)
   }
 
   public buildPath(): Path2D {
@@ -1585,6 +1606,7 @@ export class newPoint2D extends Vertex {
     if (this.CROSSES.indexOf(this.shape) > -1) {return new Cross(this.coordinates, this.size)};
     if (this.SQUARES.indexOf(this.shape) > -1) {return new newSquare(this.coordinates, new Vertex(this.size, this.size))};
     if (this.TRIANGLES.indexOf(this.shape) > -1) {return new Triangle(this.coordinates, this.size, this.markerOrientation)};
+    if (this.shape == 'halfLine') {return new HalfLine(this.coordinates, this.size, this.markerOrientation)};
   }
 
   get hovered(): boolean {return this._hovered};
@@ -1634,7 +1656,7 @@ export class newAxis {
   readonly DEFAULT_N_TICKS = 10;
   readonly OFFSET_TICKS = new Vertex(10, 20);
   readonly DRAW_START_OFFSET = 10;
-  readonly FONT_SIZE = 10;
+  readonly FONT_SIZE = 12;
   readonly FONT = 'sans-serif';
   constructor(
     vector: any[],
@@ -1642,7 +1664,7 @@ export class newAxis {
     public end: Vertex,
     private _nTicks: number = undefined) {
       this.dataType = typeof vector[0];
-      if (this.dataType == 'string') {this.labels = [''].concat(newAxis.uniqueValues(vector)).concat([''])};
+      if (this.dataType == 'string') {this.labels = newAxis.uniqueValues(vector)};
       const [minValue, maxValue] = this.computeMinMax(vector);
       [this._previousMin, this._previousMax] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
@@ -1699,7 +1721,6 @@ export class newAxis {
   private buildPath(): Path2D {
     const path = new Path2D();
     const endArrow = new newPoint2D(this.end.x, this.end.y, 10, 'triangle', ['right', 'up'][Number(this.isVertical)]);
-    console.log(endArrow)
     path.moveTo(this.origin.x - this.DRAW_START_OFFSET * Number(!this.isVertical), this.origin.y - this.DRAW_START_OFFSET * Number(this.isVertical));
     path.lineTo(this.end.x, this.end.y);
     path.addPath(endArrow.path);
@@ -1710,6 +1731,13 @@ export class newAxis {
     let newVector = vector;
     if (this.dataType == 'string') {return [0, this.labels.length]};
     return [Math.min(...newVector), Math.max(...newVector)]
+  }
+
+  private computeTickOrientation(HTMatrix: DOMMatrix) {
+    const flipper = [Math.sign(HTMatrix.a), Math.sign(HTMatrix.d)];
+    const index = Number(this.isVertical);
+    let markerOrientation = [['down', 'up'], ['left', 'right']][index];
+    return markerOrientation[Math.sign(1 - flipper[index])]
   }
 
   private computeTicks(): number[] {
@@ -1723,20 +1751,6 @@ export class newAxis {
     if (ticks.slice(0)[0] < this.minValue) {ticks.splice(0, 1)}; 
     if (ticks.slice(-1)[0] > this.maxValue) {ticks.splice(-1, 1)}; 
     return ticks
-  }
-
-  private getValueToDrawMatrix() {
-    const scale = this.drawLength / this.interval;
-    return new DOMMatrix([
-      scale, 0, 0, scale, 
-      this.origin.x - this.minValue * Number(!this.isVertical) * scale, 
-      this.origin.y - this.minValue * Number(this.isVertical) * scale]);
-  }
-
-  private marginedBounds(minValue: number, maxValue: number): [number, number] {
-    if (this.dataType == 'string') {return [minValue, maxValue]};
-    return [minValue * (1 - Math.sign(minValue) * this.marginRatio), 
-            maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
 
   public draw(context: CanvasRenderingContext2D) {
@@ -1756,16 +1770,19 @@ export class newAxis {
     const vertical = this.isVertical;
     const ticksCoords = [];
     this.ticks.forEach((tick, idx) => {
-      const point = this.drawTickPoint(context, tick, vertical, pointHTMatrix);
-      ticksCoords.push(point);
-      this.drawTickText(context, this.labels[idx], point, pointHTMatrix);
+      if (tick >= this.minValue && tick <= this.maxValue) {
+        const point = this.drawTickPoint(context, tick, vertical, pointHTMatrix);
+        ticksCoords.push(point);
+        this.drawTickText(context, this.labels[idx], point, pointHTMatrix);
+      }
     })
     context.setTransform(canvasHTMatrix);
     return ticksCoords
   }
 
   private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix): newPoint2D {
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10, 'x');      
+    const markerOrientation = this.computeTickOrientation(HTMatrix);
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10, 'halfLine', markerOrientation);      
     point.transform(HTMatrix);
     point.draw(context);
     return point
@@ -1775,6 +1792,20 @@ export class newAxis {
     const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
     const tickText = new newText(text, textOrigin, this.FONT_SIZE, this.FONT, textAlign, baseline);
     tickText.draw(context)
+  }
+
+  private getValueToDrawMatrix() {
+    const scale = this.drawLength / this.interval;
+    return new DOMMatrix([
+      scale, 0, 0, scale, 
+      this.origin.x - this.minValue * Number(!this.isVertical) * scale, 
+      this.origin.y - this.minValue * Number(this.isVertical) * scale]);
+  }
+
+  private marginedBounds(minValue: number, maxValue: number): [number, number] {
+    if (this.dataType == 'string') {return [minValue - 1, maxValue + 1]};
+    return [minValue * (1 - Math.sign(minValue) * this.marginRatio), 
+            maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
 
   public numericLabels(): string[] {
@@ -1810,7 +1841,7 @@ export class newAxis {
   }
 
   public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {
-    let center = (viewPoint.x - this.transformMatrix.e) / this.transformMatrix.a ;
+    let center = (viewPoint.x - this.transformMatrix.e) / this.transformMatrix.a;
     let offset = translation.x;
     let scale = scaling.x;
     if (this.isVertical) {center = (viewPoint.y - this.transformMatrix.f) / this.transformMatrix.d ; offset = translation.y ; scale = scaling.y};

@@ -1573,9 +1573,8 @@ export class newAxis {
   private _maxValue: number;
   private _previousMin: number;
   private _previousMax: number;
-  private _initMin: number;
-  private _initMax: number;
-  private _transformMatrix: DOMMatrix = new DOMMatrix([1, 0, 1, 0, 0, 0]);
+  private _transformMatrix: DOMMatrix = new DOMMatrix([1, 0, 0, 1, 0, 0]);
+  private _tickPrecision: number = 4;
   readonly dataType: string;
   readonly DEFAULT_N_TICKS = 10;
   readonly OFFSET_TICKS = new Vertex(10, 20);
@@ -1589,8 +1588,7 @@ export class newAxis {
       this.dataType = typeof vector[0];
       if (this.dataType == 'string') {this.labels = [''].concat(newAxis.uniqueValues(vector)).concat([''])};
       const [minValue, maxValue] = this.computeMinMax(vector);
-      [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
-      [this._initMin, this._initMax] = [this._previousMin, this._previousMax] = [this.minValue, this.maxValue];
+      [this._previousMin, this._previousMax] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
       if (this.dataType != 'string') {this.labels = this.numericLabels()};
       this.path = this.buildPath();
@@ -1625,9 +1623,11 @@ export class newAxis {
     return this.DEFAULT_N_TICKS
   }
 
-  set transformMatrix(newTransformMatrix: DOMMatrix) {this._transformMatrix = newTransformMatrix};
+  set transformMatrix(value: DOMMatrix) {this._transformMatrix = value};
 
   get transformMatrix(): DOMMatrix {return this._transformMatrix};
+
+  get tickPrecision(): number {return this._tickPrecision};
 
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));
@@ -1659,7 +1659,7 @@ export class newAxis {
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) {
-      ticks.push(Number((ticks.slice(-1)[0] + increment).toPrecision(4)));
+      ticks.push(ticks.slice(-1)[0] + increment);
     }
     if (ticks.slice(0)[0] < this.minValue) {ticks.splice(0, 1)}; 
     if (ticks.slice(-1)[0] > this.maxValue) {ticks.splice(-1, 1)}; 
@@ -1717,8 +1717,9 @@ export class newAxis {
   }
 
   public numericLabels(): string[] {
+    this.updateTickPrecision();
     let numericLabels = []
-    this.ticks.forEach((tick) => numericLabels.push(String(tick)));
+    this.ticks.forEach((tick) => numericLabels.push(tick.toPrecision(this.tickPrecision)));
     return numericLabels
   }
 
@@ -1747,19 +1748,29 @@ export class newAxis {
     return [origin, justify, baseline]
   }
 
-  public updateScale(scaling: Vertex, translation: Vertex): void {
+  public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {
+    let center = (viewPoint.x - this.transformMatrix.e) / this.transformMatrix.a ;
     let offset = translation.x;
     let scale = scaling.x;
-    if (this.isVertical) {offset = translation.y ; scale = scaling.y};
-    this.minValue = this._previousMin / scale + offset / this.transformMatrix.a;
-    this.maxValue = this._previousMax / scale + offset / this.transformMatrix.a;
-    console.log(this.minValue, this.maxValue)
+    if (this.isVertical) {center = (viewPoint.y - this.transformMatrix.f) / this.transformMatrix.d ; offset = translation.y ; scale = scaling.y};
+    this.minValue = (this._previousMin - center) / scale + center + offset / this.transformMatrix.a;
+    this.maxValue = (this._previousMax - center) / scale + center + offset / this.transformMatrix.a;
+    this.transformMatrix = this.getValueToDrawMatrix();
     this.updateTicks();
   }
+
+  private updateTickPrecision(): number {
+    const minTick = Math.min(...this.ticks);
+    const maxTick = Math.max(...this.ticks);
+    const ratio = Number(maxTick.toPrecision(this.tickPrecision)) / Number(minTick.toPrecision(this.tickPrecision));
+    if (ratio == 1) {this._tickPrecision++};
+    if (Number(maxTick.toPrecision(this.tickPrecision - 1)) != Number(minTick.toPrecision(this.tickPrecision - 1)) && this.tickPrecision > 4) {this._tickPrecision--};
+    return
+  };
 
   private updateTicks(): void {
     this.ticks = this.computeTicks();
     if (this.dataType != 'string') {this.labels = this.numericLabels()};
-  }
+  }  
 }
 

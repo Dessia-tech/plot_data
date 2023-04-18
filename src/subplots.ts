@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1484,7 +1484,9 @@ export class BasePlot extends PlotData {
   public origin: Vertex;
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
+  private viewPoint: Vertex = new Vertex(0, 0);
   private _initScale: Vertex = new Vertex(1, -1);
+  private _canvasMatrix: DOMMatrix;
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   constructor(
@@ -1499,6 +1501,7 @@ export class BasePlot extends PlotData {
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       this.origin = new Vertex(X, Y);
+      this._canvasMatrix = new DOMMatrix([this._initScale.x, 0, 0, this._initScale.y, this.origin.x, this.origin.y + this.height]);
       this.size = new Vertex(width, height);
       this.features = this.unpackData(data);
       this.scaleX = this.scaleY = 1;
@@ -1539,10 +1542,10 @@ export class BasePlot extends PlotData {
 
   private drawAxes(): void {
     [this.context_show, this.context_hidden].forEach((context, i) => {
-      context.transform(this._initScale.x, 0, 0, this._initScale.y, this.X, this.Y + this.height);
+      context.setTransform(this._canvasMatrix);
       this.axes.forEach((axis) => {
         this.axisStyle.forEach((value, key) => axis[key] = value);
-        axis.updateScale(new Vertex(this.scaleX, this.scaleY), this.translation);
+        axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
         axis.draw(context);
       })
     })
@@ -1607,9 +1610,13 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('wheel', e => {
         if (!is_parallelplot && this.interaction_ON) {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
+          this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
+          this.viewPoint.transform(this._canvasMatrix.inverse())
+          console.log(this.viewPoint)
           this.draw();
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];
+          this.viewPoint = new Vertex(0, 0);
         }
       });
 

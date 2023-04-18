@@ -1457,6 +1457,48 @@ export class Cross extends newShape {
   }
 }
 
+export class Triangle extends newShape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super();
+    this.path = this.buildPath();
+    console.log(this.path)
+  }
+
+  public buildPath(): Path2D {
+    const path = this.path;
+    const halfSize = this.size / 2;
+    if (this.orientation == 'right') {
+      path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+      path.lineTo(this.center.x + halfSize, this.center.y);
+      path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
+      path.lineTo(this.center.x - halfSize, this.center.y - halfSize);
+
+    } else if (this.orientation == 'left') {
+      path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
+      path.lineTo(this.center.x - halfSize, this.center.y);
+      path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+      path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
+
+    } else if (this.orientation == 'up') {
+      path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+      path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
+      path.lineTo(this.center.x, this.center.y + halfSize);
+      path.lineTo(this.center.x - halfSize, this.center.y - halfSize);
+
+    } else if (this.orientation == 'down') {
+      path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
+      path.lineTo(this.center.x, this.center.y - halfSize);
+      path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
+      path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+    }
+    return path
+  }
+}
+
 export class newText extends newShape {
   private _width: number = 0;
   constructor(
@@ -1517,9 +1559,17 @@ export class newPoint2D extends Vertex {
   readonly MARKERS = ['+', 'crux', 'mark'];
   readonly CROSSES = ['x', 'cross', 'oblique'];
   readonly SQUARES = ['square'];
-  constructor(x: number = 0, y: number = 0, private _size: number = 2, private _shape: string = 'circle') {
-    super(x, y);
-  };
+  readonly TRIANGLES = ['^', 'triangle', 'tri'];
+  constructor(
+    x: number = 0, 
+    y: number = 0,
+    private _size: number = 2, 
+    private _shape: string = 'circle', 
+    private _markerOrientation: string = 'up'
+    ) {
+      super(x, y);
+      this.path = this.buildPath();
+    };
 
   get clicked(): boolean {return this._clicked};
     
@@ -1534,11 +1584,16 @@ export class newPoint2D extends Vertex {
     if (this.MARKERS.indexOf(this.shape) > -1) {return new Mark(this.coordinates, this.size)};
     if (this.CROSSES.indexOf(this.shape) > -1) {return new Cross(this.coordinates, this.size)};
     if (this.SQUARES.indexOf(this.shape) > -1) {return new newSquare(this.coordinates, new Vertex(this.size, this.size))};
+    if (this.TRIANGLES.indexOf(this.shape) > -1) {return new Triangle(this.coordinates, this.size, this.markerOrientation)};
   }
 
   get hovered(): boolean {return this._hovered};
     
   set hovered(value: boolean) {this._hovered = value};
+
+  get markerOrientation(): string {return this._markerOrientation};
+    
+  set markerOrientation(value: string) {this._markerOrientation = value};
 
   get size(): number {return this._size};
     
@@ -1578,6 +1633,7 @@ export class newAxis {
   readonly dataType: string;
   readonly DEFAULT_N_TICKS = 10;
   readonly OFFSET_TICKS = new Vertex(10, 20);
+  readonly DRAW_START_OFFSET = 10;
   readonly FONT_SIZE = 10;
   readonly FONT = 'sans-serif';
   constructor(
@@ -1642,8 +1698,11 @@ export class newAxis {
 
   private buildPath(): Path2D {
     const path = new Path2D();
-    path.moveTo(this.origin.x, this.origin.y);
+    const endArrow = new newPoint2D(this.end.x, this.end.y, 10, 'triangle', ['right', 'up'][Number(this.isVertical)]);
+    console.log(endArrow)
+    path.moveTo(this.origin.x - this.DRAW_START_OFFSET * Number(!this.isVertical), this.origin.y - this.DRAW_START_OFFSET * Number(this.isVertical));
     path.lineTo(this.end.x, this.end.y);
+    path.addPath(endArrow.path);
     return path
   }
 
@@ -1683,8 +1742,10 @@ export class newAxis {
   public draw(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
+    context.fillStyle = this.strokeStyle;
     context.stroke(this.path);
-    const ticksCoords = this.drawTicks(context);
+    context.fill(this.path);
+    this.drawTicks(context);
   }
 
   private drawTicks(context: CanvasRenderingContext2D) {

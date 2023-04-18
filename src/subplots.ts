@@ -1484,7 +1484,6 @@ export class BasePlot extends PlotData {
   public origin: Vertex;
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
-  private viewPoint: Vertex = new Vertex(0, 0);
   private _initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
@@ -1543,7 +1542,7 @@ export class BasePlot extends PlotData {
       context.transform(this._initScale.x, 0, 0, this._initScale.y, this.X, this.Y + this.height);
       this.axes.forEach((axis) => {
         this.axisStyle.forEach((value, key) => axis[key] = value);
-        axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+        axis.updateScale(new Vertex(this.scaleX, this.scaleY), this.translation);
         axis.draw(context);
       })
     })
@@ -1608,7 +1607,6 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('wheel', e => {
         if (!is_parallelplot && this.interaction_ON) {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
-          this.viewPoint = new Vertex(mouse3X, mouse3Y);
           this.draw();
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];
@@ -1644,6 +1642,7 @@ export class FramePlot extends BasePlot {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       [this.xFeature, this.yFeature] = [data.x_variable, data.y_variable];
       this.axes = this.setAxes();
+      console.log(this.axes)
     }
 
   private setAxes(): newAxis[] {

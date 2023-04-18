@@ -1587,7 +1587,7 @@ export class newAxis {
     public end: Vertex,
     private _nTicks: number = undefined) {
       this.dataType = typeof vector[0];
-      if (this.dataType == 'string') {this.labels = [''].concat(newAxis.uniqueValues(vector))};
+      if (this.dataType == 'string') {this.labels = [''].concat(newAxis.uniqueValues(vector)).concat([''])};
       const [minValue, maxValue] = this.computeMinMax(vector);
       [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       [this._initMin, this._initMax] = [this._previousMin, this._previousMax] = [this.minValue, this.maxValue];
@@ -1649,12 +1649,12 @@ export class newAxis {
 
   private computeMinMax(vector: any[]): number[] {
     let newVector = vector;
-    if (typeof vector[0] == 'string') {newVector = this.stringsToValues(vector)};
+    if (this.dataType == 'string') {return [0, this.labels.length]};
     return [Math.min(...newVector), Math.max(...newVector)]
   }
 
   private computeTicks(): number[] {
-    if (this.dataType == 'string') {return Array.from(Array(this.maxValue + 1).keys())};
+    if (this.dataType == 'string') {return Array.from(Array(this.labels.length).keys())};
     const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
@@ -1675,7 +1675,7 @@ export class newAxis {
   }
 
   private marginedBounds(minValue: number, maxValue: number): [number, number] {
-    if (this.dataType == 'string') {return [minValue - 1, maxValue + 1]};
+    if (this.dataType == 'string') {return [minValue, maxValue]};
     return [minValue * (1 - Math.sign(minValue) * this.marginRatio), 
             maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
@@ -1710,20 +1710,6 @@ export class newAxis {
     return point
   }
 
-  private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, CanvasTextAlign, CanvasTextBaseline] {
-    let origin = new Vertex(point.x, point.y);
-    let justify: CanvasTextAlign = 'center';
-    let baseline: CanvasTextBaseline = 'alphabetic';
-    if (this.isVertical) {
-      justify = 'right';
-      baseline = 'middle';
-      origin.x -= Math.sign(HTMatrix.a) * this.OFFSET_TICKS.x;
-    } else {
-      origin.y -= Math.sign(HTMatrix.d) * this.OFFSET_TICKS.y;
-    }
-    return [origin, justify, baseline]
-  }
-
   private drawTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): void {
     const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
     const tickText = new newText(text, textOrigin, this.FONT_SIZE, this.FONT, textAlign, baseline);
@@ -1747,13 +1733,27 @@ export class newAxis {
     return numericVector
   }
 
-  public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {
+  private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, CanvasTextAlign, CanvasTextBaseline] {
+    let origin = new Vertex(point.x, point.y);
+    let justify: CanvasTextAlign = 'center';
+    let baseline: CanvasTextBaseline = 'alphabetic';
+    if (this.isVertical) {
+      justify = 'right';
+      baseline = 'middle';
+      origin.x -= Math.sign(HTMatrix.a) * this.OFFSET_TICKS.x;
+    } else {
+      origin.y -= Math.sign(HTMatrix.d) * this.OFFSET_TICKS.y;
+    }
+    return [origin, justify, baseline]
+  }
+
+  public updateScale(scaling: Vertex, translation: Vertex): void {
     let offset = translation.x;
     let scale = scaling.x;
-    let center = viewPoint.x;
-    if (this.isVertical) {offset = translation.y ; scale = scaling.y ; center = viewPoint.y};
+    if (this.isVertical) {offset = translation.y ; scale = scaling.y};
     this.minValue = this._previousMin / scale + offset / this.transformMatrix.a;
     this.maxValue = this._previousMax / scale + offset / this.transformMatrix.a;
+    console.log(this.minValue, this.maxValue)
     this.updateTicks();
   }
 

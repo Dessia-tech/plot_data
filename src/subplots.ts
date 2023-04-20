@@ -1606,7 +1606,7 @@ export class BasePlot extends PlotData {
         if (this.interaction_ON) {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
-          this.viewPoint.transform(this.canvasMatrix.inverse())
+          this.viewPoint.transformSelf(this.canvasMatrix.inverse())
           this.draw();
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];

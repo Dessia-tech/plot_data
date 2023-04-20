@@ -1365,6 +1365,12 @@ export class Vertex {
   public subtract(other: Vertex): Vertex {return new Vertex(this.x - other.x, this.y - other.y)}
 
   public transform(matrix: DOMMatrix) {
+    const x = matrix.a * this.x + matrix.c * this.y + matrix.e;
+    const y = matrix.b * this.x + matrix.d * this.y + matrix.f;
+    return new Vertex(x, y)
+  }
+
+  public transformSelf(matrix: DOMMatrix) {
     this.x = matrix.a * this.x + matrix.c * this.y + matrix.e;
     this.y = matrix.b * this.x + matrix.d * this.y + matrix.f;
   }
@@ -1636,6 +1642,7 @@ export class newPoint2D extends Vertex {
     context.fillStyle = this.color;
     context.strokeStyle = this.color;
     context.stroke(this.path);
+    context.fill(this.path);
   }
 }
 
@@ -1650,10 +1657,8 @@ export class newAxis {
   private _maxValue: number;
   private _previousMin: number;
   private _previousMax: number;
-  private _transformMatrix: DOMMatrix = new DOMMatrix([1, 0, 0, 1, 0, 0]);
   private _tickPrecision: number = 4;
   readonly dataType: string;
-  readonly DEFAULT_N_TICKS = 10;
   readonly OFFSET_TICKS = new Vertex(10, 20);
   readonly DRAW_START_OFFSET = 10;
   readonly FONT_SIZE = 12;
@@ -1662,7 +1667,7 @@ export class newAxis {
     vector: any[],
     public origin: Vertex,
     public end: Vertex,
-    private _nTicks: number = undefined) {
+    private _nTicks: number = 10) {
       this.dataType = typeof vector[0];
       if (this.dataType == 'string') {this.labels = newAxis.uniqueValues(vector)};
       const [minValue, maxValue] = this.computeMinMax(vector);
@@ -1697,13 +1702,12 @@ export class newAxis {
 
   get nTicks(): number {
     if (this.dataType == 'string') {return this.maxValue};
-    if (this._nTicks) {return this._nTicks};
-    return this.DEFAULT_N_TICKS
+    return this._nTicks
   }
 
-  set transformMatrix(value: DOMMatrix) {this._transformMatrix = value};
+  // set transformMatrix(value: DOMMatrix) {this._transformMatrix = value};
 
-  get transformMatrix(): DOMMatrix {return this._transformMatrix};
+  get transformMatrix(): DOMMatrix {return this.getValueToDrawMatrix()};
 
   get tickPrecision(): number {return this._tickPrecision};
 
@@ -1764,7 +1768,6 @@ export class newAxis {
 
   private drawTicks(context: CanvasRenderingContext2D) {
     const canvasHTMatrix = context.getTransform();
-    this.transformMatrix = this.getValueToDrawMatrix();
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     context.resetTransform();
     const vertical = this.isVertical;
@@ -1783,7 +1786,7 @@ export class newAxis {
   private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix): newPoint2D {
     const markerOrientation = this.computeTickOrientation(HTMatrix);
     const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10, 'halfLine', markerOrientation);      
-    point.transform(HTMatrix);
+    point.transformSelf(HTMatrix);
     point.draw(context);
     return point
   }
@@ -1821,11 +1824,14 @@ export class newAxis {
   }
 
   public stringsToValues(vector: any[]): number[] {
-    let numericVector = [];
-    vector.forEach((value) => numericVector.push(this.labels.indexOf(value) + 1));
-    return numericVector
+    if (this.dataType == 'string') {
+      let numericVector = [];
+      vector.forEach((value) => numericVector.push(this.labels.indexOf(value)));
+      return numericVector
+    }
+    return vector
   }
-
+  
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, CanvasTextAlign, CanvasTextBaseline] {
     let origin = new Vertex(point.x, point.y);
     let justify: CanvasTextAlign = 'center';
@@ -1847,7 +1853,6 @@ export class newAxis {
     if (this.isVertical) {center = (viewPoint.y - this.transformMatrix.f) / this.transformMatrix.d ; offset = translation.y ; scale = scaling.y};
     this.minValue = (this._previousMin - center) / scale + center + offset / this.transformMatrix.a;
     this.maxValue = (this._previousMax - center) / scale + center + offset / this.transformMatrix.a;
-    this.transformMatrix = this.getValueToDrawMatrix();
     this.updateTicks();
   }
 

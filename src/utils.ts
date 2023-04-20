@@ -1401,7 +1401,7 @@ export class newCircle extends newShape {
   }
 }
 
-export class newSquare extends newShape {
+export class newRect extends newShape {
   constructor(
     public origin: Vertex = new Vertex(0, 0),
     public size: Vertex = new Vertex(0, 0)
@@ -1604,7 +1604,7 @@ export class newPoint2D extends Vertex {
     if (this.CIRCLES.indexOf(this.shape) > -1) {return new newCircle(this.coordinates, this.size)};
     if (this.MARKERS.indexOf(this.shape) > -1) {return new Mark(this.coordinates, this.size)};
     if (this.CROSSES.indexOf(this.shape) > -1) {return new Cross(this.coordinates, this.size)};
-    if (this.SQUARES.indexOf(this.shape) > -1) {return new newSquare(this.coordinates, new Vertex(this.size, this.size))};
+    if (this.SQUARES.indexOf(this.shape) > -1) {return new newRect(this.coordinates, new Vertex(this.size, this.size))};
     if (this.TRIANGLES.indexOf(this.shape) > -1) {return new Triangle(this.coordinates, this.size, this.markerOrientation)};
     if (this.shape == 'halfLine') {return new HalfLine(this.coordinates, this.size, this.markerOrientation)};
   }

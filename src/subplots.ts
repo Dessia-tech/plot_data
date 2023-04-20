@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, newRect } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1484,7 +1484,6 @@ export class BasePlot extends PlotData {
   public translation: Vertex = new Vertex(0, 0);
   private viewPoint: Vertex = new Vertex(0, 0);
   private _initScale: Vertex = new Vertex(1, -1);
-  private _canvasMatrix: DOMMatrix;
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   constructor(
@@ -1499,7 +1498,6 @@ export class BasePlot extends PlotData {
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       this.origin = new Vertex(X, Y);
-      this._canvasMatrix = new DOMMatrix([this._initScale.x, 0, 0, this._initScale.y, this.origin.x, this.origin.y + this.height]);
       this.size = new Vertex(width, height);
       this.features = this.unpackData(data);
       this.scaleX = this.scaleY = 1;
@@ -1511,6 +1509,8 @@ export class BasePlot extends PlotData {
 
   get axisStyle() {return this._axisStyle};
   
+  get canvasMatrix() {return new DOMMatrix([this._initScale.x, 0, 0, this._initScale.y, this.origin.x, this.origin.y + this.height])}
+
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();
     Object.keys(data.elements[0]).forEach((feature) => {
@@ -1537,7 +1537,7 @@ export class BasePlot extends PlotData {
 
   private drawAxes(): void {
     [this.context_show, this.context_hidden].forEach(context => {
-      context.setTransform(this._canvasMatrix);
+      context.setTransform(this.canvasMatrix);
       this.axes.forEach((axis) => {
         this.axisStyle.forEach((value, key) => axis[key] = value);
         axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
@@ -1561,7 +1561,7 @@ export class BasePlot extends PlotData {
     return
   }
 
-  mouse_interaction(is_parallelplot:boolean) {
+  mouse_interaction() {
     if (this.interaction_ON === true) {
       var isDrawing = false;
       var mouse_moving = false;
@@ -1603,10 +1603,10 @@ export class BasePlot extends PlotData {
       })
 
       canvas.addEventListener('wheel', e => {
-        if (!is_parallelplot && this.interaction_ON) {
+        if (this.interaction_ON) {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
-          this.viewPoint.transform(this._canvasMatrix.inverse())
+          this.viewPoint.transform(this.canvasMatrix.inverse())
           this.draw();
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];
@@ -1671,17 +1671,51 @@ export class newHistogram extends FramePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.yFeature = 'Frequency';
-      this.computeBars(this.features.get(this.xFeature));
+      this.yFeature = 'Number';
     }
 
   private computeBars(vector: number[]) {
-    const xTicks = this.axes[0].ticks;
-    let index = 0;
-    vector.forEach(value => {
-      value = 1;
+    // const xTicks = this.axes[0].ticks;
+    // const minValue = Math.min(...numericVector);
+    // const maxValue = Math.max(...numericVector);
+    // if (minValue < xTicks[0]) {
+    //   const newMinTick = 2 * xTicks[0] - xTicks[1];
+    //   this.axes[0].ticks = [newMinTick].concat(this.axes[0].ticks);
+    // }
+    // if (maxValue > xTicks.slice(-1)[0]) {
+    //   const newMaxTick = xTicks.slice(-1)[0] + xTicks[1] - xTicks[0];
+    //   this.axes[0].ticks.push(newMaxTick);
+    // }
+    // this.drawAxes();
+    const numericVector = this.axes[0].stringsToValues(vector);
+    let bars = Array.from(Array(this.axes[0].ticks.length - 1), () => []);
+    numericVector.forEach((value, valIdx) => {
+      for (let barIdx = 0 ; barIdx < bars.length ; barIdx++ ) {
+        if (value >= this.axes[0].ticks[barIdx] && value < this.axes[0].ticks[barIdx + 1]) {
+          bars[barIdx].push(valIdx);
+          break
+        }
+      }
     });
-    console.log(vector)
+    return bars
+  }
+
+  public draw(): void {
+    super.draw()
+    const bars = this.computeBars(this.features.get(this.xFeature));
+    const numbers = bars.map(bar => bar.length);
+    // this.axes[1].minValue = 0;
+    // this.axes[1].maxValue = Math.max(...numbers);
+    // this.drawAxes();
+    this.context_hidden.restore();
+    this.context_show.restore();
+  }
+
+  public drawBars(context: CanvasRenderingContext2D, bars: number[][]) {
+    let drawnBars = [];
+    bars.forEach(bar => {
+      drawnBars.push(new newRect())
+    })
   }
 }
 

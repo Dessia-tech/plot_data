@@ -1502,25 +1502,25 @@ export class Triangle extends newShape {
       path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
       path.lineTo(this.center.x + halfSize, this.center.y);
       path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-      path.lineTo(this.center.x - halfSize, this.center.y - halfSize);
+      path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
 
     } else if (this.orientation == 'left') {
       path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
       path.lineTo(this.center.x - halfSize, this.center.y);
       path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-      path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
+      path.lineTo(this.center.x + halfSize, this.center.y - halfSize - this.lineWidth);
 
     } else if (this.orientation == 'up') {
       path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
       path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
       path.lineTo(this.center.x, this.center.y + halfSize);
-      path.lineTo(this.center.x - halfSize, this.center.y - halfSize);
+      path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
 
     } else if (this.orientation == 'down') {
       path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
       path.lineTo(this.center.x, this.center.y - halfSize);
       path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-      path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+      path.lineTo(this.center.x + halfSize + this.lineWidth, this.center.y + halfSize);
     }
     return path
   }

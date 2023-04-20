@@ -1652,13 +1652,15 @@ export class newAxis {
   public lineWidth: number = 2;
   public strokeStyle: string = string_to_hex('black');
   public labels: string[];
+
   private _marginRatio: number = 0.1;
   private _minValue: number;
   private _maxValue: number;
   private _previousMin: number;
   private _previousMax: number;
   private _tickPrecision: number = 4;
-  readonly dataType: string;
+
+  readonly isDiscrete: boolean;
   readonly OFFSET_TICKS = new Vertex(10, 20);
   readonly DRAW_START_OFFSET = 10;
   readonly FONT_SIZE = 12;
@@ -1668,12 +1670,12 @@ export class newAxis {
     public origin: Vertex,
     public end: Vertex,
     private _nTicks: number = 10) {
-      this.dataType = typeof vector[0];
-      if (this.dataType == 'string') {this.labels = newAxis.uniqueValues(vector)};
+      this.isDiscrete = typeof vector[0] == 'string';
+      if (this.isDiscrete) {this.labels = newAxis.uniqueValues(vector)};
       const [minValue, maxValue] = this.computeMinMax(vector);
       [this._previousMin, this._previousMax] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
-      if (this.dataType != 'string') {this.labels = this.numericLabels()};
+      if (!this.isDiscrete) {this.labels = this.numericLabels()};
       this.path = this.buildPath();
     };
 
@@ -1701,15 +1703,13 @@ export class newAxis {
   set nTicks(value: number) {this._nTicks = value};
 
   get nTicks(): number {
-    if (this.dataType == 'string') {return this.maxValue};
+    if (this.isDiscrete) {return this.maxValue};
     return this._nTicks
   }
 
-  // set transformMatrix(value: DOMMatrix) {this._transformMatrix = value};
+  get tickPrecision(): number {return this._tickPrecision};
 
   get transformMatrix(): DOMMatrix {return this.getValueToDrawMatrix()};
-
-  get tickPrecision(): number {return this._tickPrecision};
 
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));
@@ -1733,7 +1733,7 @@ export class newAxis {
 
   private computeMinMax(vector: any[]): number[] {
     let newVector = vector;
-    if (this.dataType == 'string') {return [0, this.labels.length]};
+    if (this.isDiscrete) {return [0, this.labels.length]};
     return [Math.min(...newVector), Math.max(...newVector)]
   }
 
@@ -1745,7 +1745,7 @@ export class newAxis {
   }
 
   private computeTicks(): number[] {
-    if (this.dataType == 'string') {return Array.from(Array(this.labels.length).keys())};
+    if (this.isDiscrete) {return Array.from(Array(this.labels.length).keys())};
     const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
@@ -1806,7 +1806,7 @@ export class newAxis {
   }
 
   private marginedBounds(minValue: number, maxValue: number): [number, number] {
-    if (this.dataType == 'string') {return [minValue - 1, maxValue + 1]};
+    if (this.isDiscrete) {return [minValue - 1, maxValue + 1]};
     return [minValue * (1 - Math.sign(minValue) * this.marginRatio), 
             maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
@@ -1824,14 +1824,14 @@ export class newAxis {
   }
 
   public stringsToValues(vector: any[]): number[] {
-    if (this.dataType == 'string') {
+    if (this.isDiscrete) {
       let numericVector = [];
       vector.forEach((value) => numericVector.push(this.labels.indexOf(value)));
       return numericVector
     }
     return vector
   }
-  
+
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, CanvasTextAlign, CanvasTextBaseline] {
     let origin = new Vertex(point.x, point.y);
     let justify: CanvasTextAlign = 'center';
@@ -1867,7 +1867,7 @@ export class newAxis {
 
   private updateTicks(): void {
     this.ticks = this.computeTicks();
-    if (this.dataType != 'string') {this.labels = this.numericLabels()};
+    if (!this.isDiscrete) {this.labels = this.numericLabels()};
   }  
 }
 

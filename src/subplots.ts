@@ -1483,7 +1483,7 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
   private viewPoint: Vertex = new Vertex(0, 0);
-  private _initScale: Vertex = new Vertex(1, -1);
+  private _initScale: Vertex = new Vertex(-1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   constructor(
@@ -1509,7 +1509,7 @@ export class BasePlot extends PlotData {
 
   get axisStyle() {return this._axisStyle};
   
-  get canvasMatrix() {return new DOMMatrix([this._initScale.x, 0, 0, this._initScale.y, this.origin.x, this.origin.y + this.height])}
+  get canvasMatrix() {return new DOMMatrix([this._initScale.x, 0, 0, this._initScale.y, this.origin.x, this.origin.y])}
 
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();
@@ -1606,7 +1606,7 @@ export class BasePlot extends PlotData {
         if (this.interaction_ON) {
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
-          this.viewPoint.transformSelf(this.canvasMatrix.inverse())
+          this.viewPoint.transformSelf(this.canvasMatrix)
           this.draw();
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];
@@ -1623,7 +1623,7 @@ export class BasePlot extends PlotData {
   }
 }
 
-export class FramePlot extends BasePlot {
+export class Frame extends BasePlot {
   xFeature: string;
   yFeature: string;
   readonly NX_TICKS = 10;
@@ -1646,9 +1646,19 @@ export class FramePlot extends BasePlot {
     }
 
   private setAxes(): newAxis[] {
-    const frameOrigin = this.origin.add(this.OFFSET);
-    const xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x, frameOrigin.y);
-    const yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y);
+    let frameOrigin = this.origin.add(this.OFFSET);
+    let xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x, frameOrigin.y);
+    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y);
+    if (this.canvasMatrix.a < 0){
+      frameOrigin.x = -(this.size.x - frameOrigin.x); 
+      xEnd.x = -(this.size.x - xEnd.x);
+      yEnd.x = frameOrigin.x;
+    }
+    if (this.canvasMatrix.d < 0){
+      frameOrigin.y = -(this.size.y - frameOrigin.y); 
+      yEnd.y = -(this.size.y - yEnd.y);
+      xEnd.y = frameOrigin.y;
+    }
     return [
       this.setAxis(this.xFeature, frameOrigin, xEnd, this.NX_TICKS), 
       this.setAxis(this.xFeature, frameOrigin, yEnd, this.NY_TICKS)]
@@ -1659,7 +1669,7 @@ export class FramePlot extends BasePlot {
   }
 }
 
-export class newHistogram extends FramePlot {
+export class newHistogram extends Frame {
   constructor(
     public data: any,
     public width: number,

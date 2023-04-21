@@ -1359,6 +1359,10 @@ export class Vertex {
   get coordinates() {return new Vertex(this.x, this.y)}
 
   public add(other: Vertex): Vertex {return new Vertex(this.x + other.x, this.y + other.y)}
+
+  public copy() {
+    return new Vertex(this.x, this.y)
+  }
   
   public norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
 

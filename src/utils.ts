@@ -1392,6 +1392,7 @@ export class newShape {
     context.strokeStyle = this.strokeStyle;
     context.fillStyle = this.fillStyle;
     context.stroke(this.path);
+    context.fill(this.path);
   }
 }
 
@@ -1422,7 +1423,7 @@ export class newRect extends newShape {
 
   public buildPath(): Path2D {
     const path = this.path;
-    path.rect(this.origin.x - this.size.x / 2, this.origin.y - this.size.y / 2, this.size.x, this.size.y);
+    path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
     return path
   }
 }
@@ -1569,7 +1570,6 @@ export class newText extends newShape {
     let tmp_context: CanvasRenderingContext2D = context
     let pxMaxWidth: number = this.width * this.scale;
     tmp_context.font = '1px ' + this._font;
-    console.log(pxMaxWidth, tmp_context)
     return pxMaxWidth / (tmp_context.measureText(this.text).width)
   }
 
@@ -1584,7 +1584,6 @@ export class newText extends newShape {
       this.width = context.measureText(this.text).width;
     } else if (this.width !== null && this.fontsize === null) {
       this.fontsize = this.automaticFontSize(context);
-      // console.log(this)
     } else if (this.width !== null && this.fontsize !== null) {
       let width = context.measureText(this.text).width;
       if (width > this.width) {this.fontsize = this.automaticFontSize(context)}
@@ -1633,7 +1632,11 @@ export class newPoint2D extends Vertex {
     if (this.CIRCLES.indexOf(this.shape) > -1) {return new newCircle(this.coordinates, this.size)};
     if (this.MARKERS.indexOf(this.shape) > -1) {return new Mark(this.coordinates, this.size)};
     if (this.CROSSES.indexOf(this.shape) > -1) {return new Cross(this.coordinates, this.size)};
-    if (this.SQUARES.indexOf(this.shape) > -1) {return new newRect(this.coordinates, new Vertex(this.size, this.size))};
+    if (this.SQUARES.indexOf(this.shape) > -1) {
+      const halfSize = this.size * 0.5;
+      const origin = new Vertex(this.coordinates.x - halfSize, this.coordinates.y - halfSize)
+      return new newRect(origin, new Vertex(this.size, this.size))
+    };
     if (this.TRIANGLES.indexOf(this.shape) > -1) {return new Triangle(this.coordinates, this.size, this.markerOrientation)};
     if (this.shape == 'halfLine') {return new HalfLine(this.coordinates, this.size, this.markerOrientation)};
   }
@@ -1671,6 +1674,7 @@ export class newPoint2D extends Vertex {
 
 export class newAxis {
   public ticks: number[];
+  public ticksCoords: Vertex[];
   public path: Path2D;
   public lineWidth: number = 2;
   public strokeStyle: string = string_to_hex('black');
@@ -1682,7 +1686,7 @@ export class newAxis {
   private _previousMin: number;
   private _previousMax: number;
   private _tickPrecision: number = 4;
-
+  
   readonly isDiscrete: boolean;
   readonly OFFSET_TICKS = new Vertex(10, 20);
   readonly DRAW_START_OFFSET = 10;
@@ -1754,6 +1758,15 @@ export class newAxis {
     return path
   }
 
+  public canvasToAxis(value: number): number {
+    return this.isVertical ? (value - this.transformMatrix.f) / this.transformMatrix.d : (value - this.transformMatrix.e) / this.transformMatrix.a
+  }
+
+  public axisToCanvas(value: number, canvasHTMatrix): number {
+    const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
+    return this.isVertical ? value * pointHTMatrix.d + pointHTMatrix.f : value * pointHTMatrix.a + pointHTMatrix.e
+  }
+
   private computeMinMax(vector: any[]): number[] {
     let newVector = vector;
     if (this.isDiscrete) {return [0, this.labels.length]};
@@ -1784,7 +1797,7 @@ export class newAxis {
     context.fillStyle = this.strokeStyle;
     context.stroke(this.path);
     context.fill(this.path);
-    this.drawTicks(context);
+    this.ticksCoords = this.drawTicks(context);
   }
 
   private drawTicks(context: CanvasRenderingContext2D) {
@@ -1792,8 +1805,8 @@ export class newAxis {
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     context.resetTransform();
     const vertical = this.isVertical;
-    const ticksCoords = [];
     const markerOrientation = this.computeTickOrientation(pointHTMatrix);
+    const ticksCoords = [];
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
         const point = this.drawTickPoint(context, tick, vertical, pointHTMatrix, markerOrientation);

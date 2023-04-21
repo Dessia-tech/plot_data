@@ -2215,7 +2215,7 @@ export abstract class PlotData {
       }
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
-      // this.draw();
+      this.draw();
       return [mouse3X, mouse3Y];
   }
 

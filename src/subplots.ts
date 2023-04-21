@@ -1383,7 +1383,6 @@ export class PrimitiveGroupContainer extends PlotData {
       this.draw();
     }
 
-
     mouse_interaction() {
       var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
       var nbObjects:number = this.primitive_groups.length;
@@ -1483,7 +1482,7 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
   private viewPoint: Vertex = new Vertex(0, 0);
-  private _initScale: Vertex = new Vertex(-1, -1);
+  private _initScale: Vertex = new Vertex(-1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1504,13 +1503,13 @@ export class BasePlot extends PlotData {
       this.scaleX = this.scaleY = 1;
     }
 
-  set axisStyle(newAxisStyle: Map<string, any>) {
-    newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value));
-  }
+  set axisStyle(newAxisStyle: Map<string, any>) {newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value))}
 
   get axisStyle() {return this._axisStyle};
   
   get canvasMatrix() {return new DOMMatrix([this._initScale.x, 0, 0, this._initScale.y, this.origin.x, this.origin.y])}
+
+  get initScale(): Vertex {return this._initScale}
 
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();
@@ -1536,7 +1535,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  private drawAxes(): void {
+  public drawAxes(): void {
     [this.context_show, this.context_hidden].forEach(context => {
       context.setTransform(this.canvasMatrix);
       this.axes.forEach((axis) => {
@@ -1562,10 +1561,15 @@ export class BasePlot extends PlotData {
     return
   }
 
+  mouseTranslate(e: MouseEvent, mouse1: Vertex): Vertex {
+    const mouse2X = e.offsetX;
+    const mouse2Y = e.offsetY;
+    return new Vertex(this.initScale.x * (mouse1.x - mouse2X), this.initScale.y * (mouse1.y - mouse2Y));
+  }
+
   mouse_interaction() {
     if (this.interaction_ON === true) {
       var isDrawing = false;
-      var mouse_moving = false;
       var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
       var click_on_selectw_border:boolean = false;
       var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
@@ -1580,11 +1584,8 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousemove', e => {
         if (this.interaction_ON) {
           if (isDrawing) {
-            mouse2X = e.offsetX;
-            mouse2Y = e.offsetY;
             canvas.style.cursor = 'move';
-            mouse_moving = true;
-            this.translation = new Vertex(this._initScale.x * (mouse1X - mouse2X), this._initScale.y * (mouse1Y - mouse2Y));
+            this.translation = this.mouseTranslate(e, new Vertex(mouse1X, mouse1Y))
             this.draw()
           }
         }
@@ -1592,7 +1593,6 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mouseup', e => {
         canvas.style.cursor = 'default';
-        mouse_moving = false;
         isDrawing = false;
         if (this.interaction_ON) {
           this.draw();
@@ -1627,7 +1627,6 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
-        mouse_moving = false;
       });
 
     }
@@ -1635,12 +1634,12 @@ export class BasePlot extends PlotData {
 }
 
 export class Frame extends BasePlot {
-  xFeature: string;
-  yFeature: string;
-  readonly NX_TICKS = 10;
-  readonly NY_TICKS = 5;
-  readonly OFFSET = new Vertex(100, 50); // new Vertex(50, 20);
-  readonly MARGIN = new Vertex(20, 20); // new Vertex(50, 20);
+  public xFeature: string;
+  public yFeature: string;
+  public NX_TICKS: number = 7;
+  public NY_TICKS: number = 7;
+  readonly OFFSET = new Vertex(100, 50);
+  readonly MARGIN = new Vertex(20, 20);
   constructor(
     public data: any,
     public width: number,
@@ -1652,35 +1651,47 @@ export class Frame extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      [this.xFeature, this.yFeature] = [data.x_variable, data.y_variable];
+      [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
     }
 
-  private setAxes(): newAxis[] {
+  public setFeatures(data: any): [string, string] {
+    return [data.x_variable, data.y_variable];
+  }
+
+  public setAxes(): newAxis[] {
+    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds()
+    return [
+      this.setAxis(this.xFeature, frameOrigin, xEnd, this.NX_TICKS), 
+      this.setAxis(this.yFeature, frameOrigin, yEnd, this.NY_TICKS)]
+  }
+
+  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+    return new newAxis(this.features.get(feature), origin, end, nTicks)
+  }
+
+  public setFrameBounds() {
     let frameOrigin = this.origin.add(this.OFFSET);
     let xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x, frameOrigin.y);
     let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y);
-    if (this.canvasMatrix.a < 0){
+    if (this.canvasMatrix.a < 0) {
       frameOrigin.x = -(this.size.x - frameOrigin.x); 
       xEnd.x = -(this.size.x - xEnd.x);
       yEnd.x = frameOrigin.x;
     }
-    if (this.canvasMatrix.d < 0){
+    if (this.canvasMatrix.d < 0) {
       frameOrigin.y = -(this.size.y - frameOrigin.y); 
       yEnd.y = -(this.size.y - yEnd.y);
       xEnd.y = frameOrigin.y;
     }
-    return [
-      this.setAxis(this.xFeature, frameOrigin, xEnd, this.NX_TICKS), 
-      this.setAxis(this.xFeature, frameOrigin, yEnd, this.NY_TICKS)]
-  }
-
-  private setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-    return new newAxis(this.features.get(feature), origin, end, nTicks)
+    return [frameOrigin, xEnd, yEnd]
   }
 }
 
 export class newHistogram extends Frame {
+  NX_TICKS = 30; // MARCHE PAS !!!! ???? !!!
+  readonly barsColorFill: string = string_to_hex('blue');
+  readonly barsColorStroke: string = string_to_hex('black');
   constructor(
     public data: any,
     public width: number,
@@ -1692,27 +1703,29 @@ export class newHistogram extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.yFeature = 'Number';
     }
 
-  private computeBars(vector: number[]) {
-    // const xTicks = this.axes[0].ticks;
-    // const minValue = Math.min(...numericVector);
-    // const maxValue = Math.max(...numericVector);
-    // if (minValue < xTicks[0]) {
-    //   const newMinTick = 2 * xTicks[0] - xTicks[1];
-    //   this.axes[0].ticks = [newMinTick].concat(this.axes[0].ticks);
-    // }
-    // if (maxValue > xTicks.slice(-1)[0]) {
-    //   const newMaxTick = xTicks.slice(-1)[0] + xTicks[1] - xTicks[0];
-    //   this.axes[0].ticks.push(newMaxTick);
-    // }
-    // this.drawAxes();
-    const numericVector = this.axes[0].stringsToValues(vector);
-    let bars = Array.from(Array(this.axes[0].ticks.length - 1), () => []);
+  private buildYAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
+    const yAxis = this.setAxis('Number', frameOrigin, yEnd, this.NY_TICKS);
+    yAxis.minValue = 0;
+    yAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;//this.features.get(this.xFeature).length + 1;
+    yAxis.saveLoc();
+    return yAxis
+  }
+
+  private updateYAxis(bars: number[][]): newAxis {
+    this.features.set('Number', bars.map(bar => bar.length));
+    this.axes[1].maxValue = Math.max(...this.features.get(this.yFeature)) + 1;//this.features.get(this.xFeature).length + 1;
+    this.axes[1].saveLoc();
+    return
+  }
+
+  private computeBars(axis: newAxis, vector: number[]): number[][] {
+    const numericVector = axis.stringsToValues(vector);
+    let bars = Array.from(Array(axis.ticks.length - 1), () => [] as number[]);
     numericVector.forEach((value, valIdx) => {
-      for (let barIdx = 0 ; barIdx < bars.length ; barIdx++ ) {
-        if (value >= this.axes[0].ticks[barIdx] && value < this.axes[0].ticks[barIdx + 1]) {
+      for (let barIdx = 0 ; barIdx < bars.length - 1 ; barIdx++ ) {
+        if (value >= axis.ticks[barIdx] && value < axis.ticks[barIdx + 1]) {
           bars[barIdx].push(valIdx);
           break
         }
@@ -1722,21 +1735,80 @@ export class newHistogram extends Frame {
   }
 
   public draw(): void {
+    const bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
+    this.updateYAxis(bars);
     super.draw()
-    const bars = this.computeBars(this.features.get(this.xFeature));
-    const numbers = bars.map(bar => bar.length);
-    // this.axes[1].minValue = 0;
-    // this.axes[1].maxValue = Math.max(...numbers);
-    // this.drawAxes();
-    this.context_hidden.restore();
-    this.context_show.restore();
+    const canvasHTMatrix = new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]);
+    const drawnBars = this.drawBars(this.axes[0], canvasHTMatrix);
+    [this.context_show, this.context_hidden].forEach(context => {
+      const localMatrix = context.getTransform();
+      context.resetTransform();
+      drawnBars.forEach(drawnBar => drawnBar.draw(context));
+      context.setTransform(localMatrix);
+      context.restore()
+    })
   }
 
-  public drawBars(context: CanvasRenderingContext2D, bars: number[][]) {
+  public drawBars(axis: newAxis, canvasMatrix: DOMMatrix): newRect[] {
     let drawnBars = [];
-    bars.forEach(bar => {
-      drawnBars.push(new newRect())
-    })
+    for (let tickIdx = 0 ; tickIdx < axis.ticksCoords.length - 1 ; tickIdx++ ) {
+      const origin = new Vertex(axis.ticksCoords[tickIdx].x, axis.ticksCoords[tickIdx].y);
+      const size = new Vertex(axis.ticksCoords[tickIdx + 1].x - origin.x, this.axes[1].axisToCanvas(this.features.get(this.yFeature)[tickIdx], canvasMatrix) - origin.y)
+      let rect = new newRect(origin, size);
+      rect.fillStyle = this.barsColorFill;
+      rect.strokeStyle = this.barsColorStroke;
+      drawnBars.push(rect);
+    }
+    return drawnBars
+  }
+
+  public setAxes(): newAxis[] {
+    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
+    const xAxis = this.setAxis(this.xFeature, frameOrigin, xEnd, this.NX_TICKS);
+    const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
+    this.features.set('Number', bars.map(bar => bar.length));
+    const yAxis = this.buildYAxis(frameOrigin, yEnd);
+    return [xAxis, yAxis];
+  }
+
+  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+    return new newAxis(this.features.get(feature), origin, end, nTicks)
+  }
+
+  public setFeatures(data: any): [string, string] {
+    return [data.x_variable, 'Number'];
+  }
+
+  mouseTranslate(e: MouseEvent, mouse1: Vertex): Vertex {
+    const mouse2X = e.offsetX;
+    return new Vertex(this.initScale.x * (mouse1.x - mouse2X), 0);
+  }
+
+  wheel_interaction(mouse3X, mouse3Y, e) { // REALLY NEEDS A REFACTOR
+    e.preventDefault();
+    this.fusion_coeff = 1.2;
+    var event = -Math.sign(e.deltaY);
+    mouse3X = e.offsetX;
+    mouse3Y = e.offsetY;
+    if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
+        if (event>0) {
+          this.scaleX = this.scaleX * this.fusion_coeff;
+          this.scroll_x++;
+          this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
+        } else if (event<0) {
+          this.scaleX = this.scaleX/this.fusion_coeff;
+          this.scroll_x--;
+          this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
+        }
+    } else {
+        if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+        this.scaleX = this.scaleX*coeff;
+        this.scroll_x = this.scroll_x + event;
+        this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
+      }
+      if (isNaN(this.scroll_x)) this.scroll_x = 0;
+      if (isNaN(this.scroll_y)) this.scroll_y = 0;
+      return [mouse3X, mouse3Y];
   }
 }
 

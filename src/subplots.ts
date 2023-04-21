@@ -1486,6 +1486,7 @@ export class BasePlot extends PlotData {
   private _initScale: Vertex = new Vertex(-1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
+  readonly MAX_PRINTED_NUMBERS = 16;
   constructor(
     public data: any,
     public width: number,
@@ -1604,7 +1605,17 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('wheel', e => {
         if (this.interaction_ON) {
+          let scale = new Vertex(this.scaleX, this.scaleY);
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
+          for (let axis of this.axes) {
+            if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+              if (this.scaleX > scale.x) {this.scaleX = scale.x}
+              if (this.scaleY > scale.y) {this.scaleY = scale.y}
+            } else if (axis.tickPrecision <= 1) {
+              if (this.scaleX < scale.x) {this.scaleX = scale.x}
+              if (this.scaleX < scale.x) {this.scaleX = scale.x}
+            }
+          }
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
           this.viewPoint.transformSelf(this.canvasMatrix)
           this.draw();
@@ -1628,7 +1639,7 @@ export class Frame extends BasePlot {
   yFeature: string;
   readonly NX_TICKS = 10;
   readonly NY_TICKS = 5;
-  readonly OFFSET = new Vertex(50, 50); // new Vertex(50, 20);
+  readonly OFFSET = new Vertex(100, 50); // new Vertex(50, 20);
   readonly MARGIN = new Vertex(20, 20); // new Vertex(50, 20);
   constructor(
     public data: any,

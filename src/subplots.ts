@@ -1723,26 +1723,55 @@ export class newHistogram extends Frame {
   private buildYAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
     const yAxis = this.setAxis('Number', frameOrigin, yEnd, this.nYTicks);
     yAxis.minValue = 0;
-    yAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1; //this.features.get(this.xFeature).length + 1;
-    yAxis.nTicks = yAxis.maxValue
+    yAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    yAxis.nTicks = yAxis.maxValue; // Maybe not the best way to set y ticks
     yAxis.saveLoc();
     return yAxis
   }
 
   private updateYAxis(bars: number[][]): newAxis {
     this.features.set('Number', bars.map(bar => bar.length));
-    this.axes[1].maxValue = Math.max(...this.features.get(this.yFeature)) + 1; //this.features.get(this.xFeature).length + 1;
-    this.axes[1].nTicks = this.axes[1].maxValue
+    this.axes[1].maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    this.axes[1].nTicks = this.axes[1].maxValue; // Maybe not the best way to set y ticks
     this.axes[1].saveLoc();
     return
   }
 
+  // private computeBars(axis: newAxis, vector: number[]): number[][] {
+  //   const numericVector = axis.stringsToValues(vector);
+  //   let bars = Array.from(Array(axis.ticks.length - 1), () => [] as number[]);
+  //   numericVector.forEach((value, valIdx) => {
+  //     for (let barIdx = 0 ; barIdx < bars.length - 1 ; barIdx++ ) {
+  //       if (value >= axis.ticks[barIdx] && value < axis.ticks[barIdx + 1]) {
+  //         bars[barIdx].push(valIdx);
+  //         break
+  //       }
+  //     }
+  //   });
+  //   return bars
+  // }
+
+  private fakeTicks(axis: newAxis): number[] {
+    let fakeTicks = [axis.minValue].concat(axis.ticks);
+    fakeTicks.push(axis.maxValue)
+    return fakeTicks
+  }
+
+  private fakeTicksCoords(axis: newAxis, canvasHTMatrix: DOMMatrix): Vertex[] {
+    const drawnMin = axis.relativeToAbsVertex(axis.minValue, canvasHTMatrix);
+    const drawnMax = axis.relativeToAbsVertex(axis.maxValue, canvasHTMatrix);
+    let fakeTicksCoords = [drawnMin].concat(axis.ticksCoords);
+    fakeTicksCoords.push(drawnMax);
+    return fakeTicksCoords
+  }
+
   private computeBars(axis: newAxis, vector: number[]): number[][] {
     const numericVector = axis.stringsToValues(vector);
-    let bars = Array.from(Array(axis.ticks.length - 1), () => [] as number[]);
+    let fakeTicks = this.fakeTicks(axis);
+    let bars = Array.from(Array(fakeTicks.length), () => [] as number[]);
     numericVector.forEach((value, valIdx) => {
-      for (let barIdx = 0 ; barIdx < bars.length - 1 ; barIdx++ ) {
-        if (value >= axis.ticks[barIdx] && value < axis.ticks[barIdx + 1]) {
+      for (let barIdx = 0 ; barIdx < bars.length ; barIdx++ ) {
+        if (value >= fakeTicks[barIdx] && value < fakeTicks[barIdx + 1]) {
           bars[barIdx].push(valIdx);
           break
         }
@@ -1766,11 +1795,12 @@ export class newHistogram extends Frame {
     })
   }
 
-  public drawBars(axis: newAxis, canvasMatrix: DOMMatrix): newRect[] {
+  public drawBars(axis: newAxis, canvasHTMatrix: DOMMatrix): newRect[] {
     let drawnBars = [];
-    for (let tickIdx = 0 ; tickIdx < axis.ticksCoords.length - 1 ; tickIdx++ ) {
-      const origin = new Vertex(axis.ticksCoords[tickIdx].x, axis.ticksCoords[tickIdx].y);
-      const size = new Vertex(axis.ticksCoords[tickIdx + 1].x - origin.x, this.axes[1].axisToCanvas(this.features.get(this.yFeature)[tickIdx], canvasMatrix) - origin.y)
+    const fakeTicksCoords = this.fakeTicksCoords(axis, canvasHTMatrix);
+    for (let tickIdx = 0 ; tickIdx < fakeTicksCoords.length - 1 ; tickIdx++ ) {
+      const origin = new Vertex(fakeTicksCoords[tickIdx].x, fakeTicksCoords[tickIdx].y);
+      const size = new Vertex(fakeTicksCoords[tickIdx + 1].x - origin.x, this.axes[1].relativeToAbsolute(this.features.get(this.yFeature)[tickIdx], canvasHTMatrix) - origin.y)
       let rect = new newRect(origin, size);
       rect.fillStyle = this.barsColorFill;
       rect.strokeStyle = this.barsColorStroke;
@@ -1788,7 +1818,7 @@ export class newHistogram extends Frame {
     return [xAxis, yAxis];
   }
 
-  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number): newAxis {
     return new newAxis(this.features.get(feature), origin, end, nTicks)
   }
 

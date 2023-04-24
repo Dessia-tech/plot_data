@@ -1763,13 +1763,22 @@ export class newAxis {
     return path
   }
 
-  public canvasToAxis(value: number): number {
+  public absoluteToRelative(value: number): number {
     return this.isVertical ? (value - this.transformMatrix.f) / this.transformMatrix.d : (value - this.transformMatrix.e) / this.transformMatrix.a
   }
 
-  public axisToCanvas(value: number, canvasHTMatrix): number {
+  public relativeToAbsolute(value: number, canvasHTMatrix: DOMMatrix): number {
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     return this.isVertical ? value * pointHTMatrix.d + pointHTMatrix.f : value * pointHTMatrix.a + pointHTMatrix.e
+  }
+
+  public absoluteToVertex(value: number): Vertex {
+    return this.isVertical ? new Vertex(this.origin.x, value) : new Vertex(value, this.origin.y)
+  }
+
+  public relativeToAbsVertex(value: number, canvasHTMatrix: DOMMatrix): Vertex {
+    const absoluteValue = this.relativeToAbsolute(value, canvasHTMatrix);
+    return this.absoluteToVertex(absoluteValue)
   }
 
   private computeMinMax(vector: any[]): number[] {

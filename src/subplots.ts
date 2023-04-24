@@ -1481,7 +1481,7 @@ export class BasePlot extends PlotData {
   public origin: Vertex;
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
-  private viewPoint: Vertex = new Vertex(0, 0);
+  protected viewPoint: Vertex = new Vertex(0, 0);
   private _initScale: Vertex = new Vertex(-1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
@@ -1521,7 +1521,7 @@ export class BasePlot extends PlotData {
     return unpackedData
   }
 
-  private drawCanvas(): void {
+  public drawCanvas(): void {
     for (let context of [this.context_show, this.context_hidden]) {
       context.save()
       this.draw_empty_canvas(context);
@@ -1535,19 +1535,35 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public drawAxes(): void {
-    [this.context_show, this.context_hidden].forEach(context => {
-      context.setTransform(this.canvasMatrix);
-      this.axes.forEach((axis) => {
-        this.axisStyle.forEach((value, key) => axis[key] = value);
-        axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-        axis.draw(context);
-      })
+  // public drawAxes(): void {
+  //   [this.context_show, this.context_hidden].forEach(context => {
+  //     context.setTransform(this.canvasMatrix);
+  //     this.axes.forEach((axis) => {
+  //       this.axisStyle.forEach((value, key) => axis[key] = value);
+  //       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+  //       axis.draw(context);
+  //     })
+  //   })
+  // }
+
+  public updateAxes(context: CanvasRenderingContext2D): void {
+    context.setTransform(this.canvasMatrix);
+    this.axes.forEach((axis) => {
+      this.axisStyle.forEach((value, key) => axis[key] = value);
+      axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
     })
   }
 
+  public drawAxes() {
+    [this.context_show].forEach(context => {
+      this.axes.forEach((axis) => {axis.draw(context)});
+    })
+  }
+
+
   public draw(): void {
     this.drawCanvas()
+    this.updateAxes(this.context_show);
     this.drawAxes()
     this.context_hidden.restore();
     this.context_show.restore();
@@ -1697,6 +1713,7 @@ export class Frame extends BasePlot {
 }
 
 export class newHistogram extends Frame {
+  protected bars: number[][];
   readonly barsColorFill: string = string_to_hex('blue');
   readonly barsColorStroke: string = string_to_hex('black');
   constructor(
@@ -1720,36 +1737,22 @@ export class newHistogram extends Frame {
 
   set nYTicks(value: number) {this._nYTicks = value}
 
-  private buildYAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
-    const yAxis = this.setAxis('Number', frameOrigin, yEnd, this.nYTicks);
-    yAxis.minValue = 0;
-    yAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
-    yAxis.nTicks = yAxis.maxValue; // Maybe not the best way to set y ticks
-    yAxis.saveLoc();
-    return yAxis
+  private buildNumberAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
+    const numberAxis = this.setAxis('Number', frameOrigin, yEnd, this.nYTicks);
+    numberAxis.minValue = 0;
+    numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    numberAxis.nTicks = numberAxis.maxValue; // Maybe not the best way to set y ticks
+    numberAxis.saveLoc();
+    return numberAxis
   }
 
-  private updateYAxis(bars: number[][]): newAxis {
+  private updateNumberAxis(numberAxis: newAxis, bars: number[][]): newAxis {
     this.features.set('Number', bars.map(bar => bar.length));
-    this.axes[1].maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
-    this.axes[1].nTicks = this.axes[1].maxValue; // Maybe not the best way to set y ticks
-    this.axes[1].saveLoc();
-    return
+    numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    numberAxis.nTicks = numberAxis.maxValue; // Maybe not the best way to set y ticks
+    numberAxis.saveLoc();
+    return numberAxis
   }
-
-  // private computeBars(axis: newAxis, vector: number[]): number[][] {
-  //   const numericVector = axis.stringsToValues(vector);
-  //   let bars = Array.from(Array(axis.ticks.length - 1), () => [] as number[]);
-  //   numericVector.forEach((value, valIdx) => {
-  //     for (let barIdx = 0 ; barIdx < bars.length - 1 ; barIdx++ ) {
-  //       if (value >= axis.ticks[barIdx] && value < axis.ticks[barIdx + 1]) {
-  //         bars[barIdx].push(valIdx);
-  //         break
-  //       }
-  //     }
-  //   });
-  //   return bars
-  // }
 
   private fakeTicks(axis: newAxis): number[] {
     let fakeTicks = [axis.minValue].concat(axis.ticks);
@@ -1768,7 +1771,7 @@ export class newHistogram extends Frame {
   private computeBars(axis: newAxis, vector: number[]): number[][] {
     const numericVector = axis.stringsToValues(vector);
     let fakeTicks = this.fakeTicks(axis);
-    let bars = Array.from(Array(fakeTicks.length), () => [] as number[]);
+    let bars = Array.from(Array(fakeTicks.length - 1), () => [] as number[]);
     numericVector.forEach((value, valIdx) => {
       for (let barIdx = 0 ; barIdx < bars.length ; barIdx++ ) {
         if (value >= fakeTicks[barIdx] && value < fakeTicks[barIdx + 1]) {
@@ -1781,18 +1784,22 @@ export class newHistogram extends Frame {
   }
 
   public draw(): void {
-    const bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
-    this.updateYAxis(bars);
-    super.draw()
-    const canvasHTMatrix = new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]);
+    super.draw();
+    const canvasHTMatrix = new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.X, this.Y]);
     const drawnBars = this.drawBars(this.axes[0], canvasHTMatrix);
     [this.context_show, this.context_hidden].forEach(context => {
       const localMatrix = context.getTransform();
       context.resetTransform();
       drawnBars.forEach(drawnBar => drawnBar.draw(context));
       context.setTransform(localMatrix);
-      context.restore()
     })
+  }
+
+  public drawAxes(): void {
+    super.updateAxes(this.context_show)
+    this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
+    this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
+    super.drawAxes();
   }
 
   public drawBars(axis: newAxis, canvasHTMatrix: DOMMatrix): newRect[] {
@@ -1814,7 +1821,7 @@ export class newHistogram extends Frame {
     const xAxis = this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks);
     const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
     this.features.set('Number', bars.map(bar => bar.length));
-    const yAxis = this.buildYAxis(frameOrigin, yEnd);
+    const yAxis = this.buildNumberAxis(frameOrigin, yEnd);
     return [xAxis, yAxis];
   }
 

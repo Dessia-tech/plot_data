@@ -1482,7 +1482,7 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
-  private _initScale: Vertex = new Vertex(1, -1);
+  private _initScale: Vertex = new Vertex(-1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1623,10 +1623,11 @@ export class BasePlot extends PlotData {
           }
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
           this.viewPoint.transformSelf(this.canvasMatrix)
-          this.draw();
+          this.draw(); // needs a refactor
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];
           this.viewPoint = new Vertex(0, 0);
+          this.draw(); // needs a refactor
         }
       });
 
@@ -1643,7 +1644,7 @@ export class Frame extends BasePlot {
   public yFeature: string;
   protected _nXTicks: number;
   protected _nYTicks: number;
-  readonly OFFSET = new Vertex(100, 50);
+  readonly OFFSET = new Vertex(70, 50);
   readonly MARGIN = new Vertex(20, 20);
   constructor(
     public data: any,
@@ -1680,7 +1681,7 @@ export class Frame extends BasePlot {
   }
 
   public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-    return new newAxis(this.features.get(feature), origin, end, nTicks)
+    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
   }
 
   public setFrameBounds() {
@@ -1793,7 +1794,6 @@ export class newHistogram extends Frame {
   public drawBars(): newRect[] {
     let drawnBars = [];
     const fakeTicksCoords = this.fakeTicksCoords(this.axes[0]);
-    console.log(fakeTicksCoords)
     for (let tickIdx = 0 ; tickIdx < fakeTicksCoords.length - 1 ; tickIdx++ ) {
       const origin = new Vertex(fakeTicksCoords[tickIdx].x, fakeTicksCoords[tickIdx].y);
       const size = new Vertex(fakeTicksCoords[tickIdx + 1].x - origin.x, this.axes[1].relativeToAbsolute(this.features.get(this.yFeature)[tickIdx], this.canvasMatrix) - origin.y)
@@ -1815,7 +1815,7 @@ export class newHistogram extends Frame {
   }
 
   public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number): newAxis {
-    return new newAxis(this.features.get(feature), origin, end, nTicks)
+    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
   }
 
   public setFeatures(data: any): [string, string] {

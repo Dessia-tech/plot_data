@@ -1673,12 +1673,13 @@ export class newPoint2D extends Vertex {
 }
 
 export class newAxis {
-  public ticks: number[];
   public ticksCoords: Vertex[];
   public path: Path2D;
   public lineWidth: number = 2;
   public strokeStyle: string = string_to_hex('black');
   public labels: string[];
+
+  protected _ticks: number[];
 
   private _marginRatio: number = 0.1;
   private _minValue: number;
@@ -1733,6 +1734,10 @@ export class newAxis {
     if (this.isDiscrete) {return this.maxValue};
     return this._nTicks
   }
+
+  get ticks() {return this._ticks}
+
+  set ticks(value: number[]) {this._ticks = value}
 
   get tickPrecision(): number {return this._tickPrecision};
 

@@ -1636,8 +1636,8 @@ export class BasePlot extends PlotData {
 export class Frame extends BasePlot {
   public xFeature: string;
   public yFeature: string;
-  public NX_TICKS: number = 7;
-  public NY_TICKS: number = 7;
+  protected _nXTicks: number;
+  protected _nYTicks: number;
   readonly OFFSET = new Vertex(100, 50);
   readonly MARGIN = new Vertex(20, 20);
   constructor(
@@ -1655,6 +1655,14 @@ export class Frame extends BasePlot {
       this.axes = this.setAxes();
     }
 
+  get nXTicks() {return this._nXTicks ? this._nXTicks : 7}
+
+  set nXTicks(value: number) {this._nXTicks = value}
+
+  get nYTicks() {return this._nYTicks ? this._nYTicks : 7}
+
+  set nYTicks(value: number) {this._nYTicks = value}
+
   public setFeatures(data: any): [string, string] {
     return [data.x_variable, data.y_variable];
   }
@@ -1662,8 +1670,8 @@ export class Frame extends BasePlot {
   public setAxes(): newAxis[] {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds()
     return [
-      this.setAxis(this.xFeature, frameOrigin, xEnd, this.NX_TICKS), 
-      this.setAxis(this.yFeature, frameOrigin, yEnd, this.NY_TICKS)]
+      this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks), 
+      this.setAxis(this.yFeature, frameOrigin, yEnd, this.nYTicks)]
   }
 
   public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
@@ -1689,7 +1697,6 @@ export class Frame extends BasePlot {
 }
 
 export class newHistogram extends Frame {
-  NX_TICKS = 30; // MARCHE PAS !!!! ???? !!!
   readonly barsColorFill: string = string_to_hex('blue');
   readonly barsColorStroke: string = string_to_hex('black');
   constructor(
@@ -1705,17 +1712,27 @@ export class newHistogram extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
+  get nXTicks() {return this._nXTicks ? this._nXTicks : 30}
+
+  set nXTicks(value: number) {this._nXTicks = value}
+
+  get nYTicks() {return this._nYTicks ? this._nYTicks : 7}
+
+  set nYTicks(value: number) {this._nYTicks = value}
+
   private buildYAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
-    const yAxis = this.setAxis('Number', frameOrigin, yEnd, this.NY_TICKS);
+    const yAxis = this.setAxis('Number', frameOrigin, yEnd, this.nYTicks);
     yAxis.minValue = 0;
-    yAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;//this.features.get(this.xFeature).length + 1;
+    yAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1; //this.features.get(this.xFeature).length + 1;
+    yAxis.nTicks = yAxis.maxValue
     yAxis.saveLoc();
     return yAxis
   }
 
   private updateYAxis(bars: number[][]): newAxis {
     this.features.set('Number', bars.map(bar => bar.length));
-    this.axes[1].maxValue = Math.max(...this.features.get(this.yFeature)) + 1;//this.features.get(this.xFeature).length + 1;
+    this.axes[1].maxValue = Math.max(...this.features.get(this.yFeature)) + 1; //this.features.get(this.xFeature).length + 1;
+    this.axes[1].nTicks = this.axes[1].maxValue
     this.axes[1].saveLoc();
     return
   }
@@ -1764,7 +1781,7 @@ export class newHistogram extends Frame {
 
   public setAxes(): newAxis[] {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
-    const xAxis = this.setAxis(this.xFeature, frameOrigin, xEnd, this.NX_TICKS);
+    const xAxis = this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks);
     const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
     this.features.set('Number', bars.map(bar => bar.length));
     const yAxis = this.buildYAxis(frameOrigin, yEnd);
@@ -1791,24 +1808,24 @@ export class newHistogram extends Frame {
     mouse3X = e.offsetX;
     mouse3Y = e.offsetY;
     if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
-        if (event>0) {
-          this.scaleX = this.scaleX * this.fusion_coeff;
-          this.scroll_x++;
-          this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-        } else if (event<0) {
-          this.scaleX = this.scaleX/this.fusion_coeff;
-          this.scroll_x--;
-          this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
-        }
+      if (event>0) {
+        this.scaleX = this.scaleX * this.fusion_coeff;
+        this.scroll_x++;
+        this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
+      } else if (event<0) {
+        this.scaleX = this.scaleX/this.fusion_coeff;
+        this.scroll_x--;
+        this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
+      }
     } else {
         if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
         this.scaleX = this.scaleX*coeff;
         this.scroll_x = this.scroll_x + event;
         this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
-      }
-      if (isNaN(this.scroll_x)) this.scroll_x = 0;
-      if (isNaN(this.scroll_y)) this.scroll_y = 0;
-      return [mouse3X, mouse3Y];
+    }
+    if (isNaN(this.scroll_x)) this.scroll_x = 0;
+    if (isNaN(this.scroll_y)) this.scroll_y = 0;
+    return [mouse3X, mouse3Y];
   }
 }
 

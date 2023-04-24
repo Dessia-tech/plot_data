@@ -1772,15 +1772,6 @@ export class newAxis {
     return this.isVertical ? value * pointHTMatrix.d + pointHTMatrix.f : value * pointHTMatrix.a + pointHTMatrix.e
   }
 
-  public absoluteToVertex(value: number): Vertex {
-    return this.isVertical ? new Vertex(this.origin.x, value) : new Vertex(value, this.origin.y)
-  }
-
-  public relativeToAbsVertex(value: number, canvasHTMatrix: DOMMatrix): Vertex {
-    const absoluteValue = this.relativeToAbsolute(value, canvasHTMatrix);
-    return this.absoluteToVertex(absoluteValue)
-  }
-
   private computeMinMax(vector: any[]): number[] {
     let newVector = vector;
     if (this.isDiscrete) {return [0, this.labels.length]};

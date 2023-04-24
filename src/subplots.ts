@@ -1482,7 +1482,7 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
-  private _initScale: Vertex = new Vertex(-1, 1);
+  private _initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1507,7 +1507,7 @@ export class BasePlot extends PlotData {
 
   get axisStyle() {return this._axisStyle};
   
-  get canvasMatrix() {return new DOMMatrix([this._initScale.x, 0, 0, this._initScale.y, this.origin.x, this.origin.y])}
+  get canvasMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
 
   get initScale(): Vertex {return this._initScale}
 
@@ -1534,17 +1534,6 @@ export class BasePlot extends PlotData {
       context.closePath();
     }
   }
-
-  // public drawAxes(): void {
-  //   [this.context_show, this.context_hidden].forEach(context => {
-  //     context.setTransform(this.canvasMatrix);
-  //     this.axes.forEach((axis) => {
-  //       this.axisStyle.forEach((value, key) => axis[key] = value);
-  //       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-  //       axis.draw(context);
-  //     })
-  //   })
-  // }
 
   public updateAxes(context: CanvasRenderingContext2D): void {
     context.setTransform(this.canvasMatrix);
@@ -1760,9 +1749,9 @@ export class newHistogram extends Frame {
     return fakeTicks
   }
 
-  private fakeTicksCoords(axis: newAxis, canvasHTMatrix: DOMMatrix): Vertex[] {
-    const drawnMin = axis.relativeToAbsVertex(axis.minValue, canvasHTMatrix);
-    const drawnMax = axis.relativeToAbsVertex(axis.maxValue, canvasHTMatrix);
+  private fakeTicksCoords(axis: newAxis): Vertex[] {
+    const drawnMin = axis.origin.transform(this.canvasMatrix);
+    const drawnMax = axis.end.transform(this.canvasMatrix);
     let fakeTicksCoords = [drawnMin].concat(axis.ticksCoords);
     fakeTicksCoords.push(drawnMax);
     return fakeTicksCoords
@@ -1785,8 +1774,7 @@ export class newHistogram extends Frame {
 
   public draw(): void {
     super.draw();
-    const canvasHTMatrix = new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.X, this.Y]);
-    const drawnBars = this.drawBars(this.axes[0], canvasHTMatrix);
+    const drawnBars = this.drawBars();
     [this.context_show, this.context_hidden].forEach(context => {
       const localMatrix = context.getTransform();
       context.resetTransform();
@@ -1802,12 +1790,13 @@ export class newHistogram extends Frame {
     super.drawAxes();
   }
 
-  public drawBars(axis: newAxis, canvasHTMatrix: DOMMatrix): newRect[] {
+  public drawBars(): newRect[] {
     let drawnBars = [];
-    const fakeTicksCoords = this.fakeTicksCoords(axis, canvasHTMatrix);
+    const fakeTicksCoords = this.fakeTicksCoords(this.axes[0]);
+    console.log(fakeTicksCoords)
     for (let tickIdx = 0 ; tickIdx < fakeTicksCoords.length - 1 ; tickIdx++ ) {
       const origin = new Vertex(fakeTicksCoords[tickIdx].x, fakeTicksCoords[tickIdx].y);
-      const size = new Vertex(fakeTicksCoords[tickIdx + 1].x - origin.x, this.axes[1].relativeToAbsolute(this.features.get(this.yFeature)[tickIdx], canvasHTMatrix) - origin.y)
+      const size = new Vertex(fakeTicksCoords[tickIdx + 1].x - origin.x, this.axes[1].relativeToAbsolute(this.features.get(this.yFeature)[tickIdx], this.canvasMatrix) - origin.y)
       let rect = new newRect(origin, size);
       rect.fillStyle = this.barsColorFill;
       rect.strokeStyle = this.barsColorStroke;

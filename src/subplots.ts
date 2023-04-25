@@ -1482,7 +1482,8 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
-  private _initScale: Vertex = new Vertex(1, 1);
+  protected _allObjects: any[] = [];
+  private _initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1549,7 +1550,6 @@ export class BasePlot extends PlotData {
     })
   }
 
-
   public draw(): void {
     this.drawCanvas()
     this.updateAxes(this.context_show);
@@ -1580,20 +1580,36 @@ export class BasePlot extends PlotData {
       var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
       var canvas = document.getElementById(this.canvas_id);
 
-      canvas.addEventListener('mousedown', e => {
-        if (this.interaction_ON) {
-          [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
-        }
-      });
-
       canvas.addEventListener('mousemove', e => {
+        const mouseCoords1 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix);
+        this._allObjects.forEach(object => {
+          if (this.context_show.isPointInPath(object.path, mouseCoords1.x, mouseCoords1.y)) {
+            object.isHover = true;
+          } else {
+            object.isHover = false;
+          }
+        })
         if (this.interaction_ON) {
           if (isDrawing) {
             canvas.style.cursor = 'move';
             this.translation = this.mouseTranslate(e, new Vertex(mouse1X, mouse1Y))
-            this.draw()
           }
         }
+        this.draw()
+      });
+
+      canvas.addEventListener('mousedown', e => {
+        const mouseCoords2 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix);
+        if (this.interaction_ON) {
+          [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
+        }
+        this._allObjects.forEach(object => {
+          if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
+            object.isClicked = object.isClicked ? false : true;
+          } else {
+            object.isClicked = false;
+          }
+        })
       });
 
       canvas.addEventListener('mouseup', e => {
@@ -1659,6 +1675,7 @@ export class Frame extends BasePlot {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
+      this._allObjects.push(...this.axes);
     }
 
   get nXTicks() {return this._nXTicks ? this._nXTicks : 7}
@@ -1775,13 +1792,16 @@ export class newHistogram extends Frame {
 
   public draw(): void {
     super.draw();
+    this._allObjects = [];
     const drawnBars = this.drawBars();
-    [this.context_show, this.context_hidden].forEach(context => {
+    [this.context_show].forEach(context => {
       const localMatrix = context.getTransform();
       context.resetTransform();
       drawnBars.forEach(drawnBar => drawnBar.draw(context));
       context.setTransform(localMatrix);
     })
+    this._allObjects.push(...this.axes);
+    this._allObjects.push(...drawnBars);
   }
 
   public drawAxes(): void {

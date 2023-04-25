@@ -1409,12 +1409,17 @@ export class newShape {
   public lineWidth: number = 1;
   public strokeStyle: string = string_to_hex('black');
   public fillStyle: string = string_to_hex('black');
+  public hoverStyle: string =  string_to_hex('red');
+  public clickedStyle: string =  string_to_hex('lightgreen');
+  public isHover: boolean = false;
+  public isClicked: boolean = false;
   constructor() {};
   
   public draw(context: CanvasRenderingContext2D) {
+    const color = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle;
+    context.strokeStyle = color;
+    context.fillStyle = color;
     context.lineWidth = this.lineWidth;
-    context.strokeStyle = this.strokeStyle;
-    context.fillStyle = this.fillStyle;
     context.stroke(this.path);
     context.fill(this.path);
   }
@@ -1726,14 +1731,19 @@ export class newPoint2D extends Vertex {
 
 export class newAxis {
   public ticksCoords: Vertex[];
+  public drawPath: Path2D;
   public path: Path2D;
-  public mousePath: Path2D;
   public lineWidth: number = 2;
   public strokeStyle: string = string_to_hex('black');
+  public hoverStyle: string =  string_to_hex('red');
+  public clickedStyle: string =  string_to_hex('lightgreen');
   public labels: string[];
+  public isHover: boolean = false;
+  public isClicked: boolean = false;
 
   protected _ticks: number[];
   protected _isDiscrete: boolean;
+  protected rubberBand: RubberBand;
 
   private _marginRatio: number = 0.1;
   private _minValue: number;
@@ -1760,7 +1770,9 @@ export class newAxis {
       [this._previousMin, this._previousMax] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
       if (!this.isDiscrete) {this.labels = this.numericLabels()};
+      this.drawPath = this.buildDrawPath();
       this.path = this.buildPath();
+      this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
     };
 
   public get drawLength(): number {
@@ -1818,12 +1830,21 @@ export class newAxis {
     return vector.filter((value, index, array) => array.indexOf(value) === index)
   }
 
-  private buildPath(): Path2D {
+  private buildDrawPath(): Path2D {
     const path = new Path2D();
     const endArrow = new newPoint2D(this.end.x, this.end.y, 10, 'triangle', ['right', 'up'][Number(this.isVertical)]);
     path.moveTo(this.origin.x - this.DRAW_START_OFFSET * Number(!this.isVertical), this.origin.y - this.DRAW_START_OFFSET * Number(this.isVertical));
     path.lineTo(this.end.x, this.end.y);
     path.addPath(endArrow.path);
+    return path
+  }
+
+  private buildPath(): Path2D {
+    const path = new Path2D();
+    const offset = new Vertex(this.DRAW_START_OFFSET * Number(this.isVertical), this.DRAW_START_OFFSET * Number(!this.isVertical));
+    const origin = new Vertex(this.origin.x, this.origin.y).subtract(offset);
+    const size = this.end.subtract(origin).add(offset);
+    path.rect(origin.x, origin.y, size.x, size.y);
     return path
   }
 
@@ -1859,16 +1880,17 @@ export class newAxis {
 
   public draw(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
-    context.strokeStyle = this.strokeStyle;
-    context.fillStyle = this.strokeStyle;
-    context.stroke(this.path);
-    context.fill(this.path);
+    const color = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle;
+    context.strokeStyle = color;
+    context.fillStyle = color;
+    context.stroke(this.drawPath);
+    context.fill(this.drawPath);
 
     const canvasHTMatrix = context.getTransform();
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     context.resetTransform();
     const markerOrientation = this.computeTickOrientation(pointHTMatrix);
-    this.ticksCoords = this.drawTicks(context, pointHTMatrix, markerOrientation);
+    this.ticksCoords = this.drawTicks(context, pointHTMatrix, markerOrientation, color);
     this.drawName(context, canvasHTMatrix, markerOrientation)
     context.setTransform(canvasHTMatrix);
   }
@@ -1884,12 +1906,12 @@ export class newAxis {
     textName.draw(context);
   }
 
-  private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, markerOrientation: string) {
+  private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, markerOrientation: string, color: string) {
     const ticksCoords = [];
     let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
-        let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, markerOrientation);
+        let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, markerOrientation, color);
         ticksCoords.push(point);
         let text = this.labels[idx]
         if (this.isDiscrete) {
@@ -1902,8 +1924,9 @@ export class newAxis {
     return ticksCoords
   }
 
-  private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, markerOrientation: string): newPoint2D {
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10, 'halfLine', markerOrientation);      
+  private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, markerOrientation: string, color: string): newPoint2D {
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10, 'halfLine', markerOrientation); 
+    point.color = color;    
     point.transformSelf(HTMatrix);
     point.draw(context);
     return point

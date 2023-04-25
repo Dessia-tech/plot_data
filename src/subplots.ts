@@ -1751,14 +1751,14 @@ export class newHistogram extends Frame {
   }
 
   private boundedTicksCoords(axis: newAxis): Vertex[] {
-    if (axis.isDiscrete) {
-      const interval = axis.ticksCoords[1].subtract(axis.ticksCoords[0]);
-      var drawnMin = axis.ticksCoords[0].add(interval.divide(2));
-      var drawnMax = axis.ticksCoords[axis.ticksCoords.length - 1].add(interval.divide(2));
-    } else {
+    // if (axis.isDiscrete) {
+    //   const interval = axis.ticksCoords[1].subtract(axis.ticksCoords[0]);
+    //   var drawnMin = axis.ticksCoords[0].subtract(interval.divide(2));
+    //   var drawnMax = axis.ticksCoords[axis.ticksCoords.length - 1].subtract(interval.divide(2));
+    // } else {
       var drawnMin = axis.origin.transform(this.canvasMatrix);
       var drawnMax = axis.end.transform(this.canvasMatrix);
-    }
+    // }
     let fakeTicksCoords = [drawnMin].concat(axis.ticksCoords);
     fakeTicksCoords.push(drawnMax);
     return fakeTicksCoords
@@ -1804,10 +1804,9 @@ export class newHistogram extends Frame {
     for (let tickIdx = 0 ; tickIdx < fakeTicksCoords.length - 1 ; tickIdx++ ) {
       let origin = new Vertex(fakeTicksCoords[tickIdx].x, fakeTicksCoords[tickIdx].y);
       let size = new Vertex(fakeTicksCoords[tickIdx + 1].x - origin.x, this.axes[1].relativeToAbsolute(this.features.get(this.yFeature)[tickIdx], this.canvasMatrix) - origin.y);
-      if (this.axes[0].isDiscrete) {
-        origin.x -= interval.x / 2;
-        size.x = interval.x;
-      };
+      // if (this.axes[0].isDiscrete) {
+      //   size.x = interval.x;
+      // };
       let rect = new newRect(origin, size);
       rect.fillStyle = this.barsColorFill;
       rect.strokeStyle = this.barsColorStroke;

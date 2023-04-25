@@ -1775,7 +1775,7 @@ export class newAxis {
   set nTicks(value: number) {this._nTicks = value};
 
   get nTicks(): number {
-    if (this.isDiscrete) {return this.maxValue};
+    if (this.isDiscrete) {return this.labels.length + 1};
     return this._nTicks
   }
 
@@ -1828,15 +1828,14 @@ export class newAxis {
   }
 
   private computeTicks(): number[] {
-    if (this.isDiscrete) {return Array.from(Array(this.labels.length).keys())};
+    // if (this.isDiscrete) {return Array.from(Array(this.labels.length).keys())};
     const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
-    while (ticks.slice(-1)[0] <= this.maxValue) {
-      ticks.push(ticks.slice(-1)[0] + increment);
-    }
+    while (ticks.slice(-1)[0] <= this.maxValue) {ticks.push(ticks.slice(-1)[0] + increment)};
     if (ticks.slice(0)[0] < this.minValue) {ticks.splice(0, 1)}; 
     if (ticks.slice(-1)[0] > this.maxValue) {ticks.splice(-1, 1)}; 
+    console.log(increment, remainder, ticks, this.minValue, this.maxValue, this.nTicks)
     return ticks
   }
 
@@ -1869,11 +1868,17 @@ export class newAxis {
 
   private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, markerOrientation: string) {
     const ticksCoords = [];
+    let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
         const point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, markerOrientation);
         ticksCoords.push(point);
-        this.drawTickText(context, this.labels[idx], point, pointHTMatrix, markerOrientation);
+        let text = this.labels[idx]
+        if (this.isDiscrete) {
+          if (count == tick && this.labels[count]) {text = this.labels[count] ; count++}
+          else {text = '' ; console.log(text)}
+        }
+        this.drawTickText(context, text, point, pointHTMatrix, markerOrientation);
       }
     })
     return ticksCoords

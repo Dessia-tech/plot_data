@@ -1482,7 +1482,7 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
-  private _initScale: Vertex = new Vertex(-1, -1);
+  private _initScale: Vertex = new Vertex(1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1677,7 +1677,7 @@ export class Frame extends BasePlot {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds()
     return [
       this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks), 
-      this.setAxis(this.xFeature, frameOrigin, yEnd, this.nYTicks)]
+      this.setAxis(this.yFeature, frameOrigin, yEnd, this.nYTicks)]
   }
 
   public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
@@ -1827,12 +1827,9 @@ export class newHistogram extends Frame {
 
   mouseTranslate(e: MouseEvent, mouse1: Vertex): Vertex {
     const mouse2X = e.offsetX;
-    const mouse2Y = e.offsetY;
     let tX = 0;
-    let tY = 0;
     if (!this.axes[0].isDiscrete) {tX = this.initScale.x * (mouse1.x - mouse2X)};
-    if (!this.axes[1].isDiscrete) {tY = this.initScale.y * (mouse1.y - mouse2Y)};
-    return new Vertex(tX, tY)
+    return new Vertex(tX, 0)
   }
 
   wheel_interaction(mouse3X, mouse3Y, e) { // REALLY NEEDS A REFACTOR
@@ -1841,6 +1838,7 @@ export class newHistogram extends Frame {
     var event = -Math.sign(e.deltaY);
     mouse3X = e.offsetX;
     mouse3Y = e.offsetY;
+    if (this.axes[0].isDiscrete) {return [mouse3X, mouse3Y]}
     if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
       if (event>0) {
         this.scaleX = this.scaleX * this.fusion_coeff;

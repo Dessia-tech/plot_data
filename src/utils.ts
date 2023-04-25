@@ -1733,6 +1733,7 @@ export class newAxis {
   public labels: string[];
 
   protected _ticks: number[];
+  protected _isDiscrete: boolean;
 
   private _marginRatio: number = 0.1;
   private _minValue: number;
@@ -1741,7 +1742,6 @@ export class newAxis {
   private _previousMax: number;
   private _tickPrecision: number = 4;
   
-  readonly isDiscrete: boolean;
   readonly OFFSET_TICKS = new Vertex(10, 20);
   readonly OFFSET_NAME = this.OFFSET_TICKS.subtract(new Vertex(65, 60));
   readonly DRAW_START_OFFSET = 10;
@@ -1770,9 +1770,11 @@ export class newAxis {
 
   get interval(): number {return Math.abs(this.maxValue - this.minValue)};
 
-  // get tickInterval(): Vertex {return this.isVertical ? new Vertex(0, this.drawLength) : new Vertex( this.drawLength, 0)}
-
   get isVertical(): boolean {return this.origin.x == this.end.x};
+
+  get isDiscrete(): boolean {return this._isDiscrete};
+  
+  set isDiscrete(value: boolean) {this._isDiscrete = value};
 
   set marginRatio(value: number) {this._marginRatio = value};
 
@@ -1846,7 +1848,6 @@ export class newAxis {
   }
 
   private computeTicks(): number[] {
-    // if (this.isDiscrete) {return Array.from(Array(this.labels.length).keys())};
     const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];

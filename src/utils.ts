@@ -1359,28 +1359,43 @@ export class Vertex {
 
   get coordinates() {return new Vertex(this.x, this.y)}
 
-  public add(other: Vertex): Vertex {return new Vertex(this.x + other.x, this.y + other.y)}
+  public copy() {return Object.create(this)}
 
-  public copy() {
-    return new Vertex(this.x, this.y)
+  public add(other: Vertex) {
+    let copy = this.copy();
+    copy.x = this.x + other.x;
+    copy.y = this.y + other.y;
+    return copy
   }
 
   public divide(value: number) {
-    return new Vertex(this.x / value, this.y / value)
+    let copy = this.copy();
+    copy.x = this.x / value;
+    copy.y = this.y / value;
+    return copy
   }
 
   public multiply(value: number) {
-    return new Vertex(this.x * value, this.y * value)
+    let copy = this.copy();
+    copy.x = this.x * value;
+    copy.y = this.y * value;
+    return copy
   }
   
   public norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
 
-  public subtract(other: Vertex): Vertex {return new Vertex(this.x - other.x, this.y - other.y)}
+  public subtract(other: Vertex) {
+    let copy = this.copy();
+    copy.x = this.x - other.x;
+    copy.y = this.y - other.y;
+    return copy
+  }
 
   public transform(matrix: DOMMatrix) {
-    const x = matrix.a * this.x + matrix.c * this.y + matrix.e;
-    const y = matrix.b * this.x + matrix.d * this.y + matrix.f;
-    return new Vertex(x, y)
+    let copy = this.copy();
+    copy.x = matrix.a * this.x + matrix.c * this.y + matrix.e;
+    copy.y = matrix.b * this.x + matrix.d * this.y + matrix.f;
+    return copy
   }
 
   public transformSelf(matrix: DOMMatrix) {
@@ -1634,17 +1649,18 @@ export class newText extends newShape {
   }
 }
 
+const CIRCLES = ['o', 'circle', 'round'];
+const MARKERS = ['+', 'crux', 'mark'];
+const CROSSES = ['x', 'cross', 'oblique'];
+const SQUARES = ['square'];
+const TRIANGLES = ['^', 'triangle', 'tri'];
 export class newPoint2D extends Vertex {
   public path: Path2D;
   private _hovered: boolean = false;
   private _clicked: boolean = false;
   private _selected: boolean = false;
   private _color: string = string_to_hex('blue');
-  readonly CIRCLES = ['o', 'circle', 'round'];
-  readonly MARKERS = ['+', 'crux', 'mark'];
-  readonly CROSSES = ['x', 'cross', 'oblique'];
-  readonly SQUARES = ['square'];
-  readonly TRIANGLES = ['^', 'triangle', 'tri'];
+  
   constructor(
     x: number = 0, 
     y: number = 0,
@@ -1665,15 +1681,15 @@ export class newPoint2D extends Vertex {
   set color(value: string) {this._color = value};
 
   get drawnShape() {
-    if (this.CIRCLES.indexOf(this.shape) > -1) {return new newCircle(this.coordinates, this.size)};
-    if (this.MARKERS.indexOf(this.shape) > -1) {return new Mark(this.coordinates, this.size)};
-    if (this.CROSSES.indexOf(this.shape) > -1) {return new Cross(this.coordinates, this.size)};
-    if (this.SQUARES.indexOf(this.shape) > -1) {
+    if (CIRCLES.indexOf(this.shape) > -1) {return new newCircle(this.coordinates, this.size)};
+    if (MARKERS.indexOf(this.shape) > -1) {return new Mark(this.coordinates, this.size)};
+    if (CROSSES.indexOf(this.shape) > -1) {return new Cross(this.coordinates, this.size)};
+    if (SQUARES.indexOf(this.shape) > -1) {
       const halfSize = this.size * 0.5;
       const origin = new Vertex(this.coordinates.x - halfSize, this.coordinates.y - halfSize)
       return new newRect(origin, new Vertex(this.size, this.size))
     };
-    if (this.TRIANGLES.indexOf(this.shape) > -1) {return new Triangle(this.coordinates, this.size, this.markerOrientation)};
+    if (TRIANGLES.indexOf(this.shape) > -1) {return new Triangle(this.coordinates, this.size, this.markerOrientation)};
     if (this.shape == 'halfLine') {return new HalfLine(this.coordinates, this.size, this.markerOrientation)};
   }
 
@@ -1753,6 +1769,8 @@ export class newAxis {
   }
 
   get interval(): number {return Math.abs(this.maxValue - this.minValue)};
+
+  // get tickInterval(): Vertex {return this.isVertical ? new Vertex(0, this.drawLength) : new Vertex( this.drawLength, 0)}
 
   get isVertical(): boolean {return this.origin.x == this.end.x};
 
@@ -1835,7 +1853,6 @@ export class newAxis {
     while (ticks.slice(-1)[0] <= this.maxValue) {ticks.push(ticks.slice(-1)[0] + increment)};
     if (ticks.slice(0)[0] < this.minValue) {ticks.splice(0, 1)}; 
     if (ticks.slice(-1)[0] > this.maxValue) {ticks.splice(-1, 1)}; 
-    console.log(increment, remainder, ticks, this.minValue, this.maxValue, this.nTicks)
     return ticks
   }
 
@@ -1871,12 +1888,12 @@ export class newAxis {
     let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
-        const point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, markerOrientation);
+        let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, markerOrientation);
         ticksCoords.push(point);
         let text = this.labels[idx]
         if (this.isDiscrete) {
           if (count == tick && this.labels[count]) {text = this.labels[count] ; count++}
-          else {text = '' ; console.log(text)}
+          else {text = ''}
         }
         this.drawTickText(context, text, point, pointHTMatrix, markerOrientation);
       }

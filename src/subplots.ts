@@ -1677,7 +1677,7 @@ export class Frame extends BasePlot {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds()
     return [
       this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks), 
-      this.setAxis(this.yFeature, frameOrigin, yEnd, this.nYTicks)]
+      this.setAxis(this.xFeature, frameOrigin, yEnd, this.nYTicks)]
   }
 
   public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
@@ -1751,14 +1751,8 @@ export class newHistogram extends Frame {
   }
 
   private boundedTicksCoords(axis: newAxis): Vertex[] {
-    // if (axis.isDiscrete) {
-    //   const interval = axis.ticksCoords[1].subtract(axis.ticksCoords[0]);
-    //   var drawnMin = axis.ticksCoords[0].subtract(interval.divide(2));
-    //   var drawnMax = axis.ticksCoords[axis.ticksCoords.length - 1].subtract(interval.divide(2));
-    // } else {
-      var drawnMin = axis.origin.transform(this.canvasMatrix);
-      var drawnMax = axis.end.transform(this.canvasMatrix);
-    // }
+    var drawnMin = axis.origin.transform(this.canvasMatrix);
+    var drawnMax = axis.end.transform(this.canvasMatrix);
     let fakeTicksCoords = [drawnMin].concat(axis.ticksCoords);
     fakeTicksCoords.push(drawnMax);
     return fakeTicksCoords
@@ -1801,16 +1795,15 @@ export class newHistogram extends Frame {
     let drawnBars = [];
     const fakeTicksCoords = this.boundedTicksCoords(this.axes[0]);
     const interval = this.axes[0].ticksCoords[1].subtract(this.axes[0].ticksCoords[0]);
+    
     for (let tickIdx = 0 ; tickIdx < fakeTicksCoords.length - 1 ; tickIdx++ ) {
       let origin = new Vertex(fakeTicksCoords[tickIdx].x, fakeTicksCoords[tickIdx].y);
       let size = new Vertex(fakeTicksCoords[tickIdx + 1].x - origin.x, this.axes[1].relativeToAbsolute(this.features.get(this.yFeature)[tickIdx], this.canvasMatrix) - origin.y);
-      // if (this.axes[0].isDiscrete) {
-      //   size.x = interval.x;
-      // };
+      if (this.axes[0].isDiscrete) {origin = origin.subtract(interval.divide(2))};
       let rect = new newRect(origin, size);
       rect.fillStyle = this.barsColorFill;
       rect.strokeStyle = this.barsColorStroke;
-      drawnBars.push(rect);
+      if (size.x != 0 && size.y != 0) {drawnBars.push(rect)};
     }
     return drawnBars
   }
@@ -1834,7 +1827,12 @@ export class newHistogram extends Frame {
 
   mouseTranslate(e: MouseEvent, mouse1: Vertex): Vertex {
     const mouse2X = e.offsetX;
-    return new Vertex(this.initScale.x * (mouse1.x - mouse2X), 0);
+    const mouse2Y = e.offsetY;
+    let tX = 0;
+    let tY = 0;
+    if (!this.axes[0].isDiscrete) {tX = this.initScale.x * (mouse1.x - mouse2X)};
+    if (!this.axes[1].isDiscrete) {tY = this.initScale.y * (mouse1.y - mouse2Y)};
+    return new Vertex(tX, tY)
   }
 
   wheel_interaction(mouse3X, mouse3Y, e) { // REALLY NEEDS A REFACTOR

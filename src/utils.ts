@@ -1568,8 +1568,8 @@ export class newText extends newShape {
     private _width: number = null,
     private _fontsize: number = 12,
     private _font: string = 'sans-serif',
-    private _justify: CanvasTextAlign = 'left',
-    private _baseline: CanvasTextBaseline = 'alphabetic',
+    private _justify: string = 'left',
+    private _baseline: string = 'alphabetic',
     protected _style: string = '',
     protected _orientation: number = 0
   ) {
@@ -1577,9 +1577,9 @@ export class newText extends newShape {
     this.path = this.buildPath();
   }
 
-  get baseline(): CanvasTextBaseline {return this._baseline};
+  get baseline(): string {return this._baseline};
 
-  set baseline(value: CanvasTextBaseline) {this._baseline = value};
+  set baseline(value: string) {this._baseline = value};
 
   get font(): string {return this._font};
 
@@ -1589,9 +1589,9 @@ export class newText extends newShape {
 
   set fontsize(value: number) {this._fontsize = value};
 
-  get justify(): CanvasTextAlign {return this._justify};
+  get justify(): string {return this._justify};
 
-  set justify(value: CanvasTextAlign) {this._justify = value};
+  set justify(value: string) {this._justify = value};
 
   get orientation(): number {return this._orientation};
 
@@ -1642,15 +1642,14 @@ export class newText extends newShape {
       throw new Error('Cannot write text with no size');
     }
     context.font = this.fullFont;
-    context.textAlign = this.justify;
-    context.textBaseline = this.baseline;
+    context.textAlign = this.justify as CanvasTextAlign;
+    context.textBaseline = this.baseline as CanvasTextBaseline;
     this.path = this.buildPath();
     context.translate(this.origin.x, this.origin.y);
     context.rotate(Math.PI/180 * this.orientation);
     context.fillText(this.text, 0, 0);
     context.rotate(-Math.PI/180 * this.orientation);
     context.translate(-this.origin.x, -this.origin.y);
-
   }
 }
 
@@ -1665,6 +1664,7 @@ export class newPoint2D extends Vertex {
   private _clicked: boolean = false;
   private _selected: boolean = false;
   private _color: string = string_to_hex('blue');
+  protected _lineWidth: number = 2;
   
   constructor(
     x: number = 0, 
@@ -1686,21 +1686,28 @@ export class newPoint2D extends Vertex {
   set color(value: string) {this._color = value};
 
   get drawnShape() {
-    if (CIRCLES.indexOf(this.shape) > -1) {return new newCircle(this.coordinates, this.size)};
-    if (MARKERS.indexOf(this.shape) > -1) {return new Mark(this.coordinates, this.size)};
-    if (CROSSES.indexOf(this.shape) > -1) {return new Cross(this.coordinates, this.size)};
+    let shape = new newShape();
+    if (CIRCLES.indexOf(this.shape) > -1) {shape = new newCircle(this.coordinates, this.size)}
+    if (MARKERS.indexOf(this.shape) > -1) {shape = new Mark(this.coordinates, this.size)};
+    if (CROSSES.indexOf(this.shape) > -1) {shape = new Cross(this.coordinates, this.size)};
     if (SQUARES.indexOf(this.shape) > -1) {
       const halfSize = this.size * 0.5;
       const origin = new Vertex(this.coordinates.x - halfSize, this.coordinates.y - halfSize)
-      return new newRect(origin, new Vertex(this.size, this.size))
+      shape = new newRect(origin, new Vertex(this.size, this.size))
     };
-    if (TRIANGLES.indexOf(this.shape) > -1) {return new Triangle(this.coordinates, this.size, this.markerOrientation)};
-    if (this.shape == 'halfLine') {return new HalfLine(this.coordinates, this.size, this.markerOrientation)};
+    if (TRIANGLES.indexOf(this.shape) > -1) {shape = new Triangle(this.coordinates, this.size, this.markerOrientation)};
+    if (this.shape == 'halfLine') {shape = new HalfLine(this.coordinates, this.size, this.markerOrientation)};
+    shape.lineWidth = this.lineWidth;
+    return shape
   }
 
   get hovered(): boolean {return this._hovered};
     
   set hovered(value: boolean) {this._hovered = value};
+
+  get lineWidth(): number {return this._lineWidth};
+    
+  set lineWidth(value: number) {this._lineWidth = value};
 
   get markerOrientation(): string {return this._markerOrientation};
     
@@ -1722,6 +1729,7 @@ export class newPoint2D extends Vertex {
 
   public draw(context: CanvasRenderingContext2D) {
     this.path = this.buildPath();
+    context.lineWidth = this.lineWidth;
     context.fillStyle = this.color;
     context.strokeStyle = this.color;
     context.stroke(this.path);
@@ -1863,11 +1871,6 @@ export class newAxis {
     return [Math.min(...newVector), Math.max(...newVector)]
   }
 
-  private computeTickOrientation(HTMatrix: DOMMatrix) {
-    if (this.isVertical) {return ['right', 'left'][Math.sign(1 - Math.sign(HTMatrix.a))]};
-    return ['up', 'down'][Math.sign(1 - Math.sign(HTMatrix.d))]
-  }
-
   private computeTicks(): number[] {
     const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const remainder = this.minValue % increment;
@@ -1888,58 +1891,62 @@ export class newAxis {
 
     const canvasHTMatrix = context.getTransform();
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
-    context.resetTransform();
-    const markerOrientation = this.computeTickOrientation(pointHTMatrix);
-    this.ticksCoords = this.drawTicks(context, pointHTMatrix, markerOrientation, color);
-    this.drawName(context, canvasHTMatrix, markerOrientation)
+    context.setTransform(pointHTMatrix)
+    this.ticksCoords = this.drawTicks(context, pointHTMatrix, color);
     context.setTransform(canvasHTMatrix);
+    this.drawName(context, canvasHTMatrix)
   }
 
-  private drawName(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, markerOrientation: string) {
-    const baseline = ['up', 'left'].indexOf(markerOrientation) != -1 ? 'hanging' : 'alphabetic';
+  private drawName(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
+    const baseline = ['hanging', 'alphabetic'][Math.sign(1 - Math.sign(this.transformMatrix.f))]
     let nameCoords = this.end.add(this.origin).divide(2);
-    if (this.isVertical) {nameCoords.x += this.OFFSET_NAME.x}
+    if (this.isVertical) {nameCoords.x += this.OFFSET_NAME.x ; ['hanging', 'alphabetic'][Math.sign(1 - Math.sign(this.transformMatrix.e))]}
     else {nameCoords.y += this.OFFSET_NAME.y}
     nameCoords.transformSelf(canvasHTMatrix);
     const orientation = this.isVertical ? -90 : 0;
     const textName = new newText(this.name, nameCoords, this.drawLength, this.FONT_SIZE, this.FONT, 'center', baseline, 'bold', orientation);
+    context.resetTransform();
     textName.draw(context);
+    context.setTransform(canvasHTMatrix);
   }
 
-  private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, markerOrientation: string, color: string) {
+  private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string) {
     const ticksCoords = [];
     let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
-        let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, markerOrientation, color);
+        let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, color);
         ticksCoords.push(point);
         let text = this.labels[idx]
         if (this.isDiscrete) {
           if (count == tick && this.labels[count]) {text = this.labels[count] ; count++}
           else {text = ''}
         }
-        this.drawTickText(context, text, point, pointHTMatrix, markerOrientation);
+        this.drawTickText(context, text, point, pointHTMatrix);
       }
     })
     return ticksCoords
   }
 
-  private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, markerOrientation: string, color: string): newPoint2D {
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10, 'halfLine', markerOrientation); 
+  private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
+    const markerOrientation = this.isVertical ? 'right' : 'up';
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10 / Math.abs(HTMatrix.a), 'halfLine', markerOrientation); 
     point.color = color;    
-    point.transformSelf(HTMatrix);
+    point.lineWidth /= Math.abs(HTMatrix.a);
     point.draw(context);
     return point
   }
 
-  private drawTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix, markerOrientation: string): void {
-    const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix, markerOrientation);
+  private drawTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): void {
+    const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
     let textWidth = null;
     if (textAlign == 'left') {textWidth = context.canvas.width - textOrigin.x - 5};
     if (textAlign == 'right') {textWidth = textOrigin.x - 5};
-    if (textAlign == 'center') {textWidth = (this.drawLength) / (this.nTicks *1.5)};
+    if (textAlign == 'center') {textWidth = (this.drawLength) / (this.nTicks * 1.5)};
+    context.resetTransform()
     const tickText = new newText(text, textOrigin, textWidth, this.FONT_SIZE, this.FONT, textAlign, baseline);
     tickText.draw(context)
+    context.setTransform(HTMatrix)
   }
 
   private getValueToDrawMatrix() {
@@ -1959,7 +1966,7 @@ export class newAxis {
   public numericLabels(): string[] {
     this.updateTickPrecision();
     let numericLabels = []
-    this.ticks.forEach((tick) => numericLabels.push(tick.toPrecision(this.tickPrecision)));
+    this.ticks.forEach(tick => numericLabels.push(tick.toPrecision(this.tickPrecision)));
     return numericLabels
   }
 
@@ -1977,22 +1984,21 @@ export class newAxis {
     return vector
   }
 
-  private textAlignments(markerOrientation: string): [CanvasTextAlign, CanvasTextBaseline] {
-    if (markerOrientation == 'up') {return ['center', 'hanging']}
-    else if (markerOrientation == 'down') {return ['center', 'alphabetic']}
-    else if (markerOrientation == 'left') {return ['left', 'middle']}
-    else if (markerOrientation == 'right') {return ['right', 'middle']}
+  private textAlignments(): [string, string] {
+    const forVertical = ['right', 'left'][Math.sign(1 - Math.sign(this.transformMatrix.e))];
+    const forHorizontal = ['hanging', 'alphabetic'][Math.sign(1 - Math.sign(this.transformMatrix.f))]
+    return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
   }
 
-  private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix, markerOrientation: string): [Vertex, CanvasTextAlign, CanvasTextBaseline] {
-    let origin = new Vertex(point.x, point.y);
+  private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, string, string] {
+    let origin = new Vertex(point.x, point.y).transform(HTMatrix);
     if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode 
       origin.x -= Math.sign(HTMatrix.a) * this.OFFSET_TICKS.x
     } 
     else {
       origin.y -= Math.sign(HTMatrix.d) * this.OFFSET_TICKS.y
     }
-    const [textAlign, baseline] = this.textAlignments(markerOrientation);
+    const [textAlign, baseline] = this.textAlignments();
     return [origin, textAlign, baseline]
   }
 

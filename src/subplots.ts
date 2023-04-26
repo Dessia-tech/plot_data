@@ -1483,7 +1483,7 @@ export class BasePlot extends PlotData {
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
   protected _allObjects: any[] = [];
-  private _initScale: Vertex = new Vertex(1, -1);
+  private _initScale: Vertex = new Vertex(-1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1582,6 +1582,7 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mousemove', e => {
         const mouseCoords1 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix);
+        console.log(this._allObjects, new Vertex(e.offsetX, e.offsetY))
         this._allObjects.forEach(object => {
           if (this.context_show.isPointInPath(object.path, mouseCoords1.x, mouseCoords1.y)) {
             object.isHover = true;
@@ -1794,12 +1795,12 @@ export class newHistogram extends Frame {
     super.draw();
     this._allObjects = [];
     const drawnBars = this.drawBars();
-    [this.context_show].forEach(context => {
-      const localMatrix = context.getTransform();
-      context.resetTransform();
-      drawnBars.forEach(drawnBar => drawnBar.draw(context));
-      context.setTransform(localMatrix);
-    })
+    // [this.context_show].forEach(context => {
+    //   const localMatrix = context.getTransform();
+    //   context.resetTransform();
+    //   drawnBars.forEach(drawnBar => drawnBar.draw(context));
+    //   context.setTransform(localMatrix);
+    // })
     this._allObjects.push(...this.axes);
     this._allObjects.push(...drawnBars);
   }

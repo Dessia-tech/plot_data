@@ -1483,7 +1483,7 @@ export class BasePlot extends PlotData {
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
   protected _allObjects: any[] = [];
-  private _initScale: Vertex = new Vertex(-1, 1);
+  private _initScale: Vertex = new Vertex(1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1581,8 +1581,8 @@ export class BasePlot extends PlotData {
       var canvas = document.getElementById(this.canvas_id);
 
       canvas.addEventListener('mousemove', e => {
-        const mouseCoords1 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix);
-        console.log(this._allObjects, new Vertex(e.offsetX, e.offsetY))
+        const mouseCoords1 = new Vertex(e.offsetX, e.offsetY) //.transform(this.canvasMatrix);
+        // console.log(this._allObjects, new Vertex(e.offsetX, e.offsetY))
         this._allObjects.forEach(object => {
           if (this.context_show.isPointInPath(object.path, mouseCoords1.x, mouseCoords1.y)) {
             object.isHover = true;
@@ -1661,7 +1661,7 @@ export class Frame extends BasePlot {
   public yFeature: string;
   protected _nXTicks: number;
   protected _nYTicks: number;
-  readonly OFFSET = new Vertex(70, 50);
+  readonly OFFSET = new Vertex(100, 100);
   readonly MARGIN = new Vertex(20, 20);
   constructor(
     public data: any,
@@ -1768,22 +1768,14 @@ export class newHistogram extends Frame {
     return fakeTicks
   }
 
-  private boundedTicksCoords(axis: newAxis): Vertex[] {
-    var drawnMin = axis.origin.transform(this.canvasMatrix);
-    var drawnMax = axis.end.transform(this.canvasMatrix);
-    let fakeTicksCoords = [drawnMin].concat(axis.ticksCoords);
-    fakeTicksCoords.push(drawnMax);
-    return fakeTicksCoords
-  }
-
   private computeBars(axis: newAxis, vector: number[]): number[][] {
     const numericVector = axis.stringsToValues(vector);
     let fakeTicks = this.boundedTicks(axis);
     let bars = Array.from(Array(fakeTicks.length - 1), () => [] as number[]);
     numericVector.forEach((value, valIdx) => {
-      for (let barIdx = 0 ; barIdx < bars.length ; barIdx++ ) {
-        if (value >= fakeTicks[barIdx] && value < fakeTicks[barIdx + 1]) {
-          bars[barIdx].push(valIdx);
+      for (let tickIdx = 0 ; tickIdx < fakeTicks.length - 1 ; tickIdx++ ) {
+        if (value >= fakeTicks[tickIdx] && value < fakeTicks[tickIdx + 1]) {
+          bars[tickIdx].push(valIdx);
           break
         }
       }
@@ -1794,16 +1786,18 @@ export class newHistogram extends Frame {
   public draw(): void {
     super.draw();
     this._allObjects = [];
-    const drawnBars = this.drawBars();
-    // [this.context_show].forEach(context => {
-    //   const localMatrix = context.getTransform();
-    //   context.resetTransform();
-    //   drawnBars.forEach(drawnBar => drawnBar.draw(context));
-    //   context.setTransform(localMatrix);
-    // })
+    const drawnBars = this.getBarsDrawing();
+    [this.context_show].forEach(context => {
+      const frameMatrix = this.axes[0].transformMatrix;
+      frameMatrix.d = this.axes[1].transformMatrix.d;
+      context.setTransform(this.canvasMatrix.multiply(frameMatrix))
+      drawnBars.forEach(drawnBar => {drawnBar.draw(context)});
+      context.resetTransform();
+    })
     this._allObjects.push(...this.axes);
     this._allObjects.push(...drawnBars);
   }
+
 
   public drawAxes(): void {
     super.updateAxes(this.context_show)
@@ -1812,19 +1806,18 @@ export class newHistogram extends Frame {
     super.drawAxes();
   }
 
-  public drawBars(): newRect[] {
+  public getBarsDrawing(): newRect[] {
+    const fullTicks = this.boundedTicks(this.axes[0]);
     let drawnBars = [];
-    const fakeTicksCoords = this.boundedTicksCoords(this.axes[0]);
-    const interval = this.axes[0].ticksCoords[1].subtract(this.axes[0].ticksCoords[0]);
-    
-    for (let tickIdx = 0 ; tickIdx < fakeTicksCoords.length - 1 ; tickIdx++ ) {
-      let origin = new Vertex(fakeTicksCoords[tickIdx].x, fakeTicksCoords[tickIdx].y);
-      let size = new Vertex(fakeTicksCoords[tickIdx + 1].x - origin.x, this.axes[1].relativeToAbsolute(this.features.get(this.yFeature)[tickIdx], this.canvasMatrix) - origin.y);
-      if (this.axes[0].isDiscrete) {origin = origin.subtract(interval.divide(2))};
+    for (let barIdx = 0 ; barIdx < this.bars.length ; barIdx++) {
+      let origin = new Vertex(fullTicks[barIdx], 0);
+      let size = new Vertex(fullTicks[barIdx + 1] - fullTicks[barIdx], this.bars[barIdx].length);
+
+      if (this.axes[0].isDiscrete) {origin.x = origin.x - size.x / 2};
       let rect = new newRect(origin, size);
       rect.fillStyle = this.barsColorFill;
       rect.strokeStyle = this.barsColorStroke;
-      if (size.x != 0 && size.y != 0) {drawnBars.push(rect)};
+      if (size.y != 0) {drawnBars.push(rect)};
     }
     return drawnBars
   }

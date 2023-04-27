@@ -1408,7 +1408,7 @@ export class newShape {
   public path: Path2D = new Path2D();
   public lineWidth: number = 1;
   public strokeStyle: string = string_to_hex('black');
-  public fillStyle: string = string_to_hex('black');
+  public fillStyle: string = string_to_hex('lightblue');
   public hoverStyle: string =  string_to_hex('red');
   public clickedStyle: string =  string_to_hex('lightgreen');
   public isHover: boolean = false;
@@ -1416,12 +1416,28 @@ export class newShape {
   constructor() {};
   
   public draw(context: CanvasRenderingContext2D) {
-    const color = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle;
-    context.strokeStyle = color;
-    context.fillStyle = color;
-    context.lineWidth = this.lineWidth;
-    context.stroke(this.path);
-    context.fill(this.path);
+    // Scale the path
+    const scaledPath = new Path2D();
+    const contextMatrix = context.getTransform();
+    scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+
+    // Save the current canvas state
+    context.save();
+
+    // Scale the canvas context
+    context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
+
+    // Set the line width
+    context.lineWidth = this.lineWidth // mat.d;
+
+    // Draw the path on the scaled context
+    context.strokeStyle = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle;
+    context.fillStyle = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.fillStyle;
+    context.fill(scaledPath);
+    context.stroke(scaledPath);
+
+    // Restore the canvas state
+    context.restore();
   }
 }
 
@@ -1893,8 +1909,9 @@ export class newAxis {
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     context.setTransform(pointHTMatrix)
     this.ticksCoords = this.drawTicks(context, pointHTMatrix, color);
-    context.setTransform(canvasHTMatrix);
+    context.resetTransform();
     this.drawName(context, canvasHTMatrix)
+    context.setTransform(canvasHTMatrix);
   }
 
   private drawName(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
@@ -1905,9 +1922,7 @@ export class newAxis {
     nameCoords.transformSelf(canvasHTMatrix);
     const orientation = this.isVertical ? -90 : 0;
     const textName = new newText(this.name, nameCoords, this.drawLength, this.FONT_SIZE, this.FONT, 'center', baseline, 'bold', orientation);
-    context.resetTransform();
     textName.draw(context);
-    context.setTransform(canvasHTMatrix);
   }
 
   private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string) {

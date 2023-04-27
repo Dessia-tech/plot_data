@@ -1483,7 +1483,7 @@ export class BasePlot extends PlotData {
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
   protected _allObjects: any[] = [];
-  private _initScale: Vertex = new Vertex(1, 1);
+  private _initScale: Vertex = new Vertex(-1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1523,8 +1523,7 @@ export class BasePlot extends PlotData {
   }
 
   public drawCanvas(): void {
-    for (let context of [this.context_show, this.context_hidden]) {
-      context.save()
+    for (let context of [this.context_show]) {
       this.draw_empty_canvas(context);
       this.context = context;
       if (this.settings_on) {this.draw_settings_rect()} 
@@ -1554,8 +1553,6 @@ export class BasePlot extends PlotData {
     this.drawCanvas()
     this.updateAxes(this.context_show);
     this.drawAxes()
-    this.context_hidden.restore();
-    this.context_show.restore();
   }
 
   draw_initial(): void {
@@ -1581,11 +1578,12 @@ export class BasePlot extends PlotData {
       var canvas = document.getElementById(this.canvas_id);
 
       canvas.addEventListener('mousemove', e => {
-        const mouseCoords1 = new Vertex(e.offsetX, e.offsetY) //.transform(this.canvasMatrix);
-        // console.log(this._allObjects, new Vertex(e.offsetX, e.offsetY))
+        const frameMatrix = this.axes[0].transformMatrix;
+        frameMatrix.d = this.axes[1].transformMatrix.d;
+        const mouseCoords1 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix.multiply(frameMatrix).inverse());
         this._allObjects.forEach(object => {
           if (this.context_show.isPointInPath(object.path, mouseCoords1.x, mouseCoords1.y)) {
-            object.isHover = true;
+            object.isHover = true; console.log(object)
           } else {
             object.isHover = false;
           }
@@ -1661,6 +1659,7 @@ export class Frame extends BasePlot {
   public yFeature: string;
   protected _nXTicks: number;
   protected _nYTicks: number;
+  protected _frameMatrix: DOMMatrix;
   readonly OFFSET = new Vertex(100, 100);
   readonly MARGIN = new Vertex(20, 20);
   constructor(
@@ -1678,6 +1677,12 @@ export class Frame extends BasePlot {
       this.axes = this.setAxes();
       this._allObjects.push(...this.axes);
     }
+
+  get frameMatrix(): DOMMatrix {
+    const frameMatrix = this.axes[0].transformMatrix;
+    frameMatrix.d = this.axes[1].transformMatrix.d;
+    return this.canvasMatrix.multiply(frameMatrix)
+  }
 
   get nXTicks() {return this._nXTicks ? this._nXTicks : 7}
 
@@ -1788,10 +1793,8 @@ export class newHistogram extends Frame {
     this._allObjects = [];
     const drawnBars = this.getBarsDrawing();
     [this.context_show].forEach(context => {
-      const frameMatrix = this.axes[0].transformMatrix;
-      frameMatrix.d = this.axes[1].transformMatrix.d;
-      context.setTransform(this.canvasMatrix.multiply(frameMatrix))
-      drawnBars.forEach(drawnBar => {drawnBar.draw(context)});
+      context.setTransform(this.frameMatrix);
+      drawnBars.forEach(drawnBar => {drawnBar.draw(context) ; if(drawnBar.isHover){console.log(drawnBar)}});
       context.resetTransform();
     })
     this._allObjects.push(...this.axes);
@@ -1812,9 +1815,9 @@ export class newHistogram extends Frame {
     for (let barIdx = 0 ; barIdx < this.bars.length ; barIdx++) {
       let origin = new Vertex(fullTicks[barIdx], 0);
       let size = new Vertex(fullTicks[barIdx + 1] - fullTicks[barIdx], this.bars[barIdx].length);
-
       if (this.axes[0].isDiscrete) {origin.x = origin.x - size.x / 2};
       let rect = new newRect(origin, size);
+
       rect.fillStyle = this.barsColorFill;
       rect.strokeStyle = this.barsColorStroke;
       if (size.y != 0) {drawnBars.push(rect)};

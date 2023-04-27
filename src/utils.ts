@@ -1416,27 +1416,16 @@ export class newShape {
   constructor() {};
   
   public draw(context: CanvasRenderingContext2D) {
-    // Scale the path
     const scaledPath = new Path2D();
     const contextMatrix = context.getTransform();
     scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
-
-    // Save the current canvas state
     context.save();
-
-    // Scale the canvas context
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
-
-    // Set the line width
-    context.lineWidth = this.lineWidth // mat.d;
-
-    // Draw the path on the scaled context
+    context.lineWidth = this.lineWidth;
     context.strokeStyle = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle;
     context.fillStyle = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);
-
-    // Restore the canvas state
     context.restore();
   }
 }

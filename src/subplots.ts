@@ -1484,13 +1484,13 @@ export class BasePlot extends PlotData {
 
   protected hoveredIndex: number[] = [];
   protected clickedIndex: number[] = [];
-  protected selectedIndex: number[] = [];
+  protected selectedIndex: boolean[];
 
   protected viewPoint: Vertex = new Vertex(0, 0);
   protected _canvasObjects: any[] = [];
 
   private _initScale: Vertex = new Vertex(-1, -1);
-  private _axisStyle = new Map<string, any>([['strokeStyle', 'rgb(0, 0, 0)']]);
+  private _axisStyle = new Map<string, any>([['strokeStyle', 'rgb(80, 80, 80)']]);
   
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1508,6 +1508,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(X, Y);
       this.size = new Vertex(width, height);
       this.features = this.unpackData(data);
+      this.selectedIndex = Array.from([...this.features][0][1], idx => idx = false);
       this.scaleX = this.scaleY = 1;
     }
 
@@ -1544,7 +1545,7 @@ export class BasePlot extends PlotData {
   }
 
   public updateAxes(): void {
-    this.axes.forEach((axis) => {
+    this.axes.forEach(axis => {
       this.axisStyle.forEach((value, key) => axis[key] = value);
       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
     })
@@ -1552,15 +1553,30 @@ export class BasePlot extends PlotData {
 
   public drawAxes() {
     [this.context_show].forEach(context => {
-      this.axes.forEach((axis) => {axis.draw(context)});
+      this.axes.forEach((axis) => {
+        if (axis.rubberBand.length != 0) {this.updateSelected(axis)};
+        axis.draw(context)
+      });
     })
+  }
+
+  public updateSelected(axis: newAxis) {
+    this.features.get('mass').forEach((value, index) => {
+      if (axis.isInRubberBand(value)) {
+        this.selectedIndex[index] = true;
+      } 
+      else {
+        this.selectedIndex[index] = false;
+      }
+    })
+    console.log(this.selectedIndex)
   }
 
   public draw(): void {
     this.drawCanvas()
     this.context_show.setTransform(this.canvasMatrix);
     this.updateAxes();
-    this.drawAxes()
+    this.drawAxes();
     this.context_show.restore();
   }
 
@@ -1578,7 +1594,7 @@ export class BasePlot extends PlotData {
 
   mouseMove(e: MouseEvent) {
     const mouseCoords = new Vertex(e.offsetX, e.offsetY);
-    const canvasCoords = mouseCoords.transform(this.canvasMatrix.inverse());
+    const canvasCoords = mouseCoords.transform(this.canvasMatrix);
     this._canvasObjects.forEach(object => {
       if (this.context_show.isPointInPath(object.path, canvasCoords.x, canvasCoords.y)) {
         object.isHover = true;
@@ -1594,7 +1610,7 @@ export class BasePlot extends PlotData {
     this._canvasObjects.forEach(object => {
       if (object.isHover) {hoveredObject = object}
     })
-    return [mouseCoords, hoveredObject]
+    return [mouseCoords, mouseCoords.transform(this.canvasMatrix), hoveredObject]
   }
 
   mouseUp(e: MouseEvent, canvasDown: Vertex): boolean {
@@ -1619,7 +1635,7 @@ export class BasePlot extends PlotData {
       var hoveredObject = undefined;
       var isDrawing = false;
       var mouseCoords = new Vertex(0, 0) ; var mouseDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
-      var canvasCoords = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
+      var canvasCoords = new Vertex(0, 0) ; var canvasDown = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
 
@@ -1628,7 +1644,7 @@ export class BasePlot extends PlotData {
         if (this.interaction_ON && isDrawing) {
           canvas.style.cursor = 'move';
           if (hoveredObject) {
-            hoveredObject.mouseChange(mouseDown.transform(this.canvasMatrix), mouseCoords.transform(this.canvasMatrix));
+            hoveredObject.mouseChange(canvasDown, canvasCoords);
           } else {
             this.translation = this.mouseTranslate(e, mouseDown);
           }
@@ -1637,7 +1653,8 @@ export class BasePlot extends PlotData {
       });
 
       canvas.addEventListener('mousedown', e => {
-        [mouseDown, hoveredObject] = this.mouseDown(mouseCoords);
+        [mouseDown, canvasDown, hoveredObject] = this.mouseDown(mouseCoords);
+        if (hoveredObject) {hoveredObject.mouseDown(canvasDown)};
         isDrawing = true;
       });
 
@@ -1935,6 +1952,7 @@ export class newHistogram extends Frame {
       this.bars[barIdx].strokeStyle = this.barsColorStroke;
       if (this.bars[barIdx].values.some(valIdx => this.hoveredIndex.indexOf(valIdx) != -1)) {this.bars[barIdx].isHover = true}
       if (this.bars[barIdx].values.some(valIdx => this.clickedIndex.indexOf(valIdx) != -1)) {this.bars[barIdx].isClicked = true}
+      if (this.bars[barIdx].values.some(valIdx => this.selectedIndex[valIdx])) {this.bars[barIdx].isSelected = true}
     }
   }
 

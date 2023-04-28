@@ -1414,6 +1414,7 @@ export class newShape {
   public clickedStyle: string =  string_to_hex('lightgreen');
   public isHover: boolean = false;
   public isClicked: boolean = false;
+  public isSelected: boolean = false;
   constructor() {};
   
   public draw(context: CanvasRenderingContext2D) {
@@ -1424,7 +1425,7 @@ export class newShape {
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
-    context.fillStyle = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.fillStyle;
+    context.fillStyle = this.isHover ? this.hoverStyle : (this.isClicked || this.isSelected) ? this.clickedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);
     context.restore();
@@ -1776,10 +1777,10 @@ export class newAxis {
   public isHover: boolean = false;
   public isClicked: boolean = false;
   public mouseStyleON: boolean = false;
+  public rubberBand: RubberBand;
 
   protected _ticks: number[];
   protected _isDiscrete: boolean;
-  protected rubberBand: RubberBand;
 
   private _marginRatio: number = 0.1;
   private _minValue: number;
@@ -1797,9 +1798,8 @@ export class newAxis {
     vector: any[],
     public origin: Vertex,
     public end: Vertex,
-    protected _name: string = '',
+    public name: string = '',
     private _nTicks: number = 10) {
-      this.name = newText.capitalize(_name);
       this.isDiscrete = typeof vector[0] == 'string';
       if (this.isDiscrete) {this.labels = newAxis.uniqueValues(vector)};
       const [minValue, maxValue] = this.computeMinMax(vector);
@@ -1836,10 +1836,6 @@ export class newAxis {
 
   get minValue(): number {return this._minValue};
 
-  set name(value: string) {this._name = value};
-
-  get name(): string {return this._name};
-
   set nTicks(value: number) {this._nTicks = value};
 
   get nTicks(): number {
@@ -1852,6 +1848,8 @@ export class newAxis {
   set ticks(value: number[]) {this._ticks = value}
 
   get tickPrecision(): number {return this._tickPrecision};
+
+  get title(): string {return newText.capitalize(this.name)}
 
   get transformMatrix(): DOMMatrix {return this.getValueToDrawMatrix()};
 
@@ -1888,9 +1886,8 @@ export class newAxis {
     return this.isVertical ? (value - this.transformMatrix.f) / this.transformMatrix.d : (value - this.transformMatrix.e) / this.transformMatrix.a
   }
 
-  public relativeToAbsolute(value: number, canvasHTMatrix: DOMMatrix): number {
-    const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
-    return this.isVertical ? value * pointHTMatrix.d + pointHTMatrix.f : value * pointHTMatrix.a + pointHTMatrix.e
+  public relativeToAbsolute(value: number): number {
+    return this.isVertical ? value * this.transformMatrix.d + this.transformMatrix.f : value * this.transformMatrix.a + this.transformMatrix.e
   }
 
   private computeMinMax(vector: any[]): number[] {
@@ -1920,10 +1917,10 @@ export class newAxis {
 
     const canvasHTMatrix = context.getTransform();
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
-    context.setTransform(pointHTMatrix)
+    context.setTransform(pointHTMatrix);
     this.ticksCoords = this.drawTicks(context, pointHTMatrix, color);
     context.resetTransform();
-    this.drawName(context, canvasHTMatrix)
+    this.drawName(context, canvasHTMatrix);
     context.setTransform(canvasHTMatrix);
     this.drawRubberBand(context);
   }
@@ -1935,7 +1932,7 @@ export class newAxis {
     else {nameCoords.y += this.OFFSET_NAME.y}
     nameCoords.transformSelf(canvasHTMatrix);
     const orientation = this.isVertical ? -90 : 0;
-    const textName = new newText(this.name, nameCoords, this.drawLength, this.FONT_SIZE, this.FONT, 'center', baseline, 'bold', orientation);
+    const textName = new newText(this.title, nameCoords, this.drawLength, this.FONT_SIZE, this.FONT, 'center', baseline, 'bold', orientation);
     textName.draw(context);
   }
 
@@ -1993,19 +1990,32 @@ export class newAxis {
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D) {
-    const realMin = this.relativeToAbsolute(this.rubberBand.minValue, new DOMMatrix([1, 0, 0, 1, 0, 0]))
-    const realMax = this.relativeToAbsolute(this.rubberBand.maxValue, new DOMMatrix([1, 0, 0, 1, 0, 0]))
+    const realMin = this.relativeToAbsolute(this.rubberBand.minValue);
+    const realMax = this.relativeToAbsolute(this.rubberBand.maxValue);
     this.rubberBand.realMin = Math.min(realMin, realMax);
     this.rubberBand.realMax = Math.max(realMin, realMax);
     this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, string_to_hex('yellow'), string_to_hex('white'), 0.1, 0.8);
   }
 
   public mouseChange(mouseDown: Vertex, mouseCoords: Vertex) {
-    let minValue = this.isVertical ? mouseDown.y : mouseDown.x;
-    let maxValue = this.isVertical ? mouseCoords.y : mouseCoords.x;
-    this.rubberBand.minValue = this.absoluteToRelative(minValue);
-    this.rubberBand.maxValue = this.absoluteToRelative(maxValue);
-    console.log(this.rubberBand.minValue, this.rubberBand.maxValue)
+    let minValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
+    let maxValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
+    this.rubberBand.minValue = Math.min(minValue, maxValue);
+    this.rubberBand.maxValue = Math.max(minValue, maxValue);
+  }
+
+  public mouseDown(mouseDown: Vertex) {
+    const mouseBand = this.isVertical ? mouseDown.y : mouseDown.x;
+    let isReset = false;
+    if (mouseBand < this.rubberBand.realMin || mouseBand > this.rubberBand.realMax) {
+      this.rubberBand.reset();
+      isReset = true;
+    } // ADD CHANGE RUBBERBAND BEHAVIOR
+    return isReset
+  }
+
+  public isInRubberBand(value: number): boolean {
+    return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false
   }
 
   public numericLabels(): string[] {

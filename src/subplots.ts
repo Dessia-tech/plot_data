@@ -1895,7 +1895,7 @@ export class newHistogram extends Frame {
   }
 
   public draw(): void {
-    super.draw();
+    this.updateAxes();
     this.getBarsDrawing();
     [this.context_show].forEach(context => {
       context.setTransform(this.frameMatrix);
@@ -1908,10 +1908,8 @@ export class newHistogram extends Frame {
     this.context_show.resetTransform();
   }
 
-  public update(): void {
-  }
-
-  public drawAxes(): void {
+  public updateAxes(): void {
+    super.drawCanvas();
     super.updateAxes(this.context_show)
     this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);

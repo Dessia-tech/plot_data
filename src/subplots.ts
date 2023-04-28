@@ -1483,7 +1483,7 @@ export class BasePlot extends PlotData {
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
   protected _canvasObjects: any[] = [];
-  private _initScale: Vertex = new Vertex(-1, -1);
+  private _initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1601,13 +1601,15 @@ export class BasePlot extends PlotData {
     const isDrawing = false;
     const isTranslating = this.translation.norm != 0;
     if (this.interaction_ON) {
-      this._canvasObjects.forEach(object => {
-        if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
-          object.isClicked = object.isClicked ? false : true;
-        } else {
-          if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
-        }
-      })
+      if (!isTranslating) {
+        this._canvasObjects.forEach(object => {
+          if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
+            object.isClicked = object.isClicked ? false : true;
+          } else {
+            if (!e.ctrlKey) {object.isClicked = false};
+          }
+        })
+      }
       this.draw();
       this.isSelecting = false;
       this.is_drawing_rubber_band = false;
@@ -1803,21 +1805,23 @@ export class Frame extends BasePlot {
     const isDrawing = false;
     const isTranslating = this.translation.norm != 0;
     if (this.interaction_ON) {
-      this._canvasObjects.forEach(object => {
-        if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
-          object.isClicked = object.isClicked ? false : true;
-        } else {
-          if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
-        }
-      })
-      const frameMouse2 = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
-      this._frameObjects.forEach(object => {
-        if (this.context_show.isPointInPath(object.path, frameMouse2.x, frameMouse2.y)) {
-          object.isClicked = object.isClicked ? false : true;
-        } else {
-          if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
-        }
-      })
+      if (!isTranslating) {
+        this._canvasObjects.forEach(object => {
+          if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
+            object.isClicked = object.isClicked ? false : true;
+          } else {
+            if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
+          }
+        })
+        const frameMouse2 = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
+        this._frameObjects.forEach(object => {
+          if (this.context_show.isPointInPath(object.path, frameMouse2.x, frameMouse2.y)) {
+            object.isClicked = object.isClicked ? false : true;
+          } else {
+            if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
+          }
+        })
+      }
       this.draw();
       this.isSelecting = false;
       this.is_drawing_rubber_band = false;

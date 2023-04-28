@@ -1925,9 +1925,9 @@ export class newAxis {
   }
 
   private drawName(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
-    const baseline = ['hanging', 'alphabetic'][Math.sign(1 - Math.sign(this.transformMatrix.f))]
+    let baseline = ['hanging', 'alphabetic'][Math.sign(1 - Math.sign(this.transformMatrix.f))]
     let nameCoords = this.end.add(this.origin).divide(2);
-    if (this.isVertical) {nameCoords.x += this.OFFSET_NAME.x ; ['hanging', 'alphabetic'][Math.sign(1 - Math.sign(this.transformMatrix.e))]}
+    if (this.isVertical) {nameCoords.x += this.OFFSET_NAME.x ; baseline = ['alphabetic', 'hanging'][Math.sign(1 - Math.sign(this.transformMatrix.e))]}
     else {nameCoords.y += this.OFFSET_NAME.y}
     nameCoords.transformSelf(canvasHTMatrix);
     const orientation = this.isVertical ? -90 : 0;

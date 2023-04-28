@@ -1925,7 +1925,7 @@ export class newAxis {
     context.resetTransform();
     this.drawName(context, canvasHTMatrix)
     context.setTransform(canvasHTMatrix);
-    this.drawRubberBand(context, canvasHTMatrix);
+    this.drawRubberBand(context);
   }
 
   private drawName(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
@@ -1992,7 +1992,7 @@ export class newAxis {
             maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
 
-  public drawRubberBand(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
+  public drawRubberBand(context: CanvasRenderingContext2D) {
     const realMin = this.relativeToAbsolute(this.rubberBand.minValue, new DOMMatrix([1, 0, 0, 1, 0, 0]))
     const realMax = this.relativeToAbsolute(this.rubberBand.maxValue, new DOMMatrix([1, 0, 0, 1, 0, 0]))
     this.rubberBand.realMin = Math.min(realMin, realMax);

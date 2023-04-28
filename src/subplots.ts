@@ -1481,10 +1481,17 @@ export class BasePlot extends PlotData {
   public origin: Vertex;
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
+
+  protected hoveredIndex: number[] = [];
+  protected clickedIndex: number[] = [];
+  protected selectedIndex: number[] = [];
+
   protected viewPoint: Vertex = new Vertex(0, 0);
   protected _canvasObjects: any[] = [];
+
   private _initScale: Vertex = new Vertex(-1, -1);
-  private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
+  private _axisStyle = new Map<string, any>([['strokeStyle', 'rgb(0, 0, 0)']]);
+  
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
   constructor(
@@ -1719,8 +1726,6 @@ export class BasePlot extends PlotData {
 export class Frame extends BasePlot {
   public xFeature: string;
   public yFeature: string;
-  protected hoveredIndex: number[] = [];
-  protected clickedIndex: number[] = [];
   protected _nXTicks: number;
   protected _nYTicks: number;
   protected _frameMatrix: DOMMatrix;

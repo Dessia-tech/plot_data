@@ -1742,6 +1742,27 @@ export class newPoint2D extends Vertex {
   }
 }
 
+export class Bar extends newRect {
+  constructor(
+    public values: any[] = [],
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0)
+  ) {
+    super(origin, size);
+  }
+
+  get length(): number {return this.values.length}
+
+  public setGeometry(origin: Vertex, size: Vertex) {
+    this.origin = origin;
+    this.size = size;
+  }
+
+  public draw(context: CanvasRenderingContext2D) {
+    if (this.size.x != 0 && this.size.y != 0) {super.draw(context)}
+  }
+}
+
 export class newAxis {
   public ticksCoords: Vertex[];
   public drawPath: Path2D;

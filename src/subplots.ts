@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, newRect } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, newRect, Bar } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1482,7 +1482,7 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
-  protected _allObjects: any[] = [];
+  protected _canvasObjects: any[] = [];
   private _initScale: Vertex = new Vertex(-1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
@@ -1523,7 +1523,8 @@ export class BasePlot extends PlotData {
   }
 
   public drawCanvas(): void {
-    for (let context of [this.context_show]) {
+    for (let context of [this.context_show, this.context_hidden]) {
+      context.save()
       this.draw_empty_canvas(context);
       this.context = context;
       if (this.settings_on) {this.draw_settings_rect()} 
@@ -1553,6 +1554,8 @@ export class BasePlot extends PlotData {
     this.drawCanvas()
     this.updateAxes(this.context_show);
     this.drawAxes()
+    this.context_hidden.restore();
+    this.context_show.restore();
   }
 
   draw_initial(): void {
@@ -1569,6 +1572,17 @@ export class BasePlot extends PlotData {
     return new Vertex(this.initScale.x * (mouse1.x - mouse2X), this.initScale.y * (mouse1.y - mouse2Y));
   }
 
+  mouseMove(e: MouseEvent) {
+    const canvasMouse1 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix.inverse());
+    this._canvasObjects.forEach(object => {
+      if (this.context_show.isPointInPath(object.path, canvasMouse1.x, canvasMouse1.y)) {
+        object.isHover = true;
+      } else {
+        object.isHover = false;
+      }
+    })
+  }
+
   mouse_interaction() {
     if (this.interaction_ON === true) {
       var isDrawing = false;
@@ -1578,21 +1592,10 @@ export class BasePlot extends PlotData {
       var canvas = document.getElementById(this.canvas_id);
 
       canvas.addEventListener('mousemove', e => {
-        const frameMatrix = this.axes[0].transformMatrix;
-        frameMatrix.d = this.axes[1].transformMatrix.d;
-        const mouseCoords1 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix.multiply(frameMatrix).inverse());
-        this._allObjects.forEach(object => {
-          if (this.context_show.isPointInPath(object.path, mouseCoords1.x, mouseCoords1.y)) {
-            object.isHover = true; console.log(object)
-          } else {
-            object.isHover = false;
-          }
-        })
-        if (this.interaction_ON) {
-          if (isDrawing) {
-            canvas.style.cursor = 'move';
-            this.translation = this.mouseTranslate(e, new Vertex(mouse1X, mouse1Y))
-          }
+        this.mouseMove(e);
+        if (this.interaction_ON && isDrawing) {
+          canvas.style.cursor = 'move';
+          this.translation = this.mouseTranslate(e, new Vertex(mouse1X, mouse1Y))
         }
         this.draw()
       });
@@ -1602,7 +1605,7 @@ export class BasePlot extends PlotData {
         if (this.interaction_ON) {
           [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
         }
-        this._allObjects.forEach(object => {
+        this._canvasObjects.forEach(object => {
           if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
             object.isClicked = object.isClicked ? false : true;
           } else {
@@ -1637,7 +1640,7 @@ export class BasePlot extends PlotData {
             }
           }
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
-          this.viewPoint.transformSelf(this.canvasMatrix)
+          this.viewPoint.transformSelf(this.canvasMatrix);
           this.draw(); // needs a refactor
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];
@@ -1652,14 +1655,59 @@ export class BasePlot extends PlotData {
 
     }
   }
+
+  wheel_interaction(mouse3X, mouse3Y, e) { //TODO: TO REFACTOR !!!
+    e.preventDefault();
+    this.fusion_coeff = 1.2;
+    var event = -Math.sign(e.deltaY);
+    mouse3X = e.offsetX;
+    mouse3Y = e.offsetY;
+    if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
+        if (event>0) {
+          this.scaleX = this.scaleX*this.fusion_coeff;
+          this.scroll_x++;
+          this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
+        } else if (event<0) {
+          this.scaleX = this.scaleX/this.fusion_coeff;
+          this.scroll_x--;
+          this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
+        }
+
+    } else if ((mouse3X<=this.decalage_axis_x + this.X) && (mouse3Y<this.height - this.decalage_axis_y + this.Y) && this.axis_ON) {
+        if (event>0) {
+          this.scaleY = this.scaleY*this.fusion_coeff;
+          this.scroll_y++;
+          this.originY = this.height/2 + this.fusion_coeff * (this.originY - this.height/2);
+        } else if (event<0) {
+          this.scaleY = this.scaleY/this.fusion_coeff;
+          this.scroll_y--;
+          this.originY = this.height/2 + 1/this.fusion_coeff * (this.originY - this.height/2);
+        }
+
+    } else {
+        if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+        this.scaleX = this.scaleX*coeff;
+        this.scaleY = this.scaleY*coeff;
+        this.scroll_x = this.scroll_x + event;
+        this.scroll_y = this.scroll_y + event;
+        this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
+        this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
+      }
+      if (isNaN(this.scroll_x)) this.scroll_x = 0;
+      if (isNaN(this.scroll_y)) this.scroll_y = 0;
+      return [mouse3X, mouse3Y];
+  }
 }
 
 export class Frame extends BasePlot {
   public xFeature: string;
   public yFeature: string;
+  protected hoveredIndex: number[] = [];
+  protected clickedIndex: number[] = [];
   protected _nXTicks: number;
   protected _nYTicks: number;
   protected _frameMatrix: DOMMatrix;
+  protected _frameObjects: any[];
   readonly OFFSET = new Vertex(100, 100);
   readonly MARGIN = new Vertex(20, 20);
   constructor(
@@ -1675,7 +1723,7 @@ export class Frame extends BasePlot {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
-      this._allObjects.push(...this.axes);
+      this._canvasObjects.push(...this.axes);
     }
 
   get frameMatrix(): DOMMatrix {
@@ -1723,10 +1771,22 @@ export class Frame extends BasePlot {
     }
     return [frameOrigin, xEnd, yEnd]
   }
+
+  mouseMove(e: MouseEvent) {
+    super.mouseMove(e);
+    const frameMouse1 = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
+    this._frameObjects.forEach(object => {
+      if (this.context_show.isPointInPath(object.path, frameMouse1.x, frameMouse1.y)) {
+        object.isHover = true; console.log(object)
+      } else {
+        object.isHover = false;
+      }
+    })
+  }
 }
 
 export class newHistogram extends Frame {
-  protected bars: number[][];
+  protected bars: Bar[] = [];
   readonly barsColorFill: string = string_to_hex('lightblue');
   readonly barsColorStroke: string = string_to_hex('black');
   constructor(
@@ -1759,7 +1819,7 @@ export class newHistogram extends Frame {
     return numberAxis
   }
 
-  private updateNumberAxis(numberAxis: newAxis, bars: number[][]): newAxis {
+  private updateNumberAxis(numberAxis: newAxis, bars: Bar[]): newAxis {
     this.features.set('Number', bars.map(bar => bar.length));
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.nTicks = numberAxis.maxValue; // Maybe not the best way to set y ticks
@@ -1773,14 +1833,26 @@ export class newHistogram extends Frame {
     return fakeTicks
   }
 
-  private computeBars(axis: newAxis, vector: number[]): number[][] {
+  private storeBarState(): [number[], number[]] {
+    const [hovered, clicked] = [[] as number[], [] as number[]];
+    if (this.bars)
+    {this.bars.forEach(bar => {
+      if (bar.isHover) {hovered.push(...bar.values)};
+      if (bar.isClicked) {clicked.push(...bar.values)};
+    })}
+    return [hovered, clicked]
+  }
+
+
+  private computeBars(axis: newAxis, vector: number[]): Bar[] {
     const numericVector = axis.stringsToValues(vector);
+    [this.hoveredIndex, this.clickedIndex] = this.storeBarState();
     let fakeTicks = this.boundedTicks(axis);
-    let bars = Array.from(Array(fakeTicks.length - 1), () => [] as number[]);
+    let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar());
     numericVector.forEach((value, valIdx) => {
       for (let tickIdx = 0 ; tickIdx < fakeTicks.length - 1 ; tickIdx++ ) {
         if (value >= fakeTicks[tickIdx] && value < fakeTicks[tickIdx + 1]) {
-          bars[tickIdx].push(valIdx);
+          bars[tickIdx].values.push(valIdx);
           break
         }
       }
@@ -1790,17 +1862,17 @@ export class newHistogram extends Frame {
 
   public draw(): void {
     super.draw();
-    this._allObjects = [];
-    const drawnBars = this.getBarsDrawing();
+    this.getBarsDrawing();
     [this.context_show].forEach(context => {
       context.setTransform(this.frameMatrix);
-      drawnBars.forEach(drawnBar => {drawnBar.draw(context) ; if(drawnBar.isHover){console.log(drawnBar)}});
+      this.bars.forEach(bar => {bar.buildPath() ; bar.draw(context)});
       context.resetTransform();
     })
-    this._allObjects.push(...this.axes);
-    this._allObjects.push(...drawnBars);
+    this._frameObjects = this.bars;
   }
 
+  public update(): void {
+  }
 
   public drawAxes(): void {
     super.updateAxes(this.context_show)
@@ -1809,20 +1881,19 @@ export class newHistogram extends Frame {
     super.drawAxes();
   }
 
-  public getBarsDrawing(): newRect[] {
+  public getBarsDrawing() {
     const fullTicks = this.boundedTicks(this.axes[0]);
-    let drawnBars = [];
     for (let barIdx = 0 ; barIdx < this.bars.length ; barIdx++) {
       let origin = new Vertex(fullTicks[barIdx], 0);
       let size = new Vertex(fullTicks[barIdx + 1] - fullTicks[barIdx], this.bars[barIdx].length);
       if (this.axes[0].isDiscrete) {origin.x = origin.x - size.x / 2};
-      let rect = new newRect(origin, size);
 
-      rect.fillStyle = this.barsColorFill;
-      rect.strokeStyle = this.barsColorStroke;
-      if (size.y != 0) {drawnBars.push(rect)};
+      this.bars[barIdx].setGeometry(origin, size);
+      this.bars[barIdx].fillStyle = this.barsColorFill;
+      this.bars[barIdx].strokeStyle = this.barsColorStroke;
+      if (this.bars[barIdx].values.some(valIdx => this.hoveredIndex.indexOf(valIdx) != -1)) {this.bars[barIdx].isHover = true}
+      if (this.bars[barIdx].values.some(valIdx => this.clickedIndex.indexOf(valIdx) != -1)) {this.bars[barIdx].isClicked = true}
     }
-    return drawnBars
   }
 
   public setAxes(): newAxis[] {
@@ -1849,14 +1920,13 @@ export class newHistogram extends Frame {
     return new Vertex(tX, 0)
   }
 
-  wheel_interaction(mouse3X, mouse3Y, e) { // REALLY NEEDS A REFACTOR
+  wheel_interaction(mouse3X, mouse3Y, e) { // TODO: REALLY NEEDS A REFACTOR
     e.preventDefault();
     this.fusion_coeff = 1.2;
     var event = -Math.sign(e.deltaY);
     mouse3X = e.offsetX;
     mouse3Y = e.offsetY;
-    if (this.axes[0].isDiscrete) {return [mouse3X, mouse3Y]}
-    if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
+    if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
       if (event>0) {
         this.scaleX = this.scaleX * this.fusion_coeff;
         this.scroll_x++;

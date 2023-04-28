@@ -1483,7 +1483,7 @@ export class BasePlot extends PlotData {
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
   protected _canvasObjects: any[] = [];
-  private _initScale: Vertex = new Vertex(1, -1);
+  private _initScale: Vertex = new Vertex(-1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1536,8 +1536,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public updateAxes(context: CanvasRenderingContext2D): void {
-    context.setTransform(this.canvasMatrix);
+  public updateAxes(): void {
     this.axes.forEach((axis) => {
       this.axisStyle.forEach((value, key) => axis[key] = value);
       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
@@ -1552,9 +1551,9 @@ export class BasePlot extends PlotData {
 
   public draw(): void {
     this.drawCanvas()
-    this.updateAxes(this.context_show);
+    this.context_show.setTransform(this.canvasMatrix);
+    this.updateAxes();
     this.drawAxes()
-    this.context_hidden.restore();
     this.context_show.restore();
   }
 
@@ -1583,6 +1582,14 @@ export class BasePlot extends PlotData {
     return [mouseCoords, canvasCoords]
   }
 
+  mouseDown(mouseCoords: Vertex) {
+    let hoveredObject = undefined;
+    this._canvasObjects.forEach(object => {
+      if (object.isHover) {hoveredObject = object}
+    })
+    return [mouseCoords, hoveredObject]
+  }
+
   mouseUp(e: MouseEvent, canvasDown: Vertex): boolean {
     const isDrawing = false;
     const isTranslating = this.translation.norm != 0;
@@ -1602,6 +1609,7 @@ export class BasePlot extends PlotData {
 
   mouse_interaction() {
     if (this.interaction_ON === true) {
+      var hoveredObject = undefined;
       var isDrawing = false;
       var mouseCoords = new Vertex(0, 0) ; var mouseDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
       var canvasCoords = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
@@ -1612,13 +1620,17 @@ export class BasePlot extends PlotData {
         [mouseCoords, canvasCoords] = this.mouseMove(e);
         if (this.interaction_ON && isDrawing) {
           canvas.style.cursor = 'move';
-          this.translation = this.mouseTranslate(e, mouseDown);
+          if (hoveredObject) {
+            hoveredObject.mouseChange(mouseDown.transform(this.canvasMatrix), mouseCoords.transform(this.canvasMatrix));
+          } else {
+            this.translation = this.mouseTranslate(e, mouseDown);
+          }
         }
         this.draw()
       });
 
       canvas.addEventListener('mousedown', e => {
-        mouseDown = mouseCoords;
+        [mouseDown, hoveredObject] = this.mouseDown(mouseCoords);
         isDrawing = true;
       });
 
@@ -1659,104 +1671,6 @@ export class BasePlot extends PlotData {
         isDrawing = false;
       });
     }
-
-  // mouseTranslate(e: MouseEvent, mouse1: Vertex): Vertex {
-  //   const mouse2X = e.offsetX;
-  //   const mouse2Y = e.offsetY;
-  //   return new Vertex(this.initScale.x * (mouse1.x - mouse2X), this.initScale.y * (mouse1.y - mouse2Y));
-  // }
-
-  // mouseMove(e: MouseEvent) {
-  //   const canvasMouse1 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix.inverse());
-  //   this._canvasObjects.forEach(object => {
-  //     if (this.context_show.isPointInPath(object.path, canvasMouse1.x, canvasMouse1.y)) {
-  //       object.isHover = true;
-  //     } else {
-  //       object.isHover = false;
-  //     }
-  //   })
-  // }
-
-  // mouseDown(e: MouseEvent): [number, number, number, number, boolean] {
-  //   const mouse1X = e.offsetX;
-  //   const mouse1Y = e.offsetY;
-  //   const mouseCoords2 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix);
-  //   let isDrawing = false;
-  //   if (this.interaction_ON) {isDrawing = true}
-  //   return [mouse1X, mouse1Y, mouseCoords2.x, mouseCoords2.y, isDrawing]
-  // }
-
-  // mouseUp(e: MouseEvent, mouseCoords2: Vertex): boolean {
-  //   const isDrawing = false;
-  //   const isTranslating = this.translation.norm != 0;
-  //   if (this.interaction_ON) {
-  //     if (!isTranslating) {
-  //       this._canvasObjects.forEach(object => {
-  //         if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
-  //           object.isClicked = object.isClicked ? false : true;
-  //         } else {
-  //           if (!e.ctrlKey) {object.isClicked = false};
-  //         }
-  //       })
-  //     }
-  //   }
-  //   return isDrawing
-  // }
-
-  // mouse_interaction() {
-  //   if (this.interaction_ON === true) {
-  //     var isDrawing = false;
-  //     var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
-  //     var canvas = document.getElementById(this.canvas_id);
-
-  //     canvas.addEventListener('mousemove', e => {
-  //       this.mouseMove(e);
-  //       if (this.interaction_ON && isDrawing) {
-  //         canvas.style.cursor = 'move';
-  //         this.translation = this.mouseTranslate(e, new Vertex(mouse1X, mouse1Y))
-  //       }
-  //       this.draw()
-  //     });
-
-  //     canvas.addEventListener('mousedown', e => {[mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing] = this.mouseDown(e)});
-
-  //     canvas.addEventListener('mouseup', e => {
-  //       canvas.style.cursor = 'default';
-  //       isDrawing = this.mouseUp(e, new Vertex(mouse2X, mouse2Y));
-  //       this.draw();
-  //       this.isSelecting = false;
-  //       this.is_drawing_rubber_band = false;
-  //       this.axes.forEach(axis => {axis.saveLoc()});
-  //       this.translation = new Vertex(0, 0);
-  //     })
-
-  //     canvas.addEventListener('wheel', e => {
-  //       if (this.interaction_ON) {
-  //         let scale = new Vertex(this.scaleX, this.scaleY);
-  //         [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
-  //         for (let axis of this.axes) {
-  //           if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
-  //             if (this.scaleX > scale.x) {this.scaleX = scale.x}
-  //             if (this.scaleY > scale.y) {this.scaleY = scale.y}
-  //           } else if (axis.tickPrecision <= 1) {
-  //             if (this.scaleX < scale.x) {this.scaleX = scale.x}
-  //             if (this.scaleX < scale.x) {this.scaleX = scale.x}
-  //           }
-  //         }
-  //         this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
-  //         this.viewPoint.transformSelf(this.canvasMatrix);
-  //         this.draw(); // needs a refactor
-  //         this.axes.forEach(axis => {axis.saveLoc()});
-  //         [this.scaleX, this.scaleY] = [1, 1];
-  //         this.viewPoint = new Vertex(0, 0);
-  //         this.draw(); // needs a refactor
-  //       }
-  //     });
-
-  //     canvas.addEventListener('mouseleave', e => {
-  //       isDrawing = false;
-  //     });
-  //   }
   }
 
   wheel_interaction(mouse3X, mouse3Y, e) { //TODO: TO REFACTOR !!!
@@ -1998,7 +1912,8 @@ export class newHistogram extends Frame {
 
   public updateAxes(): void {
     super.drawCanvas();
-    super.updateAxes(this.context_show)
+    this.context_show.setTransform(this.canvasMatrix);
+    super.updateAxes()
     this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
   }

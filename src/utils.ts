@@ -2,6 +2,7 @@ import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { BasePlot } from "./subplots";
+import { min } from "cypress/types/lodash";
 
 export class Axis {
     color_stroke:any;
@@ -1774,6 +1775,7 @@ export class newAxis {
   public labels: string[];
   public isHover: boolean = false;
   public isClicked: boolean = false;
+  public mouseStyleON: boolean = false;
 
   protected _ticks: number[];
   protected _isDiscrete: boolean;
@@ -1909,7 +1911,8 @@ export class newAxis {
 
   public draw(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
-    const color = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle;
+    let color = this.strokeStyle;
+    if (this.mouseStyleON) {color = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle};
     context.strokeStyle = color;
     context.fillStyle = color;
     context.stroke(this.drawPath);
@@ -1922,6 +1925,7 @@ export class newAxis {
     context.resetTransform();
     this.drawName(context, canvasHTMatrix)
     context.setTransform(canvasHTMatrix);
+    this.drawRubberBand(context, canvasHTMatrix);
   }
 
   private drawName(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
@@ -1986,6 +1990,22 @@ export class newAxis {
     if (this.isDiscrete) {return [minValue - 1, maxValue + 1]};
     return [minValue * (1 - Math.sign(minValue) * this.marginRatio), 
             maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
+  }
+
+  public drawRubberBand(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
+    const realMin = this.relativeToAbsolute(this.rubberBand.minValue, new DOMMatrix([1, 0, 0, 1, 0, 0]))
+    const realMax = this.relativeToAbsolute(this.rubberBand.maxValue, new DOMMatrix([1, 0, 0, 1, 0, 0]))
+    this.rubberBand.realMin = Math.min(realMin, realMax);
+    this.rubberBand.realMax = Math.max(realMin, realMax);
+    this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, string_to_hex('yellow'), string_to_hex('white'), 0.1, 0.8);
+  }
+
+  public mouseChange(mouseDown: Vertex, mouseCoords: Vertex) {
+    let minValue = this.isVertical ? mouseDown.y : mouseDown.x;
+    let maxValue = this.isVertical ? mouseCoords.y : mouseCoords.x;
+    this.rubberBand.minValue = this.absoluteToRelative(minValue);
+    this.rubberBand.maxValue = this.absoluteToRelative(maxValue);
+    console.log(this.rubberBand.minValue, this.rubberBand.maxValue)
   }
 
   public numericLabels(): string[] {

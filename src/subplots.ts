@@ -1583,6 +1583,40 @@ export class BasePlot extends PlotData {
     })
   }
 
+  mouseDown(e: MouseEvent): [number, number, number, number, boolean] {
+    const mouse1X = e.offsetX;
+    const mouse1Y = e.offsetY;
+    const mouseCoords2 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix);
+    let isDrawing = false;
+    if (this.interaction_ON) {
+      isDrawing = true;
+      this.initial_originX = this.originX;
+      this.initial_originY = this.originY;
+      if (e.ctrlKey) Interactions.click_on_clear_action(this);
+    }
+    return [mouse1X, mouse1Y, mouseCoords2.x, mouseCoords2.y, isDrawing]
+  }
+
+  mouseUp(e: MouseEvent, mouseCoords2: Vertex) {
+    const isDrawing = false;
+    const isTranslating = this.translation.norm != 0;
+    if (this.interaction_ON) {
+      this._canvasObjects.forEach(object => {
+        if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
+          object.isClicked = object.isClicked ? false : true;
+        } else {
+          if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
+        }
+      })
+      this.draw();
+      this.isSelecting = false;
+      this.is_drawing_rubber_band = false;
+      this.axes.forEach(axis => {axis.saveLoc()});
+      this.translation = new Vertex(0, 0);
+    }
+    return isDrawing
+  }
+
   mouse_interaction() {
     if (this.interaction_ON === true) {
       var isDrawing = false;
@@ -1600,30 +1634,11 @@ export class BasePlot extends PlotData {
         this.draw()
       });
 
-      canvas.addEventListener('mousedown', e => {
-        const mouseCoords2 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix);
-        if (this.interaction_ON) {
-          [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
-        }
-        this._canvasObjects.forEach(object => {
-          if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
-            object.isClicked = object.isClicked ? false : true;
-          } else {
-            object.isClicked = false;
-          }
-        })
-      });
+      canvas.addEventListener('mousedown', e => {[mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing] = this.mouseDown(e)});
 
       canvas.addEventListener('mouseup', e => {
         canvas.style.cursor = 'default';
-        isDrawing = false;
-        if (this.interaction_ON) {
-          this.draw();
-          this.isSelecting = false;
-          this.is_drawing_rubber_band = false;
-          this.axes.forEach(axis => {axis.saveLoc()});
-          this.translation = new Vertex(0, 0);
-        }
+        isDrawing = this.mouseUp(e, new Vertex(mouse2X, mouse2Y))
       })
 
       canvas.addEventListener('wheel', e => {
@@ -1772,16 +1787,44 @@ export class Frame extends BasePlot {
     return [frameOrigin, xEnd, yEnd]
   }
 
-  mouseMove(e: MouseEvent) {
+  public mouseMove(e: MouseEvent) {
     super.mouseMove(e);
     const frameMouse1 = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
     this._frameObjects.forEach(object => {
       if (this.context_show.isPointInPath(object.path, frameMouse1.x, frameMouse1.y)) {
-        object.isHover = true; console.log(object)
+        object.isHover = true;
       } else {
         object.isHover = false;
       }
     })
+  }
+
+  mouseUp(e: MouseEvent, mouseCoords2: Vertex) {
+    const isDrawing = false;
+    const isTranslating = this.translation.norm != 0;
+    if (this.interaction_ON) {
+      this._canvasObjects.forEach(object => {
+        if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
+          object.isClicked = object.isClicked ? false : true;
+        } else {
+          if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
+        }
+      })
+      const frameMouse2 = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
+      this._frameObjects.forEach(object => {
+        if (this.context_show.isPointInPath(object.path, frameMouse2.x, frameMouse2.y)) {
+          object.isClicked = object.isClicked ? false : true;
+        } else {
+          if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
+        }
+      })
+      this.draw();
+      this.isSelecting = false;
+      this.is_drawing_rubber_band = false;
+      this.axes.forEach(axis => {axis.saveLoc()});
+      this.translation = new Vertex(0, 0);
+    }
+    return isDrawing
   }
 }
 
@@ -1835,11 +1878,12 @@ export class newHistogram extends Frame {
 
   private storeBarState(): [number[], number[]] {
     const [hovered, clicked] = [[] as number[], [] as number[]];
-    if (this.bars)
-    {this.bars.forEach(bar => {
-      if (bar.isHover) {hovered.push(...bar.values)};
-      if (bar.isClicked) {clicked.push(...bar.values)};
-    })}
+    if (this.bars) {
+      this.bars.forEach(bar => {
+        if (bar.isHover) {hovered.push(...bar.values)};
+        if (bar.isClicked) {clicked.push(...bar.values)};
+      })
+    }
     return [hovered, clicked]
   }
 

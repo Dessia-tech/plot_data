@@ -1382,7 +1382,7 @@ export class Vertex {
     return copy
   }
   
-  public norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
+  public get norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
 
   public subtract(other: Vertex) {
     let copy = this.copy();
@@ -1422,7 +1422,7 @@ export class newShape {
     context.save();
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     context.lineWidth = this.lineWidth;
-    context.strokeStyle = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle;
+    context.strokeStyle = this.strokeStyle;
     context.fillStyle = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);

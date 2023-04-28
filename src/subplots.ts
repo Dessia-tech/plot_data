@@ -1483,7 +1483,7 @@ export class BasePlot extends PlotData {
   public translation: Vertex = new Vertex(0, 0);
   protected viewPoint: Vertex = new Vertex(0, 0);
   protected _canvasObjects: any[] = [];
-  private _initScale: Vertex = new Vertex(1, -1);
+  private _initScale: Vertex = new Vertex(-1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', string_to_hex('blue')]]);
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1597,7 +1597,7 @@ export class BasePlot extends PlotData {
     return [mouse1X, mouse1Y, mouseCoords2.x, mouseCoords2.y, isDrawing]
   }
 
-  mouseUp(e: MouseEvent, mouseCoords2: Vertex) {
+  mouseUp(e: MouseEvent, mouseCoords2: Vertex): boolean {
     const isDrawing = false;
     const isTranslating = this.translation.norm != 0;
     if (this.interaction_ON) {
@@ -1610,11 +1610,6 @@ export class BasePlot extends PlotData {
           }
         })
       }
-      this.draw();
-      this.isSelecting = false;
-      this.is_drawing_rubber_band = false;
-      this.axes.forEach(axis => {axis.saveLoc()});
-      this.translation = new Vertex(0, 0);
     }
     return isDrawing
   }
@@ -1623,7 +1618,6 @@ export class BasePlot extends PlotData {
     if (this.interaction_ON === true) {
       var isDrawing = false;
       var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
-      var click_on_selectw_border:boolean = false;
       var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
       var canvas = document.getElementById(this.canvas_id);
 
@@ -1640,7 +1634,12 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mouseup', e => {
         canvas.style.cursor = 'default';
-        isDrawing = this.mouseUp(e, new Vertex(mouse2X, mouse2Y))
+        isDrawing = this.mouseUp(e, new Vertex(mouse2X, mouse2Y));
+        this.draw();
+        this.isSelecting = false;
+        this.is_drawing_rubber_band = false;
+        this.axes.forEach(axis => {axis.saveLoc()});
+        this.translation = new Vertex(0, 0);
       })
 
       canvas.addEventListener('wheel', e => {
@@ -1802,17 +1801,10 @@ export class Frame extends BasePlot {
   }
 
   mouseUp(e: MouseEvent, mouseCoords2: Vertex) {
-    const isDrawing = false;
+    const isDrawing = super.mouseUp(e, mouseCoords2)
     const isTranslating = this.translation.norm != 0;
     if (this.interaction_ON) {
       if (!isTranslating) {
-        this._canvasObjects.forEach(object => {
-          if (this.context_show.isPointInPath(object.path, mouseCoords2.x, mouseCoords2.y)) {
-            object.isClicked = object.isClicked ? false : true;
-          } else {
-            if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
-          }
-        })
         const frameMouse2 = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
         this._frameObjects.forEach(object => {
           if (this.context_show.isPointInPath(object.path, frameMouse2.x, frameMouse2.y)) {
@@ -1822,11 +1814,6 @@ export class Frame extends BasePlot {
           }
         })
       }
-      this.draw();
-      this.isSelecting = false;
-      this.is_drawing_rubber_band = false;
-      this.axes.forEach(axis => {axis.saveLoc()});
-      this.translation = new Vertex(0, 0);
     }
     return isDrawing
   }
@@ -1917,6 +1904,9 @@ export class newHistogram extends Frame {
       context.resetTransform();
     })
     this._frameObjects = this.bars;
+    this.context_show.setTransform(this.canvasMatrix);
+    super.drawAxes();
+    this.context_show.resetTransform();
   }
 
   public update(): void {
@@ -1926,7 +1916,6 @@ export class newHistogram extends Frame {
     super.updateAxes(this.context_show)
     this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
-    super.drawAxes();
   }
 
   public getBarsDrawing() {

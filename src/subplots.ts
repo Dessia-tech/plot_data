@@ -1588,12 +1588,7 @@ export class BasePlot extends PlotData {
     const mouse1Y = e.offsetY;
     const mouseCoords2 = new Vertex(e.offsetX, e.offsetY).transform(this.canvasMatrix);
     let isDrawing = false;
-    if (this.interaction_ON) {
-      isDrawing = true;
-      this.initial_originX = this.originX;
-      this.initial_originY = this.originY;
-      if (e.ctrlKey) Interactions.click_on_clear_action(this);
-    }
+    if (this.interaction_ON) {isDrawing = true}
     return [mouse1X, mouse1Y, mouseCoords2.x, mouseCoords2.y, isDrawing]
   }
 
@@ -1618,7 +1613,6 @@ export class BasePlot extends PlotData {
     if (this.interaction_ON === true) {
       var isDrawing = false;
       var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
-      var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
       var canvas = document.getElementById(this.canvas_id);
 
       canvas.addEventListener('mousemove', e => {

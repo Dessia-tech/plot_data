@@ -1412,6 +1412,7 @@ export class newShape {
   public fillStyle: string = string_to_hex('lightblue');
   public hoverStyle: string =  string_to_hex('red');
   public clickedStyle: string =  string_to_hex('lightgreen');
+  public selectedStyle: string =  string_to_hex('lightviolet');
   public isHover: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
@@ -1425,7 +1426,7 @@ export class newShape {
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
-    context.fillStyle = this.isHover ? this.hoverStyle : (this.isClicked || this.isSelected) ? this.clickedStyle : this.fillStyle;
+    context.fillStyle = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);
     context.restore();
@@ -1792,6 +1793,7 @@ export class newAxis {
   readonly OFFSET_TICKS = new Vertex(10, 20);
   readonly OFFSET_NAME = this.OFFSET_TICKS.subtract(new Vertex(65, 60));
   readonly DRAW_START_OFFSET = 10;
+  readonly SIZE_END = 10;
   readonly FONT_SIZE = 12;
   readonly FONT = 'sans-serif';
   constructor(
@@ -1865,9 +1867,10 @@ export class newAxis {
   }
 
   private buildDrawPath(): Path2D {
+    const isVert =  Number(this.isVertical) ; const notVert = Number(!this.isVertical);
     const path = new Path2D();
-    const endArrow = new newPoint2D(this.end.x, this.end.y, 10, 'triangle', ['right', 'up'][Number(this.isVertical)]);
-    path.moveTo(this.origin.x - this.DRAW_START_OFFSET * Number(!this.isVertical), this.origin.y - this.DRAW_START_OFFSET * Number(this.isVertical));
+    const endArrow = new newPoint2D(this.end.x + this.SIZE_END / 2 * notVert, this.end.y + this.SIZE_END / 2 * isVert, this.SIZE_END, 'triangle', ['right', 'up'][isVert]);
+    path.moveTo(this.origin.x - this.DRAW_START_OFFSET * notVert, this.origin.y - this.DRAW_START_OFFSET * isVert);
     path.lineTo(this.end.x, this.end.y);
     path.addPath(endArrow.path);
     return path

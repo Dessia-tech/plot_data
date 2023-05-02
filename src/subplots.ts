@@ -1531,45 +1531,39 @@ export class BasePlot extends PlotData {
   }
 
   public drawCanvas(): void {
-    for (let context of [this.context_show, this.context_hidden]) {
-      context.save()
-      this.draw_empty_canvas(context);
-      this.context = context;
-      if (this.settings_on) {this.draw_settings_rect()} 
-      else {this.draw_rect()}
-      context.beginPath();
-      context.rect(this.X, this.Y, this.width, this.height);
-      context.clip();
-      context.closePath();
-    }
+    this.context_show.save()
+    this.draw_empty_canvas(this.context_show);
+    if (this.settings_on) {this.draw_settings_rect()} 
+    else {this.context = this.context_show ; this.draw_rect()}
+    this.context_show.beginPath();
+    this.context_show.rect(this.X, this.Y, this.width, this.height);
+    this.context_show.clip();
+    this.context_show.closePath();
   }
 
   public updateAxes(): void {
+    const axisSelections = [];
     this.axes.forEach(axis => {
       this.axisStyle.forEach((value, key) => axis[key] = value);
       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+      if (axis.rubberBand.length != 0) {axisSelections.push(this.updateSelected(axis))};
     })
+    if (axisSelections.length != 0) {
+      this.selectedIndex.forEach((_, index) => {
+        this.selectedIndex[index] = true;
+        axisSelections.forEach(axisSelection => {if (!axisSelection[index]) {this.selectedIndex[index] = false}})
+      })
+    } else {this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false)};
+  }
+
+  public updateSelected(axis: newAxis): boolean[] {
+    const boolSelection = Array.from(Array(this.features.get(axis.name).length), () => false);
+    this.features.get(axis.name).forEach((value, index) => {if (axis.isInRubberBand(value)) {boolSelection[index] = true}});
+    return boolSelection
   }
 
   public drawAxes() {
-    [this.context_show].forEach(context => {
-      this.axes.forEach((axis) => {
-        if (axis.rubberBand.length != 0) {this.updateSelected(axis)};
-        axis.draw(context)
-      });
-    })
-  }
-
-  public updateSelected(axis: newAxis) {
-    this.features.get(axis.name).forEach((value, index) => {
-      if (axis.isInRubberBand(value)) {
-        this.selectedIndex[index] = true;
-      } 
-      else {
-        this.selectedIndex[index] = false;
-      }
-    })
-    console.log(this.features)
+    this.axes.forEach((axis) => {axis.draw(this.context_show)});
   }
 
   public draw(): void {
@@ -1613,13 +1607,12 @@ export class BasePlot extends PlotData {
     return [mouseCoords, mouseCoords.transform(this.canvasMatrix), hoveredObject]
   }
 
-  mouseUp(e: MouseEvent, canvasDown: Vertex): boolean {
-    const isDrawing = false;
-    const isTranslating = this.translation.norm != 0;
+  mouseUp(e: MouseEvent, canvasCoords: Vertex, canvasDown: Vertex): boolean {
+    const isTranslating = canvasCoords.subtract(canvasDown).norm != 0;
     if (this.interaction_ON) {
       if (!isTranslating) {
         this._canvasObjects.forEach(object => {
-          if (this.context_show.isPointInPath(object.path, canvasDown.x, canvasDown.y)) {
+          if (this.context_show.isPointInPath(object.path, canvasCoords.x, canvasCoords.y)) {
             object.isClicked = object.isClicked ? false : true;
           } else {
             if (!e.ctrlKey) {object.isClicked = false};
@@ -1627,7 +1620,7 @@ export class BasePlot extends PlotData {
         })
       }
     }
-    return isDrawing
+    return isTranslating
   }
 
   mouse_interaction() {
@@ -1660,7 +1653,8 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mouseup', e => {
         canvas.style.cursor = 'default';
-        isDrawing = this.mouseUp(e, canvasCoords);
+        this.mouseUp(e, canvasCoords, canvasDown);
+        isDrawing = false;
         this.draw();
         this.isSelecting = false;
         this.is_drawing_rubber_band = false;
@@ -1812,26 +1806,23 @@ export class Frame extends BasePlot {
   }
 
   public mouseMove(e: MouseEvent) {
-    const canvasMouse1 = super.mouseMove(e);
-    const frameMouse1 = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
+    const canvasCoords = super.mouseMove(e);
+    const frameCoords = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
     this._frameObjects.forEach(object => {
-      if (this.context_show.isPointInPath(object.path, frameMouse1.x, frameMouse1.y)) {
-        object.isHover = true;
-      } else {
-        object.isHover = false;
-      }
+      if (this.context_show.isPointInPath(object.path, frameCoords.x, frameCoords.y)) {object.isHover = true} 
+      else {object.isHover = false}
     })
-    return canvasMouse1
+    return canvasCoords
   }
 
-  mouseUp(e: MouseEvent, mouseCoords2: Vertex) {
-    const isDrawing = super.mouseUp(e, mouseCoords2)
-    const isTranslating = this.translation.norm != 0;
+  mouseUp(e: MouseEvent, canvasCoords: Vertex, canvasDown: Vertex) {
+    const isTranslating = super.mouseUp(e, canvasCoords, canvasDown);
+    // const isTranslating = this.translation.norm != 0;
     if (this.interaction_ON) {
       if (!isTranslating) {
-        const frameMouse2 = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
+        const frameCoords = new Vertex(e.offsetX, e.offsetY).transform(this.frameMatrix.inverse());
         this._frameObjects.forEach(object => {
-          if (this.context_show.isPointInPath(object.path, frameMouse2.x, frameMouse2.y)) {
+          if (this.context_show.isPointInPath(object.path, frameCoords.x, frameCoords.y)) {
             object.isClicked = object.isClicked ? false : true;
           } else {
             if (!e.ctrlKey && !isTranslating) {object.isClicked = false};
@@ -1839,7 +1830,7 @@ export class Frame extends BasePlot {
         })
       }
     }
-    return isDrawing
+    return false
   }
 }
 
@@ -1886,8 +1877,8 @@ export class newHistogram extends Frame {
   }
 
   private getNumberFeature(bars: Bar[]): number[] {
-    const numberFeature = Array.from(Array(this.features.get(this.xFeature).length - 1));
-    bars.forEach(bar => {bar.values.forEach(value => numberFeature[value] = bar.values.length)});
+    const numberFeature = Array.from(Array(this.features.get(this.xFeature).length), () => 0);
+    bars.forEach(bar => {bar.values.forEach(value => numberFeature[value] = bar.length)});
     return numberFeature
   }
 

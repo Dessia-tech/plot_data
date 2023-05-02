@@ -1561,7 +1561,7 @@ export class BasePlot extends PlotData {
   }
 
   public updateSelected(axis: newAxis) {
-    this.features.get('mass').forEach((value, index) => {
+    this.features.get(axis.name).forEach((value, index) => {
       if (axis.isInRubberBand(value)) {
         this.selectedIndex[index] = true;
       } 
@@ -1569,7 +1569,7 @@ export class BasePlot extends PlotData {
         this.selectedIndex[index] = false;
       }
     })
-    console.log(this.selectedIndex)
+    console.log(this.features)
   }
 
   public draw(): void {
@@ -1869,7 +1869,7 @@ export class newHistogram extends Frame {
   set nYTicks(value: number) {this._nYTicks = value}
 
   private buildNumberAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
-    const numberAxis = this.setAxis('Number', frameOrigin, yEnd, this.nYTicks);
+    const numberAxis = this.setAxis('number', frameOrigin, yEnd, this.nYTicks);
     numberAxis.minValue = 0;
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.nTicks = numberAxis.maxValue; // Maybe not the best way to set y ticks
@@ -1878,11 +1878,17 @@ export class newHistogram extends Frame {
   }
 
   private updateNumberAxis(numberAxis: newAxis, bars: Bar[]): newAxis {
-    this.features.set('Number', bars.map(bar => bar.length));
+    this.features.set('number', this.getNumberFeature(bars));
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.nTicks = numberAxis.maxValue; // Maybe not the best way to set y ticks
     numberAxis.saveLoc();
     return numberAxis
+  }
+
+  private getNumberFeature(bars: Bar[]): number[] {
+    const numberFeature = Array.from(Array(this.features.get(this.xFeature).length - 1));
+    bars.forEach(bar => {bar.values.forEach(value => numberFeature[value] = bar.values.length)});
+    return numberFeature
   }
 
   private boundedTicks(axis: newAxis): number[] {
@@ -1960,7 +1966,7 @@ export class newHistogram extends Frame {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
     const xAxis = this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks);
     const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
-    this.features.set('Number', bars.map(bar => bar.length));
+    this.features.set('number', this.getNumberFeature(bars));
     const yAxis = this.buildNumberAxis(frameOrigin, yEnd);
     return [xAxis, yAxis];
   }
@@ -1970,7 +1976,7 @@ export class newHistogram extends Frame {
   }
 
   public setFeatures(data: any): [string, string] {
-    return [data.x_variable, 'Number'];
+    return [data.x_variable, 'number'];
   }
 
   mouseTranslate(e: MouseEvent, mouse1: Vertex): Vertex {

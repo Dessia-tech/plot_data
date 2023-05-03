@@ -1612,10 +1612,12 @@ export class BasePlot extends PlotData {
   }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {
-    let hoveredObject: any;
-    this.fixedObjects.forEach(object => {if (object.isHover) {hoveredObject = object}})
-    this.movingObjects.forEach(object => {if (object.isHover) {hoveredObject = object}})
-    return [canvasMouse, frameMouse, hoveredObject]
+    let clickedObject: any;
+    this.fixedObjects.forEach(object => {if (object.isHover) {clickedObject = object}})
+    this.movingObjects.forEach(object => {if (object.isHover) {clickedObject = object}})
+    if (this.fixedObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(canvasMouse)}
+    if (this.movingObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(frameMouse)}
+    return [canvasMouse, frameMouse, clickedObject]
   }
 
   public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean) {
@@ -1661,7 +1663,6 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousedown', e => {
         mouseDownTime = e.timeStamp;
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse);
-        if (clickedObject) {clickedObject.mouseDown(canvasDown)};
         isDrawing = true;
       });
 

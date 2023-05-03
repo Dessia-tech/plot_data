@@ -388,7 +388,7 @@ export class ParallelPlot extends PlotData {
     initialize_data_lists() {
       for (let i=0; i<this.axis_list.length; i++) {
         this.inverted_axis_list.push(false);
-        this.rubber_bands.push([]);
+        this.rubber_bands.push(new RubberBand(this.axis_list[i].name, 0, 0, this.vertical));
       }
     }
 
@@ -399,16 +399,13 @@ export class ParallelPlot extends PlotData {
       });
     }
 
-    getObjectsInRubberBands(rubberBands: RubberBand[]): number[] { // any to solve types problems from typescript
+    getObjectsInRubberBands(rubberBands: RubberBand[]): number[] {
       let selectedIndices = [];
-
       this.data["elements"].forEach((sample, elementIndex) => {
         var inRubberBand = 0;
         if (rubberBands.length !==0 ) {
-          rubberBands.forEach((rubberBand) => {
-            this.axis_list.forEach((axis) => {
-              inRubberBand += Number(rubberBand.includesValue(sample[rubberBand.attributeName], axis))
-            })
+          rubberBands.forEach((rubberBand, rubberIndex) => {
+            inRubberBand += Number(rubberBand.includesValue(sample[rubberBand.attributeName], this.axis_list[rubberIndex]))
           })
           if (inRubberBand == rubberBands.length) {
             selectedIndices.push(elementIndex)
@@ -1373,8 +1370,8 @@ export class Histogram extends PlotData {
     max_abs: number = 0;
     max_frequency: number = 0;
     discrete: boolean = false;
-    x_rubberband:number[]=[];
-    y_rubberband:number[]=[];
+    x_rubberband: RubberBand;
+    y_rubberband: RubberBand;
     coeff:number=0.88;
     y_step: number = 0;
     selected_keys = [];
@@ -1403,6 +1400,8 @@ export class Histogram extends PlotData {
       if (type_ !== 'float') this.discrete = true;
 
       this.x_variable = new Attribute(name, type_);
+      this.x_rubberband = new RubberBand(this.x_variable.name, 0, 0, false);
+      this.y_rubberband = new RubberBand("frequency", 0, 0, true);
       const axis = data['axis'] || {grid_on: false};
       this.axis = Axis.deserialize(axis);
       let temp_surface_style = data['surface_style'] || {};
@@ -1476,38 +1475,29 @@ export class Histogram extends PlotData {
       Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
     }
 
-
-    draw_rubberbands() {
+    draw_rubberbands() { //ok
       this.context.beginPath();
-      if (this.x_rubberband.length !== 0) {
-        this.draw_x_rubberband();
-      }
-      if (this.y_rubberband.length !== 0) {
-        this.draw_y_rubberband();
-      }
+      this.draw_rubberband(this.x_rubberband, "x");
+      this.draw_rubberband(this.y_rubberband, "y");
       this.context.closePath();
     }
 
-
-    draw_x_rubberband() {
-      let grad_beg_y = this.height - this.decalage_axis_y;
-      let h = 20;
-      let x1d = this.real_to_display(this.x_rubberband[0], 'x');
-      let x2d = this.real_to_display(this.x_rubberband[1], 'x');
-      let w = x2d - x1d;
-      Shape.rect(x1d, grad_beg_y - h/2 + this.Y, w, h, this.context, string_to_hex('lightrose'),
-                 string_to_hex('lightgrey'), 0.5, 0.6);
+    draw_rubberband(rubberBand: RubberBand, axisType: string) {
+      const COLOR_FILL = string_to_hex('lightrose');
+      const COLOR_STROKE = string_to_hex('lightgrey');
+      const LINE_WIDTH = 0.5;
+      const ALPHA = 0.6;
+      rubberBand.realMin = this.real_to_display(rubberBand.minValue, axisType);
+      rubberBand.realMax = this.real_to_display(rubberBand.maxValue, axisType);
+      if (axisType == 'x') {
+        var originY = this.height - this.decalage_axis_y + this.Y;
+        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+      } else {
+        var originY = this.decalage_axis_x + this.X;
+        rubberBand.flipValues();
+        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
+      }
     }
-
-    draw_y_rubberband() {
-      let w = 20;
-      let y1d = this.real_to_display(this.y_rubberband[0], 'y');
-      let y2d = this.real_to_display(this.y_rubberband[1], 'y');
-      let h = y2d - y1d;
-      Shape.rect(this.decalage_axis_x - w/2 + this.X, y1d, w, h, this.context, string_to_hex('lightrose'),
-                 string_to_hex('lightgrey'), 0.5, 0.6);
-    }
-
 
     coordinate_to_string(x1, x2?) {
       if (this.discrete) {
@@ -1711,7 +1701,7 @@ export class Histogram extends PlotData {
                 this.translate_rubberband(tx, 'x');
               }
             } else {
-              this.set_x_rubberband(mouse1X, mouse2X);
+              this.set_rubberband(this.x_rubberband, mouse1X, mouse2X, "x");
             }
             this.get_selected_keys();
           } else if (click_on_y_axis) {
@@ -1723,7 +1713,7 @@ export class Histogram extends PlotData {
                 this.translate_rubberband(ty, 'y');
               }
             } else {
-              this.set_y_rubberband(mouse1Y, mouse2Y);
+              this.set_rubberband(this.y_rubberband, mouse1Y, mouse2Y, "y");
             }
             this.get_selected_keys();
           } else {
@@ -1743,7 +1733,8 @@ export class Histogram extends PlotData {
           if (click_on_x_axis) {
             this.reset_x_rubberband();
           } else if (click_on_y_axis) {
-            this.y_rubberband = [];
+            this.y_rubberband.minValue = 0;
+            this.y_rubberband.maxValue = 0;
           }
           this.get_selected_keys();
         }
@@ -1779,26 +1770,24 @@ export class Histogram extends PlotData {
       }
     }
 
-
-    set_x_rubberband(mouse1X, mouse2X) {
-      let x1 = this.display_to_real(mouse1X, 'x');
-      let x2 = this.display_to_real(mouse2X, 'x');
-      this.x_rubberband = [Math.min(x1, x2), Math.max(x1, x2)];
+    set_rubberbands(mouse1X: number, mouse2X: number, mouse1Y: number, mouse2Y: number) {
+      this.set_rubberband(this.x_rubberband, mouse1X, mouse2X, "x")
+      this.set_rubberband(this.y_rubberband, mouse1Y, mouse2Y, "y")
     }
 
-    set_y_rubberband(mouse1Y, mouse2Y) {
-      let y1 = this.display_to_real(mouse1Y, 'y');
-      let y2 = this.display_to_real(mouse2Y, 'y');
-      this.y_rubberband = [Math.min(y1, y2), Math.max(y1, y2)];
+    set_rubberband(rubberBand: RubberBand, mouse1: number, mouse2: number, axisType: string) {
+      let firstValue  = this.display_to_real(mouse1, axisType);
+      let secondValue = this.display_to_real(mouse2, axisType);
+      rubberBand.minValue = Math.min(firstValue, secondValue);
+      rubberBand.maxValue = Math.max(firstValue, secondValue);
     }
-
 
     is_in_x_rubberband(x, y) {
       let h = 20;
       let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
       let y1 = grad_beg_y - h/2;
-      let x1 = this.real_to_display(this.x_rubberband[0], 'x');
-      let x2 = this.real_to_display(this.x_rubberband[1], 'x');
+      let x1 = this.real_to_display(this.x_rubberband.minValue, 'x');
+      let x2 = this.real_to_display(this.x_rubberband.maxValue, 'x');
       let w = x2 - x1;
       let click_on_x_band = Shape.isInRect(x, y, x1, y1, w, h);
 
@@ -1808,12 +1797,11 @@ export class Histogram extends PlotData {
       return [click_on_x_band, left, right];
     }
 
-
     is_in_y_rubberband(x, y) {
       let w = 20;
       let x1 = this.X + this.decalage_axis_x - w/2;
-      let y1 = this.real_to_display(this.y_rubberband[0], 'y');
-      let y2 = this.real_to_display(this.y_rubberband[1], 'y');
+      let y1 = this.real_to_display(this.y_rubberband.minValue, 'y');
+      let y2 = this.real_to_display(this.y_rubberband.maxValue, 'y');
       let h = y2 - y1;
       let click_on_y_band = Shape.isInRect(x, y, x1, y1, w, h);
 
@@ -1826,9 +1814,11 @@ export class Histogram extends PlotData {
 
     translate_rubberband(t, type_) {
       if (type_ === 'x') {
-        this.x_rubberband = [this.x_rubberband[0] + t, this.x_rubberband[1] + t];
+        this.x_rubberband.minValue += t;
+        this.x_rubberband.maxValue += t;
       } else if (type_ === 'y') {
-        this.y_rubberband = [this.y_rubberband[0] + t, this.y_rubberband[1] + t];
+        this.y_rubberband.minValue += t;
+        this.y_rubberband.maxValue += t;
       } else {
         throw new Error("translate_rubberband(): type_ must be 'x' or 'y'");
       }
@@ -1837,31 +1827,32 @@ export class Histogram extends PlotData {
 
     resize_rubberband(t, up, down, left, right) {
       if (up) {
-        this.y_rubberband[1] += t;
+        this.y_rubberband.maxValue += t;
       } else if (down) {
-        this.y_rubberband[0] += t;
+        this.y_rubberband.minValue += t;
       } else if (left) {
-        this.x_rubberband[0] += t;
+        this.x_rubberband.minValue += t;
       } else if (right) {
-        this.x_rubberband[1] += t;
+        this.x_rubberband.maxValue += t;
       }
     }
 
 
     reorder_rubberbands() {
       if (this.x_rubberband.length !== 0) {
-        this.x_rubberband = [Math.min(this.x_rubberband[0], this.x_rubberband[1]),
-        Math.max(this.x_rubberband[0], this.x_rubberband[1])];
+        this.x_rubberband.minValue = Math.min(this.x_rubberband.minValue, this.x_rubberband.maxValue);
+        this.x_rubberband.maxValue = Math.max(this.x_rubberband.minValue, this.x_rubberband.maxValue);
       }
       if (this.y_rubberband.length !== 0) {
-        this.y_rubberband = [Math.min(this.y_rubberband[0], this.y_rubberband[1]),
-        Math.max(this.y_rubberband[0], this.y_rubberband[1])];
+        this.y_rubberband.minValue = Math.min(this.y_rubberband.minValue, this.y_rubberband.maxValue);
+        this.y_rubberband.maxValue = Math.max(this.y_rubberband.minValue, this.y_rubberband.maxValue);
       }
     }
 
 
     reset_x_rubberband() {
-      this.x_rubberband = [];
+      this.x_rubberband.minValue = 0;
+      this.x_rubberband.maxValue = 0;
       this.selected_keys = [];
       this.selected_point_index = [];
     }
@@ -1874,10 +1865,10 @@ export class Histogram extends PlotData {
       if (this.x_rubberband.length === 0 && this.y_rubberband.length === 0) return;
       for (let key of keys) {
         let {x1, x2} = this.string_to_coordinate(key);
-        let x_rubberband_0 = Math.min(this.x_rubberband[0], this.x_rubberband[1]);
-        let x_rubberband_1 = Math.max(this.x_rubberband[0], this.x_rubberband[1]);
-        let y_rubberband_0 = Math.min(this.y_rubberband[0], this.y_rubberband[1]);
-        let y_rubberband_1 = Math.max(this.y_rubberband[0], this.y_rubberband[1]);
+        let x_rubberband_0 = Math.min(this.x_rubberband.minValue, this.x_rubberband.maxValue);
+        let x_rubberband_1 = Math.max(this.x_rubberband.minValue, this.x_rubberband.maxValue);
+        let y_rubberband_0 = Math.min(this.y_rubberband.minValue, this.y_rubberband.maxValue);
+        let y_rubberband_1 = Math.max(this.y_rubberband.minValue, this.y_rubberband.maxValue);
         let f = this.infos[key].length;
         let bool = true;
         if (this.x_rubberband.length !== 0) {
@@ -1913,12 +1904,13 @@ export class Histogram extends PlotData {
           return this.scale * real + this.originX + this.X;
         }
       } else if (type_ === 'y') {
-        let grad_beg_y = this.height - this.decalage_axis_y;
+        let grad_beg_y = this.height - this.decalage_axis_y /this.scale;
         let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
         return grad_beg_y - scale_y * real + this.Y;
       } else {
         throw new Error("real_to_display(): type_ must be 'x' or 'y'");
       }
+
     }
 
 

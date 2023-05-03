@@ -6,16 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.13.0]
 ## [0.12.2]
 ### Fix
 - update selected_point_index when selecting from parallelplot
 - fix previous bug
 
-
 ## [0.12.1]
 ### Fix
 - npmignore
-
+- remove rubber_bands_dep attribute from PlotData class
 
 ## [0.12.0] - 02/28/2022
 ### Add

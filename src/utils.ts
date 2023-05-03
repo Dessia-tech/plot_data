@@ -1124,11 +1124,17 @@ export function export_to_csv(rows, filename="my_data.csv") {
 }
 
 export class RubberBand {
-  axisMin: number = 0;
-  axisMax: number = 0;
-  realMin: number = 0;
-  realMax: number = 0;
-  path: Path2D; // unused for the moment
+  public axisMin: number = 0;
+  public axisMax: number = 0;
+  public realMin: number = 0;
+  public realMax: number = 0;
+  public isHover: boolean = false;
+  public isClicked: boolean = false;
+  public isSelected: boolean = false;
+  public path: Path2D; // unused for the moment
+  private minUpdate: boolean = false;
+  private maxUpdate: boolean = false;
+  private isMoved: boolean = false;
   readonly SMALL_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;
@@ -1348,6 +1354,22 @@ export class RubberBand {
     let onMaxBorder = Math.abs(mouseUniCoord - this.realMax) <= this.BORDER;
     return [isClicked, onMinBorder, onMaxBorder]
   }
+
+  public mouseDown(mouseAxis: number) {
+    if (Math.abs(mouseAxis - this.minValue) <= 0.1 * Math.abs(this.minValue)) {
+      this.minUpdate = true;
+    } else if (Math.abs(mouseAxis - this.maxValue) <= 0.1 * Math.abs(this.maxValue)) {
+      this.maxUpdate = true;
+    } else {
+      this.isMoved = true;
+    }
+  }
+
+  public mouseUp() {
+    this.minUpdate = false;
+    this.maxUpdate = false;
+    this.isMoved = false;
+  }
 }
 
 export class Vertex {
@@ -1431,6 +1453,12 @@ export class newShape {
     context.stroke(scaledPath);
     context.restore();
   }
+
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {}
+
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {}
+
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex) {}
 }
 
 export class newCircle extends newShape {
@@ -1668,10 +1696,10 @@ const SQUARES = ['square'];
 const TRIANGLES = ['^', 'triangle', 'tri'];
 export class newPoint2D extends Vertex {
   public path: Path2D;
-  private _hovered: boolean = false;
-  private _clicked: boolean = false;
-  private _selected: boolean = false;
-  private _color: string = string_to_hex('blue');
+  public isHover: boolean = false;
+  public isClicked: boolean = false;
+  public isSelected: boolean = false;
+  public color: string = string_to_hex('blue');
   protected _lineWidth: number = 2;
   
   constructor(
@@ -1684,14 +1712,6 @@ export class newPoint2D extends Vertex {
       super(x, y);
       this.path = this.buildPath();
     };
-
-  get clicked(): boolean {return this._clicked};
-    
-  set clicked(value: boolean) {this._clicked = value};
-
-  get color(): string {return this._color};
-    
-  set color(value: string) {this._color = value};
 
   get drawnShape() {
     let shape = new newShape();
@@ -1709,10 +1729,6 @@ export class newPoint2D extends Vertex {
     return shape
   }
 
-  get hovered(): boolean {return this._hovered};
-    
-  set hovered(value: boolean) {this._hovered = value};
-
   get lineWidth(): number {return this._lineWidth};
     
   set lineWidth(value: number) {this._lineWidth = value};
@@ -1724,10 +1740,6 @@ export class newPoint2D extends Vertex {
   get size(): number {return this._size};
     
   set size(value: number) {this._size = value};
-
-  get selected(): boolean {return this._selected};
-    
-  set selected(value: boolean) {this._selected = value};
 
   get shape(): string {return this._shape};
     
@@ -1879,7 +1891,7 @@ export class newAxis {
   private buildPath(): Path2D {
     const path = new Path2D();
     const offset = new Vertex(this.DRAW_START_OFFSET * Number(this.isVertical), this.DRAW_START_OFFSET * Number(!this.isVertical));
-    const origin = new Vertex(this.origin.x, this.origin.y).subtract(offset);
+    const origin = new Vertex(this.origin.x, this.origin.y).subtract(offset.multiply(2));
     const size = this.end.subtract(origin).add(offset);
     path.rect(origin.x, origin.y, size.x, size.y);
     return path
@@ -2000,7 +2012,7 @@ export class newAxis {
     this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, string_to_hex('yellow'), string_to_hex('white'), 0.1, 0.8);
   }
 
-  public mouseChange(mouseDown: Vertex, mouseCoords: Vertex) {
+  public mouseMove(mouseDown: Vertex, mouseCoords: Vertex) {
     let minValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
     let maxValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
     this.rubberBand.minValue = Math.min(minValue, maxValue);
@@ -2008,18 +2020,66 @@ export class newAxis {
   }
 
   public mouseDown(mouseDown: Vertex) {
-    const mouseBand = this.isVertical ? mouseDown.y : mouseDown.x;
     let isReset = false;
-    if (mouseBand < this.rubberBand.realMin || mouseBand > this.rubberBand.realMax) {
+    const axisValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
+    if (!this.isInRubberBand(axisValue)) {
       this.rubberBand.reset();
       isReset = true;
-    } // ADD CHANGE RUBBERBAND BEHAVIOR
+    } else {this.rubberBand.mouseDown(axisValue)}
     return isReset
+  }
+
+  public mouseUp() {
+    console.log(this.rubberBand)
+    this.rubberBand.mouseUp();
+    console.log(this.rubberBand)
   }
 
   public isInRubberBand(value: number): boolean {
     return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false
   }
+
+  // public mouseMove(mouseDown: Vertex, mouseCoords: Vertex) {
+  //   let downValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
+  //   let currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
+  //   if (!this.isInRubberBand(downValue)) {
+  //     this.rubberBand.minValue = Math.min(downValue, currentValue);
+  //     this.rubberBand.maxValue = Math.max(downValue, currentValue);
+  //   } 
+  //   else {
+  //     if (Math.abs(downValue - this.rubberBand.minValue) <= 0.1 * Math.abs(this.rubberBand.minValue)) {
+  //       this.rubberBand.minValue = downValue;
+  //     } else if (Math.abs(downValue - this.rubberBand.maxValue) <= 0.1 * Math.abs(this.rubberBand.maxValue)) {
+  //       this.rubberBand.maxValue = downValue;
+  //     } else {
+  //       const translation = currentValue - downValue;
+  //       this.rubberBand.minValue += translation;
+  //       this.rubberBand.maxValue += translation;
+  //     }
+  //   }
+  // }
+
+  // public mouseDown(mouseDown: Vertex) {
+  //   let isReset = false;
+  //   if (!this.mouseInRubberBand(mouseDown)) {
+  //     this.rubberBand.reset();
+  //     isReset = true;
+  //   }
+  //   return isReset
+  // }
+
+  // public mouseUp(mouseUp: Vertex) {
+  //   this.isClicked = false;
+  // }
+
+  // public mouseInRubberBand(mouseCoords: Vertex): boolean {
+  //   const mouseBand = this.isVertical ? mouseCoords.y : mouseCoords.x;
+  //   return this.isInRubberBand(mouseBand)
+  // }
+
+  // public isInRubberBand(value: number): boolean {
+  //   return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false
+  // }
 
   public numericLabels(): string[] {
     this.updateTickPrecision();

@@ -1767,8 +1767,6 @@ export class MultiplePlots {
       var clickOnVertex:boolean = false;
       var old_selected_index;
       var double_click = false;
-
-
       // For canvas to read keyboard inputs.
       // this.canvas.setAttribute('tabindex', '0');
       // this.canvas.focus();

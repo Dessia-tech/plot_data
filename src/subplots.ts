@@ -1601,7 +1601,7 @@ export class BasePlot extends PlotData {
     return new Vertex(mouseDown.x - currentMouse.x, mouseDown.y - currentMouse.y);
   }
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, isDrawing: boolean) {
     this.hoverUpdate(this.context_show, this.fixedObjects, canvasMouse);
     this.hoverUpdate(this.context_show, this.movingObjects, frameMouse);
   }
@@ -1647,7 +1647,7 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousemove', e => {
         downDelay = e.timeStamp - mouseDownTime;
         [canvasMouse, frameMouse] = this.projectMouse(e);
-        this.mouseMove(canvasMouse, frameMouse);
+        this.mouseMove(canvasMouse, frameMouse, isDrawing);
         if (this.interaction_ON && isDrawing) {
           if (clickedObject) {clickedObject.mouseMove(canvasDown, canvasMouse)}
           else {

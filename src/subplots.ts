@@ -1511,7 +1511,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(X, Y);
       this.size = new Vertex(width, height);
       this.features = this.unpackData(data);
-      this.selectedIndex = Array.from([...this.features][0][1], idx => idx = false);
+      this.selectedIndex = Array.from([...this.features][0][1], x => x = false);
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
     }
@@ -1588,7 +1588,7 @@ export class BasePlot extends PlotData {
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean) {
     objects.forEach(object => {
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = true; console.log(getComputedStyle(object.path).zIndex)} 
+      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = true} 
       else {if (!keepState) {object[stateName] = false}}
     })
   }
@@ -1647,10 +1647,12 @@ export class BasePlot extends PlotData {
         [canvasMouse, frameMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse);
         if (this.interaction_ON && isDrawing) {
-          canvas.style.cursor = 'move';
           if (clickedObject) {clickedObject.mouseMove(canvasDown, canvasMouse)}
           else {
-            if (downDelay >= this.MIN_TIME_TRL) {console.log("ok") ; this.translation = this.mouseTranslate(canvasMouse, canvasDown)}
+            if (downDelay >= this.MIN_TIME_TRL) {
+              canvas.style.cursor = 'move';
+              this.translation = this.mouseTranslate(canvasMouse, canvasDown)
+            }
           }
         }
         this.draw()

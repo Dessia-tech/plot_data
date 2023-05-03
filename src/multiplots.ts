@@ -1275,6 +1275,7 @@ export class MultiplePlots {
       })
 
       let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
+      this.dep_selected_points_index = actualPP.selected_point_index;
 
       this.objectList.forEach((subplot) => {
         const WAS_MERGE_ON = subplot.mergeON;

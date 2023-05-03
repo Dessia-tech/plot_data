@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.12.2]
 ### Fix
 - update selected_point_index when selecting from parallelplot
+- fix previous bug
 
 
 ## [0.12.1]

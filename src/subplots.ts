@@ -1495,6 +1495,8 @@ export class BasePlot extends PlotData {
   
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
+  readonly TRL_THRESHOLD = 20;
+  readonly MIN_TIME_TRL = 85; // Q3 = 95 ms
   constructor(
     public data: any,
     public width: number,
@@ -1511,6 +1513,7 @@ export class BasePlot extends PlotData {
       this.features = this.unpackData(data);
       this.selectedIndex = Array.from([...this.features][0][1], idx => idx = false);
       this.scaleX = this.scaleY = 1;
+      this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
     }
 
   set axisStyle(newAxisStyle: Map<string, any>) {newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value))}
@@ -1583,11 +1586,15 @@ export class BasePlot extends PlotData {
     return
   }
 
-  public hoverUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex) {
+  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean) {
     objects.forEach(object => {
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object.isHover = true} 
-      else {object.isHover = false}
+      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = true; console.log(getComputedStyle(object.path).zIndex)} 
+      else {if (!keepState) {object[stateName] = false}}
     })
+  }
+
+  public hoverUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex) {
+    this.stateUpdate(context, objects, mouseCoords, 'isHover', false)
   }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
@@ -1611,27 +1618,13 @@ export class BasePlot extends PlotData {
     return [canvasMouse, frameMouse, hoveredObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): boolean {
-    const isTranslating = canvasMouse.subtract(canvasDown).norm != 0;
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean) {
     if (this.interaction_ON) {
-      if (!isTranslating) {
-        this.fixedObjects.forEach(object => {
-          if (this.context_show.isPointInPath(object.path, canvasMouse.x, canvasMouse.y)) {
-            object.isClicked = object.isClicked ? false : true;
-          } else {
-            if (!ctrlKey) {object.isClicked = false};
-          }
-        })
-        this.movingObjects.forEach(object => {
-          if (this.context_show.isPointInPath(object.path, frameMouse.x, frameMouse.y)) {
-            object.isClicked = object.isClicked ? false : true;
-          } else {
-            if (!ctrlKey) {object.isClicked = false};
-          }
-        })
+      if (this.translation.normL1 == 0 && canvasMouse.subtract(canvasDown).normL1 <= this.TRL_THRESHOLD) {
+        this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isClicked', ctrlKey);
+        this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isClicked', ctrlKey);
       }
     }
-    return isTranslating
   }
 
   public mouse_interaction() {
@@ -1640,6 +1633,7 @@ export class BasePlot extends PlotData {
       var isDrawing = false;
       var canvasMouse = new Vertex(0, 0) ; var canvasDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
       var frameMouse = new Vertex(0, 0) ; var frameDown = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
+      var mouseDownTime = 0 ; var downDelay = 0;
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false;
@@ -1649,17 +1643,21 @@ export class BasePlot extends PlotData {
       window.addEventListener('keyup', e => ctrlKey = e.ctrlKey);
 
       canvas.addEventListener('mousemove', e => {
+        downDelay = e.timeStamp - mouseDownTime;
         [canvasMouse, frameMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse);
         if (this.interaction_ON && isDrawing) {
           canvas.style.cursor = 'move';
           if (clickedObject) {clickedObject.mouseMove(canvasDown, canvasMouse)}
-          else {this.translation = this.mouseTranslate(canvasMouse, canvasDown)}
+          else {
+            if (downDelay >= this.MIN_TIME_TRL) {console.log("ok") ; this.translation = this.mouseTranslate(canvasMouse, canvasDown)}
+          }
         }
         this.draw()
       });
 
       canvas.addEventListener('mousedown', e => {
+        mouseDownTime = e.timeStamp;
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse);
         if (clickedObject) {clickedObject.mouseDown(canvasDown)};
         isDrawing = true;
@@ -1668,10 +1666,9 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mouseup', e => {
         canvas.style.cursor = 'default';
         this.mouseUp(canvasMouse, frameMouse, canvasDown, ctrlKey);
+        if (clickedObject) {clickedObject.mouseUp(canvasDown)};
         isDrawing = false;
         this.draw();
-        this.isSelecting = false;
-        this.is_drawing_rubber_band = false;
         this.axes.forEach(axis => {axis.saveLoc()});
         this.translation = new Vertex(0, 0);
       })

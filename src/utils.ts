@@ -1404,6 +1404,8 @@ export class Vertex {
     copy.y = this.y * value;
     return copy
   }
+
+  public get normL1(): number {return Math.abs(this.x) + Math.abs(this.y)}
   
   public get norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
 

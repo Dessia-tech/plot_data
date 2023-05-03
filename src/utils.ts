@@ -73,7 +73,6 @@ export class Axis {
           context.fillText(MyMath.round(grad_beg_y + i*y_step, y_nb_digits), axis_x_start - 5, -scaleY*(grad_beg_y + i*y_step) + mvy + Y);
         i++;
       }
-
       context.stroke();
     }
 
@@ -953,7 +952,7 @@ export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
     //
     _pts = pts.slice(0);
 
-    // The algorithm require a previous and next point to the actual point array.
+    // The algorithm require a previous and next point to the current point array.
     // Check if we will draw closed or open curve.
     // If closed, copy end points to beginning and first points to end
     // If open, duplicate first points to befinning, end points to end
@@ -1111,26 +1110,79 @@ export function export_to_csv(rows, filename="my_data.csv") {
 }
 
 export class RubberBand {
+  axisMin: number = 0;
+  axisMax: number = 0;
+  realMin: number = 0;
+  realMax: number = 0;
+  smallSize: number = 20;
+  readonly MIN_LENGTH = 0.02;
   constructor(public attributeName: string,
-              public minValue: number,
-              public maxValue: number) {}
+              private _minValue: number,
+              private _maxValue: number,
+              public isVertical: boolean) {}
 
-  public static deserialize(serialized) { // A priori not required
-    return new RubberBand(serialized['attribute_name'],
-                          serialized['min_value'],
-                          serialized['max_value']);
-  }
-
-  public static fromFormerFormat(formerFormatValue: [string, [number, number]]) {
-    return new RubberBand(formerFormatValue[0], formerFormatValue[1][0], formerFormatValue[1][1]);
+  public get canvasLength() {
+    return Math.abs(this.realMax - this.realMin)
   }
 
   public get length() {
     return Math.abs(this.maxValue - this.minValue)
   }
 
+  public get normedLength() {
+    return Math.abs(this.axisMax - this.axisMin)
+  }
+
+  public set minValue(value: number) {
+    this._minValue = value;
+  }
+
+  public get minValue() {
+    return this._minValue
+  }
+
+  public set maxValue(value: number) {
+    this._maxValue = value;
+  }
+
+  public get maxValue() {
+    return this._maxValue
+  }
+
+  public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
+    if (this.isVertical) {
+      Shape.rect(origin - this.smallSize / 2, this.realMin, this.smallSize, this.canvasLength, context, colorFill, colorStroke, lineWidth, alpha);
+    } else {
+      Shape.rect(this.realMin, origin - this.smallSize / 2, this.canvasLength, this.smallSize, context, colorFill, colorStroke, lineWidth, alpha);
+    }
+  }
+
+  public invert() {
+    var newAxisMin = this.axisMin;
+    this.axisMin = 1 - this.axisMax;
+    this.axisMax = 1 - newAxisMin;
+  }
+
+  public flipValues(): void{
+    [this.axisMin, this.axisMax] = [this.axisMax, this.axisMin];
+    [this.minValue, this.maxValue] = [this.minValue, this.maxValue];
+    [this.realMin, this.realMax] = [this.realMax, this.realMin];
+  }
+
+  public reset() {
+    this.minValue = 0;
+    this.maxValue = 0;
+    this.axisMin = 0;
+    this.axisMax = 0;
+    this.realMin = 0;
+    this.realMax = 0;
+  }
+
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
+    if (this.normedLength <= this.MIN_LENGTH) {
+      includesValue = true;
+    }
     if (axis.name == this.attributeName) {
       let realValue = value;
       if (typeof realValue == "string") {

@@ -1626,6 +1626,7 @@ export class MultiplePlots {
     manage_selected_point_index_changes(old_selected_index:number[]) {
       if (!equals(old_selected_index, this.selected_point_index)) {
         var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.dep_selected_points_index } });
+        console.log(this.selected_point_index)
         this.canvas.dispatchEvent(evt);
       }
     }
@@ -1806,8 +1807,6 @@ export class MultiplePlots {
       var clickOnVertex:boolean = false;
       var old_selected_index;
       var double_click = false;
-
-
       // For canvas to read keyboard inputs.
       // this.canvas.setAttribute('tabindex', '0');
       // this.canvas.focus();

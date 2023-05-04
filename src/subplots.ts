@@ -1836,11 +1836,11 @@ export class newHistogram extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get nXTicks() {return this._nXTicks ? this._nXTicks : 30}
+  get nXTicks() {return this._nXTicks ? this._nXTicks : 20}
 
   set nXTicks(value: number) {this._nXTicks = value}
 
-  get nYTicks() {return this._nYTicks ? this._nYTicks : 7}
+  get nYTicks() {return this._nYTicks ? this._nYTicks : 10}
 
   set nYTicks(value: number) {this._nYTicks = value}
 
@@ -1848,7 +1848,7 @@ export class newHistogram extends Frame {
     const numberAxis = this.setAxis('number', frameOrigin, yEnd, this.nYTicks);
     numberAxis.minValue = 0;
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
-    numberAxis.nTicks = numberAxis.maxValue; // Maybe not the best way to set y ticks
+    numberAxis.nTicks = this.nYTicks;
     numberAxis.saveLoc();
     return numberAxis
   }
@@ -1856,7 +1856,6 @@ export class newHistogram extends Frame {
   private updateNumberAxis(numberAxis: newAxis, bars: Bar[]): newAxis {
     this.features.set('number', this.getNumberFeature(bars));
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
-    numberAxis.nTicks = numberAxis.maxValue; // Maybe not the best way to set y ticks
     numberAxis.saveLoc();
     return numberAxis
   }

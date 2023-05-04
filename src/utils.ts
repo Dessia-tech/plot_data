@@ -1134,7 +1134,7 @@ export class RubberBand {
   public path: Path2D; // unused for the moment
   public minUpdate: boolean = false;
   public maxUpdate: boolean = false;
-  public isMoved: boolean = false;
+  public lastValues: Vertex = new Vertex(null, null);
   readonly SMALL_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;
@@ -1363,26 +1363,29 @@ export class RubberBand {
   }
 
   public mouseDown(mouseAxis: number) {
+    this.isClicked = true;
     if (Math.abs(mouseAxis - this.realMin) <= 20) {this.minUpdate = true} 
     else if (Math.abs(mouseAxis - this.realMax) <= 20) {this.maxUpdate = true} 
-    else {this.isMoved = true}
+    else {this.lastValues = new Vertex(this.minValue, this.maxValue)}
   }
 
   public mouseMove(downValue: number, currentValue: number) {
-    if (this.minUpdate) {this.minValue = currentValue}
-    else if (this.maxUpdate) {this.maxValue = currentValue}
-    else if (this.isMoved) {
-      const translation = currentValue - downValue;
-      this.minValue += translation;
-      this.maxValue += translation;
+    if (this.isClicked) {
+      if (this.minUpdate) {this.minValue = currentValue}
+      else if (this.maxUpdate) {this.maxValue = currentValue}
+      else {
+        const translation = currentValue - downValue;
+        this.minValue = this.lastValues.x + translation;
+        this.maxValue = this.lastValues.y + translation;
+      }
+      this.flipMinMax();
     }
-    this.flipMinMax();
   }
 
   public mouseUp() {
     this.minUpdate = false;
     this.maxUpdate = false;
-    this.isMoved = false;
+    this.isClicked = false;
   }
 }
 
@@ -2031,7 +2034,7 @@ export class newAxis {
   public mouseMove(mouseDown: Vertex, mouseCoords: Vertex) {
     let downValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
     let currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
-    if (!this.rubberBand.minUpdate && !this.rubberBand.maxUpdate && !this.rubberBand.isMoved) {
+    if (!this.rubberBand.isClicked) {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
     } else {this.rubberBand.mouseMove(downValue, currentValue)}

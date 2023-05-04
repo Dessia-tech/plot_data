@@ -2060,49 +2060,7 @@ export class newAxis {
   public isInRubberBand(value: number): boolean {
     return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false
   }
-
-  // public mouseMove(mouseDown: Vertex, mouseCoords: Vertex) {
-  //   let downValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
-  //   let currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
-  //   if (!this.isInRubberBand(downValue)) {
-  //     this.rubberBand.minValue = Math.min(downValue, currentValue);
-  //     this.rubberBand.maxValue = Math.max(downValue, currentValue);
-  //   } 
-  //   else {
-  //     if (Math.abs(downValue - this.rubberBand.minValue) <= 0.1 * Math.abs(this.rubberBand.minValue)) {
-  //       this.rubberBand.minValue = downValue;
-  //     } else if (Math.abs(downValue - this.rubberBand.maxValue) <= 0.1 * Math.abs(this.rubberBand.maxValue)) {
-  //       this.rubberBand.maxValue = downValue;
-  //     } else {
-  //       const translation = currentValue - downValue;
-  //       this.rubberBand.minValue += translation;
-  //       this.rubberBand.maxValue += translation;
-  //     }
-  //   }
-  // }
-
-  // public mouseDown(mouseDown: Vertex) {
-  //   let isReset = false;
-  //   if (!this.mouseInRubberBand(mouseDown)) {
-  //     this.rubberBand.reset();
-  //     isReset = true;
-  //   }
-  //   return isReset
-  // }
-
-  // public mouseUp(mouseUp: Vertex) {
-  //   this.isClicked = false;
-  // }
-
-  // public mouseInRubberBand(mouseCoords: Vertex): boolean {
-  //   const mouseBand = this.isVertical ? mouseCoords.y : mouseCoords.x;
-  //   return this.isInRubberBand(mouseBand)
-  // }
-
-  // public isInRubberBand(value: number): boolean {
-  //   return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false
-  // }
-
+  
   public numericLabels(): string[] {
     this.updateTickPrecision();
     let numericLabels = []

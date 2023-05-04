@@ -1490,7 +1490,7 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: any[] = [];
 
-  private _initScale: Vertex = new Vertex(-1, -1);
+  private _initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'rgb(80, 80, 80)']]);
   
   readonly features: Map<string, any[]>;
@@ -1562,9 +1562,10 @@ export class BasePlot extends PlotData {
     } else {this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false)};
   }
 
-  public updateSelected(axis: newAxis): boolean[] {
+  public updateSelected(axis: newAxis): boolean[] { //TODO: Performance
     const boolSelection = Array.from(Array(this.features.get(axis.name).length), () => false);
-    this.features.get(axis.name).forEach((value, index) => {if (axis.isInRubberBand(value)) {boolSelection[index] = true}});
+    const vector = axis.stringsToValues(this.features.get(axis.name));
+    vector.forEach((value, index) => {if (axis.isInRubberBand(value)) {boolSelection[index] = true}});
     return boolSelection
   }
 
@@ -1753,7 +1754,7 @@ export class Frame extends BasePlot {
   public yFeature: string;
   protected _nXTicks: number;
   protected _nYTicks: number;
-  readonly OFFSET = new Vertex(100, 100);
+  readonly OFFSET = new Vertex(80, 50);
   readonly MARGIN = new Vertex(20, 20);
   constructor(
     public data: any,

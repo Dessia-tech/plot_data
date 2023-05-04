@@ -1132,9 +1132,9 @@ export class RubberBand {
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   public path: Path2D; // unused for the moment
-  private minUpdate: boolean = false;
-  private maxUpdate: boolean = false;
-  private isMoved: boolean = false;
+  public minUpdate: boolean = false;
+  public maxUpdate: boolean = false;
+  public isMoved: boolean = false;
   readonly SMALL_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;
@@ -1327,6 +1327,13 @@ export class RubberBand {
     this.realMax = 0;
   }
 
+  public flipMinMax() {
+    if (this.minValue >= this.maxValue) {
+      [this.minValue, this.maxValue] = [this.maxValue, this.minValue];
+      [this.minUpdate, this.maxUpdate] = [this.maxUpdate, this.minUpdate];
+    }
+  }
+
   public includesValue(value: any, axis: Attribute): boolean {
     let includesValue = false;
     if (this.canvasLength <= this.MIN_LENGTH) {
@@ -1356,13 +1363,20 @@ export class RubberBand {
   }
 
   public mouseDown(mouseAxis: number) {
-    if (Math.abs(mouseAxis - this.minValue) <= 0.1 * Math.abs(this.minValue)) {
-      this.minUpdate = true;
-    } else if (Math.abs(mouseAxis - this.maxValue) <= 0.1 * Math.abs(this.maxValue)) {
-      this.maxUpdate = true;
-    } else {
-      this.isMoved = true;
+    if (Math.abs(mouseAxis - this.realMin) <= 20) {this.minUpdate = true} 
+    else if (Math.abs(mouseAxis - this.realMax) <= 20) {this.maxUpdate = true} 
+    else {this.isMoved = true}
+  }
+
+  public mouseMove(downValue: number, currentValue: number) {
+    if (this.minUpdate) {this.minValue = currentValue}
+    else if (this.maxUpdate) {this.maxValue = currentValue}
+    else if (this.isMoved) {
+      const translation = currentValue - downValue;
+      this.minValue += translation;
+      this.maxValue += translation;
     }
+    this.flipMinMax();
   }
 
   public mouseUp() {
@@ -2015,26 +2029,26 @@ export class newAxis {
   }
 
   public mouseMove(mouseDown: Vertex, mouseCoords: Vertex) {
-    let minValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
-    let maxValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
-    this.rubberBand.minValue = Math.min(minValue, maxValue);
-    this.rubberBand.maxValue = Math.max(minValue, maxValue);
+    let downValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
+    let currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
+    if (!this.rubberBand.minUpdate && !this.rubberBand.maxUpdate && !this.rubberBand.isMoved) {
+      this.rubberBand.minValue = Math.min(downValue, currentValue);
+      this.rubberBand.maxValue = Math.max(downValue, currentValue);
+    } else {this.rubberBand.mouseMove(downValue, currentValue)}
   }
 
   public mouseDown(mouseDown: Vertex) {
     let isReset = false;
-    const axisValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
-    if (!this.isInRubberBand(axisValue)) {
+    const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
+    if (!this.isInRubberBand(this.absoluteToRelative(mouseUniCoord))) {
       this.rubberBand.reset();
       isReset = true;
-    } else {this.rubberBand.mouseDown(axisValue)}
+    } else {this.rubberBand.mouseDown(mouseUniCoord)}
     return isReset
   }
 
   public mouseUp() {
-    console.log(this.rubberBand)
     this.rubberBand.mouseUp();
-    console.log(this.rubberBand)
   }
 
   public isInRubberBand(value: number): boolean {

@@ -1655,7 +1655,7 @@ export class BasePlot extends PlotData {
           else {
             if (downDelay >= this.MIN_TIME_TRL) {
               canvas.style.cursor = 'move';
-              this.translation = this.mouseTranslate(canvasMouse, canvasDown)
+              this.translation = this.mouseTranslate(canvasMouse, canvasDown);
             }
           }
         }
@@ -1821,7 +1821,7 @@ export class Frame extends BasePlot {
 }
 
 export class newHistogram extends Frame {
-  protected bars: Bar[] = [];
+  public bars: Bar[] = [];
   readonly barsColorFill: string = string_to_hex('lightblue');
   readonly barsColorStroke: string = string_to_hex('black');
   constructor(

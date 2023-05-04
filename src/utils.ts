@@ -1477,7 +1477,7 @@ export class newShape {
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {}
 
-  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex) {}
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex) {this.isClicked = false}
 }
 
 export class newCircle extends newShape {
@@ -2053,9 +2053,7 @@ export class newAxis {
     return isReset
   }
 
-  public mouseUp() {
-    this.rubberBand.mouseUp();
-  }
+  public mouseUp() {this.rubberBand.mouseUp()}
 
   public isInRubberBand(value: number): boolean {
     return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false

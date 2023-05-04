@@ -36,8 +36,9 @@ describe('SIMPLE SHAPES CANVAS', function () {
       .invoke('attr', 'select_on_mouse', plot_data.plot_datas[0].primitives[6])
       .then( () => {
         plot_data.draw()
-        plot_data.select_on_mouse.tooltip.draw_primitive_tooltip(plot_data.context, plot_data.scale,
-          plot_data.originX, plot_data.originY, plot_data.X, plot_data.Y, 595, 300, plot_data.width, plot_data.height);
+        plot_data.select_on_mouse.tooltip.draw_primitive_tooltip(
+          plot_data.context, plot_data.scale, plot_data.originX, plot_data.originY, 
+          plot_data.X, plot_data.Y, 595, 300, plot_data.width, plot_data.height);
         cy.compareSnapshot(describeTitle + this.test.title, 0.05);
       })
     })

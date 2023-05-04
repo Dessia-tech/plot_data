@@ -407,6 +407,7 @@ export class ParallelPlot extends PlotData {
           }
         }
       })
+      this.selected_point_index = selectedIndices;
       return selectedIndices
     }
 

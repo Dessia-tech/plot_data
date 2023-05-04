@@ -1234,20 +1234,20 @@ export class RubberBand {
     this.axisToReal(axisOrigin, axisEnd);
   }
 
-  public axisChangeUpdate(origin: number[], end: number[], wasVertical: boolean, 
+  public axisChangeUpdate(origin: number[], end: number[], wasVertical: boolean,
     newOrigin: number[], newEnd: number[], isVertical: boolean) {
       const bounds = [origin[0] + end[0], origin[1] + end[1]];
       const newBounds = [newOrigin[0] + newEnd[0], newOrigin[1] + newEnd[1]];
       const lengths = [Math.abs(origin[0] - end[0]), Math.abs(origin[1] - end[1])];
       const newLengths = [Math.abs(newOrigin[0] - newEnd[0]), Math.abs(newOrigin[1] - newEnd[1])];
-      
+
       let index = 0;
       let newIndex = 0;
       if (wasVertical) {
         index = 1;
         if (!isVertical) {
           this.invert(bounds);
-        } 
+        }
       } else {
         if (isVertical) {
           newIndex = 1;
@@ -1265,16 +1265,16 @@ export class RubberBand {
       }
   }
 
-  public updateFromMouse(mouse1: [number, number], mouse2: [number, number], axis: Attribute, 
+  public updateFromMouse(mouse1: [number, number], mouse2: [number, number], axis: Attribute,
     axisOrigin: [number, number], axisEnd: [number, number], inverted: boolean): void {
       var mouseIdx = Number(this.isVertical);
       this.newBoundsUpdate(
-        mouse1[mouseIdx], mouse2[mouseIdx], 
+        mouse1[mouseIdx], mouse2[mouseIdx],
         [axisOrigin[mouseIdx], axisEnd[mouseIdx]],
         axis, inverted);
   }
 
-  public newBoundsUpdate(newMin: number, newMax: number, axisBounds: number[], 
+  public newBoundsUpdate(newMin: number, newMax: number, axisBounds: number[],
     axis: Attribute, inverted: boolean): void {
       this.realMin = Math.max(Math.min(newMin, newMax), axisBounds[1]);
       this.realMax = Math.min(Math.max(newMin, newMax), axisBounds[0]);
@@ -1303,7 +1303,7 @@ export class RubberBand {
     this.axisMax = 1 - tempMin;
   }
 
-  public switchOrientation(previousStart: number, newStart: number, 
+  public switchOrientation(previousStart: number, newStart: number,
     axisLengths: [number, number]) {
     let relativeMin = (this.realMin - previousStart) / axisLengths[0];
     let normedLength = this.canvasLength / axisLengths[0];
@@ -1364,8 +1364,8 @@ export class RubberBand {
 
   public mouseDown(mouseAxis: number) {
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.realMin) <= 20) {this.minUpdate = true} 
-    else if (Math.abs(mouseAxis - this.realMax) <= 20) {this.maxUpdate = true} 
+    if (Math.abs(mouseAxis - this.realMin) <= 20) {this.minUpdate = true}
+    else if (Math.abs(mouseAxis - this.realMax) <= 20) {this.maxUpdate = true}
     else {this.lastValues = new Vertex(this.minValue, this.maxValue)}
   }
 
@@ -1423,7 +1423,7 @@ export class Vertex {
   }
 
   public get normL1(): number {return Math.abs(this.x) + Math.abs(this.y)}
-  
+
   public get norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
 
   public subtract(other: Vertex) {
@@ -1458,7 +1458,7 @@ export class newShape {
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   constructor() {};
-  
+
   public draw(context: CanvasRenderingContext2D) {
     const scaledPath = new Path2D();
     const contextMatrix = context.getTransform();
@@ -1720,12 +1720,12 @@ export class newPoint2D extends Vertex {
   public isSelected: boolean = false;
   public color: string = string_to_hex('blue');
   protected _lineWidth: number = 2;
-  
+
   constructor(
-    x: number = 0, 
+    x: number = 0,
     y: number = 0,
-    private _size: number = 2, 
-    private _shape: string = 'circle', 
+    private _size: number = 2,
+    private _shape: string = 'circle',
     private _markerOrientation: string = 'up'
     ) {
       super(x, y);
@@ -1749,19 +1749,19 @@ export class newPoint2D extends Vertex {
   }
 
   get lineWidth(): number {return this._lineWidth};
-    
+
   set lineWidth(value: number) {this._lineWidth = value};
 
   get markerOrientation(): string {return this._markerOrientation};
-    
+
   set markerOrientation(value: string) {this._markerOrientation = value};
 
   get size(): number {return this._size};
-    
+
   set size(value: number) {this._size = value};
 
   get shape(): string {return this._shape};
-    
+
   set shape(value: string) {this._shape = value};
 
   private buildPath(): Path2D {return this.drawnShape.path};
@@ -1820,7 +1820,7 @@ export class newAxis {
   private _previousMin: number;
   private _previousMax: number;
   private _tickPrecision: number = 4;
-  
+
   readonly OFFSET_TICKS = new Vertex(10, 20);
   readonly OFFSET_NAME = this.OFFSET_TICKS.subtract(new Vertex(65, 60));
   readonly DRAW_START_OFFSET = 10;
@@ -1854,7 +1854,7 @@ export class newAxis {
   get isVertical(): boolean {return this.origin.x == this.end.x};
 
   get isDiscrete(): boolean {return this._isDiscrete};
-  
+
   set isDiscrete(value: boolean) {this._isDiscrete = value};
 
   set marginRatio(value: number) {this._marginRatio = value};
@@ -1935,8 +1935,8 @@ export class newAxis {
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) {ticks.push(ticks.slice(-1)[0] + increment)};
-    if (ticks.slice(0)[0] < this.minValue) {ticks.splice(0, 1)}; 
-    if (ticks.slice(-1)[0] > this.maxValue) {ticks.splice(-1, 1)}; 
+    if (ticks.slice(0)[0] < this.minValue) {ticks.splice(0, 1)};
+    if (ticks.slice(-1)[0] > this.maxValue) {ticks.splice(-1, 1)};
     return ticks
   }
 
@@ -1990,8 +1990,8 @@ export class newAxis {
 
   private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
     const markerOrientation = this.isVertical ? 'right' : 'up';
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10 / Math.abs(HTMatrix.a), 'halfLine', markerOrientation); 
-    point.color = color;    
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10 / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
+    point.color = color;
     point.lineWidth /= Math.abs(HTMatrix.a);
     point.draw(context);
     return point
@@ -2012,14 +2012,14 @@ export class newAxis {
   private getValueToDrawMatrix() {
     const scale = this.drawLength / this.interval;
     return new DOMMatrix([
-      scale, 0, 0, scale, 
-      this.origin.x - this.minValue * Number(!this.isVertical) * scale, 
+      scale, 0, 0, scale,
+      this.origin.x - this.minValue * Number(!this.isVertical) * scale,
       this.origin.y - this.minValue * Number(this.isVertical) * scale]);
   }
 
   private marginedBounds(minValue: number, maxValue: number): [number, number] {
     if (this.isDiscrete) {return [minValue - 1, maxValue + 1]};
-    return [minValue * (1 - Math.sign(minValue) * this.marginRatio), 
+    return [minValue * (1 - Math.sign(minValue) * this.marginRatio),
             maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
 
@@ -2060,7 +2060,7 @@ export class newAxis {
   public isInRubberBand(value: number): boolean {
     return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false
   }
-  
+
   public numericLabels(): string[] {
     this.updateTickPrecision();
     let numericLabels = []
@@ -2090,9 +2090,9 @@ export class newAxis {
 
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, string, string] {
     let origin = new Vertex(point.x, point.y).transform(HTMatrix);
-    if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode 
+    if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode
       origin.x -= Math.sign(HTMatrix.a) * this.OFFSET_TICKS.x
-    } 
+    }
     else {
       origin.y -= Math.sign(HTMatrix.d) * this.OFFSET_TICKS.y
     }
@@ -2123,6 +2123,5 @@ export class newAxis {
   private updateTicks(): void {
     this.ticks = this.computeTicks();
     if (!this.isDiscrete) {this.labels = this.numericLabels()};
-  }  
+  }
 }
-

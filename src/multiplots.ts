@@ -1277,7 +1277,7 @@ export class MultiplePlots {
         if (subplot instanceof ParallelPlot) {
           if (subplot !== currentPP) {
             subplot.rubber_bands.forEach((rubberBand, index) => {
-              const actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName) 
+              const actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
               if (actualRubberIndex != -1) {
                 let axisOrigin = subplot.axis_x_start;
                 let axisEnd = subplot.axis_x_end;
@@ -1285,7 +1285,7 @@ export class MultiplePlots {
                   axisOrigin = subplot.axis_y_end;
                   axisEnd = subplot.axis_y_start;
                 }
-                rubberBand.updateFromOther(currentPP.rubber_bands[actualRubberIndex], axisOrigin, axisEnd, 
+                rubberBand.updateFromOther(currentPP.rubber_bands[actualRubberIndex], axisOrigin, axisEnd,
                   subplot.inverted_axis_list[index], currentPP.inverted_axis_list[actualRubberIndex]);
               }
             })

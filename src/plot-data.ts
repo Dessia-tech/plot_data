@@ -1288,7 +1288,7 @@ export abstract class PlotData {
       this.context.closePath();
     }
   }
-  
+
   //reset parallel plot's rubber bands
   reset_rubberbands() {
     this.rubber_bands.forEach((rubberBand) => {rubberBand.reset()});
@@ -2792,7 +2792,7 @@ export class Interactions {
     let axisList = this.prepareAxisBounds(plot_data, selected_axis_index);
 
     plot_data.rubber_bands[selected_axis_index].updateFromMouse(
-      [mouse1X, mouse1Y], [mouse2X, mouse2Y], axisList, 
+      [mouse1X, mouse1Y], [mouse2X, mouse2Y], axisList,
       [plot_data.axis_x_end, plot_data.axis_y_start], [plot_data.axis_x_start, plot_data.axis_y_end], // be careful of x_ order
       plot_data.inverted_axis_list[selected_axis_index])
     plot_data.draw();
@@ -2815,7 +2815,7 @@ export class Interactions {
     const [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data, isVertical);
     const axisList = this.prepareAxisBounds(plot_data, selected_band_index);
     plot_data.rubber_bands[selected_band_index].newBoundsUpdate(
-      newMin + delta[axisIdx], newMax + delta[axisIdx], axisBounds[axisIdx], 
+      newMin + delta[axisIdx], newMax + delta[axisIdx], axisBounds[axisIdx],
       axisList, plot_data.inverted_axis_list[selected_band_index]);
     plot_data.draw();
     return [e.offsetX, e.offsetY];
@@ -2865,7 +2865,7 @@ export class Interactions {
   public static select_title_action(selected_name_index, plot_data: any) {
     plot_data.inverted_axis_list[selected_name_index] = !plot_data.inverted_axis_list[selected_name_index];
     const axisBounds = [
-      plot_data.axis_x_start + plot_data.axis_x_end, 
+      plot_data.axis_x_start + plot_data.axis_x_end,
       plot_data.axis_y_start + plot_data.axis_y_end];
     if (plot_data.rubber_bands[selected_name_index].length != 0) {
       plot_data.invert_rubber_bands([selected_name_index], axisBounds);
@@ -2882,7 +2882,7 @@ export class Interactions {
 
     plot_data.vertical = !plot_data.vertical;
     plot_data.refresh_axis_bounds(plot_data.axis_list.length);
-    
+
     const newOrigin = [plot_data.axis_x_start, plot_data.axis_y_start];
     const newEnd = [plot_data.axis_x_end, plot_data.axis_y_end];
     plot_data.rubber_bands.forEach((rubberBand) => {

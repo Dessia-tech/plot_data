@@ -465,7 +465,7 @@ export class ParallelPlot extends PlotData {
         var click_on_selectw_border:boolean = false;
         var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
         var canvas = document.getElementById(this.canvas_id);
-  
+
         canvas.addEventListener('mousedown', e => {
           if (this.interaction_ON) {
             [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
@@ -474,7 +474,7 @@ export class ParallelPlot extends PlotData {
             [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
           }
         });
-  
+
         canvas.addEventListener('mousemove', e => {
           if (this.interaction_ON) {
             this.isSelectingppAxis = false;
@@ -493,19 +493,19 @@ export class ParallelPlot extends PlotData {
             }
           }
         });
-  
+
         canvas.addEventListener('mouseup', e => {
           if (this.interaction_ON) {
             [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
           }
         })
-  
+
         canvas.addEventListener('mouseleave', e => {
           isDrawing = false;
           mouse_moving = false;
         });
-  
-  
+
+
         canvas.addEventListener("click", e => {
           if (this.interaction_ON) {
             if (e.ctrlKey) {
@@ -1493,7 +1493,7 @@ export class BasePlot extends PlotData {
 
   private _initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'rgb(80, 80, 80)']]);
-  
+
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
   readonly TRL_THRESHOLD = 20;
@@ -1520,7 +1520,7 @@ export class BasePlot extends PlotData {
   set axisStyle(newAxisStyle: Map<string, any>) {newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value))}
 
   get axisStyle() {return this._axisStyle};
-  
+
   get canvasMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
 
   get movingMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
@@ -1540,7 +1540,7 @@ export class BasePlot extends PlotData {
   public drawCanvas(): void {
     this.context_show.save()
     this.draw_empty_canvas(this.context_show);
-    if (this.settings_on) {this.draw_settings_rect()} 
+    if (this.settings_on) {this.draw_settings_rect()}
     else {this.context = this.context_show ; this.draw_rect()}
     this.context_show.beginPath();
     this.context_show.rect(this.X, this.Y, this.width, this.height);
@@ -1590,7 +1590,7 @@ export class BasePlot extends PlotData {
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean) {
     objects.forEach(object => {
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = true} 
+      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = true}
       else {if (!keepState) {object[stateName] = false}}
     })
   }
@@ -1603,7 +1603,7 @@ export class BasePlot extends PlotData {
     return new Vertex(mouseDown.x - currentMouse.x, mouseDown.y - currentMouse.y);
   }
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, isDrawing: boolean) {
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {
     this.hoverUpdate(this.context_show, this.fixedObjects, canvasMouse);
     this.hoverUpdate(this.context_show, this.movingObjects, frameMouse);
   }
@@ -1649,7 +1649,7 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousemove', e => {
         downDelay = e.timeStamp - mouseDownTime;
         [canvasMouse, frameMouse] = this.projectMouse(e);
-        this.mouseMove(canvasMouse, frameMouse, isDrawing);
+        this.mouseMove(canvasMouse, frameMouse);
         if (this.interaction_ON && isDrawing) {
           if (clickedObject) {clickedObject.mouseMove(canvasDown, canvasMouse)}
           else {
@@ -1794,7 +1794,7 @@ export class Frame extends BasePlot {
   public setAxes(): newAxis[] {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds()
     return [
-      this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks), 
+      this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks),
       this.setAxis(this.yFeature, frameOrigin, yEnd, this.nYTicks)]
   }
 
@@ -1807,12 +1807,12 @@ export class Frame extends BasePlot {
     let xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x, frameOrigin.y);
     let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y);
     if (this.canvasMatrix.a < 0) {
-      frameOrigin.x = -(this.size.x - frameOrigin.x); 
+      frameOrigin.x = -(this.size.x - frameOrigin.x);
       xEnd.x = -(this.size.x - xEnd.x);
       yEnd.x = frameOrigin.x;
     }
     if (this.canvasMatrix.d < 0) {
-      frameOrigin.y = -(this.size.y - frameOrigin.y); 
+      frameOrigin.y = -(this.size.y - frameOrigin.y);
       yEnd.y = -(this.size.y - yEnd.y);
       xEnd.y = frameOrigin.y;
     }
@@ -2297,7 +2297,7 @@ export class Histogram extends PlotData {
             [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
           }
         });
-  
+
         canvas.addEventListener('mousemove', e => {
           if (this.interaction_ON) {
             if (isDrawing) {
@@ -2313,7 +2313,7 @@ export class Histogram extends PlotData {
             }
           }
         });
-  
+
         canvas.addEventListener('mouseup', e => {
           if (!this.interaction_ON) return;
           if (mouse_moving) {
@@ -2326,13 +2326,13 @@ export class Histogram extends PlotData {
           this.is_drawing_rubber_band = false;
           this.draw();
         });
-  
+
         canvas.addEventListener('mouseleave', e => {
           isDrawing = false;
           mouse_moving = false;
         });
-  
-  
+
+
         canvas.addEventListener("click", e => {
           if (this.interaction_ON) {
             if (e.ctrlKey) {

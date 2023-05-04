@@ -2026,8 +2026,11 @@ export class newAxis {
   public drawRubberBand(context: CanvasRenderingContext2D) {
     const realMin = this.relativeToAbsolute(this.rubberBand.minValue);
     const realMax = this.relativeToAbsolute(this.rubberBand.maxValue);
-    this.rubberBand.realMin = Math.min(realMin, realMax);
-    this.rubberBand.realMax = Math.max(realMin, realMax);
+    const coord = this.isVertical ? "y" : "x";
+    this.rubberBand.realMin = Math.max(Math.min(realMin, realMax), this.origin[coord]);
+    this.rubberBand.realMax = Math.min(Math.max(realMin, realMax), this.end[coord]);
+    this.rubberBand.realMin = Math.min(this.rubberBand.realMin, this.rubberBand.realMax);
+    this.rubberBand.realMax = Math.max(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, string_to_hex('yellow'), string_to_hex('white'), 0.1, 0.8);
   }
 

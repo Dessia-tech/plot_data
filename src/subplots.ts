@@ -1588,15 +1588,11 @@ export class BasePlot extends PlotData {
     return
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean) {
+  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
     objects.forEach(object => {
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = true}
+      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = invertState ? !object[stateName] : true}
       else {if (!keepState) {object[stateName] = false}}
     })
-  }
-
-  public hoverUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex) {
-    this.stateUpdate(context, objects, mouseCoords, 'isHover', false)
   }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
@@ -1604,8 +1600,8 @@ export class BasePlot extends PlotData {
   }
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {
-    this.hoverUpdate(this.context_show, this.fixedObjects, canvasMouse);
-    this.hoverUpdate(this.context_show, this.movingObjects, frameMouse);
+    this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHover', false, false);
+    this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHover', false, false);    
   }
 
   public projectMouse(e: MouseEvent) {
@@ -1625,8 +1621,8 @@ export class BasePlot extends PlotData {
   public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean) {
     if (this.interaction_ON) {
       if (this.translation.normL1 == 0 && canvasMouse.subtract(canvasDown).normL1 <= this.TRL_THRESHOLD) {
-        this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isClicked', ctrlKey);
-        this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isClicked', ctrlKey);
+        this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isClicked', ctrlKey, true);
+        this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isClicked', ctrlKey, true);
       }
     }
   }
@@ -1671,7 +1667,7 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mouseup', e => {
         canvas.style.cursor = 'default';
         this.mouseUp(canvasMouse, frameMouse, canvasDown, ctrlKey);
-        if (clickedObject) {clickedObject.mouseUp(canvasDown)};
+        if (clickedObject) {clickedObject.mouseUp()};
         isDrawing = false;
         this.draw();
         this.axes.forEach(axis => {axis.saveLoc()});

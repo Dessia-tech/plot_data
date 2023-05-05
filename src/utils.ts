@@ -1477,7 +1477,7 @@ export class newShape {
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {}
 
-  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex) {this.isClicked = false}
+  public mouseUp() {}
 }
 
 export class newCircle extends newShape {

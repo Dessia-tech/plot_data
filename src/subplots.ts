@@ -1487,7 +1487,7 @@ export class BasePlot extends PlotData {
   public clickedIndex: number[] = [];
   public selectedIndex: boolean[];
 
-  protected viewPoint: Vertex = new Vertex(0, 0);
+  public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
   public movingObjects: any[] = [];
 
@@ -1562,7 +1562,7 @@ export class BasePlot extends PlotData {
     } else {this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false)};
   }
 
-  public updateSelected(axis: newAxis): boolean[] { //TODO: Performance
+  public updateSelected(axis: newAxis): boolean[] { // TODO: Performance
     const boolSelection = Array.from(Array(this.features.get(axis.name).length), () => false);
     const vector = axis.stringsToValues(this.features.get(axis.name));
     vector.forEach((value, index) => {if (axis.isInRubberBand(value)) {boolSelection[index] = true}});
@@ -1645,8 +1645,7 @@ export class BasePlot extends PlotData {
         [canvasMouse, frameMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse);
         if (this.interaction_ON && isDrawing) {
-          if (clickedObject?.mouseMove(canvasDown, canvasMouse)) {} // i like it !
-          else {
+          if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) { // i like it !
             canvas.style.cursor = 'move';
             this.translation = this.mouseTranslate(canvasMouse, canvasDown);
           }
@@ -1671,6 +1670,7 @@ export class BasePlot extends PlotData {
       })
 
       canvas.addEventListener('wheel', e => {
+        console.log(e)
         if (this.interaction_ON) {
           let scale = new Vertex(this.scaleX, this.scaleY);
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
@@ -1699,8 +1699,8 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public wheel_interaction(mouse3X, mouse3Y, e) { //TODO: TO REFACTOR !!!
-    e.preventDefault();
+  public wheel_interaction(mouse3X, mouse3Y, e: WheelEvent) { //TODO: TO REFACTOR !!!
+    // e.preventDefault();
     this.fusion_coeff = 1.2;
     var event = -Math.sign(e.deltaY);
     mouse3X = e.offsetX;
@@ -1950,7 +1950,7 @@ export class newHistogram extends Frame {
   }
 
   wheel_interaction(mouse3X, mouse3Y, e) { // TODO: REALLY NEEDS A REFACTOR
-    e.preventDefault();
+    // e.preventDefault();
     this.fusion_coeff = 1.2;
     var event = -Math.sign(e.deltaY);
     mouse3X = e.offsetX;

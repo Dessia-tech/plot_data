@@ -2,7 +2,7 @@ import { parseHTML } from '../support/parseHTML';
 import { initRubberBand } from '../support/initRubberBand';
 import histogramData from '../data_src/histogram.data.json';
 import { newHistogram } from '../../src/subplots';
-import { Vertex } from '../../src/utils';
+import { Vertex, newPoint2D } from '../../src/utils';
 
 const FEATURE_NAME = "histogram"
 
@@ -53,6 +53,35 @@ describe('HISTOGRAM CANVAS', function () {
       expect(histogram.axes[0].rubberBand.minValue).to.closeTo(4444, 10);
       expect(histogram.axes[0].rubberBand.maxValue).to.closeTo(10344, 10);
       expect(selectedBars).to.equal(5);
+    })
+  })
+
+  it("should hover/click on bar", function () {
+    cy.window().then(win => {
+      histogram = win.eval('plot_data');
+      [canvasMouse, frameMouse] = histogram.projectMouse({"offsetX": 319, "offsetY": 426} as MouseEvent);
+      histogram.mouseMove(canvasMouse, frameMouse);
+      expect(histogram.movingObjects[4].isHover).to.be.true;
+
+      [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse);
+      histogram.mouseUp(canvasMouse, frameMouse, canvasDown, false)
+      expect(histogram.movingObjects[4].isClicked).to.be.true;
+    })
+  })
+
+  it("should scale and translate axes limits", function () {
+    cy.window().then(win => {
+      histogram = win.eval('plot_data');
+      const e = {"offsetX": 572, "offsetY": 144, "deltaY": 3} as WheelEvent;
+      histogram.wheel_interaction(e.offsetX, e.offsetY, e);
+      histogram.viewPoint = new newPoint2D(e.offsetX, e.offsetY);
+      histogram.viewPoint.transformSelf(histogram.canvasMatrix);
+      histogram.draw();
+      [canvasDown, frameMouse] = histogram.projectMouse({"offsetX": 572, "offsetY": 144} as MouseEvent);
+      [canvasMouse, frameMouse] = histogram.projectMouse({"offsetX": 114, "offsetY": 191} as MouseEvent);
+      histogram.translation = histogram.mouseTranslate(canvasMouse, canvasDown);
+      histogram.draw();
+      cy.compareSnapshot(describeTitle + this.test.title, 0.05);
     })
   })
 })

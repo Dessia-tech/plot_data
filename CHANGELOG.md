@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [0.13.0]
+### Add
+- newHistogram plot to replace current Histogram
+    - There is no covering between multiplot histogram and this one so the two of them can live in plot_data at the same time
+    - Axes:
+        - Handled in a BasePlot object and instantiated specifically in each kind of plot (Frame, Histogram,...)
+        - Generate their own ticks, with a start number (default is 7 for normal plot, 20 for xAxis of Histogram)
+        - Ticks are built from the nearest 5 multiple in floor(log10(minValue)) with an interval computed with (maxValue - minValue) interval
+        - Instantiated in Canvas with CanvasMatrix as fixed objects
+        - 
+
+
 ## [0.12.2]
 ### Fix
 - update selected_point_index when selecting from parallelplot

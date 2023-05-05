@@ -1497,7 +1497,6 @@ export class BasePlot extends PlotData {
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
   readonly TRL_THRESHOLD = 20;
-  readonly MIN_TIME_TRL = 85; // Q3 = 95 ms
   constructor(
     public data: any,
     public width: number,
@@ -1633,7 +1632,7 @@ export class BasePlot extends PlotData {
       var isDrawing = false;
       var canvasMouse = new Vertex(0, 0) ; var canvasDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
       var frameMouse = new Vertex(0, 0) ; var frameDown = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
-      var mouseDownTime = 0 ; var downDelay = 0;
+      var mouseDownTime = 0;
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false;
@@ -1643,16 +1642,13 @@ export class BasePlot extends PlotData {
       window.addEventListener('keyup', e => ctrlKey = e.ctrlKey);
 
       canvas.addEventListener('mousemove', e => {
-        downDelay = e.timeStamp - mouseDownTime;
         [canvasMouse, frameMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse);
         if (this.interaction_ON && isDrawing) {
-          if (clickedObject) {clickedObject.mouseMove(canvasDown, canvasMouse)}
+          if (clickedObject?.mouseMove(canvasDown, canvasMouse)) {} // i like it !
           else {
-            if (downDelay >= this.MIN_TIME_TRL) {
-              canvas.style.cursor = 'move';
-              this.translation = this.mouseTranslate(canvasMouse, canvasDown);
-            }
+            canvas.style.cursor = 'move';
+            this.translation = this.mouseTranslate(canvasMouse, canvasDown);
           }
         }
         this.draw()

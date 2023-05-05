@@ -1475,7 +1475,7 @@ export class newShape {
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {}
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {}
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {return false}
 
   public mouseUp() {}
 }
@@ -2041,6 +2041,7 @@ export class newAxis {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
     } else {this.rubberBand.mouseMove(downValue, currentValue)}
+    return true
   }
 
   public mouseDown(mouseDown: Vertex) {

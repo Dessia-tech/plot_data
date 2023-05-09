@@ -1,10 +1,17 @@
 import { parseHTML } from '../support/parseHTML';
-import { initRubberBand } from '../support/initRubberBand';
 import histogramData from '../data_src/histogram.data.json';
-import { newHistogram } from '../../src/subplots';
+import { Frame, newHistogram } from '../../src/subplots';
 import { Vertex, newPoint2D } from '../../src/utils';
 
 const FEATURE_NAME = "histogram"
+
+function initRubberBand(frame: Frame) {
+  frame.axes[0].rubberBand.minValue = 600;
+  frame.axes[0].rubberBand.maxValue = 6500;
+  frame.axes[1].rubberBand.minValue = 0.9;
+  frame.axes[1].rubberBand.maxValue = 5.1;
+  frame.draw();
+}
 
 before(() => {
   parseHTML(FEATURE_NAME, histogramData)

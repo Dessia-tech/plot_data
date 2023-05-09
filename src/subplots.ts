@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, newRect, Bar } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1812,7 +1812,7 @@ export class Frame extends BasePlot {
 export class newHistogram extends Frame {
   public bars: Bar[] = [];
   readonly barsColorFill: string = 'hsl(203, 90%, 85%)';
-  readonly barsColorStroke: string = '#000000';
+  readonly barsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(
     public data: any,
     public width: number,

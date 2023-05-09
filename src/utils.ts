@@ -1,8 +1,6 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
-import { BasePlot } from "./subplots";
-import { min } from "cypress/types/lodash";
 
 export class Axis {
     color_stroke:any;
@@ -1449,11 +1447,11 @@ export class Vertex {
 export class newShape {
   public path: Path2D = new Path2D();
   public lineWidth: number = 1;
-  public strokeStyle: string = string_to_hex('black');
-  public fillStyle: string = string_to_hex('lightblue');
-  public hoverStyle: string =  string_to_hex('red');
-  public clickedStyle: string =  string_to_hex('lightgreen');
-  public selectedStyle: string =  string_to_hex('lightviolet');
+  public strokeStyle: string = 'hsl(0, 0%, 0%)';
+  public fillStyle: string = 'hsl(203, 90%, 85%)';
+  public hoverStyle: string = 'hsl(203, 90%, 60%)';
+  public clickedStyle: string = 'hsl(203, 90%, 35%)';
+  public selectedStyle: string = 'hsl(267, 95%, 85%)';
   public isHover: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
@@ -1807,9 +1805,9 @@ export class newAxis {
   public drawPath: Path2D;
   public path: Path2D;
   public lineWidth: number = 2;
-  public strokeStyle: string = string_to_hex('black');
-  public hoverStyle: string =  string_to_hex('red');
-  public clickedStyle: string =  string_to_hex('lightgreen');
+  public strokeStyle: string = 'hsl(0, 0%, 0%)';
+  public hoverStyle: string = 'hsl(0, 100%, 48%)';
+  public clickedStyle: string = 'hsl(126, 67%, 72%)';
   public rubberColor: string = 'hsla(266, 95%, 60%, 0.8)';//'hsla(127, 95%, 60%, 0.85)';
   public labels: string[];
   public isHover: boolean = false;

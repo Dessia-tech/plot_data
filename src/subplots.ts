@@ -1636,9 +1636,9 @@ export class BasePlot extends PlotData {
       var canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false;
 
-      window.addEventListener('keydown', e => ctrlKey = e.ctrlKey);
+      window.addEventListener('keydown', e => {if (e.key == "Control") ctrlKey = true});
 
-      window.addEventListener('keyup', e => ctrlKey = e.ctrlKey);
+      window.addEventListener('keyup', e => {if (e.key == "Control") ctrlKey = false});
 
       canvas.addEventListener('mousemove', e => {
         [canvasMouse, frameMouse] = this.projectMouse(e);
@@ -1692,6 +1692,7 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
+        ctrlKey = false;
       });
     }
   }

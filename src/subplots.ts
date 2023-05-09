@@ -1632,7 +1632,6 @@ export class BasePlot extends PlotData {
       var isDrawing = false;
       var canvasMouse = new Vertex(0, 0) ; var canvasDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
       var frameMouse = new Vertex(0, 0) ; var frameDown = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
-      var mouseDownTime = 0;
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false;
@@ -1654,7 +1653,6 @@ export class BasePlot extends PlotData {
       });
 
       canvas.addEventListener('mousedown', e => {
-        mouseDownTime = e.timeStamp;
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse);
         isDrawing = true;
       });
@@ -1670,7 +1668,6 @@ export class BasePlot extends PlotData {
       })
 
       canvas.addEventListener('wheel', e => {
-        console.log(e)
         if (this.interaction_ON) {
           let scale = new Vertex(this.scaleX, this.scaleY);
           [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);

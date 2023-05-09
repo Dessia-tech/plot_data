@@ -37,7 +37,7 @@ describe('SIMPLE SHAPES CANVAS', function () {
       .then( () => {
         plot_data.draw()
         plot_data.select_on_mouse.tooltip.draw_primitive_tooltip(
-          plot_data.context, plot_data.scale, plot_data.originX, plot_data.originY, 
+          plot_data.context, plot_data.scale, plot_data.originX, plot_data.originY,
           plot_data.X, plot_data.Y, 595, 300, plot_data.width, plot_data.height);
         cy.compareSnapshot(describeTitle + this.test.title, 0.05);
       })

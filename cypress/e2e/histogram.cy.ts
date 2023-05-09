@@ -46,7 +46,7 @@ describe('HISTOGRAM CANVAS', function () {
     expect(frameMouse.x).to.closeTo(3461, 10);
   })
 
-  it("should translate rubber band", function () {    
+  it("should translate rubber band", function () {
     cy.window().then(win => {
       histogram = win.eval('plot_data')
       initRubberBand(histogram);
@@ -56,7 +56,7 @@ describe('HISTOGRAM CANVAS', function () {
       clickedObject.mouseMove(frameDown, frameDown.add(new Vertex(200, 200)));
       histogram.draw()
       const selectedBars = histogram.bars.reduce((sum, current) => sum + (current.isSelected ? 1 : 0), 0);
-      
+
       expect(histogram.axes[0].rubberBand.minValue).to.closeTo(4444, 10);
       expect(histogram.axes[0].rubberBand.maxValue).to.closeTo(10344, 10);
       expect(selectedBars).to.equal(5);

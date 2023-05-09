@@ -1600,7 +1600,7 @@ export class BasePlot extends PlotData {
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {
     this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHover', false, false);
-    this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHover', false, false);    
+    this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHover', false, false);
   }
 
   public projectMouse(e: MouseEvent) {

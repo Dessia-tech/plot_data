@@ -65,7 +65,7 @@ export class MultiplePlots {
     public padding: number;
 
 
-    constructor(public data: any[], public width:number, public height:number, public buttons_ON: boolean, public canvas_id: string) {
+    constructor(public data: any[], public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
       check_package_version(data['package_version'], requirement);
       this.dataObjects = data['plots'];
@@ -96,10 +96,12 @@ export class MultiplePlots {
         } else if (object_type_ === 'histogram') {
           this.dataObjects[i]['elements'] = elements;
           newObject = new Histogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          
         } else {
           throw new Error('MultiplePlots constructor : invalid object type');
         }
         this.initializeObjectContext(newObject);
+        
         this.objectList.push(newObject);
       }
       if (elements) {this.initialize_point_families();}
@@ -884,16 +886,16 @@ export class MultiplePlots {
       this.dep_selected_points_index = [];
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
-        let otherPlot = this.objectList[i];
-        if (otherPlot instanceof PlotScatter) {
-          Interactions.click_on_reset_action(otherPlot);
-        } else if (otherPlot instanceof PlotContour) {
-          otherPlot.reset_scales();
-        } else if (otherPlot instanceof PrimitiveGroupContainer) {
-          otherPlot.reset_action();
-        } else if (otherPlot instanceof Histogram) {
-          // otherPlot.reset_scales();
-          // otherPlot.reset_x_rubberband();
+        let plot = this.objectList[i];
+        if (plot instanceof PlotScatter) {
+          Interactions.click_on_reset_action(plot);
+        } else if (plot instanceof PlotContour) {
+          plot.reset_scales();
+        } else if (plot instanceof PrimitiveGroupContainer) {
+          plot.reset_action();
+        } else if (plot instanceof Histogram) {
+          plot.reset_scales();
+          // plot.reset_x_rubberband();
         }
       }
     }

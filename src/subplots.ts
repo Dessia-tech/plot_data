@@ -1626,7 +1626,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public mouse_interaction() {
+  public mouse_interaction(isParallelPlot: boolean) {
     if (this.interaction_ON === true) {
       var clickedObject: any;
       var isDrawing = false;

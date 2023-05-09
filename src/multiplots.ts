@@ -1275,6 +1275,7 @@ export class MultiplePlots {
       })
 
       let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
+      this.dep_selected_points_index = actualPP.selected_point_index;
 
       this.objectList.forEach((subplot) => {
         const WAS_MERGE_ON = subplot.mergeON;
@@ -1806,8 +1807,6 @@ export class MultiplePlots {
       var clickOnVertex:boolean = false;
       var old_selected_index;
       var double_click = false;
-
-
       // For canvas to read keyboard inputs.
       // this.canvas.setAttribute('tabindex', '0');
       // this.canvas.focus();

@@ -1492,7 +1492,7 @@ export class BasePlot extends PlotData {
   public movingObjects: any[] = [];
 
   private _initScale: Vertex = new Vertex(1, -1);
-  private _axisStyle = new Map<string, any>([['strokeStyle', 'rgb(80, 80, 80)']]);
+  private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
 
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1814,8 +1814,8 @@ export class Frame extends BasePlot {
 
 export class newHistogram extends Frame {
   public bars: Bar[] = [];
-  readonly barsColorFill: string = string_to_hex('lightblue');
-  readonly barsColorStroke: string = string_to_hex('black');
+  readonly barsColorFill: string = 'hsl(203, 90%, 85%)';
+  readonly barsColorStroke: string = '#000000';
   constructor(
     public data: any,
     public width: number,

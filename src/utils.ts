@@ -1777,11 +1777,11 @@ export class newPoint2D extends Vertex {
 }
 
 export class Bar extends newRect {
-  public strokeStyle: string = string_to_hex('black');
-  public fillStyle: string = string_to_hex('lightblue');
-  public hoverStyle: string =  string_to_hex('red');
-  public clickedStyle: string =  string_to_hex('orange');
-  public selectedStyle: string =  string_to_hex('blue');
+  public strokeStyle: string = 'hsl(270, 0%, 0%)';
+  public fillStyle: string = 'hsl(203, 90%, 85%)';
+  public hoverStyle: string = 'hsl(203, 90%, 60%)';
+  public clickedStyle: string = 'hsl(203, 90%, 35%)';
+  public selectedStyle: string = 'hsl(267, 95%, 85%)';
   constructor(
     public values: any[] = [],
     public origin: Vertex = new Vertex(0, 0),
@@ -1810,7 +1810,7 @@ export class newAxis {
   public strokeStyle: string = string_to_hex('black');
   public hoverStyle: string =  string_to_hex('red');
   public clickedStyle: string =  string_to_hex('lightgreen');
-  public rubberColor: string = 'hsl(152, 95%, 36%)';
+  public rubberColor: string = 'hsla(266, 95%, 60%, 0.8)';//'hsla(127, 95%, 60%, 0.85)';
   public labels: string[];
   public isHover: boolean = false;
   public isClicked: boolean = false;
@@ -2037,7 +2037,7 @@ export class newAxis {
     this.rubberBand.realMax = Math.min(Math.max(realMin, realMax), this.end[coord]);
     this.rubberBand.realMin = Math.min(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.realMax = Math.max(this.rubberBand.realMin, this.rubberBand.realMax);
-    this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, string_to_hex('white'), 0.1, 0.8);
+    this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, 'hsl(203, 0%, 100%, 0.5)', 0.1, 1.);
   }
 
   public mouseMove(mouseDown: Vertex, mouseCoords: Vertex) {

@@ -1355,6 +1355,7 @@ def plot_canvas(plot_data_object: PlotDataObject,
     lib_path = cdn_url.format(version, filename)
     if debug_mode:
         core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
+        core_path = core_path.replace(" ", "%20")
 
         if not os.path.isfile(core_path):
             msg = 'Local compiled {} not found, fall back to CDN'

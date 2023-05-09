@@ -1360,7 +1360,7 @@ def plot_canvas(plot_data_object: PlotDataObject,
             msg = 'Local compiled {} not found, fall back to CDN'
             print(msg.format(core_path))
         else:
-            lib_path = core_path
+            lib_path = core_path.replace(" ", "%20")
 
     s = template.substitute(data=json.dumps(data), core_path=lib_path,
                             canvas_id=canvas_id, width=width, height=height)

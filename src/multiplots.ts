@@ -892,8 +892,8 @@ export class MultiplePlots {
         } else if (otherPlot instanceof PrimitiveGroupContainer) {
           otherPlot.reset_action();
         } else if (otherPlot instanceof Histogram) {
-          otherPlot.reset_scales();
-          otherPlot.reset_x_rubberband();
+          // otherPlot.reset_scales();
+          // otherPlot.reset_x_rubberband();
         }
       }
     }
@@ -910,7 +910,7 @@ export class MultiplePlots {
           otherPlot.reset_pp_selected();
           otherPlot.reset_rubberbands();
         } else if (otherPlot instanceof Histogram) {
-          otherPlot.reset_x_rubberband();
+          // otherPlot.reset_x_rubberband();
         } else if (otherPlot instanceof PrimitiveGroupContainer) {
           otherPlot.reset_selection();
         }
@@ -1348,7 +1348,7 @@ export class MultiplePlots {
             subplot.rubber_bands[0].updateFromOther(
               rubberBand, subplot.axis_x_start, subplot.axis_x_end, false, currentPP.inverted_axis_list[actualRubberIndex]);
           })
-          subplot.get_selected_keys();
+          // subplot.get_selected_keys();
 
         } else if (subplot instanceof PrimitiveGroupContainer) {
           subplot.selected_point_index = selectedIndices;

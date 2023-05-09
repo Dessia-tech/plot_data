@@ -1810,7 +1810,7 @@ export class Frame extends BasePlot {
   }
 }
 
-export class newHistogram extends Frame {
+export class Histogram extends Frame {
   public bars: Bar[] = [];
   readonly barsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly barsColorStroke: string = 'hsl(0, 0%, 0%)';
@@ -1975,7 +1975,7 @@ export class newHistogram extends Frame {
   }
 }
 
-export class Histogram extends PlotData {
+export class oldHistogram extends PlotData {
     edge_style: EdgeStyle;
     surface_style: SurfaceStyle;
     x_variable: Attribute;

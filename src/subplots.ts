@@ -1491,7 +1491,7 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: any[] = [];
 
-  protected initScale: Vertex = new Vertex(1, -1);
+  protected initScale: Vertex = new Vertex(0.5, -1);
   public canvasScale: Vertex;
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
 
@@ -1688,7 +1688,7 @@ export class BasePlot extends PlotData {
             }
           }
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
-          this.viewPoint.transformSelf(this.canvasMatrix);
+          this.viewPoint.transformSelf(this.canvasMatrix.inverse());
           this.draw(); // needs a refactor
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];

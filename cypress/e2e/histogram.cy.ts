@@ -1,6 +1,6 @@
 import { parseHTML } from '../support/parseHTML';
 import histogramData from '../data_src/histogram.data.json';
-import { Frame, Histogram } from '../../src/subplots';
+import { Frame, newHistogram } from '../../src/subplots';
 import { Vertex, newPoint2D } from '../../src/utils';
 
 const FEATURE_NAME = "histogram"
@@ -27,7 +27,7 @@ describe('HISTOGRAM CANVAS', function () {
     cy.compareSnapshot(describeTitle + this.test.title, 0.05);
   })
 
-  let histogram: Histogram;
+  let histogram: newHistogram;
   it("should select with rubber band", function () {
     cy.window().then(win => {
       histogram = win.eval('plot_data')

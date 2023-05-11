@@ -71,13 +71,13 @@ plots2 = [parallelplot1, parallelplot2, scatterplot1,
          scatterplot2, scatterplot3, graph2d, primitive_group_container,
          histogram]
 
-plots3 = [histogram, histogram]
+plots3 = [scatterplot2, histogram, histogram]
 
 # plots = [scatterplot1, scatterplot2]
 
 # multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 # plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True)
-plot_data_object = plot_data.MultiplePlots(plots=plots3, elements=elements, initial_view_on=True, coords = [(0, 0), (300, 0)])
+plot_data_object = plot_data.MultiplePlots(plots=plots3, elements=elements, initial_view_on=True)
 
 # Display
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

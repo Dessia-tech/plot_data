@@ -1,7 +1,7 @@
 import {PlotData, Interactions} from './plot-data';
 import {Graph2D, Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, newHistogram, oldHistogram, Frame } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
 
@@ -95,8 +95,7 @@ export class MultiplePlots {
           }
         } else if (object_type_ === 'histogram') {
           this.dataObjects[i]['elements'] = elements;
-          newObject = new Histogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-          
+          newObject = new newHistogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
         } else {
           throw new Error('MultiplePlots constructor : invalid object type');
         }
@@ -117,6 +116,7 @@ export class MultiplePlots {
         this.initializeButtons();
         this.draw_buttons();
       }
+      
       if (data['initial_view_on']) {
         this.clean_view();
         this.store_dimensions();
@@ -893,7 +893,7 @@ export class MultiplePlots {
           plot.reset_scales();
         } else if (plot instanceof PrimitiveGroupContainer) {
           plot.reset_action();
-        } else if (plot instanceof Histogram) {
+        } else if (plot instanceof newHistogram) {
           plot.reset_scales();
           // plot.reset_x_rubberband();
         }
@@ -911,7 +911,7 @@ export class MultiplePlots {
         } else if (otherPlot instanceof ParallelPlot) {
           otherPlot.reset_pp_selected();
           otherPlot.reset_rubberbands();
-        } else if (otherPlot instanceof Histogram) {
+        } else if (otherPlot instanceof oldHistogram) {
           // otherPlot.reset_x_rubberband();
         } else if (otherPlot instanceof PrimitiveGroupContainer) {
           otherPlot.reset_selection();
@@ -1073,6 +1073,15 @@ export class MultiplePlots {
           this.objectList[this.sorted_list[current_index]][big_length] = big_length_step;
           this.objectList[this.sorted_list[current_index]][small_length] = small_length_step;
 
+          if (this.objectList[this.sorted_list[current_index]] instanceof newHistogram) {
+            this.objectList[this.sorted_list[current_index]]["origin"][big_coord.toLowerCase()] = i*big_length_step + (i+1)*blank_space;
+            this.objectList[this.sorted_list[current_index]]["origin"][small_coord.toLowerCase()] = j*small_length_step + (j+1)*blank_space;
+            this.objectList[this.sorted_list[current_index]]["size"][big_coord.toLowerCase()] = big_length_step;
+            this.objectList[this.sorted_list[current_index]]["size"][small_coord.toLowerCase()] = small_length_step;
+            console.log(this.objectList[this.sorted_list[current_index]]["movingMatrix"])
+
+          }
+
           if (obj.type_ === 'primitivegroupcontainer') {
             for (let k=0; k<obj.primitive_groups.length; k++) {
               obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
@@ -1099,6 +1108,14 @@ export class MultiplePlots {
         this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
         this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
 
+        if (this.objectList[this.sorted_list[last_index + j]] instanceof newHistogram){
+          this.objectList[this.sorted_list[last_index + j]]["origin"][big_coord.toLowerCase()] = (this.big_length_nb_objects - 1)*big_length_step + this.big_length_nb_objects*blank_space;
+          this.objectList[this.sorted_list[last_index + j]]["origin"][small_coord.toLowerCase()] = j*last_small_length_step + (j+1)*blank_space;
+          this.objectList[this.sorted_list[last_index + j]]["size"][big_coord.toLowerCase()] = big_length_step;
+          this.objectList[this.sorted_list[last_index + j]]["size"][small_coord.toLowerCase()] = small_length_step;
+          console.log(this.objectList[this.sorted_list[last_index + j]])
+        }
+
         if (obj.type_ === 'primitivegroupcontainer') {
           for (let k=0; k<obj.primitive_groups.length; k++) {
             obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
@@ -1110,6 +1127,7 @@ export class MultiplePlots {
       this.resetAllObjects();
       this.redrawAllObjects();
       this.view_on_disposition = true;
+      console.log(this.objectList)
     }
 
     resizeObject(vertex_infos, tx, ty):void {
@@ -1344,7 +1362,7 @@ export class MultiplePlots {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
           }
-        } else if (subplot instanceof Histogram) {
+        } else if (subplot instanceof oldHistogram) {
           rubberBandsInPlot.forEach((rubberBand) => {
             let actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
             subplot.rubber_bands[0].updateFromOther(

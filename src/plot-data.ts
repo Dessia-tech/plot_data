@@ -1,6 +1,6 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, Vertex } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
@@ -193,6 +193,10 @@ export abstract class PlotData {
   selected_areas: number[][];
   heatmap_table;
 
+  // NEW
+  _initScale: Vertex;
+  origin: Vertex;
+
   public constructor(
     public data:any,
     public width: number,
@@ -269,6 +273,9 @@ export abstract class PlotData {
     }
   }
 
+  get initScale(): Vertex {return this._initScale}
+
+  set initScale(value: Vertex) {this._initScale = value}
 
   reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.maxX - this.minX), this.height/(this.maxY - this.minY));
@@ -288,11 +295,12 @@ export abstract class PlotData {
       this.scaleY = this.init_scaleY;
       this.originX = this.width/2 - (this.maxX + this.minX)*this.scaleX/2 + this.decalage_axis_x/2;
       this.originY = this.height/2 - (this.maxY + this.minY)*this.scaleY/2 - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/2;
-
-    } else if (this.type_ === 'histogram') {
-      this.init_scale = 0.95*(this.width - this.decalage_axis_x)/(this['max_abs'] - this['min_abs']);
+    } else if (this.type_ == 'histogram') {
+      // this.init_scale = 0.95*(this.width - this.decalage_axis_x)/(this['max_abs'] - this['min_abs']);
+      this.initScale = new Vertex(this.width/(this.maxX - this.minX), this.height/(this.maxY - this.minY));
       this.scale = this.init_scale;
       this.originX = this.decalage_axis_x - this.scale*this['min_abs'];
+      this.origin.x = this.originX;
     } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;

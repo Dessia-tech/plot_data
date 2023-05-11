@@ -1801,7 +1801,7 @@ export class Bar extends newRect {
 }
 
 export class newAxis {
-  public ticksCoords: Vertex[];
+  public ticksCoords: newPoint2D[];
   public drawPath: Path2D;
   public path: Path2D;
   public lineWidth: number = 2;

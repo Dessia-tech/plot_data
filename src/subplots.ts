@@ -1491,7 +1491,8 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: any[] = [];
 
-  private _initScale: Vertex = new Vertex(1, -1);
+  public _initScale: Vertex = new Vertex(1, -1);
+  public canvasScale: Vertex;
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
 
   readonly features: Map<string, any[]>;
@@ -1513,18 +1514,29 @@ export class BasePlot extends PlotData {
       this.features = this.unpackData(data);
       this.selectedIndex = Array.from([...this.features][0][1], x => x = false);
       this.scaleX = this.scaleY = 1;
+      this.canvasScale = this.initScale.copy();
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
+      this.refresh_MinMax();
     }
+
+  refresh_MinMax(): void {
+    this.minX = this.origin.x;
+    this.maxX = this.origin.x + this.size.x;
+    this.minY = this.origin.y;
+    this.maxY = this.origin.y + this.size.y;
+  }
 
   set axisStyle(newAxisStyle: Map<string, any>) {newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value))}
 
   get axisStyle() {return this._axisStyle};
 
-  get canvasMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
+  get canvasMatrix() {return new DOMMatrix([this.canvasScale.x, 0, 0, this.canvasScale.y, this.origin.x, this.origin.y])}
 
-  get movingMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
+  get movingMatrix() {return new DOMMatrix([this.canvasScale.x, 0, 0, this.canvasScale.y, this.origin.x, this.origin.y])}
 
   get initScale(): Vertex {return this._initScale}
+
+  set initScale(value: Vertex) {this._initScale = value}
 
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();
@@ -1538,12 +1550,13 @@ export class BasePlot extends PlotData {
 
   public drawCanvas(): void {
     this.context_show.save()
+    this.context = this.context_show;
     this.draw_empty_canvas(this.context_show);
     if (this.settings_on) {this.draw_settings_rect()}
-    else {this.context = this.context_show ; this.draw_rect()}
+    else {this.draw_rect()}
     this.context_show.beginPath();
     this.context_show.rect(this.X, this.Y, this.width, this.height);
-    this.context_show.clip();
+    // this.context_show.clip();
     this.context_show.closePath();
   }
 
@@ -1574,18 +1587,16 @@ export class BasePlot extends PlotData {
   }
 
   public draw(): void {
-    this.drawCanvas()
+    this.drawCanvas();
     this.context_show.setTransform(this.canvasMatrix);
     this.updateAxes();
     this.drawAxes();
     this.context_show.restore();
   }
 
-  public draw_initial(): void {this.draw()}
+  public draw_initial(): void {this.reset_scales();this.draw()}
 
-  public draw_from_context(hidden: any) {
-    return
-  }
+  public draw_from_context(hidden: any) {return}
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
     objects.forEach(object => {
@@ -1777,6 +1788,12 @@ export class Frame extends BasePlot {
 
   set nYTicks(value: number) {this._nYTicks = value}
 
+  public reset_scales(): void {
+    this.setAxes();
+    this.canvasScale.x = this.initScale.x * (this.size.x - this.MARGIN.x - this.OFFSET.x) / (this.axes[0].end.x - this.axes[0].origin.x);
+    this.canvasScale.y = this.initScale.y * (this.size.y - this.MARGIN.y - this.OFFSET.y) / (this.axes[1].end.y - this.axes[1].origin.y);
+  }
+
   public setFeatures(data: any): [string, string] {
     return [data.x_variable, data.y_variable];
   }
@@ -1806,11 +1823,12 @@ export class Frame extends BasePlot {
       yEnd.y = -(this.size.y - yEnd.y);
       xEnd.y = frameOrigin.y;
     }
+    console.log('g', frameOrigin, xEnd, yEnd)
     return [frameOrigin, xEnd, yEnd]
   }
 }
 
-export class Histogram extends Frame {
+export class newHistogram extends Frame {
   public bars: Bar[] = [];
   readonly barsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly barsColorStroke: string = 'hsl(0, 0%, 0%)';
@@ -1893,12 +1911,12 @@ export class Histogram extends Frame {
   public draw(): void {
     this.updateAxes();
     this.getBarsDrawing();
-    [this.context_show].forEach(context => {
-      context.setTransform(this.movingMatrix);
-      this.bars.forEach(bar => {bar.buildPath() ; bar.draw(context)});
-      context.resetTransform();
-    })
+
+    this.context_show.setTransform(this.movingMatrix);
+    this.bars.forEach(bar => {bar.buildPath() ; bar.draw(this.context_show)});
+    this.context_show.resetTransform();
     this.movingObjects = this.bars;
+
     this.context_show.setTransform(this.canvasMatrix);
     super.drawAxes();
     this.context_show.resetTransform();
@@ -2516,7 +2534,7 @@ export class ScatterMatrix extends PlotData {
           if (i === j) {
             let data1 = {x_variable: axes[i], elements: this.elements, graduation_nb: 4,
               package_version: data["package_version"], type_: "histogram"};
-            var obj: any = new Histogram(data1, x_step, y_step, false, i*x_step, j*y_step, "hist"+i);
+            var obj: any = new newHistogram(data1, x_step, y_step, false, i*x_step, j*y_step, "hist"+i);
           } else {
             let data1 = {attribute_names: [axes[i], axes[j]], elements: this.elements,
               type_: "scatterplot", package_version: data["package_version"],

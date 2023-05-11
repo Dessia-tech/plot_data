@@ -69,6 +69,7 @@
     "html-webpack-plugin": "^5.5.0",
     "ignore-errors": "^2.0.0",
     "ts-loader": "^9.2.6",
+    "typedoc": "^0.23.28",
     "webpack": "^5.75.0"
   },
   "husky": {

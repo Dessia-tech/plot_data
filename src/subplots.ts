@@ -1491,7 +1491,7 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: any[] = [];
 
-  public _initScale: Vertex = new Vertex(1, -1);
+  protected initScale: Vertex = new Vertex(1, -1);
   public canvasScale: Vertex;
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
 
@@ -1533,10 +1533,6 @@ export class BasePlot extends PlotData {
   get canvasMatrix() {return new DOMMatrix([this.canvasScale.x, 0, 0, this.canvasScale.y, this.origin.x, this.origin.y])}
 
   get movingMatrix() {return new DOMMatrix([this.canvasScale.x, 0, 0, this.canvasScale.y, this.origin.x, this.origin.y])}
-
-  get initScale(): Vertex {return this._initScale}
-
-  set initScale(value: Vertex) {this._initScale = value}
 
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();

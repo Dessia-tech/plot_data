@@ -1424,6 +1424,13 @@ export class Vertex {
 
   public get norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
 
+  public scale(scale: Vertex) {
+    let copy = this.copy();
+    copy.x = this.x * scale.x;
+    copy.y = this.y * scale.y;
+    return copy
+  }
+
   public subtract(other: Vertex) {
     let copy = this.copy();
     copy.x = this.x - other.x;
@@ -1812,7 +1819,7 @@ export class newAxis {
   public labels: string[];
   public isHover: boolean = false;
   public isClicked: boolean = false;
-  public mouseStyleON: boolean = false;
+  public mouseStyleON: boolean = true;
   public rubberBand: RubberBand;
 
   protected _ticks: number[];
@@ -1951,6 +1958,7 @@ export class newAxis {
     context.strokeStyle = color;
     context.fillStyle = color;
     context.stroke(this.drawPath);
+    context.stroke(this.path);
     context.fill(this.drawPath);
 
     const canvasHTMatrix = context.getTransform();

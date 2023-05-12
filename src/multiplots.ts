@@ -1074,12 +1074,11 @@ export class MultiplePlots {
           this.objectList[this.sorted_list[current_index]][small_length] = small_length_step;
 
           if (this.objectList[this.sorted_list[current_index]] instanceof newHistogram) {
-            this.objectList[this.sorted_list[current_index]]["origin"][big_coord.toLowerCase()] = i*big_length_step + (i+1)*blank_space;
-            this.objectList[this.sorted_list[current_index]]["origin"][small_coord.toLowerCase()] = j*small_length_step + (j+1)*blank_space;
-            this.objectList[this.sorted_list[current_index]]["size"][big_coord.toLowerCase()] = big_length_step;
-            this.objectList[this.sorted_list[current_index]]["size"][small_coord.toLowerCase()] = small_length_step;
+            // this.objectList[this.sorted_list[current_index]]["origin"][big_coord.toLowerCase()] = i*big_length_step + (i+1)*blank_space;
+            // this.objectList[this.sorted_list[current_index]]["origin"][small_coord.toLowerCase()] = j*small_length_step + (j+1)*blank_space;
+            // this.objectList[this.sorted_list[current_index]]["size"][big_coord.toLowerCase()] = big_length_step;
+            // this.objectList[this.sorted_list[current_index]]["size"][small_coord.toLowerCase()] = small_length_step;
             console.log(this.objectList[this.sorted_list[current_index]]["movingMatrix"])
-
           }
 
           if (obj.type_ === 'primitivegroupcontainer') {
@@ -1109,10 +1108,10 @@ export class MultiplePlots {
         this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
 
         if (this.objectList[this.sorted_list[last_index + j]] instanceof newHistogram){
-          this.objectList[this.sorted_list[last_index + j]]["origin"][big_coord.toLowerCase()] = (this.big_length_nb_objects - 1)*big_length_step + this.big_length_nb_objects*blank_space;
-          this.objectList[this.sorted_list[last_index + j]]["origin"][small_coord.toLowerCase()] = j*last_small_length_step + (j+1)*blank_space;
-          this.objectList[this.sorted_list[last_index + j]]["size"][big_coord.toLowerCase()] = big_length_step;
-          this.objectList[this.sorted_list[last_index + j]]["size"][small_coord.toLowerCase()] = small_length_step;
+          // this.objectList[this.sorted_list[last_index + j]]["origin"][big_coord.toLowerCase()] = (this.big_length_nb_objects - 1)*big_length_step + this.big_length_nb_objects*blank_space;
+          // this.objectList[this.sorted_list[last_index + j]]["origin"][small_coord.toLowerCase()] = j*last_small_length_step + (j+1)*blank_space;
+          // this.objectList[this.sorted_list[last_index + j]]["size"][big_coord.toLowerCase()] = big_length_step;
+          // this.objectList[this.sorted_list[last_index + j]]["size"][small_coord.toLowerCase()] = small_length_step;
           console.log(this.objectList[this.sorted_list[last_index + j]])
         }
 

@@ -1491,8 +1491,7 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: any[] = [];
 
-  protected initScale: Vertex = new Vertex(0.5, -1);
-  public canvasScale: Vertex;
+  protected initScale: Vertex = new Vertex(-1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
 
   readonly features: Map<string, any[]>;
@@ -1509,12 +1508,11 @@ export class BasePlot extends PlotData {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.origin = new Vertex(X, Y);
-      this.size = new Vertex(width, height);
+      this.origin = new Vertex(0, 0);
+      this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
       this.selectedIndex = Array.from([...this.features][0][1], x => x = false);
       this.scaleX = this.scaleY = 1;
-      this.canvasScale = this.initScale.copy();
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
     }
@@ -1530,9 +1528,9 @@ export class BasePlot extends PlotData {
 
   get axisStyle() {return this._axisStyle};
 
-  get canvasMatrix() {return new DOMMatrix([this.canvasScale.x, 0, 0, this.canvasScale.y, this.origin.x, this.origin.y])}
+  get canvasMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
 
-  get movingMatrix() {return new DOMMatrix([this.canvasScale.x, 0, 0, this.canvasScale.y, this.origin.x, this.origin.y])}
+  get movingMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
 
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();
@@ -1590,7 +1588,7 @@ export class BasePlot extends PlotData {
     this.context_show.restore();
   }
 
-  public draw_initial(): void {this.reset_scales();this.draw()}
+  public draw_initial(): void {this.draw()}
 
   public draw_from_context(hidden: any) {return}
 
@@ -1785,9 +1783,12 @@ export class Frame extends BasePlot {
   set nYTicks(value: number) {this._nYTicks = value}
 
   public reset_scales(): void {
-    this.setAxes();
-    this.canvasScale.x = this.initScale.x * (this.size.x - this.MARGIN.x - this.OFFSET.x) / (this.axes[0].end.x - this.axes[0].origin.x);
-    this.canvasScale.y = this.initScale.y * (this.size.y - this.MARGIN.y - this.OFFSET.y) / (this.axes[1].end.y - this.axes[1].origin.y);
+    const rubberBands = [this.axes[0].rubberBand, this.axes[1].rubberBand];
+    
+    this.size = new Vertex(this.width, this.height);
+    this.axes = this.setAxes();
+    this.axes[0].rubberBand = rubberBands[0];
+    this.axes[1].rubberBand = rubberBands[1];
   }
 
   public setFeatures(data: any): [string, string] {
@@ -1806,9 +1807,9 @@ export class Frame extends BasePlot {
   }
 
   public setFrameBounds() {
-    let frameOrigin = this.origin.add(this.OFFSET);
-    let xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x, frameOrigin.y);
-    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y);
+    let frameOrigin = this.origin.add(this.OFFSET).add(new Vertex(this.X, this.Y).scale(this.initScale));
+    let xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x + this.X * this.initScale.x, frameOrigin.y);
+    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y + this.Y * this.initScale.y);
     if (this.canvasMatrix.a < 0) {
       frameOrigin.x = -(this.size.x - frameOrigin.x);
       xEnd.x = -(this.size.x - xEnd.x);
@@ -1819,7 +1820,6 @@ export class Frame extends BasePlot {
       yEnd.y = -(this.size.y - yEnd.y);
       xEnd.y = frameOrigin.y;
     }
-    console.log('g', frameOrigin, xEnd, yEnd)
     return [frameOrigin, xEnd, yEnd]
   }
 }

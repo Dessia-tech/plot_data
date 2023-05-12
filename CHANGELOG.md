@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Doc Typescript
 
 ## [0.13.0]
+### Fix
+- Allow to put " " in file paths
+
 ## [0.12.2]
 ### Fix
 - update selected_point_index when selecting from parallelplot

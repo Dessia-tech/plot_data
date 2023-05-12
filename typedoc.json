@@ -1,0 +1,15 @@
+{
+    "$schema": "https://typedoc.org/schema.json",
+    "entryPoints": ["./src/plot-data.ts",
+	   	    "./src/color_conversion.ts",
+		    "./src/html.ts",
+		    "./src/primitives.ts",
+		    "./src/toolbox.ts",
+		    "./src/core.ts",
+		    "./src/multiplots.ts",
+		    "./src/style.ts",
+		    "./src/utils.ts",
+		    "./src/declare.ts",
+		    "./src/subplots.ts"],
+    "out": "doc/build/typescript/"
+}

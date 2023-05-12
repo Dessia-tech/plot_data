@@ -1491,7 +1491,7 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: any[] = [];
 
-  protected initScale: Vertex = new Vertex(-1, 1);
+  protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
 
   readonly features: Map<string, any[]>;
@@ -1784,7 +1784,7 @@ export class Frame extends BasePlot {
 
   public reset_scales(): void {
     const rubberBands = [this.axes[0].rubberBand, this.axes[1].rubberBand];
-    
+
     this.size = new Vertex(this.width, this.height);
     this.axes = this.setAxes();
     this.axes[0].rubberBand = rubberBands[0];

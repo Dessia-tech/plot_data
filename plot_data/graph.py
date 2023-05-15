@@ -24,9 +24,9 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                                           name=name)
 
     def _to_primitives(self, text_style: plot_data.TextStyle = None):
-        r = 0.04
+        r = 0.01
         primitives = []
-        pos = nx.kamada_kawai_layout(self.graph)
+        pos = nx.spring_layout(self.graph)
 
         for edge in self.graph.edges:
             node1, node2 = edge[0], edge[1]

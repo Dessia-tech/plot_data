@@ -1660,6 +1660,8 @@ export class BasePlot extends PlotData {
           if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) { // i like it !
             canvas.style.cursor = 'move';
             this.translation = this.mouseTranslate(canvasMouse, canvasDown);
+          } else if (clickedObject instanceof newAxis) {
+            this.is_drawing_rubber_band = clickedObject.is_drawing_rubberband;
           }
         }
         this.draw();

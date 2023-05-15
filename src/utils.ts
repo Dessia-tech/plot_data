@@ -1832,6 +1832,10 @@ export class newAxis {
   readonly SIZE_END = 10;
   readonly FONT_SIZE = 12;
   readonly FONT = 'sans-serif';
+
+  // OLD
+  public is_drawing_rubberband: boolean = false;
+
   constructor(
     vector: any[],
     public origin: Vertex,
@@ -2064,15 +2068,19 @@ export class newAxis {
 
   public mouseDown(mouseDown: Vertex) {
     let isReset = false;
+    this.is_drawing_rubberband = true; // OLD
     const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
     if (!this.isInRubberBand(this.absoluteToRelative(mouseUniCoord))) {
       this.rubberBand.reset();
       isReset = true;
-    } else {this.rubberBand.mouseDown(mouseUniCoord)}
+    } else {this.rubberBand.mouseDown(mouseUniCoord);}
     return isReset
   }
 
-  public mouseUp() {this.rubberBand.mouseUp()}
+  public mouseUp() {
+    this.rubberBand.mouseUp();
+    this.is_drawing_rubberband = false; // OLD
+  }
 
   public isInRubberBand(value: number): boolean {
     return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false

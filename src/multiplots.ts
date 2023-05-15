@@ -1481,12 +1481,11 @@ export class MultiplePlots {
       }
     }
 
-    get_drawing_rubberbands_obj_index(type_):number {
+    get_drawing_rubberbands_obj_index(type_): number {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
-        console.log(obj.type_)
         if (obj.type_ === type_) {
-          if (obj.is_drawing_rubber_band === true && obj.type_ === type_) {return i}
+          if (obj.is_drawing_rubber_band === true) {return i}
         }
       }
       return -1;

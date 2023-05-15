@@ -571,7 +571,7 @@ export class MultiplePlots {
           if (obj.type_ == 'parallelplot') { this.objectList[display_index].refresh_axis_coords(); }
           this.objectList[display_index].draw();
         }
-        if (obj instanceof newHistogram) {obj.reset_scales()};
+        if (obj instanceof Frame) {obj.reset_scales()};
       }
       if (this.buttons_ON) {
         this.draw_buttons();
@@ -619,7 +619,7 @@ export class MultiplePlots {
       obj.X = obj.X + tx;
       obj.Y = obj.Y + ty;
       if (obj.type_ == 'parallelplot') { this.objectList[move_plot_index].refresh_axis_coords(); }
-      if (obj instanceof newHistogram) {obj.reset_scales()};
+      if (obj instanceof Frame) {obj.reset_scales()};
       // this.redraw_object();
       if (obj.type_ == 'primitivegroupcontainer') {
         for (let i=0; i<obj['primitive_groups'].length; i++) {
@@ -896,7 +896,7 @@ export class MultiplePlots {
           plot.reset_scales();
         } else if (plot instanceof PrimitiveGroupContainer) {
           plot.reset_action();
-        } else if (plot instanceof newHistogram) {
+        } else if (plot instanceof Frame) {
           plot.reset_scales();
           // plot.reset_x_rubberband();
         }

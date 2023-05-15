@@ -1610,7 +1610,7 @@ export class BasePlot extends PlotData {
 
   public projectMouse(e: MouseEvent) {
     const mouseCoords = new Vertex(e.offsetX, e.offsetY);
-    return [mouseCoords.transform(this.canvasMatrix.inverse()), mouseCoords.transform(this.movingMatrix.inverse())]
+    return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.movingMatrix.inverse())]
   }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {
@@ -1685,8 +1685,7 @@ export class BasePlot extends PlotData {
               if (this.scaleX < scale.x) {this.scaleX = scale.x}
             }
           }
-          this.viewPoint = new newPoint2D(mouse3X, mouse3Y);
-          this.viewPoint.transformSelf(this.canvasMatrix.inverse());
+          this.viewPoint = new newPoint2D(mouse3X, mouse3Y).scale(this.initScale);
           this.draw(); // needs a refactor
           this.axes.forEach(axis => {axis.saveLoc()});
           [this.scaleX, this.scaleY] = [1, 1];
@@ -1783,12 +1782,19 @@ export class Frame extends BasePlot {
   set nYTicks(value: number) {this._nYTicks = value}
 
   public reset_scales(): void {
-    const rubberBands = [this.axes[0].rubberBand, this.axes[1].rubberBand];
-
     this.size = new Vertex(this.width, this.height);
+    this.resetAxes();
+  }
+
+  private resetAxes(): void {
+    const rubberBands = [this.axes[0].rubberBand, this.axes[1].rubberBand];
+    const xAxisIdx = this.fixedObjects.indexOf(this.axes[0]);
+    const yAxisIdx = this.fixedObjects.indexOf(this.axes[1]);
     this.axes = this.setAxes();
     this.axes[0].rubberBand = rubberBands[0];
     this.axes[1].rubberBand = rubberBands[1];
+    this.fixedObjects[xAxisIdx] = this.axes[0];
+    this.fixedObjects[yAxisIdx] = this.axes[1];
   }
 
   public setFeatures(data: any): [string, string] {

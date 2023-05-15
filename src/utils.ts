@@ -1819,7 +1819,7 @@ export class newAxis {
   public labels: string[];
   public isHover: boolean = false;
   public isClicked: boolean = false;
-  public mouseStyleON: boolean = true;
+  public mouseStyleON: boolean = false;
   public rubberBand: RubberBand;
 
   protected _ticks: number[];
@@ -1958,7 +1958,6 @@ export class newAxis {
     context.strokeStyle = color;
     context.fillStyle = color;
     context.stroke(this.drawPath);
-    context.stroke(this.path);
     context.fill(this.drawPath);
 
     const canvasHTMatrix = context.getTransform();

@@ -1550,7 +1550,6 @@ export class BasePlot extends PlotData {
     else {this.draw_rect()}
     this.context_show.beginPath();
     this.context_show.rect(this.X, this.Y, this.width, this.height);
-    // this.context_show.clip();
     this.context_show.closePath();
   }
 
@@ -1787,14 +1786,9 @@ export class Frame extends BasePlot {
   }
 
   private resetAxes(): void {
-    const rubberBands = [this.axes[0].rubberBand, this.axes[1].rubberBand];
-    const xAxisIdx = this.fixedObjects.indexOf(this.axes[0]);
-    const yAxisIdx = this.fixedObjects.indexOf(this.axes[1]);
-    this.axes = this.setAxes();
-    this.axes[0].rubberBand = rubberBands[0];
-    this.axes[1].rubberBand = rubberBands[1];
-    this.fixedObjects[xAxisIdx] = this.axes[0];
-    this.fixedObjects[yAxisIdx] = this.axes[1];
+    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
+    this.axes[0].transform(frameOrigin, xEnd);
+    this.axes[1].transform(frameOrigin, yEnd);
   }
 
   public setFeatures(data: any): [string, string] {

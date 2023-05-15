@@ -1897,6 +1897,13 @@ export class newAxis {
 
   get transformMatrix(): DOMMatrix {return this.getValueToDrawMatrix()};
 
+  public transform(newOrigin: Vertex, newEnd: Vertex) {
+    this.origin = newOrigin;
+    this.end = newEnd;
+    this.drawPath = this.buildDrawPath();
+    this.path = this.buildPath();
+  }
+
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));
     const normedValue = Math.floor(value / Math.pow(10, tenPower - 2));

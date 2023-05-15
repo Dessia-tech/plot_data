@@ -1653,7 +1653,14 @@ export class BasePlot extends PlotData {
             this.translation = this.mouseTranslate(canvasMouse, canvasDown);
           }
         }
-        this.draw()
+        this.draw();
+        var is_inside_canvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
+        if (!is_inside_canvas) {
+          isDrawing = false;
+          this.axes.forEach(axis => {axis.saveLoc()});
+          this.translation = new Vertex(0, 0);
+          canvas.style.cursor = 'default';
+        }
       });
 
       canvas.addEventListener('mousedown', e => {
@@ -1696,6 +1703,9 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
         ctrlKey = false;
+        this.axes.forEach(axis => {axis.saveLoc()});
+        this.translation = new Vertex(0, 0);
+        canvas.style.cursor = 'default';
       });
     }
   }
@@ -1764,6 +1774,7 @@ export class Frame extends BasePlot {
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
       this.fixedObjects.push(...this.axes);
+      this.type_ = 'frame';
     }
 
   get movingMatrix(): DOMMatrix {

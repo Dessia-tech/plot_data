@@ -1370,7 +1370,7 @@ export class MultiplePlots {
     }
 
     mouse_move_histogram_communication() {
-      let index = this.get_drawing_rubberbands_obj_index('histogram');
+      let index = this.get_drawing_rubberbands_obj_index('frame');
       if (index === -1) return;
       this.histogram_communication(index);
     }
@@ -1385,7 +1385,7 @@ export class MultiplePlots {
           MultiplotCom.histogram_to_scatter_communication(histogram, obj);
         } else if (obj.type_ === 'parallelplot') {
           MultiplotCom.histogram_to_pp_communication(histogram, obj);
-        } else if (obj.type_ === 'histogram') {
+        } else if (obj.type_ === 'frame') {
           MultiplotCom.histogram_to_histogram_communication(histogram, obj);
         } else if (obj.type_ === "primitivegroupcontainer") {
           primitive_indices.push(i);
@@ -1849,8 +1849,6 @@ export class MultiplePlots {
               this.mouse_move_histogram_communication();
               this.redrawAllObjects();
             }
-            console.log(this.move_plot_index, this.clickedPlotIndex, this.clicked_index_list)
-            if (this.move_plot_index != this.clickedPlotIndex) {this.clicked_index_list = []}
             this.refresh_selected_point_index();
             this.redraw_object();
           } else {

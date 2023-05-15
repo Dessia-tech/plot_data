@@ -1849,6 +1849,8 @@ export class MultiplePlots {
               this.mouse_move_histogram_communication();
               this.redrawAllObjects();
             }
+            console.log(this.move_plot_index, this.clickedPlotIndex, this.clicked_index_list)
+            if (this.move_plot_index != this.clickedPlotIndex) {this.clicked_index_list = []}
             this.refresh_selected_point_index();
             this.redraw_object();
           } else {

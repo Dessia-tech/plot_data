@@ -567,14 +567,16 @@ export class MultiplePlots {
       for (let i=0; i<this.nbObjects; i++) {
         let display_index = this.display_order[i];
         if (List.is_include(display_index, this.to_display_plots)) {
-          let obj = this.objectList[display_index];
+          var obj = this.objectList[display_index];
           if (obj.type_ == 'parallelplot') { this.objectList[display_index].refresh_axis_coords(); }
           this.objectList[display_index].draw();
         }
+        if (obj instanceof newHistogram) {obj.reset_scales()};
       }
       if (this.buttons_ON) {
         this.draw_buttons();
       }
+
     }
 
     redraw_object() {
@@ -617,6 +619,7 @@ export class MultiplePlots {
       obj.X = obj.X + tx;
       obj.Y = obj.Y + ty;
       if (obj.type_ == 'parallelplot') { this.objectList[move_plot_index].refresh_axis_coords(); }
+      if (obj instanceof newHistogram) {obj.reset_scales()};
       // this.redraw_object();
       if (obj.type_ == 'primitivegroupcontainer') {
         for (let i=0; i<obj['primitive_groups'].length; i++) {

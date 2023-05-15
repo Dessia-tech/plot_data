@@ -1269,8 +1269,8 @@ export class MultiplePlots {
             if (subplotData.attribute_names.includes(rubberBand.attributeName)) {
               rubberBandsInPlot.push(rubberBand);
             }
-          } else if (subplotData.type_ === "histogram") {
-            if (subplotData.x_variable === rubberBand.attributeName) {
+          } else if (subplot.type_ === "frame") {
+            if ((subplot as Frame).xFeature === rubberBand.attributeName) {
               rubberBandsInPlot.push(rubberBand);
             }
           } else if (subplotData.type_ === "primitivegroupcontainer") {
@@ -1347,14 +1347,13 @@ export class MultiplePlots {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
           }
-        } else if (subplot instanceof oldHistogram) {
+        } else if (subplot instanceof Frame) {
           rubberBandsInPlot.forEach((rubberBand) => {
-            let actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
-            subplot.rubber_bands[0].updateFromOther(
-              rubberBand, subplot.axis_x_start, subplot.axis_x_end, false, currentPP.inverted_axis_list[actualRubberIndex]);
-          })
+            subplot.axes[0].rubberBand.minValue = rubberBand.minValue;
+            subplot.axes[0].rubberBand.maxValue = rubberBand.maxValue;
+            subplot.draw()
           // subplot.get_selected_keys();
-
+          })
         } else if (subplot instanceof PrimitiveGroupContainer) {
           subplot.selected_point_index = selectedIndices;
           if (selectedIndices.length == 0) {
@@ -1370,7 +1369,8 @@ export class MultiplePlots {
     }
 
     mouse_move_histogram_communication() {
-      let index = this.get_drawing_rubberbands_obj_index('frame');
+      let index = this.get_drawing_rubberbands_obj_index("frame");
+      console.log(index)
       if (index === -1) return;
       this.histogram_communication(index);
     }
@@ -1385,7 +1385,7 @@ export class MultiplePlots {
           MultiplotCom.histogram_to_scatter_communication(histogram, obj);
         } else if (obj.type_ === 'parallelplot') {
           MultiplotCom.histogram_to_pp_communication(histogram, obj);
-        } else if (obj.type_ === 'frame') {
+        } else if (obj.type_ === "frame") {
           MultiplotCom.histogram_to_histogram_communication(histogram, obj);
         } else if (obj.type_ === "primitivegroupcontainer") {
           primitive_indices.push(i);
@@ -1484,9 +1484,9 @@ export class MultiplePlots {
     get_drawing_rubberbands_obj_index(type_):number {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
+        console.log(obj.type_)
         if (obj.type_ === type_) {
-        // if (obj.is_drawing_rubber_band === true && obj.type_ === type_) {
-            return i;
+          if (obj.is_drawing_rubber_band === true && obj.type_ === type_) {return i}
         }
       }
       return -1;
@@ -1800,6 +1800,7 @@ export class MultiplePlots {
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
+        console.log(mouse1X, mouse1Y)
         old_selected_index = this.selected_point_index;
         if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();
@@ -2061,20 +2062,17 @@ export class MultiplotCom {
           break;
         }
       }
+      console.log(index)
       if (index === -1) return;
-      let x_variable = histogram.axes[0].name;
-      let x_rubberband = histogram.axes[0].rubberBand;
-      let list = [histogram.axes[0].minValue, histogram.axes[0].maxValue];
-      let axis_coord1 = parallel_plot.real_to_axis_coord(x_rubberband.minValue, x_variable.type_, list,
-                                                        parallel_plot.inverted_axis_list[index]);
-      axis_coord1 = Math.max(Math.min(axis_coord1, 1), 0);
-      let axis_coord2 = parallel_plot.real_to_axis_coord(x_rubberband.maxValue, x_variable.type_, list,
-                                                        parallel_plot.inverted_axis_list[index]);
-      axis_coord2 = Math.max(Math.min(axis_coord2, 1), 0);
-      parallel_plot.rubber_bands[index].axisMin = Math.min(axis_coord1, axis_coord2);
-      parallel_plot.rubber_bands[index].axisMax = Math.max(axis_coord1, axis_coord2);
-      parallel_plot.rubber_bands[index].minValue = x_rubberband.minValue;
-      parallel_plot.rubber_bands[index].maxValue = x_rubberband.maxValue;
+      let axisOrigin = parallel_plot.axis_x_start;
+      let axisEnd = parallel_plot.axis_x_end;
+      if (parallel_plot.vertical) {
+        axisOrigin = parallel_plot.axis_y_end;
+        axisEnd = parallel_plot.axis_y_start;
+      }
+      histogram.axes[0].rubberBand.valueToAxis(parallel_plot.axis_list[index].list[0], parallel_plot.axis_list[index].list[1])
+      parallel_plot.rubber_bands[index].updateFromOther(histogram.axes[0].rubberBand, axisOrigin, axisEnd,
+        parallel_plot.inverted_axis_list[index], false);
     }
 
 
@@ -2092,8 +2090,6 @@ export class MultiplotCom {
         scatter.perm_window_w = scatter.maxX - scatter.minX;
         scatter.perm_window_h = histogram.axes[0].rubberBand.maxValue - histogram.axes[0].rubberBand.minValue;
       }
-      console.log(scatter.perm_window_x, scatter.perm_window_y, scatter.perm_window_w, scatter.perm_window_h)
-
       Interactions.selection_window_action(scatter)
     }
 }

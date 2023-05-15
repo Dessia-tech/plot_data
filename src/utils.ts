@@ -1189,16 +1189,10 @@ export class RubberBand {
     this.realMax = this.axisMax * axisLength + initAxisCoord;
   }
 
-  public valueToAxis(axisOrigin: number, axisEnd: number, inverted: boolean) {
-    let min = this.minValue;
-    let max = this.maxValue;
-    if (inverted) {
-      min = this.maxValue;
-      max = this.minValue;
-    }
-    const axisLength = Math.abs(axisOrigin - axisEnd);
-    this.axisMin = min / axisLength;
-    this.axisMax = max / axisLength;
+  public valueToAxis(axisMin: number, axisMax: number): void {
+    const interval = Math.abs(axisMin - axisMax)
+    this.axisMin = this.minValue / interval;
+    this.axisMax = this.maxValue / interval;
   }
 
   public axisToValue(axisValue: number, axis: Attribute, inverted: boolean): number { //from parallel plot axis coord (between 0 and 1) to real coord (between min_coord and max_coord)
@@ -1942,6 +1936,10 @@ export class newAxis {
 
   public relativeToAbsolute(value: number): number {
     return this.isVertical ? value * this.transformMatrix.d + this.transformMatrix.f : value * this.transformMatrix.a + this.transformMatrix.e
+  }
+
+  public normedValue(value: number): number {
+    return value / this.interval
   }
 
   private computeMinMax(vector: any[]): number[] {

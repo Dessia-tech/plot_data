@@ -1783,7 +1783,7 @@ export class Frame extends BasePlot {
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
       this.fixedObjects.push(...this.axes);
-      this.type_ = 'frame';
+      this.type_ = "frame";
     }
 
   get movingMatrix(): DOMMatrix {

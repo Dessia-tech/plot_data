@@ -914,8 +914,8 @@ export class MultiplePlots {
         } else if (otherPlot instanceof ParallelPlot) {
           otherPlot.reset_pp_selected();
           otherPlot.reset_rubberbands();
-        } else if (otherPlot instanceof oldHistogram) {
-          // otherPlot.reset_x_rubberband();
+        } else if (otherPlot instanceof Frame) {
+          otherPlot.reset();
         } else if (otherPlot instanceof PrimitiveGroupContainer) {
           otherPlot.reset_selection();
         }
@@ -1775,9 +1775,20 @@ export class MultiplePlots {
       var clickOnVertex:boolean = false;
       var old_selected_index;
       var double_click = false;
+      var ctrlKey = false; var shiftKey = false;
       // For canvas to read keyboard inputs.
       // this.canvas.setAttribute('tabindex', '0');
       // this.canvas.focus();
+
+      window.addEventListener('keydown', e => {
+        if (e.key == "Control") {ctrlKey = true}
+        if (e.key == "Shift") {shiftKey = true}
+      });
+
+      window.addEventListener('keyup', e => {
+        if (e.key == "Control") {ctrlKey = false}
+        if (e.key == "Shift") {shiftKey = false}
+      });
 
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
@@ -1789,7 +1800,7 @@ export class MultiplePlots {
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
         old_selected_index = this.selected_point_index;
-        if (e.ctrlKey) {
+        if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();
         } else {
           this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
@@ -1964,7 +1975,7 @@ export class MultiplePlots {
 
     // Not working well actually, but I let it here in case somebody wants to give it a try
       // canvas.addEventListener('keydown', e => {
-      //   if (e.ctrlKey) {
+      //   if (ctrlKey) {
       //     e.preventDefault();
       //     if (e.key === 'z') {
       //       this.restore_previous_canvas();

@@ -1904,6 +1904,8 @@ export class newAxis {
     this.path = this.buildPath();
   }
 
+  public reset(): void {this.rubberBand.reset()}
+
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));
     const normedValue = Math.floor(value / Math.pow(10, tenPower - 2));

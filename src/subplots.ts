@@ -1493,6 +1493,7 @@ export class BasePlot extends PlotData {
 
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
+  private nSamples: number;
 
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1508,6 +1509,7 @@ export class BasePlot extends PlotData {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.nSamples = data.elements.length;
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
@@ -1568,8 +1570,15 @@ export class BasePlot extends PlotData {
     } else {this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false)};
   }
 
+  public reset(): void {
+    this.axes.forEach(axis => axis.reset());
+    this.hoveredIndex = [];
+    this.clickedIndex = [];
+    this.selectedIndex = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
+  }
+
   public updateSelected(axis: newAxis): boolean[] { // TODO: Performance
-    const boolSelection = Array.from(Array(this.features.get(axis.name).length), () => false);
+    const boolSelection = Array.from(Array(this.nSamples), () => false);
     const vector = axis.stringsToValues(this.features.get(axis.name));
     vector.forEach((value, index) => {if (axis.isInRubberBand(value)) {boolSelection[index] = true}});
     return boolSelection
@@ -1859,6 +1868,11 @@ export class newHistogram extends Frame {
   get nYTicks() {return this._nYTicks ? this._nYTicks : 10}
 
   set nYTicks(value: number) {this._nYTicks = value}
+
+  public reset(): void {
+    super.reset();
+    this.bars = undefined;
+  }
 
   private buildNumberAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
     const numberAxis = this.setAxis('number', frameOrigin, yEnd, this.nYTicks);

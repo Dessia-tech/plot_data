@@ -1,5 +1,5 @@
 import {PlotData, Interactions} from './plot-data';
-import {Graph2D, Point2D} from './primitives';
+import {Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, newHistogram, oldHistogram, Frame } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
@@ -1947,7 +1947,7 @@ export class MultiplePlots {
           this.zoom_elements(mouse3X, mouse3Y, event);
           this.redrawAllObjects();
         } else {
-          this.redraw_object();
+          this.redraw_object();          
         }
       });
 

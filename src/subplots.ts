@@ -1995,24 +1995,26 @@ export class newHistogram extends Frame {
     var event = -Math.sign(e.deltaY);
     mouse3X = e.offsetX;
     mouse3Y = e.offsetY;
-    if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
-      if (event>0) {
-        this.scaleX = this.scaleX * this.fusion_coeff;
-        this.scroll_x++;
-        this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-      } else if (event<0) {
-        this.scaleX = this.scaleX/this.fusion_coeff;
-        this.scroll_x--;
-        this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
+    if (!this.axes[0].isDiscrete) {
+      if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
+        if (event>0) {
+          this.scaleX = this.scaleX * this.fusion_coeff;
+          this.scroll_x++;
+          this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
+        } else if (event<0) {
+          this.scaleX = this.scaleX/this.fusion_coeff;
+          this.scroll_x--;
+          this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
+        }
+      } else {
+          if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+          this.scaleX = this.scaleX*coeff;
+          this.scroll_x = this.scroll_x + event;
+          this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
       }
-    } else {
-        if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
-        this.scaleX = this.scaleX*coeff;
-        this.scroll_x = this.scroll_x + event;
-        this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
+      if (isNaN(this.scroll_x)) this.scroll_x = 0;
+      if (isNaN(this.scroll_y)) this.scroll_y = 0;
     }
-    if (isNaN(this.scroll_x)) this.scroll_x = 0;
-    if (isNaN(this.scroll_y)) this.scroll_y = 0;
     return [mouse3X, mouse3Y];
   }
 }

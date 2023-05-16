@@ -19,7 +19,7 @@ random.seed(0)
 
 elements = []
 nb_elements = 50
-available_colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]
+available_colors = ["purple", "Blue", "green", "red", "Yellow", "Cyan", "rose"]
 directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
     random_color = available_colors[random.randint(0, len(available_colors) - 1)]
@@ -65,10 +65,11 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 
 histogram = plot_data.Histogram(x_variable='x')
 histogram2 = plot_data.Histogram(x_variable='direction')
+histogram3 = plot_data.Histogram(x_variable='color')
 
 # Creating the multiplot
 plots = [parallelplot1, scatterplot1]
-plots2 = [parallelplot1, parallelplot2, scatterplot1,
+plots2 = [parallelplot1, parallelplot2, histogram3, scatterplot1,
          scatterplot2, scatterplot3, graph2d, primitive_group_container, histogram, histogram2]
 
 

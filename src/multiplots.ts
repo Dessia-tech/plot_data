@@ -1370,7 +1370,6 @@ export class MultiplePlots {
 
     mouse_move_histogram_communication() {
       let index = this.get_drawing_rubberbands_obj_index("frame");
-      console.log(index)
       if (index === -1) return;
       this.histogram_communication(index);
     }
@@ -1799,7 +1798,6 @@ export class MultiplePlots {
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
-        console.log(mouse1X, mouse1Y)
         old_selected_index = this.selected_point_index;
         if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();

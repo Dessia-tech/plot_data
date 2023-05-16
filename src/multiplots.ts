@@ -1229,6 +1229,13 @@ export class MultiplePlots {
                 MultiplotCom.sc_to_pp_communication(selection_coords[i], to_display_attributes[i], k, this.objectList[j]);
               }
             }
+          } else if (this.objectList[j].type_ == 'frame') {
+            (this.objectList[j] as Frame).axes.forEach(axis => {
+              if (to_display_attributes[i]['name'] == axis.name) {
+                axis.rubberBand.minValue = Math.min(...selection_coords[i]);
+                axis.rubberBand.maxValue = Math.max(...selection_coords[i]);
+              }
+            })
           }
         }
       }

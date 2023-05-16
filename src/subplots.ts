@@ -1541,6 +1541,7 @@ export class BasePlot extends PlotData {
       data.elements.forEach((element) => {vector.push(element[feature])});
       unpackedData.set(feature, vector);
     });
+    console.log(data, unpackedData)
     return unpackedData
   }
 

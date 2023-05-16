@@ -2026,7 +2026,7 @@ export class newAxis {
     if (textAlign == 'right') {textWidth = textOrigin.x - 5};
     if (textAlign == 'center') {textWidth = (this.drawLength) / (this.nTicks * 1.5)};
     context.resetTransform()
-    const tickText = new newText(text, textOrigin, textWidth, this.FONT_SIZE, this.FONT, textAlign, baseline);
+    const tickText = new newText(newText.capitalize(text), textOrigin, textWidth, this.FONT_SIZE, this.FONT, textAlign, baseline);
     tickText.draw(context)
     context.setTransform(HTMatrix)
   }

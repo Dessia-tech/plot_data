@@ -2069,7 +2069,11 @@ export class MultiplotCom {
         axisOrigin = parallel_plot.axis_y_end;
         axisEnd = parallel_plot.axis_y_start;
       }
-      histogram.axes[0].rubberBand.valueToAxis(parallel_plot.axis_list[index].list[0], parallel_plot.axis_list[index].list[1])
+      if (typeof parallel_plot.axis_list[index].list[0] == "string") {
+        histogram.axes[0].rubberBand.valueToAxis(0, parallel_plot.axis_list[index].list.length)
+      } else {
+        histogram.axes[0].rubberBand.valueToAxis(parallel_plot.axis_list[index].list[0], parallel_plot.axis_list[index].list[1])
+      }
       parallel_plot.rubber_bands[index].updateFromOther(histogram.axes[0].rubberBand, axisOrigin, axisEnd,
         parallel_plot.inverted_axis_list[index], false);
     }

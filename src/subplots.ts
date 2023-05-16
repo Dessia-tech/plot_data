@@ -1687,6 +1687,7 @@ export class BasePlot extends PlotData {
         this.draw();
         this.axes.forEach(axis => {axis.saveLoc()});
         this.translation = new Vertex(0, 0);
+        this.is_drawing_rubber_band = false;
       })
 
       canvas.addEventListener('wheel', e => {

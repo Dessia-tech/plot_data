@@ -2074,6 +2074,7 @@ export class MultiplotCom {
         }
       }
       if (index === -1) return;
+      console.log(index, histogram.xFeature, parallel_plot.axis_list[index])
       let axisOrigin = parallel_plot.axis_x_start;
       let axisEnd = parallel_plot.axis_x_end;
       if (parallel_plot.vertical) {

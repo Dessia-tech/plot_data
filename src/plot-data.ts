@@ -2046,7 +2046,6 @@ export abstract class PlotData {
         this.draw();
 
         canvas.style.cursor = 'crosshair';
-        console.log(canvas.style.cursor)
         mouse_moving = true;
       }
     } else {

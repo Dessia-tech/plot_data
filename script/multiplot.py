@@ -68,8 +68,7 @@ histogram = plot_data.Histogram(x_variable='x')
 # Creating the multiplot
 plots = [parallelplot1, scatterplot1]
 plots2 = [parallelplot1, parallelplot2, scatterplot1,
-         scatterplot2, scatterplot3, graph2d, primitive_group_container,
-         histogram]
+         scatterplot2, scatterplot3, graph2d, primitive_group_container]
 
 # plots = [scatterplot1, scatterplot2]
 

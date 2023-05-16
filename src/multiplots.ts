@@ -1456,7 +1456,6 @@ export class MultiplePlots {
       }
     }
 
-
     manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
       this.move_plot_index = this.getLastObjectIndex(mouse2X, mouse2Y);
       var l = []
@@ -1985,9 +1984,19 @@ export class MultiplotCom {
       plot_data.rubber_bands[index].axisMax = max;
       plot_data.rubber_bands[index].minValue = coordinates[0];
       plot_data.rubber_bands[index].maxValue = coordinates[1];
-      if (plot_data instanceof ParallelPlot){
-        plot_data.refresh_pp_selected();
+      let axisOrigin = plot_data.axis_x_start;
+      let axisEnd = plot_data.axis_x_end;
+      if (plot_data.vertical) {
+        axisOrigin = plot_data.axis_y_start;
+        axisEnd = plot_data.axis_y_end;
       }
+      plot_data.rubber_bands[index].axisToReal(axisOrigin, axisEnd);
+      plot_data.rubber_bands[index].updateFromOther(plot_data.rubber_bands[index], axisOrigin, axisEnd,
+        plot_data.inverted_axis_list[index], plot_data.inverted_axis_list[index]);
+      console.log(plot_data.rubber_bands[index])
+      // if (plot_data instanceof ParallelPlot){
+      //   plot_data.refresh_pp_selected();
+      // }
     }
 
     public static sc_to_sc_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], plot_data:PlotData) {

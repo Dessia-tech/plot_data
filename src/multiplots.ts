@@ -1998,8 +1998,8 @@ export class MultiplotCom {
       var max = Math.min(axis_max, 1);
       plot_data.rubber_bands[index].axisMin = min;
       plot_data.rubber_bands[index].axisMax = max;
-      plot_data.rubber_bands[index].minValue = coordinates[0];
-      plot_data.rubber_bands[index].maxValue = coordinates[1];
+      // plot_data.rubber_bands[index].minValue = coordinates[0];
+      // plot_data.rubber_bands[index].maxValue = coordinates[1];
       if (plot_data instanceof ParallelPlot){
         plot_data.refresh_pp_selected();
       }

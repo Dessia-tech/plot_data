@@ -1460,7 +1460,6 @@ export class MultiplePlots {
       }
     }
 
-
     manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
       this.move_plot_index = this.getLastObjectIndex(mouse2X, mouse2Y);
       var l = []
@@ -1798,6 +1797,7 @@ export class MultiplePlots {
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
+        console.log(mouse1X, mouse1Y)
         old_selected_index = this.selected_point_index;
         if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();
@@ -2000,6 +2000,13 @@ export class MultiplotCom {
       plot_data.rubber_bands[index].axisMax = max;
       plot_data.rubber_bands[index].minValue = coordinates[0];
       plot_data.rubber_bands[index].maxValue = coordinates[1];
+      let axisOrigin = plot_data.axis_x_start;
+      let axisEnd = plot_data.axis_x_end;
+      if (plot_data.vertical) {
+        axisOrigin = plot_data.axis_y_end;
+        axisEnd = plot_data.axis_y_start;
+      }
+      plot_data.rubber_bands[index].axisToReal(axisOrigin, axisEnd);
       if (plot_data instanceof ParallelPlot){
         plot_data.refresh_pp_selected();
       }

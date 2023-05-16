@@ -1782,6 +1782,7 @@ export class MultiplePlots {
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
+        console.log(mouse1X, mouse1Y)
         old_selected_index = this.selected_point_index;
         if (e.ctrlKey) {
           this.reset_all_selected_points();
@@ -1987,16 +1988,13 @@ export class MultiplotCom {
       let axisOrigin = plot_data.axis_x_start;
       let axisEnd = plot_data.axis_x_end;
       if (plot_data.vertical) {
-        axisOrigin = plot_data.axis_y_start;
-        axisEnd = plot_data.axis_y_end;
+        axisOrigin = plot_data.axis_y_end;
+        axisEnd = plot_data.axis_y_start;
       }
       plot_data.rubber_bands[index].axisToReal(axisOrigin, axisEnd);
-      plot_data.rubber_bands[index].updateFromOther(plot_data.rubber_bands[index], axisOrigin, axisEnd,
-        plot_data.inverted_axis_list[index], plot_data.inverted_axis_list[index]);
-      console.log(plot_data.rubber_bands[index])
-      // if (plot_data instanceof ParallelPlot){
-      //   plot_data.refresh_pp_selected();
-      // }
+      if (plot_data instanceof ParallelPlot){
+        plot_data.refresh_pp_selected();
+      }
     }
 
     public static sc_to_sc_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], plot_data:PlotData) {

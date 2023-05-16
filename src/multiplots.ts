@@ -1778,6 +1778,11 @@ export class MultiplePlots {
       // this.canvas.setAttribute('tabindex', '0');
       // this.canvas.focus();
 
+      for (let i=0; i<this.nbObjects; i++) {
+        this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
+      }
+      this.setAllInteractionsToOff();
+
       window.addEventListener('keydown', e => {
         if (e.key == "Control") {ctrlKey = true}
         if (e.key == "Shift") {shiftKey = true}
@@ -1787,11 +1792,6 @@ export class MultiplePlots {
         if (e.key == "Control") {ctrlKey = false}
         if (e.key == "Shift") {shiftKey = false}
       });
-
-      for (let i=0; i<this.nbObjects; i++) {
-        this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
-      }
-      this.setAllInteractionsToOff();
 
       this.canvas.addEventListener('mousedown', e => {
         isDrawing = true;

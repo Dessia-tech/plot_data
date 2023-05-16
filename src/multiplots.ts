@@ -2061,7 +2061,6 @@ export class MultiplotCom {
           break;
         }
       }
-      console.log(index)
       if (index === -1) return;
       let axisOrigin = parallel_plot.axis_x_start;
       let axisEnd = parallel_plot.axis_x_end;
@@ -2070,7 +2069,7 @@ export class MultiplotCom {
         axisEnd = parallel_plot.axis_y_start;
       }
       if (typeof parallel_plot.axis_list[index].list[0] == "string") {
-        histogram.axes[0].rubberBand.valueToAxis(0, parallel_plot.axis_list[index].list.length)
+        histogram.axes[0].rubberBand.valueToAxis(1, parallel_plot.axis_list[index].list.length)
       } else {
         histogram.axes[0].rubberBand.valueToAxis(parallel_plot.axis_list[index].list[0], parallel_plot.axis_list[index].list[1])
       }

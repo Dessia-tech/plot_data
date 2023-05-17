@@ -4,7 +4,6 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv,
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
-import { is } from "cypress/types/bluebird";
 
 const HIDDEN_OFFSET = 15;
 
@@ -1181,9 +1180,6 @@ export abstract class PlotData {
   }
 
   pp_color_management(index:number, selected:boolean, clicked:boolean, over:boolean, heatmap_select:boolean) {
-    // if (List.isListOfEmptyList(this.rubber_bands)) {
-    //   selected = true;
-    // }
     if (this.selected_axis_name == '') {
       if (over) {
         this.context.strokeStyle = string_to_hex("yellow");
@@ -2874,17 +2870,16 @@ export class Interactions {
 
   public static change_disposition_action(plot_data: any) {
     const wasVertical = plot_data.vertical;
-    const isVertical = !plot_data.vertical;
     const origin = [plot_data.axis_x_start, plot_data.axis_y_start];
     const end = [plot_data.axis_x_end, plot_data.axis_y_end];
 
-    plot_data.vertical = !plot_data.vertical;
+    plot_data.vertical = !wasVertical;
     plot_data.refresh_axis_bounds(plot_data.axis_list.length);
 
     const newOrigin = [plot_data.axis_x_start, plot_data.axis_y_start];
     const newEnd = [plot_data.axis_x_end, plot_data.axis_y_end];
     plot_data.rubber_bands.forEach((rubberBand) => {
-      rubberBand.axisChangeUpdate(origin, end, wasVertical, newOrigin, newEnd, isVertical);
+      rubberBand.axisChangeUpdate(origin, end, wasVertical, newOrigin, newEnd, !wasVertical);
     })
     plot_data.draw();
   }
@@ -2912,13 +2907,11 @@ export class Interactions {
         plot_data.rubber_last_min = min;
         plot_data.rubber_last_max = max;
         let idx = i;
-        if (plot_data.type_ === 'histogram') {
-          idx = 0;
-        }
+        if (plot_data.type_ === 'histogram') {idx = 0}
         if (plot_data.rubber_bands[i].isVertical) {
           var real_minY = plot_data.rubber_bands[i].realMin;
           var real_maxY = plot_data.rubber_bands[i].realMax;
-          var current_x = plot_data.axis_x_start + idx*plot_data.x_step;
+          var current_x = plot_data.axis_x_start + idx * plot_data.x_step;
           var is_in_upper_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_lower_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_maxY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_rubber_band = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY, plot_data.bandWidth, real_maxY - real_minY);
@@ -2953,9 +2946,7 @@ export class Interactions {
     var selected_axis_index = -1;
     for (var i=0; i<nb_axis; i++) {
       let idx = i;
-      if (plot_data.type_ === 'histogram') {
-        idx = 0;
-      }
+      if (plot_data.type_ === 'histogram') {idx = 0}
       if (plot_data.rubber_bands[i].isVertical) {
         var current_x = plot_data.axis_x_start + idx*plot_data.x_step;
         var bool = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, plot_data.axis_y_end, plot_data.bandWidth, plot_data.axis_y_start - plot_data.axis_y_end);

@@ -6,10 +6,6 @@ export class Axis {
     color_stroke:any;
     x_step:number;
     y_step:number;
-    // xStart: number;
-    // yStart: number;
-    // xEnd: number;
-    // yEnd: number;
 
     constructor(public nb_points_x:number=10,
                 public nb_points_y:number=10,
@@ -1134,6 +1130,7 @@ export class RubberBand {
   public maxUpdate: boolean = false;
   public lastValues: Vertex = new Vertex(null, null);
   readonly SMALL_SIZE: number = 20;
+  readonly BORDER_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;
   constructor(public attributeName: string,
@@ -1141,33 +1138,19 @@ export class RubberBand {
               private _maxValue: number,
               public isVertical: boolean) {}
 
-  public get canvasLength() {
-    return Math.abs(this.realMax - this.realMin)
-  }
+  public get canvasLength() {return Math.abs(this.realMax - this.realMin)}
 
-  public get length() {
-    return Math.abs(this.maxValue - this.minValue)
-  }
+  public get length() {return Math.abs(this.maxValue - this.minValue)}
 
-  public get normedLength() {
-    return Math.abs(this.axisMax - this.axisMin)
-  }
+  public get normedLength() {return Math.abs(this.axisMax - this.axisMin)}
 
-  public set minValue(value: number) {
-    this._minValue = value;
-  }
+  public set minValue(value: number) {this._minValue = value}
 
-  public get minValue() {
-    return this._minValue
-  }
+  public get minValue() {return this._minValue}
 
-  public set maxValue(value: number) {
-    this._maxValue = value;
-  }
+  public set maxValue(value: number) {this._maxValue = value}
 
-  public get maxValue() {
-    return this._maxValue
-  }
+  public get maxValue() {return this._maxValue}
 
   public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
     if (this.isVertical) {
@@ -1199,19 +1182,13 @@ export class RubberBand {
     if (axis.type_ == 'float') {
       let real_min = axis.list[0];
       let real_max = axis.list[1];
-      if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) {
-        return (1 - axisValue) * real_max + axisValue * real_min; //x must be between 0 and 1
-      } else {
-        return axisValue * real_max + (1 - axisValue) * real_min;
-      }
-    } else {
-      let nb_values = axis.list.length;
-      if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) {
-        return (1 - axisValue) * (nb_values - 1);
-      } else {
-        return axisValue * (nb_values - 1);
-      }
+      if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) {return (1 - axisValue) * real_max + axisValue * real_min}
+      return axisValue * real_max + (1 - axisValue) * real_min
+
     }
+    let nb_values = axis.list.length;
+    if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) {return (1 - axisValue) * (nb_values - 1)}
+    return axisValue * (nb_values - 1)
   }
 
   public updateFromOther(otherRubberBand: RubberBand, axisOrigin: number, axisEnd: number,
@@ -1220,9 +1197,9 @@ export class RubberBand {
     this.axisMax = otherRubberBand.axisMax;
     this.minValue = otherRubberBand.minValue;
     this.maxValue = otherRubberBand.maxValue;
-    const firstCond = axisInverted != otherAxisInverted && this.isVertical == otherRubberBand.isVertical;
-    const secondCond = axisInverted == otherAxisInverted && this.isVertical != otherRubberBand.isVertical;
-    if (firstCond || secondCond) {this.normedInvert()};
+    const diffSenseSameDir = axisInverted != otherAxisInverted && this.isVertical == otherRubberBand.isVertical;
+    const sameSenseDiffDir = axisInverted == otherAxisInverted && this.isVertical != otherRubberBand.isVertical;
+    if (diffSenseSameDir || sameSenseDiffDir) {this.normedInvert()};
     this.axisToReal(axisOrigin, axisEnd);
   }
 
@@ -1235,31 +1212,19 @@ export class RubberBand {
 
       let index = 0;
       let newIndex = 0;
-      if (wasVertical) {
-        index = 1;
-        if (!isVertical) {
-          this.invert(bounds);
-        }
-      } else {
-        if (isVertical) {
-          newIndex = 1;
-        }
-      }
+      if (wasVertical) {index = 1; this.invert(bounds);} 
+      else {newIndex = 1}
 
       const start = Math.min(origin[index], end[index]);
       const newStart = Math.min(newOrigin[newIndex], newEnd[newIndex]);
-      if (wasVertical != isVertical) {
-        this.switchOrientation(start, newStart, [lengths[index], newLengths[newIndex]]);
-      }
+      this.switchOrientation(start, newStart, [lengths[index], newLengths[newIndex]]);
 
-      if (!wasVertical && isVertical) {
-        this.invert(newBounds);
-      }
+      if (!wasVertical) {this.invert(newBounds)}
   }
 
   public updateFromMouse(mouse1: [number, number], mouse2: [number, number], axis: Attribute,
     axisOrigin: [number, number], axisEnd: [number, number], inverted: boolean): void {
-      var mouseIdx = Number(this.isVertical);
+      var mouseIdx = this.isVertical ? 1 : 0;
       this.newBoundsUpdate(
         mouse1[mouseIdx], mouse2[mouseIdx],
         [axisOrigin[mouseIdx], axisEnd[mouseIdx]],
@@ -1282,8 +1247,7 @@ export class RubberBand {
   }
 
   public invert(axisBounds: number[]) {
-    var axisIdx = 0;
-    if (this.isVertical) {axisIdx = 1};
+    var axisIdx = this.isVertical ? 1 : 0;
     var tempMin = this.realMin;
     this.realMin = axisBounds[axisIdx] - this.realMax;
     this.realMax = axisBounds[axisIdx] - tempMin;
@@ -1356,8 +1320,8 @@ export class RubberBand {
 
   public mouseDown(mouseAxis: number) {
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.realMin) <= 20) {this.minUpdate = true}
-    else if (Math.abs(mouseAxis - this.realMax) <= 20) {this.maxUpdate = true}
+    if (Math.abs(mouseAxis - this.realMin) <= this.BORDER_SIZE) {this.minUpdate = true}
+    else if (Math.abs(mouseAxis - this.realMax) <= this.BORDER_SIZE) {this.maxUpdate = true}
     else {this.lastValues = new Vertex(this.minValue, this.maxValue)}
   }
 
@@ -1389,25 +1353,25 @@ export class Vertex {
     this.y = y;
   };
 
-  get coordinates() {return new Vertex(this.x, this.y)}
+  get coordinates(): Vertex {return new Vertex(this.x, this.y)}
 
-  public copy() {return Object.create(this)}
+  public copy(): Vertex {return Object.create(this)}
 
-  public add(other: Vertex) {
+  public add(other: Vertex): Vertex {
     let copy = this.copy();
     copy.x = this.x + other.x;
     copy.y = this.y + other.y;
     return copy
   }
 
-  public divide(value: number) {
+  public divide(value: number): Vertex {
     let copy = this.copy();
     copy.x = this.x / value;
     copy.y = this.y / value;
     return copy
   }
 
-  public multiply(value: number) {
+  public multiply(value: number): Vertex {
     let copy = this.copy();
     copy.x = this.x * value;
     copy.y = this.y * value;
@@ -1418,28 +1382,28 @@ export class Vertex {
 
   public get norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
 
-  public scale(scale: Vertex) {
+  public scale(scale: Vertex): Vertex {
     let copy = this.copy();
     copy.x = this.x * scale.x;
     copy.y = this.y * scale.y;
     return copy
   }
 
-  public subtract(other: Vertex) {
+  public subtract(other: Vertex): Vertex {
     let copy = this.copy();
     copy.x = this.x - other.x;
     copy.y = this.y - other.y;
     return copy
   }
 
-  public transform(matrix: DOMMatrix) {
+  public transform(matrix: DOMMatrix): Vertex {
     let copy = this.copy();
     copy.x = matrix.a * this.x + matrix.c * this.y + matrix.e;
     copy.y = matrix.b * this.x + matrix.d * this.y + matrix.f;
     return copy
   }
 
-  public transformSelf(matrix: DOMMatrix) {
+  public transformSelf(matrix: DOMMatrix): void {
     this.x = matrix.a * this.x + matrix.c * this.y + matrix.e;
     this.y = matrix.b * this.x + matrix.d * this.y + matrix.f;
   }
@@ -1453,7 +1417,7 @@ export class newShape {
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
   public selectedStyle: string = 'hsl(267, 95%, 85%)';
-  public isHover: boolean = false;
+  public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   constructor() {};
@@ -1466,7 +1430,7 @@ export class newShape {
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
-    context.fillStyle = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
+    context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);
     context.restore();
@@ -1485,7 +1449,6 @@ export class newCircle extends newShape {
     public radius: number = 1
   ) {
     super();
-    this.path = this.buildPath();
   }
 
   public buildPath(): Path2D {
@@ -1531,7 +1494,7 @@ export class Mark extends newShape {
   }
 }
 
-export class HalfLine extends newShape {
+export abstract class AbstractHalfLine extends newShape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
@@ -1540,16 +1503,64 @@ export class HalfLine extends newShape {
     super();
     this.path = this.buildPath();
   }
+  public abstract buildPath(): Path2D;
+}
 
+export class UpHalfLine extends AbstractHalfLine {
   public buildPath(): Path2D {
-    const path = this.path;
+    const path = new Path2D();
     const halfSize = this.size / 2;
     path.moveTo(this.center.x, this.center.y);
-    if (this.orientation == 'up') {path.lineTo(this.center.x, this.center.y + halfSize)}
-    else if (this.orientation == 'down') {path.lineTo(this.center.x, this.center.y - halfSize)}
-    else if (this.orientation == 'left') {path.lineTo(this.center.x - halfSize, this.center.y)}
-    else if (this.orientation == 'right') {path.lineTo(this.center.x + halfSize, this.center.y)}
-    return path
+    path.lineTo(this.center.x, this.center.y + halfSize);
+    return path;
+  }
+}
+
+export class DownHalfLine extends AbstractHalfLine {
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x, this.center.y);
+    path.lineTo(this.center.x, this.center.y - halfSize);
+    return path;
+  }
+}
+
+export class LeftHalfLine extends AbstractHalfLine {
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x, this.center.y);
+    path.lineTo(this.center.x - halfSize, this.center.y);
+    return path;
+  }
+}
+
+export class RightHalfLine extends AbstractHalfLine {
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x, this.center.y);
+    path.lineTo(this.center.x + halfSize, this.center.y);
+    return path;
+  }
+}
+
+export class HalfLine extends AbstractHalfLine {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super(center, size, orientation);
+    this.path = this.buildPath();
+  }
+
+  public buildPath(): Path2D {
+    if (this.orientation == 'up') {return new UpHalfLine(this.center, this.size).path} 
+    else if (this.orientation == 'down') {return new DownHalfLine(this.center, this.size).path} 
+    else if (this.orientation == 'left') {return new LeftHalfLine(this.center, this.size).path} 
+    else if (this.orientation == 'right') {return new RightHalfLine(this.center, this.size).path}
   }
 }
 
@@ -1573,7 +1584,66 @@ export class Cross extends newShape {
   }
 }
 
-export class Triangle extends newShape {
+export abstract class AbstractTriangle extends newShape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+  ) {
+    super();
+    this.path = this.buildPath();
+  }
+  public abstract buildPath(): Path2D;
+}
+
+export class UpTriangle extends AbstractTriangle {
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
+    path.lineTo(this.center.x, this.center.y + halfSize);
+    path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
+    return path;
+  }
+}
+
+export class DownTriangle extends AbstractTriangle {
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
+    path.lineTo(this.center.x, this.center.y - halfSize);
+    path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
+    path.lineTo(this.center.x + halfSize + this.lineWidth, this.center.y + halfSize);
+    return path;
+  }
+}
+
+export class LeftTriangle extends AbstractTriangle {
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
+    path.lineTo(this.center.x - halfSize, this.center.y);
+    path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+    path.lineTo(this.center.x + halfSize, this.center.y - halfSize - this.lineWidth);
+    return path;
+  }
+}
+
+export class RightTriangle extends AbstractTriangle {
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const halfSize = this.size / 2;
+    path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    path.lineTo(this.center.x + halfSize, this.center.y);
+    path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
+    path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
+    return path;
+  }
+}
+
+export class Triangle extends AbstractTriangle {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
@@ -1584,33 +1654,10 @@ export class Triangle extends newShape {
   }
 
   public buildPath(): Path2D {
-    const path = this.path;
-    const halfSize = this.size / 2;
-    if (this.orientation == 'right') {
-      path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-      path.lineTo(this.center.x + halfSize, this.center.y);
-      path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-      path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
-
-    } else if (this.orientation == 'left') {
-      path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
-      path.lineTo(this.center.x - halfSize, this.center.y);
-      path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-      path.lineTo(this.center.x + halfSize, this.center.y - halfSize - this.lineWidth);
-
-    } else if (this.orientation == 'up') {
-      path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-      path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
-      path.lineTo(this.center.x, this.center.y + halfSize);
-      path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
-
-    } else if (this.orientation == 'down') {
-      path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
-      path.lineTo(this.center.x, this.center.y - halfSize);
-      path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-      path.lineTo(this.center.x + halfSize + this.lineWidth, this.center.y + halfSize);
-    }
-    return path
+    if (this.orientation == 'up') {return new UpTriangle(this.center, this.size).path}
+    if (this.orientation == 'down') {return new DownTriangle(this.center, this.size).path}
+    if (this.orientation == 'right') {return new RightTriangle(this.center, this.size).path}
+    if (this.orientation == 'left') {return new LeftTriangle(this.center, this.size).path}
   }
 }
 
@@ -1619,33 +1666,17 @@ export class newText extends newShape {
   constructor(
     public text: string,
     public origin: Vertex = new Vertex(0, 0),
-    private _width: number = null,
-    private _fontsize: number = 12,
-    private _font: string = 'sans-serif',
-    private _justify: string = 'left',
-    private _baseline: string = 'alphabetic',
+    public width: number = null,
+    public fontsize: number = 12,
+    public font: string = 'sans-serif',
+    public justify: string = 'left',
+    public baseline: string = 'alphabetic',
     protected _style: string = '',
     protected _orientation: number = 0
   ) {
     super();
     this.path = this.buildPath();
   }
-
-  get baseline(): string {return this._baseline};
-
-  set baseline(value: string) {this._baseline = value};
-
-  get font(): string {return this._font};
-
-  set font(value: string) {this._font = value};
-
-  get fontsize(): number {return this._fontsize};
-
-  set fontsize(value: number) {this._fontsize = value};
-
-  get justify(): string {return this._justify};
-
-  set justify(value: string) {this._justify = value};
 
   get orientation(): number {return this._orientation};
 
@@ -1655,18 +1686,12 @@ export class newText extends newShape {
 
   set style(value: string) {this._style = value};
 
-  get width(): number {return this._width};
-
-  set width(value: number) {this._width = value};
-
-  get fullFont() {
-    return this.style + ' ' + this.fontsize + 'px ' + this.font
-  }
+  get fullFont() {return `${this.style} ${this.fontsize}px ${this.font}`}
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let tmp_context: CanvasRenderingContext2D = context
     let pxMaxWidth: number = this.width * this.scale;
-    tmp_context.font = '1px ' + this._font;
+    tmp_context.font = '1px ' + this.font;
     return pxMaxWidth / (tmp_context.measureText(this.text).width)
   }
 
@@ -1676,13 +1701,9 @@ export class newText extends newShape {
     return path
   }
 
-  public static capitalize(value: string): string {
-    return value.charAt(0).toUpperCase() + value.slice(1)
-  }
+  public static capitalize(value: string): string {return value.charAt(0).toUpperCase() + value.slice(1)}
 
-  public capitalizeSelf(): void {
-    this.text = this.text.charAt(0).toUpperCase() + this.text.slice(1)
-  }
+  public capitalizeSelf(): void {this.text = newText.capitalize(this.text)}
 
   public draw(context: CanvasRenderingContext2D) {
     if (this.width === null && this.fontsize !== null) {
@@ -1724,7 +1745,7 @@ export class newPoint2D extends Vertex {
     x: number = 0,
     y: number = 0,
     private _size: number = 2,
-    private _shape: string = 'circle',
+    private _marker: string = 'circle',
     private _markerOrientation: string = 'up'
     ) {
       super(x, y);
@@ -1732,19 +1753,19 @@ export class newPoint2D extends Vertex {
     };
 
   get drawnShape() {
-    let shape = new newShape();
-    if (CIRCLES.indexOf(this.shape) > -1) {shape = new newCircle(this.coordinates, this.size)}
-    if (MARKERS.indexOf(this.shape) > -1) {shape = new Mark(this.coordinates, this.size)};
-    if (CROSSES.indexOf(this.shape) > -1) {shape = new Cross(this.coordinates, this.size)};
-    if (SQUARES.indexOf(this.shape) > -1) {
+    let marker = new newShape();
+    if (CIRCLES.indexOf(this.marker) > -1) {marker = new newCircle(this.coordinates, this.size)}
+    if (MARKERS.indexOf(this.marker) > -1) {marker = new Mark(this.coordinates, this.size)};
+    if (CROSSES.indexOf(this.marker) > -1) {marker = new Cross(this.coordinates, this.size)};
+    if (SQUARES.indexOf(this.marker) > -1) {
       const halfSize = this.size * 0.5;
       const origin = new Vertex(this.coordinates.x - halfSize, this.coordinates.y - halfSize)
-      shape = new newRect(origin, new Vertex(this.size, this.size))
+      marker = new newRect(origin, new Vertex(this.size, this.size))
     };
-    if (TRIANGLES.indexOf(this.shape) > -1) {shape = new Triangle(this.coordinates, this.size, this.markerOrientation)};
-    if (this.shape == 'halfLine') {shape = new HalfLine(this.coordinates, this.size, this.markerOrientation)};
-    shape.lineWidth = this.lineWidth;
-    return shape
+    if (TRIANGLES.indexOf(this.marker) > -1) {marker = new Triangle(this.coordinates, this.size, this.markerOrientation)};
+    if (this.marker == 'halfLine') {marker = new HalfLine(this.coordinates, this.size, this.markerOrientation)};
+    marker.lineWidth = this.lineWidth;
+    return marker
   }
 
   get lineWidth(): number {return this._lineWidth};
@@ -1759,9 +1780,9 @@ export class newPoint2D extends Vertex {
 
   set size(value: number) {this._size = value};
 
-  get shape(): string {return this._shape};
+  get marker(): string {return this._marker};
 
-  set shape(value: string) {this._shape = value};
+  set marker(value: string) {this._marker = value};
 
   private buildPath(): Path2D {return this.drawnShape.path};
 
@@ -1881,7 +1902,7 @@ export class newAxis {
   set nTicks(value: number) {this._nTicks = value};
 
   get nTicks(): number {
-    if (this.isDiscrete) {return this.labels.length + 1};
+    if (this.isDiscrete) return this.labels.length + 1
     return this._nTicks
   }
 
@@ -1894,6 +1915,10 @@ export class newAxis {
   get title(): string {return newText.capitalize(this.name)}
 
   get transformMatrix(): DOMMatrix {return this.getValueToDrawMatrix()};
+
+  private horizontalPickIdx() {return Math.sign(1 - Math.sign(this.transformMatrix.f))}
+
+  private verticalPickIdx() {return Math.sign(1 - Math.sign(this.transformMatrix.e))}
 
   public transform(newOrigin: Vertex, newEnd: Vertex) {
     this.origin = newOrigin;
@@ -1916,10 +1941,10 @@ export class newAxis {
   }
 
   private buildDrawPath(): Path2D {
-    const isVert =  Number(this.isVertical) ; const notVert = Number(!this.isVertical);
+    const verticalIdx =  Number(this.isVertical) ; const horizontalIdx = Number(!this.isVertical);
     const path = new Path2D();
-    const endArrow = new newPoint2D(this.end.x + this.SIZE_END / 2 * notVert, this.end.y + this.SIZE_END / 2 * isVert, this.SIZE_END, 'triangle', ['right', 'up'][isVert]);
-    path.moveTo(this.origin.x - this.DRAW_START_OFFSET * notVert, this.origin.y - this.DRAW_START_OFFSET * isVert);
+    const endArrow = new newPoint2D(this.end.x + this.SIZE_END / 2 * horizontalIdx, this.end.y + this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['right', 'up'][verticalIdx]);
+    path.moveTo(this.origin.x - this.DRAW_START_OFFSET * horizontalIdx, this.origin.y - this.DRAW_START_OFFSET * verticalIdx);
     path.lineTo(this.end.x, this.end.y);
     path.addPath(endArrow.path);
     return path
@@ -1947,9 +1972,8 @@ export class newAxis {
   }
 
   private computeMinMax(vector: any[]): number[] {
-    let newVector = vector;
     if (this.isDiscrete) {return [0, this.labels.length]};
-    return [Math.min(...newVector), Math.max(...newVector)]
+    return [Math.min(...vector), Math.max(...vector)]
   }
 
   private computeTicks(): number[] {
@@ -1982,9 +2006,12 @@ export class newAxis {
   }
 
   private drawName(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
-    let baseline = ['hanging', 'alphabetic'][Math.sign(1 - Math.sign(this.transformMatrix.f))]
+    let baseline = ['hanging', 'alphabetic'][this.horizontalPickIdx()]
     let nameCoords = this.end.add(this.origin).divide(2);
-    if (this.isVertical) {nameCoords.x += this.OFFSET_NAME.x ; baseline = ['alphabetic', 'hanging'][Math.sign(1 - Math.sign(this.transformMatrix.e))]}
+    if (this.isVertical) {
+      nameCoords.x += this.OFFSET_NAME.x ; 
+      baseline = ['alphabetic', 'hanging'][this.verticalPickIdx()];
+    }
     else {nameCoords.y += this.OFFSET_NAME.y}
     nameCoords.transformSelf(canvasHTMatrix);
     const orientation = this.isVertical ? -90 : 0;
@@ -2022,9 +2049,9 @@ export class newAxis {
   private drawTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): void {
     const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
     let textWidth = null;
-    if (textAlign == 'left') {textWidth = context.canvas.width - textOrigin.x - 5};
-    if (textAlign == 'right') {textWidth = textOrigin.x - 5};
-    if (textAlign == 'center') {textWidth = (this.drawLength) / (this.nTicks * 1.5)};
+    if (textAlign == 'left') textWidth = context.canvas.width - textOrigin.x - 5;
+    if (textAlign == 'right') textWidth = textOrigin.x - 5;
+    if (textAlign == 'center') textWidth = (this.drawLength) / (this.nTicks * 1.5);
     context.resetTransform()
     const tickText = new newText(newText.capitalize(text), textOrigin, textWidth, this.FONT_SIZE, this.FONT, textAlign, baseline);
     tickText.draw(context)
@@ -2088,28 +2115,22 @@ export class newAxis {
 
   public numericLabels(): string[] {
     this.updateTickPrecision();
-    let numericLabels = []
-    this.ticks.forEach(tick => numericLabels.push(tick.toPrecision(this.tickPrecision)));
-    return numericLabels
+    return this.ticks.map(tick => tick.toPrecision(this.tickPrecision))
   }
 
-  public saveLoc(): void {
+  public saveLocation(): void {
     this._previousMin = this.minValue;
     this._previousMax = this.maxValue;
   }
 
   public stringsToValues(vector: any[]): number[] {
-    if (this.isDiscrete) {
-      let numericVector = [];
-      vector.forEach((value) => numericVector.push(this.labels.indexOf(value)));
-      return numericVector
-    }
+    if (this.isDiscrete) return vector.map(value => this.labels.indexOf(value))
     return vector
   }
 
   private textAlignments(): [string, string] {
-    const forVertical = ['right', 'left'][Math.sign(1 - Math.sign(this.transformMatrix.e))];
-    const forHorizontal = ['hanging', 'alphabetic'][Math.sign(1 - Math.sign(this.transformMatrix.f))]
+    const forVertical = ['right', 'left'][this.verticalPickIdx()];
+    const forHorizontal = ['hanging', 'alphabetic'][this.horizontalPickIdx()]
     return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
   }
 

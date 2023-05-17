@@ -264,8 +264,7 @@ export class ParallelPlot extends PlotData {
       this.elements = data['elements'];
       this.edge_style = EdgeStyle.deserialize(data['edge_style']);
       var attribute_names = data['attribute_names'];
-      this.vertical = false;
-      if (data['disposition'] == 'vertical') {this.vertical = true};
+      this.vertical = data['disposition'] == 'vertical' ? true : false;
       this.initialize_all_attributes();
       this.initialize_attributes_list();
       this.add_to_axis_list(attribute_names);
@@ -1537,8 +1536,7 @@ export class BasePlot extends PlotData {
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();
     Object.keys(data.elements[0]).forEach((feature) => {
-      let vector = [];
-      data.elements.forEach((element) => {vector.push(element[feature])});
+      let vector = data.elements.map(element => element[feature]);
       unpackedData.set(feature, vector);
     });
     return unpackedData
@@ -1612,8 +1610,8 @@ export class BasePlot extends PlotData {
   }
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {
-    this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHover', false, false);
-    this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHover', false, false);
+    this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHovered', false, false);
+    this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHovered', false, false);
   }
 
   public projectMouse(e: MouseEvent) {
@@ -1623,8 +1621,8 @@ export class BasePlot extends PlotData {
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {
     let clickedObject: any;
-    this.fixedObjects.forEach(object => {if (object.isHover) {clickedObject = object}})
-    this.movingObjects.forEach(object => {if (object.isHover) {clickedObject = object}})
+    this.fixedObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
+    this.movingObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
     if (this.fixedObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(canvasMouse)}
     if (this.movingObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(frameMouse)}
     return [canvasMouse, frameMouse, clickedObject]
@@ -1657,7 +1655,7 @@ export class BasePlot extends PlotData {
         [canvasMouse, frameMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse);
         if (this.interaction_ON && isDrawing) {
-          if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) { // i like it !
+          if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
             canvas.style.cursor = 'move';
             this.translation = this.mouseTranslate(canvasMouse, canvasDown);
           } else if (clickedObject instanceof newAxis) {
@@ -1668,13 +1666,14 @@ export class BasePlot extends PlotData {
         var is_inside_canvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!is_inside_canvas) {
           isDrawing = false;
-          this.axes.forEach(axis => {axis.saveLoc()});
+          this.axes.forEach(axis => {axis.saveLocation()});
           this.translation = new Vertex(0, 0);
           canvas.style.cursor = 'default';
         }
       });
 
       canvas.addEventListener('mousedown', e => {
+        console.log(e.offsetX, e.offsetY);
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse);
         isDrawing = true;
       });
@@ -1685,7 +1684,7 @@ export class BasePlot extends PlotData {
         if (clickedObject) {clickedObject.mouseUp()};
         isDrawing = false;
         this.draw();
-        this.axes.forEach(axis => {axis.saveLoc()});
+        this.axes.forEach(axis => {axis.saveLocation()});
         this.translation = new Vertex(0, 0);
       })
 
@@ -1704,7 +1703,7 @@ export class BasePlot extends PlotData {
           }
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y).scale(this.initScale);
           this.draw(); // needs a refactor
-          this.axes.forEach(axis => {axis.saveLoc()});
+          this.axes.forEach(axis => {axis.saveLocation()});
           [this.scaleX, this.scaleY] = [1, 1];
           this.viewPoint = new Vertex(0, 0);
           this.draw(); // needs a refactor
@@ -1714,7 +1713,7 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
         ctrlKey = false;
-        this.axes.forEach(axis => {axis.saveLoc()});
+        this.axes.forEach(axis => {axis.saveLocation()});
         this.translation = new Vertex(0, 0);
         canvas.style.cursor = 'default';
       });
@@ -1881,19 +1880,19 @@ export class newHistogram extends Frame {
     numberAxis.minValue = 0;
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.nTicks = this.nYTicks;
-    numberAxis.saveLoc();
+    numberAxis.saveLocation();
     return numberAxis
   }
 
   private updateNumberAxis(numberAxis: newAxis, bars: Bar[]): newAxis {
     this.features.set('number', this.getNumberFeature(bars));
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
-    numberAxis.saveLoc();
+    numberAxis.saveLocation();
     return numberAxis
   }
 
   private getNumberFeature(bars: Bar[]): number[] {
-    const numberFeature = Array.from(Array(this.features.get(this.xFeature).length), () => 0);
+    const numberFeature = this.features.get(this.xFeature).map(() => 0);
     bars.forEach(bar => {bar.values.forEach(value => numberFeature[value] = bar.length)});
     return numberFeature
   }
@@ -1908,7 +1907,7 @@ export class newHistogram extends Frame {
     const [hovered, clicked] = [[] as number[], [] as number[]];
     if (this.bars) {
       this.bars.forEach(bar => {
-        if (bar.isHover) {hovered.push(...bar.values)};
+        if (bar.isHovered) {hovered.push(...bar.values)};
         if (bar.isClicked) {clicked.push(...bar.values)};
       })
     }
@@ -1955,18 +1954,18 @@ export class newHistogram extends Frame {
 
   public getBarsDrawing() {
     const fullTicks = this.boundedTicks(this.axes[0]);
-    for (let barIdx = 0 ; barIdx < this.bars.length ; barIdx++) {
-      let origin = new Vertex(fullTicks[barIdx], 0);
-      let size = new Vertex(fullTicks[barIdx + 1] - fullTicks[barIdx], this.bars[barIdx].length);
+    this.bars.forEach((bar, index) => {
+      let origin = new Vertex(fullTicks[index], 0);
+      let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length);
       if (this.axes[0].isDiscrete) {origin.x = origin.x - size.x / 2};
 
-      this.bars[barIdx].setGeometry(origin, size);
-      this.bars[barIdx].fillStyle = this.barsColorFill;
-      this.bars[barIdx].strokeStyle = this.barsColorStroke;
-      if (this.bars[barIdx].values.some(valIdx => this.hoveredIndex.indexOf(valIdx) != -1)) {this.bars[barIdx].isHover = true}
-      if (this.bars[barIdx].values.some(valIdx => this.clickedIndex.indexOf(valIdx) != -1)) {this.bars[barIdx].isClicked = true}
-      if (this.bars[barIdx].values.some(valIdx => this.selectedIndex[valIdx])) {this.bars[barIdx].isSelected = true}
-    }
+      bar.setGeometry(origin, size);
+      bar.fillStyle = this.barsColorFill;
+      bar.strokeStyle = this.barsColorStroke;
+      if (bar.values.some(valIdx => this.hoveredIndex.indexOf(valIdx) != -1)) {bar.isHovered = true}
+      if (bar.values.some(valIdx => this.clickedIndex.indexOf(valIdx) != -1)) {bar.isClicked = true}
+      if (bar.values.some(valIdx => this.selectedIndex[valIdx])) {bar.isSelected = true}
+    })
   }
 
   public setAxes(): newAxis[] {

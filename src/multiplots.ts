@@ -1288,16 +1288,16 @@ export class MultiplePlots {
         if (subplot instanceof ParallelPlot) {
           if (subplot !== currentPP) {
             subplot.rubber_bands.forEach((rubberBand, index) => {
-              const actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
-              if (actualRubberIndex != -1) {
+              const currentRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
+              if (currentRubberIndex != -1) {
                 let axisOrigin = subplot.axis_x_start;
                 let axisEnd = subplot.axis_x_end;
                 if (subplot.vertical) {
                   axisOrigin = subplot.axis_y_end;
                   axisEnd = subplot.axis_y_start;
                 }
-                rubberBand.updateFromOther(currentPP.rubber_bands[actualRubberIndex], axisOrigin, axisEnd,
-                  subplot.inverted_axis_list[index], currentPP.inverted_axis_list[actualRubberIndex]);
+                rubberBand.updateFromOther(currentPP.rubber_bands[currentRubberIndex], axisOrigin, axisEnd,
+                  subplot.inverted_axis_list[index], currentPP.inverted_axis_list[currentRubberIndex]);
               }
             })
           }
@@ -1360,9 +1360,9 @@ export class MultiplePlots {
           })
         } else if (subplot instanceof Histogram) {
           rubberBandsInPlot.forEach((rubberBand) => {
-            let actualRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
+            let currentRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
             subplot.rubber_bands[0].updateFromOther(
-              rubberBand, subplot.axis_x_start, subplot.axis_x_end, false, currentPP.inverted_axis_list[actualRubberIndex]);
+              rubberBand, subplot.axis_x_start, subplot.axis_x_end, false, currentPP.inverted_axis_list[currentRubberIndex]);
           })
           subplot.get_selected_keys();
         } else if (subplot instanceof PrimitiveGroupContainer) {

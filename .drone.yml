@@ -39,7 +39,7 @@ steps:
   - npm run build
   - npm run dev
   - npm install typedoc
-  - npx typedoc src/plot-data.ts --out doc/build/typescript/
+  - npx typedoc
 
 - name: install, run scripts and build doc
   image: python:3.8

@@ -2018,7 +2018,7 @@ export class newHistogram extends Frame {
   }
 }
 
-export class oldHistogram extends PlotData {
+export class Histogram extends PlotData {
     edge_style: EdgeStyle;
     surface_style: SurfaceStyle;
     x_variable: Attribute;

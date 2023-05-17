@@ -7,7 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [0.13.0]
-<<<<<<< HEAD
 ### Add
 - newHistogram plot to replace current Histogram
     - There is no covering between multiplot histogram and this one so the two of them can live in plot_data at the same time
@@ -30,11 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Then some standard shapes (rect, circle, cross, plus, half line,...)
     - newText
     - Bar, to handle Histogram objects
+- Histogram can be instantiated in multiplot
+    - Rubberbands are not totally connected
 
-=======
 ### Fix
 - Allow to put " " in file paths
->>>>>>> dev
 
 ## [0.12.2]
 ### Fix

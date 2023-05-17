@@ -889,18 +889,9 @@ export class MultiplePlots {
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
         let plot = this.objectList[i];
-        if (plot instanceof PlotScatter) {
-          Interactions.click_on_reset_action(plot);
-        } else if (plot instanceof PlotContour) {
-          plot.reset_scales();
-        } else if (plot instanceof PrimitiveGroupContainer) {
-          plot.reset_action();
-        } else if (plot instanceof Frame) {
-          plot.reset_scales();
-        } else if (plot instanceof Histogram) {
-          plot.reset_scales();
-          plot.reset_x_rubberband();
-        }
+        if (plot instanceof PlotScatter) {Interactions.click_on_reset_action(plot)} 
+        else {plot.reset_scales()} 
+        if (plot instanceof Histogram) {plot.reset_x_rubberband()}
       }
     }
 

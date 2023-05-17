@@ -69,7 +69,7 @@ histogram3 = plot_data.Histogram(x_variable='color')
 
 # Creating the multiplot
 plots = [parallelplot1, scatterplot1]
-plots2 = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, scatterplot3, graph2d, primitive_group_container, histogram]
+plots2 = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, scatterplot3, graph2d, primitive_group_container, histogram,histogram2,histogram3]
 
 # multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True)

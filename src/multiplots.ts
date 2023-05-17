@@ -75,7 +75,6 @@ export class MultiplePlots {
       this.nbObjects = this.dataObjects.length;
       this.initialize_sizes();
       this.define_canvas(canvas_id);
-      console.log(this.dataObjects)
       for (let i=0; i<this.nbObjects; i++) {
         let object_type_ = this.dataObjects[i]['type_'];
         if ((object_type_ === 'scatterplot') || (this.dataObjects[i]['type_'] == 'graph2d')) {
@@ -1418,16 +1417,16 @@ export class MultiplePlots {
     }
 
     frame_communication(index) {
-      let histogram = this.objectList[index];
+      let frame = this.objectList[index];
       let primitive_indices = [];
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if (obj.type_ === 'scatterplot') {
-          MultiplotCom.frame_to_scatter_communication(histogram, obj);
+          MultiplotCom.frame_to_scatter_communication(frame, obj);
         } else if (obj.type_ === 'parallelplot') {
-          MultiplotCom.frame_to_pp_communication(histogram, obj);
+          MultiplotCom.frame_to_pp_communication(frame, obj);
         } else if (obj.type_ === "frame") {
-          MultiplotCom.frame_to_frame_communication(histogram, obj);
+          MultiplotCom.frame_to_frame_communication(frame, obj);
         }else if (obj.type_ === "primitivegroupcontainer") {
           primitive_indices.push(i);
         }
@@ -1839,7 +1838,6 @@ export class MultiplePlots {
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
-        console.log(mouse1X, mouse1Y)
         old_selected_index = this.selected_point_index;
         if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();

@@ -1659,7 +1659,7 @@ export class BasePlot extends PlotData {
             canvas.style.cursor = 'move';
             this.translation = this.mouseTranslate(canvasMouse, canvasDown);
           } else if (clickedObject instanceof newAxis) {
-            this.is_drawing_rubber_band = clickedObject.is_drawing_rubberband;
+            this.is_drawing_rubber_band = true;
           }
         }
         this.draw();
@@ -1673,7 +1673,6 @@ export class BasePlot extends PlotData {
       });
 
       canvas.addEventListener('mousedown', e => {
-        console.log(e.offsetX, e.offsetY);
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse);
         isDrawing = true;
       });
@@ -1686,6 +1685,7 @@ export class BasePlot extends PlotData {
         this.draw();
         this.axes.forEach(axis => {axis.saveLocation()});
         this.translation = new Vertex(0, 0);
+        this.is_drawing_rubber_band = false;
       })
 
       canvas.addEventListener('wheel', e => {

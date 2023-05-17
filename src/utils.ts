@@ -1212,7 +1212,7 @@ export class RubberBand {
 
       let index = 0;
       let newIndex = 0;
-      if (wasVertical) {index = 1; this.invert(bounds);} 
+      if (wasVertical) {index = 1; this.invert(bounds);}
       else {newIndex = 1}
 
       const start = Math.min(origin[index], end[index]);
@@ -1557,9 +1557,9 @@ export class HalfLine extends AbstractHalfLine {
   }
 
   public buildPath(): Path2D {
-    if (this.orientation == 'up') {return new UpHalfLine(this.center, this.size).path} 
-    else if (this.orientation == 'down') {return new DownHalfLine(this.center, this.size).path} 
-    else if (this.orientation == 'left') {return new LeftHalfLine(this.center, this.size).path} 
+    if (this.orientation == 'up') {return new UpHalfLine(this.center, this.size).path}
+    else if (this.orientation == 'down') {return new DownHalfLine(this.center, this.size).path}
+    else if (this.orientation == 'left') {return new LeftHalfLine(this.center, this.size).path}
     else if (this.orientation == 'right') {return new RightHalfLine(this.center, this.size).path}
   }
 }
@@ -2009,7 +2009,7 @@ export class newAxis {
     let baseline = ['hanging', 'alphabetic'][this.horizontalPickIdx()]
     let nameCoords = this.end.add(this.origin).divide(2);
     if (this.isVertical) {
-      nameCoords.x += this.OFFSET_NAME.x ; 
+      nameCoords.x += this.OFFSET_NAME.x ;
       baseline = ['alphabetic', 'hanging'][this.verticalPickIdx()];
     }
     else {nameCoords.y += this.OFFSET_NAME.y}

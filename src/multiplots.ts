@@ -889,8 +889,8 @@ export class MultiplePlots {
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
         let plot = this.objectList[i];
-        if (plot instanceof PlotScatter) {Interactions.click_on_reset_action(plot)} 
-        else {plot.reset_scales()} 
+        if (plot instanceof PlotScatter) {Interactions.click_on_reset_action(plot)}
+        else {plot.reset_scales()}
         if (plot instanceof Histogram) {plot.reset_x_rubberband()}
       }
     }
@@ -1983,7 +1983,7 @@ export class MultiplePlots {
           this.zoom_elements(mouse3X, mouse3Y, event);
           this.redrawAllObjects();
         } else {
-          this.redraw_object();          
+          this.redraw_object();
         }
       });
 

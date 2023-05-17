@@ -287,6 +287,10 @@ export abstract class PlotData {
       this.scaleY = this.init_scaleY;
       this.originX = this.width/2 - (this.maxX + this.minX)*this.scaleX/2 + this.decalage_axis_x/2;
       this.originY = this.height/2 - (this.maxY + this.minY)*this.scaleY/2 - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/2;
+    } else if (this.type_ === 'histogram') {
+      this.init_scale = 0.95*(this.width - this.decalage_axis_x)/(this['max_abs'] - this['min_abs']);
+      this.scale = this.init_scale;
+      this.originX = this.decalage_axis_x - this.scale*this['min_abs'];
     } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;

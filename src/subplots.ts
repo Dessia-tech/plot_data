@@ -2559,7 +2559,7 @@ export class ScatterMatrix extends PlotData {
           if (i === j) {
             let data1 = {x_variable: axes[i], elements: this.elements, graduation_nb: 4,
               package_version: data["package_version"], type_: "histogram"};
-            var obj: any = new newHistogram(data1, x_step, y_step, false, i*x_step, j*y_step, "hist"+i);
+            var obj: any = new Histogram(data1, x_step, y_step, false, i*x_step, j*y_step, "hist"+i);
           } else {
             let data1 = {attribute_names: [axes[i], axes[j]], elements: this.elements,
               type_: "scatterplot", package_version: data["package_version"],

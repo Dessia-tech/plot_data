@@ -68,41 +68,51 @@ export class MultiplePlots {
     constructor(public data: any[], public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
       check_package_version(data['package_version'], requirement);
-      this.dataObjects = data['plots'];
-      this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
       var elements = data['elements'];
-      if (elements) {this.initialize_all_attributes();}
-      this.nbObjects = this.dataObjects.length;
-      this.initialize_sizes();
       this.define_canvas(canvas_id);
-      for (let i=0; i<this.nbObjects; i++) {
-        let object_type_ = this.dataObjects[i]['type_'];
-        if ((object_type_ === 'scatterplot') || (this.dataObjects[i]['type_'] == 'graph2d')) {
-          this.dataObjects[i]['elements'] = elements;
-          var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-        } else if (object_type_ === 'parallelplot') {
-          this.dataObjects[i]['elements'] = elements;
-          newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-        } else if (object_type_ === 'primitivegroup') {
-          newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-        } else if (object_type_ === 'primitivegroupcontainer') {
-          newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-          if (this.dataObjects[i]['association']) {
-            this.initializeObjectContext(newObject);
-            let association = this.dataObjects[i]['association'];
-            newObject = this.initialize_containers_dicts(newObject, association['associated_elements']);
-            newObject = this.call_layout(newObject, association['attribute_names']);
+      if (elements.length != 0) {
+        this.dataObjects = data['plots'];
+        this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
+        this.nbObjects = this.dataObjects.length;
+        this.initialize_all_attributes();
+        this.initialize_sizes();
+        for (let i=0; i<this.nbObjects; i++) {
+          let object_type_ = this.dataObjects[i]['type_'];
+          if ((object_type_ === 'scatterplot') || (this.dataObjects[i]['type_'] == 'graph2d')) {
+            this.dataObjects[i]['elements'] = elements;
+            var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          } else if (object_type_ === 'parallelplot') {
+            this.dataObjects[i]['elements'] = elements;
+            newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          } else if (object_type_ === 'primitivegroup') {
+            newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          } else if (object_type_ === 'primitivegroupcontainer') {
+            newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            if (this.dataObjects[i]['association']) {
+              this.initializeObjectContext(newObject);
+              let association = this.dataObjects[i]['association'];
+              newObject = this.initialize_containers_dicts(newObject, association['associated_elements']);
+              newObject = this.call_layout(newObject, association['attribute_names']);
+            }
+          } else if (object_type_ === 'histogram') {
+            this.dataObjects[i]['elements'] = elements;
+            newObject = new newHistogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          } else {
+            throw new Error('MultiplePlots constructor : invalid object type');
           }
-        } else if (object_type_ === 'histogram') {
-          this.dataObjects[i]['elements'] = elements;
-          newObject = new newHistogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-        } else {
-          throw new Error('MultiplePlots constructor : invalid object type');
+          this.initializeObjectContext(newObject);
+          this.objectList.push(newObject);
         }
+      } else {
+        this.initial_coords = [[0, 0]];
+        this.nbObjects = 1;
+        this.initialize_sizes();
+        var emptyMPData = {"package_version": data['package_version'], "name": "", "primitives": [{"package_version": data['package_version'], "name": "", "comment": "No data to plot because workflow result is empty.", "text_style": {"object_class": "plot_data.core.TextStyle", "package_version": data['package_version'], "name": "", "text_color": "rgb(100, 100, 100)", "font_size": 20, "text_align_x": "left"}, "position_x": 50.0, "position_y": 100, "text_scaling": false, "max_width": 20, "multi_lines": true, "type_": "text"}], "type_": "primitivegroup"};
+        newObject = new PlotContour(emptyMPData, this.width, this.height, true, 0, 0, canvas_id);
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       }
-      if (elements) {this.initialize_point_families();}
+      if (elements.length != 0) {this.initialize_point_families();}
 
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].draw_initial();
@@ -119,7 +129,7 @@ export class MultiplePlots {
         this.clean_view();
         this.store_dimensions();
       }
-      // this.save_canvas();
+        // this.save_canvas();
     }
 
 

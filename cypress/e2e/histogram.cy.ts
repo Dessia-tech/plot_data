@@ -65,18 +65,18 @@ describe('HISTOGRAM CANVAS', function () {
     })
   })
 
-  // it("should hover/click on bar", function () {
-  //   cy.window().then(win => {
-  //     const histogram = win.eval('plot_data') as newHistogram
-  //     [canvasMouse, frameMouse] = histogram.projectMouse({"offsetX": 319, "offsetY": 426} as MouseEvent);
-  //     histogram.mouseMove(canvasMouse, frameMouse);
-  //     expect(histogram.movingObjects[4].isHover).to.be.true;
+  it("should hover/click on bar", function () {
+    cy.window().then(win => {
+      const histogram = win.eval('plot_data') as newHistogram
+      [canvasMouse, frameMouse] = histogram.projectMouse({"offsetX": 319, "offsetY": 426} as MouseEvent);
+      histogram.mouseMove(canvasMouse, frameMouse);
+      expect(histogram.movingObjects[4].isHovered).to.be.true;
 
-  //     [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse);
-  //     histogram.mouseUp(canvasMouse, frameMouse, canvasDown, false)
-  //     expect(histogram.movingObjects[4].isClicked).to.be.true;
-  //   })
-  // })
+      [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse);
+      histogram.mouseUp(canvasMouse, frameMouse, canvasDown, false)
+      expect(histogram.movingObjects[4].isClicked).to.be.true;
+    })
+  })
 
   it("should scale and translate axes limits", function () {
     cy.window().then(win => {

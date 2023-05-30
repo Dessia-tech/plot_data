@@ -1557,10 +1557,11 @@ export class HalfLine extends AbstractHalfLine {
   }
 
   public buildPath(): Path2D {
-    if (this.orientation == 'up') {return new UpHalfLine(this.center, this.size).path}
-    else if (this.orientation == 'down') {return new DownHalfLine(this.center, this.size).path}
-    else if (this.orientation == 'left') {return new LeftHalfLine(this.center, this.size).path}
-    else if (this.orientation == 'right') {return new RightHalfLine(this.center, this.size).path}
+    if (this.orientation == 'up') return new UpHalfLine(this.center, this.size).path;
+    if (this.orientation == 'down') return new DownHalfLine(this.center, this.size).path;
+    if (this.orientation == 'left') return new LeftHalfLine(this.center, this.size).path;
+    if (this.orientation == 'right') return new RightHalfLine(this.center, this.size).path;
+    throw new Error(`Orientation ${this.orientation} is unknown.`);
   }
 }
 

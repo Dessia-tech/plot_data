@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script src=$core_path></script>
+    </head>
+    <div id="app">
+        <canvas id="canvas" style="border: 1px solid black;"></canvas>
+
+        <script type="text/javascript">
+            var width = 0.95*window.innerWidth;
+            var height = Math.max(0.95*window.innerHeight, 350);
+            var data =  {
+              "package_version": "0.12.0", 
+              "name": "", 
+              "elements": [], 
+              "plots": [{"package_version": "0.12.0", "name": "", "elements": [], "attribute_names": ["x", "y", "color", "direction"], "type_": "parallelplot"}], 
+              "initial_view_on": true, 
+              "type_": "multiplot"
+            };
+            var number_plot_data = data.length;
+            var multiplot = new PlotData.MultiplePlots(data, width, height, true, canvas.id);
+        </script>
+    </div>
+  </body>
+</html>

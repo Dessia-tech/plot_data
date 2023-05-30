@@ -19,7 +19,7 @@ random.seed(0)
 
 elements = []
 nb_elements = 50
-available_colors = [colors.VIOLET, colors.BLUE, colors.GREEN, colors.RED, colors.YELLOW, colors.CYAN, colors.ROSE]
+available_colors = ["purple", "Blue", "green", "red", "Yellow", "Cyan", "rose"]
 directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
     random_color = available_colors[random.randint(0, len(available_colors) - 1)]
@@ -64,18 +64,17 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
                                                                x_variable='x', y_variable='y')
 
 histogram = plot_data.Histogram(x_variable='x')
+histogram2 = plot_data.Histogram(x_variable='direction')
+histogram3 = plot_data.Histogram(x_variable='color')
 
 # Creating the multiplot
 plots = [parallelplot1, scatterplot1]
-plots2 = [parallelplot1, parallelplot2, scatterplot1,
-         scatterplot2, scatterplot3, graph2d, primitive_group_container,
-         histogram]
+plots2 = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, scatterplot3, graph2d, primitive_group_container,
+          histogram]
 
-# plots = [scatterplot1, scatterplot2]
-
-multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
+# multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True)
 
 # Display
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
-plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)
+# plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)

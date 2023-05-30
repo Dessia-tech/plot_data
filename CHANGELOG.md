@@ -8,17 +8,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.13.0]
 ### Add
 - Doc Typescript
+- newHistogram plot to replace current Histogram
+    - There is no covering between multiplot histogram and this one so the two of them can live in plot_data at the same time
+    - Axes:
+        - Handled in a BasePlot object and instantiated specifically in each kind of plot (Frame, Histogram,...)
+        - Generate their own ticks, with a start number (default is 7 for normal plot, 20 for xAxis of Histogram)
+        - Ticks are built from the nearest 5 multiple in floor(log10(minValue)) with an interval computed with (maxValue - minValue) interval
+        - Instantiated in Canvas with CanvasMatrix as fixed objects
+        - Mouse style can be activated for debug stuff
+    - BasePlot:
+        - Base Plot for any plot
+        - Manage mouse, features and axes instantiation
+        - In BasePlot, all objects are fixed
+    - Frame:
+        - Classic orthogonal plot with X and Y axis
+        - Allow to instantiate moving objects as bars, points, or any other
+        - Moving objects are projected in the frame movingMatrix, updated for any mouse translation or wheel
+- New Shapes have been created to facilitate the refactor. They will be harmonized with the rest of plot data later:
+    - newShape is the base Shape
+    - Then some standard shapes (rect, circle, cross, plus, half line,...)
+    - newText
+    - Bar, to handle Histogram objects
+- Histogram can be instantiated in multiplot
+    - Rubberbands are not totally connected
+
+### Fix
+- Allow to put " " in file paths
+- Allow to draw a multiplot with no data
 
 ## [0.12.2]
 ### Fix
 - update selected_point_index when selecting from parallelplot
 - fix previous bug
 
-
 ## [0.12.1]
 ### Fix
 - npmignore
-
+- remove rubber_bands_dep attribute from PlotData class
 
 ## [0.12.0] - 02/28/2022
 ### Add

@@ -114,7 +114,7 @@ histogram_template = Template('''
             var height = Math.max(0.95*window.innerHeight, 350);
 
             var data = $data;
-            var plot_data = new PlotData.Histogram(
+            var plot_data = new PlotData.newHistogram(
                 data, width, height, true, 0, 0, $canvas_id.id
             );
             plot_data.define_canvas($canvas_id.id);
@@ -125,7 +125,6 @@ histogram_template = Template('''
   </body>
 </html>
 ''')
-
 
 multiplot_template = Template('''
 <!DOCTYPE html>

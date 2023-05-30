@@ -1,10 +1,9 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, newHistogram, Histogram, Frame } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
-import { min } from 'cypress/types/lodash';
 
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
@@ -66,44 +65,54 @@ export class MultiplePlots {
     public padding: number;
 
 
-    constructor(public data: any[], public width:number, public height:number, public buttons_ON: boolean, public canvas_id: string) {
+    constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
       check_package_version(data['package_version'], requirement);
-      this.dataObjects = data['plots'];
-      this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
-      var elements = data['elements'];
-      if (elements) {this.initialize_all_attributes();}
-      this.nbObjects = this.dataObjects.length;
-      this.initialize_sizes();
       this.define_canvas(canvas_id);
-      for (let i=0; i<this.nbObjects; i++) {
-        let object_type_ = this.dataObjects[i]['type_'];
-        if ((object_type_ === 'scatterplot') || (this.dataObjects[i]['type_'] == 'graph2d')) {
-          this.dataObjects[i]['elements'] = elements;
-          var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-        } else if (object_type_ === 'parallelplot') {
-          this.dataObjects[i]['elements'] = elements;
-          newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-        } else if (object_type_ === 'primitivegroup') {
-          newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-        } else if (object_type_ === 'primitivegroupcontainer') {
-          newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-          if (this.dataObjects[i]['association']) {
-            this.initializeObjectContext(newObject);
-            let association = this.dataObjects[i]['association'];
-            newObject = this.initialize_containers_dicts(newObject, association['associated_elements']);
-            newObject = this.call_layout(newObject, association['attribute_names']);
+      var elements = data['elements'];
+      if (elements.length != 0) {
+        this.dataObjects = data['plots'];
+        this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
+        this.nbObjects = this.dataObjects.length;
+        this.initialize_all_attributes();
+        this.initialize_sizes();
+        for (let i=0; i<this.nbObjects; i++) {
+          let object_type_ = this.dataObjects[i]['type_'];
+          if ((object_type_ === 'scatterplot') || (this.dataObjects[i]['type_'] == 'graph2d')) {
+            this.dataObjects[i]['elements'] = elements;
+            var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          } else if (object_type_ === 'parallelplot') {
+            this.dataObjects[i]['elements'] = elements;
+            newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          } else if (object_type_ === 'primitivegroup') {
+            newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          } else if (object_type_ === 'primitivegroupcontainer') {
+            newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            if (this.dataObjects[i]['association']) {
+              this.initializeObjectContext(newObject);
+              let association = this.dataObjects[i]['association'];
+              newObject = this.initialize_containers_dicts(newObject, association['associated_elements']);
+              newObject = this.call_layout(newObject, association['attribute_names']);
+            }
+          } else if (object_type_ === 'histogram') {
+            this.dataObjects[i]['elements'] = elements;
+            newObject = new newHistogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          } else {
+            throw new Error('MultiplePlots constructor : invalid object type');
           }
-        } else if (object_type_ === 'histogram') {
-          this.dataObjects[i]['elements'] = elements;
-          newObject = new Histogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
-        } else {
-          throw new Error('MultiplePlots constructor : invalid object type');
+          this.initializeObjectContext(newObject);
+          this.objectList.push(newObject);
         }
+      } else {
+        this.initial_coords = [[0, 0]];
+        this.nbObjects = 1;
+        this.initialize_sizes();
+        var emptyMPData = {"package_version": data['package_version'], "name": "", "primitives": [{"package_version": data['package_version'], "name": "", "comment": "No data to plot because workflow result is empty.", "text_style": {"object_class": "plot_data.core.TextStyle", "package_version": data['package_version'], "name": "", "text_color": "rgb(100, 100, 100)", "font_size": 20, "text_align_x": "left"}, "position_x": 50.0, "position_y": 100, "text_scaling": false, "max_width": 20, "multi_lines": true, "type_": "text"}], "type_": "primitivegroup"};
+        newObject = new PlotContour(emptyMPData, this.width, this.height, true, 0, 0, canvas_id);
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       }
-      if (elements) {this.initialize_point_families();}
+      if (elements.length != 0) {this.initialize_point_families();}
 
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].draw_initial();
@@ -120,9 +129,8 @@ export class MultiplePlots {
         this.clean_view();
         this.store_dimensions();
       }
-      // this.save_canvas();
+        // this.save_canvas();
     }
-
 
     initialize_sizes() {
       var temp_sizes = this.data['sizes'];
@@ -295,12 +303,12 @@ export class MultiplePlots {
     define_canvas(canvas_id: string):void {
       this.canvas = document.getElementById(canvas_id);
       this.canvas.width = this.width;
-          this.canvas.height = this.height;
+      this.canvas.height = this.height;
       this.context_show = this.canvas.getContext("2d");
       var hiddenCanvas:any = document.createElement("canvas", { is : canvas_id });
       hiddenCanvas.id = canvas_id + '_hidden';
-          hiddenCanvas.width = this.width;
-          hiddenCanvas.height = this.height;
+      hiddenCanvas.width = this.width;
+      hiddenCanvas.height = this.height;
       this.context_hidden = hiddenCanvas.getContext("2d");
     }
 
@@ -566,14 +574,16 @@ export class MultiplePlots {
       for (let i=0; i<this.nbObjects; i++) {
         let display_index = this.display_order[i];
         if (List.is_include(display_index, this.to_display_plots)) {
-          let obj = this.objectList[display_index];
+          var obj = this.objectList[display_index];
           if (obj.type_ == 'parallelplot') { this.objectList[display_index].refresh_axis_coords(); }
           this.objectList[display_index].draw();
         }
+        if (obj instanceof Frame) {obj.reset_scales()};
       }
       if (this.buttons_ON) {
         this.draw_buttons();
       }
+
     }
 
     redraw_object() {
@@ -616,6 +626,7 @@ export class MultiplePlots {
       obj.X = obj.X + tx;
       obj.Y = obj.Y + ty;
       if (obj.type_ == 'parallelplot') { this.objectList[move_plot_index].refresh_axis_coords(); }
+      if (obj instanceof Frame) {obj.reset_scales()};
       // this.redraw_object();
       if (obj.type_ == 'primitivegroupcontainer') {
         for (let i=0; i<obj['primitive_groups'].length; i++) {
@@ -872,7 +883,7 @@ export class MultiplePlots {
       }
     }
 
-    initialize_objects_hw():void {
+    initialize_objects_hw(): void {
       this.initial_object_width = [];
       this.initial_object_height = [];
       for (let i=0; i<this.nbObjects; i++) {
@@ -881,22 +892,14 @@ export class MultiplePlots {
       }
     }
 
-    resetAllObjects():void {
+    resetAllObjects(): void {
       this.dep_selected_points_index = [];
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
-        let type_ = this.objectList[i].type_;
-        if (type_ === 'scatterplot' || type_ === 'graph2d') {
-          Interactions.click_on_reset_action(this.objectList[i]);
-        } else if (type_ === 'contour' || type_ === 'histogram') {
-          this.objectList[i].reset_scales();
-        } else if (type_ == 'primitivegroupcontainer') {
-          let obj:any = this.objectList[i];
-          obj.reset_action();
-        } else if (type_ === 'histogram') {
-          let obj: any = this.objectList[i];
-          obj.reset_x_rubberband();
-        }
+        let plot = this.objectList[i];
+        if (plot instanceof PlotScatter) {Interactions.click_on_reset_action(plot)}
+        else {plot.reset_scales()}
+        if (plot instanceof Histogram) {plot.reset_x_rubberband()}
       }
     }
 
@@ -904,17 +907,19 @@ export class MultiplePlots {
       this.dep_selected_points_index = [];
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
-        let obj: any = this.objectList[i];
-        if (obj.type_ == 'scatterplot') {
-          obj.reset_select_on_click();
+        let otherPlot: any = this.objectList[i];
+        if (otherPlot instanceof PlotScatter) {
+          otherPlot.reset_select_on_click();
           Interactions.reset_permanent_window(this.objectList[i])
-        } else if (obj.type_ == 'parallelplot') {
-          obj.reset_pp_selected();
-          obj.reset_rubberbands();
-        } else if (obj.type_ === 'histogram') {
-          obj.reset_x_rubberband();
-        } else if (obj.type_ === "primitivegroupcontainer") {
-          obj.reset_selection();
+        } else if (otherPlot instanceof ParallelPlot) {
+          otherPlot.reset_pp_selected();
+          otherPlot.reset_rubberbands();
+        } else if (otherPlot instanceof Frame) {
+          otherPlot.reset();
+        } else if (otherPlot instanceof Histogram) {
+          otherPlot.reset_x_rubberband();
+        } else if (otherPlot instanceof PrimitiveGroupContainer) {
+          otherPlot.reset_selection();
         }
       }
       this.redrawAllObjects();
@@ -926,16 +931,14 @@ export class MultiplePlots {
       for (let i=0; i<this.nbObjects; i++) {
         if (list.includes(i)) continue;
         let obj = this.objectList[i];
-        if (obj.type_ == 'scatterplot') {
-          this.objectList[i].reset_select_on_click(false);
-          Interactions.reset_permanent_window(this.objectList[i])
-        } else if (obj.type_ == 'parallelplot') {
-          this.objectList[i].reset_pp_selected();
-          this.objectList[i].rubber_bands = [];
-          this.objectList[i].rubberbands_dep = [];
-          for (let j=0; j<obj.axis_list.length; j++) {
-            this.objectList[i].rubber_bands.push([]);
-          }
+        if (obj instanceof PlotScatter) {
+          obj.reset_select_on_click(false);
+          Interactions.reset_permanent_window(obj)
+        } else if (obj instanceof ParallelPlot) {
+          obj.reset_pp_selected();
+          obj.rubber_bands.forEach((rubberBand) => {
+            rubberBand.reset()
+          })
         }
       }
       this.redrawAllObjects();
@@ -1178,19 +1181,6 @@ export class MultiplePlots {
       return -1;
     }
 
-    add_to_rubberbands_manual(obj_index, rubber_index:number, min:number, max:number): void {
-      var obj = this.objectList[obj_index];
-      this.objectList[obj_index].rubber_bands[rubber_index] = [min, max];
-      var realCoord_min = obj.axis_to_real_coords(min, obj.axis_list[rubber_index]['type'], obj.axis_list[rubber_index]['list'], obj.inverted_axis_list[rubber_index]);
-      var realCoord_max = obj.axis_to_real_coords(max, obj.axis_list[rubber_index]['type'], obj.axis_list[rubber_index]['list'], obj.inverted_axis_list[rubber_index]);
-      var real_min = Math.min(realCoord_min, realCoord_max);
-      var real_max = Math.max(realCoord_min, realCoord_max);
-      this.objectList[obj_index].add_to_rubberbands_dep([obj.axis_list[rubber_index]['name'], [real_min, real_max]]);
-      this.objectList[obj_index].is_drawing_rubber_band = true;
-      this.mouse_move_pp_communication();
-      this.objectList[obj_index].is_drawing_rubber_band = false;
-    }
-
     mouse_move_scatter_communication() {
       let isSelectingObjIndex = this.getSelectionONObject();
       if (isSelectingObjIndex != -1) {
@@ -1241,6 +1231,13 @@ export class MultiplePlots {
                 MultiplotCom.sc_to_pp_communication(selection_coords[i], to_display_attributes[i], k, this.objectList[j]);
               }
             }
+          } else if (this.objectList[j].type_ == 'frame') {
+            (this.objectList[j] as Frame).axes.forEach(axis => {
+              if (to_display_attributes[i]['name'] == axis.name) {
+                axis.rubberBand.minValue = Math.min(...selection_coords[i]);
+                axis.rubberBand.maxValue = Math.max(...selection_coords[i]);
+              }
+            })
           }
         }
       }
@@ -1258,35 +1255,34 @@ export class MultiplePlots {
       this.refresh_selected_object_from_index();
     }
 
-
     mouse_move_pp_communication() {
-      let isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
+      const isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
       if (isDrawingRubberObjIndex != -1) {
-        let isDrawingPP = this.objectList[isDrawingRubberObjIndex];
-        let rubberbands_dep = isDrawingPP.rubberbands_dep;
-        this.pp_communication(rubberbands_dep, isDrawingPP);
+        const isDrawingPP = this.objectList[isDrawingRubberObjIndex];
+        this.pp_communication(isDrawingPP.rubber_bands, isDrawingPP);
       }
     }
 
-    pp_communication(deprecatedRubberBands:[string, [number, number]][], actualPP: any): void { //process received data from a parallelplot and send it to the other objects
-      let rubberBands = [];
-      deprecatedRubberBands.forEach((deprecatedRubberBand) => {
-        rubberBands.push(RubberBand.fromFormerFormat(deprecatedRubberBand));
-      })
-
-      let selectedIndices = actualPP.getObjectsInRubberBands(rubberBands);
-      this.dep_selected_points_index = actualPP.selected_point_index;
+    pp_communication(rubberBands: RubberBand[], currentPP: any) { // process received data from a parallelplot and send it to the other objects
+      const selectedIndices = currentPP.getObjectsInRubberBands(rubberBands);
+      this.dep_selected_points_index = currentPP.selected_point_index;
+      let rubberBandNames = [];
+      rubberBands.forEach((rubberBand) => rubberBandNames.push(rubberBand.attributeName));
 
       this.objectList.forEach((subplot) => {
         const WAS_MERGE_ON = subplot.mergeON;
-        var subplotData = subplot.data
-        var rubberBandsInPlot = [];
+        const subplotData = subplot.data;
+        let rubberBandsInPlot = [];
         rubberBands.forEach((rubberBand) => {
           if (["scatterplot", "parallelplot", "graph2d"].includes(subplotData.type_)) {
             if (subplotData.attribute_names.includes(rubberBand.attributeName)) {
               rubberBandsInPlot.push(rubberBand);
             }
-          } else if (subplotData.type_ === "histogram") {
+          } else if (subplot.type_ === "frame") {
+            if ((subplot as Frame).xFeature === rubberBand.attributeName) {
+              rubberBandsInPlot.push(rubberBand);
+            }
+          } else if (subplotData.type_ === "histogram" && subplot.type_ !== "frame") {
             if (subplotData.x_variable === rubberBand.attributeName) {
               rubberBandsInPlot.push(rubberBand);
             }
@@ -1296,15 +1292,32 @@ export class MultiplePlots {
             }
           }
         })
-        if (subplot instanceof PlotScatter && subplot.type_ !== "graph2d") {
+
+        if (subplot instanceof ParallelPlot) {
+          if (subplot !== currentPP) {
+            subplot.rubber_bands.forEach((rubberBand, index) => {
+              const currentRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
+              if (currentRubberIndex != -1) {
+                let axisOrigin = subplot.axis_x_start;
+                let axisEnd = subplot.axis_x_end;
+                if (subplot.vertical) {
+                  axisOrigin = subplot.axis_y_end;
+                  axisEnd = subplot.axis_y_start;
+                }
+                rubberBand.updateFromOther(currentPP.rubber_bands[currentRubberIndex], axisOrigin, axisEnd,
+                  subplot.inverted_axis_list[index], currentPP.inverted_axis_list[currentRubberIndex]);
+              }
+            })
+          }
+        } else if (subplot instanceof PlotScatter && subplot.type_ !== "graph2d") {
           if (WAS_MERGE_ON == true) {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
           }
           let completedAxis = [];
           rubberBandsInPlot.forEach((rubberBand) => {
-            var axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
-            completedAxis.push(axisIndex)
+            const axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
+            if (rubberBand.length != 0) {completedAxis.push(axisIndex)};
             if (axisIndex == 0) {
               subplot.perm_window_x = rubberBand.minValue;
               subplot.perm_window_w = rubberBand.maxValue - subplot.perm_window_x;
@@ -1347,48 +1360,24 @@ export class MultiplePlots {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
           }
-
-        } else if (subplot instanceof ParallelPlot) {
-          let axisNames = []
-          subplot.axis_list.forEach((axis) => {axisNames.push(axis.name)})
-          rubberBandsInPlot.forEach((rubberBand, rubberBandIndex) => {
-            var axisIndex = axisNames.indexOf(rubberBand.attributeName)
-            let received_real_min = rubberBand.minValue;
-            let received_real_max = rubberBand.maxValue;
-            let temp_received_axis_min = subplot.real_to_axis_coord(
-              received_real_min,
-              subplot.axis_list[axisIndex]['type_'],
-              subplot.axis_list[axisIndex]['list'],
-              subplot.inverted_axis_list[axisIndex]
-              );
-            let temp_received_axis_max = subplot.real_to_axis_coord(
-              received_real_max,
-              subplot.axis_list[axisIndex]['type_'],
-              subplot.axis_list[axisIndex]['list'],
-              subplot.inverted_axis_list[axisIndex]
-              );
-            let received_axis_min = Math.min(temp_received_axis_min, temp_received_axis_max);
-            let received_axis_max = Math.max(temp_received_axis_min, temp_received_axis_max);
-            subplot.rubber_bands[axisIndex] = [received_axis_min, received_axis_max];
-            subplot.add_to_rubberbands_dep(deprecatedRubberBands[rubberBandIndex]);
+        } else if (subplot instanceof Frame) {
+          rubberBandsInPlot.forEach((rubberBand) => {
+            subplot.axes[0].rubberBand.minValue = rubberBand.minValue;
+            subplot.axes[0].rubberBand.maxValue = rubberBand.maxValue;
+            subplot.draw()
           })
-
         } else if (subplot instanceof Histogram) {
           rubberBandsInPlot.forEach((rubberBand) => {
-            subplot.x_rubberband = [rubberBand.minValue, rubberBand.maxValue];
+            let currentRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
+            subplot.rubber_bands[0].updateFromOther(
+              rubberBand, subplot.axis_x_start, subplot.axis_x_end, false, currentPP.inverted_axis_list[currentRubberIndex]);
           })
-          if (rubberBandsInPlot.length == 0) {
-            subplot.x_rubberband = [];
-          }
           subplot.get_selected_keys();
-
         } else if (subplot instanceof PrimitiveGroupContainer) {
           subplot.selected_point_index = selectedIndices;
           if (selectedIndices.length == 0) {
             let sumRubberLength = 0;
-            rubberBands.forEach((rubberBand) => {
-              sumRubberLength += rubberBand.length;
-            })
+            rubberBands.forEach((rubberBand) => {sumRubberLength += rubberBand.length})
             if (sumRubberLength == 0 && selectedIndices.length == 0) {
               subplot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
             }
@@ -1398,11 +1387,16 @@ export class MultiplePlots {
       })
     }
 
-
     mouse_move_histogram_communication() {
-      let index = this.get_drawing_rubberbands_obj_index('histogram');
+      let index = this.get_drawing_rubberbands_obj_index("histogram");
       if (index === -1) return;
       this.histogram_communication(index);
+    }
+
+    mouse_move_frame_communication() {
+      let index = this.get_drawing_rubberbands_obj_index("frame");
+      if (index === -1) return;
+      this.frame_communication(index);
     }
 
 
@@ -1418,6 +1412,31 @@ export class MultiplePlots {
         } else if (obj.type_ === 'histogram') {
           MultiplotCom.histogram_to_histogram_communication(histogram, obj);
         } else if (obj.type_ === "primitivegroupcontainer") {
+          primitive_indices.push(i);
+        }
+      }
+      this.refresh_dep_selected_points_index();
+      this.refresh_selected_object_from_index();
+
+      for (let index of primitive_indices) {
+        let obj: any = this.objectList[index];
+        obj.selected_point_index = this.dep_selected_points_index;
+        obj.select_primitive_groups();
+      }
+    }
+
+    frame_communication(index) {
+      let frame = this.objectList[index];
+      let primitive_indices = [];
+      for (let i=0; i<this.nbObjects; i++) {
+        let obj = this.objectList[i];
+        if (obj.type_ === 'scatterplot') {
+          MultiplotCom.frame_to_scatter_communication(frame, obj);
+        } else if (obj.type_ === 'parallelplot') {
+          MultiplotCom.frame_to_pp_communication(frame, obj);
+        } else if (obj.type_ === "frame") {
+          MultiplotCom.frame_to_frame_communication(frame, obj);
+        }else if (obj.type_ === "primitivegroupcontainer") {
           primitive_indices.push(i);
         }
       }
@@ -1474,7 +1493,6 @@ export class MultiplePlots {
             }
           }
         } else if (obj.type_ == 'parallelplot') {
-          this.objectList[i].pp_selected = [];
           for (let j=0; j<this.dep_selected_points_index.length; j++) {
             var to_display = [];
             for (let k=0; k<obj.axis_list.length; k++) {
@@ -1487,12 +1505,10 @@ export class MultiplePlots {
               }
               to_display.push(elt);
             }
-            this.objectList[i].pp_selected.push(to_display);
           }
         }
       }
     }
-
 
     manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
       this.move_plot_index = this.getLastObjectIndex(mouse2X, mouse2Y);
@@ -1513,11 +1529,11 @@ export class MultiplePlots {
       }
     }
 
-    get_drawing_rubberbands_obj_index(type_):number {
+    get_drawing_rubberbands_obj_index(type_): number {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
-        if (obj.is_drawing_rubber_band === true && obj.type_ === type_) {
-          return i;
+        if (obj.type_ === type_) {
+          if (obj.is_drawing_rubber_band === true) {return i}
         }
       }
       return -1;
@@ -1807,6 +1823,7 @@ export class MultiplePlots {
       var clickOnVertex:boolean = false;
       var old_selected_index;
       var double_click = false;
+      var ctrlKey = false; var shiftKey = false;
       // For canvas to read keyboard inputs.
       // this.canvas.setAttribute('tabindex', '0');
       // this.canvas.focus();
@@ -1816,12 +1833,22 @@ export class MultiplePlots {
       }
       this.setAllInteractionsToOff();
 
+      window.addEventListener('keydown', e => {
+        if (e.key == "Control") {ctrlKey = true}
+        if (e.key == "Shift") {shiftKey = true}
+      });
+
+      window.addEventListener('keyup', e => {
+        if (e.key == "Control") {ctrlKey = false}
+        if (e.key == "Shift") {shiftKey = false}
+      });
+
       this.canvas.addEventListener('mousedown', e => {
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
         old_selected_index = this.selected_point_index;
-        if (e.ctrlKey) {
+        if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();
         } else {
           this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
@@ -1878,6 +1905,7 @@ export class MultiplePlots {
             if (this.selectDependency_bool) {
               this.mouse_move_scatter_communication();
               this.mouse_move_pp_communication();
+              this.mouse_move_frame_communication();
               this.mouse_move_histogram_communication();
               this.redrawAllObjects();
             }
@@ -1925,11 +1953,12 @@ export class MultiplePlots {
                     this.setAllInterpolationToOFF();
                   }
                   this.reset_selected_points_except([this.clickedPlotIndex]);
-                  this.pp_communication(this.objectList[this.clickedPlotIndex].rubberbands_dep, this.objectList[this.clickedPlotIndex]);
+                  this.objectList[this.clickedPlotIndex].mouse_interaction(true);
+                  this.pp_communication(this.objectList[this.clickedPlotIndex].rubber_bands, this.objectList[this.clickedPlotIndex]);
                 }
               } else if (type_ === 'histogram') {
                 let obj: any = this.objectList[this.clickedPlotIndex];
-                if (obj.x_rubberband.length === 0) {
+                if (obj.rubber_bands[0].length === 0) {
                   this.reset_all_selected_points();
                 }
               } else if (type_ === "scatterplot") {
@@ -1995,7 +2024,7 @@ export class MultiplePlots {
 
     // Not working well actually, but I let it here in case somebody wants to give it a try
       // canvas.addEventListener('keydown', e => {
-      //   if (e.ctrlKey) {
+      //   if (ctrlKey) {
       //     e.preventDefault();
       //     if (e.key === 'z') {
       //       this.restore_previous_canvas();
@@ -2017,9 +2046,20 @@ export class MultiplotCom {
       var axis_max = Math.max(axis_coord0, axis_coord1);
       var min = Math.max(axis_min, 0);
       var max = Math.min(axis_max, 1);
-      plot_data.rubber_bands[index] = [min, max];
-      plot_data.add_to_rubberbands_dep([attribute['name'], [coordinates[0], coordinates[1]]]);
-      plot_data.refresh_pp_selected();
+      plot_data.rubber_bands[index].axisMin = min;
+      plot_data.rubber_bands[index].axisMax = max;
+      plot_data.rubber_bands[index].minValue = coordinates[0];
+      plot_data.rubber_bands[index].maxValue = coordinates[1];
+      let axisOrigin = plot_data.axis_x_start;
+      let axisEnd = plot_data.axis_x_end;
+      if (plot_data.vertical) {
+        axisOrigin = plot_data.axis_y_end;
+        axisEnd = plot_data.axis_y_start;
+      }
+      plot_data.rubber_bands[index].axisToReal(axisOrigin, axisEnd);
+      if (plot_data instanceof ParallelPlot){
+        plot_data.refresh_pp_selected();
+      }
     }
 
     public static sc_to_sc_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], plot_data:PlotData) {
@@ -2064,10 +2104,9 @@ export class MultiplotCom {
 
     public static histogram_to_histogram_communication(histogram1, histogram2) {
       if (histogram1.x_variable.name !== histogram2.x_variable.name) return;
-      histogram2.x_rubberband = histogram1.x_rubberband;
+      histogram2.rubber_bands[0] = histogram1.rubber_bands[0];
       histogram2.get_selected_keys();
     }
-
 
     public static histogram_to_pp_communication(histogram, parallel_plot) {
       let index = -1;
@@ -2079,31 +2118,82 @@ export class MultiplotCom {
       }
       if (index === -1) return;
       let x_variable = histogram.x_variable;
-      let x_rubberband = histogram.x_rubberband;
-      let axis_coord1 = parallel_plot.real_to_axis_coord(x_rubberband[0], x_variable.type_, x_variable.list,
+      let x_rubberband = histogram.rubber_bands[0];
+      let axis_coord1 = parallel_plot.real_to_axis_coord(x_rubberband.minValue, x_variable.type_, x_variable.list,
                                                           parallel_plot.inverted_axis_list[index]);
       axis_coord1 = Math.max(Math.min(axis_coord1, 1), 0);
-      let axis_coord2 = parallel_plot.real_to_axis_coord(x_rubberband[1], x_variable.type_, x_variable.list,
+      let axis_coord2 = parallel_plot.real_to_axis_coord(x_rubberband.maxValue, x_variable.type_, x_variable.list,
                                                           parallel_plot.inverted_axis_list[index]);
       axis_coord2 = Math.max(Math.min(axis_coord2, 1), 0);
-      parallel_plot.rubber_bands[index] = [Math.min(axis_coord1, axis_coord2), Math.max(axis_coord1, axis_coord2)];
-      parallel_plot.add_to_rubberbands_dep([x_variable.name, [x_rubberband[0], x_rubberband[1]]]);
+      parallel_plot.rubber_bands[index].axisMin = Math.min(axis_coord1, axis_coord2);
+      parallel_plot.rubber_bands[index].axisMax = Math.max(axis_coord1, axis_coord2);
+      parallel_plot.rubber_bands[index].minValue = x_rubberband.minValue;
+      parallel_plot.rubber_bands[index].maxValue = x_rubberband.maxValue;
     }
-
 
     public static histogram_to_scatter_communication(histogram, scatter) {
       let scatter_x = scatter.plotObject.attribute_names[0];
       let scatter_y = scatter.plotObject.attribute_names[1];
       if (histogram.x_variable.name === scatter_x) {
-        scatter.perm_window_x = histogram.x_rubberband[0];
+        scatter.perm_window_x = histogram.rubber_bands[0].minValue;
         scatter.perm_window_y = -scatter.minY;
-        scatter.perm_window_w = histogram.x_rubberband[1] - histogram.x_rubberband[0];
+        scatter.perm_window_w = histogram.rubber_bands[0].maxValue - histogram.rubber_bands[0].minValue;
         scatter.perm_window_h = scatter.maxY - scatter.minY;
       } else if (histogram.x_variable.name === scatter_y) {
         scatter.perm_window_x = scatter.minX;
-        scatter.perm_window_y = histogram.x_rubberband[1];
+        scatter.perm_window_y = histogram.rubber_bands[0].maxValue;
         scatter.perm_window_w = scatter.maxX - scatter.minX;
-        scatter.perm_window_h = histogram.x_rubberband[1] - histogram.x_rubberband[0];
+        scatter.perm_window_h = histogram.rubber_bands[0].maxValue - histogram.rubber_bands[0].minValue;
+      }
+      Interactions.selection_window_action(scatter)
+    }
+
+
+    public static frame_to_frame_communication(histogram1, histogram2) {
+      if (histogram1.axes[0].name !== histogram2.axes[0].name) return;
+      histogram2.axes[0].rubberBand = histogram1.axes[0].rubberBand;
+      histogram2.axes[1].rubberBand = histogram1.axes[1].rubberBand;
+    }
+
+    public static frame_to_pp_communication(histogram, parallel_plot) {
+      let index = -1;
+      for (let i=0; i<parallel_plot.axis_list.length; i++) {
+        if (histogram.axes[0].name === parallel_plot.axis_list[i].name) {
+          index = i;
+          break;
+        }
+      }
+      if (index === -1) return;
+
+      let axisOrigin = parallel_plot.axis_x_start;
+      let axisEnd = parallel_plot.axis_x_end;
+      if (parallel_plot.vertical) {
+        axisOrigin = parallel_plot.axis_y_end;
+        axisEnd = parallel_plot.axis_y_start;
+      }
+      if (typeof parallel_plot.axis_list[index].list[0] == "string") {
+        histogram.axes[0].rubberBand.valueToAxis(1, parallel_plot.axis_list[index].list.length)
+      } else {
+        histogram.axes[0].rubberBand.valueToAxis(parallel_plot.axis_list[index].list[0], parallel_plot.axis_list[index].list[1])
+      }
+      parallel_plot.rubber_bands[index].updateFromOther(histogram.axes[0].rubberBand, axisOrigin, axisEnd,
+        parallel_plot.inverted_axis_list[index], false);
+    }
+
+
+    public static frame_to_scatter_communication(histogram, scatter) {
+      let scatter_x = scatter.plotObject.attribute_names[0];
+      let scatter_y = scatter.plotObject.attribute_names[1];
+      if (histogram.axes[0].name === scatter_x) {
+        scatter.perm_window_x = histogram.axes[0].rubberBand.minValue;
+        scatter.perm_window_y = -scatter.minY;
+        scatter.perm_window_w = histogram.axes[0].rubberBand.maxValue - histogram.axes[0].rubberBand.minValue;
+        scatter.perm_window_h = scatter.maxY - scatter.minY;
+      } else if (histogram.axes[0].name === scatter_y) {
+        scatter.perm_window_x = scatter.minX;
+        scatter.perm_window_y = histogram.axes[0].rubberBand.maxValue;
+        scatter.perm_window_w = scatter.maxX - scatter.minX;
+        scatter.perm_window_h = histogram.axes[0].rubberBand.maxValue - histogram.axes[0].rubberBand.minValue;
       }
       Interactions.selection_window_action(scatter)
     }
@@ -2138,8 +2228,7 @@ export function save_multiplot(multiplot: MultiplePlots) {
     } else if (obj.type_ === "histogram") {
       obj_to_dict.push(["graduation_nb", obj["graduation_nb"]],
                         ["x_variable", obj["x_variable"]],
-                        ["x_rubberband", obj["x_rubberband"]],
-                        ["y_rubberband", obj["y_rubberband"]],
+                        ["rubber_bands", obj["rubber_bands"]],
                         ["scale", obj.scale],
                         ["originX", obj.originX]);
     }
@@ -2192,8 +2281,7 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
     } else if (obj.type_ === "histogram") {
       obj["graduation_nb"] = temp_objs[i]["graduation_nb"];
       obj["x_variable"] = temp_objs[i]["x_variable"];
-      obj["x_rubberband"] = temp_objs[i]["x_rubberband"];
-      obj["y_rubberband"] = temp_objs[i]["y_rubberband"];
+      obj.rubber_bands = temp_objs[i]["rubber_bands"];
       obj.scale = temp_objs[i]["scale"];
       obj.originX = temp_objs[i]["originX"];
     }
@@ -2202,7 +2290,6 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
   multiplot.redrawAllObjects();
   return multiplot;
 }
-
 
 const empty_container = {'name': '',
 'package_version': '0.6.2',

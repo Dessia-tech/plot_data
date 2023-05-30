@@ -1,6 +1,6 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, Vertex } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
@@ -137,7 +137,7 @@ export abstract class PlotData {
   disp_h:number = 0;
   selected_axis_name:string='';
   inverted_axis_list:boolean[]=[];
-  rubber_bands:any[]=[];
+  rubber_bands: RubberBand[]=[];
   rubber_last_min:number=0;
   rubber_last_max:number=0;
   edge_style:EdgeStyle;
@@ -150,7 +150,6 @@ export abstract class PlotData {
   interpolation_colors:string[]=[];
   rgbs:[number, number, number][]=[];
   hexs:string[];
-  pp_selected:any[]=[];
   pp_selected_index:number[]=[];
   click_on_button:boolean=false;
   vertical_axis_coords:number[][]=[];
@@ -169,7 +168,6 @@ export abstract class PlotData {
   isSelecting:boolean=false;
   selection_coords:[number, number][]=[];
   is_drawing_rubber_band:boolean=false;
-  rubberbands_dep:[string, [number, number]][]=[];
 
   point_families:PointFamily[]=[];
   latest_selected_points:Point2D[]=[];
@@ -270,7 +268,6 @@ export abstract class PlotData {
     }
   }
 
-
   reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.maxX - this.minX), this.height/(this.maxY - this.minY));
     this.scale = this.init_scale;
@@ -289,7 +286,6 @@ export abstract class PlotData {
       this.scaleY = this.init_scaleY;
       this.originX = this.width/2 - (this.maxX + this.minX)*this.scaleX/2 + this.decalage_axis_x/2;
       this.originY = this.height/2 - (this.maxY + this.minY)*this.scaleY/2 - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/2;
-
     } else if (this.type_ === 'histogram') {
       this.init_scale = 0.95*(this.width - this.decalage_axis_x)/(this['max_abs'] - this['min_abs']);
       this.scale = this.init_scale;
@@ -1126,22 +1122,6 @@ export abstract class PlotData {
     return axis_coords;
   }
 
-  is_inside_band(real_x, real_y, axis_index) {
-    if (this.rubber_bands[axis_index].length == 0) {
-      return true;
-    }
-    var rubber_min = this.rubber_bands[axis_index][0];
-    var rubber_max = this.rubber_bands[axis_index][1];
-    if (this.vertical === true) {
-      var coord_ax = (real_y - this.axis_y_end)/(this.axis_y_start - this.axis_y_end);
-    } else {
-      coord_ax = (real_x - this.axis_x_start)/(this.axis_x_end - this.axis_x_start);
-    }
-    if ((coord_ax>=rubber_min) && (coord_ax<=rubber_max)) {
-      return true;
-    }
-    return false;
-  }
 
   sort_to_display_list() {
     if (List.is_name_include(this.selected_axis_name, this.axis_list)) {
@@ -1200,9 +1180,6 @@ export abstract class PlotData {
   }
 
   pp_color_management(index:number, selected:boolean, clicked:boolean, over:boolean, heatmap_select:boolean) {
-    if (List.isListOfEmptyList(this.rubber_bands)) {
-      selected = true;
-    }
     if (this.selected_axis_name == '') {
       if (over) {
         this.context.strokeStyle = string_to_hex("yellow");
@@ -1248,8 +1225,7 @@ export abstract class PlotData {
       let selected = true
       if (this.vertical) { var seg_list = this.vertical_axis_coords[i]; } else { var seg_list = this.horizontal_axis_coords[i]; }
       for (let j=0; j<this.axis_list.length; j++) {
-        var inside_band = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
-        if (!inside_band) {
+        if (!this.rubber_bands[j].includesValue(this.to_display_list[i][j], this.axis_list[j])) {
           selected = false;
           break;
         }
@@ -1307,80 +1283,41 @@ export abstract class PlotData {
     }
   }
 
-  reset_pp_selected() {
-    this.pp_selected = this.to_display_list;
-    this.clicked_point_index = [];
-    this.pp_selected_index = Array.from(Array(this.to_display_list.length).keys());
-  }
-
-  // Update the selected lines
-  refresh_pp_selected() {
-    this.pp_selected = [];
-    this.pp_selected_index = [];
-    if (this.vertical) { var axis_coords = this.vertical_axis_coords; } else { axis_coords = this.horizontal_axis_coords; }
-    for (let i=0; i<this.to_display_list.length; i++) {
-      var selected:boolean = true;
-      var seg_list = axis_coords[i];
-      for (let j=0; j<this.axis_list.length; j++) {
-        var selected = this.is_inside_band(seg_list[j][0], seg_list[j][1], j);
-      }
-      if (selected) {
-        this.pp_selected.push(this.to_display_list[i]);
-        this.pp_selected_index.push(this.from_to_display_list_to_elements(i));
-      }
-    }
-    if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
-      this.reset_pp_selected();
-    }
-  }
-
-
   //reset parallel plot's rubber bands
   reset_rubberbands() {
-    this.rubber_bands = [];
-    this.rubberbands_dep = [];
-    for (let j=0; j<this.axis_list.length; j++) {
-      this.rubber_bands.push([]);
-    }
+    this.rubber_bands.forEach((rubberBand) => {rubberBand.reset()});
   }
-
 
   from_to_display_list_to_elements(i) {
     return this.display_list_to_elements_dict[i.toString()];
 
   }
 
-
   draw_rubber_bands(mvx) {
     var color_stroke = string_to_hex('white');
     var line_width = 0.1;
-    for (var i=0; i<this.rubber_bands.length; i++) {
-      if (this.rubber_bands[i].length != 0) {
-        if (this.vertical) {
-          var minY = this.rubber_bands[i][0];
-          var maxY = this.rubber_bands[i][1];
-          var real_minY = this.axis_y_end + minY*(this.axis_y_start - this.axis_y_end);
-          var real_maxY = this.axis_y_end + maxY*(this.axis_y_start - this.axis_y_end);
-          var current_x = this.axis_x_start + i*this.x_step;
-          if (i == this.move_index) {
-            Shape.rect(current_x - this.bandWidth/2 + mvx, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
+    this.rubber_bands.forEach((rubberBand, idx) => {
+      if (rubberBand.canvasLength >= rubberBand.MIN_LENGTH) {
+        if (rubberBand.isVertical) {
+          if (this.type_ !== "histogram") {
+            var origin = this.axis_x_start + idx * this.x_step;
           } else {
-            Shape.rect(current_x - this.bandWidth/2, real_minY, this.bandWidth, real_maxY - real_minY, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
+            var origin = this.decalage_axis_x + this.X;
           }
         } else {
-          var minX = this.rubber_bands[i][0];
-          var maxX = this.rubber_bands[i][1];
-          var real_minX = this.axis_x_start + minX*(this.axis_x_end - this.axis_x_start);
-          var real_maxX = this.axis_x_start + maxX*(this.axis_x_end - this.axis_x_start);
-          var current_y = this.axis_y_start + i*this.y_step;
-          if (i == this.move_index) {
-            Shape.rect(real_minX, current_y - this.bandWidth/2 + mvx, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
+          if (this.type_ !== "histogram") {
+            var origin = this.axis_y_start + idx * this.y_step;
           } else {
-            Shape.rect(real_minX, current_y - this.bandWidth/2, real_maxX - real_minX, this.bandWidth, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity, []);
+            var origin = this.height - this.decalage_axis_y + this.Y;
           }
         }
+        if (idx == this.move_index) {
+          rubberBand.draw(origin + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
+        } else {
+          rubberBand.draw(origin, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
+        }
       }
-    }
+    })
   }
 
   refresh_interpolation_colors(): void {
@@ -1538,7 +1475,7 @@ export abstract class PlotData {
     this.refresh_axis_bounds(this.axis_list.length);
     this.refresh_all_attributes();
     this.refresh_attribute_booleans();
-    this.rubber_bands.push([]);
+    this.rubber_bands.push(new RubberBand(name, 0, 0, this.vertical));
     this.refresh_to_display_list(this.elements);
     this.draw();
   }
@@ -1668,22 +1605,8 @@ export abstract class PlotData {
     this.refresh_point_list_bool = true;
   }
 
-  invert_rubber_bands(index_list) {
-    if (index_list == 'all') {
-      for (var i=0; i<this.rubber_bands.length; i++) {
-        if (this.rubber_bands[i].length != 0) {
-          [this.rubber_bands[i][0], this.rubber_bands[i][1]] = [1-this.rubber_bands[i][1], 1-this.rubber_bands[i][0]];
-        }
-      }
-    } else {
-      for (var i=0; i<index_list.length; i++) {
-        if (this.rubber_bands[index_list[i]].length != 0) {
-          [this.rubber_bands[index_list[i]][0], this.rubber_bands[index_list[i]][1]] = [1-this.rubber_bands[index_list[i]][1], 1-this.rubber_bands[index_list[i]][0]];
-        } else {
-          throw new Error('invert_rubber_bands() : asking to inverted empty array');
-        }
-      }
-    }
+  invert_rubber_bands(index_list: number[], axisBounds: [number, number]) {
+    index_list.forEach((index) => {this.rubber_bands[index].invert(axisBounds)});
   }
 
   scatter_to_real_length(sc_length:number, coord_type:string, start_coord?:number) {
@@ -1732,7 +1655,7 @@ export abstract class PlotData {
     }
   }
 
-  axis_to_real_coords(x:number, type_:string,  list, inverted):number { //from parallel plot axis coord (between 0 and 1) to real coord (between min_coord and max_coord)
+  axis_to_real_coords(x:number, type_:string, list, inverted):number { //from parallel plot axis coord (between 0 and 1) to real coord (between min_coord and max_coord)
     if (type_ == 'float') {
       let real_min = list[0];
       let real_max = list[1];
@@ -1750,16 +1673,6 @@ export abstract class PlotData {
       }
 
     }
-  }
-
-  add_to_rubberbands_dep(selection:[string, [number, number]]):void {
-    for (let i=0; i<this.rubberbands_dep.length; i++) {
-      if (this.rubberbands_dep[i][0] == selection[0]) {
-        this.rubberbands_dep[i] = selection;
-        return;
-      }
-    }
-    this.rubberbands_dep.push(selection);
   }
 
   get_nb_intersections(attrNum1, attrNum2) { //get the number of segment intersections given two axis index from the initial axis_list
@@ -2296,48 +2209,16 @@ export abstract class PlotData {
       }
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
-      this.draw();
+      this.draw()
       return [mouse3X, mouse3Y];
   }
 
-  mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
-    var mouseX = e.offsetX;
-    var mouseY = e.offsetY;
-    var click_on_disp = Shape.isInRect(mouseX, mouseY, this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h);
-    if (click_on_axis && !mouse_moving) {
-      Interactions.select_axis_action(selected_axis_index, click_on_band, click_on_border, this);
-    } else if (click_on_name && mouse_moving) {
-      [mouse3X, mouse3Y, click_on_axis] = Interactions.mouse_up_axis_interversion(mouse1X, mouse1Y, e, this);
-    } else if (click_on_name && !mouse_moving) {
-      Interactions.select_title_action(selected_name_index, this);
-    } else if (this.is_drawing_rubber_band || is_resizing) {
-      is_resizing = Interactions.rubber_band_size_check(selected_axis_index, this);
-    }
-    if (click_on_disp) {
-      Interactions.change_disposition_action(this);
-    }
-    this.refresh_pp_selected();
-    this.is_drawing_rubber_band = false;
-    mouse_moving = false;
-    isDrawing = false;
-    this.originX = 0;
-    return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing];
-  }
 
   mouse_interaction(is_parallelplot:boolean) {
     if (this.interaction_ON === true) {
       var isDrawing = false;
       var mouse_moving = false;
       var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
-      var click_on_axis:boolean=false;
-      var selected_axis_index:number = -1;
-      var click_on_name:boolean = false;
-      var selected_name_index:number = -1;
-      var click_on_band:boolean = false;
-      var click_on_border:boolean = false;
-      var selected_band_index:number = -1;
-      var selected_border:number[]=[];
-      var is_resizing:boolean=false;
       var click_on_selectw_border:boolean = false;
       var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
 
@@ -2346,44 +2227,18 @@ export abstract class PlotData {
       canvas.addEventListener('mousedown', e => {
         if (this.interaction_ON) {
           [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
-          if (is_parallelplot) {
-            [click_on_axis, selected_axis_index] = Interactions.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis, this);
-            [click_on_name, selected_name_index] = Interactions.initialize_click_on_name(this.axis_list.length, mouse1X, mouse1Y, this);
-            [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
-          }
         }
       });
 
       canvas.addEventListener('mousemove', e => {
         if (this.interaction_ON) {
-          if (is_parallelplot) {
-            this.isSelectingppAxis = false;
-            if (isDrawing) {
-              mouse_moving = true;
-              if (click_on_name) {
-                [mouse2X, mouse2Y, isDrawing, mouse_moving] = Interactions.mouse_move_axis_inversion(isDrawing, e, selected_name_index, this);
-              } else if (click_on_axis && !click_on_band && !click_on_border) {
-                [mouse2X, mouse2Y] = Interactions.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, this);
-              } else if (click_on_band) {
-                [mouse2X, mouse2Y] = Interactions.rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e, this);
-              } else if (click_on_border) {
-                [selected_border[1], mouse2X, mouse2Y, is_resizing] = Interactions.rubber_band_resize(mouse1X, mouse1Y, selected_border, e, this);
-              }
-              this.refresh_pp_selected();
-            }
-          } else {
-            [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
-          }
+          [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
         }
       });
 
       canvas.addEventListener('mouseup', e => {
         if (this.interaction_ON) {
-          if (is_parallelplot) {
-            [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
-          } else {
-            [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
-          }
+          [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
         }
       })
 
@@ -2396,17 +2251,6 @@ export abstract class PlotData {
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
         mouse_moving = false;
-      });
-
-
-      canvas.addEventListener("click", e => {
-        if (this.interaction_ON && this.isParallelPlot) {
-          if (e.ctrlKey) {
-            this.reset_pp_selected();
-            this.reset_rubberbands();
-            this.draw();
-          }
-        }
       });
 
     }
@@ -2917,122 +2761,76 @@ export class Interactions {
     return [mouse2X, mouse2Y, isDrawing, mouse_move];
   }
 
+  public static prepareAxisBounds(plot_data: any, selected_axis_index: number) {
+    let axisList = new Attribute(plot_data.axis_list[selected_axis_index].name, plot_data.axis_list[selected_axis_index].type_);
+    axisList.list = [];
+    plot_data.axis_list[selected_axis_index].list.forEach((value) => {axisList.list.push(value)});
+
+    if (plot_data.type_ == 'histogram') {
+      if (selected_axis_index == 0) {
+        axisList.type_ = 'float'
+        axisList.list[0] = plot_data.display_to_real(plot_data.axis_x_start, 'x');
+        axisList.list[1] = plot_data.display_to_real(plot_data.axis_x_end, 'x');
+      } else {
+        axisList.list[0] = plot_data.display_to_real(plot_data.axis_y_start, 'y');
+        axisList.list[1] = plot_data.display_to_real(plot_data.axis_y_end, 'y');
+      }
+    }
+    return axisList
+  }
+
   public static create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, plot_data:any) {
-    var mouse2X = e.offsetX;
-    var mouse2Y = e.offsetY;
+    const mouse2X = e.offsetX;
+    const mouse2Y = e.offsetY;
     plot_data.is_drawing_rubber_band = true;
-    if (plot_data.vertical) {
-      var min = Math.max(Math.min((mouse1Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end), (mouse2Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end)), -0.01);
-      var max = Math.min(Math.max((mouse1Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end), (mouse2Y - plot_data.axis_y_end)/(plot_data.axis_y_start - plot_data.axis_y_end)), 1);
-    } else {
-      var min = Math.max(Math.min((mouse1X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start), (mouse2X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start)), -0.01);
-      var max = Math.min(Math.max((mouse1X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start), (mouse2X - plot_data.axis_x_start)/(plot_data.axis_x_end - plot_data.axis_x_start)), 1);
-    }
-    plot_data.rubber_bands[selected_axis_index] = [min, max];
-    var realCoord_min = plot_data.axis_to_real_coords(min, plot_data.axis_list[selected_axis_index]['type_'], plot_data.axis_list[selected_axis_index]['list'], plot_data.inverted_axis_list[selected_axis_index]);
-    var realCoord_max = plot_data.axis_to_real_coords(max, plot_data.axis_list[selected_axis_index]['type_'], plot_data.axis_list[selected_axis_index]['list'], plot_data.inverted_axis_list[selected_axis_index]);
-    var real_min = Math.min(realCoord_min, realCoord_max);
-    var real_max = Math.max(realCoord_min, realCoord_max);
+    let axisList = this.prepareAxisBounds(plot_data, selected_axis_index);
 
-    plot_data.add_to_rubberbands_dep([plot_data.axis_list[selected_axis_index]['name'], [real_min, real_max]]);
+    plot_data.rubber_bands[selected_axis_index].updateFromMouse(
+      [mouse1X, mouse1Y], [mouse2X, mouse2Y], axisList,
+      [plot_data.axis_x_end, plot_data.axis_y_start], [plot_data.axis_x_start, plot_data.axis_y_end], // be careful of x_ order
+      plot_data.inverted_axis_list[selected_axis_index])
     plot_data.draw();
     return [mouse2X, mouse2Y];
   }
 
-  public static rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e, plot_data:any) {
-    var mouse2X = e.offsetX;
-    var mouse2Y = e.offsetY;
+  public static initRubberBandChanges(mouse1: [number, number], e: MouseEvent, plot_data:any, isVertical: boolean) {
     plot_data.is_drawing_rubber_band = true;
-    if (plot_data.vertical) {
-      var deltaY = (mouse2Y - mouse1Y)/(plot_data.axis_y_start - plot_data.axis_y_end);
-      var new_min = Math.max(plot_data.rubber_last_min + deltaY, -0.01);
-      var new_max = Math.min(plot_data.rubber_last_max + deltaY, 1);
-    } else {
-      var deltaX = (mouse2X - mouse1X)/(plot_data.axis_x_end - plot_data.axis_x_start);
-      var new_min = Math.max(plot_data.rubber_last_min + deltaX, -0.01);
-      var new_max = Math.min(plot_data.rubber_last_max + deltaX, 1);
-    }
-    plot_data.rubber_bands[selected_band_index] = [new_min, new_max];
-    let real_new_min = plot_data.axis_to_real_coords(new_min, plot_data.axis_list[selected_band_index]['type_'],
-                                                     plot_data.axis_list[selected_band_index]['list'],
-                                                     plot_data.inverted_axis_list[selected_band_index]);
-    let real_new_max = plot_data.axis_to_real_coords(new_max, plot_data.axis_list[selected_band_index]['type_'],
-                                                     plot_data.axis_list[selected_band_index]['list'],
-                                                     plot_data.inverted_axis_list[selected_band_index]);
-    let to_add_min = Math.min(real_new_min, real_new_max);
-    let to_add_max = Math.max(real_new_min, real_new_max);
-    plot_data.add_to_rubberbands_dep([plot_data.axis_list[selected_band_index]['name'], [to_add_min, to_add_max]]);
-    plot_data.draw();
-    return [mouse2X, mouse2Y];
+    const delta = [(e.offsetX - mouse1[0]), (e.offsetY - mouse1[1])];
+    const newMin = plot_data.rubber_last_min;
+    const newMax = plot_data.rubber_last_max;
+    const axisBounds = [[plot_data.axis_x_end, plot_data.axis_x_start], [plot_data.axis_y_start, plot_data.axis_y_end]];
+    let axisIdx = 0;
+    if (isVertical) {axisIdx = 1};
+    return [delta, newMin, newMax, axisBounds, axisIdx]
   }
 
-  public static rubber_band_resize(mouse1X, mouse1Y, selected_border, e, plot_data:any) {
-    var mouse2X = e.offsetX;
-    var mouse2Y = e.offsetY;
-    var axis_index = selected_border[0];
-    var border_number = selected_border[1];
-    plot_data.is_drawing_rubber_band = true;
-    if (plot_data.vertical) {
-      var deltaY = (mouse2Y - mouse1Y)/(plot_data.axis_y_start - plot_data.axis_y_end);
-      if (border_number == 0) {
-        var new_min = Math.min(Math.max(plot_data.rubber_last_min + deltaY, -0.01), 1);
-        plot_data.rubber_bands[axis_index][0] = new_min;
-      } else {
-        var new_max = Math.min(Math.max(plot_data.rubber_last_max + deltaY, -0.01), 1);
-        plot_data.rubber_bands[axis_index][1] = new_max;
-      }
-    } else {
-      var deltaX = (mouse2X - mouse1X)/(plot_data.axis_x_end - plot_data.axis_x_start);
-      if (border_number == 0) {
-        var new_min = Math.min(Math.max(plot_data.rubber_last_min + deltaX, -0.01), 1);
-        plot_data.rubber_bands[axis_index][0] = new_min;
-      } else {
-        var new_max = Math.min(Math.max(plot_data.rubber_last_max + deltaX, -0.01), 1);
-        plot_data.rubber_bands[axis_index][1] = new_max;
-      }
-    }
-    if (plot_data.rubber_bands[axis_index][0]>plot_data.rubber_bands[axis_index][1]) {
-      [plot_data.rubber_bands[axis_index][0],plot_data.rubber_bands[axis_index][1]] = [plot_data.rubber_bands[axis_index][1],plot_data.rubber_bands[axis_index][0]];
-      border_number = 1 - border_number;
-      [plot_data.rubber_last_min, plot_data.rubber_last_max] = [plot_data.rubber_last_max, plot_data.rubber_last_min];
-    }
-    var real_new_min = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][0],
-                                                     plot_data.axis_list[axis_index]['type_'],
-                                                     plot_data.axis_list[axis_index]['list'],
-                                                     plot_data.inverted_axis_list[axis_index]);
-    var real_new_max = plot_data.axis_to_real_coords(plot_data.rubber_bands[axis_index][1],
-                                                     plot_data.axis_list[axis_index]['type_'],
-                                                     plot_data.axis_list[axis_index]['list'],
-                                                     plot_data.inverted_axis_list[axis_index]);
-    var to_add_min = Math.min(real_new_min, real_new_max);
-    var to_add_max = Math.max(real_new_min, real_new_max);
-    plot_data.add_to_rubberbands_dep([plot_data.axis_list[axis_index]['name'], [to_add_min, to_add_max]]);
+  public static rubber_band_translation(mouse1X: number, mouse1Y: number, selected_band_index: number, e: MouseEvent, plot_data:any) {
+    const isVertical = plot_data.rubber_bands[selected_band_index].isVertical;
+    const [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data, isVertical);
+    const axisList = this.prepareAxisBounds(plot_data, selected_band_index);
+    plot_data.rubber_bands[selected_band_index].newBoundsUpdate(
+      newMin + delta[axisIdx], newMax + delta[axisIdx], axisBounds[axisIdx],
+      axisList, plot_data.inverted_axis_list[selected_band_index]);
     plot_data.draw();
-    var is_resizing = true;
-    return [border_number, mouse2X, mouse2Y, is_resizing];
+    return [e.offsetX, e.offsetY];
   }
 
-  public static select_axis_action(selected_axis_index, click_on_band, click_on_border, plot_data:PlotData) {
-    plot_data.isSelectingppAxis = true;
-    if (plot_data.rubber_bands[selected_axis_index].length == 0) {
-      var attribute_name = plot_data.axis_list[selected_axis_index]['name'];
-      if (attribute_name == plot_data.selected_axis_name) {
-        plot_data.selected_axis_name = '';
-      } else {
-        plot_data.selected_axis_name = attribute_name;
-        plot_data.sort_to_display_list(); // à modifier pour trier vertical et horizontal axis coords
-        plot_data.refresh_axis_coords();
-      }
-    } else if ((plot_data.rubber_bands[selected_axis_index].length != 0) && !click_on_band && !click_on_border) {
-      plot_data.rubber_bands[selected_axis_index] = [];
-      for (let i=0; i<plot_data.rubberbands_dep.length; i++) {
-        if (plot_data.rubberbands_dep[i][0] == plot_data.axis_list[selected_axis_index]['name']) {
-          plot_data.rubberbands_dep = List.remove_at_index(i, plot_data.rubberbands_dep);
-        }
-      }
-      plot_data.refresh_pp_selected();
+  public static rubber_band_resize(mouse1X: number, mouse1Y: number, selected_border, e: MouseEvent, plot_data:any) {
+    const axis_index = selected_border[0];
+    const border_number = selected_border[1];
+    const isVertical = plot_data.rubber_bands[axis_index].isVertical;
+    const is_resizing = true;
+    let [delta, newMin, newMax, axisBounds, axisIdx] = this.initRubberBandChanges([mouse1X, mouse1Y], e, plot_data, isVertical);
+    if (border_number == 0) {
+      newMin += delta[axisIdx];
+    } else {
+      newMax += delta[axisIdx];
     }
+    const axisList = this.prepareAxisBounds(plot_data, axis_index);
+    plot_data.rubber_bands[axis_index].newBoundsUpdate(
+      newMin, newMax, axisBounds[axisIdx], axisList, plot_data.inverted_axis_list[axis_index]);
     plot_data.draw();
+    return [border_number, e.offsetX, e.offsetY, is_resizing];
   }
 
   public static mouse_up_axis_interversion(mouse1X, mouse1Y, e, plot_data:any) {
@@ -3058,30 +2856,32 @@ export class Interactions {
     return [mouse3X, mouse3Y, click_on_axis];
   }
 
-  public static select_title_action(selected_name_index, plot_data:any) {
+  public static select_title_action(selected_name_index, plot_data: any) {
     plot_data.inverted_axis_list[selected_name_index] = !plot_data.inverted_axis_list[selected_name_index];
+    const axisBounds = [
+      plot_data.axis_x_start + plot_data.axis_x_end,
+      plot_data.axis_y_start + plot_data.axis_y_end];
     if (plot_data.rubber_bands[selected_name_index].length != 0) {
-      plot_data.invert_rubber_bands([selected_name_index]);
+      plot_data.invert_rubber_bands([selected_name_index], axisBounds);
     }
     plot_data.refresh_axis_coords();
     plot_data.draw();
   }
 
-  public static change_disposition_action(plot_data:any) {
-    plot_data.vertical = !plot_data.vertical;
+  public static change_disposition_action(plot_data: any) {
+    const wasVertical = plot_data.vertical;
+    const origin = [plot_data.axis_x_start, plot_data.axis_y_start];
+    const end = [plot_data.axis_x_end, plot_data.axis_y_end];
+
+    plot_data.vertical = !wasVertical;
     plot_data.refresh_axis_bounds(plot_data.axis_list.length);
-    plot_data.invert_rubber_bands('all');
 
+    const newOrigin = [plot_data.axis_x_start, plot_data.axis_y_start];
+    const newEnd = [plot_data.axis_x_end, plot_data.axis_y_end];
+    plot_data.rubber_bands.forEach((rubberBand) => {
+      rubberBand.axisChangeUpdate(origin, end, wasVertical, newOrigin, newEnd, !wasVertical);
+    })
     plot_data.draw();
-  }
-
-  public static rubber_band_size_check(selected_band_index, plot_data:any) {
-    if (plot_data.rubber_bands[selected_band_index].length != 0 && Math.abs(plot_data.rubber_bands[selected_band_index][0] - plot_data.rubber_bands[selected_band_index][1])<=0.02) {
-      plot_data.rubber_bands[selected_band_index] = [];
-    }
-    plot_data.draw();
-    var is_resizing = false;
-    return is_resizing;
   }
 
   public static move_axis(old_index, new_index, plot_data:any) {
@@ -3102,21 +2902,23 @@ export class Interactions {
     var selected_border:any = [];
     for (var i=0; i<plot_data.rubber_bands.length; i++) {
       if (plot_data.rubber_bands[i].length != 0) {
-        var min = plot_data.rubber_bands[i][0];
-        var max = plot_data.rubber_bands[i][1];
+        var min = plot_data.rubber_bands[i].realMin;
+        var max = plot_data.rubber_bands[i].realMax;
         plot_data.rubber_last_min = min;
         plot_data.rubber_last_max = max;
-        if (plot_data.vertical) {
-          var real_minY = plot_data.axis_y_end + min*(plot_data.axis_y_start - plot_data.axis_y_end);
-          var real_maxY = plot_data.axis_y_end + max*(plot_data.axis_y_start - plot_data.axis_y_end);
-          var current_x = plot_data.axis_x_start + i*plot_data.x_step;
+        let idx = i;
+        if (plot_data.type_ === 'histogram') {idx = 0}
+        if (plot_data.rubber_bands[i].isVertical) {
+          var real_minY = plot_data.rubber_bands[i].realMin;
+          var real_maxY = plot_data.rubber_bands[i].realMax;
+          var current_x = plot_data.axis_x_start + idx * plot_data.x_step;
           var is_in_upper_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_lower_border = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_maxY - border_size/2, plot_data.bandWidth, border_size);
           var is_in_rubber_band = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, real_minY, plot_data.bandWidth, real_maxY - real_minY);
         } else {
-          var real_minX = plot_data.axis_x_start + min*(plot_data.axis_x_end - plot_data.axis_x_start);
-          var real_maxX = plot_data.axis_x_start + max*(plot_data.axis_x_end - plot_data.axis_x_start);
-          var current_y = plot_data.axis_y_start + i*plot_data.y_step;
+          var real_minX = plot_data.rubber_bands[i].realMin;
+          var real_maxX = plot_data.rubber_bands[i].realMax;
+          var current_y = plot_data.axis_y_start + idx*plot_data.y_step;
           is_in_upper_border = Shape.isInRect(mouse1X, mouse1Y, real_minX - border_size/2, current_y - plot_data.bandWidth/2, border_size, plot_data.bandWidth);
           is_in_lower_border = Shape.isInRect(mouse1X, mouse1Y, real_maxX - border_size/2, current_y - plot_data.bandWidth/2, border_size, plot_data.bandWidth);
           is_in_rubber_band = Shape.isInRect(mouse1X, mouse1Y, real_minX, current_y - plot_data.bandWidth/2, real_maxX - real_minX, plot_data.bandWidth);
@@ -3143,11 +2945,13 @@ export class Interactions {
     click_on_axis = false;
     var selected_axis_index = -1;
     for (var i=0; i<nb_axis; i++) {
-      if (plot_data.vertical === true) {
-        var current_x = plot_data.axis_x_start + i*plot_data.x_step;
+      let idx = i;
+      if (plot_data.type_ === 'histogram') {idx = 0}
+      if (plot_data.rubber_bands[i].isVertical) {
+        var current_x = plot_data.axis_x_start + idx*plot_data.x_step;
         var bool = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, plot_data.axis_y_end, plot_data.bandWidth, plot_data.axis_y_start - plot_data.axis_y_end);
       } else {
-        var current_y = plot_data.axis_y_start + i*plot_data.y_step;
+        var current_y = plot_data.axis_y_start + idx*plot_data.y_step;
         var bool = Shape.isInRect(mouse1X, mouse1Y, plot_data.axis_x_start, current_y - plot_data.bandWidth/2, plot_data.axis_x_end - plot_data.axis_x_start, plot_data.bandWidth);
       }
       click_on_axis = click_on_axis || bool;
@@ -3192,19 +2996,19 @@ export class Interactions {
 
 export class Buttons {
   public static zoom_button(x, y, w, h, plot_data:PlotData) {
-    var actualX = x + plot_data.X;
-    var actualY = y + plot_data.Y;
+    var currentX = x + plot_data.X;
+    var currentY = y + plot_data.Y;
     plot_data.context.strokeStyle = 'black';
     plot_data.context.beginPath();
     plot_data.context.lineWidth = 2;
     plot_data.context.fillStyle = 'white';
-    plot_data.context.rect(actualX, actualY, w, h);
-    plot_data.context.rect(actualX, actualY + h, w, h);
-    plot_data.context.moveTo(actualX, actualY+h);
-    plot_data.context.lineTo(actualX+w, actualY+h);
-    Shape.crux(plot_data.context, actualX+w/2, actualY+h/2, h/3);
-    plot_data.context.moveTo(actualX + w/2 - h/3, actualY + 3*h/2);
-    plot_data.context.lineTo(actualX + w/2 + h/3, actualY + 3*h/2);
+    plot_data.context.rect(currentX, currentY, w, h);
+    plot_data.context.rect(currentX, currentY + h, w, h);
+    plot_data.context.moveTo(currentX, currentY + h);
+    plot_data.context.lineTo(currentX + w, currentY + h);
+    Shape.crux(plot_data.context, currentX + w/2, currentY + h/2, h/3);
+    plot_data.context.moveTo(currentX + w/2 - h/3, currentY + 3*h/2);
+    plot_data.context.lineTo(currentX + w/2 + h/3, currentY + 3*h/2);
     plot_data.context.fill();
     plot_data.context.stroke();
     plot_data.context.closePath();

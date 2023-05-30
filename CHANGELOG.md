@@ -8,9 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.13.0]
 ### Add
 - Doc Typescript
-
-## [0.13.0]
-### Add
 - newHistogram plot to replace current Histogram
     - There is no covering between multiplot histogram and this one so the two of them can live in plot_data at the same time
     - Axes:
@@ -37,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fix
 - Allow to put " " in file paths
+- Allow to draw a multiplot with no data
 
 ## [0.12.2]
 ### Fix

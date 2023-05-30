@@ -1,4 +1,5 @@
 import { parseHTML } from '../support/parseHTML';
+import { MultiplePlots } from '../../src/multiplots';
 import multiplotData from '../data_src/multiplot.data.json';
 import primitiveGroupContainerData from '../data_src/primitivegroupcontainer.data.json';
 
@@ -11,7 +12,13 @@ before(() => {
 describe('MULTIPLOT CANVAS', function () {
   const describeTitle = this.title + ' -- '
   beforeEach(() => {
-    cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
+    switch(Cypress.currentTest.title) {
+      case "should draw a canvas with text of empty data":
+        break;
+      default:
+        cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
+        break;
+    }
   })
 
   it("should draw canvas", function () {
@@ -41,6 +48,12 @@ describe('MULTIPLOT CANVAS', function () {
       multiplot.click_on_view_action()
       cy.compareSnapshot(describeTitle + this.test.title, 0.05);
     })
+  })
+
+  it("should draw a canvas with text of empty data", function () {
+    parseHTML("emptyMultiplot", {})
+    cy.visit("cypress/html_files/emptyMultiplot.html");
+    cy.compareSnapshot(describeTitle + this.test.title, 0.05);
   })
 
   // describe('MULTIPLOT FRONTEND INTERFACE', () => {

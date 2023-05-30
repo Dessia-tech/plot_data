@@ -65,11 +65,11 @@ export class MultiplePlots {
     public padding: number;
 
 
-    constructor(public data: any[], public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
+    constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
       check_package_version(data['package_version'], requirement);
-      var elements = data['elements'];
       this.define_canvas(canvas_id);
+      var elements = data['elements'];
       if (elements.length != 0) {
         this.dataObjects = data['plots'];
         this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
@@ -131,7 +131,6 @@ export class MultiplePlots {
       }
         // this.save_canvas();
     }
-
 
     initialize_sizes() {
       var temp_sizes = this.data['sizes'];
@@ -304,12 +303,12 @@ export class MultiplePlots {
     define_canvas(canvas_id: string):void {
       this.canvas = document.getElementById(canvas_id);
       this.canvas.width = this.width;
-          this.canvas.height = this.height;
+      this.canvas.height = this.height;
       this.context_show = this.canvas.getContext("2d");
       var hiddenCanvas:any = document.createElement("canvas", { is : canvas_id });
       hiddenCanvas.id = canvas_id + '_hidden';
-          hiddenCanvas.width = this.width;
-          hiddenCanvas.height = this.height;
+      hiddenCanvas.width = this.width;
+      hiddenCanvas.height = this.height;
       this.context_hidden = hiddenCanvas.getContext("2d");
     }
 

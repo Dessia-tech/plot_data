@@ -1833,7 +1833,7 @@ export class newAxis {
   public clickedStyle: string = 'hsl(126, 67%, 72%)';
   public rubberColor: string = 'hsla(266, 95%, 60%, 0.8)';//'hsla(127, 95%, 60%, 0.85)';
   public labels: string[];
-  public isHover: boolean = false;
+  public isHovered: boolean = false;
   public isClicked: boolean = false;
   public mouseStyleON: boolean = false;
   public rubberBand: RubberBand;
@@ -1990,7 +1990,7 @@ export class newAxis {
   public draw(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     let color = this.strokeStyle;
-    if (this.mouseStyleON) {color = this.isHover ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle};
+    if (this.mouseStyleON) {color = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle};
     context.strokeStyle = color;
     context.fillStyle = color;
     context.stroke(this.drawPath);

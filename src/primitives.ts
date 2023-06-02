@@ -259,7 +259,6 @@ export class Dataset {
 
     initialize_segments() {
       this.segments = [];
-      console.log(this.point_list)
       for (let i=0; i<this.point_list.length - 1; i++) {
         let current_point = this.point_list[i];
         let next_point = this.point_list[i+1];

@@ -234,6 +234,7 @@ export class Dataset {
                 public tooltip:Tooltip,
                 public point_style:PointStyle,
                 public elements:any[],
+                public partialPoints: boolean,
                 public display_step:number,
                 public type_:string,
                 public name:string,
@@ -258,6 +259,7 @@ export class Dataset {
 
     initialize_segments() {
       this.segments = [];
+      console.log(this.point_list)
       for (let i=0; i<this.point_list.length - 1; i++) {
         let current_point = this.point_list[i];
         let next_point = this.point_list[i+1];
@@ -272,7 +274,7 @@ export class Dataset {
                                  shape:'circle', size:2, name:'', type_:'tooltip'};
       var tooltip_text_style = {font_size: 10, font_style: 'sans-serif', text_align_x:'center', text_color:string_to_rgb('white')};
       var default_dict_ = {tooltip:{attributes: serialized['attribute_names'], text_style: tooltip_text_style}, edge_style:default_edge_style, point_style:default_point_style,
-                            display_step:1};
+                            partial_points: true, display_step:1};
       serialized = set_default_values(serialized, default_dict_)
       var tooltip = Tooltip.deserialize(serialized['tooltip']);
       var edge_style = EdgeStyle.deserialize(serialized['edge_style']);
@@ -282,6 +284,7 @@ export class Dataset {
                          tooltip,
                          point_style,
                          serialized['elements'],
+                         serialized['partial_points'],
                          serialized['display_step'],
                          serialized['type_'],
                          serialized['name'],

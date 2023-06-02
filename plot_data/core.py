@@ -735,7 +735,7 @@ class Dataset(PlotDataObject):
 
     def __init__(self, elements: List[Sample] = None,
                  edge_style: EdgeStyle = None, tooltip: Tooltip = None,
-                 point_style: PointStyle = None,
+                 point_style: PointStyle = None, partial_points: bool = None,
                  display_step: int = 1, name: str = ''):
 
         self.edge_style = edge_style
@@ -755,6 +755,7 @@ class Dataset(PlotDataObject):
             else:
                 raise ValueError(f"Element of type {type(element)} cannot be used as a Dataset data element.")
         self.elements = sampled_elements
+        self.partial_points = partial_points
         self.display_step = display_step
         PlotDataObject.__init__(self, type_='dataset', name=name)
 

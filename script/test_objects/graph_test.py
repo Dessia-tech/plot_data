@@ -1,14 +1,13 @@
 # An example of Graph2D instantiation. It draws one or several datasets on
 # one canvas and is useful for displaying numerical functions
 
-import numpy as np
-
+import math
 import plot_data
 from plot_data.colors import BLACK, BLUE, RED
 
 k = 0
 
-T1 = np.linspace(1, 20, 20)
+T1 = list(range(1, 21, 1))
 I1 = [t ** 2 for t in T1]
 elements1 = []
 for k in range(len(T1)):
@@ -27,8 +26,8 @@ custom_dataset = plot_data.Dataset(elements=elements1, name='I = f(t)',
 
 
 # Now let's create another dataset for the purpose of this exercice
-T2 = np.linspace(1, 20, 100)
-I2 = [100*(2+np.cos(t)) for t in T2]
+T2 = list(map(lambda x: x / 10, range(1, 201, 1)))
+I2 = [100*(2+math.cos(t)) for t in T2]
 elements2 = []
 for k in range(1, len(T2)):
     elements2.append({'time': T2[k], 'electric current': I2[k]})

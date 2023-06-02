@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
-import numpy as npy
 
 try:
     # dessia_common >= 0.12.0
@@ -31,9 +30,6 @@ from matplotlib import patches
 
 import plot_data.colors
 from plot_data import templates
-
-npy.seterr(divide='raise')
-
 
 def delete_none_from_dict(dict1):
     """ Delete input dictionary's keys where value is None. """

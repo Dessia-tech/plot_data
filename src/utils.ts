@@ -1673,7 +1673,8 @@ export class newText extends newShape {
     public justify: string = 'left',
     public baseline: string = 'alphabetic',
     protected _style: string = '',
-    protected _orientation: number = 0
+    protected _orientation: number = 0,
+    protected multiLine: boolean = false
   ) {
     super();
     this.path = this.buildPath();
@@ -1711,9 +1712,10 @@ export class newText extends newShape {
       this.width = context.measureText(this.text).width;
     } else if (this.width !== null && this.fontsize === null) {
       this.fontsize = this.automaticFontSize(context);
-    } else if (this.width !== null && this.fontsize !== null) {
+    } else if (this.width !== null && this.fontsize !== null && !this.multiLine) {
       let width = context.measureText(this.text).width;
       if (width > this.width) {this.fontsize = this.automaticFontSize(context)}
+    } else if (this.width !== null && this.fontsize !== null && this.multiLine) {
     } else {
       throw new Error('Cannot write text with no size');
     }
@@ -1723,9 +1725,66 @@ export class newText extends newShape {
     this.path = this.buildPath();
     context.translate(this.origin.x, this.origin.y);
     context.rotate(Math.PI/180 * this.orientation);
-    context.fillText(this.text, 0, 0);
+    this.write(context, 1);
     context.rotate(-Math.PI/180 * this.orientation);
     context.translate(-this.origin.x, -this.origin.y);
+  }
+
+  private write(context: CanvasRenderingContext2D, scaleX: number) {
+    if (this.width) {
+      if (this.multiLine) {
+        var cut_texts = this.cutting_text(context, scaleX * this.width);
+        var height_offset: number = cut_texts.length / 2 - 0.5;
+        if (this.baseline == "hanging" || this.baseline == "top") {
+          height_offset = 0.5;
+        } else if (this.baseline == "alphabetic" || this.baseline == "bottom") {
+          height_offset -= 0.2;
+        }
+        for (let i=0; i<cut_texts.length; i++) {
+          context.fillText(cut_texts[i], 0, 0 + (i - height_offset) * this.fontsize);
+        }
+      } else {
+        context.fillText(this.text, 0, 0);
+      }
+    } else {
+      context.fillText(this.text, 0, 0);
+    }
+  }
+
+  private cutting_text(context: CanvasRenderingContext2D, maxWidth: number) {
+    var words = this.text.split(' ');
+    var space_length = context.measureText(' ').width;
+    var cut_texts = [];
+    var i = 0;
+    var line_length = 0;
+    var line_text = '';
+    while (i<words.length) {
+      let word = words[i];
+      let word_length = context.measureText(word).width;
+      if (word_length >= maxWidth) {
+        if (line_text !== '') cut_texts.push(line_text);
+        line_length = 0;
+        line_text = '';
+        cut_texts.push(word);
+        i++;
+      } else {
+        if (line_length + word_length <= maxWidth) {
+          if (line_length !== 0) {
+            line_length = line_length + space_length;
+            line_text = line_text + ' ';
+          }
+          line_text = line_text + word;
+          line_length = line_length + word_length;
+          i++;
+        } else {
+          cut_texts.push(line_text);
+          line_length = 0;
+          line_text = '';
+        }
+      }
+    }
+    if (line_text !== '') cut_texts.push(line_text);
+    return cut_texts;
   }
 }
 

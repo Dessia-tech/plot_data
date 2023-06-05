@@ -1,6 +1,6 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, Vertex } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, Vertex } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
@@ -841,18 +841,43 @@ export abstract class PlotData {
       this.context.beginPath();
       this.context.lineWidth = 2;
       Shape.drawLine(this.context, [[current_x, this.axis_y_start], [current_x, this.axis_y_end]]);
-      var attribute_name = this.axis_list[i]['name'];
-      this.context.font = this.axisNameSize.toString() + 'px sans-serif';
-      this.context.textAlign = 'center';
-      if (attribute_name == this.selected_axis_name) {
+
+      let origin = new Vertex(current_x, this.axis_y_end - 20);
+      let size = this.x_step - 40;
+      let align = "center"
+      if (i == 0) {
+        origin.x = this.axis_x_start + this.x_step / 2;
+        size = this.x_step / 2 + 40;
+        align = "right";
+      } else if (i == nb_axis - 1) {
+        origin.x = current_x - this.x_step / 2;
+        size = this.x_step / 2 + 40;
+        align = "left";
+      }
+      let axisTitle = new newText(this.axis_list[i]['name'], origin, size, 12, "sans-serif", align, "alphabetic", '', 0, true)
+      if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {
-        this.context.strokeStyle = 'lightgrey';
+        this.context.strokeStyle = 'black';
       }
-      var attribute_alias = this.axis_list[i]['alias'];
       this.context.fillStyle = 'black';
-      this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20);
-      this.context.stroke();
+      axisTitle.draw(this.context);
+
+      this.context.textBaseline = "alphabetic";
+
+      // var attribute_name = this.axis_list[i]['name'];
+      // this.context.font = this.axisNameSize.toString() + 'px sans-serif';
+      // this.context.textAlign = 'center';
+      // if (attribute_name == this.selected_axis_name) {
+      //   this.context.strokeStyle = 'blue';
+      // } else {
+      //   this.context.strokeStyle = 'lightgrey';
+      // }
+      // var attribute_alias = this.axis_list[i]['alias'];
+      // this.context.fillStyle = 'black';
+      // this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20);
+      // this.context.stroke();
+
       var attribute_type = this.axis_list[i]['type_'];
       var list = this.axis_list[i]['list'];
       this.context.font = this.gradSize.toString() + 'px sans-serif';
@@ -928,18 +953,17 @@ export abstract class PlotData {
       this.context.beginPath();
       this.context.lineWidth = 2;
       Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
-      var attribute_name = this.axis_list[i]['name'];
-      this.context.font = this.axisNameSize.toString() + 'px sans-serif';
-      this.context.textAlign = 'center';
-      if (attribute_name == this.selected_axis_name) {
+
+      let axisTitle = new newText(this.axis_list[i]['name'], new Vertex(this.axis_x_start, current_y + 15), this.axis_x_start * 1.8, 12, "sans-serif", "center", "hanging", '', 0, true)
+      if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {
         this.context.strokeStyle = 'black';
       }
       this.context.fillStyle = 'black';
-      var attribute_alias = this.axis_list[i]['alias'];
-      this.context.fillText(attribute_alias, this.axis_x_start, current_y + 15);
-      this.context.stroke();
+      axisTitle.draw(this.context);
+
+      this.context.textBaseline = "alphabetic";
       var attribute_type = this.axis_list[i]['type_'];
       var list = this.axis_list[i]['list'];
       this.context.font = this.gradSize.toString() + 'px sans-serif';

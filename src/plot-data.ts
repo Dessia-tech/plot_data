@@ -846,7 +846,7 @@ export abstract class PlotData {
       let size = this.x_step - 40;
       let align = "center"
       if (i == 0) {
-        origin.x = this.axis_x_start + this.x_step / 2;
+        origin.x = current_x + this.x_step / 2;
         size = this.x_step / 2 + 40;
         align = "right";
       } else if (i == nb_axis - 1) {
@@ -862,22 +862,7 @@ export abstract class PlotData {
       }
       this.context.fillStyle = 'black';
       axisTitle.draw(this.context);
-
       this.context.textBaseline = "alphabetic";
-
-      // var attribute_name = this.axis_list[i]['name'];
-      // this.context.font = this.axisNameSize.toString() + 'px sans-serif';
-      // this.context.textAlign = 'center';
-      // if (attribute_name == this.selected_axis_name) {
-      //   this.context.strokeStyle = 'blue';
-      // } else {
-      //   this.context.strokeStyle = 'lightgrey';
-      // }
-      // var attribute_alias = this.axis_list[i]['alias'];
-      // this.context.fillStyle = 'black';
-      // this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20);
-      // this.context.stroke();
-
       var attribute_type = this.axis_list[i]['type_'];
       var list = this.axis_list[i]['list'];
       this.context.font = this.gradSize.toString() + 'px sans-serif';
@@ -954,7 +939,7 @@ export abstract class PlotData {
       this.context.lineWidth = 2;
       Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
 
-      let axisTitle = new newText(this.axis_list[i]['name'], new Vertex(this.axis_x_start, current_y + 15), this.axis_x_start * 1.8, 12, "sans-serif", "center", "hanging", '', 0, true)
+      let axisTitle = new newText(this.axis_list[i]['name'], new Vertex(this.axis_x_start - 30, current_y + 15), 100, 12, "sans-serif", "left", "hanging", '', 0, true)
       if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {

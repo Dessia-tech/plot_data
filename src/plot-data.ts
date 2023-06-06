@@ -1,6 +1,6 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, Vertex } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, textParams, Vertex } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
@@ -854,7 +854,9 @@ export abstract class PlotData {
         size = this.x_step / 2 + 40;
         align = "left";
       }
-      let axisTitle = new newText(this.axis_list[i]['name'], origin, size, 12, "sans-serif", align, "alphabetic", '', 0, true)
+
+      const textParams: textParams = {width: size, align: align, baseline: "alphabetic", multiLine: false};
+      let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
       if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {
@@ -939,7 +941,8 @@ export abstract class PlotData {
       this.context.lineWidth = 2;
       Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
 
-      let axisTitle = new newText(this.axis_list[i]['name'], new Vertex(this.axis_x_start - 30, current_y + 15), 100, 12, "sans-serif", "left", "hanging", '', 0, true)
+      const textParams: textParams = {width: 100, align: "left", baseline: "hanging", multiLine: true};
+      let axisTitle = new newText(this.axis_list[i]['name'], new Vertex(this.axis_x_start - 30, current_y + 15), textParams);
       if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {

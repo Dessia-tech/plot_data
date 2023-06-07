@@ -1683,6 +1683,7 @@ export class newText extends newShape {
   public style: string;
   public orientation: number;
   public multiLine: boolean;
+  public nRows: number;
   constructor(
     public text: string,
     public origin: Vertex,
@@ -1765,37 +1766,7 @@ export class newText extends newShape {
     const tempHeight = this.fontsize * writtenText.length;
     if (!this.height) { this.height = tempHeight };
     if (tempHeight > this.height) { this.fontsize = this.height / tempHeight * this.fontsize };
-    
-    // console.log(measureText)
-    
-    // if (!this.width && !this.height) {
-    //   if (!this.fontsize) { this.fontsize = DEFAULT_FONTSIZE };
-    //   context.font = this.fullFont;
-    //   const measureText = context.measureText(this.text);
-    //   this.width = measureText.width;
-    //   this.height = measureText.fontBoundingBoxAscent;
-    // } else if (this.width && !this.height) {
-    //   if (!this.fontsize) {
-    //     if (this.multiLine) { 
-    //       this.fontsize = DEFAULT_FONTSIZE;
-    //       context.font = this.fullFont;
-    //       this.text = this.cutting_text(context, this.width).join("\n");
-    //     } else { this.fontsize = this.automaticFontSize(context) };
-    //   }
-    //   context.font = this.fullFont;
-    //   this.height = context.measureText(this.text).fontBoundingBoxAscent;
-    // } else if (!this.width && this.height) {
-    //   if (this.fontsize) {
-    //     context.font = this.fullFont;
-    //     const measureText = context.measureText(this.text);
-    //     this.width = measureText.width;
-    //     this.height = measureText.fontBoundingBoxAscent;
-    //   }
-    // } else if (this.width && this.height) {
-    //   if (!this.fontsize) {
-    //     this.fontsize = DEFAULT_FONTSIZE;
-    //   }
-    // }
+    this.nRows = writtenText.length;
     return writtenText
   }
 
@@ -1807,27 +1778,6 @@ export class newText extends newShape {
       context.fillText(writtenText[0], 0, 0);
     }
   }
-
-  // private write(context: CanvasRenderingContext2D) {
-  //   if (this.width) {
-  //     if (this.multiLine) {
-  //       var cut_texts = this.cutting_text(context, this.scale * this.width);
-  //       var height_offset: number = cut_texts.length / 2 - 0.5;
-  //       if (this.baseline == "hanging" || this.baseline == "top") {
-  //         height_offset = 0.5;
-  //       } else if (this.baseline == "alphabetic" || this.baseline == "bottom") {
-  //         height_offset -= 0.2;
-  //       }
-  //       for (let i = 0; i < cut_texts.length; i++) {
-  //         context.fillText(cut_texts[i], 0, 0 + (i - height_offset) * this.fontsize);
-  //       }
-  //     } else {
-  //       context.fillText(this.text, 0, 0);
-  //     }
-  //   } else {
-  //     context.fillText(this.text, 0, 0);
-  //   }
-  // }
 
   private cutting_text(context: CanvasRenderingContext2D, maxWidth: number) {
     var words = this.text.split(' ');

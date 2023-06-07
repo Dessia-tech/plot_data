@@ -26,17 +26,17 @@ for i in range(nb_elements):
     random_direction = directions[random.randint(0, len(directions) - 1)]
     elements.append({'x': random.uniform(0, 200),
                      'y': random.uniform(0, 100),
-                     'color': random_color,
+                     'color t r e z r t f d s'*10: random_color,
                      'direction': random_direction})
 
 # ParallelPlot
-parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color', 'direction'])
-parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color'])
+parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color t r e z r t f d s'*10, 'direction'])
+parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color t r e z r t f d s'*10])
 
 # Scatterplots
 scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
 
-scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
+scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color t r e z r t f d s'*10,
                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes
                                                                                     # points' appearance
 
@@ -65,7 +65,7 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
 
 histogram = plot_data.Histogram(x_variable='x')
 histogram2 = plot_data.Histogram(x_variable='direction')
-histogram3 = plot_data.Histogram(x_variable='color')
+histogram3 = plot_data.Histogram(x_variable='color t r e z r t f d s'*10)
 
 # Creating the multiplot
 plots = [parallelplot1, scatterplot1]

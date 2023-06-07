@@ -946,8 +946,21 @@ export abstract class PlotData {
       this.context.lineWidth = 2;
       Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
 
-      const textParams: textParams = {width: 100, align: "left", baseline: "hanging", multiLine: true};
-      let axisTitle = new newText(this.axis_list[i]['name'], new Vertex(this.axis_x_start - 30, current_y + 15), textParams);
+      let origin = new Vertex(this.axis_x_start - 30, current_y + 15);
+      const textParams: textParams = { width: 150, height: this.y_step, align: "left", baseline: "hanging", multiLine: true };
+      let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
+
+      axisTitle.format(this.context);
+      
+      if (i != nb_axis - 1) {
+        origin.y += (axisTitle.nRows - 1) * axisTitle.fontsize;
+      } else {
+        axisTitle.width = this.width;
+      }
+      axisTitle.format(this.context);
+
+      // const textParams: textParams = {width: 100, align: "left", baseline: "hanging", multiLine: true};
+      // let axisTitle = new newText(this.axis_list[i]['name'], new Vertex(this.axis_x_start - 30, current_y + 15), textParams);
       if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {

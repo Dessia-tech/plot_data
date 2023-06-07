@@ -842,29 +842,33 @@ export abstract class PlotData {
       this.context.lineWidth = 2;
       Shape.drawLine(this.context, [[current_x, this.axis_y_start], [current_x, this.axis_y_end]]);
 
-      let origin = new Vertex(current_x, this.axis_y_end - 20);
+      let origin = new Vertex(current_x, this.axis_y_end - 10);
       let width = this.x_step - 40;
-      let align = "center"
-      const textParams: textParams = { width: width, align: align, baseline: "alphabetic", multiLine: true };
+      let align = "center";
+      const textParams: textParams = { width: width, height: origin.y - 2, align: align, baseline: "bottom", multiLine: true };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
+
       axisTitle.format(this.context);
+      
       if (i == 0 && axisTitle.width > this.axis_x_start * 2) {
-        axisTitle.origin.x = current_x + this.x_step / 2;
-        axisTitle.width = this.x_step / 2 + 40;
+        const newWidth = Math.min(axisTitle.width, this.x_step / 2);
+        axisTitle.origin.x = current_x + newWidth;
+        axisTitle.width = newWidth + 40;
         axisTitle.align = "right";
       } else if (i == nb_axis - 1 &&  axisTitle.width > this.axis_x_start * 2) {
-        axisTitle.origin.x = current_x - this.x_step / 2;
-        axisTitle.width = this.x_step / 2 + 40;
+        const newWidth = Math.min(axisTitle.width, this.x_step / 2);
+        axisTitle.origin.x = current_x - newWidth;
+        axisTitle.width = newWidth + 40;
         axisTitle.align = "left";
       }
+      axisTitle.format(this.context);
 
-      if (axisTitle.text == this.selected_axis_name) {
-        this.context.strokeStyle = 'blue';
-      } else {
-        this.context.strokeStyle = 'black';
-      }
+      if (axisTitle.text == this.selected_axis_name) { this.context.strokeStyle = 'blue' } 
+      else { this.context.strokeStyle = 'black' };
+
       this.context.fillStyle = 'black';
       axisTitle.draw(this.context);
+      
       this.context.textBaseline = "alphabetic";
       var attribute_type = this.axis_list[i]['type_'];
       var list = this.axis_list[i]['list'];

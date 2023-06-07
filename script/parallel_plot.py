@@ -11,14 +11,14 @@ COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
 for i in range(50):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
-    elements.append({'mass': random.uniform(0, 0.05),
-                     'length': random.uniform(0, 100),
+    elements.append({'TTT mass mass mass RRR': random.uniform(0, 0.05),
+                     'TTTlength length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length RRR': random.uniform(0, 100),
                      'shape': random_shape,
-                     'color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color ': random_color
+                     'TTTcolor color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color RRRTTTcolor color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color RRR': random_color
                      })
 
 plot_data_object = plot_data.ParallelPlot(elements=elements,
-                                          axes=['mass', 'length', 'shape', 'color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color '])
+                                          axes=['TTT mass mass mass RRR', 'TTTlength length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length length RRR', 'shape', 'TTTcolor color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color RRRTTTcolor color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color color RRR'])
 
 # The line above shows the minimum requirements for creating a
 # parallel plot. However, many options are available for further customization.

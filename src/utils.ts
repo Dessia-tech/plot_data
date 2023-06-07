@@ -1734,17 +1734,6 @@ export class newText extends newShape {
 
   public draw(context: CanvasRenderingContext2D) {
     const writtenText = this.format(context);
-    // if (this.width === null && this.fontsize !== null) {
-    //   this.width = context.measureText(this.text).width;
-    // } else if (this.width !== null && this.fontsize === null) {
-    //   this.fontsize = this.automaticFontSize(context);
-    // } else if (this.width !== null && this.fontsize !== null && !this.multiLine) {
-    //   let width = context.measureText(this.text).width;
-    //   if (width > this.width) { this.fontsize = this.automaticFontSize(context) }
-    // } else if (this.width !== null && this.fontsize !== null && this.multiLine) {
-    // } else {
-    //   throw new Error('Cannot write text with no size');
-    // }
     context.font = this.fullFont;
     context.textAlign = this.align as CanvasTextAlign;
     context.textBaseline = this.baseline as CanvasTextBaseline;
@@ -1772,9 +1761,12 @@ export class newText extends newShape {
       }
     }
     this.fontsize = fontsize;
-    const measureText = context.measureText(writtenText[0]);
-    this.width = measureText.width;
-    this.height = measureText.fontBoundingBoxAscent;
+    this.width = context.measureText(writtenText[0]).width;
+    const tempHeight = this.fontsize * writtenText.length;
+    if (!this.height) { this.height = tempHeight };
+    if (tempHeight > this.height) { this.fontsize = this.height / tempHeight * this.fontsize };
+    
+    // console.log(measureText)
     
     // if (!this.width && !this.height) {
     //   if (!this.fontsize) { this.fontsize = DEFAULT_FONTSIZE };
@@ -1809,8 +1801,8 @@ export class newText extends newShape {
 
   private write(writtenText: string[], context: CanvasRenderingContext2D) {
     if (writtenText.length != 1) {
-      var height_offset: number = writtenText.length / 2 - 0.5;
-      writtenText.forEach((row, index) => { context.fillText(row, 0, 0 + (index - height_offset) * this.fontsize) });
+      var offset: number = writtenText.length - 1;
+      writtenText.forEach((row, index) => { context.fillText(row, 0, (index - offset) * this.fontsize) });
     } else {
       context.fillText(writtenText[0], 0, 0);
     }

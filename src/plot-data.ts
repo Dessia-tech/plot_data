@@ -845,7 +845,7 @@ export abstract class PlotData {
       let origin = new Vertex(current_x, this.axis_y_end - 10);
       let width = this.x_step - 40;
       let align = "center";
-      const textParams: textParams = { width: width, height: origin.y - 2, align: align, baseline: "bottom", multiLine: true };
+      const textParams: textParams = { width: width, height: origin.y - 2 - this.Y, align: align, baseline: "bottom", multiLine: true };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
 
       axisTitle.format(this.context);

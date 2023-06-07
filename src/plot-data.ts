@@ -843,20 +843,21 @@ export abstract class PlotData {
       Shape.drawLine(this.context, [[current_x, this.axis_y_start], [current_x, this.axis_y_end]]);
 
       let origin = new Vertex(current_x, this.axis_y_end - 20);
-      let size = this.x_step - 40;
+      let width = this.x_step - 40;
       let align = "center"
-      if (i == 0) {
-        origin.x = current_x + this.x_step / 2;
-        size = this.x_step / 2 + 40;
-        align = "right";
-      } else if (i == nb_axis - 1) {
-        origin.x = current_x - this.x_step / 2;
-        size = this.x_step / 2 + 40;
-        align = "left";
+      const textParams: textParams = { width: width, align: align, baseline: "alphabetic", multiLine: true };
+      let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
+      axisTitle.format(this.context);
+      if (i == 0 && axisTitle.width > this.axis_x_start * 2) {
+        axisTitle.origin.x = current_x + this.x_step / 2;
+        axisTitle.width = this.x_step / 2 + 40;
+        axisTitle.align = "right";
+      } else if (i == nb_axis - 1 &&  axisTitle.width > this.axis_x_start * 2) {
+        axisTitle.origin.x = current_x - this.x_step / 2;
+        axisTitle.width = this.x_step / 2 + 40;
+        axisTitle.align = "left";
       }
 
-      const textParams: textParams = {width: size, align: align, baseline: "alphabetic", multiLine: false};
-      let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
       if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {

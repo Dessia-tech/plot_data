@@ -1756,11 +1756,10 @@ export class newText extends newShape {
     context.translate(-this.origin.x, -this.origin.y);
   }
 
-  private format(context: CanvasRenderingContext2D): string[] {
+  public format(context: CanvasRenderingContext2D): string[] {
     let fontsize = this.fontsize? this.fontsize : DEFAULT_FONTSIZE;
     let writtenText = [this.text];
     context.font = newText.buildFont(this.style, fontsize, this.font);
-    console.log(context.font, this.text)
     if (this.width) {
       if (this.multiLine) { writtenText = this.cutting_text(context, this.width) }
       else { 
@@ -1768,12 +1767,12 @@ export class newText extends newShape {
           fontsize = this.automaticFontSize(context);
           context.font = newText.buildFont(this.style, fontsize, this.font);
         } else {
-          if (context.measureText(this.text).width > this.width) { fontsize = this.automaticFontSize(context) ; console.log(fontsize)}
+          if (context.measureText(this.text).width > this.width) { fontsize = this.automaticFontSize(context) }
         }
       }
     }
-    const measureText = context.measureText(this.text);
     this.fontsize = fontsize;
+    const measureText = context.measureText(writtenText[0]);
     this.width = measureText.width;
     this.height = measureText.fontBoundingBoxAscent;
     

@@ -1,6 +1,6 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, textParams, Vertex } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, textParams, Vertex, newRect } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
@@ -191,6 +191,9 @@ export abstract class PlotData {
   heatmap_view: boolean = false;
   selected_areas: number[][];
   heatmap_table;
+
+  // HOTFIXES
+  axisNamesBoxes: newRect[];
 
   public constructor(
     public data:any,
@@ -832,6 +835,7 @@ export abstract class PlotData {
   }
 
   draw_vertical_parallel_axis(nb_axis:number, mvx:number) {
+    this.axisNamesBoxes = [];
     for (var i=0; i < nb_axis; i++) {
       if (i == this.move_index) {
         var current_x = Math.min(Math.max(this.axis_x_start + i*this.x_step + mvx, this.X), this.X + this.width);
@@ -849,18 +853,22 @@ export abstract class PlotData {
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
       axisTitle.format(this.context);
       
+      let boxOrigin = new Vertex(origin.x - axisTitle.width / 2, this.Y + 10)
       if (i == 0 && axisTitle.width > (this.axis_x_start - this.X) * 2) {
         const offset = Math.min(axisTitle.width, this.x_step / 2);
         axisTitle.origin.x = current_x + offset * 0.95;
         axisTitle.width = offset * 0.95 + (this.axis_x_start - this.X) * 0.9;
         axisTitle.align = "right";
+        boxOrigin = new Vertex(axisTitle.origin.x - axisTitle.width, this.Y + 10);
       } else if (i == nb_axis - 1 && axisTitle.width > (this.width - this.X - this.axis_x_end) * 2) {
         const offset = Math.min(axisTitle.width, this.x_step / 2);
         axisTitle.origin.x = current_x - offset * 0.95;
         axisTitle.width =  offset * 0.95 + (this.width - this.axis_x_end + this.X) * 0.9;
         axisTitle.align = "left";
+        boxOrigin = new Vertex(axisTitle.origin.x, this.Y + 10);
       }
       axisTitle.format(this.context);
+      this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.height)));
 
       if (axisTitle.text == this.selected_axis_name) { this.context.strokeStyle = 'blue' } 
       else { this.context.strokeStyle = 'black' };
@@ -935,6 +943,7 @@ export abstract class PlotData {
   }
 
   draw_horizontal_parallel_axis(nb_axis:number, mvy:number) {
+    this.axisNamesBoxes = [];
     for (var i=0; i<nb_axis; i++) {
       if (i == this.move_index) {
         var current_y = Math.min(Math.max(this.axis_y_start + i*this.y_step + mvy, this.Y), this.Y + this.height);
@@ -966,6 +975,9 @@ export abstract class PlotData {
       axisTitle.format(this.context);
 
       if (control) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) };
+
+      let boxSize = new Vertex(axisTitle.width, axisTitle.height);
+      this.axisNamesBoxes.push(new newRect(axisTitle.origin.subtract(boxSize), boxSize));
       
       if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
@@ -3004,24 +3016,37 @@ export class Interactions {
     var click_on_name:any = false;
     var selected_name_index:any = -1;
     for (var i=0; i<nb_axis; i++) {
-      var attribute_alias = plot_data.axis_list[i]['alias'];
-      var text_w = plot_data.context.measureText(attribute_alias).width;
-      var text_h = parseInt(plot_data.context.font.split('px')[0], 10);
-      if (plot_data.vertical === true) {
-        var current_x = plot_data.axis_x_start + i*plot_data.x_step;
-        click_on_name = click_on_name || Shape.isInRect(mouse1X, mouse1Y, current_x - text_w/2, plot_data.axis_y_end - 20 - text_h/2, text_w, text_h);
-
-      } else {
-        var current_y = plot_data.axis_y_start + i*plot_data.y_step;
-        click_on_name = click_on_name || Shape.isInRect(mouse1X, mouse1Y, plot_data.axis_x_start - text_w/2, current_y + 15 - text_h/2, text_w, text_h);
-      }
-      if (click_on_name === true) {
+      if (plot_data.context.isPointInPath(plot_data.axisNamesBoxes[i].path, mouse1X, mouse1Y)) {
         selected_name_index = i;
+        click_on_name = true;
         break;
       }
     }
     return [click_on_name, selected_name_index];
   }
+
+  // public static initialize_click_on_name(nb_axis:number, mouse1X:number, mouse1Y:number, plot_data:any) {
+  //   var click_on_name:any = false;
+  //   var selected_name_index:any = -1;
+  //   for (var i=0; i<nb_axis; i++) {
+  //     var attribute_alias = plot_data.axis_list[i]['alias'];
+  //     var text_w = plot_data.axisNamesBoxes[i].size.x; //plot_data.context.measureText(attribute_alias).width;
+  //     var text_h = plot_data.axisNamesBoxes[i].size.y; //parseInt(plot_data.context.font.split('px')[0], 10);
+  //     if (plot_data.vertical === true) {
+  //       var current_x = plot_data.axis_x_start + i*plot_data.x_step;
+  //       click_on_name = click_on_name || Shape.isInRect(mouse1X, mouse1Y, current_x - text_w/2, plot_data.axis_y_end - 20 - text_h/2, text_w, text_h);
+
+  //     } else {
+  //       var current_y = plot_data.axis_y_start + i*plot_data.y_step;
+  //       click_on_name = click_on_name || Shape.isInRect(mouse1X, mouse1Y, plot_data.axis_x_start - text_w/2, current_y + 15 - text_h/2, text_w, text_h);
+  //     }
+  //     if (click_on_name === true) {
+  //       selected_name_index = i;
+  //       break;
+  //     }
+  //   }
+  //   return [click_on_name, selected_name_index];
+  // }
 
   public static click_on_reset_action(plot_data:PlotData) {
     plot_data.reset_scales();

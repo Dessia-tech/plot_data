@@ -472,8 +472,6 @@ export class ParallelPlot extends PlotData {
             [click_on_name, selected_name_index] = Interactions.initialize_click_on_name(this.axis_list.length, mouse1X, mouse1Y, this);
             [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
           }
-          console.log(mouse1X, mouse1Y)
-
         });
 
         canvas.addEventListener('mousemove', e => {

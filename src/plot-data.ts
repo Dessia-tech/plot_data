@@ -850,7 +850,6 @@ export abstract class PlotData {
       axisTitle.format(this.context);
       
       if (i == 0 && axisTitle.width > (this.axis_x_start - this.X) * 2) {
-        console.log(axisTitle)
         const offset = Math.min(axisTitle.width, this.x_step / 2);
         axisTitle.origin.x = current_x + offset * 0.95;
         axisTitle.width = offset * 0.95 + (this.axis_x_start - this.X) * 0.9;
@@ -946,21 +945,28 @@ export abstract class PlotData {
       this.context.lineWidth = 2;
       Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
 
-      let origin = new Vertex(this.axis_x_start - 30, current_y + 15);
-      const textParams: textParams = { width: 150, height: this.y_step, align: "left", baseline: "hanging", multiLine: true };
+      let origin = new Vertex(this.axis_x_start, current_y + 10);
+      const textParams: textParams = { width: this.width * 0.25, height: this.y_step * 0.98, align: "center", baseline: "hanging", multiLine: true };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
 
       axisTitle.format(this.context);
       
-      if (i != nb_axis - 1) {
-        origin.y += (axisTitle.nRows - 1) * axisTitle.fontsize;
-      } else {
-        axisTitle.width = this.width;
+      let control = false;
+      if (axisTitle.width > (this.axis_x_start - this.X) * 2) {
+        axisTitle.align = "left";
+        axisTitle.origin.x -= (this.axis_x_start - this.X) * 0.8;
+        if (i != nb_axis - 1) {
+          control = true;
+        } else if (i == nb_axis - 1) {
+          axisTitle.width = this.width;
+          axisTitle.height = null;
+        }
       }
+      
       axisTitle.format(this.context);
 
-      // const textParams: textParams = {width: 100, align: "left", baseline: "hanging", multiLine: true};
-      // let axisTitle = new newText(this.axis_list[i]['name'], new Vertex(this.axis_x_start - 30, current_y + 15), textParams);
+      if (control) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) };
+      
       if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {

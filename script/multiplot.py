@@ -24,23 +24,23 @@ directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
     random_color = available_colors[random.randint(0, len(available_colors) - 1)]
     random_direction = directions[random.randint(0, len(directions) - 1)]
-    elements.append({'x': random.uniform(0, 200),
-                     'y': random.uniform(0, 100),
-                     'color t r e z r t f d s'*10: random_color,
+    elements.append({'x '*100: random.uniform(0, 200),
+                     'y '*100: random.uniform(0, 100),
+                     'color t r e z r t f d s'*3: random_color,
                      'direction': random_direction})
 
 # ParallelPlot
-parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color t r e z r t f d s'*10, 'direction'])
-parallelplot2 = plot_data.ParallelPlot(axes=['y', 'color t r e z r t f d s'*10])
+parallelplot1 = plot_data.ParallelPlot(axes=['x '*100, 'y '*100, 'color t r e z r t f d s'*3, 'direction'])
+parallelplot2 = plot_data.ParallelPlot(axes=['y '*100, 'color t r e z r t f d s'*3])
 
 # Scatterplots
-scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
+scatterplot1 = plot_data.Scatter(x_variable='x '*100, y_variable='y')
 
-scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color t r e z r t f d s'*10,
+scatterplot2 = plot_data.Scatter(x_variable='y '*100, y_variable='color t r e z r t f d s'*3,
                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes
                                                                                     # points' appearance
 
-scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
+scatterplot3 = plot_data.Scatter(x_variable='x '*100, y_variable='direction')
 
 # PrimitiveGroupContainers
 contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
@@ -61,17 +61,17 @@ primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primit
 
 primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups,
                                                                associated_elements=[1, 2, 3, 4],
-                                                               x_variable='x', y_variable='y')
+                                                               x_variable='x '*100, y_variable='y '*100)
 
-histogram = plot_data.Histogram(x_variable='x')
+histogram = plot_data.Histogram(x_variable='x '*100)
 histogram2 = plot_data.Histogram(x_variable='direction')
-histogram3 = plot_data.Histogram(x_variable='color t r e z r t f d s'*10)
+histogram3 = plot_data.Histogram(x_variable='color t r e z r t f d s'*3)
 
 # Creating the multiplot
 plots = [parallelplot1, scatterplot1]
-plots2 = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, scatterplot3, graph2d, primitive_group_container,
-          histogram]
-
+# plots2 = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, scatterplot3, graph2d, primitive_group_container,
+#           histogram]
+plots2 = [parallelplot1, parallelplot2,parallelplot1, parallelplot2, parallelplot1, parallelplot2]
 # multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True)
 

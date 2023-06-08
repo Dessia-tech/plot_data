@@ -832,7 +832,7 @@ export abstract class PlotData {
   }
 
   draw_vertical_parallel_axis(nb_axis:number, mvx:number) {
-    for (var i=0; i<nb_axis; i++) {
+    for (var i=0; i < nb_axis; i++) {
       if (i == this.move_index) {
         var current_x = Math.min(Math.max(this.axis_x_start + i*this.x_step + mvx, this.X), this.X + this.width);
       } else {
@@ -843,22 +843,22 @@ export abstract class PlotData {
       Shape.drawLine(this.context, [[current_x, this.axis_y_start], [current_x, this.axis_y_end]]);
 
       let origin = new Vertex(current_x, this.axis_y_end - 10);
-      let width = this.x_step - 40;
+      let width = this.x_step * 0.95;
       let align = "center";
       const textParams: textParams = { width: width, height: origin.y - 2 - this.Y, align: align, baseline: "bottom", multiLine: true };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
-
       axisTitle.format(this.context);
       
-      if (i == 0 && axisTitle.width > this.axis_x_start * 2) {
-        const newWidth = Math.min(axisTitle.width, this.x_step / 2);
-        axisTitle.origin.x = current_x + newWidth;
-        axisTitle.width = newWidth + 40;
+      if (i == 0 && axisTitle.width > (this.axis_x_start - this.X) * 2) {
+        console.log(axisTitle)
+        const offset = Math.min(axisTitle.width, this.x_step / 2);
+        axisTitle.origin.x = current_x + offset * 0.95;
+        axisTitle.width = offset * 0.95 + (this.axis_x_start - this.X) * 0.9;
         axisTitle.align = "right";
-      } else if (i == nb_axis - 1 &&  axisTitle.width > this.axis_x_start * 2) {
-        const newWidth = Math.min(axisTitle.width, this.x_step / 2);
-        axisTitle.origin.x = current_x - newWidth;
-        axisTitle.width = newWidth + 40;
+      } else if (i == nb_axis - 1 && axisTitle.width > (this.width - this.X - this.axis_x_end) * 2) {
+        const offset = Math.min(axisTitle.width, this.x_step / 2);
+        axisTitle.origin.x = current_x - offset * 0.95;
+        axisTitle.width =  offset * 0.95 + (this.width - this.axis_x_end + this.X) * 0.9;
         axisTitle.align = "left";
       }
       axisTitle.format(this.context);

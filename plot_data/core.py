@@ -1356,8 +1356,6 @@ def plot_html(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas
     return
 
 
-
-
 def plot_canvas(plot_data_object: PlotDataObject,
                 debug_mode: bool = False, canvas_id: str = 'canvas',
                 force_version: str = None,

@@ -853,22 +853,36 @@ export abstract class PlotData {
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
       axisTitle.format(this.context);
       
-      let boxOrigin = new Vertex(origin.x - axisTitle.width / 2, this.Y + 10)
+      let boxOriginX = 0;
+      let axisLocation = 0;
       if (i == 0 && axisTitle.width > (this.axis_x_start - this.X) * 2) {
+        axisLocation = -1;
         const offset = Math.min(axisTitle.width, this.x_step / 2);
         axisTitle.origin.x = current_x + offset * 0.95;
         axisTitle.width = offset * 0.95 + (this.axis_x_start - this.X) * 0.9;
         axisTitle.align = "right";
-        boxOrigin = new Vertex(axisTitle.origin.x - axisTitle.width, this.Y + 10);
       } else if (i == nb_axis - 1 && axisTitle.width > (this.width - this.X - this.axis_x_end) * 2) {
+        axisLocation = 1;
         const offset = Math.min(axisTitle.width, this.x_step / 2);
         axisTitle.origin.x = current_x - offset * 0.95;
         axisTitle.width =  offset * 0.95 + (this.width - this.axis_x_end + this.X) * 0.9;
         axisTitle.align = "left";
-        boxOrigin = new Vertex(axisTitle.origin.x, this.Y + 10);
       }
       axisTitle.format(this.context);
-      this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.height)));
+
+      // Weird but vowed to disappear
+      if (axisLocation == 0) { 
+        boxOriginX = origin.x - axisTitle.width / 2; 
+        axisTitle.format(this.context); 
+      } else if (axisLocation == -1) {
+        boxOriginX = axisTitle.origin.x - axisTitle.width;
+      } else if (axisLocation == 1) { 
+        boxOriginX = axisTitle.origin.x; 
+        axisTitle.format(this.context); 
+      }
+
+      let boxOrigin = new Vertex(boxOriginX, origin.y - axisTitle.nRows * axisTitle.fontsize);
+      this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize)));
 
       if (axisTitle.text == this.selected_axis_name) { this.context.strokeStyle = 'blue' } 
       else { this.context.strokeStyle = 'black' };
@@ -961,23 +975,27 @@ export abstract class PlotData {
       axisTitle.format(this.context);
       
       let control = false;
+      let standard = true;
       if (axisTitle.width > (this.axis_x_start - this.X) * 2) {
+        standard = false;
         axisTitle.align = "left";
         axisTitle.origin.x -= (this.axis_x_start - this.X) * 0.8;
-        if (i != nb_axis - 1) {
-          control = true;
-        } else if (i == nb_axis - 1) {
-          axisTitle.width = this.width;
-          axisTitle.height = null;
+        control = true;
+        if (i == nb_axis - 1) {
+          axisTitle.width = this.width - axisTitle.origin.x + this.X;
+          axisTitle.height = this.height - origin.y + this.Y;
+          axisTitle.fontsize = null;
         }
       }
       
       axisTitle.format(this.context);
+      let boxOrigin = new Vertex(origin.x, axisTitle.origin.y);
 
-      if (control) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) };
+      if (control) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) }
+      if (standard) { boxOrigin.x -= axisTitle.width / 2 }
 
-      let boxSize = new Vertex(axisTitle.width, axisTitle.height);
-      this.axisNamesBoxes.push(new newRect(axisTitle.origin.subtract(boxSize), boxSize));
+      let boxSize = new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize);
+      this.axisNamesBoxes.push(new newRect(boxOrigin, boxSize));
       
       if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';

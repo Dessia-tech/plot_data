@@ -1,5 +1,7 @@
 from string import Template
 
+empty_template = Template('''''')
+
 contour_template = Template('''
 <!DOCTYPE html>
 <html lang="en">

@@ -50,6 +50,8 @@ def delete_none_from_dict(dict1):
 class PlotDataObject(DessiaObject):
     """ Abstract interface for DessiaObject implementation in module. """
 
+    _template_name = "empty_template"
+
     def __init__(self, type_: str, name: str = '', **kwargs):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
@@ -87,6 +89,10 @@ class PlotDataObject(DessiaObject):
         """
         warnings.warn(f'class {self.__class__.__name__} does not implement mpl_plot, not plotting.')
         return ax
+
+    @property
+    def template(self):
+        return getattr(templates, self._template_name)
 
 
 class Sample(PlotDataObject):
@@ -779,6 +785,8 @@ class Graph2D(PlotDataObject):
     :type log_scale_y: bool
     """
 
+    _template_name = "scatter_template"
+
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str,
                  axis: Axis = None, log_scale_x: bool = None,
                  log_scale_y: bool = None, name: str = ''):
@@ -846,6 +854,8 @@ class Scatter(PlotDataObject):
         If set to False, you'd still be able to enable it using the button.
     """
 
+    _template_name = "scatter_template"
+
     def __init__(self, x_variable: str, y_variable: str, tooltip: Tooltip = None, point_style: PointStyle = None,
                  elements: List[Sample] = None, axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None,
                  heatmap: Heatmap = None, heatmap_view: bool = None, name: str = ''):
@@ -878,6 +888,9 @@ class Scatter(PlotDataObject):
 
 
 class ScatterMatrix(PlotDataObject):
+
+    _template_name = "scatter_matrix_template"
+
     def __init__(self, elements: List[Sample] = None, axes: List[str] = None,
                  point_style: PointStyle = None, surface_style: SurfaceStyle = None,
                  name: str = ""):
@@ -1080,6 +1093,8 @@ class PrimitiveGroup(PlotDataObject):
     Circle2D, Line2D, MultipleLabels, Wire, Point2D]]
     """
 
+    _template_name = "contour_template"
+
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
                                               Circle2D, Line2D, MultipleLabels, Wire, Point2D]],
                  name: str = ''):
@@ -1144,6 +1159,8 @@ class PrimitiveGroupsContainer(PlotDataObject):
     :type y_variable: str
     """
 
+    _template_name = "primitive_group_container_template"
+
     def __init__(self, primitive_groups: List[PrimitiveGroup],
                  sizes: List[Tuple[float, float]] = None,
                  coords: List[Tuple[float, float]] = None,
@@ -1183,6 +1200,8 @@ class ParallelPlot(PlotDataObject):
     :param rgbs: a list of rgb255 colors for color interpolation.
         Color interpolation is enabled when clicking on an axis.
     """
+
+    _template_name = "parallelplot_template"
 
     def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, disposition: str = None,
                  axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, name: str = ''):
@@ -1254,6 +1273,8 @@ class Histogram(PlotDataObject):
     :type surface_style: SurfaceStyle
     """
 
+    _template_name = "histogram_template"
+
     def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, name: str = ''):
         self.x_variable = x_variable
@@ -1276,6 +1297,8 @@ class MultiplePlots(PlotDataObject):
     :param point_families: a list of point families
     :param initial_view_on: True for enabling initial layout, False  otherwise
     """
+
+    _template_name = "multiplot_template"
 
     def __init__(self, plots: List[PlotDataObject], sizes: List[Window] = None, elements: List[Sample] = None,
                  coords: List[Tuple[float, float]] = None, point_families: List[PointFamily] = None,
@@ -1304,27 +1327,8 @@ class MultiplePlots(PlotDataObject):
 
 def plot_html(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
               force_version: str = None, width: int = 750, height: int = 400, page_name: str = None):
-    first_letter = canvas_id[0]
-    if not isinstance(first_letter, str):
-        raise ValueError('canvas_id argument must not start with a number')
-    data = plot_data_object.to_dict()
-    plot_type = data['type_']
-    if plot_type == 'primitivegroup':
-        template = templates.contour_template
-    elif plot_type in ('scatterplot', 'graph2d'):
-        template = templates.scatter_template
-    elif plot_type == 'parallelplot':
-        template = templates.parallelplot_template
-    elif plot_type == 'multiplot':
-        template = templates.multiplot_template
-    elif plot_type == 'primitivegroupcontainer':
-        template = templates.primitive_group_container_template
-    elif plot_type == 'histogram':
-        template = templates.histogram_template
-    elif plot_type == "scattermatrix":
-        template = templates.scatter_matrix_template
-    else:
-        raise NotImplementedError('Type {} not implemented'.format(plot_type))
+
+    template = plot_data_object.template
 
     if force_version is not None:
         version, folder, filename = get_current_link(version=force_version)
@@ -1341,11 +1345,10 @@ def plot_html(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas
         else:
             lib_path = core_path.replace(" ", "%20")
 
-    s = template.substitute(data=json.dumps(data), core_path=lib_path,
+    s = template.substitute(data=json.dumps(plot_data_object.to_dict()), core_path=lib_path,
                             canvas_id=canvas_id, width=width, height=height)
-    if page_name is None:
+    if not page_name:
         temp_file = tempfile.mkstemp(suffix='.html')[1]
-
         with open(temp_file, 'wb') as file:
             file.write(s.encode('utf-8'))
         print('file://' + temp_file)

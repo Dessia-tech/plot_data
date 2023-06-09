@@ -31,6 +31,7 @@ from matplotlib import patches
 import plot_data.colors
 from plot_data import templates
 
+
 def delete_none_from_dict(dict1):
     """ Delete input dictionary's keys where value is None. """
     dict2 = {}

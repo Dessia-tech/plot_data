@@ -249,6 +249,7 @@ export class ParallelPlot extends PlotData {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (!is_in_multiplot) {
         var requirement = '0.6.1';
+        console.log(data, data.package_version)
         check_package_version(data['package_version'], requirement);
       }
       this.type_ = 'parallelplot';

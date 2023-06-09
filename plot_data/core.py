@@ -1360,7 +1360,6 @@ def to_html_file(plot_data_object: PlotDataObject, debug_mode: bool = False, can
     return file_name
 
 
-
 def plot_canvas(plot_data_object: PlotDataObject,
                 debug_mode: bool = False, canvas_id: str = 'canvas',
                 force_version: str = None,

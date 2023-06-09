@@ -1325,8 +1325,8 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def plot_html(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
-              force_version: str = None, width: int = 750, height: int = 400, page_name: str = None):
+def to_html_file(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
+                 force_version: str = None, width: int = 750, height: int = 400, page_name: str = None):
 
     template = plot_data_object.template
 
@@ -1351,12 +1351,14 @@ def plot_html(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas
         temp_file = tempfile.mkstemp(suffix='.html')[1]
         with open(temp_file, 'wb') as file:
             file.write(s.encode('utf-8'))
-        print('file://' + temp_file)
+        file_name = temp_file
     else:
         with open(page_name + '.html', 'wb') as file:
             file.write(s.encode('utf-8'))
-        print(page_name + '.html')
-    return
+        file_name = page_name + '.html'
+
+    return file_name
+
 
 
 def plot_canvas(plot_data_object: PlotDataObject,
@@ -1383,57 +1385,15 @@ def plot_canvas(plot_data_object: PlotDataObject,
     :type page_name: str
     """
 
-    data = plot_data_object.to_dict()
-    plot_type = data['type_']
-    if plot_type == 'primitivegroup':
-        template = templates.contour_template
-    elif plot_type in ('scatterplot', 'graph2d'):
-        template = templates.scatter_template
-    elif plot_type == 'parallelplot':
-        template = templates.parallelplot_template
-    elif plot_type == 'multiplot':
-        template = templates.multiplot_template
-    elif plot_type == 'primitivegroupcontainer':
-        template = templates.primitive_group_container_template
-    elif plot_type == 'histogram':
-        template = templates.histogram_template
-    elif plot_type == "scattermatrix":
-        template = templates.scatter_matrix_template
-    else:
-        raise NotImplementedError('Type {} not implemented'.format(plot_type))
-
-    if force_version is not None:
-        version, folder, filename = get_current_link(version=force_version)
-    else:
-        version, folder, filename = get_current_link()
-    cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/{}'
-    lib_path = cdn_url.format(version, filename)
-    if debug_mode:
-        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
-
-        if not os.path.isfile(core_path):
-            msg = 'Local compiled {} not found, fall back to CDN'
-            print(msg.format(core_path))
+    html_file = to_html_file(plot_data_object=plot_data_object, debug_mode=debug_mode, canvas_id=canvas_id,
+                             force_version=force_version, width=width, height=height, page_name=page_name)
+    if display:
+        if page_name is None:
+            webbrowser.open('file://' + html_file)
+            print('file://' + html_file)
         else:
-            lib_path = core_path.replace(" ", "%20")
-
-    s = template.substitute(data=json.dumps(data), core_path=lib_path,
-                            canvas_id=canvas_id, width=width, height=height)
-    if page_name is None:
-        temp_file = tempfile.mkstemp(suffix='.html')[1]
-
-        with open(temp_file, 'wb') as file:
-            file.write(s.encode('utf-8'))
-
-        if display:
-            webbrowser.open('file://' + temp_file)
-        print('file://' + temp_file)
-    else:
-        with open(page_name + '.html', 'wb') as file:
-            file.write(s.encode('utf-8'))
-        if display:
-            webbrowser.open('file://' + os.path.realpath(page_name + '.html'))
-        print(page_name + '.html')
+            webbrowser.open('file://' + os.path.realpath(html_file))
+            print(html_file)
 
 
 def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):

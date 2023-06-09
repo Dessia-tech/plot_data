@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fix
 - Smart writing of axes' names in ParallelPlot
+- Python 3.9 in drone
 
 ## [0.13.0]
 ### Add

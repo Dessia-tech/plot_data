@@ -42,7 +42,7 @@ steps:
   - npx typedoc
 
 - name: install, run scripts and build doc
-  image: python:3.8
+  image: python:3.9
   commands:
   - git fetch --tags
   - python setup.py install
@@ -97,7 +97,7 @@ steps:
     email: root@dessia.tech
 
 - name: check changelog update
-  image: python:3.8
+  image: python:3.9
   when:
     event: pull_request
     branch:
@@ -180,7 +180,7 @@ steps:
     - bash code_pep8.sh
 
 - name: sdist
-  image: python:3.8
+  image: python:3.9
   commands:
   - python setup.py sdist
 

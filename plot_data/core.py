@@ -1302,7 +1302,7 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def html_plot(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
+def plot_html(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
               force_version: str = None, width: int = 750, height: int = 400, page_name: str = None):
     plot_canvas(plot_data_object=plot_data_object, debug_mode=debug_mode, canvas_id=canvas_id,
                 force_version=force_version, width=width, height=height, page_name=page_name, display=False)

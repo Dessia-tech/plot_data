@@ -852,7 +852,7 @@ export abstract class PlotData {
       const textParams: textParams = { width: width, height: origin.y - 2 - this.Y, align: align, baseline: "bottom", multiLine: true };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
       axisTitle.format(this.context);
-      
+
       let boxOriginX = 0;
       let axisLocation = 0;
       if (i == 0 && axisTitle.width > (this.axis_x_start - this.X) * 2) {
@@ -871,25 +871,25 @@ export abstract class PlotData {
       axisTitle.format(this.context);
 
       // Weird but vowed to disappear
-      if (axisLocation == 0) { 
-        boxOriginX = origin.x - axisTitle.width / 2; 
-        axisTitle.format(this.context); 
+      if (axisLocation == 0) {
+        boxOriginX = origin.x - axisTitle.width / 2;
+        axisTitle.format(this.context);
       } else if (axisLocation == -1) {
         boxOriginX = axisTitle.origin.x - axisTitle.width;
-      } else if (axisLocation == 1) { 
-        boxOriginX = axisTitle.origin.x; 
-        axisTitle.format(this.context); 
+      } else if (axisLocation == 1) {
+        boxOriginX = axisTitle.origin.x;
+        axisTitle.format(this.context);
       }
 
       let boxOrigin = new Vertex(boxOriginX, origin.y - axisTitle.nRows * axisTitle.fontsize);
       this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize)));
 
-      if (axisTitle.text == this.selected_axis_name) { this.context.strokeStyle = 'blue' } 
+      if (axisTitle.text == this.selected_axis_name) { this.context.strokeStyle = 'blue' }
       else { this.context.strokeStyle = 'black' };
 
       this.context.fillStyle = 'black';
       axisTitle.draw(this.context);
-      
+
       this.context.textBaseline = "alphabetic";
       var attribute_type = this.axis_list[i]['type_'];
       var list = this.axis_list[i]['list'];
@@ -973,7 +973,7 @@ export abstract class PlotData {
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
 
       axisTitle.format(this.context);
-      
+
       let control = false;
       let standard = true;
       if (axisTitle.width > (this.axis_x_start - this.X) * 2) {
@@ -987,7 +987,7 @@ export abstract class PlotData {
           axisTitle.fontsize = null;
         }
       }
-      
+
       axisTitle.format(this.context);
       let boxOrigin = new Vertex(origin.x, axisTitle.origin.y);
 
@@ -996,7 +996,7 @@ export abstract class PlotData {
 
       let boxSize = new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize);
       this.axisNamesBoxes.push(new newRect(boxOrigin, boxSize));
-      
+
       if (axisTitle.text == this.selected_axis_name) {
         this.context.strokeStyle = 'blue';
       } else {

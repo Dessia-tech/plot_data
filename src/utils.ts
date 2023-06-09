@@ -1667,7 +1667,7 @@ export class Triangle extends AbstractTriangle {
 }
 
 export interface textParams {
-  width?: number, height?: number, fontsize?: number, multiLine?: boolean, font?: string, align?: string, 
+  width?: number, height?: number, fontsize?: number, multiLine?: boolean, font?: string, align?: string,
   baseline?: string, style?: string, orientation?: number
 }
 
@@ -1752,7 +1752,7 @@ export class newText extends newShape {
     context.font = newText.buildFont(this.style, fontsize, this.font);
     if (this.width) {
       if (this.multiLine) { writtenText = this.cutting_text(context, this.width) }
-      else { 
+      else {
         if (!this.fontsize) {
           fontsize = this.automaticFontSize(context);
           context.font = newText.buildFont(this.style, fontsize, this.font);
@@ -2104,7 +2104,7 @@ export class newAxis {
     nameCoords.transformSelf(canvasHTMatrix);
     const orientation = this.isVertical ? -90 : 0;
     const textParams: textParams = {
-      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.FONT, align: 'center', 
+      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.FONT, align: 'center',
       baseline: baseline, style: 'bold', orientation: orientation
     };
     const textName = new newText(this.title, nameCoords, textParams);

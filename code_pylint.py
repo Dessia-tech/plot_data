@@ -13,7 +13,7 @@ import sys
 
 from pylint.lint import Run
 
-MIN_NOTE = 9.10
+MIN_NOTE = 9.50
 # RATCHET_NOTE = 0.4
 # RATCHET_ERRORS = 3
 

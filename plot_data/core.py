@@ -382,7 +382,7 @@ class Text(PlotDataObject):
     """
 
     def __init__(self, comment: str, position_x: float, position_y: float, text_style: TextStyle = None,
-                 text_scaling: bool = None,  max_width: float = None, multi_lines: bool = True, name: str = ''):
+                 text_scaling: bool = None, max_width: float = None, multi_lines: bool = True, name: str = ''):
         self.comment = comment
         self.text_style = text_style
         self.position_x = position_x
@@ -883,7 +883,7 @@ class Scatter(Figure):
         self.log_scale_y = log_scale_y
         self.heatmap = heatmap
         self.heatmap_view = heatmap_view
-        Figure.__init__(self, width=width,  height=height, type_='scatterplot', name=name)
+        Figure.__init__(self, width=width, height=height, type_='scatterplot', name=name)
 
 
 class ScatterMatrix(Figure):

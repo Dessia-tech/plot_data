@@ -13,9 +13,9 @@ graph.add_edge(1, 'a')
 graph.add_edge('a', 3)
 graph.add_edge(3, 1)
 
-plotdata_nx_graph = plot_data.PrimitiveGroup(plot_data.graph.NetworkxGraph(graph)._to_primitives(text_style = plot_data.TextStyle(text_color='rgb(0, 0, 0)',
-                                  font_size=3,
-                                  text_align_x='center',
-                                  text_align_y='middle')))
+plotdata_nx_graph = plot_data.PrimitiveGroup(plot_data.graph.NetworkxGraph(graph)._to_primitives(text_style=plot_data.TextStyle(text_color='rgb(0, 0, 0)',
+                                                                                                                                font_size=3,
+                                                                                                                                text_align_x='center',
+                                                                                                                                text_align_y='middle')))
 
 plot_data.plot_canvas(plotdata_nx_graph, debug_mode=True)

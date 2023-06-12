@@ -3,6 +3,7 @@
 import networkx as nx
 import plot_data
 
+
 class NetworkxGraph(plot_data.PrimitiveGroup):
     """
     Each node of self.graph can contain its settings in the node.data dictionary.
@@ -41,8 +42,8 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                 primitive = plot_data.Point2D(x_coord, y_coord, point_style=point_style)
 
             elif shape == 'o':
-                primitive = plot_data.Circle2D( x_coord, y_coord, radius, edge_style=edge_style,
-                                             surface_style=surface_style)
+                primitive = plot_data.Circle2D(x_coord, y_coord, radius, edge_style=edge_style,
+                                               surface_style=surface_style)
 
             elif shape == 's':
                 x_left, x_right, y_down, y_up = x_coord - radius, x_coord + radius, y_coord - radius, y_coord + radius

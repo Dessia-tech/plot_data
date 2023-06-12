@@ -30,7 +30,7 @@ class Color(dc.DessiaObject):
     def __str__(self):
         return f"rgb({round(self.red * 255)},{round(self.green * 255)},{round(self.blue * 255)})"
 
-    def to_dict(self, *args, **kwargs): # SO weird
+    def to_dict(self, *args, **kwargs):  # SO weird
         """ Get dict of color. """
         # TODO: change this!!! it cannot be deserialized in generic way
         return str(self)

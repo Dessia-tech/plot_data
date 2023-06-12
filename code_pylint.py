@@ -21,7 +21,7 @@ UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-fin
 
 MAX_ERROR_BY_TYPE = {
                      'protected-access': 1,
-                     'invalid-name': 12,
+                     'invalid-name': 6,
                      'no-else-return': 17,
                      'arguments-differ': 2,
                      'no-member': 1,

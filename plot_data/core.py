@@ -1402,9 +1402,9 @@ def bounding_box(plot_datas: List[PlotDataObject]):
     xmin, xmax, ymin, ymax = math.inf, -math.inf, math.inf, -math.inf
     for plot in plot_datas:
         if hasattr(plot, 'bounding_box'):
-            bounding_box = plot.bounding_box()
-            xmin, xmax = min(xmin, bounding_box[0]), max(xmax, bounding_box[1])
-            ymin, ymax = min(ymin, bounding_box[2]), max(ymax, bounding_box[3])
+            bounding_box_ = plot.bounding_box()
+            xmin, xmax = min(xmin, bounding_box_[0]), max(xmax, bounding_box_[1])
+            ymin, ymax = min(ymin, bounding_box_[2]), max(ymax, bounding_box_[3])
 
     return xmin, xmax, ymin, ymax
 

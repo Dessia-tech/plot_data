@@ -1349,6 +1349,9 @@ def plot_canvas(plot_data_object: PlotDataObject, filepath: str = None, debug_mo
     """
     if not filepath:
         filepath = tempfile.mkstemp(suffix='.html')[1]
+    if not filepath.endswith('.html'):
+        filepath += '.html'
+        print(f'Changing name to {filepath}')
 
     if width:
         plot_data_object.width = width

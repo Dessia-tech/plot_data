@@ -124,9 +124,7 @@ class PlotDataObject(DessiaObject):
 
 
 class Sample(PlotDataObject):
-    """
-    Graph Point.
-    """
+    """ Graph Point. """
 
     def __init__(self, values, reference_path: str = "#", name: str = ""):
         self.values = values
@@ -238,9 +236,8 @@ class PointStyle(DessiaObject):
     :type shape: str
     """
 
-    def __init__(self, color_fill: str = None, color_stroke: str = None,
-                 stroke_width: float = None,
-                 size: float = None, shape: str = None, name: str = ''):
+    def __init__(self, color_fill: str = None, color_stroke: str = None, stroke_width: float = None, size: float = None,
+                 shape: str = None, name: str = ''):
         self.color_fill = color_fill
         self.color_stroke = color_stroke
         self.stroke_width = stroke_width
@@ -292,11 +289,8 @@ class TextStyle(DessiaObject):
     :type angle: float
     """
 
-    def __init__(self, text_color: plot_data.colors.Color = None,
-                 font_size: float = None,
-                 font_style: str = None,
-                 text_align_x: str = None, text_align_y: str = None,
-                 bold: bool = None, italic: bool = None,
+    def __init__(self, text_color: plot_data.colors.Color = None, font_size: float = None, font_style: str = None,
+                 text_align_x: str = None, text_align_y: str = None, bold: bool = None, italic: bool = None,
                  angle: float = None, name: str = ''):
         self.text_color = text_color
         self.font_size = font_size
@@ -328,8 +322,7 @@ class SurfaceStyle(DessiaObject):
     :type hatching: HatchingSet
     """
 
-    def __init__(self, color_fill: str = None, opacity: float = 1.,
-                 hatching: HatchingSet = None, name: str = ''):
+    def __init__(self, color_fill: str = None, opacity: float = 1., hatching: HatchingSet = None, name: str = ''):
         # TODO: migrate from str to Color object
         self.color_fill = color_fill
         self.opacity = opacity
@@ -386,9 +379,8 @@ class Text(PlotDataObject):
     :type multi_lines: bool
     """
 
-    def __init__(self, comment: str, position_x: float, position_y: float,
-                 text_style: TextStyle = None, text_scaling: bool = None,
-                 max_width: float = None, multi_lines: bool = True, name: str = ''):
+    def __init__(self, comment: str, position_x: float, position_y: float, text_style: TextStyle = None,
+                 text_scaling: bool = None,  max_width: float = None, multi_lines: bool = True, name: str = ''):
         self.comment = comment
         self.text_style = text_style
         self.position_x = position_x
@@ -425,8 +417,7 @@ class Line2D(PlotDataObject):
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, point1: List[float], point2: List[float],
-                 edge_style: EdgeStyle = None, name: str = ''):
+    def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None, name: str = ''):
         self.data = point1 + point2
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='line2d', name=name)
@@ -465,9 +456,7 @@ class LineSegment2D(PlotDataObject):
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, point1: List[float], point2: List[float],
-                 edge_style: EdgeStyle = None,
-                 name: str = ''):
+    def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None, name: str = ''):
         # Data is used in typescript
         self.data = point1 + point2
         self.point1 = point1
@@ -509,14 +498,12 @@ class LineSegment2D(PlotDataObject):
         else:
             edge_style = DEFAULT_EDGESTYLE
 
-        ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]],
-                **edge_style.mpl_arguments())
+        ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]], **edge_style.mpl_arguments())
         return ax
 
 
 class LineSegment(LineSegment2D):
-    def __init__(self, data: List[float], edge_style: EdgeStyle = None,
-                 name: str = ''):
+    def __init__(self, data: List[float], edge_style: EdgeStyle = None, name: str = ''):
         # When to remove support?
         warnings.warn("LineSegment is deprecated, use LineSegment2D instead",
                       DeprecationWarning)
@@ -542,8 +529,8 @@ class Wire(PlotDataObject):
     :type tooltip: str
     """
 
-    def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None,
-                 tooltip: str = None, name: str = ""):
+    def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None, tooltip: str = None,
+                 name: str = ""):
         self.lines = lines
         self.edge_style = edge_style
         self.tooltip = tooltip
@@ -580,11 +567,8 @@ class Circle2D(PlotDataObject):
     :type tooltip: str
     """
 
-    def __init__(self, cx: float, cy: float, r: float,
-                 edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None,
-                 tooltip: str = None,
-                 name: str = ''):
+    def __init__(self, cx: float, cy: float, r: float, edge_style: EdgeStyle = None,
+                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.r = r
@@ -637,9 +621,7 @@ class Point2D(PlotDataObject):
     :type point_style: PointStyle
     """
 
-    def __init__(self, cx: float, cy: float,
-                 point_style: PointStyle = None,
-                 name: str = ''):
+    def __init__(self, cx: float, cy: float, point_style: PointStyle = None, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.point_style = point_style
@@ -686,10 +668,8 @@ class Axis(PlotDataObject):
     :type grid_on: bool
     """
 
-    def __init__(self, nb_points_x: int = 10, nb_points_y: int = 10,
-                 graduation_style: TextStyle = None,
-                 axis_style: EdgeStyle = None, arrow_on: bool = False,
-                 grid_on: bool = True, name: str = ''):
+    def __init__(self, nb_points_x: int = 10, nb_points_y: int = 10, graduation_style: TextStyle = None,
+                 axis_style: EdgeStyle = None, arrow_on: bool = False, grid_on: bool = True, name: str = ''):
         self.nb_points_x = nb_points_x
         self.nb_points_y = nb_points_y
         self.graduation_style = graduation_style
@@ -722,11 +702,8 @@ class Tooltip(PlotDataObject):
     :type tooltip_radius: float
     """
 
-    def __init__(self, attributes: List[str] = None,
-                 text: str = None,
-                 surface_style: SurfaceStyle = None,
-                 text_style: TextStyle = None, tooltip_radius: float = None,
-                 name: str = ''):
+    def __init__(self, attributes: List[str] = None, text: str = None, surface_style: SurfaceStyle = None,
+                 text_style: TextStyle = None, tooltip_radius: float = None, name: str = ''):
         self.attributes = attributes
         self.text = text
         self.surface_style = surface_style
@@ -767,10 +744,8 @@ class Dataset(PlotDataObject):
     """
     attribute_names = None
 
-    def __init__(self, elements: List[Sample] = None,
-                 edge_style: EdgeStyle = None, tooltip: Tooltip = None,
-                 point_style: PointStyle = None,
-                 display_step: int = 1, name: str = ''):
+    def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, tooltip: Tooltip = None,
+                 point_style: PointStyle = None, display_step: int = 1, name: str = ''):
 
         self.edge_style = edge_style
         self.tooltip = tooltip
@@ -815,9 +790,8 @@ class Graph2D(PlotDataObject):
 
     _template_name = "scatter_template"
 
-    def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str,
-                 axis: Axis = None, log_scale_x: bool = None,
-                 log_scale_y: bool = None, name: str = ''):
+    def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str, axis: Axis = None,
+                 log_scale_x: bool = None, log_scale_y: bool = None, name: str = ''):
         self.graphs = graphs
         self.attribute_names = [x_variable, y_variable]
         if axis is None:
@@ -919,9 +893,8 @@ class ScatterMatrix(PlotDataObject):
 
     _template_name = "scatter_matrix_template"
 
-    def __init__(self, elements: List[Sample] = None, axes: List[str] = None,
-                 point_style: PointStyle = None, surface_style: SurfaceStyle = None,
-                 name: str = ""):
+    def __init__(self, elements: List[Sample] = None, axes: List[str] = None, point_style: PointStyle = None,
+                 surface_style: SurfaceStyle = None, name: str = ""):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -968,10 +941,8 @@ class Arc2D(PlotDataObject):
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, cx: float, cy: float, r: float, start_angle: float,
-                 end_angle: float, data=None, anticlockwise: bool = None,
-                 edge_style: EdgeStyle = None,
-                 name: str = ''):
+    def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, data=None,
+                 anticlockwise: bool = None, edge_style: EdgeStyle = None, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.r = r
@@ -1025,8 +996,7 @@ class Contour2D(PlotDataObject):
     :type tooltip: str
     """
 
-    def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]],
-                 edge_style: EdgeStyle = None,
+    def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]], edge_style: EdgeStyle = None,
                  surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
@@ -1087,8 +1057,7 @@ class Label(PlotDataObject):
     :type rectangle_edge_style: EdgeStyle
     """
 
-    def __init__(self, title: str, text_style: TextStyle = None,
-                 rectangle_surface_style: SurfaceStyle = None,
+    def __init__(self, title: str, text_style: TextStyle = None, rectangle_surface_style: SurfaceStyle = None,
                  rectangle_edge_style: EdgeStyle = None, name: str = ''):
         self.title = title
         self.text_style = text_style
@@ -1189,12 +1158,9 @@ class PrimitiveGroupsContainer(PlotDataObject):
 
     _template_name = "primitive_group_container_template"
 
-    def __init__(self, primitive_groups: List[PrimitiveGroup],
-                 sizes: List[Tuple[float, float]] = None,
-                 coords: List[Tuple[float, float]] = None,
-                 associated_elements: List[int] = None,
-                 x_variable: str = None, y_variable: str = None,
-                 name: str = ''):
+    def __init__(self, primitive_groups: List[PrimitiveGroup], sizes: List[Tuple[float, float]] = None,
+                 coords: List[Tuple[float, float]] = None, associated_elements: List[int] = None,
+                 x_variable: str = None, y_variable: str = None, name: str = ''):
         for i, value in enumerate(primitive_groups):
             if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
@@ -1274,8 +1240,7 @@ class PointFamily(PlotDataObject):
     :param point_index: a list containing the point's index from MultiplePlots.elements
     """
 
-    def __init__(self, point_color: str, point_index: List[int],
-                 name: str = ''):
+    def __init__(self, point_color: str, point_index: List[int], name: str = ''):
         self.color = point_color
         self.point_index = point_index
         PlotDataObject.__init__(self, type_=None, name=name)

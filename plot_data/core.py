@@ -58,7 +58,7 @@ class PlotDataObject(DessiaObject):
         DessiaObject.__init__(self, name=name, **kwargs)
 
     def to_dict(self, *args, **kwargs) -> JsonSerializable:
-        """ Redefines DessiaObject's to_dict() in order to not use pointers and remove keys where value is None. """
+        """ Redefines DessiaObject's to_dict() in order not to use pointers and remove keys where value is None. """
         dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
         package_name = self.__module__.split('.', maxsplit=1)[0]
@@ -90,6 +90,15 @@ class PlotDataObject(DessiaObject):
         """
         warnings.warn(f'class {self.__class__.__name__} does not implement mpl_plot, not plotting.')
         return ax
+
+
+class Figure(PlotDataObject):
+    """ Abstract interface for handling html exportable objects in module. """
+
+    def __init__(self, type_: str, width: int = 750, height: int = 400, name: str = '', **kwargs):
+        self.width = width
+        self.height = height
+        PlotDataObject.__init__(self, type_=type_, name=name, **kwargs)
 
     @property
     def template(self):
@@ -356,8 +365,7 @@ DEFAULT_SURFACESTYLE = SurfaceStyle(color_fill=plot_data.colors.WHITE, opacity=1
 
 class Text(PlotDataObject):
     """
-    A class for displaying texts on canvas. Text is a primitive and can be
-    instantiated by PrimitiveGroup.
+    A class for displaying texts on canvas. Text is a primitive and can be instantiated by PrimitiveGroup.
 
     :param comment: the comment you want to display
     :type comment: str
@@ -367,15 +375,13 @@ class Text(PlotDataObject):
     :type position_y: float
     :param text_style: for customization (optional)
     :type text_style: TextStyle
-    :param text_scaling: True if you want the text the be rescaled \
-    when zooming and False otherwise.
+    :param text_scaling: True if you want the text the be rescaled when zooming and False otherwise.
     :type text_scaling: bool
-    :param max_width: Set a maximum length for the text. If the text \
-    is longer than max_width, it is split into several lines.
+    :param max_width: Set a maximum length for the text. If the text is longer than max_width, it is split into
+    several lines.
     :type max_width: float
-    :param multi_lines: This parameter is only useful when max_width parameter is set \
-    In that case, you can choose between squishing the text in one line or writing on \
-    multiple lines.
+    :param multi_lines: This parameter is only useful when max_width parameter is set. In that case, you can choose
+    between squishing the text in one line or writing on multiple lines.
     :type multi_lines: bool
     """
 
@@ -391,23 +397,16 @@ class Text(PlotDataObject):
         PlotDataObject.__init__(self, type_='text', name=name)
 
     def mpl_plot(self, ax=None, color='k', alpha=1.):
-        """
-        Plots using Matplotlib.
-        """
+        """ Plots using Matplotlib. """
         if not ax:
             _, ax = plt.subplots()
-        ax.text(self.position_x, self.position_y,
-                self.comment,
-                color=color,
-                alpha=alpha)
-
+        ax.text(self.position_x, self.position_y, self.comment, color=color, alpha=alpha)
         return ax
 
 
 class Line2D(PlotDataObject):
     """
-    An infinite line. Line2D is a primitive and can be instantiated by \
-    PrimitiveGroups.
+    An infinite line. Line2D is a primitive and can be instantiated by PrimitiveGroups.
 
     :param point1: first endpoint of the line segment [x1, y1].
     :type point1: List[float]
@@ -768,7 +767,7 @@ class Dataset(PlotDataObject):
         PlotDataObject.__init__(self, type_='dataset', name=name)
 
 
-class Graph2D(PlotDataObject):
+class Graph2D(Figure):
     """
     Takes one or several Datasets as input and displays them all in \
     one canvas.
@@ -839,7 +838,7 @@ class Heatmap(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
 
-class Scatter(PlotDataObject):
+class Scatter(Figure):
     """
     A class for drawing scatter plots.
 
@@ -889,7 +888,7 @@ class Scatter(PlotDataObject):
         PlotDataObject.__init__(self, type_='scatterplot', name=name)
 
 
-class ScatterMatrix(PlotDataObject):
+class ScatterMatrix(Figure):
 
     _template_name = "scatter_matrix_template"
 
@@ -1080,7 +1079,7 @@ class MultipleLabels(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplelabels', name=name)
 
 
-class PrimitiveGroup(PlotDataObject):
+class PrimitiveGroup(Figure):
     """
     A class for drawing multiple primitives and contours inside a canvas.
 
@@ -1134,7 +1133,7 @@ class PrimitiveGroup(PlotDataObject):
         return xmin, xmax, ymin, ymax
 
 
-class PrimitiveGroupsContainer(PlotDataObject):
+class PrimitiveGroupsContainer(Figure):
     """
     A class for drawing several PrimitiveGroups in one canvas.
 
@@ -1182,7 +1181,7 @@ class PrimitiveGroupsContainer(PlotDataObject):
                                 name=name)
 
 
-class ParallelPlot(PlotDataObject):
+class ParallelPlot(Figure):
     """
     Draws a parallel coordinates plot.
 
@@ -1246,7 +1245,7 @@ class PointFamily(PlotDataObject):
         PlotDataObject.__init__(self, type_=None, name=name)
 
 
-class Histogram(PlotDataObject):
+class Histogram(Figure):
     """
     The Histogram object. This class can be instantiated in Multiplot.
 
@@ -1279,7 +1278,7 @@ class Histogram(PlotDataObject):
         PlotDataObject.__init__(self, type_='histogram', name=name)
 
 
-class MultiplePlots(PlotDataObject):
+class MultiplePlots(Figure):
     """
     A class for drawing multiple PlotDataObjects (except MultiplePlots) in one canvas.
 

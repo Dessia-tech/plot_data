@@ -110,26 +110,22 @@ class Figure(PlotDataObject):
         formats.append(ExportFormat(selector="html", extension="html", method_name="to_html_stream", text=False))
         return formats
 
-    def _to_html(self, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None, width: int = 750,
-                 height: int = 400):
+    def _to_html(self, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
         lib_path = plot_data_path(debug_mode=debug_mode, version=version)
         return self.template.substitute(data=json.dumps(self.to_dict()), core_path=lib_path, canvas_id=canvas_id,
-                                        width=width, height=height)
+                                        width=self.width, height=self.height)
 
-    def to_html_stream(self, stream, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None,
-                       width: int = 750, height: int = 400):
-        html = self._to_html(debug_mode=debug_mode, canvas_id=canvas_id, version=version, width=width, height=height)
+    def to_html_stream(self, stream, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
+        html = self._to_html(debug_mode=debug_mode, canvas_id=canvas_id, version=version)
         stream.write(html.encode('utf-8'))
 
-    def to_html(self, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None,
-                width: int = 750, height: int = 400):
+    def to_html(self, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
         """ Export current PlotDataObject to an HTML file given by the filepath. """
         if not filepath.endswith('.html'):
             filepath += '.html'
             print(f'Changing name to {filepath}')
         with open(filepath, 'wb') as file:
-            self.to_html_stream(file, debug_mode=debug_mode, canvas_id=canvas_id, version=version, width=width,
-                                height=height)
+            self.to_html_stream(file, debug_mode=debug_mode, canvas_id=canvas_id, version=version)
 
 
 class Sample(PlotDataObject):
@@ -1351,8 +1347,13 @@ def plot_canvas(plot_data_object: PlotDataObject, filepath: str = None, debug_mo
     if not filepath:
         filepath = tempfile.mkstemp(suffix='.html')[1]
 
-    plot_data_object.to_html(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version,
-                             width=width, height=height)
+    drawn_plot = plot_data_object.copy()
+    if width:
+        drawn_plot.witdh = width
+    if height:
+        drawn_plot.height = height
+
+    drawn_plot.to_html(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version)
     if display:
         webbrowser.open('file://' + os.path.realpath(filepath))
         print('file://' + filepath)

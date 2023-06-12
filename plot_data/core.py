@@ -25,6 +25,7 @@ except ImportError:
     from dessia_common.utils.serialization import serialize
 
 from dessia_common.core import DessiaObject
+from dessia_common.exports import ExportFormat
 
 from dessia_common.typings import JsonSerializable
 from matplotlib import patches
@@ -93,6 +94,33 @@ class PlotDataObject(DessiaObject):
     @property
     def template(self):
         return getattr(templates, self._template_name)
+
+    def _export_formats(self) -> List[ExportFormat]:
+        """ Return a list of objects describing how to call generic exports (.json, .xlsx). """
+        formats = DessiaObject._export_formats(self)
+        formats.append(ExportFormat(selector="html", extension="html", method_name="to_html_stream", text=False))
+        return formats
+
+    def _to_html(self, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None, width: int = 750,
+                 height: int = 400):
+        lib_path = plot_data_path(debug_mode=debug_mode, version=version)
+        return self.template.substitute(data=json.dumps(self.to_dict()), core_path=lib_path, canvas_id=canvas_id,
+                                        width=width, height=height)
+
+    def to_html_stream(self, stream, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None,
+                       width: int = 750, height: int = 400):
+        html = self._to_html(debug_mode=debug_mode, canvas_id=canvas_id, version=version, width=width, height=height)
+        stream.write(html.encode('utf-8'))
+
+    def to_html(self, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None,
+                width: int = 750, height: int = 400):
+        """ Export current PlotDataObject to an HTML file given by the filepath. """
+        if not filepath.endswith('.html'):
+            filepath += '.html'
+            print(f'Changing name to {filepath}')
+        with open(filepath, 'wb') as file:
+            self.to_html_stream(file, debug_mode=debug_mode, canvas_id=canvas_id, version=version, width=width,
+                                height=height)
 
 
 class Sample(PlotDataObject):
@@ -1325,48 +1353,21 @@ class MultiplePlots(PlotDataObject):
         PlotDataObject.__init__(self, type_='multiplot', name=name)
 
 
-def to_html_file(plot_data_object: PlotDataObject, debug_mode: bool = False, canvas_id: str = 'canvas',
-                 force_version: str = None, width: int = 750, height: int = 400, page_name: str = None):
-
-    template = plot_data_object.template
-
-    if force_version is not None:
-        version, folder, filename = get_current_link(version=force_version)
-    else:
-        version, folder, filename = get_current_link()
-    cdn_url = 'https://cdn.dessia.tech/js/plot-data/{}/{}'
-    lib_path = cdn_url.format(version, filename)
+def plot_data_path(debug_mode: bool = False, version: str = None):
+    version, folder, filename = get_current_link(version=version)
     if debug_mode:
         core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
-
-        if not os.path.isfile(core_path):
-            msg = 'Local compiled {} not found, fall back to CDN'
-            print(msg.format(core_path))
-        else:
-            lib_path = core_path.replace(" ", "%20")
-
-    s = template.substitute(data=json.dumps(plot_data_object.to_dict()), core_path=lib_path,
-                            canvas_id=canvas_id, width=width, height=height)
-    if not page_name:
-        temp_file = tempfile.mkstemp(suffix='.html')[1]
-        with open(temp_file, 'wb') as file:
-            file.write(s.encode('utf-8'))
-        file_name = temp_file
-    else:
-        with open(page_name + '.html', 'wb') as file:
-            file.write(s.encode('utf-8'))
-        file_name = page_name + '.html'
-
-    return file_name
+        if os.path.isfile(core_path):
+            return core_path.replace(" ", "%20")
+        print(f'Local compiled {core_path} not found, fall back to CDN')
+    return f'https://cdn.dessia.tech/js/plot-data/{version}/{filename}'
 
 
-def plot_canvas(plot_data_object: PlotDataObject,
-                debug_mode: bool = False, canvas_id: str = 'canvas',
-                force_version: str = None,
-                width: int = 750, height: int = 400, page_name: str = None,
+def plot_canvas(plot_data_object: PlotDataObject, filepath: str = None, debug_mode: bool = False,
+                canvas_id: str = 'canvas', force_version: str = None, width: int = 750, height: int = 400,
                 display: bool = True):
     """
-    Creates a html file and plots input data in web browser
+    Creates a html file and plots input data in web browser.
 
     :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
       MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
@@ -1383,16 +1384,14 @@ def plot_canvas(plot_data_object: PlotDataObject,
     :param page_name: set the created html file's name
     :type page_name: str
     """
+    if not filepath:
+        filepath = tempfile.mkstemp(suffix='.html')[1]
 
-    html_file = to_html_file(plot_data_object=plot_data_object, debug_mode=debug_mode, canvas_id=canvas_id,
-                             force_version=force_version, width=width, height=height, page_name=page_name)
+    plot_data_object.to_html(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version,
+                             width=width, height=height)
     if display:
-        if page_name is None:
-            webbrowser.open('file://' + html_file)
-            print('file://' + html_file)
-        else:
-            webbrowser.open('file://' + os.path.realpath(html_file))
-            print(html_file)
+        webbrowser.open('file://' + os.path.realpath(filepath))
+        print('file://' + filepath)
 
 
 def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):

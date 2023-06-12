@@ -786,7 +786,8 @@ class Graph2D(Figure):
     _template_name = "scatter_template"
 
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str, axis: Axis = None,
-                 log_scale_x: bool = None, log_scale_y: bool = None, name: str = ''):
+                 log_scale_x: bool = None, log_scale_y: bool = None, width: int = 750, height: int = 400,
+                 name: str = ''):
         self.graphs = graphs
         self.attribute_names = [x_variable, y_variable]
         if axis is None:
@@ -795,7 +796,7 @@ class Graph2D(Figure):
             self.axis = axis
         self.log_scale_x = log_scale_x
         self.log_scale_y = log_scale_y
-        PlotDataObject.__init__(self, type_='graph2d', name=name)
+        Figure.__init__(self, width=width, height=height, type_='graph2d', name=name)
 
     def mpl_plot(self):
         # axs = plt.subplots(len(self.graphs))
@@ -855,7 +856,8 @@ class Scatter(Figure):
 
     def __init__(self, x_variable: str, y_variable: str, tooltip: Tooltip = None, point_style: PointStyle = None,
                  elements: List[Sample] = None, axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None,
-                 heatmap: Heatmap = None, heatmap_view: bool = None, name: str = ''):
+                 heatmap: Heatmap = None, heatmap_view: bool = None, width: int = 750, height: int = 400,
+                 name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style
@@ -881,7 +883,7 @@ class Scatter(Figure):
         self.log_scale_y = log_scale_y
         self.heatmap = heatmap
         self.heatmap_view = heatmap_view
-        PlotDataObject.__init__(self, type_='scatterplot', name=name)
+        PlotDataObject.__init__(self, width=width,  height=height, type_='scatterplot', name=name)
 
 
 class ScatterMatrix(Figure):
@@ -889,7 +891,7 @@ class ScatterMatrix(Figure):
     _template_name = "scatter_matrix_template"
 
     def __init__(self, elements: List[Sample] = None, axes: List[str] = None, point_style: PointStyle = None,
-                 surface_style: SurfaceStyle = None, name: str = ""):
+                 surface_style: SurfaceStyle = None, width: int = 750, height: int = 400, name: str = ""):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -907,7 +909,7 @@ class ScatterMatrix(Figure):
         self.axes = axes
         self.point_style = point_style
         self.surface_style = surface_style
-        PlotDataObject.__init__(self, type_="scattermatrix", name=name)
+        PlotDataObject.__init__(self, width=width, height=height, type_="scattermatrix", name=name)
 
 
 class Arc2D(PlotDataObject):
@@ -1087,11 +1089,11 @@ class PrimitiveGroup(Figure):
 
     _template_name = "contour_template"
 
-    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D,
-                                              Circle2D, Line2D, MultipleLabels, Wire, Point2D]],
-                 name: str = ''):
+    def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, Circle2D,
+                                              Line2D, MultipleLabels, Wire, Point2D]], width: int = 750,
+                 height: int = 400, name: str = ''):
         self.primitives = primitives
-        PlotDataObject.__init__(self, type_='primitivegroup', name=name)
+        PlotDataObject.__init__(self, width=width, height=height, type_='primitivegroup', name=name)
 
     def mpl_plot(self, ax=None, equal_aspect=True):
         """
@@ -1155,7 +1157,7 @@ class PrimitiveGroupsContainer(Figure):
 
     def __init__(self, primitive_groups: List[PrimitiveGroup], sizes: List[Tuple[float, float]] = None,
                  coords: List[Tuple[float, float]] = None, associated_elements: List[int] = None,
-                 x_variable: str = None, y_variable: str = None, name: str = ''):
+                 x_variable: str = None, y_variable: str = None, width: int = 750, height: int = 400, name: str = ''):
         for i, value in enumerate(primitive_groups):
             if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
@@ -1173,8 +1175,7 @@ class PrimitiveGroupsContainer(Figure):
                 if y_variable:
                     attribute_names.append(y_variable)
                 self.association['attribute_names'] = attribute_names
-        PlotDataObject.__init__(self, type_='primitivegroupcontainer',
-                                name=name)
+        PlotDataObject.__init__(self, width=width, height=height, type_='primitivegroupcontainer', name=name)
 
 
 class ParallelPlot(Figure):
@@ -1193,7 +1194,8 @@ class ParallelPlot(Figure):
     _template_name = "parallelplot_template"
 
     def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, disposition: str = None,
-                 axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, name: str = ''):
+                 axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, width: int = 750, height: int = 400,
+                 name: str = ''):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1212,7 +1214,7 @@ class ParallelPlot(Figure):
         self.disposition = disposition
         self.attribute_names = axes
         self.rgbs = rgbs
-        PlotDataObject.__init__(self, type_='parallelplot', name=name)
+        PlotDataObject.__init__(self, width=width, height=height, type_='parallelplot', name=name)
 
 
 class Attribute(PlotDataObject):
@@ -1264,14 +1266,15 @@ class Histogram(Figure):
     _template_name = "histogram_template"
 
     def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
-                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, name: str = ''):
+                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, width: int = 750, height: int = 400,
+                 name: str = ''):
         self.x_variable = x_variable
         self.elements = elements
         self.axis = axis
         self.graduation_nb = graduation_nb
         self.edge_style = edge_style
         self.surface_style = surface_style
-        PlotDataObject.__init__(self, type_='histogram', name=name)
+        PlotDataObject.__init__(self, width=width, height=height, type_='histogram', name=name)
 
 
 class MultiplePlots(Figure):
@@ -1290,7 +1293,7 @@ class MultiplePlots(Figure):
 
     def __init__(self, plots: List[PlotDataObject], sizes: List[Window] = None, elements: List[Sample] = None,
                  coords: List[Tuple[float, float]] = None, point_families: List[PointFamily] = None,
-                 initial_view_on: bool = None, name: str = ''):
+                 initial_view_on: bool = None, width: int = 750, height: int = 400, name: str = ''):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1310,7 +1313,7 @@ class MultiplePlots(Figure):
         self.coords = coords
         self.point_families = point_families
         self.initial_view_on = initial_view_on
-        PlotDataObject.__init__(self, type_='multiplot', name=name)
+        PlotDataObject.__init__(self, width=width, height=height, type_='multiplot', name=name)
 
 
 def plot_data_path(debug_mode: bool = False, version: str = None):
@@ -1347,13 +1350,12 @@ def plot_canvas(plot_data_object: PlotDataObject, filepath: str = None, debug_mo
     if not filepath:
         filepath = tempfile.mkstemp(suffix='.html')[1]
 
-    drawn_plot = plot_data_object.copy()
     if width:
-        drawn_plot.witdh = width
+        plot_data_object.width = width
     if height:
-        drawn_plot.height = height
+        plot_data_object.height = height
 
-    drawn_plot.to_html(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version)
+    plot_data_object.to_html(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version)
     if display:
         webbrowser.open('file://' + os.path.realpath(filepath))
         print('file://' + filepath)

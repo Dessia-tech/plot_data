@@ -1,59 +1,46 @@
-
+""" Basics and methods for color handling in plot_data. """
 
 import dessia_common.core as dc
 from matplotlib.colors import hsv_to_rgb
 
 
 class Color(dc.DessiaObject):
-    def __init__(self, red: float, green: float, blue: float):
+    """ Base class for handling colors as objects. """
+
+    def __init__(self, red: float, green: float, blue: float, name: str = ""):
         self.red = red
         self.green = green
         self.blue = blue
-
         self.rgb = (red, green, blue)
+        dc.DessiaObject.__init__(self, name=name)
 
     @classmethod
     def from_hex(cls, hex_code):
-        """
-        :param hex_code: an hexadecimal string
-        :type hex_code: str
-
-        :return: a Color object
-        :rtype: Color
-        """
+        """ Get REB color from hexadecimal color. """
         hex_code = hex_code.replace('#', '')
-        r, g, b = (int(hex_code[i:i + 2], 16) / 255. for i in (0, 2, 4))
-        return cls(r, g, b)
+        red, green, blue = (int(hex_code[i:i + 2], 16) / 255. for i in (0, 2, 4))
+        return cls(red, green, blue)
 
     @classmethod
-    def from_hsv(cls, h: float, s: float, v: float):
-        """
-        :return: a Color object
-        :rtype: Color
-        """
-        red, green, blue = hsv_to_rgb(h, s, v)
+    def from_hsv(cls, hue: float, saturation: float, value: float):
+        """ Get RGB color from HSV color. """
+        red, green, blue = hsv_to_rgb(hue, saturation, value)
         return cls(red=red, green=green, blue=blue)
 
     def __str__(self):
-        """
-        :return: a string rgb(r, g, b) in rgb255
-        """
-        return 'rgb({},{},{})'.format(round(self.red * 255),
-                                      round(self.green * 255),
-                                      round(self.blue * 255))
+        return f"rgb({round(self.red * 255)},{round(self.green * 255)},{round(self.blue * 255)})"
 
-    def to_dict(self, *args, **kwargs):
+    def to_dict(self, *args, **kwargs): # SO weird
+        """ Get dict of color. """
         # TODO: change this!!! it cannot be deserialized in generic way
         return str(self)
 
     @classmethod
-    def dict_to_object(cls, d):
-        """
-        :return: a Color object
-        """
-        if not d.startswith('rgb('):
+    def dict_to_object(cls, dict_):
+        """ Get color object from dict. """
+        if not dict_.startswith('rgb('):
             raise ValueError('Color should be string starting with rgb(')
-        return cls(*(int(v) / 255. for v in d[4:-1].split(',')))
+        return cls(*(int(v) / 255. for v in dict_[4:-1].split(',')))
 
 
 RED = Color.dict_to_object('rgb(247,0,0)')

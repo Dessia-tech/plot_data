@@ -1,3 +1,5 @@
+""" Templates of html files built from PlotDataObject. """
+
 from string import Template
 
 empty_template = Template('''''')

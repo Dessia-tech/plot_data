@@ -1512,7 +1512,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
-      this.selectedIndex = Array.from([...this.features][0][1], x => x = false);
+      this.selectedIndex = Array.from([...this.features][0][1], () => false);
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();

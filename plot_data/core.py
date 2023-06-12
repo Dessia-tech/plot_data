@@ -1255,7 +1255,9 @@ class Histogram(PlotDataObject):
     """
 
     def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
-                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, name: str = ''):
+                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, tooltip: Tooltip = None,
+                 name: str = ''):
+        self.tooltip = tooltip
         self.x_variable = x_variable
         self.elements = elements
         self.axis = axis

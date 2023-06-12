@@ -675,6 +675,36 @@ export class Tooltip {
       return [textfills, text_max_length];
     }
 
+    buildText(context, elt): [string[], number] {
+      var textfills = ['Information'];
+      var text_max_length = context.measureText('Information').width;
+
+      elt.printedAttributes.forEach(attr => {
+        let text = `${attr}: 1`
+        textfills.push(text);
+        let textWidth = context.measureText(text).width;
+        if (textWidth > text_max_length) { text_max_length = textWidth };
+      })
+
+      // for (let i = 0 ; i < elt.printedAttributes.length ; i++) {
+      //   let attribute_name = this.attribute_names[i];
+      //   let attribute_type = TypeOf(elt[attribute_name]);
+      //   if (attribute_type == 'float') {
+      //     var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digit évidemment pas définie lorsque l'axe des x est un string...
+      //   } else if (attribute_type == 'color') {
+      //     text = attribute_name + ' : ' + color_to_string(elt[attribute_name]);
+      //   } else {
+      //     text = attribute_name + ' : ' + elt[attribute_name];
+      //   }
+      //   var text_w = context.measureText(text).width;
+      //   textfills.push(text);
+      //   if (text_w > text_max_length) {
+      //     text_max_length = text_w;
+      //   }
+      // }
+      return [textfills, text_max_length];
+    }
+
     initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point, initial_point_list, elements, axes): [string[], number] {
       var textfills = ['Information'];
       var text_max_length = context.measureText('Information').width;
@@ -699,6 +729,65 @@ export class Tooltip {
         }
       }
       return [textfills, text_max_length];
+    }
+
+    newDraw(shape: newShape, context: CanvasRenderingContext2D) {
+      let [textfills, text_max_length] = this.buildText(context, shape);
+      if (textfills.length > 0) {
+        var tp_height = textfills.length * this.text_style.font_size * 1.25;
+
+        var tp_x = shape.tooltipOrigin.x;
+        var tp_y = shape.tooltipOrigin.y;
+        var tp_width = text_max_length * 1.3;
+
+        // Bec
+        var point1 = [shape.tooltipOrigin.x, shape.tooltipOrigin.y];
+        var point2 = [shape.tooltipOrigin.x + 5, shape.tooltipOrigin.y + 5];
+        var point3 = [shape.tooltipOrigin.x + 5, shape.tooltipOrigin.y - 5];
+
+        // if (tp_x + tp_width  > canvasWidth) {
+        //   tp_x = scaleX*cx + mvx - decalage - tp_width + X;
+        //   point1 = [tp_x + tp_width, scaleY*cy + mvy + Y + 5];
+        //   point2 = [tp_x + tp_width, scaleY*cy + mvy + Y - 5];
+        //   point3 = [tp_x + tp_width + decalage/2, scaleY*cy + mvy + Y];
+        // }
+        // if (tp_y < Y) {
+        //   tp_y = scaleY*cy + mvy + Y - 7*point_size;
+        // }
+        // if (tp_y + tp_height > canvas_height + Y) {
+        //   tp_y = scaleY*cy + mvy - tp_height + Y + 7*point_size;
+        // }
+        context.beginPath();
+        Shape.drawLine(context, [point1, point2, point3]);
+        context.stroke();
+        context.fill();
+
+        Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('black'), 0.5,
+        this.surface_style.opacity, []);
+        context.fillStyle = this.text_style.text_color;
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+
+        // var x_start = tp_x + 1/10*tp_width;
+
+        var current_y = tp_y + 0.75*this.text_style.font_size;
+        for (var i=0; i<textfills.length; i++) {
+          if (i == 0) {
+            context.font = 'bold ' + this.text_style.font;
+            context.fillText(textfills[0], tp_x + tp_width/2, current_y);
+            context.font = this.text_style.font;
+            current_y += this.text_style.font_size * 1.1;
+          } else {
+            context.fillText(textfills[i], tp_x + tp_width/2, current_y);
+            current_y += this.text_style.font_size;
+          }
+        }
+
+        context.globalAlpha = 1;
+        context.stroke();
+        context.closePath();
+      }
+
     }
 
     draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height,
@@ -818,12 +907,8 @@ export class Tooltip {
         // point2 = [tp_x + tp_width, y - 15];
         // point3 = [tp_x + tp_width, y];
       }
-      if (tp_y < Y) {
-        tp_y = y;
-      }
-      if (tp_y + tp_height > canvas_height + Y) {
-        tp_y = y - tp_height;
-      }
+      if (tp_y < Y) { tp_y = y };
+      if (tp_y + tp_height > canvas_height + Y) { tp_y = y - tp_height };
 
       // context.beginPath();
       // Shape.drawLine(context, [point1, point2, point3]);
@@ -1420,7 +1505,12 @@ export class newShape {
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
+  public printedAttributes: string[];
+  protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
+  protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
   constructor() {};
+
+  get tooltipOrigin() { return new Vertex(0, 0) };
 
   public draw(context: CanvasRenderingContext2D) {
     const scaledPath = new Path2D();
@@ -1433,7 +1523,15 @@ export class newShape {
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);
+    this.draw_tooltip(context);
     context.restore();
+  }
+
+  public draw_tooltip(context: CanvasRenderingContext2D) {
+    if (this.isClicked &&  this.isSelected) {
+      let tooltip = new Tooltip(this.TOOLTIP_SURFACE, this.TOOLTIP_TEXT_STYLE, null);
+      tooltip.newDraw(this, context)
+    }
   }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {}
@@ -1798,6 +1896,8 @@ export class newPoint2D extends Vertex {
 }
 
 export class Bar extends newRect {
+  public nValues: number;
+  public printedAttributes: string[] = ["nValues"];
   public strokeStyle: string = 'hsl(270, 0%, 0%)';
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
@@ -1809,6 +1909,7 @@ export class Bar extends newRect {
     public size: Vertex = new Vertex(0, 0)
   ) {
     super(origin, size);
+    this.nValues = values.length;
   }
 
   get length(): number {return this.values.length}

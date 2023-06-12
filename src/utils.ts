@@ -731,14 +731,14 @@ export class Tooltip {
       return [textfills, text_max_length];
     }
 
-    newDraw(shape: newShape, context: CanvasRenderingContext2D) {
+    newDraw(shape: newShape, scaleX: number, scaleY: number, context: CanvasRenderingContext2D) {
       let [textfills, text_max_length] = this.buildText(context, shape);
       if (textfills.length > 0) {
-        var tp_height = textfills.length * this.text_style.font_size * 1.25;
-
         var tp_x = shape.tooltipOrigin.x;
         var tp_y = shape.tooltipOrigin.y;
-        var tp_width = text_max_length * 1.3;
+        var tp_width = 200 / scaleX ; //text_max_length * 1.3 / scaleX;
+        var tp_height = 150 / scaleY; //textfills.length * this.text_style.font_size * 1.25 / scaleY;
+        console.log(scaleX, scaleY)
 
         // Bec
         var point1 = [shape.tooltipOrigin.x, shape.tooltipOrigin.y];
@@ -762,29 +762,30 @@ export class Tooltip {
         context.stroke();
         context.fill();
 
-        Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('black'), 0.5,
-        this.surface_style.opacity, []);
-        context.fillStyle = this.text_style.text_color;
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
+        Shape.roundRect(
+          tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, 
+          string_to_hex('black'), 0.5, this.surface_style.opacity, []);
+        // context.fillStyle = this.text_style.text_color;
+        // context.textAlign = 'center';
+        // context.textBaseline = 'middle';
 
-        // var x_start = tp_x + 1/10*tp_width;
+        // // var x_start = tp_x + 1/10*tp_width;
 
-        var current_y = tp_y + 0.75*this.text_style.font_size;
-        for (var i=0; i<textfills.length; i++) {
-          if (i == 0) {
-            context.font = 'bold ' + this.text_style.font;
-            context.fillText(textfills[0], tp_x + tp_width/2, current_y);
-            context.font = this.text_style.font;
-            current_y += this.text_style.font_size * 1.1;
-          } else {
-            context.fillText(textfills[i], tp_x + tp_width/2, current_y);
-            current_y += this.text_style.font_size;
-          }
-        }
+        // var current_y = tp_y + 0.75*this.text_style.font_size;
+        // for (var i=0; i<textfills.length; i++) {
+        //   if (i == 0) {
+        //     context.font = 'bold ' + this.text_style.font;
+        //     context.fillText(textfills[0], tp_x + tp_width/2, current_y);
+        //     context.font = this.text_style.font;
+        //     current_y += this.text_style.font_size * 1.1;
+        //   } else {
+        //     context.fillText(textfills[i], tp_x + tp_width/2, current_y);
+        //     current_y += this.text_style.font_size;
+        //   }
+        // }
 
-        context.globalAlpha = 1;
-        context.stroke();
+        // context.globalAlpha = 1;
+        // context.stroke();
         context.closePath();
       }
 
@@ -1523,14 +1524,15 @@ export class newShape {
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);
-    this.draw_tooltip(context);
     context.restore();
+    this.drawTooltip(contextMatrix.a, contextMatrix.d, context);
   }
 
-  public draw_tooltip(context: CanvasRenderingContext2D) {
+  public drawTooltip(scaleX: number, scaleY: number, context: CanvasRenderingContext2D) {
     if (this.isClicked &&  this.isSelected) {
-      let tooltip = new Tooltip(this.TOOLTIP_SURFACE, this.TOOLTIP_TEXT_STYLE, null);
-      tooltip.newDraw(this, context)
+      let tooltip = new Tooltip(this.TOOLTIP_SURFACE, this.TOOLTIP_TEXT_STYLE, this.printedAttributes);
+      tooltip.newDraw(this, scaleX, scaleY, context);
+      console.log(tooltip)
     }
   }
 
@@ -1912,6 +1914,8 @@ export class Bar extends newRect {
     this.nValues = values.length;
   }
 
+  get tooltipOrigin() { return this.origin.add(this.size) };
+
   get length(): number {return this.values.length}
 
   public setGeometry(origin: Vertex, size: Vertex) {
@@ -1920,7 +1924,7 @@ export class Bar extends newRect {
   }
 
   public draw(context: CanvasRenderingContext2D) {
-    if (this.size.x != 0 && this.size.y != 0) {super.draw(context)}
+    if (this.size.x != 0 && this.size.y != 0) { super.draw(context) }
   }
 }
 

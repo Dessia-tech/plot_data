@@ -603,11 +603,16 @@ export abstract class PlotData {
       this.context.setLineDash([]);
 
       [this.index_first_in, this.nb_points_in, this.index_last_in] = this.get_nb_points_inside_canvas(d.point_list, mvx, mvy);
-      var step = d.display_step;
-      var min_dist = this.find_min_dist(d,mvx,mvy,step);
-      while ((min_dist<20) && (step<d.point_list.length)) {
-        min_dist = this.find_min_dist(d, mvx, mvy, step);
-        step++;
+      if (d.partialPoints) {
+        var step = d.display_step;
+        var min_dist = this.find_min_dist(d,mvx,mvy,step);
+        while ((min_dist<20) && (step<d.point_list.length)) {
+          min_dist = this.find_min_dist(d, mvx, mvy, step);
+          step++;
+        }
+      }
+      else {
+        step = 1;
       }
       for (var i=0; i<d.point_list.length; i=i+step) {
         var point = d.point_list[i];

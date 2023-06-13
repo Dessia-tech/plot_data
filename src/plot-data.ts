@@ -855,15 +855,14 @@ export abstract class PlotData {
 
       let boxOriginX = 0;
       let axisLocation = 0;
+      const offset = Math.min(axisTitle.width, this.x_step / 2);
       if (i == 0 && axisTitle.width > (this.axis_x_start - this.X) * 2) {
         axisLocation = -1;
-        const offset = Math.min(axisTitle.width, this.x_step / 2);
         axisTitle.origin.x = current_x + offset * 0.95;
         axisTitle.width = offset * 0.95 + (this.axis_x_start - this.X) * 0.9;
         axisTitle.align = "right";
       } else if (i == nb_axis - 1 && axisTitle.width > (this.width - this.X - this.axis_x_end) * 2) {
         axisLocation = 1;
-        const offset = Math.min(axisTitle.width, this.x_step / 2);
         axisTitle.origin.x = current_x - offset * 0.95;
         axisTitle.width =  offset * 0.95 + (this.width - this.axis_x_end + this.X) * 0.9;
         axisTitle.align = "left";
@@ -884,9 +883,7 @@ export abstract class PlotData {
       let boxOrigin = new Vertex(boxOriginX, origin.y - axisTitle.nRows * axisTitle.fontsize);
       this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize)));
 
-      if (axisTitle.text == this.selected_axis_name) { this.context.strokeStyle = 'blue' }
-      else { this.context.strokeStyle = 'black' };
-
+      this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'
       this.context.fillStyle = 'black';
       axisTitle.draw(this.context);
 
@@ -957,6 +954,7 @@ export abstract class PlotData {
   }
 
   draw_horizontal_parallel_axis(nb_axis:number, mvy:number) {
+    const RIGHT_SPACE = this.axis_x_start - this.X;
     this.axisNamesBoxes = [];
     for (var i=0; i<nb_axis; i++) {
       if (i == this.move_index) {
@@ -974,13 +972,11 @@ export abstract class PlotData {
 
       axisTitle.format(this.context);
 
-      let control = false;
       let standard = true;
-      if (axisTitle.width > (this.axis_x_start - this.X) * 2) {
+      if (axisTitle.width > RIGHT_SPACE * 2) {
         standard = false;
         axisTitle.align = "left";
-        axisTitle.origin.x -= (this.axis_x_start - this.X) * 0.8;
-        control = true;
+        axisTitle.origin.x -= RIGHT_SPACE * 0.8;
         if (i == nb_axis - 1) {
           axisTitle.width = this.width - axisTitle.origin.x + this.X;
           axisTitle.height = this.height - origin.y + this.Y;
@@ -991,17 +987,13 @@ export abstract class PlotData {
       axisTitle.format(this.context);
       let boxOrigin = new Vertex(origin.x, axisTitle.origin.y);
 
-      if (control) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) }
-      if (standard) { boxOrigin.x -= axisTitle.width / 2 }
+      if (!standard) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) };
+      if (standard) { boxOrigin.x -= axisTitle.width / 2 };
 
       let boxSize = new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize);
       this.axisNamesBoxes.push(new newRect(boxOrigin, boxSize));
 
-      if (axisTitle.text == this.selected_axis_name) {
-        this.context.strokeStyle = 'blue';
-      } else {
-        this.context.strokeStyle = 'black';
-      }
+      this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'
       this.context.fillStyle = 'black';
       axisTitle.draw(this.context);
 
@@ -3042,29 +3034,6 @@ export class Interactions {
     }
     return [click_on_name, selected_name_index];
   }
-
-  // public static initialize_click_on_name(nb_axis:number, mouse1X:number, mouse1Y:number, plot_data:any) {
-  //   var click_on_name:any = false;
-  //   var selected_name_index:any = -1;
-  //   for (var i=0; i<nb_axis; i++) {
-  //     var attribute_alias = plot_data.axis_list[i]['alias'];
-  //     var text_w = plot_data.axisNamesBoxes[i].size.x; //plot_data.context.measureText(attribute_alias).width;
-  //     var text_h = plot_data.axisNamesBoxes[i].size.y; //parseInt(plot_data.context.font.split('px')[0], 10);
-  //     if (plot_data.vertical === true) {
-  //       var current_x = plot_data.axis_x_start + i*plot_data.x_step;
-  //       click_on_name = click_on_name || Shape.isInRect(mouse1X, mouse1Y, current_x - text_w/2, plot_data.axis_y_end - 20 - text_h/2, text_w, text_h);
-
-  //     } else {
-  //       var current_y = plot_data.axis_y_start + i*plot_data.y_step;
-  //       click_on_name = click_on_name || Shape.isInRect(mouse1X, mouse1Y, plot_data.axis_x_start - text_w/2, current_y + 15 - text_h/2, text_w, text_h);
-  //     }
-  //     if (click_on_name === true) {
-  //       selected_name_index = i;
-  //       break;
-  //     }
-  //   }
-  //   return [click_on_name, selected_name_index];
-  // }
 
   public static click_on_reset_action(plot_data:PlotData) {
     plot_data.reset_scales();

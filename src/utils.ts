@@ -607,6 +607,10 @@ export class Sort {
 
 
 export class Tooltip {
+  public strokeStyle: string ="hsl(0, 0%, 0%)";
+  public textColor: string ="hsl(0, 0%, 100%)";
+  public fillStyle: string ="hsl(0, 0%, 0%)";
+  public fontSize: number = 12;
     constructor(public surface_style:SurfaceStyle,
                 public text_style:TextStyle,
                 public attribute_names?:string[],
@@ -702,11 +706,11 @@ export class Tooltip {
     }
 
     buildText(context, elt): [string[], number] {
-      var textfills = ['Information'];
-      var text_max_length = context.measureText('Information').width;
+      var textfills = ['Information: '];
+      var text_max_length = context.measureText('Information: ').width;
 
       elt.printedAttributes.forEach(attr => {
-        let text = `${attr}: ${elt[attr]}`
+        let text = `  - ${attr}: ${elt[attr]}`
         textfills.push(text);
         let textWidth = context.measureText(text).width;
         if (textWidth > text_max_length) { text_max_length = textWidth };
@@ -722,25 +726,31 @@ export class Tooltip {
       const scaleY = contextMatrix.d;
       const TEXT_OFFSET = 6;
       const SIZE_Y = textfills.length + 1.5;
+      const SQUARE_OFFSET_Y = 10;
+      const LENGTH_FACTOR = 1.1;
       if (textfills.length > 0) {
-        const OFFSET = new Vertex(
-          scaleX < 0? -TEXT_OFFSET - text_max_length : TEXT_OFFSET, 
-          scaleY < 0? -this.text_style.font_size * (SIZE_Y + 1) / 2 : this.text_style.font_size * (SIZE_Y - 1) / 2
-          );
+        
         const size = new Vertex(
-          (text_max_length * 1.1 + TEXT_OFFSET) / Math.abs(scaleX),
+          (text_max_length * LENGTH_FACTOR + TEXT_OFFSET) / Math.abs(scaleX),
           SIZE_Y * this.text_style.font_size / Math.abs(scaleY)
           );
 
-        let textOrigin = shape.tooltipOrigin.scale(new Vertex(scaleX, scaleY)).add(OFFSET);
-        let tooltip = new newRect(shape.tooltipOrigin, size);
-        tooltip.fillStyle = this.surface_style.color_fill;
+        const OFFSET = new Vertex(
+          scaleX < 0? TEXT_OFFSET - text_max_length * LENGTH_FACTOR : TEXT_OFFSET, 
+          scaleY < 0? -this.text_style.font_size * (SIZE_Y + 1) / 2 : this.text_style.font_size * (SIZE_Y - 1) / 2
+          );
+
+        let squareOrigin = new Vertex(shape.tooltipOrigin.x - size.x / 2, shape.tooltipOrigin.y + SQUARE_OFFSET_Y / Math.abs(scaleY))
+        let textOrigin = squareOrigin.scale(new Vertex(scaleX, scaleY)).add(OFFSET);
+        let tooltip = new newRect(squareOrigin, size);
+        tooltip.fillStyle = this.fillStyle;
         tooltip.draw(context);
 
         context.scale(1 / scaleX, 1 / scaleY);
         textfills.forEach((row, index) => {
           textOrigin.y += index * this.text_style.font_size;
-          const text = new newText(row, textOrigin, null, this.text_style.font_size, this.text_style.font, "left", "middle");
+          const text = new newText(row, textOrigin, null, this.fontSize, "sans-serif", "left", "middle", index == 0? 'bold' : '');
+          text.fillStyle = this.textColor;
           text.draw(context)
         })
         context.setTransform(contextMatrix)
@@ -1791,7 +1801,7 @@ export class newText extends newShape {
 
   set style(value: string) {this._style = value};
 
-  get fullFont() {return `${this.style} ${this.fontsize}px ${this.font}`}
+  get fullFont() { return `${this.style} ${this.fontsize}px ${this.font}` }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let tmp_context: CanvasRenderingContext2D = context
@@ -1919,7 +1929,7 @@ export class Bar extends newRect {
 
   get tooltipOrigin() { return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y) };
 
-  get length(): number {return this.values.length};
+  get length(): number { return this.values.length };
 
   get nValues(): number { return this.length };
 

@@ -1940,7 +1940,7 @@ export class newHistogram extends Frame {
 
     this.context_show.setTransform(this.canvasMatrix);
     super.drawAxes();
-    
+
     this.context_show.setTransform(this.movingMatrix);
     this.bars.forEach(bar => bar.drawTooltip(this.context_show));
     this.context_show.resetTransform();

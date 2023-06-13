@@ -726,7 +726,7 @@ export class Tooltip {
       const scaleY = contextMatrix.d;
       const TEXT_OFFSET = 6;
       const SIZE_Y = textfills.length + 1.5;
-      const SQUARE_OFFSET_Y = 10;
+      const SQUARE_OFFSET_Y = 15;
       const LENGTH_FACTOR = 1.1;
       if (textfills.length > 0) {
         
@@ -747,6 +747,12 @@ export class Tooltip {
         tooltip.draw(context);
 
         context.scale(1 / scaleX, 1 / scaleY);
+        let downTriangle = new Triangle(shape.tooltipOrigin.scale(new Vertex(scaleX, scaleY)), SQUARE_OFFSET_Y, scaleY < 0? 'up' : 'down');
+        downTriangle.center.y += Math.sign(scaleY) * SQUARE_OFFSET_Y / 2;
+        downTriangle.path = downTriangle.buildPath();
+        downTriangle.strokeStyle = this.strokeStyle;
+        downTriangle.fillStyle = this.fillStyle;
+        downTriangle.draw(context);
         textfills.forEach((row, index) => {
           textOrigin.y += index * this.text_style.font_size;
           const text = new newText(row, textOrigin, null, this.fontSize, "sans-serif", "left", "middle", index == 0? 'bold' : '');

@@ -742,7 +742,9 @@ export class Tooltip {
 
         let squareOrigin = new Vertex(shape.tooltipOrigin.x - size.x / 2, shape.tooltipOrigin.y + SQUARE_OFFSET_Y / Math.abs(scaleY))
         let textOrigin = squareOrigin.scale(new Vertex(scaleX, scaleY)).add(OFFSET);
-        let tooltip = new newRect(squareOrigin, size);
+
+
+        let tooltip = new newRoundRect(squareOrigin, size, this.tooltip_radius);
         tooltip.fillStyle = this.fillStyle;
         tooltip.draw(context);
 
@@ -1549,7 +1551,7 @@ export class newShape {
   }
 
   public drawTooltip(context: CanvasRenderingContext2D) {
-    if (this.isClicked &&  this.isSelected) {
+    if (this.isClicked) {
       let tooltip = new Tooltip(this.TOOLTIP_SURFACE, this.TOOLTIP_TEXT_STYLE, this.printedAttributes);
       tooltip.newDraw(this, context);
     }
@@ -1589,6 +1591,34 @@ export class newRect extends newShape {
   public buildPath(): Path2D {
     const path = this.path;
     path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
+    return path
+  }
+}
+
+export class newRoundRect extends newRect {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0),
+    public radius: number = 2
+    ) {
+      super();
+    }
+
+  public buildPath(): Path2D {
+    const path = this.path;
+
+    var r = this.origin.x + this.size.x;
+    var b = this.origin.y + this.size.y;
+
+    path.moveTo(this.origin.x + this.radius, this.origin.y);
+    path.lineTo(r - this.radius, this.origin.y);
+    path.quadraticCurveTo(r, this.origin.y, r, this.origin.y + this.radius);
+    path.lineTo(r, this.origin.y + this.size.y - this.radius);
+    path.quadraticCurveTo(r, b, r - this.radius, b);
+    path.lineTo(this.origin.x + this.radius, b);
+    path.quadraticCurveTo(this.origin.x, b, this.origin.x, b - this.radius);
+    path.lineTo(this.origin.x, this.origin.y + this.radius);
+    path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
     return path
   }
 }

@@ -7,9 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.14.0]
 ### Add
-- Allow to draw all points of a Dataset in Graph objects
 
-### Fix
+### Fix
+- Smart writing of axes' names in ParallelPlot
+- Allow to draw all points of a Dataset in Graph objects
 - Python 3.9 in drone
 - Remove numpy from dependencies
 

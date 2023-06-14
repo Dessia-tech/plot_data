@@ -135,8 +135,8 @@ class Sample(PlotDataObject):
         self.reference_path = reference_path
         super().__init__(type_="sample", name=name)
 
-    def to_dict(self, use_pointers: bool = True, memo = None, path: str = '#', id_method = True,
-                id_memo = None) -> JsonSerializable:
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#', id_method=True,
+                id_memo=None) -> JsonSerializable:
         """
         Overwrite generic to_dict.
 
@@ -473,8 +473,8 @@ class LineSegment2D(PlotDataObject):
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
 
-    def to_dict(self, use_pointers: bool = True, memo = None, path: str = '#', id_method = True,
-                id_memo = None) -> JsonSerializable:
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#', id_method=True,
+                id_memo=None) -> JsonSerializable:
         """ Get dict of current LineSegment2D. """
         dict_ = DessiaObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path, id_method=id_method,
                                      id_memo=id_memo)
@@ -509,8 +509,8 @@ class LineSegment(LineSegment2D):
         self.data = data
         LineSegment2D.__init__(self, point1=self.data[:2], point2=self.data[2:], edge_style=edge_style, name=name)
 
-    def to_dict(self, use_pointers: bool = True, memo = None, path: str = '#', id_method = True,
-                id_memo = None) -> JsonSerializable:
+    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#', id_method=True,
+                id_memo=None) -> JsonSerializable:
         """ Get dict of current LineSegment. """
         ls2d = LineSegment2D(point1=self.data[:2], point2=self.data[2:], edge_style=self.edge_style, name=self.name)
         return ls2d.to_dict(use_pointers=use_pointers, memo=memo, path=path, id_method=id_method, id_memo=id_memo)
@@ -960,9 +960,9 @@ class Arc2D(PlotDataObject):
 
         ax.add_patch(
             Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
-                        theta1=self.start_angle * 0.5 / math.pi * 360,
-                        theta2=self.end_angle * 0.5 / math.pi * 360,
-                        edgecolor=edgecolor), **kwargs)
+                theta1=self.start_angle * 0.5 / math.pi * 360,
+                theta2=self.end_angle * 0.5 / math.pi * 360,
+                edgecolor=edgecolor), **kwargs)
 
         return ax
 
@@ -1335,6 +1335,7 @@ def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool
     :type page_name: str
     """
     plot_data_object.plot(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version)
+
 
 def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
     """ Write JSON file of data to be used in Cypress tests of Typescript module. """

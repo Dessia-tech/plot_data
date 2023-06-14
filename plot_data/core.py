@@ -14,7 +14,7 @@ import webbrowser
 from typing import Any, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon
+from matplotlib.patches import Polygon, Circle, Arc
 
 try:
     # dessia_common >= 0.12.0
@@ -25,9 +25,7 @@ except ImportError:
 
 from dessia_common.core import DessiaObject
 from dessia_common.exports import ExportFormat
-
 from dessia_common.typings import JsonSerializable
-from matplotlib import patches
 
 import plot_data.colors
 from plot_data import templates
@@ -54,7 +52,8 @@ class PlotDataObject(DessiaObject):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
 
-    def to_dict(self, *args, **kwargs) -> JsonSerializable:
+    def to_dict(self, use_pointers: bool = True, memo = None, path: str = '#', id_method = True,
+                id_memo = None) -> JsonSerializable:
         """ Redefines DessiaObject's to_dict() in order not to use pointers and remove keys where value is None. """
         dict_ = DessiaObject.to_dict(self, use_pointers=False)
         del dict_['object_class']
@@ -77,14 +76,8 @@ class PlotDataObject(DessiaObject):
     #     return DessiaObject.dict_to_object(dict_=dict_, force_generic=True, global_dict=global_dict,
     #                                        pointers_memo=pointers_memo, path=path)
 
-    def plot_data(self):
-        raise NotImplementedError("It is strange to call plot_data method from a plot_data object."
-                                  f" Check the class '{self.__class__.__name__}' you are calling")
-
-    def mpl_plot(self, ax=None):
-        """
-        Overloading of dessia object mpl_plot
-        """
+    def mpl_plot(self, ax=None, **kwargs):
+        """ Overloading of dessia object mpl_plot. """
         warnings.warn(f'class {self.__class__.__name__} does not implement mpl_plot, not plotting.')
         return ax
 
@@ -99,11 +92,12 @@ class Figure(PlotDataObject):
 
     @property
     def template(self):
+        """ Get html template of current Figure object. """
         return getattr(templates, self._template_name)
 
     def _export_formats(self) -> List[ExportFormat]:
         """ Return a list of objects describing how to call generic exports (.json, .xlsx). """
-        formats = DessiaObject._export_formats(self)
+        formats = super()._export_formats()
         formats.append(ExportFormat(selector="html", extension="html", method_name="to_html_stream", text=False))
         return formats
 
@@ -113,16 +107,23 @@ class Figure(PlotDataObject):
                                         width=self.width, height=self.height)
 
     def to_html_stream(self, stream, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
+        """ Export current Figure to its equivalent html stream file. """
         html = self._to_html(debug_mode=debug_mode, canvas_id=canvas_id, version=version)
         stream.write(html.encode('utf-8'))
 
     def to_html(self, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
-        """ Export current PlotDataObject to an HTML file given by the filepath. """
-        if not filepath.endswith('.html'):
-            filepath += '.html'
-            print(f'Changing name to {filepath}')
+        """ Export current Figure to an HTML file given by the filepath. """
+        filepath = make_filepath(filepath=filepath)
         with open(filepath, 'wb') as file:
             self.to_html_stream(file, debug_mode=debug_mode, canvas_id=canvas_id, version=version)
+        return filepath
+
+    def plot_data(self, reference_path: str = "#", **kwargs):
+        return [self]
+
+    def plot(self, reference_path: str = "#", filepath: str = None, **kwargs):
+        filepath = self.to_html(filepath=filepath, **kwargs)
+        webbrowser.open('file://' + os.path.realpath(filepath))
 
 
 class Sample(PlotDataObject):
@@ -159,7 +160,7 @@ class Sample(PlotDataObject):
         values = dict_["values"]
         return cls(values=values, reference_path=reference_path, name=name)
 
-    def plot_data(self):
+    def plot_data(self, reference_path: str = "#", **kwargs):
         raise NotImplementedError("Method plot_data is not defined for class Sample.")
 
 
@@ -181,6 +182,8 @@ class HatchingSet(DessiaObject):
 
 
 class Window(DessiaObject):
+    """ Define a Window object. """
+
     def __init__(self, width: float, height: float, name: str = ''):
         self.width = width
         self.height = height
@@ -209,6 +212,7 @@ class EdgeStyle(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
     def mpl_arguments(self, surface=False):
+        """ Get matplotlib equivalent values of attributes. """
         args = {}
         if self.color_stroke:
             if surface:
@@ -248,6 +252,7 @@ class PointStyle(DessiaObject):
         DessiaObject.__init__(self, name=name)
 
     def mpl_arguments(self):
+        """ Get matplotlib equivalent values of attributes. """
         args = {}
         if self.color_fill:
             args['color'] = self.color_fill.rgb
@@ -257,6 +262,7 @@ class PointStyle(DessiaObject):
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
+        """ Overwrite generic dict_to_object. """
         obj = DessiaObject.dict_to_object(dict_, *args, **kwargs)
         if obj.color_fill:
             obj.color_fill = plot_data.colors.Color.dict_to_object(obj.color_fill)
@@ -306,6 +312,7 @@ class TextStyle(DessiaObject):
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
+        """ Overwrite generic dict_to_object. """
         obj = DessiaObject.dict_to_object(dict_, force_generic=True, *args, **kwargs)
         if obj.text_color:
             obj.text_color = plot_data.colors.Color.dict_to_object(obj.text_color)
@@ -333,12 +340,14 @@ class SurfaceStyle(DessiaObject):
 
     @classmethod
     def dict_to_object(cls, dict_, *args, **kwargs):
+        """ Overwrite generic dict_to_object. """
         obj = DessiaObject.dict_to_object(dict_, force_generic=True, *args, **kwargs)
         if obj.color_fill:
             obj.color_fill = plot_data.colors.Color.dict_to_object(obj.color_fill)
         return obj
 
     def mpl_arguments(self):
+        """ Get matplotlib equivalent values of attributes. """
         args = {}
         if self.color_fill:
             args['facecolor'] = self.color_fill.rgb
@@ -389,11 +398,11 @@ class Text(PlotDataObject):
         self.multi_lines = multi_lines
         PlotDataObject.__init__(self, type_='text', name=name)
 
-    def mpl_plot(self, ax=None, color='k', alpha=1.):
+    def mpl_plot(self, ax=None, color='k', alpha=1., **kwargs):
         """ Plots using Matplotlib. """
         if not ax:
             _, ax = plt.subplots()
-        ax.text(self.position_x, self.position_y, self.comment, color=color, alpha=alpha)
+        ax.text(self.position_x, self.position_y, self.comment, color=color, alpha=alpha, **kwargs)
         return ax
 
 
@@ -414,10 +423,8 @@ class Line2D(PlotDataObject):
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='line2d', name=name)
 
-    def mpl_plot(self, ax=None, edge_style=None):
-        """
-        Plots using matplotlib.
-        """
+    def mpl_plot(self, ax=None, edge_style=None, **kwargs):
+        """ Plots using matplotlib. """
         if ax is None:
             _, ax = plt.subplots()
 
@@ -430,15 +437,13 @@ class Line2D(PlotDataObject):
         color = style.color_stroke.rgb
         dashes = style.dashline
 
-        ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]),
-                  color=color, dashes=dashes)
+        ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]), color=color, dashes=dashes, **kwargs)
         return ax
 
 
 class LineSegment2D(PlotDataObject):
     """
-    A line segment. This is a primitive that can be called by \
-    PrimitiveGroup.
+    A line segment. This is a primitive that can be called by PrimitiveGroup.
 
     :param point1: first endpoint of the line segment [x1, y1].
     :type point1: List[float]
@@ -461,27 +466,26 @@ class LineSegment2D(PlotDataObject):
         PlotDataObject.__init__(self, type_='linesegment2d', name=name)
 
     def bounding_box(self):
-        """
-        :return: the line segment's bounding box.
-        :rtype: float, float, float, float
-        """
+        """ Get 2D bounding box of current LineSegment2D. """
         return (min(self.data[0], self.data[2]),
                 max(self.data[0], self.data[2]),
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
 
-    def to_dict(self):
-        dict_ = DessiaObject.to_dict(self)
+    def to_dict(self, use_pointers: bool = True, memo = None, path: str = '#', id_method = True,
+                id_memo = None) -> JsonSerializable:
+        """ Get dict of current LineSegment2D. """
+        dict_ = DessiaObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path, id_method=id_method,
+                                     id_memo=id_memo)
         dict_['object_class'] = 'plot_data.core.LineSegment2D'  # To force migration to linesegment -> linesegment2d
         return dict_
 
     def polygon_points(self):
+        """ Get lists of points in a merged list. """
         return [self.point1, self.point2]
 
     def mpl_plot(self, ax=None, edge_style=None):
-        """
-        Plots using matplotlib.
-        """
+        """ Plots using matplotlib. """
         if not ax:
             _, ax = plt.subplots()
 
@@ -495,24 +499,25 @@ class LineSegment2D(PlotDataObject):
 
 
 class LineSegment(LineSegment2D):
+    """ A line segment. This is a primitive that can be called by PrimitiveGroup. """
+
     def __init__(self, data: List[float], edge_style: EdgeStyle = None, name: str = ''):
         # When to remove support?
-        warnings.warn("LineSegment is deprecated, use LineSegment2D instead",
-                      DeprecationWarning)
-
+        warnings.warn("LineSegment is deprecated, use LineSegment2D instead", DeprecationWarning)
         self.data = data
-        LineSegment2D.__init__(self, point1=self.data[:2], point2=self.data[2:], edge_style=edge_style,
-                               name=name)
+        LineSegment2D.__init__(self, point1=self.data[:2], point2=self.data[2:], edge_style=edge_style, name=name)
 
-    def to_dict(self, *args, **kwargs):
-        ls2d = LineSegment2D(point1=self.data[:2], point2=self.data[2:], edge_style=self.edge_style,
-                             name=self.name)
-        return ls2d.to_dict()
+    def to_dict(self, use_pointers: bool = True, memo = None, path: str = '#', id_method = True,
+                id_memo = None) -> JsonSerializable:
+        """ Get dict of current LineSegment. """
+        ls2d = LineSegment2D(point1=self.data[:2], point2=self.data[2:], edge_style=self.edge_style, name=self.name)
+        return ls2d.to_dict(use_pointers=use_pointers, memo=memo, path=path, id_method=id_method, id_memo=id_memo)
 
 
 class Wire(PlotDataObject):
     """
     A set of connected lines. It also provides highlighting feature.
+
     :param lines: [(x1, y1), ..., (xn,yn)]
     :type lines: List[Tuple[float, float]]
     :param edge_style: Line settings
@@ -528,16 +533,14 @@ class Wire(PlotDataObject):
         self.tooltip = tooltip
         PlotDataObject.__init__(self, type_="wire", name=name)
 
-    def mpl_plot(self, ax=None):
-        """
-        Plots using matplotlib
-        """
+    def mpl_plot(self, ax=None, **kwargs):
+        """ Plots using matplotlib. """
         if self.edge_style:
             edge_style = self.edge_style
         else:
             edge_style = DEFAULT_EDGESTYLE
 
-        ax.plot([p[0] for p in self.lines], [p[1] for p in self.lines], **edge_style.mpl_arguments())
+        ax.plot([p[0] for p in self.lines], [p[1] for p in self.lines], **edge_style.mpl_arguments(), **kwargs)
         return ax
 
 
@@ -570,16 +573,11 @@ class Circle2D(PlotDataObject):
         PlotDataObject.__init__(self, type_='circle', name=name)
 
     def bounding_box(self):
-        """
-        :return: the circle's bounding box
-        :rtype: float, float, float, float
-        """
+        """ Get 2D bounding box of current Circle2D. """
         return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
 
-    def mpl_plot(self, ax=None):
-        """
-        Plots using matplotlib
-        """
+    def mpl_plot(self, ax=None, **kwargs):
+        """ Plots using matplotlib. """
         if not ax:
             _, ax = plt.subplots()
         if self.edge_style:
@@ -596,8 +594,7 @@ class Circle2D(PlotDataObject):
 
         args.update(surface_style.mpl_arguments())
 
-        ax.add_patch(patches.Circle((self.cx, self.cy), self.r,
-                                    **args))
+        ax.add_patch(Circle((self.cx, self.cy), self.r, **args), **kwargs)
         return ax
 
 
@@ -620,13 +617,11 @@ class Point2D(PlotDataObject):
         PlotDataObject.__init__(self, type_='point', name=name)
 
     def bounding_box(self):
-        """
-        :return: the point's bounding box.
-        :rtype: float, float, float, float
-        """
+        """ Get 2D bounding box of current Circle2D. """
         return self.cx, self.cx, self.cy, self.cy
 
-    def mpl_plot(self, ax=None):
+    def mpl_plot(self, ax=None, **kwargs):
+        """ Plots using matplotlib. """
         if ax is None:
             _, ax = plt.subplots()
 
@@ -635,7 +630,7 @@ class Point2D(PlotDataObject):
         else:
             style = DEFAULT_POINTSTYLE
 
-        ax.plot([self.cx], [self.cy], marker='o', **style.mpl_arguments())
+        ax.plot([self.cx], [self.cy], marker='o', **style.mpl_arguments(), **kwargs)
         return ax
 
 
@@ -677,9 +672,7 @@ class Axis(PlotDataObject):
 
 class Tooltip(PlotDataObject):
     """
-    A class that contains information for drawing a tooltip when \
-    clicking on points.
-    A tooltip object is instantiated by Scatter and Dataset classes.
+    A class that contains information for drawing a tooltip when clicking on points.
 
     :param attributes: a list containing the attributes \
     you want to display. Attributes must be taken from Dataset's or \
@@ -711,10 +704,9 @@ class Tooltip(PlotDataObject):
 
 class Dataset(PlotDataObject):
     """
-    Numerous points are joined by line segments to display a \
-    mathematical curve.
-    Datasets are instantiated by Graph2D to display multiple datasets \
-    on one canvas.
+    Numerous points are joined by line segments to display a mathematical curve.
+
+    Datasets are instantiated by Graph2D to display multiple datasets on one canvas.
 
     :param elements: A list of vectors. Vectors must have the same \
     attributes (ie the same keys)
@@ -734,10 +726,11 @@ class Dataset(PlotDataObject):
     is the attribute displayed on y-axis.
     :type attribute_names: [str, str]
     """
+
     attribute_names = None
 
     def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, tooltip: Tooltip = None,
-                 point_style: PointStyle = None, display_step: int = 1, name: str = ''):
+                 point_style: PointStyle = None, partial_points: bool = None, display_step: int = 1, name: str = ''):
 
         self.edge_style = edge_style
         self.tooltip = tooltip
@@ -763,8 +756,7 @@ class Dataset(PlotDataObject):
 
 class Graph2D(Figure):
     """
-    Takes one or several Datasets as input and displays them all in \
-    one canvas.
+    Takes one or several Datasets as input and displays them all in one canvas.
 
     :param graphs: a list of Datasets
     :type graphs: List[Dataset]
@@ -796,7 +788,8 @@ class Graph2D(Figure):
         self.log_scale_y = log_scale_y
         super().__init__(width=width, height=height, type_='graph2d', name=name)
 
-    def mpl_plot(self):
+    def mpl_plot(self, ax=None, **kwargs):
+        """ Plots using matplotlib. """
         # axs = plt.subplots(len(self.graphs))
         _, ax = plt.subplots()
         xname, yname = self.attribute_names[:2]
@@ -806,7 +799,7 @@ class Graph2D(Figure):
             for element in dataset.elements:
                 x.append(element[xname])
                 y.append(element[yname])
-            ax.plot(x, y)
+            ax.plot(x, y, **kwargs)
         ax.set_xlabel(xname)
         ax.set_ylabel(yname)
         return ax
@@ -815,11 +808,12 @@ class Graph2D(Figure):
 class Heatmap(DessiaObject):
     """
     Heatmap is a scatter plot's view. This class contains the Heatmap's parameters.
+
     :param size: A tuple of two integers corresponding to the number of squares on the horizontal and vertical sides.
     :type size: Tuple[int, int]
-    :param colors: The list of colors ranging from low density to high density, \
-    e.g. colors=[plot_data.colors.BLUE, plot_data.colors.RED] \
-    so the low density areas tend to be blue while higher density areas tend to be red.
+    :param colors: The list of colors ranging from low density to high density, e.g.
+    `colors=[plot_data.colors.BLUE, plot_data.colors.RED]` so the low density areas tend to be blue while higher
+    density areas tend to be red.
     :type colors: List[Colors]
     :param edge_style: The areas separating lines settings
     :type edge_style: EdgeStyle
@@ -885,6 +879,7 @@ class Scatter(Figure):
 
 
 class ScatterMatrix(Figure):
+    """ ScatterMatrix of a list of Samples. """
 
     _template_name = "scatter_matrix_template"
 
@@ -912,8 +907,8 @@ class ScatterMatrix(Figure):
 
 class Arc2D(PlotDataObject):
     """
-    A class for drawing arcs. Arc2D is a primitive and can be \
-    instantiated by PrimitiveGroup. By default, the arc is drawn anticlockwise.
+    A class for drawing arcs. Arc2D is a primitive and can be instantiated by PrimitiveGroup. By default,
+    the arc is drawn anticlockwise.
 
     :param cx: the arc center's x position
     :type cx: float
@@ -949,16 +944,11 @@ class Arc2D(PlotDataObject):
         PlotDataObject.__init__(self, type_='arc', name=name)
 
     def bounding_box(self):
-        """
-        :return: the arc's bounding box
-        :rtype: float, float, float, float
-        """
+        """ Get 2D bounding box of current Circle2D. """
         return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
 
-    def mpl_plot(self, ax=None):
-        """
-        Plots using matplotlib
-        """
+    def mpl_plot(self, ax=None, **kwargs):
+        """ Plots using matplotlib. """
         if not ax:
             _, ax = plt.subplots()
         if self.edge_style:
@@ -967,18 +957,17 @@ class Arc2D(PlotDataObject):
             edgecolor = plot_data.colors.BLACK.rgb
 
         ax.add_patch(
-            patches.Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
+            Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
                         theta1=self.start_angle * 0.5 / math.pi * 360,
                         theta2=self.end_angle * 0.5 / math.pi * 360,
-                        edgecolor=edgecolor))
+                        edgecolor=edgecolor), **kwargs)
 
         return ax
 
 
 class Contour2D(PlotDataObject):
     """
-    A Contour2D is a closed polygon that is formed by multiple \
-    primitives. Contour2D can be instantiated by PrimitiveGroup.
+    A Contour2D is a closed polygon that is formed by multiple primitives.
 
     :param plot_data_primitives: a list of primitives \
     (Arc2D, LineSegment2D)
@@ -1000,29 +989,25 @@ class Contour2D(PlotDataObject):
         PlotDataObject.__init__(self, type_='contour', name=name)
 
     def bounding_box(self):
-        """
-        :return: the contour's bounding box
-        :rtype: float, float, float, float
-        """
+        """ Get 2D bounding box of current Contour2D. """
         xmin, xmax, ymin, ymax = math.inf, -math.inf, math.inf, -math.inf
         for plot_data_primitive in self.plot_data_primitives:
             if hasattr(plot_data_primitive, 'bounding_box'):
-                bb = plot_data_primitive.bounding_box()
-                xmin, xmax, ymin, ymax = min(xmin, bb[0]), max(xmax, bb[1]), \
-                    min(ymin, bb[2]), max(ymax, bb[3])
+                bounding_box = plot_data_primitive.bounding_box()
+                xmin, xmax = min(xmin, bounding_box[0]), max(xmax, bounding_box[1])
+                ymin, ymax = min(ymin, bounding_box[2]), max(ymax, bounding_box[3])
 
         return xmin, xmax, ymin, ymax
 
     def polygon_points(self):
+        """ Get lists of points in a merged list. """
         points = []
         for primitive in self.plot_data_primitives:
             points.extend(primitive.polygon_points())
         return points
 
-    def mpl_plot(self, ax=None):
-        """
-        Plots using matplotlib
-        """
+    def mpl_plot(self, ax=None, **kwargs):
+        """ Plots using matplotlib. """
         for primitive in self.plot_data_primitives:
             ax = primitive.mpl_plot(ax=ax, edge_style=self.edge_style)
 
@@ -1033,7 +1018,7 @@ class Contour2D(PlotDataObject):
 
         if surface_style.color_fill:
             points = self.polygon_points()
-            ax.add_patch(Polygon(points, closed=True, **surface_style.mpl_arguments()))
+            ax.add_patch(Polygon(points, closed=True, **surface_style.mpl_arguments()), **kwargs)
         return ax
 
 
@@ -1063,8 +1048,7 @@ class Label(PlotDataObject):
 
 class MultipleLabels(PlotDataObject):
     """
-    Draws one or several labels. MultipleLabels can be instantiated \
-    by PrimitiveGroup.
+    Draws one or several labels. MultipleLabels can be instantiated by PrimitiveGroup.
 
     :param labels: a list of Labels
     :type labels: List[Label]
@@ -1093,17 +1077,16 @@ class PrimitiveGroup(Figure):
         self.primitives = primitives
         super().__init__(width=width, height=height, type_='primitivegroup', name=name)
 
-    def mpl_plot(self, ax=None, equal_aspect=True):
-        """
-        Plots using matplotlib
-        """
+    def mpl_plot(self, ax=None, equal_aspect=True, **kwargs):
+        """ Plots using matplotlib. """
         for primitive in self.primitives:
-            ax = primitive.mpl_plot(ax=ax)
+            ax = primitive.mpl_plot(ax=ax, **kwargs)
         if equal_aspect and ax:
             ax.set_aspect('equal')
         return ax
 
     def save_to_image(self, filepath, remove_axis=True):
+        """ Save PrimitiveGroup to a picture generated with matplotlib. """
         ax = self.mpl_plot()
         if remove_axis:
             ax.set_axis_off()
@@ -1113,10 +1096,7 @@ class PrimitiveGroup(Figure):
         plt.close(ax.figure)
 
     def bounding_box(self):
-        """
-        :return: the primitive group's bounding box
-        :rtype: float, flaot, float, float
-        """
+        """ Get 2D bounding box of current PrimitiveGroup. """
         xmin, xmax, ymin, ymax = math.inf, -math.inf, math.inf, -math.inf
         for primitive in self.primitives:
             if not hasattr(primitive, 'bounding_box'):
@@ -1135,15 +1115,12 @@ class PrimitiveGroupsContainer(Figure):
 
     :param primitive_groups: a list of PrimitiveGroups
     :type primitive_groups: List[PrimitiveGroup]
-    :param sizes: [size0,...,size_n] where size_i = [width_i, length_i]\
-     is the size of primitive_groups[i]
+    :param sizes: [size0,...,size_n] where size_i = [width_i, length_i] is the size of primitive_groups[i]
     :type sizes: List[Tuple[float, float]]
     :param coords: In the same way as sizes but for coordinates.
     :type coords: List[Tuple[float, float]]
-    :param associated_elements: A list containing the associated \
-    elements indices. associated_elements[i] is associated with \
-    primitive_groups[i]. It only works if this object is inside a \
-    MultiplePlots.
+    :param associated_elements: A list containing the associated elements indices. associated_elements[i] is associated
+    with primitive_groups[i]. It only works if this object is inside a MultiplePlots.
     :type associated_elements: List[int]
     :param x_variable: variable that you want to display on x axis
     :type x_variable: str
@@ -1315,6 +1292,7 @@ class MultiplePlots(Figure):
 
 
 def plot_data_path(debug_mode: bool = False, version: str = None):
+    """ Get path of plot_data package to write it in html file of Figure to draw. """
     version, folder, filename = get_current_link(version=version)
     if debug_mode:
         core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
@@ -1324,7 +1302,17 @@ def plot_data_path(debug_mode: bool = False, version: str = None):
     return f'https://cdn.dessia.tech/js/plot-data/{version}/{filename}'
 
 
-def plot_canvas(plot_data_object: PlotDataObject, filepath: str = None, debug_mode: bool = False,
+def make_filepath(filepath: str = None):
+    """ Build path of written html file of Figure to draw. """
+    if not filepath:
+        filepath = tempfile.mkstemp(suffix='.html')[1]
+    if not filepath.endswith('.html'):
+        filepath += '.html'
+        print(f'Changing name to {filepath}')
+    return filepath
+
+
+def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool = False,
                 canvas_id: str = 'canvas', force_version: str = None, width: int = 750, height: int = 400,
                 display: bool = True):
     """
@@ -1345,24 +1333,10 @@ def plot_canvas(plot_data_object: PlotDataObject, filepath: str = None, debug_mo
     :param page_name: set the created html file's name
     :type page_name: str
     """
-    if not filepath:
-        filepath = tempfile.mkstemp(suffix='.html')[1]
-    if not filepath.endswith('.html'):
-        filepath += '.html'
-        print(f'Changing name to {filepath}')
-
-    if width:
-        plot_data_object.width = width
-    if height:
-        plot_data_object.height = height
-
-    plot_data_object.to_html(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version)
-    if display:
-        webbrowser.open('file://' + os.path.realpath(filepath))
-        print('file://' + filepath)
-
+    plot_data_object.plot(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version)
 
 def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
+    """ Write JSON file of data to be used in Cypress tests of Typescript module. """
     if not json_path.endswith(".json"):
         json_path += ".json"
         print("Added '.json' at the end of json_path variable.")
@@ -1373,15 +1347,7 @@ def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):
 
 
 def get_csv_vectors(filepath):
-    """
-    :param filepath: the csv file's relative path, starting from the \
-    script's path.
-    :type filepath: str
-
-    :return: a list of vectors (ie a list of dictionaries) that can be \
-    set to multiple_plots' or parallelplot's elements for example.
-    :rtype: List[dict]
-    """
+    """ Get csv vector of a VectoredObject (does not exist anymore). """
     raise NotImplementedError("get_csv_vectors function is not implemented anymore"
                               "as dessia_common's vectored_objects as been removed")
 
@@ -1408,29 +1374,27 @@ def bounding_box(plot_datas: List[PlotDataObject]):
 
 
 def get_current_link(version: str = None) -> Tuple[str, str, str]:
+    """ Get link of plot_data package. """
     folder = "lib"
     filename = "core.js"
-    try:
-        package = sys.modules[sys.modules[__name__].__package__]
-        if version is None:
-            version = package.__version__
+    package = sys.modules[sys.modules[__name__].__package__]
+    if version is None:
+        version = package.__version__
 
-        splitted_version = version.split(".")
-        if len(splitted_version) > 3:
-            splitted_version.pop()
-            splitted_version[2] = str(int(splitted_version[2]) - 1)
-        formatted_version = "v" + ".".join(splitted_version)
-        if formatted_version == 'v0.6.2':
-            folder = "dist"
-            filename = "plot-data.js"
-        if formatted_version == "v0.7.0":
-            folder = "lib"
-            filename = "plot-data.js"
-        if int(splitted_version[0]) >= 0\
-                and int(splitted_version[1]) >= 7\
-                and int(splitted_version[1]) >= 1:
-            folder = "libdev"
-            filename = "plot-data.js"
-        return formatted_version, folder, filename
-    except Exception:
-        return 'latest', folder, filename
+    splitted_version = version.split(".")
+    if len(splitted_version) > 3:
+        splitted_version.pop()
+        splitted_version[2] = str(int(splitted_version[2]) - 1)
+    formatted_version = "v" + ".".join(splitted_version)
+    if formatted_version == 'v0.6.2':
+        folder = "dist"
+        filename = "plot-data.js"
+    if formatted_version == "v0.7.0":
+        folder = "lib"
+        filename = "plot-data.js"
+    if int(splitted_version[0]) >= 0\
+            and int(splitted_version[1]) >= 7\
+            and int(splitted_version[1]) >= 1:
+        folder = "libdev"
+        filename = "plot-data.js"
+    return formatted_version, folder, filename

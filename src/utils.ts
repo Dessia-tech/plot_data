@@ -742,10 +742,14 @@ export class Tooltip {
 
         let squareOrigin = new Vertex(shape.tooltipOrigin.x - size.x / 2, shape.tooltipOrigin.y + SQUARE_OFFSET_Y / Math.abs(scaleY))
         let textOrigin = squareOrigin.scale(new Vertex(scaleX, scaleY)).add(OFFSET);
-
+        console.log(this.tooltip_radius)
 
         let tooltip = new newRoundRect(squareOrigin, size, this.tooltip_radius);
         tooltip.fillStyle = this.fillStyle;
+        let tooltip2 = new newRect(squareOrigin, size);
+        tooltip2.fillStyle = this.fillStyle;
+        console.log(tooltip)
+        console.log(tooltip2)
         tooltip.draw(context);
 
         context.scale(1 / scaleX, 1 / scaleY);
@@ -1602,21 +1606,23 @@ export class newRoundRect extends newRect {
     public radius: number = 2
     ) {
       super();
+      this.path = this.buildPath();
     }
 
   public buildPath(): Path2D {
     const path = this.path;
+    const hLength = this.origin.x + this.size.x;
+    const vLength = this.origin.y + this.size.y;
+    // path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
 
-    var r = this.origin.x + this.size.x;
-    var b = this.origin.y + this.size.y;
 
     path.moveTo(this.origin.x + this.radius, this.origin.y);
-    path.lineTo(r - this.radius, this.origin.y);
-    path.quadraticCurveTo(r, this.origin.y, r, this.origin.y + this.radius);
-    path.lineTo(r, this.origin.y + this.size.y - this.radius);
-    path.quadraticCurveTo(r, b, r - this.radius, b);
-    path.lineTo(this.origin.x + this.radius, b);
-    path.quadraticCurveTo(this.origin.x, b, this.origin.x, b - this.radius);
+    path.lineTo(hLength - this.radius, this.origin.y);
+    path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
+    path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
+    path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
+    path.lineTo(this.origin.x + this.radius, vLength);
+    path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
     path.lineTo(this.origin.x, this.origin.y + this.radius);
     path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
     return path

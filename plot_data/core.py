@@ -52,9 +52,11 @@ class PlotDataObject(DessiaObject):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
 
-    def to_dict(self, *args, **kwargs) -> JsonSerializable:
+    def to_dict(self, **kwargs) -> JsonSerializable:
         """ Redefines DessiaObject's to_dict() in order not to use pointers and remove keys where value is None. """
-        dict_ = DessiaObject.to_dict(self, use_pointers=False, *args, **kwargs)
+        if 'use_pointers' in kwargs:
+            kwargs.pop('use_pointers')
+        dict_ = DessiaObject.to_dict(self, use_pointers=False, **kwargs)
         del dict_['object_class']
         package_name = self.__module__.split('.', maxsplit=1)[0]
         if package_name in sys.modules:

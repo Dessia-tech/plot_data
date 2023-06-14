@@ -6,11 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.14.0]
-### Add
+### Add
 - to_html method in Python so that it is possible to create a plot data file without opening it in web browser
+- Allow to draw all points of a Dataset in Graph objects
 
 ### Fix
 - Python 3.9 in drone
+- Remove numpy from dependencies
 
 ## [0.13.0]
 ### Add

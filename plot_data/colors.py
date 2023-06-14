@@ -31,15 +31,13 @@ class Color(dc.DessiaObject):
     def __str__(self):
         return f"rgb({round(self.red * 255)},{round(self.green * 255)},{round(self.blue * 255)})"
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#', id_method=True,
-                id_memo=None) -> JsonSerializable:
+    def to_dict(self, **_) -> JsonSerializable:
         """ Get dict of color. """
         # TODO: change this!!! it cannot be deserialized in generic way
         return str(self)
 
     @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> SerializableObject:
+    def dict_to_object(cls, dict_: JsonSerializable, **_) -> SerializableObject:
         """ Get color object from dict. """
         if not dict_.startswith('rgb('):
             raise ValueError('Color should be string starting with rgb(')

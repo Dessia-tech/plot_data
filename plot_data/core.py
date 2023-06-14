@@ -11,7 +11,7 @@ import sys
 import tempfile
 import warnings
 import webbrowser
-from typing import Any, Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Circle, Arc

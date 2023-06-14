@@ -2,7 +2,7 @@
 
 import dessia_common.core as dc
 from dessia_common.serialization import SerializableObject
-from dessia_common.typings import Dict, Any, JsonSerializable
+from dessia_common.typings import JsonSerializable
 from matplotlib.colors import hsv_to_rgb
 
 class Color(dc.DessiaObject):

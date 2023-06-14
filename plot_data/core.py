@@ -796,7 +796,7 @@ class Graph2D(Figure):
             self.axis = axis
         self.log_scale_x = log_scale_x
         self.log_scale_y = log_scale_y
-        Figure.__init__(self, width=width, height=height, type_='graph2d', name=name)
+        super().__init__(width=width, height=height, type_='graph2d', name=name)
 
     def mpl_plot(self):
         # axs = plt.subplots(len(self.graphs))
@@ -883,7 +883,7 @@ class Scatter(Figure):
         self.log_scale_y = log_scale_y
         self.heatmap = heatmap
         self.heatmap_view = heatmap_view
-        Figure.__init__(self, width=width, height=height, type_='scatterplot', name=name)
+        super().__init__(width=width, height=height, type_='scatterplot', name=name)
 
 
 class ScatterMatrix(Figure):
@@ -909,7 +909,7 @@ class ScatterMatrix(Figure):
         self.axes = axes
         self.point_style = point_style
         self.surface_style = surface_style
-        Figure.__init__(self, width=width, height=height, type_="scattermatrix", name=name)
+        super().__init__(width=width, height=height, type_="scattermatrix", name=name)
 
 
 class Arc2D(PlotDataObject):
@@ -1093,7 +1093,7 @@ class PrimitiveGroup(Figure):
                                               Line2D, MultipleLabels, Wire, Point2D]], width: int = 750,
                  height: int = 400, name: str = ''):
         self.primitives = primitives
-        Figure.__init__(self, width=width, height=height, type_='primitivegroup', name=name)
+        super().__init__(width=width, height=height, type_='primitivegroup', name=name)
 
     def mpl_plot(self, ax=None, equal_aspect=True):
         """
@@ -1175,7 +1175,7 @@ class PrimitiveGroupsContainer(Figure):
                 if y_variable:
                     attribute_names.append(y_variable)
                 self.association['attribute_names'] = attribute_names
-        Figure.__init__(self, width=width, height=height, type_='primitivegroupcontainer', name=name)
+        super().__init__(width=width, height=height, type_='primitivegroupcontainer', name=name)
 
 
 class ParallelPlot(Figure):
@@ -1214,7 +1214,7 @@ class ParallelPlot(Figure):
         self.disposition = disposition
         self.attribute_names = axes
         self.rgbs = rgbs
-        Figure.__init__(self, width=width, height=height, type_='parallelplot', name=name)
+        super().__init__(width=width, height=height, type_='parallelplot', name=name)
 
 
 class Attribute(PlotDataObject):
@@ -1274,7 +1274,7 @@ class Histogram(Figure):
         self.graduation_nb = graduation_nb
         self.edge_style = edge_style
         self.surface_style = surface_style
-        Figure.__init__(self, width=width, height=height, type_='histogram', name=name)
+        super().__init__(width=width, height=height, type_='histogram', name=name)
 
 
 class MultiplePlots(Figure):
@@ -1313,7 +1313,7 @@ class MultiplePlots(Figure):
         self.coords = coords
         self.point_families = point_families
         self.initial_view_on = initial_view_on
-        Figure.__init__(self, width=width, height=height, type_='multiplot', name=name)
+        super().__init__(width=width, height=height, type_='multiplot', name=name)
 
 
 def plot_data_path(debug_mode: bool = False, version: str = None):

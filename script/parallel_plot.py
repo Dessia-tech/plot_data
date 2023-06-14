@@ -11,14 +11,18 @@ COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
 for i in range(50):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
-    elements.append({'mass': random.uniform(0, 0.05),
+    elements.append({'long left attribute name ' * 10: random.uniform(0, 20),
+                     'mass': random.uniform(0, 0.05),
                      'length': random.uniform(0, 100),
                      'shape': random_shape,
-                     'color': random_color
+                     'color': random_color,
+                     'long middle attribute name ' * 10: random.uniform(-1000, -20),
+                     'long right attribute name ' * 7: random.uniform(0, 35)
                      })
 
 plot_data_object = plot_data.ParallelPlot(elements=elements,
-                                          axes=['mass', 'length', 'shape', 'color'])
+                                          axes=['long left attribute name ' * 10, 'mass', 'length', 'shape', 'color',
+                                                'long middle attribute name ' * 10, 'long right attribute name ' * 7])
 
 # The line above shows the minimum requirements for creating a
 # parallel plot. However, many options are available for further customization.

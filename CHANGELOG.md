@@ -10,7 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - to_html method in Python so that it is possible to create a plot data file without opening it in web browser
 - Allow to draw all points of a Dataset in Graph objects
 
-### Fix
+### Fix
+- Smart writing of axes' names in ParallelPlot
+- Allow to draw all points of a Dataset in Graph objects
 - Python 3.9 in drone
 - Remove numpy from dependencies
 

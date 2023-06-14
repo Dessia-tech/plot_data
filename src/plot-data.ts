@@ -1,6 +1,6 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, Vertex } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, textParams, Vertex, newRect } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
@@ -191,6 +191,9 @@ export abstract class PlotData {
   heatmap_view: boolean = false;
   selected_areas: number[][];
   heatmap_table;
+
+  // HOTFIXES
+  axisNamesBoxes: newRect[];
 
   public constructor(
     public data:any,
@@ -837,7 +840,8 @@ export abstract class PlotData {
   }
 
   draw_vertical_parallel_axis(nb_axis:number, mvx:number) {
-    for (var i=0; i<nb_axis; i++) {
+    this.axisNamesBoxes = [];
+    for (var i=0; i < nb_axis; i++) {
       if (i == this.move_index) {
         var current_x = Math.min(Math.max(this.axis_x_start + i*this.x_step + mvx, this.X), this.X + this.width);
       } else {
@@ -846,18 +850,49 @@ export abstract class PlotData {
       this.context.beginPath();
       this.context.lineWidth = 2;
       Shape.drawLine(this.context, [[current_x, this.axis_y_start], [current_x, this.axis_y_end]]);
-      var attribute_name = this.axis_list[i]['name'];
-      this.context.font = this.axisNameSize.toString() + 'px sans-serif';
-      this.context.textAlign = 'center';
-      if (attribute_name == this.selected_axis_name) {
-        this.context.strokeStyle = 'blue';
-      } else {
-        this.context.strokeStyle = 'lightgrey';
+
+      let origin = new Vertex(current_x, this.axis_y_end - 10);
+      let width = this.x_step * 0.95;
+      let align = "center";
+      const textParams: textParams = { width: width, height: origin.y - 2 - this.Y, align: align, baseline: "bottom", multiLine: true };
+      let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
+      axisTitle.format(this.context);
+
+      let boxOriginX = 0;
+      let axisLocation = 0;
+      const offset = Math.min(axisTitle.width, this.x_step / 2);
+      if (i == 0 && axisTitle.width > (this.axis_x_start - this.X) * 2) {
+        axisLocation = -1;
+        axisTitle.origin.x = current_x + offset * 0.95;
+        axisTitle.width = offset * 0.95 + (this.axis_x_start - this.X) * 0.9;
+        axisTitle.align = "right";
+      } else if (i == nb_axis - 1 && axisTitle.width > (this.width - this.X - this.axis_x_end) * 2) {
+        axisLocation = 1;
+        axisTitle.origin.x = current_x - offset * 0.95;
+        axisTitle.width =  offset * 0.95 + (this.width - this.axis_x_end + this.X) * 0.9;
+        axisTitle.align = "left";
       }
-      var attribute_alias = this.axis_list[i]['alias'];
+      axisTitle.format(this.context);
+
+      // Weird but vowed to disappear
+      if (axisLocation == 0) {
+        boxOriginX = origin.x - axisTitle.width / 2;
+        axisTitle.format(this.context);
+      } else if (axisLocation == -1) {
+        boxOriginX = axisTitle.origin.x - axisTitle.width;
+      } else if (axisLocation == 1) {
+        boxOriginX = axisTitle.origin.x;
+        axisTitle.format(this.context);
+      }
+
+      let boxOrigin = new Vertex(boxOriginX, origin.y - axisTitle.nRows * axisTitle.fontsize);
+      this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize)));
+
+      this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'
       this.context.fillStyle = 'black';
-      this.context.fillText(attribute_alias, current_x, this.axis_y_end - 20);
-      this.context.stroke();
+      axisTitle.draw(this.context);
+
+      this.context.textBaseline = "alphabetic";
       var attribute_type = this.axis_list[i]['type_'];
       var list = this.axis_list[i]['list'];
       this.context.font = this.gradSize.toString() + 'px sans-serif';
@@ -924,6 +959,8 @@ export abstract class PlotData {
   }
 
   draw_horizontal_parallel_axis(nb_axis:number, mvy:number) {
+    const RIGHT_SPACE = this.axis_x_start - this.X;
+    this.axisNamesBoxes = [];
     for (var i=0; i<nb_axis; i++) {
       if (i == this.move_index) {
         var current_y = Math.min(Math.max(this.axis_y_start + i*this.y_step + mvy, this.Y), this.Y + this.height);
@@ -933,18 +970,39 @@ export abstract class PlotData {
       this.context.beginPath();
       this.context.lineWidth = 2;
       Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
-      var attribute_name = this.axis_list[i]['name'];
-      this.context.font = this.axisNameSize.toString() + 'px sans-serif';
-      this.context.textAlign = 'center';
-      if (attribute_name == this.selected_axis_name) {
-        this.context.strokeStyle = 'blue';
-      } else {
-        this.context.strokeStyle = 'black';
+
+      let origin = new Vertex(this.axis_x_start, current_y + 10);
+      const textParams: textParams = { width: this.width * 0.25, height: this.y_step * 0.98, align: "center", baseline: "hanging", multiLine: true };
+      let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
+
+      axisTitle.format(this.context);
+
+      let standard = true;
+      if (axisTitle.width > RIGHT_SPACE * 2) {
+        standard = false;
+        axisTitle.align = "left";
+        axisTitle.origin.x -= RIGHT_SPACE * 0.8;
+        if (i == nb_axis - 1) {
+          axisTitle.width = this.width - axisTitle.origin.x + this.X;
+          axisTitle.height = this.height - origin.y + this.Y;
+          axisTitle.fontsize = null;
+        }
       }
+
+      axisTitle.format(this.context);
+      let boxOrigin = new Vertex(origin.x, axisTitle.origin.y);
+
+      if (!standard) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) };
+      if (standard) { boxOrigin.x -= axisTitle.width / 2 };
+
+      let boxSize = new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize);
+      this.axisNamesBoxes.push(new newRect(boxOrigin, boxSize));
+
+      this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'
       this.context.fillStyle = 'black';
-      var attribute_alias = this.axis_list[i]['alias'];
-      this.context.fillText(attribute_alias, this.axis_x_start, current_y + 15);
-      this.context.stroke();
+      axisTitle.draw(this.context);
+
+      this.context.textBaseline = "alphabetic";
       var attribute_type = this.axis_list[i]['type_'];
       var list = this.axis_list[i]['list'];
       this.context.font = this.gradSize.toString() + 'px sans-serif';
@@ -2973,19 +3031,9 @@ export class Interactions {
     var click_on_name:any = false;
     var selected_name_index:any = -1;
     for (var i=0; i<nb_axis; i++) {
-      var attribute_alias = plot_data.axis_list[i]['alias'];
-      var text_w = plot_data.context.measureText(attribute_alias).width;
-      var text_h = parseInt(plot_data.context.font.split('px')[0], 10);
-      if (plot_data.vertical === true) {
-        var current_x = plot_data.axis_x_start + i*plot_data.x_step;
-        click_on_name = click_on_name || Shape.isInRect(mouse1X, mouse1Y, current_x - text_w/2, plot_data.axis_y_end - 20 - text_h/2, text_w, text_h);
-
-      } else {
-        var current_y = plot_data.axis_y_start + i*plot_data.y_step;
-        click_on_name = click_on_name || Shape.isInRect(mouse1X, mouse1Y, plot_data.axis_x_start - text_w/2, current_y + 15 - text_h/2, text_w, text_h);
-      }
-      if (click_on_name === true) {
+      if (plot_data.context.isPointInPath(plot_data.axisNamesBoxes[i].path, mouse1X, mouse1Y)) {
         selected_name_index = i;
+        click_on_name = true;
         break;
       }
     }

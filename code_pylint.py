@@ -145,7 +145,7 @@ for error_type, number_errors in stats_by_msg.items():
 
 
 if error_detected:
-    raise RuntimeError('Too many errors\nRun pylint dessia_common to get the errors')
+    raise RuntimeError('Too many errors\nRun pylint plot_data to get the errors')
 
 if error_over_ratchet_limit:
     raise RuntimeError('Please lower the error limits in code_pylint.py MAX_ERROR_BY_TYPE according to warnings above')

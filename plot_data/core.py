@@ -52,10 +52,9 @@ class PlotDataObject(DessiaObject):
         self.type_ = type_
         DessiaObject.__init__(self, name=name, **kwargs)
 
-    def to_dict(self, use_pointers: bool = True, memo = None, path: str = '#', id_method = True,
-                id_memo = None) -> JsonSerializable:
+    def to_dict(self, *args, **kwargs) -> JsonSerializable:
         """ Redefines DessiaObject's to_dict() in order not to use pointers and remove keys where value is None. """
-        dict_ = DessiaObject.to_dict(self, use_pointers=False)
+        dict_ = DessiaObject.to_dict(self, use_pointers=False, *args, **kwargs)
         del dict_['object_class']
         package_name = self.__module__.split('.', maxsplit=1)[0]
         if package_name in sys.modules:
@@ -118,10 +117,10 @@ class Figure(PlotDataObject):
             self.to_html_stream(file, debug_mode=debug_mode, canvas_id=canvas_id, version=version)
         return filepath
 
-    def plot_data(self, reference_path: str = "#", **kwargs):
+    def plot_data(self, **kwargs):
         return [self]
 
-    def plot(self, reference_path: str = "#", filepath: str = None, **kwargs):
+    def plot(self, filepath: str = None, **kwargs):
         filepath = self.to_html(filepath=filepath, **kwargs)
         webbrowser.open('file://' + os.path.realpath(filepath))
 
@@ -132,24 +131,24 @@ class Sample(PlotDataObject):
     def __init__(self, values, reference_path: str = "#", name: str = ""):
         self.values = values
         self.reference_path = reference_path
+        super().__init__(type_="sample", name=name)
 
-        PlotDataObject.__init__(self, type_="sample", name=name)
-
-    def to_dict(self, *args, **kwargs) -> JsonSerializable:
+    def to_dict(self, use_pointers: bool = True, memo = None, path: str = '#', id_method = True,
+                id_memo = None) -> JsonSerializable:
         """
         Overwrite generic to_dict.
 
         TODO Check if it can be generic (probably)
         """
-        dict_ = PlotDataObject.to_dict(self, *args, **kwargs)
+        dict_ = PlotDataObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path, id_method=id_method,
+                                       id_memo=id_memo)
         dict_.update({"reference_path": self.reference_path, "name": self.name})
         dict_.update(serialize(self.values))
         # TODO Keeping values at dict_ level before refactor, should be removed after and use dict_["values"] instead
         return dict_
 
     @classmethod
-    def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
-                       pointers_memo: Dict[str, Any] = None, path: str = '#') -> 'Sample':
+    def dict_to_object(cls, dict_: JsonSerializable, **_) -> 'Sample':
         """
         Overwrite generic dict_to_object.
 
@@ -484,7 +483,7 @@ class LineSegment2D(PlotDataObject):
         """ Get lists of points in a merged list. """
         return [self.point1, self.point2]
 
-    def mpl_plot(self, ax=None, edge_style=None):
+    def mpl_plot(self, ax=None, edge_style=None, **kwargs):
         """ Plots using matplotlib. """
         if not ax:
             _, ax = plt.subplots()
@@ -494,7 +493,8 @@ class LineSegment2D(PlotDataObject):
         else:
             edge_style = DEFAULT_EDGESTYLE
 
-        ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]], **edge_style.mpl_arguments())
+        ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]], **edge_style.mpl_arguments(),
+                **kwargs)
         return ax
 
 
@@ -993,9 +993,9 @@ class Contour2D(PlotDataObject):
         xmin, xmax, ymin, ymax = math.inf, -math.inf, math.inf, -math.inf
         for plot_data_primitive in self.plot_data_primitives:
             if hasattr(plot_data_primitive, 'bounding_box'):
-                bounding_box = plot_data_primitive.bounding_box()
-                xmin, xmax = min(xmin, bounding_box[0]), max(xmax, bounding_box[1])
-                ymin, ymax = min(ymin, bounding_box[2]), max(ymax, bounding_box[3])
+                bounding_box_ = plot_data_primitive.bounding_box()
+                xmin, xmax = min(xmin, bounding_box_[0]), max(xmax, bounding_box_[1])
+                ymin, ymax = min(ymin, bounding_box_[2]), max(ymax, bounding_box_[3])
 
         return xmin, xmax, ymin, ymax
 
@@ -1312,9 +1312,8 @@ def make_filepath(filepath: str = None):
     return filepath
 
 
-def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool = False,
-                canvas_id: str = 'canvas', force_version: str = None, width: int = 750, height: int = 400,
-                display: bool = True):
+def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas',
+                force_version: str = None):
     """
     Creates a html file and plots input data in web browser.
 

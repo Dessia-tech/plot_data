@@ -1955,11 +1955,11 @@ export class Bar extends newRect {
     this.size = size;
   }
 
-  public draw(context: CanvasRenderingContext2D) { 
-    if (this.size.x != 0 && this.size.y != 0) { 
+  public draw(context: CanvasRenderingContext2D) {
+    if (this.size.x != 0 && this.size.y != 0) {
       super.draw(context);
       this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
-    } 
+    }
   }
 }
 

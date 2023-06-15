@@ -20,7 +20,7 @@ for i in range(50):
 
 
 plot_data_object = plot_data.Scatter(elements=elements,
-                                x_variable='mass', y_variable='length')
+                                     x_variable='mass', y_variable='length')
 
 # The previous scripts shows the simplest way of creating a scatterplot.
 # However, many options are available for further customization
@@ -63,7 +63,7 @@ axis = plot_data.Axis(nb_points_x=7, nb_points_y=5,
 tooltip = plot_data.Tooltip(attributes=['mass', 'length', 'shape', 'color'])
 
 # Heatmap settings
-heatmap = plot_data.Heatmap([4,2], colors=[YELLOW, ORANGE, RED])
+heatmap = plot_data.Heatmap([4, 2], colors=[YELLOW, ORANGE, RED])
 
 # Now, here is the new scatterplot
 customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='shape',

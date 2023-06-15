@@ -1946,6 +1946,10 @@ export class Bar extends newRect {
 
   get length(): number { return this.values.length };
 
+  get tooltipMap(): Map<string, any> {
+    return new Map<string, any>([["Number", this.length], ["Min", this.min], ["Max", this.max], ["Mean", this.mean]])
+  }
+
   protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
     return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
   }
@@ -1964,13 +1968,7 @@ export class Bar extends newRect {
 
   public drawTooltip(context: CanvasRenderingContext2D) {
     if (this.isClicked) {
-      const tooltipMap = new Map<string, any>([
-        ["Number", this.values.length],
-        ["Min", this.min],
-        ["Max", this.max],
-        ["Mean", this.mean]
-      ]);
-      const tooltip = new newTooltip(this.tooltipOrigin, tooltipMap, context);
+      const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
       tooltip.draw(context);
     }
   }

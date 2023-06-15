@@ -608,10 +608,6 @@ export class Sort {
 
 
 export class Tooltip {
-  public strokeStyle: string ="hsl(0, 0%, 0%)";
-  public textColor: string ="hsl(0, 0%, 100%)";
-  public fillStyle: string ="hsl(0, 0%, 0%)";
-  public fontSize: number = 12;
   constructor(public surface_style:SurfaceStyle,
               public text_style:TextStyle,
               public attribute_names?:string[],
@@ -619,121 +615,6 @@ export class Tooltip {
               public tooltip_radius:number=10,
               public type_:string='tooltip',
               public name:string='') {}
-
-  private _buildText(context, elt): [string[], number] {
-    var textfills = ['Information: '];
-    var text_max_length = context.measureText('Information: ').width;
-
-    elt.printedAttributes.forEach(attr => {
-      let text = `  - ${attr}: ${elt[attr]}`
-      textfills.push(text);
-      let textWidth = context.measureText(text).width;
-      if (textWidth > text_max_length) { text_max_length = textWidth };
-    })
-
-    return [textfills, text_max_length];
-  }
-
-  // public newDraw(shape: newShape, context: CanvasRenderingContext2D) {
-  //   let [textfills, text_max_length] = this._buildText(context, shape);
-  //   const contextMatrix = context.getTransform();
-  //   const scaleX = contextMatrix.a;
-  //   const scaleY = contextMatrix.d;
-  //   const TEXT_OFFSET = 6;
-  //   const SIZE_Y = textfills.length + 1.5;
-  //   const SQUARE_OFFSET_Y = 15;
-  //   const LENGTH_FACTOR = 1.1;
-  //   if (textfills.length > 0) {
-      
-  //     // const size = new Vertex(
-  //     //   (text_max_length * LENGTH_FACTOR + TEXT_OFFSET) / Math.abs(scaleX),
-  //     //   SIZE_Y * this.text_style.font_size / Math.abs(scaleY)
-  //     //   );
-
-  //     // const OFFSET = new Vertex(
-  //     //   scaleX < 0? TEXT_OFFSET - text_max_length * LENGTH_FACTOR : TEXT_OFFSET, 
-  //     //   scaleY < 0? -this.text_style.font_size * (SIZE_Y + 1) / 2 : this.text_style.font_size * (SIZE_Y - 1) / 2
-  //     //   );
-
-  //     // let squareOrigin = new Vertex(shape.tooltipOrigin.x - size.x / 2, shape.tooltipOrigin.y + SQUARE_OFFSET_Y / Math.abs(scaleY))
-  //     // let textOrigin = squareOrigin.scale(new Vertex(scaleX, scaleY)).add(OFFSET);
-
-  //     const size = new Vertex(200, 50);
-  //     const OFFSET = new Vertex(0, 0);
-
-  //     let squareOrigin = new Vertex(shape.tooltipOrigin.x - size.x / 2, shape.tooltipOrigin.y + SQUARE_OFFSET_Y)
-  //     let textOrigin = squareOrigin.add(OFFSET);
-
-  //     let tooltip = new newRoundRect(squareOrigin, size, 5);
-  //     tooltip.fillStyle = this.fillStyle;
-  //     console.log(tooltip)
-  //     tooltip.draw(context);
-
-  //     // context.scale(1 / scaleX, 1 / scaleY);
-  //     // let downTriangle = new Triangle(shape.tooltipOrigin.scale(new Vertex(scaleX, scaleY)), SQUARE_OFFSET_Y, scaleY < 0? 'up' : 'down');
-  //     // downTriangle.center.y += Math.sign(scaleY) * SQUARE_OFFSET_Y / 2;
-  //     // downTriangle.path = downTriangle.buildPath();
-  //     // downTriangle.strokeStyle = this.strokeStyle;
-  //     // downTriangle.fillStyle = this.fillStyle;
-  //     // downTriangle.draw(context);
-  //     // textfills.forEach((row, index) => {
-  //     //   textOrigin.y += index * this.text_style.font_size;
-  //     //   const text = new newText(row, textOrigin, null, this.fontSize, "sans-serif", "left", "middle", index == 0? 'bold' : '');
-  //     //   text.fillStyle = this.textColor;
-  //     //   text.draw(context)
-  //     // })
-  //     // context.setTransform(contextMatrix)
-
-  //     // Bec
-  //     // var point1 = [shape.tooltipOrigin.x, shape.tooltipOrigin.y];
-  //     // var point2 = [shape.tooltipOrigin.x + 5, shape.tooltipOrigin.y + 5];
-  //     // var point3 = [shape.tooltipOrigin.x + 5, shape.tooltipOrigin.y - 5];
-
-  //     // if (tp_x + tp_width  > canvasWidth) {
-  //     //   tp_x = scaleX*cx + mvx - decalage - tp_width + X;
-  //     //   point1 = [tp_x + tp_width, scaleY*cy + mvy + Y + 5];
-  //     //   point2 = [tp_x + tp_width, scaleY*cy + mvy + Y - 5];
-  //     //   point3 = [tp_x + tp_width + decalage/2, scaleY*cy + mvy + Y];
-  //     // }
-  //     // if (tp_y < Y) {
-  //     //   tp_y = scaleY*cy + mvy + Y - 7*point_size;
-  //     // }
-  //     // if (tp_y + tp_height > canvas_height + Y) {
-  //     //   tp_y = scaleY*cy + mvy - tp_height + Y + 7*point_size;
-  //     // }
-  //     // context.beginPath();
-  //     // Shape.drawLine(context, [point1, point2, point3]);
-  //     // context.stroke();
-  //     // context.fill();
-
-  //     // Shape.roundRect(
-  //     //   tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, 
-  //     //   string_to_hex('black'), 0.5, this.surface_style.opacity, []);
-  //     // context.fillStyle = this.text_style.text_color;
-  //     // context.textAlign = 'center';
-  //     // context.textBaseline = 'middle';
-
-  //     // // var x_start = tp_x + 1/10*tp_width;
-
-  //     // var current_y = tp_y + 0.75*this.text_style.font_size;
-  //     // for (var i=0; i<textfills.length; i++) {
-  //     //   if (i == 0) {
-  //     //     context.font = 'bold ' + this.text_style.font;
-  //     //     context.fillText(textfills[0], tp_x + tp_width/2, current_y);
-  //     //     context.font = this.text_style.font;
-  //     //     current_y += this.text_style.font_size * 1.1;
-  //     //   } else {
-  //     //     context.fillText(textfills[i], tp_x + tp_width/2, current_y);
-  //     //     current_y += this.text_style.font_size;
-  //     //   }
-  //     // }
-
-  //     // context.globalAlpha = 1;
-  //     // context.stroke();
-  //     // context.closePath();
-  //   }
-
-  // }
 
     public static deserialize(serialized) {
       let default_surface_style = {color_fill:string_to_rgb('black'), opacity:0.9, hatching:undefined};
@@ -1536,11 +1417,10 @@ export class newShape {
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   public printedAttributes: string[];
+  public tooltipOrigin: Vertex;
   protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
   protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
   constructor() {};
-
-  // get tooltipOrigin() { return new Vertex(0, 0) };
 
   public draw(context: CanvasRenderingContext2D) {
     const scaledPath = new Path2D();
@@ -1555,16 +1435,6 @@ export class newShape {
     context.stroke(scaledPath);
     context.restore();
   }
-
-  // public drawTooltip(context: CanvasRenderingContext2D) {
-  //   if (this.isClicked) {
-  //     const scaledPath = new Path2D();
-  //     const contextMatrix = context.getTransform();
-  //     let tooltip = new Tooltip(this.TOOLTIP_SURFACE, this.TOOLTIP_TEXT_STYLE, this.printedAttributes);
-  //     scaledPath.addPath(tooltip.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
-  //     tooltip.newDraw(this, context);
-  //   }
-  // }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {}
 
@@ -1966,7 +1836,6 @@ export class Bar extends newRect {
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
   public selectedStyle: string = 'hsl(267, 95%, 85%)';
-  public tooltipOrigin: Vertex;
   constructor(
     public values: any[] = [],
     public origin: Vertex = new Vertex(0, 0),
@@ -1979,6 +1848,10 @@ export class Bar extends newRect {
 
   get nValues(): number { return this.length };
 
+  private computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
+    return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
+  }
+
   public setGeometry(origin: Vertex, size: Vertex) {
     this.origin = origin;
     this.size = size;
@@ -1987,22 +1860,21 @@ export class Bar extends newRect {
   public draw(context: CanvasRenderingContext2D) { 
     if (this.size.x != 0 && this.size.y != 0) { 
       super.draw(context);
-      const contextMatrix = context.getTransform();
-      this.tooltipOrigin = new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix);
+      this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
     } 
   }
 }
 
 
-const TOOLTIP_LENGTH_FACTOR = 1.1;
-const TOOLTIP_TEXT_OFFSET = 6;
+const TOOLTIP_TEXT_OFFSET = 10;
+const TOOLTIP_TRIANGLE_SIZE = 15;
 export class newTooltip {
   public path: Path2D;
   public strokeStyle: string ="hsl(0, 0%, 0%)";
   public textColor: string ="hsl(0, 0%, 100%)";
   public fillStyle: string ="hsl(0, 0%, 0%)";
   public fontsize: number = 12;
-  public radius: number = 15;
+  public radius: number = 10;
   private printedRows: string[];
   private size: Vertex;
   constructor(
@@ -2013,12 +1885,6 @@ export class newTooltip {
       [this.printedRows, this.size] = this.buildText(context);
     }
 
-  // private buildPath(): Path2D {
-  //   const path = new Path2D();
-  //   path.addPath(new newRoundRect(this.origin, this.size, this.radius).buildPath());
-  //   return path
-  // }
-
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
     let printedRows = ['Information: '];
     let textLength = context.measureText(printedRows[0]).width;
@@ -2028,72 +1894,43 @@ export class newTooltip {
       if (textWidth > textLength) { textLength = textWidth };
       printedRows.push(text);
     })
-    return [printedRows, new Vertex(textLength * TOOLTIP_LENGTH_FACTOR + TOOLTIP_TEXT_OFFSET, (printedRows.length + 1.5) * this.fontsize)]
+    return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
   }
 
-  public drawShape(): Path2D {
-    return new newRoundRect(this.origin, this.size, this.radius).path;
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const rectOrigin = this.origin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
+    const triangleCenter = this.origin;
+    triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2;
+    path.addPath(new newRoundRect(rectOrigin, this.size, this.radius).path);
+    path.addPath(new Triangle(this.origin, TOOLTIP_TRIANGLE_SIZE, 'down').path);
+    return path
   }
 
   public draw(context: CanvasRenderingContext2D) {
     const contextMatrix = context.getTransform();
     const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
+    let textOrigin = this.origin;
+    this.origin = this.origin.scale(scaling);
+
     const scaledPath = new Path2D();
-    scaledPath.addPath(this.drawShape(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
-    this.origin = this.origin.scale(scaling)
+    scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
 
     context.save();
-    context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
+    context.scale(scaling.x, scaling.y);
     context.fill(scaledPath);
     context.stroke(scaledPath);
-    // const contextMatrix = context.getTransform();
-    // const scaleX = contextMatrix.a;
-    // const scaleY = contextMatrix.d;
-    // const TEXT_OFFSET = 6;
-    // const SIZE_Y = printedRows.length + 1.5;
-    // const SQUARE_OFFSET_Y = 15;
-    // const LENGTH_FACTOR = 1.1;
-    // if (printedRows.length > 0) {
-      
-    //   // const size = new Vertex(
-    //   //   (text_max_length * LENGTH_FACTOR + TEXT_OFFSET) / Math.abs(scaleX),
-    //   //   SIZE_Y * this.text_style.font_size / Math.abs(scaleY)
-    //   //   );
 
-    //   // const OFFSET = new Vertex(
-    //   //   scaleX < 0? TEXT_OFFSET - text_max_length * LENGTH_FACTOR : TEXT_OFFSET, 
-    //   //   scaleY < 0? -this.text_style.font_size * (SIZE_Y + 1) / 2 : this.text_style.font_size * (SIZE_Y - 1) / 2
-    //   //   );
 
-    //   // let squareOrigin = new Vertex(shape.tooltipOrigin.x - size.x / 2, shape.tooltipOrigin.y + SQUARE_OFFSET_Y / Math.abs(scaleY))
-    //   // let textOrigin = squareOrigin.scale(new Vertex(scaleX, scaleY)).add(OFFSET);
+    textOrigin = textOrigin.add(new Vertex(-this.size.x / 2 + TOOLTIP_TEXT_OFFSET, (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25));
+    this.printedRows.forEach((row, index) => {
+        textOrigin.y += index * this.fontsize;
+        const text = new newText(row, textOrigin, null, this.fontsize, "sans-serif", "left", "middle", index == 0? 'bold' : '');
+        text.fillStyle = this.textColor;
+        text.draw(context)
+      })
 
-    //   const size = new Vertex(200, 50);
-    //   const OFFSET = new Vertex(0, 0);
-
-    //   let squareOrigin = new Vertex(shape.tooltipOrigin.x - size.x / 2, shape.tooltipOrigin.y + SQUARE_OFFSET_Y)
-    //   let textOrigin = squareOrigin.add(OFFSET);
-
-    //   let tooltip = new newRoundRect(squareOrigin, size, 5);
-    //   tooltip.fillStyle = this.fillStyle;
-    //   console.log(tooltip)
-    //   tooltip.draw(context);
-
-      // context.scale(1 / scaleX, 1 / scaleY);
-      // let downTriangle = new Triangle(shape.tooltipOrigin.scale(new Vertex(scaleX, scaleY)), SQUARE_OFFSET_Y, scaleY < 0? 'up' : 'down');
-      // downTriangle.center.y += Math.sign(scaleY) * SQUARE_OFFSET_Y / 2;
-      // downTriangle.path = downTriangle.buildPath();
-      // downTriangle.strokeStyle = this.strokeStyle;
-      // downTriangle.fillStyle = this.fillStyle;
-      // downTriangle.draw(context);
-      // printedRows.forEach((row, index) => {
-      //   textOrigin.y += index * this.text_style.font_size;
-      //   const text = new newText(row, textOrigin, null, this.fontSize, "sans-serif", "left", "middle", index == 0? 'bold' : '');
-      //   text.fillStyle = this.textColor;
-      //   text.draw(context)
-      // })
-      // context.setTransform(contextMatrix)
-    // }
+    context.restore()
   }
 }
 

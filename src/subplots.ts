@@ -1942,7 +1942,7 @@ export class newHistogram extends Frame {
     super.drawAxes();
     this.bars.forEach(bar => {
       if (bar.isClicked) {
-        const tt = new newTooltip(bar.tooltipOrigin, new Map<string, any>([["Number: ", bar.nValues]]), this.context_show);
+        const tt = new newTooltip(bar.tooltipOrigin, new Map<string, any>([["Number", bar.nValues]]), this.context_show);
         tt.draw(this.context_show);
       }
     })

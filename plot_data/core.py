@@ -475,14 +475,6 @@ class LineSegment2D(PlotDataObject):
                 min(self.data[1], self.data[3]),
                 max(self.data[1], self.data[3]))
 
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#', id_method=True,
-                id_memo=None) -> JsonSerializable:
-        """ Get dict of current LineSegment2D. """
-        dict_ = DessiaObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path, id_method=id_method,
-                                     id_memo=id_memo)
-        dict_['object_class'] = 'plot_data.core.LineSegment2D'  # To force migration to linesegment -> linesegment2d
-        return dict_
-
     def polygon_points(self):
         """ Get lists of points in a merged list. """
         return [self.point1, self.point2]
@@ -500,22 +492,6 @@ class LineSegment2D(PlotDataObject):
         ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]], **edge_style.mpl_arguments(),
                 **kwargs)
         return ax
-
-
-class LineSegment(LineSegment2D):
-    """ A line segment. This is a primitive that can be called by PrimitiveGroup. """
-
-    def __init__(self, data: List[float], edge_style: EdgeStyle = None, name: str = ''):
-        # When to remove support?
-        warnings.warn("LineSegment is deprecated, use LineSegment2D instead", DeprecationWarning)
-        self.data = data
-        LineSegment2D.__init__(self, point1=self.data[:2], point2=self.data[2:], edge_style=edge_style, name=name)
-
-    def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#', id_method=True,
-                id_memo=None) -> JsonSerializable:
-        """ Get dict of current LineSegment. """
-        ls2d = LineSegment2D(point1=self.data[:2], point2=self.data[2:], edge_style=self.edge_style, name=self.name)
-        return ls2d.to_dict(use_pointers=use_pointers, memo=memo, path=path, id_method=id_method, id_memo=id_memo)
 
 
 class Wire(PlotDataObject):

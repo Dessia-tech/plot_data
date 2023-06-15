@@ -1946,7 +1946,7 @@ export class Bar extends newRect {
 
   get length(): number { return this.values.length };
 
-  get tooltipMap(): Map<string, any> {
+  private get tooltipMap(): Map<string, any> {
     return new Map<string, any>([["Number", this.length], ["Min", this.min], ["Max", this.max], ["Mean", this.mean]])
   }
 
@@ -1987,12 +1987,14 @@ export class newTooltip {
   public radius: number = 10;
   private printedRows: string[];
   private size: Vertex;
+  private squareOrigin: Vertex;
   constructor(
     public origin,
     public dataToPrint: Map<string, any>,
     context: CanvasRenderingContext2D
     ) {
       [this.printedRows, this.size] = this.buildText(context);
+      this.squareOrigin = new Vertex(this.origin.x, this.origin.y);
     }
 
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
@@ -2009,16 +2011,16 @@ export class newTooltip {
 
   public buildPath(): Path2D {
     const path = new Path2D();
-    const rectOrigin = this.origin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
+    const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
     const triangleCenter = this.origin;
     triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2;
     path.addPath(new newRoundRect(rectOrigin, this.size, this.radius).path);
-    path.addPath(new Triangle(this.origin, TOOLTIP_TRIANGLE_SIZE, 'down').path);
+    path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, 'down').path);
     return path
   }
 
   private computeTextOrigin(scaling: Vertex): Vertex {
-    let textOrigin = this.origin;
+    let textOrigin = this.squareOrigin;
     let textOffsetX = -this.size.x / 2 + TOOLTIP_TEXT_OFFSET;
     let textOffsetY = (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25;
     return textOrigin.add(new Vertex(textOffsetX, textOffsetY));
@@ -2033,12 +2035,48 @@ export class newTooltip {
     })
   }
 
+  private insideCanvas(canvasSize: Vertex, scaling: Vertex): boolean {
+    let isInside = true;
+    const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE).scale(scaling));
+    const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
+    const upRightDiff = canvasSize.subtract(upRightCorner);
+
+    if (upRightDiff.x < 0) {
+      this.squareOrigin.x += upRightDiff.x;
+    } else if (upRightDiff.x > canvasSize.x) {
+      this.squareOrigin.x += upRightDiff.x - canvasSize.x;
+    }
+    if (upRightDiff.y < 0) {
+      this.squareOrigin.y += upRightDiff.y;
+      this.origin.y += upRightDiff.y;
+    } else if (upRightDiff.y > canvasSize.y){
+      this.squareOrigin.y += upRightDiff.y - canvasSize.y;
+      this.origin.y += upRightDiff.y - canvasSize.y;
+    }
+// To handle once one case is met
+    // const downLeftDiff = canvasSize.subtract(downLeftCorner);
+    // if (downLeftCorner.y < 0) {
+    //   console.log("down inf y")
+    // } else if (downLeftCorner.y > canvasSize.y){
+    //   console.log("down sup y")
+    // }
+    // if (upRightCorner.y < 0) {
+    //   console.log("down inf y")
+    // } else if (upRightCorner.y > canvasSize.y){
+    //   console.log("down sup y")
+    // }
+    return isInside
+  }
+
   public draw(context: CanvasRenderingContext2D) {
     const contextMatrix = context.getTransform();
+    const canvasSize = new Vertex(context.canvas.width, context.canvas.height);
     const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
+    this.insideCanvas(canvasSize, scaling);
     const textOrigin = this.computeTextOrigin(scaling);
     const scaledPath = new Path2D();
-
+    // console.log(this.origin.add(this.size.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE)).scale(scaling)), this.origin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE)))
+    this.squareOrigin = this.squareOrigin.scale(scaling);
     this.origin = this.origin.scale(scaling);
     scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
 

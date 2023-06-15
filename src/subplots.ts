@@ -1950,6 +1950,7 @@ export class newHistogram extends Frame {
     super.drawAxes();
     this.bars.forEach(bar => { bar.drawTooltip(this.context_show) });
     this.context_show.resetTransform();
+    console.log(this.width, this.height)
   }
 
   public updateAxes(): void {

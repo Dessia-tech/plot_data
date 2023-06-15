@@ -86,6 +86,8 @@ class PlotDataObject(DessiaObject):
 class Figure(PlotDataObject):
     """ Abstract interface for handling html exportable objects in module. """
 
+    _standalone_in_db = True
+
     def __init__(self, type_: str, width: int = 750, height: int = 400, name: str = '', **kwargs):
         self.width = width
         self.height = height

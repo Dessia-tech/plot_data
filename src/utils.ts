@@ -1955,10 +1955,23 @@ export class Bar extends newRect {
     this.size = size;
   }
 
-  public draw(context: CanvasRenderingContext2D) {
-    if (this.size.x != 0 && this.size.y != 0) {
+  public draw(context: CanvasRenderingContext2D) { 
+    if (this.size.x != 0 && this.size.y != 0) { 
       super.draw(context);
       this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
+    } 
+  }
+
+  public drawTooltip(context: CanvasRenderingContext2D) {
+    if (this.isClicked) {
+      const tooltipMap = new Map<string, any>([
+        ["Number", this.values.length],
+        ["Min", this.min],
+        ["Max", this.max],
+        ["Mean", this.mean]
+      ]);
+      const tooltip = new newTooltip(this.tooltipOrigin, tooltipMap, context);
+      tooltip.draw(context);
     }
   }
 }
@@ -1987,7 +2000,6 @@ export class newTooltip {
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
     let printedRows = ['Information: '];
     let textLength = context.measureText(printedRows[0]).width;
-    console.log(this.dataToPrint)
     this.dataToPrint.forEach((value, key) => {
       const text = `  - ${key}: ${value}`;
       const textWidth = context.measureText(text).width;
@@ -2007,13 +2019,29 @@ export class newTooltip {
     return path
   }
 
+  private computeTextOrigin(scaling: Vertex): Vertex {
+    let textOrigin = this.origin;
+    let textOffsetX = -this.size.x / 2 + TOOLTIP_TEXT_OFFSET;
+    let textOffsetY = (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25;
+    return textOrigin.add(new Vertex(textOffsetX, textOffsetY));
+  }
+
+  private writeText(textOrigin: Vertex, context: CanvasRenderingContext2D) {
+    this.printedRows.forEach((row, index) => {
+      textOrigin.y += index == 0 ? 0 : this.fontsize;
+      const text = new newText(row, textOrigin, {fontsize: this.fontsize, baseline: "middle", style: index == 0 ? 'bold' : ''});
+      text.fillStyle = this.textColor;
+      text.draw(context)
+    })
+  }
+
   public draw(context: CanvasRenderingContext2D) {
     const contextMatrix = context.getTransform();
     const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
-    let textOrigin = this.origin;
-    this.origin = this.origin.scale(scaling);
-
+    const textOrigin = this.computeTextOrigin(scaling);
     const scaledPath = new Path2D();
+
+    this.origin = this.origin.scale(scaling);
     scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
 
     context.save();
@@ -2023,15 +2051,7 @@ export class newTooltip {
     context.globalAlpha = this.alpha;
     context.fill(scaledPath);
     context.stroke(scaledPath);
-
-    textOrigin = textOrigin.add(new Vertex(-this.size.x / 2 + TOOLTIP_TEXT_OFFSET, (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25));
-    this.printedRows.forEach((row, index) => {
-        textOrigin.y += index == 0 ? 0 : this.fontsize;
-        const text = new newText(row, textOrigin, {fontsize: this.fontsize, baseline: "middle", style: index == 0? 'bold' : ''});
-        text.fillStyle = this.textColor;
-        text.draw(context)
-      })
-
+    this.writeText(textOrigin, context);
     context.restore()
   }
 }

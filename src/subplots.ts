@@ -1491,7 +1491,7 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: newShape[] = [];
 
-  protected initScale: Vertex = new Vertex(-1, 1);
+  protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   private nSamples: number;
 
@@ -1944,25 +1944,11 @@ export class newHistogram extends Frame {
     this.getBarsDrawing();
     this.context_show.setTransform(this.movingMatrix);
     this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
-    this.context_show.resetTransform();
     this.movingObjects = this.bars;
 
     this.context_show.setTransform(this.canvasMatrix);
     super.drawAxes();
-    this.bars.forEach(bar => {
-      if (bar.isClicked) {
-        const tooltip = new newTooltip(
-          bar.tooltipOrigin,
-          new Map<string, any>([
-            ["Number", bar.values.length],
-            ["Min", bar.min],
-            ["Max", bar.max],
-            ["Mean", bar.mean]
-          ]),
-          this.context_show);
-        tooltip.draw(this.context_show);
-      }
-    })
+    this.bars.forEach(bar => { bar.drawTooltip(this.context_show) });
     this.context_show.resetTransform();
   }
 

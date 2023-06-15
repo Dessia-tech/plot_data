@@ -4,501 +4,503 @@ import { Shape, MyMath, List } from "./toolbox";
 import { convertTypeAcquisitionFromJson } from "typescript";
 
 export class Axis {
-    color_stroke:any;
-    x_step:number;
-    y_step:number;
+  color_stroke: any;
+  x_step: number;
+  y_step: number;
 
-    constructor(public nb_points_x:number=10,
-                public nb_points_y:number=10,
-                public graduation_style:TextStyle,
-                public axis_style:EdgeStyle,
-                public arrow_on:boolean=false,
-                public grid_on:boolean=true,
-                public type_:string='axis',
-                public name='') {
+  constructor(public nb_points_x: number = 10,
+    public nb_points_y: number = 10,
+    public graduation_style: TextStyle,
+    public axis_style: EdgeStyle,
+    public arrow_on: boolean = false,
+    public grid_on: boolean = true,
+    public type_: string = 'axis',
+    public name = '') {
+  }
+
+  public static deserialize(serialized) {
+    let default_axis_style = { line_width: 0.5, color_stroke: string_to_rgb('grey'), dashline: [], name: '' };
+    let default_graduation_style = { text_color: string_to_rgb('grey'), font_size: 12, font_style: 'sans-serif', name: '' };
+    let default_dict_ = {
+      nb_points_x: 10, nb_points_y: 10, graduation_style: default_graduation_style,
+      axis_style: default_axis_style, arrow_on: false, grid_on: true, name: ''
+    };
+    serialized = set_default_values(serialized, default_dict_);
+    var graduation_style = TextStyle.deserialize(serialized['graduation_style']);
+    var axis_style = EdgeStyle.deserialize(serialized['axis_style']);
+    return new Axis(serialized['nb_points_x'],
+      serialized['nb_points_y'],
+      graduation_style,
+      axis_style,
+      serialized['arrow_on'],
+      serialized['grid_on'],
+      serialized['type_'],
+      serialized['name']);
+  }
+
+
+  draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end, x_step, font_size, X, canvas_width) {
+    var i = 0;
+    context.textAlign = 'center';
+    var x_nb_digits = Math.max(0, 1 - Math.floor(Math.log10(x_step)));
+    var grad_beg_x = Math.floor(1 / this.x_step * ((axis_x_start - mvx - X) / scaleX)) * this.x_step;
+    var grad_end_x = Math.ceil(1 / this.x_step * ((canvas_width - mvx) / scaleX)) * this.x_step;
+
+    while (grad_beg_x + i * x_step < grad_end_x) {
+      if (this.grid_on === true) {
+        context.strokeStyle = 'lightgrey';
+        Shape.drawLine(context, [[scaleX * (grad_beg_x + i * x_step) + mvx + X, axis_y_start], [scaleX * (grad_beg_x + i * x_step) + mvx + X, axis_y_end + 3]]);
+      } else {
+        Shape.drawLine(context, [[scaleX * (grad_beg_x + i * x_step) + mvx + X, axis_y_end - 3], [scaleX * (grad_beg_x + i * x_step) + mvx + X, axis_y_end + 3]]);
+      }
+      context.fillText(MyMath.round(grad_beg_x + i * x_step, x_nb_digits), scaleX * (grad_beg_x + i * x_step) + mvx + X, axis_y_end + font_size);
+      i++
     }
+    context.stroke();
+    // return [scaleX*(grad_beg_x) + mvx + X, scaleX*(grad_beg_x + (i-1)*x_step) + mvx + X]
+  }
 
-    public static deserialize(serialized) {
-      let default_axis_style = {line_width:0.5, color_stroke:string_to_rgb('grey'), dashline:[], name:''};
-      let default_graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', name:''};
-      let default_dict_ = {nb_points_x:10, nb_points_y:10, graduation_style:default_graduation_style,
-                          axis_style:default_axis_style, arrow_on:false, grid_on:true, name:''};
-      serialized = set_default_values(serialized, default_dict_);
-      var graduation_style = TextStyle.deserialize(serialized['graduation_style']);
-      var axis_style = EdgeStyle.deserialize(serialized['axis_style']);
-      return new Axis(serialized['nb_points_x'],
-                      serialized['nb_points_y'],
-                      graduation_style,
-                      axis_style,
-                      serialized['arrow_on'],
-                      serialized['grid_on'],
-                      serialized['type_'],
-                      serialized['name']);
+  draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, y_step, Y) {
+    var i = 0;
+    var grad_beg_y = Math.ceil(-1 / this.y_step * ((axis_y_end - mvy - Y) / scaleY)) * this.y_step;
+    var grad_end_y = Math.floor(mvy / (this.y_step * scaleY)) * this.y_step;
+    context.textAlign = 'end';
+    context.textBaseline = 'middle';
+    var y_nb_digits = Math.max(0, 1 - Math.floor(Math.log10(y_step)));
+    while (grad_beg_y + (i - 1) * y_step < grad_end_y) {
+      if (this.grid_on === true) {
+        context.strokeStyle = 'lightgrey';
+        Shape.drawLine(context, [[axis_x_start - 3, -scaleY * (grad_beg_y + i * y_step) + mvy + Y], [axis_x_end, -scaleY * (grad_beg_y + i * y_step) + mvy + Y]]);
+      } else {
+        Shape.drawLine(context, [[axis_x_start - 3, -scaleY * (grad_beg_y + i * y_step) + mvy + Y], [axis_x_start + 3, -scaleY * (grad_beg_y + i * y_step) + mvy + Y]]);
+      }
+      context.fillText(MyMath.round(grad_beg_y + i * y_step, y_nb_digits), axis_x_start - 5, -scaleY * (grad_beg_y + i * y_step) + mvy + Y);
+      i++;
     }
+    context.stroke();
+  }
 
-
-    draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end, x_step, font_size, X, canvas_width) {
-      var i=0;
-      context.textAlign = 'center';
-      var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(x_step)));
-      var grad_beg_x = Math.floor(1/this.x_step * ((axis_x_start - mvx - X)/scaleX)) * this.x_step;
-      var grad_end_x = Math.ceil(1/this.x_step * ((canvas_width - mvx)/scaleX)) * this.x_step;
-
-      while(grad_beg_x + i*x_step < grad_end_x) {
+  draw_horizontal_log_graduations(context, mvx, scaleX, minX, maxX, axis_y_start, axis_y_end, font_size, X, canvas_width) {
+    context.textAlign = 'center';
+    let delta = scaleX;
+    let numbers = [1];
+    if (delta >= canvas_width / 3 && delta <= canvas_width / 2) {
+      numbers = [1, 5];
+    } else if (delta > canvas_width / 2 && delta <= 3 / 4 * canvas_width) {
+      numbers = [1, 2, 5];
+    } else if (delta > 3 / 4 * canvas_width) {
+      numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+    }
+    let start_pow = Math.floor(minX);
+    let end_pow = Math.ceil(maxX);
+    for (let power = start_pow; power <= end_pow; power++) {
+      for (let num of numbers) {
+        let x_coord = num * Math.pow(10, power);
         if (this.grid_on === true) {
           context.strokeStyle = 'lightgrey';
-          Shape.drawLine(context, [[scaleX*(grad_beg_x + i*x_step) + mvx + X, axis_y_start], [scaleX*(grad_beg_x + i*x_step) + mvx + X, axis_y_end + 3]]);
+          Shape.drawLine(context, [[scaleX * Math.log10(x_coord) + mvx + X, axis_y_start], [scaleX * Math.log10(x_coord) + mvx + X, axis_y_end + 3]]);
         } else {
-          Shape.drawLine(context, [[scaleX*(grad_beg_x + i*x_step) + mvx + X, axis_y_end - 3], [scaleX*(grad_beg_x + i*x_step) + mvx + X, axis_y_end + 3]]);
+          Shape.drawLine(context, [[scaleX * Math.log10(x_coord) + mvx + X, axis_y_end - 3], [scaleX * Math.log10(x_coord) + mvx + X, axis_y_end + 3]]);
         }
-        context.fillText(MyMath.round(grad_beg_x + i*x_step, x_nb_digits), scaleX*(grad_beg_x + i*x_step) + mvx + X, axis_y_end + font_size);
-        i++
+        context.fillText(x_coord, scaleX * Math.log10(x_coord) + mvx + X, axis_y_end + font_size);
       }
-      context.stroke();
-      // return [scaleX*(grad_beg_x) + mvx + X, scaleX*(grad_beg_x + (i-1)*x_step) + mvx + X]
+    }
+    context.stroke();
+  }
+
+
+  draw_vertical_log_graduations(context, mvy, scaleY, minY, maxY, axis_x_start, axis_x_end, axis_y_end, canvas_height, Y) {
+    context.textAlign = 'end';
+    context.textBaseline = 'middle';
+
+    let delta = scaleY;
+    let numbers = [1];
+    if (delta >= canvas_height / 3 && delta <= canvas_height / 2) {
+      numbers = [1, 5];
+    } else if (delta > canvas_height / 2 && delta <= 3 / 4 * canvas_height) {
+      numbers = [1, 2, 5];
+    } else if (delta > 3 / 4 * canvas_height) {
+      numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
     }
 
-    draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, y_step, Y) {
-      var i=0;
-      var grad_beg_y = Math.ceil(-1/this.y_step*((axis_y_end - mvy - Y)/scaleY)) * this.y_step;
-      var grad_end_y = Math.floor(mvy/(this.y_step * scaleY)) * this.y_step;
-      context.textAlign = 'end';
-      context.textBaseline = 'middle';
-      var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(y_step)));
-      while (grad_beg_y + (i-1)*y_step < grad_end_y) {
-          if (this.grid_on === true) {
-            context.strokeStyle = 'lightgrey';
-            Shape.drawLine(context, [[axis_x_start - 3, -scaleY*(grad_beg_y + i*y_step) + mvy + Y], [axis_x_end, -scaleY*(grad_beg_y + i*y_step) + mvy + Y]]);
-          } else {
-            Shape.drawLine(context, [[axis_x_start - 3, -scaleY*(grad_beg_y + i*y_step) + mvy + Y], [axis_x_start + 3, -scaleY*(grad_beg_y + i*y_step) + mvy + Y]]);
-          }
-          context.fillText(MyMath.round(grad_beg_y + i*y_step, y_nb_digits), axis_x_start - 5, -scaleY*(grad_beg_y + i*y_step) + mvy + Y);
-        i++;
-      }
-      context.stroke();
-    }
+    let start_pow = Math.floor(-minY);
+    let end_pow = Math.ceil(-maxY);
 
-    draw_horizontal_log_graduations(context, mvx, scaleX, minX, maxX, axis_y_start, axis_y_end, font_size, X, canvas_width) {
-      context.textAlign = 'center';
-      let delta = scaleX;
-      let numbers = [1];
-      if (delta >= canvas_width/3 && delta <= canvas_width/2) {
-        numbers = [1, 5];
-      } else if (delta > canvas_width/2 && delta <= 3/4*canvas_width) {
-        numbers = [1, 2, 5];
-      } else if (delta > 3/4*canvas_width) {
-        numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-      }
-      let start_pow = Math.floor(minX);
-      let end_pow = Math.ceil(maxX);
-      for (let power=start_pow; power <= end_pow; power++) {
-        for (let num of numbers) {
-          let x_coord = num * Math.pow(10, power);
-          if (this.grid_on === true) {
-            context.strokeStyle = 'lightgrey';
-            Shape.drawLine(context, [[scaleX * Math.log10(x_coord) + mvx + X, axis_y_start], [scaleX * Math.log10(x_coord) + mvx + X, axis_y_end + 3]]);
-          } else {
-            Shape.drawLine(context, [[scaleX * Math.log10(x_coord) + mvx + X, axis_y_end - 3], [scaleX*Math.log10(x_coord) + mvx + X, axis_y_end + 3]]);
-          }
-          context.fillText(x_coord, scaleX*Math.log10(x_coord) + mvx + X, axis_y_end + font_size);
-        }
-      }
-      context.stroke();
-    }
-
-
-    draw_vertical_log_graduations(context, mvy, scaleY, minY, maxY, axis_x_start, axis_x_end, axis_y_end, canvas_height, Y) {
-      context.textAlign = 'end';
-      context.textBaseline = 'middle';
-
-      let delta = scaleY;
-      let numbers = [1];
-      if (delta >= canvas_height/3 && delta <= canvas_height/2) {
-        numbers = [1, 5];
-      } else if (delta > canvas_height/2 && delta <= 3/4*canvas_height) {
-        numbers = [1, 2, 5];
-      } else if (delta > 3/4*canvas_height) {
-        numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-      }
-
-      let start_pow = Math.floor(-minY);
-      let end_pow = Math.ceil(-maxY);
-
-      for (let power=start_pow; power<=end_pow; power++) {
-        for (let num of numbers) {
-          let y_coord = num * Math.pow(10, power);
-          if (this.grid_on === true) {
-            context.strokeStyle = 'lightgrey';
-            Shape.drawLine(context, [[axis_x_start - 3, -scaleY * Math.log10(y_coord) + mvy + Y], [axis_x_end, -scaleY* Math.log10(y_coord) + mvy + Y]]);
-          } else {
-            Shape.drawLine(context, [[axis_x_start - 3, -scaleY * Math.log10(y_coord) + mvy + Y], [axis_x_start + 3, -scaleY * Math.log10(y_coord) + mvy + Y]]);
-          }
-          context.fillText(y_coord, axis_x_start - 5, -scaleY * Math.log10(y_coord) + mvy + Y);
-        }
-      }
-      context.stroke();
-    }
-
-
-    draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y, coeff=0.88) {
-      let scale = (coeff*height - decalage_axis_y) / max_frequency;
-      let grad_beg_y = height - decalage_axis_y;
-      let i = 0;
-      context.textAlign = 'end';
-      context.textBaseline = 'middle';
-      while (i * y_step < max_frequency + y_step) {
-        Shape.drawLine(context, [[axis_x_start - 3, grad_beg_y - scale * (i * y_step) + Y],
-                       [axis_x_start + 3, grad_beg_y - scale * (i * y_step) + Y]]);
-        context.fillText(i * y_step, axis_x_start - 5, grad_beg_y - scale * (i * y_step) + Y);
-        i++;
-      }
-      context.stroke();
-    }
-
-
-    draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x,
-      decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, log_scale_x, x_step?) {
-      context.beginPath();
-      context.strokeStyle = this.axis_style.color_stroke;
-      context.lineWidth = this.axis_style.line_width;
-      var axis_x_start = decalage_axis_x + X;
-      var axis_x_end = width + X;
-      var axis_y_start = Y;
-      var axis_y_end = height - decalage_axis_y + Y;
-      //Arrow
-      if (this.arrow_on) {
-        Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
-        Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
-      }
-      //Axis
-      Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
-      //Graduations
-      if (scroll_x % 5 == 0) {
-        let kx = 1.1*scaleX/init_scaleX;
-        let num = Math.max(maxX - minX, 1);
-        this.x_step = x_step || Math.min(num/(kx*(this.nb_points_x-1)), width/(scaleX*(this.nb_points_x - 1)));
-      }
-      let font_size = Math.max(15, Math.ceil(0.01*(height + width)));
-      context.font = 'bold ' + font_size + 'px Arial';
-      context.textAlign = 'end';
-      context.fillStyle = this.graduation_style.text_color;
-      context.fillText(to_disp_attribute_name, axis_x_end - 5, axis_y_end - 10);
-      // draw_horizontal_graduations
-      context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      if (log_scale_x) {
-        this.draw_horizontal_log_graduations(context, mvx, scaleX, minX, maxX, axis_y_start, axis_y_end,
-          this.graduation_style.font_size, X, width);
-      } else {
-        // [this.xStart, this.xEnd] = this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end,
-        //   this.x_step, this.graduation_style.font_size, X, width);
-        this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end,
-          this.x_step, this.graduation_style.font_size, X, width);
-      }
-      context.closePath();
-      // return [axis_x_start, axis_x_end]
-    }
-
-
-    draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY,
-      scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, log_scale_y, y_step?) {
-      context.beginPath();
-      context.strokeStyle = this.axis_style.color_stroke;
-      context.lineWidth = this.axis_style.line_width;
-      var axis_x_start = decalage_axis_x + X;
-      var axis_x_end = width + X;
-      var axis_y_start = Y;
-      var axis_y_end = height - decalage_axis_y + Y;
-      //Arrows
-      if (this.arrow_on === true) {
-        Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
-        Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
-      }
-      //Axis
-      Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
-      // Graduations
-      if (scroll_y % 5 == 0) {
-        let ky = 1.1*scaleY/init_scaleY;
-        let num = Math.max(maxY - minY, 1);
-        this.y_step = y_step || Math.min(num/(ky*(this.nb_points_y-1)), height/(scaleY*(this.nb_points_y - 1)));
-      }
-      let font_size = Math.max(15, Math.ceil(0.01*(height + width)));
-      context.font = 'bold ' + font_size + 'px Arial';
-      context.textAlign = 'start';
-      context.fillStyle = this.graduation_style.text_color;
-      context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
-      context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      if (log_scale_y) {
-        this.draw_vertical_log_graduations(context, mvy, scaleY, minY, maxY, axis_x_start, axis_x_end, axis_y_end, height, Y)
-      } else {
-        this.draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, this.y_step, Y);
-      }
-      context.closePath();
-    }
-
-
-    draw_histogram_x_axis(context, scaleX, init_scaleX, mvx, width, height, graduations, decalage_axis_x,
-                          decalage_axis_y, scroll_x, X, Y, to_disp_attribute_name, x_step?) {
-      context.beginPath();
-      context.strokeStyle = this.axis_style.color_stroke;
-      context.lineWidth = this.axis_style.line_width;
-      var axis_x_start = decalage_axis_x + X;
-      var axis_x_end = width + X;
-      var axis_y_start = Y;
-      var axis_y_end = height - decalage_axis_y + Y;
-      //Arrow
-      if (this.arrow_on) {
-        Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
-        Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
-      }
-      //Axis
-      Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
-
-      //Graduations
-      let font_size = Math.max(15, Math.ceil(0.01*(height + width)));
-      context.font = 'bold ' + font_size + 'px Arial';
-      context.textAlign = 'end';
-      context.fillStyle = this.graduation_style.text_color;
-      context.fillText(to_disp_attribute_name, axis_x_end - 5, axis_y_end - 10);
-
-      // draw_horizontal_graduations
-      context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      var i=0;
-      context.textAlign = 'center';
-      var grad_beg_x = decalage_axis_x/scaleX + 1/4;
-      while(i < graduations.length) {
+    for (let power = start_pow; power <= end_pow; power++) {
+      for (let num of numbers) {
+        let y_coord = num * Math.pow(10, power);
         if (this.grid_on === true) {
           context.strokeStyle = 'lightgrey';
-          Shape.drawLine(context, [[scaleX*(grad_beg_x + i) + mvx + X, axis_y_start], [scaleX*(grad_beg_x + i*x_step) + mvx + X, axis_y_end + 3]]);
+          Shape.drawLine(context, [[axis_x_start - 3, -scaleY * Math.log10(y_coord) + mvy + Y], [axis_x_end, -scaleY * Math.log10(y_coord) + mvy + Y]]);
         } else {
-          Shape.drawLine(context, [[scaleX*(grad_beg_x + i) + mvx + X, axis_y_end - 3], [scaleX*(grad_beg_x + i*x_step) + mvx + X, axis_y_end + 3]]);
+          Shape.drawLine(context, [[axis_x_start - 3, -scaleY * Math.log10(y_coord) + mvy + Y], [axis_x_start + 3, -scaleY * Math.log10(y_coord) + mvy + Y]]);
         }
-        context.fillText(graduations[i], scaleX*(grad_beg_x + i) + mvx + X, axis_y_end + this.graduation_style.font_size);
-        i++;
+        context.fillText(y_coord, axis_x_start - 5, -scaleY * Math.log10(y_coord) + mvy + Y);
       }
-      context.stroke();
-      context.closePath();
-      // this.xStart = scaleX*(grad_beg_x) + mvx + X;
-      // this.xEnd = scaleX*(grad_beg_x + i - 1) + mvx + X;
-      // return [axis_x_start, axis_x_end]
     }
+    context.stroke();
+  }
 
 
-    draw_histogram_y_axis(context, width, height, max_frequency, decalage_axis_x,
-                          decalage_axis_y, X, Y, to_disp_attribute_name, y_step, coeff?) {
-      context.beginPath();
-      context.strokeStyle = this.axis_style.color_stroke;
-      context.lineWidth = this.axis_style.line_width;
-      var axis_x_start = decalage_axis_x + X;
-      var axis_x_end = width + X;
-      var axis_y_start = Y;
-      var axis_y_end = height - decalage_axis_y + Y;
-      //Arrows
-      if (this.arrow_on === true) {
-        Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
-        Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
-      }
-      //Axis
-      Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
-      // context.stroke();
-      // Graduations
-      this.y_step = y_step;
-      let font_size = Math.max(15, Math.ceil(0.01*(height + width)));
-      context.font = 'bold ' + font_size + 'px Arial';
-      context.textAlign = 'start';
-      context.fillStyle = this.graduation_style.text_color;
-      context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
-
-      //draw vertical graduations
-      context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      this.draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y, coeff);
-      context.closePath();
-      return [axis_y_end, axis_y_start]
+  draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y, coeff = 0.88) {
+    let scale = (coeff * height - decalage_axis_y) / max_frequency;
+    let grad_beg_y = height - decalage_axis_y;
+    let i = 0;
+    context.textAlign = 'end';
+    context.textBaseline = 'middle';
+    while (i * y_step < max_frequency + y_step) {
+      Shape.drawLine(context, [[axis_x_start - 3, grad_beg_y - scale * (i * y_step) + Y],
+      [axis_x_start + 3, grad_beg_y - scale * (i * y_step) + Y]]);
+      context.fillText(i * y_step, axis_x_start - 5, grad_beg_y - scale * (i * y_step) + Y);
+      i++;
     }
+    context.stroke();
+  }
 
-    draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists,
-      to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, canvas_height,
-      log_scale_x, log_scale_y) {
 
-      this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0],
-        scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, log_scale_x);
-      this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1],
-        scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height, log_scale_y);
+  draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x,
+    decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, log_scale_x, x_step?) {
+    context.beginPath();
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
+    var axis_x_start = decalage_axis_x + X;
+    var axis_x_end = width + X;
+    var axis_y_start = Y;
+    var axis_y_end = height - decalage_axis_y + Y;
+    //Arrow
+    if (this.arrow_on) {
+      Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
+      Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
     }
+    //Axis
+    Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
+    //Graduations
+    if (scroll_x % 5 == 0) {
+      let kx = 1.1 * scaleX / init_scaleX;
+      let num = Math.max(maxX - minX, 1);
+      this.x_step = x_step || Math.min(num / (kx * (this.nb_points_x - 1)), width / (scaleX * (this.nb_points_x - 1)));
+    }
+    let font_size = Math.max(15, Math.ceil(0.01 * (height + width)));
+    context.font = 'bold ' + font_size + 'px Arial';
+    context.textAlign = 'end';
+    context.fillStyle = this.graduation_style.text_color;
+    context.fillText(to_disp_attribute_name, axis_x_end - 5, axis_y_end - 10);
+    // draw_horizontal_graduations
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    if (log_scale_x) {
+      this.draw_horizontal_log_graduations(context, mvx, scaleX, minX, maxX, axis_y_start, axis_y_end,
+        this.graduation_style.font_size, X, width);
+    } else {
+      // [this.xStart, this.xEnd] = this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end,
+      //   this.x_step, this.graduation_style.font_size, X, width);
+      this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end,
+        this.x_step, this.graduation_style.font_size, X, width);
+    }
+    context.closePath();
+    // return [axis_x_start, axis_x_end]
+  }
 
-    draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute:Attribute,
-      scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, log_scale_x=false) {
-      // Drawing the coordinate system
-      context.beginPath();
-      context.strokeStyle = this.axis_style.color_stroke;
-      context.lineWidth = this.axis_style.line_width;
-      var axis_x_start = decalage_axis_x + X;
-      var axis_x_end = width + X;
-      var axis_y_start = Y;
-      var axis_y_end = height - decalage_axis_y + Y;
 
-      //Arrows
-      if (this.arrow_on) {
-        Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
-        Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
-      }
+  draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY,
+    scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, log_scale_y, y_step?) {
+    context.beginPath();
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
+    var axis_x_start = decalage_axis_x + X;
+    var axis_x_end = width + X;
+    var axis_y_start = Y;
+    var axis_y_end = height - decalage_axis_y + Y;
+    //Arrows
+    if (this.arrow_on === true) {
+      Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
+      Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
+    }
+    //Axis
+    Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
+    // Graduations
+    if (scroll_y % 5 == 0) {
+      let ky = 1.1 * scaleY / init_scaleY;
+      let num = Math.max(maxY - minY, 1);
+      this.y_step = y_step || Math.min(num / (ky * (this.nb_points_y - 1)), height / (scaleY * (this.nb_points_y - 1)));
+    }
+    let font_size = Math.max(15, Math.ceil(0.01 * (height + width)));
+    context.font = 'bold ' + font_size + 'px Arial';
+    context.textAlign = 'start';
+    context.fillStyle = this.graduation_style.text_color;
+    context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    if (log_scale_y) {
+      this.draw_vertical_log_graduations(context, mvy, scaleY, minY, maxY, axis_x_start, axis_x_end, axis_y_end, height, Y)
+    } else {
+      this.draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, this.y_step, Y);
+    }
+    context.closePath();
+  }
 
-      //Axis
-      Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
-      context.fillStyle = this.graduation_style.text_color;
-      context.strokeStyle = this.axis_style.color_stroke;
-      let font_size = Math.max(15, Math.ceil(0.01*(height + width)));
-      context.font = 'bold ' + font_size + 'px Arial';
-      context.textAlign = 'end';
-      context.textBaseline = "alphabetic";
-      context.fillText(to_display_attribute['name'], axis_x_end - 5, axis_y_end - 10);
-      context.stroke();
-      //Graduations
-      context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      if (log_scale_x) {
-        if (TypeOf(list[0]) === 'string') {
-          throw new Error("Cannot use log scale on a non float axis");
-        }
-        this.draw_horizontal_log_graduations(context, mvx, scaleX, Math.log10(list[0]), Math.log10(list[1]), axis_y_start,
-          axis_y_end, this.graduation_style.font_size, X, width);
+
+  draw_histogram_x_axis(context, scaleX, init_scaleX, mvx, width, height, graduations, decalage_axis_x,
+    decalage_axis_y, scroll_x, X, Y, to_disp_attribute_name, x_step?) {
+    context.beginPath();
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
+    var axis_x_start = decalage_axis_x + X;
+    var axis_x_end = width + X;
+    var axis_y_start = Y;
+    var axis_y_end = height - decalage_axis_y + Y;
+    //Arrow
+    if (this.arrow_on) {
+      Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
+      Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
+    }
+    //Axis
+    Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
+
+    //Graduations
+    let font_size = Math.max(15, Math.ceil(0.01 * (height + width)));
+    context.font = 'bold ' + font_size + 'px Arial';
+    context.textAlign = 'end';
+    context.fillStyle = this.graduation_style.text_color;
+    context.fillText(to_disp_attribute_name, axis_x_end - 5, axis_y_end - 10);
+
+    // draw_horizontal_graduations
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    var i = 0;
+    context.textAlign = 'center';
+    var grad_beg_x = decalage_axis_x / scaleX + 1 / 4;
+    while (i < graduations.length) {
+      if (this.grid_on === true) {
+        context.strokeStyle = 'lightgrey';
+        Shape.drawLine(context, [[scaleX * (grad_beg_x + i) + mvx + X, axis_y_start], [scaleX * (grad_beg_x + i * x_step) + mvx + X, axis_y_end + 3]]);
       } else {
-        this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end,
-          axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X, canvas_width);
+        Shape.drawLine(context, [[scaleX * (grad_beg_x + i) + mvx + X, axis_y_end - 3], [scaleX * (grad_beg_x + i * x_step) + mvx + X, axis_y_end + 3]]);
       }
-      context.stroke();
-      context.closePath();
+      context.fillText(graduations[i], scaleX * (grad_beg_x + i) + mvx + X, axis_y_end + this.graduation_style.font_size);
+      i++;
+    }
+    context.stroke();
+    context.closePath();
+    // this.xStart = scaleX*(grad_beg_x) + mvx + X;
+    // this.xEnd = scaleX*(grad_beg_x + i - 1) + mvx + X;
+    // return [axis_x_start, axis_x_end]
+  }
+
+
+  draw_histogram_y_axis(context, width, height, max_frequency, decalage_axis_x,
+    decalage_axis_y, X, Y, to_disp_attribute_name, y_step, coeff?) {
+    context.beginPath();
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
+    var axis_x_start = decalage_axis_x + X;
+    var axis_x_end = width + X;
+    var axis_y_start = Y;
+    var axis_y_end = height - decalage_axis_y + Y;
+    //Arrows
+    if (this.arrow_on === true) {
+      Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
+      Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
+    }
+    //Axis
+    Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
+    // context.stroke();
+    // Graduations
+    this.y_step = y_step;
+    let font_size = Math.max(15, Math.ceil(0.01 * (height + width)));
+    context.font = 'bold ' + font_size + 'px Arial';
+    context.textAlign = 'start';
+    context.fillStyle = this.graduation_style.text_color;
+    context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
+
+    //draw vertical graduations
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    this.draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y, coeff);
+    context.closePath();
+    return [axis_y_end, axis_y_start]
+  }
+
+  draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists,
+    to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, canvas_height,
+    log_scale_x, log_scale_y) {
+
+    this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0],
+      scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, log_scale_x);
+    this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1],
+      scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height, log_scale_y);
+  }
+
+  draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute: Attribute,
+    scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, log_scale_x = false) {
+    // Drawing the coordinate system
+    context.beginPath();
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
+    var axis_x_start = decalage_axis_x + X;
+    var axis_x_end = width + X;
+    var axis_y_start = Y;
+    var axis_y_end = height - decalage_axis_y + Y;
+
+    //Arrows
+    if (this.arrow_on) {
+      Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
+      Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
     }
 
-    draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y,
-      decalage_axis_x, decalage_axis_y, X, Y, canvas_height, log_scale_y=false) {
-      // Drawing the coordinate system
-      context.beginPath();
-      context.strokeStyle = this.axis_style.color_stroke;
-      context.lineWidth = this.axis_style.line_width;
-      var axis_x_start = decalage_axis_x + X;
-      var axis_x_end = width + X;
-      var axis_y_start = Y;
-      var axis_y_end = height - decalage_axis_y + Y;
-
-      if (this.arrow_on === true) {
-        Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
-        Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
+    //Axis
+    Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
+    context.fillStyle = this.graduation_style.text_color;
+    context.strokeStyle = this.axis_style.color_stroke;
+    let font_size = Math.max(15, Math.ceil(0.01 * (height + width)));
+    context.font = 'bold ' + font_size + 'px Arial';
+    context.textAlign = 'end';
+    context.textBaseline = "alphabetic";
+    context.fillText(to_display_attribute['name'], axis_x_end - 5, axis_y_end - 10);
+    context.stroke();
+    //Graduations
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    if (log_scale_x) {
+      if (TypeOf(list[0]) === 'string') {
+        throw new Error("Cannot use log scale on a non float axis");
       }
-      //Axis
-      Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
+      this.draw_horizontal_log_graduations(context, mvx, scaleX, Math.log10(list[0]), Math.log10(list[1]), axis_y_start,
+        axis_y_end, this.graduation_style.font_size, X, width);
+    } else {
+      this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end,
+        axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X, canvas_width);
+    }
+    context.stroke();
+    context.closePath();
+  }
 
-      context.fillStyle = this.graduation_style.text_color;
-      let font_size = Math.max(15, Math.ceil(0.01*(height + width)));
-      context.font = 'bold ' + font_size + 'px Arial';
-      context.strokeStyle = this.axis_style.color_stroke;
-      context.textAlign = 'start';
-      context.textBaseline = "alphabetic";
-      context.fillText(to_display_attribute['name'], axis_x_start + 5, axis_y_start + 20);
-      context.stroke();
+  draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y,
+    decalage_axis_x, decalage_axis_y, X, Y, canvas_height, log_scale_y = false) {
+    // Drawing the coordinate system
+    context.beginPath();
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.lineWidth = this.axis_style.line_width;
+    var axis_x_start = decalage_axis_x + X;
+    var axis_x_end = width + X;
+    var axis_y_start = Y;
+    var axis_y_end = height - decalage_axis_y + Y;
 
-      //Graduations
-      context.font = this.graduation_style.font_size.toString() + 'px Arial';
-      if (log_scale_y) {
-        if (TypeOf(list[0]) === 'string') {
-          throw new Error("Cannot use log scale on a non float axis.")
-        }
-        this.draw_vertical_log_graduations(context, mvy, scaleY, -Math.log10(list[0]), -Math.log10(list[1]),
+    if (this.arrow_on === true) {
+      Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
+      Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
+    }
+    //Axis
+    Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
+
+    context.fillStyle = this.graduation_style.text_color;
+    let font_size = Math.max(15, Math.ceil(0.01 * (height + width)));
+    context.font = 'bold ' + font_size + 'px Arial';
+    context.strokeStyle = this.axis_style.color_stroke;
+    context.textAlign = 'start';
+    context.textBaseline = "alphabetic";
+    context.fillText(to_display_attribute['name'], axis_x_start + 5, axis_y_start + 20);
+    context.stroke();
+
+    //Graduations
+    context.font = this.graduation_style.font_size.toString() + 'px Arial';
+    if (log_scale_y) {
+      if (TypeOf(list[0]) === 'string') {
+        throw new Error("Cannot use log scale on a non float axis.")
+      }
+      this.draw_vertical_log_graduations(context, mvy, scaleY, -Math.log10(list[0]), -Math.log10(list[1]),
         axis_x_start, axis_x_end, axis_y_end, canvas_height, Y);
-      } else {
-        this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start,
-          axis_y_end, list, to_display_attribute, scroll_y, Y, canvas_height);
-      }
-      context.stroke();
-      context.closePath();
+    } else {
+      this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start,
+        axis_y_end, list, to_display_attribute, scroll_y, Y, canvas_height);
     }
+    context.stroke();
+    context.closePath();
+  }
 
-    draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_x, X, canvas_width) {
-      context.textAlign = 'center';
-      if (attribute['type_'] == 'float') {
-        // var minX = list[0];
-        // var maxX = list[1];
-        if (scroll_x % 5 == 0) {
-          // let kx = 1.1*scaleX/init_scaleX;
-          // let num = Math.max(maxX - minX, 1);
-          // this.x_step = Math.min(num/(kx*(this.nb_points_x-1)), canvas_width/(scaleX*(this.nb_points_x - 1)));
-          this.x_step = canvas_width/(scaleX*(this.nb_points_x - 1));
+  draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_x, X, canvas_width) {
+    context.textAlign = 'center';
+    if (attribute['type_'] == 'float') {
+      // var minX = list[0];
+      // var maxX = list[1];
+      if (scroll_x % 5 == 0) {
+        // let kx = 1.1*scaleX/init_scaleX;
+        // let num = Math.max(maxX - minX, 1);
+        // this.x_step = Math.min(num/(kx*(this.nb_points_x-1)), canvas_width/(scaleX*(this.nb_points_x - 1)));
+        this.x_step = canvas_width / (scaleX * (this.nb_points_x - 1));
+      }
+      var i = 0;
+      var x_nb_digits = Math.max(0, 1 - Math.floor(Math.log10(this.x_step)));
+      var grad_beg_x = Math.ceil(1 / this.x_step * (axis_x_start - mvx - X) / scaleX) * this.x_step;
+      var grad_end_x = Math.ceil(1 / this.x_step * ((canvas_width - mvx) / scaleX)) * this.x_step;
+      while (grad_beg_x + i * this.x_step < grad_end_x) {
+        if (this.grid_on === true) {
+          Shape.drawLine(context, [[scaleX * (grad_beg_x + i * this.x_step) + mvx + X, axis_y_start], [scaleX * (grad_beg_x + i * this.x_step) + mvx + X, axis_y_end + 3]]);
+        } else {
+          Shape.drawLine(context, [[scaleX * (grad_beg_x + i * this.x_step) + mvx + X, axis_y_end - 3], [scaleX * (grad_beg_x + i * this.x_step) + mvx + X, axis_y_end + 3]]);
         }
-        var i=0;
-        var x_nb_digits = Math.max(0, 1-Math.floor(Math.log10(this.x_step)));
-        var grad_beg_x = Math.ceil(1/this.x_step * (axis_x_start - mvx - X)/scaleX) * this.x_step;
-        var grad_end_x = Math.ceil(1/this.x_step * ((canvas_width - mvx)/scaleX)) * this.x_step;
-        while(grad_beg_x + i*this.x_step < grad_end_x) {
+        context.fillText(MyMath.round(grad_beg_x + i * this.x_step, x_nb_digits), scaleX * (grad_beg_x + i * this.x_step) + mvx + X, axis_y_end + this.graduation_style.font_size); i++;
+      }
+    } else {
+      for (let i = 0; i < list.length; i++) {
+        if ((scaleX * i + mvx + X > axis_x_start) && (scaleX * i + mvx + X < axis_x_end)) {
           if (this.grid_on === true) {
-            Shape.drawLine(context, [[scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_start], [scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end + 3]]);
+            Shape.drawLine(context, [[scaleX * i + mvx + X, axis_y_start], [scaleX * i + mvx + X, axis_y_end + 3]]);
           } else {
-            Shape.drawLine(context, [[scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end - 3], [scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end + 3]]);
+            Shape.drawLine(context, [[scaleX * i + mvx + X, axis_y_end - 3], [scaleX * i + mvx + X, axis_y_end + 3]]);
           }
-          context.fillText(MyMath.round(grad_beg_x + i*this.x_step, x_nb_digits), scaleX*(grad_beg_x + i*this.x_step) + mvx + X, axis_y_end + this.graduation_style.font_size);          i++;
-        }
-      } else {
-        for (let i=0; i<list.length; i++) {
-          if ((scaleX*i + mvx + X > axis_x_start) && (scaleX*i + mvx + X < axis_x_end)) {
-            if (this.grid_on === true) {
-              Shape.drawLine(context, [[scaleX*i + mvx + X, axis_y_start], [scaleX*i + mvx + X, axis_y_end + 3]]);
-            } else {
-              Shape.drawLine(context, [[scaleX*i + mvx + X, axis_y_end - 3], [scaleX*i + mvx + X, axis_y_end + 3]]);
-            }
-            context.fillText(list[i], scaleX*i + mvx + X, axis_y_end + this.graduation_style.font_size);
-          }
+          context.fillText(list[i], scaleX * i + mvx + X, axis_y_end + this.graduation_style.font_size);
         }
       }
     }
+  }
 
-    draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_y, Y, canvas_height) {
-      context.textAlign = 'end';
-      context.textBaseline = 'middle';
-      if (attribute['type_'] == 'float') {
-        var minY = list[0];
-        var maxY = list[1];
-        if (scroll_y % 5 == 0) {
-          // let ky = 1.1*scaleY/init_scaleY;
-          // let num = Math.max(maxY - minY, 1);
-          // this.y_step = Math.min(num/(ky*(this.nb_points_y-1)), canvas_height/(scaleY*(this.nb_points_y - 1)));
-          this.y_step = canvas_height/(scaleY*(this.nb_points_y - 1));
+  draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, axis_y_end, list, attribute, scroll_y, Y, canvas_height) {
+    context.textAlign = 'end';
+    context.textBaseline = 'middle';
+    if (attribute['type_'] == 'float') {
+      var minY = list[0];
+      var maxY = list[1];
+      if (scroll_y % 5 == 0) {
+        // let ky = 1.1*scaleY/init_scaleY;
+        // let num = Math.max(maxY - minY, 1);
+        // this.y_step = Math.min(num/(ky*(this.nb_points_y-1)), canvas_height/(scaleY*(this.nb_points_y - 1)));
+        this.y_step = canvas_height / (scaleY * (this.nb_points_y - 1));
+      }
+      var i = 0;
+      var grad_beg_y = Math.ceil(-1 / this.y_step * ((axis_y_end - mvy - Y) / scaleY)) * this.y_step;
+      var grad_end_y = Math.floor(mvy / (this.y_step * scaleY)) * this.y_step;
+      var y_nb_digits = Math.max(0, 1 - Math.floor(Math.log10(this.y_step)));
+      while (grad_beg_y + (i - 1) * this.y_step < grad_end_y) {
+        if (this.grid_on === true) {
+          Shape.drawLine(context, [[axis_x_start - 3, -scaleY * (grad_beg_y + i * this.y_step) + mvy + Y], [axis_x_end, -scaleY * (grad_beg_y + i * this.y_step) + mvy + Y]]);
+        } else {
+          Shape.drawLine(context, [[axis_x_start - 3, -scaleY * (grad_beg_y + i * this.y_step) + mvy + Y], [axis_x_start + 3, -scaleY * (grad_beg_y + i * this.y_step) + mvy + Y]]);
         }
-        var i=0;
-        var grad_beg_y = Math.ceil(-1/this.y_step*((axis_y_end - mvy - Y)/scaleY)) * this.y_step;
-        var grad_end_y = Math.floor(mvy/(this.y_step * scaleY)) * this.y_step;
-        var y_nb_digits = Math.max(0, 1-Math.floor(Math.log10(this.y_step)));
-        while (grad_beg_y + (i-1)*this.y_step < grad_end_y) {
+        context.fillText(MyMath.round(grad_beg_y + i * this.y_step, y_nb_digits), axis_x_start - 5, -scaleY * (grad_beg_y + i * this.y_step) + mvy + Y);
+        i++;
+      }
+    } else {
+      for (let i = 0; i < list.length; i++) {
+        if ((-scaleY * i + mvy + Y > axis_y_start + 5) && (-scaleY * i + mvy + Y < axis_y_end)) {
           if (this.grid_on === true) {
-            Shape.drawLine(context,[[axis_x_start - 3, -scaleY*(grad_beg_y + i*this.y_step) + mvy + Y], [axis_x_end, -scaleY*(grad_beg_y + i*this.y_step) + mvy + Y]]);
+            Shape.drawLine(context, [[axis_x_start - 3, -scaleY * i + mvy + Y], [axis_x_end, -scaleY * i + mvy + Y]]);
           } else {
-            Shape.drawLine(context, [[axis_x_start - 3, -scaleY*(grad_beg_y + i*this.y_step) + mvy + Y], [axis_x_start + 3, -scaleY*(grad_beg_y + i*this.y_step) + mvy + Y]]);
+            Shape.drawLine(context, [[axis_x_start - 3, -scaleY * i + mvy + Y], [axis_x_start + 3, -scaleY * i + mvy + Y]]);
           }
-          context.fillText(MyMath.round(grad_beg_y + i*this.y_step, y_nb_digits), axis_x_start - 5, -scaleY*(grad_beg_y + i*this.y_step) + mvy + Y);
-          i++;
-        }
-      } else {
-        for (let i=0; i<list.length; i++) {
-          if ((-scaleY*i + mvy + Y > axis_y_start + 5) && (-scaleY*i + mvy + Y < axis_y_end)) {
-            if (this.grid_on === true) {
-              Shape.drawLine(context,[[axis_x_start - 3, -scaleY*i + mvy + Y], [axis_x_end, -scaleY*i + mvy + Y]]);
-            } else {
-                Shape.drawLine(context, [[axis_x_start - 3, -scaleY*i + mvy + Y], [axis_x_start + 3, -scaleY*i + mvy + Y]]);
-            }
-            context.fillText(list[i], axis_x_start - 5, -scaleY*i + mvy + Y);
-          }
+          context.fillText(list[i], axis_x_start - 5, -scaleY * i + mvy + Y);
         }
       }
     }
+  }
 }
 
 
 export class PointFamily {
-    constructor (public color: string,
-                 public point_index: number[],
-                 public name:string) {}
+  constructor(public color: string,
+    public point_index: number[],
+    public name: string) { }
 
-    public static deserialize(serialized) {
-      return new PointFamily(rgb_to_hex(serialized['color']),
-                             serialized['point_index'],
-                             serialized['name']);
-    }
+  public static deserialize(serialized) {
+    return new PointFamily(rgb_to_hex(serialized['color']),
+      serialized['point_index'],
+      serialized['name']);
+  }
 }
 
 
@@ -506,428 +508,435 @@ export class PointFamily {
  * A class for sorting lists.
  */
 export class Sort {
-    nbPermutations:number = 0;
-    permutations: number[] = [];
-    constructor(){};
+  nbPermutations: number = 0;
+  permutations: number[] = [];
+  constructor() { };
 
-    MergeSort(items: number[]): number[] {
-      return this.divide(items);
+  MergeSort(items: number[]): number[] {
+    return this.divide(items);
+  }
+
+  divide(items: number[]): number[] {
+    var halfLength = Math.ceil(items.length / 2);
+    var low = items.slice(0, halfLength);
+    var high = items.slice(halfLength);
+    if (halfLength > 1) {
+      low = this.divide(low);
+      high = this.divide(high);
     }
+    return this.combine(low, high);
+  }
 
-    divide(items: number[]): number[] {
-      var halfLength = Math.ceil(items.length / 2);
-      var low = items.slice(0, halfLength);
-      var high = items.slice(halfLength);
-      if (halfLength > 1) {
-          low = this.divide(low);
-          high = this.divide(high);
-      }
-      return this.combine(low, high);
-    }
-
-    combine(low: number[], high: number[]): number[] {
-      var indexLow = 0;
-      var indexHigh = 0;
-      var lengthLow = low.length;
-      var lengthHigh = high.length;
-      var combined = [];
-      while (indexLow < lengthLow || indexHigh < lengthHigh) {
-          var lowItem = low[indexLow];
-          var highItem = high[indexHigh];
-          if (lowItem !== undefined) {
-              if (highItem === undefined) {
-                  combined.push(lowItem);
-                  indexLow++;
-              } else {
-                  if (lowItem <= highItem) {
-                      combined.push(lowItem);
-                      indexLow++;
-                  } else {
-                      combined.push(highItem);
-                      this.nbPermutations = this.nbPermutations + lengthLow - indexLow;
-                      indexHigh++;
-                  }
-              }
+  combine(low: number[], high: number[]): number[] {
+    var indexLow = 0;
+    var indexHigh = 0;
+    var lengthLow = low.length;
+    var lengthHigh = high.length;
+    var combined = [];
+    while (indexLow < lengthLow || indexHigh < lengthHigh) {
+      var lowItem = low[indexLow];
+      var highItem = high[indexHigh];
+      if (lowItem !== undefined) {
+        if (highItem === undefined) {
+          combined.push(lowItem);
+          indexLow++;
+        } else {
+          if (lowItem <= highItem) {
+            combined.push(lowItem);
+            indexLow++;
           } else {
-              if (highItem !== undefined) {
-                  combined.push(highItem);
-                  indexHigh++;
-              }
-          }
-      }
-      return combined;
-    }
-
-    sortObjsByAttribute(list:any[], attribute_name:string): any[] {
-      if (!List.is_include(attribute_name, Object.getOwnPropertyNames(list[0]))) {
-        throw new Error('sortObjsByAttribute : ' + attribute_name + ' is not a property of the object')
-      }
-      var attribute_type = TypeOf(list[0][attribute_name]);
-      var list_copy = Array.from(list);
-
-      this.permutations = [];
-      for (let i=0; i<list.length; i++) this.permutations.push(i);
-
-      if (attribute_type == 'float') {
-        for (let i=0; i<list_copy.length-1; i++) {
-          let min = i;
-          let min_value = list_copy[i][attribute_name];
-          for (let j=i+1; j<list_copy.length; j++) {
-            let current_value = list_copy[j][attribute_name];
-            if (current_value < min_value) {
-              min = j;
-              min_value = current_value;
-            }
-          }
-          if (min != i) {
-            list_copy = List.move_elements(min, i, list_copy);
-            this.permutations = List.move_elements(min, i, this.permutations);
+            combined.push(highItem);
+            this.nbPermutations = this.nbPermutations + lengthLow - indexLow;
+            indexHigh++;
           }
         }
-        return list_copy;
-      } else { // ie color or string
-        let strings = [];
-        for (let i=0; i<list_copy.length; i++) {
-          if (!List.is_include(list_copy[i][attribute_name], strings)) {
-            strings.push(list_copy[i][attribute_name]);
-          }
+      } else {
+        if (highItem !== undefined) {
+          combined.push(highItem);
+          indexHigh++;
         }
-        let sorted_list = [];
-        for (let i=0; i<strings.length; i++) {
-          for (let j=0; j<list_copy.length; j++) {
-            if (strings[i] === list_copy[j][attribute_name]) {
-              sorted_list.push(list_copy[j]);
-            }
-          }
-        }
-        return sorted_list;
       }
     }
+    return combined;
+  }
+
+  sortObjsByAttribute(list: any[], attribute_name: string): any[] {
+    if (!List.is_include(attribute_name, Object.getOwnPropertyNames(list[0]))) {
+      throw new Error('sortObjsByAttribute : ' + attribute_name + ' is not a property of the object')
+    }
+    var attribute_type = TypeOf(list[0][attribute_name]);
+    var list_copy = Array.from(list);
+
+    this.permutations = [];
+    for (let i = 0; i < list.length; i++) this.permutations.push(i);
+
+    if (attribute_type == 'float') {
+      for (let i = 0; i < list_copy.length - 1; i++) {
+        let min = i;
+        let min_value = list_copy[i][attribute_name];
+        for (let j = i + 1; j < list_copy.length; j++) {
+          let current_value = list_copy[j][attribute_name];
+          if (current_value < min_value) {
+            min = j;
+            min_value = current_value;
+          }
+        }
+        if (min != i) {
+          list_copy = List.move_elements(min, i, list_copy);
+          this.permutations = List.move_elements(min, i, this.permutations);
+        }
+      }
+      return list_copy;
+    } else { // ie color or string
+      let strings = [];
+      for (let i = 0; i < list_copy.length; i++) {
+        if (!List.is_include(list_copy[i][attribute_name], strings)) {
+          strings.push(list_copy[i][attribute_name]);
+        }
+      }
+      let sorted_list = [];
+      for (let i = 0; i < strings.length; i++) {
+        for (let j = 0; j < list_copy.length; j++) {
+          if (strings[i] === list_copy[j][attribute_name]) {
+            sorted_list.push(list_copy[j]);
+          }
+        }
+      }
+      return sorted_list;
+    }
+  }
 
 }
 
 
 export class Tooltip {
-  constructor(public surface_style:SurfaceStyle,
-              public text_style:TextStyle,
-              public attribute_names?:string[],
-              public message?: Text,
-              public tooltip_radius:number=10,
-              public type_:string='tooltip',
-              public name:string='') {}
+  constructor(public surface_style: SurfaceStyle,
+    public text_style: TextStyle,
+    public attribute_names?: string[],
+    public message?: Text,
+    public tooltip_radius: number = 10,
+    public type_: string = 'tooltip',
+    public name: string = '') {
+  }
 
-    public static deserialize(serialized) {
-      let default_surface_style = {color_fill:string_to_rgb('black'), opacity:0.9, hatching:undefined};
-      let default_text_style = {text_color:string_to_rgb('lightgrey'), font_size:12, font_style:'Calibri',
-                                text_align_x:'start', text_align_y:'alphabetic', name:''};
-      let default_dict_ = {surface_style:default_surface_style, text_style:default_text_style, tooltip_radius:7};
-      serialized = set_default_values(serialized, default_dict_);
-      var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
-      var text_style = TextStyle.deserialize(serialized['text_style']);
+  public static deserialize(serialized) {
+    let default_surface_style = { color_fill: string_to_rgb('black'), opacity: 0.9, hatching: undefined };
+    let default_text_style = {
+      text_color: string_to_rgb('lightgrey'), font_size: 12, font_style: 'Calibri',
+      text_align_x: 'start', text_align_y: 'alphabetic', name: ''
+    };
+    let default_dict_ = { surface_style: default_surface_style, text_style: default_text_style, tooltip_radius: 7 };
+    serialized = set_default_values(serialized, default_dict_);
+    var surface_style = SurfaceStyle.deserialize(serialized['surface_style']);
+    var text_style = TextStyle.deserialize(serialized['text_style']);
 
-      return new Tooltip(surface_style,
-                         text_style,
-                         serialized['attributes'],
-                         serialized["text"],
-                         serialized['tooltip_radius'],
-                         serialized['type_'],
-                         serialized['name']);
+    return new Tooltip(surface_style,
+      text_style,
+      serialized['attributes'],
+      serialized["text"],
+      serialized['tooltip_radius'],
+      serialized['type_'],
+      serialized['name']);
+  }
+
+  isTooltipInsideCanvas(cx, cy, size, mvx, mvy, scaleX, scaleY, canvasWidth, canvasHeight) {
+    var x = scaleX * cx + mvx;
+    var y = scaleY * cy + mvy;
+    var length = 100 * size;
+    return (x + length >= 0) && (x - length <= canvasWidth) && (y + length >= 0) && (y - length <= canvasHeight);
+  }
+
+  refresh_nb_digits(x_nb_digits, y_nb_digits): [number, number] {
+    var new_x_digits = x_nb_digits;
+    var new_y_digit = y_nb_digits;
+    if (isNaN(new_x_digits)) {
+      new_x_digits = 3;
     }
-
-    isTooltipInsideCanvas(cx, cy, size, mvx, mvy, scaleX, scaleY, canvasWidth, canvasHeight) {
-      var x = scaleX*cx + mvx;
-      var y = scaleY*cy + mvy;
-      var length = 100*size;
-      return (x+length>=0) && (x-length<=canvasWidth) && (y+length>=0) && (y-length<=canvasHeight);
+    if (isNaN(new_y_digit)) {
+      new_y_digit = 3;
     }
+    return [new_x_digits, new_y_digit];
+  }
 
-    refresh_nb_digits(x_nb_digits, y_nb_digits): [number, number] {
-      var new_x_digits = x_nb_digits;
-      var new_y_digit = y_nb_digits;
-      if (isNaN(new_x_digits)) {
-        new_x_digits = 3;
+  initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt): [string[], number] {
+    var textfills = ['Information'];
+    var text_max_length = context.measureText('Information').width;
+    for (let i = 0; i < this.attribute_names.length; i++) {
+      let attribute_name = this.attribute_names[i];
+      let attribute_type = TypeOf(elt[attribute_name]);
+      if (attribute_type == 'float') {
+        var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits, 2)); //x_nb_digit évidemment pas définie lorsque l'axe des x est un string...
+      } else if (attribute_type == 'color') {
+        text = attribute_name + ' : ' + color_to_string(elt[attribute_name]);
+      } else {
+        text = attribute_name + ' : ' + elt[attribute_name];
       }
-      if (isNaN(new_y_digit)) {
-        new_y_digit = 3;
+      var text_w = context.measureText(text).width;
+      textfills.push(text);
+      if (text_w > text_max_length) {
+        text_max_length = text_w;
       }
-      return [new_x_digits, new_y_digit];
     }
+    return [textfills, text_max_length];
+  }
 
-    initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt): [string[], number] {
-      var textfills = ['Information'];
-      var text_max_length = context.measureText('Information').width;
-      for (let i=0; i<this.attribute_names.length; i++) {
-        let attribute_name = this.attribute_names[i];
-        let attribute_type = TypeOf(elt[attribute_name]);
-        if (attribute_type == 'float') {
-          var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digit évidemment pas définie lorsque l'axe des x est un string...
-        } else if (attribute_type == 'color') {
-          text = attribute_name + ' : ' + color_to_string(elt[attribute_name]);
+  initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point, initial_point_list, elements, axes): [string[], number] {
+    var textfills = ['Information'];
+    var text_max_length = context.measureText('Information').width;
+    for (let i = 0; i < this.attribute_names.length; i++) {
+      let attribute_name = this.attribute_names[i];
+      let attribute_type = TypeOf(elements[0][attribute_name]);
+      if (attribute_type == 'float') {
+        if (attribute_name === axes[0]) {
+          var text = attribute_name + ' : ' + MyMath.round(point.cx, Math.max(x_nb_digits, y_nb_digits, 2)); //x_nb_digits évidemment pas définie lorsque l'axe des x est un string...
+        } else if (attribute_name === axes[1]) {
+          var text = attribute_name + ' : ' + MyMath.round(-point.cy, Math.max(x_nb_digits, y_nb_digits, 2));
         } else {
-          text = attribute_name + ' : ' + elt[attribute_name];
+          let index = point.points_inside[0].getPointIndex(initial_point_list);
+          let elt = elements[index];
+          var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits, 2));
         }
         var text_w = context.measureText(text).width;
         textfills.push(text);
-        if (text_w > text_max_length) {
-          text_max_length = text_w;
-        }
       }
-      return [textfills, text_max_length];
+      if (text_w > text_max_length) {
+        text_max_length = text_w;
+      }
     }
+    return [textfills, text_max_length];
+  }
 
-    initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point, initial_point_list, elements, axes): [string[], number] {
-      var textfills = ['Information'];
-      var text_max_length = context.measureText('Information').width;
-      for (let i=0; i<this.attribute_names.length; i++) {
-        let attribute_name = this.attribute_names[i];
-        let attribute_type = TypeOf(elements[0][attribute_name]);
-        if (attribute_type == 'float') {
-          if (attribute_name === axes[0]) {
-            var text = attribute_name + ' : ' + MyMath.round(point.cx, Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digits évidemment pas définie lorsque l'axe des x est un string...
-          } else if (attribute_name === axes[1]) {
-            var text = attribute_name + ' : ' + MyMath.round(-point.cy, Math.max(x_nb_digits, y_nb_digits,2));
-          } else {
-            let index = point.points_inside[0].getPointIndex(initial_point_list);
-            let elt = elements[index];
-            var text = attribute_name + ' : ' + MyMath.round(elt[attribute_name], Math.max(x_nb_digits, y_nb_digits,2));
-          }
-          var text_w = context.measureText(text).width;
-          textfills.push(text);
-        }
-        if (text_w > text_max_length) {
-          text_max_length = text_w;
-        }
-      }
-      return [textfills, text_max_length];
-    }
-
-    draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height,
-      X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements,
-      mergeON, axes, log_scale_x, log_scale_y) {
-      var textfills = [];
-      var text_max_length = 0;
-      context.font = this.text_style.font;
-      [x_nb_digits, y_nb_digits] = this.refresh_nb_digits(x_nb_digits, y_nb_digits);
-      if (point.isPointInList(point_list)) {
-        var index = point.getPointIndex(point_list);
-        var elt = elements[index];
-        if (mergeON === true) {
-          [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point, initial_point_list, elements, axes);
-        } else {
-          [textfills, text_max_length] = this.initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt);
-        }
-      }
-
-      if (textfills.length > 0) {
-        var tp_height = textfills.length*this.text_style.font_size*1.25;
-        var cx = point.cx, cy = point.cy;
-        if (log_scale_x) cx = Math.log10(cx);
-        if (log_scale_y) cy = -Math.log10(-cy);
-        var point_size = point.point_style.size;
-        var decalage = 2.5*point_size + 15;
-        var tp_x = scaleX*cx + mvx + decalage + X;
-        var tp_y = scaleY*cy + mvy - 1/2*tp_height + Y;
-        var tp_width = text_max_length*1.3;
-
-        // Bec
-        var point1 = [tp_x - decalage/2, scaleY*cy + mvy + Y];
-        var point2 = [tp_x, scaleY*cy + mvy + Y + 5];
-        var point3 = [tp_x, scaleY*cy + mvy + Y - 5];
-
-        if (tp_x + tp_width  > canvas_width + X) {
-          tp_x = scaleX*cx + mvx - decalage - tp_width + X;
-          point1 = [tp_x + tp_width, scaleY*cy + mvy + Y + 5];
-          point2 = [tp_x + tp_width, scaleY*cy + mvy + Y - 5];
-          point3 = [tp_x + tp_width + decalage/2, scaleY*cy + mvy + Y];
-        }
-        if (tp_y < Y) {
-          tp_y = scaleY*cy + mvy + Y - 7*point_size;
-        }
-        if (tp_y + tp_height > canvas_height + Y) {
-          tp_y = scaleY*cy + mvy - tp_height + Y + 7*point_size;
-        }
-        context.beginPath();
-        Shape.drawLine(context, [point1, point2, point3]);
-        context.stroke();
-        context.fill();
-
-        Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('black'), 0.5,
-        this.surface_style.opacity, []);
-        context.fillStyle = this.text_style.text_color;
-        context.textAlign = 'center';
-        context.textBaseline = 'middle';
-
-        // var x_start = tp_x + 1/10*tp_width;
-
-        var current_y = tp_y + 0.75*this.text_style.font_size;
-        for (var i=0; i<textfills.length; i++) {
-          if (i == 0) {
-            context.font = 'bold ' + this.text_style.font;
-            context.fillText(textfills[0], tp_x + tp_width/2, current_y);
-            context.font = this.text_style.font;
-            current_y += this.text_style.font_size * 1.1;
-          } else {
-            context.fillText(textfills[i], tp_x + tp_width/2, current_y);
-            current_y += this.text_style.font_size;
-          }
-        }
-
-        context.globalAlpha = 1;
-        context.stroke();
-        context.closePath();
-      }
-
-    }
-
-    manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list,
-      X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
-      log_scale_x, log_scale_y) {
-
-      for (var i=0; i<tooltip_list.length; i++) {
-        let cx = tooltip_list[i].cx, cy = tooltip_list[i].cy;
-        if (log_scale_x) cx = Math.log10(cx);
-        if (log_scale_y) cy = -Math.log10(-cy);
-        if (tooltip_list[i] && this.isTooltipInsideCanvas(cx, cy, tooltip_list[i].size, mvx, mvy,
-          scaleX, scaleY, canvas_width, canvas_height)) {
-
-          this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height,
-            X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
-            log_scale_x, log_scale_y);
-
-        }
+  draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height,
+    X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements,
+    mergeON, axes, log_scale_x, log_scale_y) {
+    var textfills = [];
+    var text_max_length = 0;
+    context.font = this.text_style.font;
+    [x_nb_digits, y_nb_digits] = this.refresh_nb_digits(x_nb_digits, y_nb_digits);
+    if (point.isPointInList(point_list)) {
+      var index = point.getPointIndex(point_list);
+      var elt = elements[index];
+      if (mergeON === true) {
+        [textfills, text_max_length] = this.initialize_text_mergeON(context, x_nb_digits, y_nb_digits, point, initial_point_list, elements, axes);
+      } else {
+        [textfills, text_max_length] = this.initialize_text_mergeOFF(context, x_nb_digits, y_nb_digits, elt);
       }
     }
 
-
-    draw_primitive_tooltip(context, scale, mvx, mvy, X, Y, x, y, canvas_width, canvas_height) {
-      context.font = this.text_style.font;
-      var tp_height = this.text_style.font_size*1.25;
-      var tp_x = x + 5
-      var tp_y = y - 1/2*tp_height;
-      var text_length = context.measureText(this.message).width;
-      var tp_width = text_length*1.3;
+    if (textfills.length > 0) {
+      var tp_height = textfills.length * this.text_style.font_size * 1.25;
+      var cx = point.cx, cy = point.cy;
+      if (log_scale_x) cx = Math.log10(cx);
+      if (log_scale_y) cy = -Math.log10(-cy);
+      var point_size = point.point_style.size;
+      var decalage = 2.5 * point_size + 15;
+      var tp_x = scaleX * cx + mvx + decalage + X;
+      var tp_y = scaleY * cy + mvy - 1 / 2 * tp_height + Y;
+      var tp_width = text_max_length * 1.3;
 
       // Bec
-      // var point1 = [tp_x + 5, y];
-      // var point2 = [tp_x, y + 15];
-      // var point3 = [tp_x, y - 15];
+      var point1 = [tp_x - decalage / 2, scaleY * cy + mvy + Y];
+      var point2 = [tp_x, scaleY * cy + mvy + Y + 5];
+      var point3 = [tp_x, scaleY * cy + mvy + Y - 5];
 
-      if (tp_x + tp_width  > canvas_width + X) {
-        tp_x = x - tp_width;
-        // point1 = [tp_x + tp_width, y + 15];
-        // point2 = [tp_x + tp_width, y - 15];
-        // point3 = [tp_x + tp_width, y];
+      if (tp_x + tp_width > canvas_width + X) {
+        tp_x = scaleX * cx + mvx - decalage - tp_width + X;
+        point1 = [tp_x + tp_width, scaleY * cy + mvy + Y + 5];
+        point2 = [tp_x + tp_width, scaleY * cy + mvy + Y - 5];
+        point3 = [tp_x + tp_width + decalage / 2, scaleY * cy + mvy + Y];
       }
-      if (tp_y < Y) { tp_y = y };
-      if (tp_y + tp_height > canvas_height + Y) { tp_y = y - tp_height };
-
-      // context.beginPath();
-      // Shape.drawLine(context, [point1, point2, point3]);
-      // context.stroke();
-      // context.fill();
+      if (tp_y < Y) {
+        tp_y = scaleY * cy + mvy + Y - 7 * point_size;
+      }
+      if (tp_y + tp_height > canvas_height + Y) {
+        tp_y = scaleY * cy + mvy - tp_height + Y + 7 * point_size;
+      }
+      context.beginPath();
+      Shape.drawLine(context, [point1, point2, point3]);
+      context.stroke();
+      context.fill();
 
       Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('black'), 0.5,
-      this.surface_style.opacity, []);
+        this.surface_style.opacity, []);
       context.fillStyle = this.text_style.text_color;
       context.textAlign = 'center';
       context.textBaseline = 'middle';
-      context.fillText(this.message, tp_x + tp_width/2, tp_y + tp_height/2);
+
+      // var x_start = tp_x + 1/10*tp_width;
+
+      var current_y = tp_y + 0.75 * this.text_style.font_size;
+      for (var i = 0; i < textfills.length; i++) {
+        if (i == 0) {
+          context.font = 'bold ' + this.text_style.font;
+          context.fillText(textfills[0], tp_x + tp_width / 2, current_y);
+          context.font = this.text_style.font;
+          current_y += this.text_style.font_size * 1.1;
+        } else {
+          context.fillText(textfills[i], tp_x + tp_width / 2, current_y);
+          current_y += this.text_style.font_size;
+        }
+      }
+
+      context.globalAlpha = 1;
+      context.stroke();
+      context.closePath();
     }
+
+  }
+
+  manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list,
+    X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
+    log_scale_x, log_scale_y) {
+
+    for (var i = 0; i < tooltip_list.length; i++) {
+      let cx = tooltip_list[i].cx, cy = tooltip_list[i].cy;
+      if (log_scale_x) cx = Math.log10(cx);
+      if (log_scale_y) cy = -Math.log10(-cy);
+      if (tooltip_list[i] && this.isTooltipInsideCanvas(cx, cy, tooltip_list[i].size, mvx, mvy,
+        scaleX, scaleY, canvas_width, canvas_height)) {
+
+        this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height,
+          X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
+          log_scale_x, log_scale_y);
+
+      }
+    }
+  }
+
+
+  draw_primitive_tooltip(context, scale, mvx, mvy, X, Y, x, y, canvas_width, canvas_height) {
+    context.font = this.text_style.font;
+    var tp_height = this.text_style.font_size * 1.25;
+    var tp_x = x + 5
+    var tp_y = y - 1 / 2 * tp_height;
+    var text_length = context.measureText(this.message).width;
+    var tp_width = text_length * 1.3;
+
+    // Bec
+    // var point1 = [tp_x + 5, y];
+    // var point2 = [tp_x, y + 15];
+    // var point3 = [tp_x, y - 15];
+
+    if (tp_x + tp_width > canvas_width + X) {
+      tp_x = x - tp_width;
+      // point1 = [tp_x + tp_width, y + 15];
+      // point2 = [tp_x + tp_width, y - 15];
+      // point3 = [tp_x + tp_width, y];
+    }
+    if (tp_y < Y) {
+      tp_y = y;
+    }
+    if (tp_y + tp_height > canvas_height + Y) {
+      tp_y = y - tp_height;
+    }
+
+    // context.beginPath();
+    // Shape.drawLine(context, [point1, point2, point3]);
+    // context.stroke();
+    // context.fill();
+
+    Shape.roundRect(tp_x, tp_y, tp_width, tp_height, this.tooltip_radius, context, this.surface_style.color_fill, string_to_hex('black'), 0.5,
+      this.surface_style.opacity, []);
+    context.fillStyle = this.text_style.text_color;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(this.message, tp_x + tp_width / 2, tp_y + tp_height / 2);
+  }
 }
 
 
 export class Attribute {
-    list:any[];
-    alias:string;
-    constructor(public name:string,
-                public type_:string) {}
+  list: any[];
+  alias: string;
+  constructor(public name: string,
+    public type_: string) { }
 
-    public static deserialize(serialized) {
-      return new Attribute(serialized['name'],
-                           serialized['type_']);
-    }
+  public static deserialize(serialized) {
+    return new Attribute(serialized['name'],
+      serialized['type_']);
+  }
 
-    copy() {
-      var attribute_copy = new Attribute(this.name, this.type_);
-      attribute_copy['list'] = this.list;
-      return attribute_copy;
-    }
+  copy() {
+    var attribute_copy = new Attribute(this.name, this.type_);
+    attribute_copy['list'] = this.list;
+    return attribute_copy;
+  }
 }
 
 
 export class Window {
-    constructor(public height:number,public width:number, public name?:string){
-    }
+  constructor(public height: number, public width: number, public name?: string) {
+  }
 
-    public static deserialize(serialized) {
-      return new Window(serialized['height'],
-                        serialized['width'],
-                        serialized['name']);
-    }
+  public static deserialize(serialized) {
+    return new Window(serialized['height'],
+      serialized['width'],
+      serialized['name']);
+  }
 }
 
 
-export function check_package_version(package_version:string, requirement:string) {
-    var version_array = package_version.split('.');
-    var requirement_array = requirement.split('.');
-    var package_version_num = Number(version_array[0])*Math.pow(10, 4) + Number(version_array[1])*Math.pow(10,2) +
-      Number(version_array[2]);
-    var requirement_num = Number(requirement_array[0])*Math.pow(10, 4) + Number(requirement_array[1])*Math.pow(10,2) +
-      Number(requirement_array[2]);
-    if (package_version_num < requirement_num) {
-      alert("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
-    }
+export function check_package_version(package_version: string, requirement: string) {
+  var version_array = package_version.split('.');
+  var requirement_array = requirement.split('.');
+  var package_version_num = Number(version_array[0]) * Math.pow(10, 4) + Number(version_array[1]) * Math.pow(10, 2) +
+    Number(version_array[2]);
+  var requirement_num = Number(requirement_array[0]) * Math.pow(10, 4) + Number(requirement_array[1]) * Math.pow(10, 2) +
+    Number(requirement_array[2]);
+  if (package_version_num < requirement_num) {
+    alert("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
+  }
 }
 
 
 /**
  * A generic equals function that compares values and not references.
  */
- export function equals(a, b) {
-    if (a === b) return true;
+export function equals(a, b) {
+  if (a === b) return true;
 
-    if (a && b && typeof a == 'object' && typeof b == 'object') {
-      if (a.constructor !== b.constructor) return false;
+  if (a && b && typeof a == 'object' && typeof b == 'object') {
+    if (a.constructor !== b.constructor) return false;
 
-      var length, i, keys;
-      if (Array.isArray(a)) {
-        length = a.length;
-        if (length != b.length) return false;
-        for (i = length; i-- !== 0;)
-          if (!equals(a[i], b[i])) return false;
-        return true;
-      }
-
-      if (a.constructor === RegExp) return a.source === b.source && a.flags === b.flags;
-      if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b.valueOf();
-      if (a.toString !== Object.prototype.toString) return a.toString() === b.toString();
-
-      keys = Object.keys(a);
-      length = keys.length;
-      if (length !== Object.keys(b).length) return false;
-
+    var length, i, keys;
+    if (Array.isArray(a)) {
+      length = a.length;
+      if (length != b.length) return false;
       for (i = length; i-- !== 0;)
-        if (!Object.prototype.hasOwnProperty.call(b, keys[i])) return false;
-
-      for (i = length; i-- !== 0;) {
-        var key = keys[i];
-
-        if (!equals(a[key], b[key])) return false;
-      }
-
+        if (!equals(a[i], b[i])) return false;
       return true;
     }
 
-    // true if both NaN, false otherwise
-    return a!==a && b!==b;
+    if (a.constructor === RegExp) return a.source === b.source && a.flags === b.flags;
+    if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b.valueOf();
+    if (a.toString !== Object.prototype.toString) return a.toString() === b.toString();
+
+    keys = Object.keys(a);
+    length = keys.length;
+    if (length !== Object.keys(b).length) return false;
+
+    for (i = length; i-- !== 0;)
+      if (!Object.prototype.hasOwnProperty.call(b, keys[i])) return false;
+
+    for (i = length; i-- !== 0;) {
+      var key = keys[i];
+
+      if (!equals(a[key], b[key])) return false;
+    }
+
+    return true;
+  }
+
+  // true if both NaN, false otherwise
+  return a !== a && b !== b;
 }
 
 
 var nextCol = 1;
-export function genColor(){
+export function genColor() {
   var ret = [];
   // via http://stackoverflow.com/a/15804183
-  if(nextCol < 16777215){
+  if (nextCol < 16777215) {
     ret.push(nextCol & 0xff); // R
     ret.push((nextCol & 0xff00) >> 8); // G
     ret.push((nextCol & 0xff0000) >> 16); // B
@@ -941,75 +950,75 @@ export function genColor(){
 
 export function getCurvePoints(pts, tension, isClosed, numOfSegments) {
 
-    // use input value if provided, or use a default value
-    tension = (typeof tension != 'undefined') ? tension : 0.5;
-    isClosed = isClosed ? isClosed : false;
-    numOfSegments = numOfSegments ? numOfSegments : 16;
+  // use input value if provided, or use a default value
+  tension = (typeof tension != 'undefined') ? tension : 0.5;
+  isClosed = isClosed ? isClosed : false;
+  numOfSegments = numOfSegments ? numOfSegments : 16;
 
-    var _pts = [], res = [],    // clone array
-        x, y,           // our x,y coords
-        t1x, t2x, t1y, t2y, // tension vectors
-        c1, c2, c3, c4,     // cardinal points
-        st, t, i;       // steps based on num. of segments
+  var _pts = [], res = [],    // clone array
+    x, y,           // our x,y coords
+    t1x, t2x, t1y, t2y, // tension vectors
+    c1, c2, c3, c4,     // cardinal points
+    st, t, i;       // steps based on num. of segments
 
-    // clone array so we don't change the original
-    //
-    _pts = pts.slice(0);
+  // clone array so we don't change the original
+  //
+  _pts = pts.slice(0);
 
-    // The algorithm require a previous and next point to the current point array.
-    // Check if we will draw closed or open curve.
-    // If closed, copy end points to beginning and first points to end
-    // If open, duplicate first points to befinning, end points to end
-    if (isClosed) {
-        _pts.unshift(pts[pts.length - 1]);
-        _pts.unshift(pts[pts.length - 2]);
-        _pts.unshift(pts[pts.length - 1]);
-        _pts.unshift(pts[pts.length - 2]);
-        _pts.push(pts[0]);
-        _pts.push(pts[1]);
+  // The algorithm require a previous and next point to the current point array.
+  // Check if we will draw closed or open curve.
+  // If closed, copy end points to beginning and first points to end
+  // If open, duplicate first points to befinning, end points to end
+  if (isClosed) {
+    _pts.unshift(pts[pts.length - 1]);
+    _pts.unshift(pts[pts.length - 2]);
+    _pts.unshift(pts[pts.length - 1]);
+    _pts.unshift(pts[pts.length - 2]);
+    _pts.push(pts[0]);
+    _pts.push(pts[1]);
+  }
+  else {
+    _pts.unshift(pts[1]);   //copy 1. point and insert at beginning
+    _pts.unshift(pts[0]);
+    _pts.push(pts[pts.length - 2]); //copy last point and append
+    _pts.push(pts[pts.length - 1]);
+  }
+
+  // ok, lets start..
+
+  // 1. loop goes through point array
+  // 2. loop goes through each segment between the 2 pts + 1e point before and after
+  for (i = 2; i < (_pts.length - 4); i += 2) {
+    for (t = 0; t <= numOfSegments; t++) {
+
+      // calc tension vectors
+      t1x = (_pts[i + 2] - _pts[i - 2]) * tension;
+      t2x = (_pts[i + 4] - _pts[i]) * tension;
+
+      t1y = (_pts[i + 3] - _pts[i - 1]) * tension;
+      t2y = (_pts[i + 5] - _pts[i + 1]) * tension;
+
+      // calc step
+      st = t / numOfSegments;
+
+      // calc cardinals
+      c1 = 2 * Math.pow(st, 3) - 3 * Math.pow(st, 2) + 1;
+      c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2);
+      c3 = Math.pow(st, 3) - 2 * Math.pow(st, 2) + st;
+      c4 = Math.pow(st, 3) - Math.pow(st, 2);
+
+      // calc x and y cords with common control vectors
+      x = c1 * _pts[i] + c2 * _pts[i + 2] + c3 * t1x + c4 * t2x;
+      y = c1 * _pts[i + 1] + c2 * _pts[i + 3] + c3 * t1y + c4 * t2y;
+
+      //store points in array
+      res.push(x);
+      res.push(y);
+
     }
-    else {
-        _pts.unshift(pts[1]);   //copy 1. point and insert at beginning
-        _pts.unshift(pts[0]);
-        _pts.push(pts[pts.length - 2]); //copy last point and append
-        _pts.push(pts[pts.length - 1]);
-    }
+  }
 
-    // ok, lets start..
-
-    // 1. loop goes through point array
-    // 2. loop goes through each segment between the 2 pts + 1e point before and after
-    for (i=2; i < (_pts.length - 4); i+=2) {
-        for (t=0; t <= numOfSegments; t++) {
-
-            // calc tension vectors
-            t1x = (_pts[i+2] - _pts[i-2]) * tension;
-            t2x = (_pts[i+4] - _pts[i]) * tension;
-
-            t1y = (_pts[i+3] - _pts[i-1]) * tension;
-            t2y = (_pts[i+5] - _pts[i+1]) * tension;
-
-            // calc step
-            st = t / numOfSegments;
-
-            // calc cardinals
-            c1 =   2 * Math.pow(st, 3)  - 3 * Math.pow(st, 2) + 1;
-            c2 = -(2 * Math.pow(st, 3)) + 3 * Math.pow(st, 2);
-            c3 =       Math.pow(st, 3)  - 2 * Math.pow(st, 2) + st;
-            c4 =       Math.pow(st, 3)  -     Math.pow(st, 2);
-
-            // calc x and y cords with common control vectors
-            x = c1 * _pts[i]    + c2 * _pts[i+2] + c3 * t1x + c4 * t2x;
-            y = c1 * _pts[i+1]  + c2 * _pts[i+3] + c3 * t1y + c4 * t2y;
-
-            //store points in array
-            res.push(x);
-            res.push(y);
-
-        }
-    }
-
-    return res;
+  return res;
 }
 
 
@@ -1022,24 +1031,24 @@ export function merge_alert() {
 
 
 export function permutator(inputArr) {
-    var results = [];
+  var results = [];
 
-    function permute(arr, memo) {
-      var cur, memo = memo || [];
+  function permute(arr, memo) {
+    var cur, memo = memo || [];
 
-      for (var i = 0; i < arr.length; i++) {
-        cur = arr.splice(i, 1);
-        if (arr.length === 0) {
-          results.push(memo.concat(cur));
-        }
-        permute(arr.slice(), memo.concat(cur));
-        arr.splice(i, 0, cur[0]);
+    for (var i = 0; i < arr.length; i++) {
+      cur = arr.splice(i, 1);
+      if (arr.length === 0) {
+        results.push(memo.concat(cur));
       }
-
-      return results;
+      permute(arr.slice(), memo.concat(cur));
+      arr.splice(i, 0, cur[0]);
     }
 
-    return permute(inputArr, undefined);
+    return results;
+  }
+
+  return permute(inputArr, undefined);
 }
 
 
@@ -1053,37 +1062,37 @@ export function permutator(inputArr) {
  * @returns the input dictionaries with potential new values
  */
 export function set_default_values(dict_, default_dict_) {
-    if (dict_ === undefined) {
-      dict_ = {};
+  if (dict_ === undefined) {
+    dict_ = {};
+  }
+  var properties_names = Object.getOwnPropertyNames(default_dict_);
+  var entries = Object.entries(dict_);
+  for (let i = 0; i < properties_names.length; i++) {
+    let property = properties_names[i];
+    if (!dict_.hasOwnProperty(property) || dict_[property] === null) {
+      entries.push([property, default_dict_[property]]);
     }
-    var properties_names = Object.getOwnPropertyNames(default_dict_);
-    var entries = Object.entries(dict_);
-    for (let i=0; i<properties_names.length; i++) {
-      let property = properties_names[i];
-      if (!dict_.hasOwnProperty(property) || dict_[property] === null) {
-        entries.push([property, default_dict_[property]]);
-      }
-    }
-    return Object.fromEntries(entries);
+  }
+  return Object.fromEntries(entries);
 }
 
 
-export function TypeOf(element:any):string {
-    var type_ = typeof element;
-    if (type_ == 'number') {
-      return 'float';
-    } else if (type_ == 'string') {
-      if (isHex(element) || isRGB(element)) {
-        return 'color';
-      }
+export function TypeOf(element: any): string {
+  var type_ = typeof element;
+  if (type_ == 'number') {
+    return 'float';
+  } else if (type_ == 'string') {
+    if (isHex(element) || isRGB(element)) {
+      return 'color';
     }
-    return 'string';
+  }
+  return 'string';
 }
 
 
 export function drawLines(ctx, pts, first_elem) {
-    if (first_elem) ctx.moveTo(pts[0], pts[1]);
-    for(var i=2; i<pts.length-1; i+=2) ctx.lineTo(pts[i], pts[i+1]);
+  if (first_elem) ctx.moveTo(pts[0], pts[1]);
+  for (var i = 2; i < pts.length - 1; i += 2) ctx.lineTo(pts[i], pts[i + 1]);
 }
 
 
@@ -1100,7 +1109,7 @@ export function export_to_txt(filename, text) {
   document.body.removeChild(element);
 }
 
-export function export_to_csv(rows, filename="my_data.csv") {
+export function export_to_csv(rows, filename = "my_data.csv") {
   let csvContent = "data:text/csv;charset=utf-8,"
     + rows.map(e => e.join(",")).join("\n");
   var encodedUri = encodeURI(csvContent);
@@ -1130,23 +1139,23 @@ export class RubberBand {
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;
   constructor(public attributeName: string,
-              private _minValue: number,
-              private _maxValue: number,
-              public isVertical: boolean) {}
+    private _minValue: number,
+    private _maxValue: number,
+    public isVertical: boolean) { }
 
-  public get canvasLength() {return Math.abs(this.realMax - this.realMin)}
+  public get canvasLength() { return Math.abs(this.realMax - this.realMin) }
 
-  public get length() {return Math.abs(this.maxValue - this.minValue)}
+  public get length() { return Math.abs(this.maxValue - this.minValue) }
 
-  public get normedLength() {return Math.abs(this.axisMax - this.axisMin)}
+  public get normedLength() { return Math.abs(this.axisMax - this.axisMin) }
 
-  public set minValue(value: number) {this._minValue = value}
+  public set minValue(value: number) { this._minValue = value }
 
-  public get minValue() {return this._minValue}
+  public get minValue() { return this._minValue }
 
-  public set maxValue(value: number) {this._maxValue = value}
+  public set maxValue(value: number) { this._maxValue = value }
 
-  public get maxValue() {return this._maxValue}
+  public get maxValue() { return this._maxValue }
 
   public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
     if (this.isVertical) {
@@ -1178,12 +1187,12 @@ export class RubberBand {
     if (axis.type_ == 'float') {
       let real_min = axis.list[0];
       let real_max = axis.list[1];
-      if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) {return (1 - axisValue) * real_max + axisValue * real_min}
+      if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) { return (1 - axisValue) * real_max + axisValue * real_min }
       return axisValue * real_max + (1 - axisValue) * real_min
 
     }
     let nb_values = axis.list.length;
-    if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) {return (1 - axisValue) * (nb_values - 1)}
+    if ((this.isVertical && !inverted) || (!this.isVertical && inverted)) { return (1 - axisValue) * (nb_values - 1) }
     return axisValue * (nb_values - 1)
   }
 
@@ -1195,44 +1204,44 @@ export class RubberBand {
     this.maxValue = otherRubberBand.maxValue;
     const diffSenseSameDir = axisInverted != otherAxisInverted && this.isVertical == otherRubberBand.isVertical;
     const sameSenseDiffDir = axisInverted == otherAxisInverted && this.isVertical != otherRubberBand.isVertical;
-    if (diffSenseSameDir || sameSenseDiffDir) {this.normedInvert()};
+    if (diffSenseSameDir || sameSenseDiffDir) { this.normedInvert() };
     this.axisToReal(axisOrigin, axisEnd);
   }
 
   public axisChangeUpdate(origin: number[], end: number[], wasVertical: boolean,
     newOrigin: number[], newEnd: number[], isVertical: boolean) {
-      const bounds = [origin[0] + end[0], origin[1] + end[1]];
-      const newBounds = [newOrigin[0] + newEnd[0], newOrigin[1] + newEnd[1]];
-      const lengths = [Math.abs(origin[0] - end[0]), Math.abs(origin[1] - end[1])];
-      const newLengths = [Math.abs(newOrigin[0] - newEnd[0]), Math.abs(newOrigin[1] - newEnd[1])];
+    const bounds = [origin[0] + end[0], origin[1] + end[1]];
+    const newBounds = [newOrigin[0] + newEnd[0], newOrigin[1] + newEnd[1]];
+    const lengths = [Math.abs(origin[0] - end[0]), Math.abs(origin[1] - end[1])];
+    const newLengths = [Math.abs(newOrigin[0] - newEnd[0]), Math.abs(newOrigin[1] - newEnd[1])];
 
-      let index = 0;
-      let newIndex = 0;
-      if (wasVertical) {index = 1; this.invert(bounds);}
-      else {newIndex = 1}
+    let index = 0;
+    let newIndex = 0;
+    if (wasVertical) { index = 1; this.invert(bounds); }
+    else { newIndex = 1 }
 
-      const start = Math.min(origin[index], end[index]);
-      const newStart = Math.min(newOrigin[newIndex], newEnd[newIndex]);
-      this.switchOrientation(start, newStart, [lengths[index], newLengths[newIndex]]);
+    const start = Math.min(origin[index], end[index]);
+    const newStart = Math.min(newOrigin[newIndex], newEnd[newIndex]);
+    this.switchOrientation(start, newStart, [lengths[index], newLengths[newIndex]]);
 
-      if (!wasVertical) {this.invert(newBounds)}
+    if (!wasVertical) { this.invert(newBounds) }
   }
 
   public updateFromMouse(mouse1: [number, number], mouse2: [number, number], axis: Attribute,
     axisOrigin: [number, number], axisEnd: [number, number], inverted: boolean): void {
-      var mouseIdx = this.isVertical ? 1 : 0;
-      this.newBoundsUpdate(
-        mouse1[mouseIdx], mouse2[mouseIdx],
-        [axisOrigin[mouseIdx], axisEnd[mouseIdx]],
-        axis, inverted);
+    var mouseIdx = this.isVertical ? 1 : 0;
+    this.newBoundsUpdate(
+      mouse1[mouseIdx], mouse2[mouseIdx],
+      [axisOrigin[mouseIdx], axisEnd[mouseIdx]],
+      axis, inverted);
   }
 
   public newBoundsUpdate(newMin: number, newMax: number, axisBounds: number[],
     axis: Attribute, inverted: boolean): void {
-      this.realMin = Math.max(Math.min(newMin, newMax), axisBounds[1]);
-      this.realMax = Math.min(Math.max(newMin, newMax), axisBounds[0]);
-      this.realToAxis(axisBounds[0], axisBounds[1])
-      this.updateMinMax(axis, inverted);
+    this.realMin = Math.max(Math.min(newMin, newMax), axisBounds[1]);
+    this.realMax = Math.min(Math.max(newMin, newMax), axisBounds[0]);
+    this.realToAxis(axisBounds[0], axisBounds[1])
+    this.updateMinMax(axis, inverted);
   }
 
   public updateMinMax(axis: Attribute, inverted: boolean): void {
@@ -1264,7 +1273,7 @@ export class RubberBand {
     this.isVertical = !this.isVertical;
   }
 
-  public flipValues(): void{
+  public flipValues(): void {
     [this.axisMin, this.axisMax] = [this.axisMax, this.axisMin];
     [this.minValue, this.maxValue] = [this.minValue, this.maxValue];
     [this.realMin, this.realMax] = [this.realMax, this.realMin];
@@ -1316,15 +1325,15 @@ export class RubberBand {
 
   public mouseDown(mouseAxis: number) {
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.realMin) <= this.BORDER_SIZE) {this.minUpdate = true}
-    else if (Math.abs(mouseAxis - this.realMax) <= this.BORDER_SIZE) {this.maxUpdate = true}
-    else {this.lastValues = new Vertex(this.minValue, this.maxValue)}
+    if (Math.abs(mouseAxis - this.realMin) <= this.BORDER_SIZE) { this.minUpdate = true }
+    else if (Math.abs(mouseAxis - this.realMax) <= this.BORDER_SIZE) { this.maxUpdate = true }
+    else { this.lastValues = new Vertex(this.minValue, this.maxValue) }
   }
 
   public mouseMove(downValue: number, currentValue: number) {
     if (this.isClicked) {
-      if (this.minUpdate) {this.minValue = currentValue}
-      else if (this.maxUpdate) {this.maxValue = currentValue}
+      if (this.minUpdate) { this.minValue = currentValue }
+      else if (this.maxUpdate) { this.maxValue = currentValue }
       else {
         const translation = currentValue - downValue;
         this.minValue = this.lastValues.x + translation;
@@ -1349,9 +1358,9 @@ export class Vertex {
     this.y = y;
   };
 
-  get coordinates(): Vertex {return new Vertex(this.x, this.y)}
+  get coordinates(): Vertex { return new Vertex(this.x, this.y) }
 
-  public copy(): Vertex {return Object.create(this)}
+  public copy(): Vertex { return Object.create(this) }
 
   public add(other: Vertex): Vertex {
     let copy = this.copy();
@@ -1374,9 +1383,9 @@ export class Vertex {
     return copy
   }
 
-  public get normL1(): number {return Math.abs(this.x) + Math.abs(this.y)}
+  public get normL1(): number { return Math.abs(this.x) + Math.abs(this.y) }
 
-  public get norm(): number {return (this.x ** 2 + this.y ** 2) ** 0.5}
+  public get norm(): number { return (this.x ** 2 + this.y ** 2) ** 0.5 }
 
   public scale(scale: Vertex): Vertex {
     let copy = this.copy();
@@ -1441,11 +1450,11 @@ export class newShape {
     context.restore();
   }
 
-  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {}
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) { }
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {return false}
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) { return false }
 
-  public mouseUp() {}
+  public mouseUp() { }
 }
 
 export class newCircle extends newShape {
@@ -1690,46 +1699,69 @@ export class Triangle extends AbstractTriangle {
   }
 
   public buildPath(): Path2D {
-    if (this.orientation == 'up') {return new UpTriangle(this.center, this.size).path}
-    if (this.orientation == 'down') {return new DownTriangle(this.center, this.size).path}
-    if (this.orientation == 'right') {return new RightTriangle(this.center, this.size).path}
-    if (this.orientation == 'left') {return new LeftTriangle(this.center, this.size).path}
+    if (this.orientation == 'up') { return new UpTriangle(this.center, this.size).path }
+    if (this.orientation == 'down') { return new DownTriangle(this.center, this.size).path }
+    if (this.orientation == 'right') { return new RightTriangle(this.center, this.size).path }
+    if (this.orientation == 'left') { return new LeftTriangle(this.center, this.size).path }
   }
 }
 
+export interface textParams {
+  width?: number, height?: number, fontsize?: number, multiLine?: boolean, font?: string, align?: string,
+  baseline?: string, style?: string, orientation?: number
+}
+
+const DEFAULT_FONTSIZE = 12;
 export class newText extends newShape {
   public scale: number = 1;
   public fillStyle: string = 'hsl(0, 0%, 0%)'
+  public width: number;
+  public height: number;
+  public fontsize: number;
+  public font: string;
+  public align: string;
+  public baseline: string;
+  public style: string;
+  public orientation: number;
+  public multiLine: boolean;
+  public nRows: number;
   constructor(
     public text: string,
-    public origin: Vertex = new Vertex(0, 0),
-    public width: number = null,
-    public fontsize: number = 12,
-    public font: string = 'sans-serif',
-    public justify: string = 'left',
-    public baseline: string = 'alphabetic',
-    protected _style: string = '',
-    protected _orientation: number = 0
-  ) {
-    super();
-    this.path = this.buildPath();
+    public origin: Vertex,
+    { width = null,
+      height = null,
+      fontsize = null,
+      multiLine = false,
+      font = 'sans-serif',
+      align = 'left',
+      baseline = 'alphabetic',
+      style = '',
+      orientation = 0
+    }: textParams = {}) {
+      super();
+      this.width = width;
+      this.height = height;
+      this.fontsize = fontsize;
+      this.multiLine = multiLine;
+      this.font = font;
+      this.align = align;
+      this.baseline = baseline;
+      this.style = style;
+      this.orientation = orientation;
+      this.path = this.buildPath();
+    }
+
+  private static buildFont(style: string, fontsize: number, font: string): string {
+    return `${style} ${fontsize}px ${font}`
   }
 
-  get orientation(): number {return this._orientation};
-
-  set orientation(value: number) {this._orientation = value};
-
-  get style(): string {return this._style};
-
-  set style(value: string) {this._style = value};
-
-  get fullFont() { return `${this.style} ${this.fontsize}px ${this.font}` }
+  get fullFont() { return newText.buildFont(this.style, this.fontsize, this.font) }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let tmp_context: CanvasRenderingContext2D = context
     let pxMaxWidth: number = this.width * this.scale;
     tmp_context.font = '1px ' + this.font;
-    return pxMaxWidth / (tmp_context.measureText(this.text).width)
+    return Math.min(pxMaxWidth / (tmp_context.measureText(this.text).width), DEFAULT_FONTSIZE)
   }
 
   public buildPath(): Path2D {
@@ -1738,32 +1770,92 @@ export class newText extends newShape {
     return path
   }
 
-  public static capitalize(value: string): string {return value.charAt(0).toUpperCase() + value.slice(1)}
+  public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
 
-  public capitalizeSelf(): void {this.text = newText.capitalize(this.text)}
+  public capitalizeSelf(): void { this.text = newText.capitalize(this.text) }
 
   public draw(context: CanvasRenderingContext2D) {
-    if (this.width === null && this.fontsize !== null) {
-      this.width = context.measureText(this.text).width;
-    } else if (this.width !== null && this.fontsize === null) {
-      this.fontsize = this.automaticFontSize(context);
-    } else if (this.width !== null && this.fontsize !== null) {
-      let width = context.measureText(this.text).width;
-      if (width > this.width) {this.fontsize = this.automaticFontSize(context)}
-    } else {
-      throw new Error('Cannot write text with no size');
-    }
+    const writtenText = this.format(context);
     context.font = this.fullFont;
-    context.globalAlpha = this.alpha;
-    context.textAlign = this.justify as CanvasTextAlign;
+    context.textAlign = this.align as CanvasTextAlign;
     context.textBaseline = this.baseline as CanvasTextBaseline;
     this.path = this.buildPath();
     context.fillStyle = this.fillStyle;
+    context.globalAlpha = this.alpha;
     context.translate(this.origin.x, this.origin.y);
-    context.rotate(Math.PI/180 * this.orientation);
-    context.fillText(this.text, 0, 0);
-    context.rotate(-Math.PI/180 * this.orientation);
+    context.rotate(Math.PI / 180 * this.orientation);
+    this.write(writtenText, context);
+    context.rotate(-Math.PI / 180 * this.orientation);
     context.translate(-this.origin.x, -this.origin.y);
+  }
+
+  public format(context: CanvasRenderingContext2D): string[] {
+    let fontsize = this.fontsize? this.fontsize : DEFAULT_FONTSIZE;
+    let writtenText = [this.text];
+    context.font = newText.buildFont(this.style, fontsize, this.font);
+    if (this.width) {
+      if (this.multiLine) { writtenText = this.cutting_text(context, this.width) }
+      else {
+        if (!this.fontsize) {
+          fontsize = this.automaticFontSize(context);
+          context.font = newText.buildFont(this.style, fontsize, this.font);
+        } else {
+          if (context.measureText(this.text).width > this.width) { fontsize = this.automaticFontSize(context) }
+        }
+      }
+    }
+    this.fontsize = fontsize;
+    this.width = context.measureText(writtenText[0]).width;
+    const tempHeight = this.fontsize * writtenText.length;
+    if (!this.height) { this.height = tempHeight };
+    if (tempHeight > this.height) { this.fontsize = this.height / tempHeight * this.fontsize };
+    this.nRows = writtenText.length;
+    return writtenText
+  }
+
+  private write(writtenText: string[], context: CanvasRenderingContext2D) {
+    if (writtenText.length != 1) {
+      var offset: number = writtenText.length - 1;
+      writtenText.forEach((row, index) => { context.fillText(row, 0, (index - offset) * this.fontsize) });
+    } else {
+      context.fillText(writtenText[0], 0, 0);
+    }
+  }
+
+  private cutting_text(context: CanvasRenderingContext2D, maxWidth: number) {
+    var words = this.text.split(' ');
+    var space_length = context.measureText(' ').width;
+    var cut_texts = [];
+    var i = 0;
+    var line_length = 0;
+    var line_text = '';
+    while (i < words.length) {
+      let word = words[i];
+      let word_length = context.measureText(word).width;
+      if (word_length >= maxWidth) {
+        if (line_text !== '') cut_texts.push(line_text);
+        line_length = 0;
+        line_text = '';
+        cut_texts.push(word);
+        i++;
+      } else {
+        if (line_length + word_length <= maxWidth) {
+          if (line_length !== 0) {
+            line_length = line_length + space_length;
+            line_text = line_text + ' ';
+          }
+          line_text = line_text + word;
+          line_length = line_length + word_length;
+          i++;
+        } else {
+          cut_texts.push(line_text);
+          line_length = 0;
+          line_text = '';
+        }
+      }
+    }
+    if (line_text !== '') cut_texts.push(line_text);
+    return cut_texts;
   }
 }
 
@@ -1786,44 +1878,44 @@ export class newPoint2D extends Vertex {
     private _size: number = 2,
     private _marker: string = 'circle',
     private _markerOrientation: string = 'up'
-    ) {
-      super(x, y);
-      this.path = this.buildPath();
-    };
+  ) {
+    super(x, y);
+    this.path = this.buildPath();
+  };
 
   get drawnShape() {
     let marker = new newShape();
-    if (CIRCLES.indexOf(this.marker) > -1) {marker = new newCircle(this.coordinates, this.size)}
-    if (MARKERS.indexOf(this.marker) > -1) {marker = new Mark(this.coordinates, this.size)};
-    if (CROSSES.indexOf(this.marker) > -1) {marker = new Cross(this.coordinates, this.size)};
+    if (CIRCLES.indexOf(this.marker) > -1) { marker = new newCircle(this.coordinates, this.size) }
+    if (MARKERS.indexOf(this.marker) > -1) { marker = new Mark(this.coordinates, this.size) };
+    if (CROSSES.indexOf(this.marker) > -1) { marker = new Cross(this.coordinates, this.size) };
     if (SQUARES.indexOf(this.marker) > -1) {
       const halfSize = this.size * 0.5;
       const origin = new Vertex(this.coordinates.x - halfSize, this.coordinates.y - halfSize)
       marker = new newRect(origin, new Vertex(this.size, this.size))
     };
-    if (TRIANGLES.indexOf(this.marker) > -1) {marker = new Triangle(this.coordinates, this.size, this.markerOrientation)};
-    if (this.marker == 'halfLine') {marker = new HalfLine(this.coordinates, this.size, this.markerOrientation)};
+    if (TRIANGLES.indexOf(this.marker) > -1) { marker = new Triangle(this.coordinates, this.size, this.markerOrientation) };
+    if (this.marker == 'halfLine') { marker = new HalfLine(this.coordinates, this.size, this.markerOrientation) };
     marker.lineWidth = this.lineWidth;
     return marker
   }
 
-  get lineWidth(): number {return this._lineWidth};
+  get lineWidth(): number { return this._lineWidth };
 
-  set lineWidth(value: number) {this._lineWidth = value};
+  set lineWidth(value: number) { this._lineWidth = value };
 
-  get markerOrientation(): string {return this._markerOrientation};
+  get markerOrientation(): string { return this._markerOrientation };
 
-  set markerOrientation(value: string) {this._markerOrientation = value};
+  set markerOrientation(value: string) { this._markerOrientation = value };
 
-  get size(): number {return this._size};
+  get size(): number { return this._size };
 
-  set size(value: number) {this._size = value};
+  set size(value: number) { this._size = value };
 
-  get marker(): string {return this._marker};
+  get marker(): string { return this._marker };
 
-  set marker(value: string) {this._marker = value};
+  set marker(value: string) { this._marker = value };
 
-  private buildPath(): Path2D {return this.drawnShape.path};
+  private buildPath(): Path2D { return this.drawnShape.path };
 
   public draw(context: CanvasRenderingContext2D) {
     this.path = this.buildPath();
@@ -1931,12 +2023,11 @@ export class newTooltip {
     context.globalAlpha = this.alpha;
     context.fill(scaledPath);
     context.stroke(scaledPath);
-    // context.globalAlpha = 1;
 
     textOrigin = textOrigin.add(new Vertex(-this.size.x / 2 + TOOLTIP_TEXT_OFFSET, (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25));
     this.printedRows.forEach((row, index) => {
         textOrigin.y += index == 0 ? 0 : this.fontsize;
-        const text = new newText(row, textOrigin, null, this.fontsize, "sans-serif", "left", "middle", index == 0? 'bold' : '');
+        const text = new newText(row, textOrigin, {fontsize: this.fontsize, baseline: "middle", style: index == 0? 'bold' : ''});
         text.fillStyle = this.textColor;
         text.draw(context)
       })
@@ -1986,62 +2077,62 @@ export class newAxis {
     public end: Vertex,
     public name: string = '',
     private _nTicks: number = 10) {
-      this.isDiscrete = typeof vector[0] == 'string';
-      if (this.isDiscrete) {this.labels = newAxis.uniqueValues(vector)};
-      const [minValue, maxValue] = this.computeMinMax(vector);
-      [this._previousMin, this._previousMax] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
-      this.ticks = this.computeTicks();
-      if (!this.isDiscrete) {this.labels = this.numericLabels()};
-      this.drawPath = this.buildDrawPath();
-      this.path = this.buildPath();
-      this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
-    };
+    this.isDiscrete = typeof vector[0] == 'string';
+    if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
+    const [minValue, maxValue] = this.computeMinMax(vector);
+    [this._previousMin, this._previousMax] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
+    this.ticks = this.computeTicks();
+    if (!this.isDiscrete) { this.labels = this.numericLabels() };
+    this.drawPath = this.buildDrawPath();
+    this.path = this.buildPath();
+    this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
+  };
 
   public get drawLength(): number {
-    if (this.isVertical) {return Math.abs(this.origin.y - this.end.y)};
+    if (this.isVertical) { return Math.abs(this.origin.y - this.end.y) };
     return Math.abs(this.origin.x - this.end.x);
   }
 
-  get interval(): number {return Math.abs(this.maxValue - this.minValue)};
+  get interval(): number { return Math.abs(this.maxValue - this.minValue) };
 
-  get isVertical(): boolean {return this.origin.x == this.end.x};
+  get isVertical(): boolean { return this.origin.x == this.end.x };
 
-  get isDiscrete(): boolean {return this._isDiscrete};
+  get isDiscrete(): boolean { return this._isDiscrete };
 
-  set isDiscrete(value: boolean) {this._isDiscrete = value};
+  set isDiscrete(value: boolean) { this._isDiscrete = value };
 
-  set marginRatio(value: number) {this._marginRatio = value};
+  set marginRatio(value: number) { this._marginRatio = value };
 
-  get marginRatio(): number {return this._marginRatio};
+  get marginRatio(): number { return this._marginRatio };
 
-  set maxValue(value: number) {this._maxValue = value};
+  set maxValue(value: number) { this._maxValue = value };
 
-  get maxValue(): number {return this._maxValue};
+  get maxValue(): number { return this._maxValue };
 
-  set minValue(value: number) {this._minValue = value};
+  set minValue(value: number) { this._minValue = value };
 
-  get minValue(): number {return this._minValue};
+  get minValue(): number { return this._minValue };
 
-  set nTicks(value: number) {this._nTicks = value};
+  set nTicks(value: number) { this._nTicks = value };
 
   get nTicks(): number {
     if (this.isDiscrete) return this.labels.length + 1
     return this._nTicks
   }
 
-  get ticks() {return this._ticks}
+  get ticks() { return this._ticks }
 
-  set ticks(value: number[]) {this._ticks = value}
+  set ticks(value: number[]) { this._ticks = value }
 
-  get tickPrecision(): number {return this._tickPrecision};
+  get tickPrecision(): number { return this._tickPrecision };
 
-  get title(): string {return newText.capitalize(this.name)}
+  get title(): string { return newText.capitalize(this.name) }
 
-  get transformMatrix(): DOMMatrix {return this.getValueToDrawMatrix()};
+  get transformMatrix(): DOMMatrix { return this.getValueToDrawMatrix() };
 
-  private horizontalPickIdx() {return Math.sign(1 - Math.sign(this.transformMatrix.f))}
+  private horizontalPickIdx() { return Math.sign(1 - Math.sign(this.transformMatrix.f)) }
 
-  private verticalPickIdx() {return Math.sign(1 - Math.sign(this.transformMatrix.e))}
+  private verticalPickIdx() { return Math.sign(1 - Math.sign(this.transformMatrix.e)) }
 
   public transform(newOrigin: Vertex, newEnd: Vertex) {
     this.origin = newOrigin;
@@ -2050,7 +2141,7 @@ export class newAxis {
     this.path = this.buildPath();
   }
 
-  public reset(): void {this.rubberBand.reset()}
+  public reset(): void { this.rubberBand.reset() }
 
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));
@@ -2064,7 +2155,7 @@ export class newAxis {
   }
 
   private buildDrawPath(): Path2D {
-    const verticalIdx =  Number(this.isVertical) ; const horizontalIdx = Number(!this.isVertical);
+    const verticalIdx = Number(this.isVertical); const horizontalIdx = Number(!this.isVertical);
     const path = new Path2D();
     const endArrow = new newPoint2D(this.end.x + this.SIZE_END / 2 * horizontalIdx, this.end.y + this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['right', 'up'][verticalIdx]);
     path.moveTo(this.origin.x - this.DRAW_START_OFFSET * horizontalIdx, this.origin.y - this.DRAW_START_OFFSET * verticalIdx);
@@ -2095,7 +2186,7 @@ export class newAxis {
   }
 
   private computeMinMax(vector: any[]): number[] {
-    if (this.isDiscrete) {return [0, this.labels.length]};
+    if (this.isDiscrete) { return [0, this.labels.length] };
     return [Math.min(...vector), Math.max(...vector)]
   }
 
@@ -2103,16 +2194,16 @@ export class newAxis {
     const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
-    while (ticks.slice(-1)[0] <= this.maxValue) {ticks.push(ticks.slice(-1)[0] + increment)};
-    if (ticks.slice(0)[0] < this.minValue) {ticks.splice(0, 1)};
-    if (ticks.slice(-1)[0] > this.maxValue) {ticks.splice(-1, 1)};
+    while (ticks.slice(-1)[0] <= this.maxValue) { ticks.push(ticks.slice(-1)[0] + increment) };
+    if (ticks.slice(0)[0] < this.minValue) { ticks.splice(0, 1) };
+    if (ticks.slice(-1)[0] > this.maxValue) { ticks.splice(-1, 1) };
     return ticks
   }
 
   public draw(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     let color = this.strokeStyle;
-    if (this.mouseStyleON) {color = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle};
+    if (this.mouseStyleON) { color = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle };
     context.strokeStyle = color;
     context.fillStyle = color;
     context.stroke(this.drawPath);
@@ -2132,13 +2223,17 @@ export class newAxis {
     let baseline = ['hanging', 'alphabetic'][this.horizontalPickIdx()]
     let nameCoords = this.end.add(this.origin).divide(2);
     if (this.isVertical) {
-      nameCoords.x += this.OFFSET_NAME.x ;
+      nameCoords.x += this.OFFSET_NAME.x;
       baseline = ['alphabetic', 'hanging'][this.verticalPickIdx()];
     }
-    else {nameCoords.y += this.OFFSET_NAME.y}
+    else { nameCoords.y += this.OFFSET_NAME.y }
     nameCoords.transformSelf(canvasHTMatrix);
     const orientation = this.isVertical ? -90 : 0;
-    const textName = new newText(this.title, nameCoords, this.drawLength, this.FONT_SIZE, this.FONT, 'center', baseline, 'bold', orientation);
+    const textParams: textParams = {
+      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.FONT, align: 'center',
+      baseline: baseline, style: 'bold', orientation: orientation
+    };
+    const textName = new newText(this.title, nameCoords, textParams);
     textName.draw(context);
   }
 
@@ -2151,8 +2246,8 @@ export class newAxis {
         ticksCoords.push(point);
         let text = this.labels[idx]
         if (this.isDiscrete) {
-          if (count == tick && this.labels[count]) {text = this.labels[count] ; count++}
-          else {text = ''}
+          if (count == tick && this.labels[count]) { text = this.labels[count]; count++ }
+          else { text = '' }
         }
         this.drawTickText(context, text, point, pointHTMatrix);
       }
@@ -2176,7 +2271,8 @@ export class newAxis {
     if (textAlign == 'right') textWidth = textOrigin.x - 5;
     if (textAlign == 'center') textWidth = (this.drawLength) / (this.nTicks * 1.5);
     context.resetTransform()
-    const tickText = new newText(newText.capitalize(text), textOrigin, textWidth, this.FONT_SIZE, this.FONT, textAlign, baseline);
+    const textParams: textParams = {width: textWidth, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline};
+    const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
     tickText.draw(context)
     context.setTransform(HTMatrix)
   }
@@ -2190,9 +2286,9 @@ export class newAxis {
   }
 
   private marginedBounds(minValue: number, maxValue: number): [number, number] {
-    if (this.isDiscrete) {return [minValue - 1, maxValue + 1]};
+    if (this.isDiscrete) { return [minValue - 1, maxValue + 1] };
     return [minValue * (1 - Math.sign(minValue) * this.marginRatio),
-            maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
+    maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D) {
@@ -2212,7 +2308,7 @@ export class newAxis {
     if (!this.rubberBand.isClicked) {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
-    } else {this.rubberBand.mouseMove(downValue, currentValue)}
+    } else { this.rubberBand.mouseMove(downValue, currentValue) }
     return true
   }
 
@@ -2223,7 +2319,7 @@ export class newAxis {
     if (!this.isInRubberBand(this.absoluteToRelative(mouseUniCoord))) {
       this.rubberBand.reset();
       isReset = true;
-    } else {this.rubberBand.mouseDown(mouseUniCoord);}
+    } else { this.rubberBand.mouseDown(mouseUniCoord); }
     return isReset
   }
 
@@ -2274,7 +2370,7 @@ export class newAxis {
     let center = (viewPoint.x - HTMatrix.e) / HTMatrix.a;
     let offset = translation.x;
     let scale = scaling.x;
-    if (this.isVertical) {center = (viewPoint.y - HTMatrix.f) / HTMatrix.d ; offset = translation.y ; scale = scaling.y};
+    if (this.isVertical) { center = (viewPoint.y - HTMatrix.f) / HTMatrix.d; offset = translation.y; scale = scaling.y };
     this.minValue = (this._previousMin - center) / scale + center + offset / HTMatrix.a;
     this.maxValue = (this._previousMax - center) / scale + center + offset / HTMatrix.a;
     this.updateTicks();
@@ -2284,13 +2380,13 @@ export class newAxis {
     const minTick = Math.min(...this.ticks);
     const maxTick = Math.max(...this.ticks);
     const ratio = Number(maxTick.toPrecision(this.tickPrecision)) / Number(minTick.toPrecision(this.tickPrecision));
-    if (ratio == 1) {this._tickPrecision++};
-    if (Number(maxTick.toPrecision(this.tickPrecision - 1)) != Number(minTick.toPrecision(this.tickPrecision - 1)) && this.tickPrecision > 4) {this._tickPrecision--};
+    if (ratio == 1) { this._tickPrecision++ };
+    if (Number(maxTick.toPrecision(this.tickPrecision - 1)) != Number(minTick.toPrecision(this.tickPrecision - 1)) && this.tickPrecision > 4) { this._tickPrecision-- };
     return
   };
 
   private updateTicks(): void {
     this.ticks = this.computeTicks();
-    if (!this.isDiscrete) {this.labels = this.numericLabels()};
+    if (!this.isDiscrete) { this.labels = this.numericLabels() };
   }
 }

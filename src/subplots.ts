@@ -163,6 +163,7 @@ export class PlotScatter extends PlotData {
             this.selected_areas.push(temp);
           }
         }
+
         this.isParallelPlot = false;
         if (this.mergeON && alert_count === 0) {
           // merge_alert();

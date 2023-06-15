@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape, newTooltip } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1934,15 +1934,18 @@ export class newHistogram extends Frame {
     this.updateAxes();
     this.getBarsDrawing();
     this.context_show.setTransform(this.movingMatrix);
-    this.bars.forEach(bar => {bar.buildPath() ; bar.draw(this.context_show)});
+    this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
     this.context_show.resetTransform();
     this.movingObjects = this.bars;
 
     this.context_show.setTransform(this.canvasMatrix);
     super.drawAxes();
-
-    this.context_show.setTransform(this.movingMatrix);
-    this.bars.forEach(bar => bar.drawTooltip(this.context_show));
+    this.bars.forEach(bar => {
+      if (bar.isClicked) {
+        const tt = new newTooltip(bar.tooltipOrigin, new Map<string, any>([["Number: ", bar.nValues]]), this.context_show);
+        tt.draw(this.context_show);
+      }
+    })
     this.context_show.resetTransform();
   }
 

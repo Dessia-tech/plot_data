@@ -1413,14 +1413,18 @@ export class newShape {
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
   public selectedStyle: string = 'hsl(267, 95%, 85%)';
+  public alpha: number = 1;
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
-  public printedAttributes: string[];
   public tooltipOrigin: Vertex;
   protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
   protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
   constructor() {};
+
+  protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
+    throw new Error(`Method computeTooltipOrigin not implemented for ${this.constructor.name}`)
+  }
 
   public draw(context: CanvasRenderingContext2D) {
     const scaledPath = new Path2D();
@@ -1430,6 +1434,7 @@ export class newShape {
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
+    context.globalAlpha = this.alpha;
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);
@@ -1749,6 +1754,7 @@ export class newText extends newShape {
       throw new Error('Cannot write text with no size');
     }
     context.font = this.fullFont;
+    context.globalAlpha = this.alpha;
     context.textAlign = this.justify as CanvasTextAlign;
     context.textBaseline = this.baseline as CanvasTextBaseline;
     this.path = this.buildPath();
@@ -1830,12 +1836,14 @@ export class newPoint2D extends Vertex {
 }
 
 export class Bar extends newRect {
-  public printedAttributes: string[] = ["nValues"];
   public strokeStyle: string = 'hsl(270, 0%, 0%)';
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
   public selectedStyle: string = 'hsl(267, 95%, 85%)';
+  public min: number;
+  public max: number;
+  public mean: number;
   constructor(
     public values: any[] = [],
     public origin: Vertex = new Vertex(0, 0),
@@ -1846,9 +1854,7 @@ export class Bar extends newRect {
 
   get length(): number { return this.values.length };
 
-  get nValues(): number { return this.length };
-
-  private computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
+  protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
     return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
   }
 
@@ -1867,12 +1873,13 @@ export class Bar extends newRect {
 
 
 const TOOLTIP_TEXT_OFFSET = 10;
-const TOOLTIP_TRIANGLE_SIZE = 15;
+const TOOLTIP_TRIANGLE_SIZE = 10;
 export class newTooltip {
   public path: Path2D;
-  public strokeStyle: string ="hsl(0, 0%, 0%)";
-  public textColor: string ="hsl(0, 0%, 100%)";
-  public fillStyle: string ="hsl(0, 0%, 0%)";
+  public strokeStyle: string = "hsl(266, 95%, 60%)";
+  public textColor: string = "hsl(0, 0%, 100%)";
+  public fillStyle: string = "hsl(266, 95%, 60%)";
+  public alpha: number = 0.8;
   public fontsize: number = 12;
   public radius: number = 10;
   private printedRows: string[];
@@ -1888,6 +1895,7 @@ export class newTooltip {
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
     let printedRows = ['Information: '];
     let textLength = context.measureText(printedRows[0]).width;
+    console.log(this.dataToPrint)
     this.dataToPrint.forEach((value, key) => {
       const text = `  - ${key}: ${value}`;
       const textWidth = context.measureText(text).width;
@@ -1918,13 +1926,16 @@ export class newTooltip {
 
     context.save();
     context.scale(scaling.x, scaling.y);
+    context.strokeStyle = this.strokeStyle;
+    context.fillStyle = this.fillStyle;
+    context.globalAlpha = this.alpha;
     context.fill(scaledPath);
     context.stroke(scaledPath);
-
+    // context.globalAlpha = 1;
 
     textOrigin = textOrigin.add(new Vertex(-this.size.x / 2 + TOOLTIP_TEXT_OFFSET, (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25));
     this.printedRows.forEach((row, index) => {
-        textOrigin.y += index * this.fontsize;
+        textOrigin.y += index == 0 ? 0 : this.fontsize;
         const text = new newText(row, textOrigin, null, this.fontsize, "sans-serif", "left", "middle", index == 0? 'bold' : '');
         text.fillStyle = this.textColor;
         text.draw(context)

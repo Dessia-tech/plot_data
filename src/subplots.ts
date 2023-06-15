@@ -1919,14 +1919,22 @@ export class newHistogram extends Frame {
     [this.hoveredIndex, this.clickedIndex] = this.storeBarState();
     let fakeTicks = this.boundedTicks(axis);
     let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar());
+    let barValues = Array.from(Array(fakeTicks.length - 1), () => []);
     numericVector.forEach((value, valIdx) => {
       for (let tickIdx = 0 ; tickIdx < fakeTicks.length - 1 ; tickIdx++ ) {
         if (value >= fakeTicks[tickIdx] && value < fakeTicks[tickIdx + 1]) {
           bars[tickIdx].values.push(valIdx);
+          barValues[tickIdx].push(value);
           break
         }
       }
     });
+    const precision = 100;
+    barValues.forEach((values, index) => {
+      bars[index].min = Math.round(Math.min(...values) * precision) / precision;
+      bars[index].max = Math.round(Math.max(...values) * precision) / precision;
+      bars[index].mean = Math.round(values.reduce((a, b) => a + b, 0) / values.length * precision) / precision;
+    })
     return bars
   }
 
@@ -1942,8 +1950,16 @@ export class newHistogram extends Frame {
     super.drawAxes();
     this.bars.forEach(bar => {
       if (bar.isClicked) {
-        const tt = new newTooltip(bar.tooltipOrigin, new Map<string, any>([["Number", bar.nValues]]), this.context_show);
-        tt.draw(this.context_show);
+        const tooltip = new newTooltip(
+          bar.tooltipOrigin, 
+          new Map<string, any>([
+            ["Number", bar.values.length],
+            ["Min", bar.min],
+            ["Max", bar.max],
+            ["Mean", bar.mean]
+          ]), 
+          this.context_show);
+        tooltip.draw(this.context_show);
       }
     })
     this.context_show.resetTransform();

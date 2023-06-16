@@ -9,7 +9,7 @@ elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']
 COLORS = ["Red", "blue", "green", "Yellow", "orange", "purple"]
 # COLORS = [colors.RED, colors.BLUE, colors.GREEN, colors.YELLOW, colors.ORANGE, colors.VIOLET]
-for i in range(1500):
+for i in range(50):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
     elements.append({'mass': random.uniform(0, 20000),
@@ -18,6 +18,6 @@ for i in range(1500):
                      'color': random_color
                      })
 
-plot_data_object = plot_data.Histogram(x_variable='shape', elements=elements)
+plot_data_object = plot_data.Histogram(x_variable='mass', elements=elements)
 
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

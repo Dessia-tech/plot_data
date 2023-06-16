@@ -1293,7 +1293,7 @@ def make_filepath(filepath: str = None):
 
 
 def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas',
-                force_version: str = None):
+                force_version: str = None, width: float = None, height: float = None):
     """
     Creates a html file and plots input data in web browser.
 
@@ -1312,6 +1312,8 @@ def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool
     :param page_name: set the created html file's name
     :type page_name: str
     """
+    if width: plot_data_object.width = width
+    if height: plot_data_object.height = height
     plot_data_object.plot(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version)
 
 

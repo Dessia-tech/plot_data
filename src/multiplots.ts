@@ -66,6 +66,7 @@ export class MultiplePlots {
 
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
+      console.log("local")
       var requirement = '0.6.1';
       check_package_version(data['package_version'], requirement);
       this.define_canvas(canvas_id);

@@ -1312,8 +1312,10 @@ def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool
     :param page_name: set the created html file's name
     :type page_name: str
     """
-    if width: plot_data_object.width = width
-    if height: plot_data_object.height = height
+    if width:
+        plot_data_object.width = width
+    if height:
+        plot_data_object.height = height
     plot_data_object.plot(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version)
 
 

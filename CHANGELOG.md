@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1]
+### Fix
+- plot_canvas function in python (needed width and height arguments) (in dev too)
+
 ## [0.14.0]
 ### Add
 - to_html method in Python so that it is possible to create a plot data file without opening it in web browser

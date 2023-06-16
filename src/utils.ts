@@ -2069,13 +2069,13 @@ export class newTooltip {
   }
 
   public draw(context: CanvasRenderingContext2D) {
+    console.log(context)
     const contextMatrix = context.getTransform();
     const canvasSize = new Vertex(context.canvas.width, context.canvas.height);
     const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
     this.insideCanvas(canvasSize, scaling);
     const textOrigin = this.computeTextOrigin(scaling);
     const scaledPath = new Path2D();
-    // console.log(this.origin.add(this.size.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE)).scale(scaling)), this.origin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE)))
     this.squareOrigin = this.squareOrigin.scale(scaling);
     this.origin = this.origin.scale(scaling);
     scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));

@@ -2069,7 +2069,6 @@ export class newTooltip {
   }
 
   public draw(context: CanvasRenderingContext2D) {
-    console.log(context)
     const contextMatrix = context.getTransform();
     const canvasSize = new Vertex(context.canvas.width, context.canvas.height);
     const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);

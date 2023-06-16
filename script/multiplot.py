@@ -75,5 +75,5 @@ plots2 = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, scatterplot3
 plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True)
 
 # Display
-plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
+plot_data_object.plot(debug_mode = True, canvas_id = 'canvas')
 # plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)

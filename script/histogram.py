@@ -18,8 +18,6 @@ for i in range(1500):
                      'color': random_color
                      })
 
-custom_tooltip = plot_data.Tooltip(attributes=['mass', 'length', 'shape', 'color'])
-
-plot_data_object = plot_data.Histogram(x_variable='shape', elements=elements, tooltip=custom_tooltip)
+plot_data_object = plot_data.Histogram(x_variable='shape', elements=elements)
 
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

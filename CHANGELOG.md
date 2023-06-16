@@ -5,13 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1]
+### Fix
+- plot_canvas function in python (needed width and height arguments)
+
+## [0.14.0]
+### Add
+- to_html method in Python so that it is possible to create a plot data file without opening it in web browser
+- Allow to draw all points of a Dataset in Graph objects
+
+### Fix
+- Smart writing of axes' names in ParallelPlot
+- Allow to draw all points of a Dataset in Graph objects
+- Python 3.9 in drone
+- Remove numpy from dependencies
+
 ## [0.13.0]
 ### Add
 - Doc Typescript
+- newHistogram plot to replace current Histogram
+    - There is no covering between multiplot histogram and this one so the two of them can live in plot_data at the same time
+    - Axes:
+        - Handled in a BasePlot object and instantiated specifically in each kind of plot (Frame, Histogram,...)
+        - Generate their own ticks, with a start number (default is 7 for normal plot, 20 for xAxis of Histogram)
+        - Ticks are built from the nearest 5 multiple in floor(log10(minValue)) with an interval computed with (maxValue - minValue) interval
+        - Instantiated in Canvas with CanvasMatrix as fixed objects
+        - Mouse style can be activated for debug stuff
+    - BasePlot:
+        - Base Plot for any plot
+        - Manage mouse, features and axes instantiation
+        - In BasePlot, all objects are fixed
+    - Frame:
+        - Classic orthogonal plot with X and Y axis
+        - Allow to instantiate moving objects as bars, points, or any other
+        - Moving objects are projected in the frame movingMatrix, updated for any mouse translation or wheel
+- New Shapes have been created to facilitate the refactor. They will be harmonized with the rest of plot data later:
+    - newShape is the base Shape
+    - Then some standard shapes (rect, circle, cross, plus, half line,...)
+    - newText
+    - Bar, to handle Histogram objects
+- Histogram can be instantiated in multiplot
+    - Rubberbands are not totally connected
 
-## [0.13.0]
 ### Fix
 - Allow to put " " in file paths
+- Allow to draw a multiplot with no data
 
 ## [0.12.2]
 ### Fix

@@ -1,4 +1,8 @@
+""" Templates of html files built from PlotDataObject. """
+
 from string import Template
+
+empty_template = Template('''''')
 
 contour_template = Template('''
 <!DOCTYPE html>
@@ -7,9 +11,7 @@ contour_template = Template('''
     <script src=$core_path></script>
   </head>
     <div id="app">
-        <canvas id="$canvas_id" width="2000" height="490"
-                    style="border: 1px solid black;">
-        </canvas>
+        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;">
 
         <!-- Sets the basepath for the library if not in same directory -->
 
@@ -39,9 +41,7 @@ scatter_template = Template('''
       <script src=$core_path></script>
   </head>
     <div id="app">
-        <canvas id="$canvas_id" width="490" height="490"
-                    style="border: 1px solid black;">
-        </canvas>
+        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;">
 
         <script type="text/javascript">
             var width = 0.95*window.innerWidth;
@@ -70,9 +70,7 @@ parallelplot_template = Template('''
   </head>
   <body>
     <div id="app">
-        <canvas id="$canvas_id" width="490" height="490"
-                    style="border: 1px solid black;">
-        </canvas>
+        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;">
 
         <!-- Sets the basepath for the library if not in same directory -->
         <script src=$core_path ></script>
@@ -105,16 +103,14 @@ histogram_template = Template('''
   </head>
   <body>
     <div id="app">
-        <canvas id="$canvas_id" width="490" height="490"
-                    style="border: 1px solid black;">
-        </canvas>
+        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;">
 
         <script type="text/javascript">
             var width = 0.95*window.innerWidth;
             var height = Math.max(0.95*window.innerHeight, 350);
 
             var data = $data;
-            var plot_data = new PlotData.Histogram(
+            var plot_data = new PlotData.newHistogram(
                 data, width, height, true, 0, 0, $canvas_id.id
             );
             plot_data.define_canvas($canvas_id.id);
@@ -126,7 +122,6 @@ histogram_template = Template('''
 </html>
 ''')
 
-
 multiplot_template = Template('''
 <!DOCTYPE html>
 <html lang="en">
@@ -135,20 +130,14 @@ multiplot_template = Template('''
   </head>
   <body>
     <div id="app">
-        <canvas id="$canvas_id" width="490" height="490"
-                    style="border: 1px solid black;">
+        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;">
         </canvas>
 
         <script type="text/javascript">
             var width = 0.95*window.innerWidth;
             var height = Math.max(0.95*window.innerHeight, 350);
-
             var data = $data;
-            var number_plot_data = data.length;
-
-            var multiplot = new PlotData.MultiplePlots(
-                data, width, height, true, $canvas_id.id
-            );
+            var multiplot = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);
         </script>
     </div>
   </body>
@@ -164,9 +153,7 @@ primitive_group_container_template = Template('''
   </head>
   <body>
     <div id="app">
-        <canvas id="$canvas_id" width="490" height="490"
-                    style="border: 1px solid black;">
-        </canvas>
+        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;">
 
         <script type="text/javascript">
             var width = 750;
@@ -200,9 +187,7 @@ scatter_matrix_template = Template('''
   </head>
   <body>
     <div id="app">
-        <canvas id="$canvas_id" width="490" height="490"
-                    style="border: 1px solid black;">
-        </canvas>
+        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;">
 
         <!-- Sets the basepath for the library if not in same directory -->
         <script src=$core_path></script>

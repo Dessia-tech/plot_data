@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -163,6 +163,7 @@ export class PlotScatter extends PlotData {
             this.selected_areas.push(temp);
           }
         }
+
         this.isParallelPlot = false;
         if (this.mergeON && alert_count === 0) {
           // merge_alert();
@@ -241,7 +242,7 @@ export class PlotScatter extends PlotData {
 }
 
 
-/** A class that inherits from PlotData and is specific for drawing ParallelPlots  */
+/** A class that inherits from PlotData and is specific for drawing realToAxiss  */
 export class ParallelPlot extends PlotData {
 
     constructor(public data, public width, public height, public buttons_ON, X, Y, public canvas_id: string,
@@ -264,13 +265,7 @@ export class ParallelPlot extends PlotData {
       this.elements = data['elements'];
       this.edge_style = EdgeStyle.deserialize(data['edge_style']);
       var attribute_names = data['attribute_names'];
-      if (data['disposition'] == 'vertical') {
-        this.vertical = true;
-      } else if (data['disposition'] == 'horizontal') {
-        this.vertical = false;
-      } else {
-        throw new Error('Axis disposition must be vertical or horizontal');
-      }
+      this.vertical = data['disposition'] == 'vertical' ? true : false;
       this.initialize_all_attributes();
       this.initialize_attributes_list();
       this.add_to_axis_list(attribute_names);
@@ -414,6 +409,131 @@ export class ParallelPlot extends PlotData {
       })
       this.selected_point_index = selectedIndices;
       return selectedIndices
+    }
+
+    refresh_pp_selected() {
+      this.pp_selected_index = this.getObjectsInRubberBands(this.rubber_bands);
+      if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
+        this.reset_pp_selected();
+      }
+    }
+
+    reset_pp_selected() {
+      this.clicked_point_index = [];
+      this.pp_selected_index = Array.from(Array(this.to_display_list.length).keys());
+    }
+
+    mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
+      var mouseX = e.offsetX;
+      var mouseY = e.offsetY;
+      var click_on_disp = Shape.isInRect(mouseX, mouseY, this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h);
+      if (click_on_axis && !mouse_moving) {
+        this.select_axis_action(selected_axis_index, click_on_band, click_on_border);
+      } else if (click_on_name && mouse_moving) {
+        [mouse3X, mouse3Y, click_on_axis] = Interactions.mouse_up_axis_interversion(mouse1X, mouse1Y, e, this);
+      } else if (click_on_name && !mouse_moving) {
+        Interactions.select_title_action(selected_name_index, this);
+      } else if (this.is_drawing_rubber_band || is_resizing) {
+        this.draw()
+        is_resizing = false;
+      }
+      if (click_on_disp) {
+        Interactions.change_disposition_action(this);
+      }
+      this.refresh_pp_selected();
+      this.is_drawing_rubber_band = false;
+      mouse_moving = false;
+      isDrawing = false;
+      this.originX = 0;
+      return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing];
+    }
+
+    mouse_interaction() {
+      if (this.interaction_ON === true) {
+        var isDrawing = false;
+        var mouse_moving = false;
+        var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
+        var click_on_axis:boolean=false;
+        var selected_axis_index:number = -1;
+        var click_on_name:boolean = false;
+        var selected_name_index:number = -1;
+        var click_on_band:boolean = false;
+        var click_on_border:boolean = false;
+        var selected_band_index:number = -1;
+        var selected_border:number[]=[];
+        var is_resizing:boolean=false;
+        var click_on_selectw_border:boolean = false;
+        var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
+        var canvas = document.getElementById(this.canvas_id);
+
+        canvas.addEventListener('mousedown', e => {
+          if (this.interaction_ON) {
+            [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
+            [click_on_axis, selected_axis_index] = Interactions.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis, this);
+            [click_on_name, selected_name_index] = Interactions.initialize_click_on_name(this.axis_list.length, mouse1X, mouse1Y, this);
+            [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
+          }
+        });
+
+        canvas.addEventListener('mousemove', e => {
+          if (this.interaction_ON) {
+            this.isSelectingppAxis = false;
+            if (isDrawing) {
+              mouse_moving = true;
+              if (click_on_name) {
+                [mouse2X, mouse2Y, isDrawing, mouse_moving] = Interactions.mouse_move_axis_inversion(isDrawing, e, selected_name_index, this);
+              } else if (click_on_axis && !click_on_band && !click_on_border) {
+                [mouse2X, mouse2Y] = Interactions.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, this);
+              } else if (click_on_band) {
+                [mouse2X, mouse2Y] = Interactions.rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e, this);
+              } else if (click_on_border) {
+                [selected_border[1], mouse2X, mouse2Y, is_resizing] = Interactions.rubber_band_resize(mouse1X, mouse1Y, selected_border, e, this);
+              }
+              this.refresh_pp_selected();
+            }
+          }
+        });
+
+        canvas.addEventListener('mouseup', e => {
+          if (this.interaction_ON) {
+            [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
+          }
+        })
+
+        canvas.addEventListener('mouseleave', e => {
+          isDrawing = false;
+          mouse_moving = false;
+        });
+
+
+        canvas.addEventListener("click", e => {
+          if (this.interaction_ON) {
+            if (e.ctrlKey) {
+              this.reset_pp_selected();
+              this.reset_rubberbands();
+              this.draw();
+            }
+          }
+        });
+      }
+    }
+
+    public select_axis_action(selected_axis_index, click_on_band, click_on_border) {
+      this.isSelectingppAxis = true;
+      if (this.rubber_bands[selected_axis_index].length == 0) {
+        var attribute_name = this.axis_list[selected_axis_index]['name'];
+        if (attribute_name == this.selected_axis_name) {
+          this.selected_axis_name = '';
+        } else {
+          this.selected_axis_name = attribute_name;
+          this.sort_to_display_list(); // à modifier pour trier vertical et horizontal axis coords
+          this.refresh_axis_coords();
+        }
+      } else if ((this.rubber_bands[selected_axis_index].length != 0) && !click_on_band && !click_on_border) {
+        this.rubber_bands[selected_axis_index].reset();
+        this.refresh_pp_selected();
+      }
+      this.draw();
     }
 }
 
@@ -1264,7 +1384,6 @@ export class PrimitiveGroupContainer extends PlotData {
       this.draw();
     }
 
-
     mouse_interaction() {
       var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
       var nbObjects:number = this.primitive_groups.length;
@@ -1358,10 +1477,552 @@ export class PrimitiveGroupContainer extends PlotData {
 }
 
 
+export class BasePlot extends PlotData {
+  public axes: newAxis[] = [];
+  public origin: Vertex;
+  public size: Vertex;
+  public translation: Vertex = new Vertex(0, 0);
+
+  public hoveredIndex: number[] = [];
+  public clickedIndex: number[] = [];
+  public selectedIndex: boolean[];
+
+  public viewPoint: Vertex = new Vertex(0, 0);
+  public fixedObjects: any[] = [];
+  public movingObjects: newShape[] = [];
+
+  protected initScale: Vertex = new Vertex(1, -1);
+  private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
+  private nSamples: number;
+
+  readonly features: Map<string, any[]>;
+  readonly MAX_PRINTED_NUMBERS = 16;
+  readonly TRL_THRESHOLD = 20;
+  constructor(
+    public data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.nSamples = data.elements.length;
+      this.origin = new Vertex(0, 0);
+      this.size = new Vertex(width - X, height - Y);
+      this.features = this.unpackData(data);
+      this.selectedIndex = Array.from([...this.features][0][1], x => x = false);
+      this.scaleX = this.scaleY = 1;
+      this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
+      this.refresh_MinMax();
+    }
+
+  refresh_MinMax(): void {
+    this.minX = this.origin.x;
+    this.maxX = this.origin.x + this.size.x;
+    this.minY = this.origin.y;
+    this.maxY = this.origin.y + this.size.y;
+  }
+
+  set axisStyle(newAxisStyle: Map<string, any>) {newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value))}
+
+  get axisStyle() {return this._axisStyle};
+
+  get canvasMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
+
+  get movingMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
+
+  private unpackData(data: any): Map<string, any[]> {
+    let unpackedData = new Map<string, any[]>();
+    Object.keys(data.elements[0]).forEach((feature) => {
+      let vector = data.elements.map(element => element[feature]);
+      unpackedData.set(feature, vector);
+    });
+    return unpackedData
+  }
+
+  public drawCanvas(): void {
+    this.context_show.save()
+    this.context = this.context_show;
+    this.draw_empty_canvas(this.context_show);
+    if (this.settings_on) {this.draw_settings_rect()}
+    else {this.draw_rect()}
+    this.context_show.beginPath();
+    this.context_show.rect(this.X, this.Y, this.width, this.height);
+    this.context_show.closePath();
+  }
+
+  public updateAxes(): void {
+    const axisSelections = [];
+    this.axes.forEach(axis => {
+      this.axisStyle.forEach((value, key) => axis[key] = value);
+      axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+      if (axis.rubberBand.length != 0) {axisSelections.push(this.updateSelected(axis))};
+    })
+    if (axisSelections.length != 0) {
+      this.selectedIndex.forEach((_, index) => {
+        this.selectedIndex[index] = true;
+        axisSelections.forEach(axisSelection => {if (!axisSelection[index]) {this.selectedIndex[index] = false}})
+      })
+    } else {this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false)};
+  }
+
+  public reset(): void {
+    this.axes.forEach(axis => axis.reset());
+    this.hoveredIndex = [];
+    this.clickedIndex = [];
+    this.selectedIndex = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
+  }
+
+  public updateSelected(axis: newAxis): boolean[] { // TODO: Performance
+    const boolSelection = Array.from(Array(this.nSamples), () => false);
+    const vector = axis.stringsToValues(this.features.get(axis.name));
+    vector.forEach((value, index) => {if (axis.isInRubberBand(value)) {boolSelection[index] = true}});
+    return boolSelection
+  }
+
+  public drawAxes() {
+    this.axes.forEach(axis => axis.draw(this.context_show));
+  }
+
+  public draw(): void {
+    this.drawCanvas();
+    this.context_show.setTransform(this.canvasMatrix);
+    this.updateAxes();
+    this.drawAxes();
+    this.context_show.restore();
+  }
+
+  public draw_initial(): void {this.draw()}
+
+  public draw_from_context(hidden: any) {return}
+
+  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
+    objects.forEach(object => {
+      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = invertState ? !object[stateName] : true}
+      else {if (!keepState) {object[stateName] = false}}
+    })
+  }
+
+  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
+    return new Vertex(mouseDown.x - currentMouse.x, mouseDown.y - currentMouse.y);
+  }
+
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {
+    this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHovered', false, false);
+    this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHovered', false, false);
+  }
+
+  public projectMouse(e: MouseEvent) {
+    const mouseCoords = new Vertex(e.offsetX, e.offsetY);
+    return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.movingMatrix.inverse())]
+  }
+
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {
+    let clickedObject: any;
+    this.fixedObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
+    this.movingObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
+    if (this.fixedObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(canvasMouse)}
+    if (this.movingObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(frameMouse)}
+    return [canvasMouse, frameMouse, clickedObject]
+  }
+
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean) {
+    if (this.interaction_ON) {
+      if (this.translation.normL1 == 0 && canvasMouse.subtract(canvasDown).normL1 <= this.TRL_THRESHOLD) {
+        this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isClicked', ctrlKey, true);
+        this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isClicked', ctrlKey, true);
+      }
+    }
+  }
+
+  public mouse_interaction(isParallelPlot: boolean) {
+    if (this.interaction_ON === true) {
+      var clickedObject: any;
+      var isDrawing = false;
+      var canvasMouse = new Vertex(0, 0) ; var canvasDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
+      var frameMouse = new Vertex(0, 0) ; var frameDown = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
+      var mouse3X = 0; var mouse3Y = 0;
+      var canvas = document.getElementById(this.canvas_id);
+      var ctrlKey = false;
+
+      window.addEventListener('keydown', e => {if (e.key == "Control") {ctrlKey = true}});
+
+      window.addEventListener('keyup', e => {if (e.key == "Control") {ctrlKey = false}});
+
+      canvas.addEventListener('mousemove', e => {
+        [canvasMouse, frameMouse] = this.projectMouse(e);
+        this.mouseMove(canvasMouse, frameMouse);
+        if (this.interaction_ON && isDrawing) {
+          if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
+            canvas.style.cursor = 'move';
+            this.translation = this.mouseTranslate(canvasMouse, canvasDown);
+          } else if (clickedObject instanceof newAxis) {
+            this.is_drawing_rubber_band = true;
+          }
+        }
+        this.draw();
+        var is_inside_canvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
+        if (!is_inside_canvas) {
+          isDrawing = false;
+          this.axes.forEach(axis => {axis.saveLocation()});
+          this.translation = new Vertex(0, 0);
+          canvas.style.cursor = 'default';
+        }
+      });
+
+      canvas.addEventListener('mousedown', e => {
+        [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse);
+        isDrawing = true;
+      });
+
+      canvas.addEventListener('mouseup', e => {
+        canvas.style.cursor = 'default';
+        this.mouseUp(canvasMouse, frameMouse, canvasDown, ctrlKey);
+        if (clickedObject) {clickedObject.mouseUp()};
+        isDrawing = false;
+        this.draw();
+        this.axes.forEach(axis => {axis.saveLocation()});
+        this.translation = new Vertex(0, 0);
+        this.is_drawing_rubber_band = false;
+      })
+
+      canvas.addEventListener('wheel', e => {
+        if (this.interaction_ON) {
+          let scale = new Vertex(this.scaleX, this.scaleY);
+          [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
+          for (let axis of this.axes) {
+            if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+              if (this.scaleX > scale.x) {this.scaleX = scale.x}
+              if (this.scaleY > scale.y) {this.scaleY = scale.y}
+            } else if (axis.tickPrecision <= 1) {
+              if (this.scaleX < scale.x) {this.scaleX = scale.x}
+              if (this.scaleX < scale.x) {this.scaleX = scale.x}
+            }
+          }
+          this.viewPoint = new newPoint2D(mouse3X, mouse3Y).scale(this.initScale);
+          this.draw(); // needs a refactor
+          this.axes.forEach(axis => {axis.saveLocation()});
+          [this.scaleX, this.scaleY] = [1, 1];
+          this.viewPoint = new Vertex(0, 0);
+          this.draw(); // needs a refactor
+        }
+      });
+
+      canvas.addEventListener('mouseleave', e => {
+        isDrawing = false;
+        ctrlKey = false;
+        this.axes.forEach(axis => {axis.saveLocation()});
+        this.translation = new Vertex(0, 0);
+        canvas.style.cursor = 'default';
+      });
+    }
+  }
+
+  public wheel_interaction(mouse3X, mouse3Y, e: WheelEvent) { //TODO: TO REFACTOR !!!
+    // e.preventDefault();
+    this.fusion_coeff = 1.2;
+    var event = -Math.sign(e.deltaY);
+    mouse3X = e.offsetX;
+    mouse3Y = e.offsetY;
+    if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
+        if (event>0) {
+          this.scaleX = this.scaleX*this.fusion_coeff;
+          this.scroll_x++;
+          this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
+        } else if (event<0) {
+          this.scaleX = this.scaleX/this.fusion_coeff;
+          this.scroll_x--;
+          this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
+        }
+
+    } else if ((mouse3X<=this.decalage_axis_x + this.X) && (mouse3Y<this.height - this.decalage_axis_y + this.Y) && this.axis_ON) {
+        if (event>0) {
+          this.scaleY = this.scaleY*this.fusion_coeff;
+          this.scroll_y++;
+          this.originY = this.height/2 + this.fusion_coeff * (this.originY - this.height/2);
+        } else if (event<0) {
+          this.scaleY = this.scaleY/this.fusion_coeff;
+          this.scroll_y--;
+          this.originY = this.height/2 + 1/this.fusion_coeff * (this.originY - this.height/2);
+        }
+
+    } else {
+        if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+        this.scaleX = this.scaleX*coeff;
+        this.scaleY = this.scaleY*coeff;
+        this.scroll_x = this.scroll_x + event;
+        this.scroll_y = this.scroll_y + event;
+        this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
+        this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
+      }
+      if (isNaN(this.scroll_x)) this.scroll_x = 0;
+      if (isNaN(this.scroll_y)) this.scroll_y = 0;
+      return [mouse3X, mouse3Y];
+  }
+}
+
+export class Frame extends BasePlot {
+  public xFeature: string;
+  public yFeature: string;
+  protected _nXTicks: number;
+  protected _nYTicks: number;
+  readonly OFFSET = new Vertex(80, 50);
+  readonly MARGIN = new Vertex(20, 20);
+  constructor(
+    public data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      [this.xFeature, this.yFeature] = this.setFeatures(data);
+      this.axes = this.setAxes();
+      this.fixedObjects.push(...this.axes);
+      this.type_ = "frame";
+    }
+
+  get movingMatrix(): DOMMatrix {
+    const movingMatrix = this.axes[0].transformMatrix;
+    movingMatrix.d = this.axes[1].transformMatrix.d;
+    return this.canvasMatrix.multiply(movingMatrix)
+  }
+
+  get nXTicks() {return this._nXTicks ? this._nXTicks : 7}
+
+  set nXTicks(value: number) {this._nXTicks = value}
+
+  get nYTicks() {return this._nYTicks ? this._nYTicks : 7}
+
+  set nYTicks(value: number) {this._nYTicks = value}
+
+  public reset_scales(): void {
+    this.size = new Vertex(this.width, this.height);
+    this.resetAxes();
+  }
+
+  private resetAxes(): void {
+    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
+    this.axes[0].transform(frameOrigin, xEnd);
+    this.axes[1].transform(frameOrigin, yEnd);
+  }
+
+  public setFeatures(data: any): [string, string] {
+    return [data.x_variable, data.y_variable];
+  }
+
+  public setAxes(): newAxis[] {
+    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds()
+    return [
+      this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks),
+      this.setAxis(this.yFeature, frameOrigin, yEnd, this.nYTicks)]
+  }
+
+  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
+  }
+
+  public setFrameBounds() {
+    let frameOrigin = this.origin.add(this.OFFSET).add(new Vertex(this.X, this.Y).scale(this.initScale));
+    let xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x + this.X * this.initScale.x, frameOrigin.y);
+    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y + this.Y * this.initScale.y);
+    if (this.canvasMatrix.a < 0) {
+      frameOrigin.x = -(this.size.x - frameOrigin.x);
+      xEnd.x = -(this.size.x - xEnd.x);
+      yEnd.x = frameOrigin.x;
+    }
+    if (this.canvasMatrix.d < 0) {
+      frameOrigin.y = -(this.size.y - frameOrigin.y);
+      yEnd.y = -(this.size.y - yEnd.y);
+      xEnd.y = frameOrigin.y;
+    }
+    return [frameOrigin, xEnd, yEnd]
+  }
+}
+
+export class newHistogram extends Frame {
+  public bars: Bar[] = [];
+  readonly barsColorFill: string = 'hsl(203, 90%, 85%)';
+  readonly barsColorStroke: string = 'hsl(0, 0%, 0%)';
+  constructor(
+    public data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+    }
+
+  get nXTicks() {return this._nXTicks ? this._nXTicks : 20}
+
+  set nXTicks(value: number) {this._nXTicks = value}
+
+  get nYTicks() {return this._nYTicks ? this._nYTicks : 10}
+
+  set nYTicks(value: number) {this._nYTicks = value}
+
+  public reset(): void {
+    super.reset();
+    this.bars = undefined;
+  }
+
+  private buildNumberAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
+    const numberAxis = this.setAxis('number', frameOrigin, yEnd, this.nYTicks);
+    numberAxis.minValue = 0;
+    numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    numberAxis.nTicks = this.nYTicks;
+    numberAxis.saveLocation();
+    return numberAxis
+  }
+
+  private updateNumberAxis(numberAxis: newAxis, bars: Bar[]): newAxis {
+    this.features.set('number', this.getNumberFeature(bars));
+    numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    numberAxis.saveLocation();
+    return numberAxis
+  }
+
+  private getNumberFeature(bars: Bar[]): number[] {
+    const numberFeature = this.features.get(this.xFeature).map(() => 0);
+    bars.forEach(bar => {bar.values.forEach(value => numberFeature[value] = bar.length)});
+    return numberFeature
+  }
+
+  private boundedTicks(axis: newAxis): number[] {
+    let fakeTicks = [axis.minValue].concat(axis.ticks);
+    fakeTicks.push(axis.maxValue)
+    return fakeTicks
+  }
+
+  private storeBarState(): [number[], number[]] {
+    const [hovered, clicked] = [[] as number[], [] as number[]];
+    if (this.bars) {
+      this.bars.forEach(bar => {
+        if (bar.isHovered) {hovered.push(...bar.values)};
+        if (bar.isClicked) {clicked.push(...bar.values)};
+      })
+    }
+    return [hovered, clicked]
+  }
+
+  private computeBars(axis: newAxis, vector: number[]): Bar[] {
+    const numericVector = axis.stringsToValues(vector);
+    [this.hoveredIndex, this.clickedIndex] = this.storeBarState();
+    let fakeTicks = this.boundedTicks(axis);
+    let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar());
+    numericVector.forEach((value, valIdx) => {
+      for (let tickIdx = 0 ; tickIdx < fakeTicks.length - 1 ; tickIdx++ ) {
+        if (value >= fakeTicks[tickIdx] && value < fakeTicks[tickIdx + 1]) {
+          bars[tickIdx].values.push(valIdx);
+          break
+        }
+      }
+    });
+    return bars
+  }
+
+  public draw(): void {
+    this.updateAxes();
+    this.getBarsDrawing();
+
+    this.context_show.setTransform(this.movingMatrix);
+    this.bars.forEach(bar => {bar.buildPath() ; bar.draw(this.context_show)});
+    this.context_show.resetTransform();
+    this.movingObjects = this.bars;
+
+    this.context_show.setTransform(this.canvasMatrix);
+    super.drawAxes();
+    this.context_show.resetTransform();
+  }
+
+  public updateAxes(): void {
+    super.drawCanvas();
+    this.context_show.setTransform(this.canvasMatrix);
+    super.updateAxes()
+    this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
+    this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
+  }
+
+  public getBarsDrawing() {
+    const fullTicks = this.boundedTicks(this.axes[0]);
+    this.bars.forEach((bar, index) => {
+      let origin = new Vertex(fullTicks[index], 0);
+      let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length);
+      if (this.axes[0].isDiscrete) {origin.x = origin.x - size.x / 2};
+
+      bar.setGeometry(origin, size);
+      bar.fillStyle = this.barsColorFill;
+      bar.strokeStyle = this.barsColorStroke;
+      if (bar.values.some(valIdx => this.hoveredIndex.indexOf(valIdx) != -1)) {bar.isHovered = true}
+      if (bar.values.some(valIdx => this.clickedIndex.indexOf(valIdx) != -1)) {bar.isClicked = true}
+      if (bar.values.some(valIdx => this.selectedIndex[valIdx])) {bar.isSelected = true}
+    })
+  }
+
+  public setAxes(): newAxis[] {
+    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
+    const xAxis = this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks);
+    const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
+    this.features.set('number', this.getNumberFeature(bars));
+    const yAxis = this.buildNumberAxis(frameOrigin, yEnd);
+    return [xAxis, yAxis];
+  }
+
+  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number): newAxis {
+    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
+  }
+
+  public setFeatures(data: any): [string, string] {return [data.x_variable, 'number']}
+
+  mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
+    return new Vertex(this.axes[0].isDiscrete ? 0 : mouseDown.x - currentMouse.x, 0)
+  }
+
+  wheel_interaction(mouse3X, mouse3Y, e) { // TODO: REALLY NEEDS A REFACTOR
+    // e.preventDefault();
+    this.fusion_coeff = 1.2;
+    var event = -Math.sign(e.deltaY);
+    mouse3X = e.offsetX;
+    mouse3Y = e.offsetY;
+    if (!this.axes[0].isDiscrete) {
+      if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
+        if (event>0) {
+          this.scaleX = this.scaleX * this.fusion_coeff;
+          this.scroll_x++;
+          this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
+        } else if (event<0) {
+          this.scaleX = this.scaleX/this.fusion_coeff;
+          this.scroll_x--;
+          this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
+        }
+      } else {
+          if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+          this.scaleX = this.scaleX*coeff;
+          this.scroll_x = this.scroll_x + event;
+          this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
+      }
+      if (isNaN(this.scroll_x)) this.scroll_x = 0;
+      if (isNaN(this.scroll_y)) this.scroll_y = 0;
+    }
+    return [mouse3X, mouse3Y];
+  }
+}
+
 export class Histogram extends PlotData {
     edge_style: EdgeStyle;
     surface_style: SurfaceStyle;
     x_variable: Attribute;
+    y_variable: Attribute;
     axis: Axis;
     graduation_nb: number;
     initial_graduation_nb: number;
@@ -1370,11 +2031,11 @@ export class Histogram extends PlotData {
     max_abs: number = 0;
     max_frequency: number = 0;
     discrete: boolean = false;
-    x_rubberband: RubberBand;
-    y_rubberband: RubberBand;
     coeff:number=0.88;
     y_step: number = 0;
     selected_keys = [];
+    bandColor: string = string_to_hex('lightrose');
+    bandOpacity: number = 0.5;
 
     constructor(public data:any,
                 public width: number,
@@ -1400,8 +2061,11 @@ export class Histogram extends PlotData {
       if (type_ !== 'float') this.discrete = true;
 
       this.x_variable = new Attribute(name, type_);
-      this.x_rubberband = new RubberBand(this.x_variable.name, 0, 0, false);
-      this.y_rubberband = new RubberBand("frequency", 0, 0, true);
+      this.y_variable = new Attribute('frequency', "float");
+      this.rubber_bands = [
+        new RubberBand(this.x_variable.name, 0, 0, false),
+        new RubberBand("frequency", 0, 0, true)
+      ]
       const axis = data['axis'] || {grid_on: false};
       this.axis = Axis.deserialize(axis);
       let temp_surface_style = data['surface_style'] || {};
@@ -1429,7 +2093,20 @@ export class Histogram extends PlotData {
       }
       this.infos = this.get_infos();
       this.refresh_max_frequency();
+      this.y_variable.list = [0, this.max_frequency];
       if (buttons_ON) this.refresh_buttons_coords();
+      this.all_attributes = this.initializeAll_attributes_to_remove();
+      this.add_to_axis_list([this.all_attributes[0].name, 'frequency']);
+      this.inverted_axis_list = [false, false];
+    }
+
+    initializeAll_attributes_to_remove() {
+      var xAttr = this.x_variable;
+      xAttr.alias = xAttr.name
+      var yAttr = new Attribute('frequency', 'float')
+      yAttr.list = [0, this.max_frequency];
+      yAttr.alias = 'frequency';
+      return [xAttr, yAttr]
     }
 
 
@@ -1438,9 +2115,9 @@ export class Histogram extends PlotData {
       this.draw();
     }
 
-
     draw() {
       this.refresh_graduation_nb();
+      this.refresh_axis_coords();
       this.context = this.context_show;
       this.context.save();
       this.draw_empty_canvas(this.context);
@@ -1452,7 +2129,7 @@ export class Histogram extends PlotData {
 
       this.infos = this.get_infos();
       this.draw_histogram();
-      this.draw_rubberbands();
+      this.draw_rubber_bands(this.originX);
       this.draw_axis();
 
       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
@@ -1473,30 +2150,6 @@ export class Histogram extends PlotData {
     draw_buttons() {
       this.reset_rect_y = 10;
       Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
-    }
-
-    draw_rubberbands() { //ok
-      this.context.beginPath();
-      this.draw_rubberband(this.x_rubberband, "x");
-      this.draw_rubberband(this.y_rubberband, "y");
-      this.context.closePath();
-    }
-
-    draw_rubberband(rubberBand: RubberBand, axisType: string) {
-      const COLOR_FILL = string_to_hex('lightrose');
-      const COLOR_STROKE = string_to_hex('lightgrey');
-      const LINE_WIDTH = 0.5;
-      const ALPHA = 0.6;
-      rubberBand.realMin = this.real_to_display(rubberBand.minValue, axisType);
-      rubberBand.realMax = this.real_to_display(rubberBand.maxValue, axisType);
-      if (axisType == 'x') {
-        var originY = this.height - this.decalage_axis_y + this.Y;
-        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
-      } else {
-        var originY = this.decalage_axis_x + this.X;
-        rubberBand.flipValues();
-        rubberBand.draw(originY, this.context, COLOR_FILL, COLOR_STROKE, LINE_WIDTH, ALPHA);
-      }
     }
 
     coordinate_to_string(x1, x2?) {
@@ -1577,18 +2230,23 @@ export class Histogram extends PlotData {
       let keys = Object.keys(this.infos);
       this.y_step = this.get_y_step();
       if (this.discrete) {
-        this.axis.draw_histogram_x_axis(this.context, this.scale, this.init_scale, this.originX, this.width,
-                                        this.height, this.x_variable.list, this.decalage_axis_x, this.decalage_axis_y,
-                                        this.scroll_x, this.X, this.Y, this.x_variable.name);
+        // [this.axis_x_start, this.axis_x_end] = this.axis.draw_histogram_x_axis(
+        this.axis.draw_histogram_x_axis(
+          this.context, this.scale, this.init_scale, this.originX, this.width,
+          this.height, this.x_variable.list, this.decalage_axis_x, this.decalage_axis_y,
+          this.scroll_x, this.X, this.Y, this.x_variable.name);
       } else {
         let {x1, x2} = this.string_to_coordinate(keys[0]);
         let x_step = x2 - x1;
-        this.axis.draw_horizontal_axis(this.context, this.originX, this.scale,
-                                       this.width, this.height, this.init_scale, this.minX, this.maxX,
-                                       this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
-                                       this.X, this.Y, this.x_variable.name, false, x_step);
+        // [this.axis_x_start, this.axis_x_end] = this.axis.draw_horizontal_axis(
+        this.axis.draw_horizontal_axis(
+          this.context, this.originX, this.scale,
+          this.width, this.height, this.init_scale, this.minX, this.maxX,
+          this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
+          this.X, this.Y, this.x_variable.name, false, x_step);
       }
-      this.axis.draw_histogram_y_axis(this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x,
+      [this.axis_y_start, this.axis_y_end] = this.axis.draw_histogram_y_axis(
+        this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x,
         this.decalage_axis_y, this.X, this.Y, 'Frequency', this.y_step, this.coeff);
     }
 
@@ -1611,158 +2269,136 @@ export class Histogram extends PlotData {
 
 
     draw_histogram() {
-      let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
-      let keys = Object.keys(this.infos);
-      let scaleY = (0.88*this.height - this.decalage_axis_y) / this.max_frequency;
       let color_stroke = this.edge_style.color_stroke;
+      let color_fill = this.surface_style.color_fill;
+      let selectedColor = string_to_hex('lightyellow');
       let line_width = this.edge_style.line_width;
       let opacity = this.surface_style.opacity;
       let dashline = this.edge_style.dashline;
+      let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
+      let keys = Object.keys(this.infos);
+      let scaleY = (0.88*this.height - this.decalage_axis_y) / this.max_frequency;
+      let current_x = 0;
+      let f = 0;
+      let w = 0.5;
 
-      if (this.discrete) {
-        // var grad_beg_x = this.decalage_axis_x/this.scale + 1/4;
-        let w = 1/2;
-        for (let i=0; i<keys.length; i++) {
-          this.context.beginPath();
-          let color_fill = this.surface_style.color_fill;
-          if (this.selected_keys.includes(keys[i])) {
-            color_fill = string_to_hex('lightyellow');
-          }
-          let f = this.infos[keys[i]].length;
-          let current_x = this.real_to_display(i, 'x');
-          Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context,
-                     color_fill, color_stroke, line_width, opacity, dashline);
-          this.context.closePath();
-        }
-      } else {
+      if (!this.discrete) {
         let {x1, x2} = this.string_to_coordinate(keys[0]);
-        let w = x2 - x1;
-        for (let key of keys) {
-          this.context.beginPath();
-          let color_fill = this.surface_style.color_fill;
-          if (this.selected_keys.includes(key)) {
-            color_fill = string_to_hex('lightyellow');
-          }
-          let {x1} = this.string_to_coordinate(key);
-          let current_x = this.real_to_display(x1, 'x');
-          let f = this.infos[key].length;
-          Shape.rect(current_x, grad_beg_y, this.scale*w,
-                     -scaleY*f, this.context, color_fill, color_stroke, line_width, opacity, dashline);
-          this.context.closePath();
-        }
+        w = x2 - x1;
       }
+
+      keys.forEach((key, idx) => {
+        if (this.selected_keys.includes(key)) {
+          color_fill = selectedColor;
+        } else {
+          color_fill = this.surface_style.color_fill;
+        }
+        f = this.infos[key].length;
+        if (!this.discrete) {
+          let {x1} = this.string_to_coordinate(key);
+          current_x = this.real_to_display(x1, 'x');
+        } else {
+          current_x = this.real_to_display(idx, 'x');
+        }
+        this.context.beginPath();
+        Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context,
+          color_fill, color_stroke, line_width, opacity, dashline);
+        this.context.closePath();
+      })
     }
 
     mouse_interaction() {
-      var mouse1X=0, mouse1Y=0, mouse2X=0, mouse2Y=0;
-      var isDrawing=false, mouse_moving=false;
-      var canvas = document.getElementById(this.canvas_id);
-      var click_on_x_axis = false;
-      var click_on_y_axis = false;
-      var click_on_x_band = false;
-      var click_on_y_band = false;
-      var up = false, down = false;
-      var left = false, right = false;
+      if (this.interaction_ON === true) {
+        var isDrawing = false;
+        var mouse_moving = false;
+        var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
+        var click_on_axis:boolean = false;
+        var selected_axis_index:number = -1;
+        var click_on_band:boolean = false;
+        var click_on_border:boolean = false;
+        var selected_band_index:number = -1;
+        var selected_border:number[]=[];
+        var is_resizing:boolean=false;
+        var click_on_selectw_border:boolean = false;
+        var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
+        var canvas = document.getElementById(this.canvas_id);
 
-      canvas.addEventListener('mousedown', e => {
-        if (!this.interaction_ON) return;
-        isDrawing = true;
-        mouse_moving = false;
-        mouse1X = e.offsetX;
-        mouse1Y = e.offsetY;
-        click_on_x_axis = Shape.isInRect(mouse1X, mouse2Y, this.decalage_axis_x + this.X, this.height - this.decalage_axis_y - 10 + this.Y,
-                          this.width - this.decalage_axis_x, 20);
-        click_on_y_axis = Shape.isInRect(mouse1X, mouse1Y, this.decalage_axis_x - 10 + this.X, this.Y, 20, this.height - this.decalage_axis_y);
-        let click_on_reset = Shape.isInRect(mouse1X, mouse1Y, this.button_x + this.X, this.reset_rect_y + this.Y,
-                                        this.button_w, this.button_h);
-        if (click_on_x_axis) {
-          [click_on_x_band, left, right] = this.is_in_x_rubberband(mouse1X, mouse1Y);
-        }
-        if (click_on_y_axis) {
-          [click_on_y_band, up, down] = this.is_in_y_rubberband(mouse1X, mouse1Y);
-        }
-        if (click_on_reset) this.reset_scales();
-      });
+        canvas.addEventListener('mousedown', e => {
+          if (this.interaction_ON) {
+            [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
+            [click_on_axis, selected_axis_index] = Interactions.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis, this);
+            [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
+          }
+        });
 
-      canvas.addEventListener('mousemove', e => {
-        if (!this.interaction_ON) return;
-        let old_mouse2X = mouse2X, old_mouse2Y = mouse2Y;
-        mouse_moving = true;
-        mouse2X = e.offsetX;
-        mouse2Y = e.offsetY;
-        if (isDrawing) {
-          if (click_on_x_axis) {
-            this.is_drawing_rubber_band = true;
-            if (click_on_x_band) {
-              let tx = this.display_to_real_length(mouse2X - old_mouse2X, 'x')
-              if (left || right) {
-                this.resize_rubberband(tx, false, false, left, right);
-              } else {
-                this.translate_rubberband(tx, 'x');
+        canvas.addEventListener('mousemove', e => {
+          if (this.interaction_ON) {
+            if (isDrawing) {
+              mouse_moving = true;
+              if (click_on_axis && !click_on_band && !click_on_border) {
+                [mouse2X, mouse2Y] = Interactions.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, this);
+              } else if (click_on_band) {
+                [mouse2X, mouse2Y] = Interactions.rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e, this);
+              } else if (click_on_border) {
+                [selected_border[1], mouse2X, mouse2Y, is_resizing] = Interactions.rubber_band_resize(mouse1X, mouse1Y, selected_border, e, this);
               }
-            } else {
-              this.set_rubberband(this.x_rubberband, mouse1X, mouse2X, "x");
+              this.get_selected_keys();
             }
-            this.get_selected_keys();
-          } else if (click_on_y_axis) {
-            if (click_on_y_band) {
-              let ty = this.display_to_real_length(mouse2Y - old_mouse2Y, 'y');
-              if (up || down) {
-                this.resize_rubberband(ty, up, down, false, false);
-              } else {
-                this.translate_rubberband(ty, 'y');
-              }
-            } else {
-              this.set_rubberband(this.y_rubberband, mouse1Y, mouse2Y, "y");
-            }
-            this.get_selected_keys();
+          }
+        });
+
+        canvas.addEventListener('mouseup', e => {
+          if (!this.interaction_ON) return;
+          if (mouse_moving) {
+            if (up || down || left || right) {this.reorder_rubberbands()};
           } else {
-            this.originX += mouse2X - old_mouse2X;
+            if (click_on_axis) {this.rubber_bands[selected_axis_index].reset()};
+            this.get_selected_keys();
           }
-        }
-        this.draw();
-      });
+          reset_parameters();
+          this.is_drawing_rubber_band = false;
+          this.draw();
+        });
 
-      canvas.addEventListener('mouseup', e => {
-        if (!this.interaction_ON) return;
-        if (mouse_moving) {
-          if (up || down || left || right) {
-            this.reorder_rubberbands();
+        canvas.addEventListener('mouseleave', e => {
+          isDrawing = false;
+          mouse_moving = false;
+        });
+
+
+        canvas.addEventListener("click", e => {
+          if (this.interaction_ON) {
+            if (e.ctrlKey) {
+              // this.reset_pp_selected();
+              this.reset_rubberbands();
+              this.draw();
+            }
           }
-        } else {
-          if (click_on_x_axis) {
-            this.reset_x_rubberband();
-          } else if (click_on_y_axis) {
-            this.y_rubberband.minValue = 0;
-            this.y_rubberband.maxValue = 0;
-          }
-          this.get_selected_keys();
-        }
-        reset_parameters();
-        this.is_drawing_rubber_band = false;
-        this.draw();
-      });
+        });
 
+        canvas.addEventListener('wheel', e => {
+          if (!this.interaction_ON) return;
+          e.preventDefault();
+          let zoom_coeff;
+          let event = -Math.sign(e.deltaY);
+          if (event >= 0) zoom_coeff = 1.2; else zoom_coeff = 1/1.2;
+          this.scale = this.scale * zoom_coeff;
+          this.originX = mouse2X - this.X + zoom_coeff * (this.originX - mouse2X + this.X);
+          this.rubber_bands.forEach((rubberBand, index) => {
+            const axisTypes = ['x', 'y']
+            rubberBand.realMin = this.real_to_display(rubberBand.minValue, axisTypes[index]);
+            rubberBand.realMax = this.real_to_display(rubberBand.maxValue, axisTypes[index]);
+          })
+          this.draw();
+        });
 
-      canvas.addEventListener('wheel', e => {
-        if (!this.interaction_ON) return;
-        e.preventDefault();
-        let zoom_coeff;
-        let event = -Math.sign(e.deltaY);
-        if (event >= 0) zoom_coeff = 1.2; else zoom_coeff = 1/1.2;
-        this.scale = this.scale * zoom_coeff;
-        this.originX = mouse2X - this.X + zoom_coeff * (this.originX - mouse2X + this.X);
-        this.draw();
-      });
-
-
+      }
       function reset_parameters() {
         isDrawing = false;
         mouse_moving = false;
-        click_on_x_axis = false;
-        click_on_y_axis = false;
-        click_on_x_band = false;
-        click_on_y_band = false;
+        click_on_axis = false;
+        click_on_band = false;
+        click_on_border = false;
         up = false;
         down = false;
         left = false;
@@ -1770,89 +2406,26 @@ export class Histogram extends PlotData {
       }
     }
 
-    set_rubberbands(mouse1X: number, mouse2X: number, mouse1Y: number, mouse2Y: number) {
-      this.set_rubberband(this.x_rubberband, mouse1X, mouse2X, "x")
-      this.set_rubberband(this.y_rubberband, mouse1Y, mouse2Y, "y")
+    locMouseOnBands(x, y) {
+      const [click_on_x_band, left, right] = this.rubber_bands[0].includesMouse(x)
+      const [click_on_y_band, down, up] = this.rubber_bands[1].includesMouse(y)
+      return [click_on_x_band, click_on_y_band, left, right, down, up];
     }
-
-    set_rubberband(rubberBand: RubberBand, mouse1: number, mouse2: number, axisType: string) {
-      let firstValue  = this.display_to_real(mouse1, axisType);
-      let secondValue = this.display_to_real(mouse2, axisType);
-      rubberBand.minValue = Math.min(firstValue, secondValue);
-      rubberBand.maxValue = Math.max(firstValue, secondValue);
-    }
-
-    is_in_x_rubberband(x, y) {
-      let h = 20;
-      let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
-      let y1 = grad_beg_y - h/2;
-      let x1 = this.real_to_display(this.x_rubberband.minValue, 'x');
-      let x2 = this.real_to_display(this.x_rubberband.maxValue, 'x');
-      let w = x2 - x1;
-      let click_on_x_band = Shape.isInRect(x, y, x1, y1, w, h);
-
-      let vertex_w = 5;
-      let left = Shape.isInRect(x, y, x1, y1, vertex_w, h);
-      let right = Shape.isInRect(x, y, x2, y1, -vertex_w, h);
-      return [click_on_x_band, left, right];
-    }
-
-    is_in_y_rubberband(x, y) {
-      let w = 20;
-      let x1 = this.X + this.decalage_axis_x - w/2;
-      let y1 = this.real_to_display(this.y_rubberband.minValue, 'y');
-      let y2 = this.real_to_display(this.y_rubberband.maxValue, 'y');
-      let h = y2 - y1;
-      let click_on_y_band = Shape.isInRect(x, y, x1, y1, w, h);
-
-      let vertex_h = 5;
-      let down = Shape.isInRect(x, y, x1, y1, w, -vertex_h);
-      let up = Shape.isInRect(x, y, x1, y2, w, vertex_h);
-      return [click_on_y_band, up, down];
-    }
-
-
-    translate_rubberband(t, type_) {
-      if (type_ === 'x') {
-        this.x_rubberband.minValue += t;
-        this.x_rubberband.maxValue += t;
-      } else if (type_ === 'y') {
-        this.y_rubberband.minValue += t;
-        this.y_rubberband.maxValue += t;
-      } else {
-        throw new Error("translate_rubberband(): type_ must be 'x' or 'y'");
-      }
-    }
-
-
-    resize_rubberband(t, up, down, left, right) {
-      if (up) {
-        this.y_rubberband.maxValue += t;
-      } else if (down) {
-        this.y_rubberband.minValue += t;
-      } else if (left) {
-        this.x_rubberband.minValue += t;
-      } else if (right) {
-        this.x_rubberband.maxValue += t;
-      }
-    }
-
 
     reorder_rubberbands() {
-      if (this.x_rubberband.length !== 0) {
-        this.x_rubberband.minValue = Math.min(this.x_rubberband.minValue, this.x_rubberband.maxValue);
-        this.x_rubberband.maxValue = Math.max(this.x_rubberband.minValue, this.x_rubberband.maxValue);
-      }
-      if (this.y_rubberband.length !== 0) {
-        this.y_rubberband.minValue = Math.min(this.y_rubberband.minValue, this.y_rubberband.maxValue);
-        this.y_rubberband.maxValue = Math.max(this.y_rubberband.minValue, this.y_rubberband.maxValue);
-      }
+      this.rubber_bands.forEach((rubberBand) => {
+        if (rubberBand.length !== 0) {
+          var min = rubberBand.minValue;
+          rubberBand.minValue = Math.min(rubberBand.minValue, rubberBand.maxValue);
+          rubberBand.maxValue = Math.max(min, rubberBand.maxValue);
+        }
+      })
     }
 
 
     reset_x_rubberband() {
-      this.x_rubberband.minValue = 0;
-      this.x_rubberband.maxValue = 0;
+      this.rubber_bands[0].minValue = 0;
+      this.rubber_bands[0].maxValue = 0;
       this.selected_keys = [];
       this.selected_point_index = [];
     }
@@ -1862,16 +2435,16 @@ export class Histogram extends PlotData {
       this.selected_keys = [];
       this.selected_point_index = [];
       let keys = Object.keys(this.infos);
-      if (this.x_rubberband.length === 0 && this.y_rubberband.length === 0) return;
+      if (this.rubber_bands[0].length === 0 && this.rubber_bands[1].length === 0) return;
       for (let key of keys) {
         let {x1, x2} = this.string_to_coordinate(key);
-        let x_rubberband_0 = Math.min(this.x_rubberband.minValue, this.x_rubberband.maxValue);
-        let x_rubberband_1 = Math.max(this.x_rubberband.minValue, this.x_rubberband.maxValue);
-        let y_rubberband_0 = Math.min(this.y_rubberband.minValue, this.y_rubberband.maxValue);
-        let y_rubberband_1 = Math.max(this.y_rubberband.minValue, this.y_rubberband.maxValue);
+        let x_rubberband_0 = Math.min(this.rubber_bands[0].minValue, this.rubber_bands[0].maxValue);
+        let x_rubberband_1 = Math.max(this.rubber_bands[0].minValue, this.rubber_bands[0].maxValue);
+        let y_rubberband_0 = Math.min(this.rubber_bands[1].minValue, this.rubber_bands[1].maxValue);
+        let y_rubberband_1 = Math.max(this.rubber_bands[1].minValue, this.rubber_bands[1].maxValue);
         let f = this.infos[key].length;
         let bool = true;
-        if (this.x_rubberband.length !== 0) {
+        if (this.rubber_bands[0].length !== 0) {
           if (this.discrete) {
             let middle = x1 + 1/4;
             bool = bool && x_rubberband_0 <= middle && middle <= x_rubberband_1;
@@ -1882,7 +2455,7 @@ export class Histogram extends PlotData {
             // bool = bool && x_rubberband_0 <= x1 && x2 <= x_rubberband_1;
           }
         }
-        if (this.y_rubberband.length !== 0) {
+        if (this.rubber_bands[1].length !== 0) {
           bool = bool && y_rubberband_0 <= f && f <= y_rubberband_1;
         }
         if (bool) {

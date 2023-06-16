@@ -2,8 +2,7 @@
 # primitive_group: an object that contains multiple primitives. A primitive
 # is either a Circle2D, a LineSegment, a Contour2D, an Arc2D or a Text
 
-import numpy as npy
-
+import math
 import plot_data
 import plot_data.colors as colors
 
@@ -22,7 +21,7 @@ surface_style = plot_data.SurfaceStyle(color_fill=colors.WHITE, opacity=1,
 point1 = plot_data.Point2D(0.1, 0.2)
 
 # arc
-arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=npy.pi / 2)
+arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi / 2)
 
 # square contour
 rectangle_size = 2

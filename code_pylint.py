@@ -13,23 +13,21 @@ import sys
 
 from pylint.lint import Run
 
-MIN_NOTE = 9.10
+MIN_NOTE = 9.50
 # RATCHET_NOTE = 0.4
 # RATCHET_ERRORS = 3
 
 UNWATCHED_ERRORS = ['fixme', 'trailing-whitespace', 'import-error', 'missing-final-newline', 'trailing-newlines']
 
 MAX_ERROR_BY_TYPE = {
-                     'protected-access': 26,
-                     'invalid-name': 13,
-                     'consider-using-f-string': 2,
+                     'protected-access': 1,
+                     'invalid-name': 6,
                      'no-else-return': 17,
-                     'arguments-differ': 13,
+                     'arguments-differ': 2,
                      'no-member': 1,
-                     'too-many-locals': 3,
+                     'too-many-locals': 2,
                      'wrong-import-order': 1,
                      'too-many-branches': 1,
-                     'unused-import': 1,
                      'unused-argument': 4,
                      'cyclic-import': 11,
                      'no-self-use': 6,
@@ -37,14 +35,14 @@ MAX_ERROR_BY_TYPE = {
                      'trailing-whitespace': 11,
                      'empty-docstring': 7,
                      'missing-module-docstring': 4,
-                     'too-many-arguments': 15,
-                     'too-few-public-methods': 7,
+                     'too-many-arguments': 16,
+                     'too-few-public-methods': 5,
                      'unnecessary-comprehension': 5,
                      'no-value-for-parameter': 2,
                      'too-many-return-statements': 8,
                      'raise-missing-from': 6,
                      'consider-merging-isinstance': 6,
-                     'abstract-method': 25,
+                     'abstract-method': 26,
                      'import-outside-toplevel': 7,
                      'too-many-instance-attributes': 3,
                      'consider-iterating-dictionary': 4,
@@ -146,7 +144,7 @@ for error_type, number_errors in stats_by_msg.items():
 
 
 if error_detected:
-    raise RuntimeError('Too many errors\nRun pylint dessia_common to get the errors')
+    raise RuntimeError('Too many errors\nRun pylint plot_data to get the errors')
 
 if error_over_ratchet_limit:
     raise RuntimeError('Please lower the error limits in code_pylint.py MAX_ERROR_BY_TYPE according to warnings above')

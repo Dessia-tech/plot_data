@@ -2151,7 +2151,6 @@ export class newAxis {
       }
     })
     this.ticksFontsize = Math.min(...ticksText.map(tickText => tickText.fontsize));
-    console.log(this.ticksFontsize, ticksText.map(tickText => tickText.fontsize))
     context.resetTransform();
     ticksText.forEach(tickText => {
       tickText.fontsize = this.ticksFontsize;
@@ -2175,12 +2174,11 @@ export class newAxis {
     let textWidth = null;
     if (textAlign == 'left') textWidth = context.canvas.width - textOrigin.x - 5;
     if (textAlign == 'right') textWidth = textOrigin.x - 5;
-    if (textAlign == 'center') textWidth = this.drawLength / this.nTicks / 1.5;
+    if (textAlign == 'center') textWidth = this.drawLength / this.nTicks - this.drawLength * 0.015;
     const textParams: textParams = { width: textWidth, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline };
     const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
     tickText.removeEndZeros();
     tickText.format(context);
-    // if (tickText.fontsize <= this.ticksFontsize) { this.ticksFontsize = tickText.fontsize };
     return tickText
   }
 

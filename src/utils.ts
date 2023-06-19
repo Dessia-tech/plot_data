@@ -1,6 +1,7 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
+import { split } from "cypress/types/lodash";
 
 export class Axis {
   color_stroke: any;
@@ -1779,6 +1780,20 @@ export class newText extends newShape {
     }
   }
 
+  public removeEndZeros() {
+    let splitText = this.text.split(".");
+    if (splitText.length > 1) {
+      let splitDecimal = splitText[1].split("e");
+      let decimal = splitDecimal[0];
+      if (decimal) {
+        while (decimal[decimal.length - 1] == "0") { decimal = decimal.slice(0, -1) };
+        if (decimal.length != 0) { this.text = `${splitText[0]}.${decimal}` }
+        else { this.text = splitText[0] };
+        if (splitDecimal.length > 1) { this.text = `${this.text}e${splitDecimal[1]}`};
+      }
+    }
+  }
+
   private cutting_text(context: CanvasRenderingContext2D, maxWidth: number) {
     var words = this.text.split(' ');
     var space_length = context.measureText(' ').width;
@@ -2149,8 +2164,9 @@ export class newAxis {
     context.resetTransform()
     const textParams: textParams = {width: textWidth, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline};
     const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
-    tickText.draw(context)
-    context.setTransform(HTMatrix)
+    tickText.removeEndZeros();
+    tickText.draw(context);
+    context.setTransform(HTMatrix);
   }
 
   private getValueToDrawMatrix() {

@@ -2172,10 +2172,17 @@ export class newAxis {
   private computeTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): newText {
     const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
     let textWidth = null;
-    if (textAlign == 'left') textWidth = context.canvas.width - textOrigin.x - 5;
-    if (textAlign == 'right') textWidth = textOrigin.x - 5;
-    if (textAlign == 'center') textWidth = this.drawLength / this.nTicks - this.drawLength * 0.015;
-    const textParams: textParams = { width: textWidth, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline };
+    let textHeight = null;
+    if (textAlign == 'left') {
+      textWidth = Math.abs(this.OFFSET_NAME.x) - this.FONT_SIZE * 1.25;
+      textHeight = this.drawLength * 0.95 / this.ticks.length;
+    }
+    if (textAlign == 'right') {
+      textWidth = textOrigin.x - 5;
+      textHeight = this.drawLength * 0.95 / this.ticks.length;
+    }
+    if (textAlign == 'center') textWidth = this.drawLength * 0.95 / this.ticks.length;
+    const textParams: textParams = { width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline };
     const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
     tickText.removeEndZeros();
     tickText.format(context);

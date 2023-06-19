@@ -1972,6 +1972,12 @@ export class Bar extends newRect {
       tooltip.draw(context);
     }
   }
+
+  public computeStats(values: number[], precision: number) {
+    this.min = Math.round(Math.min(...values) * precision) / precision;
+    this.max = Math.round(Math.max(...values) * precision) / precision;
+    this.mean = Math.round(values.reduce((a, b) => a + b, 0) / values.length * precision) / precision;
+  }
 }
 
 

@@ -1930,12 +1930,7 @@ export class newHistogram extends Frame {
         }
       }
     });
-    const precision = 100;
-    barValues.forEach((values, index) => {
-      bars[index].min = Math.round(Math.min(...values) * precision) / precision;
-      bars[index].max = Math.round(Math.max(...values) * precision) / precision;
-      bars[index].mean = Math.round(values.reduce((a, b) => a + b, 0) / values.length * precision) / precision;
-    })
+    barValues.forEach((values, index) => { bars[index].computeStats(values, 100) });
     return bars
   }
 

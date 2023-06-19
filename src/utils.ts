@@ -1789,7 +1789,7 @@ export class newText extends newShape {
         while (decimal[decimal.length - 1] == "0") { decimal = decimal.slice(0, -1) };
         if (decimal.length != 0) { this.text = `${splitText[0]}.${decimal}` }
         else { this.text = splitText[0] };
-        if (splitDecimal.length > 1) { this.text = `${this.text}e${splitDecimal[1]}`};
+        if (splitDecimal.length > 1) { this.text = `${this.text}e${splitDecimal[1]}` };
       }
     }
   }
@@ -1949,6 +1949,7 @@ export class newAxis {
   private _previousMin: number;
   private _previousMax: number;
   private _tickPrecision: number;
+  private _ticksFontsize: number = 12;
 
   readonly OFFSET_TICKS = new Vertex(10, 20);
   readonly OFFSET_NAME = this.OFFSET_TICKS.subtract(new Vertex(65, 60));
@@ -2016,6 +2017,10 @@ export class newAxis {
   get tickPrecision(): number { return this._tickPrecision };
 
   set tickPrecision(value: number) { this._tickPrecision = value };
+
+  get ticksFontsize(): number { return this._ticksFontsize };
+
+  set ticksFontsize(value: number) { this._ticksFontsize = value };
 
   get title(): string { return newText.capitalize(this.name) }
 
@@ -2130,9 +2135,11 @@ export class newAxis {
 
   private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string) {
     const ticksCoords = [];
+    const ticksText: newText[] = [];
     let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
+        context.setTransform(pointHTMatrix);
         let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, color);
         ticksCoords.push(point);
         let text = this.labels[idx]
@@ -2140,8 +2147,16 @@ export class newAxis {
           if (count == tick && this.labels[count]) { text = this.labels[count]; count++ }
           else { text = '' }
         }
-        this.drawTickText(context, text, point, pointHTMatrix);
+        ticksText.push(this.computeTickText(context, text, point, pointHTMatrix));
       }
+    })
+    this.ticksFontsize = Math.min(...ticksText.map(tickText => tickText.fontsize));
+    console.log(this.ticksFontsize, ticksText.map(tickText => tickText.fontsize))
+    context.resetTransform();
+    ticksText.forEach(tickText => {
+      tickText.fontsize = this.ticksFontsize;
+      tickText.width = null;
+      tickText.draw(context);
     })
     return ticksCoords
   }
@@ -2155,18 +2170,18 @@ export class newAxis {
     return point
   }
 
-  private drawTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): void {
+  private computeTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): newText {
     const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
     let textWidth = null;
-    if (textAlign == 'left') textWidth = (context.canvas.width - textOrigin.x) * 0.95;
-    if (textAlign == 'right') textWidth = textOrigin.x * 0.95;
-    if (textAlign == 'center') textWidth = this.drawLength / this.nTicks * 0.95;
-    context.resetTransform()
-    const textParams: textParams = {width: textWidth, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline};
+    if (textAlign == 'left') textWidth = context.canvas.width - textOrigin.x - 5;
+    if (textAlign == 'right') textWidth = textOrigin.x - 5;
+    if (textAlign == 'center') textWidth = this.drawLength / this.nTicks / 1.5;
+    const textParams: textParams = { width: textWidth, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline };
     const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
     tickText.removeEndZeros();
-    tickText.draw(context);
-    context.setTransform(HTMatrix);
+    tickText.format(context);
+    // if (tickText.fontsize <= this.ticksFontsize) { this.ticksFontsize = tickText.fontsize };
+    return tickText
   }
 
   private getValueToDrawMatrix() {

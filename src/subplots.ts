@@ -1491,7 +1491,7 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: newShape[] = [];
 
-  protected initScale: Vertex = new Vertex(-1, -1);
+  protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   private nSamples: number;
 
@@ -1767,10 +1767,16 @@ export class BasePlot extends PlotData {
 export class Frame extends BasePlot {
   public xFeature: string;
   public yFeature: string;
+
+  private offset;
+  private margin;
+
   protected _nXTicks: number;
   protected _nYTicks: number;
-  readonly OFFSET = new Vertex(80, 50);
-  readonly MARGIN = new Vertex(20, 20);
+
+  readonly OFFSET_MULTIPLIER: number = 0.025;
+  readonly MARGIN_MULTIPLIER: number = 0.01;
+  
   constructor(
     public data: any,
     public width: number,
@@ -1782,6 +1788,8 @@ export class Frame extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.offset = new Vertex(width * this.OFFSET_MULTIPLIER, height * this.OFFSET_MULTIPLIER);
+      this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
       this.fixedObjects.push(...this.axes);
@@ -1829,9 +1837,9 @@ export class Frame extends BasePlot {
   }
 
   public setFrameBounds() {
-    let frameOrigin = this.origin.add(this.OFFSET).add(new Vertex(this.X, this.Y).scale(this.initScale));
-    let xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x + this.X * this.initScale.x, frameOrigin.y);
-    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y + this.Y * this.initScale.y);
+    let frameOrigin = this.origin.add(this.offset).add(new Vertex(this.X, this.Y).scale(this.initScale));
+    let xEnd = new Vertex(this.origin.x + this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
+    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.margin.y + this.Y * this.initScale.y);
     if (this.canvasMatrix.a < 0) {
       frameOrigin.x = -(this.size.x - frameOrigin.x);
       xEnd.x = -(this.size.x - xEnd.x);
@@ -1863,11 +1871,11 @@ export class newHistogram extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get nXTicks() {return this._nXTicks ? this._nXTicks : 50}
+  get nXTicks() {return this._nXTicks ? this._nXTicks : 5}
 
   set nXTicks(value: number) {this._nXTicks = value}
 
-  get nYTicks() {return this._nYTicks ? this._nYTicks : 30}
+  get nYTicks() {return this._nYTicks ? this._nYTicks : 5}
 
   set nYTicks(value: number) {this._nYTicks = value}
 

@@ -1950,9 +1950,12 @@ export class newAxis {
   private _previousMax: number;
   private _tickPrecision: number;
   private _ticksFontsize: number = 12;
+  private offsetTicks: Vertex;
+  private offsetTitle: Vertex;
 
-  readonly OFFSET_TICKS = new Vertex(10, 20);
-  readonly OFFSET_NAME = this.OFFSET_TICKS.subtract(new Vertex(65, 60));
+  // readonly OFFSET_TICKS = new Vertex(10, 20);
+  // readonly OFFSET_NAME = this.OFFSET_TICKS.subtract(new Vertex(65, 60));
+  readonly OFFSET_MULTIPLIER = 0.05;
   readonly DRAW_START_OFFSET = 10;
   readonly SIZE_END = 10;
   readonly FONT_SIZE = 12;
@@ -1976,6 +1979,8 @@ export class newAxis {
     this.drawPath = this.buildDrawPath();
     this.path = this.buildPath();
     this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
+    this.offsetTicks = new Vertex(10, 20);
+    this.offsetTitle = this.offsetTicks.subtract(new Vertex(65, 60));
   };
 
   public get drawLength(): number {
@@ -2110,19 +2115,19 @@ export class newAxis {
     context.setTransform(pointHTMatrix);
     this.ticksCoords = this.drawTicks(context, pointHTMatrix, color);
     context.resetTransform();
-    this.drawName(context, canvasHTMatrix);
+    this.drawTitle(context, canvasHTMatrix);
     context.setTransform(canvasHTMatrix);
     this.drawRubberBand(context);
   }
 
-  private drawName(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
+  private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
     let baseline = ['hanging', 'alphabetic'][this.horizontalPickIdx()]
     let nameCoords = this.end.add(this.origin).divide(2);
     if (this.isVertical) {
-      nameCoords.x += this.OFFSET_NAME.x;
+      nameCoords.x += this.offsetTitle.x;
       baseline = ['alphabetic', 'hanging'][this.verticalPickIdx()];
     }
-    else { nameCoords.y += this.OFFSET_NAME.y }
+    else { nameCoords.y += this.offsetTitle.y }
     nameCoords.transformSelf(canvasHTMatrix);
     const orientation = this.isVertical ? -90 : 0;
     const textParams: textParams = {
@@ -2174,11 +2179,11 @@ export class newAxis {
     let textWidth = null;
     let textHeight = null;
     if (textAlign == 'left') {
-      textWidth = Math.abs(this.OFFSET_NAME.x) - this.FONT_SIZE * 1.25;
+      textWidth = Math.abs(this.offsetTitle.x) - this.FONT_SIZE * 1.25;
       textHeight = this.drawLength * 0.95 / this.ticks.length;
     }
     if (textAlign == 'right') {
-      textWidth = textOrigin.x - 5;
+      textWidth = textOrigin.x - Math.abs(this.offsetTitle.x) + this.FONT_SIZE * 1.25;
       textHeight = this.drawLength * 0.95 / this.ticks.length;
     }
     if (textAlign == 'center') textWidth = this.drawLength * 0.95 / this.ticks.length;
@@ -2269,10 +2274,10 @@ export class newAxis {
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, string, string] {
     let origin = new Vertex(point.x, point.y).transform(HTMatrix);
     if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode
-      origin.x -= Math.sign(HTMatrix.a) * this.OFFSET_TICKS.x
+      origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks.x
     }
     else {
-      origin.y -= Math.sign(HTMatrix.d) * this.OFFSET_TICKS.y
+      origin.y -= Math.sign(HTMatrix.d) * this.offsetTicks.y
     }
     const [textAlign, baseline] = this.textAlignments();
     return [origin, textAlign, baseline]

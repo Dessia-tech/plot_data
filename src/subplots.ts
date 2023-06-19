@@ -1491,7 +1491,7 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: newShape[] = [];
 
-  protected initScale: Vertex = new Vertex(1, -1);
+  protected initScale: Vertex = new Vertex(-1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   private nSamples: number;
 
@@ -1774,7 +1774,7 @@ export class Frame extends BasePlot {
   protected _nXTicks: number;
   protected _nYTicks: number;
 
-  readonly OFFSET_MULTIPLIER: number = 0.025;
+  readonly OFFSET_MULTIPLIER: Vertex = new Vertex(0.05, 0.1);
   readonly MARGIN_MULTIPLIER: number = 0.01;
   
   constructor(
@@ -1788,7 +1788,7 @@ export class Frame extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.offset = new Vertex(width * this.OFFSET_MULTIPLIER, height * this.OFFSET_MULTIPLIER);
+      this.offset = new Vertex(width * this.OFFSET_MULTIPLIER.x, height * this.OFFSET_MULTIPLIER.y);
       this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
@@ -1826,21 +1826,23 @@ export class Frame extends BasePlot {
   }
 
   public setAxes(): newAxis[] {
-    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds()
+    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds()
     return [
-      this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks),
-      this.setAxis(this.yFeature, frameOrigin, yEnd, this.nYTicks)]
+      this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks),
+      this.setAxis(this.yFeature, freeSize.x, frameOrigin, yEnd, this.nYTicks)]
   }
 
-  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
+  public setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+    return new newAxis(this.features.get(feature), freeSize, origin, end, feature, nTicks)
   }
 
-  public setFrameBounds() {
+  public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
     let frameOrigin = this.origin.add(this.offset).add(new Vertex(this.X, this.Y).scale(this.initScale));
     let xEnd = new Vertex(this.origin.x + this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
     let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.margin.y + this.Y * this.initScale.y);
+    let freeSize = frameOrigin.copy();
     if (this.canvasMatrix.a < 0) {
+      freeSize.x = frameOrigin.x;
       frameOrigin.x = -(this.size.x - frameOrigin.x);
       xEnd.x = -(this.size.x - xEnd.x);
       yEnd.x = frameOrigin.x;
@@ -1849,8 +1851,9 @@ export class Frame extends BasePlot {
       frameOrigin.y = -(this.size.y - frameOrigin.y);
       yEnd.y = -(this.size.y - yEnd.y);
       xEnd.y = frameOrigin.y;
+      freeSize.y = this.size.y + frameOrigin.y;
     }
-    return [frameOrigin, xEnd, yEnd]
+    return [frameOrigin, xEnd, yEnd, freeSize]
   }
 }
 
@@ -1884,8 +1887,8 @@ export class newHistogram extends Frame {
     this.bars = undefined;
   }
 
-  private buildNumberAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
-    const numberAxis = this.setAxis('number', frameOrigin, yEnd, this.nYTicks);
+  private buildNumberAxis(freeSize: number, frameOrigin: Vertex, yEnd: Vertex): newAxis {
+    const numberAxis = this.setAxis('number', freeSize, frameOrigin, yEnd, this.nYTicks);
     numberAxis.minValue = 0;
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.nTicks = this.nYTicks;
@@ -1978,16 +1981,12 @@ export class newHistogram extends Frame {
   }
 
   public setAxes(): newAxis[] {
-    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
-    const xAxis = this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks);
+    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds();
+    const xAxis = this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks);
     const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
     this.features.set('number', this.getNumberFeature(bars));
-    const yAxis = this.buildNumberAxis(frameOrigin, yEnd);
+    const yAxis = this.buildNumberAxis(freeSize.x, frameOrigin, yEnd);
     return [xAxis, yAxis];
-  }
-
-  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number): newAxis {
-    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
   }
 
   public setFeatures(data: any): [string, string] {return [data.x_variable, 'number']}

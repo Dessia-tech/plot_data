@@ -1718,7 +1718,7 @@ export class newText extends newShape {
   get fullFont() { return newText.buildFont(this.style, this.fontsize, this.font) }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
-    let tmp_context: CanvasRenderingContext2D = context
+    let tmp_context: CanvasRenderingContext2D = context;
     let pxMaxWidth: number = this.width * this.scale;
     tmp_context.font = '1px ' + this.font;
     return Math.min(pxMaxWidth / (tmp_context.measureText(this.text).width), DEFAULT_FONTSIZE)
@@ -1950,13 +1950,12 @@ export class newAxis {
   private _previousMax: number;
   private _tickPrecision: number;
   private _ticksFontsize: number = 12;
-  private offsetTicks: Vertex;
-  private offsetTitle: Vertex;
+  private offsetTicks: number;
+  private offsetTitle: number;
+  private maxTickWidth: number;
+  private maxTickHeight: number;
 
-  // readonly OFFSET_TICKS = new Vertex(10, 20);
-  // readonly OFFSET_NAME = this.OFFSET_TICKS.subtract(new Vertex(65, 60));
-  readonly OFFSET_MULTIPLIER = 0.05;
-  readonly DRAW_START_OFFSET = 10;
+  readonly DRAW_START_OFFSET = 0;
   readonly SIZE_END = 10;
   readonly FONT_SIZE = 12;
   readonly FONT = 'sans-serif';
@@ -1966,26 +1965,39 @@ export class newAxis {
 
   constructor(
     vector: any[],
+    freeSize: number,
     public origin: Vertex,
     public end: Vertex,
     public name: string = '',
     private _nTicks: number = 10) {
-    this.isDiscrete = typeof vector[0] == 'string';
-    if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
-    const [minValue, maxValue] = this.computeMinMax(vector);
-    [this._previousMin, this._previousMax] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
-    this.ticks = this.computeTicks();
-    if (!this.isDiscrete) { this.labels = this.numericLabels() };
-    this.drawPath = this.buildDrawPath();
-    this.path = this.buildPath();
-    this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
-    this.offsetTicks = new Vertex(10, 20);
-    this.offsetTitle = this.offsetTicks.subtract(new Vertex(65, 60));
-  };
+      this.isDiscrete = typeof vector[0] == 'string';
+      if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
+      const [minValue, maxValue] = this.computeMinMax(vector);
+      [this._previousMin, this._previousMax] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
+      this.ticks = this.computeTicks();
+      if (!this.isDiscrete) { this.labels = this.numericLabels() };
+      this.drawPath = this.buildDrawPath();
+      this.path = this.buildPath();
+      this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
+      this.offsetTicks = this.ticksFontsize * 0.8;
+      this.offsetTitle = freeSize - this.FONT_SIZE;
+    };
 
   public get drawLength(): number {
     if (this.isVertical) { return Math.abs(this.origin.y - this.end.y) };
     return Math.abs(this.origin.x - this.end.x);
+  }
+
+  public computeTextBoxes(context: CanvasRenderingContext2D) {
+    context.save();
+    const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.FONT });
+    context.font = calibratedTickText.fullFont;
+    const calibratedMeasure = context.measureText(calibratedTickText.text).width;
+    this.offsetTitle = this.isVertical ? Math.min(this.offsetTitle, calibratedMeasure) : Math.min(this.offsetTitle, this.FONT_SIZE * 1.5 + this.offsetTicks);
+    this.maxTickWidth = Math.min(this.offsetTitle - this.offsetTicks, calibratedMeasure);
+    this.maxTickHeight = Math.min(calibratedTickText.fontsize, this.offsetTitle - this.offsetTicks);
+    if (!this.isVertical) {console.log(this.maxTickHeight)}
+    context.restore();
   }
 
   get interval(): number { return Math.abs(this.maxValue - this.minValue) };
@@ -2115,19 +2127,21 @@ export class newAxis {
     context.setTransform(pointHTMatrix);
     this.ticksCoords = this.drawTicks(context, pointHTMatrix, color);
     context.resetTransform();
+
+    this.computeTextBoxes(context);
     this.drawTitle(context, canvasHTMatrix);
     context.setTransform(canvasHTMatrix);
     this.drawRubberBand(context);
   }
 
   private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
-    let baseline = ['hanging', 'alphabetic'][this.horizontalPickIdx()]
+    let baseline = ['alphabetic', 'hanging'][this.horizontalPickIdx()]
     let nameCoords = this.end.add(this.origin).divide(2);
     if (this.isVertical) {
-      nameCoords.x += this.offsetTitle.x;
+      nameCoords.x -= this.offsetTitle;
       baseline = ['alphabetic', 'hanging'][this.verticalPickIdx()];
     }
-    else { nameCoords.y += this.offsetTitle.y }
+    else { nameCoords.y -= this.offsetTitle }
     nameCoords.transformSelf(canvasHTMatrix);
     const orientation = this.isVertical ? -90 : 0;
     const textParams: textParams = {
@@ -2179,14 +2193,17 @@ export class newAxis {
     let textWidth = null;
     let textHeight = null;
     if (textAlign == 'left') {
-      textWidth = Math.abs(this.offsetTitle.x) - this.FONT_SIZE * 1.25;
+      textWidth = this.maxTickWidth; //Math.abs(this.offsetTitle);
       textHeight = this.drawLength * 0.95 / this.ticks.length;
     }
     if (textAlign == 'right') {
-      textWidth = textOrigin.x - Math.abs(this.offsetTitle.x) + this.FONT_SIZE * 1.25;
+      textWidth = this.maxTickWidth; //textOrigin.x - Math.abs(this.offsetTitle) + this.FONT_SIZE * 1.25;
       textHeight = this.drawLength * 0.95 / this.ticks.length;
     }
-    if (textAlign == 'center') textWidth = this.drawLength * 0.95 / this.ticks.length;
+    if (textAlign == 'center') {
+      textWidth = this.drawLength * 0.95 / this.ticks.length;
+      textHeight = this.maxTickHeight;
+    }
     const textParams: textParams = { width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline };
     const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
     tickText.removeEndZeros();
@@ -2267,17 +2284,17 @@ export class newAxis {
 
   private textAlignments(): [string, string] {
     const forVertical = ['right', 'left'][this.verticalPickIdx()];
-    const forHorizontal = ['hanging', 'alphabetic'][this.horizontalPickIdx()]
+    const forHorizontal = ['alphabetic', 'hanging'][this.horizontalPickIdx()]
     return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
   }
 
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, string, string] {
     let origin = new Vertex(point.x, point.y).transform(HTMatrix);
     if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode
-      origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks.x
+      origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks;
     }
     else {
-      origin.y -= Math.sign(HTMatrix.d) * this.offsetTicks.y
+      origin.y -= Math.sign(HTMatrix.d) * this.offsetTicks;
     }
     const [textAlign, baseline] = this.textAlignments();
     return [origin, textAlign, baseline]

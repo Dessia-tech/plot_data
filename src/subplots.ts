@@ -1697,7 +1697,7 @@ export class BasePlot extends PlotData {
             if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
               if (this.scaleX > scale.x) {this.scaleX = scale.x}
               if (this.scaleY > scale.y) {this.scaleY = scale.y}
-            } else if (axis.tickPrecision <= 1) {
+            } else if (axis.tickPrecision < 1) {
               if (this.scaleX < scale.x) {this.scaleX = scale.x}
               if (this.scaleX < scale.x) {this.scaleX = scale.x}
             }

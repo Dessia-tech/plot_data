@@ -1933,7 +1933,7 @@ export class newAxis {
   private _maxValue: number;
   private _previousMin: number;
   private _previousMax: number;
-  private _tickPrecision: number = 4;
+  private _tickPrecision: number;
 
   readonly OFFSET_TICKS = new Vertex(10, 20);
   readonly OFFSET_NAME = this.OFFSET_TICKS.subtract(new Vertex(65, 60));
@@ -1999,6 +1999,8 @@ export class newAxis {
   set ticks(value: number[]) { this._ticks = value }
 
   get tickPrecision(): number { return this._tickPrecision };
+
+  set tickPrecision(value: number) { this._tickPrecision = value };
 
   get title(): string { return newText.capitalize(this.name) }
 
@@ -2141,9 +2143,9 @@ export class newAxis {
   private drawTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): void {
     const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
     let textWidth = null;
-    if (textAlign == 'left') textWidth = context.canvas.width - textOrigin.x - 5;
-    if (textAlign == 'right') textWidth = textOrigin.x - 5;
-    if (textAlign == 'center') textWidth = (this.drawLength) / (this.nTicks * 1.5);
+    if (textAlign == 'left') textWidth = (context.canvas.width - textOrigin.x) * 0.95;
+    if (textAlign == 'right') textWidth = textOrigin.x * 0.95;
+    if (textAlign == 'center') textWidth = this.drawLength / this.nTicks * 0.95;
     context.resetTransform()
     const textParams: textParams = {width: textWidth, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline};
     const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
@@ -2161,8 +2163,9 @@ export class newAxis {
 
   private marginedBounds(minValue: number, maxValue: number): [number, number] {
     if (this.isDiscrete) { return [minValue - 1, maxValue + 1] };
-    return [minValue * (1 - Math.sign(minValue) * this.marginRatio),
-    maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
+    return [
+      minValue * (1 - Math.sign(minValue) * this.marginRatio),
+      maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D) {
@@ -2251,11 +2254,14 @@ export class newAxis {
   }
 
   private updateTickPrecision(): number {
-    const minTick = Math.min(...this.ticks);
-    const maxTick = Math.max(...this.ticks);
-    const ratio = Number(maxTick.toPrecision(this.tickPrecision)) / Number(minTick.toPrecision(this.tickPrecision));
-    if (ratio == 1) { this._tickPrecision++ };
-    if (Number(maxTick.toPrecision(this.tickPrecision - 1)) != Number(minTick.toPrecision(this.tickPrecision - 1)) && this.tickPrecision > 4) { this._tickPrecision-- };
+    this.tickPrecision = 1;
+    for (let index = 0 ; index < this.ticks.length - 1 ; index++) {
+      const rightTick = this.ticks[index + 1];
+      const leftTick = this.ticks[index];
+      while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) { 
+        this.tickPrecision++;
+      };
+    }
     return
   };
 

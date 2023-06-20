@@ -1491,7 +1491,7 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: newShape[] = [];
 
-  protected initScale: Vertex = new Vertex(-1, -1);
+  protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   private nSamples: number;
 
@@ -1774,7 +1774,7 @@ export class Frame extends BasePlot {
   protected _nXTicks: number;
   protected _nYTicks: number;
 
-  readonly OFFSET_MULTIPLIER: Vertex = new Vertex(0.05, 0.1);
+  readonly OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
   readonly MARGIN_MULTIPLIER: number = 0.01;
   
   constructor(

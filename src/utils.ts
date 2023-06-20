@@ -1669,7 +1669,7 @@ export class Triangle extends AbstractTriangle {
 
 export interface textParams {
   width?: number, height?: number, fontsize?: number, multiLine?: boolean, font?: string, align?: string,
-  baseline?: string, style?: string, orientation?: number
+  baseline?: string, style?: string, orientation?: number, backgroundColor?: string, color?: string
 }
 
 const DEFAULT_FONTSIZE = 12;
@@ -1685,6 +1685,7 @@ export class newText extends newShape {
   public orientation: number;
   public multiLine: boolean;
   public nRows: number;
+  public backgroundColor: string;
   constructor(
     public text: string,
     public origin: Vertex,
@@ -1696,7 +1697,9 @@ export class newText extends newShape {
       align = 'left',
       baseline = 'alphabetic',
       style = '',
-      orientation = 0
+      orientation = 0,
+      color = "hsl(0, 0%, 0%)",
+      backgroundColor = "hsl(126, 100%, 38%)"
     }: textParams = {}) {
       super();
       this.width = width;
@@ -1708,7 +1711,8 @@ export class newText extends newShape {
       this.baseline = baseline;
       this.style = style;
       this.orientation = orientation;
-      this.path = this.buildPath();
+      this.backgroundColor = backgroundColor;
+      this.fillStyle = color;
     }
 
   private static buildFont(style: string, fontsize: number, font: string): string {
@@ -1726,7 +1730,21 @@ export class newText extends newShape {
 
   public buildPath(): Path2D {
     const path = this.path;
-    path.rect(this.origin.x, this.origin.y, this.width, this.fontsize);
+    let origin = this.origin.copy();
+    let height = this.height;
+    switch (this.align) {
+      case "center": origin.x -= this.width / 2; break
+      case "right": origin.x -= this.width; break
+      case "end": origin.x -= this.width; break
+    }
+    switch (this.baseline) {
+      case "middle": origin.y -= this.height / 2; break
+      case "top": origin.y -= this.height - this.fontsize * 0.8; break
+      case "hanging": origin.y -= this.height - this.fontsize * 0.8; break
+      case "alphabetic": height = -height; break
+      case "bottom": height = -height; break
+    }
+    path.rect(origin.x, origin.y, this.width, height);
     return path
   }
 
@@ -1735,16 +1753,20 @@ export class newText extends newShape {
   public capitalizeSelf(): void { this.text = newText.capitalize(this.text) }
 
   public draw(context: CanvasRenderingContext2D) {
+    context.save();
     const writtenText = this.format(context);
     context.font = this.fullFont;
     context.textAlign = this.align as CanvasTextAlign;
     context.textBaseline = this.baseline as CanvasTextBaseline;
     this.path = this.buildPath();
+    if (this.backgroundColor) {
+      context.fillStyle = this.backgroundColor;
+      context.fill(this.path);
+    }
     context.translate(this.origin.x, this.origin.y);
     context.rotate(Math.PI / 180 * this.orientation);
     this.write(writtenText, context);
-    context.rotate(-Math.PI / 180 * this.orientation);
-    context.translate(-this.origin.x, -this.origin.y);
+    context.restore();
   }
 
   public format(context: CanvasRenderingContext2D): string[] {
@@ -1768,10 +1790,12 @@ export class newText extends newShape {
     if (!this.height) { this.height = tempHeight };
     if (tempHeight > this.height) { this.fontsize = this.height / tempHeight * this.fontsize };
     this.nRows = writtenText.length;
+    this.height = this.fontsize * writtenText.length;
     return writtenText
   }
 
   private write(writtenText: string[], context: CanvasRenderingContext2D) {
+    context.fillStyle = this.fillStyle
     if (writtenText.length != 1) {
       var offset: number = writtenText.length - 1;
       writtenText.forEach((row, index) => { context.fillText(row, 0, (index - offset) * this.fontsize) });
@@ -1929,7 +1953,7 @@ export class newAxis {
   public ticksCoords: newPoint2D[];
   public drawPath: Path2D;
   public path: Path2D;
-  public lineWidth: number = 2;
+  public lineWidth: number = 1;
   public strokeStyle: string = 'hsl(0, 0%, 0%)';
   public hoverStyle: string = 'hsl(0, 100%, 48%)';
   public clickedStyle: string = 'hsl(126, 67%, 72%)';
@@ -1939,6 +1963,7 @@ export class newAxis {
   public isClicked: boolean = false;
   public mouseStyleON: boolean = false;
   public rubberBand: RubberBand;
+  public centeredTitle: boolean = false;
 
   protected _ticks: number[];
   protected _isDiscrete: boolean;
@@ -1956,7 +1981,8 @@ export class newAxis {
   private maxTickHeight: number;
 
   readonly DRAW_START_OFFSET = 0;
-  readonly SIZE_END = 10;
+  readonly SELECTION_RECT_SIZE = 10;
+  readonly SIZE_END = 7;
   readonly FONT_SIZE = 12;
   readonly FONT = 'sans-serif';
 
@@ -1980,7 +2006,7 @@ export class newAxis {
       this.path = this.buildPath();
       this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
       this.offsetTicks = this.ticksFontsize * 0.8;
-      this.offsetTitle = freeSize - this.FONT_SIZE;
+      this.offsetTitle = this.centeredTitle ? freeSize - this.FONT_SIZE : 0;
     };
 
   public get drawLength(): number {
@@ -1993,10 +2019,13 @@ export class newAxis {
     const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.FONT });
     context.font = calibratedTickText.fullFont;
     const calibratedMeasure = context.measureText(calibratedTickText.text).width;
-    this.offsetTitle = this.isVertical ? Math.min(this.offsetTitle, calibratedMeasure) : Math.min(this.offsetTitle, this.FONT_SIZE * 1.5 + this.offsetTicks);
-    this.maxTickWidth = Math.min(this.offsetTitle - this.offsetTicks, calibratedMeasure);
-    this.maxTickHeight = Math.min(calibratedTickText.fontsize, this.offsetTitle - this.offsetTicks);
-    if (!this.isVertical) {console.log(this.maxTickHeight)}
+    this.maxTickWidth = calibratedMeasure;
+    this.maxTickHeight = calibratedTickText.fontsize;
+    if (this.centeredTitle) {
+      this.offsetTitle = this.isVertical ? Math.min(this.offsetTitle, calibratedMeasure) : Math.min(this.offsetTitle, this.FONT_SIZE * 1.5 + this.offsetTicks);
+      this.maxTickWidth = Math.min(this.offsetTitle - this.offsetTicks, this.maxTickWidth);
+      this.maxTickHeight = Math.min(this.offsetTitle - this.offsetTicks, this.maxTickHeight);
+    }
     context.restore();
   }
 
@@ -2079,7 +2108,7 @@ export class newAxis {
 
   private buildPath(): Path2D {
     const path = new Path2D();
-    const offset = new Vertex(this.DRAW_START_OFFSET * Number(this.isVertical), this.DRAW_START_OFFSET * Number(!this.isVertical));
+    const offset = new Vertex(this.SELECTION_RECT_SIZE * Number(this.isVertical), this.SELECTION_RECT_SIZE * Number(!this.isVertical));
     const origin = new Vertex(this.origin.x, this.origin.y).subtract(offset.multiply(2));
     const size = this.end.subtract(origin).add(offset);
     path.rect(origin.x, origin.y, size.x, size.y);
@@ -2135,21 +2164,43 @@ export class newAxis {
   }
 
   private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
-    let baseline = ['alphabetic', 'hanging'][this.horizontalPickIdx()]
+    if (this.centeredTitle) {
+      var [nameCoords, align, baseline, orientation] = this.centeredTitleProperties();
+    } else {
+      var [nameCoords, align, baseline, orientation] = this.topArrowTitleProperties();
+    }
+    nameCoords.transformSelf(canvasHTMatrix);
+    const textParams: textParams = {
+      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.FONT, align: align, color: this.strokeStyle,
+      baseline: baseline, style: 'bold', orientation: orientation, backgroundColor: "hsl(126, 100%, 38%)"
+    };
+    const textName = new newText(this.title, nameCoords, textParams);
+    textName.draw(context);
+  }
+
+  private topArrowTitleProperties(): [Vertex, string, string, number] {
+    let nameCoords = this.end.copy();
+    let alignChoices = ["left", "right"];
+    let signFontAdd = 1;
+    if (!this.isVertical) {
+      alignChoices = ["right", "left"];
+      signFontAdd = -0.8;
+      nameCoords.y += this.FONT_SIZE;
+    }
+    nameCoords.x += signFontAdd * this.FONT_SIZE;
+    return [nameCoords, alignChoices[this.verticalPickIdx()], "middle", 0]
+  }
+
+  private centeredTitleProperties(): [Vertex, string, string, number] {
+    let baseline = ['alphabetic', 'hanging'][this.horizontalPickIdx()];
     let nameCoords = this.end.add(this.origin).divide(2);
     if (this.isVertical) {
       nameCoords.x -= this.offsetTitle;
       baseline = ['alphabetic', 'hanging'][this.verticalPickIdx()];
+    } else { 
+      nameCoords.y -= this.offsetTitle;
     }
-    else { nameCoords.y -= this.offsetTitle }
-    nameCoords.transformSelf(canvasHTMatrix);
-    const orientation = this.isVertical ? -90 : 0;
-    const textParams: textParams = {
-      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.FONT, align: 'center',
-      baseline: baseline, style: 'bold', orientation: orientation
-    };
-    const textName = new newText(this.title, nameCoords, textParams);
-    textName.draw(context);
+    return [nameCoords, "center", baseline, this.isVertical ? -90 : 0]
   }
 
   private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string) {
@@ -2181,7 +2232,7 @@ export class newAxis {
 
   private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
     const markerOrientation = this.isVertical ? 'right' : 'up';
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), 10 / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
     point.color = color;
     point.lineWidth /= Math.abs(HTMatrix.a);
     point.draw(context);
@@ -2192,19 +2243,17 @@ export class newAxis {
     const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
     let textWidth = null;
     let textHeight = null;
-    if (textAlign == 'left') {
+    if (['left', 'right'.includes(textAlign)]) {
       textWidth = this.maxTickWidth; //Math.abs(this.offsetTitle);
-      textHeight = this.drawLength * 0.95 / this.ticks.length;
-    }
-    if (textAlign == 'right') {
-      textWidth = this.maxTickWidth; //textOrigin.x - Math.abs(this.offsetTitle) + this.FONT_SIZE * 1.25;
       textHeight = this.drawLength * 0.95 / this.ticks.length;
     }
     if (textAlign == 'center') {
       textWidth = this.drawLength * 0.95 / this.ticks.length;
       textHeight = this.maxTickHeight;
     }
-    const textParams: textParams = { width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT, align: textAlign, baseline: baseline };
+    const textParams: textParams = { 
+      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE - 2, font: this.FONT, 
+      align: textAlign, baseline: baseline, color: this.strokeStyle };
     const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
     tickText.removeEndZeros();
     tickText.format(context);

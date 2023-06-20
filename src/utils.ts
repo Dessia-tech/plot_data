@@ -1744,7 +1744,13 @@ export class newText extends newShape {
       case "alphabetic": height = -height; break
       case "bottom": height = -height; break
     }
-    path.rect(origin.x, origin.y, this.width, height);
+    const rectPath = new Path2D();
+    rectPath.rect(-this.width / 2, 0, this.width, height); // TODO: find the good formula for hanging and alphabetic (not trivial)
+
+    const ANGLE_RAD = this.orientation * Math.PI / 180;
+    const COS = Math.cos(ANGLE_RAD);
+    const SIN = Math.sin(ANGLE_RAD);
+    path.addPath(rectPath, new DOMMatrix([COS, SIN, -SIN, COS, origin.x + this.width / 2, origin.y]));
     return path
   }
 
@@ -2006,7 +2012,7 @@ export class newAxis {
       this.path = this.buildPath();
       this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
       this.offsetTicks = this.ticksFontsize * 0.8;
-      this.offsetTitle = this.centeredTitle ? this.freeSpace - this.FONT_SIZE : 0;
+      this.offsetTitle = 0;
     };
 
   public get drawLength(): number {
@@ -2022,7 +2028,8 @@ export class newAxis {
     this.maxTickWidth = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedMeasure);
     this.maxTickHeight = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedTickText.fontsize);
     if (this.centeredTitle) {
-      this.offsetTitle = this.isVertical ? Math.min(this.offsetTitle, calibratedMeasure) : Math.min(this.offsetTitle, this.FONT_SIZE * 1.5 + this.offsetTicks);
+      const FREE_SPACE = this.freeSpace - this.FONT_SIZE - 0.3 * this.maxTickHeight;
+      this.offsetTitle = (this.isVertical ? Math.min(FREE_SPACE, calibratedMeasure) : Math.min(FREE_SPACE, this.FONT_SIZE * 1.5 + this.offsetTicks)); 
     }
     context.restore();
   }
@@ -2178,10 +2185,10 @@ export class newAxis {
 
   private topArrowTitleProperties(): [Vertex, string, string, number] {
     let nameCoords = this.end.copy();
-    let alignChoices = ["left", "right"];
+    let alignChoices = ["start", "end"];
     let signFontAdd = 1;
     if (!this.isVertical) {
-      alignChoices = ["right", "left"];
+      alignChoices = ["end", "start"];
       signFontAdd = -0.8;
       nameCoords.y += this.FONT_SIZE;
     }
@@ -2190,11 +2197,11 @@ export class newAxis {
   }
 
   private centeredTitleProperties(): [Vertex, string, string, number] {
-    let baseline = ['alphabetic', 'hanging'][this.horizontalPickIdx()];
+    let baseline = ['bottom', 'top'][this.horizontalPickIdx()];
     let nameCoords = this.end.add(this.origin).divide(2);
     if (this.isVertical) {
       nameCoords.x -= this.offsetTitle;
-      baseline = ['alphabetic', 'hanging'][this.verticalPickIdx()];
+      baseline = ['bottom', 'top'][this.verticalPickIdx()];
     } else { 
       nameCoords.y -= this.offsetTitle;
     }
@@ -2241,7 +2248,7 @@ export class newAxis {
     const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
     let textWidth = null;
     let textHeight = null;
-    if (['left', 'right'.includes(textAlign)]) {
+    if (['start', 'end'.includes(textAlign)]) {
       textWidth = this.maxTickWidth;
       textHeight = this.drawLength * 0.95 / this.ticks.length;
     }
@@ -2330,8 +2337,8 @@ export class newAxis {
   }
 
   private textAlignments(): [string, string] {
-    const forVertical = ['right', 'left'][this.verticalPickIdx()];
-    const forHorizontal = ['alphabetic', 'hanging'][this.horizontalPickIdx()]
+    const forVertical = ['end', 'start'][this.verticalPickIdx()];
+    const forHorizontal = ['bottom', 'top'][this.horizontalPickIdx()]
     return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
   }
 

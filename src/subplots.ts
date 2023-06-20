@@ -1491,6 +1491,8 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: newShape[] = [];
 
+  public font: string = "sans-serif";
+
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   private nSamples: number;
@@ -1788,7 +1790,7 @@ export class Frame extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.offset = new Vertex(width * this.OFFSET_MULTIPLIER.x, height * this.OFFSET_MULTIPLIER.y);
+      this.offset = this.computeOffset();
       this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
@@ -1809,6 +1811,13 @@ export class Frame extends BasePlot {
   get nYTicks() {return this._nYTicks ? this._nYTicks : 7}
 
   set nYTicks(value: number) {this._nYTicks = value}
+
+  private computeOffset() {
+    const naturalOffset = new Vertex(this.width * this.OFFSET_MULTIPLIER.x, this.height * this.OFFSET_MULTIPLIER.y);
+    const MIN_FONTSIZE = 6;
+    const calibratedMeasure = 33;
+    return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
+  }
 
   public reset_scales(): void {
     this.size = new Vertex(this.width, this.height);

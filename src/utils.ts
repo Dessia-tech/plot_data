@@ -1991,7 +1991,7 @@ export class newAxis {
 
   constructor(
     vector: any[],
-    freeSize: number,
+    public freeSpace: number,
     public origin: Vertex,
     public end: Vertex,
     public name: string = '',
@@ -2006,7 +2006,7 @@ export class newAxis {
       this.path = this.buildPath();
       this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
       this.offsetTicks = this.ticksFontsize * 0.8;
-      this.offsetTitle = this.centeredTitle ? freeSize - this.FONT_SIZE : 0;
+      this.offsetTitle = this.centeredTitle ? this.freeSpace - this.FONT_SIZE : 0;
     };
 
   public get drawLength(): number {
@@ -2019,12 +2019,10 @@ export class newAxis {
     const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.FONT });
     context.font = calibratedTickText.fullFont;
     const calibratedMeasure = context.measureText(calibratedTickText.text).width;
-    this.maxTickWidth = calibratedMeasure;
-    this.maxTickHeight = calibratedTickText.fontsize;
+    this.maxTickWidth = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedMeasure);
+    this.maxTickHeight = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedTickText.fontsize);
     if (this.centeredTitle) {
       this.offsetTitle = this.isVertical ? Math.min(this.offsetTitle, calibratedMeasure) : Math.min(this.offsetTitle, this.FONT_SIZE * 1.5 + this.offsetTicks);
-      this.maxTickWidth = Math.min(this.offsetTitle - this.offsetTicks, this.maxTickWidth);
-      this.maxTickHeight = Math.min(this.offsetTitle - this.offsetTicks, this.maxTickHeight);
     }
     context.restore();
   }
@@ -2211,8 +2209,8 @@ export class newAxis {
       if (tick >= this.minValue && tick <= this.maxValue) {
         context.setTransform(pointHTMatrix);
         let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, color);
+        let text = this.labels[idx];
         ticksCoords.push(point);
-        let text = this.labels[idx]
         if (this.isDiscrete) {
           if (count == tick && this.labels[count]) { text = this.labels[count]; count++ }
           else { text = '' }
@@ -2244,7 +2242,7 @@ export class newAxis {
     let textWidth = null;
     let textHeight = null;
     if (['left', 'right'.includes(textAlign)]) {
-      textWidth = this.maxTickWidth; //Math.abs(this.offsetTitle);
+      textWidth = this.maxTickWidth;
       textHeight = this.drawLength * 0.95 / this.ticks.length;
     }
     if (textAlign == 'center') {
@@ -2252,7 +2250,7 @@ export class newAxis {
       textHeight = this.maxTickHeight;
     }
     const textParams: textParams = { 
-      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE - 2, font: this.FONT, 
+      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT, 
       align: textAlign, baseline: baseline, color: this.strokeStyle };
     const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
     tickText.removeEndZeros();

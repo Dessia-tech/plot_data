@@ -1778,7 +1778,7 @@ export class Frame extends BasePlot {
 
   readonly OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
   readonly MARGIN_MULTIPLIER: number = 0.01;
-  
+
   constructor(
     public data: any,
     public width: number,

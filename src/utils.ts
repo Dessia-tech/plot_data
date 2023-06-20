@@ -1768,7 +1768,7 @@ export class newText extends newShape {
 
     context.fillStyle = this.backgroundColor;
     context.fill(this.path);
-    
+
     context.translate(this.origin.x, this.origin.y);
     context.rotate(Math.PI / 180 * this.orientation);
     this.write(writtenText, context);
@@ -2029,7 +2029,7 @@ export class newAxis {
     this.maxTickHeight = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedTickText.fontsize);
     if (this.centeredTitle) {
       const FREE_SPACE = this.freeSpace - this.FONT_SIZE - 0.3 * this.maxTickHeight;
-      this.offsetTitle = (this.isVertical ? Math.min(FREE_SPACE, calibratedMeasure) : Math.min(FREE_SPACE, this.FONT_SIZE * 1.5 + this.offsetTicks)); 
+      this.offsetTitle = (this.isVertical ? Math.min(FREE_SPACE, calibratedMeasure) : Math.min(FREE_SPACE, this.FONT_SIZE * 1.5 + this.offsetTicks));
     }
     context.restore();
   }
@@ -2202,7 +2202,7 @@ export class newAxis {
     if (this.isVertical) {
       nameCoords.x -= this.offsetTitle;
       baseline = ['bottom', 'top'][this.verticalPickIdx()];
-    } else { 
+    } else {
       nameCoords.y -= this.offsetTitle;
     }
     return [nameCoords, "center", baseline, this.isVertical ? -90 : 0]
@@ -2256,8 +2256,8 @@ export class newAxis {
       textWidth = this.drawLength * 0.95 / this.ticks.length;
       textHeight = this.maxTickHeight;
     }
-    const textParams: textParams = { 
-      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT, 
+    const textParams: textParams = {
+      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT,
       align: textAlign, baseline: baseline, color: this.strokeStyle };
     const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
     tickText.removeEndZeros();
@@ -2370,7 +2370,7 @@ export class newAxis {
     for (let index = 0 ; index < this.ticks.length - 1 ; index++) {
       const rightTick = this.ticks[index + 1];
       const leftTick = this.ticks[index];
-      while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) { 
+      while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
         this.tickPrecision++;
       };
     }

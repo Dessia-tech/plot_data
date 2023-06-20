@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.15.0]
 ### Fix
-- Automatic font size and positionning
+- Automatic font size and positioning
 - Background for texts
 - Review the way ticks are computed
 

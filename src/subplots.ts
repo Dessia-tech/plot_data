@@ -1883,11 +1883,11 @@ export class newHistogram extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get nXTicks() {return this._nXTicks ? this._nXTicks : 5}
+  get nXTicks() {return this._nXTicks ? this._nXTicks : 20}
 
   set nXTicks(value: number) {this._nXTicks = value}
 
-  get nYTicks() {return this._nYTicks ? this._nYTicks : 5}
+  get nYTicks() {return this._nYTicks ? this._nYTicks : 10}
 
   set nYTicks(value: number) {this._nYTicks = value}
 

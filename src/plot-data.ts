@@ -856,7 +856,7 @@ export abstract class PlotData {
       let align = "center";
       const textParams: textParams = { 
         width: width, height: origin.y - 2 - this.Y, align: align, baseline: "bottom", 
-        multiLine: true, color: 'black' };
+        multiLine: true, color: 'black', backgroundColor: "hsla(0, 0%, 100%, 0.5)" };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
       axisTitle.format(this.context);
 
@@ -976,7 +976,7 @@ export abstract class PlotData {
       let origin = new Vertex(this.axis_x_start, current_y + 10);
       const textParams: textParams = { 
         width: this.width * 0.25, height: this.y_step * 0.98, align: "center", 
-        baseline: "hanging", multiLine: true, color: 'black' };
+        baseline: "hanging", multiLine: true, color: 'black', backgroundColor: "hsla(0, 0%, 100%, 0.5)" };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
 
       axisTitle.format(this.context);

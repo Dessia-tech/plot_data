@@ -1699,7 +1699,7 @@ export class newText extends newShape {
       style = '',
       orientation = 0,
       color = "hsl(0, 0%, 0%)",
-      backgroundColor = "hsl(126, 100%, 38%)"
+      backgroundColor = "hsla(0, 0%, 100%, 0)"
     }: textParams = {}) {
       super();
       this.width = width;
@@ -1759,10 +1759,10 @@ export class newText extends newShape {
     context.textAlign = this.align as CanvasTextAlign;
     context.textBaseline = this.baseline as CanvasTextBaseline;
     this.path = this.buildPath();
-    if (this.backgroundColor) {
-      context.fillStyle = this.backgroundColor;
-      context.fill(this.path);
-    }
+
+    context.fillStyle = this.backgroundColor;
+    context.fill(this.path);
+    
     context.translate(this.origin.x, this.origin.y);
     context.rotate(Math.PI / 180 * this.orientation);
     this.write(writtenText, context);
@@ -2172,7 +2172,7 @@ export class newAxis {
     nameCoords.transformSelf(canvasHTMatrix);
     const textParams: textParams = {
       width: this.drawLength, fontsize: this.FONT_SIZE, font: this.FONT, align: align, color: this.strokeStyle,
-      baseline: baseline, style: 'bold', orientation: orientation, backgroundColor: "hsl(126, 100%, 38%)"
+      baseline: baseline, style: 'bold', orientation: orientation, backgroundColor: "hsla(0, 0%, 100%, 0.5)"
     };
     const textName = new newText(this.title, nameCoords, textParams);
     textName.draw(context);

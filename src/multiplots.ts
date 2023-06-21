@@ -571,15 +571,14 @@ export class MultiplePlots {
         let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
         this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
       }
-      for (let i=0; i<this.nbObjects; i++) {
-        let display_index = this.display_order[i];
+      this.display_order.forEach(display_index => {
         if (List.is_include(display_index, this.to_display_plots)) {
           var obj = this.objectList[display_index];
           if (obj.type_ == 'parallelplot') { this.objectList[display_index].refresh_axis_coords(); }
           this.objectList[display_index].draw();
         }
         if (obj instanceof Frame) {obj.reset_scales()};
-      }
+      })
       if (this.buttons_ON) {
         this.draw_buttons();
       }

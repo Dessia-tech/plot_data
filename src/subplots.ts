@@ -1585,16 +1585,29 @@ export class BasePlot extends PlotData {
     return boolSelection
   }
 
-  public drawAxes() {
-    this.axes.forEach(axis => axis.draw(this.context_show));
+  public drawAxes() { this.axes.forEach(axis => axis.draw(this.context_show)) };
+
+  public drawSelectionRectangle(context: CanvasRenderingContext2D) {
+    // TODO: change with newRect
+    Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15,15]);
   }
+
+  public drawMovingObjects() {}
 
   public draw(): void {
     this.drawCanvas();
     this.context_show.setTransform(this.canvasMatrix);
     this.updateAxes();
+
+    this.context_show.setTransform(this.movingMatrix);
+    this.drawMovingObjects();
+
+    this.context_show.setTransform(this.canvasMatrix);
     this.drawAxes();
-    this.context_show.restore();
+    
+    this.context_show.resetTransform();
+    // if (this.buttons_ON) { this.drawButtons(context) }
+    if (this.multiplot_manipulation) {  this.drawSelectionRectangle(this.context_show) };
   }
 
   public draw_initial(): void {this.draw()}
@@ -1951,26 +1964,12 @@ export class newHistogram extends Frame {
     return bars
   }
 
-  public draw(): void {
-    this.updateAxes();
-    this.getBarsDrawing();
-
-    this.context_show.setTransform(this.movingMatrix);
-    this.bars.forEach(bar => {bar.buildPath() ; bar.draw(this.context_show)});
-    this.context_show.resetTransform();
-    this.movingObjects = this.bars;
-
-    this.context_show.setTransform(this.canvasMatrix);
-    super.drawAxes();
-    this.context_show.resetTransform();
-  }
-
-  public updateAxes(): void {
-    super.drawCanvas();
-    this.context_show.setTransform(this.canvasMatrix);
-    super.updateAxes()
+  public drawMovingObjects() {
     this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
+    this.getBarsDrawing();
+    this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
+    this.movingObjects = this.bars;
   }
 
   public getBarsDrawing() {

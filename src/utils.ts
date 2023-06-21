@@ -1956,7 +1956,7 @@ export class Bar extends newRect {
 }
 
 export class newAxis {
-  public ticksCoords: newPoint2D[];
+  public ticksPoints: newPoint2D[];
   public drawPath: Path2D;
   public path: Path2D;
   public lineWidth: number = 1;
@@ -2018,6 +2018,12 @@ export class newAxis {
   public get drawLength(): number {
     if (this.isVertical) { return Math.abs(this.origin.y - this.end.y) };
     return Math.abs(this.origin.x - this.end.x);
+  }
+
+  private get drawingColor(): string {
+    let color = this.strokeStyle;
+    if (this.mouseStyleON) { color = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle };
+    return color
   }
 
   public computeTextBoxes(context: CanvasRenderingContext2D) {
@@ -2148,27 +2154,30 @@ export class newAxis {
   }
 
   public draw(context: CanvasRenderingContext2D) {
-    context.lineWidth = this.lineWidth;
-    let color = this.strokeStyle;
-    if (this.mouseStyleON) { color = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle };
+    const canvasHTMatrix = context.getTransform();
+    const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
+    const color = this.drawingColor;
+
     context.strokeStyle = color;
     context.fillStyle = color;
+    context.lineWidth = this.lineWidth;
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
 
-    const canvasHTMatrix = context.getTransform();
-    const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     context.setTransform(pointHTMatrix);
-    this.ticksCoords = this.drawTicks(context, pointHTMatrix, color);
+    const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
+    this.ticksPoints = ticksPoints;
+    
     context.resetTransform();
-
+    this.drawTicksTexts(ticksTexts, color, context);
     this.computeTextBoxes(context);
-    this.drawTitle(context, canvasHTMatrix);
+    this.drawTitle(context, canvasHTMatrix, color);
+
     context.setTransform(canvasHTMatrix);
     this.drawRubberBand(context);
   }
 
-  private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix) {
+  private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string) {
     if (this.centeredTitle) {
       var [nameCoords, align, baseline, orientation] = this.centeredTitleProperties();
     } else {
@@ -2176,7 +2185,7 @@ export class newAxis {
     }
     nameCoords.transformSelf(canvasHTMatrix);
     const textParams: textParams = {
-      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.FONT, align: align, color: this.strokeStyle,
+      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.FONT, align: align, color: color,
       baseline: baseline, style: 'bold', orientation: orientation, backgroundColor: "hsla(0, 0%, 100%, 0.5)"
     };
     const textName = new newText(this.title, nameCoords, textParams);
@@ -2208,31 +2217,23 @@ export class newAxis {
     return [nameCoords, "center", baseline, this.isVertical ? -90 : 0]
   }
 
-  private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string) {
-    const ticksCoords = [];
+  private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string) {
+    const ticksPoints = [];
     const ticksText: newText[] = [];
     let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
-        context.setTransform(pointHTMatrix);
         let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, color);
         let text = this.labels[idx];
-        ticksCoords.push(point);
+        ticksPoints.push(point);
+        ticksText.push(this.computeTickText(context, text, point, pointHTMatrix));
         if (this.isDiscrete) {
-          if (count == tick && this.labels[count]) { text = this.labels[count]; count++ }
+          if (count == tick && this.labels[count]) { text = this.labels[count] ; count++ }
           else { text = '' }
         }
-        ticksText.push(this.computeTickText(context, text, point, pointHTMatrix));
       }
     })
-    this.ticksFontsize = Math.min(...ticksText.map(tickText => tickText.fontsize));
-    context.resetTransform();
-    ticksText.forEach(tickText => {
-      tickText.fontsize = this.ticksFontsize;
-      tickText.width = null;
-      tickText.draw(context);
-    })
-    return ticksCoords
+    return [ticksPoints, ticksText]
   }
 
   private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
@@ -2242,6 +2243,18 @@ export class newAxis {
     point.lineWidth /= Math.abs(HTMatrix.a);
     point.draw(context);
     return point
+  }
+
+  private drawTicksTexts(ticksTexts: newText[], color: string, context: CanvasRenderingContext2D) {
+    this.ticksFontsize = Math.min(...ticksTexts.map(tickText => tickText.fontsize));
+    ticksTexts.forEach(tickText => { this.drawTickText(tickText, color, context) });
+  }
+
+  private drawTickText(tickText: newText, color: string, context: CanvasRenderingContext2D) {
+    tickText.fillStyle = color;
+    tickText.fontsize = this.ticksFontsize;
+    tickText.width = null;
+    tickText.draw(context);
   }
 
   private computeTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): newText {

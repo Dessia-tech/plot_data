@@ -1674,21 +1674,22 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousemove', e => {
         [canvasMouse, frameMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse);
-        if (this.interaction_ON && isDrawing) {
-          if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
-            canvas.style.cursor = 'move';
-            this.translation = this.mouseTranslate(canvasMouse, canvasDown);
-          } else if (clickedObject instanceof newAxis) {
-            this.is_drawing_rubber_band = true;
+        if (this.interaction_ON) {
+          if (isDrawing) {
+            if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
+              canvas.style.cursor = 'move';
+              this.translation = this.mouseTranslate(canvasMouse, canvasDown);
+            } else if (clickedObject instanceof newAxis) {
+              this.is_drawing_rubber_band = true;
+            }
           }
+          this.draw();
         }
-        this.draw();
         var is_inside_canvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!is_inside_canvas) {
           isDrawing = false;
-          this.axes.forEach(axis => { axis.saveLocation() });
-          this.translation = new Vertex(0, 0);
-          canvas.style.cursor = 'default';
+          // this.axes.forEach(axis => { axis.saveLocation() });
+          // this.translation = new Vertex(0, 0);
         }
       });
 

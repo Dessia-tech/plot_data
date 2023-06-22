@@ -575,6 +575,7 @@ export class MultiplePlots {
       this.objectList.forEach((plot, index) => {
         if (List.is_include(index, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
+          // plot.mouse_interaction(plot.isParallelPlot);
           plot.draw();
         }
       })
@@ -1821,11 +1822,11 @@ export class MultiplePlots {
       // this.canvas.setAttribute('tabindex', '0');
       // this.canvas.focus();
 
-      for (let i = 0 ; i < this.nbObjects ; i++) {
-        this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
-      }
+      // for (let i = 0 ; i < this.nbObjects ; i++) {
+      //   this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
+      // }
       // console.log(this.objectList)
-      // this.objectList.forEach(plot => { plot.mouse_interaction(plot.isParallelPlot) });
+      this.objectList.forEach(plot => { plot.mouse_interaction(plot.isParallelPlot) });
       this.setAllInteractionsToOff();
 
       window.addEventListener('keydown', e => {

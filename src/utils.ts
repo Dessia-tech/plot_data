@@ -2166,6 +2166,8 @@ export class newAxis {
   public centeredTitle: boolean = false;
 
   protected _ticks: number[];
+  public tickPrecision: number;
+  public ticksFontsize: number = 12;
   protected _isDiscrete: boolean;
 
   private _marginRatio: number = 0.1;
@@ -2173,8 +2175,6 @@ export class newAxis {
   private _maxValue: number;
   private _previousMin: number;
   private _previousMax: number;
-  private _tickPrecision: number;
-  private _ticksFontsize: number = 12;
   private offsetTicks: number;
   private offsetTitle: number;
   private maxTickWidth: number;
@@ -2258,14 +2258,6 @@ export class newAxis {
   get ticks() { return this._ticks }
 
   set ticks(value: number[]) { this._ticks = value }
-
-  get tickPrecision(): number { return this._tickPrecision };
-
-  set tickPrecision(value: number) { this._tickPrecision = value };
-
-  get ticksFontsize(): number { return this._ticksFontsize };
-
-  set ticksFontsize(value: number) { this._ticksFontsize = value };
 
   get title(): string { return newText.capitalize(this.name) }
 

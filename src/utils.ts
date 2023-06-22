@@ -1768,22 +1768,30 @@ export class newText extends newShape {
     return Math.min(pxMaxWidth / (tmp_context.measureText(this.text).width), DEFAULT_FONTSIZE)
   }
 
+  private setRectOffsetX(): number {
+    if (this.align == "center") return -this.width / 2;
+    if (["right", "end"].includes(this.align)) return -this.width;
+    return 0;
+  }
+
+  private setRectOffsetY(): number {
+    if (this.baseline == "middle") return -this.height / 2;
+    if (["top", "hanging"].includes(this.baseline)) return -this.height + this.fontsize * 0.8;
+    return 0;
+  }
+
+  private computeRectHeight(): number {
+    if (["alphabetic", "bottom"].includes(this.baseline)) return -this.height;
+    return this.height;
+  }
+
   public buildPath(): Path2D {
     const path = this.path;
     let origin = this.origin.copy();
-    let height = this.height;
-    switch (this.align) {
-      case "center": origin.x -= this.width / 2; break
-      case "right": origin.x -= this.width; break
-      case "end": origin.x -= this.width; break
-    }
-    switch (this.baseline) {
-      case "middle": origin.y -= this.height / 2; break
-      case "top": origin.y -= this.height - this.fontsize * 0.8; break
-      case "hanging": origin.y -= this.height - this.fontsize * 0.8; break
-      case "alphabetic": height = -height; break
-      case "bottom": height = -height; break
-    }
+    origin.x += this.setRectOffsetX();
+    origin.y += this.setRectOffsetY();
+    let height = this.computeRectHeight();
+
     const rectPath = new Path2D();
     rectPath.rect(-this.width / 2, 0, this.width, height); // TODO: find the good formula for hanging and alphabetic (not trivial)
 

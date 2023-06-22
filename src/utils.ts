@@ -1,7 +1,6 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
-import { convertTypeAcquisitionFromJson } from "typescript";
 
 export class Axis {
   color_stroke: any;

@@ -1422,10 +1422,18 @@ export class newShape {
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
   public selectedStyle: string = 'hsl(267, 95%, 85%)';
+  public alpha: number = 1;
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
-  constructor() { };
+  public tooltipOrigin: Vertex;
+  protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
+  protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
+  constructor() {};
+
+  protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
+    throw new Error(`Method computeTooltipOrigin not implemented for ${this.constructor.name}`)
+  }
 
   public draw(context: CanvasRenderingContext2D) {
     const scaledPath = new Path2D();
@@ -1435,6 +1443,7 @@ export class newShape {
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
+    context.globalAlpha = this.alpha;
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);
@@ -1454,6 +1463,7 @@ export class newCircle extends newShape {
     public radius: number = 1
   ) {
     super();
+    this.path = this.buildPath();
   }
 
   public buildPath(): Path2D {
@@ -1475,6 +1485,35 @@ export class newRect extends newShape {
   public buildPath(): Path2D {
     const path = this.path;
     path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
+    return path
+  }
+}
+
+export class newRoundRect extends newRect {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0),
+    public radius: number = 2
+    ) {
+      super();
+      this.path = this.buildPath();
+    }
+
+  public buildPath(): Path2D {
+    const path = this.path;
+    const hLength = this.origin.x + this.size.x;
+    const vLength = this.origin.y + this.size.y;
+    path.moveTo(this.origin.x + this.radius, this.origin.y);
+    path.lineTo(hLength - this.radius, this.origin.y);
+
+    path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
+
+    path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
+    path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
+    path.lineTo(this.origin.x + this.radius, vLength);
+    path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
+    path.lineTo(this.origin.x, this.origin.y + this.radius);
+    path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
     return path
   }
 }
@@ -1675,6 +1714,7 @@ export interface textParams {
 const DEFAULT_FONTSIZE = 12;
 export class newText extends newShape {
   public scale: number = 1;
+  public fillStyle: string = 'hsl(0, 0%, 0%)'
   public width: number;
   public height: number;
   public fontsize: number;
@@ -1769,6 +1809,8 @@ export class newText extends newShape {
     context.fillStyle = this.backgroundColor;
     context.fill(this.path);
 
+    context.fillStyle = this.fillStyle;
+    context.globalAlpha = this.alpha;
     context.translate(this.origin.x, this.origin.y);
     context.rotate(Math.PI / 180 * this.orientation);
     this.write(writtenText, context);
@@ -1935,6 +1977,9 @@ export class Bar extends newRect {
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
   public selectedStyle: string = 'hsl(267, 95%, 85%)';
+  public min: number;
+  public max: number;
+  public mean: number;
   constructor(
     public values: any[] = [],
     public origin: Vertex = new Vertex(0, 0),
@@ -1943,7 +1988,15 @@ export class Bar extends newRect {
     super(origin, size);
   }
 
-  get length(): number { return this.values.length }
+  get length(): number { return this.values.length };
+
+  private get tooltipMap(): Map<string, any> {
+    return new Map<string, any>([["Number", this.length], ["Min", this.min], ["Max", this.max], ["Mean", this.mean]])
+  }
+
+  protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
+    return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
+  }
 
   public setGeometry(origin: Vertex, size: Vertex) {
     this.origin = origin;
@@ -1951,7 +2004,140 @@ export class Bar extends newRect {
   }
 
   public draw(context: CanvasRenderingContext2D) {
-    if (this.size.x != 0 && this.size.y != 0) { super.draw(context) }
+    if (this.size.x != 0 && this.size.y != 0) {
+      super.draw(context);
+      this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
+    }
+  }
+
+  public drawTooltip(context: CanvasRenderingContext2D) {
+    if (this.isClicked) {
+      const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
+      tooltip.draw(context);
+    }
+  }
+
+  public computeStats(values: number[], precision: number) {
+    this.min = Math.round(Math.min(...values) * precision) / precision;
+    this.max = Math.round(Math.max(...values) * precision) / precision;
+    this.mean = Math.round(values.reduce((a, b) => a + b, 0) / values.length * precision) / precision;
+  }
+}
+
+
+const TOOLTIP_TEXT_OFFSET = 10;
+const TOOLTIP_TRIANGLE_SIZE = 10;
+export class newTooltip {
+  public path: Path2D;
+  public strokeStyle: string = "hsl(266, 95%, 60%)";
+  public textColor: string = "hsl(0, 0%, 100%)";
+  public fillStyle: string = "hsl(266, 95%, 60%)";
+  public alpha: number = 0.8;
+  public fontsize: number = 12;
+  public radius: number = 10;
+  private printedRows: string[];
+  private size: Vertex;
+  private squareOrigin: Vertex;
+  constructor(
+    public origin,
+    public dataToPrint: Map<string, any>,
+    context: CanvasRenderingContext2D
+    ) {
+      [this.printedRows, this.size] = this.buildText(context);
+      this.squareOrigin = new Vertex(this.origin.x, this.origin.y);
+    }
+
+  private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
+    let printedRows = ['Information: '];
+    let textLength = context.measureText(printedRows[0]).width;
+    this.dataToPrint.forEach((value, key) => {
+      const text = `  - ${key}: ${value}`;
+      const textWidth = context.measureText(text).width;
+      if (textWidth > textLength) { textLength = textWidth };
+      printedRows.push(text);
+    })
+    return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
+  }
+
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
+    const triangleCenter = this.origin;
+    triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2;
+    path.addPath(new newRoundRect(rectOrigin, this.size, this.radius).path);
+    path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, 'down').path);
+    return path
+  }
+
+  private computeTextOrigin(scaling: Vertex): Vertex {
+    let textOrigin = this.squareOrigin;
+    let textOffsetX = -this.size.x / 2 + TOOLTIP_TEXT_OFFSET;
+    let textOffsetY = (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25;
+    return textOrigin.add(new Vertex(textOffsetX, textOffsetY));
+  }
+
+  private writeText(textOrigin: Vertex, context: CanvasRenderingContext2D) {
+    this.printedRows.forEach((row, index) => {
+      textOrigin.y += index == 0 ? 0 : this.fontsize;
+      const text = new newText(row, textOrigin, {fontsize: this.fontsize, baseline: "middle", style: index == 0 ? 'bold' : ''});
+      text.fillStyle = this.textColor;
+      text.draw(context)
+    })
+  }
+
+  private insideCanvas(canvasSize: Vertex, scaling: Vertex): boolean {
+    let isInside = true;
+    const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE).scale(scaling));
+    const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
+    const upRightDiff = canvasSize.subtract(upRightCorner);
+
+    if (upRightDiff.x < 0) {
+      this.squareOrigin.x += upRightDiff.x;
+    } else if (upRightDiff.x > canvasSize.x) {
+      this.squareOrigin.x += upRightDiff.x - canvasSize.x;
+    }
+    if (upRightDiff.y < 0) {
+      this.squareOrigin.y += upRightDiff.y;
+      this.origin.y += upRightDiff.y;
+    } else if (upRightDiff.y > canvasSize.y){
+      this.squareOrigin.y += upRightDiff.y - canvasSize.y;
+      this.origin.y += upRightDiff.y - canvasSize.y;
+    }
+// To handle once one case is met
+    // const downLeftDiff = canvasSize.subtract(downLeftCorner);
+    // if (downLeftCorner.y < 0) {
+    //   console.log("down inf y")
+    // } else if (downLeftCorner.y > canvasSize.y){
+    //   console.log("down sup y")
+    // }
+    // if (upRightCorner.y < 0) {
+    //   console.log("down inf y")
+    // } else if (upRightCorner.y > canvasSize.y){
+    //   console.log("down sup y")
+    // }
+    return isInside
+  }
+
+  public draw(context: CanvasRenderingContext2D) {
+    const contextMatrix = context.getTransform();
+    const canvasSize = new Vertex(context.canvas.width, context.canvas.height);
+    const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
+    this.insideCanvas(canvasSize, scaling);
+    const textOrigin = this.computeTextOrigin(scaling);
+    const scaledPath = new Path2D();
+    this.squareOrigin = this.squareOrigin.scale(scaling);
+    this.origin = this.origin.scale(scaling);
+    scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+
+    context.save();
+    context.scale(scaling.x, scaling.y);
+    context.strokeStyle = this.strokeStyle;
+    context.fillStyle = this.fillStyle;
+    context.globalAlpha = this.alpha;
+    context.fill(scaledPath);
+    context.stroke(scaledPath);
+    this.writeText(textOrigin, context);
+    context.restore()
   }
 }
 

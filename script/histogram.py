@@ -18,7 +18,6 @@ for i in range(50):
                      'color': random_color
                      })
 
-
 plot_data_object = plot_data.Histogram(x_variable='mass', elements=elements)
 
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

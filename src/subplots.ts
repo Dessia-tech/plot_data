@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape, newTooltip } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1513,7 +1513,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
-      this.selectedIndex = Array.from([...this.features][0][1], x => x = false);
+      this.selectedIndex = Array.from([...this.features][0][1], () => false);
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
@@ -1920,28 +1920,30 @@ export class newHistogram extends Frame {
     [this.hoveredIndex, this.clickedIndex] = this.storeBarState();
     let fakeTicks = this.boundedTicks(axis);
     let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar());
+    let barValues = Array.from(Array(fakeTicks.length - 1), () => []);
     numericVector.forEach((value, valIdx) => {
       for (let tickIdx = 0 ; tickIdx < fakeTicks.length - 1 ; tickIdx++ ) {
         if (value >= fakeTicks[tickIdx] && value < fakeTicks[tickIdx + 1]) {
           bars[tickIdx].values.push(valIdx);
+          barValues[tickIdx].push(value);
           break
         }
       }
     });
+    barValues.forEach((values, index) => { bars[index].computeStats(values, 100) });
     return bars
   }
 
   public draw(): void {
     this.updateAxes();
     this.getBarsDrawing();
-
     this.context_show.setTransform(this.movingMatrix);
-    this.bars.forEach(bar => {bar.buildPath() ; bar.draw(this.context_show)});
-    this.context_show.resetTransform();
+    this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
     this.movingObjects = this.bars;
 
     this.context_show.setTransform(this.canvasMatrix);
     super.drawAxes();
+    this.bars.forEach(bar => { bar.drawTooltip(this.context_show) });
     this.context_show.resetTransform();
   }
 

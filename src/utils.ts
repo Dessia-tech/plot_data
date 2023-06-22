@@ -2397,6 +2397,8 @@ export class newAxis {
   private drawTicks(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string) {
     const ticksCoords = [];
     const ticksText: newText[] = [];
+    const tickTextParams = this.computeTickTextParams();
+    
     let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
@@ -2408,7 +2410,7 @@ export class newAxis {
           if (count == tick && this.labels[count]) { text = this.labels[count]; count++ }
           else { text = '' }
         }
-        ticksText.push(this.computeTickText(context, text, point, pointHTMatrix));
+        ticksText.push(this.computeTickText(context, text, tickTextParams, point, pointHTMatrix));
       }
     })
     this.ticksFontsize = Math.min(...ticksText.map(tickText => tickText.fontsize));
@@ -2421,17 +2423,8 @@ export class newAxis {
     return ticksCoords
   }
 
-  private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
-    const markerOrientation = this.isVertical ? 'right' : 'up';
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
-    point.color = color;
-    point.lineWidth /= Math.abs(HTMatrix.a);
-    point.draw(context);
-    return point
-  }
-
-  private computeTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): newText {
-    const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
+  private computeTickTextParams(): textParams {
+    const [textAlign, baseline] = this.textAlignments();
     let textWidth = null;
     let textHeight = null;
     if (['start', 'end'.includes(textAlign)]) {
@@ -2442,10 +2435,24 @@ export class newAxis {
       textWidth = this.drawLength * 0.95 / this.ticks.length;
       textHeight = this.maxTickHeight;
     }
-    const textParams: textParams = {
+    return {
       width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT,
-      align: textAlign, baseline: baseline, color: this.strokeStyle };
-    const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
+      align: textAlign, baseline: baseline, color: this.strokeStyle 
+    }
+  }
+
+  private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
+    const markerOrientation = this.isVertical ? 'right' : 'up';
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
+    point.color = color;
+    point.lineWidth /= Math.abs(HTMatrix.a);
+    point.draw(context);
+    return point
+  }
+
+  private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: textParams, point: newPoint2D, HTMatrix: DOMMatrix): newText {
+    const textOrigin = this.tickTextPositions(point, HTMatrix);
+    const tickText = new newText(newText.capitalize(text), textOrigin, tickTextParams);
     tickText.removeEndZeros();
     tickText.format(context);
     return tickText
@@ -2528,7 +2535,7 @@ export class newAxis {
     return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
   }
 
-  private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, string, string] {
+  private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): Vertex {
     let origin = new Vertex(point.x, point.y).transform(HTMatrix);
     if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode
       origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks;
@@ -2536,8 +2543,7 @@ export class newAxis {
     else {
       origin.y -= Math.sign(HTMatrix.d) * this.offsetTicks;
     }
-    const [textAlign, baseline] = this.textAlignments();
-    return [origin, textAlign, baseline]
+    return origin
   }
 
   public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {

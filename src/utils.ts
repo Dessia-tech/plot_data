@@ -2398,7 +2398,7 @@ export class newAxis {
     const ticksCoords = [];
     const ticksText: newText[] = [];
     const tickTextParams = this.computeTickTextParams();
-    
+
     let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
@@ -2437,7 +2437,7 @@ export class newAxis {
     }
     return {
       width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT,
-      align: textAlign, baseline: baseline, color: this.strokeStyle 
+      align: textAlign, baseline: baseline, color: this.strokeStyle
     }
   }
 

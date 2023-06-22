@@ -1846,6 +1846,7 @@ export class Frame extends BasePlot {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
     this.axes[0].transform(frameOrigin, xEnd);
     this.axes[1].transform(frameOrigin, yEnd);
+    console.log('done')
   }
 
   public setFeatures(data: any): [string, string] {

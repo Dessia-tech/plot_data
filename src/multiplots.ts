@@ -910,6 +910,7 @@ export class MultiplePlots {
           otherPlot.reset_rubberbands();
         } else if (otherPlot instanceof Frame) {
           otherPlot.reset();
+          otherPlot.reset_scales();
         } else if (otherPlot instanceof Histogram) {
           otherPlot.reset_x_rubberband();
         } else if (otherPlot instanceof PrimitiveGroupContainer) {

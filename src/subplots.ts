@@ -1546,7 +1546,6 @@ export class BasePlot extends PlotData {
   }
 
   public drawCanvas(): void {
-    this.context_show.save()
     this.context = this.context_show;
     this.draw_empty_canvas(this.context_show);
     if (this.settings_on) {this.draw_settings_rect()}
@@ -1594,10 +1593,14 @@ export class BasePlot extends PlotData {
 
   public drawMovingObjects() {}
 
+  public computeMovingObjects() {}
+
   public draw(): void {
+    this.context_show.save();
     this.drawCanvas();
     this.context_show.setTransform(this.canvasMatrix);
     this.updateAxes();
+    this.computeMovingObjects();
 
     this.context_show.setTransform(this.movingMatrix);
     this.drawMovingObjects();
@@ -1608,6 +1611,7 @@ export class BasePlot extends PlotData {
     this.context_show.resetTransform();
     // if (this.buttons_ON) { this.drawButtons(context) }
     if (this.multiplot_manipulation) {  this.drawSelectionRectangle(this.context_show) };
+    this.context_show.restore();
   }
 
   public draw_initial(): void {this.draw()}
@@ -1682,7 +1686,7 @@ export class BasePlot extends PlotData {
         var is_inside_canvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!is_inside_canvas) {
           isDrawing = false;
-          this.axes.forEach(axis => {axis.saveLocation()});
+          this.axes.forEach(axis => { axis.saveLocation() });
           this.translation = new Vertex(0, 0);
           canvas.style.cursor = 'default';
         }
@@ -1718,7 +1722,7 @@ export class BasePlot extends PlotData {
             }
           }
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y).scale(this.initScale);
-          this.draw(); // needs a refactor
+          this.updateAxes(); // needs a refactor
           this.axes.forEach(axis => {axis.saveLocation()});
           [this.scaleX, this.scaleY] = [1, 1];
           this.viewPoint = new Vertex(0, 0);
@@ -1964,10 +1968,13 @@ export class newHistogram extends Frame {
     return bars
   }
 
-  public drawMovingObjects() {
+  public computeMovingObjects(): void {
     this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
     this.getBarsDrawing();
+  }
+
+  public drawMovingObjects() {    
     this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
     this.movingObjects = this.bars;
   }

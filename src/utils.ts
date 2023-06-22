@@ -1421,10 +1421,18 @@ export class newShape {
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
   public selectedStyle: string = 'hsl(267, 95%, 85%)';
+  public alpha: number = 1;
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
-  constructor() { };
+  public tooltipOrigin: Vertex;
+  protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
+  protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
+  constructor() {};
+
+  protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
+    throw new Error(`Method computeTooltipOrigin not implemented for ${this.constructor.name}`)
+  }
 
   public draw(context: CanvasRenderingContext2D) {
     const scaledPath = new Path2D();
@@ -1434,11 +1442,14 @@ export class newShape {
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
+    context.globalAlpha = this.alpha;
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.fill(scaledPath);
     context.stroke(scaledPath);
     context.restore();
   }
+
+  public drawTooltip(context: CanvasRenderingContext2D) {}
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) { }
 
@@ -1453,6 +1464,7 @@ export class newCircle extends newShape {
     public radius: number = 1
   ) {
     super();
+    this.path = this.buildPath();
   }
 
   public buildPath(): Path2D {
@@ -1474,6 +1486,35 @@ export class newRect extends newShape {
   public buildPath(): Path2D {
     const path = this.path;
     path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
+    return path
+  }
+}
+
+export class newRoundRect extends newRect {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0),
+    public radius: number = 2
+    ) {
+      super();
+      this.path = this.buildPath();
+    }
+
+  public buildPath(): Path2D {
+    const path = this.path;
+    const hLength = this.origin.x + this.size.x;
+    const vLength = this.origin.y + this.size.y;
+    path.moveTo(this.origin.x + this.radius, this.origin.y);
+    path.lineTo(hLength - this.radius, this.origin.y);
+
+    path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
+
+    path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
+    path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
+    path.lineTo(this.origin.x + this.radius, vLength);
+    path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
+    path.lineTo(this.origin.x, this.origin.y + this.radius);
+    path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
     return path
   }
 }
@@ -1674,6 +1715,7 @@ export interface textParams {
 const DEFAULT_FONTSIZE = 12;
 export class newText extends newShape {
   public scale: number = 1;
+  public fillStyle: string = 'hsl(0, 0%, 0%)'
   public width: number;
   public height: number;
   public fontsize: number;
@@ -1727,22 +1769,30 @@ export class newText extends newShape {
     return Math.min(pxMaxWidth / (tmp_context.measureText(this.text).width), DEFAULT_FONTSIZE)
   }
 
+  private setRectOffsetX(): number {
+    if (this.align == "center") return -this.width / 2;
+    if (["right", "end"].includes(this.align)) return -this.width;
+    return 0;
+  }
+
+  private setRectOffsetY(): number {
+    if (this.baseline == "middle") return -this.height / 2;
+    if (["top", "hanging"].includes(this.baseline)) return -this.height + this.fontsize * 0.8;
+    return 0;
+  }
+
+  private computeRectHeight(): number {
+    if (["alphabetic", "bottom"].includes(this.baseline)) return -this.height;
+    return this.height;
+  }
+
   public buildPath(): Path2D {
     const path = this.path;
     let origin = this.origin.copy();
-    let height = this.height;
-    switch (this.align) {
-      case "center": origin.x -= this.width / 2; break
-      case "right": origin.x -= this.width; break
-      case "end": origin.x -= this.width; break
-    }
-    switch (this.baseline) {
-      case "middle": origin.y -= this.height / 2; break
-      case "top": origin.y -= this.height - this.fontsize * 0.8; break
-      case "hanging": origin.y -= this.height - this.fontsize * 0.8; break
-      case "alphabetic": height = -height; break
-      case "bottom": height = -height; break
-    }
+    origin.x += this.setRectOffsetX();
+    origin.y += this.setRectOffsetY();
+    let height = this.computeRectHeight();
+
     const rectPath = new Path2D();
     rectPath.rect(-this.width / 2, 0, this.width, height); // TODO: find the good formula for hanging and alphabetic (not trivial)
 
@@ -1768,6 +1818,8 @@ export class newText extends newShape {
     context.fillStyle = this.backgroundColor;
     context.fill(this.path);
 
+    context.fillStyle = this.fillStyle;
+    context.globalAlpha = this.alpha;
     context.translate(this.origin.x, this.origin.y);
     context.rotate(Math.PI / 180 * this.orientation);
     this.write(writtenText, context);
@@ -1934,6 +1986,9 @@ export class Bar extends newRect {
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
   public selectedStyle: string = 'hsl(267, 95%, 85%)';
+  public min: number;
+  public max: number;
+  public mean: number;
   constructor(
     public values: any[] = [],
     public origin: Vertex = new Vertex(0, 0),
@@ -1942,7 +1997,15 @@ export class Bar extends newRect {
     super(origin, size);
   }
 
-  get length(): number { return this.values.length }
+  get length(): number { return this.values.length };
+
+  private get tooltipMap(): Map<string, any> {
+    return new Map<string, any>([["Number", this.length], ["Min", this.min], ["Max", this.max], ["Mean", this.mean]])
+  }
+
+  protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
+    return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
+  }
 
   public setGeometry(origin: Vertex, size: Vertex) {
     this.origin = origin;
@@ -1950,7 +2013,140 @@ export class Bar extends newRect {
   }
 
   public draw(context: CanvasRenderingContext2D) {
-    if (this.size.x != 0 && this.size.y != 0) { super.draw(context) }
+    if (this.size.x != 0 && this.size.y != 0) {
+      super.draw(context);
+      this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
+    }
+  }
+
+  public drawTooltip(context: CanvasRenderingContext2D) {
+    if (this.isClicked) {
+      const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
+      tooltip.draw(context);
+    }
+  }
+
+  public computeStats(values: number[], precision: number) {
+    this.min = Math.round(Math.min(...values) * precision) / precision;
+    this.max = Math.round(Math.max(...values) * precision) / precision;
+    this.mean = Math.round(values.reduce((a, b) => a + b, 0) / values.length * precision) / precision;
+  }
+}
+
+
+const TOOLTIP_TEXT_OFFSET = 10;
+const TOOLTIP_TRIANGLE_SIZE = 10;
+export class newTooltip {
+  public path: Path2D;
+  public strokeStyle: string = "hsl(266, 95%, 60%)";
+  public textColor: string = "hsl(0, 0%, 100%)";
+  public fillStyle: string = "hsl(266, 95%, 60%)";
+  public alpha: number = 0.8;
+  public fontsize: number = 12;
+  public radius: number = 10;
+  private printedRows: string[];
+  private size: Vertex;
+  private squareOrigin: Vertex;
+  constructor(
+    public origin,
+    public dataToPrint: Map<string, any>,
+    context: CanvasRenderingContext2D
+    ) {
+      [this.printedRows, this.size] = this.buildText(context);
+      this.squareOrigin = new Vertex(this.origin.x, this.origin.y);
+    }
+
+  private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
+    let printedRows = ['Information: '];
+    let textLength = context.measureText(printedRows[0]).width;
+    this.dataToPrint.forEach((value, key) => {
+      const text = `  - ${key}: ${value}`;
+      const textWidth = context.measureText(text).width;
+      if (textWidth > textLength) { textLength = textWidth };
+      printedRows.push(text);
+    })
+    return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
+  }
+
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
+    const triangleCenter = this.origin;
+    triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2;
+    path.addPath(new newRoundRect(rectOrigin, this.size, this.radius).path);
+    path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, 'down').path);
+    return path
+  }
+
+  private computeTextOrigin(scaling: Vertex): Vertex {
+    let textOrigin = this.squareOrigin;
+    let textOffsetX = -this.size.x / 2 + TOOLTIP_TEXT_OFFSET;
+    let textOffsetY = (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25;
+    return textOrigin.add(new Vertex(textOffsetX, textOffsetY));
+  }
+
+  private writeText(textOrigin: Vertex, context: CanvasRenderingContext2D) {
+    this.printedRows.forEach((row, index) => {
+      textOrigin.y += index == 0 ? 0 : this.fontsize;
+      const text = new newText(row, textOrigin, {fontsize: this.fontsize, baseline: "middle", style: index == 0 ? 'bold' : ''});
+      text.fillStyle = this.textColor;
+      text.draw(context)
+    })
+  }
+
+  private insideCanvas(canvasSize: Vertex, scaling: Vertex): boolean {
+    let isInside = true;
+    const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE).scale(scaling));
+    const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
+    const upRightDiff = canvasSize.subtract(upRightCorner);
+
+    if (upRightDiff.x < 0) {
+      this.squareOrigin.x += upRightDiff.x;
+    } else if (upRightDiff.x > canvasSize.x) {
+      this.squareOrigin.x += upRightDiff.x - canvasSize.x;
+    }
+    if (upRightDiff.y < 0) {
+      this.squareOrigin.y += upRightDiff.y;
+      this.origin.y += upRightDiff.y;
+    } else if (upRightDiff.y > canvasSize.y){
+      this.squareOrigin.y += upRightDiff.y - canvasSize.y;
+      this.origin.y += upRightDiff.y - canvasSize.y;
+    }
+// To handle once one case is met
+    // const downLeftDiff = canvasSize.subtract(downLeftCorner);
+    // if (downLeftCorner.y < 0) {
+    //   console.log("down inf y")
+    // } else if (downLeftCorner.y > canvasSize.y){
+    //   console.log("down sup y")
+    // }
+    // if (upRightCorner.y < 0) {
+    //   console.log("down inf y")
+    // } else if (upRightCorner.y > canvasSize.y){
+    //   console.log("down sup y")
+    // }
+    return isInside
+  }
+
+  public draw(context: CanvasRenderingContext2D) {
+    const contextMatrix = context.getTransform();
+    const canvasSize = new Vertex(context.canvas.width, context.canvas.height);
+    const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
+    this.insideCanvas(canvasSize, scaling);
+    const textOrigin = this.computeTextOrigin(scaling);
+    const scaledPath = new Path2D();
+    this.squareOrigin = this.squareOrigin.scale(scaling);
+    this.origin = this.origin.scale(scaling);
+    scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+
+    context.save();
+    context.scale(scaling.x, scaling.y);
+    context.strokeStyle = this.strokeStyle;
+    context.fillStyle = this.fillStyle;
+    context.globalAlpha = this.alpha;
+    context.fill(scaledPath);
+    context.stroke(scaledPath);
+    this.writeText(textOrigin, context);
+    context.restore()
   }
 }
 
@@ -1971,6 +2167,8 @@ export class newAxis {
   public centeredTitle: boolean = false;
 
   protected _ticks: number[];
+  public tickPrecision: number;
+  public ticksFontsize: number = 12;
   protected _isDiscrete: boolean;
 
   private _marginRatio: number = 0.1;
@@ -1978,8 +2176,6 @@ export class newAxis {
   private _maxValue: number;
   private _previousMin: number;
   private _previousMax: number;
-  private _tickPrecision: number;
-  private _ticksFontsize: number = 12;
   private offsetTicks: number;
   private offsetTitle: number;
   private maxTickWidth: number;
@@ -2069,14 +2265,6 @@ export class newAxis {
   get ticks() { return this._ticks }
 
   set ticks(value: number[]) { this._ticks = value }
-
-  get tickPrecision(): number { return this._tickPrecision };
-
-  set tickPrecision(value: number) { this._tickPrecision = value };
-
-  get ticksFontsize(): number { return this._ticksFontsize };
-
-  set ticksFontsize(value: number) { this._ticksFontsize = value };
 
   get title(): string { return newText.capitalize(this.name) }
 
@@ -2219,29 +2407,22 @@ export class newAxis {
   private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string) {
     const ticksPoints = [];
     const ticksText: newText[] = [];
+    const tickTextParams = this.computeTickTextParams();
+    
     let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       if (tick >= this.minValue && tick <= this.maxValue) {
         let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, color);
         let text = this.labels[idx];
         ticksPoints.push(point);
-        ticksText.push(this.computeTickText(context, text, point, pointHTMatrix));
         if (this.isDiscrete) {
           if (count == tick && this.labels[count]) { text = this.labels[count] ; count++ }
           else { text = '' }
         }
+        ticksText.push(this.computeTickText(context, text, tickTextParams, point, pointHTMatrix));
       }
     })
     return [ticksPoints, ticksText]
-  }
-
-  private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
-    const markerOrientation = this.isVertical ? 'right' : 'up';
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
-    point.color = color;
-    point.lineWidth /= Math.abs(HTMatrix.a);
-    point.draw(context);
-    return point
   }
 
   private drawTicksTexts(ticksTexts: newText[], color: string, context: CanvasRenderingContext2D) {
@@ -2256,8 +2437,8 @@ export class newAxis {
     tickText.draw(context);
   }
 
-  private computeTickText(context: CanvasRenderingContext2D, text: string, point: newPoint2D, HTMatrix: DOMMatrix): newText {
-    const [textOrigin, textAlign, baseline] = this.tickTextPositions(point, HTMatrix);
+  private computeTickTextParams(): textParams {
+    const [textAlign, baseline] = this.textAlignments();
     let textWidth = null;
     let textHeight = null;
     if (['start', 'end'.includes(textAlign)]) {
@@ -2268,10 +2449,24 @@ export class newAxis {
       textWidth = this.drawLength * 0.95 / this.ticks.length;
       textHeight = this.maxTickHeight;
     }
-    const textParams: textParams = {
+    return {
       width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT,
-      align: textAlign, baseline: baseline, color: this.strokeStyle };
-    const tickText = new newText(newText.capitalize(text), textOrigin, textParams);
+      align: textAlign, baseline: baseline, color: this.strokeStyle 
+    }
+  }
+
+  private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
+    const markerOrientation = this.isVertical ? 'right' : 'up';
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
+    point.color = color;
+    point.lineWidth /= Math.abs(HTMatrix.a);
+    point.draw(context);
+    return point
+  }
+
+  private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: textParams, point: newPoint2D, HTMatrix: DOMMatrix): newText {
+    const textOrigin = this.tickTextPositions(point, HTMatrix);
+    const tickText = new newText(newText.capitalize(text), textOrigin, tickTextParams);
     tickText.removeEndZeros();
     tickText.format(context);
     return tickText
@@ -2354,7 +2549,7 @@ export class newAxis {
     return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
   }
 
-  private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): [Vertex, string, string] {
+  private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): Vertex {
     let origin = new Vertex(point.x, point.y).transform(HTMatrix);
     if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode
       origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks;
@@ -2362,8 +2557,7 @@ export class newAxis {
     else {
       origin.y -= Math.sign(HTMatrix.d) * this.offsetTicks;
     }
-    const [textAlign, baseline] = this.textAlignments();
-    return [origin, textAlign, baseline]
+    return origin
   }
 
   public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {

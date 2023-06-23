@@ -289,10 +289,6 @@ export abstract class PlotData {
       this.scaleY = this.init_scaleY;
       this.originX = this.width/2 - (this.maxX + this.minX)*this.scaleX/2 + this.decalage_axis_x/2;
       this.originY = this.height/2 - (this.maxY + this.minY)*this.scaleY/2 - (this.decalage_axis_y - (this.graph1_button_y + this.graph1_button_h + 5))/2;
-    } else if (this.type_ === 'histogram') {
-      this.init_scale = 0.95*(this.width - this.decalage_axis_x)/(this['max_abs'] - this['min_abs']);
-      this.scale = this.init_scale;
-      this.originX = this.decalage_axis_x - this.scale*this['min_abs'];
     } else { // only rescale
       this.scaleX = this.init_scale;
       this.scaleY = this.init_scale;
@@ -1365,19 +1361,8 @@ export abstract class PlotData {
     var line_width = 0.1;
     this.rubber_bands.forEach((rubberBand, idx) => {
       if (rubberBand.canvasLength >= rubberBand.MIN_LENGTH) {
-        if (rubberBand.isVertical) {
-          if (this.type_ !== "histogram") {
-            var origin = this.axis_x_start + idx * this.x_step;
-          } else {
-            var origin = this.decalage_axis_x + this.X;
-          }
-        } else {
-          if (this.type_ !== "histogram") {
-            var origin = this.axis_y_start + idx * this.y_step;
-          } else {
-            var origin = this.height - this.decalage_axis_y + this.Y;
-          }
-        }
+        if (rubberBand.isVertical) var origin = this.axis_x_start + idx * this.x_step
+        else var origin = this.axis_y_start + idx * this.y_step;
         if (idx == this.move_index) {
           rubberBand.draw(origin + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
         } else {
@@ -2832,17 +2817,6 @@ export class Interactions {
     let axisList = new Attribute(plot_data.axis_list[selected_axis_index].name, plot_data.axis_list[selected_axis_index].type_);
     axisList.list = [];
     plot_data.axis_list[selected_axis_index].list.forEach((value) => {axisList.list.push(value)});
-
-    if (plot_data.type_ == 'histogram') {
-      if (selected_axis_index == 0) {
-        axisList.type_ = 'float'
-        axisList.list[0] = plot_data.display_to_real(plot_data.axis_x_start, 'x');
-        axisList.list[1] = plot_data.display_to_real(plot_data.axis_x_end, 'x');
-      } else {
-        axisList.list[0] = plot_data.display_to_real(plot_data.axis_y_start, 'y');
-        axisList.list[1] = plot_data.display_to_real(plot_data.axis_y_end, 'y');
-      }
-    }
     return axisList
   }
 
@@ -2974,7 +2948,6 @@ export class Interactions {
         plot_data.rubber_last_min = min;
         plot_data.rubber_last_max = max;
         let idx = i;
-        if (plot_data.type_ === 'histogram') {idx = 0}
         if (plot_data.rubber_bands[i].isVertical) {
           var real_minY = plot_data.rubber_bands[i].realMin;
           var real_maxY = plot_data.rubber_bands[i].realMax;
@@ -3013,7 +2986,6 @@ export class Interactions {
     var selected_axis_index = -1;
     for (var i=0; i<nb_axis; i++) {
       let idx = i;
-      if (plot_data.type_ === 'histogram') {idx = 0}
       if (plot_data.rubber_bands[i].isVertical) {
         var current_x = plot_data.axis_x_start + idx*plot_data.x_step;
         var bool = Shape.isInRect(mouse1X, mouse1Y, current_x - plot_data.bandWidth/2, plot_data.axis_y_end, plot_data.bandWidth, plot_data.axis_y_start - plot_data.axis_y_end);

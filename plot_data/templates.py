@@ -110,7 +110,7 @@ histogram_template = Template('''
             var height = Math.max(0.95*window.innerHeight, 350);
 
             var data = $data;
-            var plot_data = new PlotData.newHistogram(
+            var plot_data = new PlotData.Histogram(
                 data, width, height, true, 0, 0, $canvas_id.id
             );
             plot_data.define_canvas($canvas_id.id);
@@ -173,38 +173,6 @@ primitive_group_container_template = Template('''
                 primitive_group_container.isParallelPlot
             );
             primitive_group_container.regular_layout();
-        </script>
-    </div>
-  </body>
-</html>
-''')
-
-scatter_matrix_template = Template('''
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-      <script src=$core_path></script>
-  </head>
-  <body>
-    <div id="app">
-        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;">
-
-        <!-- Sets the basepath for the library if not in same directory -->
-        <script src=$core_path></script>
-
-        <script type="text/javascript">
-            var width = 0.95*window.innerWidth;
-            var height = Math.max(0.95*window.innerHeight, 350);
-
-            var data = $data;
-            var number_plot_data = data.length
-
-            var plot_data = new PlotData.ScatterMatrix(
-                data, width, height, true, 0, 0, $canvas_id.id
-            );
-            plot_data.define_canvas($canvas_id.id);
-            plot_data.draw_initial();
-            plot_data.mouse_interaction(plot_data.isParallelPlot);
         </script>
     </div>
   </body>

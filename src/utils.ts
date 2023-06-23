@@ -2098,7 +2098,9 @@ export class newAxis {
     public origin: Vertex,
     public end: Vertex,
     public name: string = '',
-    private _nTicks: number = 10) {
+    private initScale: Vertex,
+    private _nTicks: number = 10
+    ) {
       this.isDiscrete = typeof vector[0] == 'string';
       if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
       const [minValue, maxValue] = this.computeMinMax(vector);
@@ -2113,8 +2115,7 @@ export class newAxis {
     };
 
   public get drawLength(): number {
-    if (this.isVertical) { return Math.abs(this.origin.y - this.end.y) };
-    return Math.abs(this.origin.x - this.end.x);
+    return this.isVertical ? Math.abs(this.origin.y - this.end.y) : Math.abs(this.origin.x - this.end.x);
   }
 
   public computeTextBoxes(context: CanvasRenderingContext2D) {
@@ -2166,9 +2167,9 @@ export class newAxis {
 
   get transformMatrix(): DOMMatrix { return this.getValueToDrawMatrix() };
 
-  private horizontalPickIdx() { return Math.sign(1 - Math.sign(this.transformMatrix.f)) }
+  private horizontalPickIdx() { return Math.sign(1 - Math.sign(this.initScale.y)) }
 
-  private verticalPickIdx() { return Math.sign(1 - Math.sign(this.transformMatrix.e)) }
+  private verticalPickIdx() { return Math.sign(1 - Math.sign(this.initScale.x)) }
 
   public transform(newOrigin: Vertex, newEnd: Vertex) {
     this.origin = newOrigin;

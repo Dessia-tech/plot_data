@@ -67,7 +67,7 @@ describe('HISTOGRAM CANVAS', function () {
 
   it("should hover/click on bar", function () {
     cy.window().then(win => {
-      const histogram = win.eval('plot_data') as newHistogram;
+      const histogram = win.eval('plot_data') as Histogram;
       [canvasMouse, frameMouse] = histogram.projectMouse({"offsetX": 278, "offsetY": 530} as MouseEvent);
       histogram.mouseMove(canvasMouse, frameMouse);
       expect(histogram.movingObjects[4].isHovered).to.be.true;

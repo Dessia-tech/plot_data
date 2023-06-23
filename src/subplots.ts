@@ -1842,7 +1842,7 @@ export class Frame extends BasePlot {
   }
 
   public setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-    return new newAxis(this.features.get(feature), freeSize, origin, end, feature, nTicks)
+    return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
   }
 
   public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {

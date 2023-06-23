@@ -887,14 +887,9 @@ class ScatterMatrix(Figure):
         super().__init__(width=width, height=height, type_="multiplot", name=name)
 
     def _build_multiplot(self):
-        subplots = []
-        for line in self.elements[0].values:
-            for col in self.elements[0].values:
-                if line == col:
-                    subplots.append(Histogram(x_variable=col))
-                else:
-                    subplots.append(Scatter(x_variable=line, y_variable=col))
-        return subplots
+        sample_attributes = self.elements[0].values.keys()
+        return [Histogram(col) if row == col else Scatter(row, col)
+                for row in sample_attributes for col in sample_attributes]
 
 
 class Arc2D(PlotDataObject):

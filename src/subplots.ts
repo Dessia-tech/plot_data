@@ -1849,7 +1849,6 @@ export class Frame extends BasePlot {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
     this.axes[0].transform(frameOrigin, xEnd);
     this.axes[1].transform(frameOrigin, yEnd);
-    console.log('done')
   }
 
   public setFeatures(data: any): [string, string] {
@@ -1915,7 +1914,7 @@ export class newHistogram extends Frame {
 
   public reset(): void {
     super.reset();
-    this.bars = undefined;
+    this.bars = [];
   }
 
   private buildNumberAxis(freeSize: number, frameOrigin: Vertex, yEnd: Vertex): newAxis {

@@ -1819,14 +1819,7 @@ export class MultiplePlots {
       var old_selected_index;
       var double_click = false;
       var ctrlKey = false; var shiftKey = false;
-      // For canvas to read keyboard inputs.
-      // this.canvas.setAttribute('tabindex', '0');
-      // this.canvas.focus();
 
-      // for (let i = 0 ; i < this.nbObjects ; i++) {
-      //   this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
-      // }
-      // console.log(this.objectList)
       this.objectList.forEach(plot => { plot.mouse_interaction(plot.isParallelPlot) });
       this.setAllInteractionsToOff();
 
@@ -1847,6 +1840,7 @@ export class MultiplePlots {
         old_selected_index = this.selected_point_index;
         if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();
+          this.resetAllObjects();
         } else {
           this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
           this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);

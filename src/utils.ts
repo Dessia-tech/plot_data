@@ -2174,6 +2174,8 @@ export class newAxis {
   private _marginRatio: number = 0.1;
   private _minValue: number;
   private _maxValue: number;
+  private _initMinValue: number;
+  private _initMaxValue: number;
   private _previousMin: number;
   private _previousMax: number;
   private offsetTicks: number;
@@ -2200,7 +2202,7 @@ export class newAxis {
       this.isDiscrete = typeof vector[0] == 'string';
       if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
       const [minValue, maxValue] = this.computeMinMax(vector);
-      [this._previousMin, this._previousMax] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
+      [this._previousMin, this._previousMax] = [this._initMinValue, this._initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
       if (!this.isDiscrete) { this.labels = this.numericLabels() };
       this.drawPath = this.buildDrawPath();
@@ -2219,20 +2221,6 @@ export class newAxis {
     let color = this.strokeStyle;
     if (this.mouseStyleON) { color = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle };
     return color
-  }
-
-  public computeTextBoxes(context: CanvasRenderingContext2D) {
-    context.save();
-    const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.FONT });
-    context.font = calibratedTickText.fullFont;
-    const calibratedMeasure = context.measureText(calibratedTickText.text).width;
-    this.maxTickWidth = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedMeasure);
-    this.maxTickHeight = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedTickText.fontsize);
-    if (this.centeredTitle) {
-      const FREE_SPACE = this.freeSpace - this.FONT_SIZE - 0.3 * this.maxTickHeight;
-      this.offsetTitle = (this.isVertical ? Math.min(FREE_SPACE, calibratedMeasure) : Math.min(FREE_SPACE, this.FONT_SIZE * 1.5 + this.offsetTicks));
-    }
-    context.restore();
   }
 
   get interval(): number { return Math.abs(this.maxValue - this.minValue) };
@@ -2281,7 +2269,14 @@ export class newAxis {
     this.path = this.buildPath();
   }
 
-  public reset(): void { this.rubberBand.reset() }
+  public reset(): void { 
+    this.rubberBand.reset();
+    this.minValue = this._initMinValue;
+    this.maxValue = this._initMaxValue;
+    this._previousMin = this._initMinValue;
+    this._previousMax = this._initMaxValue;
+    this.updateTicks();
+  }
 
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));
@@ -2328,6 +2323,20 @@ export class newAxis {
   private computeMinMax(vector: any[]): number[] {
     if (this.isDiscrete) { return [0, this.labels.length] };
     return [Math.min(...vector), Math.max(...vector)]
+  }
+
+  public computeTextBoxes(context: CanvasRenderingContext2D) {
+    context.save();
+    const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.FONT });
+    context.font = calibratedTickText.fullFont;
+    const calibratedMeasure = context.measureText(calibratedTickText.text).width;
+    this.maxTickWidth = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedMeasure);
+    this.maxTickHeight = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedTickText.fontsize);
+    if (this.centeredTitle) {
+      const FREE_SPACE = this.freeSpace - this.FONT_SIZE - 0.3 * this.maxTickHeight;
+      this.offsetTitle = (this.isVertical ? Math.min(FREE_SPACE, calibratedMeasure) : Math.min(FREE_SPACE, this.FONT_SIZE * 1.5 + this.offsetTicks));
+    }
+    context.restore();
   }
 
   private computeTicks(): number[] {

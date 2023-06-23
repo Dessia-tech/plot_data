@@ -1357,19 +1357,8 @@ export abstract class PlotData {
     var line_width = 0.1;
     this.rubber_bands.forEach((rubberBand, idx) => {
       if (rubberBand.canvasLength >= rubberBand.MIN_LENGTH) {
-        if (rubberBand.isVertical) {
-          if (this.type_ !== "histogram") {
-            var origin = this.axis_x_start + idx * this.x_step;
-          } else {
-            var origin = this.decalage_axis_x + this.X;
-          }
-        } else {
-          if (this.type_ !== "histogram") {
-            var origin = this.axis_y_start + idx * this.y_step;
-          } else {
-            var origin = this.height - this.decalage_axis_y + this.Y;
-          }
-        }
+        if (rubberBand.isVertical) var origin = this.axis_x_start + idx * this.x_step
+        else var origin = this.axis_y_start + idx * this.y_step;
         if (idx == this.move_index) {
           rubberBand.draw(origin + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
         } else {

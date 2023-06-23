@@ -98,7 +98,6 @@ export class MultiplePlots {
             this.dataObjects[i]['elements'] = elements;
             newObject = new newHistogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else {
-            console.log(this.dataObjects[i])
             throw new Error('MultiplePlots constructor : invalid object type');
           }
           this.initializeObjectContext(newObject);

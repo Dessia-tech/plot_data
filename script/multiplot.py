@@ -72,7 +72,6 @@ plots = [parallelplot1, scatterplot1]
 plots2 = [parallelplot2, histogram, scatterplot1, scatterplot2, scatterplot3, graph2d, primitive_group_container, histogram]
 # multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True)
-kk=plot_data_object.to_dict()
 
 # Display
 plot_data_object.plot(debug_mode = True, canvas_id = 'canvas')

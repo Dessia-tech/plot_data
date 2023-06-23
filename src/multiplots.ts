@@ -94,7 +94,7 @@ export class MultiplePlots {
               newObject = this.initialize_containers_dicts(newObject, association['associated_elements']);
               newObject = this.call_layout(newObject, association['attribute_names']);
             }
-          } else if (object_type_ === 'frame') {
+          } else if (object_type_ === 'frame' || object_type_ == 'histogram') {
             this.dataObjects[i]['elements'] = elements;
             newObject = new Histogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else {
@@ -1176,6 +1176,7 @@ export class MultiplePlots {
         let selection_coords = isSelectingScatter.selection_coords;
         let to_display_attributes:Attribute[] = isSelectingScatter.plotObject.to_display_attributes;
         this.scatter_communication(selection_coords, to_display_attributes, isSelectingObjIndex);
+        this.dep_selected_points_index = isSelectingScatter.selected_point_index;
       }
     }
 
@@ -1239,8 +1240,6 @@ export class MultiplePlots {
           obj.select_primitive_groups();
         }
       }
-      this.refresh_dep_selected_points_index();
-      this.refresh_selected_object_from_index();
     }
 
     mouse_move_pp_communication() {

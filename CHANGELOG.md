@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Background for texts
 - Review the way ticks are computed
 
+### Refactor
+- Remove old Histogram and switch ScatterMatrix to Multiplot
+- Rename newHistogram as Histogram
+
 ## [0.14.1]
 ### Fix
 - plot_canvas function in python (needed width and height arguments) (in dev too)

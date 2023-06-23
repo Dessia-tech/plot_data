@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Remove old Histogram and switch ScatterMatrix to Multiplot
+- Rename newHistogram as Histogram
 
 ## [0.14.1]
 ### Fix

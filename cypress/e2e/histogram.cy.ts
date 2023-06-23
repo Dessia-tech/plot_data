@@ -1,6 +1,6 @@
 import { parseHTML } from '../support/parseHTML';
 import histogramData from '../data_src/histogram.data.json';
-import { Frame, newHistogram } from '../../src/subplots';
+import { Frame, Histogram } from '../../src/subplots';
 import { Vertex, newPoint2D } from '../../src/utils';
 
 const FEATURE_NAME = "histogram"
@@ -29,7 +29,7 @@ describe('HISTOGRAM CANVAS', function () {
 
   it("should select with rubber band", function () {
     cy.window().then(win => {
-      const histogram = win.eval('plot_data') as newHistogram;
+      const histogram = win.eval('plot_data') as Histogram;
       initRubberBand(histogram)
       const nSelected = histogram.selectedIndex.reduce((sum, current) => sum + (current ? 1 : 0), 0);
       const selectedBars = histogram.bars.reduce((sum, current) => sum + (current.isSelected ? 1 : 0), 0);
@@ -42,7 +42,7 @@ describe('HISTOGRAM CANVAS', function () {
   let canvasMouse: Vertex ; let frameMouse: Vertex ; let canvasDown: Vertex ; let frameDown: Vertex ; let clickedObject: any;
   it("should project mouse", function () {
     cy.window().then(win => {
-      const histogram = win.eval('plot_data') as newHistogram;
+      const histogram = win.eval('plot_data') as Histogram;
       [canvasMouse, frameMouse] = histogram.projectMouse({"offsetX": 256, "offsetY": 628} as MouseEvent);
       expect(frameMouse.x).to.closeTo(3461, 10);
     })
@@ -50,7 +50,7 @@ describe('HISTOGRAM CANVAS', function () {
 
   it("should translate rubber band", function () {
     cy.window().then(win => {
-      const histogram = win.eval('plot_data') as newHistogram;
+      const histogram = win.eval('plot_data') as Histogram;
       initRubberBand(histogram);
 
       histogram.mouseMove(canvasMouse, frameMouse);
@@ -67,7 +67,7 @@ describe('HISTOGRAM CANVAS', function () {
 
   it("should hover/click on bar", function () {
     cy.window().then(win => {
-      const histogram = win.eval('plot_data') as newHistogram;
+      const histogram = win.eval('plot_data') as Histogram;
       [canvasMouse, frameMouse] = histogram.projectMouse({"offsetX": 319, "offsetY": 426} as MouseEvent);
       histogram.mouseMove(canvasMouse, frameMouse);
       expect(histogram.movingObjects[4].isHovered).to.be.true;
@@ -80,7 +80,7 @@ describe('HISTOGRAM CANVAS', function () {
 
   it("should scale and translate axes limits", function () {
     cy.window().then(win => {
-      const histogram = win.eval('plot_data') as newHistogram;
+      const histogram = win.eval('plot_data') as Histogram;
       const e = {"offsetX": 572, "offsetY": 144, "deltaY": 3} as WheelEvent;
       histogram.wheel_interaction(e.offsetX, e.offsetY, e);
       histogram.viewPoint = new newPoint2D(e.offsetX, e.offsetY);

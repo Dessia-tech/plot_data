@@ -861,7 +861,7 @@ class Scatter(Figure):
 class ScatterMatrix(Figure):
     """ ScatterMatrix of a list of Samples. """
 
-    _template_name = "scatter_matrix_template"
+    _template_name = "multiplot_template"
 
     def __init__(self, elements: List[Sample] = None, axes: List[str] = None, point_style: PointStyle = None,
                  surface_style: SurfaceStyle = None, width: int = 750, height: int = 400, name: str = ""):
@@ -882,7 +882,19 @@ class ScatterMatrix(Figure):
         self.axes = axes
         self.point_style = point_style
         self.surface_style = surface_style
-        super().__init__(width=width, height=height, type_="scattermatrix", name=name)
+        self.plots = self._build_multiplot()
+        self.initial_view_on = True
+        super().__init__(width=width, height=height, type_="multiplot", name=name)
+
+    def _build_multiplot(self):
+        subplots = []
+        for line in self.elements[0].values:
+            for col in self.elements[0].values:
+                if line == col:
+                    subplots.append(Histogram(x_variable=col))
+                else:
+                    subplots.append(Scatter(x_variable=line, y_variable=col))
+        return subplots
 
 
 class Arc2D(PlotDataObject):
@@ -1229,7 +1241,7 @@ class Histogram(Figure):
         self.graduation_nb = graduation_nb
         self.edge_style = edge_style
         self.surface_style = surface_style
-        super().__init__(width=width, height=height, type_='histogram', name=name)
+        super().__init__(width=width, height=height, type_='frame', name=name)
 
 
 class MultiplePlots(Figure):

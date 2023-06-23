@@ -140,23 +140,6 @@ export class Axis {
     context.stroke();
   }
 
-
-  draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y, coeff = 0.88) {
-    let scale = (coeff * height - decalage_axis_y) / max_frequency;
-    let grad_beg_y = height - decalage_axis_y;
-    let i = 0;
-    context.textAlign = 'end';
-    context.textBaseline = 'middle';
-    while (i * y_step < max_frequency + y_step) {
-      Shape.drawLine(context, [[axis_x_start - 3, grad_beg_y - scale * (i * y_step) + Y],
-      [axis_x_start + 3, grad_beg_y - scale * (i * y_step) + Y]]);
-      context.fillText(i * y_step, axis_x_start - 5, grad_beg_y - scale * (i * y_step) + Y);
-      i++;
-    }
-    context.stroke();
-  }
-
-
   draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x,
     decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, log_scale_x, x_step?) {
     context.beginPath();
@@ -234,86 +217,6 @@ export class Axis {
       this.draw_vertical_graduations(context, mvy, scaleY, axis_x_start, axis_x_end, axis_y_end, this.y_step, Y);
     }
     context.closePath();
-  }
-
-
-  draw_histogram_x_axis(context, scaleX, init_scaleX, mvx, width, height, graduations, decalage_axis_x,
-    decalage_axis_y, scroll_x, X, Y, to_disp_attribute_name, x_step?) {
-    context.beginPath();
-    context.strokeStyle = this.axis_style.color_stroke;
-    context.lineWidth = this.axis_style.line_width;
-    var axis_x_start = decalage_axis_x + X;
-    var axis_x_end = width + X;
-    var axis_y_start = Y;
-    var axis_y_end = height - decalage_axis_y + Y;
-    //Arrow
-    if (this.arrow_on) {
-      Shape.drawLine(context, [[axis_x_end - 20, axis_y_end - 10], [axis_x_end, axis_y_end]]);
-      Shape.drawLine(context, [[axis_x_end, axis_y_end], [axis_x_end - 20, axis_y_end + 10]]);
-    }
-    //Axis
-    Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
-
-    //Graduations
-    let font_size = Math.max(15, Math.ceil(0.01 * (height + width)));
-    context.font = 'bold ' + font_size + 'px Arial';
-    context.textAlign = 'end';
-    context.fillStyle = this.graduation_style.text_color;
-    context.fillText(to_disp_attribute_name, axis_x_end - 5, axis_y_end - 10);
-
-    // draw_horizontal_graduations
-    context.font = this.graduation_style.font_size.toString() + 'px Arial';
-    var i = 0;
-    context.textAlign = 'center';
-    var grad_beg_x = decalage_axis_x / scaleX + 1 / 4;
-    while (i < graduations.length) {
-      if (this.grid_on === true) {
-        context.strokeStyle = 'lightgrey';
-        Shape.drawLine(context, [[scaleX * (grad_beg_x + i) + mvx + X, axis_y_start], [scaleX * (grad_beg_x + i * x_step) + mvx + X, axis_y_end + 3]]);
-      } else {
-        Shape.drawLine(context, [[scaleX * (grad_beg_x + i) + mvx + X, axis_y_end - 3], [scaleX * (grad_beg_x + i * x_step) + mvx + X, axis_y_end + 3]]);
-      }
-      context.fillText(graduations[i], scaleX * (grad_beg_x + i) + mvx + X, axis_y_end + this.graduation_style.font_size);
-      i++;
-    }
-    context.stroke();
-    context.closePath();
-    // this.xStart = scaleX*(grad_beg_x) + mvx + X;
-    // this.xEnd = scaleX*(grad_beg_x + i - 1) + mvx + X;
-    // return [axis_x_start, axis_x_end]
-  }
-
-
-  draw_histogram_y_axis(context, width, height, max_frequency, decalage_axis_x,
-    decalage_axis_y, X, Y, to_disp_attribute_name, y_step, coeff?) {
-    context.beginPath();
-    context.strokeStyle = this.axis_style.color_stroke;
-    context.lineWidth = this.axis_style.line_width;
-    var axis_x_start = decalage_axis_x + X;
-    var axis_x_end = width + X;
-    var axis_y_start = Y;
-    var axis_y_end = height - decalage_axis_y + Y;
-    //Arrows
-    if (this.arrow_on === true) {
-      Shape.drawLine(context, [[axis_x_start - 10, axis_y_start + 20], [axis_x_start, axis_y_start]]);
-      Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start + 10, axis_y_start + 20]]);
-    }
-    //Axis
-    Shape.drawLine(context, [[axis_x_start, axis_y_start], [axis_x_start, axis_y_end]]);
-    // context.stroke();
-    // Graduations
-    this.y_step = y_step;
-    let font_size = Math.max(15, Math.ceil(0.01 * (height + width)));
-    context.font = 'bold ' + font_size + 'px Arial';
-    context.textAlign = 'start';
-    context.fillStyle = this.graduation_style.text_color;
-    context.fillText(to_disp_attribute_name, axis_x_start + 5, axis_y_start + 20);
-
-    //draw vertical graduations
-    context.font = this.graduation_style.font_size.toString() + 'px Arial';
-    this.draw_histogram_vertical_graduations(context, height, decalage_axis_y, max_frequency, axis_x_start, y_step, Y, coeff);
-    context.closePath();
-    return [axis_y_end, axis_y_start]
   }
 
   draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists,

@@ -1547,7 +1547,6 @@ export class BasePlot extends PlotData {
 
   public drawCanvas(): void {
     this.context = this.context_show;
-    // this.updateOrigin(this.X, this.Y);
     this.draw_empty_canvas(this.context_show);
     if (this.settings_on) {this.draw_settings_rect()}
     else {this.draw_rect()}
@@ -1556,21 +1555,15 @@ export class BasePlot extends PlotData {
     this.context_show.closePath();
   }
 
-  private updateOrigin(X: number, Y: number) { this.origin = new Vertex(X, Y) };
-
   public updateAxes(): void {
     const axisSelections = [];
     this.axes.forEach(axis => {
       this.axisStyle.forEach((value, key) => axis[key] = value);
       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-      if (axis.rubberBand.length != 0) {axisSelections.push(this.updateSelected(axis))};
+      if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
     })
-    if (axisSelections.length != 0) {
-      this.selectedIndex.forEach((_, index) => {
-        this.selectedIndex[index] = true;
-        axisSelections.forEach(axisSelection => {if (!axisSelection[index]) {this.selectedIndex[index] = false}})
-      })
-    } else {this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false)};
+    if (axisSelections.length != 0) { this.selectedIndex = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
+    else { this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false) }
   }
 
   public reset(): void {
@@ -1691,12 +1684,8 @@ export class BasePlot extends PlotData {
           }
           this.draw();
         }
-        var is_inside_canvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
-        if (!is_inside_canvas) {
-          isDrawing = false;
-          // this.axes.forEach(axis => { axis.saveLocation() });
-          // this.translation = new Vertex(0, 0);
-        }
+        const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
+        if (!mouseInCanvas) { isDrawing = false };
       });
 
       canvas.addEventListener('mousedown', e => {
@@ -1870,9 +1859,9 @@ export class Frame extends BasePlot {
   }
 
   public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
-    let frameOrigin = this.origin.add(this.offset).add(new Vertex(this.X, this.Y).scale(this.initScale));
-    let xEnd = new Vertex(this.origin.x + this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
-    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.margin.y + this.Y * this.initScale.y);
+    let frameOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
+    let xEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
+    let yEnd = new Vertex(frameOrigin.x, this.size.y - this.margin.y + this.Y * this.initScale.y);
     let freeSize = frameOrigin.copy();
     if (this.canvasMatrix.a < 0) {
       freeSize.x = frameOrigin.x;

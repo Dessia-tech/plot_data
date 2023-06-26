@@ -1493,7 +1493,7 @@ export class BasePlot extends PlotData {
 
   public font: string = "sans-serif";
 
-  protected initScale: Vertex = new Vertex(1, -1);
+  protected initScale: Vertex = new Vertex(-1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   private nSamples: number;
 
@@ -1547,13 +1547,16 @@ export class BasePlot extends PlotData {
 
   public drawCanvas(): void {
     this.context = this.context_show;
+    // this.updateOrigin(this.X, this.Y);
     this.draw_empty_canvas(this.context_show);
     if (this.settings_on) {this.draw_settings_rect()}
     else {this.draw_rect()}
     this.context_show.beginPath();
-    this.context_show.rect(this.X, this.Y, this.width, this.height);
+    this.context_show.rect(this.origin.x, this.origin.y, this.width, this.height);
     this.context_show.closePath();
   }
+
+  private updateOrigin(X: number, Y: number) { this.origin = new Vertex(X, Y) };
 
   public updateAxes(): void {
     const axisSelections = [];
@@ -1607,6 +1610,7 @@ export class BasePlot extends PlotData {
 
     this.context_show.setTransform(this.canvasMatrix);
     this.drawAxes();
+    // console.log(this.X, this.Y, this.origin, this.canvasMatrix, this.movingMatrix)
     this.drawTooltips();
     
     this.context_show.resetTransform();
@@ -1619,7 +1623,7 @@ export class BasePlot extends PlotData {
 
   public draw_from_context(hidden: any) {return}
 
-  public drawTooltips() { this.movingObjects.forEach(object => { object.drawTooltip(this.context_show) }) }
+  public drawTooltips() { this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) }) }
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
     objects.forEach(object => {

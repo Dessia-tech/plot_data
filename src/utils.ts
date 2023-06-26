@@ -1352,7 +1352,7 @@ export class newShape {
     context.restore();
   }
 
-  public drawTooltip(context: CanvasRenderingContext2D) {}
+  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D) {}
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) { }
 
@@ -1922,10 +1922,10 @@ export class Bar extends newRect {
     }
   }
 
-  public drawTooltip(context: CanvasRenderingContext2D) {
+  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D) {
     if (this.isClicked) {
       const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
-      tooltip.draw(context);
+      tooltip.draw(plotOrigin, plotSize, context);
     }
   }
 
@@ -1997,23 +1997,23 @@ export class newTooltip {
     })
   }
 
-  private insideCanvas(canvasSize: Vertex, scaling: Vertex): boolean {
+  private insideCanvas(plotOrigin: Vertex, plotSize: Vertex, scaling: Vertex): boolean {
     let isInside = true;
     const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE).scale(scaling));
     const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
-    const upRightDiff = canvasSize.subtract(upRightCorner);
+    const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
 
     if (upRightDiff.x < 0) {
       this.squareOrigin.x += upRightDiff.x;
-    } else if (upRightDiff.x > canvasSize.x) {
-      this.squareOrigin.x += upRightDiff.x - canvasSize.x;
+    } else if (upRightDiff.x > plotSize.x) {
+      this.squareOrigin.x += upRightDiff.x - plotSize.x;
     }
     if (upRightDiff.y < 0) {
       this.squareOrigin.y += upRightDiff.y;
       this.origin.y += upRightDiff.y;
-    } else if (upRightDiff.y > canvasSize.y){
-      this.squareOrigin.y += upRightDiff.y - canvasSize.y;
-      this.origin.y += upRightDiff.y - canvasSize.y;
+    } else if (upRightDiff.y > plotSize.y){
+      this.squareOrigin.y += upRightDiff.y - plotSize.y;
+      this.origin.y += upRightDiff.y - plotSize.y;
     }
 // To handle once one case is met
     // const downLeftDiff = canvasSize.subtract(downLeftCorner);
@@ -2030,11 +2030,11 @@ export class newTooltip {
     return isInside
   }
 
-  public draw(context: CanvasRenderingContext2D) {
+  public draw(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D) {
     const contextMatrix = context.getTransform();
-    const canvasSize = new Vertex(context.canvas.width, context.canvas.height);
+    // const canvasSize = new Vertex(context.canvas.width, context.canvas.height);
     const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
-    this.insideCanvas(canvasSize, scaling);
+    this.insideCanvas(plotOrigin, plotSize, scaling);
     const textOrigin = this.computeTextOrigin(scaling);
     const scaledPath = new Path2D();
     this.squareOrigin = this.squareOrigin.scale(scaling);

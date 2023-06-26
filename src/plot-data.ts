@@ -2097,7 +2097,6 @@ export abstract class PlotData {
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
       }
-      // this.draw();
     } else {
       if (this.zw_bool||this.select_bool) {
         canvas.style.cursor = 'crosshair';
@@ -2118,10 +2117,8 @@ export abstract class PlotData {
         }
       }
       if (this.select_on_mouse !== old_select_on_mouse) {
-        // this.draw();
       } else if (this.select_on_mouse && ["wire", "contour", "circle"].includes(this.select_on_mouse["type_"])
                 && this.select_on_mouse["tooltip"]) {
-        // this.draw();
         this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale,
           this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
       }

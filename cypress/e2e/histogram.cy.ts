@@ -31,7 +31,7 @@ describe('HISTOGRAM CANVAS', function () {
     cy.window().then(win => {
       const histogram = win.eval('plot_data') as Histogram;
       initRubberBand(histogram)
-      const nSelected = histogram.selectedIndex.reduce((sum, current) => sum + (current ? 1 : 0), 0);
+      const nSelected = histogram.selectedIndices.reduce((sum, current) => sum + (current ? 1 : 0), 0);
       const selectedBars = histogram.bars.reduce((sum, current) => sum + (current.isSelected ? 1 : 0), 0);
       expect(nSelected).to.equal(9);
       expect(selectedBars).to.equal(6);

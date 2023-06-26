@@ -1485,7 +1485,7 @@ export class BasePlot extends PlotData {
 
   public hoveredIndex: number[] = [];
   public clickedIndex: number[] = [];
-  public selectedIndex: boolean[];
+  public selectedIndices: boolean[];
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
@@ -1515,7 +1515,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
-      this.selectedIndex = Array.from([...this.features][0][1], () => false);
+      this.selectedIndices = Array.from([...this.features][0][1], () => false);
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
@@ -1562,15 +1562,15 @@ export class BasePlot extends PlotData {
       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
       if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
     })
-    if (axisSelections.length != 0) { this.selectedIndex = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
-    else { this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false) }
+    if (axisSelections.length != 0) { this.selectedIndices = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
+    else { this.selectedIndices = Array.from(Array(this.selectedIndices.length), () => false) }
   }
 
   public reset(): void {
     this.axes.forEach(axis => axis.reset());
     this.hoveredIndex = [];
     this.clickedIndex = [];
-    this.selectedIndex = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
+    this.selectedIndices = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
   }
 
   public updateSelected(axis: newAxis): boolean[] { // TODO: Performance
@@ -1990,7 +1990,7 @@ export class Histogram extends Frame {
       bar.strokeStyle = this.barsColorStroke;
       if (bar.values.some(valIdx => this.hoveredIndex.indexOf(valIdx) != -1)) {bar.isHovered = true}
       if (bar.values.some(valIdx => this.clickedIndex.indexOf(valIdx) != -1)) {bar.isClicked = true}
-      if (bar.values.some(valIdx => this.selectedIndex[valIdx])) {bar.isSelected = true}
+      if (bar.values.some(valIdx => this.selectedIndices[valIdx])) {bar.isSelected = true}
     })
   }
 

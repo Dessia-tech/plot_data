@@ -1960,6 +1960,8 @@ export class newTooltip {
     }
 
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
+    context.save();
+    context.font = `${this.fontsize}px sans-serif`
     let printedRows = ['Information: '];
     let textLength = context.measureText(printedRows[0]).width;
     this.dataToPrint.forEach((value, key) => {
@@ -1968,6 +1970,7 @@ export class newTooltip {
       if (textWidth > textLength) { textLength = textWidth };
       printedRows.push(text);
     })
+    context.restore();
     return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
   }
 
@@ -2002,7 +2005,8 @@ export class newTooltip {
     const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE).scale(scaling));
     const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
     const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
-
+    const downLeftDiff = downLeftCorner.subtract(plotOrigin);
+    // console.log(upRightDiff, downLeftDiff, this)
     if (upRightDiff.x < 0) {
       this.squareOrigin.x += upRightDiff.x;
     } else if (upRightDiff.x > plotSize.x) {
@@ -2015,24 +2019,24 @@ export class newTooltip {
       this.squareOrigin.y += upRightDiff.y - plotSize.y;
       this.origin.y += upRightDiff.y - plotSize.y;
     }
-// To handle once one case is met
-    // const downLeftDiff = canvasSize.subtract(downLeftCorner);
-    // if (downLeftCorner.y < 0) {
-    //   console.log("down inf y")
-    // } else if (downLeftCorner.y > canvasSize.y){
-    //   console.log("down sup y")
-    // }
-    // if (upRightCorner.y < 0) {
-    //   console.log("down inf y")
-    // } else if (upRightCorner.y > canvasSize.y){
-    //   console.log("down sup y")
-    // }
+
+    if (downLeftDiff.x < 0) {
+      this.squareOrigin.x -= downLeftDiff.x;
+    } else if (downLeftDiff.x > plotSize.x){
+      this.squareOrigin.x -= downLeftDiff.x - plotSize.x;
+    }
+    if (downLeftDiff.y < 0) {
+      this.squareOrigin.y += downLeftDiff.y;
+      this.origin.y += downLeftDiff.y;
+    } else if (downLeftDiff.y > plotSize.y){
+      this.squareOrigin.y += downLeftDiff.y - plotSize.y;
+      this.origin.y += downLeftDiff.y - plotSize.y;
+    }
     return isInside
   }
 
   public draw(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D) {
     const contextMatrix = context.getTransform();
-    // const canvasSize = new Vertex(context.canvas.width, context.canvas.height);
     const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
     this.insideCanvas(plotOrigin, plotSize, scaling);
     const textOrigin = this.computeTextOrigin(scaling);

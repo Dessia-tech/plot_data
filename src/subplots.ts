@@ -1553,7 +1553,7 @@ export class BasePlot extends PlotData {
     if (this.settings_on) {this.draw_settings_rect()}
     else {this.draw_rect()}
     this.context_show.beginPath();
-    this.context_show.rect(this.origin.x, this.origin.y, this.width, this.height);
+    this.context_show.rect(this.X, this.Y, this.width, this.height);
     this.context_show.closePath();
   }
 

@@ -1372,18 +1372,18 @@ export class MultiplePlots {
     frame_communication(index) {
       let frame = this.objectList[index];
       let primitive_indices = [];
-      for (let i=0; i < this.nbObjects; i++) {
-        let obj = this.objectList[i];
-        if (obj.type_ === 'scatterplot') {
-          MultiplotCom.frame_to_scatter_communication(frame, obj);
-        } else if (obj.type_ === 'parallelplot') {
-          MultiplotCom.frame_to_pp_communication(frame, obj);
-        } else if (obj.type_ === "frame") {
-          MultiplotCom.frame_to_frame_communication(frame, obj);
-        }else if (obj.type_ === "primitivegroupcontainer") {
-          primitive_indices.push(i);
+      this.objectList.forEach((plot, index) => {
+        if (plot.type_ === 'scatterplot') {
+          MultiplotCom.frame_to_scatter_communication(frame, plot);
+        } else if (plot.type_ === 'parallelplot') {
+          MultiplotCom.frame_to_pp_communication(frame, plot);
+        } else if (plot.type_ === "frame") {
+          MultiplotCom.frame_to_frame_communication(frame, plot);
+        } else if (plot.type_ === "primitivegroupcontainer") {
+          primitive_indices.push(index);
         }
-      }
+      })
+
       this.refresh_dep_selected_points_index();
       this.refresh_selected_object_from_index();
 

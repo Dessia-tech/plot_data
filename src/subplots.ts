@@ -1606,7 +1606,7 @@ export class BasePlot extends PlotData {
     this.context_show.setTransform(this.canvasMatrix);
     this.drawAxes();
     this.drawTooltips();
-    
+
     this.context_show.resetTransform();
     // if (this.buttons_ON) { this.drawButtons(context) }
     if (this.multiplot_manipulation) {  this.drawSelectionRectangle(this.context_show) };
@@ -1690,6 +1690,7 @@ export class BasePlot extends PlotData {
       });
 
       canvas.addEventListener('mousedown', e => {
+        console.log(e.offsetX, e.offsetY);
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse);
         isDrawing = true;
       });
@@ -1962,7 +1963,7 @@ export class Histogram extends Frame {
     this.getBarsDrawing();
   }
 
-  public drawMovingObjects() {    
+  public drawMovingObjects() {
     this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
     this.movingObjects = this.bars;
   }
@@ -1974,7 +1975,7 @@ export class Histogram extends Frame {
       const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
       objects.forEach(object => {
         if (object.values) {
-          if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) } 
+          if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
           else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
         }
       })

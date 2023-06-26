@@ -2177,7 +2177,7 @@ export class newAxis {
     this.path = this.buildPath();
   }
 
-  public reset(): void { 
+  public reset(): void {
     this.rubberBand.reset();
     this.minValue = this._initMinValue;
     this.maxValue = this._initMaxValue;
@@ -2271,7 +2271,7 @@ export class newAxis {
     context.setTransform(pointHTMatrix);
     const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
     this.ticksPoints = ticksPoints;
-    
+
     context.resetTransform();
     this.drawTicksTexts(ticksTexts, color, context);
     this.computeTextBoxes(context);

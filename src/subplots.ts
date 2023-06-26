@@ -1483,8 +1483,8 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
 
-  public hoveredIndex: number[] = [];
-  public clickedIndex: number[] = [];
+  public hoveredIndices: boolean[];
+  public clickedIndices: boolean[];
   public selectedIndices: boolean[];
 
   public viewPoint: Vertex = new Vertex(0, 0);
@@ -1515,6 +1515,8 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
+      this.hoveredIndices = Array.from([...this.features][0][1], () => false);
+      this.clickedIndices = Array.from([...this.features][0][1], () => false);
       this.selectedIndices = Array.from([...this.features][0][1], () => false);
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
@@ -1568,8 +1570,8 @@ export class BasePlot extends PlotData {
 
   public reset(): void {
     this.axes.forEach(axis => axis.reset());
-    this.hoveredIndex = [];
-    this.clickedIndex = [];
+    this.hoveredIndices = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
+    this.clickedIndices = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
     this.selectedIndices = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
   }
 
@@ -1665,7 +1667,6 @@ export class BasePlot extends PlotData {
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false;
-
       window.addEventListener('keydown', e => {if (e.key == "Control") {ctrlKey = true}});
 
       window.addEventListener('keyup', e => {if (e.key == "Control") {ctrlKey = false}});
@@ -1937,22 +1938,10 @@ export class Histogram extends Frame {
     return fakeTicks
   }
 
-  private storeBarState(): [number[], number[]] {
-    const [hovered, clicked] = [[] as number[], [] as number[]];
-    if (this.bars) {
-      this.bars.forEach(bar => {
-        if (bar.isHovered) {hovered.push(...bar.values)};
-        if (bar.isClicked) {clicked.push(...bar.values)};
-      })
-    }
-    return [hovered, clicked]
-  }
-
   private computeBars(axis: newAxis, vector: number[]): Bar[] {
     const numericVector = axis.stringsToValues(vector);
-    [this.hoveredIndex, this.clickedIndex] = this.storeBarState();
     let fakeTicks = this.boundedTicks(axis);
-    let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar());
+    let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar([]));
     let barValues = Array.from(Array(fakeTicks.length - 1), () => []);
     numericVector.forEach((value, valIdx) => {
       for (let tickIdx = 0 ; tickIdx < fakeTicks.length - 1 ; tickIdx++ ) {
@@ -1978,6 +1967,20 @@ export class Histogram extends Frame {
     this.movingObjects = this.bars;
   }
 
+  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
+    // TODO: Fast and dirty implementation. Needs to be rethought.
+    if (objects[0] instanceof newAxis) { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
+    else {
+      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
+      objects.forEach(object => {
+        if (object.values) {
+          if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) } 
+          else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
+        }
+      })
+    }
+  }
+
   public getBarsDrawing() {
     const fullTicks = this.boundedTicks(this.axes[0]);
     this.bars.forEach((bar, index) => {
@@ -1988,8 +1991,8 @@ export class Histogram extends Frame {
       bar.setGeometry(origin, size);
       bar.fillStyle = this.barsColorFill;
       bar.strokeStyle = this.barsColorStroke;
-      if (bar.values.some(valIdx => this.hoveredIndex.indexOf(valIdx) != -1)) {bar.isHovered = true}
-      if (bar.values.some(valIdx => this.clickedIndex.indexOf(valIdx) != -1)) {bar.isClicked = true}
+      if (bar.values.some(valIdx => this.hoveredIndices[valIdx])) {bar.isHovered = true}
+      if (bar.values.some(valIdx => this.clickedIndices[valIdx])) {bar.isClicked = true}
       if (bar.values.some(valIdx => this.selectedIndices[valIdx])) {bar.isSelected = true}
     })
   }

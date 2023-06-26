@@ -1609,7 +1609,7 @@ export class BasePlot extends PlotData {
 
     this.context_show.resetTransform();
     // if (this.buttons_ON) { this.drawButtons(context) }
-    if (this.multiplot_manipulation) {  this.drawSelectionRectangle(this.context_show) };
+    if (this.multiplot_manipulation) { this.drawSelectionRectangle(this.context_show) };
     this.context_show.restore();
   }
 

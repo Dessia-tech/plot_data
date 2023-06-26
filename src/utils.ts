@@ -2006,7 +2006,7 @@ export class newTooltip {
     const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
     const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
     const downLeftDiff = downLeftCorner.subtract(plotOrigin);
-    // console.log(upRightDiff, downLeftDiff, this)
+
     if (upRightDiff.x < 0) {
       this.squareOrigin.x += upRightDiff.x;
     } else if (upRightDiff.x > plotSize.x) {
@@ -2025,9 +2025,9 @@ export class newTooltip {
     } else if (downLeftDiff.x > plotSize.x){
       this.squareOrigin.x -= downLeftDiff.x - plotSize.x;
     }
-    if (downLeftDiff.y < 0) {
-      this.squareOrigin.y += downLeftDiff.y;
-      this.origin.y += downLeftDiff.y;
+    if (downLeftDiff.y < 0) { // Maybe wrong, did not met the case
+      this.squareOrigin.y -= downLeftDiff.y;
+      this.origin.y -= downLeftDiff.y;
     } else if (downLeftDiff.y > plotSize.y){
       this.squareOrigin.y += downLeftDiff.y - plotSize.y;
       this.origin.y += downLeftDiff.y - plotSize.y;

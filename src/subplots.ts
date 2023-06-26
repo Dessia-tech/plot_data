@@ -1493,7 +1493,7 @@ export class BasePlot extends PlotData {
 
   public font: string = "sans-serif";
 
-  protected initScale: Vertex = new Vertex(-1, 1);
+  protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   private nSamples: number;
 
@@ -1610,7 +1610,6 @@ export class BasePlot extends PlotData {
 
     this.context_show.setTransform(this.canvasMatrix);
     this.drawAxes();
-    // console.log(this.X, this.Y, this.origin, this.canvasMatrix, this.movingMatrix)
     this.drawTooltips();
     
     this.context_show.resetTransform();

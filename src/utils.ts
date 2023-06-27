@@ -1337,7 +1337,7 @@ export class newShape {
     throw new Error(`Method computeTooltipOrigin not implemented for ${this.constructor.name}`)
   }
 
-  public draw(context: CanvasRenderingContext2D) {
+  public draw(context: CanvasRenderingContext2D): void {
     const scaledPath = new Path2D();
     const contextMatrix = context.getTransform();
     scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
@@ -1352,11 +1352,11 @@ export class newShape {
     context.restore();
   }
 
-  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D) {}
+  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {}
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) { }
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) { return false }
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex): boolean { return false }
 
   public mouseUp() { }
 }
@@ -1663,7 +1663,7 @@ export class newText extends newShape {
     return `${style} ${fontsize}px ${font}`
   }
 
-  get fullFont() { return newText.buildFont(this.style, this.fontsize, this.font) }
+  get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let tmp_context: CanvasRenderingContext2D = context;
@@ -1710,7 +1710,7 @@ export class newText extends newShape {
 
   public capitalizeSelf(): void { this.text = newText.capitalize(this.text) }
 
-  public draw(context: CanvasRenderingContext2D) {
+  public draw(context: CanvasRenderingContext2D): void {
     context.save();
     const writtenText = this.format(context);
     context.font = this.fullFont;
@@ -1754,7 +1754,7 @@ export class newText extends newShape {
     return writtenText
   }
 
-  private write(writtenText: string[], context: CanvasRenderingContext2D) {
+  private write(writtenText: string[], context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle
     if (writtenText.length != 1) {
       var offset: number = writtenText.length - 1;
@@ -1764,7 +1764,7 @@ export class newText extends newShape {
     }
   }
 
-  public removeEndZeros() {
+  public removeEndZeros(): void {
     let splitText = this.text.split(".");
     if (splitText.length > 1) {
       let splitDecimal = splitText[1].split("e");
@@ -1778,7 +1778,7 @@ export class newText extends newShape {
     }
   }
 
-  private cutting_text(context: CanvasRenderingContext2D, maxWidth: number) {
+  private cutting_text(context: CanvasRenderingContext2D, maxWidth: number): string[] {
     var words = this.text.split(' ');
     var space_length = context.measureText(' ').width;
     var cut_texts = [];
@@ -1839,7 +1839,7 @@ export class newPoint2D extends Vertex {
     this.path = this.buildPath();
   };
 
-  get drawnShape() {
+  get drawnShape(): newShape {
     let marker = new newShape();
     if (CIRCLES.indexOf(this.marker) > -1) { marker = new newCircle(this.coordinates, this.size) }
     if (MARKERS.indexOf(this.marker) > -1) { marker = new Mark(this.coordinates, this.size) };
@@ -1873,7 +1873,7 @@ export class newPoint2D extends Vertex {
 
   private buildPath(): Path2D { return this.drawnShape.path };
 
-  public draw(context: CanvasRenderingContext2D) {
+  public draw(context: CanvasRenderingContext2D): void {
     this.path = this.buildPath();
     context.lineWidth = this.lineWidth;
     context.fillStyle = this.color;
@@ -1910,26 +1910,26 @@ export class Bar extends newRect {
     return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
   }
 
-  public setGeometry(origin: Vertex, size: Vertex) {
+  public setGeometry(origin: Vertex, size: Vertex): void {
     this.origin = origin;
     this.size = size;
   }
 
-  public draw(context: CanvasRenderingContext2D) {
+  public draw(context: CanvasRenderingContext2D): void {
     if (this.size.x != 0 && this.size.y != 0) {
       super.draw(context);
       this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
     }
   }
 
-  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D) {
+  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
     if (this.isClicked) {
       const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
       tooltip.draw(plotOrigin, plotSize, context);
     }
   }
 
-  public computeStats(values: number[], precision: number) {
+  public computeStats(values: number[], precision: number): void {
     this.min = Math.round(Math.min(...values) * precision) / precision;
     this.max = Math.round(Math.max(...values) * precision) / precision;
     this.mean = Math.round(values.reduce((a, b) => a + b, 0) / values.length * precision) / precision;
@@ -1991,7 +1991,7 @@ export class newTooltip {
     return textOrigin.add(new Vertex(textOffsetX, textOffsetY));
   }
 
-  private writeText(textOrigin: Vertex, context: CanvasRenderingContext2D) {
+  private writeText(textOrigin: Vertex, context: CanvasRenderingContext2D): void {
     this.printedRows.forEach((row, index) => {
       textOrigin.y += index == 0 ? 0 : this.fontsize;
       const text = new newText(row, textOrigin, {fontsize: this.fontsize, baseline: "middle", style: index == 0 ? 'bold' : ''});
@@ -2035,7 +2035,7 @@ export class newTooltip {
     return isInside
   }
 
-  public draw(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D) {
+  public draw(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
     const contextMatrix = context.getTransform();
     const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
     this.insideCanvas(plotOrigin, plotSize, scaling);
@@ -2158,7 +2158,7 @@ export class newAxis {
     return this._nTicks
   }
 
-  get ticks() { return this._ticks }
+  get ticks(): number[] { return this._ticks }
 
   set ticks(value: number[]) { this._ticks = value }
 
@@ -2166,11 +2166,11 @@ export class newAxis {
 
   get transformMatrix(): DOMMatrix { return this.getValueToDrawMatrix() };
 
-  private horizontalPickIdx() { return Math.sign(1 - Math.sign(this.initScale.y)) }
+  private horizontalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.y)) }
 
-  private verticalPickIdx() { return Math.sign(1 - Math.sign(this.initScale.x)) }
+  private verticalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.x)) }
 
-  public transform(newOrigin: Vertex, newEnd: Vertex) {
+  public transform(newOrigin: Vertex, newEnd: Vertex): void {
     this.origin = newOrigin;
     this.end = newEnd;
     this.drawPath = this.buildDrawPath();
@@ -2233,7 +2233,7 @@ export class newAxis {
     return [Math.min(...vector), Math.max(...vector)]
   }
 
-  public computeTextBoxes(context: CanvasRenderingContext2D) {
+  public computeTextBoxes(context: CanvasRenderingContext2D): void {
     context.save();
     const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.FONT });
     context.font = calibratedTickText.fullFont;
@@ -2257,7 +2257,7 @@ export class newAxis {
     return ticks
   }
 
-  public draw(context: CanvasRenderingContext2D) {
+  public draw(context: CanvasRenderingContext2D): void {
     const canvasHTMatrix = context.getTransform();
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     const color = this.drawingColor;
@@ -2281,7 +2281,7 @@ export class newAxis {
     this.drawRubberBand(context);
   }
 
-  private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string) {
+  private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
     if (this.centeredTitle) {
       var [nameCoords, align, baseline, orientation] = this.centeredTitleProperties();
     } else {
@@ -2321,7 +2321,7 @@ export class newAxis {
     return [nameCoords, "center", baseline, this.isVertical ? -90 : 0]
   }
 
-  private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string) {
+  private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string): [newPoint2D[], newText[]] {
     const ticksPoints = [];
     const ticksText: newText[] = [];
     const tickTextParams = this.computeTickTextParams();
@@ -2342,12 +2342,12 @@ export class newAxis {
     return [ticksPoints, ticksText]
   }
 
-  private drawTicksTexts(ticksTexts: newText[], color: string, context: CanvasRenderingContext2D) {
+  private drawTicksTexts(ticksTexts: newText[], color: string, context: CanvasRenderingContext2D): void {
     this.ticksFontsize = Math.min(...ticksTexts.map(tickText => tickText.fontsize));
     ticksTexts.forEach(tickText => { this.drawTickText(tickText, color, context) });
   }
 
-  private drawTickText(tickText: newText, color: string, context: CanvasRenderingContext2D) {
+  private drawTickText(tickText: newText, color: string, context: CanvasRenderingContext2D): void {
     tickText.fillStyle = color;
     tickText.fontsize = this.ticksFontsize;
     tickText.width = null;
@@ -2389,7 +2389,7 @@ export class newAxis {
     return tickText
   }
 
-  private getValueToDrawMatrix() {
+  private getValueToDrawMatrix(): DOMMatrix {
     const scale = this.drawLength / this.interval;
     return new DOMMatrix([
       scale, 0, 0, scale,
@@ -2404,7 +2404,7 @@ export class newAxis {
       maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
   }
 
-  public drawRubberBand(context: CanvasRenderingContext2D) {
+  public drawRubberBand(context: CanvasRenderingContext2D): void {
     const realMin = this.relativeToAbsolute(this.rubberBand.minValue);
     const realMax = this.relativeToAbsolute(this.rubberBand.maxValue);
     const coord = this.isVertical ? "y" : "x";
@@ -2415,7 +2415,7 @@ export class newAxis {
     this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, 'hsl(203, 0%, 100%, 0.5)', 0.1, 1.);
   }
 
-  public mouseMove(mouseDown: Vertex, mouseCoords: Vertex) {
+  public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {
     let downValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
     let currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
     if (!this.rubberBand.isClicked) {
@@ -2425,7 +2425,7 @@ export class newAxis {
     return true
   }
 
-  public mouseDown(mouseDown: Vertex) {
+  public mouseDown(mouseDown: Vertex): boolean {
     let isReset = false;
     this.is_drawing_rubberband = true; // OLD
     const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
@@ -2436,7 +2436,7 @@ export class newAxis {
     return isReset
   }
 
-  public mouseUp() {
+  public mouseUp(): void {
     this.rubberBand.mouseUp();
     this.is_drawing_rubberband = false; // OLD
   }

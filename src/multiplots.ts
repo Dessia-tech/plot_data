@@ -1372,7 +1372,7 @@ export class MultiplePlots {
     frame_communication(index) {
       let frame = this.objectList[index];
       let primitive_indices = [];
-      this.objectList.forEach((plot, index) => {
+      this.objectList.forEach((plot, plotIndex) => {
         if (plot.type_ === 'scatterplot') {
           MultiplotCom.frame_to_scatter_communication(frame, plot);
         } else if (plot.type_ === 'parallelplot') {
@@ -1380,7 +1380,7 @@ export class MultiplePlots {
         } else if (plot.type_ === "frame") {
           MultiplotCom.frame_to_frame_communication(frame, plot);
         } else if (plot.type_ === "primitivegroupcontainer") {
-          primitive_indices.push(index);
+          primitive_indices.push(plotIndex);
         }
       })
 

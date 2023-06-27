@@ -1723,7 +1723,7 @@ export class BasePlot extends PlotData {
               if (this.scaleX < scale.x) {this.scaleX = scale.x}
             }
           }
-          this.viewPoint = new newPoint2D(mouse3X, mouse3Y).scale(this.initScale);
+          this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
           this.updateAxes(); // needs a refactor
           this.axes.forEach(axis => {axis.saveLocation()});
           [this.scaleX, this.scaleY] = [1, 1];
@@ -1850,7 +1850,7 @@ export class Frame extends BasePlot {
   }
 
   public setFeatures(data: any): [string, string] {
-    return [data.x_variable, data.y_variable];
+    return [data.attribute_names[0], data.attribute_names[1]];
   }
 
   public setAxes(): newAxis[] {
@@ -2044,5 +2044,45 @@ export class Histogram extends Frame {
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
     }
     return [mouse3X, mouse3Y];
+  }
+}
+
+
+export class newScatter extends Frame {
+  public points: newPoint2D[] = [];
+  readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
+  readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
+  constructor(
+    public data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+    }
+
+  private computePoints(): newPoint2D[] {
+    const numericVectorX = this.axes[0].stringsToValues(this.features.get(this.xFeature));
+    const numericVectorY = this.axes[1].stringsToValues(this.features.get(this.yFeature));
+    const points: newPoint2D[] = [];
+    for (let index = 0 ; index < numericVectorX.length ; index++) {
+      points.push(new newPoint2D(numericVectorX[index], numericVectorY[index], 10, "circle"))
+    }
+    return points
+  }
+
+  public computeMovingObjects(): void {
+    this.points = this.computePoints();
+    console.log(this.points)
+    // this.getPointsDrawing();
+  }
+
+  public drawMovingObjects(): void {
+    // this.points.forEach(point => { point.buildPath() ; point.draw(this.context_show) });
+    // this.movingObjects = this.points;
   }
 }

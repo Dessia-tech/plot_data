@@ -1820,8 +1820,9 @@ const MARKERS = ['+', 'crux', 'mark'];
 const CROSSES = ['x', 'cross', 'oblique'];
 const SQUARES = ['square'];
 const TRIANGLES = ['^', 'triangle', 'tri'];
-export class newPoint2D extends Vertex {
+export class newPoint2D extends newShape {
   public path: Path2D;
+  public center: Vertex;
   public isHover: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
@@ -1835,29 +1836,26 @@ export class newPoint2D extends Vertex {
     private _marker: string = 'circle',
     private _markerOrientation: string = 'up'
   ) {
-    super(x, y);
+    super();
+    this.center = new Vertex(x, y);
     this.path = this.buildPath();
   };
 
   get drawnShape(): newShape {
     let marker = new newShape();
-    if (CIRCLES.indexOf(this.marker) > -1) { marker = new newCircle(this.coordinates, this.size) }
-    if (MARKERS.indexOf(this.marker) > -1) { marker = new Mark(this.coordinates, this.size) };
-    if (CROSSES.indexOf(this.marker) > -1) { marker = new Cross(this.coordinates, this.size) };
+    if (CIRCLES.indexOf(this.marker) > -1) { marker = new newCircle(this.center.coordinates, this.size) }
+    if (MARKERS.indexOf(this.marker) > -1) { marker = new Mark(this.center.coordinates, this.size) };
+    if (CROSSES.indexOf(this.marker) > -1) { marker = new Cross(this.center.coordinates, this.size) };
     if (SQUARES.indexOf(this.marker) > -1) {
       const halfSize = this.size * 0.5;
-      const origin = new Vertex(this.coordinates.x - halfSize, this.coordinates.y - halfSize)
+      const origin = new Vertex(this.center.coordinates.x - halfSize, this.center.coordinates.y - halfSize)
       marker = new newRect(origin, new Vertex(this.size, this.size))
     };
-    if (TRIANGLES.indexOf(this.marker) > -1) { marker = new Triangle(this.coordinates, this.size, this.markerOrientation) };
-    if (this.marker == 'halfLine') { marker = new HalfLine(this.coordinates, this.size, this.markerOrientation) };
+    if (TRIANGLES.indexOf(this.marker) > -1) { marker = new Triangle(this.center.coordinates, this.size, this.markerOrientation) };
+    if (this.marker == 'halfLine') { marker = new HalfLine(this.center.coordinates, this.size, this.markerOrientation) };
     marker.lineWidth = this.lineWidth;
     return marker
   }
-
-  get lineWidth(): number { return this._lineWidth };
-
-  set lineWidth(value: number) { this._lineWidth = value };
 
   get markerOrientation(): string { return this._markerOrientation };
 
@@ -1871,16 +1869,7 @@ export class newPoint2D extends Vertex {
 
   set marker(value: string) { this._marker = value };
 
-  private buildPath(): Path2D { return this.drawnShape.path };
-
-  public draw(context: CanvasRenderingContext2D): void {
-    this.path = this.buildPath();
-    context.lineWidth = this.lineWidth;
-    context.fillStyle = this.color;
-    context.strokeStyle = this.color;
-    context.stroke(this.path);
-    context.fill(this.path);
-  }
+  public buildPath(): Path2D { return this.drawnShape.path };
 }
 
 export class Bar extends newRect {
@@ -2376,7 +2365,6 @@ export class newAxis {
     const markerOrientation = this.isVertical ? 'right' : 'up';
     const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
     point.color = color;
-    point.lineWidth /= Math.abs(HTMatrix.a);
     point.draw(context);
     return point
   }
@@ -2467,7 +2455,7 @@ export class newAxis {
   }
 
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): Vertex {
-    let origin = new Vertex(point.x, point.y).transform(HTMatrix);
+    let origin = point.center.transform(HTMatrix);
     if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode
       origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks;
     }

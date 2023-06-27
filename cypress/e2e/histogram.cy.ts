@@ -83,7 +83,7 @@ describe('HISTOGRAM CANVAS', function () {
       const histogram = win.eval('plot_data') as Histogram;
       const e = {"offsetX": 572, "offsetY": 144, "deltaY": 3} as WheelEvent;
       histogram.wheel_interaction(e.offsetX, e.offsetY, e);
-      histogram.viewPoint = new newPoint2D(e.offsetX, e.offsetY);
+      histogram.viewPoint = new Vertex(e.offsetX, e.offsetY);
       histogram.viewPoint.transformSelf(histogram.canvasMatrix);
       histogram.draw();
       [canvasDown, frameMouse] = histogram.projectMouse({"offsetX": 572, "offsetY": 144} as MouseEvent);

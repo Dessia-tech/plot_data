@@ -1,7 +1,7 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, BasePlot } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
 
@@ -64,6 +64,8 @@ export class MultiplePlots {
 
     public padding: number;
 
+    // NEW
+    public rubberBands = new Map<string, RubberBand>();
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
@@ -119,6 +121,8 @@ export class MultiplePlots {
         this.display_order.push(i);
         this.to_display_plots.push(i);
       }
+
+      this.initRubberBands();
       this.mouse_interaction();
 
       if (buttons_ON) {
@@ -130,6 +134,28 @@ export class MultiplePlots {
         this.store_dimensions();
       }
         // this.save_canvas();
+    }
+
+    private initRubberBands() { this.objectList.forEach(plot => { this.updateRubberBands(plot) }) };
+
+    private updateRubberBands(plot: PlotData): void {
+      if (plot instanceof ParallelPlot) { 
+        plot.rubber_bands.forEach(rubberBand => {
+          const axisStart = plot.vertical ? plot.axis_y_end : plot.axis_x_start;
+          const axisEnd = plot.vertical ? plot.axis_y_start : plot.axis_x_end;
+          rubberBand.valueToAxis(axisStart, axisEnd)
+          this.rubberBands.set(rubberBand.attributeName, rubberBand);
+        })
+      }
+      else if (plot instanceof PlotScatter && plot.type_ !== "graph2d") {
+        const xRubberBand = new RubberBand(plot.data.attribute_names[0], plot.perm_window_x, plot.perm_window_w + plot.perm_window_x, false);
+        const yRubberBand = new RubberBand(plot.data.attribute_names[1], plot.perm_window_y, plot.perm_window_h + plot.perm_window_y, true);
+        xRubberBand.valueToAxis(plot.axis_x_start, plot.axis_x_end);
+        yRubberBand.valueToAxis(plot.axis_y_end, plot.axis_y_start);
+        this.rubberBands.set(plot.data.attribute_names[0], xRubberBand);
+        this.rubberBands.set(plot.data.attribute_names[1], yRubberBand);
+      }
+      else if (plot instanceof BasePlot) { plot.axes.forEach(axis => this.rubberBands.set(axis.name, axis.rubberBand)) };
     }
 
     initialize_sizes() {
@@ -1172,11 +1198,13 @@ export class MultiplePlots {
     mouse_move_scatter_communication() {
       let isSelectingObjIndex = this.getSelectionONObject();
       if (isSelectingObjIndex != -1) {
-        let isSelectingScatter = this.objectList[isSelectingObjIndex];
-        let selection_coords = isSelectingScatter.selection_coords;
-        let to_display_attributes:Attribute[] = isSelectingScatter.plotObject.to_display_attributes;
-        this.scatter_communication(selection_coords, to_display_attributes, isSelectingObjIndex);
-        this.dep_selected_points_index = isSelectingScatter.selected_point_index;
+        this.updateRubberBands(this.objectList[isSelectingObjIndex]);
+        console.log(this.rubberBands)
+
+        // let selection_coords = isSelectingScatter.selection_coords;
+        // let to_display_attributes:Attribute[] = isSelectingScatter.plotObject.to_display_attributes;
+        // this.scatter_communication(selection_coords, to_display_attributes, isSelectingObjIndex);
+        this.dep_selected_points_index = this.objectList[isSelectingObjIndex].selected_point_index;
       }
     }
 
@@ -1758,6 +1786,44 @@ export class MultiplePlots {
       return click_on_manip_button || click_on_selectDep_button || click_on_view || click_on_export;
     }
 
+    private spanRubberBands(currentPlot: PlotData) {
+      this.objectList.forEach((plot, index) => {
+        if (plot !== currentPlot) {
+          if (plot instanceof ParallelPlot) { 
+            plot.rubber_bands.forEach((rubberBand, rIndex) => {
+              const axisStart = plot.vertical ? plot.axis_y_end : plot.axis_x_start;
+              const axisEnd = plot.vertical ? plot.axis_y_start : plot.axis_x_end;
+              rubberBand = this.rubberBands.get(rubberBand.attributeName);
+              rubberBand.isVertical = plot.vertical;
+              rubberBand.valueToAxis(axisStart, axisEnd);
+              rubberBand.axisToReal(axisStart, axisEnd);
+              rubberBand.newBoundsUpdate(rubberBand.realMin, rubberBand.realMax, [axisStart, axisEnd], plot.all_attributes[rIndex], plot.inverted_axis_list[rIndex])
+              
+              
+              this.objectList[index].rubber_bands[rIndex] = rubberBand;
+            })
+            // console.log(plot)
+
+          }
+          else if (plot instanceof PlotScatter && plot.type_ !== "graph2d") { 
+            if (this.rubberBands.get(plot.data.attribute_names[1]).length != 0) {
+              plot.perm_window_y = this.rubberBands.get(plot.data.attribute_names[1]).minValue;
+              plot.perm_window_h = plot.perm_window_y - this.rubberBands.get(plot.data.attribute_names[1]).minValue;
+              plot.permanent_window = true;
+            };
+            if (this.rubberBands.get(plot.data.attribute_names[0]).length != 0) {
+              plot.perm_window_x = this.rubberBands.get(plot.data.attribute_names[0]).minValue;
+              plot.perm_window_w = this.rubberBands.get(plot.data.attribute_names[0]).maxValue - plot.perm_window_x;
+              plot.permanent_window = true;
+            };
+          
+            if (plot.perm_window_h == 0 && plot.perm_window_w == 0) { plot.permanent_window = false };
+          }
+          else if (plot instanceof BasePlot) { plot.axes.forEach(axis => this.rubberBands.set(axis.name, axis.rubberBand)) };
+        }
+      })
+    }
+
 
     mouse_interaction(): void {
       var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
@@ -1844,8 +1910,10 @@ export class MultiplePlots {
             mouse_moving = true;
             if (this.selectDependency_bool) {
               this.mouse_move_scatter_communication();
-              this.mouse_move_pp_communication();
-              this.mouse_move_frame_communication();
+              // this.mouse_move_pp_communication();
+              // this.mouse_move_frame_communication();
+              // this.updateRubberBands();
+              this.spanRubberBands(this.objectList[this.getSelectionONObject()]);
               this.redrawAllObjects();
             }
             this.refresh_selected_point_index();

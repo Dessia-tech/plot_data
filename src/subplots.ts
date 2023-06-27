@@ -1694,7 +1694,6 @@ export class BasePlot extends PlotData {
       });
 
       canvas.addEventListener('mousedown', e => {
-        console.log(e.offsetX, e.offsetY);
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse);
         isDrawing = true;
       });

@@ -1515,9 +1515,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
-      this.hoveredIndices = Array.from([...this.features][0][1], () => false);
-      this.clickedIndices = Array.from([...this.features][0][1], () => false);
-      this.selectedIndices = Array.from([...this.features][0][1], () => false);
+      this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
@@ -1537,6 +1535,8 @@ export class BasePlot extends PlotData {
   get canvasMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
 
   get movingMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
+
+  get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();
@@ -1565,14 +1565,18 @@ export class BasePlot extends PlotData {
       if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
     })
     if (axisSelections.length != 0) { this.selectedIndices = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
-    else { this.selectedIndices = Array.from(Array(this.selectedIndices.length), () => false) }
+    else { this.selectedIndices = new Array(this.nSamples).fill(false) }
+  }
+
+  private initSelectors() {
+    this.hoveredIndices = this.falseIndicesArray;
+    this.clickedIndices = this.falseIndicesArray;
+    this.selectedIndices = this.falseIndicesArray;
   }
 
   public reset(): void {
     this.axes.forEach(axis => axis.reset());
-    this.hoveredIndices = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
-    this.clickedIndices = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
-    this.selectedIndices = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
+    this.initSelectors();
   }
 
   public updateSelected(axis: newAxis): boolean[] { // TODO: Performance

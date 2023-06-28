@@ -2102,8 +2102,8 @@ export class newScatter extends Frame {
 
   private projectPoints(pointsMatrix: matrices.Matrix): matrices.Matrix {
     const relativeMatrix = new matrices.Matrix([
-      [this.relativeMatrix.a, this.relativeMatrix.c, this.relativeMatrix.e], 
-      [this.relativeMatrix.b, this.relativeMatrix.d, this.relativeMatrix.f], 
+      [this.relativeMatrix.a, this.relativeMatrix.c, this.relativeMatrix.e],
+      [this.relativeMatrix.b, this.relativeMatrix.d, this.relativeMatrix.f],
       [0, 0, 1]
     ])
     return relativeMatrix.mmul(pointsMatrix)

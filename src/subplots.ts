@@ -2131,8 +2131,12 @@ export class newScatter extends Frame {
   public drawAbsoluteObjects(): void {
     this.context_show.resetTransform();
     this.points.forEach((point, index) => { 
-      if (point.isClicked) this.tooltipAttr.forEach(attr => point.tooltipMap.set(attr, this.features.get(attr)[index]))
-      point.draw(this.context_show) 
+      const inCanvasX = this.features.get(this.xFeature)[index] < this.axes[0].maxValue && this.features.get(this.xFeature)[index] > this.axes[0].minValue;
+      const inCanvasY = this.features.get(this.yFeature)[index] < this.axes[1].maxValue && this.features.get(this.yFeature)[index] > this.axes[1].minValue;
+      if (inCanvasX && inCanvasY) {
+        if (point.isClicked) this.tooltipAttr.forEach(attr => point.tooltipMap.set(attr, this.features.get(attr)[index]))
+        point.draw(this.context_show);
+      }
     });
     this.absoluteObjects = this.points;
   }

@@ -2232,9 +2232,7 @@ export class newAxis {
     return this.isVertical ? value * this.transformMatrix.d + this.transformMatrix.f : value * this.transformMatrix.a + this.transformMatrix.e
   }
 
-  public normedValue(value: number): number {
-    return value / this.interval
-  }
+  public normedValue(value: number): number { return value / this.interval }
 
   private computeMinMax(vector: any[]): number[] {
     if (this.isDiscrete) { return [0, this.labels.length] };

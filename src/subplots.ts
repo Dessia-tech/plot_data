@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape, newRect } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1495,7 +1495,7 @@ export class BasePlot extends PlotData {
 
   public font: string = "sans-serif";
 
-  protected initScale: Vertex = new Vertex(1, -1);
+  protected initScale: Vertex = new Vertex(-1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   protected nSamples: number;
 
@@ -1521,6 +1521,7 @@ export class BasePlot extends PlotData {
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
+      this.buttons_ON = true;
     }
 
   refresh_MinMax(): void {
@@ -1621,14 +1622,21 @@ export class BasePlot extends PlotData {
     this.drawTooltips();
 
     this.context_show.resetTransform();
-    // if (this.buttons_ON) { this.drawButtons(context) }
+    if (this.buttons_ON) { this.drawButtons(this.context_show) }
     if (this.multiplot_manipulation) { this.drawSelectionRectangle(this.context_show) };
     this.context_show.restore();
   }
 
   public draw_initial(): void { this.draw() }
 
-  public draw_from_context(hidden: any) {return}
+  public draw_from_context(hidden: any) {}
+
+  protected drawButtons(context: CanvasRenderingContext2D) {
+    const buttonsX = this.initScale.x < 0 ? 50 : this.size.x - 250;
+    const buttonsYStart = this.initScale.y < 0 ? 50 : this.size.y - 50;
+    const buttonRect = new newRect(new Vertex(buttonsX, buttonsYStart), new Vertex(200, 20));
+    buttonRect.draw(context);
+  }
 
   public drawTooltips(): void {
     this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) })
@@ -2134,7 +2142,7 @@ export class newScatter extends Frame {
       const inCanvasX = this.features.get(this.xFeature)[index] < this.axes[0].maxValue && this.features.get(this.xFeature)[index] > this.axes[0].minValue;
       const inCanvasY = this.features.get(this.yFeature)[index] < this.axes[1].maxValue && this.features.get(this.yFeature)[index] > this.axes[1].minValue;
       if (inCanvasX && inCanvasY) {
-        if (point.isClicked) this.tooltipAttr.forEach(attr => point.tooltipMap.set(attr, this.features.get(attr)[index]))
+        if (point.isClicked) this.tooltipAttr.forEach(attr => point.tooltipMap.set(attr, this.features.get(attr)[index]));
         point.draw(this.context_show);
       }
     });

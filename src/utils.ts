@@ -1343,13 +1343,17 @@ export class newShape {
     scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
     context.save();
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
+    this.setDrawingProperties(context);
+    context.fill(scaledPath);
+    context.stroke(scaledPath);
+    context.restore();
+  }
+
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
     context.globalAlpha = this.alpha;
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-    context.fill(scaledPath);
-    context.stroke(scaledPath);
-    context.restore();
   }
 
   public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {}
@@ -1823,22 +1827,19 @@ const TRIANGLES = ['^', 'triangle', 'tri'];
 export class newPoint2D extends newShape {
   public path: Path2D;
   public center: Vertex;
-  public isHover: boolean = false;
-  public isClicked: boolean = false;
-  public isSelected: boolean = false;
-  public color: string = string_to_hex('blue');
-  protected _lineWidth: number = 2;
 
   constructor(
     x: number = 0,
     y: number = 0,
     private _size: number = 2,
     private _marker: string = 'circle',
-    private _markerOrientation: string = 'up'
+    private _markerOrientation: string = 'up',
+    color?: string
   ) {
     super();
     this.center = new Vertex(x, y);
     this.path = this.buildPath();
+    if (color) this.strokeStyle = this.fillStyle = color;
   };
 
   get drawnShape(): newShape {
@@ -1870,6 +1871,13 @@ export class newPoint2D extends newShape {
   set marker(value: string) { this._marker = value };
 
   public buildPath(): Path2D { return this.drawnShape.path };
+
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
+    context.lineWidth = this.lineWidth;
+    context.globalAlpha = this.alpha;
+    context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
+    context.strokeStyle =  context.fillStyle;
+  }
 }
 
 export class Bar extends newRect {
@@ -2363,8 +2371,7 @@ export class newAxis {
 
   private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
     const markerOrientation = this.isVertical ? 'right' : 'up';
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
-    point.color = color;
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation, color);
     point.draw(context);
     return point
   }

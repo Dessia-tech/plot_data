@@ -753,7 +753,7 @@ class Graph2D(Figure):
     :type log_scale_y: bool
     """
 
-    _template_name = "scatter_template"
+    _template_name = "graph_template"
 
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str, axis: Axis = None,
                  log_scale_x: bool = None, log_scale_y: bool = None, width: int = 750, height: int = 400,

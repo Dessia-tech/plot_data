@@ -1316,6 +1316,7 @@ export class Vertex {
   }
 }
 
+const TOOLTIP_PRECISION = 100;
 export class newShape {
   public path: Path2D = new Path2D();
   public lineWidth: number = 1;
@@ -1328,14 +1329,19 @@ export class newShape {
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
-  public tooltipOrigin: Vertex;
+  protected _tooltipOrigin: Vertex;
+  protected _tooltipMap = new Map<string, any>();
   protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
   protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
   constructor() {};
 
-  protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
-    throw new Error(`Method computeTooltipOrigin not implemented for ${this.constructor.name}`)
-  }
+  get tooltipOrigin(): Vertex { return this._tooltipOrigin };
+
+  set tooltipOrigin(value: Vertex) {this._tooltipOrigin = value };
+
+  get tooltipMap(): Map<string, any> { return this._tooltipMap };
+
+  set tooltipMap(value: Map<string, any> ) { this._tooltipMap = value };
 
   public draw(context: CanvasRenderingContext2D): void {
     const scaledPath = new Path2D();
@@ -1356,7 +1362,12 @@ export class newShape {
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
   }
 
-  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {}
+  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
+    if (this.isClicked && this.tooltipMap.size != 0) {
+      const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
+      tooltip.draw(plotOrigin, plotSize, context);
+    }
+  }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) { }
 
@@ -1858,6 +1869,8 @@ export class newPoint2D extends newShape {
     return marker
   }
 
+  get tooltipOrigin(): Vertex { return this.center };
+
   get markerOrientation(): string { return this._markerOrientation };
 
   set markerOrientation(value: string) { this._markerOrientation = value };
@@ -1899,7 +1912,7 @@ export class Bar extends newRect {
 
   get length(): number { return this.values.length };
 
-  private get tooltipMap(): Map<string, any> {
+  get tooltipMap(): Map<string, any> {
     return new Map<string, any>([["Number", this.length], ["Min", this.min], ["Max", this.max], ["Mean", this.mean]])
   }
 
@@ -1919,17 +1932,10 @@ export class Bar extends newRect {
     }
   }
 
-  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
-    if (this.isClicked) {
-      const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
-      tooltip.draw(plotOrigin, plotSize, context);
-    }
-  }
-
-  public computeStats(values: number[], precision: number): void {
-    this.min = Math.round(Math.min(...values) * precision) / precision;
-    this.max = Math.round(Math.max(...values) * precision) / precision;
-    this.mean = Math.round(values.reduce((a, b) => a + b, 0) / values.length * precision) / precision;
+  public computeStats(values: number[]): void {
+    this.min = Math.min(...values);
+    this.max = Math.max(...values);
+    this.mean = values.reduce((a, b) => a + b, 0) / values.length;
   }
 }
 
@@ -1962,7 +1968,7 @@ export class newTooltip {
     let printedRows = ['Information: '];
     let textLength = context.measureText(printedRows[0]).width;
     this.dataToPrint.forEach((value, key) => {
-      const text = `  - ${key}: ${value}`;
+      const text = `  - ${key}: ${this.formatValue(value)}`;
       const textWidth = context.measureText(text).width;
       if (textWidth > textLength) { textLength = textWidth };
       printedRows.push(text);
@@ -1970,6 +1976,11 @@ export class newTooltip {
     context.restore();
     return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
   }
+
+  private formatValue(value: number | string): number | string {
+    if (typeof value == "number") return Math.round(value * TOOLTIP_PRECISION) / TOOLTIP_PRECISION;
+    return value
+  };
 
   public buildPath(): Path2D {
     const path = new Path2D();

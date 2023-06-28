@@ -1230,8 +1230,21 @@ class Histogram(Figure):
     def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, width: int = 750, height: int = 400,
                  name: str = ''):
+        if elements is None:
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type '{type(element)}' cannot be used as a MultiPlot data element.")
         self.x_variable = x_variable
-        self.elements = elements
+        self.elements = sampled_elements
         self.axis = axis
         self.graduation_nb = graduation_nb
         self.edge_style = edge_style

@@ -1541,11 +1541,10 @@ export class BasePlot extends PlotData {
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
   private unpackData(data: any): Map<string, any[]> {
+    const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
+    featuresKeys.push("name");
     let unpackedData = new Map<string, any[]>();
-    Object.keys(data.elements[0]).forEach((feature) => {
-      let vector = data.elements.map(element => element[feature]);
-      unpackedData.set(feature, vector);
-    });
+    featuresKeys.forEach((feature) => { unpackedData.set(feature, data.elements.map(element => element[feature])) });
     return unpackedData
   }
 
@@ -1631,7 +1630,10 @@ export class BasePlot extends PlotData {
 
   public draw_from_context(hidden: any) {return}
 
-  public drawTooltips(): void { this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) }) }
+  public drawTooltips(): void { 
+    this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) }) 
+    this.absoluteObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) }) 
+  }
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     objects.forEach(object => {
@@ -1972,7 +1974,7 @@ export class Histogram extends Frame {
         }
       }
     });
-    barValues.forEach((values, index) => { bars[index].computeStats(values, 100) });
+    barValues.forEach((values, index) => { bars[index].computeStats(values) });
     return bars
   }
 
@@ -2065,6 +2067,7 @@ export class Histogram extends Frame {
 
 export class newScatter extends Frame {
   public points: newPoint2D[] = [];
+  public tooltipAttr: string[];
   readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(
@@ -2078,6 +2081,8 @@ export class newScatter extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      if (!data.tooltip) {this.tooltipAttr = Array.from(this.features.keys()) }
+      else this.tooltipAttr = data.tooltip.attribute;
     }
 
   private computePoints(): newPoint2D[] {
@@ -2125,7 +2130,10 @@ export class newScatter extends Frame {
 
   public drawAbsoluteObjects(): void {
     this.context_show.resetTransform();
-    this.points.forEach(point => { point.draw(this.context_show) });
+    this.points.forEach((point, index) => { 
+      if (point.isClicked) this.tooltipAttr.forEach(attr => point.tooltipMap.set(attr, this.features.get(attr)[index]))
+      point.draw(this.context_show) 
+    });
     this.absoluteObjects = this.points;
   }
 }

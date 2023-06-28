@@ -1,7 +1,7 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
 
@@ -78,7 +78,7 @@ export class MultiplePlots {
         this.initialize_sizes();
         for (let i=0; i<this.nbObjects; i++) {
           let object_type_ = this.dataObjects[i]['type_'];
-          if ((object_type_ === 'scatterplot') || (this.dataObjects[i]['type_'] == 'graph2d')) {
+          if (this.dataObjects[i]['type_'] == 'graph2d') {
             this.dataObjects[i]['elements'] = elements;
             var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'parallelplot') {
@@ -97,6 +97,9 @@ export class MultiplePlots {
           } else if (object_type_ === 'frame' || object_type_ == 'histogram') {
             this.dataObjects[i]['elements'] = elements;
             newObject = new Histogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+          } else if (object_type_ === 'scatterplot') {
+            this.dataObjects[i]['elements'] = elements;
+            newObject = new newScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else {
             throw new Error('MultiplePlots constructor : invalid object type');
           }

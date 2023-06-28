@@ -1495,7 +1495,7 @@ export class BasePlot extends PlotData {
 
   public font: string = "sans-serif";
 
-  protected initScale: Vertex = new Vertex(-1, -1);
+  protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   protected nSamples: number;
 
@@ -1634,7 +1634,7 @@ export class BasePlot extends PlotData {
   protected drawButtons(context: CanvasRenderingContext2D) {
     const buttonsX = this.initScale.x < 0 ? 50 : this.size.x - 250;
     const buttonsYStart = this.initScale.y < 0 ? 50 : this.size.y - 50;
-    const buttonRect = new newRect(new Vertex(buttonsX, buttonsYStart), new Vertex(200, 20));
+    const buttonRect = new newRect(new Vertex(buttonsX + this.X, buttonsYStart + this.Y), new Vertex(200, 20));
     buttonRect.draw(context);
   }
 

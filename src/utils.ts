@@ -2086,7 +2086,7 @@ export class newAxis {
   public ticksFontsize: number = 12;
   protected _isDiscrete: boolean;
 
-  private _marginRatio: number = 0.1;
+  private _marginRatio: number = 0.05;
   private _minValue: number;
   private _maxValue: number;
   private _initMinValue: number;
@@ -2404,10 +2404,11 @@ export class newAxis {
   }
 
   private marginedBounds(minValue: number, maxValue: number): [number, number] {
+    const valueRange = Math.abs(maxValue - minValue);
     if (this.isDiscrete) { return [minValue - 1, maxValue + 1] };
     return [
-      minValue * (1 - Math.sign(minValue) * this.marginRatio),
-      maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
+      minValue - valueRange * this.marginRatio,
+      maxValue + valueRange * this.marginRatio];
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D): void {

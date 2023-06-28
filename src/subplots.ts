@@ -1630,9 +1630,9 @@ export class BasePlot extends PlotData {
 
   public draw_from_context(hidden: any) {return}
 
-  public drawTooltips(): void { 
-    this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) }) 
-    this.absoluteObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) }) 
+  public drawTooltips(): void {
+    this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) })
+    this.absoluteObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) })
   }
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
@@ -2130,7 +2130,7 @@ export class newScatter extends Frame {
 
   public drawAbsoluteObjects(): void {
     this.context_show.resetTransform();
-    this.points.forEach((point, index) => { 
+    this.points.forEach((point, index) => {
       const inCanvasX = this.features.get(this.xFeature)[index] < this.axes[0].maxValue && this.features.get(this.xFeature)[index] > this.axes[0].minValue;
       const inCanvasY = this.features.get(this.yFeature)[index] < this.axes[1].maxValue && this.features.get(this.yFeature)[index] > this.axes[1].minValue;
       if (inCanvasX && inCanvasY) {

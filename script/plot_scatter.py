@@ -20,7 +20,7 @@ for i in range(50):
 
 
 plot_data_object = plot_data.Scatter(elements=elements,
-                                     x_variable='mass', y_variable='length')
+                                     x_variable='mass', y_variable='shape')
 
 # The previous scripts shows the simplest way of creating a scatterplot.
 # However, many options are available for further customization

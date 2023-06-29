@@ -1638,7 +1638,7 @@ export class BasePlot extends PlotData {
   // }
 
   public drawSelectionWindow() {
-    console.log("Top MOUMOUTE !")
+    console.log("Should allow to draw a selection window on any plot with this method")
   }
 
   public drawTooltips(): void {
@@ -1728,6 +1728,7 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mouseup', e => {
         canvas.style.cursor = 'default';
+        console.log(e.offsetX, e.offsetY)
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) {clickedObject.mouseUp()};
         isDrawing = false;
@@ -2107,6 +2108,13 @@ export class newScatter extends Frame {
       if (this.hoveredIndices[index]) {newPoint.isHovered = true};
       if (this.clickedIndices[index]) {newPoint.isClicked = true};
       if (this.selectedIndices[index]) {newPoint.isSelected = true};
+
+      const inCanvasX = numericVectorX[index] < this.axes[0].maxValue && numericVectorX[index] > this.axes[0].minValue;
+      const inCanvasY = numericVectorY[index] < this.axes[1].maxValue && numericVectorY[index] > this.axes[1].minValue;
+      if (inCanvasX && inCanvasY) {
+        if (newPoint.isClicked) this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[index]));
+        newPoint.draw(this.context_show);
+      }
       points.push(newPoint);
     }
     return points
@@ -2126,7 +2134,7 @@ export class newScatter extends Frame {
   }
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    // TODO: Fast and dirty implementation. Needs to be rethought.
+    // TODO: Fast and dirty implementation. Needs to be rethought ?
     if (objects[0] instanceof newAxis) { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
     else {
       const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
@@ -2137,18 +2145,23 @@ export class newScatter extends Frame {
     }
   }
 
-  public computeAbsoluteObjects(): void { this.points = this.computePoints() };
+  public computeAbsoluteObjects(): void { 
+    this.points = this.computePoints();
+    this.absoluteObjects = this.points;
+  };
 
   public drawAbsoluteObjects(): void {
-    this.context_show.resetTransform();
-    this.points.forEach((point, index) => {
-      const inCanvasX = this.features.get(this.xFeature)[index] < this.axes[0].maxValue && this.features.get(this.xFeature)[index] > this.axes[0].minValue;
-      const inCanvasY = this.features.get(this.yFeature)[index] < this.axes[1].maxValue && this.features.get(this.yFeature)[index] > this.axes[1].minValue;
-      if (inCanvasX && inCanvasY) {
-        if (point.isClicked) this.tooltipAttr.forEach(attr => point.tooltipMap.set(attr, this.features.get(attr)[index]));
-        point.draw(this.context_show);
-      }
-    });
-    this.absoluteObjects = this.points;
+  //   this.context_show.resetTransform();
+  //   this.points.forEach((point, index) => {
+  //     const xValue = this.axes[0].stringToValue(this.features.get(this.xFeature)[index]);
+  //     const inCanvasX = this.features.get(this.xFeature)[index] < this.axes[0].maxValue && this.features.get(this.xFeature)[index] > this.axes[0].minValue;
+  //     const inCanvasY = this.features.get(this.yFeature)[index] < this.axes[1].maxValue && this.features.get(this.yFeature)[index] > this.axes[1].minValue;
+  //     console.log(this.axes[1], this.features.get(this.yFeature)[index])
+  //     if (inCanvasX && inCanvasY) {
+  //       if (point.isClicked) this.tooltipAttr.forEach(attr => point.tooltipMap.set(attr, this.features.get(attr)[index]));
+  //       point.draw(this.context_show);
+  //     }
+  //   });
+  //   this.absoluteObjects = this.points;
   }
 }

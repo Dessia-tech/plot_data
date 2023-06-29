@@ -2466,6 +2466,11 @@ export class newAxis {
     return vector
   }
 
+  public stringToValue(value: string | number): number {
+    if (typeof value == 'string') return this.labels.indexOf(value)
+    return value
+  }
+
   private textAlignments(): [string, string] {
     const forVertical = ['end', 'start'][this.verticalPickIdx()];
     const forHorizontal = ['bottom', 'top'][this.horizontalPickIdx()]

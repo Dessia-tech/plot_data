@@ -2364,12 +2364,13 @@ export class newAxis {
     const [textAlign, baseline] = this.textAlignments();
     let textWidth = null;
     let textHeight = null;
-    if (['start', 'end'.includes(textAlign)]) {
+    const standardOffset = this.drawLength * 0.95 / this.ticks.length;
+    if (['start', 'end'].includes(textAlign)) {
       textWidth = this.maxTickWidth;
-      textHeight = this.drawLength * 0.95 / this.ticks.length;
+      textHeight = standardOffset;
     }
     if (textAlign == 'center') {
-      textWidth = this.drawLength * 0.95 / this.ticks.length;
+      textWidth = standardOffset;
       textHeight = this.maxTickHeight;
     }
     return {

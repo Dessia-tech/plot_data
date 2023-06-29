@@ -1491,7 +1491,7 @@ export class BasePlot extends PlotData {
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
   public absoluteObjects: newShape[] = [];
-  public movingObjects: newShape[] = [];
+  public relativeObjects: newShape[] = [];
 
   public font: string = "sans-serif";
 
@@ -1639,7 +1639,7 @@ export class BasePlot extends PlotData {
   }
 
   public drawTooltips(): void {
-    this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) })
+    this.relativeObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) })
     this.absoluteObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) })
   }
 
@@ -1657,7 +1657,7 @@ export class BasePlot extends PlotData {
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
     this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHovered', false, false);
     this.stateUpdate(this.context_show, this.absoluteObjects, absoluteMouse, 'isHovered', false, false);
-    this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHovered', false, false);
+    this.stateUpdate(this.context_show, this.relativeObjects, frameMouse, 'isHovered', false, false);
   }
 
   public projectMouse(e: MouseEvent): [Vertex, Vertex, Vertex] {
@@ -1669,10 +1669,10 @@ export class BasePlot extends PlotData {
     let clickedObject: any;
     this.fixedObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
     this.absoluteObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
-    this.movingObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
+    this.relativeObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
     if (this.fixedObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(canvasMouse)}
     if (this.absoluteObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(absoluteMouse)}
-    if (this.movingObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(frameMouse)}
+    if (this.relativeObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(frameMouse)}
     return [canvasMouse, frameMouse, clickedObject]
   }
 
@@ -1681,7 +1681,7 @@ export class BasePlot extends PlotData {
       if (this.translation.normL1 == 0 && canvasMouse.subtract(canvasDown).normL1 <= this.TRL_THRESHOLD) {
         this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isClicked', ctrlKey, true);
         this.stateUpdate(this.context_show, this.absoluteObjects, absoluteMouse, 'isClicked', ctrlKey, true);
-        this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isClicked', ctrlKey, true);
+        this.stateUpdate(this.context_show, this.relativeObjects, frameMouse, 'isClicked', ctrlKey, true);
       }
     }
   }
@@ -1995,7 +1995,7 @@ export class Histogram extends Frame {
 
   public drawRelativeObjects(): void {
     this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
-    this.movingObjects = this.bars;
+    this.relativeObjects = this.bars;
   }
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {

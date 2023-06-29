@@ -1491,6 +1491,8 @@ export class BasePlot extends PlotData {
   public fixedObjects: any[] = [];
   public movingObjects: newShape[] = [];
 
+  public font: string = "sans-serif";
+
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   private nSamples: number;
@@ -1697,7 +1699,7 @@ export class BasePlot extends PlotData {
             if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
               if (this.scaleX > scale.x) {this.scaleX = scale.x}
               if (this.scaleY > scale.y) {this.scaleY = scale.y}
-            } else if (axis.tickPrecision <= 1) {
+            } else if (axis.tickPrecision < 1) {
               if (this.scaleX < scale.x) {this.scaleX = scale.x}
               if (this.scaleX < scale.x) {this.scaleX = scale.x}
             }
@@ -1767,10 +1769,16 @@ export class BasePlot extends PlotData {
 export class Frame extends BasePlot {
   public xFeature: string;
   public yFeature: string;
+
+  private offset;
+  private margin;
+
   protected _nXTicks: number;
   protected _nYTicks: number;
-  readonly OFFSET = new Vertex(80, 50);
-  readonly MARGIN = new Vertex(20, 20);
+
+  readonly OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
+  readonly MARGIN_MULTIPLIER: number = 0.01;
+
   constructor(
     public data: any,
     public width: number,
@@ -1782,6 +1790,8 @@ export class Frame extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.offset = this.computeOffset();
+      this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
       this.fixedObjects.push(...this.axes);
@@ -1802,6 +1812,13 @@ export class Frame extends BasePlot {
 
   set nYTicks(value: number) {this._nYTicks = value}
 
+  private computeOffset() {
+    const naturalOffset = new Vertex(this.width * this.OFFSET_MULTIPLIER.x, this.height * this.OFFSET_MULTIPLIER.y);
+    const MIN_FONTSIZE = 6;
+    const calibratedMeasure = 33;
+    return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
+  }
+
   public reset_scales(): void {
     this.size = new Vertex(this.width, this.height);
     this.resetAxes();
@@ -1818,21 +1835,23 @@ export class Frame extends BasePlot {
   }
 
   public setAxes(): newAxis[] {
-    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds()
+    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds()
     return [
-      this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks),
-      this.setAxis(this.yFeature, frameOrigin, yEnd, this.nYTicks)]
+      this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks),
+      this.setAxis(this.yFeature, freeSize.x, frameOrigin, yEnd, this.nYTicks)]
   }
 
-  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
+  public setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+    return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
   }
 
-  public setFrameBounds() {
-    let frameOrigin = this.origin.add(this.OFFSET).add(new Vertex(this.X, this.Y).scale(this.initScale));
-    let xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x + this.X * this.initScale.x, frameOrigin.y);
-    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y + this.Y * this.initScale.y);
+  public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
+    let frameOrigin = this.origin.add(this.offset).add(new Vertex(this.X, this.Y).scale(this.initScale));
+    let xEnd = new Vertex(this.origin.x + this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
+    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.margin.y + this.Y * this.initScale.y);
+    let freeSize = frameOrigin.copy();
     if (this.canvasMatrix.a < 0) {
+      freeSize.x = frameOrigin.x;
       frameOrigin.x = -(this.size.x - frameOrigin.x);
       xEnd.x = -(this.size.x - xEnd.x);
       yEnd.x = frameOrigin.x;
@@ -1841,8 +1860,9 @@ export class Frame extends BasePlot {
       frameOrigin.y = -(this.size.y - frameOrigin.y);
       yEnd.y = -(this.size.y - yEnd.y);
       xEnd.y = frameOrigin.y;
+      freeSize.y = this.size.y + frameOrigin.y;
     }
-    return [frameOrigin, xEnd, yEnd]
+    return [frameOrigin, xEnd, yEnd, freeSize]
   }
 }
 
@@ -1876,8 +1896,8 @@ export class Histogram extends Frame {
     this.bars = undefined;
   }
 
-  private buildNumberAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
-    const numberAxis = this.setAxis('number', frameOrigin, yEnd, this.nYTicks);
+  private buildNumberAxis(freeSize: number, frameOrigin: Vertex, yEnd: Vertex): newAxis {
+    const numberAxis = this.setAxis('number', freeSize, frameOrigin, yEnd, this.nYTicks);
     numberAxis.minValue = 0;
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.nTicks = this.nYTicks;
@@ -1972,16 +1992,12 @@ export class Histogram extends Frame {
   }
 
   public setAxes(): newAxis[] {
-    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
-    const xAxis = this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks);
+    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds();
+    const xAxis = this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks);
     const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
     this.features.set('number', this.getNumberFeature(bars));
-    const yAxis = this.buildNumberAxis(frameOrigin, yEnd);
+    const yAxis = this.buildNumberAxis(freeSize.x, frameOrigin, yEnd);
     return [xAxis, yAxis];
-  }
-
-  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number): newAxis {
-    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
   }
 
   public setFeatures(data: any): [string, string] {return [data.x_variable, 'number']}

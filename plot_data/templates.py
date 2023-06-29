@@ -40,22 +40,27 @@ scatter_template = Template('''
   <head>
       <script src=$core_path></script>
   </head>
+    <div id="buttons">
+        <button name="button" value="OK" type="button" onclick="drawSelectionWindow()"> Click Here </button>
+        <hr style="border-top: 2px;">
+    </div>
     <div id="app">
-        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;">
+        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;"></canvas>
 
         <script type="text/javascript">
+            var buttonsContainer = document.querySelector("#buttons");
             var width = 0.95*window.innerWidth;
-            var height = Math.max(0.95*window.innerHeight, 350);
+            var height = Math.max(0.95*window.innerHeight, 350) - buttonsContainer.scrollHeight;
 
             var data = $data;
             var number_plot_data = data.length
 
-            var plot_data = new PlotData.newScatter(
-                data, width, height, true, 0, 0, $canvas_id.id
-            );
+            var plot_data = new PlotData.newScatter(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);
+
+            function drawSelectionWindow() { plot_data.drawSelectionWindow() }
         </script>
     </div>
 </html>

@@ -1521,7 +1521,6 @@ export class BasePlot extends PlotData {
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
-      this.buttons_ON = true;
     }
 
   refresh_MinMax(): void {
@@ -1622,7 +1621,7 @@ export class BasePlot extends PlotData {
     this.drawTooltips();
 
     this.context_show.resetTransform();
-    if (this.buttons_ON) { this.drawButtons(this.context_show) }
+    // if (this.buttons_ON) { this.drawButtons(this.context_show) }
     if (this.multiplot_manipulation) { this.drawSelectionRectangle(this.context_show) };
     this.context_show.restore();
   }
@@ -1631,11 +1630,15 @@ export class BasePlot extends PlotData {
 
   public draw_from_context(hidden: any) {}
 
-  protected drawButtons(context: CanvasRenderingContext2D) {
-    const buttonsX = this.initScale.x < 0 ? 50 : this.size.x - 250;
-    const buttonsYStart = this.initScale.y < 0 ? 50 : this.size.y - 50;
-    const buttonRect = new newRect(new Vertex(buttonsX + this.X, buttonsYStart + this.Y), new Vertex(200, 20));
-    buttonRect.draw(context);
+  // protected drawButtons(context: CanvasRenderingContext2D) { // Kept for further implementation of legends
+  //   const buttonsX = this.initScale.x < 0 ? 50 : this.size.x - 250;
+  //   const buttonsYStart = this.initScale.y < 0 ? 50 : this.size.y - 50;
+  //   const buttonRect = new newRect(new Vertex(buttonsX + this.X, buttonsYStart + this.Y), new Vertex(200, 20));
+  //   buttonRect.draw(context);
+  // }
+
+  public drawSelectionWindow() {
+    console.log("Top MOUMOUTE !")
   }
 
   public drawTooltips(): void {

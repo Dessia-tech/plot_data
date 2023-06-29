@@ -1483,9 +1483,9 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
 
-  public hoveredIndex: number[] = [];
-  public clickedIndex: number[] = [];
-  public selectedIndex: boolean[];
+  public hoveredIndices: boolean[];
+  public clickedIndices: boolean[];
+  public selectedIndices: boolean[];
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
@@ -1515,7 +1515,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
-      this.selectedIndex = Array.from([...this.features][0][1], () => false);
+      this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
@@ -1528,13 +1528,15 @@ export class BasePlot extends PlotData {
     this.maxY = this.origin.y + this.size.y;
   }
 
-  set axisStyle(newAxisStyle: Map<string, any>) {newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value))}
+  set axisStyle(newAxisStyle: Map<string, any>) { newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
 
-  get axisStyle() {return this._axisStyle};
+  get axisStyle(): Map<string, any> { return this._axisStyle }
 
-  get canvasMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
+  get canvasMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
 
-  get movingMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
+  get movingMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
+
+  get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();
@@ -1546,7 +1548,6 @@ export class BasePlot extends PlotData {
   }
 
   public drawCanvas(): void {
-    this.context_show.save()
     this.context = this.context_show;
     this.draw_empty_canvas(this.context_show);
     if (this.settings_on) {this.draw_settings_rect()}
@@ -1561,21 +1562,21 @@ export class BasePlot extends PlotData {
     this.axes.forEach(axis => {
       this.axisStyle.forEach((value, key) => axis[key] = value);
       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-      if (axis.rubberBand.length != 0) {axisSelections.push(this.updateSelected(axis))};
+      if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
     })
-    if (axisSelections.length != 0) {
-      this.selectedIndex.forEach((_, index) => {
-        this.selectedIndex[index] = true;
-        axisSelections.forEach(axisSelection => {if (!axisSelection[index]) {this.selectedIndex[index] = false}})
-      })
-    } else {this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false)};
+    if (axisSelections.length != 0) { this.selectedIndices = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
+    else { this.selectedIndices = new Array(this.nSamples).fill(false) }
+  }
+
+  private initSelectors(): void {
+    this.hoveredIndices = this.falseIndicesArray;
+    this.clickedIndices = this.falseIndicesArray;
+    this.selectedIndices = this.falseIndicesArray;
   }
 
   public reset(): void {
     this.axes.forEach(axis => axis.reset());
-    this.hoveredIndex = [];
-    this.clickedIndex = [];
-    this.selectedIndex = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
+    this.initSelectors();
   }
 
   public updateSelected(axis: newAxis): boolean[] { // TODO: Performance
@@ -1585,15 +1586,34 @@ export class BasePlot extends PlotData {
     return boolSelection
   }
 
-  public drawAxes() {
-    this.axes.forEach(axis => axis.draw(this.context_show));
+  public drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) };
+
+  public drawSelectionRectangle(context: CanvasRenderingContext2D): void {
+    // TODO: change with newRect
+    Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15,15]);
   }
 
+  public drawMovingObjects() {}
+
+  public computeMovingObjects() {}
+
   public draw(): void {
+    this.context_show.save();
     this.drawCanvas();
     this.context_show.setTransform(this.canvasMatrix);
     this.updateAxes();
+    this.computeMovingObjects();
+
+    this.context_show.setTransform(this.movingMatrix);
+    this.drawMovingObjects();
+
+    this.context_show.setTransform(this.canvasMatrix);
     this.drawAxes();
+    this.drawTooltips();
+
+    this.context_show.resetTransform();
+    // if (this.buttons_ON) { this.drawButtons(context) }
+    if (this.multiplot_manipulation) { this.drawSelectionRectangle(this.context_show) };
     this.context_show.restore();
   }
 
@@ -1601,7 +1621,9 @@ export class BasePlot extends PlotData {
 
   public draw_from_context(hidden: any) {return}
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
+  public drawTooltips(): void { this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) }) }
+
+  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     objects.forEach(object => {
       if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = invertState ? !object[stateName] : true}
       else {if (!keepState) {object[stateName] = false}}
@@ -1612,17 +1634,17 @@ export class BasePlot extends PlotData {
     return new Vertex(mouseDown.x - currentMouse.x, mouseDown.y - currentMouse.y);
   }
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex): void {
     this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHovered', false, false);
     this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHovered', false, false);
   }
 
-  public projectMouse(e: MouseEvent) {
+  public projectMouse(e: MouseEvent): [Vertex, Vertex] {
     const mouseCoords = new Vertex(e.offsetX, e.offsetY);
     return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.movingMatrix.inverse())]
   }
 
-  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex): [Vertex, Vertex, any] {
     let clickedObject: any;
     this.fixedObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
     this.movingObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
@@ -1631,7 +1653,7 @@ export class BasePlot extends PlotData {
     return [canvasMouse, frameMouse, clickedObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean) {
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
     if (this.interaction_ON) {
       if (this.translation.normL1 == 0 && canvasMouse.subtract(canvasDown).normL1 <= this.TRL_THRESHOLD) {
         this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isClicked', ctrlKey, true);
@@ -1640,7 +1662,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public mouse_interaction(isParallelPlot: boolean) {
+  public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
       var clickedObject: any;
       var isDrawing = false;
@@ -1649,7 +1671,6 @@ export class BasePlot extends PlotData {
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false;
-
       window.addEventListener('keydown', e => {if (e.key == "Control") {ctrlKey = true}});
 
       window.addEventListener('keyup', e => {if (e.key == "Control") {ctrlKey = false}});
@@ -1657,22 +1678,19 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousemove', e => {
         [canvasMouse, frameMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse);
-        if (this.interaction_ON && isDrawing) {
-          if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
-            canvas.style.cursor = 'move';
-            this.translation = this.mouseTranslate(canvasMouse, canvasDown);
-          } else if (clickedObject instanceof newAxis) {
-            this.is_drawing_rubber_band = true;
+        if (this.interaction_ON) {
+          if (isDrawing) {
+            if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
+              canvas.style.cursor = 'move';
+              this.translation = this.mouseTranslate(canvasMouse, canvasDown);
+            } else if (clickedObject instanceof newAxis) {
+              this.is_drawing_rubber_band = true;
+            }
           }
+          this.draw();
         }
-        this.draw();
-        var is_inside_canvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
-        if (!is_inside_canvas) {
-          isDrawing = false;
-          this.axes.forEach(axis => {axis.saveLocation()});
-          this.translation = new Vertex(0, 0);
-          canvas.style.cursor = 'default';
-        }
+        const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
+        if (!mouseInCanvas) { isDrawing = false };
       });
 
       canvas.addEventListener('mousedown', e => {
@@ -1705,7 +1723,7 @@ export class BasePlot extends PlotData {
             }
           }
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y).scale(this.initScale);
-          this.draw(); // needs a refactor
+          this.updateAxes(); // needs a refactor
           this.axes.forEach(axis => {axis.saveLocation()});
           [this.scaleX, this.scaleY] = [1, 1];
           this.viewPoint = new Vertex(0, 0);
@@ -1723,7 +1741,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public wheel_interaction(mouse3X, mouse3Y, e: WheelEvent) { //TODO: TO REFACTOR !!!
+  public wheel_interaction(mouse3X, mouse3Y, e: WheelEvent): [number, number] { //TODO: TO REFACTOR !!!
     // e.preventDefault();
     this.fusion_coeff = 1.2;
     var event = -Math.sign(e.deltaY);
@@ -1804,15 +1822,15 @@ export class Frame extends BasePlot {
     return this.canvasMatrix.multiply(movingMatrix)
   }
 
-  get nXTicks() {return this._nXTicks ? this._nXTicks : 7}
+  get nXTicks(): number { return this._nXTicks ? this._nXTicks : 7 }
 
   set nXTicks(value: number) {this._nXTicks = value}
 
-  get nYTicks() {return this._nYTicks ? this._nYTicks : 7}
+  get nYTicks(): number {return this._nYTicks ? this._nYTicks : 7}
 
   set nYTicks(value: number) {this._nYTicks = value}
 
-  private computeOffset() {
+  private computeOffset(): Vertex {
     const naturalOffset = new Vertex(this.width * this.OFFSET_MULTIPLIER.x, this.height * this.OFFSET_MULTIPLIER.y);
     const MIN_FONTSIZE = 6;
     const calibratedMeasure = 33;
@@ -1846,9 +1864,9 @@ export class Frame extends BasePlot {
   }
 
   public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
-    let frameOrigin = this.origin.add(this.offset).add(new Vertex(this.X, this.Y).scale(this.initScale));
-    let xEnd = new Vertex(this.origin.x + this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
-    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.margin.y + this.Y * this.initScale.y);
+    let frameOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
+    let xEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
+    let yEnd = new Vertex(frameOrigin.x, this.size.y - this.margin.y + this.Y * this.initScale.y);
     let freeSize = frameOrigin.copy();
     if (this.canvasMatrix.a < 0) {
       freeSize.x = frameOrigin.x;
@@ -1893,7 +1911,7 @@ export class Histogram extends Frame {
 
   public reset(): void {
     super.reset();
-    this.bars = undefined;
+    this.bars = [];
   }
 
   private buildNumberAxis(freeSize: number, frameOrigin: Vertex, yEnd: Vertex): newAxis {
@@ -1924,22 +1942,10 @@ export class Histogram extends Frame {
     return fakeTicks
   }
 
-  private storeBarState(): [number[], number[]] {
-    const [hovered, clicked] = [[] as number[], [] as number[]];
-    if (this.bars) {
-      this.bars.forEach(bar => {
-        if (bar.isHovered) {hovered.push(...bar.values)};
-        if (bar.isClicked) {clicked.push(...bar.values)};
-      })
-    }
-    return [hovered, clicked]
-  }
-
   private computeBars(axis: newAxis, vector: number[]): Bar[] {
     const numericVector = axis.stringsToValues(vector);
-    [this.hoveredIndex, this.clickedIndex] = this.storeBarState();
     let fakeTicks = this.boundedTicks(axis);
-    let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar());
+    let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar([]));
     let barValues = Array.from(Array(fakeTicks.length - 1), () => []);
     numericVector.forEach((value, valIdx) => {
       for (let tickIdx = 0 ; tickIdx < fakeTicks.length - 1 ; tickIdx++ ) {
@@ -1954,28 +1960,32 @@ export class Histogram extends Frame {
     return bars
   }
 
-  public draw(): void {
-    this.updateAxes();
-    this.getBarsDrawing();
-    this.context_show.setTransform(this.movingMatrix);
-    this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
-    this.movingObjects = this.bars;
-
-    this.context_show.setTransform(this.canvasMatrix);
-    super.drawAxes();
-    this.bars.forEach(bar => { bar.drawTooltip(this.context_show) });
-    this.context_show.resetTransform();
-  }
-
-  public updateAxes(): void {
-    super.drawCanvas();
-    this.context_show.setTransform(this.canvasMatrix);
-    super.updateAxes()
+  public computeMovingObjects(): void {
     this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
+    this.getBarsDrawing();
   }
 
-  public getBarsDrawing() {
+  public drawMovingObjects(): void {
+    this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
+    this.movingObjects = this.bars;
+  }
+
+  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+    // TODO: Fast and dirty implementation. Needs to be rethought.
+    if (objects[0] instanceof newAxis) { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
+    else {
+      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
+      objects.forEach(object => {
+        if (object.values) {
+          if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
+          else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
+        }
+      })
+    }
+  }
+
+  public getBarsDrawing(): void {
     const fullTicks = this.boundedTicks(this.axes[0]);
     this.bars.forEach((bar, index) => {
       let origin = new Vertex(fullTicks[index], 0);
@@ -1985,9 +1995,9 @@ export class Histogram extends Frame {
       bar.setGeometry(origin, size);
       bar.fillStyle = this.barsColorFill;
       bar.strokeStyle = this.barsColorStroke;
-      if (bar.values.some(valIdx => this.hoveredIndex.indexOf(valIdx) != -1)) {bar.isHovered = true}
-      if (bar.values.some(valIdx => this.clickedIndex.indexOf(valIdx) != -1)) {bar.isClicked = true}
-      if (bar.values.some(valIdx => this.selectedIndex[valIdx])) {bar.isSelected = true}
+      if (bar.values.some(valIdx => this.hoveredIndices[valIdx])) {bar.isHovered = true}
+      if (bar.values.some(valIdx => this.clickedIndices[valIdx])) {bar.isClicked = true}
+      if (bar.values.some(valIdx => this.selectedIndices[valIdx])) {bar.isSelected = true}
     })
   }
 
@@ -2000,13 +2010,13 @@ export class Histogram extends Frame {
     return [xAxis, yAxis];
   }
 
-  public setFeatures(data: any): [string, string] {return [data.x_variable, 'number']}
+  public setFeatures(data: any): [string, string] { return [data.x_variable, 'number'] }
 
   mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
     return new Vertex(this.axes[0].isDiscrete ? 0 : mouseDown.x - currentMouse.x, 0)
   }
 
-  wheel_interaction(mouse3X, mouse3Y, e) { // TODO: REALLY NEEDS A REFACTOR
+  wheel_interaction(mouse3X, mouse3Y, e): [number, number] { // TODO: REALLY NEEDS A REFACTOR
     // e.preventDefault();
     this.fusion_coeff = 1.2;
     var event = -Math.sign(e.deltaY);

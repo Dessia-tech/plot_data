@@ -2057,7 +2057,6 @@ export abstract class PlotData {
 
         this.originX = this.initial_originX + mouse2X - mouse1X;
         this.originY = this.initial_originY + mouse2Y - mouse1Y;
-        this.draw();
       } else {
         if (this.select_bool) {
           this.isSelecting = true;
@@ -2095,8 +2094,6 @@ export abstract class PlotData {
         this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
         this.zoom_box_w = Math.abs(mouse2X - mouse1X);
         this.zoom_box_h = Math.abs(mouse2Y - mouse1Y);
-        this.draw();
-
         canvas.style.cursor = 'crosshair';
         mouse_moving = true;
       }
@@ -2120,12 +2117,10 @@ export abstract class PlotData {
         }
       }
       if (this.select_on_mouse !== old_select_on_mouse) {
-        this.draw();
       } else if (this.select_on_mouse && ["wire", "contour", "circle"].includes(this.select_on_mouse["type_"])
                 && this.select_on_mouse["tooltip"]) {
-        this.draw();
         this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale,
-        this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
+          this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
       }
     }
     var is_inside_canvas = (mouse2X>=this.X) && (mouse2X<=this.width + this.X) && (mouse2Y>=this.Y) && (mouse2Y<=this.height + this.Y);
@@ -2134,6 +2129,7 @@ export abstract class PlotData {
       mouse_moving = false;
       canvas.style.cursor = 'default';
     }
+    this.draw();
     return [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y];
   }
 

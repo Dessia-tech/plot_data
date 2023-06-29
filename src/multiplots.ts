@@ -94,7 +94,7 @@ export class MultiplePlots {
               newObject = this.initialize_containers_dicts(newObject, association['associated_elements']);
               newObject = this.call_layout(newObject, association['attribute_names']);
             }
-          } else if (object_type_ === 'frame') {
+          } else if (object_type_ === 'frame' || object_type_ == 'histogram') {
             this.dataObjects[i]['elements'] = elements;
             newObject = new Histogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else {
@@ -571,19 +571,15 @@ export class MultiplePlots {
         let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
         this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
       }
-      for (let i=0; i<this.nbObjects; i++) {
-        let display_index = this.display_order[i];
-        if (List.is_include(display_index, this.to_display_plots)) {
-          var obj = this.objectList[display_index];
-          if (obj.type_ == 'parallelplot') { this.objectList[display_index].refresh_axis_coords(); }
-          this.objectList[display_index].draw();
-        }
-        if (obj instanceof Frame) {obj.reset_scales()};
-      }
-      if (this.buttons_ON) {
-        this.draw_buttons();
-      }
 
+      this.objectList.forEach((plot, index) => {
+        if (List.is_include(index, this.to_display_plots)) {
+          if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
+          // plot.mouse_interaction(plot.isParallelPlot);
+          plot.draw();
+        }
+      })
+      if (this.buttons_ON) { this.draw_buttons() };
     }
 
     redraw_object() {
@@ -598,9 +594,7 @@ export class MultiplePlots {
            this.context_hidden.putImageData(this.hidden_datas[display_index], obj.X, obj.Y);
         }
       }
-      if (this.buttons_ON) {
-        this.draw_buttons();
-      }
+      if (this.buttons_ON) { this.draw_buttons() };
     }
 
     store_datas() {
@@ -1182,6 +1176,7 @@ export class MultiplePlots {
         let selection_coords = isSelectingScatter.selection_coords;
         let to_display_attributes:Attribute[] = isSelectingScatter.plotObject.to_display_attributes;
         this.scatter_communication(selection_coords, to_display_attributes, isSelectingObjIndex);
+        this.dep_selected_points_index = isSelectingScatter.selected_point_index;
       }
     }
 
@@ -1245,8 +1240,6 @@ export class MultiplePlots {
           obj.select_primitive_groups();
         }
       }
-      this.refresh_dep_selected_points_index();
-      this.refresh_selected_object_from_index();
     }
 
     mouse_move_pp_communication() {
@@ -1379,18 +1372,18 @@ export class MultiplePlots {
     frame_communication(index) {
       let frame = this.objectList[index];
       let primitive_indices = [];
-      for (let i=0; i<this.nbObjects; i++) {
-        let obj = this.objectList[i];
-        if (obj.type_ === 'scatterplot') {
-          MultiplotCom.frame_to_scatter_communication(frame, obj);
-        } else if (obj.type_ === 'parallelplot') {
-          MultiplotCom.frame_to_pp_communication(frame, obj);
-        } else if (obj.type_ === "frame") {
-          MultiplotCom.frame_to_frame_communication(frame, obj);
-        }else if (obj.type_ === "primitivegroupcontainer") {
-          primitive_indices.push(i);
+      this.objectList.forEach((plot, plotIndex) => {
+        if (plot.type_ === 'scatterplot') {
+          MultiplotCom.frame_to_scatter_communication(frame, plot);
+        } else if (plot.type_ === 'parallelplot') {
+          MultiplotCom.frame_to_pp_communication(frame, plot);
+        } else if (plot.type_ === "frame") {
+          MultiplotCom.frame_to_frame_communication(frame, plot);
+        } else if (plot.type_ === "primitivegroupcontainer") {
+          primitive_indices.push(plotIndex);
         }
-      }
+      })
+
       this.refresh_dep_selected_points_index();
       this.refresh_selected_object_from_index();
 
@@ -1775,13 +1768,8 @@ export class MultiplePlots {
       var old_selected_index;
       var double_click = false;
       var ctrlKey = false; var shiftKey = false;
-      // For canvas to read keyboard inputs.
-      // this.canvas.setAttribute('tabindex', '0');
-      // this.canvas.focus();
 
-      for (let i=0; i<this.nbObjects; i++) {
-        this.objectList[i].mouse_interaction(this.objectList[i].isParallelPlot);
-      }
+      this.objectList.forEach(plot => { plot.mouse_interaction(plot.isParallelPlot) });
       this.setAllInteractionsToOff();
 
       window.addEventListener('keydown', e => {
@@ -1801,6 +1789,7 @@ export class MultiplePlots {
         old_selected_index = this.selected_point_index;
         if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();
+          this.resetAllObjects();
         } else {
           this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
           this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
@@ -1866,9 +1855,9 @@ export class MultiplePlots {
               this.mouse_over_primitive_group();
               this.mouse_over_scatter_plot();
             }
-            this.draw_buttons();
           }
         }
+        this.draw_buttons();
       });
 
       this.canvas.addEventListener('mouseup', e => {
@@ -1913,9 +1902,7 @@ export class MultiplePlots {
           }
           this.refresh_selected_point_index();
         } else {
-          if (this.view_bool) {
-            this.clean_view();
-          }
+          if (this.view_bool) { this.clean_view() }
         }
         this.manage_selected_point_index_changes(old_selected_index);
         this.redrawAllObjects();

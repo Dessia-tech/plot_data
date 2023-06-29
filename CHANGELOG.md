@@ -7,15 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.15.0]
 ### Add
-- Tooltip in Histograms
+- Tooltip in Histograms, which can be drawn only in the current window plot
+- Avoid huge bugs or problems with frontend implementation
+
 ### Fix
 - Automatic font size and positioning
 - Background for texts
 - Review the way ticks are computed
+- Review the way clicked and hovered objects are handled
 
 ### Refactor
 - Remove old Histogram and switch ScatterMatrix to Multiplot
 - Rename newHistogram as Histogram
+- Light refactor of mouse attributes
 
 ## [0.14.1]
 ### Fix

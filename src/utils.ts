@@ -2442,10 +2442,7 @@ export class newAxis {
     return isReset
   }
 
-  public mouseUp(): void {
-    this.rubberBand.mouseUp();
-    this.is_drawing_rubberband = false; // OLD
-  }
+  public mouseUp(): void { this.rubberBand.mouseUp() }
 
   public isInRubberBand(value: number): boolean {
     return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false

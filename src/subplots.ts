@@ -1503,7 +1503,7 @@ export class BasePlot extends PlotData {
   readonly MAX_PRINTED_NUMBERS = 16;
   readonly TRL_THRESHOLD = 20;
   constructor(
-    public data: any,
+    data: any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -1708,9 +1708,7 @@ export class BasePlot extends PlotData {
             if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
               canvas.style.cursor = 'move';
               this.translation = this.mouseTranslate(canvasMouse, canvasDown);
-            } else if (clickedObject instanceof newAxis) {
-              this.is_drawing_rubber_band = true;
-            }
+            } 
           }
           this.draw();
         }
@@ -1720,6 +1718,8 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+        if (clickedObject instanceof newAxis) this.is_drawing_rubber_band = true
+        else this.is_drawing_rubber_band = false
         isDrawing = true;
       });
 
@@ -1728,11 +1728,11 @@ export class BasePlot extends PlotData {
         console.log(e.offsetX, e.offsetY)
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) {clickedObject.mouseUp()};
-        isDrawing = false;
         this.draw();
         this.axes.forEach(axis => {axis.saveLocation()});
         this.translation = new Vertex(0, 0);
-        this.is_drawing_rubber_band = false;
+        clickedObject = undefined;
+        isDrawing = false;
       })
 
       canvas.addEventListener('wheel', e => {

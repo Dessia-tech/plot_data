@@ -1480,7 +1480,7 @@ export class MultiplePlots {
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if (obj.type_ === type_) {
-          if (obj.is_drawing_rubber_band === true) {return i}
+          if (obj.is_drawing_rubber_band === true) { return i }
         }
       }
       return -1;
@@ -1879,6 +1879,7 @@ export class MultiplePlots {
           if (this.selectDependency_bool) {
             if (this.clickedPlotIndex !== -1) {
               let type_ = this.objectList[this.clickedPlotIndex].type_
+              this.mouse_move_frame_communication();
               if (type_ === 'parallelplot') {
                 var selected_axis_name: string, vertical: boolean, inverted: boolean;
                 var hexs: string[], isSelectingppAxis: boolean;

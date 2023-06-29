@@ -2038,9 +2038,14 @@ export class MultiplotCom {
     }
 
     public static frame_to_frame_communication(frame1, frame2) {
-      if (frame1.axes[0].name !== frame2.axes[0].name) return;
-      frame2.axes[0].rubberBand = frame1.axes[0].rubberBand;
-      frame2.axes[1].rubberBand = frame1.axes[1].rubberBand;
+      frame2.axes.forEach(axisFrame2 => {
+        frame1.axes.forEach(axisFrame1 => {
+          if (axisFrame1.name == axisFrame2.name && axisFrame1.name != 'number') {
+            axisFrame2.rubberBand.minValue = axisFrame1.rubberBand.minValue;
+            axisFrame2.rubberBand.maxValue = axisFrame1.rubberBand.maxValue;
+          }
+        })
+      })
     }
 
     public static frame_to_pp_communication(frame, parallel_plot) {

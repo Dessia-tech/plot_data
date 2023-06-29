@@ -1600,8 +1600,6 @@ export class BasePlot extends PlotData {
 
   public computeRelativeObjects() {}
 
-  public computeAbsoluteObjects() {}
-
   public draw(): void {
     this.context_show.save();
     this.drawCanvas();
@@ -1613,7 +1611,6 @@ export class BasePlot extends PlotData {
     this.drawRelativeObjects();
 
     this.context_show.resetTransform();
-    this.computeAbsoluteObjects();
     this.drawAbsoluteObjects();
 
     this.context_show.setTransform(this.canvasMatrix);
@@ -2145,23 +2142,8 @@ export class newScatter extends Frame {
     }
   }
 
-  public computeAbsoluteObjects(): void { 
+  public drawAbsoluteObjects(): void { 
     this.points = this.computePoints();
     this.absoluteObjects = this.points;
   };
-
-  public drawAbsoluteObjects(): void {
-  //   this.context_show.resetTransform();
-  //   this.points.forEach((point, index) => {
-  //     const xValue = this.axes[0].stringToValue(this.features.get(this.xFeature)[index]);
-  //     const inCanvasX = this.features.get(this.xFeature)[index] < this.axes[0].maxValue && this.features.get(this.xFeature)[index] > this.axes[0].minValue;
-  //     const inCanvasY = this.features.get(this.yFeature)[index] < this.axes[1].maxValue && this.features.get(this.yFeature)[index] > this.axes[1].minValue;
-  //     console.log(this.axes[1], this.features.get(this.yFeature)[index])
-  //     if (inCanvasX && inCanvasY) {
-  //       if (point.isClicked) this.tooltipAttr.forEach(attr => point.tooltipMap.set(attr, this.features.get(attr)[index]));
-  //       point.draw(this.context_show);
-  //     }
-  //   });
-  //   this.absoluteObjects = this.points;
-  }
 }

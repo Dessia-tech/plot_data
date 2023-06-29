@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape, newTooltip } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1483,13 +1483,15 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
 
-  public hoveredIndex: number[] = [];
-  public clickedIndex: number[] = [];
-  public selectedIndex: boolean[];
+  public hoveredIndices: boolean[];
+  public clickedIndices: boolean[];
+  public selectedIndices: boolean[];
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
   public movingObjects: newShape[] = [];
+
+  public font: string = "sans-serif";
 
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
@@ -1513,7 +1515,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
-      this.selectedIndex = Array.from([...this.features][0][1], x => x = false);
+      this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
@@ -1526,13 +1528,15 @@ export class BasePlot extends PlotData {
     this.maxY = this.origin.y + this.size.y;
   }
 
-  set axisStyle(newAxisStyle: Map<string, any>) {newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value))}
+  set axisStyle(newAxisStyle: Map<string, any>) { newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
 
-  get axisStyle() {return this._axisStyle};
+  get axisStyle(): Map<string, any> { return this._axisStyle }
 
-  get canvasMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
+  get canvasMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
 
-  get movingMatrix() {return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y])}
+  get movingMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
+
+  get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
   private unpackData(data: any): Map<string, any[]> {
     let unpackedData = new Map<string, any[]>();
@@ -1544,7 +1548,6 @@ export class BasePlot extends PlotData {
   }
 
   public drawCanvas(): void {
-    this.context_show.save()
     this.context = this.context_show;
     this.draw_empty_canvas(this.context_show);
     if (this.settings_on) {this.draw_settings_rect()}
@@ -1559,21 +1562,21 @@ export class BasePlot extends PlotData {
     this.axes.forEach(axis => {
       this.axisStyle.forEach((value, key) => axis[key] = value);
       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-      if (axis.rubberBand.length != 0) {axisSelections.push(this.updateSelected(axis))};
+      if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
     })
-    if (axisSelections.length != 0) {
-      this.selectedIndex.forEach((_, index) => {
-        this.selectedIndex[index] = true;
-        axisSelections.forEach(axisSelection => {if (!axisSelection[index]) {this.selectedIndex[index] = false}})
-      })
-    } else {this.selectedIndex = Array.from(Array(this.selectedIndex.length), () => false)};
+    if (axisSelections.length != 0) { this.selectedIndices = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
+    else { this.selectedIndices = new Array(this.nSamples).fill(false) }
+  }
+
+  private initSelectors(): void {
+    this.hoveredIndices = this.falseIndicesArray;
+    this.clickedIndices = this.falseIndicesArray;
+    this.selectedIndices = this.falseIndicesArray;
   }
 
   public reset(): void {
     this.axes.forEach(axis => axis.reset());
-    this.hoveredIndex = [];
-    this.clickedIndex = [];
-    this.selectedIndex = Array.from(Array(this.features.get(this.axes[0].name).length), () => false);
+    this.initSelectors();
   }
 
   public updateSelected(axis: newAxis): boolean[] { // TODO: Performance
@@ -1583,23 +1586,44 @@ export class BasePlot extends PlotData {
     return boolSelection
   }
 
-  public drawAxes() {
-    this.axes.forEach(axis => axis.draw(this.context_show));
+  public drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) };
+
+  public drawSelectionRectangle(context: CanvasRenderingContext2D): void {
+    // TODO: change with newRect
+    Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15,15]);
   }
 
+  public drawMovingObjects() {}
+
+  public computeMovingObjects() {}
+
   public draw(): void {
+    this.context_show.save();
     this.drawCanvas();
     this.context_show.setTransform(this.canvasMatrix);
     this.updateAxes();
+    this.computeMovingObjects();
+
+    this.context_show.setTransform(this.movingMatrix);
+    this.drawMovingObjects();
+
+    this.context_show.setTransform(this.canvasMatrix);
     this.drawAxes();
+    this.drawTooltips();
+
+    this.context_show.resetTransform();
+    // if (this.buttons_ON) { this.drawButtons(context) }
+    if (this.multiplot_manipulation) { this.drawSelectionRectangle(this.context_show) };
     this.context_show.restore();
   }
 
-  public draw_initial(): void {this.draw()}
+  public draw_initial(): void { this.draw() }
 
   public draw_from_context(hidden: any) {return}
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
+  public drawTooltips(): void { this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) }) }
+
+  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     objects.forEach(object => {
       if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = invertState ? !object[stateName] : true}
       else {if (!keepState) {object[stateName] = false}}
@@ -1610,17 +1634,17 @@ export class BasePlot extends PlotData {
     return new Vertex(mouseDown.x - currentMouse.x, mouseDown.y - currentMouse.y);
   }
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex) {
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex): void {
     this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHovered', false, false);
     this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHovered', false, false);
   }
 
-  public projectMouse(e: MouseEvent) {
+  public projectMouse(e: MouseEvent): [Vertex, Vertex] {
     const mouseCoords = new Vertex(e.offsetX, e.offsetY);
     return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.movingMatrix.inverse())]
   }
 
-  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) {
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex): [Vertex, Vertex, any] {
     let clickedObject: any;
     this.fixedObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
     this.movingObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
@@ -1629,7 +1653,7 @@ export class BasePlot extends PlotData {
     return [canvasMouse, frameMouse, clickedObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean) {
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
     if (this.interaction_ON) {
       if (this.translation.normL1 == 0 && canvasMouse.subtract(canvasDown).normL1 <= this.TRL_THRESHOLD) {
         this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isClicked', ctrlKey, true);
@@ -1638,7 +1662,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public mouse_interaction(isParallelPlot: boolean) {
+  public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
       var clickedObject: any;
       var isDrawing = false;
@@ -1647,7 +1671,6 @@ export class BasePlot extends PlotData {
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false;
-
       window.addEventListener('keydown', e => {if (e.key == "Control") {ctrlKey = true}});
 
       window.addEventListener('keyup', e => {if (e.key == "Control") {ctrlKey = false}});
@@ -1655,22 +1678,19 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousemove', e => {
         [canvasMouse, frameMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse);
-        if (this.interaction_ON && isDrawing) {
-          if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
-            canvas.style.cursor = 'move';
-            this.translation = this.mouseTranslate(canvasMouse, canvasDown);
-          } else if (clickedObject instanceof newAxis) {
-            this.is_drawing_rubber_band = true;
+        if (this.interaction_ON) {
+          if (isDrawing) {
+            if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
+              canvas.style.cursor = 'move';
+              this.translation = this.mouseTranslate(canvasMouse, canvasDown);
+            } else if (clickedObject instanceof newAxis) {
+              this.is_drawing_rubber_band = true;
+            }
           }
+          this.draw();
         }
-        this.draw();
-        var is_inside_canvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
-        if (!is_inside_canvas) {
-          isDrawing = false;
-          this.axes.forEach(axis => {axis.saveLocation()});
-          this.translation = new Vertex(0, 0);
-          canvas.style.cursor = 'default';
-        }
+        const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
+        if (!mouseInCanvas) { isDrawing = false };
       });
 
       canvas.addEventListener('mousedown', e => {
@@ -1697,13 +1717,13 @@ export class BasePlot extends PlotData {
             if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
               if (this.scaleX > scale.x) {this.scaleX = scale.x}
               if (this.scaleY > scale.y) {this.scaleY = scale.y}
-            } else if (axis.tickPrecision <= 1) {
+            } else if (axis.tickPrecision < 1) {
               if (this.scaleX < scale.x) {this.scaleX = scale.x}
               if (this.scaleX < scale.x) {this.scaleX = scale.x}
             }
           }
           this.viewPoint = new newPoint2D(mouse3X, mouse3Y).scale(this.initScale);
-          this.draw(); // needs a refactor
+          this.updateAxes(); // needs a refactor
           this.axes.forEach(axis => {axis.saveLocation()});
           [this.scaleX, this.scaleY] = [1, 1];
           this.viewPoint = new Vertex(0, 0);
@@ -1721,7 +1741,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public wheel_interaction(mouse3X, mouse3Y, e: WheelEvent) { //TODO: TO REFACTOR !!!
+  public wheel_interaction(mouse3X, mouse3Y, e: WheelEvent): [number, number] { //TODO: TO REFACTOR !!!
     // e.preventDefault();
     this.fusion_coeff = 1.2;
     var event = -Math.sign(e.deltaY);
@@ -1767,10 +1787,16 @@ export class BasePlot extends PlotData {
 export class Frame extends BasePlot {
   public xFeature: string;
   public yFeature: string;
+
+  private offset;
+  private margin;
+
   protected _nXTicks: number;
   protected _nYTicks: number;
-  readonly OFFSET = new Vertex(80, 50);
-  readonly MARGIN = new Vertex(20, 20);
+
+  readonly OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
+  readonly MARGIN_MULTIPLIER: number = 0.01;
+
   constructor(
     public data: any,
     public width: number,
@@ -1782,6 +1808,8 @@ export class Frame extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.offset = this.computeOffset();
+      this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
       this.fixedObjects.push(...this.axes);
@@ -1794,13 +1822,20 @@ export class Frame extends BasePlot {
     return this.canvasMatrix.multiply(movingMatrix)
   }
 
-  get nXTicks() {return this._nXTicks ? this._nXTicks : 7}
+  get nXTicks(): number { return this._nXTicks ? this._nXTicks : 7 }
 
   set nXTicks(value: number) {this._nXTicks = value}
 
-  get nYTicks() {return this._nYTicks ? this._nYTicks : 7}
+  get nYTicks(): number {return this._nYTicks ? this._nYTicks : 7}
 
   set nYTicks(value: number) {this._nYTicks = value}
+
+  private computeOffset(): Vertex {
+    const naturalOffset = new Vertex(this.width * this.OFFSET_MULTIPLIER.x, this.height * this.OFFSET_MULTIPLIER.y);
+    const MIN_FONTSIZE = 6;
+    const calibratedMeasure = 33;
+    return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
+  }
 
   public reset_scales(): void {
     this.size = new Vertex(this.width, this.height);
@@ -1818,21 +1853,23 @@ export class Frame extends BasePlot {
   }
 
   public setAxes(): newAxis[] {
-    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds()
+    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds()
     return [
-      this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks),
-      this.setAxis(this.yFeature, frameOrigin, yEnd, this.nYTicks)]
+      this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks),
+      this.setAxis(this.yFeature, freeSize.x, frameOrigin, yEnd, this.nYTicks)]
   }
 
-  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
+  public setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+    return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
   }
 
-  public setFrameBounds() {
-    let frameOrigin = this.origin.add(this.OFFSET).add(new Vertex(this.X, this.Y).scale(this.initScale));
-    let xEnd = new Vertex(this.origin.x + this.size.x - this.MARGIN.x + this.X * this.initScale.x, frameOrigin.y);
-    let yEnd = new Vertex(frameOrigin.x, this.origin.y + this.size.y - this.MARGIN.y + this.Y * this.initScale.y);
+  public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
+    let frameOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
+    let xEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
+    let yEnd = new Vertex(frameOrigin.x, this.size.y - this.margin.y + this.Y * this.initScale.y);
+    let freeSize = frameOrigin.copy();
     if (this.canvasMatrix.a < 0) {
+      freeSize.x = frameOrigin.x;
       frameOrigin.x = -(this.size.x - frameOrigin.x);
       xEnd.x = -(this.size.x - xEnd.x);
       yEnd.x = frameOrigin.x;
@@ -1841,12 +1878,13 @@ export class Frame extends BasePlot {
       frameOrigin.y = -(this.size.y - frameOrigin.y);
       yEnd.y = -(this.size.y - yEnd.y);
       xEnd.y = frameOrigin.y;
+      freeSize.y = this.size.y + frameOrigin.y;
     }
-    return [frameOrigin, xEnd, yEnd]
+    return [frameOrigin, xEnd, yEnd, freeSize]
   }
 }
 
-export class newHistogram extends Frame {
+export class Histogram extends Frame {
   public bars: Bar[] = [];
   readonly barsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly barsColorStroke: string = 'hsl(0, 0%, 0%)';
@@ -1873,11 +1911,11 @@ export class newHistogram extends Frame {
 
   public reset(): void {
     super.reset();
-    this.bars = undefined;
+    this.bars = [];
   }
 
-  private buildNumberAxis(frameOrigin: Vertex, yEnd: Vertex): newAxis {
-    const numberAxis = this.setAxis('number', frameOrigin, yEnd, this.nYTicks);
+  private buildNumberAxis(freeSize: number, frameOrigin: Vertex, yEnd: Vertex): newAxis {
+    const numberAxis = this.setAxis('number', freeSize, frameOrigin, yEnd, this.nYTicks);
     numberAxis.minValue = 0;
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.nTicks = this.nYTicks;
@@ -1904,56 +1942,50 @@ export class newHistogram extends Frame {
     return fakeTicks
   }
 
-  private storeBarState(): [number[], number[]] {
-    const [hovered, clicked] = [[] as number[], [] as number[]];
-    if (this.bars) {
-      this.bars.forEach(bar => {
-        if (bar.isHovered) {hovered.push(...bar.values)};
-        if (bar.isClicked) {clicked.push(...bar.values)};
-      })
-    }
-    return [hovered, clicked]
-  }
-
   private computeBars(axis: newAxis, vector: number[]): Bar[] {
     const numericVector = axis.stringsToValues(vector);
-    [this.hoveredIndex, this.clickedIndex] = this.storeBarState();
     let fakeTicks = this.boundedTicks(axis);
-    let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar());
+    let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar([]));
+    let barValues = Array.from(Array(fakeTicks.length - 1), () => []);
     numericVector.forEach((value, valIdx) => {
       for (let tickIdx = 0 ; tickIdx < fakeTicks.length - 1 ; tickIdx++ ) {
         if (value >= fakeTicks[tickIdx] && value < fakeTicks[tickIdx + 1]) {
           bars[tickIdx].values.push(valIdx);
+          barValues[tickIdx].push(value);
           break
         }
       }
     });
+    barValues.forEach((values, index) => { bars[index].computeStats(values, 100) });
     return bars
   }
 
-  public draw(): void {
-    this.updateAxes();
-    this.getBarsDrawing();
-
-    this.context_show.setTransform(this.movingMatrix);
-    this.bars.forEach(bar => {bar.buildPath() ; bar.draw(this.context_show)});
-    this.context_show.resetTransform();
-    this.movingObjects = this.bars;
-
-    this.context_show.setTransform(this.canvasMatrix);
-    super.drawAxes();
-    this.context_show.resetTransform();
-  }
-
-  public updateAxes(): void {
-    super.drawCanvas();
-    this.context_show.setTransform(this.canvasMatrix);
-    super.updateAxes()
+  public computeMovingObjects(): void {
     this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
+    this.getBarsDrawing();
   }
 
-  public getBarsDrawing() {
+  public drawMovingObjects(): void {
+    this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
+    this.movingObjects = this.bars;
+  }
+
+  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+    // TODO: Fast and dirty implementation. Needs to be rethought.
+    if (objects[0] instanceof newAxis) { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
+    else {
+      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
+      objects.forEach(object => {
+        if (object.values) {
+          if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
+          else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
+        }
+      })
+    }
+  }
+
+  public getBarsDrawing(): void {
     const fullTicks = this.boundedTicks(this.axes[0]);
     this.bars.forEach((bar, index) => {
       let origin = new Vertex(fullTicks[index], 0);
@@ -1963,32 +1995,28 @@ export class newHistogram extends Frame {
       bar.setGeometry(origin, size);
       bar.fillStyle = this.barsColorFill;
       bar.strokeStyle = this.barsColorStroke;
-      if (bar.values.some(valIdx => this.hoveredIndex.indexOf(valIdx) != -1)) {bar.isHovered = true}
-      if (bar.values.some(valIdx => this.clickedIndex.indexOf(valIdx) != -1)) {bar.isClicked = true}
-      if (bar.values.some(valIdx => this.selectedIndex[valIdx])) {bar.isSelected = true}
+      if (bar.values.some(valIdx => this.hoveredIndices[valIdx])) {bar.isHovered = true}
+      if (bar.values.some(valIdx => this.clickedIndices[valIdx])) {bar.isClicked = true}
+      if (bar.values.some(valIdx => this.selectedIndices[valIdx])) {bar.isSelected = true}
     })
   }
 
   public setAxes(): newAxis[] {
-    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
-    const xAxis = this.setAxis(this.xFeature, frameOrigin, xEnd, this.nXTicks);
+    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds();
+    const xAxis = this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks);
     const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
     this.features.set('number', this.getNumberFeature(bars));
-    const yAxis = this.buildNumberAxis(frameOrigin, yEnd);
+    const yAxis = this.buildNumberAxis(freeSize.x, frameOrigin, yEnd);
     return [xAxis, yAxis];
   }
 
-  public setAxis(feature: string, origin: Vertex, end: Vertex, nTicks: number): newAxis {
-    return new newAxis(this.features.get(feature), origin, end, feature, nTicks)
-  }
-
-  public setFeatures(data: any): [string, string] {return [data.x_variable, 'number']}
+  public setFeatures(data: any): [string, string] { return [data.x_variable, 'number'] }
 
   mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
     return new Vertex(this.axes[0].isDiscrete ? 0 : mouseDown.x - currentMouse.x, 0)
   }
 
-  wheel_interaction(mouse3X, mouse3Y, e) { // TODO: REALLY NEEDS A REFACTOR
+  wheel_interaction(mouse3X, mouse3Y, e): [number, number] { // TODO: REALLY NEEDS A REFACTOR
     // e.preventDefault();
     this.fusion_coeff = 1.2;
     var event = -Math.sign(e.deltaY);
@@ -2015,584 +2043,5 @@ export class newHistogram extends Frame {
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
     }
     return [mouse3X, mouse3Y];
-  }
-}
-
-export class Histogram extends PlotData {
-    edge_style: EdgeStyle;
-    surface_style: SurfaceStyle;
-    x_variable: Attribute;
-    y_variable: Attribute;
-    axis: Axis;
-    graduation_nb: number;
-    initial_graduation_nb: number;
-    infos = {};
-    min_abs: number = 0;
-    max_abs: number = 0;
-    max_frequency: number = 0;
-    discrete: boolean = false;
-    coeff:number=0.88;
-    y_step: number = 0;
-    selected_keys = [];
-    bandColor: string = string_to_hex('lightrose');
-    bandOpacity: number = 0.5;
-
-    constructor(public data:any,
-                public width: number,
-                public height: number,
-                public buttons_ON: boolean,
-                public X: number,
-                public Y: number,
-                public canvas_id: string,
-                public is_in_multiplot: boolean = false) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.1';
-        check_package_version(data['package_version'], requirement);
-      }
-      this.type_ = "histogram";
-      this.elements = data['elements'];
-      this.graduation_nb = data['graduation_nb'] || 6;
-      this.initial_graduation_nb = this.graduation_nb;
-      let name = data['x_variable'];
-      let type_ = TypeOf(this.elements[0][name]);
-
-      this.discrete = false;
-      if (type_ !== 'float') this.discrete = true;
-
-      this.x_variable = new Attribute(name, type_);
-      this.y_variable = new Attribute('frequency', "float");
-      this.rubber_bands = [
-        new RubberBand(this.x_variable.name, 0, 0, false),
-        new RubberBand("frequency", 0, 0, true)
-      ]
-      const axis = data['axis'] || {grid_on: false};
-      this.axis = Axis.deserialize(axis);
-      let temp_surface_style = data['surface_style'] || {};
-      temp_surface_style = set_default_values(temp_surface_style, {color_fill: string_to_rgb('lightblue'), opacity: 1});
-      this.surface_style = SurfaceStyle.deserialize(temp_surface_style);
-      this.edge_style = EdgeStyle.deserialize(data['edge_style']);
-      if (type_ === 'float') {
-        for (let element of this.elements) {
-          this.minX = Math.min(this.minX, element[name]);
-          this.maxX = Math.max(this.maxX, element[name]);
-        }
-        this.x_variable.list = [this.minX, this.maxX];
-      } else {
-        let list = [];
-        for (let element of this.elements) {
-          let graduation = element[name];
-          if (type_ === 'color') graduation = color_to_string(graduation);
-          if (!list.includes(graduation)) list.push(graduation);
-        }
-        this.minX = 0;
-        this.maxX = list.length;
-        this.min_abs = this.minX;
-        this.max_abs = this.maxX;
-        this.x_variable.list = list;
-      }
-      this.infos = this.get_infos();
-      this.refresh_max_frequency();
-      this.y_variable.list = [0, this.max_frequency];
-      if (buttons_ON) this.refresh_buttons_coords();
-      this.all_attributes = this.initializeAll_attributes_to_remove();
-      this.add_to_axis_list([this.all_attributes[0].name, 'frequency']);
-      this.inverted_axis_list = [false, false];
-    }
-
-    initializeAll_attributes_to_remove() {
-      var xAttr = this.x_variable;
-      xAttr.alias = xAttr.name
-      var yAttr = new Attribute('frequency', 'float')
-      yAttr.list = [0, this.max_frequency];
-      yAttr.alias = 'frequency';
-      return [xAttr, yAttr]
-    }
-
-
-    draw_initial() {
-      this.reset_scales();
-      this.draw();
-    }
-
-    draw() {
-      this.refresh_graduation_nb();
-      this.refresh_axis_coords();
-      this.context = this.context_show;
-      this.context.save();
-      this.draw_empty_canvas(this.context);
-      if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
-      this.context.beginPath();
-      this.context.rect(this.X-1, this.Y-1, this.width+2, this.height + 2);
-      this.context.clip();
-      this.context.closePath();
-
-      this.infos = this.get_infos();
-      this.draw_histogram();
-      this.draw_rubber_bands(this.originX);
-      this.draw_axis();
-
-      if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
-        this.refresh_buttons_coords();
-        this.draw_buttons();
-      }
-
-      if (this.multiplot_manipulation) {
-        this.draw_manipulable_rect();
-      }
-      this.context.restore();
-    };
-
-
-    draw_from_context(hidden) {};
-
-
-    draw_buttons() {
-      this.reset_rect_y = 10;
-      Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
-    }
-
-    coordinate_to_string(x1, x2?) {
-      if (this.discrete) {
-        return this.x_variable.list[x1];
-      }
-      return x1.toString() + '_' + x2.toString();
-    }
-
-    string_to_coordinate(str) {
-      if (this.discrete) {
-        return {x1: List.get_index_of_element(str, this.x_variable.list)};
-      }
-      let l = str.split('_');
-      return {x1: Number(l[0]), x2: Number(l[1])};
-    }
-
-
-    refresh_max_frequency() {
-      let keys = Object.keys(this.infos);
-      for (let key of keys) {
-        this.max_frequency = Math.max(this.infos[key].length, this.max_frequency);
-      }
-    }
-
-
-    get_infos() {
-      let infos = {}, temp_infos = [];
-      if (this.x_variable.type_ === 'float') {
-        let min = this.x_variable.list[0], max = this.x_variable.list[1];
-        let delta = max - min;
-        let d = Math.pow(10, Math.floor(Math.log10(delta)));
-        this.min_abs = Math.floor(min / d) * d;
-        this.max_abs = Math.ceil(max / d) * d;
-        let step;
-        if (this.graduation_nb !== 1) {
-          step = (this.max_abs - this.min_abs) / (this.graduation_nb - 1);
-          let current_x = this.min_abs;
-          while (current_x < this.max_abs) {
-            let next_x = current_x + step;
-            let selected_elts = [];
-            for (let i=0;i<this.elements.length; i++) {
-              let nb = this.elements[i][this.x_variable.name];
-              if ((nb >= current_x && nb < next_x) || (next_x === this.max_abs && nb === next_x)) {
-                selected_elts.push(i);
-              }
-            }
-            let key = this.coordinate_to_string(current_x, next_x);
-            temp_infos.push([key, selected_elts]);
-            current_x = next_x;
-          }
-        } else {
-          step = this.width / 3;
-          let key = this.coordinate_to_string(this.minX, this.maxX);
-          temp_infos = [[key, this.elements]];
-        }
-        infos = Object.fromEntries(temp_infos);
-      } else {
-        for (let graduation of this.x_variable.list) {
-          temp_infos.push([graduation, []]);
-        }
-        infos = Object.fromEntries(temp_infos);
-        for (let i=0; i<this.elements.length; i++) {
-          let graduation;
-          if (this.x_variable.type_ === 'color') {
-            graduation = color_to_string(this.elements[i][this.x_variable.name]);
-          } else {
-            graduation = this.elements[i][this.x_variable.name];
-          }
-          infos[graduation].push(i);
-        }
-      }
-      return infos;
-    }
-
-
-    draw_axis() {
-      let keys = Object.keys(this.infos);
-      this.y_step = this.get_y_step();
-      if (this.discrete) {
-        // [this.axis_x_start, this.axis_x_end] = this.axis.draw_histogram_x_axis(
-        this.axis.draw_histogram_x_axis(
-          this.context, this.scale, this.init_scale, this.originX, this.width,
-          this.height, this.x_variable.list, this.decalage_axis_x, this.decalage_axis_y,
-          this.scroll_x, this.X, this.Y, this.x_variable.name);
-      } else {
-        let {x1, x2} = this.string_to_coordinate(keys[0]);
-        let x_step = x2 - x1;
-        // [this.axis_x_start, this.axis_x_end] = this.axis.draw_horizontal_axis(
-        this.axis.draw_horizontal_axis(
-          this.context, this.originX, this.scale,
-          this.width, this.height, this.init_scale, this.minX, this.maxX,
-          this.scroll_x, this.decalage_axis_x, this.decalage_axis_y,
-          this.X, this.Y, this.x_variable.name, false, x_step);
-      }
-      [this.axis_y_start, this.axis_y_end] = this.axis.draw_histogram_y_axis(
-        this.context, this.width, this.height, this.max_frequency, this.decalage_axis_x,
-        this.decalage_axis_y, this.X, this.Y, 'Frequency', this.y_step, this.coeff);
-    }
-
-
-    refresh_graduation_nb() {
-      this.graduation_nb = Math.ceil(this.scale/this.init_scale * this.initial_graduation_nb);
-    }
-
-
-    get_y_step() {
-      if (this.max_frequency <= 10) {
-        return 1;
-      } else if (this.max_frequency <= 20) {
-        return 2;
-      } else if (this.max_frequency <= 50) {
-        return 5;
-      }
-      return Math.floor(this.max_frequency / 10);
-    }
-
-
-    draw_histogram() {
-      let color_stroke = this.edge_style.color_stroke;
-      let color_fill = this.surface_style.color_fill;
-      let selectedColor = string_to_hex('lightyellow');
-      let line_width = this.edge_style.line_width;
-      let opacity = this.surface_style.opacity;
-      let dashline = this.edge_style.dashline;
-      let grad_beg_y = this.height - this.decalage_axis_y + this.Y;
-      let keys = Object.keys(this.infos);
-      let scaleY = (0.88*this.height - this.decalage_axis_y) / this.max_frequency;
-      let current_x = 0;
-      let f = 0;
-      let w = 0.5;
-
-      if (!this.discrete) {
-        let {x1, x2} = this.string_to_coordinate(keys[0]);
-        w = x2 - x1;
-      }
-
-      keys.forEach((key, idx) => {
-        if (this.selected_keys.includes(key)) {
-          color_fill = selectedColor;
-        } else {
-          color_fill = this.surface_style.color_fill;
-        }
-        f = this.infos[key].length;
-        if (!this.discrete) {
-          let {x1} = this.string_to_coordinate(key);
-          current_x = this.real_to_display(x1, 'x');
-        } else {
-          current_x = this.real_to_display(idx, 'x');
-        }
-        this.context.beginPath();
-        Shape.rect(current_x, grad_beg_y, this.scale*w, -scaleY*f, this.context,
-          color_fill, color_stroke, line_width, opacity, dashline);
-        this.context.closePath();
-      })
-    }
-
-    mouse_interaction() {
-      if (this.interaction_ON === true) {
-        var isDrawing = false;
-        var mouse_moving = false;
-        var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
-        var click_on_axis:boolean = false;
-        var selected_axis_index:number = -1;
-        var click_on_band:boolean = false;
-        var click_on_border:boolean = false;
-        var selected_band_index:number = -1;
-        var selected_border:number[]=[];
-        var is_resizing:boolean=false;
-        var click_on_selectw_border:boolean = false;
-        var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
-        var canvas = document.getElementById(this.canvas_id);
-
-        canvas.addEventListener('mousedown', e => {
-          if (this.interaction_ON) {
-            [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
-            [click_on_axis, selected_axis_index] = Interactions.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis, this);
-            [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
-          }
-        });
-
-        canvas.addEventListener('mousemove', e => {
-          if (this.interaction_ON) {
-            if (isDrawing) {
-              mouse_moving = true;
-              if (click_on_axis && !click_on_band && !click_on_border) {
-                [mouse2X, mouse2Y] = Interactions.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, this);
-              } else if (click_on_band) {
-                [mouse2X, mouse2Y] = Interactions.rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e, this);
-              } else if (click_on_border) {
-                [selected_border[1], mouse2X, mouse2Y, is_resizing] = Interactions.rubber_band_resize(mouse1X, mouse1Y, selected_border, e, this);
-              }
-              this.get_selected_keys();
-            }
-          }
-        });
-
-        canvas.addEventListener('mouseup', e => {
-          if (!this.interaction_ON) return;
-          if (mouse_moving) {
-            if (up || down || left || right) {this.reorder_rubberbands()};
-          } else {
-            if (click_on_axis) {this.rubber_bands[selected_axis_index].reset()};
-            this.get_selected_keys();
-          }
-          reset_parameters();
-          this.is_drawing_rubber_band = false;
-          this.draw();
-        });
-
-        canvas.addEventListener('mouseleave', e => {
-          isDrawing = false;
-          mouse_moving = false;
-        });
-
-
-        canvas.addEventListener("click", e => {
-          if (this.interaction_ON) {
-            if (e.ctrlKey) {
-              // this.reset_pp_selected();
-              this.reset_rubberbands();
-              this.draw();
-            }
-          }
-        });
-
-        canvas.addEventListener('wheel', e => {
-          if (!this.interaction_ON) return;
-          e.preventDefault();
-          let zoom_coeff;
-          let event = -Math.sign(e.deltaY);
-          if (event >= 0) zoom_coeff = 1.2; else zoom_coeff = 1/1.2;
-          this.scale = this.scale * zoom_coeff;
-          this.originX = mouse2X - this.X + zoom_coeff * (this.originX - mouse2X + this.X);
-          this.rubber_bands.forEach((rubberBand, index) => {
-            const axisTypes = ['x', 'y']
-            rubberBand.realMin = this.real_to_display(rubberBand.minValue, axisTypes[index]);
-            rubberBand.realMax = this.real_to_display(rubberBand.maxValue, axisTypes[index]);
-          })
-          this.draw();
-        });
-
-      }
-      function reset_parameters() {
-        isDrawing = false;
-        mouse_moving = false;
-        click_on_axis = false;
-        click_on_band = false;
-        click_on_border = false;
-        up = false;
-        down = false;
-        left = false;
-        right = false;
-      }
-    }
-
-    locMouseOnBands(x, y) {
-      const [click_on_x_band, left, right] = this.rubber_bands[0].includesMouse(x)
-      const [click_on_y_band, down, up] = this.rubber_bands[1].includesMouse(y)
-      return [click_on_x_band, click_on_y_band, left, right, down, up];
-    }
-
-    reorder_rubberbands() {
-      this.rubber_bands.forEach((rubberBand) => {
-        if (rubberBand.length !== 0) {
-          var min = rubberBand.minValue;
-          rubberBand.minValue = Math.min(rubberBand.minValue, rubberBand.maxValue);
-          rubberBand.maxValue = Math.max(min, rubberBand.maxValue);
-        }
-      })
-    }
-
-
-    reset_x_rubberband() {
-      this.rubber_bands[0].minValue = 0;
-      this.rubber_bands[0].maxValue = 0;
-      this.selected_keys = [];
-      this.selected_point_index = [];
-    }
-
-
-    get_selected_keys() {
-      this.selected_keys = [];
-      this.selected_point_index = [];
-      let keys = Object.keys(this.infos);
-      if (this.rubber_bands[0].length === 0 && this.rubber_bands[1].length === 0) return;
-      for (let key of keys) {
-        let {x1, x2} = this.string_to_coordinate(key);
-        let x_rubberband_0 = Math.min(this.rubber_bands[0].minValue, this.rubber_bands[0].maxValue);
-        let x_rubberband_1 = Math.max(this.rubber_bands[0].minValue, this.rubber_bands[0].maxValue);
-        let y_rubberband_0 = Math.min(this.rubber_bands[1].minValue, this.rubber_bands[1].maxValue);
-        let y_rubberband_1 = Math.max(this.rubber_bands[1].minValue, this.rubber_bands[1].maxValue);
-        let f = this.infos[key].length;
-        let bool = true;
-        if (this.rubber_bands[0].length !== 0) {
-          if (this.discrete) {
-            let middle = x1 + 1/4;
-            bool = bool && x_rubberband_0 <= middle && middle <= x_rubberband_1;
-            // bool = bool && x_rubberband_0 <= x1 && x1 + 1/2 <= x_rubberband_1;
-          } else {
-            let middle = (x1 + x2) / 2;
-            bool = bool && x_rubberband_0 <= middle && middle <= x_rubberband_1;
-            // bool = bool && x_rubberband_0 <= x1 && x2 <= x_rubberband_1;
-          }
-        }
-        if (this.rubber_bands[1].length !== 0) {
-          bool = bool && y_rubberband_0 <= f && f <= y_rubberband_1;
-        }
-        if (bool) {
-          this.selected_keys.push(key);
-          this.selected_point_index = this.selected_point_index.concat(this.infos[key]);
-        }
-      }
-      let sort = new Sort();
-      this.selected_point_index = sort.MergeSort(this.selected_point_index);
-    }
-
-
-    real_to_display(real: number, type_) { // type_ = 'x' or 'y'
-      if (type_ === 'x') {
-        if (this.discrete) {
-          let grad_beg_x = this.decalage_axis_x / this.scale;
-          return this.scale * (grad_beg_x + real) + this.originX + this.X;
-        } else {
-          return this.scale * real + this.originX + this.X;
-        }
-      } else if (type_ === 'y') {
-        let grad_beg_y = this.height - this.decalage_axis_y /this.scale;
-        let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-        return grad_beg_y - scale_y * real + this.Y;
-      } else {
-        throw new Error("real_to_display(): type_ must be 'x' or 'y'");
-      }
-
-    }
-
-
-    real_to_display_length(real: number, type_) {
-      if (type_ === 'x') {
-        return this.scale * real;
-      } else if (type_ === 'y') {
-        let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-        return -scale_y * real;
-      } else {
-        throw new Error("real_to_display_length(): type_ must be 'x' or 'y'");
-      }
-    }
-
-
-    display_to_real(display: number, type_) {
-      if (type_ === 'x') {
-        if (this.discrete) {
-          let grad_beg_x = this.decalage_axis_x / this.scale;
-          return (display - this.originX - this.X) / this.scale - grad_beg_x;
-        } else {
-          return (display - this.originX - this.X) / this.scale;
-        }
-      } else if (type_ === 'y') {
-        let grad_beg_y = this.height - this.decalage_axis_y;
-        let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-        return (grad_beg_y + this.Y - display) / scale_y;
-      } else {
-        throw new Error("display_to_real(): type_ must be 'x' or 'y'");
-      }
-    }
-
-
-    display_to_real_length(display: number, type_) {
-      if (type_ === 'x') {
-        return display / this.scale;
-      } else if (type_ === 'y') {
-        let scale_y = (this.coeff*this.height - this.decalage_axis_y) / this.max_frequency;
-        return -display / scale_y;
-      } else {
-        throw new Error("display_to_real_length(): type_ must be 'x' or 'y'")
-      }
-    }
-
-}
-
-
-export class ScatterMatrix extends PlotData {
-  plots = [];
-
-  constructor(public data:any,
-    public width: number,
-    public height: number,
-    public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
-    public canvas_id: string,
-    public is_in_multiplot = false) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (data["elements"][0]["type_"] == "sample") {
-        this.elements = []
-        for (var element of data["elements"]) {
-          this.elements.push(element.values)
-        }
-      } else {
-        this.elements = data["elements"];
-      }
-      let axes = data["axes"] || Object.getOwnPropertyNames(this.elements[0]);
-      let x_step = width / axes.length;
-      let y_step = height / axes.length;
-      for (let i=0; i<axes.length; i++) {
-        for (let j=0; j<axes.length; j++) {
-          if (i === j) {
-            let data1 = {x_variable: axes[i], elements: this.elements, graduation_nb: 4,
-              package_version: data["package_version"], type_: "histogram"};
-            var obj: any = new Histogram(data1, x_step, y_step, false, i*x_step, j*y_step, "hist"+i);
-          } else {
-            let data1 = {attribute_names: [axes[i], axes[j]], elements: this.elements,
-              type_: "scatterplot", package_version: data["package_version"],
-              axis: {nb_points_x: 5, nb_points_y: 5, grid_on: false}};
-            obj = new PlotScatter(data1, x_step, y_step, false, i*x_step, j*y_step, "scatter" + i + j);
-          }
-          this.plots.push(obj);
-        }
-      }
-  }
-
-  define_canvas(canvas_id: string): void {
-    super.define_canvas(canvas_id);
-    for (let i=0; i<this.plots.length; i++) {
-      this.plots[i].context_hidden = this.context_hidden;
-      this.plots[i].context_show = this.context_show;
-    }
-  }
-
-  draw_initial(): void {
-    for (let i=0; i<this.plots.length; i++) {
-      this.plots[i].draw_initial();
-    }
-  }
-
-  draw() {
-    this.draw_from_context(true);
-    this.draw_from_context(false);
-  }
-
-  draw_from_context(hidden: any) {
-    for (let i=0; i<this.plots.length; i++) {
-      this.plots[i].draw_from_context(hidden);
-    }
   }
 }

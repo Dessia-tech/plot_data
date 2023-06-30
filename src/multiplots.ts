@@ -1,7 +1,7 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, BasePlot } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
 
@@ -64,6 +64,8 @@ export class MultiplePlots {
 
     public padding: number;
 
+    // NEW
+    public rubberBands: Map<string, RubberBand>;
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
@@ -132,6 +134,7 @@ export class MultiplePlots {
         this.clean_view();
         this.store_dimensions();
       }
+      this.refreshRubberBands();
         // this.save_canvas();
     }
 
@@ -575,10 +578,13 @@ export class MultiplePlots {
         this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
       }
 
-      this.objectList.forEach((plot, index) => {
-        if (List.is_include(index, this.to_display_plots)) {
+      this.objectList.forEach((plot, pIndex) => {
+        if (List.is_include(pIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
-          // plot.mouse_interaction(plot.isParallelPlot);
+          if (plot instanceof BasePlot) {plot.selectedIndices = Array.from(Array(plot.selectedIndices.length), (value, vIndex) => {
+            if (this.dep_selected_points_index.includes(vIndex)) return true
+            else return false  
+          })}
           plot.draw();
         }
       })
@@ -853,8 +859,17 @@ export class MultiplePlots {
           bool = true;
           this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
         } else if ((obj.type_ === 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
-          bool = true;
           this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
+        } else if (obj instanceof BasePlot) {
+          bool = true;
+          obj.axes.forEach(axis => {
+            if (axis.rubberBand.length != 0) {
+              const boolIndex = (obj as BasePlot).updateSelected(axis);
+              let selectedIndices = [];
+              boolIndex.forEach((bool, bIndex) => { if (bool) selectedIndices.push(bIndex) })
+              this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, selectedIndices);
+            }
+          })
         }
       }
 
@@ -1255,7 +1270,7 @@ export class MultiplePlots {
 
     pp_communication(rubberBands: RubberBand[], currentPP: any) { // process received data from a parallelplot and send it to the other objects
       const selectedIndices = currentPP.getObjectsInRubberBands(rubberBands);
-      this.dep_selected_points_index = currentPP.selected_point_index;
+      this.refresh_dep_selected_points_index()
       let rubberBandNames = [];
       rubberBands.forEach((rubberBand) => rubberBandNames.push(rubberBand.attributeName));
 
@@ -1341,21 +1356,21 @@ export class MultiplePlots {
               subplot.select_on_click.push(scatterPoint)
             }
           })
-          subplot.refresh_selected_point_index();
+          // subplot.refresh_selected_point_index();
           if (WAS_MERGE_ON == true) {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
           }
-        } else if (subplot instanceof Frame) {
+        } else if (subplot instanceof BasePlot) {
           rubberBandsInPlot.forEach((rubberBand) => {
             subplot.axes.forEach(axis => {
               if (axis.name == rubberBand.attributeName) {
                 axis.rubberBand.minValue = rubberBand.minValue;
                 axis.rubberBand.maxValue = rubberBand.maxValue;
-                subplot.draw()
               }
             })
           })
+          subplot.draw()
         } else if (subplot instanceof PrimitiveGroupContainer) {
           subplot.selected_point_index = selectedIndices;
           if (selectedIndices.length == 0) {
@@ -1765,6 +1780,35 @@ export class MultiplePlots {
       return click_on_manip_button || click_on_selectDep_button || click_on_view || click_on_export;
     }
 
+    public initRubberBands() {
+      this.rubberBands = new Map<string, RubberBand>();
+      this.objectList.forEach(plot => {
+        if (plot instanceof BasePlot) {
+          plot.axes.forEach(axis => { this.rubberBands.set(axis.name, new RubberBand(axis.name, 0, 0, axis.isVertical)) })
+        } else if (plot instanceof ParallelPlot) {
+          plot.rubber_bands.forEach(rubberBand => {
+            this.rubberBands.set(rubberBand.attributeName, new RubberBand(rubberBand.attributeName, 0, 0, rubberBand.isVertical));
+          })
+        }
+      })
+    }
+
+    public refreshRubberBands() {
+      if (!this.rubberBands) this.initRubberBands();
+      this.objectList.forEach(plot => {
+        if (plot instanceof BasePlot) {
+          plot.axes.forEach(axis => {
+            this.rubberBands.get(axis.name).minValue = axis.rubberBand.minValue;
+            this.rubberBands.get(axis.name).maxValue = axis.rubberBand.maxValue;
+          })
+        } else if (plot instanceof ParallelPlot) {
+          plot.rubber_bands.forEach(rubberBand => {
+            this.rubberBands.get(rubberBand.attributeName).minValue = rubberBand.minValue;
+            this.rubberBands.get(rubberBand.attributeName).maxValue = rubberBand.maxValue;
+          })
+        }
+      })
+    }
 
     mouse_interaction(): void {
       var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
@@ -1853,9 +1897,9 @@ export class MultiplePlots {
               this.mouse_move_scatter_communication();
               this.mouse_move_pp_communication();
               this.mouse_move_frame_communication();
+              this.refreshRubberBands();
               this.redrawAllObjects();
             }
-            this.refresh_selected_point_index();
             this.redraw_object();
           } else {
             if (this.selectDependency_bool) {
@@ -1903,12 +1947,10 @@ export class MultiplePlots {
                   this.objectList[this.clickedPlotIndex].mouse_interaction(true);
                   this.pp_communication(this.objectList[this.clickedPlotIndex].rubber_bands, this.objectList[this.clickedPlotIndex]);
                 }
-              } else if (type_ === "scatterplot") {
-                this.mouse_up_scatter_communication();
               }
             }
           }
-          this.refresh_selected_point_index();
+          this.refreshRubberBands();
         } else {
           if (this.view_bool) { this.clean_view() }
         }

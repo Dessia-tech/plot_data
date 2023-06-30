@@ -413,9 +413,11 @@ export class ParallelPlot extends PlotData {
     }
 
     refresh_pp_selected() {
-      this.pp_selected_index = this.getObjectsInRubberBands(this.rubber_bands);
-      if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
-        this.reset_pp_selected();
+      if (!this.is_in_multiplot) {
+        this.pp_selected_index = this.getObjectsInRubberBands(this.rubber_bands);
+        if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
+          this.reset_pp_selected();
+        }
       }
     }
 
@@ -1497,7 +1499,7 @@ export class BasePlot extends PlotData {
 
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
-  protected nSamples: number;
+  public nSamples: number;
 
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1565,8 +1567,10 @@ export class BasePlot extends PlotData {
       axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
       if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
     })
-    if (axisSelections.length != 0) { this.selectedIndices = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
-    else { this.selectedIndices = new Array(this.nSamples).fill(false) }
+    if (!this.is_in_multiplot) {
+      if (axisSelections.length != 0) { this.selectedIndices = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
+      else { this.selectedIndices = new Array(this.nSamples).fill(false) }
+    }
   }
 
   private initSelectors(): void {
@@ -1604,6 +1608,7 @@ export class BasePlot extends PlotData {
     this.context_show.save();
     this.drawCanvas();
     this.context_show.setTransform(this.canvasMatrix);
+
     this.updateAxes();
     this.computeRelativeObjects();
 

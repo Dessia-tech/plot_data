@@ -1225,10 +1225,12 @@ export class RubberBand {
     return [isClicked, onMinBorder, onMaxBorder]
   }
 
+  private get borderSize() {return Math.min(this.BORDER_SIZE, this.canvasLength / 3)}
+
   public mouseDown(mouseAxis: number) {
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.realMin) <= this.BORDER_SIZE) { this.minUpdate = true }
-    else if (Math.abs(mouseAxis - this.realMax) <= this.BORDER_SIZE) { this.maxUpdate = true }
+    if (Math.abs(mouseAxis - this.realMin) <= this.borderSize) { this.minUpdate = true }
+    else if (Math.abs(mouseAxis - this.realMax) <= this.borderSize) { this.maxUpdate = true }
     else { this.lastValues = new Vertex(this.minValue, this.maxValue) }
   }
 
@@ -1944,9 +1946,9 @@ const TOOLTIP_TEXT_OFFSET = 10;
 const TOOLTIP_TRIANGLE_SIZE = 10;
 export class newTooltip {
   public path: Path2D;
-  public strokeStyle: string = "hsl(266, 95%, 60%)";
+  public strokeStyle: string = "hsl(210, 90%, 20%)";
   public textColor: string = "hsl(0, 0%, 100%)";
-  public fillStyle: string = "hsl(266, 95%, 60%)";
+  public fillStyle: string = "hsl(210, 90%, 20%)";
   public alpha: number = 0.8;
   public fontsize: number = 12;
   public radius: number = 10;

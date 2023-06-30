@@ -2164,6 +2164,14 @@ export class newAxis {
 
   get minValue(): number { return this._minValue };
 
+  set initMaxValue(value: number) { this._initMaxValue = value };
+
+  get initMaxValue(): number { return this._initMaxValue };
+
+  set initMinValue(value: number) { this._initMinValue = value };
+
+  get initMinValue(): number { return this._initMinValue };
+
   set nTicks(value: number) { this._nTicks = value };
 
   get nTicks(): number {

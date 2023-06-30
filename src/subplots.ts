@@ -1943,8 +1943,8 @@ export class Histogram extends Frame {
 
   private buildNumberAxis(freeSize: number, frameOrigin: Vertex, yEnd: Vertex): newAxis {
     const numberAxis = this.setAxis('number', freeSize, frameOrigin, yEnd, this.nYTicks);
-    numberAxis.minValue = 0;
-    numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    numberAxis.initMaxValue = numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    numberAxis.initMinValue = numberAxis.minValue = 0;
     numberAxis.nTicks = this.nYTicks;
     numberAxis.saveLocation();
     return numberAxis

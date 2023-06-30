@@ -1036,7 +1036,7 @@ export class RubberBand {
   public minUpdate: boolean = false;
   public maxUpdate: boolean = false;
   public lastValues: Vertex = new Vertex(null, null);
-  readonly SMALL_SIZE: number = 20;
+  readonly SMALL_SIZE: number = 10;
   readonly BORDER_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;

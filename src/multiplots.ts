@@ -2054,28 +2054,27 @@ export class MultiplotCom {
     }
 
     public static frame_to_pp_communication(frame, parallel_plot) {
-      let index = -1;
-      for (let i=0; i<parallel_plot.axis_list.length; i++) {
-        if (frame.axes[0].name === parallel_plot.axis_list[i].name) {
-          index = i;
-          break;
-        }
-      }
-      if (index === -1) return;
-
       let axisOrigin = parallel_plot.axis_x_start;
       let axisEnd = parallel_plot.axis_x_end;
       if (parallel_plot.vertical) {
         axisOrigin = parallel_plot.axis_y_end;
         axisEnd = parallel_plot.axis_y_start;
       }
-      if (typeof parallel_plot.axis_list[index].list[0] == "string") {
-        frame.axes[0].rubberBand.valueToAxis(1, parallel_plot.axis_list[index].list.length)
-      } else {
-        frame.axes[0].rubberBand.valueToAxis(parallel_plot.axis_list[index].list[0], parallel_plot.axis_list[index].list[1])
-      }
-      parallel_plot.rubber_bands[index].updateFromOther(frame.axes[0].rubberBand, axisOrigin, axisEnd,
-        parallel_plot.inverted_axis_list[index], false);
+     
+      frame.axes.forEach(axis => {
+        parallel_plot.axis_list.forEach((pp_axis, ppIndex) => {
+          if (axis.name == pp_axis.name) {
+            if (typeof pp_axis.list[0] == "string") {
+              axis.rubberBand.valueToAxis(1, pp_axis.list.length)
+            } else {
+              axis.rubberBand.valueToAxis(pp_axis.list[0], pp_axis.list[1])
+            }
+            parallel_plot.rubber_bands[ppIndex].updateFromOther(axis.rubberBand, axisOrigin, axisEnd,
+              parallel_plot.inverted_axis_list[ppIndex], axis.isInverted);
+          }
+        })
+        
+      })
     }
 
 

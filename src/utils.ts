@@ -2113,7 +2113,7 @@ export class newAxis {
     public origin: Vertex,
     public end: Vertex,
     public name: string = '',
-    private initScale: Vertex,
+    public initScale: Vertex,
     private _nTicks: number = 10
     ) {
       this.isDiscrete = typeof vector[0] == 'string';
@@ -2132,6 +2132,9 @@ export class newAxis {
   public get drawLength(): number {
     return this.isVertical ? Math.abs(this.origin.y - this.end.y) : Math.abs(this.origin.x - this.end.x);
   }
+
+  // TODO: OLD, MUST DISAPPEAR ONE PARALLELPLOT ARE REFACTORED
+  public get isInverted(): boolean { return this.initScale[this.isVertical ? 'y' : 'x'] == -1 }
 
   private get drawingColor(): string {
     let color = this.strokeStyle;

@@ -1348,9 +1348,13 @@ export class MultiplePlots {
           }
         } else if (subplot instanceof Frame) {
           rubberBandsInPlot.forEach((rubberBand) => {
-            subplot.axes[0].rubberBand.minValue = rubberBand.minValue;
-            subplot.axes[0].rubberBand.maxValue = rubberBand.maxValue;
-            subplot.draw()
+            subplot.axes.forEach(axis => {
+              if (axis.name == rubberBand.attributeName) {
+                axis.rubberBand.minValue = rubberBand.minValue;
+                axis.rubberBand.maxValue = rubberBand.maxValue;
+                subplot.draw()
+              }
+            })
           })
         } else if (subplot instanceof PrimitiveGroupContainer) {
           subplot.selected_point_index = selectedIndices;
@@ -1875,7 +1879,7 @@ export class MultiplePlots {
           this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
         }
 
-        if (mouse_moving === false) {
+        if (mouse_moving === false) { 
           if (this.selectDependency_bool) {
             if (this.clickedPlotIndex !== -1) {
               let type_ = this.objectList[this.clickedPlotIndex].type_

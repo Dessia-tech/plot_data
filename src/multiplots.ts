@@ -1270,7 +1270,7 @@ export class MultiplePlots {
 
     pp_communication(rubberBands: RubberBand[], currentPP: any) { // process received data from a parallelplot and send it to the other objects
       const selectedIndices = currentPP.getObjectsInRubberBands(rubberBands);
-      this.refresh_dep_selected_points_index()
+      this.refresh_dep_selected_points_index();
       let rubberBandNames = [];
       rubberBands.forEach((rubberBand) => rubberBandNames.push(rubberBand.attributeName));
 

@@ -413,11 +413,9 @@ export class ParallelPlot extends PlotData {
     }
 
     refresh_pp_selected() {
-      if (!this.is_in_multiplot) {
-        this.pp_selected_index = this.getObjectsInRubberBands(this.rubber_bands);
-        if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
-          this.reset_pp_selected();
-        }
+      this.pp_selected_index = this.getObjectsInRubberBands(this.rubber_bands);
+      if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
+        this.reset_pp_selected();
       }
     }
 

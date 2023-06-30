@@ -2248,7 +2248,7 @@ export class newAxis {
   public normedValue(value: number): number { return value / this.interval }
 
   private computeMinMax(vector: any[]): number[] {
-    if (this.isDiscrete) { return [0, this.labels.length] };
+    if (this.isDiscrete) { return [0, this.labels.length - 1] };
     return [Math.min(...vector), Math.max(...vector)]
   }
 
@@ -2271,8 +2271,8 @@ export class newAxis {
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) { ticks.push(ticks.slice(-1)[0] + increment) };
-    if (ticks.slice(0)[0] < this.minValue) { ticks.splice(0, 1) };
-    if (ticks.slice(-1)[0] > this.maxValue) { ticks.splice(-1, 1) };
+    if (ticks.slice(0)[0] < this.minValue) ticks.splice(0, 1);
+    if (ticks.slice(-1)[0] >= this.maxValue) ticks.splice(-1, 1);
     return ticks
   }
 

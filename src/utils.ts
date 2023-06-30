@@ -2259,7 +2259,7 @@ export class newAxis {
   }
 
   private computeTicks(): number[] {
-    const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+    const increment = this.isDiscrete ? 1 : newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) { ticks.push(ticks.slice(-1)[0] + increment) };

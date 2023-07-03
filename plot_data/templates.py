@@ -24,8 +24,6 @@ html_template = Template('''
 
             var data = $data;
             $plot_commands
-
-            function drawSelectionWindow() { plot_data.drawSelectionWindow() }
         </script>
     </div>
 </html>

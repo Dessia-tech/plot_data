@@ -1645,10 +1645,7 @@ export class BasePlot extends PlotData {
     const selectionWindow = new newRect(mouseClick, mouseLoc.subtract(mouseClick));
     selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
     selectionWindow.dashLine = DASH_SELECTION_WINDOW;
-    context.save();
-    context.setTransform(this.canvasMatrix);
     selectionWindow.draw(context);
-    context.restore();
   }
 
   public drawTooltips(): void {
@@ -1705,7 +1702,7 @@ export class BasePlot extends PlotData {
       var isDrawing = false;
       var canvasMouse = new Vertex(0, 0) ; var canvasDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
       var frameMouse = new Vertex(0, 0) ; var frameDown = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
-      var absoluteMouse = new Vertex(0, 0);
+      var absoluteMouse = new Vertex(0, 0); var absoluteDown = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false;
@@ -1727,7 +1724,7 @@ export class BasePlot extends PlotData {
         }
         if (this.isSelecting) {
           canvas.style.cursor = 'crosshair';
-          if (isDrawing) this.drawSelectionWindow(canvasDown, canvasMouse, this.context_show);
+          if (isDrawing) this.drawSelectionWindow(absoluteDown, absoluteMouse, this.context_show);
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
@@ -1735,6 +1732,7 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+        absoluteDown = absoluteMouse;
         if (clickedObject instanceof newAxis) this.is_drawing_rubber_band = true
         else this.is_drawing_rubber_band = false
         isDrawing = true;
@@ -1932,9 +1930,8 @@ export class Frame extends BasePlot {
 
   public drawSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex, context: CanvasRenderingContext2D) {
     super.drawSelectionWindow(mouseClick, mouseLoc, context);
-    const frameClick = mouseClick.transform(this.frameMatrix.inverse());
-    const frameLoc = mouseLoc.transform(this.frameMatrix.inverse());
-    
+    const frameClick = mouseClick.transform(this.relativeMatrix.inverse());
+    const frameLoc = mouseLoc.transform(this.relativeMatrix.inverse());
     const oneCornerX = frameClick.x;
     const otherCornerX = frameLoc.x;
     const oneCornerY = frameClick.y;

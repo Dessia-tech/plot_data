@@ -66,6 +66,7 @@ export class MultiplePlots {
 
     // NEW
     public rubberBands: Map<string, RubberBand>;
+    public isSelecting: boolean = false;
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
@@ -1810,6 +1811,11 @@ export class MultiplePlots {
       })
     }
 
+    public switchSelectionMode() {
+      this.isSelecting = true;
+      this.objectList.forEach(plot => {if (plot instanceof BasePlot) plot.switchSelectionMode()});
+    }
+
     mouse_interaction(): void {
       var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
       var isDrawing = false;
@@ -1958,6 +1964,7 @@ export class MultiplePlots {
         this.redrawAllObjects();
         isDrawing = false;
         mouse_moving = false;
+        this.isSelecting = false;
         // this.save_canvas();
       });
 

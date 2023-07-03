@@ -2,9 +2,6 @@
 
 from string import Template
 
-def get_html_string(command_name: str):
-    return Template(html_template.safe_substitute(plot_command=command_name))
-
 empty_template = Template('''''')
 
 html_template = Template('''
@@ -26,7 +23,6 @@ html_template = Template('''
             var height = Math.max(0.95*window.innerHeight, 350) - buttonsContainer.scrollHeight;
 
             var data = $data;
-
             $plot_commands
 
             function drawSelectionWindow() { plot_data.drawSelectionWindow() }
@@ -77,3 +73,6 @@ primitive_group_container_commands = """
             primitive_group_container.draw_initial();
             primitive_group_container.mouse_interaction(primitive_group_container.isParallelPlot);
             primitive_group_container.regular_layout();"""
+
+def get_html_string(command_name: str):
+    return Template(html_template.safe_substitute(plot_commands=globals()[command_name]))

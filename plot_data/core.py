@@ -11,7 +11,6 @@ import sys
 import tempfile
 import warnings
 import webbrowser
-from string import Template
 from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -97,7 +96,7 @@ class Figure(PlotDataObject):
     @property
     def template(self):
         """ Get html template of current Figure object. """
-        return Template(templates.html_template.safe_substitute(plot_commands=getattr(templates, self._plot_commands)))
+        return templates.get_html_string(command_name=self._plot_commands)
         # return getattr(templates, self._plot_commands)
 
     def _export_formats(self) -> List[ExportFormat]:

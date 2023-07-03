@@ -2273,6 +2273,7 @@ export abstract class PlotData {
       var canvas = document.getElementById(this.canvas_id);
 
       canvas.addEventListener('mousedown', e => {
+        console.log(e.offsetX, e.offsetY)
         if (this.interaction_ON) {
           [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
         }

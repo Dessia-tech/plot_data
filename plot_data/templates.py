@@ -65,9 +65,7 @@ multiplot_commands = """
             var multiplot = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);"""
 
 primitive_group_container_commands = """
-            var globalWidth = 1500;
-            var globalHeight = 800;
-            var primitive_group_container = new PlotData.PrimitiveGroupContainer(data, globalWidth, globalHeight,
+            var primitive_group_container = new PlotData.PrimitiveGroupContainer(data, width, height,
                                                                                  true, 0, 0, $canvas_id.id);
             primitive_group_container.define_canvas($canvas_id.id);
             primitive_group_container.draw_initial();

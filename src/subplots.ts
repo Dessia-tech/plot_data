@@ -1711,7 +1711,7 @@ export class BasePlot extends PlotData {
             if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
               canvas.style.cursor = 'move';
               this.translation = this.mouseTranslate(canvasMouse, canvasDown);
-            } 
+            }
           }
           this.draw();
         }
@@ -2145,7 +2145,7 @@ export class newScatter extends Frame {
     }
   }
 
-  public drawAbsoluteObjects(): void { 
+  public drawAbsoluteObjects(): void {
     this.points = this.computePoints();
     this.absoluteObjects = this.points;
   };

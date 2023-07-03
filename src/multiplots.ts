@@ -577,7 +577,6 @@ export class MultiplePlots {
         let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
         this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
       }
-
       this.objectList.forEach((plot, pIndex) => {
         if (List.is_include(pIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
@@ -902,7 +901,7 @@ export class MultiplePlots {
     }
 
     resetAllObjects(): void {
-      this.dep_selected_points_index = [];
+      // this.dep_selected_points_index = [];
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
         let plot = this.objectList[i];

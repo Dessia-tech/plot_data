@@ -1733,7 +1733,7 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
         absoluteDown = absoluteMouse;
-        if (clickedObject instanceof newAxis) this.is_drawing_rubber_band = true
+        if (clickedObject instanceof newAxis || this.isSelecting) this.is_drawing_rubber_band = true
         else this.is_drawing_rubber_band = false
         isDrawing = true;
       });

@@ -57,7 +57,7 @@ HISTOGRAM_COMMANDS = """
             var plot_data = new PlotData.Histogram(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
-            plot_data.mouse_interaction();"""
+            plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 MULTIPLOT_COMMANDS = """
             var plot_data = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);"""

@@ -1477,7 +1477,7 @@ export class PrimitiveGroupContainer extends PlotData {
     }
 }
 
-
+const DASH_SELECTION_WINDOW = [6, 7];
 export class BasePlot extends PlotData {
   public axes: newAxis[] = [];
   public origin: Vertex;
@@ -1643,6 +1643,8 @@ export class BasePlot extends PlotData {
 
   public drawSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex, context: CanvasRenderingContext2D) {
     const selectionWindow = new newRect(mouseClick, mouseLoc.subtract(mouseClick));
+    selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
+    selectionWindow.dashLine = DASH_SELECTION_WINDOW;
     context.save();
     context.setTransform(this.canvasMatrix);
     selectionWindow.draw(context);
@@ -1714,11 +1716,6 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousemove', e => {
         [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
-        if (this.isSelecting) {
-          canvas.style.cursor = 'crosshair';
-          if (isDrawing) this.drawSelectionWindow(canvasDown, canvasMouse, this.context_show);
-          console.log(canvasDown, absoluteMouse)
-        }
         if (this.interaction_ON) {
           if (isDrawing) {
             if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting) {
@@ -1726,7 +1723,11 @@ export class BasePlot extends PlotData {
               this.translation = this.mouseTranslate(canvasMouse, canvasDown);
             }
           }
-          // this.draw();
+          this.draw();
+        }
+        if (this.isSelecting) {
+          canvas.style.cursor = 'crosshair';
+          if (isDrawing) this.drawSelectionWindow(canvasDown, canvasMouse, this.context_show);
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
@@ -1749,6 +1750,7 @@ export class BasePlot extends PlotData {
         this.translation = new Vertex(0, 0);
         clickedObject = undefined;
         isDrawing = false;
+        this.isSelecting = false; // TODO: Should we de-activate selection each time mouse is up ?
       })
 
       canvas.addEventListener('wheel', e => {
@@ -1858,12 +1860,14 @@ export class Frame extends BasePlot {
       this.type_ = "frame";
     }
 
-  get relativeMatrix(): DOMMatrix {
+  get frameMatrix(): DOMMatrix {
     const relativeMatrix = this.axes[0].transformMatrix;
     relativeMatrix.d = this.axes[1].transformMatrix.a;
     relativeMatrix.f = this.axes[1].transformMatrix.f;
-    return this.canvasMatrix.multiply(relativeMatrix)
+    return relativeMatrix
   }
+
+  get relativeMatrix(): DOMMatrix { return this.canvasMatrix.multiply(this.frameMatrix) }
 
   get nXTicks(): number { return this._nXTicks ? this._nXTicks : 7 }
 
@@ -1924,6 +1928,21 @@ export class Frame extends BasePlot {
       freeSize.y = this.size.y + frameOrigin.y;
     }
     return [frameOrigin, xEnd, yEnd, freeSize]
+  }
+
+  public drawSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex, context: CanvasRenderingContext2D) {
+    super.drawSelectionWindow(mouseClick, mouseLoc, context);
+    const frameClick = mouseClick.transform(this.frameMatrix.inverse());
+    const frameLoc = mouseLoc.transform(this.frameMatrix.inverse());
+    
+    const oneCornerX = frameClick.x;
+    const otherCornerX = frameLoc.x;
+    const oneCornerY = frameClick.y;
+    const otherCornerY = frameLoc.y;
+    this.axes[0].rubberBand.minValue = Math.min(oneCornerX, otherCornerX);
+    this.axes[1].rubberBand.minValue = Math.min(oneCornerY, otherCornerY);
+    this.axes[0].rubberBand.maxValue = Math.max(oneCornerX, otherCornerX);
+    this.axes[1].rubberBand.maxValue = Math.max(oneCornerY, otherCornerY);
   }
 }
 

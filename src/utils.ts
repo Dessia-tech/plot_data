@@ -1322,6 +1322,7 @@ const TOOLTIP_PRECISION = 100;
 export class newShape {
   public path: Path2D = new Path2D();
   public lineWidth: number = 1;
+  public dashLine: number[] = [];
   public strokeStyle: string = 'hsl(0, 0%, 0%)';
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
@@ -1360,6 +1361,7 @@ export class newShape {
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
+    context.setLineDash(this.dashLine);
     context.globalAlpha = this.alpha;
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
   }

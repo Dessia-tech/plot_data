@@ -62,7 +62,7 @@ HISTOGRAM_COMMANDS = """
             plot_data.mouse_interaction();"""
 
 MULTIPLOT_COMMANDS = """
-            var multiplot = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);"""
+            var plot_data = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);"""
 
 PRIMITIVE_GROUP_CONTAINER_COMMANDS = """
             var primitive_group_container = new PlotData.PrimitiveGroupContainer(data, width, height,
@@ -71,6 +71,7 @@ PRIMITIVE_GROUP_CONTAINER_COMMANDS = """
             primitive_group_container.draw_initial();
             primitive_group_container.mouse_interaction(primitive_group_container.isParallelPlot);
             primitive_group_container.regular_layout();"""
+
 
 def get_html_string(command_name: str):
     return Template(html_template.safe_substitute(plot_commands=globals()[command_name]))

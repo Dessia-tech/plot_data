@@ -2,7 +2,7 @@
 
 from string import Template
 
-empty_template = Template('''''')
+EMPTY_TEMPLATE = Template('''''')
 
 html_template = Template('''
 <!DOCTYPE html>
@@ -31,48 +31,47 @@ html_template = Template('''
 </html>
 ''')
 
-scatter_commands = """
+SCATTER_COMMANDS = """
             var plot_data = new PlotData.newScatter(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
-contour_commands = """
+CONTOUR_COMMANDS = """
             var plot_data = new PlotData.PlotContour(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
-graph_commands = """
+GRAPH_COMMANDS = """
             var plot_data = new PlotData.PlotScatter(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
-parallelplot_commands = """
+PARALLELPLOT_COMMANDS = """
             var plot_data = new PlotData.ParallelPlot(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
-histogram_commands = """
+HISTOGRAM_COMMANDS = """
             var plot_data = new PlotData.Histogram(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction();"""
 
-multiplot_commands = """
-            var multiplot = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);"""
+MULTIPLOT_COMMANDS = """
+            var plot_data = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);"""
 
-primitive_group_container_commands = """
-            var globalWidth = 1500;
-            var globalHeight = 800;
-            var primitive_group_container = new PlotData.PrimitiveGroupContainer(data, globalWidth, globalHeight,
+PRIMITIVE_GROUP_CONTAINER_COMMANDS = """
+            var primitive_group_container = new PlotData.PrimitiveGroupContainer(data, width, height,
                                                                                  true, 0, 0, $canvas_id.id);
             primitive_group_container.define_canvas($canvas_id.id);
             primitive_group_container.draw_initial();
             primitive_group_container.mouse_interaction(primitive_group_container.isParallelPlot);
             primitive_group_container.regular_layout();"""
+
 
 def get_html_string(command_name: str):
     return Template(html_template.safe_substitute(plot_commands=globals()[command_name]))

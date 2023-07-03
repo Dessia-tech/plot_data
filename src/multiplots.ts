@@ -874,7 +874,7 @@ export class MultiplePlots {
             }
           })
         }
-      }    
+      }
       if (equals(all_index, this.dep_selected_points_index) && !bool) this.dep_selected_points_index = [];
     }
 
@@ -1923,7 +1923,7 @@ export class MultiplePlots {
           this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
         }
 
-        if (mouse_moving === false) { 
+        if (mouse_moving === false) {
           if (this.selectDependency_bool) {
             if (this.clickedPlotIndex !== -1) {
               let type_ = this.objectList[this.clickedPlotIndex].type_
@@ -2102,7 +2102,7 @@ export class MultiplotCom {
         axisOrigin = parallel_plot.axis_y_end;
         axisEnd = parallel_plot.axis_y_start;
       }
-     
+
       frame.axes.forEach(axis => {
         parallel_plot.axis_list.forEach((pp_axis, ppIndex) => {
           if (axis.name == pp_axis.name) {
@@ -2115,7 +2115,7 @@ export class MultiplotCom {
               parallel_plot.inverted_axis_list[ppIndex], axis.isInverted);
           }
         })
-        
+
       })
     }
 

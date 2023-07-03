@@ -43,8 +43,8 @@ describe('HISTOGRAM CANVAS', function () {
   it("should project mouse", function () {
     cy.window().then(win => {
       const histogram = win.eval('plot_data') as Histogram;
-      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 256, "offsetY": 628} as MouseEvent);
-      expect(frameMouse.x).to.closeTo(4058, 10);
+      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 291, "offsetY": 601} as MouseEvent);
+      expect(frameMouse.x).to.closeTo(3749, 10);
     })
   })
 
@@ -68,13 +68,16 @@ describe('HISTOGRAM CANVAS', function () {
   it("should hover/click on bar", function () {
     cy.window().then(win => {
       const histogram = win.eval('plot_data') as Histogram;
-      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 278, "offsetY": 530} as MouseEvent);
+      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 348, "offsetY": 399} as MouseEvent);
       histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
+      console.log(histogram.hoveredIndices)
       expect(histogram.hoveredIndices[4]).to.be.true;
+      expect(histogram.hoveredIndices[40]).to.be.true;
 
       [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
       histogram.mouseUp(canvasMouse, frameMouse, mouseCoords, canvasDown, false)
-      expect(histogram.clickedIndices[4]).to.be.true;
+      expect(histogram.clickedIndices[11]).to.be.true;
+      expect(histogram.clickedIndices[32]).to.be.true;
     })
   })
 

@@ -11,7 +11,7 @@ html_template = Template('''
       <script src=$core_path></script>
   </head>
     <div id="buttons">
-        <button name="button" value="OK" type="button" onclick="drawSelectionWindow()"> Draw selection window </button>
+        <button name="button" value="OK" type="button" onclick="plot_data.switchSelectionMode()"> Draw selection window </button>
         <hr style="border-top: 2px;">
     </div>
     <div id="app">

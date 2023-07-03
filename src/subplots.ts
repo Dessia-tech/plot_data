@@ -1488,6 +1488,8 @@ export class BasePlot extends PlotData {
   public clickedIndices: boolean[];
   public selectedIndices: boolean[];
 
+  public isSelecting: boolean = false;
+
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
   public absoluteObjects: newShape[] = [];
@@ -1591,7 +1593,7 @@ export class BasePlot extends PlotData {
 
   public drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) };
 
-  public drawSelectionRectangle(context: CanvasRenderingContext2D): void {
+  public drawZoneRectangle(context: CanvasRenderingContext2D): void {
     // TODO: change with newRect
     Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15,15]);
   }
@@ -1622,7 +1624,7 @@ export class BasePlot extends PlotData {
 
     this.context_show.resetTransform();
     // if (this.buttons_ON) { this.drawButtons(this.context_show) }
-    if (this.multiplot_manipulation) { this.drawSelectionRectangle(this.context_show) };
+    if (this.multiplot_manipulation) { this.drawZoneRectangle(this.context_show) };
     this.context_show.restore();
   }
 
@@ -1637,8 +1639,14 @@ export class BasePlot extends PlotData {
   //   buttonRect.draw(context);
   // }
 
-  public drawSelectionWindow() {
-    console.log("Should allow to draw a selection window on any plot with this method")
+  public switchSelectionMode() { this.isSelecting = !this.isSelecting }
+
+  public drawSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex, context: CanvasRenderingContext2D) {
+    const selectionWindow = new newRect(mouseClick, mouseLoc.subtract(mouseClick));
+    context.save();
+    context.setTransform(this.canvasMatrix);
+    selectionWindow.draw(context);
+    context.restore();
   }
 
   public drawTooltips(): void {
@@ -1706,14 +1714,19 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mousemove', e => {
         [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
+        if (this.isSelecting) {
+          canvas.style.cursor = 'crosshair';
+          if (isDrawing) this.drawSelectionWindow(canvasDown, canvasMouse, this.context_show);
+          console.log(canvasDown, absoluteMouse)
+        }
         if (this.interaction_ON) {
           if (isDrawing) {
-            if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
+            if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting) {
               canvas.style.cursor = 'move';
               this.translation = this.mouseTranslate(canvasMouse, canvasDown);
             } 
           }
-          this.draw();
+          // this.draw();
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };

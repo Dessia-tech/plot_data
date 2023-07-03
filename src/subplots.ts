@@ -1489,6 +1489,8 @@ export class BasePlot extends PlotData {
   public selectedIndices: boolean[];
 
   public isSelecting: boolean = false;
+  public initSelection: Vertex;
+  public endSelection: Vertex;
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
@@ -1625,6 +1627,7 @@ export class BasePlot extends PlotData {
     this.context_show.resetTransform();
     // if (this.buttons_ON) { this.drawButtons(this.context_show) }
     if (this.multiplot_manipulation) { this.drawZoneRectangle(this.context_show) };
+    this.drawSelectionWindow(this.context_show);
     this.context_show.restore();
   }
 
@@ -1641,11 +1644,18 @@ export class BasePlot extends PlotData {
 
   public switchSelectionMode() { this.isSelecting = !this.isSelecting }
 
-  public drawSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex, context: CanvasRenderingContext2D) {
-    const selectionWindow = new newRect(mouseClick, mouseLoc.subtract(mouseClick));
-    selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
-    selectionWindow.dashLine = DASH_SELECTION_WINDOW;
-    selectionWindow.draw(context);
+  public updateSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex) {
+    this.initSelection = mouseClick;
+    this.endSelection = mouseLoc;
+  }
+
+  public drawSelectionWindow(context: CanvasRenderingContext2D) {
+    if (this.isSelecting && this.endSelection) {
+      const selectionWindow = new newRect(this.initSelection, this.endSelection.subtract(this.initSelection));
+      selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
+      selectionWindow.dashLine = DASH_SELECTION_WINDOW;
+      selectionWindow.draw(context);
+    }
   }
 
   public drawTooltips(): void {
@@ -1724,7 +1734,7 @@ export class BasePlot extends PlotData {
         }
         if (this.isSelecting) {
           canvas.style.cursor = 'crosshair';
-          if (isDrawing) this.drawSelectionWindow(absoluteDown, absoluteMouse, this.context_show);
+          if (isDrawing) this.updateSelectionWindow(absoluteDown, absoluteMouse);
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
@@ -1928,8 +1938,8 @@ export class Frame extends BasePlot {
     return [frameOrigin, xEnd, yEnd, freeSize]
   }
 
-  public drawSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex, context: CanvasRenderingContext2D) {
-    super.drawSelectionWindow(mouseClick, mouseLoc, context);
+  public updateSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex) {
+    super.updateSelectionWindow(mouseClick, mouseLoc);
     const frameClick = mouseClick.transform(this.relativeMatrix.inverse());
     const frameLoc = mouseLoc.transform(this.relativeMatrix.inverse());
     const oneCornerX = frameClick.x;

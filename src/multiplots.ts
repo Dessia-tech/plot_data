@@ -1849,6 +1849,9 @@ export class MultiplePlots {
         } else {
           this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
           this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
+          if (this.isSelecting) this.objectList.forEach((plot, index) => {
+            if (index != this.clickedPlotIndex) plot.isSelecting = false;
+          })
           if (this.manipulation_bool) {
             this.setAllInteractionsToOff();
             if (this.clickedPlotIndex != -1) {

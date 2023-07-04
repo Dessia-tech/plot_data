@@ -1813,6 +1813,7 @@ export class MultiplePlots {
     public switchSelectionMode() {
       this.isSelecting = true;
       this.objectList.forEach(plot => {if (plot instanceof BasePlot) plot.switchSelectionMode()});
+      this.redrawAllObjects();
     }
 
     mouse_interaction(): void {
@@ -2007,9 +2008,6 @@ export class MultiplePlots {
           }
         }, 100);
         double_click = false;
-      });
-
-      this.canvas.addEventListener('selectionchange', (e:any) => {
       });
 
     // Not working well actually, but I let it here in case somebody wants to give it a try

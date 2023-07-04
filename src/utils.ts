@@ -1,6 +1,7 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
+import { EventEmitter } from "events";
 
 export class Axis {
   color_stroke: any;
@@ -1040,7 +1041,8 @@ export class RubberBand {
   readonly BORDER_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;
-  constructor(public attributeName: string,
+  constructor(
+    public attributeName: string,
     private _minValue: number,
     private _maxValue: number,
     public isVertical: boolean) { }
@@ -2069,7 +2071,7 @@ export class newTooltip {
   }
 }
 
-export class newAxis {
+export class newAxis extends EventEmitter {
   public ticksPoints: newPoint2D[];
   public drawPath: Path2D;
   public path: Path2D;
@@ -2120,6 +2122,7 @@ export class newAxis {
     public initScale: Vertex,
     private _nTicks: number = 10
     ) {
+      super();
       this.isDiscrete = typeof vector[0] == 'string';
       if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
       const [minValue, maxValue] = this.computeMinMax(vector);
@@ -2443,6 +2446,7 @@ export class newAxis {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
     } else { this.rubberBand.mouseMove(downValue, currentValue) }
+    this.emit("rubberBandChange", this.rubberBand)
     return true
   }
 

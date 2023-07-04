@@ -1951,6 +1951,24 @@ export class Frame extends BasePlot {
     this.axes[0].rubberBand.maxValue = Math.max(oneCornerX, otherCornerX);
     this.axes[1].rubberBand.maxValue = Math.max(oneCornerY, otherCornerY);
   }
+
+  public mouse_interaction(isParallelPlot: boolean): void {
+    super.mouse_interaction(isParallelPlot);
+
+    this.axes[0].on('rubberBandChange', e => { 
+      if (this.initSelection && this.endSelection) {
+        this.initSelection.x = this.axes[0].relativeToAbsolute(e.minValue) / this.initScale.x;
+        this.endSelection.x = this.axes[0].relativeToAbsolute(e.maxValue) / this.initScale.x;
+      }
+    })
+
+    this.axes[1].on('rubberBandChange', e => { 
+      if (this.initSelection && this.endSelection) {
+        this.initSelection.y = this.axes[1].relativeToAbsolute(e.minValue) / this.initScale.y;
+        this.endSelection.y = this.axes[1].relativeToAbsolute(e.maxValue) / this.initScale.y;
+      }
+    })
+  }
 }
 
 export class Histogram extends Frame {

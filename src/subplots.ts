@@ -1617,7 +1617,10 @@ export class BasePlot extends PlotData {
 
   public drawRelativeObjects() {}
 
-  public drawAbsoluteObjects() {}
+  public drawAbsoluteObjects(context: CanvasRenderingContext2D) {
+    this.absoluteObjects = [];
+    this.drawSelectionWindow(context);
+  }
 
   public computeRelativeObjects() {}
 
@@ -1633,7 +1636,7 @@ export class BasePlot extends PlotData {
     this.drawRelativeObjects();
 
     this.context_show.resetTransform();
-    this.drawAbsoluteObjects();
+    this.drawAbsoluteObjects(this.context_show);
 
     this.context_show.setTransform(this.canvasMatrix);
     this.drawAxes();
@@ -1642,7 +1645,6 @@ export class BasePlot extends PlotData {
     this.context_show.resetTransform();
     // if (this.buttons_ON) { this.drawButtons(this.context_show) }
     if (this.multiplot_manipulation) { this.drawZoneRectangle(this.context_show) };
-    this.drawSelectionWindow(this.context_show);
     this.context_show.restore();
   }
 
@@ -1666,11 +1668,12 @@ export class BasePlot extends PlotData {
 
   public drawSelectionWindow(context: CanvasRenderingContext2D) {
     if (this.isSelecting && this.endSelection) {
-      const selectionWindow = new newRect(this.initSelection, this.endSelection.subtract(this.initSelection));
-      selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
-      selectionWindow.dashLine = DASH_SELECTION_WINDOW;
-      this.selectionWindow = selectionWindow;
-      this.selectionWindow.draw(context);
+      this.selectionWindow.origin = this.initSelection
+      this.selectionWindow.size = this.endSelection.subtract(this.initSelection);
+      this.selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
+      this.selectionWindow.dashLine = DASH_SELECTION_WINDOW;
+      this.selectionWindow.draw(context)
+      this.absoluteObjects.push(this.selectionWindow)
     }
   }
 
@@ -1959,10 +1962,12 @@ export class Frame extends BasePlot {
     if ((this.isSelecting || this.is_drawing_rubber_band) && this.endSelection) {
       const initProj = this.initSelection.transform(this.relativeMatrix);
       const endProj = this.endSelection.transform(this.relativeMatrix);
-      const selectionWindow = new newRect(initProj, endProj.subtract(initProj));
-      selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
-      selectionWindow.dashLine = DASH_SELECTION_WINDOW;
-      selectionWindow.draw(context);
+      this.selectionWindow.origin = this.initSelection.transform(this.relativeMatrix); 
+      this.selectionWindow.size = endProj.subtract(initProj);
+      this.selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
+      this.selectionWindow.dashLine = DASH_SELECTION_WINDOW;
+      this.selectionWindow.draw(context);
+      this.absoluteObjects.push(this.selectionWindow);
     }
   }
 
@@ -2081,8 +2086,7 @@ export class Histogram extends Frame {
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     // TODO: Fast and dirty implementation. Needs to be rethought.
-    if (objects[0] instanceof newAxis) { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
-    else {
+     if (objects[0] instanceof Bar) {
       const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
       objects.forEach(object => {
         if (object.values) {
@@ -2090,7 +2094,7 @@ export class Histogram extends Frame {
           else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
         }
       })
-    }
+    } else { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
   }
 
   public getBarsDrawing(): void {
@@ -2175,7 +2179,7 @@ export class newScatter extends Frame {
       else this.tooltipAttr = data.tooltip.attribute;
     }
 
-  private computePoints(): newPoint2D[] {
+  private computePoints(context: CanvasRenderingContext2D): newPoint2D[] {
     const numericVectorX = this.axes[0].stringsToValues(this.features.get(this.xFeature));
     const numericVectorY = this.axes[1].stringsToValues(this.features.get(this.yFeature));
     const points: newPoint2D[] = [];
@@ -2191,7 +2195,7 @@ export class newScatter extends Frame {
       const inCanvasY = numericVectorY[index] < this.axes[1].maxValue && numericVectorY[index] > this.axes[1].minValue;
       if (inCanvasX && inCanvasY) {
         if (newPoint.isClicked) this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[index]));
-        newPoint.draw(this.context_show);
+        newPoint.draw(context);
       }
       points.push(newPoint);
     }
@@ -2217,14 +2221,15 @@ export class newScatter extends Frame {
     else {
       const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
       objects.forEach((object, index) => {
-        if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { stateIndices[index] = invertState ? !stateIndices[index] : true }
+        if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {stateIndices[index] = invertState ? !stateIndices[index] : true }
         else { if (!keepState) { stateIndices[index] = false } }
       })
     }
   }
 
-  public drawAbsoluteObjects(): void {
-    this.points = this.computePoints();
+  public drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
+    this.points = this.computePoints(context);
     this.absoluteObjects = this.points;
+    this.drawSelectionWindow(context);
   };
 }

@@ -1351,7 +1351,7 @@ export class newShape {
   public draw(context: CanvasRenderingContext2D): void {
     const scaledPath = new Path2D();
     const contextMatrix = context.getTransform();
-    scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+    scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
     context.save();
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     this.setDrawingProperties(context);
@@ -1375,6 +1375,8 @@ export class newShape {
     }
   }
 
+  public buildPath(): Path2D { return new Path2D() }
+
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) { }
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex): boolean { return false }
@@ -1392,7 +1394,7 @@ export class newCircle extends newShape {
   }
 
   public buildPath(): Path2D {
-    const path = this.path;
+    const path = new Path2D();
     path.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
     return path
   }
@@ -1408,7 +1410,7 @@ export class newRect extends newShape {
   }
 
   public buildPath(): Path2D {
-    const path = this.path;
+    const path = new Path2D();
     path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
     return path
   }
@@ -1425,7 +1427,7 @@ export class newRoundRect extends newRect {
     }
 
   public buildPath(): Path2D {
-    const path = this.path;
+    const path = new Path2D();
     const hLength = this.origin.x + this.size.x;
     const vLength = this.origin.y + this.size.y;
     path.moveTo(this.origin.x + this.radius, this.origin.y);
@@ -1453,7 +1455,7 @@ export class Mark extends newShape {
   }
 
   public buildPath(): Path2D {
-    const path = this.path;
+    const path = new Path2D();
     const halfSize = this.size / 2;
     path.moveTo(this.center.x - halfSize, this.center.y);
     path.lineTo(this.center.x + halfSize, this.center.y);
@@ -1544,7 +1546,7 @@ export class Cross extends newShape {
   }
 
   public buildPath(): Path2D {
-    const path = this.path;
+    const path = new Path2D();
     const halfSize = this.size / 2;
     path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
     path.lineTo(this.center.x + halfSize, this.center.y + halfSize);

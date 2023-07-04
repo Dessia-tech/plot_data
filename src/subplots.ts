@@ -1642,7 +1642,7 @@ export class BasePlot extends PlotData {
   //   buttonRect.draw(context);
   // }
 
-  public switchSelectionMode() { this.isSelecting = !this.isSelecting }
+  public switchSelectionMode() { this.isSelecting = !this.isSelecting ; this.draw() }
 
   public updateSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex) {
     this.initSelection = mouseClick;

@@ -1974,7 +1974,6 @@ export class Frame extends BasePlot {
 
   public mouse_interaction(isParallelPlot: boolean): void {
     super.mouse_interaction(isParallelPlot);
-
     this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => { this.updateWindowValues(e.minValue, e.maxValue, index) }));
   }
 }

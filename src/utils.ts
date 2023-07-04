@@ -2429,6 +2429,8 @@ export class newAxis extends EventEmitter {
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D): void {
+    const previousMin = this.rubberBand.realMin;
+    const previousMax = this.rubberBand.realMax;
     const realMin = this.relativeToAbsolute(this.rubberBand.minValue);
     const realMax = this.relativeToAbsolute(this.rubberBand.maxValue);
     const coord = this.isVertical ? "y" : "x";
@@ -2437,6 +2439,7 @@ export class newAxis extends EventEmitter {
     this.rubberBand.realMin = Math.min(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.realMax = Math.max(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, 'hsl(203, 0%, 100%, 0.5)', 0.1, 1.);
+    if (this.rubberBand.realMin != previousMin || this.rubberBand.realMax != previousMax) this.emit("rubberBandChange", this.rubberBand)
   }
 
   public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {
@@ -2446,7 +2449,6 @@ export class newAxis extends EventEmitter {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
     } else { this.rubberBand.mouseMove(downValue, currentValue) }
-    this.emit("rubberBandChange", this.rubberBand)
     return true
   }
 

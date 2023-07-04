@@ -1489,8 +1489,10 @@ export class BasePlot extends PlotData {
   public selectedIndices: boolean[];
 
   public isSelecting: boolean = false;
+  // TODO: needs a refacto to remove initSelection and endSelection
   public initSelection: Vertex;
   public endSelection: Vertex;
+  public selectionWindow = new newRect();
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
@@ -1593,7 +1595,20 @@ export class BasePlot extends PlotData {
     return boolSelection
   }
 
-  public drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) };
+
+  public isRubberBanded(): boolean {
+    let isRubberBanded = true;
+    this.axes.forEach(axis => isRubberBanded = isRubberBanded && axis.rubberBand.length != 0);
+    return isRubberBanded
+  }
+
+  public drawAxes(): void { 
+    this.axes.forEach(axis => axis.draw(this.context_show));
+    if (this.isRubberBanded()) {
+      this.initSelection = new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue);
+      this.endSelection = new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue);
+    }
+  };
 
   public drawZoneRectangle(context: CanvasRenderingContext2D): void {
     // TODO: change with newRect
@@ -1654,7 +1669,8 @@ export class BasePlot extends PlotData {
       const selectionWindow = new newRect(this.initSelection, this.endSelection.subtract(this.initSelection));
       selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
       selectionWindow.dashLine = DASH_SELECTION_WINDOW;
-      selectionWindow.draw(context);
+      this.selectionWindow = selectionWindow;
+      this.selectionWindow.draw(context);
     }
   }
 
@@ -1734,7 +1750,7 @@ export class BasePlot extends PlotData {
         }
         if (this.isSelecting) {
           canvas.style.cursor = 'crosshair';
-          if (isDrawing) this.updateSelectionWindow(absoluteDown, absoluteMouse);
+          if (isDrawing) this.updateSelectionWindow(frameDown, frameMouse);
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
@@ -1759,6 +1775,7 @@ export class BasePlot extends PlotData {
         clickedObject = undefined;
         isDrawing = false;
         this.isSelecting = false; // TODO: Should we de-activate selection each time mouse is up ?
+        this.is_drawing_rubber_band = false;
       })
 
       canvas.addEventListener('wheel', e => {
@@ -1939,7 +1956,7 @@ export class Frame extends BasePlot {
   }
 
   public drawSelectionWindow(context: CanvasRenderingContext2D) {
-    if (this.isSelecting && this.endSelection) {
+    if ((this.isSelecting || this.is_drawing_rubber_band) && this.endSelection) {
       const initProj = this.initSelection.transform(this.relativeMatrix);
       const endProj = this.endSelection.transform(this.relativeMatrix);
       const selectionWindow = new newRect(initProj, endProj.subtract(initProj));
@@ -1950,16 +1967,10 @@ export class Frame extends BasePlot {
   }
 
   public updateSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex) {
-    const frameClick = mouseClick.transform(this.relativeMatrix.inverse());
-    const frameLoc = mouseLoc.transform(this.relativeMatrix.inverse());
-    const oneCornerX = frameClick.x;
-    const otherCornerX = frameLoc.x;
-    const oneCornerY = frameClick.y;
-    const otherCornerY = frameLoc.y;
-    this.axes[0].rubberBand.minValue = Math.min(oneCornerX, otherCornerX);
-    this.axes[1].rubberBand.minValue = Math.min(oneCornerY, otherCornerY);
-    this.axes[0].rubberBand.maxValue = Math.max(oneCornerX, otherCornerX);
-    this.axes[1].rubberBand.maxValue = Math.max(oneCornerY, otherCornerY);
+    this.axes[0].rubberBand.minValue = Math.min(mouseClick.x, mouseLoc.x);
+    this.axes[1].rubberBand.minValue = Math.min(mouseClick.y, mouseLoc.y);
+    this.axes[0].rubberBand.maxValue = Math.max(mouseClick.x, mouseLoc.x);
+    this.axes[1].rubberBand.maxValue = Math.max(mouseClick.y, mouseLoc.y);
     this.initSelection = new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue);
     this.endSelection = new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue);
   }
@@ -1974,7 +1985,10 @@ export class Frame extends BasePlot {
 
   public mouse_interaction(isParallelPlot: boolean): void {
     super.mouse_interaction(isParallelPlot);
-    this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => { this.updateWindowValues(e.minValue, e.maxValue, index) }));
+    this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => { 
+      this.is_drawing_rubber_band = true
+      this.updateWindowValues(e.minValue, e.maxValue, index) 
+    }));
   }
 }
 

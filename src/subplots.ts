@@ -1683,10 +1683,12 @@ export class BasePlot extends PlotData {
   }
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    objects.forEach(object => {
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object[stateName] = invertState ? !object[stateName] : true }
-      else {if (!keepState) {object[stateName] = false}}
-    })
+    objects.forEach((object, index) => { this.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState) });
+  }
+
+  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index: number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
+    if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object[stateName] = invertState ? !object[stateName] : true }
+    else {if (!keepState) {object[stateName] = false}}
   }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
@@ -1772,13 +1774,13 @@ export class BasePlot extends PlotData {
         console.log(e.offsetX, e.offsetY)
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) {clickedObject.mouseUp()};
+        this.isSelecting = false; // TODO: Should we de-activate selection each time mouse is up ?
+        this.is_drawing_rubber_band = false;
+        clickedObject = undefined;
         this.draw();
         this.axes.forEach(axis => {axis.saveLocation()});
         this.translation = new Vertex(0, 0);
-        clickedObject = undefined;
         isDrawing = false;
-        this.isSelecting = false; // TODO: Should we de-activate selection each time mouse is up ?
-        this.is_drawing_rubber_band = false;
       })
 
       canvas.addEventListener('wheel', e => {
@@ -1796,7 +1798,7 @@ export class BasePlot extends PlotData {
           }
           this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
           this.updateAxes(); // needs a refactor
-          this.axes.forEach(axis => {axis.saveLocation()});
+          this.axes.forEach(axis => axis.saveLocation());
           [this.scaleX, this.scaleY] = [1, 1];
           this.viewPoint = new Vertex(0, 0);
           this.draw(); // needs a refactor
@@ -1989,11 +1991,12 @@ export class Frame extends BasePlot {
   }
 
   public mouse_interaction(isParallelPlot: boolean): void {
-    super.mouse_interaction(isParallelPlot);
     this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => { 
-      this.is_drawing_rubber_band = true
+      this.is_drawing_rubber_band = true;
       this.updateWindowValues(e.minValue, e.maxValue, index) 
     }));
+
+    super.mouse_interaction(isParallelPlot);
   }
 }
 
@@ -2084,17 +2087,15 @@ export class Histogram extends Frame {
     this.relativeObjects = this.bars;
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    // TODO: Fast and dirty implementation. Needs to be rethought.
-     if (objects[0] instanceof Bar) {
-      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-      objects.forEach(object => {
-        if (object.values) {
-          if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
-          else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
-        }
-      })
-    } else { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
+  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index: number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+    if (object instanceof Bar) {
+      if (object.values) {
+        const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
+        if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
+        else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
+      }
+    }
+    else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState)
   }
 
   public getBarsDrawing(): void {
@@ -2215,16 +2216,13 @@ export class newScatter extends Frame {
     return relativeMatrix.mmul(pointsMatrix)
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    // TODO: Fast and dirty implementation. Needs to be rethought ?
-    if (objects[0] instanceof newAxis) { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
-    else {
+  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+    if (object instanceof newPoint2D) {
       const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-      objects.forEach((object, index) => {
-        if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {stateIndices[index] = invertState ? !stateIndices[index] : true }
-        else { if (!keepState) { stateIndices[index] = false } }
-      })
+      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {stateIndices[index] = invertState ? !stateIndices[index] : true }
+      else { if (!keepState) { stateIndices[index] = false } }
     }
+    else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState)
   }
 
   public drawAbsoluteObjects(context: CanvasRenderingContext2D): void {

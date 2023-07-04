@@ -2096,6 +2096,7 @@ export class MultiplotCom {
           if (axisFrame1.name == axisFrame2.name && axisFrame1.name != 'number') {
             axisFrame2.rubberBand.minValue = axisFrame1.rubberBand.minValue;
             axisFrame2.rubberBand.maxValue = axisFrame1.rubberBand.maxValue;
+            axisFrame2.emit("rubberBandChange", axisFrame2.rubberBand)
           }
         })
       })

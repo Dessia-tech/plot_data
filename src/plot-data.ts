@@ -167,7 +167,7 @@ export abstract class PlotData {
 
   isSelecting:boolean=false;
   selection_coords:[number, number][]=[];
-  is_drawing_rubber_band:boolean=false;
+  is_drawing_rubber_band: boolean = false;
 
   point_families:PointFamily[]=[];
   latest_selected_points:Point2D[]=[];

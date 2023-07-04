@@ -1406,12 +1406,13 @@ export class newRect extends newShape {
     public size: Vertex = new Vertex(0, 0)
   ) {
     super();
-    this.path = this.buildPath();
+    this.buildPath();
   }
 
   public buildPath(): Path2D {
     const path = new Path2D();
     path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
+    this.path = path;
     return path
   }
 }
@@ -1441,6 +1442,7 @@ export class newRoundRect extends newRect {
     path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
     path.lineTo(this.origin.x, this.origin.y + this.radius);
     path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
+    this.path = path;
     return path
   }
 }
@@ -1461,6 +1463,7 @@ export class Mark extends newShape {
     path.lineTo(this.center.x + halfSize, this.center.y);
     path.moveTo(this.center.x, this.center.y - halfSize);
     path.lineTo(this.center.x, this.center.y + halfSize);
+    this.path = path;
     return path
   }
 }
@@ -1483,6 +1486,7 @@ export class UpHalfLine extends AbstractHalfLine {
     const halfSize = this.size / 2;
     path.moveTo(this.center.x, this.center.y);
     path.lineTo(this.center.x, this.center.y + halfSize);
+    this.path = path;
     return path;
   }
 }
@@ -1493,6 +1497,7 @@ export class DownHalfLine extends AbstractHalfLine {
     const halfSize = this.size / 2;
     path.moveTo(this.center.x, this.center.y);
     path.lineTo(this.center.x, this.center.y - halfSize);
+    this.path = path;
     return path;
   }
 }
@@ -1503,6 +1508,7 @@ export class LeftHalfLine extends AbstractHalfLine {
     const halfSize = this.size / 2;
     path.moveTo(this.center.x, this.center.y);
     path.lineTo(this.center.x - halfSize, this.center.y);
+    this.path = path;
     return path;
   }
 }
@@ -1513,6 +1519,7 @@ export class RightHalfLine extends AbstractHalfLine {
     const halfSize = this.size / 2;
     path.moveTo(this.center.x, this.center.y);
     path.lineTo(this.center.x + halfSize, this.center.y);
+    this.path = path;
     return path;
   }
 }
@@ -2431,8 +2438,6 @@ export class newAxis extends EventEmitter {
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D): void {
-    const previousMin = this.rubberBand.realMin;
-    const previousMax = this.rubberBand.realMax;
     const realMin = this.relativeToAbsolute(this.rubberBand.minValue);
     const realMax = this.relativeToAbsolute(this.rubberBand.maxValue);
     const coord = this.isVertical ? "y" : "x";
@@ -2441,7 +2446,7 @@ export class newAxis extends EventEmitter {
     this.rubberBand.realMin = Math.min(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.realMax = Math.max(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, 'hsl(203, 0%, 100%, 0.5)', 0.1, 1.);
-    if (this.rubberBand.realMin != previousMin || this.rubberBand.realMax != previousMax) this.emit("rubberBandChange", this.rubberBand)
+    if (this.rubberBand.isClicked) this.emit("rubberBandChange", this.rubberBand);
   }
 
   public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {

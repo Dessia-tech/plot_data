@@ -1938,8 +1938,18 @@ export class Frame extends BasePlot {
     return [frameOrigin, xEnd, yEnd, freeSize]
   }
 
+  public drawSelectionWindow(context: CanvasRenderingContext2D) {
+    if (this.isSelecting && this.endSelection) {
+      const initProj = this.initSelection.transform(this.relativeMatrix);
+      const endProj = this.endSelection.transform(this.relativeMatrix);
+      const selectionWindow = new newRect(initProj, endProj.subtract(initProj));
+      selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
+      selectionWindow.dashLine = DASH_SELECTION_WINDOW;
+      selectionWindow.draw(context);
+    }
+  }
+
   public updateSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex) {
-    super.updateSelectionWindow(mouseClick, mouseLoc);
     const frameClick = mouseClick.transform(this.relativeMatrix.inverse());
     const frameLoc = mouseLoc.transform(this.relativeMatrix.inverse());
     const oneCornerX = frameClick.x;
@@ -1950,24 +1960,22 @@ export class Frame extends BasePlot {
     this.axes[1].rubberBand.minValue = Math.min(oneCornerY, otherCornerY);
     this.axes[0].rubberBand.maxValue = Math.max(oneCornerX, otherCornerX);
     this.axes[1].rubberBand.maxValue = Math.max(oneCornerY, otherCornerY);
+    this.initSelection = new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue);
+    this.endSelection = new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue);
+  }
+
+  public updateWindowValues(newMin: number, newMax: number, axisIndex: number) {
+    const coordName = ["x", "y"][axisIndex];
+    if (this.initSelection && this.endSelection) {
+      this.initSelection[coordName] = newMin;
+      this.endSelection[coordName] = newMax;
+    }
   }
 
   public mouse_interaction(isParallelPlot: boolean): void {
     super.mouse_interaction(isParallelPlot);
 
-    this.axes[0].on('rubberBandChange', e => { 
-      if (this.initSelection && this.endSelection) {
-        this.initSelection.x = this.axes[0].relativeToAbsolute(e.minValue) / this.initScale.x;
-        this.endSelection.x = this.axes[0].relativeToAbsolute(e.maxValue) / this.initScale.x;
-      }
-    })
-
-    this.axes[1].on('rubberBandChange', e => { 
-      if (this.initSelection && this.endSelection) {
-        this.initSelection.y = this.axes[1].relativeToAbsolute(e.minValue) / this.initScale.y;
-        this.endSelection.y = this.axes[1].relativeToAbsolute(e.maxValue) / this.initScale.y;
-      }
-    })
+    this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => { this.updateWindowValues(e.minValue, e.maxValue, index) }));
   }
 }
 

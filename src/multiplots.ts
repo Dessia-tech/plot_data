@@ -2012,6 +2012,12 @@ export class MultiplePlots {
       this.canvas.addEventListener('selectionchange', (e:any) => {
       });
 
+      this.objectList.forEach(plot => {
+        if (plot instanceof BasePlot) {
+          
+        }
+      })
+
 
     // Not working well actually, but I let it here in case somebody wants to give it a try
       // canvas.addEventListener('keydown', e => {

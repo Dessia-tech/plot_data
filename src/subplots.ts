@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape, newRect } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape, SelectionBox } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1489,10 +1489,7 @@ export class BasePlot extends PlotData {
   public selectedIndices: boolean[];
 
   public isSelecting: boolean = false;
-  // TODO: needs a refacto to remove initSelection and endSelection
-  public initSelection: Vertex;
-  public endSelection: Vertex;
-  public selectionWindow = new newRect();
+  public selectionBox = new SelectionBox();
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
@@ -1604,10 +1601,7 @@ export class BasePlot extends PlotData {
 
   public drawAxes(): void { 
     this.axes.forEach(axis => axis.draw(this.context_show));
-    if (this.isRubberBanded()) {
-      this.initSelection = new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue);
-      this.endSelection = new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue);
-    }
+    if (this.isRubberBanded()) this.selectionBox.frameBoxUpdate(this.axes[0].rubberBand, this.axes[1].rubberBand);
   };
 
   public drawZoneRectangle(context: CanvasRenderingContext2D): void {
@@ -1619,7 +1613,7 @@ export class BasePlot extends PlotData {
 
   public drawAbsoluteObjects(context: CanvasRenderingContext2D) {
     this.absoluteObjects = [];
-    this.drawSelectionWindow(context);
+    this.drawSelectionBox(context);
   }
 
   public computeRelativeObjects() {}
@@ -1661,19 +1655,19 @@ export class BasePlot extends PlotData {
 
   public switchSelectionMode() { this.isSelecting = !this.isSelecting ; this.draw() }
 
-  public updateSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex) {
-    this.initSelection = mouseClick;
-    this.endSelection = mouseLoc;
+  public updateSelectionBox(frameDown: Vertex, frameLoc: Vertex) {
+    this.selectionBox.minVertex = frameDown;
+    this.selectionBox.maxVertex = frameLoc;
   }
 
-  public drawSelectionWindow(context: CanvasRenderingContext2D) {
-    if (this.isSelecting && this.endSelection) {
-      this.selectionWindow.origin = this.initSelection
-      this.selectionWindow.size = this.endSelection.subtract(this.initSelection);
-      this.selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
-      this.selectionWindow.dashLine = DASH_SELECTION_WINDOW;
-      this.selectionWindow.draw(context)
-      this.absoluteObjects.push(this.selectionWindow)
+  public drawSelectionBox(context: CanvasRenderingContext2D) {
+    if (this.isSelecting && this.selectionBox.isDefined) {
+      this.selectionBox.origin = this.selectionBox.minVertex;
+      this.selectionBox.size = this.selectionBox.maxVertex.subtract(this.selectionBox.minVertex);
+      this.selectionBox.fillStyle = "hsla(0, 0%, 100%, 0)";
+      this.selectionBox.dashLine = DASH_SELECTION_WINDOW;
+      this.selectionBox.draw(context)
+      this.absoluteObjects.push(this.selectionBox)
     }
   }
 
@@ -1755,7 +1749,7 @@ export class BasePlot extends PlotData {
         }
         if (this.isSelecting) {
           canvas.style.cursor = 'crosshair';
-          if (isDrawing) this.updateSelectionWindow(frameDown, frameMouse);
+          if (isDrawing) this.updateSelectionBox(frameDown, frameMouse);
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
@@ -1960,42 +1954,35 @@ export class Frame extends BasePlot {
     return [frameOrigin, xEnd, yEnd, freeSize]
   }
 
-  public drawSelectionWindow(context: CanvasRenderingContext2D) {
-    if ((this.isSelecting || this.is_drawing_rubber_band) && this.endSelection) {
-      const initProj = this.initSelection.transform(this.relativeMatrix);
-      const endProj = this.endSelection.transform(this.relativeMatrix);
-      this.selectionWindow.origin = this.initSelection.transform(this.relativeMatrix); 
-      this.selectionWindow.size = endProj.subtract(initProj);
-      if (this.selectionWindow.area != 0) {
-        this.selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
-        this.selectionWindow.dashLine = DASH_SELECTION_WINDOW;
-        this.selectionWindow.draw(context);
-        this.absoluteObjects.push(this.selectionWindow);
+  public drawSelectionBox(context: CanvasRenderingContext2D) {
+    if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
+      const initProj = this.selectionBox.minVertex.transform(this.relativeMatrix);
+      const endProj = this.selectionBox.maxVertex.transform(this.relativeMatrix);
+      this.selectionBox.origin = initProj; 
+      this.selectionBox.size = endProj.subtract(initProj);
+      if (this.selectionBox.area != 0) {
+        console.log(this.selectionBox.area)
+        this.selectionBox.fillStyle = "hsla(0, 0%, 100%, 0)";
+        this.selectionBox.dashLine = DASH_SELECTION_WINDOW;
+        this.selectionBox.draw(context);
+        this.absoluteObjects.push(this.selectionBox);
       }
     }
   }
 
-  public updateSelectionWindow(mouseClick: Vertex, mouseLoc: Vertex) {
-    this.axes[0].rubberBand.minValue = Math.min(mouseClick.x, mouseLoc.x);
-    this.axes[1].rubberBand.minValue = Math.min(mouseClick.y, mouseLoc.y);
-    this.axes[0].rubberBand.maxValue = Math.max(mouseClick.x, mouseLoc.x);
-    this.axes[1].rubberBand.maxValue = Math.max(mouseClick.y, mouseLoc.y);
-    this.initSelection = new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue);
-    this.endSelection = new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue);
-  }
-
-  public updateWindowValues(newMin: number, newMax: number, axisIndex: number) {
-    const coordName = ["x", "y"][axisIndex];
-    if (this.initSelection && this.endSelection) {
-      this.initSelection[coordName] = newMin;
-      this.endSelection[coordName] = newMax;
-    }
+  public updateSelectionBox(frameDown: Vertex, frameMouse: Vertex) {
+    super.updateSelectionBox(frameDown, frameMouse);
+    this.axes[0].rubberBand.minValue = Math.min(frameDown.x, frameMouse.x);
+    this.axes[1].rubberBand.minValue = Math.min(frameDown.y, frameMouse.y);
+    this.axes[0].rubberBand.maxValue = Math.max(frameDown.x, frameMouse.x);
+    this.axes[1].rubberBand.maxValue = Math.max(frameDown.y, frameMouse.y);
+    this.selectionBox.frameBoxUpdate(this.axes[0].rubberBand, this.axes[1].rubberBand);
   }
 
   public mouse_interaction(isParallelPlot: boolean): void {
     this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => { 
       this.is_drawing_rubber_band = true;
-      this.updateWindowValues(e.minValue, e.maxValue, index) 
+      this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
     }));
 
     super.mouse_interaction(isParallelPlot);
@@ -2230,6 +2217,6 @@ export class newScatter extends Frame {
   public drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
     this.points = this.computePoints(context);
     this.absoluteObjects = this.points;
-    this.drawSelectionWindow(context);
+    this.drawSelectionBox(context);
   };
 }

@@ -2082,6 +2082,32 @@ export class newTooltip {
   }
 }
 
+
+export class SelectionBox extends newRect {
+  public minVertex: Vertex;
+  public maxVertex: Vertex;
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0)
+  ) {
+    super(origin, size);
+  }
+
+  get isDefined(): boolean { return (this.minVertex != undefined && this.maxVertex != undefined) }
+
+  public frameBoxUpdate(rubberBandX: RubberBand, rubberBandY: RubberBand) {
+    this.minVertex = new Vertex(rubberBandX.minValue, rubberBandY.minValue);
+    this.maxVertex = new Vertex(rubberBandX.maxValue, rubberBandY.maxValue);
+  }
+
+  public rubberBandUpdate(rubberBand: RubberBand, coordName: string) {
+    if (this.isDefined) {
+      this.minVertex[coordName] = rubberBand.minValue;
+      this.maxVertex[coordName] = rubberBand.maxValue;
+    }
+  }
+}
+
 export class newAxis extends EventEmitter {
   public ticksPoints: newPoint2D[];
   public drawPath: Path2D;
@@ -2469,6 +2495,7 @@ export class newAxis extends EventEmitter {
       this.rubberBand.reset();
       isReset = true;
     } else { this.rubberBand.mouseDown(mouseUniCoord); }
+    this.emit("rubberBandChange", this.rubberBand);
     return isReset
   }
 

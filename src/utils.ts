@@ -1409,6 +1409,8 @@ export class newRect extends newShape {
     this.buildPath();
   }
 
+  get area(): number { return this.size.x * this.size.y }
+
   public buildPath(): Path2D {
     const path = new Path2D();
     path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);

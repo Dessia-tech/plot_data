@@ -1964,6 +1964,7 @@ export class MultiplePlots {
         }
         this.refreshRubberBands();
         this.manage_selected_point_index_changes(old_selected_index);
+        this.objectList.forEach(plot => plot.is_drawing_rubber_band = false);
         this.redrawAllObjects();
         isDrawing = false;
         mouse_moving = false;

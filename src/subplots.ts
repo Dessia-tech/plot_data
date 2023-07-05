@@ -1775,7 +1775,7 @@ export class BasePlot extends PlotData {
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) {clickedObject.mouseUp()};
         this.isSelecting = false; // TODO: Should we de-activate selection each time mouse is up ?
-        this.is_drawing_rubber_band = false;
+        if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
         clickedObject = undefined;
         this.draw();
         this.axes.forEach(axis => {axis.saveLocation()});
@@ -1966,10 +1966,12 @@ export class Frame extends BasePlot {
       const endProj = this.endSelection.transform(this.relativeMatrix);
       this.selectionWindow.origin = this.initSelection.transform(this.relativeMatrix); 
       this.selectionWindow.size = endProj.subtract(initProj);
-      this.selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
-      this.selectionWindow.dashLine = DASH_SELECTION_WINDOW;
-      this.selectionWindow.draw(context);
-      this.absoluteObjects.push(this.selectionWindow);
+      if (this.selectionWindow.area != 0) {
+        this.selectionWindow.fillStyle = "hsla(0, 0%, 100%, 0)";
+        this.selectionWindow.dashLine = DASH_SELECTION_WINDOW;
+        this.selectionWindow.draw(context);
+        this.absoluteObjects.push(this.selectionWindow);
+      }
     }
   }
 

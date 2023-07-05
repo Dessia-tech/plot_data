@@ -1378,7 +1378,7 @@ export class newShape {
 
   public buildPath(): Path2D { return new Path2D() }
 
-  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) { }
+  public mouseDown(mouseDown: Vertex) { }
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex): boolean { return false }
 
@@ -2115,8 +2115,12 @@ export class SelectionBox extends newRect {
   }
 
   public buildRectFromHTMatrix(HTMatrix: DOMMatrix) {
-    this.origin = this.minVertex.transform(HTMatrix); 
+    this.origin = this.minVertex.transform(HTMatrix);
     this.size = this.maxVertex.transform(HTMatrix).subtract(this.origin);
+  }
+
+  public mouseDown(mouseDown: Vertex): void {
+
   }
 }
 

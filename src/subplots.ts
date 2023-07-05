@@ -1964,7 +1964,7 @@ export class Frame extends BasePlot {
   }
 
   public mouse_interaction(isParallelPlot: boolean): void {
-    this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => { 
+    this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => {
       this.is_drawing_rubber_band = true;
       this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
     }));

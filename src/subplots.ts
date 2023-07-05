@@ -1497,7 +1497,7 @@ export class BasePlot extends PlotData {
 
   public font: string = "sans-serif";
 
-  protected initScale: Vertex = new Vertex(-1, 1);
+  protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   public nSamples: number;
 
@@ -1653,9 +1653,12 @@ export class BasePlot extends PlotData {
 
   public updateSelectionBox(frameDown: Vertex, frameLoc: Vertex) { this.selectionBox.update(frameDown, frameLoc) }
 
+  public get drawingZone(): [Vertex, Vertex] { return [new Vertex(this.X, this.Y), this.size] }
+
   public drawSelectionBox(context: CanvasRenderingContext2D) {
     if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
-      this.selectionBox.buildRectFromHTMatrix(new Vertex(this.X, this.Y), this.size, this.relativeMatrix);
+      const [drawingOrigin, drawingSize] = this.drawingZone;
+      this.selectionBox.buildRectFromHTMatrix(drawingOrigin, drawingSize, this.relativeMatrix);
       if (this.selectionBox.area != 0) {
         this.selectionBox.draw(context);
         this.absoluteObjects.push(this.selectionBox);
@@ -1896,11 +1899,20 @@ export class Frame extends BasePlot {
 
   get nXTicks(): number { return this._nXTicks ? this._nXTicks : 7 }
 
-  set nXTicks(value: number) {this._nXTicks = value}
+  set nXTicks(value: number) { this._nXTicks = value }
 
-  get nYTicks(): number {return this._nYTicks ? this._nYTicks : 7}
+  get nYTicks(): number { return this._nYTicks ? this._nYTicks : 7 }
 
-  set nYTicks(value: number) {this._nYTicks = value}
+  set nYTicks(value: number) { this._nYTicks = value }
+
+  public get drawingZone(): [Vertex, Vertex] {
+    const origin = new Vertex();
+    origin.x = this.initScale.x < 0 ? this.axes[0].end.x : this.axes[0].origin.x;
+    origin.y = this.initScale.y < 0 ? this.axes[1].end.y : this.axes[1].origin.y;
+    const size = new Vertex(Math.abs(this.axes[0].end.x - this.axes[0].origin.x), Math.abs(this.axes[1].end.y - this.axes[1].origin.y))
+    return [origin.transform(this.canvasMatrix.inverse()), size] 
+  }
+
 
   private computeOffset(): Vertex {
     const naturalOffset = new Vertex(this.width * this.OFFSET_MULTIPLIER.x, this.height * this.OFFSET_MULTIPLIER.y);

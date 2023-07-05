@@ -2130,24 +2130,34 @@ export class SelectionBox extends newRect {
     this.insideCanvas(plotOrigin, plotSize);
   }
 
-  private insideCanvas(plotOrigin: Vertex, plotSize: Vertex): boolean {
+  private insideCanvas(drawOrigin: Vertex, drawSize: Vertex): boolean {
     let isInside = true;
     const downLeftCorner = this.origin;
-    const upRightCorner = this.origin.add(this.size);
-    const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
-    const downLeftDiff = downLeftCorner.subtract(plotOrigin);
+    const upRightCorner = downLeftCorner.add(this.size);
+    const upRightDiff = drawOrigin.add(drawSize).subtract(upRightCorner);
+    const downLeftDiff = downLeftCorner.subtract(drawOrigin);
 
     if (upRightDiff.x < 0) this.size.x += upRightDiff.x
-    else if (upRightDiff.x > plotSize.x) this.size.x += upRightDiff.x - plotSize.x
+    else if (upRightDiff.x > drawSize.x) this.size.x += upRightDiff.x - drawSize.x;
 
-    if (upRightDiff.y < 0) this.size.y += upRightDiff.y;
-    else if (upRightDiff.y > plotSize.y) this.size.y += upRightDiff.y - plotSize.y;
+    if (upRightDiff.y < 0) this.size.y += upRightDiff.y
+    else if (upRightDiff.y > drawSize.y) this.size.y += upRightDiff.y - drawSize.y;
 
-    if (downLeftDiff.x < 0) { this.origin.x -= downLeftDiff.x ; this.size.x += downLeftDiff.x }
-    else if (downLeftDiff.x > plotSize.x) { this.origin.x -= downLeftDiff.x - plotSize.x ; this.size.x += downLeftDiff.x - plotSize.x }
+    if (downLeftDiff.x < 0) {
+      this.origin.x -= downLeftDiff.x;
+      this.size.x += downLeftDiff.x;
+    } else if (downLeftDiff.x > drawSize.x){
+      this.origin.x -= downLeftDiff.x - drawSize.x;
+      this.size.x += downLeftDiff.x - drawSize.x;
+    }
+    if (downLeftDiff.y < 0) {
+      this.origin.y -= downLeftDiff.y;
+      this.size.y += downLeftDiff.y;
+    } else if (downLeftDiff.y > drawSize.y){
+      this.origin.y -= downLeftDiff.y - drawSize.y;
+      this.size.y += downLeftDiff.y - drawSize.y;
+    }
 
-    if (downLeftDiff.y < 0) { this.origin.y -= downLeftDiff.y ; this.size.y += downLeftDiff.y }
-    else if (downLeftDiff.y > plotSize.y) { this.origin.y -= downLeftDiff.y - plotSize.y ; this.size.y += downLeftDiff.y - plotSize.y }
     return isInside
   }
 

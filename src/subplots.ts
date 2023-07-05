@@ -1661,13 +1661,14 @@ export class BasePlot extends PlotData {
   }
 
   public drawSelectionBox(context: CanvasRenderingContext2D) {
-    if (this.isSelecting && this.selectionBox.isDefined) {
-      this.selectionBox.origin = this.selectionBox.minVertex;
-      this.selectionBox.size = this.selectionBox.maxVertex.subtract(this.selectionBox.minVertex);
-      this.selectionBox.fillStyle = "hsla(0, 0%, 100%, 0)";
-      this.selectionBox.dashLine = DASH_SELECTION_WINDOW;
-      this.selectionBox.draw(context)
-      this.absoluteObjects.push(this.selectionBox)
+    if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
+      this.selectionBox.buildRectFromHTMatrix(this.relativeMatrix);
+      if (this.selectionBox.area != 0) {
+        this.selectionBox.fillStyle = "hsla(0, 0%, 100%, 0)";
+        this.selectionBox.dashLine = DASH_SELECTION_WINDOW;
+        this.selectionBox.draw(context);
+        this.absoluteObjects.push(this.selectionBox);
+      }
     }
   }
 
@@ -1952,22 +1953,6 @@ export class Frame extends BasePlot {
       freeSize.y = this.size.y + frameOrigin.y;
     }
     return [frameOrigin, xEnd, yEnd, freeSize]
-  }
-
-  public drawSelectionBox(context: CanvasRenderingContext2D) {
-    if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
-      const initProj = this.selectionBox.minVertex.transform(this.relativeMatrix);
-      const endProj = this.selectionBox.maxVertex.transform(this.relativeMatrix);
-      this.selectionBox.origin = initProj; 
-      this.selectionBox.size = endProj.subtract(initProj);
-      if (this.selectionBox.area != 0) {
-        console.log(this.selectionBox.area)
-        this.selectionBox.fillStyle = "hsla(0, 0%, 100%, 0)";
-        this.selectionBox.dashLine = DASH_SELECTION_WINDOW;
-        this.selectionBox.draw(context);
-        this.absoluteObjects.push(this.selectionBox);
-      }
-    }
   }
 
   public updateSelectionBox(frameDown: Vertex, frameMouse: Vertex) {

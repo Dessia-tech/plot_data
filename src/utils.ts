@@ -2106,6 +2106,11 @@ export class SelectionBox extends newRect {
       this.maxVertex[coordName] = rubberBand.maxValue;
     }
   }
+
+  public buildRectFromHTMatrix(HTMatrix: DOMMatrix) {
+    this.origin = this.minVertex.transform(HTMatrix); 
+    this.size = this.maxVertex.transform(HTMatrix).subtract(this.origin);
+  }
 }
 
 export class newAxis extends EventEmitter {

@@ -1477,7 +1477,6 @@ export class PrimitiveGroupContainer extends PlotData {
     }
 }
 
-const DASH_SELECTION_WINDOW = [6, 7];
 export class BasePlot extends PlotData {
   public axes: newAxis[] = [];
   public origin: Vertex;
@@ -1599,10 +1598,7 @@ export class BasePlot extends PlotData {
     return isRubberBanded
   }
 
-  public drawAxes(): void { 
-    this.axes.forEach(axis => axis.draw(this.context_show));
-    if (this.isRubberBanded()) this.selectionBox.frameBoxUpdate(this.axes[0].rubberBand, this.axes[1].rubberBand);
-  };
+  public drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) }
 
   public drawZoneRectangle(context: CanvasRenderingContext2D): void {
     // TODO: change with newRect
@@ -1655,17 +1651,12 @@ export class BasePlot extends PlotData {
 
   public switchSelectionMode() { this.isSelecting = !this.isSelecting ; this.draw() }
 
-  public updateSelectionBox(frameDown: Vertex, frameLoc: Vertex) {
-    this.selectionBox.minVertex = frameDown;
-    this.selectionBox.maxVertex = frameLoc;
-  }
+  public updateSelectionBox(frameDown: Vertex, frameLoc: Vertex) { this.selectionBox.update(frameDown, frameLoc) }
 
   public drawSelectionBox(context: CanvasRenderingContext2D) {
     if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
       this.selectionBox.buildRectFromHTMatrix(this.relativeMatrix);
       if (this.selectionBox.area != 0) {
-        this.selectionBox.fillStyle = "hsla(0, 0%, 100%, 0)";
-        this.selectionBox.dashLine = DASH_SELECTION_WINDOW;
         this.selectionBox.draw(context);
         this.absoluteObjects.push(this.selectionBox);
       }
@@ -1935,6 +1926,11 @@ export class Frame extends BasePlot {
     return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
   }
 
+  public drawAxes() {
+    super.drawAxes();
+    if (this.isRubberBanded()) this.updateSelectionBox(...this.rubberBandsCorners);
+  }
+
   public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
     let frameOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
     let xEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
@@ -1956,12 +1952,15 @@ export class Frame extends BasePlot {
   }
 
   public updateSelectionBox(frameDown: Vertex, frameMouse: Vertex) {
-    super.updateSelectionBox(frameDown, frameMouse);
     this.axes[0].rubberBand.minValue = Math.min(frameDown.x, frameMouse.x);
     this.axes[1].rubberBand.minValue = Math.min(frameDown.y, frameMouse.y);
     this.axes[0].rubberBand.maxValue = Math.max(frameDown.x, frameMouse.x);
     this.axes[1].rubberBand.maxValue = Math.max(frameDown.y, frameMouse.y);
-    this.selectionBox.frameBoxUpdate(this.axes[0].rubberBand, this.axes[1].rubberBand);
+    super.updateSelectionBox(...this.rubberBandsCorners);
+  }
+
+  public get rubberBandsCorners(): [Vertex, Vertex] {
+    return [new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue), new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue)]
   }
 
   public mouse_interaction(isParallelPlot: boolean): void {

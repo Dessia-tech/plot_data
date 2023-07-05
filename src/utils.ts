@@ -2,6 +2,7 @@ import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
+import { max } from "cypress/types/lodash";
 
 export class Axis {
   color_stroke: any;
@@ -2082,7 +2083,7 @@ export class newTooltip {
   }
 }
 
-
+const DASH_SELECTION_WINDOW = [6, 7];
 export class SelectionBox extends newRect {
   public minVertex: Vertex;
   public maxVertex: Vertex;
@@ -2095,9 +2096,15 @@ export class SelectionBox extends newRect {
 
   get isDefined(): boolean { return (this.minVertex != undefined && this.maxVertex != undefined) }
 
-  public frameBoxUpdate(rubberBandX: RubberBand, rubberBandY: RubberBand) {
-    this.minVertex = new Vertex(rubberBandX.minValue, rubberBandY.minValue);
-    this.maxVertex = new Vertex(rubberBandX.maxValue, rubberBandY.maxValue);
+  public draw(context: CanvasRenderingContext2D) {
+    this.fillStyle = "hsla(0, 0%, 100%, 0)";
+    this.dashLine = DASH_SELECTION_WINDOW;
+    super.draw(context);
+  }
+
+  public update(minVertex: Vertex, maxVertex: Vertex) {
+    this.minVertex = minVertex;
+    this.maxVertex = maxVertex;
   }
 
   public rubberBandUpdate(rubberBand: RubberBand, coordName: string) {

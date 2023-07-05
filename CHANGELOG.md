@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.16.0]
 ### Refactor
 - First implementation of Scatter as a Frame plot
+- Add SelectionBox object and allow to draw it on any BasePlot, interacting with RubberBands
 
 ## [0.15.0]
 ### Add

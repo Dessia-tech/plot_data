@@ -1497,7 +1497,7 @@ export class BasePlot extends PlotData {
 
   public font: string = "sans-serif";
 
-  protected initScale: Vertex = new Vertex(1, -1);
+  protected initScale: Vertex = new Vertex(-1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
   public nSamples: number;
 
@@ -1655,7 +1655,7 @@ export class BasePlot extends PlotData {
 
   public drawSelectionBox(context: CanvasRenderingContext2D) {
     if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
-      this.selectionBox.buildRectFromHTMatrix(this.relativeMatrix);
+      this.selectionBox.buildRectFromHTMatrix(new Vertex(this.X, this.Y), this.size, this.relativeMatrix);
       if (this.selectionBox.area != 0) {
         this.selectionBox.draw(context);
         this.absoluteObjects.push(this.selectionBox);

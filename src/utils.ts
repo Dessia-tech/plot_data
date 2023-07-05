@@ -2124,9 +2124,31 @@ export class SelectionBox extends newRect {
     }
   }
 
-  public buildRectFromHTMatrix(HTMatrix: DOMMatrix) {
+  public buildRectFromHTMatrix(plotOrigin: Vertex, plotSize: Vertex, HTMatrix: DOMMatrix) {
     this.origin = this.minVertex.transform(HTMatrix);
     this.size = this.maxVertex.transform(HTMatrix).subtract(this.origin);
+    this.insideCanvas(plotOrigin, plotSize);
+  }
+
+  private insideCanvas(plotOrigin: Vertex, plotSize: Vertex): boolean {
+    let isInside = true;
+    const downLeftCorner = this.origin;
+    const upRightCorner = this.origin.add(this.size);
+    const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
+    const downLeftDiff = downLeftCorner.subtract(plotOrigin);
+
+    if (upRightDiff.x < 0) this.size.x += upRightDiff.x
+    else if (upRightDiff.x > plotSize.x) this.size.x += upRightDiff.x - plotSize.x
+
+    if (upRightDiff.y < 0) this.size.y += upRightDiff.y;
+    else if (upRightDiff.y > plotSize.y) this.size.y += upRightDiff.y - plotSize.y;
+
+    if (downLeftDiff.x < 0) { this.origin.x -= downLeftDiff.x ; this.size.x += downLeftDiff.x }
+    else if (downLeftDiff.x > plotSize.x) { this.origin.x -= downLeftDiff.x - plotSize.x ; this.size.x += downLeftDiff.x - plotSize.x }
+
+    if (downLeftDiff.y < 0) { this.origin.y -= downLeftDiff.y ; this.size.y += downLeftDiff.y }
+    else if (downLeftDiff.y > plotSize.y) { this.origin.y -= downLeftDiff.y - plotSize.y ; this.size.y += downLeftDiff.y - plotSize.y }
+    return isInside
   }
 
   private get borderSizeX() {return Math.min(BORDER_SIZE, Math.abs(this.size.x) / 3)}

@@ -1581,6 +1581,7 @@ export class BasePlot extends PlotData {
 
   public reset(): void {
     this.axes.forEach(axis => axis.reset());
+    this.selectionBox = new SelectionBox();
     this.initSelectors();
   }
 

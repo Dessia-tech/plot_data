@@ -1026,6 +1026,9 @@ export function export_to_csv(rows, filename = "my_data.csv") {
   document.body.removeChild(link);
 }
 
+const BORDER_SIZE = 20;
+const SMALL_RUBBERBAND_SIZE = 10;
+
 export class RubberBand {
   public axisMin: number = 0;
   public axisMax: number = 0;
@@ -1038,8 +1041,6 @@ export class RubberBand {
   public minUpdate: boolean = false;
   public maxUpdate: boolean = false;
   public lastValues: Vertex = new Vertex(null, null);
-  readonly SMALL_SIZE: number = 10;
-  readonly BORDER_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;
   constructor(
@@ -1064,9 +1065,9 @@ export class RubberBand {
 
   public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
     if (this.isVertical) {
-      Shape.rect(origin - this.SMALL_SIZE / 2, this.realMin, this.SMALL_SIZE, this.canvasLength, context, colorFill, colorStroke, lineWidth, alpha);
+      Shape.rect(origin - SMALL_RUBBERBAND_SIZE / 2, this.realMin, SMALL_RUBBERBAND_SIZE, this.canvasLength, context, colorFill, colorStroke, lineWidth, alpha);
     } else {
-      Shape.rect(this.realMin, origin - this.SMALL_SIZE / 2, this.canvasLength, this.SMALL_SIZE, context, colorFill, colorStroke, lineWidth, alpha);
+      Shape.rect(this.realMin, origin - SMALL_RUBBERBAND_SIZE / 2, this.canvasLength, SMALL_RUBBERBAND_SIZE, context, colorFill, colorStroke, lineWidth, alpha);
     }
   }
 
@@ -1228,7 +1229,7 @@ export class RubberBand {
     return [isClicked, onMinBorder, onMaxBorder]
   }
 
-  private get borderSize() {return Math.min(this.BORDER_SIZE, this.canvasLength / 3)}
+  private get borderSize() {return Math.min(BORDER_SIZE, this.canvasLength / 3)}
 
   public mouseDown(mouseAxis: number) {
     this.isClicked = true;
@@ -1380,7 +1381,7 @@ export class newShape {
 
   public mouseDown(mouseDown: Vertex) { }
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex): boolean { return false }
+  public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean { return false }
 
   public mouseUp() { }
 }
@@ -2087,19 +2088,28 @@ const DASH_SELECTION_WINDOW = [6, 7];
 export class SelectionBox extends newRect {
   public minVertex: Vertex;
   public maxVertex: Vertex;
+
+  private _previousMin: Vertex;
+  private _previousMax: Vertex;
+
+  public leftUpdate: boolean = false;
+  public rightUpdate: boolean = false;
+  public upUpdate: boolean = false;
+  public downUpdate: boolean = false;
   constructor(
     public origin: Vertex = new Vertex(0, 0),
     public size: Vertex = new Vertex(0, 0)
   ) {
     super(origin, size);
+    this.dashLine = DASH_SELECTION_WINDOW;
+    this.selectedStyle = this.clickedStyle = this.hoverStyle = this.fillStyle = "hsla(0, 0%, 100%, 0)";
   }
 
   get isDefined(): boolean { return (this.minVertex != undefined && this.maxVertex != undefined) }
 
-  public draw(context: CanvasRenderingContext2D) {
-    this.fillStyle = "hsla(0, 0%, 100%, 0)";
-    this.dashLine = DASH_SELECTION_WINDOW;
-    super.draw(context);
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
+    super.setDrawingProperties(context);
+    context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2.5 : this.lineWidth;
   }
 
   public update(minVertex: Vertex, maxVertex: Vertex) {
@@ -2119,9 +2129,43 @@ export class SelectionBox extends newRect {
     this.size = this.maxVertex.transform(HTMatrix).subtract(this.origin);
   }
 
-  public mouseDown(mouseDown: Vertex): void {
+  private get borderSizeX() {return Math.min(BORDER_SIZE, Math.abs(this.size.x) / 3)}
 
+  private get borderSizeY() {return Math.min(BORDER_SIZE, Math.abs(this.size.y) / 3)}
+
+  private saveState() {
+    this._previousMin = this.minVertex;
+    this._previousMax = this.maxVertex;
   }
+
+  public mouseDown(mouseDown: Vertex): void {
+    this.isClicked = true;
+    this.saveState();
+    if (Math.abs(mouseDown.x - this.origin.x) <= this.borderSizeX) { this.leftUpdate = true }
+    if (Math.abs(mouseDown.x - (this.origin.x + this.size.x)) <= this.borderSizeX) { this.rightUpdate = true }
+    if (Math.abs(mouseDown.y - this.origin.y) <= this.borderSizeY) { this.downUpdate = true }
+    if (Math.abs(mouseDown.y - (this.origin.y + this.size.y)) <= this.borderSizeY) { this.upUpdate = true }
+  }
+
+  public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {
+    if (!this.leftUpdate && !this.rightUpdate && !this.downUpdate && !this.upUpdate) {
+      const translation = mouseCoords.subtract(mouseDown);
+      this.minVertex = this._previousMin.add(translation);
+      this.maxVertex = this._previousMax.add(translation);
+      return false
+    }
+    if (this.leftUpdate) this.minVertex.x = Math.min(this._previousMax.x, mouseCoords.x);
+    if (this.rightUpdate) this.maxVertex.x = Math.max(this._previousMin.x, mouseCoords.x);
+    if (this.downUpdate) this.minVertex.y = Math.min(this._previousMax.y, mouseCoords.y);
+    if (this.upUpdate) this.maxVertex.y = Math.max(this._previousMin.y, mouseCoords.y);
+    if (this.minVertex.x == this._previousMax.x) this.maxVertex.x = mouseCoords.x;
+    if (this.maxVertex.x == this._previousMin.x) this.minVertex.x = mouseCoords.x;
+    if (this.minVertex.y == this._previousMax.y) this.maxVertex.y = mouseCoords.y;
+    if (this.maxVertex.y == this._previousMin.y) this.minVertex.y = mouseCoords.y;
+    return false
+  }
+
+  public mouseUp() { this.leftUpdate = this.rightUpdate = this.upUpdate = this.downUpdate = this.isClicked = this.isHovered = false }
 }
 
 export class newAxis extends EventEmitter {

@@ -1964,11 +1964,15 @@ export class MultiplePlots {
         }
         this.refreshRubberBands();
         this.manage_selected_point_index_changes(old_selected_index);
-        this.objectList.forEach(plot => plot.is_drawing_rubber_band = false);
+        this.isSelecting = false;
+        this.objectList.forEach(plot => {
+          plot.is_drawing_rubber_band = false;
+          if (plot.isSelecting) this.isSelecting = true;
+        });
+        if (this.isSelecting) this.objectList.forEach(plot => {if (plot instanceof BasePlot) plot.isSelecting = true});
         this.redrawAllObjects();
         isDrawing = false;
         mouse_moving = false;
-        this.isSelecting = false;
         // this.save_canvas();
       });
 

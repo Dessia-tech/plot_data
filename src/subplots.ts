@@ -1732,16 +1732,24 @@ export class BasePlot extends PlotData {
         this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
         if (this.interaction_ON) {
           if (isDrawing) {
-            if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting) {
-              canvas.style.cursor = 'move';
-              this.translation = this.mouseTranslate(canvasMouse, canvasDown);
+            if (clickedObject instanceof SelectionBox != true) { // TODO: BEURK !!!!
+              if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting) {
+                canvas.style.cursor = 'move';
+                this.translation = this.mouseTranslate(canvasMouse, canvasDown);
+              }
             }
           }
           this.draw();
         }
         if (this.isSelecting) {
           canvas.style.cursor = 'crosshair';
-          if (isDrawing) this.updateSelectionBox(frameDown, frameMouse);
+          if (isDrawing) {
+            if (clickedObject instanceof SelectionBox) {
+              clickedObject.mouseMove(frameDown, frameMouse);
+              this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex);
+            }
+            else this.updateSelectionBox(frameDown, frameMouse);
+          }
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
@@ -1759,8 +1767,9 @@ export class BasePlot extends PlotData {
         canvas.style.cursor = 'default';
         console.log(e.offsetX, e.offsetY)
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
-        if (clickedObject) {clickedObject.mouseUp()};
-        this.isSelecting = false; // TODO: Should we de-activate selection each time mouse is up ?
+        if (clickedObject) clickedObject.mouseUp();
+        if (this.isSelecting) this.selectionBox.mouseUp();
+        if (clickedObject instanceof SelectionBox != true) this.isSelecting = false;
         if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
         clickedObject = undefined;
         this.draw();

@@ -1355,9 +1355,9 @@ export class newShape {
     const scaledPath = new Path2D();
     if (this.isScaled) {
       const contextMatrix = context.getTransform();
-      scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+      scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
       context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
-    } else scaledPath.addPath(this.buildPath());
+    } else scaledPath.addPath(this.path);
     this.setDrawingProperties(context);
     context.fill(scaledPath);
     context.stroke(scaledPath);
@@ -1863,9 +1863,9 @@ export class newPoint2D extends newShape {
   constructor(
     x: number = 0,
     y: number = 0,
-    private _size: number = 2,
-    private _marker: string = 'circle',
-    private _markerOrientation: string = 'up',
+    protected _size: number = 2,
+    protected _marker: string = 'circle',
+    protected _markerOrientation: string = 'up',
     color?: string
   ) {
     super();
@@ -1912,6 +1912,20 @@ export class newPoint2D extends newShape {
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.strokeStyle =  context.fillStyle;
   }
+}
+
+export class ScatterPoint extends newPoint2D {
+  constructor(
+    x: number = 0,
+    y: number = 0,
+    protected _size: number = 2,
+    protected _marker: string = 'circle',
+    protected _markerOrientation: string = 'up',
+    color?: string
+  ) {
+    super(x, y, _size, _marker, _markerOrientation, color);
+  };
+
 }
 
 export class Bar extends newRect {

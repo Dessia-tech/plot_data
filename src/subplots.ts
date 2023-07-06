@@ -1661,6 +1661,7 @@ export class BasePlot extends PlotData {
       const [drawingOrigin, drawingSize] = this.drawingZone;
       this.selectionBox.buildRectFromHTMatrix(drawingOrigin, drawingSize, this.relativeMatrix);
       if (this.selectionBox.area != 0) {
+        this.selectionBox.buildPath();
         this.selectionBox.draw(context);
         this.absoluteObjects.push(this.selectionBox);
       }
@@ -2191,10 +2192,9 @@ export class newScatter extends Frame {
     const numericVectorX = this.axes[0].stringsToValues(this.features.get(this.xFeature));
     const numericVectorY = this.axes[1].stringsToValues(this.features.get(this.yFeature));
     const points: newPoint2D[] = [];
-    const pointsHTMatrix = this.getPointsHTMatrix(numericVectorX, numericVectorY);
-    const coordsMatrix = this.projectPoints(pointsHTMatrix);
+    const coordsMatrix = this.projectPoints(numericVectorX, numericVectorY);
     for (let index = 0 ; index < numericVectorX.length ; index++) {
-      let newPoint = new newPoint2D(coordsMatrix.get(0, index),  coordsMatrix.get(1, index), 5, "circle", undefined, "hsl(203, 90%, 85%)");
+      let newPoint = new newPoint2D(coordsMatrix[0][index],  coordsMatrix[1][index], 5, "circle", undefined, "hsl(203, 90%, 85%)");
       if (this.hoveredIndices[index]) {newPoint.isHovered = true};
       if (this.clickedIndices[index]) {newPoint.isClicked = true};
       if (this.selectedIndices[index]) {newPoint.isSelected = true};
@@ -2211,17 +2211,18 @@ export class newScatter extends Frame {
     return points
   }
 
-  private getPointsHTMatrix(vectorX: number[], vectorY: number[]) {
-    return new matrices.Matrix([vectorX, vectorY, Array.from(Array(this.nSamples), () => 1)])
-  }
-
-  private projectPoints(pointsMatrix: matrices.Matrix): matrices.Matrix {
-    const relativeMatrix = new matrices.Matrix([
+  private projectPoints(vectorX: number[], vectorY: number[]) {
+    const HTMatrix = [
       [this.relativeMatrix.a, this.relativeMatrix.c, this.relativeMatrix.e],
       [this.relativeMatrix.b, this.relativeMatrix.d, this.relativeMatrix.f],
-      [0, 0, 1]
-    ])
-    return relativeMatrix.mmul(pointsMatrix)
+      [0, 0, 1]]
+    let projectedCoords = Array.from(Array(2), () => []);
+    for (let index = 0; index < vectorX.length; index++) {
+      projectedCoords[0].push(vectorX[index] * HTMatrix[0][0] + HTMatrix[0][2]);
+      projectedCoords[1].push(vectorY[index] * HTMatrix[1][1] + HTMatrix[1][2]);
+
+    }
+    return projectedCoords
   }
 
   public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
@@ -2238,4 +2239,17 @@ export class newScatter extends Frame {
     this.absoluteObjects = this.points;
     this.drawSelectionBox(context);
   };
+
+  public agglomerativeClustering(xCoords: number[], yCoords: number[], nPoints: number) {
+    let squareDistances = new Array(xCoords.length); 
+    for (let i = 0; i < xCoords.length; i++) {
+      if (squareDistances[i] == undefined) squareDistances[i] = new Array(xCoords.length);
+      for (let j = i; j < xCoords.length; j++) {
+        squareDistances[i][j] = (xCoords[i] - xCoords[j])**2 + (yCoords[i] - yCoords[j])**2;
+        if (squareDistances[j] == undefined) squareDistances[j] = new Array(xCoords.length);
+        squareDistances[j][i] = squareDistances[i][j];
+      }
+    }
+    // console.log(squareDistances)
+  }
 }

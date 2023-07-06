@@ -5,6 +5,7 @@ import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
+import { merge } from "cypress/types/lodash";
 
 var alert_count = 0;
 /**
@@ -2223,6 +2224,7 @@ export class newScatter extends Frame {
         points.push(newPoint);
       }
     }
+    this.agglomerativeClustering(Array.from(points, point => point.center.x), Array.from(points, point => point.center.y))
     return points
   }
 
@@ -2241,16 +2243,34 @@ export class newScatter extends Frame {
     this.drawSelectionBox(context);
   };
 
-  // public agglomerativeClustering(xCoords: number[], yCoords: number[], nPoints: number) {
-  //   let squareDistances = new Array(xCoords.length); 
-  //   for (let i = 0; i < xCoords.length; i++) {
-  //     if (squareDistances[i] == undefined) squareDistances[i] = new Array(xCoords.length);
-  //     for (let j = i; j < xCoords.length; j++) {
-  //       squareDistances[i][j] = (xCoords[i] - xCoords[j])**2 + (yCoords[i] - yCoords[j])**2;
-  //       if (squareDistances[j] == undefined) squareDistances[j] = new Array(xCoords.length);
-  //       squareDistances[j][i] = squareDistances[i][j];
-  //     }
-  //   }
-  //   // console.log(squareDistances)
-  // }
+  public distanceMatrix(xCoords: number[], yCoords: number[]): number[][] {
+    let squareDistances = new Array(xCoords.length); 
+    for (let i = 0; i < xCoords.length; i++) {
+      if (squareDistances[i] == undefined) squareDistances[i] = new Array(xCoords.length);
+      for (let j = i; j < xCoords.length; j++) {
+        squareDistances[i][j] = (xCoords[i] - xCoords[j])**2 + (yCoords[i] - yCoords[j])**2;
+        if (squareDistances[j] == undefined) squareDistances[j] = new Array(xCoords.length);
+        squareDistances[j][i] = squareDistances[i][j];
+      }
+    }
+    return squareDistances
+  }
+  
+  public agglomerativeClustering(xCoords: number[], yCoords: number[], minDistance: number = 50) {
+    const squareDistances = this.distanceMatrix(xCoords, yCoords)
+    const mergedPoints = [];
+    const pickedPoints = new Array(squareDistances.length).fill(false);
+    const squaredDist = minDistance**2;
+    squareDistances.forEach((distances, row) => {
+      if (!pickedPoints[row]) {
+        mergedPoints.push([]);
+        distances.forEach((distance, col) => { 
+          if (distance <= squaredDist && !pickedPoints[col]) {
+            mergedPoints[mergedPoints.length - 1].push(col);
+            pickedPoints[col] = true;
+          }
+        })
+      }
+    })
+  }
 }

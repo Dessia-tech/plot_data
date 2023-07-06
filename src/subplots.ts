@@ -1567,13 +1567,12 @@ export class BasePlot extends PlotData {
     })
     if (!this.is_in_multiplot) {
       if (axisSelections.length > 1) { 
-        const selection = [...axisSelections[0]];
+        this.selectedIndices = [...axisSelections[0]];
         axisSelections[0].forEach(valIndex => {
           axisSelections.slice(1).forEach(axisSelection => { 
-            if (axisSelection.indexOf(valIndex) == -1) selection.splice(selection.indexOf(valIndex), 1) 
+            if (axisSelection.indexOf(valIndex) == -1) this.selectedIndices.splice(this.selectedIndices.indexOf(valIndex), 1) 
           })
         })
-        this.selectedIndices = selection
       } else { this.selectedIndices = axisSelections.length == 0 ? [] : axisSelections[0] }
     }
   }

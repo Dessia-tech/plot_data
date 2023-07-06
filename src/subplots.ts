@@ -1911,7 +1911,7 @@ export class Frame extends BasePlot {
     origin.x = this.initScale.x < 0 ? this.axes[0].end.x : this.axes[0].origin.x;
     origin.y = this.initScale.y < 0 ? this.axes[1].end.y : this.axes[1].origin.y;
     const size = new Vertex(Math.abs(this.axes[0].end.x - this.axes[0].origin.x), Math.abs(this.axes[1].end.y - this.axes[1].origin.y))
-    return [origin.transform(this.canvasMatrix.inverse()), size] 
+    return [origin.transform(this.canvasMatrix.inverse()), size]
   }
 
 

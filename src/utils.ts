@@ -1330,7 +1330,7 @@ export class newShape {
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
-  public selectedStyle: string = 'hsl(267, 95%, 85%)';
+  public selectedStyle: string = 'hsl(163, 100%, 38%)';
   public alpha: number = 1;
   public isHovered: boolean = false;
   public isClicked: boolean = false;
@@ -1916,7 +1916,7 @@ export class Bar extends newRect {
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
-  public selectedStyle: string = 'hsl(267, 95%, 85%)';
+  public selectedStyle: string = 'hsl(165, 100%, 40%)';
   public min: number;
   public max: number;
   public mean: number;
@@ -2207,7 +2207,7 @@ export class newAxis extends EventEmitter {
   public strokeStyle: string = 'hsl(0, 0%, 0%)';
   public hoverStyle: string = 'hsl(0, 100%, 48%)';
   public clickedStyle: string = 'hsl(126, 67%, 72%)';
-  public rubberColor: string = 'hsla(266, 95%, 60%, 0.8)';//'hsla(127, 95%, 60%, 0.85)';
+  public rubberColor: string = 'hsla(200, 95%, 50%, 0.5)';//'hsla(127, 95%, 60%, 0.85)';
   public labels: string[];
   public isHovered: boolean = false;
   public isClicked: boolean = false;

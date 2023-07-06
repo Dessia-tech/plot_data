@@ -1,12 +1,11 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape, SelectionBox } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, ScatterPoint, Bar, newShape, SelectionBox } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
-import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
-import * as matrices from "ml-matrix";
-
+import { EdgeStyle, TextStyle } from "./style";
+import { countBy } from "cypress/types/lodash";
 
 var alert_count = 0;
 /**
@@ -1966,6 +1965,14 @@ export class Frame extends BasePlot {
     if (this.isRubberBanded()) this.updateSelectionBox(...this.rubberBandsCorners);
   }
 
+  public plottedObjectStateUpdate(context: CanvasRenderingContext2D, object: any, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
+    if (object.values) {
+      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
+      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
+      else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
+    }
+  }
+
   public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
     let frameOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
     let xEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
@@ -2096,14 +2103,8 @@ export class Histogram extends Frame {
   }
 
   public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index: number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    if (object instanceof Bar) {
-      if (object.values) {
-        const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-        if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
-        else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
-      }
-    }
-    else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState)
+    if (object instanceof Bar) this.plottedObjectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
+    else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState);
   }
 
   public getBarsDrawing(): void {
@@ -2169,7 +2170,7 @@ export class Histogram extends Frame {
 
 
 export class newScatter extends Frame {
-  public points: newPoint2D[] = [];
+  public points: ScatterPoint[] = [];
   public tooltipAttr: string[];
   readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
@@ -2188,49 +2189,33 @@ export class newScatter extends Frame {
       else this.tooltipAttr = data.tooltip.attribute;
     }
 
-  private computePoints(context: CanvasRenderingContext2D): newPoint2D[] {
+  private computePoints(context: CanvasRenderingContext2D): ScatterPoint[] {
     const numericVectorX = this.axes[0].stringsToValues(this.features.get(this.xFeature));
     const numericVectorY = this.axes[1].stringsToValues(this.features.get(this.yFeature));
-    const points: newPoint2D[] = [];
-    const coordsMatrix = this.projectPoints(numericVectorX, numericVectorY);
+    const points: ScatterPoint[] = [];
     for (let index = 0 ; index < numericVectorX.length ; index++) {
-      let newPoint = new newPoint2D(coordsMatrix[0][index],  coordsMatrix[1][index], 5, "circle", undefined, "hsl(203, 90%, 85%)");
-      if (this.hoveredIndices[index]) {newPoint.isHovered = true};
-      if (this.clickedIndices[index]) {newPoint.isClicked = true};
-      if (this.selectedIndices[index]) {newPoint.isSelected = true};
-
       const inCanvasX = numericVectorX[index] < this.axes[0].maxValue && numericVectorX[index] > this.axes[0].minValue;
       const inCanvasY = numericVectorY[index] < this.axes[1].maxValue && numericVectorY[index] > this.axes[1].minValue;
       if (inCanvasX && inCanvasY) {
+        const [xCoord, yCoord] = this.projectPoint(numericVectorX[index], numericVectorY[index])
+        let newPoint = new ScatterPoint([index], xCoord,  yCoord, 4, "circle", undefined, "hsl(203, 90%, 85%)");
+        if (this.hoveredIndices[index]) {newPoint.isHovered = true};
+        if (this.clickedIndices[index]) {newPoint.isClicked = true};
+        if (this.selectedIndices[index]) {newPoint.isSelected = true};
         if (newPoint.isClicked) this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[index]));
-        newPoint.isScaled = false;
         newPoint.draw(context);
+        points.push(newPoint);
       }
-      points.push(newPoint);
     }
     return points
   }
 
-  private projectPoints(vectorX: number[], vectorY: number[]) {
-    const HTMatrix = [
-      [this.relativeMatrix.a, this.relativeMatrix.c, this.relativeMatrix.e],
-      [this.relativeMatrix.b, this.relativeMatrix.d, this.relativeMatrix.f],
-      [0, 0, 1]]
-    let projectedCoords = Array.from(Array(2), () => []);
-    for (let index = 0; index < vectorX.length; index++) {
-      projectedCoords[0].push(vectorX[index] * HTMatrix[0][0] + HTMatrix[0][2]);
-      projectedCoords[1].push(vectorY[index] * HTMatrix[1][1] + HTMatrix[1][2]);
-
-    }
-    return projectedCoords
+  private projectPoint(xCoord: number, yCoord: number) {
+    return [xCoord * this.relativeMatrix.a + this.relativeMatrix.e, yCoord * this.relativeMatrix.d + this.relativeMatrix.f]
   }
 
   public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    if (object instanceof newPoint2D) {
-      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {stateIndices[index] = invertState ? !stateIndices[index] : true }
-      else { if (!keepState) { stateIndices[index] = false } }
-    }
+    if (object instanceof ScatterPoint) this.plottedObjectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
     else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState)
   }
 
@@ -2240,16 +2225,16 @@ export class newScatter extends Frame {
     this.drawSelectionBox(context);
   };
 
-  public agglomerativeClustering(xCoords: number[], yCoords: number[], nPoints: number) {
-    let squareDistances = new Array(xCoords.length); 
-    for (let i = 0; i < xCoords.length; i++) {
-      if (squareDistances[i] == undefined) squareDistances[i] = new Array(xCoords.length);
-      for (let j = i; j < xCoords.length; j++) {
-        squareDistances[i][j] = (xCoords[i] - xCoords[j])**2 + (yCoords[i] - yCoords[j])**2;
-        if (squareDistances[j] == undefined) squareDistances[j] = new Array(xCoords.length);
-        squareDistances[j][i] = squareDistances[i][j];
-      }
-    }
-    // console.log(squareDistances)
-  }
+  // public agglomerativeClustering(xCoords: number[], yCoords: number[], nPoints: number) {
+  //   let squareDistances = new Array(xCoords.length); 
+  //   for (let i = 0; i < xCoords.length; i++) {
+  //     if (squareDistances[i] == undefined) squareDistances[i] = new Array(xCoords.length);
+  //     for (let j = i; j < xCoords.length; j++) {
+  //       squareDistances[i][j] = (xCoords[i] - xCoords[j])**2 + (yCoords[i] - yCoords[j])**2;
+  //       if (squareDistances[j] == undefined) squareDistances[j] = new Array(xCoords.length);
+  //       squareDistances[j][i] = squareDistances[i][j];
+  //     }
+  //   }
+  //   // console.log(squareDistances)
+  // }
 }

@@ -1916,14 +1916,16 @@ export class newPoint2D extends newShape {
 
 export class ScatterPoint extends newPoint2D {
   constructor(
+    public values: number[],
     x: number = 0,
     y: number = 0,
-    protected _size: number = 2,
+    protected _size: number = 3,
     protected _marker: string = 'circle',
     protected _markerOrientation: string = 'up',
     color?: string
   ) {
     super(x, y, _size, _marker, _markerOrientation, color);
+    this.isScaled = false;
   };
 
 }

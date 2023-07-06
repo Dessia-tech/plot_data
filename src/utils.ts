@@ -1335,6 +1335,7 @@ export class newShape {
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
+  public isScaled: boolean = true;
   protected _tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
   protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
@@ -1350,11 +1351,13 @@ export class newShape {
   set tooltipMap(value: Map<string, any> ) { this._tooltipMap = value };
 
   public draw(context: CanvasRenderingContext2D): void {
-    const scaledPath = new Path2D();
-    const contextMatrix = context.getTransform();
-    scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
     context.save();
-    context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
+    const scaledPath = new Path2D();
+    if (this.isScaled) {
+      const contextMatrix = context.getTransform();
+      scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+      context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
+    } else scaledPath.addPath(this.buildPath());
     this.setDrawingProperties(context);
     context.fill(scaledPath);
     context.stroke(scaledPath);

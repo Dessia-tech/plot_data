@@ -1698,12 +1698,24 @@ export class BasePlot extends PlotData {
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
     let clickedObject: any;
-    this.fixedObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
-    this.absoluteObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
-    this.relativeObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
-    if (this.fixedObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(canvasMouse)}
-    if (this.absoluteObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(absoluteMouse)}
-    if (this.relativeObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(frameMouse)}
+    this.fixedObjects.forEach(object => {
+      if (object.isHovered) {
+        clickedObject = object;
+        clickedObject.mouseDown(canvasMouse);
+      }
+    })
+    this.absoluteObjects.forEach(object => {
+      if (object.isHovered) {
+        clickedObject = object;
+        clickedObject.mouseDown(absoluteMouse);
+      }
+    })
+    this.relativeObjects.forEach(object => {
+      if (object.isHovered) {
+        clickedObject = object;
+        clickedObject.mouseDown(frameMouse);
+      }
+    })
     return [canvasMouse, frameMouse, clickedObject]
   }
 
@@ -2191,6 +2203,7 @@ export class newScatter extends Frame {
       const inCanvasY = numericVectorY[index] < this.axes[1].maxValue && numericVectorY[index] > this.axes[1].minValue;
       if (inCanvasX && inCanvasY) {
         if (newPoint.isClicked) this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[index]));
+        newPoint.isScaled = false;
         newPoint.draw(context);
       }
       points.push(newPoint);

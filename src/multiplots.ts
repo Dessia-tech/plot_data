@@ -581,12 +581,7 @@ export class MultiplePlots {
       this.objectList.forEach((plot, pIndex) => {
         if (List.is_include(pIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
-          if (plot instanceof BasePlot) {
-            plot.selectedIndices = Array.from(Array(plot.selectedIndices.length), (value, vIndex) => {
-              if (this.dep_selected_points_index.includes(vIndex)) return true
-              else return false
-            })
-          }
+          if (plot instanceof BasePlot) plot.selectedIndices = this.dep_selected_points_index;
           plot.draw();
         }
       })
@@ -867,9 +862,7 @@ export class MultiplePlots {
           obj.axes.forEach(axis => {
             if (axis.rubberBand.length != 0) {
               bool = true;
-              const boolIndex = (obj as BasePlot).updateSelected(axis);
-              let selectedIndices = [];
-              boolIndex.forEach((bool, bIndex) => { if (bool) selectedIndices.push(bIndex) })
+              const selectedIndices = (obj as BasePlot).updateSelected(axis);
               this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, selectedIndices);
             }
           })

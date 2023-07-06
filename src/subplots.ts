@@ -5,7 +5,6 @@ import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
-import { countBy } from "cypress/types/lodash";
 
 var alert_count = 0;
 /**
@@ -1482,9 +1481,9 @@ export class BasePlot extends PlotData {
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
 
-  public hoveredIndices: boolean[];
-  public clickedIndices: boolean[];
-  public selectedIndices: boolean[];
+  public hoveredIndices: number[];
+  public clickedIndices: number[];
+  public selectedIndices: number[];
 
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
@@ -1567,15 +1566,22 @@ export class BasePlot extends PlotData {
       if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
     })
     if (!this.is_in_multiplot) {
-      if (axisSelections.length != 0) { this.selectedIndices = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
-      else { this.selectedIndices = new Array(this.nSamples).fill(false) }
+      if (axisSelections.length > 1) { 
+        const selection = [...axisSelections[0]];
+        axisSelections[0].forEach(valIndex => {
+          axisSelections.slice(1).forEach(axisSelection => { 
+            if (axisSelection.indexOf(valIndex) == -1) selection.splice(selection.indexOf(valIndex), 1) 
+          })
+        })
+        this.selectedIndices = selection
+      } else { this.selectedIndices = axisSelections.length == 0 ? [] : axisSelections[0] }
     }
   }
 
   private initSelectors(): void {
-    this.hoveredIndices = this.falseIndicesArray;
-    this.clickedIndices = this.falseIndicesArray;
-    this.selectedIndices = this.falseIndicesArray;
+    this.hoveredIndices = [];
+    this.clickedIndices = [];
+    this.selectedIndices = [];
   }
 
   public reset(): void {
@@ -1584,13 +1590,12 @@ export class BasePlot extends PlotData {
     this.initSelectors();
   }
 
-  public updateSelected(axis: newAxis): boolean[] { // TODO: Performance
-    const boolSelection = Array.from(Array(this.nSamples), () => false);
+  public updateSelected(axis: newAxis): number[] { // TODO: Performance
+    const selection = [];
     const vector = axis.stringsToValues(this.features.get(axis.name));
-    vector.forEach((value, index) => {if (axis.isInRubberBand(value)) {boolSelection[index] = true}});
-    return boolSelection
+    vector.forEach((value, index) => { if (axis.isInRubberBand(value)) selection.push(index) });
+    return selection
   }
-
 
   public isRubberBanded(): boolean {
     let isRubberBanded = true;
@@ -1967,9 +1972,21 @@ export class Frame extends BasePlot {
 
   public plottedObjectStateUpdate(context: CanvasRenderingContext2D, object: any, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
     if (object.values) {
-      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
-      else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
+      let stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
+      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { 
+        object.values.forEach(value => {
+          const valIndex = stateIndices.indexOf(value);
+          if (valIndex == -1) stateIndices.push(value)
+          else { if (invertState) stateIndices.splice(valIndex, 1) }
+        })
+      } else { 
+        if (!keepState) {
+          object.values.forEach(value => {
+            const valIndex = stateIndices.indexOf(value);
+            if (valIndex != -1) stateIndices.splice(valIndex, 1);
+          })
+        } 
+      }
     }
   }
 
@@ -2117,9 +2134,9 @@ export class Histogram extends Frame {
       bar.setGeometry(origin, size);
       bar.fillStyle = this.barsColorFill;
       bar.strokeStyle = this.barsColorStroke;
-      if (bar.values.some(valIdx => this.hoveredIndices[valIdx])) {bar.isHovered = true}
-      if (bar.values.some(valIdx => this.clickedIndices[valIdx])) {bar.isClicked = true}
-      if (bar.values.some(valIdx => this.selectedIndices[valIdx])) {bar.isSelected = true}
+      if (bar.values.some(valIdx => this.hoveredIndices.indexOf(valIdx) != -1)) {bar.isHovered = true}
+      if (bar.values.some(valIdx => this.clickedIndices.indexOf(valIdx) != -1)) {bar.isClicked = true}
+      if (bar.values.some(valIdx => this.selectedIndices.indexOf(valIdx) != -1)) {bar.isSelected = true}
     })
   }
 
@@ -2199,9 +2216,9 @@ export class newScatter extends Frame {
       if (inCanvasX && inCanvasY) {
         const [xCoord, yCoord] = this.projectPoint(numericVectorX[index], numericVectorY[index])
         let newPoint = new ScatterPoint([index], xCoord,  yCoord, 4, "circle", undefined, "hsl(203, 90%, 85%)");
-        if (this.hoveredIndices[index]) {newPoint.isHovered = true};
-        if (this.clickedIndices[index]) {newPoint.isClicked = true};
-        if (this.selectedIndices[index]) {newPoint.isSelected = true};
+        if (this.hoveredIndices.indexOf(index) != -1) {newPoint.isHovered = true};
+        if (this.clickedIndices.indexOf(index) != -1) {newPoint.isClicked = true};
+        if (this.selectedIndices.indexOf(index) != -1) {newPoint.isSelected = true};
         if (newPoint.isClicked) this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[index]));
         newPoint.draw(context);
         points.push(newPoint);

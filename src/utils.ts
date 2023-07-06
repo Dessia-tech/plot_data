@@ -1915,6 +1915,7 @@ export class newPoint2D extends newShape {
 }
 
 export class ScatterPoint extends newPoint2D {
+  public mean = new Vertex();
   constructor(
     public values: number[],
     x: number = 0,
@@ -1926,8 +1927,18 @@ export class ScatterPoint extends newPoint2D {
   ) {
     super(x, y, _size, _marker, _markerOrientation, color);
     this.isScaled = false;
+    this.size = Math.max(this.size, this.size * this.values.length**0.3);
   };
 
+  get tooltipMap(): Map<string, any> {
+    return new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],])
+  }
+
+  public update() {
+    this.isScaled = false;
+    this.size = Math.min(25, this.size * this.values.length**0.3);
+    this.path = this.buildPath();
+  }
 }
 
 export class Bar extends newRect {

@@ -5,7 +5,6 @@ import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
-import { merge } from "cypress/types/lodash";
 
 var alert_count = 0;
 /**
@@ -2209,22 +2208,43 @@ export class newScatter extends Frame {
   private computePoints(context: CanvasRenderingContext2D): ScatterPoint[] {
     const numericVectorX = this.axes[0].stringsToValues(this.features.get(this.xFeature));
     const numericVectorY = this.axes[1].stringsToValues(this.features.get(this.yFeature));
-    const points: ScatterPoint[] = [];
+    const xCoords = [];
+    const yCoords = [];
     for (let index = 0 ; index < numericVectorX.length ; index++) {
       const inCanvasX = numericVectorX[index] < this.axes[0].maxValue && numericVectorX[index] > this.axes[0].minValue;
       const inCanvasY = numericVectorY[index] < this.axes[1].maxValue && numericVectorY[index] > this.axes[1].minValue;
       if (inCanvasX && inCanvasY) {
-        const [xCoord, yCoord] = this.projectPoint(numericVectorX[index], numericVectorY[index])
-        let newPoint = new ScatterPoint([index], xCoord,  yCoord, 4, "circle", undefined, "hsl(203, 90%, 85%)");
-        if (this.hoveredIndices.indexOf(index) != -1) {newPoint.isHovered = true};
-        if (this.clickedIndices.indexOf(index) != -1) {newPoint.isClicked = true};
-        if (this.selectedIndices.indexOf(index) != -1) {newPoint.isSelected = true};
-        if (newPoint.isClicked) this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[index]));
-        newPoint.draw(context);
-        points.push(newPoint);
+        const [xCoord, yCoord] = this.projectPoint(numericVectorX[index], numericVectorY[index]);
+        xCoords.push(xCoord);
+        yCoords.push(yCoord);
       }
     }
-    this.agglomerativeClustering(Array.from(points, point => point.center.x), Array.from(points, point => point.center.y))
+
+    const mergedPoints = this.agglomerativeClustering(xCoords, yCoords);
+    const points: ScatterPoint[] = [];
+    mergedPoints.forEach(indexList => {
+      let centerX = 0;
+      let centerY = 0;
+      let meanX = 0;
+      let meanY = 0;
+      let newPoint = new ScatterPoint(indexList, 0, 0, 4, "circle", undefined, "hsl(203, 90%, 85%)");
+      indexList.forEach(index => { 
+        centerX += xCoords[index];
+        centerY += yCoords[index];
+        meanX += numericVectorX[index];
+        meanY += numericVectorY[index];
+        if (!newPoint.isHovered) { if (this.hoveredIndices.indexOf(index) != -1) newPoint.isHovered = true };
+        if (!newPoint.isClicked) { if (this.clickedIndices.indexOf(index) != -1) newPoint.isClicked = true };
+        if (!newPoint.isSelected) { if (this.selectedIndices.indexOf(index) != -1) newPoint.isSelected = true };
+      });
+      newPoint.center.x = centerX / indexList.length;
+      newPoint.center.y = centerY / indexList.length;
+      newPoint.mean.x = meanX / indexList.length;
+      newPoint.mean.y = meanY / indexList.length;
+      newPoint.update();
+      newPoint.draw(context);
+      points.push(newPoint);
+    })
     return points
   }
 
@@ -2255,8 +2275,8 @@ export class newScatter extends Frame {
     }
     return squareDistances
   }
-  
-  public agglomerativeClustering(xCoords: number[], yCoords: number[], minDistance: number = 50) {
+
+  public agglomerativeClustering(xCoords: number[], yCoords: number[], minDistance: number = 25): number[][] {
     const squareDistances = this.distanceMatrix(xCoords, yCoords)
     const mergedPoints = [];
     const pickedPoints = new Array(squareDistances.length).fill(false);
@@ -2272,5 +2292,6 @@ export class newScatter extends Frame {
         })
       }
     })
+    return mergedPoints
   }
 }

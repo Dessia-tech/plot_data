@@ -2233,13 +2233,43 @@ export class newScatter extends Frame {
     return points
   }
 
+  private mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
+    if (!this.isMerged) return [...Array(xCoords.length).keys()].map(x => [x]);
+    const squareDistances = this.distanceMatrix(xCoords, yCoords);
+    const squaredDist = minDistance**2;
+    const mergedPoints = [];
+    const indexLists = new Array(squareDistances.length).fill([]);
+    const closedPoints = new Array(squareDistances.length).fill(0);
+    const pickedPoints = new Array(squareDistances.length).fill(false);
+    squareDistances.forEach((squareDistance, pIndex) => {
+      const newList = []
+      let nPoints = 0;
+      squareDistance.forEach((distance, dIndex) => { if (distance <= squaredDist) { nPoints++ ; newList.push(dIndex) }});
+      closedPoints[pIndex] = nPoints;
+      indexLists[pIndex] = newList;
+    })
+
+    while (sum(closedPoints) != 0) {
+      const centerIndex = argMax(closedPoints)[1];
+      const newCluster = [];
+      closedPoints[centerIndex] = 0;
+      indexLists[centerIndex].forEach(index => {
+        if (!pickedPoints[index]) { newCluster.push(index); pickedPoints[index] = true };
+        closedPoints[index] = 0;
+      })
+      mergedPoints.push(newCluster);
+    }
+    return mergedPoints
+  }
+
   private computePoint(indexList: number[], pointsInCanvas: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[], 
     minSize: number, thresholdDist: number): ScatterPoint {
       let centerX = 0;
       let centerY = 0;
       let meanX = 0;
       let meanY = 0;
-      let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle') //, undefined, undefined, "hsl(0, 0, 100%)");
+      let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle')
+      if (this.clusterColors && !this.isMerged) newPoint.fillStyle = this.clusterColors[pointsInCanvas[indexList[0]]]; 
       indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];
@@ -2284,7 +2314,7 @@ export class newScatter extends Frame {
     return [xCoord * this.relativeMatrix.a + this.relativeMatrix.e, yCoord * this.relativeMatrix.d + this.relativeMatrix.f]
   }
 
-  public distanceMatrix(xCoords: number[], yCoords: number[]): number[][] {
+  private distanceMatrix(xCoords: number[], yCoords: number[]): number[][] {
     let squareDistances = new Array(xCoords.length);
     for (let i = 0; i < xCoords.length; i++) {
       if (squareDistances[i] == undefined) squareDistances[i] = new Array(xCoords.length);
@@ -2297,8 +2327,8 @@ export class newScatter extends Frame {
     return squareDistances
   }
 
-  public agglomerativeClustering(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
-    const squareDistances = this.distanceMatrix(xCoords, yCoords);
+  private agglomerativeClustering(xValues: number[], yValues: number[], minDistance: number = 0.25): number[][] {
+    const squareDistances = this.distanceMatrix(xValues, yValues);
     const pickedPoints = new Array(squareDistances.length).fill(false);
     const squaredDist = minDistance**2;
     const clusteredPoints = [];
@@ -2316,38 +2346,42 @@ export class newScatter extends Frame {
     return clusteredPoints
   }
 
-  public simpleCluster() {
+  public simpleCluster() { this.clusterColors ? undefined : this.computeClusterColors() ; this.draw() }
 
-  }
+  private computeClusterColors(): void {
+    const xValues = [...this.axes[0].stringsToValues(this.features.get(this.xFeature))];
+    const yValues = [...this.axes[1].stringsToValues(this.features.get(this.yFeature))];
+    const scaledX = arrayScale(xValues);
+    const scaledY = arrayScale(yValues);
+    const clusteredPoints = this.agglomerativeClustering(scaledX, scaledY, 0.33);
 
-  public mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
-    if (!this.isMerged) return [...Array(xCoords.length).keys()].map(x => [x]);
-    const squareDistances = this.distanceMatrix(xCoords, yCoords);
-    const squaredDist = minDistance**2;
-    const mergedPoints = [];
-    const indexLists = new Array(squareDistances.length).fill([]);
-    const closedPoints = new Array(squareDistances.length).fill(0);
-    const pickedPoints = new Array(squareDistances.length).fill(false);
-    squareDistances.forEach((squareDistance, pIndex) => {
-      const newList = []
-      let nPoints = 0;
-      squareDistance.forEach((distance, dIndex) => { if (distance <= squaredDist) { nPoints++ ; newList.push(dIndex) }});
-      closedPoints[pIndex] = nPoints;
-      indexLists[pIndex] = newList;
+    const colorRatio: number = 360 / clusteredPoints.length;
+    this.clusterColors = new Array(xValues.length);
+    let colorRadius: number = 0;
+    clusteredPoints.forEach(cluster => {
+      colorRadius += colorRatio;
+      const color = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
+      cluster.forEach(point => this.clusterColors[point] = color)
     })
-
-    while (sum(closedPoints) != 0) {
-      const centerIndex = argMax(closedPoints)[1];
-      const newCluster = [];
-      closedPoints[centerIndex] = 0;
-      indexLists[centerIndex].forEach(index => {
-        if (!pickedPoints[index]) { newCluster.push(index); pickedPoints[index] = true };
-        closedPoints[index] = 0;
-      })
-      mergedPoints.push(newCluster);
-    }
-    return mergedPoints
   }
+}
+
+function mean(array: number[]): number {
+  let sum = 0;
+  array.forEach(value => sum += value);
+  return sum / array.length
+}
+
+function standardDeviation(array: number[]): [number, number] {
+  const arrayMean = mean(array);
+  let sum = 0;
+  array.forEach(value => sum += (value - arrayMean)**2);
+  return [Math.sqrt(sum / array.length), arrayMean]
+}
+
+function arrayScale(array: number[]): number[] {
+  const [std, mean] = standardDeviation(array);
+  return Array.from(array, x => (x - mean) / std)
 }
 
 function argMin(array: number[]): [number, number] {

@@ -2332,7 +2332,7 @@ export class newScatter extends Frame {
     const pickedPoints = new Array(squareDistances.length).fill(false);
     const squaredDist = minDistance**2;
     const clusteredPoints = [];
-    squareDistances.forEach((distances, row) => {
+    squareDistances.forEach((distances, row) => { // TODO: review this
       if (!pickedPoints[row]) {
         clusteredPoints.push([]);
         distances.forEach((distance, col) => {

@@ -2210,6 +2210,7 @@ export class newScatter extends Frame {
     const numericVectorY = this.axes[1].stringsToValues(this.features.get(this.yFeature));
     const xCoords = [];
     const yCoords = [];
+    const thresholdDist = 15;
     for (let index = 0 ; index < numericVectorX.length ; index++) {
       const inCanvasX = numericVectorX[index] < this.axes[0].maxValue && numericVectorX[index] > this.axes[0].minValue;
       const inCanvasY = numericVectorY[index] < this.axes[1].maxValue && numericVectorY[index] > this.axes[1].minValue;
@@ -2220,14 +2221,14 @@ export class newScatter extends Frame {
       }
     }
 
-    const mergedPoints = this.mergePoints(xCoords, yCoords);
+    const mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
     const points: ScatterPoint[] = [];
     mergedPoints.forEach(indexList => {
       let centerX = 0;
       let centerY = 0;
       let meanX = 0;
       let meanY = 0;
-      let newPoint = new ScatterPoint(indexList, 0, 0, 4, "circle", undefined, "hsl(203, 90%, 85%)");
+      let newPoint = new ScatterPoint(indexList, 0, 0, 4);
       indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];
@@ -2237,8 +2238,13 @@ export class newScatter extends Frame {
         if (!newPoint.isClicked) { if (this.clickedIndices.indexOf(index) != -1) newPoint.isClicked = true };
         if (!newPoint.isSelected) { if (this.selectedIndices.indexOf(index) != -1) newPoint.isSelected = true };
       });
+
       newPoint.center.x = centerX / indexList.length;
       newPoint.center.y = centerY / indexList.length;
+      indexList.forEach(index => { 
+        const distance = newPoint.center.distance(new Vertex(xCoords[index], yCoords[index]));
+        if (distance > newPoint.size / 2) newPoint.size = Math.min(distance, thresholdDist);
+      });
       newPoint.mean.x = meanX / indexList.length;
       newPoint.mean.y = meanY / indexList.length;
       newPoint.update();
@@ -2297,11 +2303,11 @@ export class newScatter extends Frame {
 
   public mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
     const squareDistances = this.distanceMatrix(xCoords, yCoords);
-    const pickedPoints = new Array(squareDistances.length).fill(false);
     const squaredDist = minDistance**2;
     const mergedPoints = [];
     const indexLists = new Array(squareDistances.length).fill([]);
     const closedPoints = new Array(squareDistances.length).fill(0);
+    const pickedPoints = new Array(squareDistances.length).fill(false);
     squareDistances.forEach((squareDistance, pIndex) => {
       const newList = []
       let nPoints = 0;
@@ -2309,18 +2315,16 @@ export class newScatter extends Frame {
       closedPoints[pIndex] = nPoints;
       indexLists[pIndex] = newList;
     })
-    let count = 0;
+
     while (sum(closedPoints) != 0) {
       const centerIndex = argMax(closedPoints)[1];
       const newCluster = [];
       closedPoints[centerIndex] = 0;
       indexLists[centerIndex].forEach(index => {
-        if (!pickedPoints[index]) newCluster.push(index);
+        if (!pickedPoints[index]) { newCluster.push(index); pickedPoints[index] = true };
         closedPoints[index] = 0;
-        pickedPoints[index] = true;
       })
       mergedPoints.push(newCluster);
-      count++;
     }
     return mergedPoints
   }

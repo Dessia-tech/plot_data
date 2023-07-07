@@ -1283,6 +1283,8 @@ export class Vertex {
     return copy
   }
 
+  public distance(other: Vertex): number { return Math.sqrt((this.x - other.x)**2 + (this.y - other.y)**2) }
+
   public multiply(value: number): Vertex {
     let copy = this.copy();
     copy.x = this.x * value;
@@ -1927,7 +1929,6 @@ export class ScatterPoint extends newPoint2D {
   ) {
     super(x, y, _size, _marker, _markerOrientation, color);
     this.isScaled = false;
-    this.size = Math.max(this.size, this.size * this.values.length**0.3);
   };
 
   get tooltipMap(): Map<string, any> {
@@ -1936,7 +1937,6 @@ export class ScatterPoint extends newPoint2D {
 
   public update() {
     this.isScaled = false;
-    this.size = Math.min(25, this.size * this.values.length**0.3);
     this.path = this.buildPath();
   }
 }

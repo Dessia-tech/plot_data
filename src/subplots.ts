@@ -2346,22 +2346,21 @@ export class newScatter extends Frame {
     return clusteredPoints
   }
 
-  public simpleCluster() { this.clusterColors ? undefined : this.computeClusterColors() ; this.draw() }
+  public simpleCluster(inputValue: number) { this.computeClusterColors(inputValue) ; this.draw() }
 
-  private computeClusterColors(): void {
+  private computeClusterColors(normedDistance: number = 0.33): void {
     const xValues = [...this.axes[0].stringsToValues(this.features.get(this.xFeature))];
     const yValues = [...this.axes[1].stringsToValues(this.features.get(this.yFeature))];
     const scaledX = arrayScale(xValues);
     const scaledY = arrayScale(yValues);
-    const clusteredPoints = this.agglomerativeClustering(scaledX, scaledY, 0.33);
+    const clusteredPoints = this.agglomerativeClustering(scaledX, scaledY, normedDistance);
 
     const colorRatio: number = 360 / clusteredPoints.length;
     this.clusterColors = new Array(xValues.length);
     let colorRadius: number = 0;
     clusteredPoints.forEach(cluster => {
       colorRadius += colorRatio;
-      const color = 'hsl('+ colorRadius +', 50%, 50%, 90%)';
-      cluster.forEach(point => this.clusterColors[point] = color)
+      cluster.forEach(point => this.clusterColors[point] = `hsl(${colorRadius}, 50%, 50%, 90%)`);
     })
   }
 }

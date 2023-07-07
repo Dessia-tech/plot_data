@@ -7,13 +7,35 @@ EMPTY_TEMPLATE = Template('''''')
 html_template = Template('''
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-      <script src=$core_path></script>
-  </head>
+<style>
+.slider {
+  -webkit-appearance: none;
+  height: 10px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.7;
+  -webkit-transition: .2s;
+  transition: opacity .2s;
+}
+
+.slider:hover {
+  opacity: 1;
+}
+
+.slider::-moz-range-thumb {
+  width: 25px;
+  height: 10px;
+  background: #04AA6D;
+  cursor: pointer;
+}
+</style>
+    <head>
+        <script src=$core_path></script>
+    </head>
     <div id="buttons">
-        <button name="select" value="OK" type="button" onclick="plot_data.switchSelectionMode()"> Draw selection window </button>
-        <button name="mergeON" value="OK" type="button" onclick="plot_data.switchMerge()"> Switch Point Merge </button>
-        <button name="cluster" value="OK" type="button" onclick="plot_data.simpleCluster()"> Cluster </button>
+        <button name="select" value="OK" type="button" onclick="plot_data.switchSelectionMode()"> Draw selection window </button> &nbsp;&nbsp;
+        <button name="mergeON" value="OK" type="button"  onclick="plot_data.switchMerge()"> Switch Point Merge </button> &nbsp;&nbsp;
+        Cluster:&nbsp; <input type="range" class="slider" min="0" max="3000" value="300" onclick="plot_data.simpleCluster(value / 1000)"></input>
         <hr style="border-top: 2px;">
     </div>
     <div id="app">

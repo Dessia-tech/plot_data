@@ -2220,7 +2220,7 @@ export class newScatter extends Frame {
       }
     }
 
-    const mergedPoints = this.agglomerativeClustering(xCoords, yCoords);
+    const mergedPoints = this.mergePoints(xCoords, yCoords);
     const points: ScatterPoint[] = [];
     mergedPoints.forEach(indexList => {
       let centerX = 0;
@@ -2276,22 +2276,83 @@ export class newScatter extends Frame {
     return squareDistances
   }
 
-  public agglomerativeClustering(xCoords: number[], yCoords: number[], minDistance: number = 25): number[][] {
-    const squareDistances = this.distanceMatrix(xCoords, yCoords)
-    const mergedPoints = [];
+  public agglomerativeClustering(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
+    const squareDistances = this.distanceMatrix(xCoords, yCoords);
     const pickedPoints = new Array(squareDistances.length).fill(false);
     const squaredDist = minDistance**2;
+    const clusteredPoints = [];
     squareDistances.forEach((distances, row) => {
       if (!pickedPoints[row]) {
-        mergedPoints.push([]);
+        clusteredPoints.push([]);
         distances.forEach((distance, col) => { 
           if (distance <= squaredDist && !pickedPoints[col]) {
-            mergedPoints[mergedPoints.length - 1].push(col);
+            clusteredPoints[clusteredPoints.length - 1].push(col);
             pickedPoints[col] = true;
           }
         })
       }
     })
+    return clusteredPoints
+  }
+
+  public mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
+    const squareDistances = this.distanceMatrix(xCoords, yCoords);
+    const pickedPoints = new Array(squareDistances.length).fill(false);
+    const squaredDist = minDistance**2;
+    const mergedPoints = [];
+    const indexLists = new Array(squareDistances.length).fill([]);
+    const closedPoints = new Array(squareDistances.length).fill(0);
+    squareDistances.forEach((squareDistance, pIndex) => {
+      const newList = []
+      let nPoints = 0;
+      squareDistance.forEach((distance, dIndex) => { if (distance <= squaredDist) { nPoints++ ; newList.push(dIndex) }});
+      closedPoints[pIndex] = nPoints;
+      indexLists[pIndex] = newList;
+    })
+    let count = 0;
+    while (sum(closedPoints) != 0) {
+      const centerIndex = argMax(closedPoints)[1];
+      const newCluster = [];
+      closedPoints[centerIndex] = 0;
+      indexLists[centerIndex].forEach(index => {
+        if (!pickedPoints[index]) newCluster.push(index);
+        closedPoints[index] = 0; 
+        pickedPoints[index] = true;
+      })
+      mergedPoints.push(newCluster);
+      count++;
+    }
     return mergedPoints
   }
+}
+
+function argMin(array: number[]): [number, number] {
+  let min = Number.POSITIVE_INFINITY;
+  let argMin = -1;
+  array.forEach((value, index) => {
+    if (value < min) {
+      min = value;
+      argMin = index;
+    }
+  })
+  return [min, argMin]
+}
+
+function argMax(array: number[]): [number, number] {
+  let max = Number.NEGATIVE_INFINITY;
+  let argMax = -1;
+  array.forEach((value, index) => {
+    if (value > max) {
+      max = value;
+      argMax = index;
+    }
+  })
+  return [max, argMax]
+}
+
+
+function sum(array: number[]): number {
+  let sum = 0;
+  array.forEach(value => sum += value);
+  return sum
 }

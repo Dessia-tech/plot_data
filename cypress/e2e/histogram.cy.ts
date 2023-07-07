@@ -70,13 +70,13 @@ describe('HISTOGRAM CANVAS', function () {
       const histogram = win.eval('plot_data') as Histogram;
       [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 348, "offsetY": 399} as MouseEvent);
       histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
-      expect(histogram.hoveredIndices[4]).to.be.true;
-      expect(histogram.hoveredIndices[40]).to.be.true;
+      expect(histogram.hoveredIndices[4]).to.equal(39);
+      expect(histogram.hoveredIndices.length).to.equal(7);
 
       [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
       histogram.mouseUp(canvasMouse, frameMouse, mouseCoords, canvasDown, false)
-      expect(histogram.clickedIndices[11]).to.be.true;
-      expect(histogram.clickedIndices[32]).to.be.true;
+      expect(histogram.clickedIndices[2]).to.equal(11);
+      expect(histogram.clickedIndices[6]).to.equal(47);
     })
   })
 

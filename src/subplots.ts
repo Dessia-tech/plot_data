@@ -2188,6 +2188,7 @@ export class Histogram extends Frame {
 export class newScatter extends Frame {
   public points: ScatterPoint[] = [];
   public tooltipAttr: string[];
+  public isMerged: boolean = false;
   readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(
@@ -2205,6 +2206,8 @@ export class newScatter extends Frame {
       else this.tooltipAttr = data.tooltip.attribute;
     }
 
+  public switchMerge() { this.isMerged = !this.isMerged ; this.draw() }
+
   private computePoints(context: CanvasRenderingContext2D): ScatterPoint[] {
     const numericVectorX = this.axes[0].stringsToValues(this.features.get(this.xFeature));
     const numericVectorY = this.axes[1].stringsToValues(this.features.get(this.yFeature));
@@ -2221,7 +2224,9 @@ export class newScatter extends Frame {
       }
     }
 
-    const mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
+    let mergedPoints = [...Array(xCoords.length).keys()].map(x => [x]);
+    if (this.isMerged) mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist)
+    
     const points: ScatterPoint[] = [];
     mergedPoints.forEach(indexList => {
       let centerX = 0;

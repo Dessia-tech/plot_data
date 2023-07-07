@@ -11,7 +11,8 @@ html_template = Template('''
       <script src=$core_path></script>
   </head>
     <div id="buttons">
-        <button name="button" value="OK" type="button" onclick="plot_data.switchSelectionMode()"> Draw selection window </button>
+        <button name="select" value="OK" type="button" onclick="plot_data.switchSelectionMode()"> Draw selection window </button>
+        <button name="mergeON" value="OK" type="button" onclick="plot_data.switchMerge()"> Switch Point Merge </button>
         <hr style="border-top: 2px;">
     </div>
     <div id="app">

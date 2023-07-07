@@ -1566,11 +1566,11 @@ export class BasePlot extends PlotData {
       if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
     })
     if (!this.is_in_multiplot) {
-      if (axisSelections.length > 1) { 
+      if (axisSelections.length > 1) {
         this.selectedIndices = [...axisSelections[0]];
         axisSelections[0].forEach(valIndex => {
-          axisSelections.slice(1).forEach(axisSelection => { 
-            if (axisSelection.indexOf(valIndex) == -1) this.selectedIndices.splice(this.selectedIndices.indexOf(valIndex), 1) 
+          axisSelections.slice(1).forEach(axisSelection => {
+            if (axisSelection.indexOf(valIndex) == -1) this.selectedIndices.splice(this.selectedIndices.indexOf(valIndex), 1)
           })
         })
       } else { this.selectedIndices = axisSelections.length == 0 ? [] : axisSelections[0] }
@@ -1972,19 +1972,19 @@ export class Frame extends BasePlot {
   public plottedObjectStateUpdate(context: CanvasRenderingContext2D, object: any, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
     if (object.values) {
       let stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { 
+      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {
         object.values.forEach(value => {
           const valIndex = stateIndices.indexOf(value);
           if (valIndex == -1) stateIndices.push(value)
           else { if (invertState) stateIndices.splice(valIndex, 1) }
         })
-      } else { 
+      } else {
         if (!keepState) {
           object.values.forEach(value => {
             const valIndex = stateIndices.indexOf(value);
             if (valIndex != -1) stateIndices.splice(valIndex, 1);
           })
-        } 
+        }
       }
     }
   }
@@ -2228,7 +2228,7 @@ export class newScatter extends Frame {
       let meanX = 0;
       let meanY = 0;
       let newPoint = new ScatterPoint(indexList, 0, 0, 4, "circle", undefined, "hsl(203, 90%, 85%)");
-      indexList.forEach(index => { 
+      indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];
         meanX += numericVectorX[index];
@@ -2264,7 +2264,7 @@ export class newScatter extends Frame {
   };
 
   public distanceMatrix(xCoords: number[], yCoords: number[]): number[][] {
-    let squareDistances = new Array(xCoords.length); 
+    let squareDistances = new Array(xCoords.length);
     for (let i = 0; i < xCoords.length; i++) {
       if (squareDistances[i] == undefined) squareDistances[i] = new Array(xCoords.length);
       for (let j = i; j < xCoords.length; j++) {
@@ -2284,7 +2284,7 @@ export class newScatter extends Frame {
     squareDistances.forEach((distances, row) => {
       if (!pickedPoints[row]) {
         clusteredPoints.push([]);
-        distances.forEach((distance, col) => { 
+        distances.forEach((distance, col) => {
           if (distance <= squaredDist && !pickedPoints[col]) {
             clusteredPoints[clusteredPoints.length - 1].push(col);
             pickedPoints[col] = true;
@@ -2316,7 +2316,7 @@ export class newScatter extends Frame {
       closedPoints[centerIndex] = 0;
       indexLists[centerIndex].forEach(index => {
         if (!pickedPoints[index]) newCluster.push(index);
-        closedPoints[index] = 0; 
+        closedPoints[index] = 0;
         pickedPoints[index] = true;
       })
       mergedPoints.push(newCluster);
@@ -2349,7 +2349,6 @@ function argMax(array: number[]): [number, number] {
   })
   return [max, argMax]
 }
-
 
 function sum(array: number[]): number {
   let sum = 0;

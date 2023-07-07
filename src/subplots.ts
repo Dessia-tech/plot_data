@@ -2229,7 +2229,7 @@ export class newScatter extends Frame {
 
     let mergedPoints = [...Array(xCoords.length).keys()].map(x => [x]);
     if (this.isMerged) mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist)
-    
+
     const points: ScatterPoint[] = [];
     mergedPoints.forEach(indexList => {
       let centerX = 0;

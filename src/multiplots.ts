@@ -1809,7 +1809,7 @@ export class MultiplePlots {
       this.redrawAllObjects();
     }
 
-    public switchMerge() { 
+    public switchMerge() {
       this.objectList.forEach(plot => {if (plot instanceof newScatter) plot.switchMerge()});
       this.redrawAllObjects();
     }

@@ -2214,6 +2214,8 @@ export class newScatter extends Frame {
     const xCoords = [];
     const yCoords = [];
     const thresholdDist = 15;
+    const pointsInCanvas = [];
+    const minSize = 4;
     for (let index = 0 ; index < numericVectorX.length ; index++) {
       const inCanvasX = numericVectorX[index] < this.axes[0].maxValue && numericVectorX[index] > this.axes[0].minValue;
       const inCanvasY = numericVectorY[index] < this.axes[1].maxValue && numericVectorY[index] > this.axes[1].minValue;
@@ -2221,6 +2223,7 @@ export class newScatter extends Frame {
         const [xCoord, yCoord] = this.projectPoint(numericVectorX[index], numericVectorY[index]);
         xCoords.push(xCoord);
         yCoords.push(yCoord);
+        pointsInCanvas.push(index);
       }
     }
 
@@ -2233,23 +2236,21 @@ export class newScatter extends Frame {
       let centerY = 0;
       let meanX = 0;
       let meanY = 0;
-      let newPoint = new ScatterPoint(indexList, 0, 0, 4);
+      let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle') //, undefined, undefined, "hsl(0, 0, 100%)");
       indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];
-        meanX += numericVectorX[index];
-        meanY += numericVectorY[index];
-        if (!newPoint.isHovered) { if (this.hoveredIndices.indexOf(index) != -1) newPoint.isHovered = true };
-        if (!newPoint.isClicked) { if (this.clickedIndices.indexOf(index) != -1) newPoint.isClicked = true };
-        if (!newPoint.isSelected) { if (this.selectedIndices.indexOf(index) != -1) newPoint.isSelected = true };
+        meanX += numericVectorX[pointsInCanvas[index]];
+        meanY += numericVectorY[pointsInCanvas[index]];
+        newPoint.values.push(pointsInCanvas[index]);
+        if (!newPoint.isHovered) { if (this.hoveredIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isHovered = true };
+        if (!newPoint.isClicked) { if (this.clickedIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isClicked = true };
+        if (!newPoint.isSelected) { if (this.selectedIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isSelected = true };
       });
 
       newPoint.center.x = centerX / indexList.length;
       newPoint.center.y = centerY / indexList.length;
-      indexList.forEach(index => { 
-        const distance = newPoint.center.distance(new Vertex(xCoords[index], yCoords[index]));
-        if (distance > newPoint.size / 2) newPoint.size = Math.min(distance, thresholdDist);
-      });
+      newPoint.size = Math.min(newPoint.size * 1.15**(indexList.length - 1), thresholdDist);
       newPoint.mean.x = meanX / indexList.length;
       newPoint.mean.y = meanY / indexList.length;
       newPoint.update();

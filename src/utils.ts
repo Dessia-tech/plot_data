@@ -1868,13 +1868,32 @@ export class newPoint2D extends newShape {
     protected _size: number = 2,
     protected _marker: string = 'circle',
     protected _markerOrientation: string = 'up',
-    color?: string
+    fillStyle?: string,
+    strokeStyle?: string
   ) {
     super();
     this.center = new Vertex(x, y);
     this.path = this.buildPath();
-    if (color) this.strokeStyle = this.fillStyle = color;
+    this.setColors(fillStyle, strokeStyle);
+    this.lineWidth = 1;
   };
+
+  public getfillStyleHSL() {
+    let [h, s, l] = this.fillStyle.split(',');
+    h = h.split('hsl(')[1];
+    s = s.split('%')[0];
+    l = l.split('%')[0];
+    return [h, s, l]
+  }
+
+  public setColors(fillStyle: string, strokeStyle: string) {
+    if (fillStyle) this.fillStyle = fillStyle;
+    if (!strokeStyle) {
+      const [h, s, l] = this.getfillStyleHSL();
+      this.strokeStyle = `hsl(${h}, ${s}%, ${Math.min(100, Number(l) + 10)}%)`;
+    }
+    else this.strokeStyle = strokeStyle;
+  }
 
   get drawnShape(): newShape {
     let marker = new newShape();
@@ -1912,7 +1931,7 @@ export class newPoint2D extends newShape {
     context.lineWidth = this.lineWidth;
     context.globalAlpha = this.alpha;
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-    context.strokeStyle =  context.fillStyle;
+    context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle;
   }
 }
 
@@ -1925,9 +1944,10 @@ export class ScatterPoint extends newPoint2D {
     protected _size: number = 3,
     protected _marker: string = 'circle',
     protected _markerOrientation: string = 'up',
-    color?: string
+    fillStyle?: string,
+    strokeStyle?: string
   ) {
-    super(x, y, _size, _marker, _markerOrientation, color);
+    super(x, y, _size, _marker, _markerOrientation, fillStyle, strokeStyle);
     this.isScaled = false;
   };
 

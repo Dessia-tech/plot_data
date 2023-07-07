@@ -2262,14 +2262,14 @@ export class newScatter extends Frame {
     return mergedPoints
   }
 
-  private computePoint(indexList: number[], pointsInCanvas: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[], 
+  private computePoint(indexList: number[], pointsInCanvas: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
     minSize: number, thresholdDist: number): ScatterPoint {
       let centerX = 0;
       let centerY = 0;
       let meanX = 0;
       let meanY = 0;
       let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle')
-      if (this.clusterColors && !this.isMerged) newPoint.fillStyle = this.clusterColors[pointsInCanvas[indexList[0]]]; 
+      if (this.clusterColors && !this.isMerged) newPoint.fillStyle = this.clusterColors[pointsInCanvas[indexList[0]]];
       indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];

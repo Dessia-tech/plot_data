@@ -2189,8 +2189,7 @@ export class newScatter extends Frame {
   public points: ScatterPoint[] = [];
   public tooltipAttr: string[];
   public isMerged: boolean = false;
-  readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
-  readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
+  public clusterColors: string[];
   constructor(
     public data: any,
     public width: number,
@@ -2206,32 +2205,36 @@ export class newScatter extends Frame {
       else this.tooltipAttr = data.tooltip.attribute;
     }
 
+  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+    if (object instanceof ScatterPoint) this.plottedObjectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
+    else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState)
+  }
+
+  public drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
+    this.points = this.computePoints(context);
+    this.absoluteObjects = this.points;
+    this.drawSelectionBox(context);
+  };
+
   public switchMerge() { this.isMerged = !this.isMerged ; this.draw() }
 
   private computePoints(context: CanvasRenderingContext2D): ScatterPoint[] {
-    const numericVectorX = this.axes[0].stringsToValues(this.features.get(this.xFeature));
-    const numericVectorY = this.axes[1].stringsToValues(this.features.get(this.yFeature));
-    const xCoords = [];
-    const yCoords = [];
+    const [xCoords, yCoords, xValues, yValues, pointsInCanvas] = this.projectPoints();
     const thresholdDist = 15;
-    const pointsInCanvas = [];
+    let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
+
     const minSize = 4;
-    for (let index = 0 ; index < numericVectorX.length ; index++) {
-      const inCanvasX = numericVectorX[index] < this.axes[0].maxValue && numericVectorX[index] > this.axes[0].minValue;
-      const inCanvasY = numericVectorY[index] < this.axes[1].maxValue && numericVectorY[index] > this.axes[1].minValue;
-      if (inCanvasX && inCanvasY) {
-        const [xCoord, yCoord] = this.projectPoint(numericVectorX[index], numericVectorY[index]);
-        xCoords.push(xCoord);
-        yCoords.push(yCoord);
-        pointsInCanvas.push(index);
-      }
-    }
-
-    let mergedPoints = [...Array(xCoords.length).keys()].map(x => [x]);
-    if (this.isMerged) mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist)
-
     const points: ScatterPoint[] = [];
     mergedPoints.forEach(indexList => {
+      const newPoint = this.computePoint(indexList, pointsInCanvas, xCoords, yCoords, xValues, yValues, minSize, thresholdDist);
+      newPoint.draw(context);
+      points.push(newPoint);
+    })
+    return points
+  }
+
+  private computePoint(indexList: number[], pointsInCanvas: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[], 
+    minSize: number, thresholdDist: number): ScatterPoint {
       let centerX = 0;
       let centerY = 0;
       let meanX = 0;
@@ -2240,8 +2243,8 @@ export class newScatter extends Frame {
       indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];
-        meanX += numericVectorX[pointsInCanvas[index]];
-        meanY += numericVectorY[pointsInCanvas[index]];
+        meanX += xValues[pointsInCanvas[index]];
+        meanY += yValues[pointsInCanvas[index]];
         newPoint.values.push(pointsInCanvas[index]);
         if (!newPoint.isHovered) { if (this.hoveredIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isHovered = true };
         if (!newPoint.isClicked) { if (this.clickedIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isClicked = true };
@@ -2254,26 +2257,32 @@ export class newScatter extends Frame {
       newPoint.mean.x = meanX / indexList.length;
       newPoint.mean.y = meanY / indexList.length;
       newPoint.update();
-      newPoint.draw(context);
-      points.push(newPoint);
-    })
-    return points
+
+      return newPoint
+    }
+
+  private projectPoints() {
+    const xValues = this.axes[0].stringsToValues(this.features.get(this.xFeature));
+    const yValues = this.axes[1].stringsToValues(this.features.get(this.yFeature));
+    const xCoords = [];
+    const yCoords = [];
+    const pointsInCanvas = [];
+    for (let index = 0 ; index < xValues.length ; index++) {
+      const inCanvasX = xValues[index] < this.axes[0].maxValue && xValues[index] > this.axes[0].minValue;
+      const inCanvasY = yValues[index] < this.axes[1].maxValue && yValues[index] > this.axes[1].minValue;
+      if (inCanvasX && inCanvasY) {
+        const [xCoord, yCoord] = this.projectPoint(xValues[index], yValues[index]);
+        xCoords.push(xCoord);
+        yCoords.push(yCoord);
+        pointsInCanvas.push(index);
+      }
+    }
+    return [xCoords, yCoords, xValues, yValues, pointsInCanvas]
   }
 
   private projectPoint(xCoord: number, yCoord: number) {
     return [xCoord * this.relativeMatrix.a + this.relativeMatrix.e, yCoord * this.relativeMatrix.d + this.relativeMatrix.f]
   }
-
-  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    if (object instanceof ScatterPoint) this.plottedObjectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
-    else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState)
-  }
-
-  public drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
-    this.points = this.computePoints(context);
-    this.absoluteObjects = this.points;
-    this.drawSelectionBox(context);
-  };
 
   public distanceMatrix(xCoords: number[], yCoords: number[]): number[][] {
     let squareDistances = new Array(xCoords.length);
@@ -2307,7 +2316,12 @@ export class newScatter extends Frame {
     return clusteredPoints
   }
 
+  public simpleCluster() {
+
+  }
+
   public mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
+    if (!this.isMerged) return [...Array(xCoords.length).keys()].map(x => [x]);
     const squareDistances = this.distanceMatrix(xCoords, yCoords);
     const squaredDist = minDistance**2;
     const mergedPoints = [];

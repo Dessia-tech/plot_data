@@ -1330,7 +1330,7 @@ export class newShape {
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
-  public selectedStyle: string = 'hsl(163, 100%, 38%)';
+  public selectedStyle: string = 'hsl(140, 65%, 60%)';
   public alpha: number = 1;
   public isHovered: boolean = false;
   public isClicked: boolean = false;
@@ -1942,11 +1942,6 @@ export class ScatterPoint extends newPoint2D {
 }
 
 export class Bar extends newRect {
-  public strokeStyle: string = 'hsl(270, 0%, 0%)';
-  public fillStyle: string = 'hsl(203, 90%, 85%)';
-  public hoverStyle: string = 'hsl(203, 90%, 60%)';
-  public clickedStyle: string = 'hsl(203, 90%, 35%)';
-  public selectedStyle: string = 'hsl(165, 100%, 40%)';
   public min: number;
   public max: number;
   public mean: number;
@@ -2113,7 +2108,7 @@ export class newTooltip {
   }
 }
 
-const DASH_SELECTION_WINDOW = [6, 7];
+const DASH_SELECTION_WINDOW = [7, 3];
 export class SelectionBox extends newRect {
   public minVertex: Vertex;
   public maxVertex: Vertex;
@@ -2132,13 +2127,14 @@ export class SelectionBox extends newRect {
     super(origin, size);
     this.dashLine = DASH_SELECTION_WINDOW;
     this.selectedStyle = this.clickedStyle = this.hoverStyle = this.fillStyle = "hsla(0, 0%, 100%, 0)";
+    this.lineWidth = 0.5
   }
 
   get isDefined(): boolean { return (this.minVertex != undefined && this.maxVertex != undefined) }
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     super.setDrawingProperties(context);
-    context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2.5 : this.lineWidth;
+    context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
   }
 
   public update(minVertex: Vertex, maxVertex: Vertex) {

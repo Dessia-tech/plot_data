@@ -35,7 +35,7 @@ html_template = Template('''
     <div id="buttons">
         <button name="select" value="OK" type="button" onclick="plot_data.switchSelectionMode()"> Draw selection window </button> &nbsp;&nbsp;
         <button name="mergeON" value="OK" type="button"  onclick="plot_data.switchMerge()"> Switch Point Merge </button> &nbsp;&nbsp;
-        Cluster:&nbsp; <input type="range" class="slider" min="0" max="1000" value="200" onclick="plot_data.simpleCluster(value / 1000)"></input>
+        Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250" onclick="plot_data.simpleCluster(value / 10000)"></input>
         <hr style="border-top: 2px;">
     </div>
     <div id="app">

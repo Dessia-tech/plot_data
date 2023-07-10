@@ -2341,10 +2341,10 @@ export class newScatter extends Frame {
       clusteredPoints.push(newCluster);
     })
 
-    let clusters = [clusteredPoints[0]];
-    let nClusters = 0;
+    let clusters = [];
+    let nClusters = -1;
     let count = 0;
-    while (nClusters != clusters.length && count < 10) {
+    while (nClusters != clusters.length && count < 100) {
       nClusters = clusters.length;
       clusters = [clusteredPoints[0]];
       clusteredPoints.forEach(candidate => {
@@ -2399,7 +2399,7 @@ function standardDeviation(array: number[]): [number, number] {
   return [Math.sqrt(sum / array.length), arrayMean]
 }
 
-function arrayScale(array: number[]): number[] {
+function scaleArray(array: number[]): number[] {
   const [std, mean] = standardDeviation(array);
   return Array.from(array, x => (x - mean) / std)
 }

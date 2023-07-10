@@ -2428,7 +2428,9 @@ export class newAxis extends EventEmitter {
 
   private computeMinMax(vector: any[]): number[] {
     if (this.isDiscrete) { return [0, this.labels.length - 1] };
-    return [Math.min(...vector), Math.max(...vector)]
+    const min = Math.min(...vector);
+    const max = Math.max(...vector);
+    return min != max ? [min ,max] : [min * 0.7, max * 1.3]
   }
 
   public computeTextBoxes(context: CanvasRenderingContext2D): void {

@@ -2205,6 +2205,7 @@ export class newScatter extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (!data.tooltip) {this.tooltipAttr = Array.from(this.features.keys()) }
       else this.tooltipAttr = data.tooltip.attribute;
+      console.log(data, this.features)
     }
 
   public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {

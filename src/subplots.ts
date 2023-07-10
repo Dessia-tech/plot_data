@@ -2282,14 +2282,12 @@ export class newScatter extends Frame {
         if (!newPoint.isClicked) { if (this.clickedIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isClicked = true };
         if (!newPoint.isSelected) { if (this.selectedIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isSelected = true };
       });
-
       newPoint.center.x = centerX / indexList.length;
       newPoint.center.y = centerY / indexList.length;
       newPoint.size = Math.min(newPoint.size * 1.15**(indexList.length - 1), thresholdDist);
       newPoint.mean.x = meanX / indexList.length;
       newPoint.mean.y = meanY / indexList.length;
       newPoint.update();
-
       return newPoint
     }
 
@@ -2335,16 +2333,14 @@ export class newScatter extends Frame {
     let clusteredPoints = [];
     squareDistances.forEach(distances => {
       let newCluster = [];
-      distances.forEach((distance, col) => {
-        if (distance <= squaredDist) newCluster.push(col);
-      })
+      distances.forEach((distance, col) => { if (distance <= squaredDist) newCluster.push(col) });
       clusteredPoints.push(newCluster);
     })
 
     let clusters = [];
     let nClusters = -1;
-    let count = 0;
-    while (nClusters != clusters.length && count < 100) {
+    let maxIter = 0;
+    while (nClusters != clusters.length && maxIter < 100) {
       nClusters = clusters.length;
       clusters = [clusteredPoints[0]];
       clusteredPoints.forEach(candidate => {
@@ -2362,7 +2358,7 @@ export class newScatter extends Frame {
         if (isCluster) clusters.push(candidate);
       })
       clusteredPoints = new Array(...clusters);
-      count++;
+      maxIter++;
     }
     return clusters
   }

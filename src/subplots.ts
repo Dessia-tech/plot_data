@@ -5,6 +5,8 @@ import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
+import { parseConfigFileTextToJson } from "typescript";
+import { pick } from "cypress/types/lodash";
 
 var alert_count = 0;
 /**
@@ -2329,21 +2331,40 @@ export class newScatter extends Frame {
 
   private agglomerativeClustering(xValues: number[], yValues: number[], minDistance: number = 0.25): number[][] {
     const squareDistances = this.distanceMatrix(xValues, yValues);
-    const pickedPoints = new Array(squareDistances.length).fill(false);
     const squaredDist = minDistance**2;
-    const clusteredPoints = [];
-    squareDistances.forEach((distances, row) => { // TODO: review this
-      if (!pickedPoints[row]) {
-        clusteredPoints.push([]);
-        distances.forEach((distance, col) => {
-          if (distance <= squaredDist && !pickedPoints[col]) {
-            clusteredPoints[clusteredPoints.length - 1].push(col);
-            pickedPoints[col] = true;
+    let clusteredPoints = [];
+    squareDistances.forEach(distances => {
+      let newCluster = [];
+      distances.forEach((distance, col) => {
+        if (distance <= squaredDist) newCluster.push(col);
+      })
+      clusteredPoints.push(newCluster);
+    })
+
+    let clusters = [clusteredPoints[0]];
+    let nClusters = 0;
+    let count = 0;
+    while (nClusters != clusters.length && count < 10) {
+      nClusters = clusters.length;
+      clusters = [clusteredPoints[0]];
+      clusteredPoints.forEach(candidate => {
+        let isCluster = true;
+        clusters.forEach((cluster, clusterIndex) => {
+          for (let i=0; i < candidate.length; i++) {
+            if (cluster.includes(candidate[i])) {
+              clusters[clusterIndex].push(...candidate);
+              clusters[clusterIndex] = clusters[clusterIndex].filter((value, index, array) => array.indexOf(value) === index);
+              isCluster = false;
+              break;
+            }
           }
         })
-      }
-    })
-    return clusteredPoints
+        if (isCluster) clusters.push(candidate);
+      })
+      clusteredPoints = new Array(...clusters);
+      count++;
+    }
+    return clusters
   }
 
   public simpleCluster(inputValue: number) { this.computeClusterColors(inputValue) ; this.draw() }
@@ -2351,8 +2372,8 @@ export class newScatter extends Frame {
   private computeClusterColors(normedDistance: number = 0.33): void {
     const xValues = [...this.axes[0].stringsToValues(this.features.get(this.xFeature))];
     const yValues = [...this.axes[1].stringsToValues(this.features.get(this.yFeature))];
-    const scaledX = arrayScale(xValues);
-    const scaledY = arrayScale(yValues);
+    const scaledX = normalizeArray(xValues);
+    const scaledY = normalizeArray(yValues);
     const clusteredPoints = this.agglomerativeClustering(scaledX, scaledY, normedDistance);
 
     const colorRatio: number = 360 / clusteredPoints.length;
@@ -2381,6 +2402,11 @@ function standardDeviation(array: number[]): [number, number] {
 function arrayScale(array: number[]): number[] {
   const [std, mean] = standardDeviation(array);
   return Array.from(array, x => (x - mean) / std)
+}
+
+function normalizeArray(array: number[]): number[] {
+  const maxAbs = Math.max(...array.map(x => Math.abs(x)));
+  return array.map(x => x / maxAbs)
 }
 
 function argMin(array: number[]): [number, number] {

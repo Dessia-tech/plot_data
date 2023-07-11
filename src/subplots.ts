@@ -2234,8 +2234,8 @@ export class newScatter extends Frame {
       const color = mapMax(colors);
       point.setColors(color[0]);
       point.update();
-      if (point.isInFrame(this.axes[0], this.axes[1])) point.draw(context); 
-    }) 
+      if (point.isInFrame(this.axes[0], this.axes[1])) point.draw(context);
+    })
   }
 
   public switchMerge() { this.isMerged = !this.isMerged; this.points = this.computePoints(); this.draw() }

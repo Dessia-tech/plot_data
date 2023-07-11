@@ -1808,7 +1808,7 @@ export class MultiplePlots {
       this.redrawAllObjects();
     }
 
-    public simpleCluster(inputValue: number) { 
+    public simpleCluster(inputValue: number) {
       this.objectList.forEach(plot => {if (plot instanceof newScatter) plot.simpleCluster(inputValue)});
       this.redrawAllObjects();
     }

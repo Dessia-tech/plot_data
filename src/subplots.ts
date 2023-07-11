@@ -5,8 +5,6 @@ import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
-import { parseConfigFileTextToJson } from "typescript";
-import { pick } from "cypress/types/lodash";
 
 var alert_count = 0;
 /**
@@ -2205,7 +2203,6 @@ export class newScatter extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (!data.tooltip) {this.tooltipAttr = Array.from(this.features.keys()) }
       else this.tooltipAttr = data.tooltip.attribute;
-      console.log(data, this.features)
     }
 
   public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
@@ -2272,7 +2269,7 @@ export class newScatter extends Frame {
       let meanX = 0;
       let meanY = 0;
       let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle')
-      if (this.clusterColors && !this.isMerged) newPoint.fillStyle = this.clusterColors[pointsInCanvas[indexList[0]]];
+      if (this.clusterColors && !this.isMerged) newPoint.setColors(this.clusterColors[pointsInCanvas[indexList[0]]]);
       indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];

@@ -1858,6 +1858,7 @@ const MARKERS = ['+', 'crux', 'mark'];
 const CROSSES = ['x', 'cross', 'oblique'];
 const SQUARES = ['square'];
 const TRIANGLES = ['^', 'triangle', 'tri'];
+const STROKE_STYLE_OFFSET = 5;
 export class newPoint2D extends newShape {
   public path: Path2D;
   public center: Vertex;
@@ -1874,7 +1875,8 @@ export class newPoint2D extends newShape {
     super();
     this.center = new Vertex(x, y);
     this.path = this.buildPath();
-    this.setColors(fillStyle, strokeStyle);
+    this.fillStyle = fillStyle ? fillStyle : this.fillStyle;
+    this.strokeStyle = strokeStyle ? strokeStyle : this.setStrokeStyle();
     this.lineWidth = 1;
   };
 
@@ -1886,14 +1888,17 @@ export class newPoint2D extends newShape {
     return [h, s, l]
   }
 
-  public setColors(fillStyle: string, strokeStyle: string) {
-    if (fillStyle) this.fillStyle = fillStyle;
-    if (!strokeStyle) {
-      const [h, s, l] = this.getfillStyleHSL();
-      this.strokeStyle = `hsl(${h}, ${s}%, ${Math.min(100, Number(l) + 10)}%)`;
-    }
-    else this.strokeStyle = strokeStyle;
+  public setStrokeStyle(): string {
+    const [h, s, l] = this.getfillStyleHSL();
+    const lValue = Number(l) <= STROKE_STYLE_OFFSET ? Number(l) + STROKE_STYLE_OFFSET : Number(l) - STROKE_STYLE_OFFSET;
+    return `hsl(${h}, ${s}%, ${lValue}%)`;
   }
+
+  public setColors(fillStyle?: string, strokeStyle?: string) {
+    this.fillStyle = fillStyle ? fillStyle : this.fillStyle;
+    this.strokeStyle = strokeStyle ? strokeStyle : this.setStrokeStyle();
+  }
+
 
   get drawnShape(): newShape {
     let marker = new newShape();
@@ -1931,7 +1936,7 @@ export class newPoint2D extends newShape {
     context.lineWidth = this.lineWidth;
     context.globalAlpha = this.alpha;
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-    context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle;
+    context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle ? this.strokeStyle : this.fillStyle;
   }
 }
 

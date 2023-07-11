@@ -199,7 +199,7 @@ export class MultiplePlots {
         this.objectList[i].Y = this.objectList[i].Y * ratio;
       }
       this.define_canvas(this.canvas_id);
-      // this.redrawAllObjects();
+      this.redrawAllObjects();
     }
 
 
@@ -1056,8 +1056,6 @@ export class MultiplePlots {
       this.small_length_nb_objects = Math.min(Math.ceil(nbObjectsDisplayed/2), Math.floor(Math.sqrt(nbObjectsDisplayed)));
       this.big_length_nb_objects = Math.ceil(nbObjectsDisplayed/this.small_length_nb_objects);
       this.sorted_list = this.getSortedList();
-      // let big_length_step = this[big_length]/big_length_nb_objects;
-      // let small_length_step = this[small_length]/small_length_nb_objects;
       let blank_space = this.padding || 0.01*this[small_length];
       let big_length_step = (this[big_length] - (this.big_length_nb_objects + 1)*blank_space)/this.big_length_nb_objects;
       let small_length_step = (this[small_length] - (this.small_length_nb_objects + 1)*blank_space)/this.small_length_nb_objects;
@@ -1065,7 +1063,6 @@ export class MultiplePlots {
       for (let i=0; i<this.big_length_nb_objects - 1; i++) {
         for (let j=0; j<this.small_length_nb_objects; j++) {
           var current_index = i*this.small_length_nb_objects + j; //current_index in sorted_list
-
           // The three following lines are useful for primitive group containers only
           let obj:any = this.objectList[this.sorted_list[current_index]];
           let old_small_coord = obj[small_coord];
@@ -1083,15 +1080,12 @@ export class MultiplePlots {
               obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord;
             }
           }
-
         }
       }
       let last_index = current_index + 1;
       let remaining_obj = nbObjectsDisplayed - last_index;
-      // let last_small_length_step = this[small_length]/remaining_obj;
       let last_small_length_step = (this[small_length] - (remaining_obj + 1)*blank_space)/remaining_obj;
       for (let j=0; j<remaining_obj; j++) {
-
         // The three following lines are useful for primitive group containers only
         let obj:any = this.objectList[this.sorted_list[last_index + j]];
         let old_small_coord = obj[small_coord];
@@ -1109,9 +1103,9 @@ export class MultiplePlots {
             obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord;
           }
         }
-
       }
       this.resetAllObjects();
+      this.objectList.forEach(plot => {if (plot instanceof newScatter) plot.points = plot.computePoints() });
       this.redrawAllObjects();
       this.view_on_disposition = true;
     }

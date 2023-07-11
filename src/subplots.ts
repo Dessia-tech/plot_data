@@ -2240,7 +2240,7 @@ export class newScatter extends Frame {
 
   public switchMerge() { this.isMerged = !this.isMerged; this.points = this.computePoints(); this.draw() }
 
-  private computePoints(): ScatterPoint[] {
+  public computePoints(): ScatterPoint[] {
     const [xCoords, yCoords, xValues, yValues, pointsInCanvas] = this.projectPoints();
     const thresholdDist = 15;
     let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
@@ -2253,6 +2253,29 @@ export class newScatter extends Frame {
     })
     return points
   }
+
+  private computePoint(indexList: number[], pointsInCanvas: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
+    minSize: number, thresholdDist: number): ScatterPoint {
+      let centerX = 0;
+      let centerY = 0;
+      let meanX = 0;
+      let meanY = 0;
+      let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle');
+      indexList.forEach(index => {
+        centerX += xCoords[index];
+        centerY += yCoords[index];
+        meanX += xValues[pointsInCanvas[index]];
+        meanY += yValues[pointsInCanvas[index]];
+        newPoint.values.push(pointsInCanvas[index]);
+      });
+      newPoint.center.x = centerX / indexList.length;
+      newPoint.center.y = centerY / indexList.length;
+      newPoint.size = Math.min(newPoint.size * 1.15**(indexList.length - 1), thresholdDist);
+      newPoint.mean.x = meanX / indexList.length;
+      newPoint.mean.y = meanY / indexList.length;
+      newPoint.update();
+      return newPoint
+    }
 
   private mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
     if (!this.isMerged) return [...Array(xCoords.length).keys()].map(x => [x]);
@@ -2282,29 +2305,6 @@ export class newScatter extends Frame {
     }
     return mergedPoints
   }
-
-  private computePoint(indexList: number[], pointsInCanvas: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
-    minSize: number, thresholdDist: number): ScatterPoint {
-      let centerX = 0;
-      let centerY = 0;
-      let meanX = 0;
-      let meanY = 0;
-      let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle');
-      indexList.forEach(index => {
-        centerX += xCoords[index];
-        centerY += yCoords[index];
-        meanX += xValues[pointsInCanvas[index]];
-        meanY += yValues[pointsInCanvas[index]];
-        newPoint.values.push(pointsInCanvas[index]);
-      });
-      newPoint.center.x = centerX / indexList.length;
-      newPoint.center.y = centerY / indexList.length;
-      newPoint.size = Math.min(newPoint.size * 1.15**(indexList.length - 1), thresholdDist);
-      newPoint.mean.x = meanX / indexList.length;
-      newPoint.mean.y = meanY / indexList.length;
-      newPoint.update();
-      return newPoint
-    }
 
   private projectPoints() {
     const xValues = this.axes[0].stringsToValues(this.features.get(this.xFeature));
@@ -2399,7 +2399,7 @@ export class newScatter extends Frame {
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
     const translation = super.mouseTranslate(currentMouse, mouseDown);
     const pointTRL = new Vertex(translation.x * this.initScale.x, translation.y * this.initScale.y);
-    this.points.forEach((point, index) => {point.center = this.previousCoords[index].add(pointTRL); point.update()})
+    this.points.forEach((point, index) => { point.center = this.previousCoords[index].add(pointTRL); point.update() })
     return translation
   }
 
@@ -2483,11 +2483,20 @@ function argMax(array: number[]): [number, number] {
   return [max, argMax]
 }
 
+function mapMin(map: Map<any, number>): [any, number] {
+  let min = Number.NEGATIVE_INFINITY;
+  let keyMin: string;
+  map.forEach((value, key) => {
+    if (value >= min) min = value; keyMin = key;
+  })
+  return [keyMin, min]
+}
+
 function mapMax(map: Map<any, number>): [any, number] {
   let max = Number.NEGATIVE_INFINITY;
   let keyMax: string;
   map.forEach((value, key) => {
-    if (value >= max) {max = value; keyMax = key}
+    if (value >= max) max = value; keyMax = key;
   })
   return [keyMax, max]
 }

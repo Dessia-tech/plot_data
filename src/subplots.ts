@@ -2214,7 +2214,7 @@ export class newScatter extends Frame {
 
   public drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
     this.drawPoints(context);
-    this.absoluteObjects = this.points;
+    this.absoluteObjects = new Array(...this.points);
     this.drawSelectionBox(context);
   };
 

@@ -581,7 +581,10 @@ export class MultiplePlots {
       this.objectList.forEach((plot, pIndex) => {
         if (List.is_include(pIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
-          if (plot instanceof BasePlot) plot.selectedIndices = this.dep_selected_points_index;
+          if (plot instanceof BasePlot) {
+            plot.selectedIndices = this.dep_selected_points_index;
+            plot.reset_scales();
+          }
           plot.draw();
         }
       })
@@ -1594,7 +1597,7 @@ export class MultiplePlots {
 
 
     manage_selected_point_index_changes(old_selected_index:number[]) {
-      if (!equals(old_selected_index, this.selected_point_index)) {
+      if (!equals(old_selected_index, this.dep_selected_points_index)) {
         var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.dep_selected_points_index } });
         this.canvas.dispatchEvent(evt);
       }
@@ -1840,7 +1843,7 @@ export class MultiplePlots {
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
-        old_selected_index = this.selected_point_index;
+        old_selected_index = this.dep_selected_points_index;
         if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();
           this.resetAllObjects();

@@ -1686,7 +1686,7 @@ export class BasePlot extends PlotData {
   }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
-    return new Vertex(mouseDown.x - currentMouse.x, mouseDown.y - currentMouse.y);
+    return currentMouse.subtract(mouseDown)
   }
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
@@ -2151,7 +2151,7 @@ export class Histogram extends Frame {
   public setFeatures(data: any): [string, string] { return [data.x_variable, 'number'] }
 
   mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
-    return new Vertex(this.axes[0].isDiscrete ? 0 : mouseDown.x - currentMouse.x, 0)
+    return new Vertex(this.axes[0].isDiscrete ? 0 : currentMouse.x - mouseDown.x, 0)
   }
 
   wheel_interaction(mouse3X, mouse3Y, e): [number, number] { // TODO: REALLY NEEDS A REFACTOR
@@ -2190,6 +2190,7 @@ export class newScatter extends Frame {
   public tooltipAttr: string[];
   public isMerged: boolean = false;
   public clusterColors: string[];
+  public previousCoords: Vertex[];
   constructor(
     public data: any,
     public width: number,
@@ -2203,6 +2204,7 @@ export class newScatter extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (!data.tooltip) {this.tooltipAttr = Array.from(this.features.keys()) }
       else this.tooltipAttr = data.tooltip.attribute;
+      this.points = this.computePoints();
     }
 
   public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
@@ -2211,14 +2213,34 @@ export class newScatter extends Frame {
   }
 
   public drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
-    this.points = this.computePoints(context);
+    this.drawPoints(context);
     this.absoluteObjects = this.points;
     this.drawSelectionBox(context);
   };
 
-  public switchMerge() { this.isMerged = !this.isMerged ; this.draw() }
+  public drawPoints(context: CanvasRenderingContext2D): void {
+    this.points.forEach(point => {
+      const colors = new Map<string, number>();
+      point.isHovered = point.isClicked = point.isSelected = false;
+      point.values.forEach(index => {
+        if (this.clusterColors) {
+          if (colors.has(this.clusterColors[index])) colors.set(this.clusterColors[index], colors.get(this.clusterColors[index]) + 1)
+          else colors.set(this.clusterColors[index], 1);
+        }
+        if (this.hoveredIndices.indexOf(index) != -1) point.isHovered = true;
+        if (this.clickedIndices.indexOf(index) != -1) point.isClicked = true;
+        if (this.selectedIndices.indexOf(index) != -1) point.isSelected = true;
+      });
+      const color = mapMax(colors);
+      point.setColors(color[0]);
+      point.update();
+      if (point.isInFrame(this.axes[0], this.axes[1])) point.draw(context); 
+    }) 
+  }
 
-  private computePoints(context: CanvasRenderingContext2D): ScatterPoint[] {
+  public switchMerge() { this.isMerged = !this.isMerged; this.points = this.computePoints(); this.draw() }
+
+  private computePoints(): ScatterPoint[] {
     const [xCoords, yCoords, xValues, yValues, pointsInCanvas] = this.projectPoints();
     const thresholdDist = 15;
     let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
@@ -2227,7 +2249,6 @@ export class newScatter extends Frame {
     const points: ScatterPoint[] = [];
     mergedPoints.forEach(indexList => {
       const newPoint = this.computePoint(indexList, pointsInCanvas, xCoords, yCoords, xValues, yValues, minSize, thresholdDist);
-      newPoint.draw(context);
       points.push(newPoint);
     })
     return points
@@ -2268,17 +2289,13 @@ export class newScatter extends Frame {
       let centerY = 0;
       let meanX = 0;
       let meanY = 0;
-      let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle')
-      if (this.clusterColors && !this.isMerged) newPoint.setColors(this.clusterColors[pointsInCanvas[indexList[0]]]);
+      let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle');
       indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];
         meanX += xValues[pointsInCanvas[index]];
         meanY += yValues[pointsInCanvas[index]];
         newPoint.values.push(pointsInCanvas[index]);
-        if (!newPoint.isHovered) { if (this.hoveredIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isHovered = true };
-        if (!newPoint.isClicked) { if (this.clickedIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isClicked = true };
-        if (!newPoint.isSelected) { if (this.selectedIndices.indexOf(pointsInCanvas[index]) != -1) newPoint.isSelected = true };
       });
       newPoint.center.x = centerX / indexList.length;
       newPoint.center.y = centerY / indexList.length;
@@ -2361,7 +2378,7 @@ export class newScatter extends Frame {
     return clusters
   }
 
-  public simpleCluster(inputValue: number) { this.computeClusterColors(inputValue) ; this.draw() }
+  public simpleCluster(inputValue: number) { this.computeClusterColors(inputValue); this.draw() }
 
   private computeClusterColors(normedDistance: number = 0.33): void {
     const xValues = [...this.axes[0].stringsToValues(this.features.get(this.xFeature))];
@@ -2377,6 +2394,45 @@ export class newScatter extends Frame {
       colorRadius += colorRatio;
       cluster.forEach(point => this.clusterColors[point] = `hsl(${colorRadius}, 50%, 50%, 90%)`);
     })
+  }
+
+  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
+    const translation = super.mouseTranslate(currentMouse, mouseDown);
+    const pointTRL = new Vertex(translation.x * this.initScale.x, translation.y * this.initScale.y);
+    this.points.forEach((point, index) => {point.center = this.previousCoords[index].add(pointTRL); point.update()})
+    return translation
+  }
+
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
+    let [superCanvasMouse, superFrameMouse, clickedObject] = super.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+    this.previousCoords = Array.from(this.points, point => point.center);
+    return [superCanvasMouse, superFrameMouse, clickedObject]
+  }
+
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+    super.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
+    this.previousCoords = [];
+  }
+
+  public wheel_interaction(mouse3X: any, mouse3Y: any, e: WheelEvent): [number, number] {
+    let scale = new Vertex(this.scaleX, this.scaleY);
+    [mouse3X, mouse3Y] = super.wheel_interaction(mouse3X, mouse3Y, e);
+    for (let axis of this.axes) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > scale.x) {this.scaleX = scale.x}
+        if (this.scaleY > scale.y) {this.scaleY = scale.y}
+      } else if (axis.tickPrecision < 1) {
+        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+      }
+    }
+    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
+    this.updateAxes(); // needs a refactor
+    this.axes.forEach(axis => axis.saveLocation());
+    [this.scaleX, this.scaleY] = [1, 1];
+    this.viewPoint = new Vertex(0, 0);
+    this.points = this.computePoints();
+    return [mouse3X, mouse3Y];
   }
 }
 
@@ -2425,6 +2481,15 @@ function argMax(array: number[]): [number, number] {
     }
   })
   return [max, argMax]
+}
+
+function mapMax(map: Map<any, number>): [any, number] {
+  let max = Number.NEGATIVE_INFINITY;
+  let keyMax: string;
+  map.forEach((value, key) => {
+    if (value >= max) {max = value; keyMax = key}
+  })
+  return [keyMax, max]
 }
 
 function sum(array: number[]): number {

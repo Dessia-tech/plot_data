@@ -1964,6 +1964,12 @@ export class ScatterPoint extends newPoint2D {
     this.isScaled = false;
     this.path = this.buildPath();
   }
+
+  public isInFrame(xAxis: newAxis, yAxis: newAxis): boolean {
+    const inCanvasX = this.mean.x < xAxis.maxValue && this.mean.x > xAxis.minValue;
+    const inCanvasY = this.mean.y < yAxis.maxValue && this.mean.y > yAxis.minValue;
+    return inCanvasX && inCanvasY
+  }
 }
 
 export class Bar extends newRect {
@@ -2693,8 +2699,8 @@ export class newAxis extends EventEmitter {
     let offset = translation.x;
     let scale = scaling.x;
     if (this.isVertical) { center = (viewPoint.y - HTMatrix.f) / HTMatrix.d; offset = translation.y; scale = scaling.y };
-    this.minValue = (this._previousMin - center) / scale + center + offset / HTMatrix.a;
-    this.maxValue = (this._previousMax - center) / scale + center + offset / HTMatrix.a;
+    this.minValue = (this._previousMin - center) / scale + center - offset / HTMatrix.a;
+    this.maxValue = (this._previousMax - center) / scale + center - offset / HTMatrix.a;
     this.updateTicks();
   }
 

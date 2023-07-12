@@ -1916,7 +1916,7 @@ export class newPoint2D extends newShape {
     return marker
   }
 
-  get tooltipOrigin(): Vertex { return this.center };
+  get tooltipOrigin(): Vertex { return this.center.copy() };
 
   get markerOrientation(): string { return this._markerOrientation };
 

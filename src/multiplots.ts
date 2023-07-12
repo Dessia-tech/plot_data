@@ -583,7 +583,9 @@ export class MultiplePlots {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
           if (plot instanceof BasePlot) {
             plot.selectedIndices = this.dep_selected_points_index;
-            plot.reset_scales();
+            // Kept for the moment cause it was fixing a bug that it does not seem to fix anymore since bug is not here anymore...
+            // plot.reset_scales();
+            // if (plot instanceof Frame) plot.updateSize();
           }
           plot.draw();
         }
@@ -1108,7 +1110,7 @@ export class MultiplePlots {
         }
       }
       this.resetAllObjects();
-      this.objectList.forEach(plot => {if (plot instanceof newScatter) plot.points = plot.computePoints() });
+      this.objectList.forEach(plot => {if (plot instanceof newScatter) plot.computePoints() });
       this.redrawAllObjects();
       this.view_on_disposition = true;
     }

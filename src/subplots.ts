@@ -1939,8 +1939,10 @@ export class Frame extends BasePlot {
     return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
+  public updateSize(): void { this.size = new Vertex(this.width, this.height) }
+
   public reset_scales(): void {
-    this.size = new Vertex(this.width, this.height);
+    this.updateSize();
     this.resetAxes();
   }
 
@@ -2205,9 +2207,19 @@ export class newScatter extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (!data.tooltip) {this.tooltipAttr = Array.from(this.features.keys()) }
       else this.tooltipAttr = data.tooltip.attribute;
-      this.points = this.computePoints();
+      this.computePoints();
     }
 
+  public reset_scales() {
+    super.reset_scales();
+    this.computePoints();
+  }  
+
+  public reset(): void {
+    super.reset();
+    this.resetClusters();
+  }
+  
   public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     if (object instanceof ScatterPoint) this.plottedObjectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
     else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState)
@@ -2239,20 +2251,19 @@ export class newScatter extends Frame {
     })
   }
 
-  public switchMerge() { this.isMerged = !this.isMerged; this.points = this.computePoints(); this.draw() }
+  public switchMerge() { this.isMerged = !this.isMerged; this.computePoints(); this.draw() }
 
-  public computePoints(): ScatterPoint[] {
+  public computePoints() {
     const [xCoords, yCoords, xValues, yValues, pointsInCanvas] = this.projectPoints();
     const thresholdDist = 15;
     let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
 
     const minSize = 4;
-    const points: ScatterPoint[] = [];
+    this.points = [];
     mergedPoints.forEach(indexList => {
       const newPoint = this.computePoint(indexList, pointsInCanvas, xCoords, yCoords, xValues, yValues, minSize, thresholdDist);
-      points.push(newPoint);
+      this.points.push(newPoint);
     })
-    return points
   }
 
   private computePoint(indexList: number[], pointsInCanvas: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
@@ -2381,6 +2392,13 @@ export class newScatter extends Frame {
 
   public simpleCluster(inputValue: number) { this.computeClusterColors(inputValue); this.draw() }
 
+  public resetClusters() { 
+    this.clusterColors = undefined; 
+    const defaultPoint = new ScatterPoint([]);
+    this.points.forEach(point => point.setColors(defaultPoint.fillStyle));
+    this.draw();
+   }
+
   private computeClusterColors(normedDistance: number = 0.33): void {
     const xValues = [...this.axes[0].stringsToValues(this.features.get(this.xFeature))];
     const yValues = [...this.axes[1].stringsToValues(this.features.get(this.yFeature))];
@@ -2432,7 +2450,7 @@ export class newScatter extends Frame {
     this.axes.forEach(axis => axis.saveLocation());
     [this.scaleX, this.scaleY] = [1, 1];
     this.viewPoint = new Vertex(0, 0);
-    this.points = this.computePoints();
+    this.computePoints();
     return [mouse3X, mouse3Y];
   }
 }

@@ -1858,7 +1858,7 @@ const MARKERS = ['+', 'crux', 'mark'];
 const CROSSES = ['x', 'cross', 'oblique'];
 const SQUARES = ['square'];
 const TRIANGLES = ['^', 'triangle', 'tri'];
-const STROKE_STYLE_OFFSET = 10;
+const STROKE_STYLE_OFFSET = 15;
 export class newPoint2D extends newShape {
   public path: Path2D;
   public center: Vertex;

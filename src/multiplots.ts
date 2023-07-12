@@ -1818,6 +1818,10 @@ export class MultiplePlots {
       this.redrawAllObjects();
     }
 
+    public resetClusters(): void {
+      this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.resetClusters()})
+    }
+
     mouse_interaction(): void {
       var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
       var isDrawing = false;

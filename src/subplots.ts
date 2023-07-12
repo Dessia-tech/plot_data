@@ -2251,7 +2251,11 @@ export class newScatter extends Frame {
     })
   }
 
-  public switchMerge() { this.isMerged = !this.isMerged; this.computePoints(); this.draw() }
+  public switchMerge() { 
+    this.isMerged = !this.isMerged; 
+    this.computePoints(); 
+    this.draw();
+   }
 
   public computePoints() {
     const [xCoords, yCoords, xValues, yValues, pointsInCanvas] = this.projectPoints();

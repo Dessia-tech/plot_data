@@ -2210,7 +2210,7 @@ export class newScatter extends Frame {
       this.computePoints();
     }
 
-  public reset_scales() {
+  public reset_scales(): void {
     super.reset_scales();
     this.computePoints();
   }  
@@ -2251,26 +2251,26 @@ export class newScatter extends Frame {
     })
   }
 
-  public switchMerge() { 
+  public switchMerge(): void { 
     this.isMerged = !this.isMerged; 
     this.computePoints(); 
     this.draw();
    }
 
-  public computePoints() {
-    const [xCoords, yCoords, xValues, yValues, pointsInCanvas] = this.projectPoints();
+  public computePoints(): void {
+    const [xCoords, yCoords, xValues, yValues] = this.projectPoints();
     const thresholdDist = 15;
     let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
 
     const minSize = 4;
     this.points = [];
     mergedPoints.forEach(indexList => {
-      const newPoint = this.computePoint(indexList, pointsInCanvas, xCoords, yCoords, xValues, yValues, minSize, thresholdDist);
+      const newPoint = this.computePoint(indexList, xCoords, yCoords, xValues, yValues, minSize, thresholdDist);
       this.points.push(newPoint);
     })
   }
 
-  private computePoint(indexList: number[], pointsInCanvas: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
+  private computePoint(indexList: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
     minSize: number, thresholdDist: number): ScatterPoint {
       let centerX = 0;
       let centerY = 0;
@@ -2280,9 +2280,9 @@ export class newScatter extends Frame {
       indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];
-        meanX += xValues[pointsInCanvas[index]];
-        meanY += yValues[pointsInCanvas[index]];
-        newPoint.values.push(pointsInCanvas[index]);
+        meanX += xValues[index];
+        meanY += yValues[index];
+        newPoint.values.push(index);
       });
       newPoint.center.x = centerX / indexList.length;
       newPoint.center.y = centerY / indexList.length;
@@ -2322,26 +2322,20 @@ export class newScatter extends Frame {
     return mergedPoints
   }
 
-  private projectPoints() {
+  private projectPoints(): [number[], number[], number[], number[]] {
     const xValues = this.axes[0].stringsToValues(this.features.get(this.xFeature));
     const yValues = this.axes[1].stringsToValues(this.features.get(this.yFeature));
     const xCoords = [];
     const yCoords = [];
-    const pointsInCanvas = [];
     for (let index = 0 ; index < xValues.length ; index++) {
-      const inCanvasX = xValues[index] < this.axes[0].maxValue && xValues[index] > this.axes[0].minValue;
-      const inCanvasY = yValues[index] < this.axes[1].maxValue && yValues[index] > this.axes[1].minValue;
-      if (inCanvasX && inCanvasY) {
-        const [xCoord, yCoord] = this.projectPoint(xValues[index], yValues[index]);
-        xCoords.push(xCoord);
-        yCoords.push(yCoord);
-        pointsInCanvas.push(index);
-      }
+      const [xCoord, yCoord] = this.projectPoint(xValues[index], yValues[index]);
+      xCoords.push(xCoord);
+      yCoords.push(yCoord);
     }
-    return [xCoords, yCoords, xValues, yValues, pointsInCanvas]
+    return [xCoords, yCoords, xValues, yValues]
   }
 
-  private projectPoint(xCoord: number, yCoord: number) {
+  private projectPoint(xCoord: number, yCoord: number): [number, number] {
     return [xCoord * this.relativeMatrix.a + this.relativeMatrix.e, yCoord * this.relativeMatrix.d + this.relativeMatrix.f]
   }
 
@@ -2394,9 +2388,9 @@ export class newScatter extends Frame {
     return clusters
   }
 
-  public simpleCluster(inputValue: number) { this.computeClusterColors(inputValue); this.draw() }
+  public simpleCluster(inputValue: number): void { this.computeClusterColors(inputValue); this.draw() }
 
-  public resetClusters() { 
+  public resetClusters(): void { 
     this.clusterColors = undefined; 
     const defaultPoint = new ScatterPoint([]);
     this.points.forEach(point => point.setColors(defaultPoint.fillStyle));

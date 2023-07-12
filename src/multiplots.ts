@@ -1728,7 +1728,6 @@ export class MultiplePlots {
       return false;
     }
 
-
     save_canvas() {
       if (current_save <= multiplot_saves.length - 2) {
         multiplot_saves = List.remove_at_indices(current_save + 1, multiplot_saves.length - 1, multiplot_saves);
@@ -1739,7 +1738,6 @@ export class MultiplePlots {
       }
       current_save = multiplot_saves.length - 1;
     }
-
 
     restore_previous_canvas() {
       if (current_save === 0) return;
@@ -1762,7 +1760,6 @@ export class MultiplePlots {
       }
       this.redrawAllObjects();
     }
-
 
     is_on_button(mouseX, mouseY) {
       var click_on_manip_button = Shape.isInRect(mouseX, mouseY, this.transbutton_x, this.button_y, this.button_w, this.button_h);

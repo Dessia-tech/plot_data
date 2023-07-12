@@ -1486,6 +1486,7 @@ export class BasePlot extends PlotData {
   public selectedIndices: number[];
 
   public isSelecting: boolean = false;
+  // public select_bool: boolean = false;
   public selectionBox = new SelectionBox();
 
   public viewPoint: Vertex = new Vertex(0, 0);
@@ -1653,7 +1654,7 @@ export class BasePlot extends PlotData {
   //   buttonRect.draw(context);
   // }
 
-  public switchSelectionMode() { this.isSelecting = !this.isSelecting ; this.draw() }
+  public switchSelectionMode() { this.isSelecting = !this.isSelecting; this.draw() }
 
   public updateSelectionBox(frameDown: Vertex, frameLoc: Vertex) { this.selectionBox.update(frameDown, frameLoc) }
 

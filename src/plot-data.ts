@@ -2682,6 +2682,8 @@ export class Interactions {
 
   public static click_on_merge_action(plot_data) {
     plot_data.mergeON = !plot_data.mergeON;
+    // Kept in case the behavior has to be for unitary plots and not directly the whole multiplot
+    // if (plot_data.isMerged !== undefined) { plot_data.isMerged = !plot_data.isMerged; plot_data.points = plot_data.computePoints() }
     plot_data.refresh_point_list_bool = true;
     plot_data.reset_scroll();
     plot_data.select_on_click = [];

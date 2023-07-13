@@ -36,7 +36,7 @@ html_template = Template('''
         <button name="mergeON" value="OK" type="button"  onclick="plot_data.switchMerge()"> Switch Point Merge </button> &nbsp;&nbsp;
         <button name="Zoom" value="OK" type="button"  onclick="plot_data.switchZoom()"> Zoom Box </button> &nbsp;&nbsp;
         Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250" onclick="plot_data.simpleCluster(value / 10000)"></input>
-        <button name="resetClusters" value="OK" type="button"  onclick="plot_data.resetClusters()"> Reset clusters </button> &nbsp;&nbsp;
+        <button name="resetClusters" value="OK" type="button"  onclick="plot_data.resetClusters()"> Reset clusters </button>
 <hr style="border-top: 2px;">
     </div>
     <div id="app">

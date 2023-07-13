@@ -1486,8 +1486,8 @@ export class BasePlot extends PlotData {
   public selectedIndices: number[];
 
   public isSelecting: boolean = false;
-  // public select_bool: boolean = false;
   public selectionBox = new SelectionBox();
+  public isZooming: boolean = false;
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: any[] = [];
@@ -1654,9 +1654,11 @@ export class BasePlot extends PlotData {
   //   buttonRect.draw(context);
   // }
 
-  public switchSelectionMode() { this.isSelecting = !this.isSelecting; this.draw() }
+  public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() }
 
-  public updateSelectionBox(frameDown: Vertex, frameLoc: Vertex) { this.selectionBox.update(frameDown, frameLoc) }
+  public switchZoom(): void { this.isZooming = !this.isZooming }
+
+  public updateSelectionBox(frameDown: Vertex, frameLoc: Vertex): void { this.selectionBox.update(frameDown, frameLoc) }
 
   public get drawingZone(): [Vertex, Vertex] { return [new Vertex(this.X, this.Y), this.size] }
 
@@ -1670,6 +1672,23 @@ export class BasePlot extends PlotData {
         this.absoluteObjects.push(this.selectionBox);
       }
     }
+  }
+
+  public drawZoomBox(zoomBox: SelectionBox, frameDown: Vertex, frameMouse: Vertex, context: CanvasRenderingContext2D): void {
+    zoomBox.update(frameDown, frameMouse);
+    const [drawingOrigin, drawingSize] = this.drawingZone;
+    zoomBox.buildRectFromHTMatrix(drawingOrigin, drawingSize, this.relativeMatrix);
+    zoomBox.buildPath();
+    zoomBox.draw(context);
+  }
+
+  public zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
+    this.axes[0].minValue = Math.min(zoomBox.minVertex.x, zoomBox.maxVertex.x);
+    this.axes[0].maxValue = Math.max(zoomBox.minVertex.x, zoomBox.maxVertex.x);
+    this.axes[1].minValue = Math.min(zoomBox.minVertex.y, zoomBox.maxVertex.y);
+    this.axes[1].maxValue = Math.max(zoomBox.minVertex.y, zoomBox.maxVertex.y);
+    this.axes.forEach(axis => axis.saveLocation());
+    this.updateAxes();
   }
 
   public drawTooltips(): void {
@@ -1738,32 +1757,34 @@ export class BasePlot extends PlotData {
     if (this.interaction_ON === true) {
       var clickedObject: any;
       var isDrawing = false;
-      var canvasMouse = new Vertex(0, 0) ; var canvasDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
-      var frameMouse = new Vertex(0, 0) ; var frameDown = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
-      var absoluteMouse = new Vertex(0, 0); var absoluteDown = new Vertex(0, 0);
+      var canvasMouse = new Vertex(0, 0); var canvasDown = new Vertex(0, 0); var mouseWheel = new Vertex(0, 0);
+      var frameMouse = new Vertex(0, 0); var frameDown = new Vertex(0, 0); var canvasWheel = new Vertex(0, 0);
+      var absoluteMouse = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false; var shiftKey = false;
+      var zoomBox = new SelectionBox();
       window.addEventListener('keydown', e => {
         if (e.key == "Control") ctrlKey = true;
         if (e.key == "Shift") { 
           shiftKey = true; 
-          if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() } 
+          if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
         }
       });
 
       window.addEventListener('keyup', e => {
         if (e.key == "Control") ctrlKey = false;
-        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; canvas.style.cursor = 'default'; this.draw() }
+        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; canvas.style.cursor = 'default'; this.draw() };
       });
 
       canvas.addEventListener('mousemove', e => {
         [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
+        if (this.isZooming) canvas.style.cursor = 'crosshair';
         if (this.interaction_ON) {
           if (isDrawing) {
             if (clickedObject instanceof SelectionBox != true) { // TODO: BEURK !!!!
-              if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting) {
+              if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting && !this.isZooming) {
                 canvas.style.cursor = 'move';
                 this.translation = this.mouseTranslate(canvasMouse, canvasDown);
               }
@@ -1780,20 +1801,27 @@ export class BasePlot extends PlotData {
             else this.updateSelectionBox(frameDown, frameMouse);
           }
         }
+        if (this.isZooming) {
+          if (isDrawing) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
+        }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
       });
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-        absoluteDown = absoluteMouse;
         if (clickedObject instanceof newAxis || this.isSelecting) this.is_drawing_rubber_band = true
-        else this.is_drawing_rubber_band = false
+        else this.is_drawing_rubber_band = false;
+        if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
       });
 
       canvas.addEventListener('mouseup', e => {
         if (!shiftKey) canvas.style.cursor = 'default';
+        if (this.isZooming) {
+          this.switchZoom();
+          this.zoomBoxUpdateAxes(zoomBox);
+        }
         console.log(e.offsetX, e.offsetY)
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) clickedObject.mouseUp();
@@ -1832,7 +1860,7 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
         ctrlKey = false;
-        this.axes.forEach(axis => {axis.saveLocation()});
+        this.axes.forEach(axis => axis.saveLocation());
         this.translation = new Vertex(0, 0);
         canvas.style.cursor = 'default';
       });
@@ -2136,9 +2164,10 @@ export class Histogram extends Frame {
 
   public getBarsDrawing(): void {
     const fullTicks = this.boundedTicks(this.axes[0]);
+    const minY = this.boundedTicks(this.axes[1])[0];
     this.bars.forEach((bar, index) => {
-      let origin = new Vertex(fullTicks[index], 0);
-      let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length);
+      let origin = new Vertex(fullTicks[index], minY);
+      let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length > minY ? bar.length - minY : 0);
       if (this.axes[0].isDiscrete) {origin.x = origin.x - size.x / 2};
 
       bar.setGeometry(origin, size);
@@ -2225,6 +2254,7 @@ export class newScatter extends Frame {
 
   public reset(): void {
     super.reset();
+    this.computePoints();
     this.resetClusters();
   }
   
@@ -2263,7 +2293,12 @@ export class newScatter extends Frame {
     this.isMerged = !this.isMerged; 
     this.computePoints(); 
     this.draw();
-   }
+  }
+
+  public zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
+    super.zoomBoxUpdateAxes(zoomBox);
+    this.computePoints();
+  }
 
   public computePoints(): void {
     const [xCoords, yCoords, xValues, yValues] = this.projectPoints();

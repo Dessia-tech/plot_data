@@ -2716,7 +2716,7 @@ export class newAxis extends EventEmitter {
     return
   };
 
-  private updateTicks(): void {
+  public updateTicks(): void {
     this.ticks = this.computeTicks();
     if (!this.isDiscrete) { this.labels = this.numericLabels() };
   }

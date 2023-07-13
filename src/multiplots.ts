@@ -67,6 +67,7 @@ export class MultiplePlots {
     // NEW
     public rubberBands: Map<string, RubberBand>;
     public isSelecting: boolean = false;
+    public isZooming: boolean = false;
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
@@ -1799,25 +1800,21 @@ export class MultiplePlots {
       })
     }
 
-    public switchSelectionMode() {
-      this.isSelecting = true;
-      this.objectList.forEach(plot => {if (plot instanceof BasePlot) plot.switchSelectionMode()});
-      this.redrawAllObjects();
+    public switchSelection() {
+      this.isSelecting = !this.isSelecting;
+      this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchSelection() });
     }
 
-    public switchMerge() {
-      this.objectList.forEach(plot => {if (plot instanceof newScatter) plot.switchMerge()});
-      this.redrawAllObjects();
+    public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.switchMerge() })};
+
+    public switchZoom() { 
+      this.isZooming = !this.isZooming; 
+      this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchZoom() });
     }
 
-    public simpleCluster(inputValue: number) {
-      this.objectList.forEach(plot => {if (plot instanceof newScatter) plot.simpleCluster(inputValue)});
-      this.redrawAllObjects();
-    }
+    public simpleCluster(inputValue: number) { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.simpleCluster(inputValue) })};
 
-    public resetClusters(): void {
-      this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.resetClusters()})
-    }
+    public resetClusters(): void { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.resetClusters() })};
 
     mouse_interaction(): void {
       var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
@@ -1856,9 +1853,8 @@ export class MultiplePlots {
         } else {
           this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
           this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
-          if (this.isSelecting) this.objectList.forEach((plot, index) => {
-            if (index != this.clickedPlotIndex) plot.isSelecting = false;
-          })
+          if (this.isSelecting) this.objectList.forEach((plot, index) => { if (index != this.clickedPlotIndex) plot.isSelecting = false });
+          if (this.isZooming) this.objectList.forEach((plot, index) => { if (index != this.clickedPlotIndex) (plot as BasePlot).isZooming = false });
           if (this.manipulation_bool) {
             this.setAllInteractionsToOff();
             if (this.clickedPlotIndex != -1) {
@@ -1879,6 +1875,7 @@ export class MultiplePlots {
       this.canvas.addEventListener('mousemove', e => {
         var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
         mouse2X = e.offsetX; mouse2Y = e.offsetY;
+        if (this.isSelecting) this.canvas.style.cursor = 'crosshair';
         if (this.manipulation_bool) {
           if (isDrawing) {
             this.view_on_disposition = false;
@@ -1906,20 +1903,22 @@ export class MultiplePlots {
           }
         } else {
           this.manage_mouse_interactions(mouse2X, mouse2Y);
-          if (isDrawing) {
-            mouse_moving = true;
-            if (this.selectDependency_bool) {
-              this.mouse_move_scatter_communication();
-              this.mouse_move_pp_communication();
-              this.mouse_move_frame_communication();
-              this.refreshRubberBands();
-              this.redrawAllObjects();
-            }
-            this.redraw_object();
-          } else {
-            if (this.selectDependency_bool) {
-              this.mouse_over_primitive_group();
-              this.mouse_over_scatter_plot();
+          if (!this.isZooming) {
+            if (isDrawing) {
+              mouse_moving = true;
+              if (this.selectDependency_bool) {
+                this.mouse_move_scatter_communication();
+                this.mouse_move_pp_communication();
+                this.mouse_move_frame_communication();
+                this.refreshRubberBands();
+                this.redrawAllObjects();
+              }
+              this.redraw_object();
+            } else {
+              if (this.selectDependency_bool) {
+                this.mouse_over_primitive_group();
+                this.mouse_over_scatter_plot();
+              }
             }
           }
         }
@@ -1934,6 +1933,7 @@ export class MultiplePlots {
         var click_on_view = Shape.isInRect(mouse3X, mouse3Y, this.view_button_x, this.button_y, this.button_w, this.button_h);
         var click_on_export = Shape.isInRect(mouse3X, mouse3Y, this.export_button_x, this.button_y, this.button_w, this.button_h);
         this.click_on_button = click_on_manip_button || click_on_selectDep_button || click_on_view || click_on_export;
+
         if (this.click_on_button) {
           this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
         }
@@ -1971,11 +1971,12 @@ export class MultiplePlots {
         this.refreshRubberBands();
         this.manage_selected_point_index_changes(old_selected_index);
         this.isSelecting = false;
+        this.isZooming = false;
         this.objectList.forEach(plot => {
           plot.is_drawing_rubber_band = false;
           if (plot.isSelecting) this.isSelecting = true;
+          if (plot instanceof BasePlot) plot.isZooming = false;
         });
-        if (this.isSelecting) this.objectList.forEach(plot => {if (plot instanceof BasePlot) plot.isSelecting = true});
         this.redrawAllObjects();
         isDrawing = false;
         mouse_moving = false;

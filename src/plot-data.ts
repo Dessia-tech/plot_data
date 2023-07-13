@@ -4,6 +4,7 @@ import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv,
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
+import * as EventEmitter from "events";
 
 const HIDDEN_OFFSET = 15;
 
@@ -11,7 +12,7 @@ const HIDDEN_OFFSET = 15;
  * for that purpose. It is inherited by more specific data-visualization objects such as
  * PlotScatter, PlotContour, ParallelPlot and PrimitiveGroupContainer
  */
-export abstract class PlotData {
+export abstract class PlotData extends EventEmitter {
   type_:string;
   name:string = "";
   context_show:any;
@@ -204,6 +205,7 @@ export abstract class PlotData {
     public Y: number,
     public canvas_id: string,
     public is_in_multiplot: boolean = false) {
+      super();
       this.initial_width = width;
       this.initial_height = height;
       this.name = data["name"];

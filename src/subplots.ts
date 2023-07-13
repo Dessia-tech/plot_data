@@ -5,6 +5,7 @@ import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
+import { deflateSync } from "zlib";
 
 var alert_count = 0;
 /**
@@ -1838,22 +1839,10 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('wheel', e => {
         if (this.interaction_ON) {
           let scale = new Vertex(this.scaleX, this.scaleY);
-          [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
-          for (let axis of this.axes) {
-            if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
-              if (this.scaleX > scale.x) {this.scaleX = scale.x}
-              if (this.scaleY > scale.y) {this.scaleY = scale.y}
-            } else if (axis.tickPrecision < 1) {
-              if (this.scaleX < scale.x) {this.scaleX = scale.x}
-              if (this.scaleX < scale.x) {this.scaleX = scale.x}
-            }
-          }
-          this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
-          this.updateAxes(); // needs a refactor
-          this.axes.forEach(axis => axis.saveLocation());
-          [this.scaleX, this.scaleY] = [1, 1];
-          this.viewPoint = new Vertex(0, 0);
-          this.draw(); // needs a refactor
+          console.log(scale);
+          [mouse3X, mouse3Y] = this.wheelFromEvent(e);
+          console.log(e, mouse3X, mouse3Y);
+          this.drawAfterRescale(mouse3X, mouse3Y, scale);
         }
       });
 
@@ -1867,40 +1856,71 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public wheel_interaction(mouse3X, mouse3Y, e: WheelEvent): [number, number] { //TODO: TO REFACTOR !!!
+  public drawAfterRescale(mouse3X: number, mouse3Y: number, scale: Vertex): void {
+    for (let axis of this.axes) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > scale.x) {this.scaleX = scale.x}
+        if (this.scaleY > scale.y) {this.scaleY = scale.y}
+      } else if (axis.tickPrecision < 1) {
+        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+      }
+    }
+    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
+    this.updateAxes(); // needs a refactor
+    this.axes.forEach(axis => axis.saveLocation());
+    [this.scaleX, this.scaleY] = [1, 1];
+    this.viewPoint = new Vertex(0, 0);
+    this.draw(); // needs a refactor
+  }
+
+  public zoomIn(): void {
+    const [mouse3X, mouse3Y] = this.wheel_interaction(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2, 342);
+    this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(1, 1));
+  }
+
+  public zoomOut() {
+    var zoom_coeff = 1/1.2;
+    this.scaleX = this.scaleX*zoom_coeff;
+    this.scaleY = this.scaleY*zoom_coeff;
+    this.originX = this.width/2 + zoom_coeff * (this.originX - this.width/2);
+    this.originY = this.height/2 + zoom_coeff * (this.originY - this.height/2);
+    this.reset_scroll();
+  }
+
+  public wheelFromEvent(e: WheelEvent): [number, number] { return this.wheel_interaction(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
+
+  public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: TO REFACTOR !!!
     // e.preventDefault();
     this.fusion_coeff = 1.2;
-    var event = -Math.sign(e.deltaY);
-    mouse3X = e.offsetX;
-    mouse3Y = e.offsetY;
     if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
-        if (event>0) {
+        if (deltaY>0) {
           this.scaleX = this.scaleX*this.fusion_coeff;
           this.scroll_x++;
           this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-        } else if (event<0) {
+        } else if (deltaY<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
           this.scroll_x--;
           this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
         }
 
     } else if ((mouse3X<=this.decalage_axis_x + this.X) && (mouse3Y<this.height - this.decalage_axis_y + this.Y) && this.axis_ON) {
-        if (event>0) {
+        if (deltaY>0) {
           this.scaleY = this.scaleY*this.fusion_coeff;
           this.scroll_y++;
           this.originY = this.height/2 + this.fusion_coeff * (this.originY - this.height/2);
-        } else if (event<0) {
+        } else if (deltaY<0) {
           this.scaleY = this.scaleY/this.fusion_coeff;
           this.scroll_y--;
           this.originY = this.height/2 + 1/this.fusion_coeff * (this.originY - this.height/2);
         }
 
     } else {
-        if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+        if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
         this.scaleX = this.scaleX*coeff;
         this.scaleY = this.scaleY*coeff;
-        this.scroll_x = this.scroll_x + event;
-        this.scroll_y = this.scroll_y + event;
+        this.scroll_x = this.scroll_x + deltaY;
+        this.scroll_y = this.scroll_y + deltaY;
         this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
         this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
       }
@@ -2194,27 +2214,24 @@ export class Histogram extends Frame {
     return new Vertex(this.axes[0].isDiscrete ? 0 : currentMouse.x - mouseDown.x, 0)
   }
 
-  wheel_interaction(mouse3X, mouse3Y, e): [number, number] { // TODO: REALLY NEEDS A REFACTOR
+  wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
     // e.preventDefault();
     this.fusion_coeff = 1.2;
-    var event = -Math.sign(e.deltaY);
-    mouse3X = e.offsetX;
-    mouse3Y = e.offsetY;
     if (!this.axes[0].isDiscrete) {
       if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
-        if (event>0) {
+        if (deltaY>0) {
           this.scaleX = this.scaleX * this.fusion_coeff;
           this.scroll_x++;
           this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-        } else if (event<0) {
+        } else if (deltaY<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
           this.scroll_x--;
           this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
         }
       } else {
-          if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+          if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
           this.scaleX = this.scaleX*coeff;
-          this.scroll_x = this.scroll_x + event;
+          this.scroll_x = this.scroll_x + deltaY;
           this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
       }
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
@@ -2474,9 +2491,9 @@ export class newScatter extends Frame {
     this.previousCoords = [];
   }
 
-  public wheel_interaction(mouse3X: any, mouse3Y: any, e: WheelEvent): [number, number] {
+  public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] {
     let scale = new Vertex(this.scaleX, this.scaleY);
-    [mouse3X, mouse3Y] = super.wheel_interaction(mouse3X, mouse3Y, e);
+    [mouse3X, mouse3Y] = super.wheel_interaction(mouse3X, mouse3Y, deltaY);
     for (let axis of this.axes) {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
         if (this.scaleX > scale.x) {this.scaleX = scale.x}

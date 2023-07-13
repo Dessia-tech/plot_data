@@ -84,7 +84,7 @@ describe('HISTOGRAM CANVAS', function () {
     cy.window().then(win => {
       const histogram = win.eval('plot_data') as Histogram;
       const e = {"offsetX": 572, "offsetY": 144, "deltaY": 3} as WheelEvent;
-      histogram.wheel_interaction(e.offsetX, e.offsetY, e);
+      histogram.wheelFromEvent(e);
       histogram.viewPoint = new Vertex(e.offsetX, e.offsetY);
       histogram.viewPoint.transformSelf(histogram.canvasMatrix);
       histogram.draw();

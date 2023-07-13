@@ -1743,10 +1743,19 @@ export class BasePlot extends PlotData {
       var absoluteMouse = new Vertex(0, 0); var absoluteDown = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
-      var ctrlKey = false;
-      window.addEventListener('keydown', e => {if (e.key == "Control") {ctrlKey = true}});
+      var ctrlKey = false; var shiftKey = false;
+      window.addEventListener('keydown', e => {
+        if (e.key == "Control") ctrlKey = true;
+        if (e.key == "Shift") { 
+          shiftKey = true; 
+          if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() } 
+        }
+      });
 
-      window.addEventListener('keyup', e => {if (e.key == "Control") {ctrlKey = false}});
+      window.addEventListener('keyup', e => {
+        if (e.key == "Control") ctrlKey = false;
+        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; canvas.style.cursor = 'default'; this.draw() }
+      });
 
       canvas.addEventListener('mousemove', e => {
         [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
@@ -1763,7 +1772,6 @@ export class BasePlot extends PlotData {
           this.draw();
         }
         if (this.isSelecting) {
-          canvas.style.cursor = 'crosshair';
           if (isDrawing) {
             if (clickedObject instanceof SelectionBox) {
               clickedObject.mouseMove(frameDown, frameMouse);
@@ -1785,12 +1793,12 @@ export class BasePlot extends PlotData {
       });
 
       canvas.addEventListener('mouseup', e => {
-        canvas.style.cursor = 'default';
+        if (!shiftKey) canvas.style.cursor = 'default';
         console.log(e.offsetX, e.offsetY)
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) clickedObject.mouseUp();
         if (this.isSelecting) this.selectionBox.mouseUp();
-        if (clickedObject instanceof SelectionBox != true) this.isSelecting = false;
+        if (clickedObject instanceof SelectionBox != true && !shiftKey) this.isSelecting = false;
         if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
         clickedObject = undefined;
         this.draw();

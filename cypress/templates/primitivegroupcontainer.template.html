@@ -26,9 +26,9 @@
         <script src=$core_path></script>
     </head>
     <div id="buttons">
-        <button name="select" value="OK" type="button" onclick="plot_data.switchSelectionMode()"> Draw selection window </button>
         <button name="mergeON" value="OK" type="button" onclick="plot_data.switchMerge()"> Switch Point Merge </button>
         Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250" onclick="plot_data.simpleCluster(value / 10000)"></input>
+        <button name="resetClusters" value="OK" type="button"  onclick="plot_data.resetClusters()"> Reset clusters </button>
         <hr style="border-top: 2px;">
     </div>
     <div id="app">

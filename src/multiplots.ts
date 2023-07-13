@@ -1834,12 +1834,15 @@ export class MultiplePlots {
 
       window.addEventListener('keydown', e => {
         if (e.key == "Control") {ctrlKey = true}
-        if (e.key == "Shift") {shiftKey = true}
+        if (e.key == "Shift") {
+          shiftKey = true;
+          if (!ctrlKey) { this.isSelecting = true; this.canvas.style.cursor = 'crosshair'; this.redrawAllObjects() } 
+        }
       });
 
       window.addEventListener('keyup', e => {
         if (e.key == "Control") {ctrlKey = false}
-        if (e.key == "Shift") {shiftKey = false}
+        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; this.canvas.style.cursor = 'default'; this.redrawAllObjects() }
       });
 
       this.canvas.addEventListener('mousedown', e => {

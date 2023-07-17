@@ -200,6 +200,7 @@ export class MultiplePlots {
         this.objectList[i].Y = this.objectList[i].Y * ratio;
       }
       this.define_canvas(this.canvas_id);
+      this.clean_view();
       this.redrawAllObjects();
     }
 

@@ -40,10 +40,10 @@ html_template = Template('''
        Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250" onclick="plot_data.simpleCluster(value / 10000)"></input>
         <button name="resetClusters" value="OK" type="button"  onclick="plot_data.resetClusters()"> Reset clusters </button>
         <button name="resetView" value="OK" type="button"  onclick="plot_data.resetView()"> Reset view </button>
-<hr style="border-top: 2px;">
+    <hr style="border-top: 2px;">
     </div>
     <div id="app">
-        <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;"></canvas>
+        <canvas id="$canvas_id" style="border: 1px solid black;"></canvas>
 
         <script type="text/javascript">
             var buttonsContainer = document.querySelector("#buttons");

@@ -2271,6 +2271,7 @@ export class newAxis extends EventEmitter {
   public mouseStyleON: boolean = false;
   public rubberBand: RubberBand;
   public centeredTitle: boolean = false;
+  public font: string = 'sans-serif';
 
   protected _ticks: number[];
   public tickPrecision: number;
@@ -2293,7 +2294,6 @@ export class newAxis extends EventEmitter {
   readonly SELECTION_RECT_SIZE = 10;
   readonly SIZE_END = 7;
   readonly FONT_SIZE = 12;
-  readonly FONT = 'sans-serif';
 
   // OLD
   public is_drawing_rubberband: boolean = false;
@@ -2451,7 +2451,7 @@ export class newAxis extends EventEmitter {
 
   public computeTextBoxes(context: CanvasRenderingContext2D): void {
     context.save();
-    const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.FONT });
+    const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.font });
     context.font = calibratedTickText.fullFont;
     const calibratedMeasure = context.measureText(calibratedTickText.text).width;
     this.maxTickWidth = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedMeasure);
@@ -2505,7 +2505,7 @@ export class newAxis extends EventEmitter {
     }
     nameCoords.transformSelf(canvasHTMatrix);
     const textParams: textParams = {
-      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.FONT, align: align, color: color,
+      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.font, align: align, color: color,
       baseline: baseline, style: 'bold', orientation: orientation, backgroundColor: "hsla(0, 0%, 100%, 0.5)"
     };
     const textName = new newText(this.title, nameCoords, textParams);
@@ -2584,7 +2584,7 @@ export class newAxis extends EventEmitter {
       textHeight = this.maxTickHeight;
     }
     return {
-      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.FONT,
+      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.font,
       align: textAlign, baseline: baseline, color: this.strokeStyle
     }
   }

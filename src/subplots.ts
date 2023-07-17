@@ -1498,7 +1498,7 @@ export class BasePlot extends PlotData {
   public font: string = "sans-serif";
 
   protected initScale: Vertex = new Vertex(1, -1);
-  private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
+  private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
   public nSamples: number;
 
   readonly features: Map<string, any[]>;
@@ -1523,6 +1523,7 @@ export class BasePlot extends PlotData {
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
+      this.unpackAxisStyle(data);
     }
 
   refresh_MinMax(): void {
@@ -1541,6 +1542,15 @@ export class BasePlot extends PlotData {
   get relativeMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
+
+  public unpackAxisStyle(data:any): void {
+    if (data.axis) {
+      if (data.axis.axis_style.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
+      if (data.axis.graduation_style.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
+      if (data.axis.graduation_style.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
+      if (data.axis.axis_style.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
+    }
+  }
 
   private unpackData(data: any): Map<string, any[]> {
     const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
@@ -1609,7 +1619,7 @@ export class BasePlot extends PlotData {
     this.resetSelectors();
   }
 
-  public updateSelected(axis: newAxis): number[] { // TODO: Performance
+  public updateSelected(axis: newAxis): number[] {
     const selection = [];
     const vector = axis.stringsToValues(this.features.get(axis.name));
     vector.forEach((value, index) => { if (axis.isInRubberBand(value)) selection.push(index) });
@@ -1998,6 +2008,13 @@ export class Frame extends BasePlot {
     return [origin.transform(this.canvasMatrix.inverse()), size]
   }
 
+  public unpackAxisStyle(data: any): void {
+    if (data.axis) {
+      super.unpackAxisStyle(data);
+      this.nXTicks = data.axis.nb_points_x;
+      this.nYTicks = data.axis.nb_points_y;
+    }
+  }
 
   private computeOffset(): Vertex {
     const naturalOffset = new Vertex(this.width * this.OFFSET_MULTIPLIER.x, this.height * this.OFFSET_MULTIPLIER.y);

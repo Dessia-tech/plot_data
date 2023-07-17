@@ -1839,9 +1839,7 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('wheel', e => {
         if (this.interaction_ON) {
           let scale = new Vertex(this.scaleX, this.scaleY);
-          console.log(scale);
           [mouse3X, mouse3Y] = this.wheelFromEvent(e);
-          console.log(e, mouse3X, mouse3Y);
           this.drawAfterRescale(mouse3X, mouse3Y, scale);
         }
       });
@@ -1874,9 +1872,9 @@ export class BasePlot extends PlotData {
     this.draw(); // needs a refactor
   }
 
-  public zoomIn(): void { this.zoom(new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2), 342) }
+  public zoomIn(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), 342) }
 
-  public zoomOut(): void { this.zoom(new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2), -342) }
+  public zoomOut(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), -342) }
 
   public zoom(center: Vertex, zFactor: number): void {
     const [mouse3X, mouse3Y] = this.wheel_interaction(center.x, center.y, zFactor);

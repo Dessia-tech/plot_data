@@ -1812,6 +1812,10 @@ export class MultiplePlots {
       this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchZoom() });
     }
 
+    public zoomIn() { (this.objectList[this.clickedPlotIndex] as BasePlot).zoomIn() }
+
+    public zoomOut() { (this.objectList[this.clickedPlotIndex] as BasePlot).zoomOut() }
+
     public simpleCluster(inputValue: number) { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.simpleCluster(inputValue) })};
 
     public resetClusters(): void { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.resetClusters() })};

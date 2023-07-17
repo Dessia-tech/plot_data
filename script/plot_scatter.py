@@ -42,9 +42,9 @@ custom_tooltip = plot_data.Tooltip(attributes=['mass', 'length'],
 # Then, points' appearance can be modified through point_style attribute
 point_style = plot_data.PointStyle(color_fill=LIGHTGREEN,
                                    color_stroke=VIOLET,
-                                   stroke_width=0.5,
-                                   size=2,  # 1, 2, 3 or 4
-                                   shape='square')  # 'circle', 'square' or 'crux'
+                                   stroke_width=2,
+                                   size=8,  # 1, 2, 3 or 4
+                                   shape='^')  # 'circle', 'square' or 'crux'
 
 # Finally, axis can be personalized too
 graduation_style = plot_data.TextStyle(text_color=BLUE, font_size=10,

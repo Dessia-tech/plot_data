@@ -198,3 +198,23 @@ export function isRGB(str:string):boolean {
 export function isHex(str:string):boolean {
   return str.substring(0,1) == '#';
 }
+
+export function RGBToHSL(r: number, g: number, b: number): [number, number, number] {
+  let dr = r / 255;
+  let dg = g / 255;
+  let db = b / 255;
+  const l = Math.max(dr, dg, db);
+  const s = l - Math.min(dr, dg, db);
+  const h = s
+    ? l === r
+      ? (dg - db) / s
+      : l === dg
+      ? 2 + (db - dr) / s
+      : 4 + (dr - dg) / s
+    : 0;
+  return [
+    60 * h < 0 ? 60 * h + 360 : 60 * h,
+    100 * (s ? (l <= 0.5 ? s / (2 * l - s) : s / (2 - (2 * l - s))) : 0),
+    (100 * (2 * l - s)) / 2,
+  ];
+};

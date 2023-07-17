@@ -2273,6 +2273,13 @@ export class Histogram extends Frame {
 
 export class newScatter extends Frame {
   public points: ScatterPoint[] = [];
+
+  public fillStyle: string;
+  public strokeStyle: string;
+  public marker: string = 'circle';
+  public pointSize: number = 8;
+  public lineWidth: number;
+
   public tooltipAttr: string[];
   public isMerged: boolean = false;
   public clusterColors: string[];
@@ -2290,8 +2297,19 @@ export class newScatter extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (!data.tooltip) {this.tooltipAttr = Array.from(this.features.keys()) }
       else this.tooltipAttr = data.tooltip.attribute;
+      this.unpackPointStyle(data);
       this.computePoints();
     }
+
+  public unpackPointStyle(data: any): void {
+    if (data.point_style) {
+      if (data.point_style.color_fill) this.fillStyle = data.point_style.color_fill;
+      if (data.point_style.color_stroke) this.strokeStyle = data.point_style.color_stroke;
+      if (data.point_style.shape) this.marker = data.point_style.shape;
+      if (data.point_style.stroke_width) this.lineWidth = data.point_style.stroke_width;
+      if (data.point_style.size) this.pointSize = data.point_style.size;
+    }
+  }
 
   public reset_scales(): void {
     super.reset_scales();
@@ -2316,6 +2334,7 @@ export class newScatter extends Frame {
   };
 
   public drawPoints(context: CanvasRenderingContext2D): void {
+    let color = this.fillStyle;
     this.points.forEach(point => {
       const colors = new Map<string, number>();
       point.isHovered = point.isClicked = point.isSelected = false;
@@ -2328,8 +2347,11 @@ export class newScatter extends Frame {
         if (this.clickedIndices.indexOf(index) != -1) point.isClicked = true;
         if (this.selectedIndices.indexOf(index) != -1) point.isSelected = true;
       });
-      const color = mapMax(colors);
-      point.setColors(color[0]);
+
+      if (colors.size != 0) color = mapMax(colors)[0];
+      point.lineWidth = this.lineWidth;
+      point.setColors(color, this.strokeStyle);
+      point.marker = this.marker;
       point.update();
       if (point.isInFrame(this.axes[0], this.axes[1])) point.draw(context);
     })
@@ -2347,14 +2369,14 @@ export class newScatter extends Frame {
   }
 
   public computePoints(): void {
+    const thresholdDist = 30;
+
     const [xCoords, yCoords, xValues, yValues] = this.projectPoints();
-    const thresholdDist = 15;
     let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
 
-    const minSize = 4;
     this.points = [];
     mergedPoints.forEach(indexList => {
-      const newPoint = this.computePoint(indexList, xCoords, yCoords, xValues, yValues, minSize, thresholdDist);
+      const newPoint = this.computePoint(indexList, xCoords, yCoords, xValues, yValues, this.pointSize, thresholdDist);
       this.points.push(newPoint);
     })
   }

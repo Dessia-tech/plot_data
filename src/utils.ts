@@ -1,5 +1,5 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
-import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string } from "./color_conversion";
+import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string, RGBToHSL } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
 
@@ -1880,17 +1880,23 @@ export class newPoint2D extends newShape {
     this.lineWidth = 1;
   };
 
-  public getfillStyleHSL(fillStyle: string) {
+  public getFillStyleHSL(fillStyle: string): [number, number, number] {
+    if (fillStyle.includes("rgb")) return RGBToHSL(...this.getFillStyleRGB(fillStyle));
     let [h, s, l] = fillStyle.split(',');
     h = h.split('hsl(')[1];
     s = s.split('%')[0];
     l = l.split('%')[0];
-    return [h, s, l]
+    return [Number(h), Number(s), Number(l)]
+  }
+
+  public getFillStyleRGB(fillStyle: string): [number, number, number] {
+    let [r, g, b] = fillStyle.split(',');
+    return [Number(r.split('rgb(')[1]), Number(g), Number(b.split(")")[0])]
   }
 
   public setStrokeStyle(fillStyle: string): string {
-    const [h, s, l] = this.getfillStyleHSL(fillStyle);
-    const lValue = Number(l) <= STROKE_STYLE_OFFSET ? Number(l) + STROKE_STYLE_OFFSET : Number(l) - STROKE_STYLE_OFFSET;
+    const [h, s, l] = this.getFillStyleHSL(fillStyle);
+    const lValue = l <= STROKE_STYLE_OFFSET ? l + STROKE_STYLE_OFFSET : l - STROKE_STYLE_OFFSET;
     return `hsl(${h}, ${s}%, ${lValue}%)`;
   }
 
@@ -1901,7 +1907,7 @@ export class newPoint2D extends newShape {
 
   get drawnShape(): newShape {
     let marker = new newShape();
-    if (CIRCLES.indexOf(this.marker) > -1) { marker = new newCircle(this.center.coordinates, this.size) }
+    if (CIRCLES.indexOf(this.marker) > -1) { marker = new newCircle(this.center.coordinates, this.size / 2) }
     if (MARKERS.indexOf(this.marker) > -1) { marker = new Mark(this.center.coordinates, this.size) };
     if (CROSSES.indexOf(this.marker) > -1) { marker = new Cross(this.center.coordinates, this.size) };
     if (SQUARES.indexOf(this.marker) > -1) {
@@ -1936,7 +1942,7 @@ export class newPoint2D extends newShape {
     context.globalAlpha = this.alpha;
     const fillColor = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.fillStyle = fillColor;
-    context.strokeStyle = this.setStrokeStyle(fillColor);
+    context.strokeStyle = this.strokeStyle ? this.strokeStyle : this.setStrokeStyle(fillColor);
   }
 }
 

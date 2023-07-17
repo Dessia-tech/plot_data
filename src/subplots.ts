@@ -1874,18 +1874,13 @@ export class BasePlot extends PlotData {
     this.draw(); // needs a refactor
   }
 
-  public zoomIn(): void {
-    const [mouse3X, mouse3Y] = this.wheel_interaction(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2, 342);
-    this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(1, 1));
-  }
+  public zoomIn(): void { this.zoom(new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2), 342) }
 
-  public zoomOut() {
-    var zoom_coeff = 1/1.2;
-    this.scaleX = this.scaleX*zoom_coeff;
-    this.scaleY = this.scaleY*zoom_coeff;
-    this.originX = this.width/2 + zoom_coeff * (this.originX - this.width/2);
-    this.originY = this.height/2 + zoom_coeff * (this.originY - this.height/2);
-    this.reset_scroll();
+  public zoomOut(): void { this.zoom(new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2), -342) }
+
+  public zoom(center: Vertex, zFactor: number): void {
+    const [mouse3X, mouse3Y] = this.wheel_interaction(center.x, center.y, zFactor);
+    this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(1, 1));
   }
 
   public wheelFromEvent(e: WheelEvent): [number, number] { return this.wheel_interaction(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }

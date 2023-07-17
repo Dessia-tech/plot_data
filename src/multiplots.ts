@@ -922,7 +922,7 @@ export class MultiplePlots {
           otherPlot.reset_pp_selected();
           otherPlot.reset_rubberbands();
         } else if (otherPlot instanceof Frame) {
-          otherPlot.reset();
+          otherPlot.resetSelection();
         } else if (otherPlot instanceof PrimitiveGroupContainer) {
           otherPlot.reset_selection();
         }
@@ -1819,6 +1819,18 @@ export class MultiplePlots {
     public simpleCluster(inputValue: number) { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.simpleCluster(inputValue) })};
 
     public resetClusters(): void { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.resetClusters() })};
+
+    public resetSelection(): void {
+      this.dep_selected_points_index = [];
+      this.rubberBands.forEach(rubberBand => rubberBand.reset());
+      this.objectList.forEach(plot => {if (plot instanceof BasePlot) plot.resetSelection()});
+      this.redrawAllObjects();
+    }
+
+    public resetView(): void {
+      this.resetAllObjects();
+      this.redrawAllObjects();
+    }
 
     mouse_interaction(): void {
       var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;

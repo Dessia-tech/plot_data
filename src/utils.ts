@@ -2388,13 +2388,17 @@ export class newAxis extends EventEmitter {
     this.path = this.buildPath();
   }
 
-  public reset(): void {
-    this.rubberBand.reset();
+  public resetScale(): void {
     this.minValue = this._initMinValue;
     this.maxValue = this._initMaxValue;
     this._previousMin = this._initMinValue;
     this._previousMax = this._initMaxValue;
     this.updateTicks();
+  }
+
+  public reset(): void {
+    this.rubberBand.reset();
+    this.resetScale();
   }
 
   private static nearestFive(value: number): number {

@@ -1579,16 +1579,34 @@ export class BasePlot extends PlotData {
     }
   }
 
+  public updateSize(): void { this.size = new Vertex(this.width, this.height) }
+
+  public resetAxes(): void { this.axes.forEach(axis => axis.reset()) }
+
+  public reset_scales(): void {
+    this.updateSize();
+    this.axes.forEach(axis => axis.resetScale());
+  }
+
   private initSelectors(): void {
     this.hoveredIndices = [];
     this.clickedIndices = [];
     this.selectedIndices = [];
   }
 
-  public reset(): void {
-    this.axes.forEach(axis => axis.reset());
+  public resetSelectors(): void {
     this.selectionBox = new SelectionBox();
     this.initSelectors();
+  }
+
+  public reset(): void {
+    this.axes.forEach(axis => axis.reset());
+    this.resetSelectors();
+  }
+
+  public resetSelection(): void {
+    this.axes.forEach(axis => axis.rubberBand.reset());
+    this.resetSelectors();
   }
 
   public updateSelected(axis: newAxis): number[] { // TODO: Performance
@@ -1992,10 +2010,11 @@ export class Frame extends BasePlot {
 
   public reset_scales(): void {
     this.updateSize();
-    this.resetAxes();
+    this.initAxes();
+    this.axes.forEach(axis => axis.resetScale());
   }
 
-  private resetAxes(): void {
+  private initAxes(): void {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
     this.axes[0].transform(frameOrigin, xEnd);
     this.axes[1].transform(frameOrigin, yEnd);

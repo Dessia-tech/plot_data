@@ -2014,7 +2014,6 @@ export class Frame extends BasePlot {
       this.nXTicks = data.axis.nb_points_x;
       this.nYTicks = data.axis.nb_points_y;
     }
-    if (data.graduation_nb) this.nXTicks = data.graduation_nb;
   }
 
   private computeOffset(): Vertex {
@@ -2149,6 +2148,11 @@ export class Histogram extends Frame {
   get nYTicks() {return this._nYTicks ? this._nYTicks : 10}
 
   set nYTicks(value: number) {this._nYTicks = value}
+
+  public unpackAxisStyle(data: any): void {
+    super.unpackAxisStyle(data);
+    if (data.graduation_nb) this.nXTicks = data.graduation_nb;
+  }
 
   public unpackBarStyle(data: any): void {
     if (data.surface_style) { if (data.surface_style.color_fill) this.fillStyle = data.surface_style.color_fill };
@@ -2326,6 +2330,7 @@ export class newScatter extends Frame {
       if (data.point_style.stroke_width) this.lineWidth = data.point_style.stroke_width;
       if (data.point_style.size) this.pointSize = data.point_style.size;
     }
+    if (data.tooltip) this.tooltipAttr = data.tooltip.attributes;
   }
 
   public reset_scales(): void {
@@ -2417,6 +2422,8 @@ export class newScatter extends Frame {
       newPoint.size = Math.min(newPoint.size * 1.15**(indexList.length - 1), thresholdDist);
       newPoint.mean.x = meanX / indexList.length;
       newPoint.mean.y = meanY / indexList.length;
+      newPoint.updateTooltipMap();
+      if (newPoint.values.length == 1) this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[newPoint.values[0]]));
       newPoint.update();
       return newPoint
     }

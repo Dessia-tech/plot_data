@@ -60,7 +60,7 @@ axis = plot_data.Axis(nb_points_x=7, nb_points_y=5,
 
 # a tooltip is drawn when clicking on a point. Users can choose what information
 # they want to be displayed.
-tooltip = plot_data.Tooltip(attributes=['mass', 'length', 'shape', 'color'])
+tooltip = plot_data.Tooltip(attributes=['mass', 'length', 'shape'])
 
 # Heatmap settings
 heatmap = plot_data.Heatmap([4, 2], colors=[YELLOW, ORANGE, RED])

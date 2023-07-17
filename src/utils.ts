@@ -1962,9 +1962,9 @@ export class ScatterPoint extends newPoint2D {
     this.isScaled = false;
   };
 
-  get tooltipMap(): Map<string, any> {
-    return new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],])
-  }
+  get tooltipMap(): Map<string, any> { return this._tooltipMap };
+
+  public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
 
   public update() {
     this.isScaled = false;

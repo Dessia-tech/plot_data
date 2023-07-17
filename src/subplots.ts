@@ -2014,6 +2014,7 @@ export class Frame extends BasePlot {
       this.nXTicks = data.axis.nb_points_x;
       this.nYTicks = data.axis.nb_points_y;
     }
+    if (data.graduation_nb) this.nXTicks = data.graduation_nb;
   }
 
   private computeOffset(): Vertex {
@@ -2121,8 +2122,12 @@ export class Frame extends BasePlot {
 
 export class Histogram extends Frame {
   public bars: Bar[] = [];
-  readonly barsColorFill: string = 'hsl(203, 90%, 85%)';
-  readonly barsColorStroke: string = 'hsl(0, 0%, 0%)';
+
+  public fillStyle: string = 'hsl(203, 90%, 85%)';
+  public strokeStyle: string = 'hsl(0, 0%, 0%)';
+  public lineWidth: number = 1;
+  public dashLine: number[] = [];
+
   constructor(
     public data: any,
     public width: number,
@@ -2134,6 +2139,7 @@ export class Histogram extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.unpackBarStyle(data);
     }
 
   get nXTicks() {return this._nXTicks ? this._nXTicks : 20}
@@ -2143,6 +2149,15 @@ export class Histogram extends Frame {
   get nYTicks() {return this._nYTicks ? this._nYTicks : 10}
 
   set nYTicks(value: number) {this._nYTicks = value}
+
+  public unpackBarStyle(data: any): void {
+    if (data.surface_style) { if (data.surface_style.color_fill) this.fillStyle = data.surface_style.color_fill };
+    if (data.edge_style) {
+      if (data.edge_style.line_width) this.lineWidth = data.edge_style.line_width;
+      if (data.edge_style.color_stroke) this.strokeStyle = data.edge_style.color_stroke;
+      if (data.edge_style.dashline) this.dashLine = data.edge_style.dashline;
+    }
+  }
 
   public reset(): void {
     super.reset();
@@ -2220,8 +2235,10 @@ export class Histogram extends Frame {
       if (this.axes[0].isDiscrete) {origin.x = origin.x - size.x / 2};
 
       bar.setGeometry(origin, size);
-      bar.fillStyle = this.barsColorFill;
-      bar.strokeStyle = this.barsColorStroke;
+      bar.fillStyle = this.fillStyle;
+      bar.strokeStyle = this.strokeStyle;
+      bar.dashLine = this.dashLine;
+      bar.lineWidth = this.lineWidth;
       if (bar.values.some(valIdx => this.hoveredIndices.indexOf(valIdx) != -1)) {bar.isHovered = true}
       if (bar.values.some(valIdx => this.clickedIndices.indexOf(valIdx) != -1)) {bar.isClicked = true}
       if (bar.values.some(valIdx => this.selectedIndices.indexOf(valIdx) != -1)) {bar.isSelected = true}

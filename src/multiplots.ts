@@ -1866,7 +1866,12 @@ export class MultiplePlots {
 
       window.addEventListener('keyup', e => {
         if (e.key == "Control") {ctrlKey = false}
-        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; this.canvas.style.cursor = 'default'; this.redrawAllObjects() }
+        if (e.key == "Shift") { 
+          shiftKey = false; 
+          this.isSelecting = false; 
+          this.objectList.forEach(plot => {plot.isSelecting = false; plot.is_drawing_rubber_band = false}); 
+          this.canvas.style.cursor = 'default'; 
+          this.redrawAllObjects() }
       });
 
       this.canvas.addEventListener('mousedown', e => {
@@ -2000,16 +2005,18 @@ export class MultiplePlots {
             }
           }
         } else {
-          if (this.view_bool) { this.clean_view() }
+          if (this.view_bool) this.clean_view();
         }
         this.refreshRubberBands();
         this.manage_selected_point_index_changes(old_selected_index);
         this.updateSelectedPrimitives();
-        this.isSelecting = false;
+        if (!shiftKey) this.isSelecting = false;
         this.isZooming = false;
         this.objectList.forEach(plot => {
-          plot.is_drawing_rubber_band = false;
-          if (plot.isSelecting) this.isSelecting = true;
+          if (!shiftKey) {
+            plot.is_drawing_rubber_band = false;
+            if (plot.isSelecting) this.isSelecting = true;
+          }
           if (plot instanceof BasePlot) plot.isZooming = false;
         });
         this.redrawAllObjects();

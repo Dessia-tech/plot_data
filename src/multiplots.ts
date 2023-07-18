@@ -68,6 +68,8 @@ export class MultiplePlots {
     public rubberBands: Map<string, RubberBand>;
     public isSelecting: boolean = false;
     public isZooming: boolean = false;
+    public clickedIndices: number[] = [];
+    public hoveredIndices: number[] = [];
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       var requirement = '0.6.1';
@@ -585,6 +587,8 @@ export class MultiplePlots {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
           if (plot instanceof BasePlot) {
             plot.selectedIndices = this.dep_selected_points_index;
+            plot.clickedIndices = this.clickedIndices;
+            plot.hoveredIndices = [...this.hoveredIndices];
             // Kept for the moment cause it was fixing a bug that it does not seem to fix anymore since bug is not here anymore...
             // plot.reset_scales();
             // if (plot instanceof Frame) plot.updateSize();
@@ -1935,6 +1939,11 @@ export class MultiplePlots {
               if (this.selectDependency_bool) {
                 this.mouse_over_primitive_group();
                 this.mouse_over_scatter_plot();
+                if (this.objectList[this.last_index] instanceof BasePlot) {
+                  this.hoveredIndices = (this.objectList[this.last_index] as BasePlot).hoveredIndices;
+                  this.clickedIndices = (this.objectList[this.last_index] as BasePlot).clickedIndices;
+                }
+                this.redrawAllObjects();
               }
             }
           }

@@ -641,11 +641,7 @@ class Axis(PlotDataObject):
         self.nb_points_x = nb_points_x
         self.nb_points_y = nb_points_y
         self.graduation_style = graduation_style
-        if graduation_style is None:
-            self.graduation_style = TextStyle(text_color=plot_data.colors.GREY)
         self.axis_style = axis_style
-        if axis_style is None:
-            self.axis_style = EdgeStyle(color_stroke=plot_data.colors.LIGHTGREY)
         self.arrow_on = arrow_on
         self.grid_on = grid_on
         PlotDataObject.__init__(self, type_='axis', name=name)

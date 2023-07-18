@@ -1545,10 +1545,14 @@ export class BasePlot extends PlotData {
 
   public unpackAxisStyle(data:any): void {
     if (data.axis) {
-      if (data.axis.axis_style.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
-      if (data.axis.graduation_style.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
-      if (data.axis.graduation_style.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
-      if (data.axis.axis_style.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
+      if (data.axis.axis_style) {
+        if (data.axis.axis_style.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
+        if (data.axis.axis_style.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
+      }
+      if (data.axis.graduation_style) {
+        if (data.axis.graduation_style.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
+        if (data.axis.graduation_style.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
+      }
     }
   }
 
@@ -1726,10 +1730,10 @@ export class BasePlot extends PlotData {
   }
 
   public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    objects.forEach((object, index) => { this.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState) });
+    objects.forEach(object => { this.objectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState) });
   }
 
-  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index: number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
+  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
     if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object[stateName] = invertState ? !object[stateName] : true }
     else {if (!keepState) {object[stateName] = false}}
   }
@@ -2225,9 +2229,9 @@ export class Histogram extends Frame {
     this.relativeObjects = this.bars;
   }
 
-  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index: number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     if (object instanceof Bar) this.plottedObjectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
-    else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState);
+    else super.objectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState);
   }
 
   public getBarsDrawing(): void {
@@ -2243,9 +2247,9 @@ export class Histogram extends Frame {
       bar.strokeStyle = this.strokeStyle;
       bar.dashLine = this.dashLine;
       bar.lineWidth = this.lineWidth;
-      if (bar.values.some(valIdx => this.hoveredIndices.indexOf(valIdx) != -1)) {bar.isHovered = true}
-      if (bar.values.some(valIdx => this.clickedIndices.indexOf(valIdx) != -1)) {bar.isClicked = true}
-      if (bar.values.some(valIdx => this.selectedIndices.indexOf(valIdx) != -1)) {bar.isSelected = true}
+      if (bar.values.some(valIdx => this.hoveredIndices.indexOf(valIdx) != -1)) bar.isHovered = true;
+      if (bar.values.some(valIdx => this.clickedIndices.indexOf(valIdx) != -1)) bar.isClicked = true;
+      if (bar.values.some(valIdx => this.selectedIndices.indexOf(valIdx) != -1)) bar.isSelected = true;
     })
   }
 
@@ -2260,7 +2264,7 @@ export class Histogram extends Frame {
 
   public setFeatures(data: any): [string, string] { return [data.x_variable, 'number'] }
 
-  mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
+  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
     return new Vertex(this.axes[0].isDiscrete ? 0 : currentMouse.x - mouseDown.x, 0)
   }
 
@@ -2344,9 +2348,9 @@ export class newScatter extends Frame {
     this.resetClusters();
   }
   
-  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, index:number, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+  public objectStateUpdate(context: CanvasRenderingContext2D, object: any, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     if (object instanceof ScatterPoint) this.plottedObjectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
-    else super.objectStateUpdate(context, object, index, mouseCoords, stateName, keepState, invertState)
+    else super.objectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
   }
 
   public drawAbsoluteObjects(context: CanvasRenderingContext2D): void {

@@ -1602,7 +1602,7 @@ export class BasePlot extends PlotData {
     this.axes.forEach(axis => axis.resetScale());
   }
 
-  private initSelectors(): void {
+  public initSelectors(): void {
     this.hoveredIndices = [];
     this.clickedIndices = [];
     this.selectedIndices = [];

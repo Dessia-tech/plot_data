@@ -914,7 +914,7 @@ export class MultiplePlots {
       for (let i=0; i<this.nbObjects; i++) {
         let plot = this.objectList[i];
         if (plot instanceof PlotScatter) {Interactions.click_on_reset_action(plot)}
-        else {plot.reset_scales()}
+        else plot.reset_scales();
       }
     }
 
@@ -929,12 +929,11 @@ export class MultiplePlots {
         } else if (otherPlot instanceof ParallelPlot) {
           otherPlot.reset_pp_selected();
           otherPlot.reset_rubberbands();
-        } else if (otherPlot instanceof Frame) {
-          otherPlot.resetSelection();
         } else if (otherPlot instanceof PrimitiveGroupContainer) {
           otherPlot.reset_selection();
         }
       }
+      this.resetSelection();
       this.redrawAllObjects();
     }
 
@@ -1725,9 +1724,7 @@ export class MultiplePlots {
           }
         }
       }
-
     }
-
 
     has_primitive_group_container() {
       for (let i=0; i<this.objectList.length; i++) {
@@ -1834,8 +1831,10 @@ export class MultiplePlots {
 
     public resetSelection(): void {
       this.dep_selected_points_index = [];
+      this.clickedIndices = [];
+      this.hoveredIndices = [];
       this.rubberBands.forEach(rubberBand => rubberBand.reset());
-      this.objectList.forEach(plot => {if (plot instanceof BasePlot) plot.resetSelection()});
+      this.objectList.forEach(plot => {if (plot instanceof BasePlot) plot.initSelectors()});
       this.redrawAllObjects();
     }
 
@@ -2004,8 +2003,8 @@ export class MultiplePlots {
           if (this.view_bool) { this.clean_view() }
         }
         this.refreshRubberBands();
-        this.updateSelectedPrimitives();
         this.manage_selected_point_index_changes(old_selected_index);
+        this.updateSelectedPrimitives();
         this.isSelecting = false;
         this.isZooming = false;
         this.objectList.forEach(plot => {

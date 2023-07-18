@@ -1401,7 +1401,7 @@ export class MultiplePlots {
           MultiplotCom.frame_to_pp_communication(frame, plot);
         } else if (plot.type_ === "frame") {
           MultiplotCom.frame_to_frame_communication(frame, plot);
-        } 
+        }
       })
       this.refresh_dep_selected_points_index();
       this.refresh_selected_object_from_index();
@@ -1819,8 +1819,8 @@ export class MultiplePlots {
 
     public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.switchMerge() })};
 
-    public switchZoom() { 
-      this.isZooming = !this.isZooming; 
+    public switchZoom() {
+      this.isZooming = !this.isZooming;
       this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchZoom() });
     }
 
@@ -1861,7 +1861,7 @@ export class MultiplePlots {
         if (e.key == "Control") {ctrlKey = true}
         if (e.key == "Shift") {
           shiftKey = true;
-          if (!ctrlKey) { this.isSelecting = true; this.canvas.style.cursor = 'crosshair'; this.redrawAllObjects() } 
+          if (!ctrlKey) { this.isSelecting = true; this.canvas.style.cursor = 'crosshair'; this.redrawAllObjects() }
         }
       });
 
@@ -1931,7 +1931,7 @@ export class MultiplePlots {
           }
         } else {
           this.manage_mouse_interactions(mouse2X, mouse2Y);
-          
+
           if (!this.isZooming) {
             if (isDrawing) {
               mouse_moving = true;

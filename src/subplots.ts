@@ -1799,8 +1799,8 @@ export class BasePlot extends PlotData {
       var zoomBox = new SelectionBox();
       window.addEventListener('keydown', e => {
         if (e.key == "Control") ctrlKey = true;
-        if (e.key == "Shift") { 
-          shiftKey = true; 
+        if (e.key == "Shift") {
+          shiftKey = true;
           if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
         }
       });
@@ -2340,14 +2340,14 @@ export class newScatter extends Frame {
   public reset_scales(): void {
     super.reset_scales();
     this.computePoints();
-  }  
+  }
 
   public reset(): void {
     super.reset();
     this.computePoints();
     this.resetClusters();
   }
-  
+
   public objectStateUpdate(context: CanvasRenderingContext2D, object: any, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     if (object instanceof ScatterPoint) this.plottedObjectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
     else super.objectStateUpdate(context, object, mouseCoords, stateName, keepState, invertState)
@@ -2383,9 +2383,9 @@ export class newScatter extends Frame {
     })
   }
 
-  public switchMerge(): void { 
-    this.isMerged = !this.isMerged; 
-    this.computePoints(); 
+  public switchMerge(): void {
+    this.isMerged = !this.isMerged;
+    this.computePoints();
     this.draw();
   }
 
@@ -2529,8 +2529,8 @@ export class newScatter extends Frame {
 
   public simpleCluster(inputValue: number): void { this.computeClusterColors(inputValue); this.draw() }
 
-  public resetClusters(): void { 
-    this.clusterColors = undefined; 
+  public resetClusters(): void {
+    this.clusterColors = undefined;
     const defaultPoint = new ScatterPoint([]);
     this.points.forEach(point => point.setColors(defaultPoint.fillStyle));
     this.draw();

@@ -592,6 +592,9 @@ export class MultiplePlots {
             // Kept for the moment cause it was fixing a bug that it does not seem to fix anymore since bug is not here anymore...
             // plot.reset_scales();
             // if (plot instanceof Frame) plot.updateSize();
+          } else if (plot instanceof ParallelPlot) {
+            plot.select_on_mouse_indices = [...this.hoveredIndices];
+            plot.clicked_point_index = this.clickedIndices;
           }
           plot.draw();
         }
@@ -1668,7 +1671,7 @@ export class MultiplePlots {
         for (let i=0; i<this.nbObjects; i++) {
           let obj = this.objectList[i];
           if (obj.type_ === "parallelplot") {
-            obj.select_on_mouse_indices = this.objectList[this.move_plot_index].select_on_mouse_indices;
+            obj.selected_point_index = (this.objectList[this.move_plot_index] as BasePlot).hoveredIndices;
             obj.draw();
           }
         }
@@ -2160,7 +2163,6 @@ export class MultiplotCom {
               parallel_plot.inverted_axis_list[ppIndex], axis.isInverted);
           }
         })
-
       })
     }
 

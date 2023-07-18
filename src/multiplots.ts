@@ -1394,7 +1394,6 @@ export class MultiplePlots {
 
     frame_communication(index) {
       let frame = this.objectList[index];
-      let primitive_indices = [];
       this.objectList.forEach((plot, plotIndex) => {
         if (plot.type_ === 'scatterplot') {
           MultiplotCom.frame_to_scatter_communication(frame, plot);
@@ -1402,19 +1401,24 @@ export class MultiplePlots {
           MultiplotCom.frame_to_pp_communication(frame, plot);
         } else if (plot.type_ === "frame") {
           MultiplotCom.frame_to_frame_communication(frame, plot);
-        } else if (plot.type_ === "primitivegroupcontainer") {
-          primitive_indices.push(plotIndex);
-        }
+        } 
       })
-
       this.refresh_dep_selected_points_index();
       this.refresh_selected_object_from_index();
+    }
 
-      for (let index of primitive_indices) {
-        let obj: any = this.objectList[index];
-        obj.selected_point_index = this.dep_selected_points_index;
-        obj.select_primitive_groups();
-      }
+    public updateSelectedPrimitives() {
+      let sumRubberLength = 0;
+      this.rubberBands.forEach(rubberBand => sumRubberLength += rubberBand.length);
+      this.objectList.forEach(plot => {
+        if (plot instanceof PrimitiveGroupContainer) {
+          plot.selected_point_index = this.dep_selected_points_index;
+          if (sumRubberLength == 0 && plot.selected_point_index.length == 0) {
+            plot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
+          }
+          plot.select_primitive_groups();
+        }
+      });
     }
 
 
@@ -1927,6 +1931,7 @@ export class MultiplePlots {
           }
         } else {
           this.manage_mouse_interactions(mouse2X, mouse2Y);
+          
           if (!this.isZooming) {
             if (isDrawing) {
               mouse_moving = true;
@@ -1935,6 +1940,7 @@ export class MultiplePlots {
                 this.mouse_move_pp_communication();
                 this.mouse_move_frame_communication();
                 this.refreshRubberBands();
+                this.updateSelectedPrimitives();
                 this.redrawAllObjects();
               }
               this.redraw_object();
@@ -1998,6 +2004,7 @@ export class MultiplePlots {
           if (this.view_bool) { this.clean_view() }
         }
         this.refreshRubberBands();
+        this.updateSelectedPrimitives();
         this.manage_selected_point_index_changes(old_selected_index);
         this.isSelecting = false;
         this.isZooming = false;

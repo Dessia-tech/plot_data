@@ -121,7 +121,7 @@ export class MultiplePlots {
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       }
-      if (elements.length != 0) {this.initialize_point_families();}
+      // if (elements.length != 0) {this.initialize_point_families();}
 
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].draw_initial();

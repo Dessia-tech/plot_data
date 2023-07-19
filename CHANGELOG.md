@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Reset actions
     - Dependencies of sample states between plots
     - Use attributes coming from Python
+- Point families implementation as PointSet
 
 ## [0.15.0]
 ### Add

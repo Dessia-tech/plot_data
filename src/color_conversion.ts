@@ -280,4 +280,3 @@ export function colorRGB(color: string): string {
   if (color.includes('hsl')) return HSLToRGB(color);
   if (color.includes('#')) return HEXToRGB(color);
 }
-

@@ -3,7 +3,7 @@ import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeO
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, RGBToHEX, colorHSL } from "./color_conversion";
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHEX, colorHSL } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
 
 var alert_count = 0;
@@ -389,7 +389,7 @@ export class ParallelPlot extends PlotData {
     initialize_hexs() {
       this.hexs = [];
       this.interpolation_colors.forEach(rgb => {
-        this.hexs.push(RGBToHEX(rgb));
+        this.hexs.push(colorHEX(rgb));
       });
     }
 

@@ -1,5 +1,5 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
-import { string_to_rgb, RGBToHEX, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string, arrayRGBToHSL, RGBToArray, HSLToArray } from "./color_conversion";
+import { string_to_rgb, colorHEX, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string, arrayRGBToHSL, RGBToArray, HSLToArray } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
 
@@ -400,7 +400,7 @@ export class PointFamily {
     public name: string) { }
 
   public static deserialize(serialized) {
-    return new PointFamily(RGBToHEX(serialized['color']),
+    return new PointFamily(colorHEX(serialized['color']),
       serialized['point_index'],
       serialized['name']);
   }

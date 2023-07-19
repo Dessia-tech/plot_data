@@ -1,4 +1,4 @@
-import { string_to_hex, string_to_rgb, RGBToHEX } from "./color_conversion";
+import { string_to_hex, string_to_rgb, colorHEX } from "./color_conversion";
 import { set_default_values } from "./utils";
 
 /**
@@ -25,7 +25,7 @@ export class EdgeStyle {
                             name:''};
         serialized = set_default_values(serialized, default_dict_);
         return new EdgeStyle(serialized['line_width'],
-                            RGBToHEX(serialized['color_stroke']),
+                            colorHEX(serialized['color_stroke']),
                             serialized['dashline'],
                             serialized['name']);
     }
@@ -102,8 +102,8 @@ export class PointStyle {
       let default_dict_ = {color_fill:string_to_hex('lightviolet'), color_stroke:string_to_hex('lightgrey'),
                                  stroke_width:0.5, size:2, shape:'circle', name:''};
       serialized = set_default_values(serialized, default_dict_);
-      return new PointStyle(RGBToHEX(serialized['color_fill']),
-                            RGBToHEX(serialized['color_stroke']),
+      return new PointStyle(colorHEX(serialized['color_fill']),
+                            colorHEX(serialized['color_stroke']),
                             serialized['stroke_width'],
                             serialized['size'],
                             serialized['shape'],
@@ -133,7 +133,7 @@ export class SurfaceStyle {
       if (serialized['hatching'] != null) {
         var hatching = HatchingSet.deserialize(serialized['hatching']);
       }
-      return new SurfaceStyle(RGBToHEX(serialized['color_fill']),
+      return new SurfaceStyle(colorHEX(serialized['color_fill']),
                                  serialized['opacity'],
                                  hatching);
     }
@@ -180,7 +180,7 @@ export class TextStyle {
                            font_style:'sans-serif', text_align_x:'start',
                            text_align_y: 'alphabetic', name:''};
       serialized = set_default_values(serialized,default_dict_);
-      return new TextStyle(RGBToHEX(serialized['text_color']),
+      return new TextStyle(colorHEX(serialized['text_color']),
                               serialized['font_size'],
                               serialized['font_style'],
                               serialized['text_align_x'],

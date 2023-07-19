@@ -2306,7 +2306,7 @@ export class newScatter extends Frame {
   public strokeStyle: string;
   public marker: string = 'circle';
   public pointSize: number = 8;
-  public lineWidth: number;
+  public lineWidth: number = 1;
 
   public tooltipAttr: string[];
   public isMerged: boolean = false;

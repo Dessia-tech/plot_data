@@ -3,7 +3,7 @@ import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeO
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, hex_to_rgb } from "./color_conversion";
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, RGBToHEX, colorHSL } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
 
 var alert_count = 0;
@@ -389,7 +389,7 @@ export class ParallelPlot extends PlotData {
     initialize_hexs() {
       this.hexs = [];
       this.interpolation_colors.forEach(rgb => {
-        this.hexs.push(rgb_to_hex(rgb));
+        this.hexs.push(RGBToHEX(rgb));
       });
     }
 
@@ -2363,8 +2363,8 @@ export class newScatter extends Frame {
   };
 
   public drawPoints(context: CanvasRenderingContext2D): void {
-    let color = this.fillStyle;
     this.points.forEach(point => {
+      let color = this.fillStyle;
       const colors = new Map<string, number>();
       point.isHovered = point.isClicked = point.isSelected = false;
       point.values.forEach(index => {
@@ -2378,8 +2378,7 @@ export class newScatter extends Frame {
       });
       const pointsSetIndex = this.getPointSet(point);
       if (colors.size != 0) color = mapMax(colors)[0]
-      else { if (pointsSetIndex != -1) color = hex_to_rgb(this.pointSetColors[pointsSetIndex]) };
-      console.log(this.pointSetColors)
+      else { if (pointsSetIndex != -1) color = colorHSL(this.pointSetColors[pointsSetIndex]) };
       point.lineWidth = this.lineWidth;
       point.setColors(color, this.strokeStyle);
       point.marker = this.marker;
@@ -2389,10 +2388,12 @@ export class newScatter extends Frame {
   }
 
   private getPointSet(point: ScatterPoint): number {
-    for (let i = 0; i < point.values.length; i++) {
-      if (this.pointSets.includes(point.values[i])) return i
-    }
-    return -1
+    const pointSets = new Map<number, number>();
+    point.values.forEach(pointIndex => {
+      pointSets.set(this.pointSets[pointIndex], pointSets.get(this.pointSets[pointIndex]) ? pointSets.get(this.pointSets[pointIndex]) + 1 : 1);
+    })
+    if (pointSets.size > 1) pointSets.delete(-1);
+    return mapMax(pointSets)[0]
   }
 
   public switchMerge(): void {

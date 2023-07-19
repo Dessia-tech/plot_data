@@ -3,7 +3,7 @@ import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, textParams, Vertex, newRect } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
-import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
+import { RGBToHEX, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
 import * as EventEmitter from "events";
 
 const HIDDEN_OFFSET = 15;
@@ -380,7 +380,7 @@ export abstract class PlotData extends EventEmitter {
 
   draw_wire(hidden: boolean, wire: Wire) {
     if (hidden) {
-      this.context.strokeStyle = rgb_to_hex(wire.hidden_color);
+      this.context.strokeStyle = RGBToHEX(wire.hidden_color);
       this.context.lineWidth = wire.edge_style.line_width + HIDDEN_OFFSET;
     } else {
       if (this.select_on_mouse === wire) {
@@ -473,7 +473,7 @@ export abstract class PlotData extends EventEmitter {
           if (d.selected || List.contains_undefined(this.select_on_click)) {
             this.context.fillStyle = d.point_style.color_fill;
           } else {
-            this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
+            this.context.fillStyle = RGBToHEX(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
           }
         } else {
           this.context.fillStyle = this.plotObject.point_style.color_fill;
@@ -1269,10 +1269,10 @@ export abstract class PlotData extends EventEmitter {
         this.context.strokeStyle = string_to_hex("black");
         this.context.lineWidth = 3 * this.edge_style.line_width;
       } else if (selected) {
-        this.context.strokeStyle = rgb_to_hex(this.interpolation_colors[index]);
+        this.context.strokeStyle = RGBToHEX(this.interpolation_colors[index]);
         this.context.lineWidth = this.edge_style.line_width;
       } else {
-        this.context.strokeStyle = rgb_to_hex(tint_rgb(this.interpolation_colors[index], 0.8));
+        this.context.strokeStyle = RGBToHEX(tint_rgb(this.interpolation_colors[index], 0.8));
         this.context.lineWidth = this.edge_style.line_width;
       }
     }

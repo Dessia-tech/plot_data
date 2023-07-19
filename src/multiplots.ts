@@ -3,7 +3,7 @@ import {Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, BasePlot } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
-import { string_to_hex, string_to_rgb, rgb_to_string, hex_to_rgb, RGBToHSL, colorHSL, HSLToArray } from './color_conversion';
+import { string_to_hex, string_to_rgb, rgb_to_string, colorHSL } from './color_conversion';
 
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
@@ -121,7 +121,8 @@ export class MultiplePlots {
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       }
-      if (elements.length != 0) {this.initialize_point_families();}
+      // if (elements.length != 0) {this.initialize_point_families();}
+      this.initPointSets(data);
 
       for (let i=0; i<this.nbObjects; i++) {
         this.objectList[i].draw_initial();
@@ -139,12 +140,13 @@ export class MultiplePlots {
         this.store_dimensions();
       }
       this.refreshRubberBands();
-
-      this.point_families.forEach(pointFamily => {
-        if (pointFamily.color.includes("#")) pointFamily.color = hex_to_rgb(pointFamily.color);
-        if (pointFamily.color.includes("rgb")) pointFamily.color = colorHSL(...RGBToHSL(...HSLToArray(pointFamily.color)));
-      })
         // this.save_canvas();
+    }
+
+    public initPointSets(data: any) {
+      if (data.point_families) {
+        data.point_families.forEach(pointFamily =>  this.point_families.push(new PointFamily(colorHSL(pointFamily.color), pointFamily.point_index, '')));
+      }
     }
 
     initialize_sizes() {
@@ -596,6 +598,7 @@ export class MultiplePlots {
             plot.hoveredIndices = [...this.hoveredIndices];
             if (plot instanceof Frame) {
               if (this.point_families.length != 0) {
+                plot.pointSetColors = [];
                 this.point_families.forEach((pointFamily, familyIdx) => {
                   pointFamily.pointIndices.forEach(pointIdx => plot.pointSets[pointIdx] = familyIdx);
                   plot.pointSetColors.push(pointFamily.color);

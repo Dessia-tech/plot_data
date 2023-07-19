@@ -1,5 +1,5 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
-import { string_to_rgb, rgb_to_hex, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string, RGBToHSL, HSLToArray } from "./color_conversion";
+import { string_to_rgb, RGBToHEX, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string, arrayRGBToHSL, RGBToArray, HSLToArray } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
 
@@ -400,7 +400,7 @@ export class PointFamily {
     public name: string) { }
 
   public static deserialize(serialized) {
-    return new PointFamily(rgb_to_hex(serialized['color']),
+    return new PointFamily(RGBToHEX(serialized['color']),
       serialized['point_index'],
       serialized['name']);
   }
@@ -1881,7 +1881,7 @@ export class newPoint2D extends newShape {
   };
 
   public getFillStyleHSL(fillStyle: string): [number, number, number] {
-    if (fillStyle.includes("rgb")) return RGBToHSL(...this.getFillStyleRGB(fillStyle));
+    if (fillStyle.includes("rgb")) return arrayRGBToHSL(...RGBToArray(fillStyle));
     return HSLToArray(fillStyle)
   }
 

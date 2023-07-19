@@ -1,4 +1,4 @@
-import { string_to_rgb, rgb_to_string, string_to_hex, rgb_to_hex } from "./color_conversion";
+import { string_to_rgb, rgb_to_string, string_to_hex, RGBToHEX } from "./color_conversion";
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
@@ -910,7 +910,7 @@ export class Heatmap {
     let edge_style = EdgeStyle.deserialize(serialized["edge_style"]);
     let colors = [];
     for (let i=0; i<serialized["colors"].length; i++) {
-      colors.push(rgb_to_hex(serialized["colors"][i]));
+      colors.push(RGBToHEX(serialized["colors"][i]));
     }
     return new Heatmap(serialized["size"], colors, edge_style, serialized["name"]);
   }

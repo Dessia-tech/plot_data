@@ -29,19 +29,6 @@ function get_rgb_to_string_dict() {
 }
 export const rgb_to_string_dict = get_rgb_to_string_dict();
 
-function componentToHex(c) {
-  var hex = c.toString(16);
-  return hex.length == 1 ? "0" + hex : hex;
-}
-
-export function rgb_to_hex(rgb:string): string {
-  var tokens = rgb.slice(4, rgb.length - 1).split(',');
-  var r = parseInt(tokens[0],10);
-  var g = parseInt(tokens[1],10);
-  var b = parseInt(tokens[2],10);
-  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
-}
-
 export function isColorInDict(str:string): boolean {
   var colors = Object.keys(string_to_hex_dict);
   return colors.includes(str);
@@ -69,7 +56,7 @@ export function hex_to_rgb(hex:string): string {
   var r = parseInt(result[0], 16);
   var g = parseInt(result[1], 16);
   var b = parseInt(result[2], 16);
-  return arrayToColorRGB(r, g, b);
+  return stringRGB(r, g, b);
 }
 
 export function rgb_to_string(rgb:string): string {
@@ -115,7 +102,7 @@ export function average_color(rgb1:string, rgb2:string): string {
   var new_r = (rgb_vect1[0] + rgb_vect2[0])/2;
   var new_g = (rgb_vect1[1] + rgb_vect2[1])/2;
   var new_b = (rgb_vect1[2] + rgb_vect2[2])/2;
-  return arrayToColorRGB(new_r, new_g, new_b);
+  return stringRGB(new_r, new_g, new_b);
 }
 
 export function rgb_interpolation([r1, g1, b1], [r2, g2, b2], n:number): string[] {
@@ -124,7 +111,7 @@ export function rgb_interpolation([r1, g1, b1], [r2, g2, b2], n:number): string[
     var r = Math.floor(r1*(1-k/n) + r2*k/n);
     var g = Math.floor(g1*(1-k/n) + g2*k/n);
     var b = Math.floor(b1*(1-k/n) + b2*k/n);
-    color_list.push(arrayToColorRGB(r,g,b));
+    color_list.push(stringRGB(r,g,b));
   }
   return color_list;
 }
@@ -159,7 +146,7 @@ export function heatmap_color(density, max_density, colors) {
   let g = Math.floor((1-val)*color1[1] + val*color2[1]);
   let b = Math.floor((1-val)*color1[2] + val*color2[2]);
   let rgb = "rgb(" + r.toString() + "," + g.toString() + "," + b.toString() + ")";
-  return rgb_to_hex(rgb);
+  return RGBToHEX(rgb);
 }
 
 export function rgb_strToVector(rgb:string): [number, number, number] {
@@ -175,7 +162,7 @@ export function tint_rgb(rgb:string, coeff:number): string { //coeff must be bet
   var r = result[0] + (255 - result[0])*coeff;
   var g = result[1] + (255 - result[1])*coeff;
   var b = result[2] + (255 - result[2])*coeff;
-  return arrayToColorRGB(r,g,b);
+  return stringRGB(r,g,b);
 }
 
 export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 0 ans 1. The higher the coeff, the darker the color
@@ -183,7 +170,7 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
   var r = result[0]*(1 - coeff);
   var g = result[1]*(1 - coeff);
   var b = result[2]*(1 - coeff);
-  return arrayToColorRGB(r,g,b);
+  return stringRGB(r,g,b);
 }
 
 
@@ -195,7 +182,8 @@ export function isHex(str:string):boolean {
   return str.substring(0,1) == '#';
 }
 
-export function RGBToHSL(r: number, g: number, b: number): [number, number, number] {
+// NEW (need a merge with what's before)
+export function arrayRGBToHSL(r: number, g: number, b: number): [number, number, number] {
   let dr = r / 255;
   let dg = g / 255;
   let db = b / 255;
@@ -215,17 +203,81 @@ export function RGBToHSL(r: number, g: number, b: number): [number, number, numb
   ];
 };
 
-export function colorHSL(h:number, s: number, l: number): string { return `hsl(${h},${s}%,${l}%)` }
+export function arrayHSLToRGB(h: number, s: number, l: number): [number, number, number] {
+  s /= 100;
+  l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [255 * f(0), 255 * f(8), 255 * f(4)];
+}
 
 export function HSLToArray(hslColor: string): [number, number, number] {
   let [h, s, l] = hslColor.split(',');
-  h = h.split('hsl(')[1];
-  s = s.split('%')[0];
-  l = l.split('%')[0];
-  return [Number(h), Number(s), Number(l)]
+  return [Number(h.split('hsl(')[1]), Number(s.split('%')[0]), Number(l.split('%')[0])]
 }
 
-export function arrayToColorRGB(r:number, g:number, b:number): string { return `rgb(${r},${g},${b})` }
+export function RGBToArray(rgbColor: string): [number, number, number] {
+  let [r, g, b] = rgbColor.split(',');
+  return [Number(r.split('rgb(')[1]), Number(g), Number(b.split(")")[0])]
+}
 
-export function arrayToColorHSL(h:number, s: number, l: number): string { return `hsl(${h},${s}%,${l}%)` }
+function componentToHex(component: number): string {
+  var hex = component.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+export function arrayRGBToHEX(r: number, g: number, b: number) { return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b) }
+
+export function arrayHEXToRGB(hexColor: string): [number, number, number] {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColor);
+  return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : null
+}
+
+export function arrayHSLToHex(h: number, s: number, l: number): string {
+  l /= 100;
+  const a = s * Math.min(l, 1 - l) / 100;
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');   // convert to Hex and prefix "0" if needed
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+export function arrayHEXToHSL(hexColor: string): [number, number, number] { return arrayRGBToHSL(...arrayHEXToRGB(hexColor)) }
+
+export function stringRGB(r: number, g: number, b: number): string { return `rgb(${r},${g},${b})` }
+
+export function stringHSL(h: number, s: number, l: number): string { return `hsl(${h},${s}%,${l}%)` }
+
+export function HSLToRGB(hslColor: string): string { return stringRGB(...arrayHSLToRGB(...HSLToArray(hslColor))) }
+
+export function RGBToHSL(rgbColor: string): string { return stringHSL(...arrayRGBToHSL(...RGBToArray(rgbColor))) }
+
+export function RGBToHEX(rgbColor: string): string { return arrayRGBToHEX(...RGBToArray(rgbColor)) }
+
+export function HEXToRGB(hexColor: string): string { return stringRGB(...arrayHEXToRGB(hexColor)) }
+
+export function HEXToHSL(hexColor: string): string { return stringHSL(...arrayHEXToHSL(hexColor)) }
+
+export function HSLToHEX(hslColor: string): string { return arrayHSLToHex(...HSLToArray(hslColor)) }
+
+export function colorHSL(color: string): string {
+  if (color.includes('hsl')) return color;
+  if (color.includes('rgb')) return RGBToHSL(color);
+  if (color.includes('#')) return HEXToHSL(color);
+}
+
+export function colorHEX(color: string): string {
+  if (color.includes('#')) return color;
+  if (color.includes('hsl')) return HSLToHEX(color);
+  if (color.includes('rgb')) return RGBToHEX(color);
+}
+
+export function colorRGB(color: string): string {
+  if (color.includes('rgb')) return color;
+  if (color.includes('hsl')) return HSLToRGB(color);
+  if (color.includes('#')) return HEXToRGB(color);
+}
 

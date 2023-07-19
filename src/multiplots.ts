@@ -1866,11 +1866,11 @@ export class MultiplePlots {
 
       window.addEventListener('keyup', e => {
         if (e.key == "Control") {ctrlKey = false}
-        if (e.key == "Shift") { 
-          shiftKey = false; 
-          this.isSelecting = false; 
-          this.objectList.forEach(plot => {plot.isSelecting = false; plot.is_drawing_rubber_band = false}); 
-          this.canvas.style.cursor = 'default'; 
+        if (e.key == "Shift") {
+          shiftKey = false;
+          this.isSelecting = false;
+          this.objectList.forEach(plot => {plot.isSelecting = false; plot.is_drawing_rubber_band = false});
+          this.canvas.style.cursor = 'default';
           this.redrawAllObjects() }
       });
 

@@ -807,9 +807,8 @@ export abstract class PlotData extends EventEmitter {
 
   get_point_order() {
     var point_order = [];
-    for (let i=0; i<this.point_families.length; i++) {
-      point_order.push([]);
-    }
+    for (let i=0; i<this.point_families.length; i++) point_order.push([]);
+
     for (let i=0; i<this.scatter_points.length; i++) {
       let point_point_families = this.scatter_points[i].point_families;
       for (let j=0; j<point_point_families.length; j++) {
@@ -1572,7 +1571,7 @@ export abstract class PlotData extends EventEmitter {
   refresh_scatter_point_family() {
     this.reset_scatter_point_families();
     for (let i=0; i<this.point_families.length; i++) {
-      let point_index = this.point_families[i].point_index;
+      let point_index = this.point_families[i].pointIndices;
       for (let index of point_index) {
         this.plotObject.point_list[index].point_families.push(this.point_families[i]);
       }

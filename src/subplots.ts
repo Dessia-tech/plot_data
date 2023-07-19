@@ -3,9 +3,8 @@ import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeO
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, hex_to_rgb } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
-import { deflateSync } from "zlib";
 
 var alert_count = 0;
 /**
@@ -1486,6 +1485,10 @@ export class BasePlot extends PlotData {
   public clickedIndices: number[];
   public selectedIndices: number[];
 
+  public nSamples: number;
+  public pointSets: number[];
+  public pointSetColors: string[] = [];
+
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
   public isZooming: boolean = false;
@@ -1499,7 +1502,6 @@ export class BasePlot extends PlotData {
 
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
-  public nSamples: number;
 
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
@@ -1524,6 +1526,7 @@ export class BasePlot extends PlotData {
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
       this.unpackAxisStyle(data);
+      this.pointSets = new Array(this.nSamples).fill(-1);
     }
 
   refresh_MinMax(): void {
@@ -2373,14 +2376,23 @@ export class newScatter extends Frame {
         if (this.clickedIndices.indexOf(index) != -1) point.isClicked = true;
         if (this.selectedIndices.indexOf(index) != -1) point.isSelected = true;
       });
-
-      if (colors.size != 0) color = mapMax(colors)[0];
+      const pointsSetIndex = this.getPointSet(point);
+      if (colors.size != 0) color = mapMax(colors)[0]
+      else { if (pointsSetIndex != -1) color = hex_to_rgb(this.pointSetColors[pointsSetIndex]) };
+      console.log(this.pointSetColors)
       point.lineWidth = this.lineWidth;
       point.setColors(color, this.strokeStyle);
       point.marker = this.marker;
       point.update();
       if (point.isInFrame(this.axes[0], this.axes[1])) point.draw(context);
     })
+  }
+
+  private getPointSet(point: ScatterPoint): number {
+    for (let i = 0; i < point.values.length; i++) {
+      if (this.pointSets.includes(point.values[i])) return i
+    }
+    return -1
   }
 
   public switchMerge(): void {
@@ -2413,7 +2425,7 @@ export class newScatter extends Frame {
       let centerY = 0;
       let meanX = 0;
       let meanY = 0;
-      let newPoint = new ScatterPoint([], 0, 0, minSize, 'circle');
+      let newPoint = new ScatterPoint([], 0, 0, minSize, this.marker);
       indexList.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];

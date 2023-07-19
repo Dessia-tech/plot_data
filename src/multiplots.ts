@@ -3,7 +3,7 @@ import {Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, BasePlot } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
-import { string_to_hex, string_to_rgb, rgb_to_string } from './color_conversion';
+import { string_to_hex, string_to_rgb, rgb_to_string, hex_to_rgb, RGBToHSL, colorHSL, HSLToArray } from './color_conversion';
 
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
@@ -139,6 +139,11 @@ export class MultiplePlots {
         this.store_dimensions();
       }
       this.refreshRubberBands();
+
+      this.point_families.forEach(pointFamily => {
+        if (pointFamily.color.includes("#")) pointFamily.color = hex_to_rgb(pointFamily.color);
+        if (pointFamily.color.includes("rgb")) pointFamily.color = colorHSL(...RGBToHSL(...HSLToArray(pointFamily.color)));
+      })
         // this.save_canvas();
     }
 
@@ -328,7 +333,7 @@ export class MultiplePlots {
       new_plot_data.point_families = this.point_families;
       if (new_plot_data.type_ == 'scatterplot') {
         for (let family of this.point_families) {
-          for (let index of family.point_index) {
+          for (let index of family.pointIndices) {
               new_plot_data.plotObject.point_list[index].point_families.push(family);
           }
         }
@@ -589,9 +594,14 @@ export class MultiplePlots {
             plot.selectedIndices = this.dep_selected_points_index;
             plot.clickedIndices = this.clickedIndices;
             plot.hoveredIndices = [...this.hoveredIndices];
-            // Kept for the moment cause it was fixing a bug that it does not seem to fix anymore since bug is not here anymore...
-            // plot.reset_scales();
-            // if (plot instanceof Frame) plot.updateSize();
+            if (plot instanceof Frame) {
+              if (this.point_families.length != 0) {
+                this.point_families.forEach((pointFamily, familyIdx) => {
+                  pointFamily.pointIndices.forEach(pointIdx => plot.pointSets[pointIdx] = familyIdx);
+                  plot.pointSetColors.push(pointFamily.color);
+                })
+              }
+            }
           } else if (plot instanceof ParallelPlot) {
             plot.select_on_mouse_indices = [...this.hoveredIndices];
             plot.clicked_point_index = this.clickedIndices;
@@ -697,7 +707,7 @@ export class MultiplePlots {
 
     add_point_family(point_family:PointFamily): void {
       this.point_families.push(point_family);
-      var point_index = point_family.point_index;
+      var point_index = point_family.pointIndices;
       for (let i=0; i<this.nbObjects; i++) {
         if (this.objectList[i].type_ == 'scatterplot') {
           for (let j=0; j<point_index.length; j++) {
@@ -729,7 +739,7 @@ export class MultiplePlots {
     add_points_to_family(points_index_to_add:number[], family_index:number): void {
       for (let i=0; i<points_index_to_add.length; i++) {
         if (points_index_to_add[i] !== undefined) {
-          this.point_families[family_index].point_index.push(points_index_to_add[i]);
+          this.point_families[family_index].pointIndices.push(points_index_to_add[i]);
           for (let j=0; j<this.nbObjects; j++) {
             if (this.objectList[j].type_ == 'scatterplot') {
               if (!(List.is_include(this.point_families[family_index],
@@ -745,7 +755,7 @@ export class MultiplePlots {
     }
 
     remove_points_from_family(points_index_to_remove:number[], family_index:number): void {
-      this.point_families[family_index].point_index = List.remove_selection(points_index_to_remove, this.point_families[family_index].point_index);
+      this.point_families[family_index].pointIndices = List.remove_selection(points_index_to_remove, this.point_families[family_index].pointIndices);
       for (let i=0; i<points_index_to_remove.length; i++) {
         if (points_index_to_remove[i] !== undefined) {
           for (let j=0; j<this.nbObjects; j++) {

@@ -69,7 +69,7 @@ export function hex_to_rgb(hex:string): string {
   var r = parseInt(result[0], 16);
   var g = parseInt(result[1], 16);
   var b = parseInt(result[2], 16);
-  return rgb_vectorToStr(r, g, b);
+  return arrayToColorRGB(r, g, b);
 }
 
 export function rgb_to_string(rgb:string): string {
@@ -115,7 +115,7 @@ export function average_color(rgb1:string, rgb2:string): string {
   var new_r = (rgb_vect1[0] + rgb_vect2[0])/2;
   var new_g = (rgb_vect1[1] + rgb_vect2[1])/2;
   var new_b = (rgb_vect1[2] + rgb_vect2[2])/2;
-  return rgb_vectorToStr(new_r, new_g, new_b);
+  return arrayToColorRGB(new_r, new_g, new_b);
 }
 
 export function rgb_interpolation([r1, g1, b1], [r2, g2, b2], n:number): string[] {
@@ -124,7 +124,7 @@ export function rgb_interpolation([r1, g1, b1], [r2, g2, b2], n:number): string[
     var r = Math.floor(r1*(1-k/n) + r2*k/n);
     var g = Math.floor(g1*(1-k/n) + g2*k/n);
     var b = Math.floor(b1*(1-k/n) + b2*k/n);
-    color_list.push(rgb_vectorToStr(r,g,b));
+    color_list.push(arrayToColorRGB(r,g,b));
   }
   return color_list;
 }
@@ -170,16 +170,12 @@ export function rgb_strToVector(rgb:string): [number, number, number] {
   return [r,g,b];
 }
 
-export function rgb_vectorToStr(r:number, g:number, b:number): string {
-  return 'rgb(' + r.toString() + ',' + g.toString() + ',' + b.toString() + ')';
-}
-
 export function tint_rgb(rgb:string, coeff:number): string { //coeff must be between 0 and 1. The higher coeff, the lighter the color
   var result = rgb_strToVector(rgb);
   var r = result[0] + (255 - result[0])*coeff;
   var g = result[1] + (255 - result[1])*coeff;
   var b = result[2] + (255 - result[2])*coeff;
-  return rgb_vectorToStr(r,g,b);
+  return arrayToColorRGB(r,g,b);
 }
 
 export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 0 ans 1. The higher the coeff, the darker the color
@@ -187,7 +183,7 @@ export function darken_rgb(rgb: string, coeff:number) { //coeff must be between 
   var r = result[0]*(1 - coeff);
   var g = result[1]*(1 - coeff);
   var b = result[2]*(1 - coeff);
-  return rgb_vectorToStr(r,g,b);
+  return arrayToColorRGB(r,g,b);
 }
 
 
@@ -218,3 +214,18 @@ export function RGBToHSL(r: number, g: number, b: number): [number, number, numb
     (100 * (2 * l - s)) / 2,
   ];
 };
+
+export function colorHSL(h:number, s: number, l: number): string { return `hsl(${h},${s}%,${l}%)` }
+
+export function HSLToArray(hslColor: string): [number, number, number] {
+  let [h, s, l] = hslColor.split(',');
+  h = h.split('hsl(')[1];
+  s = s.split('%')[0];
+  l = l.split('%')[0];
+  return [Number(h), Number(s), Number(l)]
+}
+
+export function arrayToColorRGB(r:number, g:number, b:number): string { return `rgb(${r},${g},${b})` }
+
+export function arrayToColorHSL(h:number, s: number, l: number): string { return `hsl(${h},${s}%,${l}%)` }
+

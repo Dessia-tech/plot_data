@@ -47,7 +47,7 @@ export class MultiplePlots {
     display_order:number[]=[];
     all_attributes:Attribute[]=[];
     selected_point_index:number[]=[];
-    dep_selected_points_index:number[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
+    selectedIndices:number[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
     point_families:PointFamily[]=[];
     to_display_plots:number[]=[];
     primitive_dict={};
@@ -145,7 +145,7 @@ export class MultiplePlots {
 
     public initPointSets(data: any) {
       if (data.point_families) {
-        data.point_families.forEach(pointFamily =>  this.point_families.push(new PointFamily(colorHSL(pointFamily.color), pointFamily.point_index, '')));
+        data.point_families.forEach(pointFamily => this.point_families.push(new PointFamily(colorHSL(pointFamily.color), pointFamily.point_index, '')));
       }
     }
 
@@ -277,10 +277,10 @@ export class MultiplePlots {
     }
 
     click_on_export_action() {
-      let text = "Indices: [" + this.dep_selected_points_index.toString() + "]\n\n";
+      let text = "Indices: [" + this.selectedIndices.toString() + "]\n\n";
       text = text + "Points: \n";
       let keys = Object.keys(this.data["elements"][0]);
-      for (let i of this.dep_selected_points_index) {
+      for (let i of this.selectedIndices) {
         let element = this.data["elements"][i];
         text = text + "{";
         for (let key of keys) {
@@ -589,11 +589,12 @@ export class MultiplePlots {
         let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
         this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
       }
+      // console.log(this.point_families)
       this.objectList.forEach((plot, pIndex) => {
         if (List.is_include(pIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
           if (plot instanceof BasePlot) {
-            plot.selectedIndices = this.dep_selected_points_index;
+            plot.selectedIndices = this.selectedIndices;
             plot.clickedIndices = this.clickedIndices;
             plot.hoveredIndices = [...this.hoveredIndices];
             if (plot instanceof Frame) {
@@ -709,7 +710,7 @@ export class MultiplePlots {
     }
 
     add_point_family(point_family:PointFamily): void {
-      this.point_families.push(point_family);
+      this.point_families.push(new PointFamily(colorHSL(point_family.color), point_family.pointIndices, point_family.name));
       var point_index = point_family.pointIndices;
       for (let i=0; i<this.nbObjects; i++) {
         if (this.objectList[i].type_ == 'scatterplot') {
@@ -740,6 +741,7 @@ export class MultiplePlots {
     }
 
     add_points_to_family(points_index_to_add:number[], family_index:number): void {
+      console.log(points_index_to_add, family_index)
       for (let i=0; i<points_index_to_add.length; i++) {
         if (points_index_to_add[i] !== undefined) {
           this.point_families[family_index].pointIndices.push(points_index_to_add[i]);
@@ -869,33 +871,33 @@ export class MultiplePlots {
       }
     }
 
-    refresh_dep_selected_points_index() {
+    refresh_selectedIndices() {
       var all_index = [];
-      this.dep_selected_points_index = [];
+      this.selectedIndices = [];
       for (let i=0; i<this.data['elements'].length; i++) {
         all_index.push(i);
-        this.dep_selected_points_index.push(i);
+        this.selectedIndices.push(i);
       }
       var bool = false;
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if ((obj.type_ === 'scatterplot') && !equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
           bool = true;
-          this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
+          this.selectedIndices = List.listIntersection(this.selectedIndices, obj.selected_point_index);
         } else if ((obj.type_ === 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
           bool = true;
-          this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
+          this.selectedIndices = List.listIntersection(this.selectedIndices, obj.pp_selected_index);
         } else if (obj instanceof BasePlot) {
           obj.axes.forEach(axis => {
             if (axis.rubberBand.length != 0) {
               bool = true;
               const selectedIndices = (obj as BasePlot).updateSelected(axis);
-              this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, selectedIndices);
+              this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
             }
           })
         }
       }
-      if (equals(all_index, this.dep_selected_points_index) && !bool) this.dep_selected_points_index = [];
+      if (equals(all_index, this.selectedIndices) && !bool) this.selectedIndices = [];
     }
 
     initializeMouseXY(mouse1X, mouse1Y):void {
@@ -922,7 +924,7 @@ export class MultiplePlots {
     }
 
     resetAllObjects(): void {
-      // this.dep_selected_points_index = [];
+      // this.selectedIndices = [];
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
         let plot = this.objectList[i];
@@ -932,7 +934,7 @@ export class MultiplePlots {
     }
 
     reset_all_selected_points() {
-      this.dep_selected_points_index = [];
+      this.selectedIndices = [];
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
         let otherPlot: any = this.objectList[i];
@@ -951,7 +953,7 @@ export class MultiplePlots {
     }
 
     reset_selected_points_except(list:number[]) {
-      this.dep_selected_points_index = [];
+      this.selectedIndices = [];
       this.selected_point_index = [];
       for (let i=0; i<this.nbObjects; i++) {
         if (list.includes(i)) continue;
@@ -1207,7 +1209,7 @@ export class MultiplePlots {
         let selection_coords = isSelectingScatter.selection_coords;
         let to_display_attributes:Attribute[] = isSelectingScatter.plotObject.to_display_attributes;
         this.scatter_communication(selection_coords, to_display_attributes, isSelectingObjIndex);
-        this.dep_selected_points_index = isSelectingScatter.selected_point_index;
+        this.selectedIndices = isSelectingScatter.selected_point_index;
       }
     }
 
@@ -1283,7 +1285,7 @@ export class MultiplePlots {
 
     pp_communication(rubberBands: RubberBand[], currentPP: any) { // process received data from a parallelplot and send it to the other objects
       const selectedIndices = currentPP.getObjectsInRubberBands(rubberBands);
-      this.refresh_dep_selected_points_index();
+      this.refresh_selectedIndices();
       let rubberBandNames = [];
       rubberBands.forEach((rubberBand) => rubberBandNames.push(rubberBand.attributeName));
 
@@ -1415,7 +1417,7 @@ export class MultiplePlots {
           MultiplotCom.frame_to_frame_communication(frame, plot);
         }
       })
-      this.refresh_dep_selected_points_index();
+      this.refresh_selectedIndices();
       this.refresh_selected_object_from_index();
     }
 
@@ -1424,7 +1426,7 @@ export class MultiplePlots {
       this.rubberBands.forEach(rubberBand => sumRubberLength += rubberBand.length);
       this.objectList.forEach(plot => {
         if (plot instanceof PrimitiveGroupContainer) {
-          plot.selected_point_index = this.dep_selected_points_index;
+          plot.selected_point_index = this.selectedIndices;
           if (sumRubberLength == 0 && plot.selected_point_index.length == 0) {
             plot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
           }
@@ -1456,7 +1458,7 @@ export class MultiplePlots {
         if (i === this.clickedPlotIndex) continue;
         var obj = this.objectList[i];
         if (obj.type_ == 'scatterplot') {
-          let temp_select_on_click = List.getListEltFromIndex(this.dep_selected_points_index, obj.plotObject.point_list);
+          let temp_select_on_click = List.getListEltFromIndex(this.selectedIndices, obj.plotObject.point_list);
           this.objectList[i].select_on_click = [];
           for (let j=0; j<obj.scatter_points.length; j++) {
             let scatter_points_j = obj.scatter_points[j];
@@ -1476,15 +1478,15 @@ export class MultiplePlots {
             }
           }
         } else if (obj.type_ == 'parallelplot') {
-          for (let j=0; j<this.dep_selected_points_index.length; j++) {
+          for (let j=0; j<this.selectedIndices.length; j++) {
             var to_display = [];
             for (let k=0; k<obj.axis_list.length; k++) {
               let attribute_name = obj.axis_list[k].name;
               let type_ = obj.axis_list[k].type_;
               if (type_ == 'color') {
-                var elt = rgb_to_string(obj.elements[this.dep_selected_points_index[j]][attribute_name]);
+                var elt = rgb_to_string(obj.elements[this.selectedIndices[j]][attribute_name]);
               } else {
-                elt = obj.elements[this.dep_selected_points_index[j]][attribute_name];
+                elt = obj.elements[this.selectedIndices[j]][attribute_name];
               }
               to_display.push(elt);
             }
@@ -1624,8 +1626,8 @@ export class MultiplePlots {
 
 
     manage_selected_point_index_changes(old_selected_index:number[]) {
-      if (!equals(old_selected_index, this.dep_selected_points_index)) {
-        var evt = new CustomEvent('selectionchange', { detail: { 'selected_point_indices': this.dep_selected_points_index } });
+      if (!equals(old_selected_index, this.selectedIndices)) {
+        var evt = new CustomEvent('selectionchange', { detail: { 'selectedIndices': this.selectedIndices } });
         this.canvas.dispatchEvent(evt);
       }
     }
@@ -1843,7 +1845,7 @@ export class MultiplePlots {
     public resetClusters(): void { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.resetClusters() })};
 
     public resetSelection(): void {
-      this.dep_selected_points_index = [];
+      this.selectedIndices = [];
       this.clickedIndices = [];
       this.hoveredIndices = [];
       this.rubberBands.forEach(rubberBand => rubberBand.reset());
@@ -1891,7 +1893,7 @@ export class MultiplePlots {
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
-        old_selected_index = this.dep_selected_points_index;
+        old_selected_index = this.selectedIndices;
         if (ctrlKey && shiftKey) {
           this.reset_all_selected_points();
           this.resetAllObjects();
@@ -2243,7 +2245,7 @@ export function save_multiplot(multiplot: MultiplePlots) {
   let dict_ = {"data": multiplot.data,
                "coords": coords,
                "sizes": sizes,
-               "dep_selected_point_index": multiplot.dep_selected_points_index,
+               "selectedIndices": multiplot.selectedIndices,
                "plots": temp_objs,
                "canvas_id": multiplot.canvas_id};
   return dict_;
@@ -2285,7 +2287,7 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
 
     }
   }
-  multiplot.dep_selected_points_index = dict_["dep_selected_points_index"];
+  multiplot.selectedIndices = dict_["selectedIndices"];
   multiplot.redrawAllObjects();
   return multiplot;
 }

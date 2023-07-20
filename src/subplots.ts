@@ -2667,7 +2667,7 @@ function mapMin(map: Map<any, number>): [any, number] {
   let keyMin: string;
   map.forEach((value, key) => {
     if (value >= min) {
-      min = value; 
+      min = value;
       keyMin = key;
     }
   })
@@ -2678,8 +2678,8 @@ function mapMax(map: Map<any, number>): [any, number] {
   let max = Number.NEGATIVE_INFINITY;
   let keyMax: string;
   map.forEach((value, key) => {
-    if (value >= max) { 
-      max = value; 
+    if (value >= max) {
+      max = value;
       keyMax = key;
     }
   })

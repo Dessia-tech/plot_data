@@ -2338,6 +2338,16 @@ export class newScatter extends Frame {
       if (data.point_style.size) this.pointSize = data.point_style.size;
     }
     if (data.tooltip) this.tooltipAttr = data.tooltip.attributes;
+    if (data.points_sets) this.unpackPointsSets(data);
+  }
+
+  public unpackPointsSets(data: any): void {
+    data.points_sets.forEach((pointSet, setIndex) => {
+      pointSet.point_index.forEach(pointIndex => {
+        this.pointSets[pointIndex] = setIndex;
+      })
+      this.pointSetColors.push(pointSet.color);
+    })
   }
 
   public reset_scales(): void {
@@ -2369,16 +2379,17 @@ export class newScatter extends Frame {
       point.isHovered = point.isClicked = point.isSelected = false;
       point.values.forEach(index => {
         if (this.clusterColors) {
-          if (colors.has(this.clusterColors[index])) colors.set(this.clusterColors[index], colors.get(this.clusterColors[index]) + 1)
-          else colors.set(this.clusterColors[index], 1);
+          colors.set(this.clusterColors[index], colors.get(this.clusterColors[index]) ? colors.get(this.clusterColors[index]) + 1 : 1);
         }
         if (this.hoveredIndices.indexOf(index) != -1) point.isHovered = true;
         if (this.clickedIndices.indexOf(index) != -1) point.isClicked = true;
         if (this.selectedIndices.indexOf(index) != -1) point.isSelected = true;
       });
-      const pointsSetIndex = this.getPointSet(point);
       if (colors.size != 0) color = mapMax(colors)[0]
-      else { if (pointsSetIndex != -1) color = colorHSL(this.pointSetColors[pointsSetIndex]) };
+      else {
+        const pointsSetIndex = this.getPointSet(point);
+        if (pointsSetIndex != -1) color = colorHSL(this.pointSetColors[pointsSetIndex]);
+      };
       point.lineWidth = this.lineWidth;
       point.setColors(color);
       point.marker = this.marker;
@@ -2655,7 +2666,10 @@ function mapMin(map: Map<any, number>): [any, number] {
   let min = Number.NEGATIVE_INFINITY;
   let keyMin: string;
   map.forEach((value, key) => {
-    if (value >= min) min = value; keyMin = key;
+    if (value >= min) {
+      min = value; 
+      keyMin = key;
+    }
   })
   return [keyMin, min]
 }
@@ -2664,7 +2678,10 @@ function mapMax(map: Map<any, number>): [any, number] {
   let max = Number.NEGATIVE_INFINITY;
   let keyMax: string;
   map.forEach((value, key) => {
-    if (value >= max) max = value; keyMax = key;
+    if (value >= max) { 
+      max = value; 
+      keyMax = key;
+    }
   })
   return [keyMax, max]
 }

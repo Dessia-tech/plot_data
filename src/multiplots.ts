@@ -589,7 +589,6 @@ export class MultiplePlots {
         let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
         this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
       }
-      // console.log(this.point_families)
       this.objectList.forEach((plot, pIndex) => {
         if (List.is_include(pIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
@@ -741,7 +740,6 @@ export class MultiplePlots {
     }
 
     add_points_to_family(points_index_to_add:number[], family_index:number): void {
-      console.log(points_index_to_add, family_index)
       for (let i=0; i<points_index_to_add.length; i++) {
         if (points_index_to_add[i] !== undefined) {
           this.point_families[family_index].pointIndices.push(points_index_to_add[i]);

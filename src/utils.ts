@@ -1352,6 +1352,8 @@ export class newShape {
 
   set tooltipMap(value: Map<string, any> ) { this._tooltipMap = value };
 
+  public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
+
   public draw(context: CanvasRenderingContext2D): void {
     context.save();
     const scaledPath = new Path2D();
@@ -2024,7 +2026,7 @@ export class newTooltip {
   public textColor: string = "hsl(0, 0%, 100%)";
   public fillStyle: string = "hsl(210, 90%, 20%)";
   public alpha: number = 0.8;
-  public fontsize: number = 12;
+  public fontsize: number = 10;
   public radius: number = 10;
   private printedRows: string[];
   private size: Vertex;
@@ -2040,14 +2042,19 @@ export class newTooltip {
 
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
     context.save();
-    context.font = `${this.fontsize}px sans-serif`
-    let printedRows = ['Information: '];
+    context.font = `${this.fontsize}px sans-serif`;
+    let printedRows = [];
     let textLength = context.measureText(printedRows[0]).width;
     this.dataToPrint.forEach((value, key) => {
-      const text = `  - ${key}: ${this.formatValue(value)}`;
+      let text: string;
+    if (key == "Number") { 
+        if (value != 1) text = `${value} samples`;
+      } else { 
+        if (!(key == "name" && value == '')) text = `${key}: ${this.formatValue(value)}`;
+      };
       const textWidth = context.measureText(text).width;
       if (textWidth > textLength) { textLength = textWidth };
-      printedRows.push(text);
+      if (text) printedRows.push(text);
     })
     context.restore();
     return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
@@ -2076,9 +2083,10 @@ export class newTooltip {
   }
 
   private writeText(textOrigin: Vertex, context: CanvasRenderingContext2D): void {
+    const regexSamples: RegExp = /^[0-9]+\ssamples/;
     this.printedRows.forEach((row, index) => {
       textOrigin.y += index == 0 ? 0 : this.fontsize;
-      const text = new newText(row, textOrigin, {fontsize: this.fontsize, baseline: "middle", style: index == 0 ? 'bold' : ''});
+      const text = new newText(row, textOrigin, {fontsize: this.fontsize, baseline: "middle", style: regexSamples.test(row) ? 'bold' : ''});
       text.fillStyle = this.textColor;
       text.draw(context)
     })

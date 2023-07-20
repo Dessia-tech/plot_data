@@ -2451,7 +2451,10 @@ export class newScatter extends Frame {
       newPoint.mean.x = meanX / indexList.length;
       newPoint.mean.y = meanY / indexList.length;
       newPoint.updateTooltipMap();
-      if (newPoint.values.length == 1) this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[newPoint.values[0]]));
+      if (newPoint.values.length == 1) {
+        newPoint.newTooltipMap();
+        this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[newPoint.values[0]]));
+      }
       newPoint.update();
       return newPoint
     }

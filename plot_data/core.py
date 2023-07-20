@@ -636,7 +636,7 @@ class Axis(PlotDataObject):
     :type grid_on: bool
     """
 
-    def __init__(self, nb_points_x: int = 10, nb_points_y: int = 10, graduation_style: TextStyle = None,
+    def __init__(self, nb_points_x: int = None, nb_points_y: int = None, graduation_style: TextStyle = None,
                  axis_style: EdgeStyle = None, arrow_on: bool = False, grid_on: bool = True, name: str = ''):
         self.nb_points_x = nb_points_x
         self.nb_points_y = nb_points_y

@@ -1999,11 +1999,11 @@ export class Frame extends BasePlot {
 
   get relativeMatrix(): DOMMatrix { return this.canvasMatrix.multiply(this.frameMatrix) }
 
-  get nXTicks(): number { return this._nXTicks ? this._nXTicks : 7 }
+  get nXTicks(): number { return this._nXTicks ? this._nXTicks : 10 }
 
   set nXTicks(value: number) { this._nXTicks = value }
 
-  get nYTicks(): number { return this._nYTicks ? this._nYTicks : 7 }
+  get nYTicks(): number { return this._nYTicks ? this._nYTicks : 10 }
 
   set nYTicks(value: number) { this._nYTicks = value }
 

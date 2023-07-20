@@ -1898,7 +1898,7 @@ export class newPoint2D extends newShape {
 
   public setColors(fillStyle?: string, strokeStyle?: string) {
     this.fillStyle = fillStyle ? fillStyle : this.fillStyle;
-    this.strokeStyle = strokeStyle ? strokeStyle : this.setStrokeStyle(this.fillStyle);
+    this.strokeStyle = strokeStyle; // ? strokeStyle : this.setStrokeStyle(this.fillStyle);
   }
 
   get drawnShape(): newShape {

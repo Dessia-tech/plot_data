@@ -2380,7 +2380,7 @@ export class newScatter extends Frame {
       if (colors.size != 0) color = mapMax(colors)[0]
       else { if (pointsSetIndex != -1) color = colorHSL(this.pointSetColors[pointsSetIndex]) };
       point.lineWidth = this.lineWidth;
-      point.setColors(color, this.strokeStyle);
+      point.setColors(color);
       point.marker = this.marker;
       point.update();
       if (point.isInFrame(this.axes[0], this.axes[1])) point.draw(context);
@@ -2520,13 +2520,12 @@ export class newScatter extends Frame {
     while (nClusters != clusters.length && maxIter < 100) {
       nClusters = clusters.length;
       clusters = [clusteredPoints[0]];
-      clusteredPoints.forEach(candidate => {
+      clusteredPoints.slice(1).forEach(candidate => {
         let isCluster = true;
         clusters.forEach((cluster, clusterIndex) => {
           for (let i=0; i < candidate.length; i++) {
             if (cluster.includes(candidate[i])) {
-              clusters[clusterIndex].push(...candidate);
-              clusters[clusterIndex] = clusters[clusterIndex].filter((value, index, array) => array.indexOf(value) === index);
+              candidate.forEach(point => { if (!clusters[clusterIndex].includes(point)) clusters[clusterIndex].push(point) });
               isCluster = false;
               break;
             }

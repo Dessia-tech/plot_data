@@ -2776,8 +2776,8 @@ export class ShapeCollection extends DrawingCollection {
     super(drawings, frame);
   }
 
-  public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D): void {
-    this.drawings.forEach(drawing => drawing.drawTooltip(canvasOrigin, canvasSize, context));
+  public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
+    this.drawings.forEach(drawing => { if (!inMultiPlot) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
   }
 }
 
@@ -2788,6 +2788,12 @@ export class GroupCollection extends ShapeCollection {
     public frame: DOMMatrix = new DOMMatrix()
   ) {
     super(drawings, frame);
+  }
+
+  public drawingIsContainer(drawing: any): boolean { return drawing.values ? drawing.values.length > 1 ? true : false : false }
+
+  public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
+    this.drawings.forEach(drawing => { if (this.drawingIsContainer(drawing)) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
   }
 
   public updateSampleStates(stateName: string): number[] {

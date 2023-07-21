@@ -1648,7 +1648,7 @@ export class BasePlot extends PlotData {
     this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show);
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex, 
+  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
     frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
       this.fixedObjects.updateMouseState(context, canvasMouse, stateName, keepState, invertState);
       this.absoluteObjects.updateMouseState(context, absoluteMouse, stateName, keepState, invertState);
@@ -1995,7 +1995,7 @@ export class Histogram extends Frame {
     this.relativeObjects = new GroupCollection(this.bars, this.relativeMatrix);
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex, 
+  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
     frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);
     let stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
@@ -2120,7 +2120,7 @@ export class newScatter extends Frame {
     return relativeMatrix.mmul(pointsMatrix)
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex, 
+  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
     frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
     super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);
     let stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];

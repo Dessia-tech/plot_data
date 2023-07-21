@@ -1060,8 +1060,8 @@ export class RubberBand {
   public get maxValue() { return this._maxValue }
 
   public selfSend(rubberBands: Map<string, RubberBand>) { rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical)) }
-  
-  public selfSendRange(rubberBands: Map<string, RubberBand>) { 
+
+  public selfSendRange(rubberBands: Map<string, RubberBand>) {
     rubberBands.get(this.attributeName).minValue = this.minValue;
     rubberBands.get(this.attributeName).maxValue = this.maxValue;
   }
@@ -2540,7 +2540,7 @@ export class DrawingCollection {
   public updateMouseState(context: CanvasRenderingContext2D, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
     this.drawings.forEach(drawing => {
       if (context.isPointInPath(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
-      else { 
+      else {
         if (!keepState) drawing[stateName] = false;
       }
     })
@@ -2548,7 +2548,7 @@ export class DrawingCollection {
 
   public mouseDown(mouseCoords: Vertex): any {
     let clickedObject: any;
-    this.drawings.forEach(drawing => { 
+    this.drawings.forEach(drawing => {
       if (drawing.isHovered) {
         clickedObject = drawing;
         clickedObject.mouseDown(mouseCoords);

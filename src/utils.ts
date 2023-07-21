@@ -2719,7 +2719,9 @@ export class GroupCollection extends ShapeCollection {
   }
 
   public updateSampleStates(sampleStates: boolean[], stateName: string): boolean[] {
-    this.drawings.forEach(drawing => drawing.values.forEach(sample => sampleStates[sample] = drawing[stateName]));
+    this.drawings.forEach(drawing => {
+      if (drawing.values) drawing.values.forEach(sample => sampleStates[sample] = drawing[stateName]);
+    });
     return sampleStates
   }
 }

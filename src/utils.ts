@@ -2062,9 +2062,9 @@ export class newTooltip {
     let textLength = context.measureText(printedRows[0]).width;
     this.dataToPrint.forEach((value, key) => {
       let text: string;
-    if (key == "Number") { 
+    if (key == "Number") {
         if (value != 1) text = `${value} samples`;
-      } else { 
+      } else {
         if (!(key == "name" && value == '')) text = `${key}: ${this.formatValue(value)}`;
       };
       const textWidth = context.measureText(text).width;

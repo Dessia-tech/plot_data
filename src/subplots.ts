@@ -2066,7 +2066,7 @@ export class Histogram extends Frame {
 
 export class newScatter extends Frame {
   public points: newPoint2D[] = [];
-  public tooltipAttr: string[];
+  public tooltipAttributes: string[];
   readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(
@@ -2080,8 +2080,8 @@ export class newScatter extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!data.tooltip) {this.tooltipAttr = Array.from(this.features.keys()) }
-      else this.tooltipAttr = data.tooltip.attribute;
+      if (!data.tooltip) {this.tooltipAttributes = Array.from(this.features.keys()) }
+      else this.tooltipAttributes = data.tooltip.attribute;
     }
 
   private computePoints(): newPoint2D[] {
@@ -2092,14 +2092,14 @@ export class newScatter extends Frame {
     const coordsMatrix = this.projectPoints(pointsHTMatrix);
     for (let index = 0 ; index < numericVectorX.length ; index++) {
       let newPoint = new newPoint2D(coordsMatrix.get(0, index),  coordsMatrix.get(1, index), 5, "circle", undefined, "hsl(203, 90%, 85%)");
-      if (this.hoveredIndices[index]) {newPoint.isHovered = true};
-      if (this.clickedIndices[index]) {newPoint.isClicked = true};
-      if (this.selectedIndices[index]) {newPoint.isSelected = true};
+      newPoint.isHovered = this.hoveredIndices[index];
+      newPoint.isClicked = this.clickedIndices[index];
+      newPoint.isSelected = this.selectedIndices[index];
 
       const inCanvasX = numericVectorX[index] < this.axes[0].maxValue && numericVectorX[index] > this.axes[0].minValue;
       const inCanvasY = numericVectorY[index] < this.axes[1].maxValue && numericVectorY[index] > this.axes[1].minValue;
       if (inCanvasX && inCanvasY) {
-        if (newPoint.isClicked) this.tooltipAttr.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[index]));
+        if (newPoint.isClicked) this.tooltipAttributes.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[index]));
         newPoint.draw(this.context_show);
       }
       points.push(newPoint);

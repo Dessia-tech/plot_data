@@ -135,7 +135,6 @@ export class MultiplePlots {
         this.store_dimensions();
       }
       this.refreshRubberBands();
-        // this.save_canvas();
     }
 
     initialize_sizes() {

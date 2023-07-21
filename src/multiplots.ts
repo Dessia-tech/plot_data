@@ -853,19 +853,19 @@ export class MultiplePlots {
         all_index.push(i);
         this.dep_selected_points_index.push(i);
       }
-      var bool = false;
+      var isSelecting = false;
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if ((obj.type_ === 'scatterplot') && !equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
-          bool = true;
+          isSelecting = true;
           this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
         } else if ((obj.type_ === 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
-          bool = true;
+          isSelecting = true;
           this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
         } else if (obj instanceof BasePlot) {
           obj.axes.forEach(axis => {
             if (axis.rubberBand.length != 0) {
-              bool = true;
+              isSelecting = true;
               const boolIndex = (obj as BasePlot).updateSelected(axis);
               let selectedIndices = [];
               boolIndex.forEach((bool, bIndex) => { if (bool) selectedIndices.push(bIndex) })
@@ -874,7 +874,7 @@ export class MultiplePlots {
           })
         }
       }
-      if (equals(all_index, this.dep_selected_points_index) && !bool) this.dep_selected_points_index = [];
+      if (equals(all_index, this.dep_selected_points_index) && !isSelecting) this.dep_selected_points_index = [];
     }
 
     initializeMouseXY(mouse1X, mouse1Y):void {

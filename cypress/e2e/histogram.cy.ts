@@ -70,7 +70,6 @@ describe('HISTOGRAM CANVAS', function () {
       const histogram = win.eval('plot_data') as Histogram;
       [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 348, "offsetY": 399} as MouseEvent);
       histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
-      console.log(histogram.hoveredIndices)
       expect(histogram.hoveredIndices[4]).to.be.true;
       expect(histogram.hoveredIndices[40]).to.be.true;
 

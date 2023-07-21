@@ -901,13 +901,10 @@ export class MultiplePlots {
     }
 
     resetAllObjects(): void {
-      // this.dep_selected_points_index = [];
-      this.selected_point_index = [];
-      for (let i=0; i<this.nbObjects; i++) {
-        let plot = this.objectList[i];
-        if (plot instanceof PlotScatter) {Interactions.click_on_reset_action(plot)}
-        else {plot.reset_scales()}
-      }
+      this.objectList.forEach(plot =>  {
+        if (plot instanceof PlotScatter) Interactions.click_on_reset_action(plot)
+        else plot.reset_scales();
+      })
     }
 
     reset_all_selected_points() {
@@ -1833,6 +1830,7 @@ export class MultiplePlots {
       });
 
       this.canvas.addEventListener('mousedown', e => {
+        console.log(this.selected_point_index)
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;

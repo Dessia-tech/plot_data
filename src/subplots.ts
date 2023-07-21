@@ -2175,7 +2175,7 @@ export class newScatter extends Frame {
   public isMerged: boolean = false;
   public clusterColors: string[];
   public previousCoords: Vertex[];
-  
+
   readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(

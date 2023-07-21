@@ -394,6 +394,7 @@ class PointFamily(PlotDataObject):
         self.point_index = point_index
         PlotDataObject.__init__(self, type_=None, name=name)
 
+
 class Text(PlotDataObject):
     """
     A class for displaying texts on canvas. Text is a primitive and can be instantiated by PrimitiveGroup.

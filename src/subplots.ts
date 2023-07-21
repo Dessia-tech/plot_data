@@ -2049,26 +2049,6 @@ export class Frame extends BasePlot {
     if (this.isRubberBanded()) this.updateSelectionBox(...this.rubberBandsCorners);
   }
 
-  public plottedObjectStateUpdate(context: CanvasRenderingContext2D, object: any, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
-    if (object.values) {
-      let stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {
-        object.values.forEach(value => {
-          const valIndex = stateIndices.indexOf(value);
-          if (valIndex == -1) stateIndices.push(value)
-          else { if (invertState) stateIndices.splice(valIndex, 1) }
-        })
-      } else {
-        if (!keepState) {
-          object.values.forEach(value => {
-            const valIndex = stateIndices.indexOf(value);
-            if (valIndex != -1) stateIndices.splice(valIndex, 1);
-          })
-        }
-      }
-    }
-  }
-
   public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
     let frameOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
     let xEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);

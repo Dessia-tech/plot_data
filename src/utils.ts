@@ -2793,7 +2793,6 @@ export class GroupCollection extends ShapeCollection {
         if (drawing[stateName]) drawing.values.forEach(sample => newSampleStates.push(sample));
       }
     });
-    console.log(newSampleStates)
     return newSampleStates
   }
 }

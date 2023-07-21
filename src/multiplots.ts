@@ -587,7 +587,7 @@ export class MultiplePlots {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
           if (plot instanceof BasePlot) {
             plot.selectedIndices = this.dep_selected_points_index;
-            plot.clickedIndices = this.clickedIndices;
+            plot.clickedIndices = [...this.clickedIndices];
             plot.hoveredIndices = [...this.hoveredIndices];
             // Kept for the moment cause it was fixing a bug that it does not seem to fix anymore since bug is not here anymore...
             // plot.reset_scales();
@@ -1984,6 +1984,10 @@ export class MultiplePlots {
                   this.pp_communication(this.objectList[this.clickedPlotIndex].rubber_bands, this.objectList[this.clickedPlotIndex]);
                 }
               }
+              if (this.objectList[this.last_index] instanceof BasePlot) {
+                this.hoveredIndices = (this.objectList[this.last_index] as BasePlot).hoveredIndices;
+                this.clickedIndices = (this.objectList[this.last_index] as BasePlot).clickedIndices;
+              }
             }
           }
         } else {
@@ -2132,6 +2136,7 @@ export class MultiplotCom {
           if (currentAxis.name == otherAxis.name && currentAxis.name != 'number') {
             otherAxis.rubberBand.minValue = currentAxis.rubberBand.minValue;
             otherAxis.rubberBand.maxValue = currentAxis.rubberBand.maxValue;
+            otherAxis.emit("rubberBandChange", otherAxis.rubberBand);
           }
         })
       })

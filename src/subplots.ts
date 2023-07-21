@@ -1669,10 +1669,10 @@ export class BasePlot extends PlotData {
   }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
-    let clickedObject: any;
-    clickedObject = this.fixedObjects.mouseDown(canvasMouse);
-    clickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
-    clickedObject = this.relativeObjects.mouseDown(frameMouse);
+    const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
+    const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
+    const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);
+    const clickedObject = fixedClickedObject ? fixedClickedObject : absoluteClickedObject ? absoluteClickedObject : relativeClickedObject ? relativeClickedObject : null
     return [canvasMouse, frameMouse, clickedObject]
   }
 
@@ -1686,7 +1686,7 @@ export class BasePlot extends PlotData {
 
   public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
-      var clickedObject: any;
+      var clickedObject: any = null;
       var isDrawing = false;
       var canvasMouse = new Vertex(0, 0) ; var canvasDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
       var frameMouse = new Vertex(0, 0) ; var frameDown = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
@@ -1724,11 +1724,11 @@ export class BasePlot extends PlotData {
       canvas.addEventListener('mouseup', e => {
         canvas.style.cursor = 'default';
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
-        if (clickedObject) {clickedObject.mouseUp()};
+        if (clickedObject) clickedObject.mouseUp()
         this.draw();
         this.axes.forEach(axis => {axis.saveLocation()});
         this.translation = new Vertex(0, 0);
-        clickedObject = undefined;
+        clickedObject = null;
         isDrawing = false;
       })
 

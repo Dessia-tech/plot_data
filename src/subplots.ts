@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape, newRect } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, DrawingCollection, ShapeCollection, GroupCollection } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1489,9 +1489,9 @@ export class BasePlot extends PlotData {
   public selectedIndices: boolean[];
 
   public viewPoint: Vertex = new Vertex(0, 0);
-  public fixedObjects: any[] = [];
-  public absoluteObjects: newShape[] = [];
-  public relativeObjects: newShape[] = [];
+  public fixedObjects: DrawingCollection;
+  public absoluteObjects: GroupCollection;
+  public relativeObjects: GroupCollection;
 
   public font: string = "sans-serif";
 
@@ -1521,6 +1521,8 @@ export class BasePlot extends PlotData {
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
+      this.absoluteObjects = new GroupCollection();
+      this.relativeObjects = new GroupCollection();
     }
 
   refresh_MinMax(): void {
@@ -1551,8 +1553,8 @@ export class BasePlot extends PlotData {
   public drawCanvas(): void {
     this.context = this.context_show;
     this.draw_empty_canvas(this.context_show);
-    if (this.settings_on) {this.draw_settings_rect()}
-    else {this.draw_rect()}
+    if (this.settings_on) this.draw_settings_rect()
+    else this.draw_rect();
     this.context_show.beginPath();
     this.context_show.rect(this.X, this.Y, this.width, this.height);
     this.context_show.closePath();
@@ -1642,25 +1644,23 @@ export class BasePlot extends PlotData {
   }
 
   public drawTooltips(): void {
-    this.relativeObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) })
-    this.absoluteObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) })
+    this.relativeObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show);
+    this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show);
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    objects.forEach(object => {
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object[stateName] = invertState ? !object[stateName] : true }
-      else {if (!keepState) {object[stateName] = false}}
-    })
-  }
+  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex, 
+    frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+      this.fixedObjects.updateMouseState(context, canvasMouse, stateName, keepState, invertState);
+      this.absoluteObjects.updateMouseState(context, absoluteMouse, stateName, keepState, invertState);
+      this.relativeObjects.updateMouseState(context, frameMouse, stateName, keepState, invertState);
+    }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
     return new Vertex(mouseDown.x - currentMouse.x, mouseDown.y - currentMouse.y);
   }
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
-    this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHovered', false, false);
-    this.stateUpdate(this.context_show, this.absoluteObjects, absoluteMouse, 'isHovered', false, false);
-    this.stateUpdate(this.context_show, this.relativeObjects, frameMouse, 'isHovered', false, false);
+    this.stateUpdate(this.context_show, canvasMouse, absoluteMouse, frameMouse, 'isHovered', false, false);
   }
 
   public projectMouse(e: MouseEvent): [Vertex, Vertex, Vertex] {
@@ -1670,21 +1670,16 @@ export class BasePlot extends PlotData {
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
     let clickedObject: any;
-    this.fixedObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
-    this.absoluteObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
-    this.relativeObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
-    if (this.fixedObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(canvasMouse)}
-    if (this.absoluteObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(absoluteMouse)}
-    if (this.relativeObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(frameMouse)}
+    clickedObject = this.fixedObjects.mouseDown(canvasMouse);
+    clickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
+    clickedObject = this.relativeObjects.mouseDown(frameMouse);
     return [canvasMouse, frameMouse, clickedObject]
   }
 
   public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
     if (this.interaction_ON) {
       if (this.translation.normL1 == 0 && canvasMouse.subtract(canvasDown).normL1 <= this.TRL_THRESHOLD) {
-        this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isClicked', ctrlKey, true);
-        this.stateUpdate(this.context_show, this.absoluteObjects, absoluteMouse, 'isClicked', ctrlKey, true);
-        this.stateUpdate(this.context_show, this.relativeObjects, frameMouse, 'isClicked', ctrlKey, true);
+        this.stateUpdate(this.context_show, canvasMouse, absoluteMouse, frameMouse, 'isClicked', ctrlKey, true);
       }
     }
   }
@@ -1728,7 +1723,6 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mouseup', e => {
         canvas.style.cursor = 'default';
-        console.log(e.offsetX, e.offsetY)
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) {clickedObject.mouseUp()};
         this.draw();
@@ -1827,7 +1821,7 @@ export class Frame extends BasePlot {
   readonly MARGIN_MULTIPLIER: number = 0.01;
 
   constructor(
-    public data: any,
+    data: any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -1841,7 +1835,7 @@ export class Frame extends BasePlot {
       this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
-      this.fixedObjects.push(...this.axes);
+      this.fixedObjects = new DrawingCollection(this.axes, this.canvasMatrix);
       this.type_ = "frame";
     }
 
@@ -1919,7 +1913,7 @@ export class Histogram extends Frame {
   readonly barsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly barsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(
-    public data: any,
+    data: any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -1962,7 +1956,7 @@ export class Histogram extends Frame {
 
   private getNumberFeature(bars: Bar[]): number[] {
     const numberFeature = this.features.get(this.xFeature).map(() => 0);
-    bars.forEach(bar => {bar.values.forEach(value => numberFeature[value] = bar.length)});
+    bars.forEach(bar => bar.values.forEach(value => numberFeature[value] = bar.length));
     return numberFeature
   }
 
@@ -1998,21 +1992,14 @@ export class Histogram extends Frame {
 
   public drawRelativeObjects(): void {
     this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
-    this.relativeObjects = this.bars;
+    this.relativeObjects = new GroupCollection(this.bars, this.relativeMatrix);
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    // TODO: Fast and dirty implementation. Needs to be rethought.
-    if (objects[0] instanceof newAxis) { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
-    else {
-      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-      objects.forEach(object => {
-        if (object.values) {
-          if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
-          else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
-        }
-      })
-    }
+  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex, 
+    frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+    super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);
+    let stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
+    stateIndices = this.relativeObjects.updateSampleStates(stateIndices, stateName);
   }
 
   public getBarsDrawing(): void {
@@ -2083,7 +2070,7 @@ export class newScatter extends Frame {
   readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
   readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(
-    public data: any,
+    data: any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -2133,20 +2120,18 @@ export class newScatter extends Frame {
     return relativeMatrix.mmul(pointsMatrix)
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    // TODO: Fast and dirty implementation. Needs to be rethought ?
-    if (objects[0] instanceof newAxis) { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
-    else {
-      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-      objects.forEach((object, index) => {
-        if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { stateIndices[index] = invertState ? !stateIndices[index] : true }
-        else { if (!keepState) { stateIndices[index] = false } }
-      })
-    }
+  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex, 
+    frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+    super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);
+    let stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
+    stateIndices = this.absoluteObjects.updateSampleStates(stateIndices, stateName);
   }
 
   public drawAbsoluteObjects(): void {
     this.points = this.computePoints();
-    this.absoluteObjects = this.points;
+    // For this to work before merging other branches
+    this.points.forEach((point, index) => point["values"] = [index]);
+
+    this.absoluteObjects = new GroupCollection(this.points);
   };
 }

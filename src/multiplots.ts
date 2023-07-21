@@ -1352,7 +1352,6 @@ export class MultiplePlots {
               subplot.select_on_click.push(scatterPoint)
             }
           })
-          // subplot.refresh_selected_point_index();
           if (WAS_MERGE_ON == true) {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
@@ -1396,7 +1395,7 @@ export class MultiplePlots {
         } else if (plot.type_ === 'parallelplot') {
           MultiplotCom.frame_to_pp_communication(frame, plot);
         } else if (plot.type_ === "frame") {
-          MultiplotCom.frame_to_frame_communication(frame, plot);
+          MultiplotCom.frame_to_frame_communication(frame as Frame, plot as Frame);
         } else if (plot.type_ === "primitivegroupcontainer") {
           primitive_indices.push(plotIndex);
         }
@@ -1779,30 +1778,16 @@ export class MultiplePlots {
     public initRubberBands() {
       this.rubberBands = new Map<string, RubberBand>();
       this.objectList.forEach(plot => {
-        if (plot instanceof BasePlot) {
-          plot.axes.forEach(axis => { this.rubberBands.set(axis.name, new RubberBand(axis.name, 0, 0, axis.isVertical)) })
-        } else if (plot instanceof ParallelPlot) {
-          plot.rubber_bands.forEach(rubberBand => {
-            this.rubberBands.set(rubberBand.attributeName, new RubberBand(rubberBand.attributeName, 0, 0, rubberBand.isVertical));
-          })
-        }
+        if (plot instanceof BasePlot) plot.axes.forEach(axis => axis.sendRubberBand(this.rubberBands))
+        else if (plot instanceof ParallelPlot) plot.rubber_bands.forEach(rubberBand => rubberBand.selfSend(this.rubberBands));
       })
     }
 
     public refreshRubberBands() {
       if (!this.rubberBands) this.initRubberBands();
       this.objectList.forEach(plot => {
-        if (plot instanceof BasePlot) {
-          plot.axes.forEach(axis => {
-            this.rubberBands.get(axis.name).minValue = axis.rubberBand.minValue;
-            this.rubberBands.get(axis.name).maxValue = axis.rubberBand.maxValue;
-          })
-        } else if (plot instanceof ParallelPlot) {
-          plot.rubber_bands.forEach(rubberBand => {
-            this.rubberBands.get(rubberBand.attributeName).minValue = rubberBand.minValue;
-            this.rubberBands.get(rubberBand.attributeName).maxValue = rubberBand.maxValue;
-          })
-        }
+        if (plot instanceof BasePlot) plot.axes.forEach(axis => axis.sendRubberBandRange(this.rubberBands))
+        else if (plot instanceof ParallelPlot) plot.rubber_bands.forEach(rubberBand => rubberBand.selfSendRange(this.rubberBands));
       })
     }
 
@@ -1830,7 +1815,6 @@ export class MultiplePlots {
       });
 
       this.canvas.addEventListener('mousedown', e => {
-        console.log(this.selected_point_index)
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
@@ -2081,12 +2065,12 @@ export class MultiplotCom {
       Interactions.selection_window_action(plot_data);
     }
 
-    public static frame_to_frame_communication(frame1, frame2) {
-      frame2.axes.forEach(axisFrame2 => {
-        frame1.axes.forEach(axisFrame1 => {
-          if (axisFrame1.name == axisFrame2.name && axisFrame1.name != 'number') {
-            axisFrame2.rubberBand.minValue = axisFrame1.rubberBand.minValue;
-            axisFrame2.rubberBand.maxValue = axisFrame1.rubberBand.maxValue;
+    public static frame_to_frame_communication(currentFrame: Frame, otherFrame: Frame): void {
+      otherFrame.axes.forEach(otherAxis => {
+        currentFrame.axes.forEach(currentAxis => {
+          if (currentAxis.name == otherAxis.name && currentAxis.name != 'number') {
+            otherAxis.rubberBand.minValue = currentAxis.rubberBand.minValue;
+            otherAxis.rubberBand.maxValue = currentAxis.rubberBand.maxValue;
           }
         })
       })

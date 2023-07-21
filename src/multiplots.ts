@@ -582,8 +582,8 @@ export class MultiplePlots {
         let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
         this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
       }
-      this.objectList.forEach((plot, pIndex) => {
-        if (List.is_include(pIndex, this.to_display_plots)) {
+      this.objectList.forEach((plot, plotIndex) => {
+        if (List.is_include(plotIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
           if (plot instanceof BasePlot) {
             plot.selectedIndices = this.dep_selected_points_index;
@@ -863,26 +863,26 @@ export class MultiplePlots {
         all_index.push(i);
         this.dep_selected_points_index.push(i);
       }
-      var bool = false;
+      var isSelecting = false;
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if ((obj.type_ === 'scatterplot') && !equals([obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h], [0,0,0,0])) {
-          bool = true;
+          isSelecting = true;
           this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.selected_point_index);
         } else if ((obj.type_ === 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
-          bool = true;
+          isSelecting = true;
           this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, obj.pp_selected_index);
         } else if (obj instanceof BasePlot) {
           obj.axes.forEach(axis => {
             if (axis.rubberBand.length != 0) {
-              bool = true;
+              isSelecting = true;
               const selectedIndices = (obj as BasePlot).updateSelected(axis);
               this.dep_selected_points_index = List.listIntersection(this.dep_selected_points_index, selectedIndices);
             }
           })
         }
       }
-      if (equals(all_index, this.dep_selected_points_index) && !bool) this.dep_selected_points_index = [];
+      if (equals(all_index, this.dep_selected_points_index) && !isSelecting) this.dep_selected_points_index = [];
     }
 
     initializeMouseXY(mouse1X, mouse1Y):void {
@@ -909,13 +909,10 @@ export class MultiplePlots {
     }
 
     resetAllObjects(): void {
-      // this.dep_selected_points_index = [];
-      this.selected_point_index = [];
-      for (let i=0; i<this.nbObjects; i++) {
-        let plot = this.objectList[i];
-        if (plot instanceof PlotScatter) {Interactions.click_on_reset_action(plot)}
+      this.objectList.forEach(plot =>  {
+        if (plot instanceof PlotScatter) Interactions.click_on_reset_action(plot)
         else plot.reset_scales();
-      }
+      })
     }
 
     reset_all_selected_points() {
@@ -1356,7 +1353,6 @@ export class MultiplePlots {
               subplot.select_on_click.push(scatterPoint)
             }
           })
-          // subplot.refresh_selected_point_index();
           if (WAS_MERGE_ON == true) {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
@@ -1399,7 +1395,7 @@ export class MultiplePlots {
         } else if (plot.type_ === 'parallelplot') {
           MultiplotCom.frame_to_pp_communication(frame, plot);
         } else if (plot.type_ === "frame") {
-          MultiplotCom.frame_to_frame_communication(frame, plot);
+          MultiplotCom.frame_to_frame_communication(frame as Frame, plot as Frame);
         }
       })
       this.refresh_dep_selected_points_index();
@@ -1782,30 +1778,16 @@ export class MultiplePlots {
     public initRubberBands() {
       this.rubberBands = new Map<string, RubberBand>();
       this.objectList.forEach(plot => {
-        if (plot instanceof BasePlot) {
-          plot.axes.forEach(axis => { this.rubberBands.set(axis.name, new RubberBand(axis.name, 0, 0, axis.isVertical)) })
-        } else if (plot instanceof ParallelPlot) {
-          plot.rubber_bands.forEach(rubberBand => {
-            this.rubberBands.set(rubberBand.attributeName, new RubberBand(rubberBand.attributeName, 0, 0, rubberBand.isVertical));
-          })
-        }
+        if (plot instanceof BasePlot) plot.axes.forEach(axis => axis.sendRubberBand(this.rubberBands))
+        else if (plot instanceof ParallelPlot) plot.rubber_bands.forEach(rubberBand => rubberBand.selfSend(this.rubberBands));
       })
     }
 
     public refreshRubberBands() {
       if (!this.rubberBands) this.initRubberBands();
       this.objectList.forEach(plot => {
-        if (plot instanceof BasePlot) {
-          plot.axes.forEach(axis => {
-            this.rubberBands.get(axis.name).minValue = axis.rubberBand.minValue;
-            this.rubberBands.get(axis.name).maxValue = axis.rubberBand.maxValue;
-          })
-        } else if (plot instanceof ParallelPlot) {
-          plot.rubber_bands.forEach(rubberBand => {
-            this.rubberBands.get(rubberBand.attributeName).minValue = rubberBand.minValue;
-            this.rubberBands.get(rubberBand.attributeName).maxValue = rubberBand.maxValue;
-          })
-        }
+        if (plot instanceof BasePlot) plot.axes.forEach(axis => axis.sendRubberBandRange(this.rubberBands))
+        else if (plot instanceof ParallelPlot) plot.rubber_bands.forEach(rubberBand => rubberBand.selfSendRange(this.rubberBands));
       })
     }
 
@@ -2144,13 +2126,12 @@ export class MultiplotCom {
       Interactions.selection_window_action(plot_data);
     }
 
-    public static frame_to_frame_communication(frame1, frame2) {
-      frame2.axes.forEach(axisFrame2 => {
-        frame1.axes.forEach(axisFrame1 => {
-          if (axisFrame1.name == axisFrame2.name && axisFrame1.name != 'number') {
-            axisFrame2.rubberBand.minValue = axisFrame1.rubberBand.minValue;
-            axisFrame2.rubberBand.maxValue = axisFrame1.rubberBand.maxValue;
-            axisFrame2.emit("rubberBandChange", axisFrame2.rubberBand)
+    public static frame_to_frame_communication(currentFrame: Frame, otherFrame: Frame): void {
+      otherFrame.axes.forEach(otherAxis => {
+        currentFrame.axes.forEach(currentAxis => {
+          if (currentAxis.name == otherAxis.name && currentAxis.name != 'number') {
+            otherAxis.rubberBand.minValue = currentAxis.rubberBand.minValue;
+            otherAxis.rubberBand.maxValue = currentAxis.rubberBand.maxValue;
           }
         })
       })

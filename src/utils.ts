@@ -1062,6 +1062,13 @@ export class RubberBand {
 
   public get maxValue() { return this._maxValue }
 
+  public selfSend(rubberBands: Map<string, RubberBand>) { rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical)) }
+
+  public selfSendRange(rubberBands: Map<string, RubberBand>) {
+    rubberBands.get(this.attributeName).minValue = this.minValue;
+    rubberBands.get(this.attributeName).maxValue = this.maxValue;
+  }
+
   public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
     if (this.isVertical) {
       Shape.rect(origin - SMALL_RUBBERBAND_SIZE / 2, this.realMin, SMALL_RUBBERBAND_SIZE, this.canvasLength, context, colorFill, colorStroke, lineWidth, alpha);
@@ -1338,15 +1345,11 @@ export class newShape {
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   public isScaled: boolean = true;
-  protected _tooltipOrigin: Vertex;
+  public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
   protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
   protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
   constructor() {};
-
-  get tooltipOrigin(): Vertex { return this._tooltipOrigin };
-
-  set tooltipOrigin(value: Vertex) {this._tooltipOrigin = value };
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
 
@@ -1921,7 +1924,10 @@ export class newPoint2D extends newShape {
     return marker
   }
 
-  get tooltipOrigin(): Vertex { return this.center.copy() };
+  public draw(context: CanvasRenderingContext2D): void {
+    this.tooltipOrigin = this.center.copy();
+    super.draw(context);
+  }
 
   get markerOrientation(): string { return this._markerOrientation };
 
@@ -1975,6 +1981,15 @@ export class ScatterPoint extends newPoint2D {
     const inCanvasX = this.mean.x < xAxis.maxValue && this.mean.x > xAxis.minValue;
     const inCanvasY = this.mean.y < yAxis.maxValue && this.mean.y > yAxis.minValue;
     return inCanvasX && inCanvasY
+  }
+}
+
+
+export class MergedShape extends newShape {
+  constructor(
+    public values: any[] = []
+  ) {
+    super();
   }
 }
 
@@ -2284,13 +2299,14 @@ export class newAxis extends EventEmitter {
   public ticksFontsize: number = 12;
   protected _isDiscrete: boolean;
 
-  private _marginRatio: number = 0.05;
-  private _minValue: number;
-  private _maxValue: number;
-  private _initMinValue: number;
-  private _initMaxValue: number;
+  public minValue: number;
+  public maxValue: number;
+  public initMinValue: number;
+  public initMaxValue: number;
   private _previousMin: number;
   private _previousMax: number;
+
+  private _marginRatio: number = 0.05;
   private offsetTicks: number;
   private offsetTitle: number;
   private maxTickWidth: number;
@@ -2317,7 +2333,7 @@ export class newAxis extends EventEmitter {
       this.isDiscrete = typeof vector[0] == 'string';
       if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
       const [minValue, maxValue] = this.computeMinMax(vector);
-      [this._previousMin, this._previousMax] = [this._initMinValue, this._initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
+      [this._previousMin, this._previousMax] = [this.initMinValue, this.initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
       if (!this.isDiscrete) { this.labels = this.numericLabels() };
       this.drawPath = this.buildDrawPath();
@@ -2352,22 +2368,6 @@ export class newAxis extends EventEmitter {
 
   get marginRatio(): number { return this._marginRatio };
 
-  set maxValue(value: number) { this._maxValue = value };
-
-  get maxValue(): number { return this._maxValue };
-
-  set minValue(value: number) { this._minValue = value };
-
-  get minValue(): number { return this._minValue };
-
-  set initMaxValue(value: number) { this._initMaxValue = value };
-
-  get initMaxValue(): number { return this._initMaxValue };
-
-  set initMinValue(value: number) { this._initMinValue = value };
-
-  get initMinValue(): number { return this._initMinValue };
-
   set nTicks(value: number) { this._nTicks = value };
 
   get nTicks(): number {
@@ -2395,10 +2395,11 @@ export class newAxis extends EventEmitter {
   }
 
   public resetScale(): void {
-    this.minValue = this._initMinValue;
-    this.maxValue = this._initMaxValue;
-    this._previousMin = this._initMinValue;
-    this._previousMax = this._initMaxValue;
+    this.rubberBand.reset();
+    this.minValue = this.initMinValue;
+    this.maxValue = this.initMaxValue;
+    this._previousMin = this.initMinValue;
+    this._previousMax = this.initMaxValue;
     this.updateTicks();
   }
 
@@ -2406,6 +2407,10 @@ export class newAxis extends EventEmitter {
     this.rubberBand.reset();
     this.resetScale();
   }
+
+  public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }
+
+  public sendRubberBandRange(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSendRange(rubberBands) }
 
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));
@@ -2729,5 +2734,66 @@ export class newAxis extends EventEmitter {
   public updateTicks(): void {
     this.ticks = this.computeTicks();
     if (!this.isDiscrete) { this.labels = this.numericLabels() };
+  }
+}
+
+export class DrawingCollection {
+  constructor(
+    public drawings: any[] = [],
+    public frame: DOMMatrix = new DOMMatrix()
+  ) {}
+
+  public updateMouseState(context: CanvasRenderingContext2D, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
+    this.drawings.forEach(drawing => {
+      if (context.isPointInPath(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
+      else {
+        if (!keepState) drawing[stateName] = false;
+      }
+    })
+  }
+
+  public mouseDown(mouseCoords: Vertex): any {
+    let clickedObject: any = null;
+    this.drawings.forEach(drawing => {
+      if (drawing.isHovered) {
+        clickedObject = drawing;
+        clickedObject.mouseDown(mouseCoords);
+      }
+    });
+    return clickedObject
+  }
+}
+
+export class ShapeCollection extends DrawingCollection {
+  constructor(
+    public drawings: newShape[] = [],
+    public frame: DOMMatrix = new DOMMatrix()
+  ) {
+    super(drawings, frame);
+  }
+
+  public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D): void {
+    this.drawings.forEach(drawing => drawing.drawTooltip(canvasOrigin, canvasSize, context));
+  }
+}
+
+
+export class GroupCollection extends ShapeCollection {
+  constructor(
+    public drawings: any[] = [],
+    public frame: DOMMatrix = new DOMMatrix()
+  ) {
+    super(drawings, frame);
+  }
+
+  public updateSampleStates(stateName: string): number[] {
+    const newSampleStates = [];
+    this.drawings.forEach(drawing => {
+      if (drawing.values) {
+        if (drawing[stateName]) drawing.values.forEach(sample => newSampleStates.push(sample));
+      }
+    });
+    console.log(newSampleStates)
+    return newSampleStates
   }
 }

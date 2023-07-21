@@ -2547,7 +2547,7 @@ export class DrawingCollection {
   }
 
   public mouseDown(mouseCoords: Vertex): any {
-    let clickedObject: any;
+    let clickedObject: any = null;
     this.drawings.forEach(drawing => {
       if (drawing.isHovered) {
         clickedObject = drawing;

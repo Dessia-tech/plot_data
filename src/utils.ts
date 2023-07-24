@@ -1333,6 +1333,7 @@ export class Vertex {
 const TOOLTIP_PRECISION = 100;
 export class newShape {
   public path: Path2D = new Path2D();
+
   public lineWidth: number = 1;
   public dashLine: number[] = [];
   public strokeStyle: string = 'hsl(0, 0%, 0%)';
@@ -1341,12 +1342,16 @@ export class newShape {
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
   public selectedStyle: string = 'hsl(140, 65%, 60%)';
   public alpha: number = 1;
+
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   public isScaled: boolean = true;
+  public inFrame: boolean = true;
+
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
+
   protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
   protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
   constructor() {};
@@ -1978,7 +1983,8 @@ export class ScatterPoint extends newPoint2D {
   public isInFrame(xAxis: newAxis, yAxis: newAxis): boolean {
     const inCanvasX = this.mean.x < xAxis.maxValue && this.mean.x > xAxis.minValue;
     const inCanvasY = this.mean.y < yAxis.maxValue && this.mean.y > yAxis.minValue;
-    return inCanvasX && inCanvasY
+    this.inFrame = inCanvasX && inCanvasY;
+    return this.inFrame
   }
 }
 
@@ -2777,7 +2783,7 @@ export class ShapeCollection extends DrawingCollection {
   }
 
   public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
-    this.drawings.forEach(drawing => { if (!inMultiPlot) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
+    this.drawings.forEach(drawing => { if (!inMultiPlot && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
   }
 }
 
@@ -2792,7 +2798,7 @@ export class GroupCollection extends ShapeCollection {
   public drawingIsContainer(drawing: any): boolean { return drawing.values ? drawing.values.length > 1 ? true : false : false }
 
   public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
-    this.drawings.forEach(drawing => { if (this.drawingIsContainer(drawing) || !inMultiPlot) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
+    this.drawings.forEach(drawing => { if ((this.drawingIsContainer(drawing) || !inMultiPlot) && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
   }
 
   public updateSampleStates(stateName: string): number[] {

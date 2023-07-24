@@ -807,16 +807,36 @@ class Graph2D(Figure):
         ax.set_ylabel(yname)
         return ax
 
+    def graphs_to_curves(self):
+        curves = []
+        for graph in self.graphs:
+            x_coords = []
+            y_coords = []
+            for sample in graph.elements:
+                x_coords.append(sample[self.attribute_names[0]])
+                y_coords.append(sample[self.attribute_names[1]])
+            line_width = graph.edge_style.line_width
+            color = graph.edge_style.color_stroke
+            dash_line = graph.edge_style.dashline
+            marker = graph.point_style.shape
+            name = graph.name
+            curves.append(Curve(x_coords, y_coords, name, line_width=line_width, color=color, dash_line=dash_line,
+                                marker=marker))
+        return curves
+
+    def to_plot(self):
+        return
+
 
 class Curve(PlotDataObject):
 
-    _KWARGS = ['lineWidth', 'color', 'dashLine', 'marker']
+    _KWARGS = ['line_width', 'color', 'dash_line', 'marker']
 
     def __init__(self, x_coords: List[float], y_coords: List[float] = None, name: str = '', **kwargs):
         self.x_coords, self.y_coords = self.buildCoords(x_coords, y_coords)
-        self.lineWidth = None
+        self.line_width = None
         self.color = None
-        self.dashLine = None
+        self.dash_line = None
         self.marker = None
         self.setStyle(kwargs)
 
@@ -824,12 +844,14 @@ class Curve(PlotDataObject):
     def buildCoords(x_coords: List[float], y_coords: List[float]):
         if y_coords is None:
             return list(range(len(y_coords))), x_coords
-        if len(x_coords) == len(y_coords): return x_coords, y_coords
+        if len(x_coords) == len(y_coords):
+            return x_coords, y_coords
         raise ValueError("x_coords and y_coords must be the same length.")
 
     def setStyle(self, kwargs: Dict[str, Any]):
         for attribute in self._KWARGS:
-            if attribute in kwargs: setattr(self, attribute, kwargs[attribute])
+            if attribute in kwargs:
+                setattr(self, attribute, kwargs[attribute])
 
     @classmethod
     def fromPlot(cls, x_values: List[Union(float, Dict[str, Any])],
@@ -864,7 +886,6 @@ class Plot(Figure):
                  y_variable: str = None, axis: Axis = None, legend: List[str] = None, width: int = 750,
                  height: int = 400, name: str = '', **kwargs):
         self.curves = self.buildCurves(x_values, y_values, x_variable, y_variable, legend, **kwargs)
-
         if axis is None:
             self.axis = Axis()
         else:
@@ -877,11 +898,16 @@ class Plot(Figure):
         if isinstance(x_values[0], (float, dict)):
             return [Curve.fromPlot(x_values=x_values, y_values=y_values, x_variable=x_variable, y_variable=y_variable,
                                    legend=legend, **kwargs)]
-        curves = []
-        for x_subvalues, y_subvalues, sub_legend in zip(x_values, y_values, legend):
-            curves.append(Curve.fromPlot(x_values=x_subvalues, y_values=y_subvalues, x_variable=x_variable,
-                                         y_variable=y_variable, legend=sub_legend, **kwargs))
-        return curves
+
+        if isinstance(x_values[0], list):
+            curves = []
+            for x_subvalues, y_subvalues, sub_legend in zip(x_values, y_values, legend):
+                curves.append(Curve.fromPlot(x_values=x_subvalues, y_values=y_subvalues, x_variable=x_variable,
+                                             y_variable=y_variable, legend=sub_legend, **kwargs))
+            return curves
+
+        if isinstance(x_values[0], Curve):
+            return x_values
 
 
 

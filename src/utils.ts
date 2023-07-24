@@ -1384,9 +1384,11 @@ export class newShape {
     context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
   }
 
+  public initTooltip(context: CanvasRenderingContext2D): newTooltip { return new newTooltip(this.tooltipOrigin, this.tooltipMap, context) }
+
   public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
     if (this.isClicked && this.tooltipMap.size != 0) {
-      const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
+      const tooltip = this.initTooltip(context);
       tooltip.draw(plotOrigin, plotSize, context);
     }
   }
@@ -1932,6 +1934,12 @@ export class newPoint2D extends newShape {
     super.draw(context);
   }
 
+  public initTooltip(context: CanvasRenderingContext2D): newTooltip {
+    const tooltip = super.initTooltip(context);
+    tooltip.isFlipper = true;
+    return tooltip
+  }
+
   get markerOrientation(): string { return this._markerOrientation };
 
   set markerOrientation(value: string) { this._markerOrientation = value };
@@ -1988,15 +1996,6 @@ export class ScatterPoint extends newPoint2D {
   }
 }
 
-
-export class MergedShape extends newShape {
-  constructor(
-    public values: any[] = []
-  ) {
-    super();
-  }
-}
-
 export class Bar extends newRect {
   public min: number;
   public max: number;
@@ -2043,15 +2042,19 @@ const TOOLTIP_TEXT_OFFSET = 10;
 const TOOLTIP_TRIANGLE_SIZE = 10;
 export class newTooltip {
   public path: Path2D;
+
   public strokeStyle: string = "hsl(210, 90%, 20%)";
   public textColor: string = "hsl(0, 0%, 100%)";
   public fillStyle: string = "hsl(210, 90%, 20%)";
   public alpha: number = 0.8;
   public fontsize: number = 10;
   public radius: number = 10;
+
   private printedRows: string[];
-  private size: Vertex;
   private squareOrigin: Vertex;
+  private size: Vertex;
+  private isUp = true;
+  public isFlipper = false;
   constructor(
     public origin,
     public dataToPrint: Map<string, any>,
@@ -2090,9 +2093,9 @@ export class newTooltip {
     const path = new Path2D();
     const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
     const triangleCenter = this.origin;
-    triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2;
+    triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2 * (this.isUp ? 1 : -1);
     path.addPath(new newRoundRect(rectOrigin, this.size, this.radius).path);
-    path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, 'down').path);
+    path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, this.isUp ? 'down' : 'up').path);
     return path
   }
 
@@ -2113,8 +2116,7 @@ export class newTooltip {
     })
   }
 
-  private insideCanvas(plotOrigin: Vertex, plotSize: Vertex, scaling: Vertex): boolean {
-    let isInside = true;
+  public insideCanvas(plotOrigin: Vertex, plotSize: Vertex, scaling: Vertex): void {
     const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE).scale(scaling));
     const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
     const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
@@ -2126,11 +2128,22 @@ export class newTooltip {
       this.squareOrigin.x += upRightDiff.x - plotSize.x;
     }
     if (upRightDiff.y < 0) {
-      this.squareOrigin.y += upRightDiff.y;
-      this.origin.y += upRightDiff.y;
+      if (!this.isFlipper) {
+        this.squareOrigin.y += upRightDiff.y;
+        this.origin.y += upRightDiff.y;
+      } else {
+        this.squareOrigin.y += -this.size.y - TOOLTIP_TRIANGLE_SIZE * 2;
+        this.flip();
+      }
+
     } else if (upRightDiff.y > plotSize.y){
-      this.squareOrigin.y += upRightDiff.y - plotSize.y;
-      this.origin.y += upRightDiff.y - plotSize.y;
+      if (!this.isFlipper) {
+        this.squareOrigin.y += upRightDiff.y - plotSize.y;
+        this.origin.y += upRightDiff.y - plotSize.y;
+      } else {
+        this.squareOrigin.y += this.size.y + TOOLTIP_TRIANGLE_SIZE * 2;
+        this.flip();
+      }
     }
 
     if (downLeftDiff.x < 0) {
@@ -2145,8 +2158,9 @@ export class newTooltip {
       this.squareOrigin.y += downLeftDiff.y - plotSize.y;
       this.origin.y += downLeftDiff.y - plotSize.y;
     }
-    return isInside
   }
+
+  public flip(): void { this.isUp = !this.isUp }
 
   public draw(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
     const contextMatrix = context.getTransform();

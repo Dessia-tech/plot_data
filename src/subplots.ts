@@ -1565,7 +1565,7 @@ export class BasePlot extends PlotData {
     const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
     featuresKeys.push("name");
     let unpackedData = new Map<string, any[]>();
-    featuresKeys.forEach((feature) => { unpackedData.set(feature, data.elements.map(element => element[feature])) });
+    featuresKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
   }
 
@@ -2417,6 +2417,11 @@ export class newScatter extends Frame {
       if (newPoint.values.length == 1) {
         newPoint.newTooltipMap();
         this.tooltipAttributes.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[newPoint.values[0]]));
+      } else {
+        newPoint.tooltipMap.set(`${this.xFeature} mean`, newPoint.tooltipMap.get('X mean'));
+        newPoint.tooltipMap.set(`${this.yFeature} mean`, newPoint.tooltipMap.get('Y mean'));
+        newPoint.tooltipMap.delete('X mean');
+        newPoint.tooltipMap.delete('Y mean');
       }
       newPoint.update();
       return newPoint

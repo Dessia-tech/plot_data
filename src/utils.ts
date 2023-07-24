@@ -1036,7 +1036,7 @@ export class RubberBand {
   public minUpdate: boolean = false;
   public maxUpdate: boolean = false;
   public lastValues: Vertex = new Vertex(null, null);
-  readonly SMALL_SIZE: number = 20;
+  readonly SMALL_SIZE: number = 10;
   readonly BORDER_SIZE: number = 20;
   readonly MIN_LENGTH = 5;
   readonly BORDER = 5;
@@ -1058,6 +1058,13 @@ export class RubberBand {
   public set maxValue(value: number) { this._maxValue = value }
 
   public get maxValue() { return this._maxValue }
+
+  public selfSend(rubberBands: Map<string, RubberBand>) { rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical)) }
+
+  public selfSendRange(rubberBands: Map<string, RubberBand>) {
+    rubberBands.get(this.attributeName).minValue = this.minValue;
+    rubberBands.get(this.attributeName).maxValue = this.maxValue;
+  }
 
   public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
     if (this.isVertical) {
@@ -1225,10 +1232,12 @@ export class RubberBand {
     return [isClicked, onMinBorder, onMaxBorder]
   }
 
+  private get borderSize() {return Math.min(this.BORDER_SIZE, this.canvasLength / 3)}
+
   public mouseDown(mouseAxis: number) {
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.realMin) <= this.BORDER_SIZE) { this.minUpdate = true }
-    else if (Math.abs(mouseAxis - this.realMax) <= this.BORDER_SIZE) { this.maxUpdate = true }
+    if (Math.abs(mouseAxis - this.realMin) <= this.borderSize) { this.minUpdate = true }
+    else if (Math.abs(mouseAxis - this.realMax) <= this.borderSize) { this.maxUpdate = true }
     else { this.lastValues = new Vertex(this.minValue, this.maxValue) }
   }
 
@@ -1316,6 +1325,7 @@ export class Vertex {
   }
 }
 
+const TOOLTIP_PRECISION = 100;
 export class newShape {
   public path: Path2D = new Path2D();
   public lineWidth: number = 1;
@@ -1329,13 +1339,14 @@ export class newShape {
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   public tooltipOrigin: Vertex;
+  protected _tooltipMap = new Map<string, any>();
   protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
   protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
   constructor() {};
 
-  protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
-    throw new Error(`Method computeTooltipOrigin not implemented for ${this.constructor.name}`)
-  }
+  get tooltipMap(): Map<string, any> { return this._tooltipMap };
+
+  set tooltipMap(value: Map<string, any> ) { this._tooltipMap = value };
 
   public draw(context: CanvasRenderingContext2D): void {
     const scaledPath = new Path2D();
@@ -1343,16 +1354,25 @@ export class newShape {
     scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
     context.save();
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
-    context.lineWidth = this.lineWidth;
-    context.strokeStyle = this.strokeStyle;
-    context.globalAlpha = this.alpha;
-    context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
+    this.setDrawingProperties(context);
     context.fill(scaledPath);
     context.stroke(scaledPath);
     context.restore();
   }
 
-  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {}
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
+    context.lineWidth = this.lineWidth;
+    context.strokeStyle = this.strokeStyle;
+    context.globalAlpha = this.alpha;
+    context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
+  }
+
+  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
+    if (this.isClicked && this.tooltipMap.size != 0) {
+      const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
+      tooltip.draw(plotOrigin, plotSize, context);
+    }
+  }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex) { }
 
@@ -1820,44 +1840,44 @@ const MARKERS = ['+', 'crux', 'mark'];
 const CROSSES = ['x', 'cross', 'oblique'];
 const SQUARES = ['square'];
 const TRIANGLES = ['^', 'triangle', 'tri'];
-export class newPoint2D extends Vertex {
+export class newPoint2D extends newShape {
   public path: Path2D;
-  public isHover: boolean = false;
-  public isClicked: boolean = false;
-  public isSelected: boolean = false;
-  public color: string = string_to_hex('blue');
-  protected _lineWidth: number = 2;
+  public center: Vertex;
 
   constructor(
     x: number = 0,
     y: number = 0,
     private _size: number = 2,
     private _marker: string = 'circle',
-    private _markerOrientation: string = 'up'
+    private _markerOrientation: string = 'up',
+    color?: string
   ) {
-    super(x, y);
+    super();
+    this.center = new Vertex(x, y);
     this.path = this.buildPath();
+    if (color) this.strokeStyle = this.fillStyle = color;
   };
 
   get drawnShape(): newShape {
     let marker = new newShape();
-    if (CIRCLES.indexOf(this.marker) > -1) { marker = new newCircle(this.coordinates, this.size) }
-    if (MARKERS.indexOf(this.marker) > -1) { marker = new Mark(this.coordinates, this.size) };
-    if (CROSSES.indexOf(this.marker) > -1) { marker = new Cross(this.coordinates, this.size) };
+    if (CIRCLES.indexOf(this.marker) > -1) { marker = new newCircle(this.center.coordinates, this.size) }
+    if (MARKERS.indexOf(this.marker) > -1) { marker = new Mark(this.center.coordinates, this.size) };
+    if (CROSSES.indexOf(this.marker) > -1) { marker = new Cross(this.center.coordinates, this.size) };
     if (SQUARES.indexOf(this.marker) > -1) {
       const halfSize = this.size * 0.5;
-      const origin = new Vertex(this.coordinates.x - halfSize, this.coordinates.y - halfSize)
+      const origin = new Vertex(this.center.coordinates.x - halfSize, this.center.coordinates.y - halfSize)
       marker = new newRect(origin, new Vertex(this.size, this.size))
     };
-    if (TRIANGLES.indexOf(this.marker) > -1) { marker = new Triangle(this.coordinates, this.size, this.markerOrientation) };
-    if (this.marker == 'halfLine') { marker = new HalfLine(this.coordinates, this.size, this.markerOrientation) };
+    if (TRIANGLES.indexOf(this.marker) > -1) { marker = new Triangle(this.center.coordinates, this.size, this.markerOrientation) };
+    if (this.marker == 'halfLine') { marker = new HalfLine(this.center.coordinates, this.size, this.markerOrientation) };
     marker.lineWidth = this.lineWidth;
     return marker
   }
 
-  get lineWidth(): number { return this._lineWidth };
-
-  set lineWidth(value: number) { this._lineWidth = value };
+  public draw(context: CanvasRenderingContext2D): void {
+    this.tooltipOrigin = this.center.copy();
+    super.draw(context);
+  }
 
   get markerOrientation(): string { return this._markerOrientation };
 
@@ -1871,15 +1891,22 @@ export class newPoint2D extends Vertex {
 
   set marker(value: string) { this._marker = value };
 
-  private buildPath(): Path2D { return this.drawnShape.path };
+  public buildPath(): Path2D { return this.drawnShape.path };
 
-  public draw(context: CanvasRenderingContext2D): void {
-    this.path = this.buildPath();
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
-    context.fillStyle = this.color;
-    context.strokeStyle = this.color;
-    context.stroke(this.path);
-    context.fill(this.path);
+    context.globalAlpha = this.alpha;
+    context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
+    context.strokeStyle =  context.fillStyle;
+  }
+}
+
+
+export class MergedShape extends newShape {
+  constructor(
+    public values: any[] = []
+  ) {
+    super();
   }
 }
 
@@ -1902,7 +1929,7 @@ export class Bar extends newRect {
 
   get length(): number { return this.values.length };
 
-  private get tooltipMap(): Map<string, any> {
+  get tooltipMap(): Map<string, any> {
     return new Map<string, any>([["Number", this.length], ["Min", this.min], ["Max", this.max], ["Mean", this.mean]])
   }
 
@@ -1922,17 +1949,10 @@ export class Bar extends newRect {
     }
   }
 
-  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
-    if (this.isClicked) {
-      const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
-      tooltip.draw(plotOrigin, plotSize, context);
-    }
-  }
-
-  public computeStats(values: number[], precision: number): void {
-    this.min = Math.round(Math.min(...values) * precision) / precision;
-    this.max = Math.round(Math.max(...values) * precision) / precision;
-    this.mean = Math.round(values.reduce((a, b) => a + b, 0) / values.length * precision) / precision;
+  public computeStats(values: number[]): void {
+    this.min = Math.min(...values);
+    this.max = Math.max(...values);
+    this.mean = values.reduce((a, b) => a + b, 0) / values.length;
   }
 }
 
@@ -1941,9 +1961,9 @@ const TOOLTIP_TEXT_OFFSET = 10;
 const TOOLTIP_TRIANGLE_SIZE = 10;
 export class newTooltip {
   public path: Path2D;
-  public strokeStyle: string = "hsl(266, 95%, 60%)";
+  public strokeStyle: string = "hsl(210, 90%, 20%)";
   public textColor: string = "hsl(0, 0%, 100%)";
-  public fillStyle: string = "hsl(266, 95%, 60%)";
+  public fillStyle: string = "hsl(210, 90%, 20%)";
   public alpha: number = 0.8;
   public fontsize: number = 12;
   public radius: number = 10;
@@ -1965,7 +1985,7 @@ export class newTooltip {
     let printedRows = ['Information: '];
     let textLength = context.measureText(printedRows[0]).width;
     this.dataToPrint.forEach((value, key) => {
-      const text = `  - ${key}: ${value}`;
+      const text = `  - ${key}: ${this.formatValue(value)}`;
       const textWidth = context.measureText(text).width;
       if (textWidth > textLength) { textLength = textWidth };
       printedRows.push(text);
@@ -1973,6 +1993,11 @@ export class newTooltip {
     context.restore();
     return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
   }
+
+  private formatValue(value: number | string): number | string {
+    if (typeof value == "number") return Math.round(value * TOOLTIP_PRECISION) / TOOLTIP_PRECISION;
+    return value
+  };
 
   public buildPath(): Path2D {
     const path = new Path2D();
@@ -2078,13 +2103,14 @@ export class newAxis {
   public ticksFontsize: number = 12;
   protected _isDiscrete: boolean;
 
-  private _marginRatio: number = 0.1;
-  private _minValue: number;
-  private _maxValue: number;
-  private _initMinValue: number;
-  private _initMaxValue: number;
+  public minValue: number;
+  public maxValue: number;
+  public initMinValue: number;
+  public initMaxValue: number;
   private _previousMin: number;
   private _previousMax: number;
+
+  private _marginRatio: number = 0.05;
   private offsetTicks: number;
   private offsetTitle: number;
   private maxTickWidth: number;
@@ -2105,13 +2131,13 @@ export class newAxis {
     public origin: Vertex,
     public end: Vertex,
     public name: string = '',
-    private initScale: Vertex,
+    public initScale: Vertex,
     private _nTicks: number = 10
     ) {
       this.isDiscrete = typeof vector[0] == 'string';
       if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
       const [minValue, maxValue] = this.computeMinMax(vector);
-      [this._previousMin, this._previousMax] = [this._initMinValue, this._initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
+      [this._previousMin, this._previousMax] = [this.initMinValue, this.initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
       if (!this.isDiscrete) { this.labels = this.numericLabels() };
       this.drawPath = this.buildDrawPath();
@@ -2124,6 +2150,9 @@ export class newAxis {
   public get drawLength(): number {
     return this.isVertical ? Math.abs(this.origin.y - this.end.y) : Math.abs(this.origin.x - this.end.x);
   }
+
+  // TODO: OLD, MUST DISAPPEAR ONE PARALLELPLOT ARE REFACTORED
+  public get isInverted(): boolean { return this.initScale[this.isVertical ? 'y' : 'x'] == -1 }
 
   private get drawingColor(): string {
     let color = this.strokeStyle;
@@ -2142,14 +2171,6 @@ export class newAxis {
   set marginRatio(value: number) { this._marginRatio = value };
 
   get marginRatio(): number { return this._marginRatio };
-
-  set maxValue(value: number) { this._maxValue = value };
-
-  get maxValue(): number { return this._maxValue };
-
-  set minValue(value: number) { this._minValue = value };
-
-  get minValue(): number { return this._minValue };
 
   set nTicks(value: number) { this._nTicks = value };
 
@@ -2179,12 +2200,16 @@ export class newAxis {
 
   public reset(): void {
     this.rubberBand.reset();
-    this.minValue = this._initMinValue;
-    this.maxValue = this._initMaxValue;
-    this._previousMin = this._initMinValue;
-    this._previousMax = this._initMaxValue;
+    this.minValue = this.initMinValue;
+    this.maxValue = this.initMaxValue;
+    this._previousMin = this.initMinValue;
+    this._previousMax = this.initMaxValue;
     this.updateTicks();
   }
+
+  public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }
+
+  public sendRubberBandRange(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSendRange(rubberBands) }
 
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));
@@ -2224,12 +2249,10 @@ export class newAxis {
     return this.isVertical ? value * this.transformMatrix.d + this.transformMatrix.f : value * this.transformMatrix.a + this.transformMatrix.e
   }
 
-  public normedValue(value: number): number {
-    return value / this.interval
-  }
+  public normedValue(value: number): number { return value / this.interval }
 
   private computeMinMax(vector: any[]): number[] {
-    if (this.isDiscrete) { return [0, this.labels.length] };
+    if (this.isDiscrete) return [0, this.labels.length - 1]
     return [Math.min(...vector), Math.max(...vector)]
   }
 
@@ -2248,12 +2271,12 @@ export class newAxis {
   }
 
   private computeTicks(): number[] {
-    const increment = newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+    const increment = this.isDiscrete ? 1 : newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) { ticks.push(ticks.slice(-1)[0] + increment) };
-    if (ticks.slice(0)[0] < this.minValue) { ticks.splice(0, 1) };
-    if (ticks.slice(-1)[0] > this.maxValue) { ticks.splice(-1, 1) };
+    if (ticks.slice(0)[0] < this.minValue) ticks.splice(0, 1);
+    if (ticks.slice(-1)[0] >= this.maxValue) ticks.splice(-1, 1);
     return ticks
   }
 
@@ -2375,9 +2398,7 @@ export class newAxis {
 
   private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
     const markerOrientation = this.isVertical ? 'right' : 'up';
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation);
-    point.color = color;
-    point.lineWidth /= Math.abs(HTMatrix.a);
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation, color);
     point.draw(context);
     return point
   }
@@ -2399,10 +2420,11 @@ export class newAxis {
   }
 
   private marginedBounds(minValue: number, maxValue: number): [number, number] {
+    const valueRange = Math.abs(maxValue - minValue);
     if (this.isDiscrete) { return [minValue - 1, maxValue + 1] };
     return [
-      minValue * (1 - Math.sign(minValue) * this.marginRatio),
-      maxValue * (1 + Math.sign(maxValue) * this.marginRatio)];
+      minValue - valueRange * this.marginRatio,
+      maxValue + valueRange * this.marginRatio];
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D): void {
@@ -2437,10 +2459,7 @@ export class newAxis {
     return isReset
   }
 
-  public mouseUp(): void {
-    this.rubberBand.mouseUp();
-    this.is_drawing_rubberband = false; // OLD
-  }
+  public mouseUp(): void { this.rubberBand.mouseUp() }
 
   public isInRubberBand(value: number): boolean {
     return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false
@@ -2461,6 +2480,11 @@ export class newAxis {
     return vector
   }
 
+  public stringToValue(value: string | number): number {
+    if (typeof value == 'string') return this.labels.indexOf(value)
+    return value
+  }
+
   private textAlignments(): [string, string] {
     const forVertical = ['end', 'start'][this.verticalPickIdx()];
     const forHorizontal = ['bottom', 'top'][this.horizontalPickIdx()]
@@ -2468,7 +2492,7 @@ export class newAxis {
   }
 
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): Vertex {
-    let origin = new Vertex(point.x, point.y).transform(HTMatrix);
+    let origin = point.center.transform(HTMatrix);
     if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode
       origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks;
     }
@@ -2504,5 +2528,60 @@ export class newAxis {
   private updateTicks(): void {
     this.ticks = this.computeTicks();
     if (!this.isDiscrete) { this.labels = this.numericLabels() };
+  }
+}
+
+export class DrawingCollection {
+  constructor(
+    public drawings: any[] = [],
+    public frame: DOMMatrix = new DOMMatrix()
+  ) {}
+
+  public updateMouseState(context: CanvasRenderingContext2D, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
+    this.drawings.forEach(drawing => {
+      if (context.isPointInPath(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
+      else {
+        if (!keepState) drawing[stateName] = false;
+      }
+    })
+  }
+
+  public mouseDown(mouseCoords: Vertex): any {
+    let clickedObject: any = null;
+    this.drawings.forEach(drawing => {
+      if (drawing.isHovered) {
+        clickedObject = drawing;
+        clickedObject.mouseDown(mouseCoords);
+      }
+    });
+    return clickedObject
+  }
+}
+
+export class ShapeCollection extends DrawingCollection {
+  constructor(
+    public drawings: newShape[] = [],
+    public frame: DOMMatrix = new DOMMatrix()
+  ) {
+    super(drawings, frame);
+  }
+
+  public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D): void {
+    this.drawings.forEach(drawing => drawing.drawTooltip(canvasOrigin, canvasSize, context));
+  }
+}
+
+
+export class GroupCollection extends ShapeCollection {
+  constructor(
+    public drawings: any[] = [],
+    public frame: DOMMatrix = new DOMMatrix()
+  ) {
+    super(drawings, frame);
+  }
+
+  public updateSampleStates(sampleStates: boolean[], stateName: string): boolean[] {
+    this.drawings.forEach(drawing => drawing.values.forEach(sample => sampleStates[sample] = drawing[stateName]));
+    return sampleStates
   }
 }

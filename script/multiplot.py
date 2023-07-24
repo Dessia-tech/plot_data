@@ -38,7 +38,7 @@ scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
 
 scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes
-                                                                                    # points' appearance
+# points' appearance
 
 scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 
@@ -75,5 +75,5 @@ plots2 = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, scatterplot3
 plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True)
 
 # Display
-plot_data_object.plot(debug_mode = True, canvas_id = 'canvas')
+plot_data_object.plot(debug_mode=True, canvas_id='canvas')
 # plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)

@@ -46,7 +46,7 @@ def delete_none_from_dict(dict1):
 class PlotDataObject(DessiaObject):
     """ Abstract interface for DessiaObject implementation in module. """
 
-    _template_name = "empty_template"
+    _plot_commands = "EMPTY_TEMPLATE"
 
     def __init__(self, type_: str, name: str = '', **kwargs):
         self.type_ = type_
@@ -96,7 +96,8 @@ class Figure(PlotDataObject):
     @property
     def template(self):
         """ Get html template of current Figure object. """
-        return getattr(templates, self._template_name)
+        return templates.get_html_string(command_name=self._plot_commands)
+        # return getattr(templates, self._plot_commands)
 
     def _export_formats(self) -> List[ExportFormat]:
         """ Return a list of objects describing how to call generic exports (.json, .xlsx). """
@@ -753,7 +754,7 @@ class Graph2D(Figure):
     :type log_scale_y: bool
     """
 
-    _template_name = "scatter_template"
+    _plot_commands = "GRAPH_COMMANDS"
 
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str, axis: Axis = None,
                  log_scale_x: bool = None, log_scale_y: bool = None, width: int = 750, height: int = 400,
@@ -824,7 +825,7 @@ class Scatter(Figure):
         If set to False, you'd still be able to enable it using the button.
     """
 
-    _template_name = "scatter_template"
+    _plot_commands = "SCATTER_COMMANDS"
 
     def __init__(self, x_variable: str, y_variable: str, tooltip: Tooltip = None, point_style: PointStyle = None,
                  elements: List[Sample] = None, axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None,
@@ -861,7 +862,7 @@ class Scatter(Figure):
 class ScatterMatrix(Figure):
     """ ScatterMatrix of a list of Samples. """
 
-    _template_name = "multiplot_template"
+    _plot_commands = "MULTIPLOT_COMMANDS"
 
     def __init__(self, elements: List[Sample] = None, axes: List[str] = None, point_style: PointStyle = None,
                  surface_style: SurfaceStyle = None, width: int = 750, height: int = 400, name: str = ""):
@@ -1056,7 +1057,7 @@ class PrimitiveGroup(Figure):
     Circle2D, Line2D, MultipleLabels, Wire, Point2D]]
     """
 
-    _template_name = "contour_template"
+    _plot_commands = "CONTOUR_COMMANDS"
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, Circle2D,
                                               Line2D, MultipleLabels, Wire, Point2D]], width: int = 750,
@@ -1115,7 +1116,7 @@ class PrimitiveGroupsContainer(Figure):
     :type y_variable: str
     """
 
-    _template_name = "primitive_group_container_template"
+    _plot_commands = "PRIMITIVE_GROUP_CONTAINER_COMMANDS"
 
     def __init__(self, primitive_groups: List[PrimitiveGroup], sizes: List[Tuple[float, float]] = None,
                  coords: List[Tuple[float, float]] = None, associated_elements: List[int] = None,
@@ -1153,7 +1154,7 @@ class ParallelPlot(Figure):
         Color interpolation is enabled when clicking on an axis.
     """
 
-    _template_name = "parallelplot_template"
+    _plot_commands = "PARALLELPLOT_COMMANDS"
 
     def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, disposition: str = None,
                  axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, width: int = 750, height: int = 400,
@@ -1225,13 +1226,26 @@ class Histogram(Figure):
     :type surface_style: SurfaceStyle
     """
 
-    _template_name = "histogram_template"
+    _plot_commands = "HISTOGRAM_COMMANDS"
 
     def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, width: int = 750, height: int = 400,
                  name: str = ''):
+        if elements is None:
+            elements = []
+        sampled_elements = []
+        for element in elements:
+            # RetroCompat' < 0.11.0
+            if not isinstance(element, Sample) and isinstance(element, Dict):
+                reference_path = element.pop("reference_path", "#")
+                element_name = element.pop("name", "")
+                sampled_elements.append(Sample(values=element, reference_path=reference_path, name=element_name))
+            elif isinstance(element, Sample):
+                sampled_elements.append(element)
+            else:
+                raise ValueError(f"Element of type '{type(element)}' cannot be used as a MultiPlot data element.")
         self.x_variable = x_variable
-        self.elements = elements
+        self.elements = sampled_elements
         self.axis = axis
         self.graduation_nb = graduation_nb
         self.edge_style = edge_style
@@ -1251,7 +1265,7 @@ class MultiplePlots(Figure):
     :param initial_view_on: True for enabling initial layout, False  otherwise
     """
 
-    _template_name = "multiplot_template"
+    _plot_commands = "MULTIPLOT_COMMANDS"
 
     def __init__(self, plots: List[PlotDataObject], sizes: List[Window] = None, elements: List[Sample] = None,
                  coords: List[Tuple[float, float]] = None, point_families: List[PointFamily] = None,

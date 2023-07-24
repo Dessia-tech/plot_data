@@ -47,7 +47,7 @@ describe('SIMPLE SHAPES CANVAS', function () {
   it("should be hovered near line", function () {
     cy.window().then((win) => {
       let plot_data = win.eval('plot_data');
-      cy.get('canvas').click(595, 300)
+      cy.get('canvas').click(572, 275)
       .then( () => {
         expect(plot_data.select_on_click[0]).to.equal(plot_data.plot_datas[0].primitives[6]);
       })

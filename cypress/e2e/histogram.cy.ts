@@ -39,12 +39,12 @@ describe('HISTOGRAM CANVAS', function () {
     })
   })
 
-  let canvasMouse: Vertex ; let frameMouse: Vertex ; let canvasDown: Vertex ; let frameDown: Vertex ; let clickedObject: any;
+  let canvasMouse: Vertex ; let frameMouse: Vertex ; let canvasDown: Vertex ; let mouseCoords: Vertex ; let frameDown: Vertex ; let clickedObject: any;
   it("should project mouse", function () {
     cy.window().then(win => {
       const histogram = win.eval('plot_data') as Histogram;
-      [canvasMouse, frameMouse] = histogram.projectMouse({"offsetX": 256, "offsetY": 628} as MouseEvent);
-      expect(frameMouse.x).to.closeTo(4058, 10);
+      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 291, "offsetY": 601} as MouseEvent);
+      expect(frameMouse.x).to.closeTo(3749, 10);
     })
   })
 
@@ -53,8 +53,8 @@ describe('HISTOGRAM CANVAS', function () {
       const histogram = win.eval('plot_data') as Histogram;
       initRubberBand(histogram);
 
-      histogram.mouseMove(canvasMouse, frameMouse);
-      [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse);
+      histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
+      [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
       clickedObject.mouseMove(frameDown, frameDown.add(new Vertex(200, 200)));
       histogram.draw()
       const selectedBars = histogram.bars.reduce((sum, current) => sum + (current.isSelected ? 1 : 0), 0);
@@ -68,13 +68,15 @@ describe('HISTOGRAM CANVAS', function () {
   it("should hover/click on bar", function () {
     cy.window().then(win => {
       const histogram = win.eval('plot_data') as Histogram;
-      [canvasMouse, frameMouse] = histogram.projectMouse({"offsetX": 278, "offsetY": 530} as MouseEvent);
-      histogram.mouseMove(canvasMouse, frameMouse);
+      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 348, "offsetY": 399} as MouseEvent);
+      histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
       expect(histogram.hoveredIndices[4]).to.be.true;
+      expect(histogram.hoveredIndices[40]).to.be.true;
 
-      [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse);
-      histogram.mouseUp(canvasMouse, frameMouse, canvasDown, false)
-      expect(histogram.clickedIndices[4]).to.be.true;
+      [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
+      histogram.mouseUp(canvasMouse, frameMouse, mouseCoords, canvasDown, false)
+      expect(histogram.clickedIndices[11]).to.be.true;
+      expect(histogram.clickedIndices[32]).to.be.true;
     })
   })
 
@@ -83,7 +85,7 @@ describe('HISTOGRAM CANVAS', function () {
       const histogram = win.eval('plot_data') as Histogram;
       const e = {"offsetX": 572, "offsetY": 144, "deltaY": 3} as WheelEvent;
       histogram.wheel_interaction(e.offsetX, e.offsetY, e);
-      histogram.viewPoint = new newPoint2D(e.offsetX, e.offsetY);
+      histogram.viewPoint = new Vertex(e.offsetX, e.offsetY);
       histogram.viewPoint.transformSelf(histogram.canvasMatrix);
       histogram.draw();
       [canvasDown, frameMouse] = histogram.projectMouse({"offsetX": 572, "offsetY": 144} as MouseEvent);

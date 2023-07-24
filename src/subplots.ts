@@ -1548,7 +1548,7 @@ export class BasePlot extends PlotData {
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
-  public unpackAxisStyle(data:any): void {
+  protected unpackAxisStyle(data:any): void {
     if (data.axis) {
       if (data.axis.axis_style) {
         if (data.axis.axis_style.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
@@ -1561,7 +1561,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  private unpackData(data: any): Map<string, any[]> {
+  protected unpackData(data: any): Map<string, any[]> {
     const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
     featuresKeys.push("name");
     let unpackedData = new Map<string, any[]>();
@@ -1569,7 +1569,7 @@ export class BasePlot extends PlotData {
     return unpackedData
   }
 
-  public drawCanvas(): void {
+  private drawCanvas(): void {
     this.context = this.context_show;
     this.draw_empty_canvas(this.context_show);
     if (this.settings_on) this.draw_settings_rect()
@@ -1579,7 +1579,7 @@ export class BasePlot extends PlotData {
     this.context_show.closePath();
   }
 
-  public updateAxes(): void {
+  protected updateAxes(): void {
     const axisSelections = [];
     this.axes.forEach(axis => {
       this.axisStyle.forEach((value, key) => axis[key] = value);
@@ -1598,9 +1598,9 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public updateSize(): void { this.size = new Vertex(this.width, this.height) }
+  protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
 
-  public resetAxes(): void { this.axes.forEach(axis => axis.reset()) }
+  protected resetAxes(): void { this.axes.forEach(axis => axis.reset()) }
 
   public reset_scales(): void {
     this.updateSize();
@@ -1613,17 +1613,17 @@ export class BasePlot extends PlotData {
     this.selectedIndices = [];
   }
 
-  public resetSelectors(): void {
+  protected resetSelectors(): void {
     this.selectionBox = new SelectionBox();
     this.initSelectors();
   }
 
-  public reset(): void {
+  protected reset(): void {
     this.axes.forEach(axis => axis.reset());
     this.resetSelectors();
   }
 
-  public resetSelection(): void {
+  protected resetSelection(): void {
     this.axes.forEach(axis => axis.rubberBand.reset());
     this.resetSelectors();
   }
@@ -1635,27 +1635,27 @@ export class BasePlot extends PlotData {
     return selection
   }
 
-  public isRubberBanded(): boolean {
+  protected isRubberBanded(): boolean {
     let isRubberBanded = true;
     this.axes.forEach(axis => isRubberBanded = isRubberBanded && axis.rubberBand.length != 0);
     return isRubberBanded
   }
 
-  public drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) }
+  protected drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) }
 
-  public drawZoneRectangle(context: CanvasRenderingContext2D): void {
+  private drawZoneRectangle(context: CanvasRenderingContext2D): void {
     // TODO: change with newRect
     Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15,15]);
   }
 
-  public drawRelativeObjects() {}
+  protected drawRelativeObjects() {}
 
-  public drawAbsoluteObjects(context: CanvasRenderingContext2D) {
+  protected drawAbsoluteObjects(context: CanvasRenderingContext2D) {
     this.absoluteObjects = new GroupCollection();
     this.drawSelectionBox(context);
   }
 
-  public computeRelativeObjects() {}
+  protected computeRelativeObjects() {}
 
   public draw(): void {
     this.context_show.save();
@@ -1696,11 +1696,11 @@ export class BasePlot extends PlotData {
 
   public switchZoom(): void { this.isZooming = !this.isZooming }
 
-  public updateSelectionBox(frameDown: Vertex, frameLoc: Vertex): void { this.selectionBox.update(frameDown, frameLoc) }
+  protected updateSelectionBox(frameDown: Vertex, frameLoc: Vertex): void { this.selectionBox.update(frameDown, frameLoc) }
 
   public get drawingZone(): [Vertex, Vertex] { return [new Vertex(this.X, this.Y), this.size] }
 
-  public drawSelectionBox(context: CanvasRenderingContext2D) {
+  protected drawSelectionBox(context: CanvasRenderingContext2D) {
     if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
       const [drawingOrigin, drawingSize] = this.drawingZone;
       this.selectionBox.buildRectFromHTMatrix(drawingOrigin, drawingSize, this.relativeMatrix);
@@ -1712,7 +1712,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public drawZoomBox(zoomBox: SelectionBox, frameDown: Vertex, frameMouse: Vertex, context: CanvasRenderingContext2D): void {
+  private drawZoomBox(zoomBox: SelectionBox, frameDown: Vertex, frameMouse: Vertex, context: CanvasRenderingContext2D): void {
     zoomBox.update(frameDown, frameMouse);
     const [drawingOrigin, drawingSize] = this.drawingZone;
     zoomBox.buildRectFromHTMatrix(drawingOrigin, drawingSize, this.relativeMatrix);
@@ -1720,7 +1720,7 @@ export class BasePlot extends PlotData {
     zoomBox.draw(context);
   }
 
-  public zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
+  protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
     this.axes[0].minValue = Math.min(zoomBox.minVertex.x, zoomBox.maxVertex.x);
     this.axes[0].maxValue = Math.max(zoomBox.minVertex.x, zoomBox.maxVertex.x);
     this.axes[1].minValue = Math.min(zoomBox.minVertex.y, zoomBox.maxVertex.y);
@@ -1729,12 +1729,12 @@ export class BasePlot extends PlotData {
     this.updateAxes();
   }
 
-  public drawTooltips(): void {
+  private drawTooltips(): void {
     this.relativeObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
     this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
+  protected stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
     frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
       this.fixedObjects.updateMouseState(context, canvasMouse, stateName, keepState, invertState);
       this.absoluteObjects.updateMouseState(context, absoluteMouse, stateName, keepState, invertState);
@@ -1869,7 +1869,7 @@ export class BasePlot extends PlotData {
     }
   }
 
-  public drawAfterRescale(mouse3X: number, mouse3Y: number, scale: Vertex): void {
+  private drawAfterRescale(mouse3X: number, mouse3Y: number, scale: Vertex): void {
     for (let axis of this.axes) {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
         if (this.scaleX > scale.x) {this.scaleX = scale.x}
@@ -1891,7 +1891,7 @@ export class BasePlot extends PlotData {
 
   public zoomOut(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), -342) }
 
-  public zoom(center: Vertex, zFactor: number): void {
+  private zoom(center: Vertex, zFactor: number): void {
     const [mouse3X, mouse3Y] = this.wheel_interaction(center.x, center.y, zFactor);
     this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(1, 1));
   }
@@ -1998,14 +1998,14 @@ export class Frame extends BasePlot {
     return [origin.transform(this.canvasMatrix.inverse()), size]
   }
 
-  public unpackAxisStyle(data: any): void {
+  protected unpackAxisStyle(data: any): void {
     if (data.axis) {
       super.unpackAxisStyle(data);
       this.nXTicks = data.axis.nb_points_x;
       this.nYTicks = data.axis.nb_points_y;
     }
   }
-  public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
+  protected stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
     frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
       super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);
       if (stateName == "isHovered") this.hoveredIndices = this.sampleDrawings.updateSampleStates(stateName);
@@ -2019,7 +2019,7 @@ export class Frame extends BasePlot {
     return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
-  public updateSize(): void { this.size = new Vertex(this.width, this.height) }
+  protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
 
   public reset_scales(): void {
     this.updateSize();
@@ -2033,7 +2033,7 @@ export class Frame extends BasePlot {
     this.axes[1].transform(frameOrigin, yEnd);
   }
 
-  public setFeatures(data: any): [string, string] {
+  protected setFeatures(data: any): [string, string] {
     let xFeature = data.attribute_names[0];
     let yFeature = data.attribute_names[1];
     if (!xFeature) { xFeature = "indices"; this.features.set("indices", Array.from(Array(this.nSamples).keys())) };
@@ -2043,26 +2043,25 @@ export class Frame extends BasePlot {
       }
     }
     return [xFeature, yFeature]
-     
   }
 
-  public setAxes(): newAxis[] {
+  protected setAxes(): newAxis[] {
     const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds()
     return [
       this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks),
       this.setAxis(this.yFeature, freeSize.x, frameOrigin, yEnd, this.nYTicks)]
   }
 
-  public setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+  protected setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
     return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
   }
 
-  public drawAxes() {
+  protected drawAxes() {
     super.drawAxes();
     if (this.isRubberBanded()) this.updateSelectionBox(...this.rubberBandsCorners);
   }
 
-  public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
+  protected setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
     let frameOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
     let xEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
     let yEnd = new Vertex(frameOrigin.x, this.size.y - this.margin.y + this.Y * this.initScale.y);
@@ -2082,7 +2081,7 @@ export class Frame extends BasePlot {
     return [frameOrigin, xEnd, yEnd, freeSize]
   }
 
-  public updateSelectionBox(frameDown: Vertex, frameMouse: Vertex) {
+  protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex) {
     this.axes[0].rubberBand.minValue = Math.min(frameDown.x, frameMouse.x);
     this.axes[1].rubberBand.minValue = Math.min(frameDown.y, frameMouse.y);
     this.axes[0].rubberBand.maxValue = Math.max(frameDown.x, frameMouse.x);
@@ -2099,7 +2098,6 @@ export class Frame extends BasePlot {
       this.is_drawing_rubber_band = true;
       this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
     }));
-
     super.mouse_interaction(isParallelPlot);
   }
 }
@@ -2134,12 +2132,12 @@ export class Histogram extends Frame {
 
   set nYTicks(value: number) {this._nYTicks = value}
 
-  public unpackAxisStyle(data: any): void {
+  protected unpackAxisStyle(data: any): void {
     super.unpackAxisStyle(data);
     if (data.graduation_nb) this.nXTicks = data.graduation_nb;
   }
 
-  public unpackBarStyle(data: any): void {
+  private unpackBarStyle(data: any): void {
     if (data.surface_style) { if (data.surface_style.color_fill) this.fillStyle = data.surface_style.color_fill };
     if (data.edge_style) {
       if (data.edge_style.line_width) this.lineWidth = data.edge_style.line_width;
@@ -2148,7 +2146,7 @@ export class Histogram extends Frame {
     }
   }
 
-  public reset(): void {
+  protected reset(): void {
     super.reset();
     this.bars = [];
   }
@@ -2199,18 +2197,18 @@ export class Histogram extends Frame {
     return bars
   }
 
-  public computeRelativeObjects(): void {
+  protected computeRelativeObjects(): void {
     this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
     this.getBarsDrawing();
   }
 
-  public drawRelativeObjects(): void {
+  protected drawRelativeObjects(): void {
     this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
     this.relativeObjects = new GroupCollection([...this.bars], this.relativeMatrix);
   }
 
-  public getBarsDrawing(): void {
+  private getBarsDrawing(): void {
     const fullTicks = this.boundedTicks(this.axes[0]);
     const minY = this.boundedTicks(this.axes[1])[0];
     this.bars.forEach((bar, index) => {
@@ -2229,7 +2227,7 @@ export class Histogram extends Frame {
     })
   }
 
-  public setAxes(): newAxis[] {
+  protected setAxes(): newAxis[] {
     const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds();
     const xAxis = this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks);
     const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
@@ -2238,13 +2236,13 @@ export class Histogram extends Frame {
     return [xAxis, yAxis];
   }
 
-  public setFeatures(data: any): [string, string] { return [data.x_variable, 'number'] }
+  protected setFeatures(data: any): [string, string] { return [data.x_variable, 'number'] }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
     return new Vertex(this.axes[0].isDiscrete ? 0 : currentMouse.x - mouseDown.x, 0)
   }
 
-  wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
+  public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
     // e.preventDefault();
     this.fusion_coeff = 1.2;
     if (!this.axes[0].isDiscrete) {
@@ -2307,7 +2305,7 @@ export class newScatter extends Frame {
 
   get sampleDrawings(): GroupCollection { return this.absoluteObjects }
 
-  public unpackPointStyle(data: any): void {
+  private unpackPointStyle(data: any): void {
     if (data.point_style) {
       if (data.point_style.color_fill) this.fillStyle = data.point_style.color_fill;
       if (data.point_style.color_stroke) this.strokeStyle = data.point_style.color_stroke;
@@ -2319,7 +2317,7 @@ export class newScatter extends Frame {
     if (data.points_sets) this.unpackPointsSets(data);
   }
 
-  public unpackPointsSets(data: any): void {
+  private unpackPointsSets(data: any): void {
     data.points_sets.forEach((pointSet, setIndex) => {
       pointSet.point_index.forEach(pointIndex => {
         this.pointSets[pointIndex] = setIndex;
@@ -2333,19 +2331,19 @@ export class newScatter extends Frame {
     this.computePoints();
   }
 
-  public reset(): void {
+  protected reset(): void {
     super.reset();
     this.computePoints();
     this.resetClusters();
   }
 
-  public drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
+  protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
     this.drawPoints(context);
     this.absoluteObjects = new GroupCollection([...this.points]);
     this.drawSelectionBox(context);
   };
 
-  public drawPoints(context: CanvasRenderingContext2D): void {
+  private drawPoints(context: CanvasRenderingContext2D): void {
     this.points.forEach(point => {
       let color = this.fillStyle;
       const colors = new Map<string, number>();
@@ -2386,7 +2384,7 @@ export class newScatter extends Frame {
     this.draw();
   }
 
-  public zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
+  protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
     super.zoomBoxUpdateAxes(zoomBox);
     this.computePoints();
   }
@@ -2606,6 +2604,13 @@ export class newGraph2D extends newScatter {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
+  protected unpackData(data: any): Map<string, any[]> {
+    const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
+    featuresKeys.push("name");
+    let unpackedData = new Map<string, any[]>();
+    featuresKeys.forEach((feature) => { unpackedData.set(feature, data.elements.map(element => element[feature])) });
+    return unpackedData
+  }
   
 }
 

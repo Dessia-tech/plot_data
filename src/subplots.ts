@@ -2611,7 +2611,6 @@ export class newGraph2D extends newScatter {
     featuresKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
   }
-  
 }
 
 function mean(array: number[]): number {

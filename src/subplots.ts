@@ -1565,7 +1565,7 @@ export class BasePlot extends PlotData {
     const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
     featuresKeys.push("name");
     let unpackedData = new Map<string, any[]>();
-    featuresKeys.forEach((feature) => { unpackedData.set(feature, data.elements.map(element => element[feature])) });
+    featuresKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
   }
 
@@ -2608,7 +2608,7 @@ export class newGraph2D extends newScatter {
     const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
     featuresKeys.push("name");
     let unpackedData = new Map<string, any[]>();
-    featuresKeys.forEach((feature) => { unpackedData.set(feature, data.elements.map(element => element[feature])) });
+    featuresKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
   }
   

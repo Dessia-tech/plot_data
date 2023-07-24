@@ -1730,8 +1730,8 @@ export class BasePlot extends PlotData {
   }
 
   public drawTooltips(): void {
-    this.relativeObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
-    this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
+    this.relativeObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show);
+    this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show);
   }
 
   public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,

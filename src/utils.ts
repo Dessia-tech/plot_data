@@ -2781,7 +2781,6 @@ export class ShapeCollection extends DrawingCollection {
   }
 }
 
-
 export class GroupCollection extends ShapeCollection {
   constructor(
     public drawings: any[] = [],
@@ -2792,7 +2791,7 @@ export class GroupCollection extends ShapeCollection {
 
   public drawingIsContainer(drawing: any): boolean { return drawing.values ? drawing.values.length > 1 ? true : false : false }
 
-  public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
+  public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D): void {
     this.drawings.forEach(drawing => { if (this.drawingIsContainer(drawing)) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
   }
 

@@ -1965,6 +1965,7 @@ export class Frame extends BasePlot {
       this.offset = this.computeOffset();
       this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
       [this.xFeature, this.yFeature] = this.setFeatures(data);
+      console.log(this.features)
       this.axes = this.setAxes();
       this.fixedObjects = new DrawingCollection(this.axes, this.canvasMatrix);
       this.type_ = "frame";
@@ -2033,7 +2034,16 @@ export class Frame extends BasePlot {
   }
 
   public setFeatures(data: any): [string, string] {
-    return [data.attribute_names[0], data.attribute_names[1]];
+    let xFeature = data.attribute_names[0];
+    let yFeature = data.attribute_names[1];
+    if (!xFeature) { xFeature = "indices"; this.features.set("indices", Array.from(Array(this.nSamples).keys())) };
+    if (!yFeature) { 
+      for (let key of Array.from(this.features.keys())) {
+        if (!["name", "indices"].includes(key)) { yFeature = key; break };
+      }
+    }
+    return [xFeature, yFeature]
+     
   }
 
   public setAxes(): newAxis[] {
@@ -2579,6 +2589,24 @@ export class newScatter extends Frame {
     this.computePoints();
     return [mouse3X, mouse3Y];
   }
+}
+
+
+export class newGraph2D extends newScatter {
+  constructor(
+    data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+    }
+
+  
 }
 
 function mean(array: number[]): number {

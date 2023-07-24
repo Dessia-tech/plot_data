@@ -849,10 +849,10 @@ class Scatter(Figure):
 
     _plot_commands = "SCATTER_COMMANDS"
 
-    def __init__(self, x_variable: str, y_variable: str, tooltip: Tooltip = None, point_style: PointStyle = None,
-                 elements: List[Sample] = None, points_sets: List[PointFamily] = None, axis: Axis = None,
-                 log_scale_x: bool = None, log_scale_y: bool = None, heatmap: Heatmap = None, heatmap_view: bool = None,
-                 width: int = 750, height: int = 400, name: str = ''):
+    def __init__(self, x_variable: str = None, y_variable: str = None, tooltip: Tooltip = None,
+                 point_style: PointStyle = None, elements: List[Sample] = None, points_sets: List[PointFamily] = None,
+                 axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None, heatmap: Heatmap = None,
+                 heatmap_view: bool = None, width: int = 750, height: int = 400, name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style

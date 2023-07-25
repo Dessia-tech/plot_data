@@ -2375,6 +2375,7 @@ export class newAxis extends EventEmitter {
   readonly SELECTION_RECT_SIZE = 10;
   readonly SIZE_END = 7;
   readonly FONT_SIZE = 12;
+  readonly isFilled = true;
 
   // OLD
   public is_drawing_rubberband: boolean = false;

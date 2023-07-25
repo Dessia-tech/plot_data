@@ -2383,10 +2383,8 @@ export class newScatter extends Frame {
 
   public computePoints(): void {
     const thresholdDist = 30;
-
     const [xCoords, yCoords, xValues, yValues] = this.projectPoints();
     let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
-
     this.points = [];
     mergedPoints.forEach(indexList => {
       const newPoint = this.computePoint(indexList, xCoords, yCoords, xValues, yValues, this.pointSize, thresholdDist);
@@ -2418,8 +2416,8 @@ export class newScatter extends Frame {
         newPoint.newTooltipMap();
         this.tooltipAttributes.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[newPoint.values[0]]));
       } else {
-        newPoint.tooltipMap.set(`${this.xFeature} mean`, newPoint.tooltipMap.get('X mean'));
-        newPoint.tooltipMap.set(`${this.yFeature} mean`, newPoint.tooltipMap.get('Y mean'));
+        newPoint.tooltipMap.set(`Average ${this.xFeature}`, this.axes[0].isDiscrete ? this.axes[0].labels[Math.round(newPoint.mean.x)] : newPoint.mean.x);
+        newPoint.tooltipMap.set(`Average ${this.yFeature}`, this.axes[1].isDiscrete ? this.axes[1].labels[Math.round(newPoint.mean.y)] : newPoint.mean.y);
         newPoint.tooltipMap.delete('X mean');
         newPoint.tooltipMap.delete('Y mean');
       }

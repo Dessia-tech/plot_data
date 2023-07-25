@@ -1517,10 +1517,10 @@ export class BasePlot extends PlotData {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.nSamples = data.elements.length;
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
+      this.nSamples = this.features.entries().next().value[1].length;
       this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
@@ -2344,6 +2344,8 @@ export class newScatter extends Frame {
   };
 
   private drawPoints(context: CanvasRenderingContext2D): void {
+    const axesOrigin = this.axes[0].origin;
+    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y);
     this.points.forEach(point => {
       let color = this.fillStyle;
       const colors = new Map<string, number>();
@@ -2365,7 +2367,7 @@ export class newScatter extends Frame {
       point.setColors(color);
       point.marker = this.marker;
       point.update();
-      if (point.isInFrame(this.axes[0], this.axes[1])) point.draw(context);
+      if (point.isInFrame(axesOrigin, axesEnd, this.initScale)) point.draw(context);
     })
   }
 
@@ -2608,6 +2610,7 @@ export class newGraph2D extends newScatter {
     }
 
   protected unpackData(data: any): Map<string, any[]> {
+    console.log(data);
     const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
     featuresKeys.push("name");
     let unpackedData = new Map<string, any[]>();

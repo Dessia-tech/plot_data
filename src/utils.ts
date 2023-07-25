@@ -1892,6 +1892,8 @@ export class newPoint2D extends newShape {
     this.lineWidth = 1;
   };
 
+  public update() { this.path = this.buildPath() }
+
   public getFillStyleHSL(fillStyle: string): [number, number, number] {
     if (fillStyle.includes("rgb")) return arrayRGBToHSL(...RGBToArray(fillStyle));
     return HSLToArray(fillStyle)
@@ -1910,7 +1912,7 @@ export class newPoint2D extends newShape {
 
   public setColors(fillStyle?: string, strokeStyle?: string) {
     this.fillStyle = fillStyle ? fillStyle : this.fillStyle;
-    this.strokeStyle = strokeStyle; // ? strokeStyle : this.setStrokeStyle(this.fillStyle);
+    this.strokeStyle = strokeStyle;
   }
 
   get drawnShape(): newShape {
@@ -1961,6 +1963,13 @@ export class newPoint2D extends newShape {
     context.fillStyle = fillColor;
     context.strokeStyle = this.strokeStyle ? this.strokeStyle : this.setStrokeStyle(fillColor);
   }
+
+  public isInFrame(origin: Vertex, end: Vertex, scale: Vertex): boolean {
+    const inCanvasX = this.center.x * scale.x < end.x && this.center.x * scale.x > origin.x;
+    const inCanvasY = this.center.y * scale.y < end.y && this.center.y * scale.y > origin.y;
+    this.inFrame = inCanvasX && inCanvasY;
+    return this.inFrame
+  }
 }
 
 export class ScatterPoint extends newPoint2D {
@@ -1979,20 +1988,8 @@ export class ScatterPoint extends newPoint2D {
     this.isScaled = false;
   };
 
-  get tooltipMap(): Map<string, any> { return this._tooltipMap };
-
-  public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
-
-  public update() {
-    this.isScaled = false;
-    this.path = this.buildPath();
-  }
-
-  public isInFrame(xAxis: newAxis, yAxis: newAxis): boolean {
-    const inCanvasX = this.mean.x < xAxis.maxValue && this.mean.x > xAxis.minValue;
-    const inCanvasY = this.mean.y < yAxis.maxValue && this.mean.y > yAxis.minValue;
-    this.inFrame = inCanvasX && inCanvasY;
-    return this.inFrame
+  public updateTooltipMap() {
+    this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],])
   }
 }
 

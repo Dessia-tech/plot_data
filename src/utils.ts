@@ -2018,6 +2018,11 @@ export class Curve extends newShape {
     return emptyCurve
   }
 
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
+    super.setDrawingProperties(context);
+    context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
+  }
+
   public buildPath(): Path2D {
     const path = new Path2D();
     path.moveTo(this.points[0].center.x, this.points[0].center.y);
@@ -2799,9 +2804,19 @@ export class DrawingCollection {
 
   public updateMouseState(context: CanvasRenderingContext2D, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
     this.drawings.forEach(drawing => {
-      if (context.isPointInPath(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
-      else {
-        if (!keepState) drawing[stateName] = false;
+      if (drawing.isFilled) {
+        if (context.isPointInPath(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
+        else {
+          if (!keepState) drawing[stateName] = false;
+        }
+      } else {
+        context.save();
+        context.lineWidth = 10;
+        if (context.isPointInStroke(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
+        else {
+          if (!keepState) drawing[stateName] = false;
+        }
+        context.restore();
       }
     })
   }

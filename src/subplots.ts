@@ -2593,10 +2593,9 @@ export class newScatter extends Frame {
   }
 }
 
-
 export class newGraph2D extends newScatter {
   public curves: Curve[];
-  public showPoints: boolean = true;
+  public showPoints: boolean = false;
   private curvesIndices: number[][];
   constructor(
     data: any,
@@ -2636,8 +2635,11 @@ export class newGraph2D extends newScatter {
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
     this.drawCurves(context);
-    if (this.showPoints) this.drawPoints(context);
-    this.absoluteObjects = new GroupCollection([...this.points, ...this.curves]);
+    this.absoluteObjects = new GroupCollection([...this.curves]);
+    if (this.showPoints) {
+      this.drawPoints(context);
+      this.absoluteObjects.drawings = [...this.points, ...this.absoluteObjects.drawings];
+    }
     this.drawSelectionBox(context);
   };
 

@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection, Curve } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1965,7 +1965,6 @@ export class Frame extends BasePlot {
       this.offset = this.computeOffset();
       this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
       [this.xFeature, this.yFeature] = this.setFeatures(data);
-      console.log(this.features)
       this.axes = this.setAxes();
       this.fixedObjects = new DrawingCollection(this.axes, this.canvasMatrix);
       this.type_ = "frame";
@@ -2343,7 +2342,7 @@ export class newScatter extends Frame {
     this.drawSelectionBox(context);
   };
 
-  private drawPoints(context: CanvasRenderingContext2D): void {
+  protected drawPoints(context: CanvasRenderingContext2D): void {
     const axesOrigin = this.axes[0].origin;
     const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y);
     this.points.forEach(point => {
@@ -2596,6 +2595,9 @@ export class newScatter extends Frame {
 
 
 export class newGraph2D extends newScatter {
+  public curves: Curve[];
+  public showPoints: boolean = true;
+  private curvesIndices: number[][];
   constructor(
     data: any,
     public width: number,
@@ -2610,13 +2612,42 @@ export class newGraph2D extends newScatter {
     }
 
   protected unpackData(data: any): Map<string, any[]> {
-    console.log(data);
-    const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
-    featuresKeys.push("name");
-    let unpackedData = new Map<string, any[]>();
-    featuresKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
-    return unpackedData
+    const formattedData: {[key: string]: any} = {};
+    this.curvesIndices = [];
+    this.curves = [];
+    formattedData["elements"] = [];
+    if (data.graphs) {
+      data.graphs.forEach(graph => {
+        this.curves.push(Curve.getGraphProperties(graph));
+        this.curvesIndices.push(range(formattedData["elements"].length, formattedData["elements"].length + graph.elements.length));
+        formattedData["elements"].push(...graph.elements);
+      })
+    }
+    return super.unpackData(formattedData)
   }
+
+  public drawCurves(context: CanvasRenderingContext2D): void {
+    this.curves.forEach((curve, curveIndex) => {
+      curve.points = Array.from(this.curvesIndices[curveIndex], index => this.points[index]);
+      curve.path = curve.buildPath();
+      curve.draw(context);
+    })
+  }
+
+  protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
+    this.drawCurves(context);
+    if (this.showPoints) this.drawPoints(context);
+    this.absoluteObjects = new GroupCollection([...this.points, ...this.curves]);
+    this.drawSelectionBox(context);
+  };
+
+  public switchMerge(): void { this.isMerged = false }
+}
+
+function range(start: number, end: number, step: number = 1): number[] {
+  let array = [];
+  for (let i = start; i < end; i = i + step) array.push(i);
+  return array
 }
 
 function mean(array: number[]): number {

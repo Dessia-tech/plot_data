@@ -1347,13 +1347,11 @@ export class newShape {
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   public isScaled: boolean = true;
+  public isFilled: boolean = true;
   public inFrame: boolean = true;
 
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
-
-  protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
-  protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
   constructor() {};
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
@@ -1371,7 +1369,7 @@ export class newShape {
       context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     } else scaledPath.addPath(this.path);
     this.setDrawingProperties(context);
-    context.fill(scaledPath);
+    if (this.isFilled) context.fill(scaledPath);
     context.stroke(scaledPath);
     context.restore();
   }
@@ -1986,10 +1984,45 @@ export class ScatterPoint extends newPoint2D {
   ) {
     super(x, y, _size, _marker, _markerOrientation, fillStyle, strokeStyle);
     this.isScaled = false;
-  };
+  }
 
   public updateTooltipMap() {
     this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],])
+  }
+}
+
+export class Curve extends newShape {
+  public marker: string;
+  public pointColor: string;
+  public pointSize: number;
+  constructor(
+    public points: newPoint2D[] = [],
+    public name: string = ""
+  ) {
+    super();
+    this.isScaled = false;
+    this.isFilled = false;
+  }
+
+  public static getGraphProperties(graph: {[key: string]: any}): Curve {
+    const emptyCurve = new Curve([], graph.name);
+    if (graph.point_style) {
+      if (graph.point_style.shape) emptyCurve.marker = graph.point_style.shape;
+      if (graph.point_style.size) emptyCurve.pointSize = graph.point_style.size;
+    }
+    if (graph.edge_style) {
+      if (graph.edge_style.line_width) emptyCurve.lineWidth = graph.edge_style.line_width;
+      if (graph.edge_style.color_stroke) emptyCurve.strokeStyle = graph.edge_style.color_stroke;
+      if (graph.edge_style.dashline) emptyCurve.dashLine = graph.edge_style.dashline;
+    }
+    return emptyCurve
+  }
+
+  public buildPath(): Path2D {
+    const path = new Path2D();
+    path.moveTo(this.points[0].center.x, this.points[0].center.y);
+    this.points.slice(1).forEach(point => path.lineTo(point.center.x, point.center.y));
+    return path
   }
 }
 

@@ -2455,7 +2455,6 @@ export class newAxis extends EventEmitter {
   }
 
   public resetScale(): void {
-    this.rubberBand.reset();
     this.minValue = this.initMinValue;
     this.maxValue = this.initMaxValue;
     this._previousMin = this.initMinValue;

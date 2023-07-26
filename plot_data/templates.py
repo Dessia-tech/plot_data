@@ -39,7 +39,8 @@ html_template = Template('''
         <button name="Zoom-" value="OK" type="button" onclick="plot_data.zoomOut()"> Zoom- </button> &nbsp;&nbsp;
         Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250" onclick="plot_data.simpleCluster(value / 10000)"></input>
         <button name="resetClusters" value="OK" type="button" onclick="plot_data.resetClusters()"> Reset clusters </button> &nbsp;&nbsp;
-        <button name="resetView" value="OK" type="button" onclick="plot_data.resetView()"> Reset view </button>
+        <button name="resetView" value="OK" type="button" onclick="plot_data.resetView()"> Reset view </button> &nbsp;&nbsp;
+        <button name="showPoints" value="OK" type="button" onclick="plot_data.switchShowPoints()"> Show points </button>
     <hr style="border-top: 2px;">
     </div>
     <div id="app">

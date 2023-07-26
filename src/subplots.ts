@@ -1602,10 +1602,12 @@ export class BasePlot extends PlotData {
 
   protected resetAxes(): void { this.axes.forEach(axis => axis.reset()) }
 
-  public reset_scales(): void {
+  public reset_scales(): void { // TODO: merge with resetView
     this.updateSize();
     this.axes.forEach(axis => axis.resetScale());
   }
+
+  public resetView(): void { this.reset_scales(); this.draw() }
 
   public initSelectors(): void {
     this.hoveredIndices = [];
@@ -2644,6 +2646,8 @@ export class newGraph2D extends newScatter {
   };
 
   public switchMerge(): void { this.isMerged = false }
+
+  public switchShowPoints(): void { this.showPoints = !this.showPoints; this.draw() } 
 }
 
 function range(start: number, end: number, step: number = 1): number[] {

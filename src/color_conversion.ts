@@ -267,16 +267,19 @@ export function colorHSL(color: string): string {
   if (color.includes('hsl')) return color;
   if (color.includes('rgb')) return RGBToHSL(color);
   if (color.includes('#')) return HEXToHSL(color);
+  throw new Error(`${color} is not a color.`)
 }
 
 export function colorHEX(color: string): string {
   if (color.includes('#')) return color;
   if (color.includes('hsl')) return HSLToHEX(color);
   if (color.includes('rgb')) return RGBToHEX(color);
+  throw new Error(`${color} is not a color.`)
 }
 
 export function colorRGB(color: string): string {
   if (color.includes('rgb')) return color;
   if (color.includes('hsl')) return HSLToRGB(color);
   if (color.includes('#')) return HEXToRGB(color);
+  throw new Error(`${color} is not a color.`)
 }

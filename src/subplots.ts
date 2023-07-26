@@ -2038,7 +2038,7 @@ export class Frame extends BasePlot {
     let xFeature = data.attribute_names[0];
     let yFeature = data.attribute_names[1];
     if (!xFeature) { xFeature = "indices"; this.features.set("indices", Array.from(Array(this.nSamples).keys())) };
-    if (!yFeature) { 
+    if (!yFeature) {
       for (let key of Array.from(this.features.keys())) {
         if (!["name", "indices"].includes(key)) { yFeature = key; break };
       }

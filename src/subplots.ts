@@ -2628,13 +2628,6 @@ export class newGraph2D extends newScatter {
     return super.unpackData(formattedData)
   }
 
-  // public getPointStyle(graph) {
-  //   if (graph.point_style) {
-  //     if (graph.point_style.shape) emptyCurve.marker = graph.point_style.shape;
-  //     if (graph.point_style.size) emptyCurve.pointSize = graph.point_style.size;
-  //   }
-  // }
-
   public drawCurves(context: CanvasRenderingContext2D): void {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
     const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
@@ -2661,7 +2654,18 @@ export class newGraph2D extends newScatter {
 
   public switchMerge(): void { this.isMerged = false }
 
-  public switchShowPoints(): void { this.showPoints = !this.showPoints; this.draw() } 
+  public switchShowPoints(): void { this.showPoints = !this.showPoints; this.draw() }
+
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+    super.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
+    this.curves.forEach(curve => curve.previousTooltipOrigin = curve.tooltipOrigin);
+  }
+
+  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
+    const translation = super.mouseTranslate(currentMouse, mouseDown);
+    this.curves.forEach(curve => { if (curve.previousTooltipOrigin) curve.tooltipOrigin = curve.previousTooltipOrigin.add(translation.scale(this.initScale)) });
+    return translation
+  }
 }
 
 function range(start: number, end: number, step: number = 1): number[] {

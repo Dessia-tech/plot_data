@@ -2006,6 +2006,7 @@ export class ScatterPoint extends newPoint2D {
 
 export class Curve extends newShape {
   public drawingZone: newRect;
+  public previousTooltipOrigin: Vertex;
   constructor(
     public points: newPoint2D[] = [],
     public name: string = ""
@@ -2013,7 +2014,21 @@ export class Curve extends newShape {
     super();
     this.isScaled = false;
     this.isFilled = false;
+    this.updateTooltipMap();
   }
+
+  public initTooltip(context: CanvasRenderingContext2D): newTooltip {
+    const tooltip = super.initTooltip(context);
+    tooltip.isFlipper = true;
+    return tooltip
+  }
+
+  public mouseDown(mouseDown: Vertex) {
+    this.previousTooltipOrigin = mouseDown.copy();
+    this.tooltipOrigin = this.previousTooltipOrigin.copy();
+  }
+
+  public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Name", this.name]]) }
 
   public static getGraphProperties(graph: {[key: string]: any}): Curve {
     const emptyCurve = new Curve([], graph.name);

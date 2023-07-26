@@ -1349,6 +1349,7 @@ export class newShape {
   public isScaled: boolean = true;
   public isFilled: boolean = true;
   public inFrame: boolean = true;
+  public onFrame: boolean = false;
 
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
@@ -1890,6 +1891,18 @@ export class newPoint2D extends newShape {
     this.lineWidth = 1;
   };
 
+  public copy(): newPoint2D {
+    const copy = new newPoint2D();
+    copy.center = this.center.copy();
+    copy.size = this.size;
+    copy.marker = this.marker;
+    copy.markerOrientation = this.markerOrientation;
+    copy.fillStyle = this.fillStyle;
+    copy.strokeStyle = this.strokeStyle;
+    copy.lineWidth = this.lineWidth;
+    return copy
+  }
+
   public update() { this.path = this.buildPath() }
 
   public getFillStyleHSL(fillStyle: string): [number, number, number] {
@@ -1992,9 +2005,7 @@ export class ScatterPoint extends newPoint2D {
 }
 
 export class Curve extends newShape {
-  public marker: string;
-  public pointColor: string;
-  public pointSize: number;
+  public drawingZone: newRect;
   constructor(
     public points: newPoint2D[] = [],
     public name: string = ""
@@ -2006,10 +2017,6 @@ export class Curve extends newShape {
 
   public static getGraphProperties(graph: {[key: string]: any}): Curve {
     const emptyCurve = new Curve([], graph.name);
-    if (graph.point_style) {
-      if (graph.point_style.shape) emptyCurve.marker = graph.point_style.shape;
-      if (graph.point_style.size) emptyCurve.pointSize = graph.point_style.size;
-    }
     if (graph.edge_style) {
       if (graph.edge_style.line_width) emptyCurve.lineWidth = graph.edge_style.line_width;
       if (graph.edge_style.color_stroke) emptyCurve.strokeStyle = graph.edge_style.color_stroke;
@@ -2023,10 +2030,18 @@ export class Curve extends newShape {
     context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
   }
 
+  public draw(context: CanvasRenderingContext2D): void {
+    context.save();
+    super.draw(context);
+    context.globalCompositeOperation = "destination-in";
+    context.fill(this.drawingZone.path);
+    context.restore();
+  }
+
   public buildPath(): Path2D {
     const path = new Path2D();
     path.moveTo(this.points[0].center.x, this.points[0].center.y);
-    this.points.slice(1).forEach(point => path.lineTo(point.center.x, point.center.y));
+    this.points.slice(1).forEach(point=> path.lineTo(point.center.x, point.center.y));
     return path
   }
 }

@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection, Curve } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection, Curve, newRect } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -2597,8 +2597,9 @@ export class newScatter extends Frame {
 
 export class newGraph2D extends newScatter {
   public curves: Curve[];
-  public showPoints: boolean = false;
   private curvesIndices: number[][];
+
+  public showPoints: boolean = false;
   constructor(
     data: any,
     public width: number,
@@ -2627,12 +2628,25 @@ export class newGraph2D extends newScatter {
     return super.unpackData(formattedData)
   }
 
+  // public getPointStyle(graph) {
+  //   if (graph.point_style) {
+  //     if (graph.point_style.shape) emptyCurve.marker = graph.point_style.shape;
+  //     if (graph.point_style.size) emptyCurve.pointSize = graph.point_style.size;
+  //   }
+  // }
+
   public drawCurves(context: CanvasRenderingContext2D): void {
+    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
+    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
+    const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
+    context.beginPath();
     this.curves.forEach((curve, curveIndex) => {
       curve.points = Array.from(this.curvesIndices[curveIndex], index => this.points[index]);
       curve.path = curve.buildPath();
+      curve.drawingZone = drawingZone;
       curve.draw(context);
     })
+    context.closePath();
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {

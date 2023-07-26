@@ -2004,6 +2004,7 @@ export class Frame extends BasePlot {
       this.nYTicks = data.axis.nb_points_y;
     }
   }
+  
   public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
     frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
       super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);

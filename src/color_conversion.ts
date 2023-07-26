@@ -184,17 +184,17 @@ export function isHex(str:string):boolean {
 
 // NEW (need a merge with what's before)
 export function arrayRGBToHSL(r: number, g: number, b: number): [number, number, number] {
-  let dr = r / 255;
-  let dg = g / 255;
-  let db = b / 255;
-  const l = Math.max(dr, dg, db);
-  const s = l - Math.min(dr, dg, db);
+  let normedR = r / 255;
+  let normedG = g / 255;
+  let normedB = b / 255;
+  const l = Math.max(normedR, normedG, normedB);
+  const s = l - Math.min(normedR, normedG, normedB);
   const h = s
     ? l === r
-      ? (dg - db) / s
-      : l === dg
-      ? 2 + (db - dr) / s
-      : 4 + (dr - dg) / s
+      ? (normedG - normedB) / s
+      : l === normedG
+      ? 2 + (normedB - normedR) / s
+      : 4 + (normedR - normedG) / s
     : 0;
   return [
     60 * h < 0 ? 60 * h + 360 : 60 * h,

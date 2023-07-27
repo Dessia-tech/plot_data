@@ -1574,25 +1574,24 @@ export class BasePlot extends PlotData {
   }
 
   public updateAxes(): void {
-    const axisSelections = [];
+    const axesSelections = [];
     this.axes.forEach(axis => {
       axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-      if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
+      if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
     })
-    if (!this.is_in_multiplot) this.selectedIndices = BasePlot.intersectArrays(axisSelections);
+    if (!this.is_in_multiplot) this.selectedIndices = BasePlot.intersectArrays(axesSelections);
   }
 
-  public static intersectArrays(arrayList: any[][]): any[] {
-    let selectedIndices = []; 
-    if (arrayList.length > 1) {
-      selectedIndices = [...arrayList[0]];
-      arrayList[0].forEach(valIndex => {
-        arrayList.slice(1).forEach(axisSelection => {
-          if (axisSelection.indexOf(valIndex) == -1) selectedIndices.splice(selectedIndices.indexOf(valIndex), 1);
-        })
+  public static intersectArrays(arrays: any[][]): any[] {
+    if (arrays.length == 1) return arrays[0]
+    if (arrays.length == 0) return []
+    const arraysIntersection = [...arrays[0]];
+    arrays[0].forEach(value => {
+      arrays.slice(1).forEach(array => {
+        if (!array.includes(value)) arraysIntersection.splice(arraysIntersection.indexOf(value), 1);
       })
-    } else { selectedIndices = arrayList.length == 0 ? [] : arrayList[0] }
-    return selectedIndices
+    })
+    return arraysIntersection
   }
 
   public updateSize(): void { this.size = new Vertex(this.width, this.height) }
@@ -1616,7 +1615,7 @@ export class BasePlot extends PlotData {
   }
 
   public reset(): void {
-    this.axes.forEach(axis => axis.reset());
+    this.resetAxes();
     this.resetSelectors();
   }
 
@@ -1693,7 +1692,7 @@ export class BasePlot extends PlotData {
 
   public switchZoom(): void { this.isZooming = !this.isZooming }
 
-  public updateSelectionBox(frameDown: Vertex, frameLoc: Vertex): void { this.selectionBox.update(frameDown, frameLoc) }
+  public updateSelectionBox(frameDown: Vertex, frameMouse: Vertex): void { this.selectionBox.update(frameDown, frameMouse) }
 
   public get drawingZone(): [Vertex, Vertex] { return [new Vertex(this.X, this.Y), this.size] }
 
@@ -1771,8 +1770,8 @@ export class BasePlot extends PlotData {
     if (this.interaction_ON === true) {
       var clickedObject: any = null;
       var isDrawing = false;
-      var canvasMouse = new Vertex(0, 0); var canvasDown = new Vertex(0, 0); var mouseWheel = new Vertex(0, 0);
-      var frameMouse = new Vertex(0, 0); var frameDown = new Vertex(0, 0); var canvasWheel = new Vertex(0, 0);
+      var canvasMouse = new Vertex(0, 0); var canvasDown = new Vertex(0, 0);
+      var frameMouse = new Vertex(0, 0); var frameDown = new Vertex(0, 0);
       var absoluteMouse = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
@@ -1797,7 +1796,8 @@ export class BasePlot extends PlotData {
         if (this.isZooming) canvas.style.cursor = 'crosshair';
         if (this.interaction_ON) {
           if (isDrawing) {
-            if (clickedObject instanceof SelectionBox != true) { // TODO: BEURK !!!!
+            if (clickedObject instanceof SelectionBox) {
+            } else {
               if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting && !this.isZooming) {
                 canvas.style.cursor = 'move';
                 this.translation = this.mouseTranslate(canvasMouse, canvasDown);
@@ -1806,17 +1806,15 @@ export class BasePlot extends PlotData {
           }
           this.draw();
         }
-        if (this.isSelecting) {
-          if (isDrawing) {
+        if (isDrawing) {
+          if (this.isSelecting) {
             if (clickedObject instanceof SelectionBox) {
               clickedObject.mouseMove(frameDown, frameMouse);
               this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex);
             }
             else this.updateSelectionBox(frameDown, frameMouse);
           }
-        }
-        if (this.isZooming) {
-          if (isDrawing) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
+          if (this.isZooming) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
@@ -1824,8 +1822,7 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-        if (clickedObject instanceof newAxis || this.isSelecting) this.is_drawing_rubber_band = true
-        else this.is_drawing_rubber_band = false;
+        this.is_drawing_rubber_band = clickedObject instanceof newAxis || this.isSelecting;
         if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
       });
@@ -1839,7 +1836,7 @@ export class BasePlot extends PlotData {
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) clickedObject.mouseUp();
         if (this.isSelecting) this.selectionBox.mouseUp();
-        if (clickedObject instanceof SelectionBox != true && !shiftKey) this.isSelecting = false;
+        if (!(clickedObject instanceof SelectionBox || shiftKey)) this.isSelecting = false;
         if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
         clickedObject = null;
         this.draw();
@@ -2128,12 +2125,10 @@ export class Histogram extends Frame {
   }
 
   public unpackBarStyle(data: any): void {
-    if (data.surface_style) { if (data.surface_style.color_fill) this.fillStyle = data.surface_style.color_fill };
-    if (data.edge_style) {
-      if (data.edge_style.line_width) this.lineWidth = data.edge_style.line_width;
-      if (data.edge_style.color_stroke) this.strokeStyle = data.edge_style.color_stroke;
-      if (data.edge_style.dashline) this.dashLine = data.edge_style.dashline;
-    }
+    if (data.surface_style?.color_fill) this.fillStyle = data.surface_style.color_fill;
+    if (data.edge_style?.line_width) this.lineWidth = data.edge_style.line_width;
+    if (data.edge_style?.color_stroke) this.strokeStyle = data.edge_style.color_stroke;
+    if (data.edge_style?.dashline) this.dashLine = data.edge_style.dashline;
   }
 
   public reset(): void {
@@ -2211,9 +2206,9 @@ export class Histogram extends Frame {
       bar.strokeStyle = this.strokeStyle;
       bar.dashLine = this.dashLine;
       bar.lineWidth = this.lineWidth;
-      if (bar.values.some(valIdx => this.hoveredIndices.indexOf(valIdx) != -1)) bar.isHovered = true;
-      if (bar.values.some(valIdx => this.clickedIndices.indexOf(valIdx) != -1)) bar.isClicked = true;
-      if (bar.values.some(valIdx => this.selectedIndices.indexOf(valIdx) != -1)) bar.isSelected = true;
+      if (bar.values.some(valIdx => this.hoveredIndices.includes(valIdx))) bar.isHovered = true;
+      if (bar.values.some(valIdx => this.clickedIndices.includes(valIdx))) bar.isClicked = true;
+      if (bar.values.some(valIdx => this.selectedIndices.includes(valIdx))) bar.isSelected = true;
     })
   }
 
@@ -2296,13 +2291,11 @@ export class newScatter extends Frame {
   get sampleDrawings(): GroupCollection { return this.absoluteObjects }
 
   public unpackPointStyle(data: any): void {
-    if (data.point_style) {
-      if (data.point_style.color_fill) this.fillStyle = data.point_style.color_fill;
-      if (data.point_style.color_stroke) this.strokeStyle = data.point_style.color_stroke;
-      if (data.point_style.shape) this.marker = data.point_style.shape;
-      if (data.point_style.stroke_width) this.lineWidth = data.point_style.stroke_width;
-      if (data.point_style.size) this.pointSize = data.point_style.size;
-    }
+    if (data.point_style?.color_fill) this.fillStyle = data.point_style.color_fill;
+    if (data.point_style?.color_stroke) this.strokeStyle = data.point_style.color_stroke;
+    if (data.point_style?.shape) this.marker = data.point_style.shape;
+    if (data.point_style?.stroke_width) this.lineWidth = data.point_style.stroke_width;
+    if (data.point_style?.size) this.pointSize = data.point_style.size;
     if (data.tooltip) this.tooltipAttributes = data.tooltip.attributes;
     if (data.points_sets) this.unpackPointsSets(data);
   }
@@ -2340,11 +2333,12 @@ export class newScatter extends Frame {
       point.isHovered = point.isClicked = point.isSelected = false;
       point.values.forEach(index => {
         if (this.clusterColors) {
-          colors.set(this.clusterColors[index], colors.get(this.clusterColors[index]) ? colors.get(this.clusterColors[index]) + 1 : 1);
+          const currentColorCounter = this.clusterColors[index];
+          colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
         }
-        if (this.hoveredIndices.indexOf(index) != -1) point.isHovered = true;
-        if (this.clickedIndices.indexOf(index) != -1) point.isClicked = true;
-        if (this.selectedIndices.indexOf(index) != -1) point.isSelected = true;
+        if (this.hoveredIndices.includes(index)) point.isHovered = true;
+        if (this.clickedIndices.includes(index)) point.isClicked = true;
+        if (this.selectedIndices.includes(index)) point.isSelected = true;
       });
       if (colors.size != 0) color = mapMax(colors)[0]
       else {
@@ -2362,7 +2356,8 @@ export class newScatter extends Frame {
   private getPointSet(point: ScatterPoint): number {
     const pointSets = new Map<number, number>();
     point.values.forEach(pointIndex => {
-      pointSets.set(this.pointSets[pointIndex], pointSets.get(this.pointSets[pointIndex]) ? pointSets.get(this.pointSets[pointIndex]) + 1 : 1);
+      const currentPoint = this.pointSets[pointIndex];
+      pointSets.set(currentPoint, pointSets.get(currentPoint) ? pointSets.get(currentPoint) + 1 : 1);
     })
     if (pointSets.size > 1) pointSets.delete(-1);
     return mapMax(pointSets)[0]
@@ -2383,32 +2378,30 @@ export class newScatter extends Frame {
     const thresholdDist = 30;
     const [xCoords, yCoords, xValues, yValues] = this.projectPoints();
     let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
-    this.points = [];
-    mergedPoints.forEach(indexList => {
-      const newPoint = this.computePoint(indexList, xCoords, yCoords, xValues, yValues, this.pointSize, thresholdDist);
-      this.points.push(newPoint);
-    })
+    this.points = mergedPoints.map(indexList => { 
+      return this.computePoint(indexList, xCoords, yCoords, xValues, yValues, this.pointSize, thresholdDist)
+    });
   }
 
-  private computePoint(indexList: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
+  private computePoint(indices: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
     minSize: number, thresholdDist: number): ScatterPoint {
       let centerX = 0;
       let centerY = 0;
       let meanX = 0;
       let meanY = 0;
       let newPoint = new ScatterPoint([], 0, 0, minSize, this.marker);
-      indexList.forEach(index => {
+      indices.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];
         meanX += xValues[index];
         meanY += yValues[index];
         newPoint.values.push(index);
       });
-      newPoint.center.x = centerX / indexList.length;
-      newPoint.center.y = centerY / indexList.length;
-      newPoint.size = Math.min(newPoint.size * 1.15**(indexList.length - 1), thresholdDist);
-      newPoint.mean.x = meanX / indexList.length;
-      newPoint.mean.y = meanY / indexList.length;
+      newPoint.center.x = centerX / indices.length;
+      newPoint.center.y = centerY / indices.length;
+      newPoint.size = Math.min(newPoint.size * 1.15**(indices.length - 1), thresholdDist);
+      newPoint.mean.x = meanX / indices.length;
+      newPoint.mean.y = meanY / indices.length;
       newPoint.updateTooltipMap();
       if (newPoint.values.length == 1) {
         newPoint.newTooltipMap();
@@ -2426,28 +2419,36 @@ export class newScatter extends Frame {
   private mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
     if (!this.isMerged) return [...Array(xCoords.length).keys()].map(x => [x]);
     const squareDistances = this.distanceMatrix(xCoords, yCoords);
-    const squaredDist = minDistance**2;
+    const threshold = minDistance**2;
     const mergedPoints = [];
-    const indexLists = new Array(squareDistances.length).fill([]);
+    const pointGroups = new Array(squareDistances.length).fill([]);
     const closedPoints = new Array(squareDistances.length).fill(0);
     const pickedPoints = new Array(squareDistances.length).fill(false);
-    squareDistances.forEach((squareDistance, pIndex) => {
-      const newList = []
+    squareDistances.forEach((squareDistance, pointIndex) => {
+      const pointGroup = []
       let nPoints = 0;
-      squareDistance.forEach((distance, dIndex) => { if (distance <= squaredDist) { nPoints++ ; newList.push(dIndex) }});
-      closedPoints[pIndex] = nPoints;
-      indexLists[pIndex] = newList;
+      squareDistance.forEach((distance, otherIndex) => {
+        if (distance <= threshold) {
+          nPoints++;
+          pointGroup.push(otherIndex);
+        }
+      });
+      closedPoints[pointIndex] = nPoints;
+      pointGroups[pointIndex] = pointGroup;
     })
 
     while (sum(closedPoints) != 0) {
       const centerIndex = argMax(closedPoints)[1];
-      const newCluster = [];
+      const cluster = [];
       closedPoints[centerIndex] = 0;
-      indexLists[centerIndex].forEach(index => {
-        if (!pickedPoints[index]) { newCluster.push(index); pickedPoints[index] = true };
+      pointGroups[centerIndex].forEach(index => {
+        if (!pickedPoints[index]) {
+          cluster.push(index); 
+          pickedPoints[index] = true
+        }
         closedPoints[index] = 0;
       })
-      mergedPoints.push(newCluster);
+      mergedPoints.push(cluster);
     }
     return mergedPoints
   }
@@ -2472,10 +2473,10 @@ export class newScatter extends Frame {
   private distanceMatrix(xCoords: number[], yCoords: number[]): number[][] {
     let squareDistances = new Array(xCoords.length);
     for (let i = 0; i < xCoords.length; i++) {
-      if (squareDistances[i] == undefined) squareDistances[i] = new Array(xCoords.length);
+      if (!squareDistances[i]) squareDistances[i] = new Array(xCoords.length);
       for (let j = i; j < xCoords.length; j++) {
         squareDistances[i][j] = (xCoords[i] - xCoords[j])**2 + (yCoords[i] - yCoords[j])**2;
-        if (squareDistances[j] == undefined) squareDistances[j] = new Array(xCoords.length);
+        if (!squareDistances[j]) squareDistances[j] = new Array(xCoords.length);
         squareDistances[j][i] = squareDistances[i][j];
       }
     }
@@ -2484,12 +2485,12 @@ export class newScatter extends Frame {
 
   private agglomerativeClustering(xValues: number[], yValues: number[], minDistance: number = 0.25): number[][] {
     const squareDistances = this.distanceMatrix(xValues, yValues);
-    const squaredDist = minDistance**2;
+    const threshold = minDistance**2;
     let clusteredPoints = [];
     squareDistances.forEach(distances => {
-      let newCluster = [];
-      distances.forEach((distance, col) => { if (distance <= squaredDist) newCluster.push(col) });
-      clusteredPoints.push(newCluster);
+      let cluster = [];
+      distances.forEach((distance, col) => { if (distance <= threshold) cluster.push(col) });
+      clusteredPoints.push(cluster);
     })
 
     let clusters = [];
@@ -2520,7 +2521,7 @@ export class newScatter extends Frame {
   public simpleCluster(inputValue: number): void { this.computeClusterColors(inputValue); this.draw() }
 
   public resetClusters(): void {
-    this.clusterColors = undefined;
+    this.clusterColors = null;
     const defaultPoint = new ScatterPoint([]);
     this.points.forEach(point => point.setColors(defaultPoint.fillStyle));
     this.draw();

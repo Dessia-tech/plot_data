@@ -144,7 +144,9 @@ export class MultiplePlots {
 
     public initPointSets(data: any) {
       if (data.point_families) {
-        data.point_families.forEach(pointFamily => this.point_families.push(new PointFamily(colorHsl(pointFamily.color), pointFamily.point_index, '')));
+        this.point_families = data.point_families.map(
+          pointFamily => new PointFamily(colorHsl(pointFamily.color), pointFamily.point_index, '')
+       )
       }
     }
 
@@ -597,10 +599,9 @@ export class MultiplePlots {
             plot.hoveredIndices = [...this.hoveredIndices];
             if (plot instanceof Frame) {
               if (this.point_families.length != 0) {
-                plot.pointSetColors = [];
-                this.point_families.forEach((pointFamily, familyIdx) => {
+                plot.pointSetColors = this.point_families.map((pointFamily, familyIdx) => {
                   pointFamily.pointIndices.forEach(pointIdx => plot.pointSets[pointIdx] = familyIdx);
-                  plot.pointSetColors.push(pointFamily.color);
+                  return pointFamily.color
                 })
               }
             }
@@ -611,7 +612,7 @@ export class MultiplePlots {
           plot.draw();
         }
       })
-      if (this.buttons_ON) { this.draw_buttons() };
+      if (this.buttons_ON) this.draw_buttons();
     }
 
     redraw_object() {
@@ -868,7 +869,7 @@ export class MultiplePlots {
       }
     }
 
-    refresh_selectedIndices() {
+    refreshSelectedIndices() {
       var all_index = [];
       this.selectedIndices = [];
       for (let i=0; i<this.data['elements'].length; i++) {
@@ -1279,7 +1280,7 @@ export class MultiplePlots {
 
     pp_communication(rubberBands: RubberBand[], currentPP: any) { // process received data from a parallelplot and send it to the other objects
       const selectedIndices = currentPP.getObjectsInRubberBands(rubberBands);
-      this.refresh_selectedIndices();
+      this.refreshSelectedIndices();
       let rubberBandNames = [];
       rubberBands.forEach((rubberBand) => rubberBandNames.push(rubberBand.attributeName));
 
@@ -1410,7 +1411,7 @@ export class MultiplePlots {
           MultiplotCom.frame_to_frame_communication(frame as Frame, plot as Frame);
         }
       })
-      this.refresh_selectedIndices();
+      this.refreshSelectedIndices();
       this.refresh_selected_object_from_index();
     }
 
@@ -1851,7 +1852,10 @@ export class MultiplePlots {
       this.setAllInteractionsToOff();
 
       window.addEventListener('keydown', e => {
-        if (e.key == "Control") {ctrlKey = true}
+        if (e.key == "Control") {
+          ctrlKey = true;
+          this.canvas.style.cursor = 'default';
+        }
         if (e.key == "Shift") {
           shiftKey = true;
           if (!ctrlKey) { this.isSelecting = true; this.canvas.style.cursor = 'crosshair'; this.redrawAllObjects() }

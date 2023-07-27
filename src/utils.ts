@@ -1,5 +1,5 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
-import { string_to_rgb, colorHex, color_to_string, isHex, isRgb, string_to_hex, rgb_to_string, arrayRgbToHsl, rgbToArray, hslToArray } from "./color_conversion";
+import { string_to_rgb, colorHex, color_to_string, isHex, isRgb, string_to_hex, rgb_to_string, hslToArray, colorHsl } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
 
@@ -1892,18 +1892,8 @@ export class newPoint2D extends newShape {
     this.lineWidth = 1;
   };
 
-  public getFillStyleHSL(fillStyle: string): [number, number, number] {
-    if (fillStyle.includes("rgb")) return arrayRgbToHsl(...rgbToArray(fillStyle));
-    return hslToArray(fillStyle)
-  }
-
-  public getFillStyleRGB(fillStyle: string): [number, number, number] {
-    let [r, g, b] = fillStyle.split(',');
-    return [Number(r.split('rgb(')[1]), Number(g), Number(b.split(")")[0])]
-  }
-
   public setStrokeStyle(fillStyle: string): string {
-    const [h, s, l] = this.getFillStyleHSL(fillStyle);
+    const [h, s, l] = hslToArray(colorHsl(fillStyle));
     const lValue = l <= STROKE_STYLE_OFFSET ? l + STROKE_STYLE_OFFSET : l - STROKE_STYLE_OFFSET;
     return `hsl(${h}, ${s}%, ${lValue}%)`;
   }
@@ -2430,6 +2420,11 @@ export class newAxis extends EventEmitter {
   public reset(): void {
     this.rubberBand.reset();
     this.resetScale();
+  }
+
+  public update(axisStyle: Map<string, any>, viewPoint: Vertex, scale: Vertex, translation: Vertex): void {
+    axisStyle.forEach((value, key) => this[key] = value);
+    this.updateScale(viewPoint, scale, translation);
   }
 
   public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }

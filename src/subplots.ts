@@ -3,7 +3,7 @@ import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeO
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl, color } from "./color_conversion";
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
 
 var alert_count = 0;
@@ -1549,16 +1549,10 @@ export class BasePlot extends PlotData {
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
   public unpackAxisStyle(data:any): void {
-    if (data.axis) {
-      if (data.axis.axis_style) {
-        if (data.axis.axis_style.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
-        if (data.axis.axis_style.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
-      }
-      if (data.axis.graduation_style) {
-        if (data.axis.graduation_style.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
-        if (data.axis.graduation_style.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
-      }
-    }
+    if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
+    if (data.axis?.axis_style?.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
+    if (data.axis?.graduation_style?.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
+    if (data.axis?.graduation_style?.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
   }
 
   private unpackData(data: any): Map<string, any[]> {
@@ -1582,20 +1576,23 @@ export class BasePlot extends PlotData {
   public updateAxes(): void {
     const axisSelections = [];
     this.axes.forEach(axis => {
-      this.axisStyle.forEach((value, key) => axis[key] = value);
-      axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+      axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
       if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
     })
-    if (!this.is_in_multiplot) {
-      if (axisSelections.length > 1) {
-        this.selectedIndices = [...axisSelections[0]];
-        axisSelections[0].forEach(valIndex => {
-          axisSelections.slice(1).forEach(axisSelection => {
-            if (axisSelection.indexOf(valIndex) == -1) this.selectedIndices.splice(this.selectedIndices.indexOf(valIndex), 1)
-          })
+    if (!this.is_in_multiplot) this.selectedIndices = BasePlot.intersectArrays(axisSelections);
+  }
+
+  public static intersectArrays(arrayList: any[][]): any[] {
+    let selectedIndices = []; 
+    if (arrayList.length > 1) {
+      selectedIndices = [...arrayList[0]];
+      arrayList[0].forEach(valIndex => {
+        arrayList.slice(1).forEach(axisSelection => {
+          if (axisSelection.indexOf(valIndex) == -1) selectedIndices.splice(selectedIndices.indexOf(valIndex), 1);
         })
-      } else { this.selectedIndices = axisSelections.length == 0 ? [] : axisSelections[0] }
-    }
+      })
+    } else { selectedIndices = arrayList.length == 0 ? [] : arrayList[0] }
+    return selectedIndices
   }
 
   public updateSize(): void { this.size = new Vertex(this.width, this.height) }
@@ -2277,8 +2274,8 @@ export class newScatter extends Frame {
   public clusterColors: string[];
   public previousCoords: Vertex[];
 
-  readonly pointsColorFill: color = 'hsl(203, 90%, 85%)';
-  readonly pointsColorStroke: color = 'hsl(0, 0%, 0%)';
+  readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
+  readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(
     data: any,
     public width: number,
@@ -2352,7 +2349,7 @@ export class newScatter extends Frame {
       if (colors.size != 0) color = mapMax(colors)[0]
       else {
         const pointsSetIndex = this.getPointSet(point);
-        if (pointsSetIndex != -1) color = colorHsl(this.pointSetColors[pointsSetIndex] as color);
+        if (pointsSetIndex != -1) color = colorHsl(this.pointSetColors[pointsSetIndex]);
       };
       point.lineWidth = this.lineWidth;
       point.setColors(color);

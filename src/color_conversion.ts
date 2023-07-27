@@ -186,7 +186,7 @@ export function isHex(str:string):boolean {
 type hslColor =`hsl(${number},${number}%,${number}%)`;
 type rgbColor =`rgb(${number},${number},${number})`;
 type hexColor =`#${number | string}${number | string}${number | string}`;
-export type color = hslColor | rgbColor | hexColor;
+type color = hslColor | rgbColor | hexColor;
 
 export function arrayRgbToHsl(r: number, g: number, b: number): [number, number, number] {
   // HSL and RGB theory https://www.rapidtables.com/convert/color/rgb-to-hsl.html
@@ -218,12 +218,12 @@ export function arrayHslToRgb(h: number, s: number, l: number): [number, number,
   return [255 * f(0), 255 * f(8), 255 * f(4)];
 }
 
-export function hslToArray(hslColor: hslColor): [number, number, number] {
+export function hslToArray(hslColor: string): [number, number, number] {
   let [h, s, l] = hslColor.split(',');
   return [Number(h.split('hsl(')[1]), Number(s.split('%')[0]), Number(l.split('%')[0])]
 }
 
-export function rgbToArray(rgbColor: rgbColor): [number, number, number] {
+export function rgbToArray(rgbColor: string): [number, number, number] {
   // format: `rgb(${r},${g},${b})`
   let [r, g, b] = rgbColor.split(',');
   return [Number(r.split('rgb(')[1]), Number(g), Number(b.split(")")[0])]
@@ -235,17 +235,17 @@ function componentToHex(component: number): string {
   return hex.length == 1 ? "0" + hex : hex;
 }
 
-export function arrayRgbToHex(r: number, g: number, b: number): hexColor {
+export function arrayRgbToHex(r: number, g: number, b: number): string {
   // RGB and HEX theory: https://www.rapidtables.com/convert/color/hex-to-rgb.html
-  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b) as hexColor;
+  return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
-export function arrayHexToRgb(hexColor: hexColor): [number, number, number] {
+export function arrayHexToRgb(hexColor: string): [number, number, number] {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColor);
   return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : null
 }
 
-export function arrayHslToHex(h: number, s: number, l: number): hexColor {
+export function arrayHslToHex(h: number, s: number, l: number): string {
   // https://docs.aspose.com/html/net/tutorial/html-colors/
   l /= 100;
   const a = s * Math.min(l, 1 - l) / 100;
@@ -257,41 +257,41 @@ export function arrayHslToHex(h: number, s: number, l: number): hexColor {
   return `#${f(0)}${f(8)}${f(4)}`;
 }
 
-export function arrayHexToHsl(hexColor: hexColor): [number, number, number] { return arrayRgbToHsl(...arrayHexToRgb(hexColor)) }
+export function arrayHexToHsl(hexColor: string): [number, number, number] { return arrayRgbToHsl(...arrayHexToRgb(hexColor)) }
 
-export function rgbToString(r: number, g: number, b: number): rgbColor { return `rgb(${r},${g},${b})` }
+export function rgbToString(r: number, g: number, b: number): string { return `rgb(${r},${g},${b})` }
 
-export function hslToString(h: number, s: number, l: number): hslColor { return `hsl(${h},${s}%,${l}%)` }
+export function hslToString(h: number, s: number, l: number): string { return `hsl(${h},${s}%,${l}%)` }
 
-export function hslToRgb(hslColor: hslColor): rgbColor { return rgbToString(...arrayHslToRgb(...hslToArray(hslColor))) }
+export function hslToRgb(hslColor: string): string { return rgbToString(...arrayHslToRgb(...hslToArray(hslColor))) }
 
-export function rgbToHsl(rgbColor: rgbColor): hslColor { return hslToString(...arrayRgbToHsl(...rgbToArray(rgbColor))) }
+export function rgbToHsl(rgbColor: string): string { return hslToString(...arrayRgbToHsl(...rgbToArray(rgbColor))) }
 
-export function rgbToHex(rgbColor: rgbColor): hexColor { return arrayRgbToHex(...rgbToArray(rgbColor)) }
+export function rgbToHex(rgbColor: string): string { return arrayRgbToHex(...rgbToArray(rgbColor)) }
 
-export function hexToRgb(hexColor: hexColor): rgbColor { return rgbToString(...arrayHexToRgb(hexColor)) }
+export function hexToRgb(hexColor: string): string { return rgbToString(...arrayHexToRgb(hexColor)) }
 
-export function hexToHsl(hexColor: hexColor): hslColor { return hslToString(...arrayHexToHsl(hexColor)) }
+export function hexToHsl(hexColor: string): string { return hslToString(...arrayHexToHsl(hexColor)) }
 
-export function hslToHex(hslColor: hslColor): hexColor { return arrayHslToHex(...hslToArray(hslColor)) }
+export function hslToHex(hslColor: string): string { return arrayHslToHex(...hslToArray(hslColor)) }
 
-export function colorHsl(color: hexColor | hslColor | rgbColor): hslColor {
-  if (color.includes('hsl')) return color as hslColor;
-  if (color.includes('rgb')) return rgbToHsl(color as rgbColor);
-  if (color.includes('#')) return hexToHsl(color as hexColor);
+export function colorHsl(color: string): string {
+  if (color.includes('hsl')) return color;
+  if (color.includes('rgb')) return rgbToHsl(color);
+  if (color.includes('#')) return hexToHsl(color);
   throw new Error(`${color} is not a color.`)
 }
 
 export function colorHex(color: string): string {
-  if (color.includes('#')) return color as hexColor;
-  if (color.includes('hsl')) return hslToHex(color as hslColor);
-  if (color.includes('rgb')) return rgbToHex(color as rgbColor);
+  if (color.includes('#')) return color ;
+  if (color.includes('hsl')) return hslToHex(color);
+  if (color.includes('rgb')) return rgbToHex(color);
   throw new Error(`${color} is not a color.`)
 }
 
 export function colorRgb(color: string): string {
-  if (color.includes('rgb')) return color as rgbColor;
-  if (color.includes('hsl')) return hslToRgb(color as hslColor);
-  if (color.includes('#')) return hexToRgb(color as hexColor);
+  if (color.includes('rgb')) return color;
+  if (color.includes('hsl')) return hslToRgb(color);
+  if (color.includes('#')) return hexToRgb(color);
   throw new Error(`${color} is not a color.`)
 }

@@ -3,7 +3,7 @@ import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeO
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHEX, colorHSL } from "./color_conversion";
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
 
 var alert_count = 0;
@@ -389,7 +389,7 @@ export class ParallelPlot extends PlotData {
     initialize_hexs() {
       this.hexs = [];
       this.interpolation_colors.forEach(rgb => {
-        this.hexs.push(colorHEX(rgb));
+        this.hexs.push(colorHex(rgb));
       });
     }
 
@@ -2352,7 +2352,7 @@ export class newScatter extends Frame {
       if (colors.size != 0) color = mapMax(colors)[0]
       else {
         const pointsSetIndex = this.getPointSet(point);
-        if (pointsSetIndex != -1) color = colorHSL(this.pointSetColors[pointsSetIndex]);
+        if (pointsSetIndex != -1) color = colorHsl(this.pointSetColors[pointsSetIndex]);
       };
       point.lineWidth = this.lineWidth;
       point.setColors(color);

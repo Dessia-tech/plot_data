@@ -3,7 +3,7 @@ import {Point2D} from './primitives';
 import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, BasePlot } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
-import { string_to_hex, string_to_rgb, rgb_to_string, colorHSL } from './color_conversion';
+import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
 
 var multiplot_saves:MultiplePlots[]=[];
 var current_save:number=0;
@@ -144,7 +144,7 @@ export class MultiplePlots {
 
     public initPointSets(data: any) {
       if (data.point_families) {
-        data.point_families.forEach(pointFamily => this.point_families.push(new PointFamily(colorHSL(pointFamily.color), pointFamily.point_index, '')));
+        data.point_families.forEach(pointFamily => this.point_families.push(new PointFamily(colorHsl(pointFamily.color), pointFamily.point_index, '')));
       }
     }
 
@@ -708,7 +708,7 @@ export class MultiplePlots {
     }
 
     add_point_family(point_family:PointFamily): void {
-      this.point_families.push(new PointFamily(colorHSL(point_family.color), point_family.pointIndices, point_family.name));
+      this.point_families.push(new PointFamily(colorHsl(point_family.color), point_family.pointIndices, point_family.name));
       var point_index = point_family.pointIndices;
       for (let i=0; i<this.nbObjects; i++) {
         if (this.objectList[i].type_ == 'scatterplot') {

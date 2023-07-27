@@ -1,5 +1,5 @@
 import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
-import { string_to_rgb, colorHEX, color_to_string, isHex, isRGB, string_to_hex, rgb_to_string, arrayRGBToHSL, RGBToArray, HSLToArray } from "./color_conversion";
+import { string_to_rgb, colorHex, color_to_string, isHex, isRgb, string_to_hex, rgb_to_string, arrayRgbToHsl, rgbToArray, hslToArray } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
 
@@ -400,7 +400,7 @@ export class PointFamily {
     public name: string) { }
 
   public static deserialize(serialized) {
-    return new PointFamily(colorHEX(serialized['color']),
+    return new PointFamily(colorHex(serialized['color']),
       serialized['point_index'],
       serialized['name']);
   }
@@ -985,7 +985,7 @@ export function TypeOf(element: any): string {
   if (type_ == 'number') {
     return 'float';
   } else if (type_ == 'string') {
-    if (isHex(element) || isRGB(element)) {
+    if (isHex(element) || isRgb(element)) {
       return 'color';
     }
   }
@@ -1893,8 +1893,8 @@ export class newPoint2D extends newShape {
   };
 
   public getFillStyleHSL(fillStyle: string): [number, number, number] {
-    if (fillStyle.includes("rgb")) return arrayRGBToHSL(...RGBToArray(fillStyle));
-    return HSLToArray(fillStyle)
+    if (fillStyle.includes("rgb")) return arrayRgbToHsl(...rgbToArray(fillStyle));
+    return hslToArray(fillStyle)
   }
 
   public getFillStyleRGB(fillStyle: string): [number, number, number] {

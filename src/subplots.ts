@@ -3,7 +3,7 @@ import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeO
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl } from "./color_conversion";
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl, color } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
 
 var alert_count = 0;
@@ -1979,11 +1979,11 @@ export class Frame extends BasePlot {
 
   get relativeMatrix(): DOMMatrix { return this.canvasMatrix.multiply(this.frameMatrix) }
 
-  get nXTicks(): number { return this._nXTicks ? this._nXTicks : 10 }
+  get nXTicks(): number { return this._nXTicks ?? 10 }
 
   set nXTicks(value: number) { this._nXTicks = value }
 
-  get nYTicks(): number { return this._nYTicks ? this._nYTicks : 10 }
+  get nYTicks(): number { return this._nYTicks ?? 10 }
 
   set nYTicks(value: number) { this._nYTicks = value }
 
@@ -2277,8 +2277,8 @@ export class newScatter extends Frame {
   public clusterColors: string[];
   public previousCoords: Vertex[];
 
-  readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
-  readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
+  readonly pointsColorFill: color = 'hsl(203, 90%, 85%)';
+  readonly pointsColorStroke: color = 'hsl(0, 0%, 0%)';
   constructor(
     data: any,
     public width: number,
@@ -2352,7 +2352,7 @@ export class newScatter extends Frame {
       if (colors.size != 0) color = mapMax(colors)[0]
       else {
         const pointsSetIndex = this.getPointSet(point);
-        if (pointsSetIndex != -1) color = colorHsl(this.pointSetColors[pointsSetIndex]);
+        if (pointsSetIndex != -1) color = colorHsl(this.pointSetColors[pointsSetIndex] as color);
       };
       point.lineWidth = this.lineWidth;
       point.setColors(color);

@@ -189,6 +189,7 @@ type hexColor =`#${number | string}${number | string}${number | string}`;
 type color = hslColor | rgbColor | hexColor;
 
 export function arrayRgbToHsl(r: number, g: number, b: number): [number, number, number] {
+  // Get [h,s,l] array of HSL color from [r,g,b] array from a RGB color array.
   // HSL and RGB theory https://www.rapidtables.com/convert/color/rgb-to-hsl.html
   let normedR = r / 255;
   let normedG = g / 255;
@@ -209,43 +210,49 @@ export function arrayRgbToHsl(r: number, g: number, b: number): [number, number,
 };
 
 export function arrayHslToRgb(h: number, s: number, l: number): [number, number, number] {
-  // HSL and RGB theory: https://www.rapidtables.com/convert/color/rgb-to-hsl.html
+  // Get [r,g,b] array of RGB color from [h,s,l] array from a HSL color array.
+  // Nice code from the Internet to compute these formulas: https://www.rapidtables.com/convert/color/hsl-to-rgb.html
   s /= 100;
   l /= 100;
   const k = n => (n + h / 30) % 12;
   const a = s * Math.min(l, 1 - l);
-  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); // 
   return [255 * f(0), 255 * f(8), 255 * f(4)];
 }
 
 export function hslToArray(hslColor: string): [number, number, number] {
+  // Get [h,s,l] array from a HSL color (format: hsl(h,s%,l%)).
   let [h, s, l] = hslColor.split(',');
   return [Number(h.split('hsl(')[1]), Number(s.split('%')[0]), Number(l.split('%')[0])]
 }
 
 export function rgbToArray(rgbColor: string): [number, number, number] {
-  // format: `rgb(${r},${g},${b})`
+  // Get [r,g,b] array from a RGB color (format: rgb(r,g,b)).
   let [r, g, b] = rgbColor.split(',');
   return [Number(r.split('rgb(')[1]), Number(g), Number(b.split(")")[0])]
 }
 
 function componentToHex(component: number): string {
+  // Get hexadecimal code of a rgb component.
   // RGB and HEX theory: https://www.rapidtables.com/convert/color/hex-to-rgb.html
   var hex = component.toString(16);
   return hex.length == 1 ? "0" + hex : hex;
 }
 
 export function arrayRgbToHex(r: number, g: number, b: number): string {
+  // Get a Hexadecimal color (format: #RRGGBB with RR, GG, BB in hexadecimal format) from RGB color (rgb(r,g,b)) vector.
   // RGB and HEX theory: https://www.rapidtables.com/convert/color/hex-to-rgb.html
   return "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
 }
 
 export function arrayHexToRgb(hexColor: string): [number, number, number] {
+  // Get RGB color (rgb(r,g,b)) vector from a Hexadecimal color (format: #RRGGBB with RR, GG, BB in hexadecimal format).
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hexColor);
   return result ? [parseInt(result[1], 16), parseInt(result[2], 16), parseInt(result[3], 16)] : null
 }
 
 export function arrayHslToHex(h: number, s: number, l: number): string {
+  // Get a Hexadecimal color (format: #RRGGBB with RR, GG, BB in hexadecimal format) from HSL color (hsl(h,s%,l%)) vector.
   // https://docs.aspose.com/html/net/tutorial/html-colors/
   l /= 100;
   const a = s * Math.min(l, 1 - l) / 100;

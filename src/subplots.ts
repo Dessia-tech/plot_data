@@ -1796,8 +1796,7 @@ export class BasePlot extends PlotData {
         if (this.isZooming) canvas.style.cursor = 'crosshair';
         if (this.interaction_ON) {
           if (isDrawing) {
-            if (clickedObject instanceof SelectionBox) {
-            } else {
+            if ( !(clickedObject instanceof SelectionBox) ) {
               if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting && !this.isZooming) {
                 canvas.style.cursor = 'move';
                 this.translation = this.mouseTranslate(canvasMouse, canvasDown);
@@ -1836,7 +1835,7 @@ export class BasePlot extends PlotData {
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) clickedObject.mouseUp();
         if (this.isSelecting) this.selectionBox.mouseUp();
-        if (!(clickedObject instanceof SelectionBox || shiftKey)) this.isSelecting = false;
+        if ( !(clickedObject instanceof SelectionBox || shiftKey) ) this.isSelecting = false;
         if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
         clickedObject = null;
         this.draw();
@@ -2349,7 +2348,7 @@ export class newScatter extends Frame {
       point.setColors(color);
       point.marker = this.marker;
       point.update();
-      if (point.isInFrame(this.axes[0], this.axes[1]))       {console.log(point.fillStyle);point.draw(context);}
+      if (point.isInFrame(this.axes[0], this.axes[1])) point.draw(context);
     })
   }
 
@@ -2389,7 +2388,7 @@ export class newScatter extends Frame {
       let centerY = 0;
       let meanX = 0;
       let meanY = 0;
-      let newPoint = new ScatterPoint([], 0, 0, minSize, this.marker);
+      const newPoint = new ScatterPoint([], 0, 0, minSize, this.marker);
       indices.forEach(index => {
         centerX += xCoords[index];
         centerY += yCoords[index];
@@ -2421,7 +2420,7 @@ export class newScatter extends Frame {
     const squareDistances = this.distanceMatrix(xCoords, yCoords);
     const threshold = minDistance**2;
     const mergedPoints = [];
-    const pointGroups = new Array(squareDistances.length).fill([]);
+    const pointsGroups = new Array(squareDistances.length).fill([]);
     const closedPoints = new Array(squareDistances.length).fill(0);
     const pickedPoints = new Array(squareDistances.length).fill(false);
     squareDistances.forEach((squareDistance, pointIndex) => {
@@ -2434,14 +2433,14 @@ export class newScatter extends Frame {
         }
       });
       closedPoints[pointIndex] = nPoints;
-      pointGroups[pointIndex] = pointGroup;
+      pointsGroups[pointIndex] = pointGroup;
     })
 
     while (sum(closedPoints) != 0) {
       const centerIndex = argMax(closedPoints)[1];
       const cluster = [];
       closedPoints[centerIndex] = 0;
-      pointGroups[centerIndex].forEach(index => {
+      pointsGroups[centerIndex].forEach(index => {
         if (!pickedPoints[index]) {
           cluster.push(index); 
           pickedPoints[index] = true
@@ -2486,11 +2485,11 @@ export class newScatter extends Frame {
   private agglomerativeClustering(xValues: number[], yValues: number[], minDistance: number = 0.25): number[][] {
     const squareDistances = this.distanceMatrix(xValues, yValues);
     const threshold = minDistance**2;
-    let clusteredPoints = [];
+    let pointsGroups = [];
     squareDistances.forEach(distances => {
-      let cluster = [];
-      distances.forEach((distance, col) => { if (distance <= threshold) cluster.push(col) });
-      clusteredPoints.push(cluster);
+      let pointsGroup = [];
+      distances.forEach((distance, col) => { if (distance <= threshold) pointsGroup.push(col) });
+      pointsGroups.push(pointsGroup);
     })
 
     let clusters = [];
@@ -2498,8 +2497,8 @@ export class newScatter extends Frame {
     let maxIter = 0;
     while (nClusters != clusters.length && maxIter < 100) {
       nClusters = clusters.length;
-      clusters = [clusteredPoints[0]];
-      clusteredPoints.slice(1).forEach(candidate => {
+      clusters = [pointsGroups[0]];
+      pointsGroups.slice(1).forEach(candidate => {
         let isCluster = true;
         clusters.forEach((cluster, clusterIndex) => {
           for (let i=0; i < candidate.length; i++) {
@@ -2512,7 +2511,7 @@ export class newScatter extends Frame {
         })
         if (isCluster) clusters.push(candidate);
       })
-      clusteredPoints = new Array(...clusters);
+      pointsGroups = new Array(...clusters);
       maxIter++;
     }
     return clusters
@@ -2532,12 +2531,12 @@ export class newScatter extends Frame {
     const yValues = [...this.axes[1].stringsToValues(this.features.get(this.yFeature))];
     const scaledX = normalizeArray(xValues);
     const scaledY = normalizeArray(yValues);
-    const clusteredPoints = this.agglomerativeClustering(scaledX, scaledY, normedDistance);
+    const clusters = this.agglomerativeClustering(scaledX, scaledY, normedDistance);
 
-    const colorRatio: number = 360 / clusteredPoints.length;
+    const colorRatio: number = 360 / clusters.length;
     this.clusterColors = new Array(xValues.length);
     let colorRadius: number = 0;
-    clusteredPoints.forEach(cluster => {
+    clusters.forEach(cluster => {
       colorRadius += colorRatio;
       cluster.forEach(point => this.clusterColors[point] = `hsl(${colorRadius}, 50%, 50%, 90%)`);
     })
@@ -2553,6 +2552,7 @@ export class newScatter extends Frame {
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
     let [superCanvasMouse, superFrameMouse, clickedObject] = super.mouseDown(canvasMouse, frameMouse, absoluteMouse);
     this.previousCoords = Array.from(this.points, point => point.center);
+    this.previousCoords = this.points.map(p => p.center)
     return [superCanvasMouse, superFrameMouse, clickedObject]
   }
 

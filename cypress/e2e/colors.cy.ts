@@ -29,7 +29,6 @@ describe('COLORS CONVERSION', function () {
 
         const stringRgb2 = colors.rgbToString(rgb2[0], rgb2[1], rgb2[2]);
         const convertedRgb2 = colors.hslToArray(colors.colorHsl(stringRgb2));
-        console.log(colors.rgbToHsl(stringRgb2))
         expect(convertedRgb2[0]).to.closeTo(hsl2[0], 1);
         expect(convertedRgb2[1]).to.closeTo(hsl2[1], 1);
         expect(convertedRgb2[2]).to.closeTo(hsl2[2], 1);

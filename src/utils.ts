@@ -1393,7 +1393,7 @@ export class newShape {
     }
   }
 
-  public buildPath(): Path2D { return new Path2D() }
+  public buildPath(): void {}
 
   public mouseDown(mouseDown: Vertex) { }
 
@@ -1429,11 +1429,9 @@ export class newRect extends newShape {
 
   get area(): number { return this.size.x * this.size.y }
 
-  public buildPath(): Path2D {
-    const path = new Path2D();
-    path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
-    this.path = path;
-    return path
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
   }
 }
 
@@ -1444,26 +1442,24 @@ export class newRoundRect extends newRect {
     public radius: number = 2
     ) {
       super();
-      this.path = this.buildPath();
+      this.buildPath();
     }
 
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const hLength = this.origin.x + this.size.x;
     const vLength = this.origin.y + this.size.y;
-    path.moveTo(this.origin.x + this.radius, this.origin.y);
-    path.lineTo(hLength - this.radius, this.origin.y);
+    this.path.moveTo(this.origin.x + this.radius, this.origin.y);
+    this.path.lineTo(hLength - this.radius, this.origin.y);
 
-    path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
+    this.path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
 
-    path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
-    path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
-    path.lineTo(this.origin.x + this.radius, vLength);
-    path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
-    path.lineTo(this.origin.x, this.origin.y + this.radius);
-    path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
-    this.path = path;
-    return path
+    this.path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
+    this.path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
+    this.path.lineTo(this.origin.x + this.radius, vLength);
+    this.path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
+    this.path.lineTo(this.origin.x, this.origin.y + this.radius);
+    this.path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
   }
 }
 
@@ -1473,18 +1469,16 @@ export class Mark extends newShape {
     public size: number = 1
   ) {
     super();
-    this.path = this.buildPath();
+    this.buildPath();
   }
 
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x - halfSize, this.center.y);
-    path.lineTo(this.center.x + halfSize, this.center.y);
-    path.moveTo(this.center.x, this.center.y - halfSize);
-    path.lineTo(this.center.x, this.center.y + halfSize);
-    this.path = path;
-    return path
+    this.path.moveTo(this.center.x - halfSize, this.center.y);
+    this.path.lineTo(this.center.x + halfSize, this.center.y);
+    this.path.moveTo(this.center.x, this.center.y - halfSize);
+    this.path.lineTo(this.center.x, this.center.y + halfSize);
   }
 }
 
@@ -1495,52 +1489,44 @@ export abstract class AbstractHalfLine extends newShape {
     public orientation: string = 'up'
   ) {
     super();
-    this.path = this.buildPath();
+    this.buildPath();
   }
-  public abstract buildPath(): Path2D;
+  // public abstract buildPath(): void;
 }
 
 export class UpHalfLine extends AbstractHalfLine {
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x, this.center.y);
-    path.lineTo(this.center.x, this.center.y + halfSize);
-    this.path = path;
-    return path;
+    this.path.moveTo(this.center.x, this.center.y);
+    this.path.lineTo(this.center.x, this.center.y + halfSize);
   }
 }
 
 export class DownHalfLine extends AbstractHalfLine {
-  public buildPath(): Path2D {
-    const path = new Path2D();
+    public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x, this.center.y);
-    path.lineTo(this.center.x, this.center.y - halfSize);
-    this.path = path;
-    return path;
+    this.path.moveTo(this.center.x, this.center.y);
+    this.path.lineTo(this.center.x, this.center.y - halfSize);
   }
 }
 
 export class LeftHalfLine extends AbstractHalfLine {
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x, this.center.y);
-    path.lineTo(this.center.x - halfSize, this.center.y);
-    this.path = path;
-    return path;
+    this.path.moveTo(this.center.x, this.center.y);
+    this.path.lineTo(this.center.x - halfSize, this.center.y);
   }
 }
 
 export class RightHalfLine extends AbstractHalfLine {
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x, this.center.y);
-    path.lineTo(this.center.x + halfSize, this.center.y);
-    this.path = path;
-    return path;
+    this.path.moveTo(this.center.x, this.center.y);
+    this.path.lineTo(this.center.x + halfSize, this.center.y);
   }
 }
 
@@ -1551,15 +1537,15 @@ export class HalfLine extends AbstractHalfLine {
     public orientation: string = 'up'
   ) {
     super(center, size, orientation);
-    this.path = this.buildPath();
+    this.buildPath();
   }
 
-  public buildPath(): Path2D {
-    if (this.orientation == 'up') return new UpHalfLine(this.center, this.size).path;
-    if (this.orientation == 'down') return new DownHalfLine(this.center, this.size).path;
-    if (this.orientation == 'left') return new LeftHalfLine(this.center, this.size).path;
-    if (this.orientation == 'right') return new RightHalfLine(this.center, this.size).path;
-    throw new Error(`Orientation ${this.orientation} is unknown.`);
+  public buildPath(): void {
+    if (this.orientation == 'up') this.path = new UpHalfLine(this.center, this.size).path;
+    if (this.orientation == 'down') this.path = new DownHalfLine(this.center, this.size).path;
+    if (this.orientation == 'left') this.path = new LeftHalfLine(this.center, this.size).path;
+    if (this.orientation == 'right') this.path = new RightHalfLine(this.center, this.size).path;
+    if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
   }
 }
 
@@ -1569,17 +1555,16 @@ export class Cross extends newShape {
     public size: number = 1
   ) {
     super();
-    this.path = this.buildPath();
+    this.buildPath();
   }
 
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-    path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-    path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
-    path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
-    return path
+    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+    this.path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
   }
 }
 
@@ -1587,58 +1572,55 @@ export abstract class AbstractTriangle extends newShape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
-  ) {
+    public orientation: string = 'up'
+    ) {
     super();
-    this.path = this.buildPath();
+    this.buildPath();
   }
-  public abstract buildPath(): Path2D;
+  public abstract buildPath(): void;
 }
 
 export class UpTriangle extends AbstractTriangle {
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-    path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
-    path.lineTo(this.center.x, this.center.y + halfSize);
-    path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
-    return path;
+    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x, this.center.y + halfSize);
+    this.path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
   }
 }
 
 export class DownTriangle extends AbstractTriangle {
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
-    path.lineTo(this.center.x, this.center.y - halfSize);
-    path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-    path.lineTo(this.center.x + halfSize + this.lineWidth, this.center.y + halfSize);
-    return path;
+    this.path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
+    this.path.lineTo(this.center.x, this.center.y - halfSize);
+    this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
+    this.path.lineTo(this.center.x + halfSize + this.lineWidth, this.center.y + halfSize);
   }
 }
 
 export class LeftTriangle extends AbstractTriangle {
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
-    path.lineTo(this.center.x - halfSize, this.center.y);
-    path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-    path.lineTo(this.center.x + halfSize, this.center.y - halfSize - this.lineWidth);
-    return path;
+    this.path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x - halfSize, this.center.y);
+    this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize - this.lineWidth);
   }
 }
 
 export class RightTriangle extends AbstractTriangle {
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const halfSize = this.size / 2;
-    path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-    path.lineTo(this.center.x + halfSize, this.center.y);
-    path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-    path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
-    return path;
+    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y);
+    this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
+    this.path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
   }
 }
 
@@ -1649,14 +1631,15 @@ export class Triangle extends AbstractTriangle {
     public orientation: string = 'up'
   ) {
     super();
-    this.path = this.buildPath();
+    this.buildPath();
   }
 
-  public buildPath(): Path2D {
-    if (this.orientation == 'up') { return new UpTriangle(this.center, this.size).path }
-    if (this.orientation == 'down') { return new DownTriangle(this.center, this.size).path }
-    if (this.orientation == 'right') { return new RightTriangle(this.center, this.size).path }
-    if (this.orientation == 'left') { return new LeftTriangle(this.center, this.size).path }
+  public buildPath(): void {
+    if (this.orientation == 'up') this.path = new UpTriangle(this.center, this.size).path
+    if (this.orientation == 'down') this.path = new DownTriangle(this.center, this.size).path
+    if (this.orientation == 'right') this.path = new RightTriangle(this.center, this.size).path
+    if (this.orientation == 'left') this.path = new LeftTriangle(this.center, this.size).path
+    if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
   }
 }
 
@@ -1739,12 +1722,11 @@ export class newText extends newShape {
     return this.height;
   }
 
-  public buildPath(): Path2D {
-    const path = this.path;
-    let origin = this.origin.copy();
+  public buildPath(): void {
+    const origin = this.origin.copy();
     origin.x += this.setRectOffsetX();
     origin.y += this.setRectOffsetY();
-    let height = this.computeRectHeight();
+    const height = this.computeRectHeight();
 
     const rectPath = new Path2D();
     rectPath.rect(-this.width / 2, 0, this.width, height); // TODO: find the good formula for hanging and alphabetic (not trivial)
@@ -1752,8 +1734,7 @@ export class newText extends newShape {
     const ANGLE_RAD = this.orientation * Math.PI / 180;
     const COS = Math.cos(ANGLE_RAD);
     const SIN = Math.sin(ANGLE_RAD);
-    path.addPath(rectPath, new DOMMatrix([COS, SIN, -SIN, COS, origin.x + this.width / 2, origin.y]));
-    return path
+    this.path.addPath(rectPath, new DOMMatrix([COS, SIN, -SIN, COS, origin.x + this.width / 2, origin.y]));
   }
 
   public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
@@ -1766,7 +1747,7 @@ export class newText extends newShape {
     context.font = this.fullFont;
     context.textAlign = this.align as CanvasTextAlign;
     context.textBaseline = this.baseline as CanvasTextBaseline;
-    this.path = this.buildPath();
+    this.buildPath();
 
     context.fillStyle = this.backgroundColor;
     context.fill(this.path);
@@ -1807,7 +1788,7 @@ export class newText extends newShape {
   private write(writtenText: string[], context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle
     if (writtenText.length != 1) {
-      var offset: number = writtenText.length - 1;
+      const offset: number = writtenText.length - 1;
       writtenText.forEach((row, index) => { context.fillText(row, 0, (index - offset) * this.fontsize) });
     } else {
       context.fillText(writtenText[0], 0, 0);
@@ -1886,7 +1867,7 @@ export class newPoint2D extends newShape {
   ) {
     super();
     this.center = new Vertex(x, y);
-    this.path = this.buildPath();
+    this.buildPath();
     this.fillStyle = fillStyle ? fillStyle : this.fillStyle;
     this.strokeStyle = strokeStyle ? strokeStyle : this.setStrokeStyle(this.fillStyle);
     this.lineWidth = 1;
@@ -1942,7 +1923,7 @@ export class newPoint2D extends newShape {
 
   set marker(value: string) { this._marker = value };
 
-  public buildPath(): Path2D { return this.drawnShape.path };
+  public buildPath(): void { this.path = this.drawnShape.path };
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
@@ -1975,7 +1956,7 @@ export class ScatterPoint extends newPoint2D {
 
   public update() {
     this.isScaled = false;
-    this.path = this.buildPath();
+    this.buildPath();
   }
 
   public isInFrame(xAxis: newAxis, yAxis: newAxis): boolean {
@@ -2079,14 +2060,13 @@ export class newTooltip {
     return value
   };
 
-  public buildPath(): Path2D {
-    const path = new Path2D();
+  public buildPath(): void {
+    this.path = new Path2D();
     const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
     const triangleCenter = this.origin;
     triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2 * (this.isUp ? 1 : -1);
-    path.addPath(new newRoundRect(rectOrigin, this.size, this.radius).path);
-    path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, this.isUp ? 'down' : 'up').path);
-    return path
+    this.path.addPath(new newRoundRect(rectOrigin, this.size, this.radius).path);
+    this.path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, this.isUp ? 'down' : 'up').path);
   }
 
   private computeTextOrigin(scaling: Vertex): Vertex {
@@ -2160,7 +2140,8 @@ export class newTooltip {
     const scaledPath = new Path2D();
     this.squareOrigin = this.squareOrigin.scale(scaling);
     this.origin = this.origin.scale(scaling);
-    scaledPath.addPath(this.buildPath(), new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+    this.buildPath();
+    scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
 
     context.save();
     context.scale(scaling.x, scaling.y);
@@ -2351,7 +2332,7 @@ export class newAxis extends EventEmitter {
       this.ticks = this.computeTicks();
       if (!this.isDiscrete) { this.labels = this.numericLabels() };
       this.drawPath = this.buildDrawPath();
-      this.path = this.buildPath();
+      this.buildPath();
       this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
       this.offsetTicks = this.ticksFontsize * 0.8;
       this.offsetTitle = 0;
@@ -2405,7 +2386,7 @@ export class newAxis extends EventEmitter {
     this.origin = newOrigin;
     this.end = newEnd;
     this.drawPath = this.buildDrawPath();
-    this.path = this.buildPath();
+    this.buildPath();
   }
 
   public resetScale(): void {
@@ -2452,13 +2433,12 @@ export class newAxis extends EventEmitter {
     return path
   }
 
-  private buildPath(): Path2D {
-    const path = new Path2D();
+  private buildPath(): void {
+    this.path = new Path2D();
     const offset = new Vertex(this.SELECTION_RECT_SIZE * Number(this.isVertical), this.SELECTION_RECT_SIZE * Number(!this.isVertical));
     const origin = new Vertex(this.origin.x, this.origin.y).subtract(offset.multiply(2));
     const size = this.end.subtract(origin).add(offset);
-    path.rect(origin.x, origin.y, size.x, size.y);
-    return path
+    this.path.rect(origin.x, origin.y, size.x, size.y);
   }
 
   public absoluteToRelative(value: number): number {

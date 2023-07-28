@@ -2377,7 +2377,7 @@ export class newScatter extends Frame {
     const mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
     this.points = mergedPoints.map(mergedIndices => {
       return ScatterPoint.fromPlottedValues(
-        mergedIndices, pointsData, this.pointSize, this.marker, thresholdDist, 
+        mergedIndices, pointsData, this.pointSize, this.marker, thresholdDist,
         this.tooltipAttributes, this.features, this.axes, this.xFeature, this.yFeature
         )
     });

@@ -1952,8 +1952,8 @@ export class ScatterPoint extends newPoint2D {
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
 
-  public static fromPlottedValues(indices: number[], pointsData: {[key: string]: number[]}, pointSize: number, marker: string, 
-    thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[], 
+  public static fromPlottedValues(indices: number[], pointsData: {[key: string]: number[]}, pointSize: number, marker: string,
+    thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[],
     xName: string, yName: string): ScatterPoint {
       const newPoint = new ScatterPoint(indices, 0, 0, pointSize, marker);
       newPoint.computeValues(pointsData, thresholdDist);

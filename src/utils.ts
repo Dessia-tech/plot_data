@@ -1850,6 +1850,9 @@ const CROSSES = ['x', 'cross', 'oblique'];
 const SQUARES = ['square'];
 const TRIANGLES = ['^', 'triangle', 'tri'];
 const STROKE_STYLE_OFFSET = 15;
+export interface pointStyle {
+  size?: number, fillStyle?: string, strokeStyle?: string, marker?: string, markerOrientation?: string
+}
 export class newPoint2D extends newShape {
   public path: Path2D;
   public center: Vertex;
@@ -1870,6 +1873,14 @@ export class newPoint2D extends newShape {
     this.strokeStyle = strokeStyle || this.setStrokeStyle(this.fillStyle);
     this.lineWidth = 1;
   };
+
+  public updateStyle(style: pointStyle): void {
+    this.size = style.size ?? this.size;
+    this.fillStyle = style.fillStyle ?? this.fillStyle;
+    this.strokeStyle = style.strokeStyle ?? this.strokeStyle;
+    this.marker = style.marker ?? this.marker;
+    this.markerOrientation = style.markerOrientation ?? this.markerOrientation;
+  }
 
   public copy(): newPoint2D {
     const copy = new newPoint2D();
@@ -1995,6 +2006,11 @@ export class ScatterPoint extends newPoint2D {
     this.tooltipMap.delete('Y mean');
   }
 
+  public updateStyle(style: pointStyle): void {
+    super.updateStyle(style);
+    this.marker = this.values.length > 1 ? this.marker : style.marker ?? this.marker;
+  }
+
   public computeValues(pointsData: {[key: string]: number[]}, thresholdDist: number): void {
       let centerX = 0;
       let centerY = 0;
@@ -2014,7 +2030,7 @@ export class ScatterPoint extends newPoint2D {
     }
 }
 
-export class Curve extends newShape {
+export class LineSequence extends newShape {
   public drawingZone: newRect;
   public previousTooltipOrigin: Vertex;
   constructor(
@@ -2040,14 +2056,14 @@ export class Curve extends newShape {
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Name", this.name]]) }
 
-  public static getGraphProperties(graph: {[key: string]: any}): Curve {
-    const emptyCurve = new Curve([], graph.name);
+  public static getGraphProperties(graph: {[key: string]: any}): LineSequence {
+    const emptyLineSequence = new LineSequence([], graph.name);
     if (graph.edge_style) {
-      if (graph.edge_style.line_width) emptyCurve.lineWidth = graph.edge_style.line_width;
-      if (graph.edge_style.color_stroke) emptyCurve.strokeStyle = graph.edge_style.color_stroke;
-      if (graph.edge_style.dashline) emptyCurve.dashLine = graph.edge_style.dashline;
+      if (graph.edge_style.line_width) emptyLineSequence.lineWidth = graph.edge_style.line_width;
+      if (graph.edge_style.color_stroke) emptyLineSequence.strokeStyle = graph.edge_style.color_stroke;
+      if (graph.edge_style.dashline) emptyLineSequence.dashLine = graph.edge_style.dashline;
     }
-    return emptyCurve
+    return emptyLineSequence
   }
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {

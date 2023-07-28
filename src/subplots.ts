@@ -1,5 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection, Curve, newRect } from "./utils";
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, 
+  Bar, DrawingCollection, SelectionBox, GroupCollection, LineSequence, newRect, pointStyle } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1488,7 +1489,7 @@ export class BasePlot extends PlotData {
   public nSamples: number;
   public pointSets: number[];
   public pointSetColors: string[] = [];
-  public pointMarkers: string[] = [];
+  public pointStyles: pointStyle[] = null;
 
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
@@ -2355,7 +2356,8 @@ export class newScatter extends Frame {
       };
       point.lineWidth = this.lineWidth;
       point.setColors(color);
-      point.marker = point.values.length > 1 ? this.marker : this.pointMarkers[point.values[0]] ?? this.marker;
+      point.marker = this.marker;
+      if (this.pointStyles) point.updateStyle(this.pointStyles[point.values[0]]);
       point.update();
       if (point.isInFrame(axesOrigin, axesEnd, this.initScale)) point.draw(context);
     })
@@ -2563,9 +2565,8 @@ export class newScatter extends Frame {
 }
 
 export class newGraph2D extends newScatter {
-  public curves: Curve[];
+  public curves: LineSequence[];
   private curvesIndices: number[][];
-
   public showPoints: boolean = false;
   constructor(
     data: any,
@@ -2582,15 +2583,20 @@ export class newGraph2D extends newScatter {
 
   protected unpackData(data: any): Map<string, any[]> {
     const formattedData: {[key: string]: any} = {};
+    this.pointStyles = [];
     this.curvesIndices = [];
     this.curves = [];
     formattedData["elements"] = [];
     if (data.graphs) {
       data.graphs.forEach(graph => {
-        this.curves.push(Curve.getGraphProperties(graph));
+        this.curves.push(LineSequence.getGraphProperties(graph));
         const curveIndices = range(formattedData["elements"].length, formattedData["elements"].length + graph.elements.length);
-        if (graph.point_style?.shape) curveIndices.forEach(i => this.pointMarkers[i] = graph.point_style.shape)
-        this.curvesIndices.push(range(formattedData["elements"].length, formattedData["elements"].length + graph.elements.length));
+        this.pointStyles.push(...new Array(curveIndices.length).fill({}));
+        if (graph.point_style?.shape) curveIndices.forEach(i => this.pointStyles[i].marker = graph.point_style.shape);
+        if (graph.point_style?.color_stroke) curveIndices.forEach(i => this.pointStyles[i].strokeStyle = graph.point_style.color_stroke);
+        if (graph.point_style?.color_fill) curveIndices.forEach(i => this.pointStyles[i].fillStyle = graph.point_style.color_fill);
+        if (graph.point_style?.size) curveIndices.forEach(i => this.pointStyles[i].size = graph.point_style.size);
+        this.curvesIndices.push(curveIndices);
         formattedData["elements"].push(...graph.elements);
       })
     }

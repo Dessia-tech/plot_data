@@ -3,7 +3,7 @@
 
 import math
 import plot_data
-from plot_data.colors import BLACK, BLUE, RED
+from plot_data.colors import BLUE, RED
 
 k = 0
 
@@ -17,7 +17,7 @@ dataset1 = plot_data.Dataset(elements=elements1, name='I1 = f(t)')
 
 # The previous line instantiates a dataset with limited arguments but
 # several customizations are available
-point_style = plot_data.PointStyle(color_fill=RED, color_stroke=BLACK, shape='crux')
+point_style = plot_data.PointStyle(color_fill=RED, color_stroke=RED, shape='crux')
 edge_style = plot_data.EdgeStyle(color_stroke=BLUE, dashline=[10, 5])
 
 custom_dataset = plot_data.Dataset(elements=elements1, name='I = f(t)',

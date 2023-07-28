@@ -215,21 +215,21 @@ export function arrayHslToRgb(h: number, s: number, l: number): [number, number,
   Get [r,g,b] array of RGB color from [h,s,l] array from a HSL color array.
 
   The k function is used to determine which of the six segments of the color wheel the current hue falls within,
-  and then adjusts the lightness value l based on the saturation and hue values. 
-  The a variable is used to compute the amount of lightness to be added or subtracted from the lightness value 
+  and then adjusts the lightness value l based on the saturation and hue values.
+  The a variable is used to compute the amount of lightness to be added or subtracted from the lightness value
   based on the saturation value.
-  Finally, the f function is used to compute the RGB values for each of the three color channels 
+  Finally, the f function is used to compute the RGB values for each of the three color channels
   (red (0), green (8), and blue (4)) based on the k function and the a variable.
   The f function returns a value between 0 and 1, which is then scaled up to the appropriate range to represent an RGB
   color value.
-  
+
   Source: https://www.rapidtables.com/convert/color/hsl-to-rgb.html
   */
   s /= 100;
   l /= 100;
   const k = n => (n + h / 30) % 12;
   const a = s * Math.min(l, 1 - l);
-  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); // 
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1))); //
   return [255 * f(0), 255 * f(8), 255 * f(4)];
 }
 
@@ -266,13 +266,13 @@ export function arrayHexToRgb(hexColor: string): [number, number, number] {
 
 export function arrayHslToHex(h: number, s: number, l: number): string {
   /*
-  Lightness is normalized before any computation, so is saturation. 
+  Lightness is normalized before any computation, so is saturation.
   The function first calculates the amount of saturation that should be added to the lightness value to create the equivalent
   amount of color. The Math.min() function is used to ensure that the saturation value is not greater than 50%.
-  
+
   The f function then takes a number as input and calculates the corresponding color value based on the input value and
-  the HSL color values. 
-  The k variable converts the input value (0 for red, 8 for green, 4 for blue) to get the corresponding color. 
+  the HSL color values.
+  The k variable converts the input value (0 for red, 8 for green, 4 for blue) to get the corresponding color.
   The color is then calculated with k, l and some magic numbers.
 
   The reason for using these numbers (3, 9) in this calculation is because the HSL color model uses a circular color wheel.
@@ -281,7 +281,7 @@ export function arrayHslToHex(h: number, s: number, l: number): string {
 
   The f function is called three times with different input values to calculate the red, green, and blue color values.
   The resulting red, green, and blue values are concatenated into a single hexadecimal color value in the format #RRGGBB.
-  
+
   Source:  https://docs.aspose.com/html/net/tutorial/html-colors/
   */
   l /= 100;

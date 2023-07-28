@@ -44,7 +44,7 @@ describe('COLORS CONVERSION', function () {
         expect(convertedHex2[1]).to.closeTo(rgb2[1], 1);
         expect(convertedHex2[2]).to.closeTo(rgb2[2], 1);
     });
-    it("should convert hsl to rgb", function () { 
+    it("should convert hsl to rgb", function () {
         const stringHsl = colors.hslToString(hsl[0], hsl[1], hsl[2]);
         const convertedHsl = colors.rgbToArray(colors.colorRgb(stringHsl));
         expect(convertedHsl[0]).to.closeTo(rgb[0], 1);
@@ -57,7 +57,7 @@ describe('COLORS CONVERSION', function () {
         expect(convertedHsl2[1]).to.closeTo(rgb2[1], 1);
         expect(convertedHsl2[2]).to.closeTo(rgb2[2], 1);
     });
-    it("should convert rgb to hex", function () { 
+    it("should convert rgb to hex", function () {
         const stringRgb = colors.rgbToString(rgb[0], rgb[1], rgb[2]);
         expect(colors.colorHex(stringRgb)).to.equal(hex);
     });

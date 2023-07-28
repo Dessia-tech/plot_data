@@ -1997,7 +1997,7 @@ export class Frame extends BasePlot {
       this.nYTicks = data.axis.nb_points_y;
     }
   }
-  
+
   public stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
     frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
       super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);
@@ -2374,7 +2374,7 @@ export class newScatter extends Frame {
     const thresholdDist = 30;
     const [xCoords, yCoords, xValues, yValues] = this.projectPoints();
     let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
-    this.points = mergedPoints.map(indexList => { 
+    this.points = mergedPoints.map(indexList => {
       return this.computePoint(indexList, xCoords, yCoords, xValues, yValues, this.pointSize, thresholdDist)
     });
   }
@@ -2439,7 +2439,7 @@ export class newScatter extends Frame {
       closedPoints[centerIndex] = 0;
       pointsGroups[centerIndex].forEach(index => {
         if (!pickedPoints[index]) {
-          cluster.push(index); 
+          cluster.push(index);
           pickedPoints[index] = true
         }
         closedPoints[index] = 0;

@@ -806,7 +806,7 @@ class Graph2D(Figure):
         ax.set_xlabel(xname)
         ax.set_ylabel(yname)
         return ax
-
+# TODO: commented code here is supposed to be used soon
     # def graphs_to_curves(self):
     #     curves = []
     #     for graph in self.graphs:

@@ -1862,14 +1862,14 @@ export class newPoint2D extends newShape {
     protected _size: number = 2,
     protected _marker: string = 'circle',
     protected _markerOrientation: string = 'up',
-    fillStyle?: string,
-    strokeStyle?: string
+    fillStyle: string = null,
+    strokeStyle: string = null
   ) {
     super();
     this.center = new Vertex(x, y);
     this.buildPath();
-    this.fillStyle = fillStyle ? fillStyle : this.fillStyle;
-    this.strokeStyle = strokeStyle ? strokeStyle : this.setStrokeStyle(this.fillStyle);
+    this.fillStyle = fillStyle || this.fillStyle;
+    this.strokeStyle = strokeStyle || this.setStrokeStyle(this.fillStyle);
     this.lineWidth = 1;
   };
 
@@ -1879,23 +1879,23 @@ export class newPoint2D extends newShape {
     return `hsl(${h}, ${s}%, ${lValue}%)`;
   }
 
-  public setColors(fillStyle?: string, strokeStyle?: string) {
-    this.fillStyle = fillStyle ? fillStyle : this.fillStyle;
+  public setColors(fillStyle: string = null, strokeStyle: string = null) {
+    this.fillStyle = fillStyle || this.fillStyle;
     this.strokeStyle = strokeStyle; // ? strokeStyle : this.setStrokeStyle(this.fillStyle);
   }
 
   get drawnShape(): newShape {
     let marker = new newShape();
-    if (CIRCLES.indexOf(this.marker) > -1) { marker = new newCircle(this.center.coordinates, this.size / 2) }
-    if (MARKERS.indexOf(this.marker) > -1) { marker = new Mark(this.center.coordinates, this.size) };
-    if (CROSSES.indexOf(this.marker) > -1) { marker = new Cross(this.center.coordinates, this.size) };
-    if (SQUARES.indexOf(this.marker) > -1) {
+    if (CIRCLES.includes(this.marker)) marker = new newCircle(this.center.coordinates, this.size / 2);
+    if (MARKERS.includes(this.marker)) marker = new Mark(this.center.coordinates, this.size);
+    if (CROSSES.includes(this.marker)) marker = new Cross(this.center.coordinates, this.size);
+    if (SQUARES.includes(this.marker)) {
       const halfSize = this.size * 0.5;
       const origin = new Vertex(this.center.coordinates.x - halfSize, this.center.coordinates.y - halfSize)
       marker = new newRect(origin, new Vertex(this.size, this.size))
     };
-    if (TRIANGLES.indexOf(this.marker) > -1) { marker = new Triangle(this.center.coordinates, this.size, this.markerOrientation) };
-    if (this.marker == 'halfLine') { marker = new HalfLine(this.center.coordinates, this.size, this.markerOrientation) };
+    if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center.coordinates, this.size, this.markerOrientation);
+    if (this.marker == 'halfLine') marker = new HalfLine(this.center.coordinates, this.size, this.markerOrientation);
     marker.lineWidth = this.lineWidth;
     return marker
   }
@@ -1930,7 +1930,7 @@ export class newPoint2D extends newShape {
     context.globalAlpha = this.alpha;
     const fillColor = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
     context.fillStyle = fillColor;
-    context.strokeStyle = this.strokeStyle ? this.strokeStyle : this.setStrokeStyle(fillColor);
+    context.strokeStyle = this.strokeStyle ?? this.setStrokeStyle(fillColor);
   }
 }
 
@@ -1943,8 +1943,8 @@ export class ScatterPoint extends newPoint2D {
     protected _size: number = 3,
     protected _marker: string = 'circle',
     protected _markerOrientation: string = 'up',
-    fillStyle?: string,
-    strokeStyle?: string
+    fillStyle: string = null,
+    strokeStyle: string = null
   ) {
     super(x, y, _size, _marker, _markerOrientation, fillStyle, strokeStyle);
     this.isScaled = false;
@@ -2038,17 +2038,17 @@ export class newTooltip {
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
     context.save();
     context.font = `${this.fontsize}px sans-serif`;
-    let printedRows = [];
-    let textLength = context.measureText(printedRows[0]).width;
+    const printedRows = [];
+    let textLength = 0;
     this.dataToPrint.forEach((value, key) => {
-      let text: string;
-    if (key == "Number") {
+      let text: string = null;
+      if (key == "Number") {
         if (value != 1) text = `${value} samples`;
       } else {
         if (!(key == "name" && value == '')) text = `${key}: ${this.formatValue(value)}`;
       };
       const textWidth = context.measureText(text).width;
-      if (textWidth > textLength) { textLength = textWidth };
+      if (textWidth > textLength) textLength = textWidth;
       if (text) printedRows.push(text);
     })
     context.restore();
@@ -2092,39 +2092,35 @@ export class newTooltip {
     const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
     const downLeftDiff = downLeftCorner.subtract(plotOrigin);
 
-    if (upRightDiff.x < 0) {
-      this.squareOrigin.x += upRightDiff.x;
-    } else if (upRightDiff.x > plotSize.x) {
-      this.squareOrigin.x += upRightDiff.x - plotSize.x;
-    }
+    if (upRightDiff.x < 0) this.squareOrigin.x += upRightDiff.x
+    else if (upRightDiff.x > plotSize.x) this.squareOrigin.x += upRightDiff.x - plotSize.x;
+
     if (upRightDiff.y < 0) {
-      if (!this.isFlipper) {
-        this.squareOrigin.y += upRightDiff.y;
-        this.origin.y += upRightDiff.y;
-      } else {
+      if (this.isFlipper) {
         this.squareOrigin.y += -this.size.y - TOOLTIP_TRIANGLE_SIZE * 2;
         this.flip();
+      } else {
+        this.squareOrigin.y += upRightDiff.y;
+        this.origin.y += upRightDiff.y;
       }
 
     } else if (upRightDiff.y > plotSize.y){
-      if (!this.isFlipper) {
-        this.squareOrigin.y += upRightDiff.y - plotSize.y;
-        this.origin.y += upRightDiff.y - plotSize.y;
-      } else {
+      if (this.isFlipper) {
         this.squareOrigin.y += this.size.y + TOOLTIP_TRIANGLE_SIZE * 2;
         this.flip();
+      } else {
+        this.squareOrigin.y += upRightDiff.y - plotSize.y;
+        this.origin.y += upRightDiff.y - plotSize.y;
       }
     }
 
-    if (downLeftDiff.x < 0) {
-      this.squareOrigin.x -= downLeftDiff.x;
-    } else if (downLeftDiff.x > plotSize.x){
-      this.squareOrigin.x -= downLeftDiff.x - plotSize.x;
-    }
+    if (downLeftDiff.x < 0) this.squareOrigin.x -= downLeftDiff.x
+    else if (downLeftDiff.x > plotSize.x) this.squareOrigin.x -= downLeftDiff.x - plotSize.x;
+
     if (downLeftDiff.y < 0) { // Maybe wrong, did not met the case
       this.squareOrigin.y -= downLeftDiff.y;
       this.origin.y -= downLeftDiff.y;
-    } else if (downLeftDiff.y > plotSize.y){
+    } else if (downLeftDiff.y > plotSize.y) {
       this.squareOrigin.y += downLeftDiff.y - plotSize.y;
       this.origin.y += downLeftDiff.y - plotSize.y;
     }
@@ -2157,11 +2153,11 @@ export class newTooltip {
 
 const DASH_SELECTION_WINDOW = [7, 3];
 export class SelectionBox extends newRect {
-  public minVertex: Vertex;
-  public maxVertex: Vertex;
+  public minVertex: Vertex = null;
+  public maxVertex: Vertex = null;
 
-  private _previousMin: Vertex;
-  private _previousMax: Vertex;
+  private _previousMin: Vertex = null;
+  private _previousMax: Vertex = null;
 
   public leftUpdate: boolean = false;
   public rightUpdate: boolean = false;
@@ -2177,7 +2173,7 @@ export class SelectionBox extends newRect {
     this.lineWidth = 0.5
   }
 
-  get isDefined(): boolean { return (this.minVertex != undefined && this.maxVertex != undefined) }
+  get isDefined(): boolean { return (this.minVertex != null && this.maxVertex != null) }
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     super.setDrawingProperties(context);
@@ -2202,8 +2198,7 @@ export class SelectionBox extends newRect {
     this.insideCanvas(plotOrigin, plotSize);
   }
 
-  private insideCanvas(drawOrigin: Vertex, drawSize: Vertex): boolean {
-    let isInside = true;
+  private insideCanvas(drawOrigin: Vertex, drawSize: Vertex): void {
     const downLeftCorner = this.origin;
     const upRightCorner = downLeftCorner.add(this.size);
     const upRightDiff = drawOrigin.add(drawSize).subtract(upRightCorner);
@@ -2218,19 +2213,17 @@ export class SelectionBox extends newRect {
     if (downLeftDiff.x < 0) {
       this.origin.x -= downLeftDiff.x;
       this.size.x += downLeftDiff.x;
-    } else if (downLeftDiff.x > drawSize.x){
+    } else if (downLeftDiff.x > drawSize.x) {
       this.origin.x -= downLeftDiff.x - drawSize.x;
       this.size.x += downLeftDiff.x - drawSize.x;
     }
     if (downLeftDiff.y < 0) {
       this.origin.y -= downLeftDiff.y;
       this.size.y += downLeftDiff.y;
-    } else if (downLeftDiff.y > drawSize.y){
+    } else if (downLeftDiff.y > drawSize.y) {
       this.origin.y -= downLeftDiff.y - drawSize.y;
       this.size.y += downLeftDiff.y - drawSize.y;
     }
-
-    return isInside
   }
 
   private get borderSizeX() {return Math.min(BORDER_SIZE, Math.abs(this.size.x) / 3)}
@@ -2245,14 +2238,14 @@ export class SelectionBox extends newRect {
   public mouseDown(mouseDown: Vertex): void {
     this.isClicked = true;
     this.saveState();
-    if (Math.abs(mouseDown.x - this.origin.x) <= this.borderSizeX) { this.leftUpdate = true }
-    if (Math.abs(mouseDown.x - (this.origin.x + this.size.x)) <= this.borderSizeX) { this.rightUpdate = true }
-    if (Math.abs(mouseDown.y - this.origin.y) <= this.borderSizeY) { this.downUpdate = true }
-    if (Math.abs(mouseDown.y - (this.origin.y + this.size.y)) <= this.borderSizeY) { this.upUpdate = true }
+    this.leftUpdate = Math.abs(mouseDown.x - this.origin.x) <= this.borderSizeX;
+    this.rightUpdate = Math.abs(mouseDown.x - (this.origin.x + this.size.x)) <= this.borderSizeX;
+    this.downUpdate = Math.abs(mouseDown.y - this.origin.y) <= this.borderSizeY;
+    this.upUpdate = Math.abs(mouseDown.y - (this.origin.y + this.size.y)) <= this.borderSizeY;
   }
 
   public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {
-    if (!this.leftUpdate && !this.rightUpdate && !this.downUpdate && !this.upUpdate) {
+    if ( !(this.leftUpdate || this.rightUpdate || this.downUpdate || this.upUpdate) ) {
       const translation = mouseCoords.subtract(mouseDown);
       this.minVertex = this._previousMin.add(translation);
       this.maxVertex = this._previousMax.add(translation);
@@ -2280,7 +2273,7 @@ export class newAxis extends EventEmitter {
   public strokeStyle: string = 'hsl(0, 0%, 0%)';
   public hoverStyle: string = 'hsl(0, 100%, 48%)';
   public clickedStyle: string = 'hsl(126, 67%, 72%)';
-  public rubberColor: string = 'hsla(200, 95%, 50%, 0.5)';//'hsla(127, 95%, 60%, 0.85)';
+  public rubberColor: string = 'hsl(200, 95%, 50%)';//'hsla(127, 95%, 60%, 0.85)';
   public labels: string[];
   public isHovered: boolean = false;
   public isClicked: boolean = false;
@@ -2638,7 +2631,7 @@ export class newAxis extends EventEmitter {
     this.rubberBand.realMax = Math.min(Math.max(realMin, realMax), this.end[coord]);
     this.rubberBand.realMin = Math.min(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.realMax = Math.max(this.rubberBand.realMin, this.rubberBand.realMax);
-    this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, 'hsl(203, 0%, 100%, 0.5)', 0.1, 1.);
+    this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, this.rubberColor, 0.1, 0.5);
     if (this.rubberBand.isClicked) this.emit("rubberBandChange", this.rubberBand);
   }
 
@@ -2784,7 +2777,7 @@ export class GroupCollection extends ShapeCollection {
     super(drawings, frame);
   }
 
-  public drawingIsContainer(drawing: any): boolean { return drawing.values ? drawing.values.length > 1 ? true : false : false }
+  public drawingIsContainer(drawing: any): boolean { return drawing.values?.length > 1 }
 
   public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
     this.drawings.forEach(drawing => { if ((this.drawingIsContainer(drawing) || !inMultiPlot) && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });

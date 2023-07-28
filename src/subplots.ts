@@ -2253,7 +2253,7 @@ export class Histogram extends Frame {
   }
 }
 
-
+const DEFAULT_POINT_COLOR: string = 'hsl(203, 90%, 85%)';
 export class newScatter extends Frame {
   public points: ScatterPoint[] = [];
 
@@ -2267,9 +2267,6 @@ export class newScatter extends Frame {
   public isMerged: boolean = false;
   public clusterColors: string[];
   public previousCoords: Vertex[];
-
-  readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
-  readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(
     data: any,
     public width: number,
@@ -2521,8 +2518,7 @@ export class newScatter extends Frame {
 
   public resetClusters(): void {
     this.clusterColors = null;
-    const defaultPoint = new ScatterPoint([]);
-    this.points.forEach(point => point.setColors(defaultPoint.fillStyle));
+    this.points.forEach(point => point.setColors(DEFAULT_POINT_COLOR));
     this.draw();
    }
 
@@ -2562,9 +2558,9 @@ export class newScatter extends Frame {
   }
 
   public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] {
-    let scale = new Vertex(this.scaleX, this.scaleY);
+    const scale = new Vertex(this.scaleX, this.scaleY);
     [mouse3X, mouse3Y] = super.wheel_interaction(mouse3X, mouse3Y, deltaY);
-    for (let axis of this.axes) {
+    for (const axis of this.axes) {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
         if (this.scaleX > scale.x) {this.scaleX = scale.x}
         if (this.scaleY > scale.y) {this.scaleY = scale.y}

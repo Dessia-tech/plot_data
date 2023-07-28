@@ -1407,13 +1407,12 @@ export class newCircle extends newShape {
     public radius: number = 1
   ) {
     super();
-    this.path = this.buildPath();
+    this.buildPath();
   }
 
-  public buildPath(): Path2D {
-    const path = new Path2D();
-    path.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
-    return path
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.path.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
   }
 }
 
@@ -1450,9 +1449,7 @@ export class newRoundRect extends newRect {
     const vLength = this.origin.y + this.size.y;
     this.path.moveTo(this.origin.x + this.radius, this.origin.y);
     this.path.lineTo(hLength - this.radius, this.origin.y);
-
     this.path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
-
     this.path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
     this.path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
     this.path.lineTo(this.origin.x + this.radius, vLength);
@@ -1468,6 +1465,7 @@ export class Mark extends newShape {
     public size: number = 1
   ) {
     super();
+    this.isFilled = false;
     this.buildPath();
   }
 
@@ -1488,9 +1486,9 @@ export abstract class AbstractHalfLine extends newShape {
     public orientation: string = 'up'
   ) {
     super();
+    this.isFilled = false;
     this.buildPath();
   }
-  // public abstract buildPath(): void;
 }
 
 export class UpHalfLine extends AbstractHalfLine {
@@ -1503,7 +1501,7 @@ export class UpHalfLine extends AbstractHalfLine {
 }
 
 export class DownHalfLine extends AbstractHalfLine {
-    public buildPath(): void {
+  public buildPath(): void {
     this.path = new Path2D();
     const halfSize = this.size / 2;
     this.path.moveTo(this.center.x, this.center.y);
@@ -1554,6 +1552,7 @@ export class Cross extends newShape {
     public size: number = 1
   ) {
     super();
+    this.isFilled = false;
     this.buildPath();
   }
 
@@ -1910,6 +1909,7 @@ export class newPoint2D extends newShape {
     if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center.coordinates, this.size, this.markerOrientation);
     if (this.marker == 'halfLine') marker = new HalfLine(this.center.coordinates, this.size, this.markerOrientation);
     marker.lineWidth = this.lineWidth;
+    this.isFilled = marker.isFilled;
     return marker
   }
 
@@ -1987,12 +1987,12 @@ export class ScatterPoint extends newPoint2D {
     if (this.values.length == 1) {
       this.newTooltipMap();
       tooltipAttributes.forEach(attr => this.tooltipMap.set(attr, features.get(attr)[this.values[0]]));
-    } else {
-      this.tooltipMap.set(`Average ${xName}`, axes[0].isDiscrete ? axes[0].labels[Math.round(this.mean.x)] : this.mean.x);
-      this.tooltipMap.set(`Average ${yName}`, axes[1].isDiscrete ? axes[1].labels[Math.round(this.mean.y)] : this.mean.y);
-      this.tooltipMap.delete('X mean');
-      this.tooltipMap.delete('Y mean');
+      return;
     }
+    this.tooltipMap.set(`Average ${xName}`, axes[0].isDiscrete ? axes[0].labels[Math.round(this.mean.x)] : this.mean.x);
+    this.tooltipMap.set(`Average ${yName}`, axes[1].isDiscrete ? axes[1].labels[Math.round(this.mean.y)] : this.mean.y);
+    this.tooltipMap.delete('X mean');
+    this.tooltipMap.delete('Y mean');
   }
 
   public computeValues(pointsData: {[key: string]: number[]}, thresholdDist: number): void {
@@ -2063,11 +2063,10 @@ export class Curve extends newShape {
     context.restore();
   }
 
-  public buildPath(): Path2D {
-    const path = new Path2D();
-    path.moveTo(this.points[0].center.x, this.points[0].center.y);
-    this.points.slice(1).forEach(point=> path.lineTo(point.center.x, point.center.y));
-    return path
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.path.moveTo(this.points[0].center.x, this.points[0].center.y);
+    this.points.slice(1).forEach(point=> this.path.lineTo(point.center.x, point.center.y));
   }
 }
 

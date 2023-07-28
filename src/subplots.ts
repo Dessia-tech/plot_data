@@ -1488,6 +1488,7 @@ export class BasePlot extends PlotData {
   public nSamples: number;
   public pointSets: number[];
   public pointSetColors: string[] = [];
+  public pointMarkers: string[] = [];
 
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
@@ -2354,7 +2355,7 @@ export class newScatter extends Frame {
       };
       point.lineWidth = this.lineWidth;
       point.setColors(color);
-      point.marker = this.marker;
+      point.marker = point.values.length > 1 ? this.marker : this.pointMarkers[point.values[0]] ?? this.marker;
       point.update();
       if (point.isInFrame(axesOrigin, axesEnd, this.initScale)) point.draw(context);
     })
@@ -2587,6 +2588,8 @@ export class newGraph2D extends newScatter {
     if (data.graphs) {
       data.graphs.forEach(graph => {
         this.curves.push(Curve.getGraphProperties(graph));
+        const curveIndices = range(formattedData["elements"].length, formattedData["elements"].length + graph.elements.length);
+        if (graph.point_style?.shape) curveIndices.forEach(i => this.pointMarkers[i] = graph.point_style.shape)
         this.curvesIndices.push(range(formattedData["elements"].length, formattedData["elements"].length + graph.elements.length));
         formattedData["elements"].push(...graph.elements);
       })
@@ -2600,8 +2603,8 @@ export class newGraph2D extends newScatter {
     const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
     context.beginPath();
     this.curves.forEach((curve, curveIndex) => {
-      curve.points = Array.from(this.curvesIndices[curveIndex], index => this.points[index]);
-      curve.path = curve.buildPath();
+      curve.points = this.curvesIndices[curveIndex].map(index => { return this.points[index] });
+      curve.buildPath();
       curve.drawingZone = drawingZone;
       curve.draw(context);
     })

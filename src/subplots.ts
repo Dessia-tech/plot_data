@@ -3,7 +3,7 @@ import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeO
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHEX, colorHSL } from "./color_conversion";
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
 
 var alert_count = 0;
@@ -389,7 +389,7 @@ export class ParallelPlot extends PlotData {
     initialize_hexs() {
       this.hexs = [];
       this.interpolation_colors.forEach(rgb => {
-        this.hexs.push(colorHEX(rgb));
+        this.hexs.push(colorHex(rgb));
       });
     }
 
@@ -1549,16 +1549,10 @@ export class BasePlot extends PlotData {
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
   protected unpackAxisStyle(data:any): void {
-    if (data.axis) {
-      if (data.axis.axis_style) {
-        if (data.axis.axis_style.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
-        if (data.axis.axis_style.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
-      }
-      if (data.axis.graduation_style) {
-        if (data.axis.graduation_style.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
-        if (data.axis.graduation_style.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
-      }
-    }
+    if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
+    if (data.axis?.axis_style?.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
+    if (data.axis?.graduation_style?.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
+    if (data.axis?.graduation_style?.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
   }
 
   protected unpackData(data: any): Map<string, any[]> {
@@ -1579,23 +1573,25 @@ export class BasePlot extends PlotData {
     this.context_show.closePath();
   }
 
-  protected updateAxes(): void {
-    const axisSelections = [];
+  public updateAxes(): void {
+    const axesSelections = [];
     this.axes.forEach(axis => {
-      this.axisStyle.forEach((value, key) => axis[key] = value);
-      axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-      if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
+      axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+      if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
     })
-    if (!this.is_in_multiplot) {
-      if (axisSelections.length > 1) {
-        this.selectedIndices = [...axisSelections[0]];
-        axisSelections[0].forEach(valIndex => {
-          axisSelections.slice(1).forEach(axisSelection => {
-            if (axisSelection.indexOf(valIndex) == -1) this.selectedIndices.splice(this.selectedIndices.indexOf(valIndex), 1)
-          })
-        })
-      } else { this.selectedIndices = axisSelections.length == 0 ? [] : axisSelections[0] }
-    }
+    if (!this.is_in_multiplot) this.selectedIndices = BasePlot.intersectArrays(axesSelections);
+  }
+
+  public static intersectArrays(arrays: any[][]): any[] {
+    if (arrays.length == 1) return arrays[0]
+    if (arrays.length == 0) return []
+    const arraysIntersection = [...arrays[0]];
+    arrays[0].forEach(value => {
+      arrays.slice(1).forEach(array => {
+        if (!array.includes(value)) arraysIntersection.splice(arraysIntersection.indexOf(value), 1);
+      })
+    })
+    return arraysIntersection
   }
 
   protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
@@ -1621,7 +1617,7 @@ export class BasePlot extends PlotData {
   }
 
   protected reset(): void {
-    this.axes.forEach(axis => axis.reset());
+    this.resetAxes();
     this.resetSelectors();
   }
 
@@ -1698,7 +1694,7 @@ export class BasePlot extends PlotData {
 
   public switchZoom(): void { this.isZooming = !this.isZooming }
 
-  protected updateSelectionBox(frameDown: Vertex, frameLoc: Vertex): void { this.selectionBox.update(frameDown, frameLoc) }
+  protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex): void { this.selectionBox.update(frameDown, frameMouse) }
 
   public get drawingZone(): [Vertex, Vertex] { return [new Vertex(this.X, this.Y), this.size] }
 
@@ -1776,8 +1772,8 @@ export class BasePlot extends PlotData {
     if (this.interaction_ON === true) {
       var clickedObject: any = null;
       var isDrawing = false;
-      var canvasMouse = new Vertex(0, 0); var canvasDown = new Vertex(0, 0); var mouseWheel = new Vertex(0, 0);
-      var frameMouse = new Vertex(0, 0); var frameDown = new Vertex(0, 0); var canvasWheel = new Vertex(0, 0);
+      var canvasMouse = new Vertex(0, 0); var canvasDown = new Vertex(0, 0);
+      var frameMouse = new Vertex(0, 0); var frameDown = new Vertex(0, 0);
       var absoluteMouse = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
@@ -1802,7 +1798,7 @@ export class BasePlot extends PlotData {
         if (this.isZooming) canvas.style.cursor = 'crosshair';
         if (this.interaction_ON) {
           if (isDrawing) {
-            if (clickedObject instanceof SelectionBox != true) { // TODO: BEURK !!!!
+            if ( !(clickedObject instanceof SelectionBox) ) {
               if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting && !this.isZooming) {
                 canvas.style.cursor = 'move';
                 this.translation = this.mouseTranslate(canvasMouse, canvasDown);
@@ -1811,17 +1807,15 @@ export class BasePlot extends PlotData {
           }
           this.draw();
         }
-        if (this.isSelecting) {
-          if (isDrawing) {
+        if (isDrawing) {
+          if (this.isSelecting) {
             if (clickedObject instanceof SelectionBox) {
               clickedObject.mouseMove(frameDown, frameMouse);
               this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex);
             }
             else this.updateSelectionBox(frameDown, frameMouse);
           }
-        }
-        if (this.isZooming) {
-          if (isDrawing) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
+          if (this.isZooming) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
@@ -1829,8 +1823,7 @@ export class BasePlot extends PlotData {
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-        if (clickedObject instanceof newAxis || this.isSelecting) this.is_drawing_rubber_band = true
-        else this.is_drawing_rubber_band = false;
+        this.is_drawing_rubber_band = clickedObject instanceof newAxis || this.isSelecting;
         if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
       });
@@ -1844,7 +1837,7 @@ export class BasePlot extends PlotData {
         this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
         if (clickedObject) clickedObject.mouseUp();
         if (this.isSelecting) this.selectionBox.mouseUp();
-        if (clickedObject instanceof SelectionBox != true && !shiftKey) this.isSelecting = false;
+        if ( !(clickedObject instanceof SelectionBox || shiftKey) ) this.isSelecting = false;
         if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
         clickedObject = null;
         this.draw();
@@ -1981,11 +1974,11 @@ export class Frame extends BasePlot {
 
   get relativeMatrix(): DOMMatrix { return this.canvasMatrix.multiply(this.frameMatrix) }
 
-  get nXTicks(): number { return this._nXTicks ? this._nXTicks : 10 }
+  get nXTicks(): number { return this._nXTicks ?? 10 }
 
   set nXTicks(value: number) { this._nXTicks = value }
 
-  get nYTicks(): number { return this._nYTicks ? this._nYTicks : 10 }
+  get nYTicks(): number { return this._nYTicks ?? 10 }
 
   set nYTicks(value: number) { this._nYTicks = value }
 
@@ -2006,6 +1999,7 @@ export class Frame extends BasePlot {
       this.nYTicks = data.axis.nb_points_y;
     }
   }
+  
   protected stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
     frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
       super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);
@@ -2138,13 +2132,11 @@ export class Histogram extends Frame {
     if (data.graduation_nb) this.nXTicks = data.graduation_nb;
   }
 
-  private unpackBarStyle(data: any): void {
-    if (data.surface_style) { if (data.surface_style.color_fill) this.fillStyle = data.surface_style.color_fill };
-    if (data.edge_style) {
-      if (data.edge_style.line_width) this.lineWidth = data.edge_style.line_width;
-      if (data.edge_style.color_stroke) this.strokeStyle = data.edge_style.color_stroke;
-      if (data.edge_style.dashline) this.dashLine = data.edge_style.dashline;
-    }
+  public unpackBarStyle(data: any): void {
+    if (data.surface_style?.color_fill) this.fillStyle = data.surface_style.color_fill;
+    if (data.edge_style?.line_width) this.lineWidth = data.edge_style.line_width;
+    if (data.edge_style?.color_stroke) this.strokeStyle = data.edge_style.color_stroke;
+    if (data.edge_style?.dashline) this.dashLine = data.edge_style.dashline;
   }
 
   protected reset(): void {
@@ -2222,9 +2214,9 @@ export class Histogram extends Frame {
       bar.strokeStyle = this.strokeStyle;
       bar.dashLine = this.dashLine;
       bar.lineWidth = this.lineWidth;
-      if (bar.values.some(valIdx => this.hoveredIndices.indexOf(valIdx) != -1)) bar.isHovered = true;
-      if (bar.values.some(valIdx => this.clickedIndices.indexOf(valIdx) != -1)) bar.isClicked = true;
-      if (bar.values.some(valIdx => this.selectedIndices.indexOf(valIdx) != -1)) bar.isSelected = true;
+      if (bar.values.some(valIdx => this.hoveredIndices.includes(valIdx))) bar.isHovered = true;
+      if (bar.values.some(valIdx => this.clickedIndices.includes(valIdx))) bar.isClicked = true;
+      if (bar.values.some(valIdx => this.selectedIndices.includes(valIdx))) bar.isSelected = true;
     })
   }
 
@@ -2270,7 +2262,7 @@ export class Histogram extends Frame {
   }
 }
 
-
+const DEFAULT_POINT_COLOR: string = 'hsl(203, 90%, 85%)';
 export class newScatter extends Frame {
   public points: ScatterPoint[] = [];
 
@@ -2284,9 +2276,6 @@ export class newScatter extends Frame {
   public isMerged: boolean = false;
   public clusterColors: string[];
   public previousCoords: Vertex[];
-
-  readonly pointsColorFill: string = 'hsl(203, 90%, 85%)';
-  readonly pointsColorStroke: string = 'hsl(0, 0%, 0%)';
   constructor(
     data: any,
     public width: number,
@@ -2306,14 +2295,12 @@ export class newScatter extends Frame {
 
   get sampleDrawings(): GroupCollection { return this.absoluteObjects }
 
-  private unpackPointStyle(data: any): void {
-    if (data.point_style) {
-      if (data.point_style.color_fill) this.fillStyle = data.point_style.color_fill;
-      if (data.point_style.color_stroke) this.strokeStyle = data.point_style.color_stroke;
-      if (data.point_style.shape) this.marker = data.point_style.shape;
-      if (data.point_style.stroke_width) this.lineWidth = data.point_style.stroke_width;
-      if (data.point_style.size) this.pointSize = data.point_style.size;
-    }
+  public unpackPointStyle(data: any): void {
+    if (data.point_style?.color_fill) this.fillStyle = data.point_style.color_fill;
+    if (data.point_style?.color_stroke) this.strokeStyle = data.point_style.color_stroke;
+    if (data.point_style?.shape) this.marker = data.point_style.shape;
+    if (data.point_style?.stroke_width) this.lineWidth = data.point_style.stroke_width;
+    if (data.point_style?.size) this.pointSize = data.point_style.size;
     if (data.tooltip) this.tooltipAttributes = data.tooltip.attributes;
     if (data.points_sets) this.unpackPointsSets(data);
   }
@@ -2353,16 +2340,17 @@ export class newScatter extends Frame {
       point.isHovered = point.isClicked = point.isSelected = false;
       point.values.forEach(index => {
         if (this.clusterColors) {
-          colors.set(this.clusterColors[index], colors.get(this.clusterColors[index]) ? colors.get(this.clusterColors[index]) + 1 : 1);
+          const currentColorCounter = this.clusterColors[index];
+          colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
         }
-        if (this.hoveredIndices.indexOf(index) != -1) point.isHovered = true;
-        if (this.clickedIndices.indexOf(index) != -1) point.isClicked = true;
-        if (this.selectedIndices.indexOf(index) != -1) point.isSelected = true;
+        if (this.hoveredIndices.includes(index)) point.isHovered = true;
+        if (this.clickedIndices.includes(index)) point.isClicked = true;
+        if (this.selectedIndices.includes(index)) point.isSelected = true;
       });
       if (colors.size != 0) color = mapMax(colors)[0]
       else {
         const pointsSetIndex = this.getPointSet(point);
-        if (pointsSetIndex != -1) color = colorHSL(this.pointSetColors[pointsSetIndex]);
+        if (pointsSetIndex != -1) color = colorHsl(this.pointSetColors[pointsSetIndex]);
       };
       point.lineWidth = this.lineWidth;
       point.setColors(color);
@@ -2375,7 +2363,8 @@ export class newScatter extends Frame {
   private getPointSet(point: ScatterPoint): number {
     const pointSets = new Map<number, number>();
     point.values.forEach(pointIndex => {
-      pointSets.set(this.pointSets[pointIndex], pointSets.get(this.pointSets[pointIndex]) ? pointSets.get(this.pointSets[pointIndex]) + 1 : 1);
+      const currentPoint = this.pointSets[pointIndex];
+      pointSets.set(currentPoint, pointSets.get(currentPoint) ? pointSets.get(currentPoint) + 1 : 1);
     })
     if (pointSets.size > 1) pointSets.delete(-1);
     return mapMax(pointSets)[0]
@@ -2395,72 +2384,49 @@ export class newScatter extends Frame {
   public computePoints(): void {
     const thresholdDist = 30;
     const [xCoords, yCoords, xValues, yValues] = this.projectPoints();
-    let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
-    this.points = [];
-    mergedPoints.forEach(indexList => {
-      const newPoint = this.computePoint(indexList, xCoords, yCoords, xValues, yValues, this.pointSize, thresholdDist);
-      this.points.push(newPoint);
-    })
+    const pointsData = {"xCoords": xCoords, "yCoords": yCoords, "xValues": xValues, "yValues": yValues};
+    const mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
+    this.points = mergedPoints.map(mergedIndices => {
+      return ScatterPoint.fromPlottedValues(
+        mergedIndices, pointsData, this.pointSize, this.marker, thresholdDist,
+        this.tooltipAttributes, this.features, this.axes, this.xFeature, this.yFeature
+        )
+    });
   }
-
-  private computePoint(indexList: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
-    minSize: number, thresholdDist: number): ScatterPoint {
-      let centerX = 0;
-      let centerY = 0;
-      let meanX = 0;
-      let meanY = 0;
-      let newPoint = new ScatterPoint([], 0, 0, minSize, this.marker);
-      indexList.forEach(index => {
-        centerX += xCoords[index];
-        centerY += yCoords[index];
-        meanX += xValues[index];
-        meanY += yValues[index];
-        newPoint.values.push(index);
-      });
-      newPoint.center.x = centerX / indexList.length;
-      newPoint.center.y = centerY / indexList.length;
-      newPoint.size = Math.min(newPoint.size * 1.15**(indexList.length - 1), thresholdDist);
-      newPoint.mean.x = meanX / indexList.length;
-      newPoint.mean.y = meanY / indexList.length;
-      newPoint.updateTooltipMap();
-      if (newPoint.values.length == 1) {
-        newPoint.newTooltipMap();
-        this.tooltipAttributes.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[newPoint.values[0]]));
-      } else {
-        newPoint.tooltipMap.set(`Average ${this.xFeature}`, this.axes[0].isDiscrete ? this.axes[0].labels[Math.round(newPoint.mean.x)] : newPoint.mean.x);
-        newPoint.tooltipMap.set(`Average ${this.yFeature}`, this.axes[1].isDiscrete ? this.axes[1].labels[Math.round(newPoint.mean.y)] : newPoint.mean.y);
-        newPoint.tooltipMap.delete('X mean');
-        newPoint.tooltipMap.delete('Y mean');
-      }
-      newPoint.update();
-      return newPoint
-    }
 
   private mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
     if (!this.isMerged) return [...Array(xCoords.length).keys()].map(x => [x]);
     const squareDistances = this.distanceMatrix(xCoords, yCoords);
-    const squaredDist = minDistance**2;
+    const threshold = minDistance**2;
     const mergedPoints = [];
-    const indexLists = new Array(squareDistances.length).fill([]);
+    const pointsGroups = new Array(squareDistances.length).fill([]);
     const closedPoints = new Array(squareDistances.length).fill(0);
     const pickedPoints = new Array(squareDistances.length).fill(false);
-    squareDistances.forEach((squareDistance, pIndex) => {
-      const newList = []
+    squareDistances.forEach((squareDistance, pointIndex) => {
+      const pointGroup = []
       let nPoints = 0;
-      squareDistance.forEach((distance, dIndex) => { if (distance <= squaredDist) { nPoints++ ; newList.push(dIndex) }});
-      closedPoints[pIndex] = nPoints;
-      indexLists[pIndex] = newList;
+      squareDistance.forEach((distance, otherIndex) => {
+        if (distance <= threshold) {
+          nPoints++;
+          pointGroup.push(otherIndex);
+        }
+      });
+      closedPoints[pointIndex] = nPoints;
+      pointsGroups[pointIndex] = pointGroup;
     })
 
     while (sum(closedPoints) != 0) {
       const centerIndex = argMax(closedPoints)[1];
-      const newCluster = [];
+      const cluster = [];
       closedPoints[centerIndex] = 0;
-      indexLists[centerIndex].forEach(index => {
-        if (!pickedPoints[index]) { newCluster.push(index); pickedPoints[index] = true };
+      pointsGroups[centerIndex].forEach(index => {
+        if (!pickedPoints[index]) {
+          cluster.push(index);
+          pickedPoints[index] = true
+        }
         closedPoints[index] = 0;
       })
-      mergedPoints.push(newCluster);
+      mergedPoints.push(cluster);
     }
     return mergedPoints
   }
@@ -2485,10 +2451,10 @@ export class newScatter extends Frame {
   private distanceMatrix(xCoords: number[], yCoords: number[]): number[][] {
     let squareDistances = new Array(xCoords.length);
     for (let i = 0; i < xCoords.length; i++) {
-      if (squareDistances[i] == undefined) squareDistances[i] = new Array(xCoords.length);
+      if (!squareDistances[i]) squareDistances[i] = new Array(xCoords.length);
       for (let j = i; j < xCoords.length; j++) {
         squareDistances[i][j] = (xCoords[i] - xCoords[j])**2 + (yCoords[i] - yCoords[j])**2;
-        if (squareDistances[j] == undefined) squareDistances[j] = new Array(xCoords.length);
+        if (!squareDistances[j]) squareDistances[j] = new Array(xCoords.length);
         squareDistances[j][i] = squareDistances[i][j];
       }
     }
@@ -2497,12 +2463,12 @@ export class newScatter extends Frame {
 
   private agglomerativeClustering(xValues: number[], yValues: number[], minDistance: number = 0.25): number[][] {
     const squareDistances = this.distanceMatrix(xValues, yValues);
-    const squaredDist = minDistance**2;
-    let clusteredPoints = [];
+    const threshold = minDistance**2;
+    let pointsGroups = [];
     squareDistances.forEach(distances => {
-      let newCluster = [];
-      distances.forEach((distance, col) => { if (distance <= squaredDist) newCluster.push(col) });
-      clusteredPoints.push(newCluster);
+      let pointsGroup = [];
+      distances.forEach((distance, col) => { if (distance <= threshold) pointsGroup.push(col) });
+      pointsGroups.push(pointsGroup);
     })
 
     let clusters = [];
@@ -2510,8 +2476,8 @@ export class newScatter extends Frame {
     let maxIter = 0;
     while (nClusters != clusters.length && maxIter < 100) {
       nClusters = clusters.length;
-      clusters = [clusteredPoints[0]];
-      clusteredPoints.slice(1).forEach(candidate => {
+      clusters = [pointsGroups[0]];
+      pointsGroups.slice(1).forEach(candidate => {
         let isCluster = true;
         clusters.forEach((cluster, clusterIndex) => {
           for (let i=0; i < candidate.length; i++) {
@@ -2524,7 +2490,7 @@ export class newScatter extends Frame {
         })
         if (isCluster) clusters.push(candidate);
       })
-      clusteredPoints = new Array(...clusters);
+      pointsGroups = new Array(...clusters);
       maxIter++;
     }
     return clusters
@@ -2533,9 +2499,8 @@ export class newScatter extends Frame {
   public simpleCluster(inputValue: number): void { this.computeClusterColors(inputValue); this.draw() }
 
   public resetClusters(): void {
-    this.clusterColors = undefined;
-    const defaultPoint = new ScatterPoint([]);
-    this.points.forEach(point => point.setColors(defaultPoint.fillStyle));
+    this.clusterColors = null;
+    this.points.forEach(point => point.setColors(DEFAULT_POINT_COLOR));
     this.draw();
    }
 
@@ -2544,12 +2509,12 @@ export class newScatter extends Frame {
     const yValues = [...this.axes[1].stringsToValues(this.features.get(this.yFeature))];
     const scaledX = normalizeArray(xValues);
     const scaledY = normalizeArray(yValues);
-    const clusteredPoints = this.agglomerativeClustering(scaledX, scaledY, normedDistance);
+    const clusters = this.agglomerativeClustering(scaledX, scaledY, normedDistance);
 
-    const colorRatio: number = 360 / clusteredPoints.length;
+    const colorRatio: number = 360 / clusters.length;
     this.clusterColors = new Array(xValues.length);
     let colorRadius: number = 0;
-    clusteredPoints.forEach(cluster => {
+    clusters.forEach(cluster => {
       colorRadius += colorRatio;
       cluster.forEach(point => this.clusterColors[point] = `hsl(${colorRadius}, 50%, 50%, 90%)`);
     })
@@ -2565,6 +2530,7 @@ export class newScatter extends Frame {
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
     let [superCanvasMouse, superFrameMouse, clickedObject] = super.mouseDown(canvasMouse, frameMouse, absoluteMouse);
     this.previousCoords = Array.from(this.points, point => point.center);
+    this.previousCoords = this.points.map(p => p.center)
     return [superCanvasMouse, superFrameMouse, clickedObject]
   }
 
@@ -2574,9 +2540,9 @@ export class newScatter extends Frame {
   }
 
   public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] {
-    let scale = new Vertex(this.scaleX, this.scaleY);
+    const scale = new Vertex(this.scaleX, this.scaleY);
     [mouse3X, mouse3Y] = super.wheel_interaction(mouse3X, mouse3Y, deltaY);
-    for (let axis of this.axes) {
+    for (const axis of this.axes) {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
         if (this.scaleX > scale.x) {this.scaleX = scale.x}
         if (this.scaleY > scale.y) {this.scaleY = scale.y}

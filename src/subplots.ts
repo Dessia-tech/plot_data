@@ -2349,7 +2349,7 @@ export class newScatter extends Frame {
       point.setColors(color);
       point.marker = this.marker;
       point.update();
-      if (point.isInFrame(this.axes[0], this.axes[1])) point.draw(context);
+      if (point.isInFrame(this.axes[0], this.axes[1]))       {console.log(point.fillStyle);point.draw(context);}
     })
   }
 

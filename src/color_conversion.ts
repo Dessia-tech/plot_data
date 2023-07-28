@@ -204,6 +204,7 @@ export function arrayRgbToHsl(r: number, g: number, b: number): [number, number,
     if (cMax == normedR) h = 60 * (normedG - normedB) / delta;
     else if (cMax == normedG) h = 60 * ((normedB - normedR) / delta + 2);
     else h = 60 * ((normedR - normedG) / delta + 4);
+    if (h < 0) h += 360;
     s = delta / (1 - Math.abs(2 * l - 1));
   }
   return [h, s * 100, l * 100]

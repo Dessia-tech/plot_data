@@ -1952,12 +1952,53 @@ export class ScatterPoint extends newPoint2D {
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
 
+  public static fromPlottedValues(indices: number[], pointsData: {[key: string]: number[]}, pointSize: number, marker: string, 
+    thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[], 
+    xName: string, yName: string): ScatterPoint {
+      const newPoint = new ScatterPoint(indices, 0, 0, pointSize, marker);
+      newPoint.computeValues(pointsData, thresholdDist);
+      newPoint.updateTooltip(tooltipAttributes, features, axes, xName, yName);
+      newPoint.update();
+      return newPoint
+    }
+
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
 
   public update() {
     this.isScaled = false;
     this.buildPath();
   }
+
+  public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[], xName: string, yName: string) {
+    this.updateTooltipMap();
+    if (this.values.length == 1) {
+      this.newTooltipMap();
+      tooltipAttributes.forEach(attr => this.tooltipMap.set(attr, features.get(attr)[this.values[0]]));
+    } else {
+      this.tooltipMap.set(`Average ${xName}`, axes[0].isDiscrete ? axes[0].labels[Math.round(this.mean.x)] : this.mean.x);
+      this.tooltipMap.set(`Average ${yName}`, axes[1].isDiscrete ? axes[1].labels[Math.round(this.mean.y)] : this.mean.y);
+      this.tooltipMap.delete('X mean');
+      this.tooltipMap.delete('Y mean');
+    }
+  }
+
+  public computeValues(pointsData: {[key: string]: number[]}, thresholdDist: number): void {
+      let centerX = 0;
+      let centerY = 0;
+      let meanX = 0;
+      let meanY = 0;
+      this.values.forEach(index => {
+        centerX += pointsData.xCoords[index];
+        centerY += pointsData.yCoords[index];
+        meanX += pointsData.xValues[index];
+        meanY += pointsData.yValues[index];
+      });
+      this.center.x = centerX / this.values.length;
+      this.center.y = centerY / this.values.length;
+      this.size = Math.min(this.size * 1.15**(this.values.length - 1), thresholdDist);
+      this.mean.x = meanX / this.values.length;
+      this.mean.y = meanY / this.values.length;
+    }
 
   public isInFrame(xAxis: newAxis, yAxis: newAxis): boolean {
     const inCanvasX = this.mean.x < xAxis.maxValue && this.mean.x > xAxis.minValue;

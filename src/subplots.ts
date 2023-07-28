@@ -2373,44 +2373,15 @@ export class newScatter extends Frame {
   public computePoints(): void {
     const thresholdDist = 30;
     const [xCoords, yCoords, xValues, yValues] = this.projectPoints();
-    let mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
-    this.points = mergedPoints.map(indexList => {
-      return this.computePoint(indexList, xCoords, yCoords, xValues, yValues, this.pointSize, thresholdDist)
+    const pointsData = {"xCoords": xCoords, "yCoords": yCoords, "xValues": xValues, "yValues": yValues};
+    const mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
+    this.points = mergedPoints.map(mergedIndices => {
+      return ScatterPoint.fromPlottedValues(
+        mergedIndices, pointsData, this.pointSize, this.marker, thresholdDist, 
+        this.tooltipAttributes, this.features, this.axes, this.xFeature, this.yFeature
+        )
     });
   }
-
-  private computePoint(indices: number[], xCoords: number[], yCoords: number[], xValues: number[], yValues: number[],
-    minSize: number, thresholdDist: number): ScatterPoint {
-      let centerX = 0;
-      let centerY = 0;
-      let meanX = 0;
-      let meanY = 0;
-      const newPoint = new ScatterPoint([], 0, 0, minSize, this.marker);
-      indices.forEach(index => {
-        centerX += xCoords[index];
-        centerY += yCoords[index];
-        meanX += xValues[index];
-        meanY += yValues[index];
-        newPoint.values.push(index);
-      });
-      newPoint.center.x = centerX / indices.length;
-      newPoint.center.y = centerY / indices.length;
-      newPoint.size = Math.min(newPoint.size * 1.15**(indices.length - 1), thresholdDist);
-      newPoint.mean.x = meanX / indices.length;
-      newPoint.mean.y = meanY / indices.length;
-      newPoint.updateTooltipMap();
-      if (newPoint.values.length == 1) {
-        newPoint.newTooltipMap();
-        this.tooltipAttributes.forEach(attr => newPoint.tooltipMap.set(attr, this.features.get(attr)[newPoint.values[0]]));
-      } else {
-        newPoint.tooltipMap.set(`Average ${this.xFeature}`, this.axes[0].isDiscrete ? this.axes[0].labels[Math.round(newPoint.mean.x)] : newPoint.mean.x);
-        newPoint.tooltipMap.set(`Average ${this.yFeature}`, this.axes[1].isDiscrete ? this.axes[1].labels[Math.round(newPoint.mean.y)] : newPoint.mean.y);
-        newPoint.tooltipMap.delete('X mean');
-        newPoint.tooltipMap.delete('Y mean');
-      }
-      newPoint.update();
-      return newPoint
-    }
 
   private mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
     if (!this.isMerged) return [...Array(xCoords.length).keys()].map(x => [x]);

@@ -2518,7 +2518,6 @@ export class newScatter extends Frame {
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
     let [superCanvasMouse, superFrameMouse, clickedObject] = super.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-    this.previousCoords = Array.from(this.points, point => point.center);
     this.previousCoords = this.points.map(p => p.center)
     return [superCanvasMouse, superFrameMouse, clickedObject]
   }

@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Dependencies of sample states between plots
     - Use attributes coming from Python
 - Point families implementation as PointSet
+- Graph2D implementation
 
 ## [0.15.0]
 ### Add

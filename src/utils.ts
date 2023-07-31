@@ -1395,7 +1395,7 @@ export class newShape {
     context.globalAlpha = this.alpha;
     if (this.isFilled) {
       context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-      context.strokeStyle = this.strokeStyle ?? this.setStrokeStyle(context.fillStyle);
+      context.strokeStyle = this.setStrokeStyle(context.fillStyle);
     } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle;
   }
 
@@ -1912,9 +1912,9 @@ export class newPoint2D extends newShape {
 
   public update() { this.buildPath() }
 
-  public setColors(fillStyle: string = null, strokeStyle: string = null) {
-    this.fillStyle = fillStyle || this.fillStyle;
-    this.strokeStyle = strokeStyle; // ? strokeStyle : this.setStrokeStyle(this.fillStyle);
+  public setColors(color: string) {
+    this.fillStyle = this.isFilled ? color : null;
+    this.strokeStyle = this.isFilled ? this.setStrokeStyle(this.fillStyle) : color;
   }
 
   get drawnShape(): newShape {

@@ -2276,8 +2276,8 @@ const DEFAULT_POINT_COLOR: string = 'hsl(203, 90%, 85%)';
 export class newScatter extends Frame {
   public points: ScatterPoint[] = [];
 
-  public fillStyle: string;
-  public strokeStyle: string;
+  public fillStyle: string = DEFAULT_POINT_COLOR;
+  public strokeStyle: string = null;
   public marker: string = 'circle';
   public pointSize: number = 8;
   public lineWidth: number = 1;
@@ -2364,8 +2364,13 @@ export class newScatter extends Frame {
       };
       point.lineWidth = this.lineWidth;
       point.setColors(color);
-      point.marker = this.marker;
-      if (this.pointStyles) point.updateStyle(this.pointStyles[point.values[0]]);
+      if (this.pointStyles) {
+        if (!this.clusterColors) point.updateStyle(this.pointStyles[point.values[0]])
+        else {
+          let clusterPointStyle = Object.assign({}, this.pointStyles, { strokeStyle: null });
+          point.updateStyle(clusterPointStyle);
+        }
+      } else point.marker = this.marker;
       point.update();
       if (point.isInFrame(axesOrigin, axesEnd, this.initScale)) point.draw(context);
     })

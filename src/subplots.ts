@@ -1581,6 +1581,10 @@ export class BasePlot extends PlotData {
       axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
       if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
     })
+    this.updateSelection(axesSelections);
+  }
+
+  public updateSelection(axesSelections: number[][]): void {
     if (!this.is_in_multiplot) this.selectedIndices = BasePlot.intersectArrays(axesSelections);
   }
 
@@ -2536,8 +2540,7 @@ export class newScatter extends Frame {
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
     let [superCanvasMouse, superFrameMouse, clickedObject] = super.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-    this.previousCoords = Array.from(this.points, point => point.center);
-    this.previousCoords = this.points.map(p => p.center)
+    this.previousCoords = this.points.map(p => p.center);
     return [superCanvasMouse, superFrameMouse, clickedObject]
   }
 
@@ -2610,6 +2613,8 @@ export class newGraph2D extends newScatter {
     if (packedPointStyle?.color_fill) pointsIndices.forEach(i => this.pointStyles[i].fillStyle = packedPointStyle.color_fill);
     if (packedPointStyle?.size) pointsIndices.forEach(i => this.pointStyles[i].size = packedPointStyle.size);
   }
+
+  public updateSelection(axesSelections: number[][]): void { this.selectedIndices = BasePlot.intersectArrays(axesSelections) }
 
   public drawCurves(context: CanvasRenderingContext2D): void {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);

@@ -594,15 +594,18 @@ export class MultiplePlots {
         if (List.is_include(plotIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
           if (plot instanceof BasePlot) {
-            plot.selectedIndices = this.selectedIndices;
-            plot.clickedIndices = [...this.clickedIndices];
-            plot.hoveredIndices = [...this.hoveredIndices];
-            if (plot instanceof Frame) {
-              if (this.point_families.length != 0) {
-                plot.pointSetColors = this.point_families.map((pointFamily, familyIdx) => {
-                  pointFamily.pointIndices.forEach(pointIdx => plot.pointSets[pointIdx] = familyIdx);
-                  return pointFamily.color
-                })
+            // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
+            if ( !(plot instanceof newGraph2D) ) {
+              plot.selectedIndices = this.selectedIndices;
+              plot.clickedIndices = [...this.clickedIndices];
+              plot.hoveredIndices = [...this.hoveredIndices];
+              if (plot instanceof Frame) {
+                if (this.point_families.length != 0) {
+                  plot.pointSetColors = this.point_families.map((pointFamily, familyIdx) => {
+                    pointFamily.pointIndices.forEach(pointIdx => plot.pointSets[pointIdx] = familyIdx);
+                    return pointFamily.color
+                  })
+                }
               }
             }
           } else if (plot instanceof ParallelPlot) {
@@ -887,10 +890,13 @@ export class MultiplePlots {
           this.selectedIndices = List.listIntersection(this.selectedIndices, obj.pp_selected_index);
         } else if (obj instanceof BasePlot) {
           obj.axes.forEach(axis => {
-            if (axis.rubberBand.length != 0) {
-              isSelecting = true;
-              const selectedIndices = (obj as BasePlot).updateSelected(axis);
-              this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
+            // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
+            if ( !(obj instanceof newGraph2D) ) {
+              if (axis.rubberBand.length != 0) {
+                isSelecting = true;
+                const selectedIndices = (obj as BasePlot).updateSelected(axis);
+                this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
+              }
             }
           })
         }
@@ -1840,7 +1846,7 @@ export class MultiplePlots {
       this.redrawAllObjects();
     }
 
-    mouse_interaction(): void {
+    mouse_interaction(): void { //TODO: this has to be totally refactored, with special behaviors defined in each plot class
       var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
       var isDrawing = false;
       var mouse_moving:boolean = false;
@@ -1944,7 +1950,8 @@ export class MultiplePlots {
                 this.mouse_move_pp_communication();
                 this.mouse_move_frame_communication();
                 this.refreshRubberBands();
-                this.updateSelectedPrimitives();
+                // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
+                if ( !(this.objectList[this.last_index] instanceof newGraph2D) ) this.updateSelectedPrimitives();
                 this.redrawAllObjects();
               }
               this.redraw_object();
@@ -1952,7 +1959,7 @@ export class MultiplePlots {
               if (this.selectDependency_bool) {
                 this.mouse_over_primitive_group();
                 this.mouse_over_scatter_plot();
-                if (this.objectList[this.last_index] instanceof BasePlot) {
+                if (this.objectList[this.last_index] instanceof BasePlot && !(this.objectList[this.last_index] instanceof newGraph2D)) {
                   this.hoveredIndices = (this.objectList[this.last_index] as BasePlot).hoveredIndices;
                   this.clickedIndices = (this.objectList[this.last_index] as BasePlot).clickedIndices;
                 }
@@ -2002,7 +2009,7 @@ export class MultiplePlots {
                   this.pp_communication(this.objectList[this.clickedPlotIndex].rubber_bands, this.objectList[this.clickedPlotIndex]);
                 }
               }
-              if (this.objectList[this.last_index] instanceof BasePlot) {
+              if (this.objectList[this.last_index] instanceof BasePlot && !(this.objectList[this.last_index] instanceof newGraph2D)) {
                 this.hoveredIndices = (this.objectList[this.last_index] as BasePlot).hoveredIndices;
                 this.clickedIndices = (this.objectList[this.last_index] as BasePlot).clickedIndices;
               }
@@ -2013,7 +2020,8 @@ export class MultiplePlots {
         }
         this.refreshRubberBands();
         this.manage_selected_point_index_changes(old_selected_index);
-        this.updateSelectedPrimitives();
+        // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
+        if ( !(this.objectList[this.last_index] instanceof newGraph2D) ) this.updateSelectedPrimitives();
         if (!shiftKey) this.isSelecting = false;
         this.isZooming = false;
         this.objectList.forEach(plot => {

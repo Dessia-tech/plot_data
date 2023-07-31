@@ -1694,7 +1694,11 @@ export class BasePlot extends PlotData {
 
   public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() }
 
+  public switchMerge(): void {}
+
   public switchZoom(): void { this.isZooming = !this.isZooming }
+
+  public switchShowPoints(): void {}
 
   protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex): void { this.selectionBox.update(frameDown, frameMouse) }
 
@@ -2611,20 +2615,17 @@ export class newGraph2D extends newScatter {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
     const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
     const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
-    drawingZone.fillStyle = "hsl(0, 0%, 100%)";
-    const image = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
     this.curves.forEach((curve, curveIndex) => {
-      curve.points = this.curvesIndices[curveIndex].map(index => { return this.points[index] });
-      curve.buildPath();
-      curve.drawingZone = drawingZone;
+      curve.update(this.curvesIndices[curveIndex].map(index => { return this.points[index] }));
       curve.draw(context);
     })
     context.globalCompositeOperation = "destination-in";
     context.fill(drawingZone.path);
-    const imageGraph = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
+    const cutGraph = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
     context.globalCompositeOperation = "source-over";
-    context.putImageData(image, 0, 0);
-    context.putImageData(imageGraph, this.X, this.Y);
+    context.putImageData(previousCanvas, 0, 0);
+    context.putImageData(cutGraph, this.X, this.Y);
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {

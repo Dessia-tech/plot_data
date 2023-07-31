@@ -2026,7 +2026,6 @@ export class ScatterPoint extends newPoint2D {
 }
 
 export class LineSequence extends newShape {
-  public drawingZone: newRect;
   public previousTooltipOrigin: Vertex;
   constructor(
     public points: newPoint2D[] = [],
@@ -2064,16 +2063,15 @@ export class LineSequence extends newShape {
     context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
   }
 
-  // public draw(context: CanvasRenderingContext2D): void {
-  //   context.save();    
-  //   super.draw(context);
-  //   context.restore();
-  // }
-
   public buildPath(): void {
     this.path = new Path2D();
     this.path.moveTo(this.points[0].center.x, this.points[0].center.y);
     this.points.slice(1).forEach(point=> this.path.lineTo(point.center.x, point.center.y));
+  }
+
+  public update(points: newPoint2D[]): void {
+    this.points = points;
+    this.buildPath();
   }
 }
 

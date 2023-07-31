@@ -1809,7 +1809,9 @@ export class MultiplePlots {
       this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchSelection() });
     }
 
-    public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.switchMerge() })};
+    public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchMerge() })};
+
+    public switchShowPoints() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchShowPoints() })};
 
     public switchZoom() {
       this.isZooming = !this.isZooming;

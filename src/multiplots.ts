@@ -361,18 +361,10 @@ export class MultiplePlots {
     }
 
     add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-      var graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', text_align_x:'center', text_align_y:'alphabetic', name:''};
-      var axis_style = {line_width:0.5, color_stroke:string_to_rgb('grey'), dashline:[], name:''};
-      var DEFAULT_AXIS = {nb_points_x:10, nb_points_y:10, graduation_style: graduation_style, axis_style: axis_style, arrow_on: false, grid_on: true, type_:'axis', name:''};
-      var surface_style = {color_fill: string_to_rgb('lightblue'), opacity:0.75, hatching:undefined};
-      var text_style = {text_color: string_to_rgb('black'), font_size:10, font_style:'sans-serif', text_align_x:'start', text_align_y:'alphabetic', name:''};
-      var DEFAULT_TOOLTIP = {attribute_names:[attr_x.name, attr_y.name], surface_style:surface_style, text_style:text_style, tooltip_radius:5, type_:'tooltip', name:''};
-      var point_style = {color_fill:string_to_rgb('lightblue'), color_stroke:string_to_rgb('grey'), stroke_width:0.5, size:2, shape:'circle', name:''};
-      var new_scatter = {tooltip:DEFAULT_TOOLTIP, attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
-                         elements:this.data['elements'], axis:DEFAULT_AXIS, type_:'scatterplot', name:'', package_version: this.data['package_version']};
+      var new_scatter = {attribute_names: [attr_x.name, attr_y.name], elements:this.data['elements'], type_:'frame', name:'', package_version: this.data['package_version']};
       var DEFAULT_WIDTH = 560;
       var DEFAULT_HEIGHT = 300;
-      var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
+      var new_plot_data = new newScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
       this.initialize_new_plot_data(new_plot_data);
     }
 

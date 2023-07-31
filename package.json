@@ -68,7 +68,6 @@
     "fs": "^0.0.1-security",
     "html-webpack-plugin": "^5.5.0",
     "ignore-errors": "^2.0.0",
-    "ml-matrix": "^6.10.4",
     "ts-loader": "^9.2.6",
     "typedoc": "^0.23.28",
     "webpack": "^5.75.0"

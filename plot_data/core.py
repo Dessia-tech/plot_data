@@ -369,6 +369,32 @@ DEFAULT_TEXTSTYLE = TextStyle(text_color=plot_data.colors.BLACK)
 DEFAULT_SURFACESTYLE = SurfaceStyle(color_fill=plot_data.colors.WHITE, opacity=1.)  # Not sure about opacity=1 in TS
 
 
+class Attribute(PlotDataObject):
+    """
+    Represents an attribute.
+
+    :param type_: The attribute's type (in that case, values are either 'float', 'color' or 'string')
+    :param name: The attribute's name
+    """
+
+    def __init__(self, type_: str, name: str):
+        PlotDataObject.__init__(self, type_=type_, name=name)
+
+
+class PointFamily(PlotDataObject):
+    """
+    A class that defines a point family. This class can be used in MultiplePlots to create families of points.
+
+    :param point_color: a color that is proper to this family (rgb255)
+    :param point_index: a list containing the point's index from MultiplePlots.elements
+    """
+
+    def __init__(self, point_color: str, point_index: List[int], name: str = ''):
+        self.color = point_color
+        self.point_index = point_index
+        PlotDataObject.__init__(self, type_=None, name=name)
+
+
 class Text(PlotDataObject):
     """
     A class for displaying texts on canvas. Text is a primitive and can be instantiated by PrimitiveGroup.
@@ -636,16 +662,12 @@ class Axis(PlotDataObject):
     :type grid_on: bool
     """
 
-    def __init__(self, nb_points_x: int = 10, nb_points_y: int = 10, graduation_style: TextStyle = None,
+    def __init__(self, nb_points_x: int = None, nb_points_y: int = None, graduation_style: TextStyle = None,
                  axis_style: EdgeStyle = None, arrow_on: bool = False, grid_on: bool = True, name: str = ''):
         self.nb_points_x = nb_points_x
         self.nb_points_y = nb_points_y
         self.graduation_style = graduation_style
-        if graduation_style is None:
-            self.graduation_style = TextStyle(text_color=plot_data.colors.GREY)
         self.axis_style = axis_style
-        if axis_style is None:
-            self.axis_style = EdgeStyle(color_stroke=plot_data.colors.LIGHTGREY)
         self.arrow_on = arrow_on
         self.grid_on = grid_on
         PlotDataObject.__init__(self, type_='axis', name=name)
@@ -828,9 +850,9 @@ class Scatter(Figure):
     _plot_commands = "SCATTER_COMMANDS"
 
     def __init__(self, x_variable: str, y_variable: str, tooltip: Tooltip = None, point_style: PointStyle = None,
-                 elements: List[Sample] = None, axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None,
-                 heatmap: Heatmap = None, heatmap_view: bool = None, width: int = 750, height: int = 400,
-                 name: str = ''):
+                 elements: List[Sample] = None, points_sets: List[PointFamily] = None, axis: Axis = None,
+                 log_scale_x: bool = None, log_scale_y: bool = None, heatmap: Heatmap = None, heatmap_view: bool = None,
+                 width: int = 750, height: int = 400, name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style
@@ -856,6 +878,7 @@ class Scatter(Figure):
         self.log_scale_y = log_scale_y
         self.heatmap = heatmap
         self.heatmap_view = heatmap_view
+        self.points_sets = points_sets
         super().__init__(width=width, height=height, type_='scatterplot', name=name)
 
 
@@ -1178,32 +1201,6 @@ class ParallelPlot(Figure):
         self.attribute_names = axes
         self.rgbs = rgbs
         super().__init__(width=width, height=height, type_='parallelplot', name=name)
-
-
-class Attribute(PlotDataObject):
-    """
-    Represents an attribute.
-
-    :param type_: The attribute's type (in that case, values are either 'float', 'color' or 'string')
-    :param name: The attribute's name
-    """
-
-    def __init__(self, type_: str, name: str):
-        PlotDataObject.__init__(self, type_=type_, name=name)
-
-
-class PointFamily(PlotDataObject):
-    """
-    A class that defines a point family. This class can be used in MultiplePlots to create families of points.
-
-    :param point_color: a color that is proper to this family (rgb255)
-    :param point_index: a list containing the point's index from MultiplePlots.elements
-    """
-
-    def __init__(self, point_color: str, point_index: List[int], name: str = ''):
-        self.color = point_color
-        self.point_index = point_index
-        PlotDataObject.__init__(self, type_=None, name=name)
 
 
 class Histogram(Figure):

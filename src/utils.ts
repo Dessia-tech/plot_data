@@ -2893,7 +2893,7 @@ export class GroupCollection extends ShapeCollection {
     super(drawings, frame);
   }
 
-  public drawingIsContainer(drawing: any): boolean { return drawing.values?.length > 1 }
+  public drawingIsContainer(drawing: any): boolean { return drawing.values?.length > 1 || drawing instanceof LineSequence }
 
   public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
     this.drawings.forEach(drawing => { if ((this.drawingIsContainer(drawing) || !inMultiPlot) && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });

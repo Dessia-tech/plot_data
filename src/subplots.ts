@@ -24,10 +24,6 @@ export class PlotContour extends PlotData {
                        public canvas_id: string,
                        public is_in_multiplot = false) {
       super(data, width, height, buttons_ON, 0, 0, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.0';
-        check_package_version(data['package_version'], requirement);
-      }
       this.plot_datas = [];
       this.type_ = 'primitivegroup';
       var d = this.data;
@@ -119,10 +115,6 @@ export class PlotScatter extends PlotData {
       public canvas_id: string,
       public is_in_multiplot = false) {
         super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-        if (!is_in_multiplot) {
-          var requirement = '0.6.0';
-          check_package_version(data['package_version'], requirement);
-        }
         if (this.buttons_ON) {
           this.refresh_buttons_coords();
         }
@@ -249,10 +241,6 @@ export class ParallelPlot extends PlotData {
     constructor(public data, public width, public height, public buttons_ON, X, Y, public canvas_id: string,
                 public is_in_multiplot = false) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.1';
-        check_package_version(data['package_version'], requirement);
-      }
       this.type_ = 'parallelplot';
       if (this.buttons_ON) {
         this.disp_x = this.width - 35;
@@ -302,7 +290,7 @@ export class ParallelPlot extends PlotData {
 
     initialize_all_attributes() {
       var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
-      var exceptions = ['name', 'package_version', 'object_class'];
+      var exceptions = ['name', 'object_class'];
       for (let i=0; i<attribute_names.length; i++) {
         if (!(List.is_include(attribute_names[i], exceptions))) {
           let name = attribute_names[i];
@@ -557,10 +545,6 @@ export class PrimitiveGroupContainer extends PlotData {
                 public canvas_id: string,
                 public is_in_multiplot: boolean = false) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.0';
-        check_package_version(data['package_version'], requirement);
-      }
       this.type_ = 'primitivegroupcontainer';
       var serialized = data['primitive_groups'];
       var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);

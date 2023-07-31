@@ -778,19 +778,6 @@ export class Window {
 }
 
 
-export function check_package_version(package_version: string, requirement: string) {
-  var version_array = package_version.split('.');
-  var requirement_array = requirement.split('.');
-  var package_version_num = Number(version_array[0]) * Math.pow(10, 4) + Number(version_array[1]) * Math.pow(10, 2) +
-    Number(version_array[2]);
-  var requirement_num = Number(requirement_array[0]) * Math.pow(10, 4) + Number(requirement_array[1]) * Math.pow(10, 2) +
-    Number(requirement_array[2]);
-  if (package_version_num < requirement_num) {
-    alert("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
-  }
-}
-
-
 /**
  * A generic equals function that compares values and not references.
  */

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 - First implementation of Scatter as a Frame plot
 
+### Removed
+- Package Version checks is not implemented anymore
+
 ## [0.15.0]
 ### Add
 - Tooltip in Histograms, which can be drawn only in the current window plot

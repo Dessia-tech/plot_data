@@ -2643,6 +2643,13 @@ export class newGraph2D extends newScatter {
     this.drawSelectionBox(context);
   };
 
+  public reset_scales(): void {
+    const scale = new Vertex(this.frameMatrix.a, this.frameMatrix.d).scale(this.initScale);
+    const translation = new Vertex(this.axes[0].maxValue - this.axes[0].initMaxValue, this.axes[1].maxValue - this.axes[1].initMaxValue).scale(scale);
+    this.curves.forEach(curve => curve.translateTooltip(translation));
+    super.reset_scales();
+  }
+
   public switchMerge(): void { this.isMerged = false }
 
   public switchShowPoints(): void { this.showPoints = !this.showPoints; this.draw() }

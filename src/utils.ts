@@ -1310,6 +1310,13 @@ export class Vertex {
     return copy
   }
 
+  public translate(translation: Vertex): Vertex { return this.add(translation) }
+
+  public translateSelf(translation: Vertex): void {
+    this.x += translation.x;
+    this.y += translation.y;
+  }
+
   public subtract(other: Vertex): Vertex {
     let copy = this.copy();
     copy.x = this.x - other.x;
@@ -2043,10 +2050,14 @@ export class LineSequence extends newShape {
     return tooltip
   }
 
-  public mouseDown(mouseDown: Vertex) {
-    this.previousTooltipOrigin = mouseDown.copy();
+  public setTooltipOrigin(vertex: Vertex): void {
+    this.previousTooltipOrigin = vertex.copy();
     this.tooltipOrigin = this.previousTooltipOrigin.copy();
   }
+
+  public translateTooltip(translation: Vertex): void { this.tooltipOrigin?.translateSelf(translation) }
+
+  public mouseDown(mouseDown: Vertex) { this.setTooltipOrigin(mouseDown) }
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Name", this.name]]) }
 

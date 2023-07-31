@@ -11,7 +11,7 @@ import sys
 import tempfile
 import warnings
 import webbrowser
-from typing import Dict, List, Tuple, Union #, Any
+from typing import Dict, List, Tuple, Union  # , Any
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Circle, Arc
@@ -31,6 +31,7 @@ import plot_data.colors
 from plot_data import templates
 
 # CURVES_DATATYPE = Union(List[float], List[str], List[List[float]], List[Dict[str, Any]])
+
 
 def delete_none_from_dict(dict1):
     """ Delete input dictionary's keys where value is None. """
@@ -909,7 +910,6 @@ class Graph2D(Figure):
 
 #         if isinstance(x_values[0], Curve):
 #             return x_values
-
 
 
 class Heatmap(DessiaObject):

@@ -1953,8 +1953,11 @@ export class newPoint2D extends newShape {
     context.lineWidth = this.lineWidth;
     context.globalAlpha = this.alpha;
     const fillColor = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-    context.fillStyle = fillColor;
-    context.strokeStyle = this.strokeStyle ?? this.setStrokeStyle(fillColor);
+    if (this.isFilled) {
+      context.fillStyle = fillColor;
+      context.strokeStyle = this.strokeStyle ?? this.setStrokeStyle(fillColor);
+    } else context.strokeStyle = fillColor;
+    
   }
 
   public isInFrame(origin: Vertex, end: Vertex, scale: Vertex): boolean {

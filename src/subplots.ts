@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, 
+import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint,
   Bar, DrawingCollection, SelectionBox, GroupCollection, LineSequence, newRect, pointStyle } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
@@ -2001,7 +2001,7 @@ export class Frame extends BasePlot {
       this.nYTicks = data.axis.nb_points_y;
     }
   }
-  
+
   protected stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
     frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
       super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);

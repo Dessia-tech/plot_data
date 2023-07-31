@@ -68,8 +68,6 @@ export class MultiplePlots {
     public rubberBands: Map<string, RubberBand>;
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
-      console.log(data)
-      var requirement = '0.6.1';
       this.define_canvas(canvas_id);
       var elements = data['elements'];
       

@@ -2592,29 +2592,39 @@ export class newGraph2D extends newScatter {
         this.curves.push(LineSequence.getGraphProperties(graph));
         const curveIndices = range(formattedData["elements"].length, formattedData["elements"].length + graph.elements.length);
         this.pointStyles.push(...new Array(curveIndices.length).fill({}));
-        if (graph.point_style?.shape) curveIndices.forEach(i => this.pointStyles[i].marker = graph.point_style.shape);
-        if (graph.point_style?.color_stroke) curveIndices.forEach(i => this.pointStyles[i].strokeStyle = graph.point_style.color_stroke);
-        if (graph.point_style?.color_fill) curveIndices.forEach(i => this.pointStyles[i].fillStyle = graph.point_style.color_fill);
-        if (graph.point_style?.size) curveIndices.forEach(i => this.pointStyles[i].size = graph.point_style.size);
         this.curvesIndices.push(curveIndices);
+        this.unpackGraphPointStyle(curveIndices, graph.point_style);
         formattedData["elements"].push(...graph.elements);
       })
     }
     return super.unpackData(formattedData)
   }
 
+  private unpackGraphPointStyle(pointsIndices: number[], packedPointStyle: {[key: string]: any}): void {
+    if (packedPointStyle?.shape) pointsIndices.forEach(i => this.pointStyles[i].marker = packedPointStyle.shape);
+    if (packedPointStyle?.color_stroke) pointsIndices.forEach(i => this.pointStyles[i].strokeStyle = packedPointStyle.color_stroke);
+    if (packedPointStyle?.color_fill) pointsIndices.forEach(i => this.pointStyles[i].fillStyle = packedPointStyle.color_fill);
+    if (packedPointStyle?.size) pointsIndices.forEach(i => this.pointStyles[i].size = packedPointStyle.size);
+  }
+
   public drawCurves(context: CanvasRenderingContext2D): void {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
     const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
     const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
-    context.beginPath();
+    drawingZone.fillStyle = "hsl(0, 0%, 100%)";
+    const image = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
     this.curves.forEach((curve, curveIndex) => {
       curve.points = this.curvesIndices[curveIndex].map(index => { return this.points[index] });
       curve.buildPath();
       curve.drawingZone = drawingZone;
       curve.draw(context);
     })
-    context.closePath();
+    context.globalCompositeOperation = "destination-in";
+    context.fill(drawingZone.path);
+    const imageGraph = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
+    context.globalCompositeOperation = "source-over";
+    context.putImageData(image, 0, 0);
+    context.putImageData(imageGraph, this.X, this.Y);
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {

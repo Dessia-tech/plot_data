@@ -1375,12 +1375,21 @@ export class newShape {
     context.restore();
   }
 
+  public setStrokeStyle(fillStyle: string): string {
+    const [h, s, l] = hslToArray(colorHsl(fillStyle));
+    const lValue = l <= STROKE_STYLE_OFFSET ? l + STROKE_STYLE_OFFSET : l - STROKE_STYLE_OFFSET;
+    return `hsl(${h}, ${s}%, ${lValue}%)`;
+  }
+
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
     context.setLineDash(this.dashLine);
     context.globalAlpha = this.alpha;
-    context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
+    if (this.isFilled) {
+      context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
+      context.strokeStyle = this.strokeStyle ?? this.setStrokeStyle(context.fillStyle);
+    } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle;
   }
 
   public initTooltip(context: CanvasRenderingContext2D): newTooltip { return new newTooltip(this.tooltipOrigin, this.tooltipMap, context) }
@@ -1896,12 +1905,6 @@ export class newPoint2D extends newShape {
 
   public update() { this.buildPath() }
 
-  public setStrokeStyle(fillStyle: string): string {
-    const [h, s, l] = hslToArray(colorHsl(fillStyle));
-    const lValue = l <= STROKE_STYLE_OFFSET ? l + STROKE_STYLE_OFFSET : l - STROKE_STYLE_OFFSET;
-    return `hsl(${h}, ${s}%, ${lValue}%)`;
-  }
-
   public setColors(fillStyle: string = null, strokeStyle: string = null) {
     this.fillStyle = fillStyle || this.fillStyle;
     this.strokeStyle = strokeStyle; // ? strokeStyle : this.setStrokeStyle(this.fillStyle);
@@ -1948,17 +1951,6 @@ export class newPoint2D extends newShape {
   set marker(value: string) { this._marker = value };
 
   public buildPath(): void { this.path = this.drawnShape.path };
-
-  public setDrawingProperties(context: CanvasRenderingContext2D) {
-    context.lineWidth = this.lineWidth;
-    context.globalAlpha = this.alpha;
-    const fillColor = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-    if (this.isFilled) {
-      context.fillStyle = fillColor;
-      context.strokeStyle = this.strokeStyle ?? this.setStrokeStyle(fillColor);
-    } else context.strokeStyle = fillColor;
-    
-  }
 
   public isInFrame(origin: Vertex, end: Vertex, scale: Vertex): boolean {
     const inCanvasX = this.center.x * scale.x < end.x && this.center.x * scale.x > origin.x;
@@ -2061,11 +2053,9 @@ export class LineSequence extends newShape {
 
   public static getGraphProperties(graph: {[key: string]: any}): LineSequence {
     const emptyLineSequence = new LineSequence([], graph.name);
-    if (graph.edge_style) {
-      if (graph.edge_style.line_width) emptyLineSequence.lineWidth = graph.edge_style.line_width;
-      if (graph.edge_style.color_stroke) emptyLineSequence.strokeStyle = graph.edge_style.color_stroke;
-      if (graph.edge_style.dashline) emptyLineSequence.dashLine = graph.edge_style.dashline;
-    }
+    if (graph.edge_style?.line_width) emptyLineSequence.lineWidth = graph.edge_style.line_width;
+    if (graph.edge_style?.color_stroke) emptyLineSequence.strokeStyle = graph.edge_style.color_stroke;
+    if (graph.edge_style?.dashline) emptyLineSequence.dashLine = graph.edge_style.dashline;
     return emptyLineSequence
   }
 
@@ -2074,13 +2064,11 @@ export class LineSequence extends newShape {
     context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
   }
 
-  public draw(context: CanvasRenderingContext2D): void {
-    context.save();
-    super.draw(context);
-    context.globalCompositeOperation = "destination-in";
-    context.fill(this.drawingZone.path);
-    context.restore();
-  }
+  // public draw(context: CanvasRenderingContext2D): void {
+  //   context.save();    
+  //   super.draw(context);
+  //   context.restore();
+  // }
 
   public buildPath(): void {
     this.path = new Path2D();

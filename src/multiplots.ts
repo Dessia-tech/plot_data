@@ -86,7 +86,7 @@ export class MultiplePlots {
           let object_type_ = this.dataObjects[i]['type_'];
           if (this.dataObjects[i]['type_'] == 'graph2d') {
             this.dataObjects[i]['elements'] = elements;
-            var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            var newObject:any = new newGraph2D(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'parallelplot') {
             this.dataObjects[i]['elements'] = elements;
             newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);

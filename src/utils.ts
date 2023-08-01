@@ -1877,7 +1877,7 @@ export class newPointStyle implements PointStyleInterface {
       color_stroke = null,
       stroke_width = null,
       shape = 'circle',
-      name = '',
+      name = ''
     }: PointStyleInterface = {}
     ) {
       this.size = size;

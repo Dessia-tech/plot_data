@@ -1507,7 +1507,7 @@ export class BasePlot extends PlotData {
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
-      this.nSamples = this.features.entries().next().value[1].length;
+      this.nSamples = this.features.entries().next().value[1].length; // a little bit cumbersome
       this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));

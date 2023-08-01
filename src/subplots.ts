@@ -1,6 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint,
-  Bar, DrawingCollection, SelectionBox, GroupCollection, LineSequence, newRect, pointStyle } from "./utils";
+import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection,
+  LineSequence, newRect, newPointStyle } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -23,10 +23,6 @@ export class PlotContour extends PlotData {
                        public canvas_id: string,
                        public is_in_multiplot = false) {
       super(data, width, height, buttons_ON, 0, 0, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.0';
-        check_package_version(data['package_version'], requirement);
-      }
       this.plot_datas = [];
       this.type_ = 'primitivegroup';
       var d = this.data;
@@ -118,10 +114,6 @@ export class PlotScatter extends PlotData {
       public canvas_id: string,
       public is_in_multiplot = false) {
         super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-        if (!is_in_multiplot) {
-          var requirement = '0.6.0';
-          check_package_version(data['package_version'], requirement);
-        }
         if (this.buttons_ON) {
           this.refresh_buttons_coords();
         }
@@ -248,10 +240,6 @@ export class ParallelPlot extends PlotData {
     constructor(public data, public width, public height, public buttons_ON, X, Y, public canvas_id: string,
                 public is_in_multiplot = false) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.1';
-        check_package_version(data['package_version'], requirement);
-      }
       this.type_ = 'parallelplot';
       if (this.buttons_ON) {
         this.disp_x = this.width - 35;
@@ -301,7 +289,7 @@ export class ParallelPlot extends PlotData {
 
     initialize_all_attributes() {
       var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
-      var exceptions = ['name', 'package_version', 'object_class'];
+      var exceptions = ['name', 'object_class'];
       for (let i=0; i<attribute_names.length; i++) {
         if (!(List.is_include(attribute_names[i], exceptions))) {
           let name = attribute_names[i];
@@ -556,10 +544,6 @@ export class PrimitiveGroupContainer extends PlotData {
                 public canvas_id: string,
                 public is_in_multiplot: boolean = false) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.0';
-        check_package_version(data['package_version'], requirement);
-      }
       this.type_ = 'primitivegroupcontainer';
       var serialized = data['primitive_groups'];
       var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
@@ -1489,7 +1473,7 @@ export class BasePlot extends PlotData {
   public nSamples: number;
   public pointSets: number[];
   public pointSetColors: string[] = [];
-  public pointStyles: pointStyle[] = null;
+  public pointStyles: newPointStyle[] = null;
 
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
@@ -1702,7 +1686,7 @@ export class BasePlot extends PlotData {
 
   public switchZoom(): void { this.isZooming = !this.isZooming }
 
-  public switchShowPoints(): void {}
+  public togglePoints(): void {}
 
   protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex): void { this.selectionBox.update(frameDown, frameMouse) }
 
@@ -2041,10 +2025,16 @@ export class Frame extends BasePlot {
   protected setFeatures(data: any): [string, string] {
     let xFeature = data.attribute_names[0];
     let yFeature = data.attribute_names[1];
-    if (!xFeature) { xFeature = "indices"; this.features.set("indices", Array.from(Array(this.nSamples).keys())) };
+    if (!xFeature) {
+      xFeature = "indices";
+      this.features.set("indices", Array.from(Array(this.nSamples).keys()));
+    }
     if (!yFeature) {
       for (let key of Array.from(this.features.keys())) {
-        if (!["name", "indices"].includes(key)) { yFeature = key; break };
+        if (!["name", "indices"].includes(key)) {
+          yFeature = key;
+          break;
+        }
       }
     }
     return [xFeature, yFeature]
@@ -2297,7 +2287,7 @@ export class newScatter extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!data.tooltip) {this.tooltipAttributes = Array.from(this.features.keys()) }
+      if (!data.tooltip) this.tooltipAttributes = Array.from(this.features.keys());
       else this.tooltipAttributes = data.tooltip.attribute;
       this.unpackPointStyle(data);
       this.computePoints();
@@ -2594,29 +2584,23 @@ export class newGraph2D extends newScatter {
     }
 
   protected unpackData(data: any): Map<string, any[]> {
-    const formattedData: {[key: string]: any} = {};
+    const graphSamples = [];
     this.pointStyles = [];
     this.curvesIndices = [];
     this.curves = [];
-    formattedData["elements"] = [];
     if (data.graphs) {
       data.graphs.forEach(graph => {
-        this.curves.push(LineSequence.getGraphProperties(graph));
-        const curveIndices = range(formattedData["elements"].length, formattedData["elements"].length + graph.elements.length);
-        this.pointStyles.push(...new Array(curveIndices.length).fill({}));
-        this.curvesIndices.push(curveIndices);
-        this.unpackGraphPointStyle(curveIndices, graph.point_style);
-        formattedData["elements"].push(...graph.elements);
+        if (graph.elements.length != 0) {
+          this.curves.push(LineSequence.getGraphProperties(graph));
+          const curveIndices = range(graphSamples.length, graphSamples.length + graph.elements.length);
+          const graphPointStyle = new newPointStyle(graph.point_style);
+          this.pointStyles.push(...new Array(curveIndices.length).fill(graphPointStyle));
+          this.curvesIndices.push(curveIndices);
+          graphSamples.push(...graph.elements);
+        }
       })
     }
-    return super.unpackData(formattedData)
-  }
-
-  private unpackGraphPointStyle(pointsIndices: number[], packedPointStyle: {[key: string]: any}): void {
-    if (packedPointStyle?.shape) pointsIndices.forEach(i => this.pointStyles[i].marker = packedPointStyle.shape);
-    if (packedPointStyle?.color_stroke) pointsIndices.forEach(i => this.pointStyles[i].strokeStyle = packedPointStyle.color_stroke);
-    if (packedPointStyle?.color_fill) pointsIndices.forEach(i => this.pointStyles[i].fillStyle = packedPointStyle.color_fill);
-    if (packedPointStyle?.size) pointsIndices.forEach(i => this.pointStyles[i].size = packedPointStyle.size);
+    return super.unpackData({"elements": graphSamples})
   }
 
   public updateSelection(axesSelections: number[][]): void { this.selectedIndices = BasePlot.intersectArrays(axesSelections) }
@@ -2657,7 +2641,7 @@ export class newGraph2D extends newScatter {
 
   public switchMerge(): void { this.isMerged = false }
 
-  public switchShowPoints(): void { this.showPoints = !this.showPoints; this.draw() }
+  public togglePoints(): void { this.showPoints = !this.showPoints; this.draw() }
 
   public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
     super.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);

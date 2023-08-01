@@ -779,19 +779,6 @@ export class Window {
 }
 
 
-export function check_package_version(package_version: string, requirement: string) {
-  var version_array = package_version.split('.');
-  var requirement_array = requirement.split('.');
-  var package_version_num = Number(version_array[0]) * Math.pow(10, 4) + Number(version_array[1]) * Math.pow(10, 2) +
-    Number(version_array[2]);
-  var requirement_num = Number(requirement_array[0]) * Math.pow(10, 4) + Number(requirement_array[1]) * Math.pow(10, 2) +
-    Number(requirement_array[2]);
-  if (package_version_num < requirement_num) {
-    alert("plot_data's version must be updated. Current version: " + package_version + ", minimum requirement: " + requirement);
-  }
-}
-
-
 /**
  * A generic equals function that compares values and not references.
  */
@@ -1657,9 +1644,18 @@ export class Triangle extends AbstractTriangle {
   }
 }
 
-export interface textParams {
-  width?: number, height?: number, fontsize?: number, multiLine?: boolean, font?: string, align?: string,
-  baseline?: string, style?: string, orientation?: number, backgroundColor?: string, color?: string
+export interface TextParams {
+  width?: number,
+  height?: number,
+  fontsize?: number,
+  multiLine?: boolean,
+  font?: string,
+  align?: string,
+  baseline?: string,
+  style?: string,
+  orientation?: number,
+  backgroundColor?: string,
+  color?: string
 }
 
 const DEFAULT_FONTSIZE = 12;
@@ -1691,7 +1687,7 @@ export class newText extends newShape {
       orientation = 0,
       color = "hsl(0, 0%, 0%)",
       backgroundColor = "hsla(0, 0%, 100%, 0)"
-    }: textParams = {}) {
+    }: TextParams = {}) {
       super();
       this.width = width;
       this.height = height;
@@ -1860,15 +1856,44 @@ export class newText extends newShape {
   }
 }
 
+export interface PointStyleInterface {
+  size?: number,
+  color_fill?: string,
+  color_stroke?: string,
+  stroke_width?: number,
+  shape?: string,
+  name?: string
+}
+
+export class newPointStyle implements PointStyleInterface {
+  public size: number;
+  public fillStyle: string;
+  public strokeStyle: string;
+  public marker: string;
+  public lineWidth: number;
+  constructor(
+    { size = null,
+      color_fill = null,
+      color_stroke = null,
+      stroke_width = null,
+      shape = 'circle',
+      name = '',
+    }: PointStyleInterface = {}
+    ) {
+      this.size = size;
+      this.fillStyle = color_fill;
+      this.strokeStyle = color_stroke;
+      this.marker = shape;
+      this.lineWidth = stroke_width;
+    }
+}
+
 const CIRCLES = ['o', 'circle', 'round'];
 const MARKERS = ['+', 'crux', 'mark'];
 const CROSSES = ['x', 'cross', 'oblique'];
 const SQUARES = ['square'];
 const TRIANGLES = ['^', 'triangle', 'tri'];
 const STROKE_STYLE_OFFSET = 15;
-export interface pointStyle {
-  size?: number, fillStyle?: string, strokeStyle?: string, marker?: string, markerOrientation?: string
-}
 export class newPoint2D extends newShape {
   public path: Path2D;
   public center: Vertex;
@@ -1890,12 +1915,11 @@ export class newPoint2D extends newShape {
     this.lineWidth = 1;
   };
 
-  public updateStyle(style: pointStyle): void {
+  public updateStyle(style: newPointStyle): void {
     this.size = style.size ?? this.size;
     this.fillStyle = style.fillStyle ?? this.fillStyle;
     this.strokeStyle = style.strokeStyle ?? this.strokeStyle;
     this.marker = style.marker ?? this.marker;
-    this.markerOrientation = style.markerOrientation ?? this.markerOrientation;
   }
 
   public copy(): newPoint2D {
@@ -2008,7 +2032,7 @@ export class ScatterPoint extends newPoint2D {
     this.tooltipMap.delete('Y mean');
   }
 
-  public updateStyle(style: pointStyle): void {
+  public updateStyle(style: newPointStyle): void {
     super.updateStyle(style);
     this.marker = this.values.length > 1 ? this.marker : style.marker ?? this.marker;
   }
@@ -2061,11 +2085,15 @@ export class LineSequence extends newShape {
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Name", this.name]]) }
 
+  private getEdgeStyle(edgeStyle: {[key: string]: any}): void {
+    if (edgeStyle.line_width) this.lineWidth = edgeStyle.line_width;
+    if (edgeStyle.color_stroke) this.strokeStyle = edgeStyle.color_stroke;
+    if (edgeStyle.dashline) this.dashLine = edgeStyle.dashline;
+  }
+
   public static getGraphProperties(graph: {[key: string]: any}): LineSequence {
     const emptyLineSequence = new LineSequence([], graph.name);
-    if (graph.edge_style?.line_width) emptyLineSequence.lineWidth = graph.edge_style.line_width;
-    if (graph.edge_style?.color_stroke) emptyLineSequence.strokeStyle = graph.edge_style.color_stroke;
-    if (graph.edge_style?.dashline) emptyLineSequence.dashLine = graph.edge_style.dashline;
+    if (graph.edge_style) emptyLineSequence.getEdgeStyle(graph.edge_style);
     return emptyLineSequence
   }
 
@@ -2626,7 +2654,7 @@ export class newAxis extends EventEmitter {
       var [nameCoords, align, baseline, orientation] = this.topArrowTitleProperties();
     }
     nameCoords.transformSelf(canvasHTMatrix);
-    const textParams: textParams = {
+    const textParams: TextParams = {
       width: this.drawLength, fontsize: this.FONT_SIZE, font: this.font, align: align, color: color,
       baseline: baseline, style: 'bold', orientation: orientation, backgroundColor: "hsla(0, 0%, 100%, 0.5)"
     };
@@ -2692,7 +2720,7 @@ export class newAxis extends EventEmitter {
     tickText.draw(context);
   }
 
-  private computeTickTextParams(): textParams {
+  private computeTickTextParams(): TextParams {
     const [textAlign, baseline] = this.textAlignments();
     let textWidth = null;
     let textHeight = null;
@@ -2718,7 +2746,7 @@ export class newAxis extends EventEmitter {
     return point
   }
 
-  private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: textParams, point: newPoint2D, HTMatrix: DOMMatrix): newText {
+  private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: newPoint2D, HTMatrix: DOMMatrix): newText {
     const textOrigin = this.tickTextPositions(point, HTMatrix);
     const tickText = new newText(newText.capitalize(text), textOrigin, tickTextParams);
     tickText.removeEndZeros();

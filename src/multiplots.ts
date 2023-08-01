@@ -1,6 +1,6 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
-import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
+import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, BasePlot, newGraph2D } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
@@ -72,10 +72,9 @@ export class MultiplePlots {
     public hoveredIndices: number[] = [];
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
-      var requirement = '0.6.1';
-      check_package_version(data['package_version'], requirement);
       this.define_canvas(canvas_id);
       var elements = data['elements'];
+
       if (elements.length != 0) {
         this.dataObjects = data['plots'];
         this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
@@ -116,7 +115,29 @@ export class MultiplePlots {
         this.initial_coords = [[0, 0]];
         this.nbObjects = 1;
         this.initialize_sizes();
-        var emptyMPData = {"package_version": data['package_version'], "name": "", "primitives": [{"package_version": data['package_version'], "name": "", "comment": "No data to plot because workflow result is empty.", "text_style": {"object_class": "plot_data.core.TextStyle", "package_version": data['package_version'], "name": "", "text_color": "rgb(100, 100, 100)", "font_size": 20, "text_align_x": "left"}, "position_x": 50.0, "position_y": 100, "text_scaling": false, "max_width": 20, "multi_lines": true, "type_": "text"}], "type_": "primitivegroup"};
+        var emptyMPData = {
+          "name": "",
+          "primitives": [
+            {
+              "name": "",
+              "comment": "No data to plot because workflow result is empty.",
+              "text_style": {
+                "object_class": "plot_data.core.TextStyle",
+                "name": "",
+                "text_color": "rgb(100, 100, 100)",
+                "font_size": 20,
+                "text_align_x": "left"
+              },
+              "position_x": 50.0,
+              "position_y": 100,
+              "text_scaling": false,
+              "max_width": 20,
+              "multi_lines": true,
+              "type_": "text"
+            }
+          ],
+          "type_": "primitivegroup"
+        };
         newObject = new PlotContour(emptyMPData, this.width, this.height, true, 0, 0, canvas_id);
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
@@ -166,7 +187,7 @@ export class MultiplePlots {
     initialize_all_attributes() {
       this.all_attributes = [];
       var attribute_names = Object.getOwnPropertyNames(this.data['elements'][0]);
-      var exceptions = ['name', 'package_version', 'object_class'];
+      var exceptions = ['name', 'object_class'];
       for (let i=0; i<attribute_names.length; i++) {
         if (!(List.is_include(attribute_names[i], exceptions))) {
           let name = attribute_names[i];
@@ -361,7 +382,7 @@ export class MultiplePlots {
     }
 
     add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-      var new_scatter = {attribute_names: [attr_x.name, attr_y.name], elements:this.data['elements'], type_:'frame', name:'', package_version: this.data['package_version']};
+      var new_scatter = {attribute_names: [attr_x.name, attr_y.name], elements:this.data['elements'], type_:'frame', name:''};
       var DEFAULT_WIDTH = 560;
       var DEFAULT_HEIGHT = 300;
       var new_plot_data = new newScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
@@ -374,8 +395,14 @@ export class MultiplePlots {
         attribute_names.push(attributes[i].name);
       }
       var edge_style = {line_width:0.5, color_stroke:string_to_rgb('black'), dashline:[], name:''};
-      var pp_data = {edge_style:edge_style, disposition: 'vertical', attribute_names:attribute_names,
-                    rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:'', package_version:this.data['package_version']};
+      var pp_data = {
+        edge_style: edge_style,
+        disposition: 'vertical',
+        attribute_names: attribute_names,
+        rgbs: [[192, 11, 11], [14, 192, 11], [11, 11, 192]],
+        elements: this.data['elements'],
+        name:''
+      };
       var DEFAULT_WIDTH = 560;
       var DEFAULT_HEIGHT = 300;
       var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
@@ -1809,7 +1836,7 @@ export class MultiplePlots {
 
     public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchMerge() })};
 
-    public switchShowPoints() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchShowPoints() })};
+    public togglePoints() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.togglePoints() })};
 
     public switchZoom() {
       this.isZooming = !this.isZooming;
@@ -1935,6 +1962,7 @@ export class MultiplePlots {
           this.manage_mouse_interactions(mouse2X, mouse2Y);
 
           if (!this.isZooming) {
+            const currentPlot = this.objectList[this.last_index];
             if (isDrawing) {
               mouse_moving = true;
               if (this.selectDependency_bool) {
@@ -1943,7 +1971,7 @@ export class MultiplePlots {
                 this.mouse_move_frame_communication();
                 this.refreshRubberBands();
                 // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
-                if ( !(this.objectList[this.last_index] instanceof newGraph2D) ) this.updateSelectedPrimitives();
+                if ( !(currentPlot instanceof newGraph2D) ) this.updateSelectedPrimitives();
                 this.redrawAllObjects();
               }
               this.redraw_object();
@@ -1951,9 +1979,9 @@ export class MultiplePlots {
               if (this.selectDependency_bool) {
                 this.mouse_over_primitive_group();
                 this.mouse_over_scatter_plot();
-                if (this.objectList[this.last_index] instanceof BasePlot && !(this.objectList[this.last_index] instanceof newGraph2D)) {
-                  this.hoveredIndices = (this.objectList[this.last_index] as BasePlot).hoveredIndices;
-                  this.clickedIndices = (this.objectList[this.last_index] as BasePlot).clickedIndices;
+                if (currentPlot instanceof BasePlot && !(currentPlot instanceof newGraph2D)) {
+                  this.hoveredIndices = (currentPlot as BasePlot).hoveredIndices;
+                  this.clickedIndices = (currentPlot as BasePlot).clickedIndices;
                 }
                 this.redrawAllObjects();
               }
@@ -1976,7 +2004,7 @@ export class MultiplePlots {
           this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
         }
 
-        if (mouse_moving === false) {
+        if (!mouse_moving) {
           if (this.selectDependency_bool) {
             if (this.clickedPlotIndex !== -1) {
               let type_ = this.objectList[this.clickedPlotIndex].type_
@@ -2281,7 +2309,8 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
   return multiplot;
 }
 
-const empty_container = {'name': '',
-'package_version': '0.6.2',
-'primitive_groups': [],
-'type_': 'primitivegroupcontainer'};
+const empty_container = {
+  'name': '',
+  'primitive_groups': [],
+  'type_': 'primitivegroupcontainer'
+};

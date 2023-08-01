@@ -1,6 +1,6 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, textParams, Vertex, newRect } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, TextParams, Vertex, newRect } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
 import { colorHex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
@@ -851,7 +851,7 @@ export abstract class PlotData extends EventEmitter {
       let origin = new Vertex(current_x, this.axis_y_end - 10);
       let width = this.x_step * 0.95;
       let align = "center";
-      const textParams: textParams = {
+      const textParams: TextParams = {
         width: width, height: origin.y - 2 - this.Y, align: align, baseline: "bottom",
         multiLine: true, color: 'black', backgroundColor: "hsla(0, 0%, 100%, 0.5)" };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
@@ -971,7 +971,7 @@ export abstract class PlotData extends EventEmitter {
       Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
 
       let origin = new Vertex(this.axis_x_start, current_y + 10);
-      const textParams: textParams = {
+      const textParams: TextParams = {
         width: this.width * 0.25, height: this.y_step * 0.98, align: "center",
         baseline: "hanging", multiLine: true, color: 'black', backgroundColor: "hsla(0, 0%, 100%, 0.5)" };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);

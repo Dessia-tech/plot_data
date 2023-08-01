@@ -11,7 +11,7 @@ import sys
 import tempfile
 import warnings
 import webbrowser
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Union  # , Any
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Circle, Arc
@@ -29,6 +29,8 @@ from dessia_common.typings import JsonSerializable
 
 import plot_data.colors
 from plot_data import templates
+
+# CURVES_DATATYPE = Union(List[float], List[str], List[List[float]], List[Dict[str, Any]])
 
 
 def delete_none_from_dict(dict1):
@@ -762,8 +764,7 @@ class Graph2D(Figure):
     :type x_variable: str
     :param y_variable: variable that you want to display on y axis
     :type y_variable: str
-    :param axis: an object containing all information needed for \
-    drawing axis
+    :param axis: an object containing all information needed for drawing axis
     :type axis: Axis
     :param log_scale_x: True or False
     :type log_scale_x: bool
@@ -801,6 +802,109 @@ class Graph2D(Figure):
         ax.set_xlabel(xname)
         ax.set_ylabel(yname)
         return ax
+# TODO: commented code here is supposed to be used soon
+    # def graphs_to_curves(self):
+    #     curves = []
+    #     for graph in self.graphs:
+    #         x_coords = []
+    #         y_coords = []
+    #         for sample in graph.elements:
+    #             x_coords.append(sample[self.attribute_names[0]])
+    #             y_coords.append(sample[self.attribute_names[1]])
+    #         line_width = graph.edge_style.line_width
+    #         color = graph.edge_style.color_stroke
+    #         dash_line = graph.edge_style.dashline
+    #         marker = graph.point_style.shape
+    #         name = graph.name
+    #         curves.append(Curve(x_coords, y_coords, name, line_width=line_width, color=color, dash_line=dash_line,
+    #                             marker=marker))
+    #     return curves
+
+    # def to_plot(self):
+    #     return
+
+
+# class Curve(PlotDataObject):
+
+#     _KWARGS = ['line_width', 'color', 'dash_line', 'marker']
+
+#     def __init__(self, x_coords: Union(List[str], List[float]), y_coords: Union(List[str], List[float]) = None,
+#                  name: str = '', **kwargs):
+#         self.x_coords, self.y_coords = self.buildCoords(x_coords, y_coords)
+#         self.line_width = None
+#         self.color = None
+#         self.dash_line = None
+#         self.marker = None
+#         self.setStyle(kwargs)
+
+#     @staticmethod
+#     def buildCoords(x_coords: Union(List[str], List[float]), y_coords: Union(List[str], List[float])):
+#         if y_coords is None:
+#             return list(range(len(y_coords))), x_coords
+#         if len(x_coords) == len(y_coords):
+#             return x_coords, y_coords
+#         raise ValueError("x_coords and y_coords must be the same length.")
+
+#     def setStyle(self, kwargs: Dict[str, Any]):
+#         for attribute in self._KWARGS:
+#             if attribute in kwargs:
+#                 setattr(self, attribute, kwargs[attribute])
+
+#     @classmethod
+#     def fromPlot(cls, x_values: CURVES_DATATYPE, y_values: CURVES_DATATYPE, x_variable: str, y_variable: str,
+#                  legend: List[str], **kwargs):
+#         if isinstance(x_values[0], float):
+#             if len(legend) != 1 and legend is not None:
+#                 raise ValueError("x_values and legend must be the same length.")
+#             if legend is None:
+#                 return cls(x_values, y_values, **kwargs)
+#             if len(legend) == 1:
+#                 return cls(x_values, y_values, legend[0], **kwargs)
+
+#         if isinstance(x_values[0], dict):
+#             if x_variable not in x_values[0]:
+#                 raise ValueError(f"{x_variable} not in keys of x_values.")
+
+#             x_coords = [];
+#             y_coords = [];
+#             for elements in x_values:
+#                 x_coords.append(elements[x_variable])
+#                 y_coords.append(elements[y_variable])
+#             return cls(x_coords, y_coords, legend[0], **kwargs)
+
+#         raise TypeError("x_values must be a list of float or dict.")
+
+
+# class Plot(Figure):
+
+#     _plot_commands = "GRAPH_COMMANDS"
+
+#     def __init__(self, x_values: CURVES_DATATYPE, y_values: CURVES_DATATYPE = None, x_variable: str = None,
+#                  y_variable: str = None, axis: Axis = None, legend: List[str] = None, width: int = 750,
+#                  height: int = 400, name: str = '', **kwargs):
+#         self.curves = self.buildCurves(x_values, y_values, x_variable, y_variable, legend, **kwargs)
+#         if axis is None:
+#             self.axis = Axis()
+#         else:
+#             self.axis = axis
+#         super().__init__(width=width, height=height, type_='graph2d', name=name)
+
+#     @staticmethod
+#     def buildCurves(x_values: CURVES_DATATYPE, y_values: CURVES_DATATYPE, x_variable: str, y_variable: str,
+#                     legend: List[str], **kwargs):
+#         if isinstance(x_values[0], (str, float, dict)):
+#             return [Curve.fromPlot(x_values=x_values, y_values=y_values, x_variable=x_variable, y_variable=y_variable,
+#                                    legend=legend, **kwargs)]
+
+#         if isinstance(x_values[0], list):
+#             curves = []
+#             for x_subvalues, y_subvalues, sub_legend in zip(x_values, y_values, legend):
+#                 curves.append(Curve.fromPlot(x_values=x_subvalues, y_values=y_subvalues, x_variable=x_variable,
+#                                              y_variable=y_variable, legend=sub_legend, **kwargs))
+#             return curves
+
+#         if isinstance(x_values[0], Curve):
+#             return x_values
 
 
 class Heatmap(DessiaObject):
@@ -844,10 +948,10 @@ class Scatter(Figure):
 
     _plot_commands = "SCATTER_COMMANDS"
 
-    def __init__(self, x_variable: str, y_variable: str, tooltip: Tooltip = None, point_style: PointStyle = None,
-                 elements: List[Sample] = None, points_sets: List[PointFamily] = None, axis: Axis = None,
-                 log_scale_x: bool = None, log_scale_y: bool = None, heatmap: Heatmap = None, heatmap_view: bool = None,
-                 width: int = 750, height: int = 400, name: str = ''):
+    def __init__(self, x_variable: str = None, y_variable: str = None, tooltip: Tooltip = None,
+                 point_style: PointStyle = None, elements: List[Sample] = None, points_sets: List[PointFamily] = None,
+                 axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None, heatmap: Heatmap = None,
+                 heatmap_view: bool = None, width: int = 750, height: int = 400, name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style

@@ -1,7 +1,7 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, BasePlot } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, BasePlot, newGraph2D } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
 
@@ -85,7 +85,7 @@ export class MultiplePlots {
           let object_type_ = this.dataObjects[i]['type_'];
           if (this.dataObjects[i]['type_'] == 'graph2d') {
             this.dataObjects[i]['elements'] = elements;
-            var newObject:any = new PlotScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            var newObject:any = new newGraph2D(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'parallelplot') {
             this.dataObjects[i]['elements'] = elements;
             newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
@@ -382,25 +382,10 @@ export class MultiplePlots {
     }
 
     add_scatterplot(attr_x:Attribute, attr_y:Attribute) {
-      var graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', text_align_x:'center', text_align_y:'alphabetic', name:''};
-      var axis_style = {line_width:0.5, color_stroke:string_to_rgb('grey'), dashline:[], name:''};
-      var DEFAULT_AXIS = {nb_points_x:10, nb_points_y:10, graduation_style: graduation_style, axis_style: axis_style, arrow_on: false, grid_on: true, type_:'axis', name:''};
-      var surface_style = {color_fill: string_to_rgb('lightblue'), opacity:0.75, hatching:undefined};
-      var text_style = {text_color: string_to_rgb('black'), font_size:10, font_style:'sans-serif', text_align_x:'start', text_align_y:'alphabetic', name:''};
-      var DEFAULT_TOOLTIP = {attribute_names:[attr_x.name, attr_y.name], surface_style:surface_style, text_style:text_style, tooltip_radius:5, type_:'tooltip', name:''};
-      var point_style = {color_fill:string_to_rgb('lightblue'), color_stroke:string_to_rgb('grey'), stroke_width:0.5, size:2, shape:'circle', name:''};
-      var new_scatter = {
-        tooltip: DEFAULT_TOOLTIP,
-        attribute_names: [attr_x.name, attr_y.name],
-        point_style: point_style,
-        elements: this.data['elements'],
-        axis:DEFAULT_AXIS,
-        type_:'scatterplot',
-        name:''
-      };
+      var new_scatter = {attribute_names: [attr_x.name, attr_y.name], elements:this.data['elements'], type_:'frame', name:''};
       var DEFAULT_WIDTH = 560;
       var DEFAULT_HEIGHT = 300;
-      var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
+      var new_plot_data = new newScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
       this.initialize_new_plot_data(new_plot_data);
     }
 
@@ -628,15 +613,18 @@ export class MultiplePlots {
         if (List.is_include(plotIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
           if (plot instanceof BasePlot) {
-            plot.selectedIndices = this.selectedIndices;
-            plot.clickedIndices = [...this.clickedIndices];
-            plot.hoveredIndices = [...this.hoveredIndices];
-            if (plot instanceof Frame) {
-              if (this.point_families.length != 0) {
-                plot.pointSetColors = this.point_families.map((pointFamily, familyIdx) => {
-                  pointFamily.pointIndices.forEach(pointIdx => plot.pointSets[pointIdx] = familyIdx);
-                  return pointFamily.color
-                })
+            // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
+            if ( !(plot instanceof newGraph2D) ) {
+              plot.selectedIndices = this.selectedIndices;
+              plot.clickedIndices = [...this.clickedIndices];
+              plot.hoveredIndices = [...this.hoveredIndices];
+              if (plot instanceof Frame) {
+                if (this.point_families.length != 0) {
+                  plot.pointSetColors = this.point_families.map((pointFamily, familyIdx) => {
+                    pointFamily.pointIndices.forEach(pointIdx => plot.pointSets[pointIdx] = familyIdx);
+                    return pointFamily.color
+                  })
+                }
               }
             }
           } else if (plot instanceof ParallelPlot) {
@@ -921,10 +909,13 @@ export class MultiplePlots {
           this.selectedIndices = List.listIntersection(this.selectedIndices, obj.pp_selected_index);
         } else if (obj instanceof BasePlot) {
           obj.axes.forEach(axis => {
-            if (axis.rubberBand.length != 0) {
-              isSelecting = true;
-              const selectedIndices = (obj as BasePlot).updateSelected(axis);
-              this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
+            // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
+            if ( !(obj instanceof newGraph2D) ) {
+              if (axis.rubberBand.length != 0) {
+                isSelecting = true;
+                const selectedIndices = (obj as BasePlot).updateSelected(axis);
+                this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
+              }
             }
           })
         }
@@ -1843,7 +1834,9 @@ export class MultiplePlots {
       this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchSelection() });
     }
 
-    public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.switchMerge() })};
+    public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchMerge() })};
+
+    public togglePoints() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.togglePoints() })};
 
     public switchZoom() {
       this.isZooming = !this.isZooming;
@@ -1872,7 +1865,7 @@ export class MultiplePlots {
       this.redrawAllObjects();
     }
 
-    mouse_interaction(): void {
+    mouse_interaction(): void { //TODO: this has to be totally refactored, with special behaviors defined in each plot class
       var mouse1X:number = 0; var mouse1Y:number = 0; var mouse2X:number = 0; var mouse2Y:number = 0; var mouse3X:number = 0; var mouse3Y:number = 0;
       var isDrawing = false;
       var mouse_moving:boolean = false;
@@ -1969,6 +1962,7 @@ export class MultiplePlots {
           this.manage_mouse_interactions(mouse2X, mouse2Y);
 
           if (!this.isZooming) {
+            const currentPlot = this.objectList[this.last_index];
             if (isDrawing) {
               mouse_moving = true;
               if (this.selectDependency_bool) {
@@ -1976,7 +1970,8 @@ export class MultiplePlots {
                 this.mouse_move_pp_communication();
                 this.mouse_move_frame_communication();
                 this.refreshRubberBands();
-                this.updateSelectedPrimitives();
+                // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
+                if ( !(currentPlot instanceof newGraph2D) ) this.updateSelectedPrimitives();
                 this.redrawAllObjects();
               }
               this.redraw_object();
@@ -1984,9 +1979,9 @@ export class MultiplePlots {
               if (this.selectDependency_bool) {
                 this.mouse_over_primitive_group();
                 this.mouse_over_scatter_plot();
-                if (this.objectList[this.last_index] instanceof BasePlot) {
-                  this.hoveredIndices = (this.objectList[this.last_index] as BasePlot).hoveredIndices;
-                  this.clickedIndices = (this.objectList[this.last_index] as BasePlot).clickedIndices;
+                if (currentPlot instanceof BasePlot && !(currentPlot instanceof newGraph2D)) {
+                  this.hoveredIndices = (currentPlot as BasePlot).hoveredIndices;
+                  this.clickedIndices = (currentPlot as BasePlot).clickedIndices;
                 }
                 this.redrawAllObjects();
               }
@@ -2009,7 +2004,7 @@ export class MultiplePlots {
           this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
         }
 
-        if (mouse_moving === false) {
+        if (!mouse_moving) {
           if (this.selectDependency_bool) {
             if (this.clickedPlotIndex !== -1) {
               let type_ = this.objectList[this.clickedPlotIndex].type_
@@ -2034,7 +2029,7 @@ export class MultiplePlots {
                   this.pp_communication(this.objectList[this.clickedPlotIndex].rubber_bands, this.objectList[this.clickedPlotIndex]);
                 }
               }
-              if (this.objectList[this.last_index] instanceof BasePlot) {
+              if (this.objectList[this.last_index] instanceof BasePlot && !(this.objectList[this.last_index] instanceof newGraph2D)) {
                 this.hoveredIndices = (this.objectList[this.last_index] as BasePlot).hoveredIndices;
                 this.clickedIndices = (this.objectList[this.last_index] as BasePlot).clickedIndices;
               }
@@ -2045,7 +2040,8 @@ export class MultiplePlots {
         }
         this.refreshRubberBands();
         this.manage_selected_point_index_changes(old_selected_index);
-        this.updateSelectedPrimitives();
+        // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
+        if ( !(this.objectList[this.last_index] instanceof newGraph2D) ) this.updateSelectedPrimitives();
         if (!shiftKey) this.isSelecting = false;
         this.isZooming = false;
         this.objectList.forEach(plot => {

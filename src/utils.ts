@@ -1297,6 +1297,13 @@ export class Vertex {
     return copy
   }
 
+  public translate(translation: Vertex): Vertex { return this.add(translation) }
+
+  public translateSelf(translation: Vertex): void {
+    this.x += translation.x;
+    this.y += translation.y;
+  }
+
   public subtract(other: Vertex): Vertex {
     let copy = this.copy();
     copy.x = this.x - other.x;
@@ -1334,13 +1341,12 @@ export class newShape {
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   public isScaled: boolean = true;
+  public isFilled: boolean = true;
   public inFrame: boolean = true;
+  public onFrame: boolean = false;
 
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
-
-  protected readonly TOOLTIP_SURFACE: SurfaceStyle = new SurfaceStyle(string_to_hex("lightgrey"), 0.5, null);
-  protected readonly TOOLTIP_TEXT_STYLE: TextStyle = new TextStyle(string_to_hex("black"), 14, "Calibri");
   constructor() {};
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
@@ -1358,9 +1364,15 @@ export class newShape {
       context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
     } else scaledPath.addPath(this.path);
     this.setDrawingProperties(context);
-    context.fill(scaledPath);
+    if (this.isFilled) context.fill(scaledPath);
     context.stroke(scaledPath);
     context.restore();
+  }
+
+  public setStrokeStyle(fillStyle: string): string {
+    const [h, s, l] = hslToArray(colorHsl(fillStyle));
+    const lValue = l <= STROKE_STYLE_OFFSET ? l + STROKE_STYLE_OFFSET : l - STROKE_STYLE_OFFSET;
+    return `hsl(${h}, ${s}%, ${lValue}%)`;
   }
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
@@ -1368,7 +1380,10 @@ export class newShape {
     context.strokeStyle = this.strokeStyle;
     context.setLineDash(this.dashLine);
     context.globalAlpha = this.alpha;
-    context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
+    if (this.isFilled) {
+      context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
+      context.strokeStyle = this.setStrokeStyle(context.fillStyle);
+    } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle;
   }
 
   public initTooltip(context: CanvasRenderingContext2D): newTooltip { return new newTooltip(this.tooltipOrigin, this.tooltipMap, context) }
@@ -1395,13 +1410,12 @@ export class newCircle extends newShape {
     public radius: number = 1
   ) {
     super();
-    this.path = this.buildPath();
+    this.buildPath();
   }
 
-  public buildPath(): Path2D {
-    const path = new Path2D();
-    path.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
-    return path
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.path.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
   }
 }
 
@@ -1438,9 +1452,7 @@ export class newRoundRect extends newRect {
     const vLength = this.origin.y + this.size.y;
     this.path.moveTo(this.origin.x + this.radius, this.origin.y);
     this.path.lineTo(hLength - this.radius, this.origin.y);
-
     this.path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
-
     this.path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
     this.path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
     this.path.lineTo(this.origin.x + this.radius, vLength);
@@ -1456,6 +1468,7 @@ export class Mark extends newShape {
     public size: number = 1
   ) {
     super();
+    this.isFilled = false;
     this.buildPath();
   }
 
@@ -1476,9 +1489,9 @@ export abstract class AbstractHalfLine extends newShape {
     public orientation: string = 'up'
   ) {
     super();
+    this.isFilled = false;
     this.buildPath();
   }
-  // public abstract buildPath(): void;
 }
 
 export class UpHalfLine extends AbstractHalfLine {
@@ -1491,7 +1504,7 @@ export class UpHalfLine extends AbstractHalfLine {
 }
 
 export class DownHalfLine extends AbstractHalfLine {
-    public buildPath(): void {
+  public buildPath(): void {
     this.path = new Path2D();
     const halfSize = this.size / 2;
     this.path.moveTo(this.center.x, this.center.y);
@@ -1542,6 +1555,7 @@ export class Cross extends newShape {
     public size: number = 1
   ) {
     super();
+    this.isFilled = false;
     this.buildPath();
   }
 
@@ -1630,9 +1644,18 @@ export class Triangle extends AbstractTriangle {
   }
 }
 
-export interface textParams {
-  width?: number, height?: number, fontsize?: number, multiLine?: boolean, font?: string, align?: string,
-  baseline?: string, style?: string, orientation?: number, backgroundColor?: string, color?: string
+export interface TextParams {
+  width?: number,
+  height?: number,
+  fontsize?: number,
+  multiLine?: boolean,
+  font?: string,
+  align?: string,
+  baseline?: string,
+  style?: string,
+  orientation?: number,
+  backgroundColor?: string,
+  color?: string
 }
 
 const DEFAULT_FONTSIZE = 12;
@@ -1664,7 +1687,7 @@ export class newText extends newShape {
       orientation = 0,
       color = "hsl(0, 0%, 0%)",
       backgroundColor = "hsla(0, 0%, 100%, 0)"
-    }: textParams = {}) {
+    }: TextParams = {}) {
       super();
       this.width = width;
       this.height = height;
@@ -1833,6 +1856,38 @@ export class newText extends newShape {
   }
 }
 
+export interface PointStyleInterface {
+  size?: number,
+  color_fill?: string,
+  color_stroke?: string,
+  stroke_width?: number,
+  shape?: string,
+  name?: string
+}
+
+export class newPointStyle implements PointStyleInterface {
+  public size: number;
+  public fillStyle: string;
+  public strokeStyle: string;
+  public marker: string;
+  public lineWidth: number;
+  constructor(
+    { size = null,
+      color_fill = null,
+      color_stroke = null,
+      stroke_width = null,
+      shape = 'circle',
+      name = ''
+    }: PointStyleInterface = {}
+    ) {
+      this.size = size;
+      this.fillStyle = color_fill;
+      this.strokeStyle = color_stroke;
+      this.marker = shape;
+      this.lineWidth = stroke_width;
+    }
+}
+
 const CIRCLES = ['o', 'circle', 'round'];
 const MARKERS = ['+', 'crux', 'mark'];
 const CROSSES = ['x', 'cross', 'oblique'];
@@ -1860,15 +1915,30 @@ export class newPoint2D extends newShape {
     this.lineWidth = 1;
   };
 
-  public setStrokeStyle(fillStyle: string): string {
-    const [h, s, l] = hslToArray(colorHsl(fillStyle));
-    const lValue = l <= STROKE_STYLE_OFFSET ? l + STROKE_STYLE_OFFSET : l - STROKE_STYLE_OFFSET;
-    return `hsl(${h}, ${s}%, ${lValue}%)`;
+  public updateStyle(style: newPointStyle): void {
+    this.size = style.size ?? this.size;
+    this.fillStyle = style.fillStyle ?? this.fillStyle;
+    this.strokeStyle = style.strokeStyle ?? this.strokeStyle;
+    this.marker = style.marker ?? this.marker;
   }
 
-  public setColors(fillStyle: string = null, strokeStyle: string = null) {
-    this.fillStyle = fillStyle || this.fillStyle;
-    this.strokeStyle = strokeStyle; // ? strokeStyle : this.setStrokeStyle(this.fillStyle);
+  public copy(): newPoint2D {
+    const copy = new newPoint2D();
+    copy.center = this.center.copy();
+    copy.size = this.size;
+    copy.marker = this.marker;
+    copy.markerOrientation = this.markerOrientation;
+    copy.fillStyle = this.fillStyle;
+    copy.strokeStyle = this.strokeStyle;
+    copy.lineWidth = this.lineWidth;
+    return copy
+  }
+
+  public update() { this.buildPath() }
+
+  public setColors(color: string) {
+    this.fillStyle = this.isFilled ? color : null;
+    this.strokeStyle = this.isFilled ? this.setStrokeStyle(this.fillStyle) : color;
   }
 
   get drawnShape(): newShape {
@@ -1884,6 +1954,7 @@ export class newPoint2D extends newShape {
     if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center.coordinates, this.size, this.markerOrientation);
     if (this.marker == 'halfLine') marker = new HalfLine(this.center.coordinates, this.size, this.markerOrientation);
     marker.lineWidth = this.lineWidth;
+    this.isFilled = marker.isFilled;
     return marker
   }
 
@@ -1912,12 +1983,11 @@ export class newPoint2D extends newShape {
 
   public buildPath(): void { this.path = this.drawnShape.path };
 
-  public setDrawingProperties(context: CanvasRenderingContext2D) {
-    context.lineWidth = this.lineWidth;
-    context.globalAlpha = this.alpha;
-    const fillColor = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-    context.fillStyle = fillColor;
-    context.strokeStyle = this.strokeStyle ?? this.setStrokeStyle(fillColor);
+  public isInFrame(origin: Vertex, end: Vertex, scale: Vertex): boolean {
+    const inCanvasX = this.center.x * scale.x < end.x && this.center.x * scale.x > origin.x;
+    const inCanvasY = this.center.y * scale.y < end.y && this.center.y * scale.y > origin.y;
+    this.inFrame = inCanvasX && inCanvasY;
+    return this.inFrame
   }
 }
 
@@ -1935,9 +2005,7 @@ export class ScatterPoint extends newPoint2D {
   ) {
     super(x, y, _size, _marker, _markerOrientation, fillStyle, strokeStyle);
     this.isScaled = false;
-  };
-
-  get tooltipMap(): Map<string, any> { return this._tooltipMap };
+  }
 
   public static fromPlottedValues(indices: number[], pointsData: {[key: string]: number[]}, pointSize: number, marker: string,
     thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[],
@@ -1951,22 +2019,22 @@ export class ScatterPoint extends newPoint2D {
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
 
-  public update() {
-    this.isScaled = false;
-    this.buildPath();
-  }
-
   public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[], xName: string, yName: string) {
     this.updateTooltipMap();
     if (this.values.length == 1) {
       this.newTooltipMap();
       tooltipAttributes.forEach(attr => this.tooltipMap.set(attr, features.get(attr)[this.values[0]]));
-    } else {
-      this.tooltipMap.set(`Average ${xName}`, axes[0].isDiscrete ? axes[0].labels[Math.round(this.mean.x)] : this.mean.x);
-      this.tooltipMap.set(`Average ${yName}`, axes[1].isDiscrete ? axes[1].labels[Math.round(this.mean.y)] : this.mean.y);
-      this.tooltipMap.delete('X mean');
-      this.tooltipMap.delete('Y mean');
+      return;
     }
+    this.tooltipMap.set(`Average ${xName}`, axes[0].isDiscrete ? axes[0].labels[Math.round(this.mean.x)] : this.mean.x);
+    this.tooltipMap.set(`Average ${yName}`, axes[1].isDiscrete ? axes[1].labels[Math.round(this.mean.y)] : this.mean.y);
+    this.tooltipMap.delete('X mean');
+    this.tooltipMap.delete('Y mean');
+  }
+
+  public updateStyle(style: newPointStyle): void {
+    super.updateStyle(style);
+    this.marker = this.values.length > 1 ? this.marker : style.marker ?? this.marker;
   }
 
   public computeValues(pointsData: {[key: string]: number[]}, thresholdDist: number): void {
@@ -1986,12 +2054,63 @@ export class ScatterPoint extends newPoint2D {
       this.mean.x = meanX / this.values.length;
       this.mean.y = meanY / this.values.length;
     }
+}
 
-  public isInFrame(xAxis: newAxis, yAxis: newAxis): boolean {
-    const inCanvasX = this.mean.x < xAxis.maxValue && this.mean.x > xAxis.minValue;
-    const inCanvasY = this.mean.y < yAxis.maxValue && this.mean.y > yAxis.minValue;
-    this.inFrame = inCanvasX && inCanvasY;
-    return this.inFrame
+export class LineSequence extends newShape {
+  public previousTooltipOrigin: Vertex;
+  constructor(
+    public points: newPoint2D[] = [],
+    public name: string = ""
+  ) {
+    super();
+    this.isScaled = false;
+    this.isFilled = false;
+    this.updateTooltipMap();
+  }
+
+  public initTooltip(context: CanvasRenderingContext2D): newTooltip {
+    const tooltip = super.initTooltip(context);
+    tooltip.isFlipper = true;
+    return tooltip
+  }
+
+  public setTooltipOrigin(vertex: Vertex): void {
+    this.previousTooltipOrigin = vertex.copy();
+    this.tooltipOrigin = this.previousTooltipOrigin.copy();
+  }
+
+  public translateTooltip(translation: Vertex): void { this.tooltipOrigin?.translateSelf(translation) }
+
+  public mouseDown(mouseDown: Vertex) { this.setTooltipOrigin(mouseDown) }
+
+  public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Name", this.name]]) }
+
+  private getEdgeStyle(edgeStyle: {[key: string]: any}): void {
+    if (edgeStyle.line_width) this.lineWidth = edgeStyle.line_width;
+    if (edgeStyle.color_stroke) this.strokeStyle = edgeStyle.color_stroke;
+    if (edgeStyle.dashline) this.dashLine = edgeStyle.dashline;
+  }
+
+  public static getGraphProperties(graph: {[key: string]: any}): LineSequence {
+    const emptyLineSequence = new LineSequence([], graph.name);
+    if (graph.edge_style) emptyLineSequence.getEdgeStyle(graph.edge_style);
+    return emptyLineSequence
+  }
+
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
+    super.setDrawingProperties(context);
+    context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
+  }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.path.moveTo(this.points[0].center.x, this.points[0].center.y);
+    this.points.slice(1).forEach(point=> this.path.lineTo(point.center.x, point.center.y));
+  }
+
+  public update(points: newPoint2D[]): void {
+    this.points = points;
+    this.buildPath();
   }
 }
 
@@ -2332,6 +2451,7 @@ export class newAxis extends EventEmitter {
   readonly SELECTION_RECT_SIZE = 10;
   readonly SIZE_END = 7;
   readonly FONT_SIZE = 12;
+  readonly isFilled = true;
 
   // OLD
   public is_drawing_rubberband: boolean = false;
@@ -2411,7 +2531,6 @@ export class newAxis extends EventEmitter {
   }
 
   public resetScale(): void {
-    this.rubberBand.reset();
     this.minValue = this.initMinValue;
     this.maxValue = this.initMaxValue;
     this._previousMin = this.initMinValue;
@@ -2535,7 +2654,7 @@ export class newAxis extends EventEmitter {
       var [nameCoords, align, baseline, orientation] = this.topArrowTitleProperties();
     }
     nameCoords.transformSelf(canvasHTMatrix);
-    const textParams: textParams = {
+    const textParams: TextParams = {
       width: this.drawLength, fontsize: this.FONT_SIZE, font: this.font, align: align, color: color,
       baseline: baseline, style: 'bold', orientation: orientation, backgroundColor: "hsla(0, 0%, 100%, 0.5)"
     };
@@ -2601,7 +2720,7 @@ export class newAxis extends EventEmitter {
     tickText.draw(context);
   }
 
-  private computeTickTextParams(): textParams {
+  private computeTickTextParams(): TextParams {
     const [textAlign, baseline] = this.textAlignments();
     let textWidth = null;
     let textHeight = null;
@@ -2627,7 +2746,7 @@ export class newAxis extends EventEmitter {
     return point
   }
 
-  private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: textParams, point: newPoint2D, HTMatrix: DOMMatrix): newText {
+  private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: newPoint2D, HTMatrix: DOMMatrix): newText {
     const textOrigin = this.tickTextPositions(point, HTMatrix);
     const tickText = new newText(newText.capitalize(text), textOrigin, tickTextParams);
     tickText.removeEndZeros();
@@ -2765,21 +2884,27 @@ export class DrawingCollection {
 
   public updateMouseState(context: CanvasRenderingContext2D, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
     this.drawings.forEach(drawing => {
-      if (context.isPointInPath(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
-      else {
-        if (!keepState) drawing[stateName] = false;
+      if (drawing.isFilled) {
+        if (context.isPointInPath(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
+        else {
+          if (!keepState) drawing[stateName] = false;
+        }
+      } else {
+        context.save();
+        context.lineWidth = 10;
+        if (context.isPointInStroke(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
+        else {
+          if (!keepState) drawing[stateName] = false;
+        }
+        context.restore();
       }
     })
   }
 
   public mouseDown(mouseCoords: Vertex): any {
     let clickedObject: any = null;
-    this.drawings.forEach(drawing => {
-      if (drawing.isHovered) {
-        clickedObject = drawing;
-        clickedObject.mouseDown(mouseCoords);
-      }
-    });
+    this.drawings.forEach(drawing => { if (drawing.isHovered) clickedObject = drawing });
+    clickedObject?.mouseDown(mouseCoords);
     return clickedObject
   }
 }
@@ -2805,7 +2930,7 @@ export class GroupCollection extends ShapeCollection {
     super(drawings, frame);
   }
 
-  public drawingIsContainer(drawing: any): boolean { return drawing.values?.length > 1 }
+  public drawingIsContainer(drawing: any): boolean { return drawing.values?.length > 1 || drawing instanceof LineSequence }
 
   public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
     this.drawings.forEach(drawing => { if ((this.drawingIsContainer(drawing) || !inMultiPlot) && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });

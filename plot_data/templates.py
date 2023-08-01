@@ -39,7 +39,8 @@ html_template = Template('''
         <button name="Zoom-" value="OK" type="button" onclick="plot_data.zoomOut()"> Zoom- </button> &nbsp;&nbsp;
         Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250" onclick="plot_data.simpleCluster(value / 10000)"></input>
         <button name="resetClusters" value="OK" type="button" onclick="plot_data.resetClusters()"> Reset clusters </button> &nbsp;&nbsp;
-        <button name="resetView" value="OK" type="button" onclick="plot_data.resetView()"> Reset view </button>
+        <button name="resetView" value="OK" type="button" onclick="plot_data.resetView()"> Reset view </button> &nbsp;&nbsp;
+        <button name="showPoints" value="OK" type="button" onclick="plot_data.togglePoints()"> Show points </button>
     <hr style="border-top: 2px;">
     </div>
     <div id="app">
@@ -70,7 +71,7 @@ CONTOUR_COMMANDS = """
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 GRAPH_COMMANDS = """
-            var plot_data = new PlotData.PlotScatter(data, width, height, true, 0, 0, $canvas_id.id);
+            var plot_data = new PlotData.newGraph2D(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""

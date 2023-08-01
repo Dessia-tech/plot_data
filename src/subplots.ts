@@ -1462,6 +1462,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
 export class BasePlot extends PlotData {
   public axes: newAxis[] = [];
+  public drawnFeatures: string[];
   public origin: Vertex;
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
@@ -1513,8 +1514,11 @@ export class BasePlot extends PlotData {
       this.refresh_MinMax();
       this.unpackAxisStyle(data);
       this.pointSets = new Array(this.nSamples).fill(-1);
-      this.absoluteObjects = new GroupCollection();
+      this.drawnFeatures = this.setFeatures(data);
+      this.axes = this.setAxes();
+      this.fixedObjects = new DrawingCollection(this.axes, this.canvasMatrix);
       this.relativeObjects = new GroupCollection();
+      this.absoluteObjects = new GroupCollection();
     }
 
   refresh_MinMax(): void {
@@ -1566,6 +1570,16 @@ export class BasePlot extends PlotData {
       if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
     })
     this.updateSelection(axesSelections);
+  }
+
+  protected setFeatures(data: any): string[] { return data.attribute_names ?? Array.from(this.features.keys()) }
+
+  protected setAxes(): newAxis[] {
+    return this.drawnFeatures.map(feature => this.setAxis(feature, 0, this.origin, this.origin.add(this.size)))
+  }
+
+  protected setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+    return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
   }
 
   public updateSelection(axesSelections: number[][]): void {
@@ -1951,11 +1965,6 @@ export class Frame extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.offset = this.computeOffset();
-      this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
-      [this.xFeature, this.yFeature] = this.setFeatures(data);
-      this.axes = this.setAxes();
-      this.fixedObjects = new DrawingCollection(this.axes, this.canvasMatrix);
       this.type_ = "frame";
     }
 
@@ -2041,14 +2050,13 @@ export class Frame extends BasePlot {
   }
 
   protected setAxes(): newAxis[] {
-    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds()
+    this.offset = this.computeOffset();
+    this.margin = new Vertex(this.size.x * this.MARGIN_MULTIPLIER, this.size.y * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
+    [this.xFeature, this.yFeature] = this.drawnFeatures;
+    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds();
     return [
       this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks),
       this.setAxis(this.yFeature, freeSize.x, frameOrigin, yEnd, this.nYTicks)]
-  }
-
-  protected setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-    return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
   }
 
   protected drawAxes() {
@@ -2657,7 +2665,6 @@ export class newGraph2D extends newScatter {
 
 
 export class newParallelPlot extends BasePlot {
-  public drawnFeatures: string[];
   constructor(
     data: any,
     public width: number,
@@ -2669,12 +2676,7 @@ export class newParallelPlot extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.drawnFeatures = this.setFeatures(data);
-      console.log(this.features.keys())
-    }
-
-    public setFeatures(data: any): string[] {
-      return data.attribute_names ?? this.features.keys()
+      console.log(this.features, this.drawnFeatures)
     }
 }
 

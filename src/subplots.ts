@@ -1941,19 +1941,17 @@ export class BasePlot extends PlotData {
   }
 }
 
+const OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
+const MARGIN_MULTIPLIER: number = 0.01;
 export class Frame extends BasePlot {
   public xFeature: string;
   public yFeature: string;
 
   private offset;
   private margin;
-
+  
   protected _nXTicks: number;
   protected _nYTicks: number;
-
-  readonly OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
-  readonly MARGIN_MULTIPLIER: number = 0.01;
-
   constructor(
     data: any,
     public width: number,
@@ -2011,7 +2009,7 @@ export class Frame extends BasePlot {
     }
 
   private computeOffset(): Vertex {
-    const naturalOffset = new Vertex(this.width * this.OFFSET_MULTIPLIER.x, this.height * this.OFFSET_MULTIPLIER.y);
+    const naturalOffset = new Vertex(this.width * OFFSET_MULTIPLIER.x, this.height * OFFSET_MULTIPLIER.y);
     const MIN_FONTSIZE = 6;
     const calibratedMeasure = 33;
     return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
@@ -2051,7 +2049,7 @@ export class Frame extends BasePlot {
 
   protected setAxes(): newAxis[] {
     this.offset = this.computeOffset();
-    this.margin = new Vertex(this.size.x * this.MARGIN_MULTIPLIER, this.size.y * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
+    this.margin = new Vertex(this.size.x * MARGIN_MULTIPLIER, this.size.y * MARGIN_MULTIPLIER).add(new Vertex(10, 10));
     [this.xFeature, this.yFeature] = this.drawnFeatures;
     const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds();
     return [

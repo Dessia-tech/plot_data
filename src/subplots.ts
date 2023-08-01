@@ -2287,7 +2287,7 @@ export class newScatter extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!data.tooltip) {this.tooltipAttributes = Array.from(this.features.keys()) }
+      if (!data.tooltip) this.tooltipAttributes = Array.from(this.features.keys());
       else this.tooltipAttributes = data.tooltip.attribute;
       this.unpackPointStyle(data);
       this.computePoints();
@@ -2592,7 +2592,7 @@ export class newGraph2D extends newScatter {
       data.graphs.forEach(graph => {
         this.curves.push(LineSequence.getGraphProperties(graph));
         const curveIndices = range(graphSamples.length, graphSamples.length + graph.elements.length);
-        const graphPointStyle = newPointStyle.unpackGraphPointStyle(graph.point_style);
+        const graphPointStyle = new newPointStyle(graph.point_style);
         this.pointStyles.push(...new Array(curveIndices.length).fill(graphPointStyle));
         this.curvesIndices.push(curveIndices);
         graphSamples.push(...graph.elements);

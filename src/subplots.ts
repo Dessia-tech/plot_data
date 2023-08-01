@@ -2367,7 +2367,7 @@ export class newScatter extends Frame {
       if (this.pointStyles) {
         if (!this.clusterColors) point.updateStyle(this.pointStyles[point.values[0]])
         else {
-          let clusterPointStyle = Object.assign({}, this.pointStyles, { strokeStyle: null });
+          let clusterPointStyle = Object.assign({}, this.pointStyles[point.values[0]], { strokeStyle: null });
           point.updateStyle(clusterPointStyle);
         }
       } else point.marker = this.marker;

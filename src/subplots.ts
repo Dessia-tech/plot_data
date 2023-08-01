@@ -2673,6 +2673,7 @@ export class newGraph2D extends newScatter {
 
 
 export class newParallelPlot extends BasePlot {
+  public drawnFeatures: string[];
   constructor(
     data: any,
     public width: number,
@@ -2684,6 +2685,12 @@ export class newParallelPlot extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.drawnFeatures = this.setFeatures(data);
+      console.log(this.features.keys())
+    }
+
+    public setFeatures(data: any): string[] {
+      return data.attribute_names ?? this.features.keys()
     }
 }
 

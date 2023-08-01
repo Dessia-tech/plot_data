@@ -77,7 +77,7 @@ GRAPH_COMMANDS = """
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 PARALLELPLOT_COMMANDS = """
-            var plot_data = new PlotData.ParallelPlot(data, width, height, true, 0, 0, $canvas_id.id);
+            var plot_data = new PlotData.newParallelPlot(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""

@@ -2590,12 +2590,14 @@ export class newGraph2D extends newScatter {
     this.curves = [];
     if (data.graphs) {
       data.graphs.forEach(graph => {
-        this.curves.push(LineSequence.getGraphProperties(graph));
-        const curveIndices = range(graphSamples.length, graphSamples.length + graph.elements.length);
-        const graphPointStyle = new newPointStyle(graph.point_style);
-        this.pointStyles.push(...new Array(curveIndices.length).fill(graphPointStyle));
-        this.curvesIndices.push(curveIndices);
-        graphSamples.push(...graph.elements);
+        if (graph.elements.length != 0) {
+          this.curves.push(LineSequence.getGraphProperties(graph));
+          const curveIndices = range(graphSamples.length, graphSamples.length + graph.elements.length);
+          const graphPointStyle = new newPointStyle(graph.point_style);
+          this.pointStyles.push(...new Array(curveIndices.length).fill(graphPointStyle));
+          this.curvesIndices.push(curveIndices);
+          graphSamples.push(...graph.elements);
+        }
       })
     }
     return super.unpackData({"elements": graphSamples})

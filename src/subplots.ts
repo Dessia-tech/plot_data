@@ -1,11 +1,11 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { check_package_version, Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, newPoint2D, Bar, newShape, newTooltip } from "./utils";
+import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection,
+  LineSequence, newRect, newPointStyle } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, rgb_to_hex, color_to_string } from "./color_conversion";
-import { EdgeStyle, TextStyle, SurfaceStyle } from "./style";
-
+import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl } from "./color_conversion";
+import { EdgeStyle, TextStyle } from "./style";
 
 var alert_count = 0;
 /**
@@ -23,10 +23,6 @@ export class PlotContour extends PlotData {
                        public canvas_id: string,
                        public is_in_multiplot = false) {
       super(data, width, height, buttons_ON, 0, 0, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.0';
-        check_package_version(data['package_version'], requirement);
-      }
       this.plot_datas = [];
       this.type_ = 'primitivegroup';
       var d = this.data;
@@ -118,10 +114,6 @@ export class PlotScatter extends PlotData {
       public canvas_id: string,
       public is_in_multiplot = false) {
         super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-        if (!is_in_multiplot) {
-          var requirement = '0.6.0';
-          check_package_version(data['package_version'], requirement);
-        }
         if (this.buttons_ON) {
           this.refresh_buttons_coords();
         }
@@ -248,10 +240,6 @@ export class ParallelPlot extends PlotData {
     constructor(public data, public width, public height, public buttons_ON, X, Y, public canvas_id: string,
                 public is_in_multiplot = false) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.1';
-        check_package_version(data['package_version'], requirement);
-      }
       this.type_ = 'parallelplot';
       if (this.buttons_ON) {
         this.disp_x = this.width - 35;
@@ -301,7 +289,7 @@ export class ParallelPlot extends PlotData {
 
     initialize_all_attributes() {
       var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
-      var exceptions = ['name', 'package_version', 'object_class'];
+      var exceptions = ['name', 'object_class'];
       for (let i=0; i<attribute_names.length; i++) {
         if (!(List.is_include(attribute_names[i], exceptions))) {
           let name = attribute_names[i];
@@ -390,7 +378,7 @@ export class ParallelPlot extends PlotData {
     initialize_hexs() {
       this.hexs = [];
       this.interpolation_colors.forEach(rgb => {
-        this.hexs.push(rgb_to_hex(rgb));
+        this.hexs.push(colorHex(rgb));
       });
     }
 
@@ -556,10 +544,6 @@ export class PrimitiveGroupContainer extends PlotData {
                 public canvas_id: string,
                 public is_in_multiplot: boolean = false) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!is_in_multiplot) {
-        var requirement = '0.6.0';
-        check_package_version(data['package_version'], requirement);
-      }
       this.type_ = 'primitivegroupcontainer';
       var serialized = data['primitive_groups'];
       var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
@@ -1476,32 +1460,40 @@ export class PrimitiveGroupContainer extends PlotData {
     }
 }
 
-
 export class BasePlot extends PlotData {
   public axes: newAxis[] = [];
   public origin: Vertex;
   public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
 
-  public hoveredIndices: boolean[];
-  public clickedIndices: boolean[];
-  public selectedIndices: boolean[];
+  public hoveredIndices: number[];
+  public clickedIndices: number[];
+  public selectedIndices: number[];
+
+  public nSamples: number;
+  public pointSets: number[];
+  public pointSetColors: string[] = [];
+  public pointStyles: newPointStyle[] = null;
+
+  public isSelecting: boolean = false;
+  public selectionBox = new SelectionBox();
+  public isZooming: boolean = false;
 
   public viewPoint: Vertex = new Vertex(0, 0);
-  public fixedObjects: any[] = [];
-  public movingObjects: newShape[] = [];
+  public fixedObjects: DrawingCollection;
+  public absoluteObjects: GroupCollection;
+  public relativeObjects: GroupCollection;
 
   public font: string = "sans-serif";
 
   protected initScale: Vertex = new Vertex(1, -1);
-  private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 31%)']]);
-  private nSamples: number;
+  private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   readonly features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 16;
   readonly TRL_THRESHOLD = 20;
   constructor(
-    public data: any,
+    data: any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -1511,14 +1503,18 @@ export class BasePlot extends PlotData {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.nSamples = data.elements.length;
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
+      this.nSamples = this.features.entries().next().value[1].length; // a little bit cumbersome
       this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
+      this.unpackAxisStyle(data);
+      this.pointSets = new Array(this.nSamples).fill(-1);
+      this.absoluteObjects = new GroupCollection();
+      this.relativeObjects = new GroupCollection();
     }
 
   refresh_MinMax(): void {
@@ -1534,247 +1530,394 @@ export class BasePlot extends PlotData {
 
   get canvasMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
 
-  get movingMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
+  get relativeMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
-  private unpackData(data: any): Map<string, any[]> {
+  protected unpackAxisStyle(data:any): void {
+    if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
+    if (data.axis?.axis_style?.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
+    if (data.axis?.graduation_style?.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
+    if (data.axis?.graduation_style?.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
+  }
+
+  protected unpackData(data: any): Map<string, any[]> {
+    const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
+    featuresKeys.push("name");
     let unpackedData = new Map<string, any[]>();
-    Object.keys(data.elements[0]).forEach((feature) => {
-      let vector = data.elements.map(element => element[feature]);
-      unpackedData.set(feature, vector);
-    });
+    featuresKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
   }
 
-  public drawCanvas(): void {
+  private drawCanvas(): void {
     this.context = this.context_show;
     this.draw_empty_canvas(this.context_show);
-    if (this.settings_on) {this.draw_settings_rect()}
-    else {this.draw_rect()}
+    if (this.settings_on) this.draw_settings_rect()
+    else this.draw_rect();
     this.context_show.beginPath();
     this.context_show.rect(this.X, this.Y, this.width, this.height);
     this.context_show.closePath();
   }
 
   public updateAxes(): void {
-    const axisSelections = [];
+    const axesSelections = [];
     this.axes.forEach(axis => {
-      this.axisStyle.forEach((value, key) => axis[key] = value);
-      axis.updateScale(this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-      if (axis.rubberBand.length != 0) axisSelections.push(this.updateSelected(axis));
+      axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+      if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
     })
-    if (axisSelections.length != 0) { this.selectedIndices = axisSelections.reduce((a, b) => a.map((c, i) => b[i] && c)) }
-    else { this.selectedIndices = new Array(this.nSamples).fill(false) }
+    this.updateSelection(axesSelections);
   }
 
-  private initSelectors(): void {
-    this.hoveredIndices = this.falseIndicesArray;
-    this.clickedIndices = this.falseIndicesArray;
-    this.selectedIndices = this.falseIndicesArray;
+  public updateSelection(axesSelections: number[][]): void {
+    if (!this.is_in_multiplot) this.selectedIndices = BasePlot.intersectArrays(axesSelections);
   }
 
-  public reset(): void {
-    this.axes.forEach(axis => axis.reset());
+  public static intersectArrays(arrays: any[][]): any[] {
+    if (arrays.length == 1) return arrays[0]
+    if (arrays.length == 0) return []
+    const arraysIntersection = [...arrays[0]];
+    arrays[0].forEach(value => {
+      arrays.slice(1).forEach(array => {
+        if (!array.includes(value)) arraysIntersection.splice(arraysIntersection.indexOf(value), 1);
+      })
+    })
+    return arraysIntersection
+  }
+
+  protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
+
+  protected resetAxes(): void { this.axes.forEach(axis => axis.reset()) }
+
+  public reset_scales(): void { // TODO: merge with resetView
+    this.updateSize();
+    this.axes.forEach(axis => axis.resetScale());
+  }
+
+  public resetView(): void { this.reset_scales(); this.draw() }
+
+  public initSelectors(): void {
+    this.hoveredIndices = [];
+    this.clickedIndices = [];
+    this.selectedIndices = [];
+  }
+
+  protected resetSelectors(): void {
+    this.selectionBox = new SelectionBox();
     this.initSelectors();
   }
 
-  public updateSelected(axis: newAxis): boolean[] { // TODO: Performance
-    const boolSelection = Array.from(Array(this.nSamples), () => false);
-    const vector = axis.stringsToValues(this.features.get(axis.name));
-    vector.forEach((value, index) => {if (axis.isInRubberBand(value)) {boolSelection[index] = true}});
-    return boolSelection
+  protected reset(): void {
+    this.resetAxes();
+    this.resetSelectors();
   }
 
-  public drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) };
+  protected resetSelection(): void {
+    this.axes.forEach(axis => axis.rubberBand.reset());
+    this.resetSelectors();
+  }
 
-  public drawSelectionRectangle(context: CanvasRenderingContext2D): void {
+  public updateSelected(axis: newAxis): number[] {
+    const selection = [];
+    const vector = axis.stringsToValues(this.features.get(axis.name));
+    vector.forEach((value, index) => { if (axis.isInRubberBand(value)) selection.push(index) });
+    return selection
+  }
+
+  protected isRubberBanded(): boolean {
+    let isRubberBanded = true;
+    this.axes.forEach(axis => isRubberBanded = isRubberBanded && axis.rubberBand.length != 0);
+    return isRubberBanded
+  }
+
+  protected drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) }
+
+  private drawZoneRectangle(context: CanvasRenderingContext2D): void {
     // TODO: change with newRect
     Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15,15]);
   }
 
-  public drawMovingObjects() {}
+  protected drawRelativeObjects() {}
 
-  public computeMovingObjects() {}
+  protected drawAbsoluteObjects(context: CanvasRenderingContext2D) {
+    this.absoluteObjects = new GroupCollection();
+    this.drawSelectionBox(context);
+  }
+
+  protected computeRelativeObjects() {}
 
   public draw(): void {
     this.context_show.save();
     this.drawCanvas();
     this.context_show.setTransform(this.canvasMatrix);
-    this.updateAxes();
-    this.computeMovingObjects();
 
-    this.context_show.setTransform(this.movingMatrix);
-    this.drawMovingObjects();
+    this.updateAxes();
+    this.computeRelativeObjects();
+
+    this.context_show.setTransform(this.relativeMatrix);
+    this.drawRelativeObjects();
+
+    this.context_show.resetTransform();
+    this.drawAbsoluteObjects(this.context_show);
 
     this.context_show.setTransform(this.canvasMatrix);
     this.drawAxes();
     this.drawTooltips();
 
     this.context_show.resetTransform();
-    // if (this.buttons_ON) { this.drawButtons(context) }
-    if (this.multiplot_manipulation) { this.drawSelectionRectangle(this.context_show) };
+    // if (this.buttons_ON) { this.drawButtons(this.context_show) }
+    if (this.multiplot_manipulation) { this.drawZoneRectangle(this.context_show) };
     this.context_show.restore();
   }
 
   public draw_initial(): void { this.draw() }
 
-  public draw_from_context(hidden: any) {return}
+  public draw_from_context(hidden: any) {}
 
-  public drawTooltips(): void { this.movingObjects.forEach(object => { object.drawTooltip(new Vertex(this.X, this.Y), this.size, this.context_show) }) }
+  // protected drawButtons(context: CanvasRenderingContext2D) { // Kept for further implementation of legends
+  //   const buttonsX = this.initScale.x < 0 ? 50 : this.size.x - 250;
+  //   const buttonsYStart = this.initScale.y < 0 ? 50 : this.size.y - 50;
+  //   const buttonRect = new newRect(new Vertex(buttonsX + this.X, buttonsYStart + this.Y), new Vertex(200, 20));
+  //   buttonRect.draw(context);
+  // }
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    objects.forEach(object => {
-      if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) {object[stateName] = invertState ? !object[stateName] : true}
-      else {if (!keepState) {object[stateName] = false}}
-    })
+  public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() }
+
+  public switchMerge(): void {}
+
+  public switchZoom(): void { this.isZooming = !this.isZooming }
+
+  public togglePoints(): void {}
+
+  protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex): void { this.selectionBox.update(frameDown, frameMouse) }
+
+  public get drawingZone(): [Vertex, Vertex] { return [new Vertex(this.X, this.Y), this.size] }
+
+  protected drawSelectionBox(context: CanvasRenderingContext2D) {
+    if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
+      const [drawingOrigin, drawingSize] = this.drawingZone;
+      this.selectionBox.buildRectFromHTMatrix(drawingOrigin, drawingSize, this.relativeMatrix);
+      if (this.selectionBox.area != 0) {
+        this.selectionBox.buildPath();
+        this.selectionBox.draw(context);
+        this.absoluteObjects.drawings.push(this.selectionBox);
+      }
+    }
   }
+
+  private drawZoomBox(zoomBox: SelectionBox, frameDown: Vertex, frameMouse: Vertex, context: CanvasRenderingContext2D): void {
+    zoomBox.update(frameDown, frameMouse);
+    const [drawingOrigin, drawingSize] = this.drawingZone;
+    zoomBox.buildRectFromHTMatrix(drawingOrigin, drawingSize, this.relativeMatrix);
+    zoomBox.buildPath();
+    zoomBox.draw(context);
+  }
+
+  protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
+    this.axes[0].minValue = Math.min(zoomBox.minVertex.x, zoomBox.maxVertex.x);
+    this.axes[0].maxValue = Math.max(zoomBox.minVertex.x, zoomBox.maxVertex.x);
+    this.axes[1].minValue = Math.min(zoomBox.minVertex.y, zoomBox.maxVertex.y);
+    this.axes[1].maxValue = Math.max(zoomBox.minVertex.y, zoomBox.maxVertex.y);
+    this.axes.forEach(axis => axis.saveLocation());
+    this.updateAxes();
+  }
+
+  private drawTooltips(): void {
+    this.relativeObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
+    this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
+  }
+
+  protected stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
+    frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+      this.fixedObjects.updateMouseState(context, canvasMouse, stateName, keepState, invertState);
+      this.absoluteObjects.updateMouseState(context, absoluteMouse, stateName, keepState, invertState);
+      this.relativeObjects.updateMouseState(context, frameMouse, stateName, keepState, invertState);
+    }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
-    return new Vertex(mouseDown.x - currentMouse.x, mouseDown.y - currentMouse.y);
+    return currentMouse.subtract(mouseDown)
   }
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex): void {
-    this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isHovered', false, false);
-    this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isHovered', false, false);
+  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
+    this.stateUpdate(this.context_show, canvasMouse, absoluteMouse, frameMouse, 'isHovered', false, false);
   }
 
-  public projectMouse(e: MouseEvent): [Vertex, Vertex] {
+  public projectMouse(e: MouseEvent): [Vertex, Vertex, Vertex] {
     const mouseCoords = new Vertex(e.offsetX, e.offsetY);
-    return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.movingMatrix.inverse())]
+    return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.relativeMatrix.inverse()), mouseCoords]
   }
 
-  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex): [Vertex, Vertex, any] {
-    let clickedObject: any;
-    this.fixedObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
-    this.movingObjects.forEach(object => {if (object.isHovered) {clickedObject = object}})
-    if (this.fixedObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(canvasMouse)}
-    if (this.movingObjects.indexOf(clickedObject) != -1) {clickedObject.mouseDown(frameMouse)}
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
+    const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
+    const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
+    const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);
+    const clickedObject = fixedClickedObject ? fixedClickedObject : absoluteClickedObject ? absoluteClickedObject : relativeClickedObject ? relativeClickedObject : null
     return [canvasMouse, frameMouse, clickedObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
     if (this.interaction_ON) {
       if (this.translation.normL1 == 0 && canvasMouse.subtract(canvasDown).normL1 <= this.TRL_THRESHOLD) {
-        this.stateUpdate(this.context_show, this.fixedObjects, canvasMouse, 'isClicked', ctrlKey, true);
-        this.stateUpdate(this.context_show, this.movingObjects, frameMouse, 'isClicked', ctrlKey, true);
+        this.stateUpdate(this.context_show, canvasMouse, absoluteMouse, frameMouse, 'isClicked', ctrlKey, true);
       }
     }
   }
 
   public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
-      var clickedObject: any;
+      var clickedObject: any = null;
       var isDrawing = false;
-      var canvasMouse = new Vertex(0, 0) ; var canvasDown = new Vertex(0, 0) ; var mouseWheel = new Vertex(0, 0);
-      var frameMouse = new Vertex(0, 0) ; var frameDown = new Vertex(0, 0) ; var canvasWheel = new Vertex(0, 0);
+      var canvasMouse = new Vertex(0, 0); var canvasDown = new Vertex(0, 0);
+      var frameMouse = new Vertex(0, 0); var frameDown = new Vertex(0, 0);
+      var absoluteMouse = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
       var canvas = document.getElementById(this.canvas_id);
-      var ctrlKey = false;
-      window.addEventListener('keydown', e => {if (e.key == "Control") {ctrlKey = true}});
+      var ctrlKey = false; var shiftKey = false;
+      var zoomBox = new SelectionBox();
+      window.addEventListener('keydown', e => {
+        if (e.key == "Control") ctrlKey = true;
+        if (e.key == "Shift") {
+          shiftKey = true;
+          if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
+        }
+      });
 
-      window.addEventListener('keyup', e => {if (e.key == "Control") {ctrlKey = false}});
+      window.addEventListener('keyup', e => {
+        if (e.key == "Control") ctrlKey = false;
+        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; canvas.style.cursor = 'default'; this.draw() };
+      });
 
       canvas.addEventListener('mousemove', e => {
-        [canvasMouse, frameMouse] = this.projectMouse(e);
-        this.mouseMove(canvasMouse, frameMouse);
+        [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
+        this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
+        if (this.isZooming) canvas.style.cursor = 'crosshair';
         if (this.interaction_ON) {
           if (isDrawing) {
-            if (!clickedObject?.mouseMove(canvasDown, canvasMouse)) {
-              canvas.style.cursor = 'move';
-              this.translation = this.mouseTranslate(canvasMouse, canvasDown);
-            } else if (clickedObject instanceof newAxis) {
-              this.is_drawing_rubber_band = true;
+            if ( !(clickedObject instanceof SelectionBox) ) {
+              if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting && !this.isZooming) {
+                canvas.style.cursor = 'move';
+                this.translation = this.mouseTranslate(canvasMouse, canvasDown);
+              }
             }
           }
           this.draw();
+        }
+        if (isDrawing) {
+          if (this.isSelecting) {
+            if (clickedObject instanceof SelectionBox) {
+              clickedObject.mouseMove(frameDown, frameMouse);
+              this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex);
+            }
+            else this.updateSelectionBox(frameDown, frameMouse);
+          }
+          if (this.isZooming) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
         }
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
         if (!mouseInCanvas) { isDrawing = false };
       });
 
       canvas.addEventListener('mousedown', e => {
-        [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse);
+        [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+        this.is_drawing_rubber_band = clickedObject instanceof newAxis || this.isSelecting;
+        if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
       });
 
       canvas.addEventListener('mouseup', e => {
-        canvas.style.cursor = 'default';
-        this.mouseUp(canvasMouse, frameMouse, canvasDown, ctrlKey);
-        if (clickedObject) {clickedObject.mouseUp()};
-        isDrawing = false;
+        if (!shiftKey) canvas.style.cursor = 'default';
+        if (this.isZooming) {
+          this.switchZoom();
+          this.zoomBoxUpdateAxes(zoomBox);
+        }
+        this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
+        if (clickedObject) clickedObject.mouseUp();
+        if (this.isSelecting) this.selectionBox.mouseUp();
+        if ( !(clickedObject instanceof SelectionBox || shiftKey) ) this.isSelecting = false;
+        if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
+        clickedObject = null;
         this.draw();
-        this.axes.forEach(axis => {axis.saveLocation()});
+        this.axes.forEach(axis => axis.saveLocation());
         this.translation = new Vertex(0, 0);
-        this.is_drawing_rubber_band = false;
+        isDrawing = false;
       })
 
       canvas.addEventListener('wheel', e => {
         if (this.interaction_ON) {
           let scale = new Vertex(this.scaleX, this.scaleY);
-          [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
-          for (let axis of this.axes) {
-            if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
-              if (this.scaleX > scale.x) {this.scaleX = scale.x}
-              if (this.scaleY > scale.y) {this.scaleY = scale.y}
-            } else if (axis.tickPrecision < 1) {
-              if (this.scaleX < scale.x) {this.scaleX = scale.x}
-              if (this.scaleX < scale.x) {this.scaleX = scale.x}
-            }
-          }
-          this.viewPoint = new newPoint2D(mouse3X, mouse3Y).scale(this.initScale);
-          this.updateAxes(); // needs a refactor
-          this.axes.forEach(axis => {axis.saveLocation()});
-          [this.scaleX, this.scaleY] = [1, 1];
-          this.viewPoint = new Vertex(0, 0);
-          this.draw(); // needs a refactor
+          [mouse3X, mouse3Y] = this.wheelFromEvent(e);
+          this.drawAfterRescale(mouse3X, mouse3Y, scale);
         }
       });
 
       canvas.addEventListener('mouseleave', e => {
         isDrawing = false;
         ctrlKey = false;
-        this.axes.forEach(axis => {axis.saveLocation()});
+        this.axes.forEach(axis => axis.saveLocation());
         this.translation = new Vertex(0, 0);
         canvas.style.cursor = 'default';
       });
     }
   }
 
-  public wheel_interaction(mouse3X, mouse3Y, e: WheelEvent): [number, number] { //TODO: TO REFACTOR !!!
+  private drawAfterRescale(mouse3X: number, mouse3Y: number, scale: Vertex): void {
+    for (let axis of this.axes) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > scale.x) {this.scaleX = scale.x}
+        if (this.scaleY > scale.y) {this.scaleY = scale.y}
+      } else if (axis.tickPrecision < 1) {
+        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+      }
+    }
+    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
+    this.updateAxes(); // needs a refactor
+    this.axes.forEach(axis => axis.saveLocation());
+    [this.scaleX, this.scaleY] = [1, 1];
+    this.viewPoint = new Vertex(0, 0);
+    this.draw(); // needs a refactor
+  }
+
+  public zoomIn(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), 342) }
+
+  public zoomOut(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), -342) }
+
+  private zoom(center: Vertex, zFactor: number): void {
+    const [mouse3X, mouse3Y] = this.wheel_interaction(center.x, center.y, zFactor);
+    this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(1, 1));
+  }
+
+  public wheelFromEvent(e: WheelEvent): [number, number] { return this.wheel_interaction(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
+
+  public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: TO REFACTOR !!!
     // e.preventDefault();
     this.fusion_coeff = 1.2;
-    var event = -Math.sign(e.deltaY);
-    mouse3X = e.offsetX;
-    mouse3Y = e.offsetY;
     if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
-        if (event>0) {
+        if (deltaY>0) {
           this.scaleX = this.scaleX*this.fusion_coeff;
           this.scroll_x++;
           this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-        } else if (event<0) {
+        } else if (deltaY<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
           this.scroll_x--;
           this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
         }
 
     } else if ((mouse3X<=this.decalage_axis_x + this.X) && (mouse3Y<this.height - this.decalage_axis_y + this.Y) && this.axis_ON) {
-        if (event>0) {
+        if (deltaY>0) {
           this.scaleY = this.scaleY*this.fusion_coeff;
           this.scroll_y++;
           this.originY = this.height/2 + this.fusion_coeff * (this.originY - this.height/2);
-        } else if (event<0) {
+        } else if (deltaY<0) {
           this.scaleY = this.scaleY/this.fusion_coeff;
           this.scroll_y--;
           this.originY = this.height/2 + 1/this.fusion_coeff * (this.originY - this.height/2);
         }
 
     } else {
-        if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+        if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
         this.scaleX = this.scaleX*coeff;
         this.scaleY = this.scaleY*coeff;
-        this.scroll_x = this.scroll_x + event;
-        this.scroll_y = this.scroll_y + event;
+        this.scroll_x = this.scroll_x + deltaY;
+        this.scroll_y = this.scroll_y + deltaY;
         this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
         this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
       }
@@ -1798,7 +1941,7 @@ export class Frame extends BasePlot {
   readonly MARGIN_MULTIPLIER: number = 0.01;
 
   constructor(
-    public data: any,
+    data: any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -1812,23 +1955,51 @@ export class Frame extends BasePlot {
       this.margin = new Vertex(width * this.MARGIN_MULTIPLIER, height * this.MARGIN_MULTIPLIER).add(new Vertex(10, 10));
       [this.xFeature, this.yFeature] = this.setFeatures(data);
       this.axes = this.setAxes();
-      this.fixedObjects.push(...this.axes);
+      this.fixedObjects = new DrawingCollection(this.axes, this.canvasMatrix);
       this.type_ = "frame";
     }
 
-  get movingMatrix(): DOMMatrix {
-    const movingMatrix = this.axes[0].transformMatrix;
-    movingMatrix.d = this.axes[1].transformMatrix.d;
-    return this.canvasMatrix.multiply(movingMatrix)
+  get frameMatrix(): DOMMatrix {
+    const relativeMatrix = this.axes[0].transformMatrix;
+    relativeMatrix.d = this.axes[1].transformMatrix.a;
+    relativeMatrix.f = this.axes[1].transformMatrix.f;
+    return relativeMatrix
   }
 
-  get nXTicks(): number { return this._nXTicks ? this._nXTicks : 7 }
+  get relativeMatrix(): DOMMatrix { return this.canvasMatrix.multiply(this.frameMatrix) }
 
-  set nXTicks(value: number) {this._nXTicks = value}
+  get nXTicks(): number { return this._nXTicks ?? 10 }
 
-  get nYTicks(): number {return this._nYTicks ? this._nYTicks : 7}
+  set nXTicks(value: number) { this._nXTicks = value }
 
-  set nYTicks(value: number) {this._nYTicks = value}
+  get nYTicks(): number { return this._nYTicks ?? 10 }
+
+  set nYTicks(value: number) { this._nYTicks = value }
+
+  get sampleDrawings(): GroupCollection { return this.relativeObjects }
+
+  public get drawingZone(): [Vertex, Vertex] {
+    const origin = new Vertex();
+    origin.x = this.initScale.x < 0 ? this.axes[0].end.x : this.axes[0].origin.x;
+    origin.y = this.initScale.y < 0 ? this.axes[1].end.y : this.axes[1].origin.y;
+    const size = new Vertex(Math.abs(this.axes[0].end.x - this.axes[0].origin.x), Math.abs(this.axes[1].end.y - this.axes[1].origin.y))
+    return [origin.transform(this.canvasMatrix.inverse()), size]
+  }
+
+  protected unpackAxisStyle(data: any): void {
+    if (data.axis) {
+      super.unpackAxisStyle(data);
+      this.nXTicks = data.axis.nb_points_x;
+      this.nYTicks = data.axis.nb_points_y;
+    }
+  }
+
+  protected stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
+    frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
+      super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);
+      if (stateName == "isHovered") this.hoveredIndices = this.sampleDrawings.updateSampleStates(stateName);
+      if (stateName == 'isClicked') this.clickedIndices = this.sampleDrawings.updateSampleStates(stateName);
+    }
 
   private computeOffset(): Vertex {
     const naturalOffset = new Vertex(this.width * this.OFFSET_MULTIPLIER.x, this.height * this.OFFSET_MULTIPLIER.y);
@@ -1837,33 +2008,55 @@ export class Frame extends BasePlot {
     return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
+  protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
+
   public reset_scales(): void {
-    this.size = new Vertex(this.width, this.height);
-    this.resetAxes();
+    this.updateSize();
+    this.initAxes();
+    this.axes.forEach(axis => axis.resetScale());
   }
 
-  private resetAxes(): void {
+  private initAxes(): void {
     const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
     this.axes[0].transform(frameOrigin, xEnd);
     this.axes[1].transform(frameOrigin, yEnd);
   }
 
-  public setFeatures(data: any): [string, string] {
-    return [data.x_variable, data.y_variable];
+  protected setFeatures(data: any): [string, string] {
+    let xFeature = data.attribute_names[0];
+    let yFeature = data.attribute_names[1];
+    if (!xFeature) {
+      xFeature = "indices";
+      this.features.set("indices", Array.from(Array(this.nSamples).keys()));
+    }
+    if (!yFeature) {
+      for (let key of Array.from(this.features.keys())) {
+        if (!["name", "indices"].includes(key)) {
+          yFeature = key;
+          break;
+        }
+      }
+    }
+    return [xFeature, yFeature]
   }
 
-  public setAxes(): newAxis[] {
+  protected setAxes(): newAxis[] {
     const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds()
     return [
       this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks),
       this.setAxis(this.yFeature, freeSize.x, frameOrigin, yEnd, this.nYTicks)]
   }
 
-  public setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+  protected setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
     return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
   }
 
-  public setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
+  protected drawAxes() {
+    super.drawAxes();
+    if (this.isRubberBanded()) this.updateSelectionBox(...this.rubberBandsCorners);
+  }
+
+  protected setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
     let frameOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
     let xEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
     let yEnd = new Vertex(frameOrigin.x, this.size.y - this.margin.y + this.Y * this.initScale.y);
@@ -1882,14 +2075,38 @@ export class Frame extends BasePlot {
     }
     return [frameOrigin, xEnd, yEnd, freeSize]
   }
+
+  protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex) {
+    this.axes[0].rubberBand.minValue = Math.min(frameDown.x, frameMouse.x);
+    this.axes[1].rubberBand.minValue = Math.min(frameDown.y, frameMouse.y);
+    this.axes[0].rubberBand.maxValue = Math.max(frameDown.x, frameMouse.x);
+    this.axes[1].rubberBand.maxValue = Math.max(frameDown.y, frameMouse.y);
+    super.updateSelectionBox(...this.rubberBandsCorners);
+  }
+
+  public get rubberBandsCorners(): [Vertex, Vertex] {
+    return [new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue), new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue)]
+  }
+
+  public mouse_interaction(isParallelPlot: boolean): void {
+    this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => {
+      this.is_drawing_rubber_band = true;
+      this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
+    }));
+    super.mouse_interaction(isParallelPlot);
+  }
 }
 
 export class Histogram extends Frame {
   public bars: Bar[] = [];
-  readonly barsColorFill: string = 'hsl(203, 90%, 85%)';
-  readonly barsColorStroke: string = 'hsl(0, 0%, 0%)';
+
+  public fillStyle: string = 'hsl(203, 90%, 85%)';
+  public strokeStyle: string = 'hsl(0, 0%, 0%)';
+  public lineWidth: number = 1;
+  public dashLine: number[] = [];
+
   constructor(
-    public data: any,
+    data: any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -1899,6 +2116,7 @@ export class Histogram extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.unpackBarStyle(data);
     }
 
   get nXTicks() {return this._nXTicks ? this._nXTicks : 20}
@@ -1909,15 +2127,27 @@ export class Histogram extends Frame {
 
   set nYTicks(value: number) {this._nYTicks = value}
 
-  public reset(): void {
+  protected unpackAxisStyle(data: any): void {
+    super.unpackAxisStyle(data);
+    if (data.graduation_nb) this.nXTicks = data.graduation_nb;
+  }
+
+  public unpackBarStyle(data: any): void {
+    if (data.surface_style?.color_fill) this.fillStyle = data.surface_style.color_fill;
+    if (data.edge_style?.line_width) this.lineWidth = data.edge_style.line_width;
+    if (data.edge_style?.color_stroke) this.strokeStyle = data.edge_style.color_stroke;
+    if (data.edge_style?.dashline) this.dashLine = data.edge_style.dashline;
+  }
+
+  protected reset(): void {
     super.reset();
     this.bars = [];
   }
 
   private buildNumberAxis(freeSize: number, frameOrigin: Vertex, yEnd: Vertex): newAxis {
     const numberAxis = this.setAxis('number', freeSize, frameOrigin, yEnd, this.nYTicks);
-    numberAxis.minValue = 0;
-    numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    numberAxis.initMaxValue = numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+    numberAxis.initMinValue = numberAxis.minValue = 0;
     numberAxis.nTicks = this.nYTicks;
     numberAxis.saveLocation();
     return numberAxis
@@ -1932,7 +2162,7 @@ export class Histogram extends Frame {
 
   private getNumberFeature(bars: Bar[]): number[] {
     const numberFeature = this.features.get(this.xFeature).map(() => 0);
-    bars.forEach(bar => {bar.values.forEach(value => numberFeature[value] = bar.length)});
+    bars.forEach(bar => bar.values.forEach(value => numberFeature[value] = bar.length));
     return numberFeature
   }
 
@@ -1956,52 +2186,41 @@ export class Histogram extends Frame {
         }
       }
     });
-    barValues.forEach((values, index) => { bars[index].computeStats(values, 100) });
+    barValues.forEach((values, index) => { bars[index].computeStats(values) });
     return bars
   }
 
-  public computeMovingObjects(): void {
+  protected computeRelativeObjects(): void {
     this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
     this.getBarsDrawing();
   }
 
-  public drawMovingObjects(): void {
+  protected drawRelativeObjects(): void {
     this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
-    this.movingObjects = this.bars;
+    this.relativeObjects = new GroupCollection([...this.bars], this.relativeMatrix);
   }
 
-  public stateUpdate(context: CanvasRenderingContext2D, objects: any[], mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-    // TODO: Fast and dirty implementation. Needs to be rethought.
-    if (objects[0] instanceof newAxis) { super.stateUpdate(context, objects, mouseCoords, stateName, keepState, invertState) }
-    else {
-      const stateIndices = [this.hoveredIndices, this.clickedIndices][stateName == "isHovered" ? 0 : 1];
-      objects.forEach(object => {
-        if (object.values) {
-          if (context.isPointInPath(object.path, mouseCoords.x, mouseCoords.y)) { object.values.forEach(value => stateIndices[value] = invertState ? !stateIndices[value] : true) }
-          else { if (!keepState) {object.values.forEach(value => stateIndices[value] = false)} }
-        }
-      })
-    }
-  }
-
-  public getBarsDrawing(): void {
+  private getBarsDrawing(): void {
     const fullTicks = this.boundedTicks(this.axes[0]);
+    const minY = this.boundedTicks(this.axes[1])[0];
     this.bars.forEach((bar, index) => {
-      let origin = new Vertex(fullTicks[index], 0);
-      let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length);
+      let origin = new Vertex(fullTicks[index], minY);
+      let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length > minY ? bar.length - minY : 0);
       if (this.axes[0].isDiscrete) {origin.x = origin.x - size.x / 2};
 
       bar.setGeometry(origin, size);
-      bar.fillStyle = this.barsColorFill;
-      bar.strokeStyle = this.barsColorStroke;
-      if (bar.values.some(valIdx => this.hoveredIndices[valIdx])) {bar.isHovered = true}
-      if (bar.values.some(valIdx => this.clickedIndices[valIdx])) {bar.isClicked = true}
-      if (bar.values.some(valIdx => this.selectedIndices[valIdx])) {bar.isSelected = true}
+      bar.fillStyle = this.fillStyle;
+      bar.strokeStyle = this.strokeStyle;
+      bar.dashLine = this.dashLine;
+      bar.lineWidth = this.lineWidth;
+      if (bar.values.some(valIdx => this.hoveredIndices.includes(valIdx))) bar.isHovered = true;
+      if (bar.values.some(valIdx => this.clickedIndices.includes(valIdx))) bar.isClicked = true;
+      if (bar.values.some(valIdx => this.selectedIndices.includes(valIdx))) bar.isSelected = true;
     })
   }
 
-  public setAxes(): newAxis[] {
+  protected setAxes(): newAxis[] {
     const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds();
     const xAxis = this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks);
     const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
@@ -2010,33 +2229,30 @@ export class Histogram extends Frame {
     return [xAxis, yAxis];
   }
 
-  public setFeatures(data: any): [string, string] { return [data.x_variable, 'number'] }
+  protected setFeatures(data: any): [string, string] { return [data.x_variable, 'number'] }
 
-  mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
-    return new Vertex(this.axes[0].isDiscrete ? 0 : mouseDown.x - currentMouse.x, 0)
+  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
+    return new Vertex(this.axes[0].isDiscrete ? 0 : currentMouse.x - mouseDown.x, 0)
   }
 
-  wheel_interaction(mouse3X, mouse3Y, e): [number, number] { // TODO: REALLY NEEDS A REFACTOR
+  public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
     // e.preventDefault();
     this.fusion_coeff = 1.2;
-    var event = -Math.sign(e.deltaY);
-    mouse3X = e.offsetX;
-    mouse3Y = e.offsetY;
     if (!this.axes[0].isDiscrete) {
       if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
-        if (event>0) {
+        if (deltaY>0) {
           this.scaleX = this.scaleX * this.fusion_coeff;
           this.scroll_x++;
           this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-        } else if (event<0) {
+        } else if (deltaY<0) {
           this.scaleX = this.scaleX/this.fusion_coeff;
           this.scroll_x--;
           this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
         }
       } else {
-          if (event>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+          if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
           this.scaleX = this.scaleX*coeff;
-          this.scroll_x = this.scroll_x + event;
+          this.scroll_x = this.scroll_x + deltaY;
           this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
       }
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
@@ -2044,4 +2260,480 @@ export class Histogram extends Frame {
     }
     return [mouse3X, mouse3Y];
   }
+}
+
+const DEFAULT_POINT_COLOR: string = 'hsl(203, 90%, 85%)';
+export class newScatter extends Frame {
+  public points: ScatterPoint[] = [];
+
+  public fillStyle: string = DEFAULT_POINT_COLOR;
+  public strokeStyle: string = null;
+  public marker: string = 'circle';
+  public pointSize: number = 8;
+  public lineWidth: number = 1;
+
+  public tooltipAttributes: string[];
+  public isMerged: boolean = false;
+  public clusterColors: string[];
+  public previousCoords: Vertex[];
+  constructor(
+    data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      if (!data.tooltip) this.tooltipAttributes = Array.from(this.features.keys());
+      else this.tooltipAttributes = data.tooltip.attribute;
+      this.unpackPointStyle(data);
+      this.computePoints();
+    }
+
+  get sampleDrawings(): GroupCollection { return this.absoluteObjects }
+
+  public unpackPointStyle(data: any): void {
+    if (data.point_style?.color_fill) this.fillStyle = data.point_style.color_fill;
+    if (data.point_style?.color_stroke) this.strokeStyle = data.point_style.color_stroke;
+    if (data.point_style?.shape) this.marker = data.point_style.shape;
+    if (data.point_style?.stroke_width) this.lineWidth = data.point_style.stroke_width;
+    if (data.point_style?.size) this.pointSize = data.point_style.size;
+    if (data.tooltip) this.tooltipAttributes = data.tooltip.attributes;
+    if (data.points_sets) this.unpackPointsSets(data);
+  }
+
+  private unpackPointsSets(data: any): void {
+    data.points_sets.forEach((pointSet, setIndex) => {
+      pointSet.point_index.forEach(pointIndex => {
+        this.pointSets[pointIndex] = setIndex;
+      })
+      this.pointSetColors.push(pointSet.color);
+    })
+  }
+
+  public reset_scales(): void {
+    super.reset_scales();
+    this.computePoints();
+  }
+
+  protected reset(): void {
+    super.reset();
+    this.computePoints();
+    this.resetClusters();
+  }
+
+  protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
+    this.drawPoints(context);
+    this.absoluteObjects = new GroupCollection([...this.points]);
+    this.drawSelectionBox(context);
+  };
+
+  protected drawPoints(context: CanvasRenderingContext2D): void {
+    const axesOrigin = this.axes[0].origin;
+    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y);
+    this.points.forEach(point => {
+      let color = this.fillStyle;
+      const colors = new Map<string, number>();
+      point.isHovered = point.isClicked = point.isSelected = false;
+      point.values.forEach(index => {
+        if (this.clusterColors) {
+          const currentColorCounter = this.clusterColors[index];
+          colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
+        }
+        if (this.hoveredIndices.includes(index)) point.isHovered = true;
+        if (this.clickedIndices.includes(index)) point.isClicked = true;
+        if (this.selectedIndices.includes(index)) point.isSelected = true;
+      });
+      if (colors.size != 0) color = mapMax(colors)[0]
+      else {
+        const pointsSetIndex = this.getPointSet(point);
+        if (pointsSetIndex != -1) color = colorHsl(this.pointSetColors[pointsSetIndex]);
+      };
+      point.lineWidth = this.lineWidth;
+      point.setColors(color);
+      if (this.pointStyles) {
+        if (!this.clusterColors) point.updateStyle(this.pointStyles[point.values[0]])
+        else {
+          let clusterPointStyle = Object.assign({}, this.pointStyles[point.values[0]], { strokeStyle: null });
+          point.updateStyle(clusterPointStyle);
+        }
+      } else point.marker = this.marker;
+      point.update();
+      if (point.isInFrame(axesOrigin, axesEnd, this.initScale)) point.draw(context);
+    })
+  }
+
+  private getPointSet(point: ScatterPoint): number {
+    const pointSets = new Map<number, number>();
+    point.values.forEach(pointIndex => {
+      const currentPoint = this.pointSets[pointIndex];
+      pointSets.set(currentPoint, pointSets.get(currentPoint) ? pointSets.get(currentPoint) + 1 : 1);
+    })
+    if (pointSets.size > 1) pointSets.delete(-1);
+    return mapMax(pointSets)[0]
+  }
+
+  public switchMerge(): void {
+    this.isMerged = !this.isMerged;
+    this.computePoints();
+    this.draw();
+  }
+
+  protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
+    super.zoomBoxUpdateAxes(zoomBox);
+    this.computePoints();
+  }
+
+  public computePoints(): void {
+    const thresholdDist = 30;
+    const [xCoords, yCoords, xValues, yValues] = this.projectPoints();
+    const pointsData = {"xCoords": xCoords, "yCoords": yCoords, "xValues": xValues, "yValues": yValues};
+    const mergedPoints = this.mergePoints(xCoords, yCoords, thresholdDist);
+    this.points = mergedPoints.map(mergedIndices => {
+      return ScatterPoint.fromPlottedValues(
+        mergedIndices, pointsData, this.pointSize, this.marker, thresholdDist,
+        this.tooltipAttributes, this.features, this.axes, this.xFeature, this.yFeature
+        )
+    });
+  }
+
+  private mergePoints(xCoords: number[], yCoords: number[], minDistance: number = 15): number[][] {
+    if (!this.isMerged) return [...Array(xCoords.length).keys()].map(x => [x]);
+    const squareDistances = this.distanceMatrix(xCoords, yCoords);
+    const threshold = minDistance**2;
+    const mergedPoints = [];
+    const pointsGroups = new Array(squareDistances.length).fill([]);
+    const closedPoints = new Array(squareDistances.length).fill(0);
+    const pickedPoints = new Array(squareDistances.length).fill(false);
+    squareDistances.forEach((squareDistance, pointIndex) => {
+      const pointGroup = []
+      let nPoints = 0;
+      squareDistance.forEach((distance, otherIndex) => {
+        if (distance <= threshold) {
+          nPoints++;
+          pointGroup.push(otherIndex);
+        }
+      });
+      closedPoints[pointIndex] = nPoints;
+      pointsGroups[pointIndex] = pointGroup;
+    })
+
+    while (sum(closedPoints) != 0) {
+      const centerIndex = argMax(closedPoints)[1];
+      const cluster = [];
+      closedPoints[centerIndex] = 0;
+      pointsGroups[centerIndex].forEach(index => {
+        if (!pickedPoints[index]) {
+          cluster.push(index);
+          pickedPoints[index] = true
+        }
+        closedPoints[index] = 0;
+      })
+      mergedPoints.push(cluster);
+    }
+    return mergedPoints
+  }
+
+  private projectPoints(): [number[], number[], number[], number[]] {
+    const xValues = this.axes[0].stringsToValues(this.features.get(this.xFeature));
+    const yValues = this.axes[1].stringsToValues(this.features.get(this.yFeature));
+    const xCoords = [];
+    const yCoords = [];
+    for (let index = 0 ; index < xValues.length ; index++) {
+      const [xCoord, yCoord] = this.projectPoint(xValues[index], yValues[index]);
+      xCoords.push(xCoord);
+      yCoords.push(yCoord);
+    }
+    return [xCoords, yCoords, xValues, yValues]
+  }
+
+  private projectPoint(xCoord: number, yCoord: number): [number, number] {
+    return [xCoord * this.relativeMatrix.a + this.relativeMatrix.e, yCoord * this.relativeMatrix.d + this.relativeMatrix.f]
+  }
+
+  private distanceMatrix(xCoords: number[], yCoords: number[]): number[][] {
+    let squareDistances = new Array(xCoords.length);
+    for (let i = 0; i < xCoords.length; i++) {
+      if (!squareDistances[i]) squareDistances[i] = new Array(xCoords.length);
+      for (let j = i; j < xCoords.length; j++) {
+        squareDistances[i][j] = (xCoords[i] - xCoords[j])**2 + (yCoords[i] - yCoords[j])**2;
+        if (!squareDistances[j]) squareDistances[j] = new Array(xCoords.length);
+        squareDistances[j][i] = squareDistances[i][j];
+      }
+    }
+    return squareDistances
+  }
+
+  private agglomerativeClustering(xValues: number[], yValues: number[], minDistance: number = 0.25): number[][] {
+    const squareDistances = this.distanceMatrix(xValues, yValues);
+    const threshold = minDistance**2;
+    let pointsGroups = [];
+    squareDistances.forEach(distances => {
+      let pointsGroup = [];
+      distances.forEach((distance, col) => { if (distance <= threshold) pointsGroup.push(col) });
+      pointsGroups.push(pointsGroup);
+    })
+
+    let clusters = [];
+    let nClusters = -1;
+    let maxIter = 0;
+    while (nClusters != clusters.length && maxIter < 100) {
+      nClusters = clusters.length;
+      clusters = [pointsGroups[0]];
+      pointsGroups.slice(1).forEach(candidate => {
+        let isCluster = true;
+        clusters.forEach((cluster, clusterIndex) => {
+          for (let i=0; i < candidate.length; i++) {
+            if (cluster.includes(candidate[i])) {
+              candidate.forEach(point => { if (!clusters[clusterIndex].includes(point)) clusters[clusterIndex].push(point) });
+              isCluster = false;
+              break;
+            }
+          }
+        })
+        if (isCluster) clusters.push(candidate);
+      })
+      pointsGroups = new Array(...clusters);
+      maxIter++;
+    }
+    return clusters
+  }
+
+  public simpleCluster(inputValue: number): void { this.computeClusterColors(inputValue); this.draw() }
+
+  public resetClusters(): void {
+    this.clusterColors = null;
+    this.points.forEach(point => point.setColors(DEFAULT_POINT_COLOR));
+    this.draw();
+   }
+
+  private computeClusterColors(normedDistance: number = 0.33): void {
+    const xValues = [...this.axes[0].stringsToValues(this.features.get(this.xFeature))];
+    const yValues = [...this.axes[1].stringsToValues(this.features.get(this.yFeature))];
+    const scaledX = normalizeArray(xValues);
+    const scaledY = normalizeArray(yValues);
+    const clusters = this.agglomerativeClustering(scaledX, scaledY, normedDistance);
+
+    const colorRatio: number = 360 / clusters.length;
+    this.clusterColors = new Array(xValues.length);
+    let colorRadius: number = 0;
+    clusters.forEach(cluster => {
+      colorRadius += colorRatio;
+      cluster.forEach(point => this.clusterColors[point] = `hsl(${colorRadius}, 50%, 50%, 90%)`);
+    })
+  }
+
+  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
+    const translation = super.mouseTranslate(currentMouse, mouseDown);
+    const pointTRL = new Vertex(translation.x * this.initScale.x, translation.y * this.initScale.y);
+    this.points.forEach((point, index) => { point.center = this.previousCoords[index].add(pointTRL); point.update() })
+    return translation
+  }
+
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
+    let [superCanvasMouse, superFrameMouse, clickedObject] = super.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+    this.previousCoords = this.points.map(p => p.center);
+    return [superCanvasMouse, superFrameMouse, clickedObject]
+  }
+
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+    super.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
+    this.previousCoords = [];
+  }
+
+  public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] {
+    const scale = new Vertex(this.scaleX, this.scaleY);
+    [mouse3X, mouse3Y] = super.wheel_interaction(mouse3X, mouse3Y, deltaY);
+    for (const axis of this.axes) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > scale.x) {this.scaleX = scale.x}
+        if (this.scaleY > scale.y) {this.scaleY = scale.y}
+      } else if (axis.tickPrecision < 1) {
+        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+      }
+    }
+    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
+    this.updateAxes(); // needs a refactor
+    this.axes.forEach(axis => axis.saveLocation());
+    [this.scaleX, this.scaleY] = [1, 1];
+    this.viewPoint = new Vertex(0, 0);
+    this.computePoints();
+    return [mouse3X, mouse3Y];
+  }
+}
+
+export class newGraph2D extends newScatter {
+  public curves: LineSequence[];
+  private curvesIndices: number[][];
+  public showPoints: boolean = false;
+  constructor(
+    data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+    }
+
+  protected unpackData(data: any): Map<string, any[]> {
+    const graphSamples = [];
+    this.pointStyles = [];
+    this.curvesIndices = [];
+    this.curves = [];
+    if (data.graphs) {
+      data.graphs.forEach(graph => {
+        if (graph.elements.length != 0) {
+          this.curves.push(LineSequence.getGraphProperties(graph));
+          const curveIndices = range(graphSamples.length, graphSamples.length + graph.elements.length);
+          const graphPointStyle = new newPointStyle(graph.point_style);
+          this.pointStyles.push(...new Array(curveIndices.length).fill(graphPointStyle));
+          this.curvesIndices.push(curveIndices);
+          graphSamples.push(...graph.elements);
+        }
+      })
+    }
+    return super.unpackData({"elements": graphSamples})
+  }
+
+  public updateSelection(axesSelections: number[][]): void { this.selectedIndices = BasePlot.intersectArrays(axesSelections) }
+
+  public drawCurves(context: CanvasRenderingContext2D): void {
+    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
+    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
+    const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
+    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    this.curves.forEach((curve, curveIndex) => {
+      curve.update(this.curvesIndices[curveIndex].map(index => { return this.points[index] }));
+      curve.draw(context);
+    })
+    context.globalCompositeOperation = "destination-in";
+    context.fill(drawingZone.path);
+    const cutGraph = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
+    context.globalCompositeOperation = "source-over";
+    context.putImageData(previousCanvas, 0, 0);
+    context.putImageData(cutGraph, this.X, this.Y);
+  }
+
+  protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
+    this.drawCurves(context);
+    this.absoluteObjects = new GroupCollection([...this.curves]);
+    if (this.showPoints) {
+      this.drawPoints(context);
+      this.absoluteObjects.drawings = [...this.points, ...this.absoluteObjects.drawings];
+    }
+    this.drawSelectionBox(context);
+  };
+
+  public reset_scales(): void {
+    const scale = new Vertex(this.frameMatrix.a, this.frameMatrix.d).scale(this.initScale);
+    const translation = new Vertex(this.axes[0].maxValue - this.axes[0].initMaxValue, this.axes[1].maxValue - this.axes[1].initMaxValue).scale(scale);
+    this.curves.forEach(curve => curve.translateTooltip(translation));
+    super.reset_scales();
+  }
+
+  public switchMerge(): void { this.isMerged = false }
+
+  public togglePoints(): void { this.showPoints = !this.showPoints; this.draw() }
+
+  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+    super.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
+    this.curves.forEach(curve => curve.previousTooltipOrigin = curve.tooltipOrigin);
+  }
+
+  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
+    const translation = super.mouseTranslate(currentMouse, mouseDown);
+    this.curves.forEach(curve => { if (curve.previousTooltipOrigin) curve.tooltipOrigin = curve.previousTooltipOrigin.add(translation.scale(this.initScale)) });
+    return translation
+  }
+}
+
+function range(start: number, end: number, step: number = 1): number[] {
+  let array = [];
+  for (let i = start; i < end; i = i + step) array.push(i);
+  return array
+}
+
+function mean(array: number[]): number {
+  let sum = 0;
+  array.forEach(value => sum += value);
+  return sum / array.length
+}
+
+function standardDeviation(array: number[]): [number, number] {
+  const arrayMean = mean(array);
+  let sum = 0;
+  array.forEach(value => sum += (value - arrayMean)**2);
+  return [Math.sqrt(sum / array.length), arrayMean]
+}
+
+function scaleArray(array: number[]): number[] {
+  const [std, mean] = standardDeviation(array);
+  return Array.from(array, x => (x - mean) / std)
+}
+
+function normalizeArray(array: number[]): number[] {
+  const maxAbs = Math.max(...array.map(x => Math.abs(x)));
+  return array.map(x => x / maxAbs)
+}
+
+function argMin(array: number[]): [number, number] {
+  let min = Number.POSITIVE_INFINITY;
+  let argMin = -1;
+  array.forEach((value, index) => {
+    if (value < min) {
+      min = value;
+      argMin = index;
+    }
+  })
+  return [min, argMin]
+}
+
+function argMax(array: number[]): [number, number] {
+  let max = Number.NEGATIVE_INFINITY;
+  let argMax = -1;
+  array.forEach((value, index) => {
+    if (value > max) {
+      max = value;
+      argMax = index;
+    }
+  })
+  return [max, argMax]
+}
+
+function mapMin(map: Map<any, number>): [any, number] {
+  let min = Number.NEGATIVE_INFINITY;
+  let keyMin: string;
+  map.forEach((value, key) => {
+    if (value >= min) {
+      min = value;
+      keyMin = key;
+    }
+  })
+  return [keyMin, min]
+}
+
+function mapMax(map: Map<any, number>): [any, number] {
+  let max = Number.NEGATIVE_INFINITY;
+  let keyMax: string;
+  map.forEach((value, key) => {
+    if (value >= max) {
+      max = value;
+      keyMax = key;
+    }
+  })
+  return [keyMax, max]
+}
+
+function sum(array: number[]): number {
+  let sum = 0;
+  array.forEach(value => sum += value);
+  return sum
 }

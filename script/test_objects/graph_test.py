@@ -3,7 +3,7 @@
 
 import math
 import plot_data
-from plot_data.colors import BLACK, BLUE, RED
+from plot_data.colors import BLUE, RED
 
 k = 0
 
@@ -17,7 +17,7 @@ dataset1 = plot_data.Dataset(elements=elements1, name='I1 = f(t)')
 
 # The previous line instantiates a dataset with limited arguments but
 # several customizations are available
-point_style = plot_data.PointStyle(color_fill=RED, color_stroke=BLACK, shape='crux')
+point_style = plot_data.PointStyle(color_fill=RED, color_stroke=RED, shape='crux')
 edge_style = plot_data.EdgeStyle(color_stroke=BLUE, dashline=[10, 5])
 
 custom_dataset = plot_data.Dataset(elements=elements1, name='I = f(t)',
@@ -33,4 +33,4 @@ for k in range(1, len(T2)):
     elements2.append({'time': T2[k], 'electric current': I2[k]})
 
 dataset2 = plot_data.Dataset(elements=elements2, name='I2 = f(t)')
-graph2d = plot_data.Graph2D(graphs=[dataset1, dataset2], x_variable='time', y_variable='electric current')
+graph2d = plot_data.Graph2D(graphs=[custom_dataset, dataset2], x_variable='time', y_variable='electric current')

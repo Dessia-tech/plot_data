@@ -1,4 +1,4 @@
-import { string_to_rgb, rgb_to_string, string_to_hex, rgb_to_hex } from "./color_conversion";
+import { string_to_rgb, rgb_to_string, string_to_hex, colorHex } from "./color_conversion";
 import { EdgeStyle, SurfaceStyle, PointStyle, TextStyle } from "./style";
 import { set_default_values, genColor, drawLines, getCurvePoints, Tooltip, Axis, PointFamily, Attribute, TypeOf } from "./utils";
 import { Shape, List, MyObject } from "./toolbox";
@@ -666,7 +666,7 @@ export class Scatter {
 
   initialize_all_attributes() {
     var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
-    var exceptions = ['package_version', 'object_class'];
+    var exceptions = ['object_class'];
     for (let i=0; i<attribute_names.length; i++) {
       let name = attribute_names[i];
       if (!List.is_include(name, exceptions)) {
@@ -910,7 +910,7 @@ export class Heatmap {
     let edge_style = EdgeStyle.deserialize(serialized["edge_style"]);
     let colors = [];
     for (let i=0; i<serialized["colors"].length; i++) {
-      colors.push(rgb_to_hex(serialized["colors"][i]));
+      colors.push(colorHex(serialized["colors"][i]));
     }
     return new Heatmap(serialized["size"], colors, edge_style, serialized["name"]);
   }

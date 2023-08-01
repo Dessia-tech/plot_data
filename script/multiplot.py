@@ -38,7 +38,7 @@ scatterplot1 = plot_data.Scatter(x_variable='x', y_variable='y')
 
 scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes
-                                                                                    # points' appearance
+# points' appearance
 
 scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
 
@@ -72,8 +72,11 @@ plots = [parallelplot1, scatterplot1]
 plots2 = [parallelplot1, parallelplot2, scatterplot1, scatterplot2, scatterplot3, graph2d, primitive_group_container,
           histogram]
 # multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
-plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True)
+plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True,
+                                           point_families=[plot_data.PointFamily('rgb(25, 178, 200)', [1,2,3,4,5,6,7]),
+                                                           plot_data.PointFamily('rgb(225, 13, 200)', [10,20,30,41,45,46,47]),
+                                                           plot_data.PointFamily('rgb(146, 178, 78)', [11,21,31,41,25,26,27])])
 
 # Display
-plot_data_object.plot(debug_mode = True, canvas_id = 'canvas')
+plot_data_object.plot(debug_mode=True, canvas_id='canvas')
 # plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)

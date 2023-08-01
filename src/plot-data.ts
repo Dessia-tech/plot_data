@@ -1,9 +1,10 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
 import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
-import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, textParams, Vertex, newRect } from "./utils";
+import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, TextParams, Vertex, newRect } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
-import { rgb_to_hex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
+import { colorHex, tint_rgb, hex_to_rgb, rgb_to_string, get_interpolation_colors, rgb_strToVector } from "./color_conversion";
+import * as EventEmitter from "events";
 
 const HIDDEN_OFFSET = 15;
 
@@ -11,7 +12,7 @@ const HIDDEN_OFFSET = 15;
  * for that purpose. It is inherited by more specific data-visualization objects such as
  * PlotScatter, PlotContour, ParallelPlot and PrimitiveGroupContainer
  */
-export abstract class PlotData {
+export abstract class PlotData extends EventEmitter {
   type_:string;
   name:string = "";
   context_show:any;
@@ -167,7 +168,7 @@ export abstract class PlotData {
 
   isSelecting:boolean=false;
   selection_coords:[number, number][]=[];
-  is_drawing_rubber_band:boolean=false;
+  is_drawing_rubber_band: boolean = false;
 
   point_families:PointFamily[]=[];
   latest_selected_points:Point2D[]=[];
@@ -204,6 +205,7 @@ export abstract class PlotData {
     public Y: number,
     public canvas_id: string,
     public is_in_multiplot: boolean = false) {
+      super();
       this.initial_width = width;
       this.initial_height = height;
       this.name = data["name"];
@@ -378,7 +380,7 @@ export abstract class PlotData {
 
   draw_wire(hidden: boolean, wire: Wire) {
     if (hidden) {
-      this.context.strokeStyle = rgb_to_hex(wire.hidden_color);
+      this.context.strokeStyle = colorHex(wire.hidden_color);
       this.context.lineWidth = wire.edge_style.line_width + HIDDEN_OFFSET;
     } else {
       if (this.select_on_mouse === wire) {
@@ -471,7 +473,7 @@ export abstract class PlotData {
           if (d.selected || List.contains_undefined(this.select_on_click)) {
             this.context.fillStyle = d.point_style.color_fill;
           } else {
-            this.context.fillStyle = rgb_to_hex(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
+            this.context.fillStyle = colorHex(tint_rgb(hex_to_rgb(d.point_style.color_fill), 0.75));
           }
         } else {
           this.context.fillStyle = this.plotObject.point_style.color_fill;
@@ -805,9 +807,8 @@ export abstract class PlotData {
 
   get_point_order() {
     var point_order = [];
-    for (let i=0; i<this.point_families.length; i++) {
-      point_order.push([]);
-    }
+    for (let i=0; i<this.point_families.length; i++) point_order.push([]);
+
     for (let i=0; i<this.scatter_points.length; i++) {
       let point_point_families = this.scatter_points[i].point_families;
       for (let j=0; j<point_point_families.length; j++) {
@@ -850,7 +851,7 @@ export abstract class PlotData {
       let origin = new Vertex(current_x, this.axis_y_end - 10);
       let width = this.x_step * 0.95;
       let align = "center";
-      const textParams: textParams = {
+      const textParams: TextParams = {
         width: width, height: origin.y - 2 - this.Y, align: align, baseline: "bottom",
         multiLine: true, color: 'black', backgroundColor: "hsla(0, 0%, 100%, 0.5)" };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
@@ -970,7 +971,7 @@ export abstract class PlotData {
       Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
 
       let origin = new Vertex(this.axis_x_start, current_y + 10);
-      const textParams: textParams = {
+      const textParams: TextParams = {
         width: this.width * 0.25, height: this.y_step * 0.98, align: "center",
         baseline: "hanging", multiLine: true, color: 'black', backgroundColor: "hsla(0, 0%, 100%, 0.5)" };
       let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
@@ -1268,10 +1269,10 @@ export abstract class PlotData {
         this.context.strokeStyle = string_to_hex("black");
         this.context.lineWidth = 3 * this.edge_style.line_width;
       } else if (selected) {
-        this.context.strokeStyle = rgb_to_hex(this.interpolation_colors[index]);
+        this.context.strokeStyle = colorHex(this.interpolation_colors[index]);
         this.context.lineWidth = this.edge_style.line_width;
       } else {
-        this.context.strokeStyle = rgb_to_hex(tint_rgb(this.interpolation_colors[index], 0.8));
+        this.context.strokeStyle = colorHex(tint_rgb(this.interpolation_colors[index], 0.8));
         this.context.lineWidth = this.edge_style.line_width;
       }
     }
@@ -1570,7 +1571,7 @@ export abstract class PlotData {
   refresh_scatter_point_family() {
     this.reset_scatter_point_families();
     for (let i=0; i<this.point_families.length; i++) {
-      let point_index = this.point_families[i].point_index;
+      let point_index = this.point_families[i].pointIndices;
       for (let index of point_index) {
         this.plotObject.point_list[index].point_families.push(this.point_families[i]);
       }
@@ -2682,6 +2683,8 @@ export class Interactions {
 
   public static click_on_merge_action(plot_data) {
     plot_data.mergeON = !plot_data.mergeON;
+    // Kept in case the behavior has to be for unitary plots and not directly the whole multiplot
+    // if (plot_data.isMerged !== undefined) { plot_data.isMerged = !plot_data.isMerged; plot_data.points = plot_data.computePoints() }
     plot_data.refresh_point_list_bool = true;
     plot_data.reset_scroll();
     plot_data.select_on_click = [];

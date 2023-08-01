@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0]
+### Refactor
+- First implementation of Scatter as a Frame plot
+- Add SelectionBox object and allow to draw it on any BasePlot, interacting with RubberBands
+- Add method to merge scatter points
+- New Scatter frontend implementation:
+    - Selection Boxes
+    - Mouse interactions
+    - Zoom boxes
+    - Clustering
+    - Fixed mouse behavior for almost all cases of selection
+    - Reset actions
+    - Dependencies of sample states between plots
+    - Use attributes coming from Python
+- Point families implementation as PointSet
+- Graph2D implementation
+
+### Removed
+- Package Version checks is not implemented anymore
+
 ## [0.15.0]
 ### Add
 - Tooltip in Histograms, which can be drawn only in the current window plot

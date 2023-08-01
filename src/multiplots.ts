@@ -70,7 +70,7 @@ export class MultiplePlots {
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       this.define_canvas(canvas_id);
       var elements = data['elements'];
-      
+
       if (elements.length != 0) {
         this.dataObjects = data['plots'];
         this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);

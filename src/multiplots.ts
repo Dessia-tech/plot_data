@@ -1809,7 +1809,7 @@ export class MultiplePlots {
 
     public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchMerge() })};
 
-    public switchShowPoints() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchShowPoints() })};
+    public togglePoints() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.togglePoints() })};
 
     public switchZoom() {
       this.isZooming = !this.isZooming;
@@ -1935,6 +1935,7 @@ export class MultiplePlots {
           this.manage_mouse_interactions(mouse2X, mouse2Y);
 
           if (!this.isZooming) {
+            const currentPlot = this.objectList[this.last_index];
             if (isDrawing) {
               mouse_moving = true;
               if (this.selectDependency_bool) {
@@ -1943,7 +1944,7 @@ export class MultiplePlots {
                 this.mouse_move_frame_communication();
                 this.refreshRubberBands();
                 // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
-                if ( !(this.objectList[this.last_index] instanceof newGraph2D) ) this.updateSelectedPrimitives();
+                if ( !(currentPlot instanceof newGraph2D) ) this.updateSelectedPrimitives();
                 this.redrawAllObjects();
               }
               this.redraw_object();
@@ -1951,9 +1952,9 @@ export class MultiplePlots {
               if (this.selectDependency_bool) {
                 this.mouse_over_primitive_group();
                 this.mouse_over_scatter_plot();
-                if (this.objectList[this.last_index] instanceof BasePlot && !(this.objectList[this.last_index] instanceof newGraph2D)) {
-                  this.hoveredIndices = (this.objectList[this.last_index] as BasePlot).hoveredIndices;
-                  this.clickedIndices = (this.objectList[this.last_index] as BasePlot).clickedIndices;
+                if (currentPlot instanceof BasePlot && !(currentPlot instanceof newGraph2D)) {
+                  this.hoveredIndices = (currentPlot as BasePlot).hoveredIndices;
+                  this.clickedIndices = (currentPlot as BasePlot).clickedIndices;
                 }
                 this.redrawAllObjects();
               }
@@ -1976,7 +1977,7 @@ export class MultiplePlots {
           this.click_on_button_action(click_on_manip_button, click_on_selectDep_button, click_on_view, click_on_export);
         }
 
-        if (mouse_moving === false) {
+        if (!mouse_moving) {
           if (this.selectDependency_bool) {
             if (this.clickedPlotIndex !== -1) {
               let type_ = this.objectList[this.clickedPlotIndex].type_

@@ -40,7 +40,7 @@ html_template = Template('''
         Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250" onclick="plot_data.simpleCluster(value / 10000)"></input>
         <button name="resetClusters" value="OK" type="button" onclick="plot_data.resetClusters()"> Reset clusters </button> &nbsp;&nbsp;
         <button name="resetView" value="OK" type="button" onclick="plot_data.resetView()"> Reset view </button> &nbsp;&nbsp;
-        <button name="showPoints" value="OK" type="button" onclick="plot_data.switchShowPoints()"> Show points </button>
+        <button name="showPoints" value="OK" type="button" onclick="plot_data.togglePoints()"> Show points </button>
     <hr style="border-top: 2px;">
     </div>
     <div id="app">

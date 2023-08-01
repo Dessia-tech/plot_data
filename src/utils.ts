@@ -1860,15 +1860,47 @@ export class newText extends newShape {
   }
 }
 
+export interface pointStyle {
+  size?: number, fillStyle?: string, strokeStyle?: string, marker?: string, markerOrientation?: string
+}
+
+export class newPointStyle implements pointStyle {
+  public size: number;
+  public fillStyle: string;
+  public strokeStyle: string;
+  public marker: string;
+  public markerOrientation: string;
+  constructor(
+    { size = null,
+      fillStyle = null,
+      strokeStyle = null,
+      marker = 'circle',
+      markerOrientation = 'up'
+    }: pointStyle = {}
+    ) {
+      this.size = size;
+      this.fillStyle = fillStyle;
+      this.strokeStyle = strokeStyle;
+      this.marker = marker;
+      this.markerOrientation = markerOrientation;
+    }
+
+  public static unpackGraphPointStyle(packedPointStyle: {[key: string]: any}): newPointStyle {
+    const style = new newPointStyle();
+    if (packedPointStyle?.shape) style.marker = packedPointStyle.shape;
+    if (packedPointStyle?.color_stroke) style.strokeStyle = packedPointStyle.color_stroke;
+    if (packedPointStyle?.color_fill) style.fillStyle = packedPointStyle.color_fill;
+    if (packedPointStyle?.size) style.size = packedPointStyle.size;
+    return style
+  }
+}
+
 const CIRCLES = ['o', 'circle', 'round'];
 const MARKERS = ['+', 'crux', 'mark'];
 const CROSSES = ['x', 'cross', 'oblique'];
 const SQUARES = ['square'];
 const TRIANGLES = ['^', 'triangle', 'tri'];
 const STROKE_STYLE_OFFSET = 15;
-export interface pointStyle {
-  size?: number, fillStyle?: string, strokeStyle?: string, marker?: string, markerOrientation?: string
-}
 export class newPoint2D extends newShape {
   public path: Path2D;
   public center: Vertex;
@@ -2061,11 +2093,15 @@ export class LineSequence extends newShape {
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Name", this.name]]) }
 
+  private getEdgeStyle(edgeStyle: {[key: string]: any}): void {
+    if (edgeStyle.line_width) this.lineWidth = edgeStyle.line_width;
+    if (edgeStyle.color_stroke) this.strokeStyle = edgeStyle.color_stroke;
+    if (edgeStyle.dashline) this.dashLine = edgeStyle.dashline;
+  }
+
   public static getGraphProperties(graph: {[key: string]: any}): LineSequence {
     const emptyLineSequence = new LineSequence([], graph.name);
-    if (graph.edge_style?.line_width) emptyLineSequence.lineWidth = graph.edge_style.line_width;
-    if (graph.edge_style?.color_stroke) emptyLineSequence.strokeStyle = graph.edge_style.color_stroke;
-    if (graph.edge_style?.dashline) emptyLineSequence.dashLine = graph.edge_style.dashline;
+    if (graph.edge_style) emptyLineSequence.getEdgeStyle(graph.edge_style);
     return emptyLineSequence
   }
 

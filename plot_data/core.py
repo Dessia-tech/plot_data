@@ -60,11 +60,6 @@ class PlotDataObject(DessiaObject):
             kwargs.pop('use_pointers')
         dict_ = DessiaObject.to_dict(self, use_pointers=False, **kwargs)
         del dict_['object_class']
-        package_name = self.__module__.split('.', maxsplit=1)[0]
-        if package_name in sys.modules:
-            package = sys.modules[package_name]
-            if hasattr(package, '__version__'):
-                dict_['package_version'] = package.__version__
 
         new_dict_ = delete_none_from_dict(dict_)
         return new_dict_

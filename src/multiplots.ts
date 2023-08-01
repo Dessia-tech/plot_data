@@ -1,6 +1,6 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
-import { Attribute, PointFamily, check_package_version, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
+import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
 import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, BasePlot } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
@@ -72,10 +72,9 @@ export class MultiplePlots {
     public hoveredIndices: number[] = [];
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
-      var requirement = '0.6.1';
-      check_package_version(data['package_version'], requirement);
       this.define_canvas(canvas_id);
       var elements = data['elements'];
+
       if (elements.length != 0) {
         this.dataObjects = data['plots'];
         this.initial_coords = data['coords'] || Array(this.dataObjects.length).fill([0,0]);
@@ -116,7 +115,29 @@ export class MultiplePlots {
         this.initial_coords = [[0, 0]];
         this.nbObjects = 1;
         this.initialize_sizes();
-        var emptyMPData = {"package_version": data['package_version'], "name": "", "primitives": [{"package_version": data['package_version'], "name": "", "comment": "No data to plot because workflow result is empty.", "text_style": {"object_class": "plot_data.core.TextStyle", "package_version": data['package_version'], "name": "", "text_color": "rgb(100, 100, 100)", "font_size": 20, "text_align_x": "left"}, "position_x": 50.0, "position_y": 100, "text_scaling": false, "max_width": 20, "multi_lines": true, "type_": "text"}], "type_": "primitivegroup"};
+        var emptyMPData = {
+          "name": "",
+          "primitives": [
+            {
+              "name": "",
+              "comment": "No data to plot because workflow result is empty.",
+              "text_style": {
+                "object_class": "plot_data.core.TextStyle",
+                "name": "",
+                "text_color": "rgb(100, 100, 100)",
+                "font_size": 20,
+                "text_align_x": "left"
+              },
+              "position_x": 50.0,
+              "position_y": 100,
+              "text_scaling": false,
+              "max_width": 20,
+              "multi_lines": true,
+              "type_": "text"
+            }
+          ],
+          "type_": "primitivegroup"
+        };
         newObject = new PlotContour(emptyMPData, this.width, this.height, true, 0, 0, canvas_id);
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
@@ -166,7 +187,7 @@ export class MultiplePlots {
     initialize_all_attributes() {
       this.all_attributes = [];
       var attribute_names = Object.getOwnPropertyNames(this.data['elements'][0]);
-      var exceptions = ['name', 'package_version', 'object_class'];
+      var exceptions = ['name', 'object_class'];
       for (let i=0; i<attribute_names.length; i++) {
         if (!(List.is_include(attribute_names[i], exceptions))) {
           let name = attribute_names[i];
@@ -368,8 +389,15 @@ export class MultiplePlots {
       var text_style = {text_color: string_to_rgb('black'), font_size:10, font_style:'sans-serif', text_align_x:'start', text_align_y:'alphabetic', name:''};
       var DEFAULT_TOOLTIP = {attribute_names:[attr_x.name, attr_y.name], surface_style:surface_style, text_style:text_style, tooltip_radius:5, type_:'tooltip', name:''};
       var point_style = {color_fill:string_to_rgb('lightblue'), color_stroke:string_to_rgb('grey'), stroke_width:0.5, size:2, shape:'circle', name:''};
-      var new_scatter = {tooltip:DEFAULT_TOOLTIP, attribute_names: [attr_x.name, attr_y.name], point_style: point_style,
-                         elements:this.data['elements'], axis:DEFAULT_AXIS, type_:'scatterplot', name:'', package_version: this.data['package_version']};
+      var new_scatter = {
+        tooltip: DEFAULT_TOOLTIP,
+        attribute_names: [attr_x.name, attr_y.name],
+        point_style: point_style,
+        elements: this.data['elements'],
+        axis:DEFAULT_AXIS,
+        type_:'scatterplot',
+        name:''
+      };
       var DEFAULT_WIDTH = 560;
       var DEFAULT_HEIGHT = 300;
       var new_plot_data = new PlotScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
@@ -382,8 +410,14 @@ export class MultiplePlots {
         attribute_names.push(attributes[i].name);
       }
       var edge_style = {line_width:0.5, color_stroke:string_to_rgb('black'), dashline:[], name:''};
-      var pp_data = {edge_style:edge_style, disposition: 'vertical', attribute_names:attribute_names,
-                    rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]], elements:this.data['elements'], name:'', package_version:this.data['package_version']};
+      var pp_data = {
+        edge_style: edge_style,
+        disposition: 'vertical',
+        attribute_names: attribute_names,
+        rgbs: [[192, 11, 11], [14, 192, 11], [11, 11, 192]],
+        elements: this.data['elements'],
+        name:''
+      };
       var DEFAULT_WIDTH = 560;
       var DEFAULT_HEIGHT = 300;
       var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
@@ -2279,7 +2313,8 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
   return multiplot;
 }
 
-const empty_container = {'name': '',
-'package_version': '0.6.2',
-'primitive_groups': [],
-'type_': 'primitivegroupcontainer'};
+const empty_container = {
+  'name': '',
+  'primitive_groups': [],
+  'type_': 'primitivegroupcontainer'
+};

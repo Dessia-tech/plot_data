@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.16.0]
 ### Refactor
 - First implementation of Scatter as a Frame plot
+- Add SelectionBox object and allow to draw it on any BasePlot, interacting with RubberBands
+- Add method to merge scatter points
+- New Scatter frontend implementation:
+    - Selection Boxes
+    - Mouse interactions
+    - Zoom boxes
+    - Clustering
+    - Fixed mouse behavior for almost all cases of selection
+    - Reset actions
+    - Dependencies of sample states between plots
+    - Use attributes coming from Python
+- Point families implementation as PointSet
 
 ### Removed
 - Package Version checks is not implemented anymore

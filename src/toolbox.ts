@@ -148,6 +148,7 @@ export class Shape {
      and the number of empty pixels if i%2 != 0.
      */
     public static rect(x, y, w, h, context, color_fill='No', color_stroke=string_to_hex('black'), line_width=1, opacity=1, dashline=[]) {
+      context.save();
       context.beginPath();
       context.setLineDash(dashline);
       context.fillStyle = color_fill;
@@ -160,6 +161,7 @@ export class Shape {
       context.closePath();
       context.globalAlpha = 1;
       context.setLineDash([]);
+      context.restore();
     }
 
     /**

@@ -1,11 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-      <script src=$core_path></script>
-  </head>
+    <style>
+    .slider {
+      -webkit-appearance: none;
+      height: 10px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: .2s;
+      transition: opacity .2s;
+    }
+
+    .slider:hover {
+      opacity: 1;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 25px;
+      height: 10px;
+      background: #04AA6D;
+      cursor: pointer;
+    }
+    </style>
+    <head>
+        <script src=$core_path></script>
+    </head>
     <div id="buttons">
-        <button name="button" value="OK" type="button" onclick="drawSelectionWindow()"> Draw selection window </button>
-        <hr style="border-top: 2px;">
+      <button name="mergeON" value="OK" type="button"  onclick="plot_data.switchMerge()"> Switch Point Merge </button> &nbsp;&nbsp;
+      <button name="Zoom" value="OK" type="button"  onclick="plot_data.switchZoom()"> Zoom Box </button>
+      <button name="Zoom+" value="OK" type="button"  onclick="plot_data.zoomIn()"> Zoom+ </button>
+      <button name="Zoom-" value="OK" type="button"  onclick="plot_data.zoomOut()"> Zoom- </button> &nbsp;&nbsp;
+      Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250" onclick="plot_data.simpleCluster(value / 10000)"></input>
+      <button name="resetClusters" value="OK" type="button"  onclick="plot_data.resetClusters()"> Reset clusters </button> &nbsp;&nbsp;
+      <button name="resetView" value="OK" type="button"  onclick="plot_data.resetView()"> Reset view </button>
+    <hr style="border-top: 2px;">
     </div>
     <div id="app">
         <canvas id="$canvas_id" width="$width" height="$height" style="border: 1px solid black;"></canvas>
@@ -18,8 +46,6 @@
             var data = $data;
 
             var multiplot = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);
-
-            function drawSelectionWindow() { plot_data.drawSelectionWindow() }
         </script>
     </div>
 </html>

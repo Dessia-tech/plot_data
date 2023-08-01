@@ -2671,6 +2671,23 @@ export class newGraph2D extends newScatter {
   }
 }
 
+
+export class newParallelPlot extends BasePlot {
+  constructor(
+    data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+    }
+}
+
+
 function range(start: number, end: number, step: number = 1): number[] {
   let array = [];
   for (let i = start; i < end; i = i + step) array.push(i);

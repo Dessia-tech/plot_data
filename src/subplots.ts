@@ -1460,6 +1460,9 @@ export class PrimitiveGroupContainer extends PlotData {
     }
 }
 
+
+const OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
+const MARGIN_MULTIPLIER: number = 0.01;
 export class Figure extends PlotData {
   public axes: newAxis[] = [];
   public drawnFeatures: string[];
@@ -1487,6 +1490,8 @@ export class Figure extends PlotData {
 
   public font: string = "sans-serif";
 
+  protected offset: Vertex;
+  protected margin: Vertex;
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
@@ -1574,12 +1579,50 @@ export class Figure extends PlotData {
 
   protected setFeatures(data: any): string[] { return data.attribute_names ?? Array.from(this.features.keys()) }
 
-  protected setAxes(): newAxis[] {
-    return this.drawnFeatures.map(feature => this.setAxis(feature, 0, this.origin, this.origin.add(this.size)))
+  protected computeOffset(): Vertex {
+    const naturalOffset = new Vertex(this.width * OFFSET_MULTIPLIER.x, this.height * OFFSET_MULTIPLIER.y);
+    const MIN_FONTSIZE = 6;
+    const calibratedMeasure = 33;
+    return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
+
+  protected setFrameBounds() {
+    this.offset = this.computeOffset();
+    this.margin = new Vertex(this.size.x * MARGIN_MULTIPLIER, this.size.y * MARGIN_MULTIPLIER).add(new Vertex(10, 10));
+    return this.computeBounds()
+  }
+
+  private computeBounds(): [Vertex, Vertex, Vertex] {
+    const drawOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
+    const drawEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x,  this.size.y - this.margin.y + this.Y * this.initScale.y);
+    const freeSize = drawOrigin.copy();
+    if (this.canvasMatrix.a < 0) this.swapDimension("x", drawOrigin, drawEnd, freeSize);
+    if (this.canvasMatrix.d < 0) this.swapDimension("y", drawOrigin, drawEnd, freeSize);
+    return [drawOrigin, drawEnd, freeSize]
+  }
+
+  private swapDimension(dimension: string, origin: Vertex, end: Vertex, freeSize: Vertex): void {
+    origin[dimension] = origin[dimension] - this.size[dimension];
+    end[dimension] = end[dimension] - this.size[dimension];
+    freeSize[dimension] = this.size[dimension] + origin[dimension];
+  }
+
+  protected setAxes(): newAxis[] {
+    const [drawOrigin, drawEnd, freeSize] = this.setFrameBounds();
+    return this.buildAxes(drawOrigin, drawEnd, freeSize)
+  }
+
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [newAxis, newAxis] { return }
+
+  protected transformAxes(drawOrigin: Vertex, drawEnd: Vertex): void {}
 
   protected setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
     return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
+  }
+
+  private relocateAxes(): void {
+    const [drawOrigin, drawEnd] = this.computeBounds();
+    this.transformAxes(drawOrigin, drawEnd);
   }
 
   public updateSelection(axesSelections: number[][]): void {
@@ -1604,6 +1647,7 @@ export class Figure extends PlotData {
 
   public reset_scales(): void { // TODO: merge with resetView
     this.updateSize();
+    this.relocateAxes();
     this.axes.forEach(axis => axis.resetScale());
   }
 
@@ -1941,14 +1985,10 @@ export class Figure extends PlotData {
   }
 }
 
-const OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
-const MARGIN_MULTIPLIER: number = 0.01;
+
 export class Frame extends Figure {
   public xFeature: string;
   public yFeature: string;
-
-  protected offset: Vertex;
-  protected margin: Vertex;
   
   protected _nXTicks: number;
   protected _nYTicks: number;
@@ -1994,11 +2034,9 @@ export class Frame extends Figure {
   }
 
   protected unpackAxisStyle(data: any): void {
-    if (data.axis) {
-      super.unpackAxisStyle(data);
-      this.nXTicks = data.axis.nb_points_x;
-      this.nYTicks = data.axis.nb_points_y;
-    }
+    super.unpackAxisStyle(data);
+    if (data.axis?.nb_points_x) this.nXTicks = data.axis.nb_points_x;
+    if (data.axis?.nb_points_y) this.nYTicks = data.axis.nb_points_y;
   }
 
   protected stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
@@ -2008,17 +2046,8 @@ export class Frame extends Figure {
       if (stateName == 'isClicked') this.clickedIndices = this.sampleDrawings.updateSampleStates(stateName);
     }
 
-  protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
-
-  public reset_scales(): void {
-    this.updateSize();
-    this.initAxes();
-    this.axes.forEach(axis => axis.resetScale());
-  }
-
   protected setFeatures(data: any): [string, string] {
-    this.xFeature = data.attribute_names[0];
-    this.yFeature = data.attribute_names[1];
+    [this.xFeature, this.yFeature] = super.setFeatures(data);
     if (!this.xFeature) {
       this.xFeature = "indices";
       this.features.set("indices", Array.from(Array(this.nSamples).keys()));
@@ -2034,50 +2063,18 @@ export class Frame extends Figure {
     return [this.xFeature, this.yFeature]
   }
 
-  private initAxes(): void {
-    const [drawOrigin, drawEnd] = this.computeBounds();
+  protected transformAxes(drawOrigin: Vertex, drawEnd: Vertex): void {
+    super.transformAxes(drawOrigin, drawEnd);
     this.axes[0].transform(drawOrigin, new Vertex(drawEnd.x, drawOrigin.y));
     this.axes[1].transform(drawOrigin, new Vertex(drawOrigin.x, drawEnd.y));
   }
 
-  protected setFrameBounds() {
-    this.offset = this.computeOffset();
-    this.margin = new Vertex(this.size.x * MARGIN_MULTIPLIER, this.size.y * MARGIN_MULTIPLIER).add(new Vertex(10, 10));
-    return this.computeBounds()
-  }
-
-  protected setAxes(): newAxis[] {
-    const [drawOrigin, drawEnd, freeSize] = this.setFrameBounds();
-    return this.buildAxes(drawOrigin, drawEnd, freeSize)
-  }
-
   protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [newAxis, newAxis] {
+    super.buildAxes(drawOrigin, drawEnd, freeSize);
     return [
       this.setAxis(this.xFeature, freeSize.y, drawOrigin, new Vertex(drawEnd.x, drawOrigin.y), this.nXTicks),
       this.setAxis(this.yFeature, freeSize.x, drawOrigin, new Vertex(drawOrigin.x, drawEnd.y), this.nYTicks)
     ]
-  }
-
-  protected computeOffset(): Vertex {
-    const naturalOffset = new Vertex(this.width * OFFSET_MULTIPLIER.x, this.height * OFFSET_MULTIPLIER.y);
-    const MIN_FONTSIZE = 6;
-    const calibratedMeasure = 33;
-    return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
-  }
-
-  protected computeBounds(): [Vertex, Vertex, Vertex] {
-    const drawOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
-    const drawEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x,  this.size.y - this.margin.y + this.Y * this.initScale.y);
-    const freeSize = drawOrigin.copy();
-    if (this.canvasMatrix.a < 0) this.swapDimension("x", drawOrigin, drawEnd, freeSize);
-    if (this.canvasMatrix.d < 0) this.swapDimension("y", drawOrigin, drawEnd, freeSize);
-    return [drawOrigin, drawEnd, freeSize]
-  }
-
-  private swapDimension(dimension: string, origin: Vertex, end: Vertex, freeSize: Vertex): void {
-    origin[dimension] = origin[dimension] - this.size[dimension];
-    end[dimension] = end[dimension] - this.size[dimension];
-    freeSize[dimension] = this.size[dimension] + origin[dimension];
   }
 
   protected drawAxes() {
@@ -2181,9 +2178,10 @@ export class Histogram extends Frame {
     return fakeTicks
   }
 
-  private computeBars(axis: newAxis, vector: number[]): Bar[] {
-    const numericVector = axis.stringsToValues(vector);
-    let fakeTicks = this.boundedTicks(axis);
+  private computeBars(vector: number[]): Bar[] {
+    const baseAxis = this.axes[0] ?? this.setAxis(this.xFeature, 0, new Vertex(), new Vertex(), this.nXTicks);
+    const numericVector = baseAxis.stringsToValues(vector);
+    let fakeTicks = this.boundedTicks(baseAxis);
     let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar([]));
     let barValues = Array.from(Array(fakeTicks.length - 1), () => []);
     numericVector.forEach((value, valIdx) => {
@@ -2200,13 +2198,18 @@ export class Histogram extends Frame {
   }
 
   protected computeRelativeObjects(): void {
-    this.bars = this.computeBars(this.axes[0], this.features.get(this.xFeature));
+    super.computeRelativeObjects();
+    this.bars = this.computeBars(this.features.get(this.xFeature));
     this.axes[1] = this.updateNumberAxis(this.axes[1], this.bars);
     this.getBarsDrawing();
   }
 
   protected drawRelativeObjects(): void {
-    this.bars.forEach(bar => { bar.buildPath() ; bar.draw(this.context_show) });
+    super.drawRelativeObjects();
+    this.bars.forEach(bar => {
+      bar.buildPath();
+      bar.draw(this.context_show);
+    });
     this.relativeObjects = new GroupCollection([...this.bars], this.relativeMatrix);
   }
 
@@ -2230,20 +2233,21 @@ export class Histogram extends Frame {
   }
 
   protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [newAxis, newAxis] {
-    const xAxis = this.setAxis(this.xFeature, freeSize.y, drawOrigin, new Vertex(drawEnd.x, drawOrigin.y), this.nXTicks);
-    const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
+    const bars = this.computeBars(this.features.get(this.xFeature));
     this.features.set('number', this.getNumberFeature(bars));
-    const yAxis = this.buildNumberAxis(freeSize.x, drawOrigin, new Vertex(drawOrigin.x, drawEnd.y));
-    return [xAxis, yAxis];
+    let [xAxis, yAxis] = super.buildAxes(drawOrigin, drawEnd, freeSize);
+    yAxis = this.buildNumberAxis(freeSize.x, drawOrigin, new Vertex(drawOrigin.x, drawEnd.y));
+    return [xAxis, yAxis]
   }
 
   protected setFeatures(data: any): [string, string] {
-    [this.xFeature, this.yFeature] = [data.x_variable, 'number'];
-    return [this.xFeature, this.yFeature]
+    data["attribute_names"] = [data.x_variable, 'number']; // legacy, will disappear
+    return super.setFeatures(data);
   }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
-    return new Vertex(this.axes[0].isDiscrete ? 0 : currentMouse.x - mouseDown.x, 0)
+    const translation = super.mouseTranslate(currentMouse, mouseDown);
+    return new Vertex(this.axes[0].isDiscrete ? 0 : translation.x, 0)
   }
 
   public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
@@ -2338,8 +2342,8 @@ export class newScatter extends Frame {
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
     this.drawPoints(context);
-    this.absoluteObjects = new GroupCollection([...this.points]);
-    this.drawSelectionBox(context);
+    super.drawAbsoluteObjects(context);
+    this.absoluteObjects.drawings.unshift(...this.points);
   };
 
   protected drawPoints(context: CanvasRenderingContext2D): void {

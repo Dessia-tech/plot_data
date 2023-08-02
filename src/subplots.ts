@@ -1947,8 +1947,8 @@ export class Frame extends BasePlot {
   public xFeature: string;
   public yFeature: string;
 
-  private offset;
-  private margin;
+  protected offset: Vertex;
+  protected margin: Vertex;
   
   protected _nXTicks: number;
   protected _nYTicks: number;
@@ -2008,13 +2008,6 @@ export class Frame extends BasePlot {
       if (stateName == 'isClicked') this.clickedIndices = this.sampleDrawings.updateSampleStates(stateName);
     }
 
-  private computeOffset(): Vertex {
-    const naturalOffset = new Vertex(this.width * OFFSET_MULTIPLIER.x, this.height * OFFSET_MULTIPLIER.y);
-    const MIN_FONTSIZE = 6;
-    const calibratedMeasure = 33;
-    return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
-  }
-
   protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
 
   public reset_scales(): void {
@@ -2023,63 +2016,73 @@ export class Frame extends BasePlot {
     this.axes.forEach(axis => axis.resetScale());
   }
 
-  private initAxes(): void {
-    const [frameOrigin, xEnd, yEnd] = this.setFrameBounds();
-    this.axes[0].transform(frameOrigin, xEnd);
-    this.axes[1].transform(frameOrigin, yEnd);
-  }
-
   protected setFeatures(data: any): [string, string] {
-    let xFeature = data.attribute_names[0];
-    let yFeature = data.attribute_names[1];
-    if (!xFeature) {
-      xFeature = "indices";
+    this.xFeature = data.attribute_names[0];
+    this.yFeature = data.attribute_names[1];
+    if (!this.xFeature) {
+      this.xFeature = "indices";
       this.features.set("indices", Array.from(Array(this.nSamples).keys()));
     }
-    if (!yFeature) {
+    if (!this.yFeature) {
       for (let key of Array.from(this.features.keys())) {
         if (!["name", "indices"].includes(key)) {
-          yFeature = key;
+          this.yFeature = key;
           break;
         }
       }
     }
-    return [xFeature, yFeature]
+    return [this.xFeature, this.yFeature]
+  }
+
+  private initAxes(): void {
+    const [drawOrigin, drawEnd] = this.computeBounds();
+    this.axes[0].transform(drawOrigin, new Vertex(drawEnd.x, drawOrigin.y));
+    this.axes[1].transform(drawOrigin, new Vertex(drawOrigin.x, drawEnd.y));
+  }
+
+  protected setFrameBounds() {
+    this.offset = this.computeOffset();
+    this.margin = new Vertex(this.size.x * MARGIN_MULTIPLIER, this.size.y * MARGIN_MULTIPLIER).add(new Vertex(10, 10));
+    return this.computeBounds()
   }
 
   protected setAxes(): newAxis[] {
-    this.offset = this.computeOffset();
-    this.margin = new Vertex(this.size.x * MARGIN_MULTIPLIER, this.size.y * MARGIN_MULTIPLIER).add(new Vertex(10, 10));
-    [this.xFeature, this.yFeature] = this.drawnFeatures;
-    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds();
+    const [drawOrigin, drawEnd, freeSize] = this.setFrameBounds();
+    return this.buildAxes(drawOrigin, drawEnd, freeSize)
+  }
+
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [newAxis, newAxis] {
     return [
-      this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks),
-      this.setAxis(this.yFeature, freeSize.x, frameOrigin, yEnd, this.nYTicks)]
+      this.setAxis(this.xFeature, freeSize.y, drawOrigin, new Vertex(drawEnd.x, drawOrigin.y), this.nXTicks),
+      this.setAxis(this.yFeature, freeSize.x, drawOrigin, new Vertex(drawOrigin.x, drawEnd.y), this.nYTicks)
+    ]
+  }
+
+  protected computeOffset(): Vertex {
+    const naturalOffset = new Vertex(this.width * OFFSET_MULTIPLIER.x, this.height * OFFSET_MULTIPLIER.y);
+    const MIN_FONTSIZE = 6;
+    const calibratedMeasure = 33;
+    return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
+  }
+
+  protected computeBounds(): [Vertex, Vertex, Vertex] {
+    const drawOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
+    const drawEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x,  this.size.y - this.margin.y + this.Y * this.initScale.y);
+    const freeSize = drawOrigin.copy();
+    if (this.canvasMatrix.a < 0) this.swapDimension("x", drawOrigin, drawEnd, freeSize);
+    if (this.canvasMatrix.d < 0) this.swapDimension("y", drawOrigin, drawEnd, freeSize);
+    return [drawOrigin, drawEnd, freeSize]
+  }
+
+  private swapDimension(dimension: string, origin: Vertex, end: Vertex, freeSize: Vertex): void {
+    origin[dimension] = origin[dimension] - this.size[dimension];
+    end[dimension] = end[dimension] - this.size[dimension];
+    freeSize[dimension] = this.size[dimension] + origin[dimension];
   }
 
   protected drawAxes() {
     super.drawAxes();
     if (this.isRubberBanded()) this.updateSelectionBox(...this.rubberBandsCorners);
-  }
-
-  protected setFrameBounds(): [Vertex, Vertex, Vertex, Vertex] {
-    let frameOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
-    let xEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, frameOrigin.y);
-    let yEnd = new Vertex(frameOrigin.x, this.size.y - this.margin.y + this.Y * this.initScale.y);
-    let freeSize = frameOrigin.copy();
-    if (this.canvasMatrix.a < 0) {
-      freeSize.x = frameOrigin.x;
-      frameOrigin.x = -(this.size.x - frameOrigin.x);
-      xEnd.x = -(this.size.x - xEnd.x);
-      yEnd.x = frameOrigin.x;
-    }
-    if (this.canvasMatrix.d < 0) {
-      frameOrigin.y = -(this.size.y - frameOrigin.y);
-      yEnd.y = -(this.size.y - yEnd.y);
-      xEnd.y = frameOrigin.y;
-      freeSize.y = this.size.y + frameOrigin.y;
-    }
-    return [frameOrigin, xEnd, yEnd, freeSize]
   }
 
   protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex) {
@@ -2192,7 +2195,7 @@ export class Histogram extends Frame {
         }
       }
     });
-    barValues.forEach((values, index) => { bars[index].computeStats(values) });
+    barValues.forEach((values, index) => bars[index].computeStats(values));
     return bars
   }
 
@@ -2226,16 +2229,18 @@ export class Histogram extends Frame {
     })
   }
 
-  protected setAxes(): newAxis[] {
-    const [frameOrigin, xEnd, yEnd, freeSize] = this.setFrameBounds();
-    const xAxis = this.setAxis(this.xFeature, freeSize.y, frameOrigin, xEnd, this.nXTicks);
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [newAxis, newAxis] {
+    const xAxis = this.setAxis(this.xFeature, freeSize.y, drawOrigin, new Vertex(drawEnd.x, drawOrigin.y), this.nXTicks);
     const bars = this.computeBars(xAxis, this.features.get(this.xFeature));
     this.features.set('number', this.getNumberFeature(bars));
-    const yAxis = this.buildNumberAxis(freeSize.x, frameOrigin, yEnd);
+    const yAxis = this.buildNumberAxis(freeSize.x, drawOrigin, new Vertex(drawOrigin.x, drawEnd.y));
     return [xAxis, yAxis];
   }
 
-  protected setFeatures(data: any): [string, string] { return [data.x_variable, 'number'] }
+  protected setFeatures(data: any): [string, string] {
+    [this.xFeature, this.yFeature] = [data.x_variable, 'number'];
+    return [this.xFeature, this.yFeature]
+  }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
     return new Vertex(this.axes[0].isDiscrete ? 0 : currentMouse.x - mouseDown.x, 0)
@@ -2674,7 +2679,7 @@ export class newParallelPlot extends BasePlot {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      console.log(this.features, this.drawnFeatures)
+      // console.log(this.features, this.drawnFeatures)
     }
 }
 

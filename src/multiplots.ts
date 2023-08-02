@@ -1,7 +1,7 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, BasePlot, newGraph2D } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, Figure, newGraph2D } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
 
@@ -612,7 +612,7 @@ export class MultiplePlots {
       this.objectList.forEach((plot, plotIndex) => {
         if (List.is_include(plotIndex, this.to_display_plots)) {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
-          if (plot instanceof BasePlot) {
+          if (plot instanceof Figure) {
             // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
             if ( !(plot instanceof newGraph2D) ) {
               plot.selectedIndices = this.selectedIndices;
@@ -907,13 +907,13 @@ export class MultiplePlots {
         } else if ((obj.type_ === 'parallelplot') && !List.isListOfEmptyList(obj.rubber_bands)) {
           isSelecting = true;
           this.selectedIndices = List.listIntersection(this.selectedIndices, obj.pp_selected_index);
-        } else if (obj instanceof BasePlot) {
+        } else if (obj instanceof Figure) {
           obj.axes.forEach(axis => {
             // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
             if ( !(obj instanceof newGraph2D) ) {
               if (axis.rubberBand.length != 0) {
                 isSelecting = true;
-                const selectedIndices = (obj as BasePlot).updateSelected(axis);
+                const selectedIndices = (obj as Figure).updateSelected(axis);
                 this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
               }
             }
@@ -1395,7 +1395,7 @@ export class MultiplePlots {
             Interactions.click_on_merge_action(subplot)
             subplot.draw();
           }
-        } else if (subplot instanceof BasePlot) {
+        } else if (subplot instanceof Figure) {
           rubberBandsInPlot.forEach((rubberBand) => {
             subplot.axes.forEach(axis => {
               if (axis.name == rubberBand.attributeName) {
@@ -1708,7 +1708,7 @@ export class MultiplePlots {
         for (let i=0; i<this.nbObjects; i++) {
           let obj = this.objectList[i];
           if (obj.type_ === "parallelplot") {
-            obj.selected_point_index = (this.objectList[this.move_plot_index] as BasePlot).hoveredIndices;
+            obj.selected_point_index = (this.objectList[this.move_plot_index] as Figure).hoveredIndices;
             obj.draw();
           }
         }
@@ -1816,7 +1816,7 @@ export class MultiplePlots {
     public initRubberBands() {
       this.rubberBands = new Map<string, RubberBand>();
       this.objectList.forEach(plot => {
-        if (plot instanceof BasePlot) plot.axes.forEach(axis => axis.sendRubberBand(this.rubberBands))
+        if (plot instanceof Figure) plot.axes.forEach(axis => axis.sendRubberBand(this.rubberBands))
         else if (plot instanceof ParallelPlot) plot.rubber_bands.forEach(rubberBand => rubberBand.selfSend(this.rubberBands));
       })
     }
@@ -1824,28 +1824,28 @@ export class MultiplePlots {
     public refreshRubberBands() {
       if (!this.rubberBands) this.initRubberBands();
       this.objectList.forEach(plot => {
-        if (plot instanceof BasePlot) plot.axes.forEach(axis => axis.sendRubberBandRange(this.rubberBands))
+        if (plot instanceof Figure) plot.axes.forEach(axis => axis.sendRubberBandRange(this.rubberBands))
         else if (plot instanceof ParallelPlot) plot.rubber_bands.forEach(rubberBand => rubberBand.selfSendRange(this.rubberBands));
       })
     }
 
     public switchSelection() {
       this.isSelecting = !this.isSelecting;
-      this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchSelection() });
+      this.objectList.forEach(plot => { if (plot instanceof Figure) plot.switchSelection() });
     }
 
-    public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchMerge() })};
+    public switchMerge() { this.objectList.forEach(plot => { if (plot instanceof Figure) plot.switchMerge() })};
 
-    public togglePoints() { this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.togglePoints() })};
+    public togglePoints() { this.objectList.forEach(plot => { if (plot instanceof Figure) plot.togglePoints() })};
 
     public switchZoom() {
       this.isZooming = !this.isZooming;
-      this.objectList.forEach(plot => { if (plot instanceof BasePlot) plot.switchZoom() });
+      this.objectList.forEach(plot => { if (plot instanceof Figure) plot.switchZoom() });
     }
 
-    public zoomIn() { (this.objectList[this.clickedPlotIndex] as BasePlot).zoomIn() }
+    public zoomIn() { (this.objectList[this.clickedPlotIndex] as Figure).zoomIn() }
 
-    public zoomOut() { (this.objectList[this.clickedPlotIndex] as BasePlot).zoomOut() }
+    public zoomOut() { (this.objectList[this.clickedPlotIndex] as Figure).zoomOut() }
 
     public simpleCluster(inputValue: number) { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.simpleCluster(inputValue) })};
 
@@ -1856,7 +1856,7 @@ export class MultiplePlots {
       this.clickedIndices = [];
       this.hoveredIndices = [];
       this.rubberBands.forEach(rubberBand => rubberBand.reset());
-      this.objectList.forEach(plot => {if (plot instanceof BasePlot) plot.initSelectors()});
+      this.objectList.forEach(plot => {if (plot instanceof Figure) plot.initSelectors()});
       this.redrawAllObjects();
     }
 
@@ -1911,7 +1911,7 @@ export class MultiplePlots {
           this.clickedPlotIndex = this.getLastObjectIndex(mouse1X, mouse1Y);
           this.clicked_index_list = this.getObjectIndex(mouse1X, mouse1Y);
           if (this.isSelecting) this.objectList.forEach((plot, index) => { if (index != this.clickedPlotIndex) plot.isSelecting = false });
-          if (this.isZooming) this.objectList.forEach((plot, index) => { if (index != this.clickedPlotIndex) (plot as BasePlot).isZooming = false });
+          if (this.isZooming) this.objectList.forEach((plot, index) => { if (index != this.clickedPlotIndex) (plot as Figure).isZooming = false });
           if (this.manipulation_bool) {
             this.setAllInteractionsToOff();
             if (this.clickedPlotIndex != -1) {
@@ -1979,9 +1979,9 @@ export class MultiplePlots {
               if (this.selectDependency_bool) {
                 this.mouse_over_primitive_group();
                 this.mouse_over_scatter_plot();
-                if (currentPlot instanceof BasePlot && !(currentPlot instanceof newGraph2D)) {
-                  this.hoveredIndices = (currentPlot as BasePlot).hoveredIndices;
-                  this.clickedIndices = (currentPlot as BasePlot).clickedIndices;
+                if (currentPlot instanceof Figure && !(currentPlot instanceof newGraph2D)) {
+                  this.hoveredIndices = (currentPlot as Figure).hoveredIndices;
+                  this.clickedIndices = (currentPlot as Figure).clickedIndices;
                 }
                 this.redrawAllObjects();
               }
@@ -2029,9 +2029,9 @@ export class MultiplePlots {
                   this.pp_communication(this.objectList[this.clickedPlotIndex].rubber_bands, this.objectList[this.clickedPlotIndex]);
                 }
               }
-              if (this.objectList[this.last_index] instanceof BasePlot && !(this.objectList[this.last_index] instanceof newGraph2D)) {
-                this.hoveredIndices = (this.objectList[this.last_index] as BasePlot).hoveredIndices;
-                this.clickedIndices = (this.objectList[this.last_index] as BasePlot).clickedIndices;
+              if (this.objectList[this.last_index] instanceof Figure && !(this.objectList[this.last_index] instanceof newGraph2D)) {
+                this.hoveredIndices = (this.objectList[this.last_index] as Figure).hoveredIndices;
+                this.clickedIndices = (this.objectList[this.last_index] as Figure).clickedIndices;
               }
             }
           }
@@ -2049,7 +2049,7 @@ export class MultiplePlots {
             plot.is_drawing_rubber_band = false;
             if (plot.isSelecting) this.isSelecting = true;
           }
-          if (plot instanceof BasePlot) plot.isZooming = false;
+          if (plot instanceof Figure) plot.isZooming = false;
         });
         this.redrawAllObjects();
         isDrawing = false;

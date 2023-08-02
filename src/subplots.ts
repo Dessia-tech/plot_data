@@ -1460,7 +1460,7 @@ export class PrimitiveGroupContainer extends PlotData {
     }
 }
 
-export class BasePlot extends PlotData {
+export class Figure extends PlotData {
   public axes: newAxis[] = [];
   public drawnFeatures: string[];
   public origin: Vertex;
@@ -1547,8 +1547,8 @@ export class BasePlot extends PlotData {
 
   protected unpackData(data: any): Map<string, any[]> {
     const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
+    const unpackedData = new Map<string, any[]>();
     featuresKeys.push("name");
-    let unpackedData = new Map<string, any[]>();
     featuresKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
   }
@@ -1583,7 +1583,7 @@ export class BasePlot extends PlotData {
   }
 
   public updateSelection(axesSelections: number[][]): void {
-    if (!this.is_in_multiplot) this.selectedIndices = BasePlot.intersectArrays(axesSelections);
+    if (!this.is_in_multiplot) this.selectedIndices = Figure.intersectArrays(axesSelections);
   }
 
   public static intersectArrays(arrays: any[][]): any[] {
@@ -1943,7 +1943,7 @@ export class BasePlot extends PlotData {
 
 const OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
 const MARGIN_MULTIPLIER: number = 0.01;
-export class Frame extends BasePlot {
+export class Frame extends Figure {
   public xFeature: string;
   public yFeature: string;
 
@@ -2614,7 +2614,7 @@ export class newGraph2D extends newScatter {
     return super.unpackData({"elements": graphSamples})
   }
 
-  public updateSelection(axesSelections: number[][]): void { this.selectedIndices = BasePlot.intersectArrays(axesSelections) }
+  public updateSelection(axesSelections: number[][]): void { this.selectedIndices = Figure.intersectArrays(axesSelections) }
 
   public drawCurves(context: CanvasRenderingContext2D): void {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
@@ -2667,7 +2667,7 @@ export class newGraph2D extends newScatter {
 }
 
 
-export class newParallelPlot extends BasePlot {
+export class newParallelPlot extends Figure {
   constructor(
     data: any,
     public width: number,

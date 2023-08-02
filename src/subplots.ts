@@ -2517,7 +2517,10 @@ export class newScatter extends Frame {
     return clusters
   }
 
-  public simpleCluster(inputValue: number): void { this.computeClusterColors(inputValue); this.draw() }
+  public simpleCluster(inputValue: number): void {
+    this.computeClusterColors(inputValue);
+    this.draw();
+  }
 
   public resetClusters(): void {
     this.clusterColors = null;
@@ -2618,7 +2621,12 @@ export class newGraph2D extends newScatter {
     return super.unpackData({"elements": graphSamples})
   }
 
-  public updateSelection(axesSelections: number[][]): void { this.selectedIndices = Figure.intersectArrays(axesSelections) }
+  public updateSelection(axesSelections: number[][]): void {
+    const inMultiplot = this.is_in_multiplot
+    this.is_in_multiplot = false;
+    super.updateSelection(axesSelections);
+    this.is_in_multiplot = inMultiplot;
+  }
 
   public drawCurves(context: CanvasRenderingContext2D): void {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
@@ -2639,12 +2647,8 @@ export class newGraph2D extends newScatter {
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
     this.drawCurves(context);
-    this.absoluteObjects = new GroupCollection([...this.curves]);
-    if (this.showPoints) {
-      this.drawPoints(context);
-      this.absoluteObjects.drawings = [...this.points, ...this.absoluteObjects.drawings];
-    }
-    this.drawSelectionBox(context);
+    if (this.showPoints) super.drawAbsoluteObjects(context);
+    this.absoluteObjects.drawings.push(...this.curves);
   };
 
   public reset_scales(): void {
@@ -2656,7 +2660,10 @@ export class newGraph2D extends newScatter {
 
   public switchMerge(): void { this.isMerged = false }
 
-  public togglePoints(): void { this.showPoints = !this.showPoints; this.draw() }
+  public togglePoints(): void {
+    this.showPoints = !this.showPoints;
+    this.draw();
+  }
 
   public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
     super.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);

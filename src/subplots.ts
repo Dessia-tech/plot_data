@@ -1586,7 +1586,7 @@ export class Figure extends PlotData {
     return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
-  protected setFrameBounds() {
+  protected setFigureBounds() {
     this.offset = this.computeOffset();
     this.margin = new Vertex(this.size.x * MARGIN_MULTIPLIER, this.size.y * MARGIN_MULTIPLIER).add(new Vertex(10, 10));
     return this.computeBounds()
@@ -1608,11 +1608,11 @@ export class Figure extends PlotData {
   }
 
   protected setAxes(): newAxis[] {
-    const [drawOrigin, drawEnd, freeSize] = this.setFrameBounds();
+    const [drawOrigin, drawEnd, freeSize] = this.setFigureBounds();
     return this.buildAxes(drawOrigin, drawEnd, freeSize)
   }
 
-  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [newAxis, newAxis] { return }
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis[] { return }
 
   protected transformAxes(drawOrigin: Vertex, drawEnd: Vertex): void {}
 
@@ -2679,6 +2679,7 @@ export class newGraph2D extends newScatter {
 
 
 export class newParallelPlot extends Figure {
+  public isVertical: boolean = true;
   constructor(
     data: any,
     public width: number,
@@ -2690,8 +2691,28 @@ export class newParallelPlot extends Figure {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      // console.log(this.features, this.drawnFeatures)
     }
+
+  private axisFromFeature(featureName: string, step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis {
+    let axisOrigin = new Vertex(this.isVertical ? drawOrigin.x + offset : drawOrigin.x, this.isVertical ? drawOrigin.y : drawOrigin.y + offset);
+    let axisEnd = new Vertex(this.isVertical ? axisOrigin.x : drawEnd.x, this.isVertical ? drawEnd.y : axisOrigin.y);
+    let freeSpace = offset == 0 ? this.isVertical ? freeSize.x : freeSize.y : step;
+    let axis = this.setAxis(featureName, freeSpace, axisOrigin, axisEnd);
+    axis.centeredTitle = false;
+    return axis
+  }
+
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis[] {
+    super.buildAxes(drawOrigin, drawEnd, freeSize);
+    const step = (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1);
+    const axes: newAxis[] = [];
+    let offset = 0;
+    this.drawnFeatures.forEach(featureName => {
+      axes.push(this.axisFromFeature(featureName, step, offset, drawOrigin, drawEnd, freeSize));
+      offset += step;
+    })
+    return axes
+  }
 }
 
 

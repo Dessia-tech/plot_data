@@ -2466,8 +2466,11 @@ export class newAxis extends EventEmitter {
     private _nTicks: number = 10
     ) {
       super();
-      this.isDiscrete = typeof vector[0] == 'string';
-      if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
+      this.isDiscrete = vector === undefined ? true : typeof vector[0] == 'string';
+      if (this.isDiscrete) {
+        if (vector) this.labels = newAxis.uniqueValues(vector)
+        else this.labels = ["0", "1"];
+      }
       const [minValue, maxValue] = this.computeMinMax(vector);
       [this._previousMin, this._previousMax] = [this.initMinValue, this.initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
@@ -2592,8 +2595,9 @@ export class newAxis extends EventEmitter {
   public normedValue(value: number): number { return value / this.interval }
 
   private computeMinMax(vector: any[]): number[] {
-    if (vector.length == 0) return [0, 1];;
-    if (this.isDiscrete) return [0, this.labels.length - 1]
+    if (!vector) return [0, 1];
+    if (vector.length == 0) return [0, 1];
+    if (this.isDiscrete) return [0, this.labels.length - 1];
     const min = Math.min(...vector);
     const max = Math.max(...vector);
     return min != max ? [min ,max] : [min * 0.7, max * 1.3]

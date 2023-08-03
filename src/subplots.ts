@@ -1592,7 +1592,7 @@ export class Figure extends PlotData {
     return this.computeBounds()
   }
 
-  private computeBounds(): [Vertex, Vertex, Vertex] {
+  protected computeBounds(): [Vertex, Vertex, Vertex] {
     const drawOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
     const drawEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x,  this.size.y - this.margin.y + this.Y * this.initScale.y);
     const freeSize = drawOrigin.copy();
@@ -2679,7 +2679,7 @@ export class newGraph2D extends newScatter {
 
 
 export class newParallelPlot extends Figure {
-  public isVertical: boolean = true;
+  private _isVertical: boolean;
   constructor(
     data: any,
     public width: number,
@@ -2691,13 +2691,24 @@ export class newParallelPlot extends Figure {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.isVertical = false;
     }
 
+  get isVertical(): boolean { return this._isVertical ?? true }
+
+  set isVertical(value: boolean) { this._isVertical = value }
+
+  public switchOrientation() {
+    this.isVertical = this.isVertical ? !this.isVertical : !this.axes[0].isVertical;
+    this.axes = this.buildAxes(...this.computeBounds());
+    this.draw();
+  }
+
   private axisFromFeature(featureName: string, step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis {
-    let axisOrigin = new Vertex(this.isVertical ? drawOrigin.x + offset : drawOrigin.x, this.isVertical ? drawOrigin.y : drawOrigin.y + offset);
-    let axisEnd = new Vertex(this.isVertical ? axisOrigin.x : drawEnd.x, this.isVertical ? drawEnd.y : axisOrigin.y);
-    let freeSpace = offset == 0 ? this.isVertical ? freeSize.x : freeSize.y : step;
-    let axis = this.setAxis(featureName, freeSpace, axisOrigin, axisEnd);
+    const axisOrigin = new Vertex(this.isVertical ? drawOrigin.x + offset : drawOrigin.x, this.isVertical ? drawOrigin.y : drawOrigin.y + offset);
+    const axisEnd = new Vertex(this.isVertical ? axisOrigin.x : drawEnd.x, this.isVertical ? drawEnd.y : axisOrigin.y);
+    const freeSpace = offset == 0 ? this.isVertical ? freeSize.x : freeSize.y : step;
+    const axis = this.setAxis(featureName, freeSpace, axisOrigin, axisEnd);
     axis.centeredTitle = false;
     return axis
   }

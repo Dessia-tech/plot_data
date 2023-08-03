@@ -2521,14 +2521,9 @@ export class newAxis extends EventEmitter {
   public transform(newOrigin: Vertex, newEnd: Vertex): void {
     this.origin = newOrigin;
     this.end = newEnd;
+    this.rubberBand.isVertical = this.isVertical;
     this.drawPath = this.buildDrawPath();
     this.buildPath();
-  }
-
-  public rotate(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): void {
-    if (this.isVertical) {
-
-    }
   }
 
   public resetScale(): void {

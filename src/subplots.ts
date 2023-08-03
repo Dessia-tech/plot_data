@@ -1651,7 +1651,10 @@ export class Figure extends PlotData {
     this.axes.forEach(axis => axis.resetScale());
   }
 
-  public resetView(): void { this.reset_scales(); this.draw() }
+  public resetView(): void {
+    this.reset_scales();
+    this.draw();
+  }
 
   public initSelectors(): void {
     this.hoveredIndices = [];
@@ -2704,12 +2707,10 @@ export class newParallelPlot extends Figure {
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     let offset = 0;
     this.axes.forEach(axis => {
-
-      axis.rotate(drawOrigin, drawEnd, freeSize);
+      const [axisOrigin, axisEnd, freeSpace] = this.computeAxisLocation(step, offset, drawOrigin, drawEnd, freeSize);
+      axis.transform(axisOrigin, axisEnd);
       offset += step;
     });
-    // this.isVertical = this.isVertical ? !this.isVertical : !this.axes[0].isVertical;
-    // this.axes = this.buildAxes(...this.computeBounds());
     this.draw();
   }
 
@@ -2719,7 +2720,7 @@ export class newParallelPlot extends Figure {
 
   private computeAxisLocation(step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [Vertex, Vertex, number] {
     const axisOrigin = this.isVertical ? 
-      new Vertex(drawOrigin.x + offset, drawOrigin.y) : 
+      new Vertex(drawOrigin.x + offset, drawOrigin.y) :
       new Vertex(drawOrigin.x, drawOrigin.y + offset);
     const axisEnd = this.isVertical ? 
       new Vertex(axisOrigin.x, drawEnd.y) : 

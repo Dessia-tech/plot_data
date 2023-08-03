@@ -41,7 +41,7 @@ html_template = Template('''
         <button name="resetClusters" value="OK" type="button" onclick="plot_data.resetClusters()"> Reset clusters </button> &nbsp;&nbsp;
         <button name="resetView" value="OK" type="button" onclick="plot_data.resetView()"> Reset view </button> &nbsp;&nbsp;
         <button name="showPoints" value="OK" type="button" onclick="plot_data.togglePoints()"> Show points </button>
-        <button name="switchOrientation" value="OK" type="button" onclick="plot_data.switchOrientation()"> Change Disposition </button>
+        <button name="switchOrientation" value="OK" type="button" onclick="plot_data.rotate()"> Change Disposition </button>
     <hr style="border-top: 2px;">
     </div>
     <div id="app">

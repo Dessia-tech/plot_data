@@ -2694,20 +2694,42 @@ export class newParallelPlot extends Figure {
       this.isVertical = false;
     }
 
-  get isVertical(): boolean { return this._isVertical ?? true }
+  get isVertical(): boolean { return this._isVertical ?? false }
 
   set isVertical(value: boolean) { this._isVertical = value }
 
   public switchOrientation() {
     this.isVertical = this.isVertical ? !this.isVertical : !this.axes[0].isVertical;
-    this.axes = this.buildAxes(...this.computeBounds());
+    const [drawOrigin, drawEnd, freeSize] = this.computeBounds();
+    const step = this.computeAxesStep(drawOrigin, drawEnd);
+    let offset = 0;
+    this.axes.forEach(axis => {
+
+      axis.rotate(drawOrigin, drawEnd, freeSize);
+      offset += step;
+    });
+    // this.isVertical = this.isVertical ? !this.isVertical : !this.axes[0].isVertical;
+    // this.axes = this.buildAxes(...this.computeBounds());
     this.draw();
   }
 
-  private axisFromFeature(featureName: string, step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis {
-    const axisOrigin = new Vertex(this.isVertical ? drawOrigin.x + offset : drawOrigin.x, this.isVertical ? drawOrigin.y : drawOrigin.y + offset);
-    const axisEnd = new Vertex(this.isVertical ? axisOrigin.x : drawEnd.x, this.isVertical ? drawEnd.y : axisOrigin.y);
+  private computeAxesStep(drawOrigin: Vertex, drawEnd: Vertex): number {
+    return (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1)
+  }
+
+  private computeAxisLocation(step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [Vertex, Vertex, number] {
+    const axisOrigin = this.isVertical ? 
+      new Vertex(drawOrigin.x + offset, drawOrigin.y) : 
+      new Vertex(drawOrigin.x, drawOrigin.y + offset);
+    const axisEnd = this.isVertical ? 
+      new Vertex(axisOrigin.x, drawEnd.y) : 
+      new Vertex(drawEnd.x, axisOrigin.y);
     const freeSpace = offset == 0 ? this.isVertical ? freeSize.x : freeSize.y : step;
+    return [axisOrigin, axisEnd, freeSpace]
+  }
+
+  private axisFromFeature(featureName: string, step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis {
+    const [axisOrigin, axisEnd, freeSpace] = this.computeAxisLocation(step, offset, drawOrigin, drawEnd, freeSize);
     const axis = this.setAxis(featureName, freeSpace, axisOrigin, axisEnd);
     axis.centeredTitle = false;
     return axis
@@ -2715,7 +2737,7 @@ export class newParallelPlot extends Figure {
 
   protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis[] {
     super.buildAxes(drawOrigin, drawEnd, freeSize);
-    const step = (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1);
+    const step = this.computeAxesStep(drawOrigin, drawEnd);
     const axes: newAxis[] = [];
     let offset = 0;
     this.drawnFeatures.forEach(featureName => {

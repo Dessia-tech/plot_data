@@ -2462,11 +2462,11 @@ export class newAxis extends EventEmitter {
     ) {
       super();
       this.isDiscrete = typeof vector[0] == 'string';
-      if (this.isDiscrete) { this.labels = newAxis.uniqueValues(vector) };
+      if (this.isDiscrete) this.labels = newAxis.uniqueValues(vector);
       const [minValue, maxValue] = this.computeMinMax(vector);
       [this._previousMin, this._previousMax] = [this.initMinValue, this.initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
-      if (!this.isDiscrete) { this.labels = this.numericLabels() };
+      if (!this.isDiscrete) this.labels = this.numericLabels();
       this.drawPath = this.buildDrawPath();
       this.buildPath();
       this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
@@ -2523,6 +2523,12 @@ export class newAxis extends EventEmitter {
     this.end = newEnd;
     this.drawPath = this.buildDrawPath();
     this.buildPath();
+  }
+
+  public rotate(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): void {
+    if (this.isVertical) {
+
+    }
   }
 
   public resetScale(): void {
@@ -2643,11 +2649,9 @@ export class newAxis extends EventEmitter {
   }
 
   private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
-    if (this.centeredTitle) {
-      var [nameCoords, align, baseline, orientation] = this.centeredTitleProperties();
-    } else {
-      var [nameCoords, align, baseline, orientation] = this.topArrowTitleProperties();
-    }
+    const [nameCoords, align, baseline, orientation] = this.centeredTitle ?
+      this.centeredTitleProperties() :
+      this.topArrowTitleProperties();
     nameCoords.transformSelf(canvasHTMatrix);
     const textParams: TextParams = {
       width: this.drawLength, fontsize: this.FONT_SIZE, font: this.font, align: align, color: color,
@@ -2676,9 +2680,7 @@ export class newAxis extends EventEmitter {
     if (this.isVertical) {
       nameCoords.x -= this.offsetTitle;
       baseline = ['bottom', 'top'][this.verticalPickIdx()];
-    } else {
-      nameCoords.y -= this.offsetTitle;
-    }
+    } else nameCoords.y -= this.offsetTitle;
     return [nameCoords, "center", baseline, this.isVertical ? -90 : 0]
   }
 
@@ -2694,8 +2696,11 @@ export class newAxis extends EventEmitter {
         let text = this.labels[idx];
         ticksPoints.push(point);
         if (this.isDiscrete) {
-          if (count == tick && this.labels[count]) { text = this.labels[count] ; count++ }
-          else { text = '' }
+          if (count == tick && this.labels[count]) {
+            text = this.labels[count];
+            count++;
+          }
+          else text = '';
         }
         ticksText.push(this.computeTickText(context, text, tickTextParams, point, pointHTMatrix));
       }
@@ -2705,7 +2710,7 @@ export class newAxis extends EventEmitter {
 
   private drawTicksTexts(ticksTexts: newText[], color: string, context: CanvasRenderingContext2D): void {
     this.ticksFontsize = Math.min(...ticksTexts.map(tickText => tickText.fontsize));
-    ticksTexts.forEach(tickText => { this.drawTickText(tickText, color, context) });
+    ticksTexts.forEach(tickText => this.drawTickText(tickText, color, context));
   }
 
   private drawTickText(tickText: newText, color: string, context: CanvasRenderingContext2D): void {
@@ -2759,7 +2764,7 @@ export class newAxis extends EventEmitter {
 
   private marginedBounds(minValue: number, maxValue: number): [number, number] {
     const valueRange = Math.abs(maxValue - minValue);
-    if (this.isDiscrete) { return [minValue - 1, maxValue + 1] };
+    if (this.isDiscrete) return [minValue - 1, maxValue + 1]
     return [
       minValue - valueRange * this.marginRatio,
       maxValue + valueRange * this.marginRatio];
@@ -2783,7 +2788,7 @@ export class newAxis extends EventEmitter {
     if (!this.rubberBand.isClicked) {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
-    } else { this.rubberBand.mouseMove(downValue, currentValue) }
+    } else this.rubberBand.mouseMove(downValue, currentValue);
     return true
   }
 
@@ -2802,7 +2807,7 @@ export class newAxis extends EventEmitter {
   public mouseUp(): void { this.rubberBand.mouseUp() }
 
   public isInRubberBand(value: number): boolean {
-    return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue) ? true : false
+    return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue)
   }
 
   public numericLabels(): string[] {
@@ -2833,12 +2838,8 @@ export class newAxis extends EventEmitter {
 
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): Vertex {
     let origin = point.center.transform(HTMatrix);
-    if (this.isVertical) { // a little strange, should be the same as name but different since points are already in a relative mode
-      origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks;
-    }
-    else {
-      origin.y -= Math.sign(HTMatrix.d) * this.offsetTicks;
-    }
+    if (this.isVertical) origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks
+    else origin.y -= Math.sign(HTMatrix.d) * this.offsetTicks;
     return origin
   }
 
@@ -2847,7 +2848,11 @@ export class newAxis extends EventEmitter {
     let center = (viewPoint.x - HTMatrix.e) / HTMatrix.a;
     let offset = translation.x;
     let scale = scaling.x;
-    if (this.isVertical) { center = (viewPoint.y - HTMatrix.f) / HTMatrix.d; offset = translation.y; scale = scaling.y };
+    if (this.isVertical) {
+      center = (viewPoint.y - HTMatrix.f) / HTMatrix.d;
+      offset = translation.y;
+      scale = scaling.y;
+    }
     this.minValue = (this._previousMin - center) / scale + center - offset / HTMatrix.a;
     this.maxValue = (this._previousMax - center) / scale + center - offset / HTMatrix.a;
     this.updateTicks();
@@ -2867,7 +2872,7 @@ export class newAxis extends EventEmitter {
 
   public updateTicks(): void {
     this.ticks = this.computeTicks();
-    if (!this.isDiscrete) { this.labels = this.numericLabels() };
+    if (!this.isDiscrete) this.labels = this.numericLabels();
   }
 }
 

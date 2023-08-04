@@ -1,6 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle } from "./utils";
+  LineSequence, newRect, newPointStyle, ParallelAxis } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -2733,17 +2733,21 @@ export class newParallelPlot extends Figure {
     return [axisOrigin, axisEnd, freeSpace]
   }
 
-  private axisFromFeature(featureName: string, step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis {
+  protected setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): ParallelAxis {
+    return new ParallelAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
+  }
+
+  private axisFromFeature(featureName: string, step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis {
     const [axisOrigin, axisEnd, freeSpace] = this.computeAxisLocation(step, offset, drawOrigin, drawEnd, freeSize);
     const axis = this.setAxis(featureName, freeSpace, axisOrigin, axisEnd);
     axis.centeredTitle = false;
     return axis
   }
 
-  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis[] {
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis[] {
     super.buildAxes(drawOrigin, drawEnd, freeSize);
     const step = this.computeAxesStep(drawOrigin, drawEnd);
-    const axes: newAxis[] = [];
+    const axes: ParallelAxis[] = [];
     let offset = 0;
     this.drawnFeatures.forEach(featureName => {
       axes.push(this.axisFromFeature(featureName, step, offset, drawOrigin, drawEnd, freeSize));

@@ -1544,6 +1544,73 @@ export class HalfLine extends AbstractHalfLine {
   }
 }
 
+export abstract class AbstractLine extends newShape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super();
+    this.isFilled = false;
+    this.buildPath();
+  }
+}
+
+export class VerticalLine extends AbstractLine {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x, this.center.y - halfSize);
+    this.path.lineTo(this.center.x, this.center.y + halfSize);
+  }
+}
+
+export class HorizontalLine extends AbstractLine {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y);
+    this.path.lineTo(this.center.x + halfSize, this.center.y);
+  }
+}
+
+export class SlashLine extends AbstractLine {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+  }
+}
+
+export class BackSlashLine extends AbstractLine {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
+  }
+}
+
+export class Line extends AbstractLine {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super(center, size, orientation);
+    this.buildPath();
+  }
+
+  public buildPath(): void {
+    if (this.orientation == 'vertical') this.path = new VerticalLine(this.center, this.size).path;
+    if (this.orientation == 'horizontal') this.path = new HorizontalLine(this.center, this.size).path;
+    if (this.orientation == 'slash') this.path = new SlashLine(this.center, this.size).path;
+    if (this.orientation == 'backslash') this.path = new BackSlashLine(this.center, this.size).path;
+    if (!['vertical', 'horizontal', 'slash', 'backslash'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
+  }
+}
+
 export class Cross extends newShape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
@@ -1948,6 +2015,7 @@ export class newPoint2D extends newShape {
     };
     if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center.coordinates, this.size, this.markerOrientation);
     if (this.marker == 'halfLine') marker = new HalfLine(this.center.coordinates, this.size, this.markerOrientation);
+    if (this.marker == 'line') marker = new Line(this.center.coordinates, this.size, this.markerOrientation);
     marker.lineWidth = this.lineWidth;
     this.isFilled = marker.isFilled;
     return marker
@@ -2458,7 +2526,7 @@ export class newAxis extends EventEmitter {
     public end: Vertex,
     public name: string = '',
     public initScale: Vertex,
-    private _nTicks: number = 10
+    protected _nTicks: number = 10
     ) {
       super();
       this.isDiscrete = typeof vector[0] == 'string';
@@ -2499,6 +2567,10 @@ export class newAxis extends EventEmitter {
 
   get marginRatio(): number { return this._marginRatio };
 
+  get tickMarker(): string { return "halfLine"}
+
+  get tickOrientation(): string { return this.isVertical ? 'right' : 'up' }
+
   set nTicks(value: number) { this._nTicks = value };
 
   get nTicks(): number {
@@ -2517,6 +2589,8 @@ export class newAxis extends EventEmitter {
   private horizontalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.y)) }
 
   private verticalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.x)) }
+
+  protected computeEnds(): void {}
 
   public transform(newOrigin: Vertex, newEnd: Vertex): void {
     this.origin = newOrigin;
@@ -2559,9 +2633,11 @@ export class newAxis extends EventEmitter {
     return vector.filter((value, index, array) => array.indexOf(value) === index)
   }
 
-  private buildDrawPath(): Path2D {
-    const verticalIdx = Number(this.isVertical); const horizontalIdx = Number(!this.isVertical);
+  protected buildDrawPath(): Path2D {
+    const verticalIdx = Number(this.isVertical);
+    const horizontalIdx = Number(!this.isVertical);
     const path = new Path2D();
+    this.computeEnds();
     const endArrow = new newPoint2D(this.end.x + this.SIZE_END / 2 * horizontalIdx, this.end.y + this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['right', 'up'][verticalIdx]);
     path.moveTo(this.origin.x - this.DRAW_START_OFFSET * horizontalIdx, this.origin.y - this.DRAW_START_OFFSET * verticalIdx);
     path.lineTo(this.end.x, this.end.y);
@@ -2646,9 +2722,7 @@ export class newAxis extends EventEmitter {
   }
 
   private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
-    const [nameCoords, align, baseline, orientation] = this.centeredTitle ?
-      this.centeredTitleProperties() :
-      this.topArrowTitleProperties();
+    const [nameCoords, align, baseline, orientation] = this.getTitleProperties();
     nameCoords.transformSelf(canvasHTMatrix);
     const textParams: TextParams = {
       width: this.drawLength, fontsize: this.FONT_SIZE, font: this.font, align: align, color: color,
@@ -2656,6 +2730,21 @@ export class newAxis extends EventEmitter {
     };
     const textName = new newText(this.title, nameCoords, textParams);
     textName.draw(context);
+  }
+
+  private getTitleProperties() : [Vertex, string, string, number] {
+    if (this.centeredTitle) return this.centeredTitleProperties();
+    return this.topArrowTitleProperties()
+  }
+
+  private centeredTitleProperties(): [Vertex, string, string, number] {
+    let baseline = ['bottom', 'top'][this.horizontalPickIdx()];
+    let nameCoords = this.end.add(this.origin).divide(2);
+    if (this.isVertical) {
+      nameCoords.x -= this.offsetTitle;
+      baseline = ['bottom', 'top'][this.verticalPickIdx()];
+    } else nameCoords.y -= this.offsetTitle;
+    return [nameCoords, "center", baseline, this.isVertical ? -90 : 0]
   }
 
   private topArrowTitleProperties(): [Vertex, string, string, number] {
@@ -2669,16 +2758,6 @@ export class newAxis extends EventEmitter {
     }
     nameCoords.x += signFontAdd * this.FONT_SIZE;
     return [nameCoords, alignChoices[this.verticalPickIdx()], "middle", 0]
-  }
-
-  private centeredTitleProperties(): [Vertex, string, string, number] {
-    let baseline = ['bottom', 'top'][this.horizontalPickIdx()];
-    let nameCoords = this.end.add(this.origin).divide(2);
-    if (this.isVertical) {
-      nameCoords.x -= this.offsetTitle;
-      baseline = ['bottom', 'top'][this.verticalPickIdx()];
-    } else nameCoords.y -= this.offsetTitle;
-    return [nameCoords, "center", baseline, this.isVertical ? -90 : 0]
   }
 
   private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string): [newPoint2D[], newText[]] {
@@ -2736,9 +2815,8 @@ export class newAxis extends EventEmitter {
     }
   }
 
-  private drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
-    const markerOrientation = this.isVertical ? 'right' : 'up';
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), 'halfLine', markerOrientation, color);
+  protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
     point.draw(context);
     return point
   }
@@ -2871,6 +2949,30 @@ export class newAxis extends EventEmitter {
     this.ticks = this.computeTicks();
     if (!this.isDiscrete) this.labels = this.numericLabels();
   }
+}
+
+
+export class ParallelAxis extends newAxis {
+  constructor(
+    vector: any[],
+    public freeSpace: number,
+    public origin: Vertex,
+    public end: Vertex,
+    public name: string = '',
+    public initScale: Vertex,
+    protected _nTicks: number = 10
+    ) {
+      super(vector, freeSpace, origin, end, name, initScale, _nTicks);
+    }
+  
+  get tickMarker(): string { return "line"}
+
+  get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
+
+  protected computeEnds(): void {
+    super.computeEnds();
+    this.end.y += this.isVertical ? -this.drawLength * 0.1 : 0;
+  }  
 }
 
 export class DrawingCollection {

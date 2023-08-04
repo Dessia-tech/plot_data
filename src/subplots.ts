@@ -1551,10 +1551,10 @@ export class Figure extends PlotData {
   }
 
   protected unpackData(data: any): Map<string, any[]> {
-    const featuresKeys: string[] = Array.from(Object.keys(data.elements[0].values));
+    const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
     const unpackedData = new Map<string, any[]>();
-    featuresKeys.push("name");
-    featuresKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
+    featureKeys.push("name");
+    featureKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
   }
 
@@ -2305,10 +2305,11 @@ export class newScatter extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      if (!data.tooltip) this.tooltipAttributes = Array.from(this.features.keys());
-      else this.tooltipAttributes = data.tooltip.attribute;
-      this.unpackPointStyle(data);
-      this.computePoints();
+      if (this.nSamples > 0) {
+        this.tooltipAttributes = data.tooltip ? data.tooltip.attribute : Array.from(this.features.keys());
+        this.unpackPointStyle(data);
+        this.computePoints();
+      }
     }
 
   get sampleDrawings(): GroupCollection { return this.absoluteObjects }
@@ -2582,7 +2583,7 @@ export class newScatter extends Frame {
     this.axes.forEach(axis => axis.saveLocation());
     [this.scaleX, this.scaleY] = [1, 1];
     this.viewPoint = new Vertex(0, 0);
-    this.computePoints();
+    if (this.nSamples > 0) this.computePoints();
     return [mouse3X, mouse3Y];
   }
 }

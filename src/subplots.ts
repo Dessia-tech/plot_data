@@ -1542,11 +1542,10 @@ export class BasePlot extends PlotData {
   }
 
   protected unpackData(data: any): Map<string, any[]> {
-    let featuresKeys: string[] = [];
-    if (data.elements[0]) featuresKeys = Array.from(Object.keys(data.elements[0].values));
-    featuresKeys.push("name");
-    let unpackedData = new Map<string, any[]>();
-    featuresKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
+    const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
+    featureKeys.push("name");
+    const unpackedData = new Map<string, any[]>();
+    featureKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
   }
 
@@ -2289,8 +2288,7 @@ export class newScatter extends Frame {
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       if (this.nSamples > 0) {
-        if (!data.tooltip) this.tooltipAttributes = Array.from(this.features.keys());
-        else this.tooltipAttributes = data.tooltip.attribute;
+        this.tooltipAttributes = data.tooltip ? data.tooltip.attribute : Array.from(this.features.keys());
         this.unpackPointStyle(data);
         this.computePoints();
       }

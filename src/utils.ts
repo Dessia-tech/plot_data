@@ -2595,8 +2595,7 @@ export class newAxis extends EventEmitter {
   public normedValue(value: number): number { return value / this.interval }
 
   private computeMinMax(vector: any[]): number[] {
-    if (!vector) return [0, 1];
-    if (vector.length == 0) return [0, 1];
+    if (!vector?.length) return [0, 1];
     if (this.isDiscrete) return [0, this.labels.length - 1];
     const min = Math.min(...vector);
     const max = Math.max(...vector);

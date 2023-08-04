@@ -2712,6 +2712,7 @@ export class newParallelPlot extends Figure {
     let offset = 0;
     this.axes.forEach(axis => {
       const [axisOrigin, axisEnd] = this.computeAxisLocation(step, offset, drawOrigin, drawEnd, freeSize);
+      axis.freeSpace = freeSize[this.isVertical ? "y" : "x"];
       axis.transform(axisOrigin, axisEnd);
       offset += step;
     });

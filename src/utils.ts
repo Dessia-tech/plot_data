@@ -1833,25 +1833,25 @@ export class newText extends newShape {
   }
 
   public format(context: CanvasRenderingContext2D): string[] {
-    let fontsize = this.fontsize? this.fontsize : DEFAULT_FONTSIZE;
+    let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
     let writtenText = [this.text];
     context.font = newText.buildFont(this.style, fontsize, this.font);
     if (this.width) {
-      if (this.multiLine) { writtenText = this.cutting_text(context, this.width) }
+      if (this.multiLine) writtenText = this.cutting_text(context, this.width)
       else {
         if (!this.fontsize) {
           fontsize = this.automaticFontSize(context);
           context.font = newText.buildFont(this.style, fontsize, this.font);
         } else {
-          if (context.measureText(this.text).width > this.width) { fontsize = this.automaticFontSize(context) }
+          if (context.measureText(this.text).width > this.width) fontsize = this.automaticFontSize(context);
         }
       }
     }
     this.fontsize = fontsize;
     this.width = context.measureText(writtenText[0]).width;
     const tempHeight = this.fontsize * writtenText.length;
-    if (!this.height) { this.height = tempHeight };
-    if (tempHeight > this.height) { this.fontsize = this.height / tempHeight * this.fontsize };
+    this.height = this.height ?? tempHeight;
+    if (tempHeight > this.height) this.fontsize = this.height / tempHeight * this.fontsize;
     this.nRows = writtenText.length;
     this.height = this.fontsize * writtenText.length;
     return writtenText
@@ -2505,10 +2505,10 @@ export class newAxis extends EventEmitter {
   private _previousMax: number;
 
   private _marginRatio: number = 0.05;
-  private offsetTicks: number;
-  private offsetTitle: number;
-  private maxTickWidth: number;
-  private maxTickHeight: number;
+  protected offsetTicks: number;
+  protected offsetTitle: number;
+  protected maxTickWidth: number;
+  protected maxTickHeight: number;
 
   readonly DRAW_START_OFFSET = 0;
   readonly SELECTION_RECT_SIZE = 10;
@@ -2721,20 +2721,34 @@ export class newAxis extends EventEmitter {
     this.drawRubberBand(context);
   }
 
-  private drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
+  protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
+    return {
+      width: this.drawLength,
+      fontsize: this.FONT_SIZE,
+      font: this.font,
+      align: align,
+      color: color,
+      baseline: baseline,
+      style: 'bold',
+      orientation: orientation,
+      backgroundColor: "hsla(0, 30%, 50%, 0.5)"
+    }
+  }
+
+  protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
+    text.format(context);
+  }
+
+  protected drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
     const [nameCoords, align, baseline, orientation] = this.getTitleProperties();
-    nameCoords.transformSelf(canvasHTMatrix);
-    const textParams: TextParams = {
-      width: this.drawLength, fontsize: this.FONT_SIZE, font: this.font, align: align, color: color,
-      baseline: baseline, style: 'bold', orientation: orientation, backgroundColor: "hsla(0, 0%, 100%, 0.5)"
-    };
-    const textName = new newText(this.title, nameCoords, textParams);
+    const textParams = this.getTitleTextParams(color, align, baseline, orientation);
+    const textName = new newText(this.title, nameCoords.transform(canvasHTMatrix), textParams);
+    this.formatTitle(textName, context);
     textName.draw(context);
   }
 
-  private getTitleProperties() : [Vertex, string, string, number] {
-    if (this.centeredTitle) return this.centeredTitleProperties();
-    return this.topArrowTitleProperties()
+  protected getTitleProperties() : [Vertex, string, string, number] {
+    return this.centeredTitle ? this.centeredTitleProperties() : this.topArrowTitleProperties()
   }
 
   private centeredTitleProperties(): [Vertex, string, string, number] {
@@ -2953,6 +2967,7 @@ export class newAxis extends EventEmitter {
 
 
 export class ParallelAxis extends newAxis {
+  private titleRect: newRect;
   constructor(
     vector: any[],
     public freeSpace: number,
@@ -2969,9 +2984,51 @@ export class ParallelAxis extends newAxis {
 
   get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
 
+  // Besoin de revoir complètement comment dessiner un texte dans un rectangle avant de travailler sur les axes.
+
+  protected getTitleProperties(): [Vertex, string, string, number] {
+    return this.isVertical ?
+      this.verticalTitleProperties() :
+      this.horizontalTitleProperties()
+  }
+
+  private horizontalTitleProperties(): [Vertex, string, string, number] { return [this.titleRect.origin, "left", "top", 0] }
+
+  private verticalTitleProperties(): [Vertex, string, string, number] { return [this.titleRect.origin, "center", "bottom", 0] }
+
+  // private firstTitleProperties(): [Vertex, string, string, number] {
+  //   return
+  // }
+
+  // private lastTitleProperties(): [Vertex, string, string, number] {
+  //   return
+  // }
+
+  protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
+    super.formatTitle(text, context);
+    if (!this.isVertical) {text.origin.y += text.height + this.offsetTicks + this.ticksFontsize; text.format(context);}
+  }
+
+  protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
+    const titleTextParams = super.getTitleTextParams(color, align, baseline, orientation);
+    titleTextParams.multiLine = true;
+    titleTextParams.width = this.titleRect.size.x;
+    titleTextParams.height = this.titleRect.size.y;
+    return titleTextParams
+  }
+
   protected computeEnds(): void {
     super.computeEnds();
-    this.end.y += this.isVertical ? -this.drawLength * 0.1 : 0;
+    if (this.isVertical) {
+      this.end.y -= this.drawLength * 0.1;
+      this.titleRect = new newRect(this.end.add(new Vertex(0, this.drawLength * 0.02)), new Vertex(this.freeSpace, this.drawLength * 0.1));
+    } else {
+      this.origin.x -= this.origin.x * 0.75;
+      this.titleRect = new newRect(
+        this.origin.add(new Vertex(0, 0)), 
+        new Vertex(this.drawLength * 0.2, this.freeSpace * 0.85)
+      );
+    }
   }  
 }
 

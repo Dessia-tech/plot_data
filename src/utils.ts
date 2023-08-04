@@ -2603,8 +2603,8 @@ export class newAxis extends EventEmitter {
     this.maxTickWidth = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedMeasure);
     this.maxTickHeight = Math.min(this.freeSpace - this.offsetTicks - 1, calibratedTickText.fontsize);
     if (this.centeredTitle) {
-      const FREE_SPACE = this.freeSpace - this.FONT_SIZE - 0.3 * this.maxTickHeight;
-      this.offsetTitle = (this.isVertical ? Math.min(FREE_SPACE, calibratedMeasure) : Math.min(FREE_SPACE, this.FONT_SIZE * 1.5 + this.offsetTicks));
+      const freeSpace = this.freeSpace - this.FONT_SIZE - 0.3 * this.maxTickHeight;
+      this.offsetTitle = (this.isVertical ? Math.min(freeSpace, calibratedMeasure) : Math.min(freeSpace, this.FONT_SIZE * 1.5 + this.offsetTicks));
     }
     context.restore();
   }
@@ -2630,13 +2630,15 @@ export class newAxis extends EventEmitter {
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
 
+    context.resetTransform();
+    this.computeTextBoxes(context);
+
     context.setTransform(pointHTMatrix);
     const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
     this.ticksPoints = ticksPoints;
 
     context.resetTransform();
     this.drawTicksTexts(ticksTexts, color, context);
-    this.computeTextBoxes(context);
     this.drawTitle(context, canvasHTMatrix, color);
 
     context.setTransform(canvasHTMatrix);

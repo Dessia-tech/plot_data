@@ -2694,10 +2694,9 @@ export class newParallelPlot extends Figure {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.isVertical = false;
     }
 
-  get isVertical(): boolean { return this._isVertical ?? false }
+  get isVertical(): boolean { return this._isVertical ?? true }
 
   set isVertical(value: boolean) { this._isVertical = value }
 
@@ -2707,7 +2706,7 @@ export class newParallelPlot extends Figure {
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     let offset = 0;
     this.axes.forEach(axis => {
-      const [axisOrigin, axisEnd, freeSpace] = this.computeAxisLocation(step, offset, drawOrigin, drawEnd, freeSize);
+      const [axisOrigin, axisEnd] = this.computeAxisLocation(step, offset, drawOrigin, drawEnd, freeSize);
       axis.transform(axisOrigin, axisEnd);
       offset += step;
     });

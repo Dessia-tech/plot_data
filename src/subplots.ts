@@ -2344,9 +2344,9 @@ export class newScatter extends Frame {
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
-    this.drawPoints(context);
     super.drawAbsoluteObjects(context);
-    this.absoluteObjects.drawings.unshift(...this.points);
+    this.drawPoints(context);
+    this.absoluteObjects.drawings = [...this.points, ...this.absoluteObjects.drawings];
   };
 
   protected drawPoints(context: CanvasRenderingContext2D): void {
@@ -2650,9 +2650,14 @@ export class newGraph2D extends newScatter {
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
     this.drawCurves(context);
-    if (this.showPoints) super.drawAbsoluteObjects(context);
-    this.absoluteObjects.drawings.push(...this.curves);
-  };
+    if (this.showPoints) {
+      super.drawAbsoluteObjects(context);
+      this.absoluteObjects.drawings = [...this.curves, ...this.absoluteObjects.drawings];
+    } else {
+      this.absoluteObjects = new GroupCollection([...this.curves]);
+      this.drawSelectionBox(context);
+    }
+  }
 
   public reset_scales(): void {
     const scale = new Vertex(this.frameMatrix.a, this.frameMatrix.d).scale(this.initScale);

@@ -1254,9 +1254,9 @@ export class RubberBand {
 export class Vertex {
   constructor(public x: number = 0, public y: number = 0) {}
 
-  get coordinates(): Vertex { return new Vertex(this.x, this.y) }
+  get coordinates(): [number, number] { return [this.x, this.y] }
 
-  public copy(): Vertex { return Object.create(this) }
+  public copy(): Vertex { return new Vertex(this.x, this.y) }
 
   public add(other: Vertex): Vertex {
     let copy = this.copy();
@@ -2005,17 +2005,17 @@ export class newPoint2D extends newShape {
 
   get drawnShape(): newShape {
     let marker = new newShape();
-    if (CIRCLES.includes(this.marker)) marker = new newCircle(this.center.coordinates, this.size / 2);
-    if (MARKERS.includes(this.marker)) marker = new Mark(this.center.coordinates, this.size);
-    if (CROSSES.includes(this.marker)) marker = new Cross(this.center.coordinates, this.size);
+    if (CIRCLES.includes(this.marker)) marker = new newCircle(this.center, this.size / 2);
+    if (MARKERS.includes(this.marker)) marker = new Mark(this.center, this.size);
+    if (CROSSES.includes(this.marker)) marker = new Cross(this.center, this.size);
     if (SQUARES.includes(this.marker)) {
       const halfSize = this.size * 0.5;
-      const origin = new Vertex(this.center.coordinates.x - halfSize, this.center.coordinates.y - halfSize)
+      const origin = new Vertex(this.center.x - halfSize, this.center.y - halfSize)
       marker = new newRect(origin, new Vertex(this.size, this.size))
     };
-    if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center.coordinates, this.size, this.markerOrientation);
-    if (this.marker == 'halfLine') marker = new HalfLine(this.center.coordinates, this.size, this.markerOrientation);
-    if (this.marker == 'line') marker = new Line(this.center.coordinates, this.size, this.markerOrientation);
+    if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center, this.size, this.markerOrientation);
+    if (this.marker == 'halfLine') marker = new HalfLine(this.center, this.size, this.markerOrientation);
+    if (this.marker == 'line') marker = new Line(this.center, this.size, this.markerOrientation);
     marker.lineWidth = this.lineWidth;
     this.isFilled = marker.isFilled;
     return marker
@@ -2548,7 +2548,7 @@ export class newAxis extends EventEmitter {
     return this.isVertical ? Math.abs(this.origin.y - this.end.y) : Math.abs(this.origin.x - this.end.x);
   }
 
-  // TODO: OLD, MUST DISAPPEAR ONE PARALLELPLOT ARE REFACTORED
+  // TODO: OLD, MUST DISAPPEAR ONCE PARALLELPLOT ARE REFACTORED
   public get isInverted(): boolean { return this.initScale[this.isVertical ? 'y' : 'x'] == -1 }
 
   private get drawingColor(): string {
@@ -3008,7 +3008,10 @@ export class ParallelAxis extends newAxis {
 
   protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
     super.formatTitle(text, context);
-    if (!this.isVertical) {text.origin.y += text.height + this.offsetTicks + this.ticksFontsize; text.format(context);}
+    if (!this.isVertical) {
+      text.origin.y += text.height + this.offsetTicks + this.ticksFontsize;
+      text.format(context);
+    }
   }
 
   protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {

@@ -1596,6 +1596,7 @@ export class Figure extends PlotData {
     const drawOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
     const drawEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x,  this.size.y - this.margin.y + this.Y * this.initScale.y);
     const freeSize = drawOrigin.copy();
+    console.log("d",freeSize)
     if (this.canvasMatrix.a < 0) this.swapDimension("x", drawOrigin, drawEnd, freeSize);
     if (this.canvasMatrix.d < 0) this.swapDimension("y", drawOrigin, drawEnd, freeSize);
     return [drawOrigin, drawEnd, freeSize]
@@ -2714,6 +2715,7 @@ export class newParallelPlot extends Figure {
     this.axes.forEach(axis => {
       const [axisOrigin, axisEnd] = this.computeAxisLocation(step, offset, drawOrigin, drawEnd, freeSize);
       axis.freeSpace = freeSize[this.isVertical ? "y" : "x"];
+      console.log(freeSize, axis.freeSpace)
       axis.transform(axisOrigin, axisEnd);
       offset += step;
     });

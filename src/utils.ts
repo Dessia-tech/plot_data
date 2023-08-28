@@ -1723,7 +1723,7 @@ export interface TextParams {
 const DEFAULT_FONTSIZE = 12;
 export class newText extends newShape {
   public scale: number = 1;
-  public fillStyle: string = 'hsl(0, 0%, 0%)'
+  public fillStyle: string = 'hsl(0, 0%, 0%)';
   public width: number;
   public height: number;
   public fontsize: number;
@@ -1735,6 +1735,7 @@ export class newText extends newShape {
   public multiLine: boolean;
   public nRows: number;
   public backgroundColor: string;
+  // public boundingBox: newRect = new newRect(); // begin a refactor
   constructor(
     public text: string,
     public origin: Vertex,
@@ -1762,7 +1763,13 @@ export class newText extends newShape {
       this.orientation = orientation;
       this.backgroundColor = backgroundColor;
       this.fillStyle = color;
+      // this.updateBoundingBox();
     }
+
+  // private updateBoundingBox(): void {
+  //   this.boundingBox.origin = this.origin.copy();
+  //   this.boundingBox.size = new Vertex(this.width, this.height);
+  // }
 
   private static buildFont(style: string, fontsize: number, font: string): string {
     return `${style} ${fontsize}px ${font}`
@@ -2475,6 +2482,15 @@ export class SelectionBox extends newRect {
   public mouseUp() { this.leftUpdate = this.rightUpdate = this.upUpdate = this.downUpdate = this.isClicked = this.isHovered = false }
 }
 
+export class TitleSettings {
+  constructor(
+    public origin: Vertex = null,
+    public align: string = null,
+    public baseline: string = null,
+    public orientation: number = null
+  ) {}
+}
+
 export class newAxis extends EventEmitter {
   public ticksPoints: newPoint2D[];
   public drawPath: Path2D;
@@ -2490,6 +2506,7 @@ export class newAxis extends EventEmitter {
   public mouseStyleON: boolean = false;
   public rubberBand: RubberBand;
   public centeredTitle: boolean = false;
+  public titleSettings: TitleSettings = new TitleSettings();
   public font: string = 'sans-serif';
 
   protected _ticks: number[];
@@ -2737,43 +2754,42 @@ export class newAxis extends EventEmitter {
     }
   }
 
-  protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
-    text.format(context);
-  }
+  protected formatTitle(text: newText, context: CanvasRenderingContext2D): void { text.format(context) }
 
   protected drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
-    const [nameCoords, align, baseline, orientation] = this.getTitleProperties();
-    const textParams = this.getTitleTextParams(color, align, baseline, orientation);
-    const textName = new newText(this.title, nameCoords.transform(canvasHTMatrix), textParams);
+    this.setTitleSettings();
+    const textParams = this.getTitleTextParams(color, this.titleSettings.align, this.titleSettings.baseline, this.titleSettings.orientation);
+    const textName = new newText(this.title, this.titleSettings.origin.transform(canvasHTMatrix), textParams);
     this.formatTitle(textName, context);
     textName.draw(context);
   }
 
-  protected getTitleProperties() : [Vertex, string, string, number] {
-    return this.centeredTitle ? this.centeredTitleProperties() : this.topArrowTitleProperties()
-  }
+  public setTitleSettings(): void { this.centeredTitle ? this.centeredTitleProperties() : this.topArrowTitleProperties() }
 
-  private centeredTitleProperties(): [Vertex, string, string, number] {
-    let baseline = ['bottom', 'top'][this.horizontalPickIdx()];
-    let nameCoords = this.end.add(this.origin).divide(2);
+  private centeredTitleProperties(): void {
+    this.titleSettings.origin = this.end.add(this.origin).divide(2);
+    this.titleSettings.align = "center";
+    this.titleSettings.baseline = ['bottom', 'top'][this.horizontalPickIdx()];
     if (this.isVertical) {
-      nameCoords.x -= this.offsetTitle;
-      baseline = ['bottom', 'top'][this.verticalPickIdx()];
-    } else nameCoords.y -= this.offsetTitle;
-    return [nameCoords, "center", baseline, this.isVertical ? -90 : 0]
+      this.titleSettings.origin.x -= this.offsetTitle;
+      this.titleSettings.baseline = ['bottom', 'top'][this.verticalPickIdx()];
+    } else this.titleSettings.origin.y -= this.offsetTitle;
+    this.titleSettings.orientation = this.isVertical ? -90 : 0;
   }
 
-  private topArrowTitleProperties(): [Vertex, string, string, number] {
-    let nameCoords = this.end.copy();
+  private topArrowTitleProperties(): void {
+    this.titleSettings.origin = this.end.copy();
     let alignChoices = ["start", "end"];
     let signFontAdd = 1;
     if (!this.isVertical) {
       alignChoices = ["end", "start"];
       signFontAdd = -0.8;
-      nameCoords.y += this.FONT_SIZE;
+      this.titleSettings.origin.y += this.FONT_SIZE;
     }
-    nameCoords.x += signFontAdd * this.FONT_SIZE;
-    return [nameCoords, alignChoices[this.verticalPickIdx()], "middle", 0]
+    this.titleSettings.origin.x += signFontAdd * this.FONT_SIZE;
+    this.titleSettings.align = alignChoices[this.verticalPickIdx()];
+    this.titleSettings.baseline = "middle";
+    this.titleSettings.orientation = 0;
   }
 
   private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string): [newPoint2D[], newText[]] {
@@ -2969,7 +2985,7 @@ export class newAxis extends EventEmitter {
 
 
 export class ParallelAxis extends newAxis {
-  private titleRect: newRect;
+  public titleRect: newRect = new newRect();
   constructor(
     vector: any[],
     public freeSpace: number,
@@ -2982,21 +2998,68 @@ export class ParallelAxis extends newAxis {
       super(vector, freeSpace, origin, end, name, initScale, _nTicks);
     }
   
-  get tickMarker(): string { return "line"}
+  get tickMarker(): string { return "line" }
 
   get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
 
-  // Besoin de revoir complètement comment dessiner un texte dans un rectangle avant de travailler sur les axes.
-
-  protected getTitleProperties(): [Vertex, string, string, number] {
-    return this.isVertical ?
-      this.verticalTitleProperties() :
-      this.horizontalTitleProperties()
+  public setTitleSettings(): void {
+    this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
   }
 
-  private horizontalTitleProperties(): [Vertex, string, string, number] { return [this.titleRect.origin, "left", "top", 0] }
+  public static getLocation(step: number, axisIndex: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex, isVertical: boolean): [Vertex, Vertex, number] {
+    const verticalX = drawOrigin.x + axisIndex * step;
+    const horizontalY = drawOrigin.y + axisIndex * step;
+    if (isVertical) return [new Vertex(verticalX, drawOrigin.y), new Vertex(verticalX, drawEnd.y), step];
+    return [new Vertex(drawOrigin.x, horizontalY), new Vertex(drawEnd.x, horizontalY), step]
+  }
 
-  private verticalTitleProperties(): [Vertex, string, string, number] { return [this.titleRect.origin, "center", "bottom", 0] }
+  public static fromFeature(
+    features: Map<string, any[]>, name: string, step: number, index: number, drawOrigin: Vertex,
+    drawEnd: Vertex, freeSize: Vertex, isVertical: boolean, initScale: Vertex): ParallelAxis {
+      const [axisOrigin, axisEnd, freeSpace] = this.getLocation(step, index, drawOrigin, drawEnd, freeSize, isVertical);
+      const axis = new ParallelAxis(features.get(name), freeSpace, axisOrigin, axisEnd, name, initScale);
+      axis.centeredTitle = false;
+      axis.computeTitle(index, step, drawOrigin, drawEnd, freeSize);
+      return axis
+  }
+
+  private horizontalTitleProperties(): void { 
+    this.titleSettings.origin = this.titleRect.origin;
+    this.titleSettings.align = "left";
+    this.titleSettings.baseline = "top";
+    this.titleSettings.orientation = 0;
+  }
+
+  private verticalTitleProperties(): void {
+    this.titleSettings.origin = this.titleRect.origin; 
+    this.titleSettings.align = "center";
+    this.titleSettings.baseline = "bottom"; 
+    this.titleSettings.orientation = 0;
+  }
+
+  private computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis {
+    this.freeSpace = step;
+    if (index == 0) {
+      if (this.isVertical) {
+        this.freeSpace = freeSize.y; //this.size.y - this.drawLength - Math.abs(this.offset.y);
+        this.titleRect = new newRect(
+          new Vertex(this.origin.x, this.end.y + this.drawLength * 0.035), 
+          new Vertex(step / 2 + 3 * this.origin.x / 4, this.freeSpace)
+        );
+        this.titleSettings.align = "left";
+      } else {
+        this.titleRect = new newRect(
+          new Vertex(this.origin.x * 0.25, this.origin.y + 15), 
+          new Vertex(this.drawLength * 0.8, freeSize.x) //this.size.y - step * (this.drawnFeatures.length - 2))
+        );
+      }
+    }
+    // if (index == this.drawnFeatures.length - 1) {
+    //   if (this.isVertical) this.freeSpace = step / 2 + this.size.x - drawEnd.x
+    //   else this.freeSpace = drawEnd.y;
+    // }
+    return this
+  }
 
   // private firstTitleProperties(): [Vertex, string, string, number] {
   //   return
@@ -3008,8 +3071,8 @@ export class ParallelAxis extends newAxis {
 
   protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
     super.formatTitle(text, context);
-    if (!this.isVertical) text.origin.y += text.height + this.offsetTicks + this.ticksFontsize;
-    text.format(context);
+    // if (!this.isVertical) text.origin.y += text.height + this.offsetTicks + this.ticksFontsize;
+    // text.format(context);
   }
 
   protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
@@ -3022,16 +3085,8 @@ export class ParallelAxis extends newAxis {
 
   protected computeEnds(): void {
     super.computeEnds();
-    if (this.isVertical) {
-      this.end.y -= this.drawLength * 0.1;
-      this.titleRect = new newRect(this.end.add(new Vertex(0, this.drawLength * 0.02)), new Vertex(this.freeSpace, this.drawLength * 0.1));
-    } else {
-      this.origin.x -= this.origin.x * 0.75;
-      this.titleRect = new newRect(
-        this.origin.add(new Vertex(0, 0)), 
-        new Vertex(this.drawLength * 0.2, this.freeSpace * 0.85)
-      );
-    }
+    if (this.isVertical) this.end.y -= this.drawLength * 0.1
+    else this.origin.x -= this.origin.x * 0.75;
   }  
 }
 

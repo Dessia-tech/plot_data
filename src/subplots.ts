@@ -1586,7 +1586,7 @@ export class Figure extends PlotData {
     return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
-  protected setFigureBounds() {
+  protected setBounds() {
     this.offset = this.computeOffset();
     this.margin = new Vertex(this.size.x * MARGIN_MULTIPLIER, this.size.y * MARGIN_MULTIPLIER).add(new Vertex(10, 10));
     return this.computeBounds()
@@ -1594,9 +1594,8 @@ export class Figure extends PlotData {
 
   protected computeBounds(): [Vertex, Vertex, Vertex] {
     const drawOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
-    const drawEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x,  this.size.y - this.margin.y + this.Y * this.initScale.y);
+    const drawEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, this.size.y - this.margin.y + this.Y * this.initScale.y);
     const freeSize = drawOrigin.copy();
-    console.log("d", freeSize)
     if (this.canvasMatrix.a < 0) this.swapDimension("x", drawOrigin, drawEnd, freeSize);
     if (this.canvasMatrix.d < 0) this.swapDimension("y", drawOrigin, drawEnd, freeSize);
     return [drawOrigin, drawEnd, freeSize]
@@ -1609,7 +1608,7 @@ export class Figure extends PlotData {
   }
 
   protected setAxes(): newAxis[] {
-    const [drawOrigin, drawEnd, freeSize] = this.setFigureBounds();
+    const [drawOrigin, drawEnd, freeSize] = this.setBounds();
     return this.buildAxes(drawOrigin, drawEnd, freeSize)
   }
 
@@ -2689,6 +2688,7 @@ export class newGraph2D extends newScatter {
 
 
 export class newParallelPlot extends Figure {
+  public axes: ParallelAxis[];
   private _isVertical: boolean;
   constructor(
     data: any,
@@ -2703,7 +2703,7 @@ export class newParallelPlot extends Figure {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get isVertical(): boolean { return this._isVertical ?? false }
+  get isVertical(): boolean { return this._isVertical ?? true }
 
   set isVertical(value: boolean) { this._isVertical = value }
 
@@ -2711,11 +2711,11 @@ export class newParallelPlot extends Figure {
     this.isVertical = !this.isVertical;
     const [drawOrigin, drawEnd, freeSize] = this.computeBounds();
     const step = this.computeAxesStep(drawOrigin, drawEnd);
-    let offset = 0;
+    let axisIndex = 0;
     this.axes.forEach(axis => {
-      const [axisOrigin, axisEnd] = this.computeAxisLocation(step, offset, drawOrigin, drawEnd, freeSize);
+      const [axisOrigin, axisEnd, freeSpace] = ParallelAxis.getLocation(step, axisIndex, drawOrigin, drawEnd, freeSize, this.isVertical);
       axis.transform(axisOrigin, axisEnd);
-      offset += step;
+      axisIndex++;
     });
     this.draw();
   }
@@ -2724,39 +2724,14 @@ export class newParallelPlot extends Figure {
     return (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1)
   }
 
-  private computeAxisLocation(step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [Vertex, Vertex, number] {
-    const axisOrigin = this.isVertical ? 
-      new Vertex(drawOrigin.x + offset, drawOrigin.y) :
-      new Vertex(drawOrigin.x, drawOrigin.y + offset);
-    const axisEnd = this.isVertical ? 
-      new Vertex(axisOrigin.x, drawEnd.y) : 
-      new Vertex(drawEnd.x, axisOrigin.y);
-    const freeSpace = (offset == 0 || Math.abs(offset - step * (this.drawnFeatures.length - 1)) <= 0.1) ? this.isVertical ? freeSize.x : freeSize.y : step;
-    if (offset == 0) {
-      
-    }
-    return [axisOrigin, axisEnd, freeSpace]
-  }
-
-  protected setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): ParallelAxis {
-    return new ParallelAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
-  }
-
-  private axisFromFeature(featureName: string, step: number, offset: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis {
-    const [axisOrigin, axisEnd, freeSpace] = this.computeAxisLocation(step, offset, drawOrigin, drawEnd, freeSize);
-    const axis = this.setAxis(featureName, freeSpace, axisOrigin, axisEnd);
-    axis.centeredTitle = false;
-    return axis
-  }
-
   protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis[] {
     super.buildAxes(drawOrigin, drawEnd, freeSize);
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     const axes: ParallelAxis[] = [];
-    let offset = 0;
+    let axisIndex = 0;
     this.drawnFeatures.forEach(featureName => {
-      axes.push(this.axisFromFeature(featureName, step, offset, drawOrigin, drawEnd, freeSize));
-      offset += step;
+      axes.push(ParallelAxis.fromFeature(this.features, featureName, step, axisIndex, drawOrigin, drawEnd, freeSize, this.isVertical, this.initScale));
+      axisIndex++;
     })
     return axes
   }

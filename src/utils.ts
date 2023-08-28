@@ -3008,10 +3008,8 @@ export class ParallelAxis extends newAxis {
 
   protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
     super.formatTitle(text, context);
-    if (!this.isVertical) {
-      text.origin.y += text.height + this.offsetTicks + this.ticksFontsize;
-      text.format(context);
-    }
+    if (!this.isVertical) text.origin.y += text.height + this.offsetTicks + this.ticksFontsize;
+    text.format(context);
   }
 
   protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {

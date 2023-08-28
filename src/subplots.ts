@@ -1596,7 +1596,7 @@ export class Figure extends PlotData {
     const drawOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
     const drawEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x,  this.size.y - this.margin.y + this.Y * this.initScale.y);
     const freeSize = drawOrigin.copy();
-    console.log("d",freeSize)
+    console.log("d", freeSize)
     if (this.canvasMatrix.a < 0) this.swapDimension("x", drawOrigin, drawEnd, freeSize);
     if (this.canvasMatrix.d < 0) this.swapDimension("y", drawOrigin, drawEnd, freeSize);
     return [drawOrigin, drawEnd, freeSize]
@@ -2703,12 +2703,12 @@ export class newParallelPlot extends Figure {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get isVertical(): boolean { return this._isVertical ?? true }
+  get isVertical(): boolean { return this._isVertical ?? false }
 
   set isVertical(value: boolean) { this._isVertical = value }
 
   public switchOrientation() {
-    this.isVertical = this.isVertical ? !this.isVertical : !this.axes[0].isVertical;
+    this.isVertical = !this.isVertical;
     const [drawOrigin, drawEnd, freeSize] = this.computeBounds();
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     let offset = 0;
@@ -2731,7 +2731,10 @@ export class newParallelPlot extends Figure {
     const axisEnd = this.isVertical ? 
       new Vertex(axisOrigin.x, drawEnd.y) : 
       new Vertex(drawEnd.x, axisOrigin.y);
-    const freeSpace = offset == 0 ? this.isVertical ? freeSize.x : freeSize.y : step;
+    const freeSpace = (offset == 0 || Math.abs(offset - step * (this.drawnFeatures.length - 1)) <= 0.1) ? this.isVertical ? freeSize.x : freeSize.y : step;
+    if (offset == 0) {
+      
+    }
     return [axisOrigin, axisEnd, freeSpace]
   }
 

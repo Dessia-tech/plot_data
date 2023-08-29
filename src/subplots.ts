@@ -2711,11 +2711,10 @@ export class newParallelPlot extends Figure {
     this.isVertical = !this.isVertical;
     const [drawOrigin, drawEnd, freeSize] = this.computeBounds();
     const step = this.computeAxesStep(drawOrigin, drawEnd);
-    let axisIndex = 0;
-    this.axes.forEach(axis => {
-      const [axisOrigin, axisEnd, freeSpace] = ParallelAxis.getLocation(step, axisIndex, drawOrigin, drawEnd, freeSize, this.isVertical);
+    this.axes.forEach((axis, index) => {
+      const [axisOrigin, axisEnd, freeSpace] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, freeSize, this.isVertical);
       axis.transform(axisOrigin, axisEnd);
-      axisIndex++;
+      axis.computeTitle(index, step, drawOrigin, drawEnd, freeSize);
     });
     this.draw();
   }
@@ -2728,10 +2727,8 @@ export class newParallelPlot extends Figure {
     super.buildAxes(drawOrigin, drawEnd, freeSize);
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     const axes: ParallelAxis[] = [];
-    let axisIndex = 0;
-    this.drawnFeatures.forEach(featureName => {
-      axes.push(ParallelAxis.fromFeature(this.features, featureName, step, axisIndex, drawOrigin, drawEnd, freeSize, this.isVertical, this.initScale));
-      axisIndex++;
+    this.drawnFeatures.forEach((featureName, index) => {
+      axes.push(ParallelAxis.fromFeature(this.features, featureName, step, index, drawOrigin, drawEnd, freeSize, this.isVertical, this.initScale));
     })
     return axes
   }

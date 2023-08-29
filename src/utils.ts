@@ -2996,6 +2996,7 @@ export class ParallelAxis extends newAxis {
     protected _nTicks: number = 10
     ) {
       super(vector, freeSpace, origin, end, name, initScale, _nTicks);
+      this.centeredTitle = false;
     }
   
   get tickMarker(): string { return "line" }
@@ -3018,26 +3019,23 @@ export class ParallelAxis extends newAxis {
     drawEnd: Vertex, freeSize: Vertex, isVertical: boolean, initScale: Vertex): ParallelAxis {
       const [axisOrigin, axisEnd, freeSpace] = this.getLocation(step, index, drawOrigin, drawEnd, freeSize, isVertical);
       const axis = new ParallelAxis(features.get(name), freeSpace, axisOrigin, axisEnd, name, initScale);
-      axis.centeredTitle = false;
       axis.computeTitle(index, step, drawOrigin, drawEnd, freeSize);
       return axis
   }
 
   private horizontalTitleProperties(): void { 
     this.titleSettings.origin = this.titleRect.origin;
-    this.titleSettings.align = "left";
     this.titleSettings.baseline = "top";
     this.titleSettings.orientation = 0;
   }
 
   private verticalTitleProperties(): void {
-    this.titleSettings.origin = this.titleRect.origin; 
-    this.titleSettings.align = "center";
-    this.titleSettings.baseline = "bottom"; 
+    this.titleSettings.origin = this.titleRect.origin;
+    this.titleSettings.baseline = "bottom";
     this.titleSettings.orientation = 0;
   }
 
-  private computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis {
+  public computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis {
     this.freeSpace = step;
     if (index == 0) {
       if (this.isVertical) {
@@ -3060,15 +3058,6 @@ export class ParallelAxis extends newAxis {
     // }
     return this
   }
-
-  // private firstTitleProperties(): [Vertex, string, string, number] {
-  //   return
-  // }
-
-  // private lastTitleProperties(): [Vertex, string, string, number] {
-  //   return
-  // }
-
   protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
     super.formatTitle(text, context);
     // if (!this.isVertical) text.origin.y += text.height + this.offsetTicks + this.ticksFontsize;

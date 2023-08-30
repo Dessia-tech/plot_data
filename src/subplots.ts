@@ -2697,22 +2697,21 @@ export class newParallelPlot extends Figure {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get isVertical(): boolean { return this._isVertical ?? false }
+  get isVertical(): boolean { return this._isVertical ?? true }
 
   set isVertical(value: boolean) { this._isVertical = value }
 
-  public switchOrientation() {
-    this.isVertical = !this.isVertical;
-    // const [drawOrigin, drawEnd, freeSize] = this.computeBounds();
-    const [drawOrigin, drawEnd] = this.computeBounds();
-    const step = this.computeAxesStep(drawOrigin, drawEnd);
-    this.axes.forEach((axis, index) => {
-      const [axisOrigin, axisEnd, freeSpace] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.size, this.isVertical);
-      axis.transform(axisOrigin, axisEnd);
-      axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
-    });
-    this.draw();
-  }
+  // public switchOrientation() {
+  //   this.isVertical = !this.isVertical;
+  //   const [drawOrigin, drawEnd, freeSpace] = this.computeBounds();
+  //   const step = this.computeAxesStep(drawOrigin, drawEnd);
+  //   this.axes.forEach((axis, index) => {
+  //     const [axisOrigin, axisEnd] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.isVertical);
+  //     axis.transform(axisOrigin, axisEnd);
+  //     axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
+  //   });
+  //   this.draw();
+  // }
 
   private computeAxesStep(drawOrigin: Vertex, drawEnd: Vertex): number {
     return (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1)
@@ -2722,40 +2721,38 @@ export class newParallelPlot extends Figure {
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     const boundingBoxes: newRect[] = [];
     this.drawnFeatures.forEach((drawnFeature, index) => {
+      const axisOrigin = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.isVertical)[0];
       if (this.isVertical) {
         boundingBoxes.push(
           new newRect(
-            new Vertex(drawOrigin.x - step / 2 + step * index, drawOrigin.y),
+            new Vertex(axisOrigin.x - step / 2, drawOrigin.y),
             new Vertex(step, drawEnd.y - drawOrigin.y)
           )
         )
       } else {
         boundingBoxes.push(
           new newRect(
-            new Vertex(drawOrigin.x, drawOrigin.y + step * index),
+            new Vertex(axisOrigin.x, axisOrigin.y),
             new Vertex((drawEnd.x - drawOrigin.x) * 0.5, step)
           )
         )
       }
+      // TODO: [DEBUG LINES] Remove the two next lines
+      boundingBoxes[boundingBoxes.length - 1].lineWidth = 0.5;
+      boundingBoxes[boundingBoxes.length - 1].isFilled = false;
     });
     return boundingBoxes
   }
 
-  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): newAxis[] {
-    return this.drawnFeatures.map((drawnFeature, index) => {
-      return this.setAxis(drawnFeature, axisBoundingBoxes[index], drawOrigin, new Vertex(drawEnd.x, drawOrigin.y));
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): ParallelAxis[] {
+    const step = this.computeAxesStep(drawOrigin, drawEnd);
+    const axes: ParallelAxis[] = [];
+    this.drawnFeatures.forEach((featureName, index) => {
+      const [axisOrigin, axisEnd] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.isVertical);
+      axes.push(new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale));
     })
+    return axes
   }
-
-  // protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): ParallelAxis[] {//, freeSize: Vertex): ParallelAxis[] {
-  //   super.buildAxes(drawOrigin, drawEnd, freeSize);
-  //   const step = this.computeAxesStep(drawOrigin, drawEnd);
-  //   const axes: ParallelAxis[] = [];
-  //   this.drawnFeatures.forEach((featureName, index) => {
-  //     axes.push(ParallelAxis.fromFeature(this.features, featureName, step, index, drawOrigin, drawEnd, this.size, this.isVertical, this.initScale));
-  //   })
-  //   return axes
-  // }
 }
 
 

@@ -3041,29 +3041,29 @@ export class ParallelAxis extends newAxis {
     this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
   }
 
-  public static getLocation(step: number, axisIndex: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex, isVertical: boolean): [Vertex, Vertex, newRect] {
+  public static getLocation(step: number, axisIndex: number, drawOrigin: Vertex, drawEnd: Vertex, isVertical: boolean): [Vertex, Vertex] {
     const verticalX = drawOrigin.x + axisIndex * step;
     const horizontalY = drawOrigin.y + axisIndex * step;
     if (isVertical) return [
       new Vertex(verticalX, drawOrigin.y),
-      new Vertex(verticalX, drawEnd.y),
-      new newRect(new Vertex(verticalX - step / 2, drawOrigin.y), new Vertex(step, Math.abs(drawEnd.y - drawOrigin.y)))
+      new Vertex(verticalX, drawEnd.y)
     ];
     return [
       new Vertex(drawOrigin.x, horizontalY),
-      new Vertex(drawEnd.x, horizontalY),
-      new newRect(new Vertex(drawOrigin.x, horizontalY), new Vertex(Math.abs(drawEnd.x - drawOrigin.x) * 0.5, step))
+      new Vertex(drawEnd.x, horizontalY)
     ]
   }
 
-  public static fromFeature(
-    features: Map<string, any[]>, name: string, step: number, index: number, drawOrigin: Vertex,
-    drawEnd: Vertex, freeSize: Vertex, isVertical: boolean, initScale: Vertex): ParallelAxis {
-      const [axisOrigin, axisEnd, boundingBox] = this.getLocation(step, index, drawOrigin, drawEnd, freeSize, isVertical);
-      const axis = new ParallelAxis(features.get(name), boundingBox, axisOrigin, axisEnd, name, initScale);
-      axis.computeTitle(index, step, drawOrigin, drawEnd, freeSize);
-      return axis
-  }
+
+
+  // public static fromFeature(
+  //   features: Map<string, any[]>, name: string, step: number, index: number, drawOrigin: Vertex,
+  //   drawEnd: Vertex, freeSize: Vertex, isVertical: boolean, initScale: Vertex): ParallelAxis {
+  //     const [axisOrigin, axisEnd, boundingBox] = this.getLocation(step, index, drawOrigin, drawEnd, freeSize, isVertical);
+  //     const axis = new ParallelAxis(features.get(name), boundingBox, axisOrigin, axisEnd, name, initScale);
+  //     axis.computeTitle(index, step, drawOrigin, drawEnd, freeSize);
+  //     return axis
+  // }
 
   private horizontalTitleProperties(): void { 
     this.titleSettings.origin = this.titleRect.origin;
@@ -3117,8 +3117,15 @@ export class ParallelAxis extends newAxis {
 
   protected computeEnds(): void {
     super.computeEnds();
-    if (this.isVertical) this.end.y -= this.drawLength * 0.1
-    else this.origin.x -= this.origin.x * 0.75;
+    if (this.isVertical) {
+      this.end.y -= this.drawLength * 0.1;
+      this.boundingBox.size.x -= this.SIZE_END / 2;
+    }
+    else {
+      this.origin.x -= this.origin.x * 0.75;
+      this.boundingBox.origin.x = this.origin.x;
+      this.boundingBox.size.y -= this.SIZE_END / 2;
+    }
   }  
 }
 

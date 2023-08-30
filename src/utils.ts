@@ -2234,6 +2234,7 @@ export class Bar extends newRect {
     if (this.values.some(valIdx => hoveredIndices.includes(valIdx))) this.isHovered = true;
     if (this.values.some(valIdx => clickedIndices.includes(valIdx))) this.isClicked = true;
     if (this.values.some(valIdx => selectedIndices.includes(valIdx))) this.isSelected = true;
+    this.buildPath();
   }
 }
 

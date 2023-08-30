@@ -2214,10 +2214,7 @@ export class Histogram extends Frame {
 
   protected drawRelativeObjects(): void {
     super.drawRelativeObjects();
-    this.bars.forEach(bar => {
-      bar.buildPath();
-      bar.draw(this.context_show);
-    });
+    this.bars.forEach(bar => bar.draw(this.context_show));
     this.relativeObjects = new GroupCollection([...this.bars], this.relativeMatrix);
   }
 

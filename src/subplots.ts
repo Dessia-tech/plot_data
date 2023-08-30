@@ -2250,7 +2250,6 @@ export class Histogram extends Frame {
   }
 
   public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
-    // e.preventDefault();
     this.fusion_coeff = 1.2;
     if (!this.axes[0].isDiscrete) {
       if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
@@ -2397,7 +2396,7 @@ export class newScatter extends Frame {
     this.draw();
   }
 
-  protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
+  protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void {
     super.zoomBoxUpdateAxes(zoomBox);
     this.computePoints();
   }

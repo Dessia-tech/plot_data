@@ -2322,9 +2322,7 @@ export class newScatter extends Frame {
 
   private unpackPointsSets(data: any): void {
     data.points_sets.forEach((pointSet, setIndex) => {
-      pointSet.point_index.forEach(pointIndex => {
-        this.pointSets[pointIndex] = setIndex;
-      })
+      pointSet.point_index.forEach(pointIndex => this.pointSets[pointIndex] = setIndex);
       this.pointSetColors.push(pointSet.color);
     })
   }
@@ -2566,12 +2564,12 @@ export class newScatter extends Frame {
     const scale = new Vertex(this.scaleX, this.scaleY);
     [mouse3X, mouse3Y] = super.wheel_interaction(mouse3X, mouse3Y, deltaY);
     for (const axis of this.axes) {
-      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
-        if (this.scaleX > scale.x) {this.scaleX = scale.x}
-        if (this.scaleY > scale.y) {this.scaleY = scale.y}
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) { // code style only
+        if (this.scaleX > scale.x) this.scaleX = scale.x;
+        if (this.scaleY > scale.y) this.scaleY = scale.y;
       } else if (axis.tickPrecision < 1) {
-        if (this.scaleX < scale.x) {this.scaleX = scale.x}
-        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+        if (this.scaleX < scale.x) this.scaleX = scale.x;
+        if (this.scaleX < scale.x) this.scaleX = scale.x;
       }
     }
     this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);

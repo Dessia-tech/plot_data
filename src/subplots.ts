@@ -2166,15 +2166,6 @@ export class Histogram extends Frame {
     this.bars = [];
   }
 
-  // private buildNumberAxis(axisBoundingBox: newRect, frameOrigin: Vertex, yEnd: Vertex): newAxis {
-  //   const numberAxis = this.setAxis('number', axisBoundingBox, frameOrigin, yEnd, this.nYTicks);
-  //   numberAxis.initMaxValue = numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
-  //   numberAxis.initMinValue = numberAxis.minValue = 0;
-  //   numberAxis.nTicks = this.nYTicks;
-  //   numberAxis.saveLocation();
-  //   return numberAxis
-  // }
-
   private updateNumberAxis(numberAxis: newAxis, bars: Bar[]): newAxis {
     this.features.set('number', this.getNumberFeature(bars));
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
@@ -2236,16 +2227,8 @@ export class Histogram extends Frame {
     this.bars.forEach((bar, index) => {
       let origin = new Vertex(fullTicks[index], minY);
       let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length > minY ? bar.length - minY : 0);
-      if (this.axes[0].isDiscrete) {origin.x = origin.x - size.x / 2};
-
-      bar.setGeometry(origin, size);
-      bar.fillStyle = this.fillStyle;
-      bar.strokeStyle = this.strokeStyle;
-      bar.dashLine = this.dashLine;
-      bar.lineWidth = this.lineWidth;
-      if (bar.values.some(valIdx => this.hoveredIndices.includes(valIdx))) bar.isHovered = true;
-      if (bar.values.some(valIdx => this.clickedIndices.includes(valIdx))) bar.isClicked = true;
-      if (bar.values.some(valIdx => this.selectedIndices.includes(valIdx))) bar.isSelected = true;
+      if (this.axes[0].isDiscrete) origin.x = origin.x - size.x / 2;
+      bar.updateStyle(origin, size, this.hoveredIndices, this.clickedIndices, this.selectedIndices);
     })
   }
 

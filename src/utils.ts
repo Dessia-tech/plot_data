@@ -2223,6 +2223,17 @@ export class Bar extends newRect {
     this.max = Math.max(...values);
     this.mean = values.reduce((a, b) => a + b, 0) / values.length;
   }
+
+  public updateStyle(origin: Vertex, size: Vertex, hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[]): void {
+    this.setGeometry(origin, size);
+    this.fillStyle = this.fillStyle;
+    this.strokeStyle = this.strokeStyle;
+    this.dashLine = this.dashLine;
+    this.lineWidth = this.lineWidth;
+    if (this.values.some(valIdx => hoveredIndices.includes(valIdx))) this.isHovered = true;
+    if (this.values.some(valIdx => clickedIndices.includes(valIdx))) this.isClicked = true;
+    if (this.values.some(valIdx => selectedIndices.includes(valIdx))) this.isSelected = true;
+  }
 }
 
 

@@ -8,9 +8,9 @@ from plot_data.colors import (BLUE, GREEN, GREY, LIGHTBLUE, LIGHTVIOLET,
 
 random.seed(2)
 elements = []
-SHAPES = ['round', 'square', 'triangle', 'ellipse']
+SHAPES = ['1-2-3-4-5-6-7-8-9round', 'square', 'triangle', 'ellipse']
 COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
-for i in range(0):
+for i in range(1000):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
     elements.append({'mass': random.uniform(0, 50),

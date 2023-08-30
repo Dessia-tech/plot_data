@@ -1,6 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle, ParallelAxis } from "./utils";
+  LineSequence, newRect, newPointStyle } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1512,7 +1512,7 @@ export class Figure extends PlotData {
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
-      this.nSamples = this.features.entries().next().value[1].length; // a little bit cumbersome
+      this.nSamples = this.features.entries().next().value[1].length;
       this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
@@ -1586,43 +1586,50 @@ export class Figure extends PlotData {
     return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
-  protected setBounds() {
+  protected setBounds(): [Vertex, Vertex, Vertex] {
     this.offset = this.computeOffset();
     this.margin = new Vertex(this.size.x * MARGIN_MULTIPLIER, this.size.y * MARGIN_MULTIPLIER).add(new Vertex(10, 10));
     return this.computeBounds()
   }
 
   protected computeBounds(): [Vertex, Vertex, Vertex] {
-    const drawOrigin = this.offset.add(new Vertex(this.X, this.Y).scale(this.initScale));
-    const drawEnd = new Vertex(this.size.x - this.margin.x + this.X * this.initScale.x, this.size.y - this.margin.y + this.Y * this.initScale.y);
-    const freeSize = drawOrigin.copy();
-    if (this.canvasMatrix.a < 0) this.swapDimension("x", drawOrigin, drawEnd, freeSize);
-    if (this.canvasMatrix.d < 0) this.swapDimension("y", drawOrigin, drawEnd, freeSize);
-    return [drawOrigin, drawEnd, freeSize]
+    const canvasOrigin = new Vertex(this.X, this.Y).scale(this.initScale);
+    const drawOrigin = this.offset.add(canvasOrigin);
+    const drawEnd = canvasOrigin.add(this.size.subtract(this.margin));
+    const freeSpace = new Vertex(Math.abs(drawOrigin.x - this.X), Math.abs(drawOrigin.y - this.Y));
+    if (this.canvasMatrix.a < 0) this.swapDimension("x", drawOrigin, drawEnd, freeSpace);
+    if (this.canvasMatrix.d < 0) this.swapDimension("y", drawOrigin, drawEnd, freeSpace);
+    return [drawOrigin, drawEnd, freeSpace]
   }
 
-  private swapDimension(dimension: string, origin: Vertex, end: Vertex, freeSize: Vertex): void {
+  private swapDimension(dimension: string, origin: Vertex, end: Vertex, freeSpace: Vertex): void {
     origin[dimension] = origin[dimension] - this.size[dimension];
     end[dimension] = end[dimension] - this.size[dimension];
-    freeSize[dimension] = this.size[dimension] + origin[dimension];
+    freeSpace[dimension] = Math.abs(new Vertex(this.X, this.Y)[dimension] - origin[dimension] * this.initScale[dimension] + this.size[dimension]);
   }
 
   protected setAxes(): newAxis[] {
-    const [drawOrigin, drawEnd, freeSize] = this.setBounds();
-    return this.buildAxes(drawOrigin, drawEnd, freeSize)
+    const [drawOrigin, drawEnd, freeSpace] = this.setBounds();
+    const axisBoundingBoxes = this.buildAxisBoundingBoxes(drawOrigin, drawEnd, freeSpace);
+    return this.buildAxes(drawOrigin, drawEnd, axisBoundingBoxes)
   }
 
-  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): newAxis[] { return }
+  protected buildAxisBoundingBoxes(drawOrigin: Vertex, drawEnd: Vertex, freeSpace: Vertex): newRect[] { return }
 
-  protected transformAxes(drawOrigin: Vertex, drawEnd: Vertex): void {}
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBox: newRect[]): newAxis[] { return }
 
-  protected setAxis(feature: string, freeSize: number, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-    return new newAxis(this.features.get(feature), freeSize, origin, end, feature, this.initScale, nTicks)
+  protected transformAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): void {
+    axisBoundingBoxes.forEach((box, index) => this.axes[index].boundingBox = box);
+  }
+
+  protected setAxis(feature: string, axisBoundingBox: newRect, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
+    return new newAxis(this.features.get(feature), axisBoundingBox, origin, end, feature, this.initScale, nTicks)
   }
 
   private relocateAxes(): void {
-    const [drawOrigin, drawEnd] = this.computeBounds();
-    this.transformAxes(drawOrigin, drawEnd);
+    const [drawOrigin, drawEnd, freeSpace] = this.computeBounds();
+    const axisBoundingBoxes = this.buildAxisBoundingBoxes(drawOrigin, drawEnd, freeSpace);
+    this.transformAxes(drawOrigin, drawEnd, axisBoundingBoxes);
   }
 
   public updateSelection(axesSelections: number[][]): void {
@@ -2066,18 +2073,24 @@ export class Frame extends Figure {
     return [this.xFeature, this.yFeature]
   }
 
-  protected transformAxes(drawOrigin: Vertex, drawEnd: Vertex): void {
-    super.transformAxes(drawOrigin, drawEnd);
+  protected transformAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): void {
+    super.transformAxes(drawOrigin, drawEnd, axisBoundingBoxes);
     this.axes[0].transform(drawOrigin, new Vertex(drawEnd.x, drawOrigin.y));
     this.axes[1].transform(drawOrigin, new Vertex(drawOrigin.x, drawEnd.y));
   }
 
-  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [newAxis, newAxis] {
-    super.buildAxes(drawOrigin, drawEnd, freeSize);
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): [newAxis, newAxis] {
+    super.buildAxes(drawOrigin, drawEnd, axisBoundingBoxes);
     return [
-      this.setAxis(this.xFeature, freeSize.y, drawOrigin, new Vertex(drawEnd.x, drawOrigin.y), this.nXTicks),
-      this.setAxis(this.yFeature, freeSize.x, drawOrigin, new Vertex(drawOrigin.x, drawEnd.y), this.nYTicks)
+      this.setAxis(this.xFeature, axisBoundingBoxes[0], drawOrigin, new Vertex(drawEnd.x, drawOrigin.y), this.nXTicks),
+      this.setAxis(this.yFeature, axisBoundingBoxes[1], drawOrigin, new Vertex(drawOrigin.x, drawEnd.y), this.nYTicks)
     ]
+  }
+
+  protected buildAxisBoundingBoxes(drawOrigin: Vertex, drawEnd: Vertex, freeSpace: Vertex): newRect[] {
+    const xBoundingBox = new newRect(new Vertex(drawOrigin.x, drawOrigin.y - freeSpace.y), new Vertex(drawEnd.x - drawOrigin.x, freeSpace.y));
+    const yBoundingBox = new newRect(new Vertex(drawOrigin.x - freeSpace.x, drawOrigin.y), new Vertex(freeSpace.x, drawEnd.y - drawOrigin.y));
+    return [xBoundingBox, yBoundingBox]
   }
 
   protected drawAxes() {
@@ -2153,8 +2166,8 @@ export class Histogram extends Frame {
     this.bars = [];
   }
 
-  private buildNumberAxis(freeSize: number, frameOrigin: Vertex, yEnd: Vertex): newAxis {
-    const numberAxis = this.setAxis('number', freeSize, frameOrigin, yEnd, this.nYTicks);
+  private buildNumberAxis(axisBoundingBox: newRect, frameOrigin: Vertex, yEnd: Vertex): newAxis {
+    const numberAxis = this.setAxis('number', axisBoundingBox, frameOrigin, yEnd, this.nYTicks);
     numberAxis.initMaxValue = numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.initMinValue = numberAxis.minValue = 0;
     numberAxis.nTicks = this.nYTicks;
@@ -2182,7 +2195,7 @@ export class Histogram extends Frame {
   }
 
   private computeBars(vector: number[]): Bar[] {
-    const baseAxis = this.axes[0] ?? this.setAxis(this.xFeature, 0, new Vertex(), new Vertex(), this.nXTicks);
+    const baseAxis = this.axes[0] ?? this.setAxis(this.xFeature, new newRect(), new Vertex(), new Vertex(), this.nXTicks);
     const numericVector = baseAxis.stringsToValues(vector);
     let fakeTicks = this.boundedTicks(baseAxis);
     let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar([]));
@@ -2235,11 +2248,11 @@ export class Histogram extends Frame {
     })
   }
 
-  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): [newAxis, newAxis] {
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): [newAxis, newAxis] {
     const bars = this.computeBars(this.features.get(this.xFeature));
     this.features.set('number', this.getNumberFeature(bars));
-    let [xAxis, yAxis] = super.buildAxes(drawOrigin, drawEnd, freeSize);
-    yAxis = this.buildNumberAxis(freeSize.x, drawOrigin, new Vertex(drawOrigin.x, drawEnd.y));
+    let [xAxis, yAxis] = super.buildAxes(drawOrigin, drawEnd, axisBoundingBoxes);
+    yAxis = this.buildNumberAxis(axisBoundingBoxes[1], drawOrigin, new Vertex(drawOrigin.x, drawEnd.y));
     return [xAxis, yAxis]
   }
 
@@ -2687,52 +2700,53 @@ export class newGraph2D extends newScatter {
 }
 
 
-export class newParallelPlot extends Figure {
-  public axes: ParallelAxis[];
-  private _isVertical: boolean;
-  constructor(
-    data: any,
-    public width: number,
-    public height: number,
-    public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
-    public canvas_id: string,
-    public is_in_multiplot: boolean = false
-    ) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-    }
+// export class newParallelPlot extends Figure {
+//   public axes: ParallelAxis[];
+//   private _isVertical: boolean;
+//   constructor(
+//     data: any,
+//     public width: number,
+//     public height: number,
+//     public buttons_ON: boolean,
+//     public X: number,
+//     public Y: number,
+//     public canvas_id: string,
+//     public is_in_multiplot: boolean = false
+//     ) {
+//       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+//     }
 
-  get isVertical(): boolean { return this._isVertical ?? true }
+//   get isVertical(): boolean { return this._isVertical ?? true }
 
-  set isVertical(value: boolean) { this._isVertical = value }
+//   set isVertical(value: boolean) { this._isVertical = value }
 
-  public switchOrientation() {
-    this.isVertical = !this.isVertical;
-    const [drawOrigin, drawEnd, freeSize] = this.computeBounds();
-    const step = this.computeAxesStep(drawOrigin, drawEnd);
-    this.axes.forEach((axis, index) => {
-      const [axisOrigin, axisEnd, freeSpace] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, freeSize, this.isVertical);
-      axis.transform(axisOrigin, axisEnd);
-      axis.computeTitle(index, step, drawOrigin, drawEnd, freeSize);
-    });
-    this.draw();
-  }
+//   public switchOrientation() {
+//     this.isVertical = !this.isVertical;
+//     // const [drawOrigin, drawEnd, freeSize] = this.computeBounds();
+//     const [drawOrigin, drawEnd] = this.computeBounds();
+//     const step = this.computeAxesStep(drawOrigin, drawEnd);
+//     this.axes.forEach((axis, index) => {
+//       const [axisOrigin, axisEnd, freeSpace] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.size, this.isVertical);
+//       axis.transform(axisOrigin, axisEnd);
+//       axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
+//     });
+//     this.draw();
+//   }
 
-  private computeAxesStep(drawOrigin: Vertex, drawEnd: Vertex): number {
-    return (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1)
-  }
+//   private computeAxesStep(drawOrigin: Vertex, drawEnd: Vertex): number {
+//     return (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1)
+//   }
 
-  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis[] {
-    super.buildAxes(drawOrigin, drawEnd, freeSize);
-    const step = this.computeAxesStep(drawOrigin, drawEnd);
-    const axes: ParallelAxis[] = [];
-    this.drawnFeatures.forEach((featureName, index) => {
-      axes.push(ParallelAxis.fromFeature(this.features, featureName, step, index, drawOrigin, drawEnd, freeSize, this.isVertical, this.initScale));
-    })
-    return axes
-  }
-}
+//   protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex): ParallelAxis[] {//, freeSize: Vertex): ParallelAxis[] {
+//     super.buildAxes(drawOrigin, drawEnd);//, freeSize);
+//     const step = this.computeAxesStep(drawOrigin, drawEnd);
+//     const axes: ParallelAxis[] = [];
+//     this.drawnFeatures.forEach((featureName, index) => {
+//       axes.push(ParallelAxis.fromFeature(this.features, featureName, step, index, drawOrigin, drawEnd, this.size, this.isVertical, this.initScale));
+//     })
+//     return axes
+//   }
+// }
 
 
 function range(start: number, end: number, step: number = 1): number[] {

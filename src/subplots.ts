@@ -1,6 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle } from "./utils";
+  LineSequence, newRect, newPointStyle, ParallelAxis } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -2166,19 +2166,20 @@ export class Histogram extends Frame {
     this.bars = [];
   }
 
-  private buildNumberAxis(axisBoundingBox: newRect, frameOrigin: Vertex, yEnd: Vertex): newAxis {
-    const numberAxis = this.setAxis('number', axisBoundingBox, frameOrigin, yEnd, this.nYTicks);
-    numberAxis.initMaxValue = numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
-    numberAxis.initMinValue = numberAxis.minValue = 0;
-    numberAxis.nTicks = this.nYTicks;
-    numberAxis.saveLocation();
-    return numberAxis
-  }
+  // private buildNumberAxis(axisBoundingBox: newRect, frameOrigin: Vertex, yEnd: Vertex): newAxis {
+  //   const numberAxis = this.setAxis('number', axisBoundingBox, frameOrigin, yEnd, this.nYTicks);
+  //   numberAxis.initMaxValue = numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
+  //   numberAxis.initMinValue = numberAxis.minValue = 0;
+  //   numberAxis.nTicks = this.nYTicks;
+  //   numberAxis.saveLocation();
+  //   return numberAxis
+  // }
 
   private updateNumberAxis(numberAxis: newAxis, bars: Bar[]): newAxis {
     this.features.set('number', this.getNumberFeature(bars));
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.saveLocation();
+    numberAxis.updateTicks();
     return numberAxis
   }
 
@@ -2251,9 +2252,8 @@ export class Histogram extends Frame {
   protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): [newAxis, newAxis] {
     const bars = this.computeBars(this.features.get(this.xFeature));
     this.features.set('number', this.getNumberFeature(bars));
-    let [xAxis, yAxis] = super.buildAxes(drawOrigin, drawEnd, axisBoundingBoxes);
-    yAxis = this.buildNumberAxis(axisBoundingBoxes[1], drawOrigin, new Vertex(drawOrigin.x, drawEnd.y));
-    return [xAxis, yAxis]
+    const [xAxis, yAxis] = super.buildAxes(drawOrigin, drawEnd, axisBoundingBoxes)
+    return [xAxis, this.updateNumberAxis(yAxis, bars)]
   }
 
   protected setFeatures(data: any): [string, string] {
@@ -2700,53 +2700,82 @@ export class newGraph2D extends newScatter {
 }
 
 
-// export class newParallelPlot extends Figure {
-//   public axes: ParallelAxis[];
-//   private _isVertical: boolean;
-//   constructor(
-//     data: any,
-//     public width: number,
-//     public height: number,
-//     public buttons_ON: boolean,
-//     public X: number,
-//     public Y: number,
-//     public canvas_id: string,
-//     public is_in_multiplot: boolean = false
-//     ) {
-//       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-//     }
+export class newParallelPlot extends Figure {
+  public axes: ParallelAxis[];
+  private _isVertical: boolean;
+  constructor(
+    data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+    }
 
-//   get isVertical(): boolean { return this._isVertical ?? true }
+  get isVertical(): boolean { return this._isVertical ?? false }
 
-//   set isVertical(value: boolean) { this._isVertical = value }
+  set isVertical(value: boolean) { this._isVertical = value }
 
-//   public switchOrientation() {
-//     this.isVertical = !this.isVertical;
-//     // const [drawOrigin, drawEnd, freeSize] = this.computeBounds();
-//     const [drawOrigin, drawEnd] = this.computeBounds();
-//     const step = this.computeAxesStep(drawOrigin, drawEnd);
-//     this.axes.forEach((axis, index) => {
-//       const [axisOrigin, axisEnd, freeSpace] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.size, this.isVertical);
-//       axis.transform(axisOrigin, axisEnd);
-//       axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
-//     });
-//     this.draw();
-//   }
+  public switchOrientation() {
+    this.isVertical = !this.isVertical;
+    // const [drawOrigin, drawEnd, freeSize] = this.computeBounds();
+    const [drawOrigin, drawEnd] = this.computeBounds();
+    const step = this.computeAxesStep(drawOrigin, drawEnd);
+    this.axes.forEach((axis, index) => {
+      const [axisOrigin, axisEnd, freeSpace] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.size, this.isVertical);
+      axis.transform(axisOrigin, axisEnd);
+      axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
+    });
+    this.draw();
+  }
 
-//   private computeAxesStep(drawOrigin: Vertex, drawEnd: Vertex): number {
-//     return (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1)
-//   }
+  private computeAxesStep(drawOrigin: Vertex, drawEnd: Vertex): number {
+    return (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1)
+  }
 
-//   protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex): ParallelAxis[] {//, freeSize: Vertex): ParallelAxis[] {
-//     super.buildAxes(drawOrigin, drawEnd);//, freeSize);
-//     const step = this.computeAxesStep(drawOrigin, drawEnd);
-//     const axes: ParallelAxis[] = [];
-//     this.drawnFeatures.forEach((featureName, index) => {
-//       axes.push(ParallelAxis.fromFeature(this.features, featureName, step, index, drawOrigin, drawEnd, this.size, this.isVertical, this.initScale));
-//     })
-//     return axes
-//   }
-// }
+  protected buildAxisBoundingBoxes(drawOrigin: Vertex, drawEnd: Vertex, freeSpace: Vertex): newRect[] {
+    const step = this.computeAxesStep(drawOrigin, drawEnd);
+    const boundingBoxes: newRect[] = [];
+    this.drawnFeatures.forEach((drawnFeature, index) => {
+      if (this.isVertical) {
+        boundingBoxes.push(
+          new newRect(
+            new Vertex(drawOrigin.x - step / 2 + step * index, drawOrigin.y),
+            new Vertex(step, drawEnd.y - drawOrigin.y)
+          )
+        )
+      } else {
+        boundingBoxes.push(
+          new newRect(
+            new Vertex(drawOrigin.x, drawOrigin.y + step * index),
+            new Vertex((drawEnd.x - drawOrigin.x) * 0.5, step)
+          )
+        )
+      }
+    });
+    return boundingBoxes
+  }
+
+  protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): newAxis[] {
+    return this.drawnFeatures.map((drawnFeature, index) => {
+      return this.setAxis(drawnFeature, axisBoundingBoxes[index], drawOrigin, new Vertex(drawEnd.x, drawOrigin.y));
+    })
+  }
+
+  // protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): ParallelAxis[] {//, freeSize: Vertex): ParallelAxis[] {
+  //   super.buildAxes(drawOrigin, drawEnd, freeSize);
+  //   const step = this.computeAxesStep(drawOrigin, drawEnd);
+  //   const axes: ParallelAxis[] = [];
+  //   this.drawnFeatures.forEach((featureName, index) => {
+  //     axes.push(ParallelAxis.fromFeature(this.features, featureName, step, index, drawOrigin, drawEnd, this.size, this.isVertical, this.initScale));
+  //   })
+  //   return axes
+  // }
+}
 
 
 function range(start: number, end: number, step: number = 1): number[] {

@@ -3005,100 +3005,109 @@ export class newAxis extends EventEmitter {
 }
 
 
-// export class ParallelAxis extends newAxis {
-//   public titleRect: newRect = new newRect();
-//   constructor(
-//     vector: any[],
-//     public freeSpace: newRect,
-//     public origin: Vertex,
-//     public end: Vertex,
-//     public name: string = '',
-//     public initScale: Vertex,
-//     protected _nTicks: number = 10
-//     ) {
-//       super(vector, freeSpace, origin, end, name, initScale, _nTicks);
-//       this.centeredTitle = false;
-//     }
+export class ParallelAxis extends newAxis {
+  public titleRect: newRect = new newRect();
+  constructor(
+    vector: any[],
+    public boundingBox: newRect,
+    public origin: Vertex,
+    public end: Vertex,
+    public name: string = '',
+    public initScale: Vertex,
+    protected _nTicks: number = 10
+    ) {
+      super(vector, boundingBox, origin, end, name, initScale, _nTicks);
+      this.centeredTitle = false;
+    }
   
-//   get tickMarker(): string { return "line" }
+  get tickMarker(): string { return "line" }
 
-//   get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
+  get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
 
-//   public setTitleSettings(): void {
-//     this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
-//   }
+  public setTitleSettings(): void {
+    this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
+  }
 
-//   public static getLocation(step: number, axisIndex: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex, isVertical: boolean): [Vertex, Vertex, number] {
-//     const verticalX = drawOrigin.x + axisIndex * step;
-//     const horizontalY = drawOrigin.y + axisIndex * step;
-//     if (isVertical) return [new Vertex(verticalX, drawOrigin.y), new Vertex(verticalX, drawEnd.y), step];
-//     return [new Vertex(drawOrigin.x, horizontalY), new Vertex(drawEnd.x, horizontalY), step]
-//   }
+  public static getLocation(step: number, axisIndex: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex, isVertical: boolean): [Vertex, Vertex, newRect] {
+    const verticalX = drawOrigin.x + axisIndex * step;
+    const horizontalY = drawOrigin.y + axisIndex * step;
+    if (isVertical) return [
+      new Vertex(verticalX, drawOrigin.y),
+      new Vertex(verticalX, drawEnd.y),
+      new newRect(new Vertex(verticalX - step / 2, drawOrigin.y), new Vertex(step, Math.abs(drawEnd.y - drawOrigin.y)))
+    ];
+    return [
+      new Vertex(drawOrigin.x, horizontalY),
+      new Vertex(drawEnd.x, horizontalY),
+      new newRect(new Vertex(drawOrigin.x, horizontalY), new Vertex(Math.abs(drawEnd.x - drawOrigin.x) * 0.5, step))
+    ]
+  }
 
-//   public static fromFeature(
-//     features: Map<string, any[]>, name: string, step: number, index: number, drawOrigin: Vertex,
-//     drawEnd: Vertex, freeSize: Vertex, isVertical: boolean, initScale: Vertex): ParallelAxis {
-//       const [axisOrigin, axisEnd, freeSpace] = this.getLocation(step, index, drawOrigin, drawEnd, freeSize, isVertical);
-//       const axis = new ParallelAxis(features.get(name), freeSpace, axisOrigin, axisEnd, name, initScale);
-//       axis.computeTitle(index, step, drawOrigin, drawEnd, freeSize);
-//       return axis
-//   }
+  public static fromFeature(
+    features: Map<string, any[]>, name: string, step: number, index: number, drawOrigin: Vertex,
+    drawEnd: Vertex, freeSize: Vertex, isVertical: boolean, initScale: Vertex): ParallelAxis {
+      const [axisOrigin, axisEnd, boundingBox] = this.getLocation(step, index, drawOrigin, drawEnd, freeSize, isVertical);
+      const axis = new ParallelAxis(features.get(name), boundingBox, axisOrigin, axisEnd, name, initScale);
+      axis.computeTitle(index, step, drawOrigin, drawEnd, freeSize);
+      return axis
+  }
 
-//   private horizontalTitleProperties(): void { 
-//     this.titleSettings.origin = this.titleRect.origin;
-//     this.titleSettings.baseline = "top";
-//     this.titleSettings.orientation = 0;
-//   }
+  private horizontalTitleProperties(): void { 
+    this.titleSettings.origin = this.titleRect.origin;
+    this.titleSettings.baseline = "top";
+    this.titleSettings.orientation = 0;
+  }
 
-//   private verticalTitleProperties(): void {
-//     this.titleSettings.origin = this.titleRect.origin;
-//     this.titleSettings.baseline = "bottom";
-//     this.titleSettings.orientation = 0;
-//   }
+  private verticalTitleProperties(): void {
+    this.titleSettings.origin = this.titleRect.origin;
+    this.titleSettings.baseline = "bottom";
+    this.titleSettings.orientation = 0;
+  }
 
-//   public computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis {
-//     this.freeSpace = step;
-//     if (index == 0) {
-//       if (this.isVertical) {
-//         this.freeSpace = freeSize.y; //this.size.y - this.drawLength - Math.abs(this.offset.y);
-//         this.titleRect = new newRect(
-//           new Vertex(this.origin.x, this.end.y + this.drawLength * 0.035), 
-//           new Vertex(step / 2 + 3 * this.origin.x / 4, this.freeSpace)
-//         );
-//         this.titleSettings.align = "left";
-//       } else {
-//         this.titleRect = new newRect(
-//           new Vertex(this.origin.x * 0.25, this.origin.y + 15), 
-//           new Vertex(this.drawLength * 0.8, freeSize.x) //this.size.y - step * (this.drawnFeatures.length - 2))
-//         );
-//       }
-//     }
-//     // if (index == this.drawnFeatures.length - 1) {
-//     //   if (this.isVertical) this.freeSpace = step / 2 + this.size.x - drawEnd.x
-//     //   else this.freeSpace = drawEnd.y;
-//     // }
-//     return this
-//   }
-//   protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
-//     super.formatTitle(text, context);
-//     // if (!this.isVertical) text.origin.y += text.height + this.offsetTicks + this.ticksFontsize;
-//     // text.format(context);
-//   }
+  public computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis {
+    // this.freeSpace = step;
+    if (index == 0) {
+      if (this.isVertical) {
+        // this.freeSpace = freeSize.y; //this.size.y - this.drawLength - Math.abs(this.offset.y);
+        this.titleRect = new newRect(
+          new Vertex(this.origin.x, this.end.y + this.drawLength * 0.035), 
+          new Vertex(step / 2 + 3 * this.origin.x / 4, this.boundingBox.size.y)
+        );
+        this.titleSettings.align = "left";
+      } else {
+        this.titleRect = new newRect(
+          new Vertex(this.origin.x * 0.25, this.origin.y + 15), 
+          new Vertex(this.drawLength * 0.8, this.boundingBox.size.x) //this.size.y - step * (this.drawnFeatures.length - 2))
+        );
+      }
+    }
+    // if (index == this.drawnFeatures.length - 1) {
+    //   if (this.isVertical) this.freeSpace = step / 2 + this.size.x - drawEnd.x
+    //   else this.freeSpace = drawEnd.y;
+    // }
+    return this
+  }
+  
+  protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
+    super.formatTitle(text, context);
+    // if (!this.isVertical) text.origin.y += text.height + this.offsetTicks + this.ticksFontsize;
+    // text.format(context);
+  }
 
-//   protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
-//     const titleTextParams = super.getTitleTextParams(color, align, baseline, orientation);
-//     titleTextParams.multiLine = true;
-//     titleTextParams.width = this.titleRect.size.x;
-//     titleTextParams.height = this.titleRect.size.y;
-//     return titleTextParams
-//   }
+  protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
+    const titleTextParams = super.getTitleTextParams(color, align, baseline, orientation);
+    titleTextParams.multiLine = true;
+    titleTextParams.width = this.titleRect.size.x;
+    titleTextParams.height = this.titleRect.size.y;
+    return titleTextParams
+  }
 
-//   protected computeEnds(): void {
-//     super.computeEnds();
-//     if (this.isVertical) this.end.y -= this.drawLength * 0.1
-//     else this.origin.x -= this.origin.x * 0.75;
-//   }  
-// }
+  protected computeEnds(): void {
+    super.computeEnds();
+    if (this.isVertical) this.end.y -= this.drawLength * 0.1
+    else this.origin.x -= this.origin.x * 0.75;
+  }  
+}
 
 export class DrawingCollection {
   constructor(

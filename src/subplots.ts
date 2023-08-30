@@ -2228,7 +2228,11 @@ export class Histogram extends Frame {
       let origin = new Vertex(fullTicks[index], minY);
       let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length > minY ? bar.length - minY : 0);
       if (this.axes[0].isDiscrete) origin.x = origin.x - size.x / 2;
-      bar.updateStyle(origin, size, this.hoveredIndices, this.clickedIndices, this.selectedIndices);
+      bar.updateStyle(
+        origin, size,
+        this.hoveredIndices, this.clickedIndices, this.selectedIndices,
+        this.fillStyle, this.strokeStyle, this.dashLine, this.lineWidth
+      );
     })
   }
 

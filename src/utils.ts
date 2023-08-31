@@ -1797,8 +1797,9 @@ export class newText extends newShape {
     const origin = this.origin.copy();
     origin.x += this.setRectOffsetX();
     origin.y += this.setRectOffsetY();
+    const height = this.computeRectHeight();
     const rectPath = new Path2D();
-    rectPath.rect(-this.width / 2, 0, this.width, this.height); // TODO: find the good formula for hanging and alphabetic (not trivial)
+    rectPath.rect(-this.width / 2, 0, this.width, height); // TODO: find the good formula for hanging and alphabetic (not trivial)
     const ANGLE_RAD = this.orientation * Math.PI / 180;
     const COS = Math.cos(ANGLE_RAD);
     const SIN = Math.sin(ANGLE_RAD);

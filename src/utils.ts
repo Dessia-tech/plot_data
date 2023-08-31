@@ -1735,7 +1735,6 @@ export class newText extends newShape {
   public multiLine: boolean;
   public nRows: number;
   public backgroundColor: string;
-  // public boundingBox: newRect = new newRect(); // begin a refactor
   constructor(
     public text: string,
     public origin: Vertex,
@@ -1763,13 +1762,7 @@ export class newText extends newShape {
       this.orientation = orientation;
       this.backgroundColor = backgroundColor;
       this.fillStyle = color;
-      // this.updateBoundingBox();
     }
-
-  // private updateBoundingBox(): void {
-  //   this.boundingBox.origin = this.origin.copy();
-  //   this.boundingBox.size = new Vertex(this.width, this.height);
-  // }
 
   private static buildFont(style: string, fontsize: number, font: string): string {
     return `${style} ${fontsize}px ${font}`
@@ -1778,10 +1771,9 @@ export class newText extends newShape {
   get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
-    let tmp_context: CanvasRenderingContext2D = context;
     let pxMaxWidth: number = this.width * this.scale;
-    tmp_context.font = '1px ' + this.font;
-    return Math.min(pxMaxWidth / (tmp_context.measureText(this.text).width), DEFAULT_FONTSIZE)
+    context.font = '1px ' + this.font;
+    return Math.min(pxMaxWidth / context.measureText(this.text).width, DEFAULT_FONTSIZE)
   }
 
   private setRectOffsetX(): number {
@@ -1805,11 +1797,8 @@ export class newText extends newShape {
     const origin = this.origin.copy();
     origin.x += this.setRectOffsetX();
     origin.y += this.setRectOffsetY();
-    const height = this.computeRectHeight();
-
     const rectPath = new Path2D();
-    rectPath.rect(-this.width / 2, 0, this.width, height); // TODO: find the good formula for hanging and alphabetic (not trivial)
-
+    rectPath.rect(-this.width / 2, 0, this.width, this.height); // TODO: find the good formula for hanging and alphabetic (not trivial)
     const ANGLE_RAD = this.orientation * Math.PI / 180;
     const COS = Math.cos(ANGLE_RAD);
     const SIN = Math.sin(ANGLE_RAD);
@@ -1839,31 +1828,6 @@ export class newText extends newShape {
     context.restore();
   }
 
-  public format(context: CanvasRenderingContext2D): string[] {
-    let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
-    let writtenText = [this.text];
-    context.font = newText.buildFont(this.style, fontsize, this.font);
-    if (this.width) {
-      if (this.multiLine) writtenText = this.cutting_text(context, this.width)
-      else {
-        if (!this.fontsize) {
-          fontsize = this.automaticFontSize(context);
-          context.font = newText.buildFont(this.style, fontsize, this.font);
-        } else {
-          if (context.measureText(this.text).width > this.width) fontsize = this.automaticFontSize(context);
-        }
-      }
-    }
-    this.fontsize = fontsize;
-    this.width = context.measureText(writtenText[0]).width;
-    const tempHeight = this.fontsize * writtenText.length;
-    this.height = this.height ?? tempHeight;
-    if (tempHeight > this.height) this.fontsize = this.height / tempHeight * this.fontsize;
-    this.nRows = writtenText.length;
-    this.height = this.fontsize * writtenText.length;
-    return writtenText
-  }
-
   private write(writtenText: string[], context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle
     if (writtenText.length != 1) {
@@ -1888,40 +1852,57 @@ export class newText extends newShape {
     }
   }
 
-  private cutting_text(context: CanvasRenderingContext2D, maxWidth: number): string[] {
-    var words = this.text.split(' ');
-    var space_length = context.measureText(' ').width;
-    var cut_texts = [];
-    var i = 0;
-    var line_length = 0;
-    var line_text = '';
-    while (i < words.length) {
-      let word = words[i];
-      let word_length = context.measureText(word).width;
-      if (word_length >= maxWidth) {
-        if (line_text !== '') cut_texts.push(line_text);
-        line_length = 0;
-        line_text = '';
-        cut_texts.push(word);
-        i++;
-      } else {
-        if (line_length + word_length <= maxWidth) {
-          if (line_length !== 0) {
-            line_length = line_length + space_length;
-            line_text = line_text + ' ';
-          }
-          line_text = line_text + word;
-          line_length = line_length + word_length;
-          i++;
-        } else {
-          cut_texts.push(line_text);
-          line_length = 0;
-          line_text = '';
-        }
+  public format(context: CanvasRenderingContext2D): string[] {
+    let writtenText = [this.text];
+    let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
+    context.font = newText.buildFont(this.style, fontsize, this.font);
+    if (this.width) {
+      if (this.multiLine) [writtenText, fontsize] = this.multiLineSplit(fontsize, context);
+      else {
+        if (!this.fontsize || context.measureText(this.text).width > this.width) fontsize = this.automaticFontSize(context);
       }
     }
-    if (line_text !== '') cut_texts.push(line_text);
-    return cut_texts;
+    this.fontsize = fontsize;
+    context.font = newText.buildFont(this.style, fontsize, this.font);
+    this.height = writtenText.length * fontsize;
+    this.width = context.measureText(writtenText[0]).width;
+    return writtenText
+  }
+
+  public multiLineSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
+    context.font = newText.buildFont(this.style, fontsize, this.font);
+    const oneRowLength = context.measureText(this.text).width;
+    if (oneRowLength <= this.width) return [[this.text], fontsize];
+    if (!this.height) return [this.fixedFontSplit(context), fontsize];    
+    return this.autoFontSplit(fontsize, context);
+  }
+
+  private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
+    const rows: string[] = [];
+    let pickedChars = 0;
+    while (pickedChars < this.text.length) {
+      let newRow = '';
+      let remainingText = this.text.slice(pickedChars);
+      while (context.measureText(newRow).width < this.width) {
+        newRow += this.text[pickedChars];
+        pickedChars++;
+        if (pickedChars == this.text.length) break;
+      }
+      if (newRow.length != 0) rows.push(newRow);
+    }
+    return rows
+  }
+
+  private autoFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
+    let rows = [];
+    let criterion = Number.POSITIVE_INFINITY;
+    while (criterion > this.height) {
+      context.font = newText.buildFont(this.style, fontsize, this.font);
+      rows = this.fixedFontSplit(context);
+      criterion = fontsize * rows.length;
+      fontsize--;
+    }
+    return [rows, fontsize + 1]
   }
 }
 
@@ -2858,7 +2839,6 @@ export class newAxis extends EventEmitter {
   private drawTickText(tickText: newText, color: string, context: CanvasRenderingContext2D): void {
     tickText.fillStyle = color;
     tickText.fontsize = this.ticksFontsize;
-    tickText.width = null;
     tickText.draw(context);
   }
 
@@ -2877,7 +2857,7 @@ export class newAxis extends EventEmitter {
     }
     return {
       width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.font,
-      align: textAlign, baseline: baseline, color: this.strokeStyle
+      align: textAlign, baseline: baseline, color: this.strokeStyle, backgroundColor: "hsla(0, 30%, 50%, 0.5)"
     }
   }
 
@@ -3037,27 +3017,18 @@ export class ParallelAxis extends newAxis {
 
   get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
 
+  public draw(context: CanvasRenderingContext2D): void {
+    super.draw(context);
+    const canvasHTMatrix = context.getTransform();
+    const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
+    this.titleRect.draw(context);
+    context.resetTransform();
+    this.drawTitle(context, canvasHTMatrix, "rgb(0,0,0)");
+  }
+
   public setTitleSettings(): void {
     this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
   }
-
-  // public static getLocation(step: number, axisIndex: number, drawOrigin: Vertex, drawEnd: Vertex, isVertical: boolean): [Vertex, Vertex] {
-  //   const verticalX = drawOrigin.x + axisIndex * step;
-  //   const horizontalY = drawOrigin.y + axisIndex * step;
-  //   if (isVertical) return [new Vertex(verticalX, drawOrigin.y), new Vertex(verticalX, drawEnd.y)]
-  //   return [new Vertex(drawOrigin.x, horizontalY), new Vertex(drawEnd.x, horizontalY)]
-  // }
-
-
-
-  // public static fromFeature(
-  //   features: Map<string, any[]>, name: string, step: number, index: number, drawOrigin: Vertex,
-  //   drawEnd: Vertex, freeSize: Vertex, isVertical: boolean, initScale: Vertex): ParallelAxis {
-  //     const [axisOrigin, axisEnd, boundingBox] = this.getLocation(step, index, drawOrigin, drawEnd, freeSize, isVertical);
-  //     const axis = new ParallelAxis(features.get(name), boundingBox, axisOrigin, axisEnd, name, initScale);
-  //     axis.computeTitle(index, step, drawOrigin, drawEnd, freeSize);
-  //     return axis
-  // }
 
   private horizontalTitleProperties(): void { 
     this.titleSettings.origin = this.titleRect.origin;
@@ -3077,8 +3048,8 @@ export class ParallelAxis extends newAxis {
       if (this.isVertical) {
         // this.freeSpace = freeSize.y; //this.size.y - this.drawLength - Math.abs(this.offset.y);
         this.titleRect = new newRect(
-          new Vertex(this.origin.x, this.end.y + this.drawLength * 0.035), 
-          new Vertex(step / 2 + 3 * this.origin.x / 4, this.boundingBox.size.y)
+          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y + this.drawLength + this.SIZE_END * 2), 
+          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - this.drawLength - this.SIZE_END * 2)
         );
         this.titleSettings.align = "left";
       } else {

@@ -2740,31 +2740,29 @@ export class newParallelPlot extends Figure {
   }
 
   private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const MARGIN_FACTOR = 0.9;
-    const LAST_MARGIN_FACTOR = 0.95;
+    const FREE_SPACE_FACTOR = 0.95;
     const SIZE_FACTOR = 0.35;
     const boundingBox = new newRect(axisOrigin.copy());
-    boundingBox.size = new Vertex(axisSize * SIZE_FACTOR, step * MARGIN_FACTOR);
+    boundingBox.size = new Vertex(axisSize * SIZE_FACTOR, step * FREE_SPACE_FACTOR);
     if (index == this.drawnFeatures.length - 1) {
       boundingBox.size.x = axisSize;
-      boundingBox.size.y = (this.size.y - Math.abs(axisOrigin.y)) * LAST_MARGIN_FACTOR;
+      boundingBox.size.y = (this.size.y - Math.abs(axisOrigin.y)) * FREE_SPACE_FACTOR;
     }
     boundingBox.origin.y -= boundingBox.size.y;
     return boundingBox
   }
 
   private verticalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const FIRST_AXIS_OFFSET_FACTOR = 0.9;
-    const LAST_AXIS_MARGIN_FACTOR = 0.95;
+    const FREE_SPACE_FACTOR = 0.95;
     const boundingBox = new newRect(axisOrigin.copy());
-    boundingBox.size = new Vertex(step, axisSize);
+    boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
     if (index == 0) {
-      boundingBox.origin.x -= axisOrigin.x * FIRST_AXIS_OFFSET_FACTOR;
-      boundingBox.size.x = step / 2 + axisOrigin.x * FIRST_AXIS_OFFSET_FACTOR;
+      boundingBox.origin.x -= axisOrigin.x * FREE_SPACE_FACTOR;
+      boundingBox.size.x = (step / 2 + axisOrigin.x) * FREE_SPACE_FACTOR;
     } else if (index == this.drawnFeatures.length - 1) {
-      boundingBox.origin.x -= step / 2;
-      boundingBox.size.x = (this.size.x - boundingBox.origin.x) * LAST_AXIS_MARGIN_FACTOR;
-    } else boundingBox.origin.x -= step / 2;
+      boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
+      boundingBox.size.x = (this.size.x - boundingBox.origin.x) * FREE_SPACE_FACTOR;
+    } else boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
     return boundingBox
   }
 
@@ -2782,7 +2780,9 @@ export class newParallelPlot extends Figure {
     const axes: ParallelAxis[] = [];
     this.drawnFeatures.forEach((featureName, index) => {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index, drawOrigin, drawEnd);
-      axes.push(new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale));
+      const axis = new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale);
+      axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
+      axes.push(axis);
     })
     return axes
   }

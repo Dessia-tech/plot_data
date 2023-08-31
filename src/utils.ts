@@ -3041,18 +3041,12 @@ export class ParallelAxis extends newAxis {
     this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
   }
 
-  public static getLocation(step: number, axisIndex: number, drawOrigin: Vertex, drawEnd: Vertex, isVertical: boolean): [Vertex, Vertex] {
-    const verticalX = drawOrigin.x + axisIndex * step;
-    const horizontalY = drawOrigin.y + axisIndex * step;
-    if (isVertical) return [
-      new Vertex(verticalX, drawOrigin.y),
-      new Vertex(verticalX, drawEnd.y)
-    ];
-    return [
-      new Vertex(drawOrigin.x, horizontalY),
-      new Vertex(drawEnd.x, horizontalY)
-    ]
-  }
+  // public static getLocation(step: number, axisIndex: number, drawOrigin: Vertex, drawEnd: Vertex, isVertical: boolean): [Vertex, Vertex] {
+  //   const verticalX = drawOrigin.x + axisIndex * step;
+  //   const horizontalY = drawOrigin.y + axisIndex * step;
+  //   if (isVertical) return [new Vertex(verticalX, drawOrigin.y), new Vertex(verticalX, drawEnd.y)]
+  //   return [new Vertex(drawOrigin.x, horizontalY), new Vertex(drawEnd.x, horizontalY)]
+  // }
 
 
 

@@ -1463,6 +1463,8 @@ export class PrimitiveGroupContainer extends PlotData {
 
 const OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
 const MARGIN_MULTIPLIER: number = 0.01;
+const MIN_FONTSIZE: number = 6;
+const calibratedMeasure: number = 33;
 export class Figure extends PlotData {
   public axes: newAxis[] = [];
   public drawnFeatures: string[];
@@ -1581,8 +1583,6 @@ export class Figure extends PlotData {
 
   protected computeOffset(): Vertex {
     const naturalOffset = new Vertex(this.width * OFFSET_MULTIPLIER.x, this.height * OFFSET_MULTIPLIER.y);
-    const MIN_FONTSIZE = 6;
-    const calibratedMeasure = 33;
     return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
@@ -2701,17 +2701,25 @@ export class newParallelPlot extends Figure {
 
   set isVertical(value: boolean) { this._isVertical = value }
 
-  // public switchOrientation() {
-  //   this.isVertical = !this.isVertical;
-  //   const [drawOrigin, drawEnd, freeSpace] = this.computeBounds();
-  //   const step = this.computeAxesStep(drawOrigin, drawEnd);
-  //   this.axes.forEach((axis, index) => {
-  //     const [axisOrigin, axisEnd] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.isVertical);
-  //     axis.transform(axisOrigin, axisEnd);
-  //     axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
-  //   });
-  //   this.draw();
-  // }
+  protected computeOffset(): Vertex {
+    const standardOffset = super.computeOffset();
+    if (this.isVertical) return new Vertex(Math.max(standardOffset.x, calibratedMeasure), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
+    return standardOffset
+  }
+
+  public switchOrientation() {
+    this.isVertical = !this.isVertical;
+    const [drawOrigin, drawEnd, freeSpace] = this.setBounds();
+    const axisBoundingBoxes = this.buildAxisBoundingBoxes(drawOrigin, drawEnd, freeSpace);
+    const step = this.computeAxesStep(drawOrigin, drawEnd);
+    this.axes.forEach((axis, index) => {
+      const [axisOrigin, axisEnd] = this.getAxisLocation(step, index, drawOrigin, drawEnd);
+      axis.boundingBox = axisBoundingBoxes[index];
+      axis.transform(axisOrigin, axisEnd);
+      axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
+    });
+    this.draw();
+  }
 
   private computeAxesStep(drawOrigin: Vertex, drawEnd: Vertex): number {
     return (this.isVertical ? drawEnd.x - drawOrigin.x : drawEnd.y - drawOrigin.y) / (this.drawnFeatures.length - 1)
@@ -2721,22 +2729,9 @@ export class newParallelPlot extends Figure {
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     const boundingBoxes: newRect[] = [];
     this.drawnFeatures.forEach((drawnFeature, index) => {
-      const axisOrigin = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.isVertical)[0];
-      if (this.isVertical) {
-        boundingBoxes.push(
-          new newRect(
-            new Vertex(axisOrigin.x - step / 2, drawOrigin.y),
-            new Vertex(step, drawEnd.y - drawOrigin.y)
-          )
-        )
-      } else {
-        boundingBoxes.push(
-          new newRect(
-            new Vertex(axisOrigin.x, axisOrigin.y),
-            new Vertex((drawEnd.x - drawOrigin.x) * 0.5, step)
-          )
-        )
-      }
+      const axisOrigin = this.getAxisLocation(step, index, drawOrigin, drawEnd)[0];
+      if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(axisOrigin, drawEnd.y - drawOrigin.y, step, index));
+      else boundingBoxes.push(this.horizontalAxisBoundingBox(axisOrigin, drawEnd.x - drawOrigin.x, step, index));
       // TODO: [DEBUG LINES] Remove the two next lines
       boundingBoxes[boundingBoxes.length - 1].lineWidth = 0.5;
       boundingBoxes[boundingBoxes.length - 1].isFilled = false;
@@ -2744,11 +2739,49 @@ export class newParallelPlot extends Figure {
     return boundingBoxes
   }
 
+  private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
+    const MARGIN_FACTOR = 0.9;
+    const LAST_MARGIN_FACTOR = 0.95;
+    const SIZE_FACTOR = 0.35;
+    const boundingBox = new newRect(axisOrigin.copy());
+    boundingBox.size = new Vertex(axisSize * SIZE_FACTOR, step * MARGIN_FACTOR);
+    if (index == this.drawnFeatures.length - 1) {
+      boundingBox.size.x = axisSize;
+      boundingBox.size.y = (this.size.y - Math.abs(axisOrigin.y)) * LAST_MARGIN_FACTOR;
+    }
+    boundingBox.origin.y -= boundingBox.size.y;
+    return boundingBox
+  }
+
+  private verticalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
+    const FIRST_AXIS_OFFSET_FACTOR = 0.9;
+    const LAST_AXIS_MARGIN_FACTOR = 0.95;
+    const boundingBox = new newRect(axisOrigin.copy());
+    boundingBox.size = new Vertex(step, axisSize);
+    if (index == 0) {
+      boundingBox.origin.x -= axisOrigin.x * FIRST_AXIS_OFFSET_FACTOR;
+      boundingBox.size.x = step / 2 + axisOrigin.x * FIRST_AXIS_OFFSET_FACTOR;
+    } else if (index == this.drawnFeatures.length - 1) {
+      boundingBox.origin.x -= step / 2;
+      boundingBox.size.x = (this.size.x - boundingBox.origin.x) * LAST_AXIS_MARGIN_FACTOR;
+    } else boundingBox.origin.x -= step / 2;
+    return boundingBox
+  }
+
+
+  private getAxisLocation(step: number, axisIndex: number, drawOrigin: Vertex, drawEnd: Vertex): [Vertex, Vertex] {
+    const verticalX = drawOrigin.x + axisIndex * step;
+    const horizontalY = drawOrigin.y + (this.drawnFeatures.length - 1 - axisIndex) * step;
+    if (this.isVertical) return [new Vertex(verticalX, drawOrigin.y), new Vertex(verticalX, drawEnd.y)]
+    return [new Vertex(drawOrigin.x, horizontalY), new Vertex(drawEnd.x, horizontalY)]
+  }
+
   protected buildAxes(drawOrigin: Vertex, drawEnd: Vertex, axisBoundingBoxes: newRect[]): ParallelAxis[] {
+    super.buildAxes(drawOrigin, drawEnd, axisBoundingBoxes);
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     const axes: ParallelAxis[] = [];
     this.drawnFeatures.forEach((featureName, index) => {
-      const [axisOrigin, axisEnd] = ParallelAxis.getLocation(step, index, drawOrigin, drawEnd, this.isVertical);
+      const [axisOrigin, axisEnd] = this.getAxisLocation(step, index, drawOrigin, drawEnd);
       axes.push(new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale));
     })
     return axes

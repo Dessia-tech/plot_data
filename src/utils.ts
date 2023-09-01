@@ -1735,6 +1735,8 @@ export class newText extends newShape {
   public multiLine: boolean;
   public nRows: number;
   public backgroundColor: string;
+  public boundingBox: newRect;
+  public offset: number = 0;
   constructor(
     public text: string,
     public origin: Vertex,
@@ -1751,8 +1753,7 @@ export class newText extends newShape {
       backgroundColor = "hsla(0, 0%, 100%, 0)"
     }: TextParams = {}) {
       super();
-      this.width = width;
-      this.height = height;
+      this.boundingBox = new newRect(origin, new Vertex(width, height));
       this.fontsize = fontsize;
       this.multiLine = multiLine;
       this.font = font;
@@ -1771,7 +1772,7 @@ export class newText extends newShape {
   get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
-    let pxMaxWidth: number = this.width * this.scale;
+    let pxMaxWidth: number = this.boundingBox.size.x * this.scale;
     context.font = '1px ' + this.font;
     return Math.min(pxMaxWidth / context.measureText(this.text).width, DEFAULT_FONTSIZE)
   }
@@ -1780,6 +1781,12 @@ export class newText extends newShape {
     if (this.align == "center") return -this.width / 2;
     if (["right", "end"].includes(this.align)) return -this.width;
     return 0;
+  }
+
+  private computOffsetY(): void {
+    if (this.multiLine) {
+      this.offset = ["top", "hanging"].includes(this.baseline) ? this.height - this.boundingBox.size.y - this.fontsize : 0;
+    }
   }
 
   private setRectOffsetY(): number {
@@ -1796,14 +1803,14 @@ export class newText extends newShape {
   public buildPath(): void {
     const origin = this.origin.copy();
     origin.x += this.setRectOffsetX();
-    origin.y += this.setRectOffsetY();
+    origin.y += this.setRectOffsetY() + this.offset;
     const height = this.computeRectHeight();
     const rectPath = new Path2D();
-    rectPath.rect(-this.width / 2, 0, this.width, height); // TODO: find the good formula for hanging and alphabetic (not trivial)
+    rectPath.rect(origin.x, origin.y, this.width, height);
     const ANGLE_RAD = this.orientation * Math.PI / 180;
     const COS = Math.cos(ANGLE_RAD);
     const SIN = Math.sin(ANGLE_RAD);
-    this.path.addPath(rectPath, new DOMMatrix([COS, SIN, -SIN, COS, origin.x + this.width / 2, origin.y]));
+    this.path.addPath(rectPath, new DOMMatrix([COS, SIN, -SIN, COS, 0, 0]));
   }
 
   public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
@@ -1813,6 +1820,7 @@ export class newText extends newShape {
   public draw(context: CanvasRenderingContext2D): void {
     context.save();
     const writtenText = this.format(context);
+    this.computOffsetY();
     context.font = this.fullFont;
     context.textAlign = this.align as CanvasTextAlign;
     context.textBaseline = this.baseline as CanvasTextBaseline;
@@ -1832,8 +1840,8 @@ export class newText extends newShape {
   private write(writtenText: string[], context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle
     if (writtenText.length != 1) {
-      const offset: number = writtenText.length - 1;
-      writtenText.forEach((row, index) => { context.fillText(row, 0, (index - offset) * this.fontsize) });
+      const nRows: number = writtenText.length - 1;
+      writtenText.forEach((row, index) => context.fillText(row, 0, (index - nRows) * this.fontsize + this.offset));
     } else {
       context.fillText(writtenText[0], 0, 0);
     }
@@ -1845,10 +1853,10 @@ export class newText extends newShape {
       let splitDecimal = splitText[1].split("e");
       let decimal = splitDecimal[0];
       if (decimal) {
-        while (decimal[decimal.length - 1] == "0") { decimal = decimal.slice(0, -1) };
-        if (decimal.length != 0) { this.text = `${splitText[0]}.${decimal}` }
-        else { this.text = splitText[0] };
-        if (splitDecimal.length > 1) { this.text = `${this.text}e${splitDecimal[1]}` };
+        while (decimal[decimal.length - 1] == "0") decimal = decimal.slice(0, -1);
+        if (decimal.length != 0) this.text = `${splitText[0]}.${decimal}`
+        else this.text = splitText[0];
+        if (splitDecimal.length > 1) this.text = `${this.text}e${splitDecimal[1]}`;
       }
     }
   }
@@ -1857,24 +1865,26 @@ export class newText extends newShape {
     let writtenText = [this.text];
     let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
     context.font = newText.buildFont(this.style, fontsize, this.font);
-    if (this.width) {
+    if (this.boundingBox.size.x) {
       if (this.multiLine) [writtenText, fontsize] = this.multiLineSplit(fontsize, context);
       else {
-        if (!this.fontsize || context.measureText(this.text).width > this.width) fontsize = this.automaticFontSize(context);
+        if (!this.fontsize || context.measureText(this.text).width > this.boundingBox.size.x) fontsize = this.automaticFontSize(context);
       }
     }
     this.fontsize = fontsize;
     context.font = newText.buildFont(this.style, fontsize, this.font);
     this.height = writtenText.length * fontsize;
-    this.width = context.measureText(writtenText[0]).width;
+    let longestRow = writtenText[0];
+    writtenText.forEach(row => { if (row.length > longestRow.length) longestRow = row });
+    this.width = context.measureText(longestRow).width;
     return writtenText
   }
 
   public multiLineSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     context.font = newText.buildFont(this.style, fontsize, this.font);
     const oneRowLength = context.measureText(this.text).width;
-    if (oneRowLength <= this.width) return [[this.text], fontsize];
-    if (!this.height) return [this.fixedFontSplit(context), fontsize];    
+    if (oneRowLength <= this.boundingBox.size.x) return [[this.text], fontsize];
+    if (!this.boundingBox.size.y) return [this.fixedFontSplit(context), fontsize];    
     return this.autoFontSplit(fontsize, context);
   }
 
@@ -1883,10 +1893,14 @@ export class newText extends newShape {
     let pickedChars = 0;
     while (pickedChars < this.text.length) {
       let newRow = '';
-      let remainingText = this.text.slice(pickedChars);
-      while (context.measureText(newRow).width < this.width) {
+      while (context.measureText(newRow).width < this.boundingBox.size.x) {
         newRow += this.text[pickedChars];
         pickedChars++;
+        if (context.measureText(newRow).width > this.boundingBox.size.x) {
+          pickedChars--;
+          newRow = newRow.slice(0, newRow.length - 1);
+          break
+        }
         if (pickedChars == this.text.length) break;
       }
       if (newRow.length != 0) rows.push(newRow);
@@ -1897,7 +1911,7 @@ export class newText extends newShape {
   private autoFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     let rows = [];
     let criterion = Number.POSITIVE_INFINITY;
-    while (criterion > this.height) {
+    while (criterion > this.boundingBox.size.y) {
       context.font = newText.buildFont(this.style, fontsize, this.font);
       rows = this.fixedFontSplit(context);
       criterion = fontsize * rows.length;
@@ -3032,38 +3046,42 @@ export class ParallelAxis extends newAxis {
   }
 
   private horizontalTitleProperties(): void { 
-    this.titleSettings.origin = this.titleRect.origin;
-    this.titleSettings.baseline = "top";
+    this.titleSettings.origin = this.titleRect.origin.copy();
+    if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleRect.origin.y + this.titleRect.size.y;
+    this.titleSettings.baseline = this.initScale.y > 0 ? "bottom" : "top";
     this.titleSettings.orientation = 0;
   }
 
   private verticalTitleProperties(): void {
-    this.titleSettings.origin = this.titleRect.origin;
-    this.titleSettings.baseline = "bottom";
+    this.titleSettings.origin = this.titleRect.origin.copy();
+    if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleRect.origin.y + this.titleRect.size.y;
+    this.titleSettings.baseline = this.initScale.y > 0 ? "top" : "bottom";
     this.titleSettings.orientation = 0;
   }
 
   public computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis {
-    // this.freeSpace = step;
     if (index == 0) {
       if (this.isVertical) {
-        // this.freeSpace = freeSize.y; //this.size.y - this.drawLength - Math.abs(this.offset.y);
+        const offset = this.drawLength + this.SIZE_END * 2;
         this.titleRect = new newRect(
-          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y + this.drawLength + this.SIZE_END * 2), 
-          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - this.drawLength - this.SIZE_END * 2)
+          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y + offset), 
+          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - offset)
         );
         this.titleSettings.align = "left";
       } else {
+        const offset = this.SIZE_END + this.offsetTicks + this.FONT_SIZE;
         this.titleRect = new newRect(
-          new Vertex(this.origin.x * 0.25, this.origin.y + 15), 
-          new Vertex(this.drawLength * 0.8, this.boundingBox.size.x) //this.size.y - step * (this.drawnFeatures.length - 2))
+          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y), 
+          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - offset)
         );
+        // if (this.initScale.y > 0) {
+        //   this.titleRect.origin.y = this.titleRect.origin.y + this.titleRect.size.y; 
+        //   this.titleRect.buildPath();}
       }
-    }
-    // if (index == this.drawnFeatures.length - 1) {
+    // } else if (index == this.drawnFeatures.length - 1) {
     //   if (this.isVertical) this.freeSpace = step / 2 + this.size.x - drawEnd.x
     //   else this.freeSpace = drawEnd.y;
-    // }
+    }
     return this
   }
   
@@ -3088,9 +3106,10 @@ export class ParallelAxis extends newAxis {
       this.boundingBox.size.x -= this.SIZE_END / 2;
     }
     else {
+      this.boundingBox.size.x += this.origin.x * 0.75;
       this.origin.x -= this.origin.x * 0.75;
       this.boundingBox.origin.x = this.origin.x;
-      this.boundingBox.size.y -= this.SIZE_END / 2;
+      // this.boundingBox.size.y -= this.SIZE_END / 2;
     }
   }  
 }

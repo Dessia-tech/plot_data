@@ -2697,7 +2697,7 @@ export class newParallelPlot extends Figure {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get isVertical(): boolean { return this._isVertical ?? true }
+  get isVertical(): boolean { return this._isVertical ?? false }
 
   set isVertical(value: boolean) { this._isVertical = value }
 
@@ -2729,9 +2729,9 @@ export class newParallelPlot extends Figure {
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     const boundingBoxes: newRect[] = [];
     this.drawnFeatures.forEach((drawnFeature, index) => {
-      const axisOrigin = this.getAxisLocation(step, index, drawOrigin, drawEnd)[0];
-      if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(axisOrigin, drawEnd.y - drawOrigin.y, step, index));
-      else boundingBoxes.push(this.horizontalAxisBoundingBox(axisOrigin, drawEnd.x - drawOrigin.x, step, index));
+      const [axisOrigin, axisEnd] = this.getAxisLocation(step, index, drawOrigin, drawEnd);
+      if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(axisOrigin, axisEnd.y - axisOrigin.y, step, index));
+      else boundingBoxes.push(this.horizontalAxisBoundingBox(axisOrigin, axisEnd.x - axisOrigin.x, step, index));
       // TODO: [DEBUG LINES] Remove the two next lines
       boundingBoxes[boundingBoxes.length - 1].lineWidth = 0.5;
       boundingBoxes[boundingBoxes.length - 1].isFilled = false;

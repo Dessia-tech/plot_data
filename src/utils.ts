@@ -1838,12 +1838,12 @@ export class newText extends newShape {
   }
 
   private write(writtenText: string[], context: CanvasRenderingContext2D): void {
-    context.fillStyle = this.fillStyle
+    context.fillStyle = this.fillStyle;
     if (writtenText.length != 1) {
       const nRows: number = writtenText.length - 1;
       writtenText.forEach((row, index) => context.fillText(row, 0, (index - nRows) * this.fontsize + this.offset));
     } else {
-      context.fillText(writtenText[0], 0, 0);
+      context.fillText(writtenText[0], 0, this.offset);
     }
   }
 
@@ -3039,6 +3039,7 @@ export class ParallelAxis extends newAxis {
     this.titleRect.draw(context);
     context.resetTransform();
     this.drawTitle(context, canvasHTMatrix, "rgb(0,0,0)");
+    context.setTransform(canvasHTMatrix);
   }
 
   public setTitleSettings(): void {
@@ -3046,14 +3047,12 @@ export class ParallelAxis extends newAxis {
   }
 
   private horizontalTitleProperties(): void { 
-    this.titleSettings.origin = this.titleRect.origin.copy();
     if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleRect.origin.y + this.titleRect.size.y;
     this.titleSettings.baseline = this.initScale.y > 0 ? "bottom" : "top";
     this.titleSettings.orientation = 0;
   }
 
   private verticalTitleProperties(): void {
-    this.titleSettings.origin = this.titleRect.origin.copy();
     if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleRect.origin.y + this.titleRect.size.y;
     this.titleSettings.baseline = this.initScale.y > 0 ? "top" : "bottom";
     this.titleSettings.orientation = 0;
@@ -3074,13 +3073,27 @@ export class ParallelAxis extends newAxis {
           new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y), 
           new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - offset)
         );
-        // if (this.initScale.y > 0) {
-        //   this.titleRect.origin.y = this.titleRect.origin.y + this.titleRect.size.y; 
-        //   this.titleRect.buildPath();}
       }
-    // } else if (index == this.drawnFeatures.length - 1) {
-    //   if (this.isVertical) this.freeSpace = step / 2 + this.size.x - drawEnd.x
-    //   else this.freeSpace = drawEnd.y;
+      this.titleSettings.origin = this.titleRect.origin.copy();
+    } else {
+      if (this.isVertical) {
+        const offset = this.drawLength + this.SIZE_END * 2;
+        this.titleRect = new newRect(
+          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y + offset), 
+          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - offset)
+        );
+        this.titleSettings.align = "center";
+        this.titleSettings.origin = this.titleRect.origin.copy();
+        this.titleSettings.origin.x += this.boundingBox.size.x / 2;
+      } else {
+        const offset = this.SIZE_END + this.offsetTicks + this.FONT_SIZE;
+        this.titleRect = new newRect(
+          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y), 
+          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - offset)
+        );
+        this.titleSettings.align = "left";
+        this.titleSettings.origin = this.titleRect.origin.copy();
+      }
     }
     return this
   }

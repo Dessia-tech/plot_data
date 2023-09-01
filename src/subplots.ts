@@ -1494,7 +1494,7 @@ export class Figure extends PlotData {
 
   protected offset: Vertex;
   protected margin: Vertex;
-  protected initScale: Vertex = new Vertex(1, -1);
+  protected initScale: Vertex = new Vertex(1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   readonly features: Map<string, any[]>;
@@ -2697,7 +2697,7 @@ export class newParallelPlot extends Figure {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get isVertical(): boolean { return this._isVertical ?? false }
+  get isVertical(): boolean { return this._isVertical ?? true }
 
   set isVertical(value: boolean) { this._isVertical = value }
 

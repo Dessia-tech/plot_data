@@ -2716,7 +2716,7 @@ export class newParallelPlot extends Figure {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index, drawOrigin, drawEnd);
       axis.boundingBox = axisBoundingBoxes[index];
       axis.transform(axisOrigin, axisEnd);
-      axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
+      axis.computeTitle(index, step, drawOrigin, drawEnd, this.drawnFeatures.length);
     });
     this.draw();
   }
@@ -2757,11 +2757,20 @@ export class newParallelPlot extends Figure {
     const boundingBox = new newRect(axisOrigin.copy());
     boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
     if (index == 0) {
-      boundingBox.origin.x -= axisOrigin.x * FREE_SPACE_FACTOR;
-      boundingBox.size.x = (step / 2 + axisOrigin.x) * FREE_SPACE_FACTOR;
+      if (this.initScale.x < 0) {
+        boundingBox.origin.x -= (this.width + axisOrigin.x) * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (step / 2 + this.width + axisOrigin.x) * FREE_SPACE_FACTOR;
+      } else {
+        boundingBox.origin.x -= axisOrigin.x * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (step / 2 + axisOrigin.x) * FREE_SPACE_FACTOR;
+      }
     } else if (index == this.drawnFeatures.length - 1) {
       boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
-      boundingBox.size.x = (this.size.x - boundingBox.origin.x) * FREE_SPACE_FACTOR;
+      if (this.initScale.x < 0) {
+        boundingBox.size.x = (step / 2 - axisOrigin.x) * FREE_SPACE_FACTOR;
+      } else {
+        boundingBox.size.x = (this.size.x - boundingBox.origin.x) * FREE_SPACE_FACTOR;
+      }
     } else boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
     return boundingBox
   }
@@ -2781,7 +2790,7 @@ export class newParallelPlot extends Figure {
     this.drawnFeatures.forEach((featureName, index) => {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index, drawOrigin, drawEnd);
       const axis = new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale);
-      axis.computeTitle(index, step, drawOrigin, drawEnd, this.size);
+      axis.computeTitle(index, step, drawOrigin, drawEnd, this.drawnFeatures.length);
       axes.push(axis);
     })
     return axes

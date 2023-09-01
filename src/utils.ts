@@ -3058,50 +3058,27 @@ export class ParallelAxis extends newAxis {
     this.titleSettings.orientation = 0;
   }
 
-  public computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, freeSize: Vertex): ParallelAxis {
-    if (index == 0) {
-      if (this.isVertical) {
-        const offset = this.drawLength + this.SIZE_END * 2;
-        this.titleRect = new newRect(
-          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y + offset), 
-          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - offset)
-        );
-        this.titleSettings.align = "left";
-      } else {
-        const offset = this.SIZE_END + this.offsetTicks + this.FONT_SIZE;
-        this.titleRect = new newRect(
-          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y), 
-          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - offset)
-        );
-      }
-      this.titleSettings.origin = this.titleRect.origin.copy();
+  public computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, nAxis: number): ParallelAxis {
+    this.titleRect = new newRect(this.boundingBox.origin.copy(), this.boundingBox.size.copy());
+    let offset = 0;
+    if (this.isVertical) {
+      offset = this.drawLength + this.SIZE_END * 2;
+      this.titleRect.origin.y += offset;
     } else {
+      offset = this.SIZE_END + this.offsetTicks + this.FONT_SIZE;
+    }
+    this.titleRect.size.y -= offset;
+    this.titleRect.buildPath();
+    this.titleSettings.origin = this.titleRect.origin.copy();
+    this.titleSettings.align = this.initScale.x > 0 ? "left" : "right";
+    
+    if (index != 0) {
       if (this.isVertical) {
-        const offset = this.drawLength + this.SIZE_END * 2;
-        this.titleRect = new newRect(
-          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y + offset), 
-          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - offset)
-        );
-        this.titleSettings.align = "center";
-        this.titleSettings.origin = this.titleRect.origin.copy();
-        this.titleSettings.origin.x += this.boundingBox.size.x / 2;
-      } else {
-        const offset = this.SIZE_END + this.offsetTicks + this.FONT_SIZE;
-        this.titleRect = new newRect(
-          new Vertex(this.boundingBox.origin.x, this.boundingBox.origin.y), 
-          new Vertex(this.boundingBox.size.x, this.boundingBox.size.y - offset)
-        );
-        this.titleSettings.align = "left";
-        this.titleSettings.origin = this.titleRect.origin.copy();
+        this.titleSettings.align = index == nAxis - 1 ? (this.initScale.x > 0 ? "right" : "left") : "center";
+        this.titleSettings.origin.x += (index == nAxis - 1 ? 1 : 0.5) * this.boundingBox.size.x ;
       }
     }
     return this
-  }
-  
-  protected formatTitle(text: newText, context: CanvasRenderingContext2D): void {
-    super.formatTitle(text, context);
-    // if (!this.isVertical) text.origin.y += text.height + this.offsetTicks + this.ticksFontsize;
-    // text.format(context);
   }
 
   protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
@@ -3119,10 +3096,12 @@ export class ParallelAxis extends newAxis {
       this.boundingBox.size.x -= this.SIZE_END / 2;
     }
     else {
-      this.boundingBox.size.x += this.origin.x * 0.75;
-      this.origin.x -= this.origin.x * 0.75;
-      this.boundingBox.origin.x = this.origin.x;
-      // this.boundingBox.size.y -= this.SIZE_END / 2;
+      if (this.initScale.x > 0) {
+        this.boundingBox.size.x += this.origin.x * 0.75;
+        this.origin.x -= this.origin.x * 0.75;
+        this.boundingBox.origin.x = this.origin.x;
+      }
+      this.boundingBox.size.y -= this.SIZE_END / 2;
     }
   }  
 }

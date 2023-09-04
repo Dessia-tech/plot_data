@@ -1494,7 +1494,7 @@ export class Figure extends PlotData {
 
   protected offset: Vertex;
   protected margin: Vertex;
-  protected initScale: Vertex = new Vertex(1, 1);
+  protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   readonly features: Map<string, any[]>;
@@ -1697,7 +1697,7 @@ export class Figure extends PlotData {
     return isRubberBanded
   }
 
-  protected drawAxes(): void { this.axes.forEach(axis => axis.draw(this.context_show)) }
+  protected drawFixedObjects(context: CanvasRenderingContext2D): void { this.fixedObjects.draw(context) }
 
   private drawZoneRectangle(context: CanvasRenderingContext2D): void {
     // TODO: change with newRect
@@ -1728,7 +1728,7 @@ export class Figure extends PlotData {
     this.drawAbsoluteObjects(this.context_show);
 
     this.context_show.setTransform(this.canvasMatrix);
-    this.drawAxes();
+    this.drawFixedObjects(this.context_show);
     this.drawTooltips();
 
     this.context_show.resetTransform();
@@ -2093,8 +2093,8 @@ export class Frame extends Figure {
     return [xBoundingBox, yBoundingBox]
   }
 
-  protected drawAxes() {
-    super.drawAxes();
+  protected drawFixedObjects(context: CanvasRenderingContext2D): void {
+    super.drawFixedObjects(context);
     if (this.isRubberBanded()) this.updateSelectionBox(...this.rubberBandsCorners);
   }
 

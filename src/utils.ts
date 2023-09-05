@@ -1791,7 +1791,7 @@ export class newText extends newShape {
 
   private setRectOffsetY(): number {
     if (this.baseline == "middle") return -this.height / 2;
-    if (["top", "hanging"].includes(this.baseline)) return -this.height + this.fontsize * 0.8;
+    if (["top", "hanging"].includes(this.baseline)) return -this.height + this.fontsize;
     return 0;
   }
 

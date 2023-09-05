@@ -2697,7 +2697,7 @@ export class newParallelPlot extends Figure {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get isVertical(): boolean { return this._isVertical ?? true }
+  get isVertical(): boolean { return this._isVertical ?? false }
 
   set isVertical(value: boolean) { this._isVertical = value }
 
@@ -2743,7 +2743,8 @@ export class newParallelPlot extends Figure {
     boundingBox.size = new Vertex(axisSize * SIZE_FACTOR, step * FREE_SPACE_FACTOR);
     if (index == this.drawnFeatures.length - 1) {
       boundingBox.size.x = axisSize;
-      boundingBox.size.y = (this.size.y - Math.abs(axisOrigin.y)) * FREE_SPACE_FACTOR;
+      if (this.initScale.y < 0) boundingBox.size.y = (this.size.y - Math.abs(axisOrigin.y)) * FREE_SPACE_FACTOR
+      else boundingBox.size.y = Math.abs(axisOrigin.y) * FREE_SPACE_FACTOR
     }
     boundingBox.origin.y -= boundingBox.size.y;
     return boundingBox

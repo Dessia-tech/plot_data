@@ -1815,23 +1815,25 @@ export class newText extends newShape {
   public capitalizeSelf(): void { this.text = newText.capitalize(this.text) }
 
   public draw(context: CanvasRenderingContext2D): void {
-    context.save();
-    this.setBoundingBoxState();
-    const writtenText = this.format(context);
-    this.computeOffsetY();
-    this.buildPath();
-    this.boundingBox.draw(context);
-
-    context.font = this.fullFont;
-    context.textAlign = this.align as CanvasTextAlign;
-    context.textBaseline = this.baseline as CanvasTextBaseline;
-
-    context.fillStyle = this.fillStyle;
-    context.globalAlpha = this.alpha;
-    context.translate(this.origin.x, this.origin.y);
-    context.rotate(Math.PI / 180 * this.orientation);
-    this.write(writtenText, context);
-    context.restore();
+    if (this.text) {
+      context.save();
+      this.setBoundingBoxState();
+      const writtenText = this.format(context);
+      this.computeOffsetY();
+      this.buildPath();
+      this.boundingBox.draw(context);
+  
+      context.font = this.fullFont;
+      context.textAlign = this.align as CanvasTextAlign;
+      context.textBaseline = this.baseline as CanvasTextBaseline;
+  
+      context.fillStyle = this.fillStyle;
+      context.globalAlpha = this.alpha;
+      context.translate(this.origin.x, this.origin.y);
+      context.rotate(Math.PI / 180 * this.orientation);
+      this.write(writtenText, context);
+      context.restore();
+    }
   }
 
   private setBoundingBoxState(): void {
@@ -3033,9 +3035,10 @@ export class newAxis extends EventEmitter {
   }
 
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): Vertex {
-    let origin = point.center.transform(HTMatrix);
-    if (this.isVertical) origin.x -= Math.sign(HTMatrix.a) * this.offsetTicks
-    else origin.y -= Math.sign(HTMatrix.d) * this.offsetTicks;
+    const origin = point.center.transform(HTMatrix);
+    const inversionFactor = this.isInverted ? 1 : -1
+    if (this.isVertical) origin.x += inversionFactor * Math.sign(HTMatrix.a) * this.offsetTicks
+    else origin.y += inversionFactor * Math.sign(HTMatrix.d) * this.offsetTicks;
     return origin
   }
 
@@ -3170,12 +3173,6 @@ export class ParallelAxis extends newAxis {
   protected clickOnTitle(): void { this.flip() }
 
   protected flip(): void { this.isInverted = !this.isInverted }
-
-  protected textAlignments(): [string, string] {
-    const forVertical = this.isInverted ? (this.initScale.x > 0 ? 'start' : 'end') : (this.initScale.x > 0 ? 'end' : 'start');
-    const forHorizontal = this.isInverted ? (this.initScale.y > 0 ? 'top' : 'bottom') : (this.initScale.y > 0 ? 'bottom' : 'top');
-    return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
-  }
 }
 
 export class DrawingCollection {

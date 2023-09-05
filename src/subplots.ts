@@ -2732,9 +2732,6 @@ export class newParallelPlot extends Figure {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index, drawOrigin, drawEnd);
       if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(axisOrigin, axisEnd.y - axisOrigin.y, step, index));
       else boundingBoxes.push(this.horizontalAxisBoundingBox(axisOrigin, axisEnd.x - axisOrigin.x, step, index));
-      // TODO: [DEBUG LINES] Remove the two next lines
-      boundingBoxes[boundingBoxes.length - 1].lineWidth = 0.5;
-      boundingBoxes[boundingBoxes.length - 1].isFilled = false;
     });
     return boundingBoxes
   }

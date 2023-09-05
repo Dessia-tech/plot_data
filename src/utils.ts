@@ -2529,6 +2529,7 @@ export class newAxis extends EventEmitter {
   public labels: string[];
   public isHovered: boolean = false;
   public isClicked: boolean = false;
+  public isInverted: boolean = false;
   public mouseStyleON: boolean = false;
   public rubberBand: RubberBand;
   public title: newText;
@@ -2581,6 +2582,8 @@ export class newAxis extends EventEmitter {
       [this._previousMin, this._previousMax] = [this.initMinValue, this.initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
       if (!this.isDiscrete) this.labels = this.numericLabels();
+      this.computeEnds();
+      this.adjustBoundingBox();
       this.drawPath = this.buildDrawPath();
       this.buildPath();
       this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
@@ -2594,7 +2597,7 @@ export class newAxis extends EventEmitter {
   }
 
   // TODO: OLD, MUST DISAPPEAR ONCE PARALLELPLOT ARE REFACTORED
-  public get isInverted(): boolean { return this.initScale[this.isVertical ? 'y' : 'x'] == -1 }
+  // public get isInverted(): boolean { return this.initScale[this.isVertical ? 'y' : 'x'] == -1 }
 
   private get drawingColor(): string {
     let color = this.strokeStyle;
@@ -2643,6 +2646,8 @@ export class newAxis extends EventEmitter {
     this.origin = newOrigin;
     this.end = newEnd;
     this.rubberBand.isVertical = this.isVertical;
+    this.computeEnds();
+    this.adjustBoundingBox();
     this.drawPath = this.buildDrawPath();
     this.buildPath();
   }
@@ -2696,9 +2701,12 @@ export class newAxis extends EventEmitter {
     const verticalIdx = Number(this.isVertical);
     const horizontalIdx = Number(!this.isVertical);
     const path = new Path2D();
-    this.computeEnds();
-    const endArrow = new newPoint2D(this.end.x + this.SIZE_END / 2 * horizontalIdx, this.end.y + this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['right', 'up'][verticalIdx]);
-    this.adjustBoundingBox();
+    let endArrow: newPoint2D;
+      if (this.isInverted) {
+      endArrow = new newPoint2D(this.origin.x - this.SIZE_END / 2 * horizontalIdx, this.origin.y - this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['left', 'down'][verticalIdx]);
+    } else {
+      endArrow = new newPoint2D(this.end.x + this.SIZE_END / 2 * horizontalIdx, this.end.y + this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['right', 'up'][verticalIdx]);
+    }
     path.moveTo(this.origin.x - this.DRAW_START_OFFSET * horizontalIdx, this.origin.y - this.DRAW_START_OFFSET * verticalIdx);
     path.lineTo(this.end.x, this.end.y);
     path.addPath(endArrow.path);
@@ -2766,6 +2774,8 @@ export class newAxis extends EventEmitter {
   }
 
   public draw(context: CanvasRenderingContext2D): void {
+    context.save();
+    this.drawPath = this.buildDrawPath();
     this.buildPath();
     const canvasHTMatrix = context.getTransform();
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
@@ -2791,6 +2801,7 @@ export class newAxis extends EventEmitter {
 
     context.setTransform(canvasHTMatrix);
     this.drawRubberBand(context);
+    context.restore();
   }
 
   protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
@@ -2855,7 +2866,6 @@ export class newAxis extends EventEmitter {
     const ticksPoints = [];
     const ticksText: newText[] = [];
     const tickTextParams = this.computeTickTextParams();
-
     let count = Math.max(0, this.ticks[0]);
     this.ticks.forEach((tick, idx) => {
       let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, color);
@@ -2919,10 +2929,18 @@ export class newAxis extends EventEmitter {
 
   private getValueToDrawMatrix(): DOMMatrix {
     const scale = this.drawLength / this.interval;
+    if (this.isInverted) {
+      return new DOMMatrix([
+        -scale, 0, 0, -scale,
+        this.end.x + this.minValue * Number(!this.isVertical) * scale,
+        this.end.y + this.minValue * Number(this.isVertical) * scale
+      ]);
+    }
     return new DOMMatrix([
       scale, 0, 0, scale,
       this.origin.x - this.minValue * Number(!this.isVertical) * scale,
-      this.origin.y - this.minValue * Number(this.isVertical) * scale]);
+      this.origin.y - this.minValue * Number(this.isVertical) * scale
+    ]);
   }
 
   private marginedBounds(minValue: number, maxValue: number): [number, number] {
@@ -2957,7 +2975,7 @@ export class newAxis extends EventEmitter {
 
   public mouseDown(mouseDown: Vertex): boolean {
     let isReset = false;
-    if (this.isInTitleBox(mouseDown.scale(this.initScale))) this.title.isClicked = true
+    if (this.isInTitleBox(mouseDown.scale(this.initScale))) this.clickOnTitle()
     else {
       this.is_drawing_rubberband = true; // OLD
       const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
@@ -2979,6 +2997,8 @@ export class newAxis extends EventEmitter {
       coords.y <= this.title.boundingBox.origin.y && coords.y >= this.title.boundingBox.origin.y + this.title.boundingBox.size.y;
     return isInX && isInY
   }
+
+  protected clickOnTitle(): void {}
 
   public mouseUp(): void { this.rubberBand.mouseUp() }
 
@@ -3006,9 +3026,9 @@ export class newAxis extends EventEmitter {
     return value
   }
 
-  private textAlignments(): [string, string] {
-    const forVertical = ['end', 'start'][this.verticalPickIdx()];
-    const forHorizontal = ['bottom', 'top'][this.horizontalPickIdx()]
+  protected textAlignments(): [string, string] {
+    const forVertical = this.initScale.x > 0 ? 'end' : 'start';
+    const forHorizontal = this.initScale.y > 0 ? 'bottom' : 'top';
     return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
   }
 
@@ -3071,21 +3091,6 @@ export class ParallelAxis extends newAxis {
   get tickMarker(): string { return "line" }
 
   get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
-
-  protected buildPath(): void {
-    super.buildPath();
-    // if (this.titleBox) this.path.addPath(this.titleBox.path);
-  }
-
-  public draw(context: CanvasRenderingContext2D): void {
-    super.draw(context);
-    const canvasHTMatrix = context.getTransform();
-    const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
-    // this.titleZone.draw(context);
-    context.resetTransform();
-    this.drawTitle(context, canvasHTMatrix, "rgb(0,0,0)");
-    context.setTransform(canvasHTMatrix);
-  }
 
   public setTitleSettings(): void {
     this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
@@ -3162,6 +3167,15 @@ export class ParallelAxis extends newAxis {
 
   public mouseUp(): void { this.rubberBand.mouseUp() }
 
+  protected clickOnTitle(): void { this.flip() }
+
+  protected flip(): void { this.isInverted = !this.isInverted }
+
+  protected textAlignments(): [string, string] {
+    const forVertical = this.isInverted ? (this.initScale.x > 0 ? 'start' : 'end') : (this.initScale.x > 0 ? 'end' : 'start');
+    const forHorizontal = this.isInverted ? (this.initScale.y > 0 ? 'top' : 'bottom') : (this.initScale.y > 0 ? 'bottom' : 'top');
+    return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
+  }
 }
 
 export class DrawingCollection {

@@ -1902,7 +1902,7 @@ export class newText extends newShape {
   public multiLineSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     context.font = newText.buildFont(this.style, fontsize, this.font);
     const oneRowLength = context.measureText(this.text).width;
-    if (oneRowLength <= this.boundingBox.size.x) return [[this.text], fontsize];
+    if (oneRowLength <= this.boundingBox.size.x) return [[this.text], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y : fontsize];
     if (!this.boundingBox.size.y) return [this.fixedFontSplit(context), fontsize];    
     return this.autoFontSplit(fontsize, context);
   }

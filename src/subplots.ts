@@ -2756,7 +2756,7 @@ export class newParallelPlot extends Figure {
     boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
     if (index == 0) {
       if (this.initScale.x < 0) {
-        boundingBox.origin.x -= (this.width + axisOrigin.x) * FREE_SPACE_FACTOR;
+        boundingBox.origin.x -= (this.size.x + axisOrigin.x) * FREE_SPACE_FACTOR;
         boundingBox.size.x = (step / 2 + this.width + axisOrigin.x) * FREE_SPACE_FACTOR;
       } else {
         boundingBox.origin.x -= axisOrigin.x * FREE_SPACE_FACTOR;

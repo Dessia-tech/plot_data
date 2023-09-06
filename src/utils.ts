@@ -2259,6 +2259,7 @@ const TOOLTIP_TRIANGLE_SIZE = 10;
 export class newTooltip {
   public path: Path2D;
 
+  public lineWidth: number = 1;
   public strokeStyle: string = "hsl(210, 90%, 20%)";
   public textColor: string = "hsl(0, 0%, 100%)";
   public fillStyle: string = "hsl(210, 90%, 20%)";
@@ -2386,6 +2387,7 @@ export class newTooltip {
 
     context.save();
     context.scale(scaling.x, scaling.y);
+    context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
     context.fillStyle = this.fillStyle;
     context.globalAlpha = this.alpha;

@@ -2570,6 +2570,7 @@ export class newAxis extends newShape{
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isInverted: boolean = false;
+  private nearbyMouse: boolean = false;
   public mouseStyleON: boolean = false;
   public rubberBand: RubberBand;
   public title: newText;
@@ -2822,9 +2823,9 @@ export class newAxis extends newShape{
     context.strokeStyle = color;
     context.fillStyle = color;
     context.lineWidth = this.lineWidth;
-    // this.boundingBox.draw(context);
+    this.boundingBox.draw(context);
     context.stroke(this.drawPath);
-    // context.stroke(this.path);
+    context.stroke(this.path);
     context.fill(this.drawPath);
 
     context.resetTransform();
@@ -3004,6 +3005,7 @@ export class newAxis extends newShape{
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
     super.mouseMove(context, mouseCoords);
+    this.nearbyMouse = context.isPointInPath(this.boundingBox.path, mouseCoords.x, mouseCoords.y);
     if (this.isInTitleBox(mouseCoords.scale(this.initScale))) this.title.isHovered = true
     else this.title.isHovered = false;
     if (this.mouseClick) {
@@ -3038,7 +3040,7 @@ export class newAxis extends newShape{
 
   public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
     super.mouseUp(context, keepState);
-    this.rubberBand.mouseUp()
+    this.rubberBand.mouseUp();
     if (this.is_drawing_rubberband) {
       this.emitter.emit("rubberBandChange", this.rubberBand);
       this.is_drawing_rubberband = false;
@@ -3166,12 +3168,14 @@ export class ParallelAxis extends newAxis {
 
   public computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, nAxis: number): ParallelAxis {
     this.titleZone = new newRect(this.boundingBox.origin.copy(), this.boundingBox.size.copy());
+    const SIZE_FACTOR = 0.35;
     let offset = 0;
     if (this.isVertical) {
       offset = this.drawLength + this.SIZE_END * 2;
       this.titleZone.origin.y += offset;
     } else {
       offset = this.SIZE_END + this.offsetTicks + this.FONT_SIZE;
+      this.titleZone.size.x *= SIZE_FACTOR;
     }
     this.titleZone.size.y -= offset;
     this.titleZone.buildPath();
@@ -3218,7 +3222,7 @@ export class ParallelAxis extends newAxis {
 
   public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
     super.mouseUp(context, keepState);
-    if (this.title.isClicked && this.title.isHovered) {
+    if (this.title.isClicked && this.title.isHovered && !this.is_drawing_rubberband) {
       this.title.isClicked = false;
       this.flip();
     }

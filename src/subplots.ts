@@ -2740,9 +2740,8 @@ export class newParallelPlot extends Figure {
 
   private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
     const FREE_SPACE_FACTOR = 0.95;
-    const SIZE_FACTOR = 0.35;
     const boundingBox = new newRect(axisOrigin.copy());
-    boundingBox.size = new Vertex(axisSize * SIZE_FACTOR, step * FREE_SPACE_FACTOR);
+    boundingBox.size = new Vertex(axisSize, step * FREE_SPACE_FACTOR);
     if (index == this.drawnFeatures.length - 1) {
       boundingBox.size.x = axisSize;
       if (this.initScale.y < 0) boundingBox.size.y = (this.size.y - Math.abs(axisOrigin.y)) * FREE_SPACE_FACTOR

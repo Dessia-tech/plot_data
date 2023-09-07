@@ -74,7 +74,7 @@ describe('HISTOGRAM CANVAS', function () {
       expect(histogram.hoveredIndices.length).to.equal(7);
 
       [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
-      histogram.mouseUp(canvasMouse, frameMouse, mouseCoords, canvasDown, false)
+      histogram.mouseUp(canvasMouse, canvasDown, false)
       expect(histogram.clickedIndices[2]).to.equal(11);
       expect(histogram.clickedIndices[6]).to.equal(47);
     })

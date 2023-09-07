@@ -1226,15 +1226,15 @@ export class RubberBand {
 
   public mouseDown(mouseAxis: number) {
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.realMin) <= this.borderSize) { this.minUpdate = true }
-    else if (Math.abs(mouseAxis - this.realMax) <= this.borderSize) { this.maxUpdate = true }
-    else { this.lastValues = new Vertex(this.minValue, this.maxValue) }
+    if (Math.abs(mouseAxis - this.realMin) <= this.borderSize) this.minUpdate = true
+    else if (Math.abs(mouseAxis - this.realMax) <= this.borderSize) this.maxUpdate = true
+    else this.lastValues = new Vertex(this.minValue, this.maxValue);
   }
 
   public mouseMove(downValue: number, currentValue: number) {
     if (this.isClicked) {
-      if (this.minUpdate) { this.minValue = currentValue }
-      else if (this.maxUpdate) { this.maxValue = currentValue }
+      if (this.minUpdate) this.minValue = currentValue
+      else if (this.maxUpdate) this.maxValue = currentValue
       else {
         const translation = currentValue - downValue;
         this.minValue = this.lastValues.x + translation;
@@ -1332,13 +1332,13 @@ export class newShape {
   public selectedStyle: string = 'hsl(140, 65%, 60%)';
   public alpha: number = 1;
 
+  public mouseClick: Vertex = null;
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   public isScaled: boolean = true;
   public isFilled: boolean = true;
   public inFrame: boolean = true;
-  public onFrame: boolean = false;
 
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
@@ -1392,11 +1392,26 @@ export class newShape {
 
   public buildPath(): void {}
 
-  public mouseDown(mouseDown: Vertex) { }
+  public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
+    context.save();
+    context.lineWidth = 10;
+    const isHovered = context.isPointInStroke(this.path, point.x, point.y);
+    context.restore();
+    return isHovered
+  }
 
-  public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean { return false }
+  public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
 
-  public mouseUp() { }
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
+    this.isHovered = this.isPointInShape(context, mouseCoords);
+    return false
+  }
+
+  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
+    this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
+    this.mouseClick = null;
+  }
 }
 
 export class newCircle extends newShape {
@@ -2166,7 +2181,10 @@ export class LineSequence extends newShape {
 
   public translateTooltip(translation: Vertex): void { this.tooltipOrigin?.translateSelf(translation) }
 
-  public mouseDown(mouseDown: Vertex) { this.setTooltipOrigin(mouseDown) }
+  public mouseDown(mouseDown: Vertex) {
+    super.mouseDown(mouseDown);
+    if (this.isHovered) this.setTooltipOrigin(mouseDown);
+  }
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Name", this.name]]) }
 
@@ -2402,9 +2420,9 @@ const DASH_SELECTION_WINDOW = [7, 3];
 export class SelectionBox extends newRect {
   public minVertex: Vertex = null;
   public maxVertex: Vertex = null;
-
-  private _previousMin: Vertex = null;
-  private _previousMax: Vertex = null;
+  private _previousMin: Vertex;
+  private _previousMax: Vertex;
+  private _scale: Vertex = new Vertex(1, 1);
 
   public leftUpdate: boolean = false;
   public rightUpdate: boolean = false;
@@ -2415,6 +2433,9 @@ export class SelectionBox extends newRect {
     public size: Vertex = new Vertex(0, 0)
   ) {
     super(origin, size);
+    this.mouseClick = this.origin.copy();
+    this._previousMin = this.origin.copy();
+    this._previousMax = this.origin.copy();
     this.dashLine = DASH_SELECTION_WINDOW;
     this.selectedStyle = this.clickedStyle = this.hoverStyle = this.fillStyle = "hsla(0, 0%, 100%, 0)";
     this.lineWidth = 0.5
@@ -2439,10 +2460,11 @@ export class SelectionBox extends newRect {
     }
   }
 
-  public buildRectFromHTMatrix(plotOrigin: Vertex, plotSize: Vertex, HTMatrix: DOMMatrix) {
-    this.origin = this.minVertex.transform(HTMatrix);
-    this.size = this.maxVertex.transform(HTMatrix).subtract(this.origin);
-    this.insideCanvas(plotOrigin, plotSize);
+  public buildRectangle(frameOrigin: Vertex, frameSize: Vertex) {
+    this.origin = this.minVertex.copy();
+    this.size = this.maxVertex.subtract(this.origin);
+    this.insideCanvas(frameOrigin, frameSize);
+    this.buildPath();
   }
 
   private insideCanvas(drawOrigin: Vertex, drawSize: Vertex): void {
@@ -2473,27 +2495,36 @@ export class SelectionBox extends newRect {
     }
   }
 
-  private get borderSizeX() {return Math.min(BORDER_SIZE, Math.abs(this.size.x) / 3)}
+  private get borderSizeX() { return Math.min(BORDER_SIZE / Math.abs(this._scale.x), Math.abs(this.size.x) / 3) }
 
-  private get borderSizeY() {return Math.min(BORDER_SIZE, Math.abs(this.size.y) / 3)}
+  private get borderSizeY() { return Math.min(BORDER_SIZE / Math.abs(this._scale.y), Math.abs(this.size.y) / 3) }
 
   private saveState() {
-    this._previousMin = this.minVertex;
-    this._previousMax = this.maxVertex;
+    this._previousMin = this.minVertex.copy();
+    this._previousMax = this.maxVertex.copy();
+  }
+
+  public updateScale(scaleX: number, scaleY: number): void {
+    this._scale.x = scaleX;
+    this._scale.y = scaleY;
   }
 
   public mouseDown(mouseDown: Vertex): void {
-    this.isClicked = true;
-    this.saveState();
-    this.leftUpdate = Math.abs(mouseDown.x - this.origin.x) <= this.borderSizeX;
-    this.rightUpdate = Math.abs(mouseDown.x - (this.origin.x + this.size.x)) <= this.borderSizeX;
-    this.downUpdate = Math.abs(mouseDown.y - this.origin.y) <= this.borderSizeY;
-    this.upUpdate = Math.abs(mouseDown.y - (this.origin.y + this.size.y)) <= this.borderSizeY;
+    super.mouseDown(mouseDown);
+    if (this.isHovered) {
+      this.isClicked = true;
+      this.saveState();
+      this.leftUpdate = Math.abs(this.mouseClick.x - this.minVertex.x) <= this.borderSizeX;
+      this.rightUpdate = Math.abs(this.mouseClick.x - (this.maxVertex.x)) <= this.borderSizeX;
+      this.downUpdate = Math.abs(this.mouseClick.y - this.minVertex.y) <= this.borderSizeY;
+      this.upUpdate = Math.abs(this.mouseClick.y - (this.maxVertex.y)) <= this.borderSizeY;
+    }
   }
 
-  public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {
-    if ( !(this.leftUpdate || this.rightUpdate || this.downUpdate || this.upUpdate) ) {
-      const translation = mouseCoords.subtract(mouseDown);
+  mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
+    const mouseMoveBool = super.mouseMove(context, mouseCoords);
+    if (!(this.leftUpdate || this.rightUpdate || this.downUpdate || this.upUpdate) && this.isClicked) {
+      const translation = mouseCoords.subtract(this.mouseClick);
       this.minVertex = this._previousMin.add(translation);
       this.maxVertex = this._previousMax.add(translation);
       return false
@@ -2502,14 +2533,19 @@ export class SelectionBox extends newRect {
     if (this.rightUpdate) this.maxVertex.x = Math.max(this._previousMin.x, mouseCoords.x);
     if (this.downUpdate) this.minVertex.y = Math.min(this._previousMax.y, mouseCoords.y);
     if (this.upUpdate) this.maxVertex.y = Math.max(this._previousMin.y, mouseCoords.y);
-    if (this.minVertex.x == this._previousMax.x) this.maxVertex.x = mouseCoords.x;
-    if (this.maxVertex.x == this._previousMin.x) this.minVertex.x = mouseCoords.x;
-    if (this.minVertex.y == this._previousMax.y) this.maxVertex.y = mouseCoords.y;
-    if (this.maxVertex.y == this._previousMin.y) this.minVertex.y = mouseCoords.y;
-    return false
+    if (this.isClicked) {
+      if (this.minVertex.x == this._previousMax.x) this.maxVertex.x = mouseCoords.x;
+      if (this.maxVertex.x == this._previousMin.x) this.minVertex.x = mouseCoords.x;
+      if (this.minVertex.y == this._previousMax.y) this.maxVertex.y = mouseCoords.y;
+      if (this.maxVertex.y == this._previousMin.y) this.minVertex.y = mouseCoords.y;
+    }
+    return mouseMoveBool
   }
 
-  public mouseUp() { this.leftUpdate = this.rightUpdate = this.upUpdate = this.downUpdate = this.isClicked = this.isHovered = false }
+  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean) {
+    super.mouseUp(context, keepState);
+    this.isClicked = this.leftUpdate = this.rightUpdate = this.upUpdate = this.downUpdate = false;
+  }
 }
 
 export class TitleSettings {
@@ -2521,7 +2557,7 @@ export class TitleSettings {
   ) {}
 }
 
-export class newAxis extends EventEmitter {
+export class newAxis extends newShape{
   public ticksPoints: newPoint2D[];
   public drawPath: Path2D;
   public path: Path2D;
@@ -2546,6 +2582,7 @@ export class newAxis extends EventEmitter {
   public ticksFontsize: number = 12;
   protected _isDiscrete: boolean;
 
+  public emitter: EventEmitter = new EventEmitter();
   public minValue: number;
   public maxValue: number;
   public initMinValue: number;
@@ -2599,9 +2636,6 @@ export class newAxis extends EventEmitter {
   public get drawLength(): number {
     return this.isVertical ? Math.abs(this.origin.y - this.end.y) : Math.abs(this.origin.x - this.end.x);
   }
-
-  // TODO: OLD, MUST DISAPPEAR ONCE PARALLELPLOT ARE REFACTORED
-  // public get isInverted(): boolean { return this.initScale[this.isVertical ? 'y' : 'x'] == -1 }
 
   private get drawingColor(): string {
     let color = this.strokeStyle;
@@ -2706,7 +2740,7 @@ export class newAxis extends EventEmitter {
     const horizontalIdx = Number(!this.isVertical);
     const path = new Path2D();
     let endArrow: newPoint2D;
-      if (this.isInverted) {
+    if (this.isInverted) {
       endArrow = new newPoint2D(this.origin.x - this.SIZE_END / 2 * horizontalIdx, this.origin.y - this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['left', 'down'][verticalIdx]);
     } else {
       endArrow = new newPoint2D(this.end.x + this.SIZE_END / 2 * horizontalIdx, this.end.y + this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['right', 'up'][verticalIdx]);
@@ -2717,7 +2751,7 @@ export class newAxis extends EventEmitter {
     return path
   }
 
-  protected buildPath(): void {
+  public buildPath(): void {
     this.path = new Path2D();
     const offset = new Vertex(this.SELECTION_RECT_SIZE * Number(this.isVertical), this.SELECTION_RECT_SIZE * Number(!this.isVertical));
     const origin = new Vertex(this.origin.x, this.origin.y).subtract(offset.multiply(2));
@@ -2788,8 +2822,9 @@ export class newAxis extends EventEmitter {
     context.strokeStyle = color;
     context.fillStyle = color;
     context.lineWidth = this.lineWidth;
-    this.boundingBox.draw(context);
+    // this.boundingBox.draw(context);
     context.stroke(this.drawPath);
+    // context.stroke(this.path);
     context.fill(this.drawPath);
 
     context.resetTransform();
@@ -2964,32 +2999,50 @@ export class newAxis extends EventEmitter {
     this.rubberBand.realMin = Math.min(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.realMax = Math.max(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, this.rubberColor, 0.1, 0.5);
-    if (this.rubberBand.isClicked) this.emit("rubberBandChange", this.rubberBand);
+    if (this.rubberBand.isClicked) this.emitter.emit("rubberBandChange", this.rubberBand);
   }
 
-  public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {
-    let downValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
-    let currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
-    if (!this.rubberBand.isClicked) {
-      this.rubberBand.minValue = Math.min(downValue, currentValue);
-      this.rubberBand.maxValue = Math.max(downValue, currentValue);
-    } else this.rubberBand.mouseMove(downValue, currentValue);
-    return true
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
+    super.mouseMove(context, mouseCoords);
+    if (this.isInTitleBox(mouseCoords.scale(this.initScale))) this.title.isHovered = true
+    else this.title.isHovered = false;
+    if (this.mouseClick) {
+      let downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
+      let currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
+      if (!this.rubberBand.isClicked) {
+        this.rubberBand.minValue = Math.min(downValue, currentValue);
+        this.rubberBand.maxValue = Math.max(downValue, currentValue);
+      } else this.rubberBand.mouseMove(downValue, currentValue);
+      this.emitter.emit("rubberBandChange", this.rubberBand);
+    }
+    return false
   }
 
   public mouseDown(mouseDown: Vertex): boolean {
+    super.mouseDown(mouseDown);
     let isReset = false;
-    if (this.isInTitleBox(mouseDown.scale(this.initScale))) this.clickOnTitle()
-    else {
-      this.is_drawing_rubberband = true; // OLD
-      const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
-      if (!this.isInRubberBand(this.absoluteToRelative(mouseUniCoord))) {
-        this.rubberBand.reset();
-        isReset = true;
-      } else this.rubberBand.mouseDown(mouseUniCoord);
-      this.emit("rubberBandChange", this.rubberBand);
+    if (this.isHovered) {
+      if (this.isInTitleBox(mouseDown.scale(this.initScale))) this.clickOnTitle()
+      else {
+        this.is_drawing_rubberband = true; // OLD
+        const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
+        if (!this.isInRubberBand(this.absoluteToRelative(mouseUniCoord))) {
+          this.rubberBand.reset();
+          isReset = true;
+        } else this.rubberBand.mouseDown(mouseUniCoord);
+        this.emitter.emit("rubberBandChange", this.rubberBand);
+      }
     }
     return isReset
+  }
+
+  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
+    super.mouseUp(context, keepState);
+    this.rubberBand.mouseUp()
+    if (this.is_drawing_rubberband) {
+      this.emitter.emit("rubberBandChange", this.rubberBand);
+      this.is_drawing_rubberband = false;
+    }
   }
 
   private isInTitleBox(coords: Vertex): boolean {
@@ -3003,8 +3056,6 @@ export class newAxis extends EventEmitter {
   }
 
   protected clickOnTitle(): void {}
-
-  public mouseUp(): void { this.rubberBand.mouseUp() }
 
   public isInRubberBand(value: number): boolean {
     return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue)
@@ -3160,19 +3211,20 @@ export class ParallelAxis extends newAxis {
     }
   }
 
-  public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {
-    let downValue = this.absoluteToRelative(this.isVertical ? mouseDown.y : mouseDown.x);
-    let currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
-    if (!this.rubberBand.isClicked) {
-      this.rubberBand.minValue = Math.min(downValue, currentValue);
-      this.rubberBand.maxValue = Math.max(downValue, currentValue);
-    } else this.rubberBand.mouseMove(downValue, currentValue);
-    return true
+  // public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {
+  //   const superMouseMoveOutput = super.mouseMove(mouseDown, mouseCoords);
+  //   return superMouseMoveOutput
+  // }
+
+  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
+    super.mouseUp(context, keepState);
+    if (this.title.isClicked && this.title.isHovered) {
+      this.title.isClicked = false;
+      this.flip();
+    }
   }
 
-  public mouseUp(): void { this.rubberBand.mouseUp() }
-
-  protected clickOnTitle(): void { this.flip() }
+  protected clickOnTitle(): void { this.title.isClicked = true }
 
   protected flip(): void { this.isInverted = !this.isInverted }
 }
@@ -3183,26 +3235,23 @@ export class DrawingCollection {
     public frame: DOMMatrix = new DOMMatrix()
   ) {}
 
-  public updateMouseState(context: CanvasRenderingContext2D, mouseCoords: Vertex, stateName: string, keepState: boolean, invertState: boolean) {
-    this.drawings.forEach(drawing => {
-      if (drawing.isFilled) {
-        if (context.isPointInPath(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
-        else { if (!keepState) drawing[stateName] = false }
-      } else {
-        context.save();
-        context.lineWidth = 10;
-        if (context.isPointInStroke(drawing.path, mouseCoords.x, mouseCoords.y)) drawing[stateName] = invertState ? !drawing[stateName] : true
-        else { if (!keepState) drawing[stateName] = false }
-        context.restore();
-      }
-    })
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
+    let inTranslation = false;
+    this.drawings.forEach(drawing => inTranslation = inTranslation || drawing.mouseMove(context, mouseCoords));
+    return inTranslation
   }
 
   public mouseDown(mouseCoords: Vertex): any {
     let clickedObject: any = null;
-    this.drawings.forEach(drawing => { if (drawing.isHovered) clickedObject = drawing });
-    clickedObject?.mouseDown(mouseCoords);
+    this.drawings.forEach(drawing => {
+      drawing.mouseDown(mouseCoords);
+      if (drawing.isHovered) clickedObject = drawing;
+    });
     return clickedObject
+  }
+
+  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
+    this.drawings.forEach(drawing => drawing.mouseUp(context, keepState));
   }
 
   public draw(context: CanvasRenderingContext2D): void { this.drawings.forEach(drawing => drawing.draw(context)) }
@@ -3237,9 +3286,11 @@ export class GroupCollection extends ShapeCollection {
 
   public updateSampleStates(stateName: string): number[] {
     const newSampleStates = [];
-    this.drawings.forEach(drawing => {
+    this.drawings.forEach((drawing, index) => {
       if (drawing.values) {
         if (drawing[stateName]) drawing.values.forEach(sample => newSampleStates.push(sample));
+      } else {
+        if (drawing[stateName] && !(drawing instanceof SelectionBox)) newSampleStates.push(index);
       }
     });
     return newSampleStates

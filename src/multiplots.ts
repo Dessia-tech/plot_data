@@ -2182,7 +2182,7 @@ export class MultiplotCom {
           if (currentAxis.name == otherAxis.name && currentAxis.name != 'number') {
             otherAxis.rubberBand.minValue = currentAxis.rubberBand.minValue;
             otherAxis.rubberBand.maxValue = currentAxis.rubberBand.maxValue;
-            otherAxis.emit("rubberBandChange", otherAxis.rubberBand);
+            otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
           }
         })
       })

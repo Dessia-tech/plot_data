@@ -1704,12 +1704,12 @@ export class Figure extends PlotData {
     Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15,15]);
   }
 
-  protected drawRelativeObjects() {}
-
-  protected drawAbsoluteObjects(context: CanvasRenderingContext2D) {
-    this.absoluteObjects = new GroupCollection();
+  protected drawRelativeObjects(context: CanvasRenderingContext2D) {
+    this.relativeObjects = new GroupCollection([], this.relativeMatrix);
     this.drawSelectionBox(context);
   }
+
+  protected drawAbsoluteObjects(context: CanvasRenderingContext2D) { this.absoluteObjects = new GroupCollection() }
 
   protected computeRelativeObjects() {}
 
@@ -1722,7 +1722,7 @@ export class Figure extends PlotData {
     this.computeRelativeObjects();
 
     this.context_show.setTransform(this.relativeMatrix);
-    this.drawRelativeObjects();
+    this.drawRelativeObjects(this.context_show);
 
     this.context_show.resetTransform();
     this.drawAbsoluteObjects(this.context_show);
@@ -1762,22 +1762,29 @@ export class Figure extends PlotData {
 
   protected drawSelectionBox(context: CanvasRenderingContext2D) {
     if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
-      const [drawingOrigin, drawingSize] = this.drawingZone;
-      this.selectionBox.buildRectFromHTMatrix(drawingOrigin, drawingSize, this.relativeMatrix);
+      this.selectionBox.updateScale(this.axes[0].transformMatrix.a, this.axes[1].transformMatrix.d);
+      this.selectionBox.buildRectangle(
+        new Vertex(this.axes[0].minValue, this.axes[1].minValue), 
+        new Vertex(this.axes[0].interval, this.axes[1].interval)
+      );
       if (this.selectionBox.area != 0) {
         this.selectionBox.buildPath();
         this.selectionBox.draw(context);
-        this.absoluteObjects.drawings.push(this.selectionBox);
       }
+      this.relativeObjects.drawings.push(this.selectionBox);
     }
   }
 
   private drawZoomBox(zoomBox: SelectionBox, frameDown: Vertex, frameMouse: Vertex, context: CanvasRenderingContext2D): void {
     zoomBox.update(frameDown, frameMouse);
-    const [drawingOrigin, drawingSize] = this.drawingZone;
-    zoomBox.buildRectFromHTMatrix(drawingOrigin, drawingSize, this.relativeMatrix);
-    zoomBox.buildPath();
+    zoomBox.buildRectangle(
+      new Vertex(this.axes[0].minValue, this.axes[1].minValue), 
+      new Vertex(this.axes[0].interval, this.axes[1].interval)
+    );
+    context.save();
+    context.setTransform(this.relativeMatrix);
     zoomBox.draw(context);
+    context.restore();
   }
 
   protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
@@ -1794,19 +1801,14 @@ export class Figure extends PlotData {
     this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
   }
 
-  protected stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
-    frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-      this.fixedObjects.updateMouseState(context, canvasMouse, stateName, keepState, invertState);
-      this.absoluteObjects.updateMouseState(context, absoluteMouse, stateName, keepState, invertState);
-      this.relativeObjects.updateMouseState(context, frameMouse, stateName, keepState, invertState);
-    }
-
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
     return currentMouse.subtract(mouseDown)
   }
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
-    this.stateUpdate(this.context_show, canvasMouse, absoluteMouse, frameMouse, 'isHovered', false, false);
+    this.fixedObjects.mouseMove(this.context_show, canvasMouse);
+    this.absoluteObjects.mouseMove(this.context_show, absoluteMouse);
+    this.relativeObjects.mouseMove(this.context_show, frameMouse);
   }
 
   public projectMouse(e: MouseEvent): [Vertex, Vertex, Vertex] {
@@ -1822,12 +1824,17 @@ export class Figure extends PlotData {
     return [canvasMouse, frameMouse, clickedObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
     if (this.interaction_ON) {
-      if (this.translation.normL1 == 0 && canvasMouse.subtract(canvasDown).normL1 <= this.TRL_THRESHOLD) {
-        this.stateUpdate(this.context_show, canvasMouse, absoluteMouse, frameMouse, 'isClicked', ctrlKey, true);
-      }
+      this.fixedObjects.mouseUp(this.context_show, ctrlKey);
+      this.absoluteObjects.mouseUp(this.context_show, ctrlKey);
+      this.relativeObjects.mouseUp(this.context_show, ctrlKey);
     }
+  }
+
+  public translate(canvas: HTMLElement, translation: Vertex): void {
+    canvas.style.cursor = 'move';
+    this.translation = translation;
   }
 
   public mouse_interaction(isParallelPlot: boolean): void {
@@ -1838,7 +1845,7 @@ export class Figure extends PlotData {
       var frameMouse = new Vertex(0, 0); var frameDown = new Vertex(0, 0);
       var absoluteMouse = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
-      var canvas = document.getElementById(this.canvas_id);
+      const canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false; var shiftKey = false;
       var zoomBox = new SelectionBox();
       window.addEventListener('keydown', e => {
@@ -1851,7 +1858,7 @@ export class Figure extends PlotData {
 
       window.addEventListener('keyup', e => {
         if (e.key == "Control") ctrlKey = false;
-        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; canvas.style.cursor = 'default'; this.draw() };
+        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; this.is_drawing_rubber_band = false; canvas.style.cursor = 'default'; this.draw() };
       });
 
       canvas.addEventListener('mousemove', e => {
@@ -1860,32 +1867,25 @@ export class Figure extends PlotData {
         if (this.isZooming) canvas.style.cursor = 'crosshair';
         if (this.interaction_ON) {
           if (isDrawing) {
-            if ( !(clickedObject instanceof SelectionBox) ) {
-              if (!clickedObject?.mouseMove(canvasDown, canvasMouse) && !this.isSelecting && !this.isZooming) {
-                canvas.style.cursor = 'move';
-                this.translation = this.mouseTranslate(canvasMouse, canvasDown);
-              }
+            const translation = this.mouseTranslate(canvasMouse, canvasDown);
+            if (!(clickedObject instanceof newAxis)) {
+              if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
+            }
+            if (this.isSelecting) {
+              if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
+              else this.updateSelectionBox(frameDown, frameMouse);
             }
           }
-          this.draw();
         }
-        if (isDrawing) {
-          if (this.isSelecting) {
-            if (clickedObject instanceof SelectionBox) {
-              clickedObject.mouseMove(frameDown, frameMouse);
-              this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex);
-            }
-            else this.updateSelectionBox(frameDown, frameMouse);
-          }
-          if (this.isZooming) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
-        }
+        this.draw();
+        if (this.isZooming && isDrawing) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
         const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
-        if (!mouseInCanvas) { isDrawing = false };
+        if (!mouseInCanvas) isDrawing = false;
       });
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-        this.is_drawing_rubber_band = clickedObject instanceof newAxis || this.isSelecting;
+        this.is_drawing_rubber_band = this.isSelecting;
         if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
       });
@@ -1896,10 +1896,7 @@ export class Figure extends PlotData {
           this.switchZoom();
           this.zoomBoxUpdateAxes(zoomBox);
         }
-        this.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
-        if (clickedObject) clickedObject.mouseUp();
-        if (this.isSelecting) this.selectionBox.mouseUp();
-        if ( !(clickedObject instanceof SelectionBox || shiftKey) ) this.isSelecting = false;
+        this.mouseUp(canvasMouse, canvasDown, ctrlKey);
         if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
         clickedObject = null;
         this.draw();
@@ -2049,12 +2046,15 @@ export class Frame extends Figure {
     if (data.axis?.nb_points_y) this.nYTicks = data.axis.nb_points_y;
   }
 
-  protected stateUpdate(context: CanvasRenderingContext2D, canvasMouse: Vertex, absoluteMouse: Vertex,
-    frameMouse: Vertex, stateName: string, keepState: boolean, invertState: boolean): void {
-      super.stateUpdate(context, canvasMouse, absoluteMouse, frameMouse, stateName, keepState, invertState);
-      if (stateName == "isHovered") this.hoveredIndices = this.sampleDrawings.updateSampleStates(stateName);
-      if (stateName == 'isClicked') this.clickedIndices = this.sampleDrawings.updateSampleStates(stateName);
-    }
+  public mouseMove(canvasMouse: Vertex, absoluteMouse: Vertex, frameMouse: Vertex): void {
+    super.mouseMove(canvasMouse, absoluteMouse, frameMouse);
+    this.hoveredIndices = this.sampleDrawings.updateSampleStates('isHovered');
+  }
+
+  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+    this.clickedIndices = this.sampleDrawings.updateSampleStates('isClicked');
+  }
 
   protected setFeatures(data: any): [string, string] {
     [this.xFeature, this.yFeature] = super.setFeatures(data);
@@ -2093,8 +2093,8 @@ export class Frame extends Figure {
     return [xBoundingBox, yBoundingBox]
   }
 
-  protected drawFixedObjects(context: CanvasRenderingContext2D): void {
-    super.drawFixedObjects(context);
+  protected drawRelativeObjects(context: CanvasRenderingContext2D): void {
+    super.drawRelativeObjects(context);
     if (this.isRubberBanded()) this.updateSelectionBox(...this.rubberBandsCorners);
   }
 
@@ -2111,7 +2111,7 @@ export class Frame extends Figure {
   }
 
   public mouse_interaction(isParallelPlot: boolean): void {
-    this.axes.forEach((axis, index) => axis.on('rubberBandChange', e => {
+    this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => {
       this.is_drawing_rubber_band = true;
       this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
     }));
@@ -2212,10 +2212,10 @@ export class Histogram extends Frame {
     this.getBarsDrawing();
   }
 
-  protected drawRelativeObjects(): void {
-    super.drawRelativeObjects();
+  protected drawRelativeObjects(context: CanvasRenderingContext2D): void {
+    super.drawRelativeObjects(context);
     this.bars.forEach(bar => bar.draw(this.context_show));
-    this.relativeObjects = new GroupCollection([...this.bars], this.relativeMatrix);
+    this.relativeObjects.drawings = [...this.bars, ...this.relativeObjects.drawings];
   }
 
   private getBarsDrawing(): void {
@@ -2542,11 +2542,13 @@ export class newScatter extends Frame {
     })
   }
 
-  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
-    const translation = super.mouseTranslate(currentMouse, mouseDown);
+  public translate(canvas: HTMLElement, translation: Vertex): void {
+    super.translate(canvas, translation);
     const pointTRL = new Vertex(translation.x * this.initScale.x, translation.y * this.initScale.y);
-    this.points.forEach((point, index) => { point.center = this.previousCoords[index].add(pointTRL); point.update() })
-    return translation
+    this.points.forEach((point, index) => {
+      point.center = this.previousCoords[index].add(pointTRL);
+      point.update();
+    })
   }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
@@ -2555,8 +2557,8 @@ export class newScatter extends Frame {
     return [superCanvasMouse, superFrameMouse, clickedObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    super.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
+  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
     this.previousCoords = [];
   }
 
@@ -2668,8 +2670,8 @@ export class newGraph2D extends newScatter {
     this.draw();
   }
 
-  public mouseUp(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    super.mouseUp(canvasMouse, frameMouse, absoluteMouse, canvasDown, ctrlKey);
+  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
     this.curves.forEach(curve => curve.previousTooltipOrigin = curve.tooltipOrigin);
   }
 

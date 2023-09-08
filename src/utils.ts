@@ -3245,7 +3245,7 @@ export class ParallelAxis extends newAxis {
 
   protected flip(): void { this.isInverted = !this.isInverted }
 
-  public switchOrientation(newOrigin: Vertex, newEnd: Vertex, boundingBox: newRect, index: number, nAxis: number): void {
+  public updateLocation(newOrigin: Vertex, newEnd: Vertex, boundingBox: newRect, index: number, nAxis: number): void {
     this.boundingBox = boundingBox;
     this.transform(newOrigin, newEnd);
     this.computeEnds();

@@ -2717,14 +2717,18 @@ export class newParallelPlot extends Figure {
     return standardOffset
   }
 
-  public switchOrientation() {
+  public switchOrientation(): void {
     this.isVertical = !this.isVertical;
+    this.updateAxesLocation();
+  }
+
+  private updateAxesLocation(): void {
     const freeSpace = this.setBounds();
     const axisBoundingBoxes = this.buildAxisBoundingBoxes(freeSpace);
     const step = this.computeAxesStep();
     this.axes.forEach((axis, index) => {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
-      axis.switchOrientation(axisOrigin, axisEnd, axisBoundingBoxes[index], index, this.drawnFeatures.length);
+      axis.updateLocation(axisOrigin, axisEnd, axisBoundingBoxes[index], index, this.drawnFeatures.length);
     });
     this.draw();
   }
@@ -2815,10 +2819,7 @@ export class newParallelPlot extends Figure {
 
   public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
     for (let i = 0; i < this.axes.length; i++) {
-      if (this.axes[i].hasMoved) {
-        this.isVertical = !this.isVertical;
-        this.switchOrientation();
-      }
+      if (this.axes[i].hasMoved) { this.updateAxesLocation(); break }
     }
     super.mouseUp(canvasMouse, canvasDown, ctrlKey);
   }

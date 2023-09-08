@@ -2806,13 +2806,21 @@ export class newParallelPlot extends Figure {
     if (this.isVertical) {
       if (this.initScale.x < 0) this.axes.sort((a, b) => b.origin.x - a.origin.x)
       else this.axes.sort((a, b) => a.origin.x - b.origin.x);
+    } else {
+      if (this.initScale.y < 0) this.axes.sort((a, b) => b.origin.y - a.origin.y)
+      else this.axes.sort((a, b) => a.origin.y - b.origin.y);
     }
     this.drawnFeatures = this.axes.map(axis => axis.name);
   }
 
   public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+    for (let i = 0; i < this.axes.length; i++) {
+      if (this.axes[i].hasMoved) {
+        this.isVertical = !this.isVertical;
+        this.switchOrientation();
+      }
+    }
     super.mouseUp(canvasMouse, canvasDown, ctrlKey);
-    this.draw();
   }
 }
 

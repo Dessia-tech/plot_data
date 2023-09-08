@@ -2863,7 +2863,7 @@ export class newAxis extends newShape{
 
   protected formatTitle(text: newText, context: CanvasRenderingContext2D): void { text.format(context) }
 
-  private updateTitle(text: string, origin: Vertex, textParams: TextParams): void {
+  protected updateTitle(context: CanvasRenderingContext2D, text: string, origin: Vertex, textParams: TextParams): void {
     this.title.text = text;
     this.title.origin = origin;
     this.title.updateParameters(textParams);
@@ -2873,7 +2873,7 @@ export class newAxis extends newShape{
   protected drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
     this.setTitleSettings();
     const textParams = this.getTitleTextParams(color, this.titleSettings.align, this.titleSettings.baseline, this.titleSettings.orientation);
-    this.updateTitle(this.titleText, this.titleSettings.origin.transform(canvasHTMatrix), textParams);
+    this.updateTitle(context, this.titleText, this.titleSettings.origin.transform(canvasHTMatrix), textParams);
     this.title.draw(context);
     this.path.addPath(this.title.path, new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]));
   }
@@ -3261,6 +3261,15 @@ export class ParallelAxis extends newAxis {
     this.boundingBox.translate(translation);
     this.titleSettings.origin = this.titleSettings.origin.add(translation);
     this.transform(newOrigin, newEnd);
+  }
+
+  protected updateTitle(context: CanvasRenderingContext2D, text: string, origin: Vertex, textParams: TextParams): void {
+    super.updateTitle(context, text, origin, textParams);
+    const writtenText = this.title.format(context);
+    if (this.isVertical && writtenText.length == 1 && ["left", "right"].includes(this.titleSettings.align)) {
+      this.titleSettings.align = "center";
+      this.titleSettings.origin.x = this.origin.x;
+    }
   }
 }
 

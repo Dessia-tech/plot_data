@@ -3260,6 +3260,7 @@ export class ParallelAxis extends newAxis {
     const translation = newOrigin.subtract(this.origin);
     this.boundingBox.translate(translation);
     this.titleSettings.origin = this.titleSettings.origin.add(translation);
+    this.titleZone.origin = this.titleZone.origin.add(translation);
     this.transform(newOrigin, newEnd);
   }
 

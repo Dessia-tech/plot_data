@@ -1957,37 +1957,14 @@ export class Figure extends PlotData {
   public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: TO REFACTOR !!!
     // e.preventDefault();
     this.fusion_coeff = 1.2;
-    if ((mouse3Y>=this.height - this.decalage_axis_y + this.Y) && (mouse3X>this.decalage_axis_x + this.X) && this.axis_ON) {
-        if (deltaY>0) {
-          this.scaleX = this.scaleX*this.fusion_coeff;
-          this.scroll_x++;
-          this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-        } else if (deltaY<0) {
-          this.scaleX = this.scaleX/this.fusion_coeff;
-          this.scroll_x--;
-          this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
-        }
 
-    } else if ((mouse3X<=this.decalage_axis_x + this.X) && (mouse3Y<this.height - this.decalage_axis_y + this.Y) && this.axis_ON) {
-        if (deltaY>0) {
-          this.scaleY = this.scaleY*this.fusion_coeff;
-          this.scroll_y++;
-          this.originY = this.height/2 + this.fusion_coeff * (this.originY - this.height/2);
-        } else if (deltaY<0) {
-          this.scaleY = this.scaleY/this.fusion_coeff;
-          this.scroll_y--;
-          this.originY = this.height/2 + 1/this.fusion_coeff * (this.originY - this.height/2);
-        }
-
-    } else {
-        if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
-        this.scaleX = this.scaleX*coeff;
-        this.scaleY = this.scaleY*coeff;
-        this.scroll_x = this.scroll_x + deltaY;
-        this.scroll_y = this.scroll_y + deltaY;
-        this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
-        this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
-      }
+      if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+      this.scaleX = this.scaleX*coeff;
+      this.scaleY = this.scaleY*coeff;
+      this.scroll_x = this.scroll_x + deltaY;
+      this.scroll_y = this.scroll_y + deltaY;
+      this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
+      this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
       if (isNaN(this.scroll_x)) this.scroll_x = 0;
       if (isNaN(this.scroll_y)) this.scroll_y = 0;
       return [mouse3X, mouse3Y];
@@ -2807,13 +2784,8 @@ export class newParallelPlot extends Figure {
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
     super.mouseMove(canvasMouse, frameMouse, absoluteMouse);
-    if (this.isVertical) {
-      if (this.initScale.x < 0) this.axes.sort((a, b) => b.origin.x - a.origin.x)
-      else this.axes.sort((a, b) => a.origin.x - b.origin.x);
-    } else {
-      if (this.initScale.y < 0) this.axes.sort((a, b) => b.origin.y - a.origin.y)
-      else this.axes.sort((a, b) => a.origin.y - b.origin.y);
-    }
+    if (this.isVertical) this.axes.sort((a, b) => a.origin.x - b.origin.x)
+    else this.axes.sort((a, b) => b.origin.y - a.origin.y);
     this.drawnFeatures = this.axes.map(axis => axis.name);
   }
 

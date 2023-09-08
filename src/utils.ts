@@ -2576,6 +2576,7 @@ export class newAxis extends newShape{
   public isClicked: boolean = false;
   public isInverted: boolean = false;
   private nearbyMouse: boolean = false;
+  private clickInPath: boolean = false;
   public mouseStyleON: boolean = false;
   public rubberBand: RubberBand;
   public title: newText;
@@ -3008,10 +3009,10 @@ export class newAxis extends newShape{
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
     super.mouseMove(context, mouseCoords);
-    // this.nearbyMouse = context.isPointInPath(this.boundingBox.path, mouseCoords.x, mouseCoords.y);
+    this.nearbyMouse = context.isPointInPath(this.boundingBox.path, mouseCoords.x, mouseCoords.y);
     this.title.isHovered = this.isInTitleBox(context, mouseCoords.scale(this.initScale));
     if (this.mouseClick) {
-      if (!this.title.isClicked) {
+      if (!this.title.isClicked && this.clickInPath) {
         const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
         const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
         if (!this.rubberBand.isClicked) {
@@ -3019,15 +3020,20 @@ export class newAxis extends newShape{
           this.rubberBand.maxValue = Math.max(downValue, currentValue);
         } else this.rubberBand.mouseMove(downValue, currentValue);
         this.emitter.emit("rubberBandChange", this.rubberBand);
-      } else this.mouseMoveClickedTitle(mouseCoords);
+      } else if (context.isPointInPath(this.boundingBox.path, this.mouseClick.x, this.mouseClick.y) && !this.clickInPath) {
+        this.mouseTranslate(this.mouseClick, mouseCoords);
+      } else if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords);
     }
     return false
   }
+
+  protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void {}
 
   public mouseDown(mouseDown: Vertex): boolean {
     super.mouseDown(mouseDown);
     let isReset = false;
     if (this.isHovered) {
+      this.clickInPath = true;
       if (this.title.isHovered) this.clickOnTitle(mouseDown)
       else {
         this.is_drawing_rubberband = true; // OLD
@@ -3038,7 +3044,8 @@ export class newAxis extends newShape{
         } else this.rubberBand.mouseDown(mouseUniCoord);
         this.emitter.emit("rubberBandChange", this.rubberBand);
       }
-    }
+    } else if (this.nearbyMouse) this.mouseClick = mouseDown.copy();
+    this.saveLocation();
     return isReset
   }
 
@@ -3051,8 +3058,9 @@ export class newAxis extends newShape{
     this.rubberBand.mouseUp();
     if (this.is_drawing_rubberband) {
       this.emitter.emit("rubberBandChange", this.rubberBand);
-      this.is_drawing_rubberband = false;
     }
+    this.is_drawing_rubberband = false;
+    this.clickInPath = false;
   }
 
   protected isInTitleBox(context, coords: Vertex): boolean {
@@ -3238,6 +3246,12 @@ export class ParallelAxis extends newAxis {
     super.mouseUp(context, keepState);
   }
 
+  protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void {
+    super.mouseTranslate(mouseDown, mouseCoords);
+    const translation = mouseCoords.subtract(this.mouseClick);
+    this.updateScale(new Vertex(0, 0), new Vertex(1, 1), translation);
+  }
+
   private updateEnds(): void {
     this._previousOrigin = this.origin.copy();
     this._previousEnd = this.end.copy();
@@ -3291,7 +3305,7 @@ export class DrawingCollection {
     let clickedObject: any = null;
     this.drawings.forEach(drawing => {
       drawing.mouseDown(mouseCoords);
-      if (drawing.isHovered) clickedObject = drawing;
+      if (drawing.isHovered || drawing.nearbyMouse) clickedObject = drawing;
     });
     return clickedObject
   }

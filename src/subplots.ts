@@ -1943,7 +1943,7 @@ export class Figure extends PlotData {
   public zoomOut(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), -342) }
 
   private zoom(center: Vertex, zFactor: number): void {
-    const [mouse3X, mouse3Y] = this.wheel_interaction(center.x, center.y, zFactor);
+    const [mouse3X, mouse3Y] = this.mouseWheel(center.x, center.y, zFactor);
     this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(1, 1));
   }
 
@@ -2229,7 +2229,7 @@ export class Histogram extends Frame {
     return new Vertex(this.axes[0].isDiscrete ? 0 : translation.x, 0)
   }
 
-  public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
+  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
     this.fusion_coeff = 1.2;
     if (!this.axes[0].isDiscrete) {
       if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
@@ -2541,9 +2541,9 @@ export class newScatter extends Frame {
     this.previousCoords = [];
   }
 
-  public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] {
+  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] {
     const scale = new Vertex(this.scaleX, this.scaleY);
-    [mouse3X, mouse3Y] = super.wheel_interaction(mouse3X, mouse3Y, deltaY);
+    [mouse3X, mouse3Y] = super.mouseWheel(mouse3X, mouse3Y, deltaY);
     for (const axis of this.axes) {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) { // code style only
         if (this.scaleX > scale.x) this.scaleX = scale.x;

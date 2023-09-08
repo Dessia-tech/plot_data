@@ -1734,7 +1734,6 @@ export class Figure extends PlotData {
     this.drawTooltips();
 
     this.context_show.resetTransform();
-    // if (this.buttons_ON) { this.drawButtons(this.context_show) }
     if (this.multiplot_manipulation) { this.drawZoneRectangle(this.context_show) };
     this.context_show.restore();
   }
@@ -1742,13 +1741,6 @@ export class Figure extends PlotData {
   public draw_initial(): void { this.draw() }
 
   public draw_from_context(hidden: any) {}
-
-  // protected drawButtons(context: CanvasRenderingContext2D) { // Kept for further implementation of legends
-  //   const buttonsX = this.initScale.x < 0 ? 50 : this.size.x - 250;
-  //   const buttonsYStart = this.initScale.y < 0 ? 50 : this.size.y - 50;
-  //   const buttonRect = new newRect(new Vertex(buttonsX + this.X, buttonsYStart + this.Y), new Vertex(200, 20));
-  //   buttonRect.draw(context);
-  // }
 
   public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() }
 
@@ -1909,9 +1901,8 @@ export class Figure extends PlotData {
 
       canvas.addEventListener('wheel', e => {
         if (this.interaction_ON) {
-          let scale = new Vertex(this.scaleX, this.scaleY);
           [mouse3X, mouse3Y] = this.wheelFromEvent(e);
-          this.drawAfterRescale(mouse3X, mouse3Y, scale);
+          this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(this.scaleX, this.scaleY));
         }
       });
 
@@ -1925,16 +1916,20 @@ export class Figure extends PlotData {
     }
   }
 
-  private drawAfterRescale(mouse3X: number, mouse3Y: number, scale: Vertex): void {
+  protected regulateScale(scale: Vertex): void {
     for (let axis of this.axes) {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
-        if (this.scaleX > scale.x) {this.scaleX = scale.x}
-        if (this.scaleY > scale.y) {this.scaleY = scale.y}
+        if (this.scaleX > scale.x) this.scaleX = scale.x;
+        if (this.scaleY > scale.y) this.scaleY = scale.y;
       } else if (axis.tickPrecision < 1) {
-        if (this.scaleX < scale.x) {this.scaleX = scale.x}
-        if (this.scaleX < scale.x) {this.scaleX = scale.x}
+        if (this.scaleX < scale.x) this.scaleX = scale.x;
+        if (this.scaleX < scale.x) this.scaleX = scale.x;
       }
     }
+  }
+
+  protected drawAfterRescale(mouse3X: number, mouse3Y: number, scale: Vertex): void {
+    this.regulateScale(scale);
     this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
     this.updateAxes(); // needs a refactor
     this.axes.forEach(axis => axis.saveLocation());
@@ -1952,22 +1947,21 @@ export class Figure extends PlotData {
     this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(1, 1));
   }
 
-  public wheelFromEvent(e: WheelEvent): [number, number] { return this.wheel_interaction(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
+  public wheelFromEvent(e: WheelEvent): [number, number] { return this.mouseWheel(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
 
-  public wheel_interaction(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: TO REFACTOR !!!
-    // e.preventDefault();
+  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
     this.fusion_coeff = 1.2;
-
-      if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
-      this.scaleX = this.scaleX*coeff;
-      this.scaleY = this.scaleY*coeff;
-      this.scroll_x = this.scroll_x + deltaY;
-      this.scroll_y = this.scroll_y + deltaY;
-      this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
-      this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
-      if (isNaN(this.scroll_x)) this.scroll_x = 0;
-      if (isNaN(this.scroll_y)) this.scroll_y = 0;
-      return [mouse3X, mouse3Y];
+    if (deltaY>0) var coeff = this.fusion_coeff
+    else coeff = 1/this.fusion_coeff;
+    this.scaleX = this.scaleX * coeff;
+    this.scaleY = this.scaleY * coeff;
+    this.scroll_x = this.scroll_x + deltaY;
+    this.scroll_y = this.scroll_y + deltaY;
+    this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
+    this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
+    if (isNaN(this.scroll_x)) this.scroll_x = 0;
+    if (isNaN(this.scroll_y)) this.scroll_y = 0;
+    return [mouse3X, mouse3Y];
   }
 }
 
@@ -2794,6 +2788,21 @@ export class newParallelPlot extends Figure {
       if (this.axes[i].hasMoved) { this.updateAxesLocation(); break }
     }
     super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+  }
+
+  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
+    const mouseCoords = new Vertex(...super.mouseWheel(mouse3X, mouse3Y, deltaY));
+    this.viewPoint = mouseCoords.scale(this.initScale);
+    for (let i = 0; i < this.axes.length; i++) {
+      if (this.axes[i].boundingBox.isPointInShape(this.context_show, this.viewPoint)) {
+        this.axes[i].update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+        this.axes[i].saveLocation()
+        break;
+      }
+    }
+    this.scaleX = this.scaleY = 1;
+    this.viewPoint = new Vertex(0, 0);
+    return [mouse3X, mouse3Y];
   }
 }
 

@@ -2699,7 +2699,7 @@ export class newParallelPlot extends Figure {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
     }
 
-  get isVertical(): boolean { return this._isVertical ?? false }
+  get isVertical(): boolean { return this._isVertical ?? true }
 
   set isVertical(value: boolean) { this._isVertical = value }
 
@@ -2716,9 +2716,7 @@ export class newParallelPlot extends Figure {
     const step = this.computeAxesStep(drawOrigin, drawEnd);
     this.axes.forEach((axis, index) => {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index, drawOrigin, drawEnd);
-      axis.boundingBox = axisBoundingBoxes[index];
-      axis.transform(axisOrigin, axisEnd);
-      axis.computeTitle(index, step, drawOrigin, drawEnd, this.drawnFeatures.length);
+      axis.switchOrientation(axisOrigin, axisEnd, axisBoundingBoxes[index], index, this.drawnFeatures.length);
     });
     this.draw();
   }
@@ -2789,7 +2787,7 @@ export class newParallelPlot extends Figure {
     this.drawnFeatures.forEach((featureName, index) => {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index, drawOrigin, drawEnd);
       const axis = new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale);
-      axis.computeTitle(index, step, drawOrigin, drawEnd, this.drawnFeatures.length);
+      axis.computeTitle(index, this.drawnFeatures.length);
       axes.push(axis);
     })
     return axes

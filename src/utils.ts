@@ -1444,6 +1444,11 @@ export class newRect extends newShape {
     this.path = new Path2D();
     this.path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
   }
+
+  public translate(translation: Vertex): void {
+    this.origin = this.origin.add(translation);
+    this.buildPath();
+  }
 }
 
 export class newRoundRect extends newRect {
@@ -2682,11 +2687,9 @@ export class newAxis extends newShape{
   protected computeEnds(): void {}
 
   public transform(newOrigin: Vertex, newEnd: Vertex): void {
-    this.origin = newOrigin;
-    this.end = newEnd;
+    this.origin = newOrigin.copy();
+    this.end = newEnd.copy();
     this.rubberBand.isVertical = this.isVertical;
-    this.computeEnds();
-    this.adjustBoundingBox();
     this.drawPath = this.buildDrawPath();
     this.buildPath();
   }
@@ -2724,7 +2727,7 @@ export class newAxis extends newShape{
     return vector.filter((value, index, array) => array.indexOf(value) === index)
   }
 
-  private adjustBoundingBox(): void {
+  protected adjustBoundingBox(): void {
     if (this.isVertical) {
       this.boundingBox.size.x += this.SIZE_END / 2;
       this.boundingBox.size.y += this.SIZE_END;
@@ -3005,17 +3008,18 @@ export class newAxis extends newShape{
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
     super.mouseMove(context, mouseCoords);
-    this.nearbyMouse = context.isPointInPath(this.boundingBox.path, mouseCoords.x, mouseCoords.y);
-    if (this.isInTitleBox(mouseCoords.scale(this.initScale))) this.title.isHovered = true
-    else this.title.isHovered = false;
+    // this.nearbyMouse = context.isPointInPath(this.boundingBox.path, mouseCoords.x, mouseCoords.y);
+    this.title.isHovered = this.isInTitleBox(context, mouseCoords.scale(this.initScale));
     if (this.mouseClick) {
-      let downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
-      let currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
-      if (!this.rubberBand.isClicked) {
-        this.rubberBand.minValue = Math.min(downValue, currentValue);
-        this.rubberBand.maxValue = Math.max(downValue, currentValue);
-      } else this.rubberBand.mouseMove(downValue, currentValue);
-      this.emitter.emit("rubberBandChange", this.rubberBand);
+      if (!this.title.isClicked) {
+        const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
+        const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
+        if (!this.rubberBand.isClicked) {
+          this.rubberBand.minValue = Math.min(downValue, currentValue);
+          this.rubberBand.maxValue = Math.max(downValue, currentValue);
+        } else this.rubberBand.mouseMove(downValue, currentValue);
+        this.emitter.emit("rubberBandChange", this.rubberBand);
+      } else this.mouseMoveClickedTitle(mouseCoords);
     }
     return false
   }
@@ -3024,7 +3028,7 @@ export class newAxis extends newShape{
     super.mouseDown(mouseDown);
     let isReset = false;
     if (this.isHovered) {
-      if (this.isInTitleBox(mouseDown.scale(this.initScale))) this.clickOnTitle()
+      if (this.title.isHovered) this.clickOnTitle(mouseDown)
       else {
         this.is_drawing_rubberband = true; // OLD
         const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
@@ -3038,8 +3042,12 @@ export class newAxis extends newShape{
     return isReset
   }
 
+  public mouseMoveClickedTitle(mouseCoords: Vertex): void {}
+
   public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
     super.mouseUp(context, keepState);
+    this.title.mouseUp(context, false);
+    this.title.isClicked = false;
     this.rubberBand.mouseUp();
     if (this.is_drawing_rubberband) {
       this.emitter.emit("rubberBandChange", this.rubberBand);
@@ -3047,17 +3055,11 @@ export class newAxis extends newShape{
     }
   }
 
-  private isInTitleBox(coords: Vertex): boolean {
-    const isInX = this.title.boundingBox.size.x > 0 ?
-      coords.x >= this.title.boundingBox.origin.x && coords.x <= this.title.boundingBox.origin.x + this.title.boundingBox.size.x:
-      coords.x <= this.title.boundingBox.origin.x && coords.x >= this.title.boundingBox.origin.x + this.title.boundingBox.size.x;
-    const isInY = this.title.boundingBox.size.y > 0 ?
-      coords.y >= this.title.boundingBox.origin.y && coords.y <= this.title.boundingBox.origin.y + this.title.boundingBox.size.y:
-      coords.y <= this.title.boundingBox.origin.y && coords.y >= this.title.boundingBox.origin.y + this.title.boundingBox.size.y;
-    return isInX && isInY
+  protected isInTitleBox(context, coords: Vertex): boolean {
+    return this.title.boundingBox.isPointInShape(context, coords)
   }
 
-  protected clickOnTitle(): void {}
+  protected clickOnTitle(mouseDown: Vertex): void { this.title.mouseDown(mouseDown); this.title.isClicked = true }
 
   public isInRubberBand(value: number): boolean {
     return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue)
@@ -3133,6 +3135,10 @@ export class newAxis extends newShape{
 
 export class ParallelAxis extends newAxis {
   public titleZone: newRect = new newRect();
+  public hasMoved: boolean = false;
+  private _previousOrigin: Vertex;
+  private _previousEnd: Vertex;
+  
   constructor(
     vector: any[],
     public boundingBox: newRect,
@@ -3144,6 +3150,7 @@ export class ParallelAxis extends newAxis {
     ) {
       super(vector, boundingBox, origin, end, name, initScale, _nTicks);
       this.centeredTitle = false;
+      this.updateEnds();
     }
   
   get tickMarker(): string { return "line" }
@@ -3166,7 +3173,7 @@ export class ParallelAxis extends newAxis {
     this.titleSettings.orientation = 0;
   }
 
-  public computeTitle(index: number, step: number, drawOrigin: Vertex, drawEnd: Vertex, nAxis: number): ParallelAxis {
+  public computeTitle(index: number, nAxis: number): ParallelAxis {
     this.titleZone = new newRect(this.boundingBox.origin.copy(), this.boundingBox.size.copy());
     const SIZE_FACTOR = 0.35;
     let offset = 0;
@@ -3215,23 +3222,48 @@ export class ParallelAxis extends newAxis {
     }
   }
 
-  // public mouseMove(mouseDown: Vertex, mouseCoords: Vertex): boolean {
-  //   const superMouseMoveOutput = super.mouseMove(mouseDown, mouseCoords);
-  //   return superMouseMoveOutput
-  // }
+  public mouseMoveClickedTitle(mouseCoords: Vertex): void {
+    const translation = mouseCoords.subtract(this.mouseClick);
+    this.translate(this._previousOrigin.add(translation), this._previousEnd.add(translation));
+    if (translation.norm > 10) this.hasMoved = true;
+  }
 
   public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
-    super.mouseUp(context, keepState);
-    if (this.title.isClicked && this.title.isHovered && !this.is_drawing_rubberband) {
+    if (this.title.isClicked && this.title.isHovered && !this.hasMoved) {
       this.title.isClicked = false;
       this.flip();
     }
+    if (this.hasMoved) this.updateEnds();
+    this.hasMoved = false;
+    super.mouseUp(context, keepState);
   }
 
-  protected clickOnTitle(): void { this.title.isClicked = true }
+  private updateEnds(): void {
+    this._previousOrigin = this.origin.copy();
+    this._previousEnd = this.end.copy();
+  }
 
   protected flip(): void { this.isInverted = !this.isInverted }
+
+  public switchOrientation(newOrigin: Vertex, newEnd: Vertex, boundingBox: newRect, index: number, nAxis: number): void {
+    this.boundingBox = boundingBox;
+    this.transform(newOrigin, newEnd);
+    this.computeEnds();
+    this.adjustBoundingBox();
+    this.updateEnds();
+    this.drawPath = this.buildDrawPath();
+    this.buildPath();
+    this.computeTitle(index, nAxis);
+  }
+
+  public translate(newOrigin: Vertex, newEnd: Vertex): void {
+    const translation = newOrigin.subtract(this.origin);
+    this.boundingBox.translate(translation);
+    this.titleSettings.origin = this.titleSettings.origin.add(translation);
+    this.transform(newOrigin, newEnd);
+  }
 }
+
 
 export class DrawingCollection {
   constructor(

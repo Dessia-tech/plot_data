@@ -2,7 +2,6 @@ import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, colorHex, color_to_string, isHex, isRgb, string_to_hex, rgb_to_string, hslToArray, colorHsl } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
-import { sep } from "path";
 
 export class Axis {
   color_stroke: any;

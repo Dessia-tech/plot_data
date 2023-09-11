@@ -2852,7 +2852,11 @@ export class newParallelPlot extends Figure {
   protected drawTooltips(): void {}
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
-    super.mouseMove(canvasMouse, frameMouse, absoluteMouse);
+    this.fixedObjects.mouseMove(this.context_show, canvasMouse);
+    if (!this.is_drawing_rubber_band) {
+      this.absoluteObjects.mouseMove(this.context_show, absoluteMouse);
+      this.relativeObjects.mouseMove(this.context_show, frameMouse);
+    };
     if (this.isVertical) this.axes.sort((a, b) => a.origin.x - b.origin.x)
     else this.axes.sort((a, b) => b.origin.y - a.origin.y);
     this.drawnFeatures = this.axes.map(axis => axis.name);
@@ -2886,7 +2890,6 @@ export class newParallelPlot extends Figure {
       if (axis.boundingBox.isClicked && !axis.isClicked) axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
       if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
     })
-    console.log(axesSelections)
     this.updateSelection(axesSelections);
   }
 

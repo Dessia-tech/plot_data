@@ -2,6 +2,7 @@ import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, colorHex, color_to_string, isHex, isRgb, string_to_hex, rgb_to_string, hslToArray, colorHsl } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
+import { sep } from "path";
 
 export class Axis {
   color_stroke: any;
@@ -1756,6 +1757,7 @@ export class newText extends newShape {
   public nRows: number;
   public boundingBox: newRect;
   public offset: number = 0;
+  private words: string[];
   constructor(
     public text: string,
     public origin: Vertex,
@@ -1903,6 +1905,7 @@ export class newText extends newShape {
     let writtenText = [this.text];
     let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
     context.font = newText.buildFont(this.style, fontsize, this.font);
+    this.words = this.getWords(); // TODO: compute it only once
     if (this.boundingBox.size.x) {
       if (this.multiLine) [writtenText, fontsize] = this.multiLineSplit(fontsize, context);
       else {
@@ -1924,6 +1927,25 @@ export class newText extends newShape {
     if (oneRowLength <= this.boundingBox.size.x) return [[this.text], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y : fontsize];
     if (!this.boundingBox.size.y) return [this.fixedFontSplit(context), fontsize];    
     return this.autoFontSplit(fontsize, context);
+  }
+
+  private getWords(): string[] {
+    if (!this.multiLine) return [this.text]
+    const words = [];
+    const separators = ["_", "/", "\\", " ", ",", ";", ":"];
+    let pickedChars = 0;
+    while (pickedChars < this.text.length - 1) {
+      let word = this.text[pickedChars];
+      if (separators.includes(this.text[pickedChars])) pickedChars++;
+      else {
+        while (!separators.includes(this.text[pickedChars]) && pickedChars < this.text.length - 1) {
+          pickedChars++;
+          word += this.text[pickedChars];
+        }
+      }
+      words.push(word);
+    }
+    return words
   }
 
   private fixedFontSplit(context: CanvasRenderingContext2D): string[] {

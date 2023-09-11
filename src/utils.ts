@@ -1846,6 +1846,7 @@ export class newText extends newShape {
       const writtenText = this.format(context);
       this.computeOffsetY();
       this.buildPath();
+      this.boundingBox.draw(context)
   
       context.font = this.fullFont;
       context.textAlign = this.align as CanvasTextAlign;
@@ -2246,7 +2247,7 @@ export class LineSequence extends newShape {
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     super.setDrawingProperties(context);
-    context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
+    context.lineWidth = (this.isHovered || this.isClicked || this.isSelected) ? this.lineWidth * 2 : this.lineWidth;
   }
 
   public buildPath(): void {
@@ -2803,12 +2804,14 @@ export class newAxis extends newShape{
     this.path.rect(origin.x, origin.y, size.x, size.y);
   }
 
-  public absoluteToRelative(value: number): number {
-    return this.isVertical ? (value - this.transformMatrix.f) / this.transformMatrix.d : (value - this.transformMatrix.e) / this.transformMatrix.a
+  public absoluteToRelative(value: string | number): number {
+    const numberedValue = this.stringToValue(value);
+    return this.isVertical ? (numberedValue - this.transformMatrix.f) / this.transformMatrix.d : (numberedValue - this.transformMatrix.e) / this.transformMatrix.a
   }
 
-  public relativeToAbsolute(value: number): number {
-    return this.isVertical ? value * this.transformMatrix.d + this.transformMatrix.f : value * this.transformMatrix.a + this.transformMatrix.e
+  public relativeToAbsolute(value: string | number): number {
+    const numberedValue = this.stringToValue(value);
+    return this.isVertical ? numberedValue * this.transformMatrix.d + this.transformMatrix.f : numberedValue * this.transformMatrix.a + this.transformMatrix.e
   }
 
   public normedValue(value: number): number { return value / this.interval }
@@ -2895,7 +2898,7 @@ export class newAxis extends newShape{
       baseline: baseline,
       style: 'bold',
       orientation: orientation,
-      backgroundColor: "hsla(0, 30%, 50%, 0.5)"
+      backgroundColor: "hsla(0, 0%, 100%, 0.5)"
     }
   }
 
@@ -2906,6 +2909,7 @@ export class newAxis extends newShape{
     this.title.origin = origin;
     this.title.updateParameters(textParams);
     this.title.boundingBox.buildPath();
+    this.title.boundingBox.hoverStyle = this.title.boundingBox.clickedStyle = this.title.boundingBox.selectedStyle = this.title.boundingBox.fillStyle;
   }
 
   protected drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
@@ -2990,7 +2994,7 @@ export class newAxis extends newShape{
     }
     return {
       width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.font,
-      align: textAlign, baseline: baseline, color: this.strokeStyle, backgroundColor: "hsla(0, 0%, 100%, 0.5)"
+      align: textAlign, baseline: baseline, color: this.strokeStyle, backgroundColor: "hsl(0, 0%, 100%, 0.5)"
     }
   }
 
@@ -3093,9 +3097,7 @@ export class newAxis extends newShape{
     this.title.mouseUp(context, false);
     this.title.isClicked = false;
     this.rubberBand.mouseUp();
-    if (this.is_drawing_rubberband) {
-      this.emitter.emit("rubberBandChange", this.rubberBand);
-    }
+    if (this.is_drawing_rubberband) this.emitter.emit("rubberBandChange", this.rubberBand);
     this.is_drawing_rubberband = false;
   }
 

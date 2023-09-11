@@ -1651,11 +1651,14 @@ export class Figure extends PlotData {
   public static intersectArrays(arrays: any[][]): any[] {
     if (arrays.length == 1) return arrays[0]
     if (arrays.length == 0) return []
-    const arraysIntersection = [...arrays[0]];
-    arrays[0].forEach(value => {
-      arrays.slice(1).forEach(array => {
-        if (!array.includes(value)) arraysIntersection.splice(arraysIntersection.indexOf(value), 1);
-      })
+    const arraysIntersection = [];
+    const allValues = arrays.concat(...arrays)
+    allValues.forEach(value => {
+      let inAllArrays = true;
+      for (let i=0; i < arrays.length; i++) {
+        if (!arrays[i].includes(value)) { inAllArrays = false; break }
+      }
+      if (inAllArrays) arraysIntersection.push(value);
     })
     return arraysIntersection
   }
@@ -1830,9 +1833,11 @@ export class Figure extends PlotData {
 
   public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
     if (this.interaction_ON) {
+      if (!this.isSelecting && !this.is_drawing_rubber_band) {
+        this.absoluteObjects.mouseUp(this.context_show, ctrlKey);
+        this.relativeObjects.mouseUp(this.context_show, ctrlKey);
+      }
       this.fixedObjects.mouseUp(this.context_show, ctrlKey);
-      this.absoluteObjects.mouseUp(this.context_show, ctrlKey);
-      this.relativeObjects.mouseUp(this.context_show, ctrlKey);
     }
   }
 
@@ -1874,7 +1879,7 @@ export class Figure extends PlotData {
             const translation = this.mouseTranslate(canvasMouse, canvasDown);
             if (!(clickedObject instanceof newAxis)) {
               if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
-            }
+            } else this.is_drawing_rubber_band = clickedObject.is_drawing_rubberband;
             if (this.isSelecting) {
               if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
               else this.updateSelectionBox(frameDown, frameMouse);
@@ -1889,8 +1894,8 @@ export class Figure extends PlotData {
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-        console.log(absoluteMouse)
-        this.is_drawing_rubber_band = this.isSelecting;
+        if (clickedObject instanceof newAxis) this.is_drawing_rubber_band = clickedObject.is_drawing_rubberband
+        else this.is_drawing_rubber_band = this.isSelecting;
         if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
       });
@@ -2676,6 +2681,7 @@ export class newGraph2D extends newScatter {
 export class newParallelPlot extends Figure {
   public axes: ParallelAxis[];
   public curves: LineSequence[];
+  public curveColor: string = 'hsl(203, 90%, 85%)';
   private _isVertical: boolean;
   constructor(
     data: any,
@@ -2689,7 +2695,6 @@ export class newParallelPlot extends Figure {
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       this.computeCurves();
-      console.log(this.curves)
     }
 
   get isVertical(): boolean { return this._isVertical ?? true }
@@ -2822,8 +2827,10 @@ export class newParallelPlot extends Figure {
   public drawCurves(context: CanvasRenderingContext2D): void {
     this.updateCurves();
     const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
-    this.curves.forEach(curve => {
-      curve.points.forEach(point => point.draw(context))
+    this.curves.forEach((curve, i) => {
+      if (this.selectedIndices.includes(i)) curve.isSelected = true
+      else curve.isSelected = false;
+      curve.strokeStyle = this.curveColor;
       curve.draw(context);
     });
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
@@ -2876,13 +2883,13 @@ export class newParallelPlot extends Figure {
   public updateAxes(): void {
     const axesSelections = [];
     this.axes.forEach(axis => {
-      if (axis.boundingBox.isClicked && !axis.isClicked) {
-        axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-      }
+      if (axis.boundingBox.isClicked && !axis.isClicked) axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
       if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
     })
+    console.log(axesSelections)
     this.updateSelection(axesSelections);
   }
+
 }
 
 

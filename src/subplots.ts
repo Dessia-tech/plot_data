@@ -1461,10 +1461,8 @@ export class PrimitiveGroupContainer extends PlotData {
 }
 
 
-const OFFSET_MULTIPLIER: Vertex = new Vertex(0.035, 0.07);
-const MARGIN_MULTIPLIER: number = 0.01;
 const MIN_FONTSIZE: number = 6;
-const calibratedMeasure: number = 33;
+const MIN_OFFSET: number = 33;
 export class Figure extends PlotData {
   public axes: newAxis[] = [];
   public drawOrigin: Vertex;
@@ -1496,6 +1494,8 @@ export class Figure extends PlotData {
 
   protected offset: Vertex;
   protected margin: Vertex;
+  protected _offset_factor: Vertex; // = new Vertex(0.035, 0.07);
+  protected _margin_factor: number; // = 0.01;
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
@@ -1547,6 +1547,14 @@ export class Figure extends PlotData {
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
+  get offset_factor(): Vertex { return this._offset_factor ?? new Vertex(0.035, 0.07) }
+
+  set offset_factor(value: Vertex) { this._offset_factor = value }
+
+  get margin_factor(): number { return this._margin_factor ?? 0.01 }
+
+  set margin_factor(value: number) { this._margin_factor = value }
+
   protected unpackAxisStyle(data:any): void {
     if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
     if (data.axis?.axis_style?.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
@@ -1584,13 +1592,13 @@ export class Figure extends PlotData {
   protected setFeatures(data: any): string[] { return data.attribute_names ?? Array.from(this.features.keys()) }
 
   protected computeOffset(): Vertex {
-    const naturalOffset = new Vertex(this.width * OFFSET_MULTIPLIER.x, this.height * OFFSET_MULTIPLIER.y);
-    return new Vertex(Math.max(naturalOffset.x, calibratedMeasure), Math.max(naturalOffset.y, MIN_FONTSIZE));
+    const naturalOffset = new Vertex(this.width * this.offset_factor.x, this.height * this.offset_factor.y);
+    return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
   protected setBounds(): Vertex {
     this.offset = this.computeOffset();
-    this.margin = new Vertex(this.size.x * MARGIN_MULTIPLIER, this.size.y * MARGIN_MULTIPLIER).add(new Vertex(10, 10));
+    this.margin = new Vertex(this.size.x * this.margin_factor, this.size.y * this.margin_factor).add(new Vertex(10, 10));
     return this.computeBounds()
   }
 
@@ -1604,7 +1612,7 @@ export class Figure extends PlotData {
     return freeSpace
   }
 
-  private swapDimension(dimension: string, origin: Vertex, end: Vertex, freeSpace: Vertex): void {
+  protected swapDimension(dimension: string, origin: Vertex, end: Vertex, freeSpace: Vertex): void {
     origin[dimension] = origin[dimension] - this.size[dimension];
     end[dimension] = end[dimension] - this.size[dimension];
     freeSpace[dimension] = Math.abs(new Vertex(this.X, this.Y)[dimension] - origin[dimension] * this.initScale[dimension] + this.size[dimension]);
@@ -2684,9 +2692,17 @@ export class newParallelPlot extends Figure {
 
   set isVertical(value: boolean) { this._isVertical = value }
 
+  get offset_factor(): Vertex { return this._offset_factor ?? new Vertex(0.035, 0.1) }
+
+  set offset_factor(value: Vertex) { this._offset_factor = value }
+
+  get margin_factor(): number { return this._margin_factor ?? 0.01 }
+
+  set margin_factor(value: number) { this._margin_factor = value }
+
   protected computeOffset(): Vertex {
     const standardOffset = super.computeOffset();
-    if (this.isVertical) return new Vertex(Math.max(standardOffset.x, calibratedMeasure), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
+    if (this.isVertical) return new Vertex(Math.max(standardOffset.x, MIN_OFFSET), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
     return standardOffset
   }
 

@@ -1932,7 +1932,11 @@ export class newText extends newShape {
   }
 
   private getWords(): string[] {
-    if (this.words) return this.words
+    if (this.words) return this.words;
+    return this.splitTextInWords();
+  }
+
+  private splitTextInWords(): string[] {
     const words = [];
     let pickedChars = 0;
     while (pickedChars < this.text.length - 1) {

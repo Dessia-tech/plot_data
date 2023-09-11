@@ -1513,6 +1513,7 @@ export class Figure extends PlotData {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.unpackAxisStyle(data);
       this.origin = new Vertex(0, 0);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
@@ -1521,7 +1522,6 @@ export class Figure extends PlotData {
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
       this.refresh_MinMax();
-      this.unpackAxisStyle(data);
       this.pointSets = new Array(this.nSamples).fill(-1);
       this.drawnFeatures = this.setFeatures(data);
       this.axes = this.setAxes();
@@ -1625,7 +1625,9 @@ export class Figure extends PlotData {
   }
 
   protected setAxis(feature: string, axisBoundingBox: newRect, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-    return new newAxis(this.features.get(feature), axisBoundingBox, origin, end, feature, this.initScale, nTicks)
+    const axis = new newAxis(this.features.get(feature), axisBoundingBox, origin, end, feature, this.initScale, nTicks);
+    axis.updateStyle(this.axisStyle);
+    return axis
   }
 
   private relocateAxes(): void {
@@ -2770,6 +2772,7 @@ export class newParallelPlot extends Figure {
     this.drawnFeatures.forEach((featureName, index) => {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
       const axis = new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale);
+      axis.updateStyle(this.axisStyle);
       axis.computeTitle(index, this.drawnFeatures.length);
       axes.push(axis);
     })
@@ -2803,6 +2806,17 @@ export class newParallelPlot extends Figure {
     this.scaleX = this.scaleY = 1;
     this.viewPoint = new Vertex(0, 0);
     return [mouse3X, mouse3Y];
+  }
+
+  public updateAxes(): void {
+    const axesSelections = [];
+    this.axes.forEach(axis => {
+      if (axis.boundingBox.isClicked && !axis.isClicked) {
+        axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+      }
+      if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
+    })
+    this.updateSelection(axesSelections);
   }
 }
 

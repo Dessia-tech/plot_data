@@ -1741,6 +1741,7 @@ export interface TextParams {
   color?: string
 }
 
+const SEPARATORS = ["_", "/", "\\", " ", ",", ";", ":"];
 const DEFAULT_FONTSIZE = 12;
 export class newText extends newShape {
   public scale: number = 1;
@@ -1785,6 +1786,7 @@ export class newText extends newShape {
       this.style = style;
       this.orientation = orientation;
       this.fillStyle = color;
+      this.words = this.getWords();
     }
 
   private static buildFont(style: string, fontsize: number, font: string): string {
@@ -1838,6 +1840,7 @@ export class newText extends newShape {
 
   public draw(context: CanvasRenderingContext2D): void {
     if (this.text) {
+      this.words = this.getWords();
       context.save();
       this.setBoundingBoxState();
       const writtenText = this.format(context);
@@ -1905,7 +1908,6 @@ export class newText extends newShape {
     let writtenText = [this.text];
     let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
     context.font = newText.buildFont(this.style, fontsize, this.font);
-    this.words = this.getWords(); // TODO: compute it only once
     if (this.boundingBox.size.x) {
       if (this.multiLine) [writtenText, fontsize] = this.multiLineSplit(fontsize, context);
       else {
@@ -1930,15 +1932,14 @@ export class newText extends newShape {
   }
 
   private getWords(): string[] {
-    if (!this.multiLine) return [this.text]
+    if (this.words) return this.words
     const words = [];
-    const separators = ["_", "/", "\\", " ", ",", ";", ":"];
     let pickedChars = 0;
     while (pickedChars < this.text.length - 1) {
       let word = this.text[pickedChars];
-      if (separators.includes(this.text[pickedChars])) pickedChars++;
+      if (SEPARATORS.includes(this.text[pickedChars])) pickedChars++;
       else {
-        while (!separators.includes(this.text[pickedChars]) && pickedChars < this.text.length - 1) {
+        while (!SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length - 1) {
           pickedChars++;
           word += this.text[pickedChars];
         }
@@ -1950,22 +1951,29 @@ export class newText extends newShape {
 
   private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
     const rows: string[] = [];
-    let pickedChars = 0;
-    while (pickedChars < this.text.length) {
+    let pickedWords = 0;
+    while (pickedWords < this.words.length) {
       let newRow = '';
-      while (context.measureText(newRow).width < this.boundingBox.size.x) {
-        newRow += this.text[pickedChars];
-        pickedChars++;
-        if (context.measureText(newRow).width > this.boundingBox.size.x) {
-          pickedChars--;
-          newRow = newRow.slice(0, newRow.length - 1);
-          break
+      while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
+        if (context.measureText(newRow + this.words[pickedWords]).width > this.boundingBox.size.x) break
+        else {
+          newRow += this.words[pickedWords];
+          pickedWords++;
         }
-        if (pickedChars == this.text.length) break;
       }
       if (newRow.length != 0) rows.push(newRow);
     }
-    return rows
+    return this.cleanStartAllRows(rows)
+  }
+
+  private cleanStartAllRows(rows: string[]): string[] {
+    return rows.map(row => { return this.removeFirstSpaces(row) })
+  }
+
+  private removeFirstSpaces(row: string): string {
+    let charIndex = 0;
+    while (SEPARATORS.includes(row[charIndex])) charIndex++;
+    return row.slice(charIndex);
   }
 
   private autoFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {

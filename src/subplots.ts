@@ -2690,6 +2690,11 @@ export class newParallelPlot extends Figure {
     return standardOffset
   }
 
+  public resetView(): void {
+    this.axes.forEach(axis => axis.resetScale());
+    this.draw();
+  }
+
   public switchOrientation(): void {
     this.isVertical = !this.isVertical;
     this.updateAxesLocation();
@@ -2756,7 +2761,6 @@ export class newParallelPlot extends Figure {
     } else boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
     return boundingBox
   }
-
 
   private getAxisLocation(step: number, axisIndex: number): [Vertex, Vertex] {
     const verticalX = this.drawOrigin.x + axisIndex * step;

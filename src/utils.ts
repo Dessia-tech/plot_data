@@ -2727,7 +2727,7 @@ export class newAxis extends newShape{
     return vector.filter((value, index, array) => array.indexOf(value) === index)
   }
 
-  protected adjustBoundingBox(): void {
+  public adjustBoundingBox(): void {
     if (this.isVertical) {
       this.boundingBox.size.x += this.SIZE_END / 2;
       this.boundingBox.size.y += this.SIZE_END;
@@ -3011,18 +3011,23 @@ export class newAxis extends newShape{
     this.boundingBox.mouseMove(context, mouseCoords);
     this.title.mouseMove(context, mouseCoords.scale(this.initScale));
     if (this.mouseClick) {
-      if (!this.title.isClicked && this.isClicked) {
-        const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
-        const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
-        if (!this.rubberBand.isClicked) {
-          this.rubberBand.minValue = Math.min(downValue, currentValue);
-          this.rubberBand.maxValue = Math.max(downValue, currentValue);
-        } else this.rubberBand.mouseMove(downValue, currentValue);
-        this.emitter.emit("rubberBandChange", this.rubberBand);
-      } else if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords);
+      if (this.isClicked && !this.title.isClicked) this.mouseMoveClickedArrow(mouseCoords)
+      else if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords);
     }
     return false
   }
+
+  public mouseMoveClickedArrow(mouseCoords: Vertex): void {
+    const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
+    const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
+    if (!this.rubberBand.isClicked) {
+      this.rubberBand.minValue = Math.min(downValue, currentValue);
+      this.rubberBand.maxValue = Math.max(downValue, currentValue);
+    } else this.rubberBand.mouseMove(downValue, currentValue);
+    this.emitter.emit("rubberBandChange", this.rubberBand);
+  }
+
+  public mouseMoveClickedTitle(mouseCoords: Vertex): void {}
 
   public mouseDown(mouseDown: Vertex): void {
     super.mouseDown(mouseDown);
@@ -3040,8 +3045,6 @@ export class newAxis extends newShape{
     if (this.boundingBox.isHovered) this.boundingBox.isClicked = true;
     this.saveLocation();
   }
-
-  public mouseMoveClickedTitle(mouseCoords: Vertex): void {}
 
   public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
     super.mouseUp(context, keepState);
@@ -3157,6 +3160,11 @@ export class ParallelAxis extends newAxis {
   get tickMarker(): string { return "line" }
 
   get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
+
+  public resetScale(): void {
+    this.isInverted = false;
+    super.resetScale();
+  }
 
   public setTitleSettings(): void {
     this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()

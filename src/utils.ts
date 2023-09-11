@@ -2073,6 +2073,12 @@ export class newPoint2D extends newShape {
 
   public update() { this.buildPath() }
 
+  public scale(scale: Vertex): newPoint2D {
+    this.center = this.center.scale(scale);
+    this.buildPath();
+    return this
+  }
+
   public setColors(color: string) {
     this.fillStyle = this.isFilled ? color : null;
     this.strokeStyle = this.isFilled ? this.setStrokeStyle(this.fillStyle) : color;

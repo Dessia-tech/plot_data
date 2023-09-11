@@ -1,6 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle, ParallelAxis } from "./utils";
+  LineSequence, newRect, newPointStyle, ParallelAxis, Line, newPoint2D } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1800,7 +1800,7 @@ export class Figure extends PlotData {
     this.updateAxes();
   }
 
-  private drawTooltips(): void {
+  protected drawTooltips(): void {
     this.relativeObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
     this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
   }
@@ -1889,6 +1889,7 @@ export class Figure extends PlotData {
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+        console.log(absoluteMouse)
         this.is_drawing_rubber_band = this.isSelecting;
         if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
@@ -2674,6 +2675,7 @@ export class newGraph2D extends newScatter {
 
 export class newParallelPlot extends Figure {
   public axes: ParallelAxis[];
+  public curves: LineSequence[];
   private _isVertical: boolean;
   constructor(
     data: any,
@@ -2686,6 +2688,8 @@ export class newParallelPlot extends Figure {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.computeCurves();
+      console.log(this.curves)
     }
 
   get isVertical(): boolean { return this._isVertical ?? true }
@@ -2798,6 +2802,47 @@ export class newParallelPlot extends Figure {
     })
     return axes
   }
+
+  public computeCurves(): void {
+    this.curves = [];
+    for (let i=0; i < this.nSamples; i++) this.curves.push(new LineSequence([], String(i)));
+  }
+
+  public updateCurves(): void {
+    this.curves.forEach((curve, i) => {
+      curve.points = [];
+      this.drawnFeatures.forEach((feature, j) => {
+        if (this.isVertical) curve.points.push(new newPoint2D(this.axes[j].origin.x, this.axes[j].relativeToAbsolute(this.features.get(feature)[i])).scale(this.initScale))
+        else curve.points.push(new newPoint2D(this.axes[j].relativeToAbsolute(this.features.get(feature)[i]), this.axes[j].origin.y).scale(this.initScale));
+      })
+      curve.buildPath();
+    })
+  }
+
+  public drawCurves(context: CanvasRenderingContext2D): void {
+    this.updateCurves();
+    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    this.curves.forEach(curve => {
+      curve.points.forEach(point => point.draw(context))
+      curve.draw(context);
+    });
+    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
+    const axesEnd = new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
+    const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
+    context.globalCompositeOperation = "destination-in";
+    context.fill(drawingZone.path);
+    const cutGraph = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
+    context.globalCompositeOperation = "source-over";
+    context.putImageData(previousCanvas, 0, 0);
+    context.putImageData(cutGraph, this.X, this.Y);
+  }
+
+  protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
+    this.drawCurves(context);
+    this.absoluteObjects = new GroupCollection([...this.curves]);
+  }
+
+  protected drawTooltips(): void {}
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
     super.mouseMove(canvasMouse, frameMouse, absoluteMouse);

@@ -2163,6 +2163,7 @@ export class Histogram extends Frame {
 
   private updateNumberAxis(numberAxis: newAxis, bars: Bar[]): newAxis {
     this.features.set('number', this.getNumberFeature(bars));
+    numberAxis.minValue = 0;
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
     numberAxis.saveLocation();
     numberAxis.updateTicks();
@@ -2219,7 +2220,7 @@ export class Histogram extends Frame {
     this.bars.forEach((bar, index) => {
       let origin = new Vertex(fullTicks[index], minY);
       let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length > minY ? bar.length - minY : 0);
-      if (this.axes[0].isDiscrete) origin.x = origin.x - size.x / 2;
+      if (this.axes[0].isDiscrete) origin.x = origin.x - (fullTicks[2] - fullTicks[1]) / 2;
       bar.updateStyle(
         origin, size,
         this.hoveredIndices, this.clickedIndices, this.selectedIndices,
@@ -2247,26 +2248,24 @@ export class Histogram extends Frame {
 
   public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
     this.fusion_coeff = 1.2;
-    if (!this.axes[0].isDiscrete) {
-      if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
-        if (deltaY>0) {
-          this.scaleX = this.scaleX * this.fusion_coeff;
-          this.scroll_x++;
-          this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-        } else if (deltaY<0) {
-          this.scaleX = this.scaleX/this.fusion_coeff;
-          this.scroll_x--;
-          this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
-        }
-      } else {
-          if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
-          this.scaleX = this.scaleX*coeff;
-          this.scroll_x = this.scroll_x + deltaY;
-          this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
+    if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
+      if (deltaY>0) {
+        this.scaleX = this.scaleX * this.fusion_coeff;
+        this.scroll_x++;
+        this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
+      } else if (deltaY<0) {
+        this.scaleX = this.scaleX/this.fusion_coeff;
+        this.scroll_x--;
+        this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
       }
-      if (isNaN(this.scroll_x)) this.scroll_x = 0;
-      if (isNaN(this.scroll_y)) this.scroll_y = 0;
+    } else {
+        if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
+        this.scaleX = this.scaleX*coeff;
+        this.scroll_x = this.scroll_x + deltaY;
+        this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
     }
+    if (isNaN(this.scroll_x)) this.scroll_x = 0;
+    if (isNaN(this.scroll_y)) this.scroll_y = 0;
     return [mouse3X, mouse3Y];
   }
 }

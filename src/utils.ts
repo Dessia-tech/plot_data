@@ -2764,7 +2764,12 @@ export class newAxis extends newShape{
   }
 
   public static uniqueValues(vector: string[]): string[] {
-    return vector.filter((value, index, array) => array.indexOf(value) === index)
+    let uniqueValues = vector.filter((value, index, array) => array.indexOf(value) === index);
+    while (uniqueValues.length < 5) {
+      uniqueValues.push('');
+      uniqueValues = [''].concat(uniqueValues);
+    }
+    return uniqueValues
   }
 
   public adjustBoundingBox(): void {
@@ -2951,6 +2956,7 @@ export class newAxis extends newShape{
     const ticksText: newText[] = [];
     const tickTextParams = this.computeTickTextParams();
     let count = Math.max(0, this.ticks[0]);
+    while (this.labels[count] == '') count++;
     this.ticks.forEach((tick, idx) => {
       let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, color);
       let text = this.labels[idx];

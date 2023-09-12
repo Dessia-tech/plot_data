@@ -1933,10 +1933,10 @@ export class newText extends newShape {
 
   private getWords(): string[] {
     if (this.words) return this.words;
-    return this.splitTextInWords();
+    return this.splitInWords();
   }
 
-  private splitTextInWords(): string[] {
+  private splitInWords(): string[] {
     const words = [];
     let pickedChars = 0;
     while (pickedChars < this.text.length - 1) {
@@ -1946,6 +1946,10 @@ export class newText extends newShape {
         while (!SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length - 1) {
           pickedChars++;
           word += this.text[pickedChars];
+        }
+        if (SEPARATORS.includes(this.text[pickedChars])) {
+          word += this.text[pickedChars];
+          pickedChars++;
         }
       }
       words.push(word);

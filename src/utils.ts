@@ -3324,12 +3324,15 @@ export class ParallelAxis extends newAxis {
   }
 }
 
-
-export class DrawingCollection {
+export class ShapeCollection {
   constructor(
-    public drawings: any[] = [],
+    public drawings: newShape[] = [],
     public frame: DOMMatrix = new DOMMatrix()
   ) {}
+
+  public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
+    this.drawings.forEach(drawing => { if (!inMultiPlot && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
+  }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
     let inTranslation = false;
@@ -3351,19 +3354,6 @@ export class DrawingCollection {
   }
 
   public draw(context: CanvasRenderingContext2D): void { this.drawings.forEach(drawing => drawing.draw(context)) }
-}
-
-export class ShapeCollection extends DrawingCollection {
-  constructor(
-    public drawings: newShape[] = [],
-    public frame: DOMMatrix = new DOMMatrix()
-  ) {
-    super(drawings, frame);
-  }
-
-  public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
-    this.drawings.forEach(drawing => { if (!inMultiPlot && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
-  }
 }
 
 export class GroupCollection extends ShapeCollection {

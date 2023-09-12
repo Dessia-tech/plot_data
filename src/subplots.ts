@@ -1,5 +1,5 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, DrawingCollection, SelectionBox, GroupCollection,
+import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
   LineSequence, newRect, newPointStyle, ParallelAxis, Line, newPoint2D } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
@@ -1486,7 +1486,7 @@ export class Figure extends PlotData {
   public isZooming: boolean = false;
 
   public viewPoint: Vertex = new Vertex(0, 0);
-  public fixedObjects: DrawingCollection;
+  public fixedObjects: ShapeCollection;
   public absoluteObjects: GroupCollection;
   public relativeObjects: GroupCollection;
 
@@ -1525,7 +1525,7 @@ export class Figure extends PlotData {
       this.pointSets = new Array(this.nSamples).fill(-1);
       this.drawnFeatures = this.setFeatures(data);
       this.axes = this.setAxes();
-      this.fixedObjects = new DrawingCollection(this.axes, this.canvasMatrix);
+      this.fixedObjects = new ShapeCollection(this.axes, this.canvasMatrix);
       this.relativeObjects = new GroupCollection();
       this.absoluteObjects = new GroupCollection();
     }

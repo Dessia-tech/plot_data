@@ -1,7 +1,7 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, Figure, newGraph2D } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, Figure, newGraph2D, newParallelPlot } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
 
@@ -88,7 +88,7 @@ export class MultiplePlots {
             var newObject:any = new newGraph2D(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'parallelplot') {
             this.dataObjects[i]['elements'] = elements;
-            newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            newObject = new newParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'primitivegroup') {
             newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'primitivegroupcontainer') {
@@ -1420,7 +1420,7 @@ export class MultiplePlots {
     }
 
     mouse_move_frame_communication() {
-      let index = this.get_drawing_rubberbands_obj_index("frame");
+      let index = this.get_drawing_rubberbands_figure_index();
       if (index === -1) return;
       this.frame_communication(index);
     }
@@ -1428,13 +1428,8 @@ export class MultiplePlots {
     frame_communication(index) {
       let frame = this.objectList[index];
       this.objectList.forEach((plot, plotIndex) => {
-        if (plot.type_ === 'scatterplot') {
-          MultiplotCom.frame_to_scatter_communication(frame, plot);
-        } else if (plot.type_ === 'parallelplot') {
-          MultiplotCom.frame_to_pp_communication(frame, plot);
-        } else if (plot.type_ === "frame") {
-          MultiplotCom.frame_to_frame_communication(frame as Frame, plot as Frame);
-        }
+        if (plot instanceof Figure)
+          MultiplotCom.frame_to_frame_communication(frame as Figure, plot);
       })
       this.refreshSelectedIndices();
       this.refresh_selected_object_from_index();
@@ -1537,6 +1532,16 @@ export class MultiplePlots {
       for (let i=this.clickedPlotIndex; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
         if (obj.type_ === type_) {
+          if (obj.is_drawing_rubber_band === true) return i
+        }
+      }
+      return -1;
+    }
+
+    get_drawing_rubberbands_figure_index(): number {
+      for (let i=this.clickedPlotIndex; i<this.nbObjects; i++) {
+        let obj = this.objectList[i];
+        if (obj instanceof Figure) {
           if (obj.is_drawing_rubber_band === true) return i
         }
       }
@@ -2176,9 +2181,9 @@ export class MultiplotCom {
       Interactions.selection_window_action(plot_data);
     }
 
-    public static frame_to_frame_communication(currentFrame: Frame, otherFrame: Frame): void {
-      otherFrame.axes.forEach(otherAxis => {
-        currentFrame.axes.forEach(currentAxis => {
+    public static frame_to_frame_communication(currentFigure: Figure, otherFigure: Figure): void {
+      otherFigure.axes.forEach(otherAxis => {
+        currentFigure.axes.forEach(currentAxis => {
           if (currentAxis.name == otherAxis.name && currentAxis.name != 'number') {
             otherAxis.rubberBand.minValue = currentAxis.rubberBand.minValue;
             otherAxis.rubberBand.maxValue = currentAxis.rubberBand.maxValue;

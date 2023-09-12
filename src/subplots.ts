@@ -1669,6 +1669,7 @@ export class Figure extends PlotData {
 
   public reset_scales(): void { // TODO: merge with resetView
     this.updateSize();
+    this.computeOffset();
     this.relocateAxes();
     this.axes.forEach(axis => axis.resetScale());
   }
@@ -2714,9 +2715,9 @@ export class newParallelPlot extends Figure {
     return standardOffset
   }
 
-  public resetView(): void {
-    this.axes.forEach(axis => axis.resetScale());
-    this.draw();
+  public reset_scales(): void { // TODO: merge with resetView
+    super.reset_scales();
+    this.updateAxesLocation();
   }
 
   public switchOrientation(): void {
@@ -2736,7 +2737,8 @@ export class newParallelPlot extends Figure {
   }
 
   private computeAxesStep(): number {
-    return (this.isVertical ? this.drawEnd.x - this.drawOrigin.x : this.drawEnd.y - this.drawOrigin.y) / (this.drawnFeatures.length - 1)
+    if (this.isVertical) return (this.drawEnd.x - this.drawOrigin.x - Math.abs(this.offset.x) - Math.abs(this.margin.x)) / (this.drawnFeatures.length - 1)
+    return (this.drawEnd.y - this.drawOrigin.y) / (this.drawnFeatures.length - 1)
   }
 
   protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
@@ -2859,6 +2861,7 @@ export class newParallelPlot extends Figure {
     if (this.isVertical) this.axes.sort((a, b) => a.origin.x - b.origin.x)
     else this.axes.sort((a, b) => b.origin.y - a.origin.y);
     this.drawnFeatures = this.axes.map(axis => axis.name);
+    this.hoveredIndices = this.absoluteObjects.updateSampleStates('isHovered');
   }
 
   public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
@@ -2866,6 +2869,7 @@ export class newParallelPlot extends Figure {
       if (this.axes[i].hasMoved) { this.updateAxesLocation(); break }
     }
     super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+    this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
   }
 
   public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor

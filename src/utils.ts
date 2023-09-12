@@ -2827,11 +2827,16 @@ export class newAxis extends newShape{
     return min != max ? [min ,max] : [min * 0.7, max * 1.3]
   }
 
-  public computeTextBoxes(context: CanvasRenderingContext2D): void {
-    context.save();
+  protected getCalibratedTextWidth(context: CanvasRenderingContext2D): [newText, number] {
     const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.font });
     context.font = calibratedTickText.fullFont;
     const calibratedMeasure = context.measureText(calibratedTickText.text).width;
+    return [calibratedTickText, calibratedMeasure]
+  }
+
+  public computeTextBoxes(context: CanvasRenderingContext2D): void {
+    context.save();
+    const [calibratedTickText, calibratedMeasure] = this.getCalibratedTextWidth(context);
     this.maxTickWidth = Math.min(this.boundingBox.size.x - this.offsetTicks - 3 - this.SIZE_END / 2, calibratedMeasure);
     this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - this.SIZE_END / 2, calibratedTickText.fontsize);
     if (this.centeredTitle) this.centeredTitleTextBoxes(calibratedMeasure);
@@ -3328,6 +3333,14 @@ export class ParallelAxis extends newAxis {
       this.title.origin.x = this.titleSettings.origin.x;
       this.title.align = "center";
     }
+  }
+
+  public computeTextBoxes(context: CanvasRenderingContext2D): void {
+    context.save();
+    const [calibratedTickText, calibratedMeasure] = this.getCalibratedTextWidth(context);
+    this.maxTickWidth = this.origin.x - this.boundingBox.origin.x - this.offsetTicks - 3; //Math.min(this.boundingBox.size.x - this.offsetTicks - 3 - this.SIZE_END / 2, calibratedMeasure);
+    this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - this.SIZE_END / 2, calibratedTickText.fontsize);
+    context.restore();
   }
 }
 

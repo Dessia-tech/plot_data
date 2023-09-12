@@ -1660,7 +1660,7 @@ export class Figure extends PlotData {
       }
       if (inAllArrays) arraysIntersection.push(value);
     })
-    return arraysIntersection
+    return newAxis.uniqueValues(arraysIntersection)
   }
 
   protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
@@ -2891,7 +2891,6 @@ export class newParallelPlot extends Figure {
     })
     this.updateSelection(axesSelections);
   }
-
 }
 
 

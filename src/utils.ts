@@ -2764,12 +2764,7 @@ export class newAxis extends newShape{
   }
 
   public static uniqueValues(vector: string[]): string[] {
-    let uniqueValues = vector.filter((value, index, array) => array.indexOf(value) === index);
-    while (uniqueValues.length < 5) {
-      uniqueValues.push('');
-      uniqueValues = [''].concat(uniqueValues);
-    }
-    return uniqueValues
+    return vector.filter((value, index, array) => array.indexOf(value) === index)
   }
 
   public adjustBoundingBox(): void {

@@ -21,7 +21,7 @@ describe('PARALLEL PLOT CANVAS', function () {
   it("should draw a nice horizontal parallel plot", function () {
     cy.window().then((win) => {
       let parallelPlot = win.eval('plot_data')
-      Interactions.change_disposition_action(parallelPlot);
+      parallelPlot.switchOrientation();
       cy.compareSnapshot(describeTitle + this.test.title, 0.05);
     })
   })

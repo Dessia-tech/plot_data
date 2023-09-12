@@ -1846,11 +1846,11 @@ export class newText extends newShape {
       this.computeOffsetY();
       this.buildPath();
       this.boundingBox.draw(context)
-  
+
       context.font = this.fullFont;
       context.textAlign = this.align as CanvasTextAlign;
       context.textBaseline = this.baseline as CanvasTextBaseline;
-  
+
       context.fillStyle = this.fillStyle;
       context.globalAlpha = this.alpha;
       context.translate(this.origin.x, this.origin.y);
@@ -1927,7 +1927,7 @@ export class newText extends newShape {
     context.font = newText.buildFont(this.style, fontsize, this.font);
     const oneRowLength = context.measureText(this.text).width;
     if (oneRowLength <= this.boundingBox.size.x) return [[this.text], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y : fontsize];
-    if (!this.boundingBox.size.y) return [this.fixedFontSplit(context), fontsize];    
+    if (!this.boundingBox.size.y) return [this.fixedFontSplit(context), fontsize];
     return this.autoFontSplit(fontsize, context);
   }
 
@@ -3085,7 +3085,7 @@ export class newAxis extends newShape{
         else this.rubberBand.mouseDown(mouseUniCoord);
         this.emitter.emit("rubberBandChange", this.rubberBand);
       }
-    } 
+    }
     if (this.boundingBox.isHovered) this.boundingBox.isClicked = true;
     this.saveLocation();
   }
@@ -3184,7 +3184,7 @@ export class ParallelAxis extends newAxis {
   public hasMoved: boolean = false;
   private _previousOrigin: Vertex;
   private _previousEnd: Vertex;
-  
+
   constructor(
     vector: any[],
     public boundingBox: newRect,
@@ -3198,7 +3198,7 @@ export class ParallelAxis extends newAxis {
       this.centeredTitle = false;
       this.updateEnds();
     }
-  
+
   get tickMarker(): string { return "line" }
 
   get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
@@ -3212,7 +3212,7 @@ export class ParallelAxis extends newAxis {
     this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
   }
 
-  private horizontalTitleProperties(): void { 
+  private horizontalTitleProperties(): void {
     if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleZone.origin.y + this.titleZone.size.y;
     this.titleSettings.baseline = this.initScale.y > 0 ? "bottom" : "top";
     this.titleSettings.orientation = 0;
@@ -3239,7 +3239,7 @@ export class ParallelAxis extends newAxis {
     this.titleZone.buildPath();
     this.titleSettings.origin = this.titleZone.origin.copy();
     this.titleSettings.align = this.initScale.x > 0 ? "left" : "right";
-    
+
     if (index != 0) {
       if (this.isVertical) {
         this.titleSettings.align = index == nAxis - 1 ? (this.initScale.x > 0 ? "right" : "left") : "center";

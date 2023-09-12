@@ -1771,7 +1771,7 @@ export class Figure extends PlotData {
     if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
       this.selectionBox.updateScale(this.axes[0].transformMatrix.a, this.axes[1].transformMatrix.d);
       this.selectionBox.buildRectangle(
-        new Vertex(this.axes[0].minValue, this.axes[1].minValue), 
+        new Vertex(this.axes[0].minValue, this.axes[1].minValue),
         new Vertex(this.axes[0].interval, this.axes[1].interval)
       );
       if (this.selectionBox.area != 0) {
@@ -1785,7 +1785,7 @@ export class Figure extends PlotData {
   private drawZoomBox(zoomBox: SelectionBox, frameDown: Vertex, frameMouse: Vertex, context: CanvasRenderingContext2D): void {
     zoomBox.update(frameDown, frameMouse);
     zoomBox.buildRectangle(
-      new Vertex(this.axes[0].minValue, this.axes[1].minValue), 
+      new Vertex(this.axes[0].minValue, this.axes[1].minValue),
       new Vertex(this.axes[0].interval, this.axes[1].interval)
     );
     context.save();
@@ -1985,7 +1985,7 @@ export class Figure extends PlotData {
 export class Frame extends Figure {
   public xFeature: string;
   public yFeature: string;
-  
+
   protected _nXTicks: number;
   protected _nYTicks: number;
   constructor(
@@ -2078,7 +2078,7 @@ export class Frame extends Figure {
 
   protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
     const xBoundingBox = new newRect(
-      new Vertex(this.drawOrigin.x, this.drawOrigin.y - freeSpace.y), 
+      new Vertex(this.drawOrigin.x, this.drawOrigin.y - freeSpace.y),
       new Vertex(this.drawEnd.x - this.drawOrigin.x, freeSpace.y)
     );
     const yBoundingBox = new newRect(

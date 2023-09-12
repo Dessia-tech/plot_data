@@ -3325,6 +3325,8 @@ export class ParallelAxis extends newAxis {
     if (this.isVertical && writtenText.length == 1 && ["left", "right"].includes(this.titleSettings.align)) {
       this.titleSettings.align = "center";
       this.titleSettings.origin.x = this.origin.x;
+      this.title.origin.x = this.titleSettings.origin.x;
+      this.title.align = "center";
     }
   }
 }

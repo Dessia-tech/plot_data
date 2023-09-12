@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 - Handle empty elements in Scatter
 
+### Add
+- Parallel plot feature with:
+    - Movable axes
+    - Scalable axes
+    - Possibility to translate local values of axes
+    - Rubberbands
+    - Mouse handling on curves
+    - Possibility to switch orientation
+    - Possibility to change sense of axes by clicking on their title
+- Line shape with its variants
+
+### Refactor
+- newAxis
+- newText
+- Mouse handling in objects
+
 ## [0.16.0]
 ### Refactor
 - First implementation of Scatter as a Frame plot

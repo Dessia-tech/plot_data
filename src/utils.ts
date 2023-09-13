@@ -1920,6 +1920,7 @@ export class newText extends newShape {
     let longestRow = writtenText[0];
     writtenText.forEach(row => { if (row.length > longestRow.length) longestRow = row });
     this.width = context.measureText(longestRow).width;
+    this.nRows = writtenText.length;
     return writtenText
   }
 
@@ -3272,14 +3273,7 @@ export class ParallelAxis extends newAxis {
       this.end.y -= this.drawLength * 0.1;
       this.boundingBox.size.x -= this.SIZE_END / 2;
     }
-    else {
-      if (this.initScale.x > 0) {
-        this.boundingBox.size.x += this.origin.x * 0.75;
-        this.origin.x -= this.origin.x * 0.75;
-        this.boundingBox.origin.x = this.origin.x;
-      }
-      this.boundingBox.size.y -= this.SIZE_END / 2;
-    }
+    else this.boundingBox.size.y -= this.SIZE_END / 2;
   }
 
   public mouseMoveClickedTitle(mouseCoords: Vertex): void {
@@ -3327,9 +3321,9 @@ export class ParallelAxis extends newAxis {
   protected updateTitle(context: CanvasRenderingContext2D, text: string, origin: Vertex, textParams: TextParams): void {
     super.updateTitle(context, text, origin, textParams);
     const writtenText = this.title.format(context);
-    if (this.isVertical && writtenText.length == 1 && ["left", "right"].includes(this.titleSettings.align)) {
+    if (this.isVertical && writtenText.length == 1) {
       this.titleSettings.align = "center";
-      this.titleSettings.origin.x = this.origin.x;
+      this.titleSettings.origin.x = this.origin.x * this.initScale.x;
       this.title.origin.x = this.titleSettings.origin.x;
       this.title.align = "center";
     }

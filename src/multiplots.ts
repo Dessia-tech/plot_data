@@ -674,9 +674,7 @@ export class MultiplePlots {
       var obj:any = this.objectList[move_plot_index]
       obj.X = obj.X + tx;
       obj.Y = obj.Y + ty;
-      if (obj.type_ == 'parallelplot') { this.objectList[move_plot_index].refresh_axis_coords(); }
-      if (obj instanceof Frame) {obj.reset_scales()};
-      // this.redraw_object();
+      if (obj instanceof Figure) obj.reset_scales();
       if (obj.type_ == 'primitivegroupcontainer') {
         for (let i=0; i<obj['primitive_groups'].length; i++) {
           obj['primitive_groups'][i].X = obj['primitive_groups'][i].X + tx;
@@ -1868,6 +1866,10 @@ export class MultiplePlots {
     public resetView(): void {
       this.resetAllObjects();
       this.redrawAllObjects();
+    }
+
+    public switchOrientation(): void {
+      this.objectList.forEach(plot => { if (plot instanceof newParallelPlot) plot.switchOrientation() });
     }
 
     mouse_interaction(): void { //TODO: this has to be totally refactored, with special behaviors defined in each plot class

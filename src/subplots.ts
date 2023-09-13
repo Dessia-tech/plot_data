@@ -2712,7 +2712,7 @@ export class newParallelPlot extends Figure {
   protected computeOffset(): Vertex {
     const standardOffset = super.computeOffset();
     if (this.isVertical) return new Vertex(Math.max(standardOffset.x, MIN_OFFSET), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
-    return standardOffset
+    return new Vertex(standardOffset.x / 3, Math.max(standardOffset.y, MIN_OFFSET));
   }
 
   public reset_scales(): void { // TODO: merge with resetView
@@ -2755,11 +2755,11 @@ export class newParallelPlot extends Figure {
   private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
     const FREE_SPACE_FACTOR = 0.95;
     const boundingBox = new newRect(axisOrigin.copy());
+    const relativeY = Math.abs(axisOrigin.y) - this.Y;
     boundingBox.size = new Vertex(axisSize, step * FREE_SPACE_FACTOR);
     if (index == this.drawnFeatures.length - 1) {
-      boundingBox.size.x = axisSize;
-      if (this.initScale.y < 0) boundingBox.size.y = (this.size.y - Math.abs(axisOrigin.y)) * FREE_SPACE_FACTOR
-      else boundingBox.size.y = Math.abs(axisOrigin.y) * FREE_SPACE_FACTOR
+      if (this.initScale.y < 0) boundingBox.size.y = (this.size.y - relativeY) * FREE_SPACE_FACTOR
+      else boundingBox.size.y = relativeY * FREE_SPACE_FACTOR
     }
     boundingBox.origin.y -= boundingBox.size.y;
     return boundingBox
@@ -2768,21 +2768,22 @@ export class newParallelPlot extends Figure {
   private verticalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
     const FREE_SPACE_FACTOR = 0.95;
     const boundingBox = new newRect(axisOrigin.copy());
+    const relativeX = axisOrigin.x - this.X;
     boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
     if (index == 0) {
       if (this.initScale.x < 0) {
-        boundingBox.origin.x -= (this.size.x + axisOrigin.x) * FREE_SPACE_FACTOR;
-        boundingBox.size.x = (step / 2 + this.width + axisOrigin.x) * FREE_SPACE_FACTOR;
+        boundingBox.origin.x -= (this.size.x + relativeX) * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (step / 2 + this.width + relativeX) * FREE_SPACE_FACTOR;
       } else {
-        boundingBox.origin.x -= axisOrigin.x * FREE_SPACE_FACTOR;
-        boundingBox.size.x = (step / 2 + axisOrigin.x) * FREE_SPACE_FACTOR;
+        boundingBox.origin.x -= relativeX * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (step / 2 + relativeX) * FREE_SPACE_FACTOR;
       }
     } else if (index == this.drawnFeatures.length - 1) {
       boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
       if (this.initScale.x < 0) {
-        boundingBox.size.x = (step / 2 - axisOrigin.x) * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (step / 2 - relativeX) * FREE_SPACE_FACTOR;
       } else {
-        boundingBox.size.x = (this.size.x - boundingBox.origin.x) * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (this.size.x - boundingBox.origin.x + this.X) * FREE_SPACE_FACTOR;
       }
     } else boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
     return boundingBox

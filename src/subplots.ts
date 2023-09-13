@@ -6,6 +6,7 @@ import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
+import { EventEmitter } from "events";
 
 var alert_count = 0;
 /**
@@ -2683,6 +2684,7 @@ export class newParallelPlot extends Figure {
   public curves: LineSequence[];
   public curveColor: string = 'hsl(203, 90%, 85%)';
   private _isVertical: boolean;
+  private emitter: EventEmitter = new EventEmitter();
   constructor(
     data: any,
     public width: number,
@@ -2733,6 +2735,7 @@ export class newParallelPlot extends Figure {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
       axis.updateLocation(axisOrigin, axisEnd, axisBoundingBoxes[index], index, this.drawnFeatures.length);
     });
+    this.computeCurves();
     this.draw();
   }
 
@@ -2814,6 +2817,10 @@ export class newParallelPlot extends Figure {
     this.curves = [];
     for (let i=0; i < this.nSamples; i++) {
       const curve = new LineSequence([], String(i));
+      this.drawnFeatures.forEach((feature, j) => {
+        if (this.isVertical) curve.points.push(new newPoint2D(this.axes[j].origin.x, this.axes[j].relativeToAbsolute(this.features.get(feature)[i])).scale(this.initScale))
+        else curve.points.push(new newPoint2D(this.axes[j].relativeToAbsolute(this.features.get(feature)[i]), this.axes[j].origin.y).scale(this.initScale));
+      })
       curve.hoveredFactor = curve.clickedFactor = 1;
       curve.selectedFactor = 1.5;
       this.curves.push(curve);
@@ -2822,10 +2829,11 @@ export class newParallelPlot extends Figure {
 
   public updateCurves(context: CanvasRenderingContext2D): void {
     this.curves.forEach((curve, i) => {
-      curve.points = [];
       this.drawnFeatures.forEach((feature, j) => {
-        if (this.isVertical) curve.points.push(new newPoint2D(this.axes[j].origin.x, this.axes[j].relativeToAbsolute(this.features.get(feature)[i])).scale(this.initScale))
-        else curve.points.push(new newPoint2D(this.axes[j].relativeToAbsolute(this.features.get(feature)[i]), this.axes[j].origin.y).scale(this.initScale));
+        if ((this.axes[j].boundingBox.isClicked && !this.axes[j].isClicked) || this.axes[j].title.isClicked) {
+          if (this.isVertical) curve.points[j] = new newPoint2D(this.axes[j].origin.x, this.axes[j].relativeToAbsolute(this.features.get(feature)[i])).scale(this.initScale)
+          else curve.points[j] = new newPoint2D(this.axes[j].relativeToAbsolute(this.features.get(feature)[i]), this.axes[j].origin.y).scale(this.initScale);
+        }
       })
       curve.buildPath();
       curve.isHovered = this.hoveredIndices.includes(i);
@@ -2865,8 +2873,17 @@ export class newParallelPlot extends Figure {
     };
     if (this.isVertical) this.axes.sort((a, b) => a.origin.x - b.origin.x)
     else this.axes.sort((a, b) => b.origin.y - a.origin.y);
-    this.drawnFeatures = this.axes.map(axis => axis.name);
+    this.drawnFeatures = this.axes.map((axis, i) => {
+      if (this.drawnFeatures[i] != axis.name) axis.hasMoved = true;
+      return axis.name;
+    });
     this.hoveredIndices = this.absoluteObjects.updateSampleStates('isHovered');
+    this.curves.forEach((curve, i) => {
+      this.axes.forEach((axis, j) => axis.emitter.on('changeAxisState', e => {
+        if (this.isVertical) curve.points[j] = new newPoint2D(e.origin.x, e.relativeToAbsolute(this.features.get(e.name)[i])).scale(this.initScale)
+        else curve.points[j] = new newPoint2D(e.relativeToAbsolute(this.features.get(e.name)[i]), e.origin.y).scale(this.initScale);
+      }))
+    })
   }
 
   public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
@@ -2875,6 +2892,12 @@ export class newParallelPlot extends Figure {
     }
     super.mouseUp(canvasMouse, canvasDown, ctrlKey);
     this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
+    this.curves.forEach((curve, i) => {
+      this.axes.forEach((axis, j) => axis.emitter.on('changeAxisState', e => {
+        if (this.isVertical) curve.points[j] = new newPoint2D(e.origin.x, e.relativeToAbsolute(this.features.get(e.name)[i])).scale(this.initScale)
+        else curve.points[j] = new newPoint2D(e.relativeToAbsolute(this.features.get(e.name)[i]), e.origin.y).scale(this.initScale);
+      }))
+    })
   }
 
   public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor

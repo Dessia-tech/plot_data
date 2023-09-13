@@ -3284,14 +3284,19 @@ export class ParallelAxis extends newAxis {
     const translation = mouseCoords.subtract(this.mouseClick);
     this.translate(this._previousOrigin.add(translation), this._previousEnd.add(translation));
     if (translation.norm > 10) this.hasMoved = true;
+    this.emitter.emit("changeAxisState", this);
   }
 
   public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
     if (this.title.isClicked && this.title.isHovered && !this.hasMoved) {
       this.title.isClicked = false;
       this.flip();
+      this.emitter.emit("changeAxisState", this);
     }
-    if (this.hasMoved) this.updateEnds();
+    if (this.hasMoved) {
+      this.updateEnds();
+      this.emitter.emit("changeAxisState", this);
+    } 
     this.hasMoved = false;
     super.mouseUp(context, keepState);
   }
@@ -3301,7 +3306,7 @@ export class ParallelAxis extends newAxis {
     this._previousEnd = this.end.copy();
   }
 
-  protected flip(): void { this.isInverted = !this.isInverted }
+  protected flip(): void { this.isInverted = !this.isInverted; this.emitter.emit("changeAxisState", this) }
 
   public updateLocation(newOrigin: Vertex, newEnd: Vertex, boundingBox: newRect, index: number, nAxis: number): void {
     this.boundingBox = boundingBox;

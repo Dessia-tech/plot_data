@@ -2207,6 +2207,9 @@ export class ScatterPoint extends newPoint2D {
 
 export class LineSequence extends newShape {
   public previousTooltipOrigin: Vertex;
+  public hoveredFactor: number = 2;
+  public clickedFactor: number = 2;
+  public selectedFactor: number = 2;
   constructor(
     public points: newPoint2D[] = [],
     public name: string = ""
@@ -2215,6 +2218,10 @@ export class LineSequence extends newShape {
     this.isScaled = false;
     this.isFilled = false;
     this.updateTooltipMap();
+  }
+
+  public setLineWidth(): void {
+
   }
 
   public initTooltip(context: CanvasRenderingContext2D): newTooltip {
@@ -2251,7 +2258,8 @@ export class LineSequence extends newShape {
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     super.setDrawingProperties(context);
-    context.lineWidth = (this.isHovered || this.isClicked || this.isSelected) ? this.lineWidth * 2 : this.lineWidth;
+    const factor = this.isSelected ? this.selectedFactor : this.isClicked ? this.clickedFactor : this.isHovered ? this.hoveredFactor : 1;
+    context.lineWidth = this.lineWidth * factor;
   }
 
   public buildPath(): void {

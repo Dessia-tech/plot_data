@@ -2812,7 +2812,12 @@ export class newParallelPlot extends Figure {
 
   public computeCurves(): void {
     this.curves = [];
-    for (let i=0; i < this.nSamples; i++) this.curves.push(new LineSequence([], String(i)));
+    for (let i=0; i < this.nSamples; i++) {
+      const curve = new LineSequence([], String(i));
+      curve.hoveredFactor = curve.clickedFactor = 1;
+      curve.selectedFactor = 1.5;
+      this.curves.push(curve);
+    }
   }
 
   public updateCurves(): void {

@@ -2820,7 +2820,7 @@ export class newParallelPlot extends Figure {
     }
   }
 
-  public updateCurves(): void {
+  public updateCurves(context: CanvasRenderingContext2D): void {
     this.curves.forEach((curve, i) => {
       curve.points = [];
       this.drawnFeatures.forEach((feature, j) => {
@@ -2828,19 +2828,17 @@ export class newParallelPlot extends Figure {
         else curve.points.push(new newPoint2D(this.axes[j].relativeToAbsolute(this.features.get(feature)[i]), this.axes[j].origin.y).scale(this.initScale));
       })
       curve.buildPath();
-    })
-  }
-
-  public drawCurves(context: CanvasRenderingContext2D): void {
-    this.updateCurves();
-    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
-    this.curves.forEach((curve, i) => {
       curve.isHovered = this.hoveredIndices.includes(i);
       curve.isClicked = this.clickedIndices.includes(i);
       curve.isSelected = this.selectedIndices.includes(i);
       curve.strokeStyle = this.curveColor;
       curve.draw(context);
-    });
+    })
+  }
+
+  public drawCurves(context: CanvasRenderingContext2D): void {
+    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    this.updateCurves(context);
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
     const axesEnd = new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
     const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));

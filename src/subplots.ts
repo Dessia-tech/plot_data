@@ -2835,12 +2835,9 @@ export class newParallelPlot extends Figure {
     this.updateCurves();
     const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
     this.curves.forEach((curve, i) => {
-      if (this.hoveredIndices.includes(i)) curve.isHovered = true
-      else curve.isHovered = false;
-      if (this.clickedIndices.includes(i)) curve.isClicked = true
-      else curve.isClicked = false;
-      if (this.selectedIndices.includes(i)) curve.isSelected = true
-      else curve.isSelected = false;
+      curve.isHovered = this.hoveredIndices.includes(i);
+      curve.isClicked = this.clickedIndices.includes(i);
+      curve.isSelected = this.selectedIndices.includes(i);
       curve.strokeStyle = this.curveColor;
       curve.draw(context);
     });

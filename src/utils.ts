@@ -2220,10 +2220,6 @@ export class LineSequence extends newShape {
     this.updateTooltipMap();
   }
 
-  public setLineWidth(): void {
-
-  }
-
   public initTooltip(context: CanvasRenderingContext2D): newTooltip {
     const tooltip = super.initTooltip(context);
     tooltip.isFlipper = true;

@@ -1495,8 +1495,8 @@ export class Figure extends PlotData {
 
   protected offset: Vertex;
   protected margin: Vertex;
-  protected _offset_factor: Vertex; // = new Vertex(0.035, 0.07);
-  protected _margin_factor: number; // = 0.01;
+  protected _offsetFactor: Vertex; // = new Vertex(0.035, 0.07);
+  protected _marginFactor: Vertex; // = 0.01;
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
@@ -1548,13 +1548,13 @@ export class Figure extends PlotData {
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
-  get offset_factor(): Vertex { return this._offset_factor ?? new Vertex(0.035, 0.07) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.07) }
 
-  set offset_factor(value: Vertex) { this._offset_factor = value }
+  set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
-  get margin_factor(): number { return this._margin_factor ?? 0.01 }
+  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.01, 0.02) }
 
-  set margin_factor(value: number) { this._margin_factor = value }
+  set marginFactor(value: Vertex) { this._marginFactor = value }
 
   protected unpackAxisStyle(data:any): void {
     if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
@@ -1593,13 +1593,13 @@ export class Figure extends PlotData {
   protected setFeatures(data: any): string[] { return data.attribute_names ?? Array.from(this.features.keys()) }
 
   protected computeOffset(): Vertex {
-    const naturalOffset = new Vertex(this.width * this.offset_factor.x, this.height * this.offset_factor.y);
+    const naturalOffset = new Vertex(this.width * this.offsetFactor.x, this.height * this.offsetFactor.y);
     return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
   protected setBounds(): Vertex {
     this.offset = this.computeOffset();
-    this.margin = new Vertex(this.size.x * this.margin_factor, this.size.y * this.margin_factor).add(new Vertex(10, 10));
+    this.margin = new Vertex(this.size.x * this.marginFactor.x, this.size.y * this.marginFactor.y).add(new Vertex(10, 10));
     return this.computeBounds()
   }
 
@@ -1848,6 +1848,8 @@ export class Figure extends PlotData {
     this.translation = translation;
   }
 
+  protected activateSelection(emittedRubberband: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
+
   public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
       var clickedObject: any = null;
@@ -1859,6 +1861,9 @@ export class Figure extends PlotData {
       const canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false; var shiftKey = false;
       var zoomBox = new SelectionBox();
+
+      this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
+
       window.addEventListener('keydown', e => {
         if (e.key == "Control") ctrlKey = true;
         if (e.key == "Shift") {
@@ -1881,7 +1886,7 @@ export class Figure extends PlotData {
             const translation = this.mouseTranslate(canvasMouse, canvasDown);
             if (!(clickedObject instanceof newAxis)) {
               if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
-            } else this.is_drawing_rubber_band = clickedObject.is_drawing_rubberband;
+            }
             if (this.isSelecting) {
               if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
               else this.updateSelectionBox(frameDown, frameMouse);
@@ -1896,8 +1901,7 @@ export class Figure extends PlotData {
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-        if (clickedObject instanceof newAxis) this.is_drawing_rubber_band = clickedObject.is_drawing_rubberband
-        else this.is_drawing_rubber_band = this.isSelecting;
+        if (!(clickedObject instanceof newAxis)) this.is_drawing_rubber_band = this.isSelecting;
         if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
       });
@@ -2110,13 +2114,18 @@ export class Frame extends Figure {
     return [new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue), new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue)]
   }
 
-  public mouse_interaction(isParallelPlot: boolean): void {
-    this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => {
-      this.is_drawing_rubber_band = true;
-      this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
-    }));
-    super.mouse_interaction(isParallelPlot);
+  protected activateSelection(emittedRubberband: RubberBand, index: number): void {
+    super.activateSelection(emittedRubberband, index)
+    this.selectionBox.rubberBandUpdate(emittedRubberband, ["x", "y"][index]);
   }
+
+  // public mouse_interaction(isParallelPlot: boolean): void {
+  //   this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => {
+  //     this.is_drawing_rubber_band = true;
+  //     this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
+  //   }));
+  //   super.mouse_interaction(isParallelPlot);
+  // }
 }
 
 export class Histogram extends Frame {
@@ -2707,13 +2716,13 @@ export class newParallelPlot extends Figure {
 
   set isVertical(value: boolean) { this._isVertical = value }
 
-  get offset_factor(): Vertex { return this._offset_factor ?? new Vertex(0.035, 0.1) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.1) }
 
-  set offset_factor(value: Vertex) { this._offset_factor = value }
+  set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
-  get margin_factor(): number { return this._margin_factor ?? 0.01 }
+  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.025, 0.0025) }
 
-  set margin_factor(value: number) { this._margin_factor = value }
+  set marginFactor(value: Vertex) { this._marginFactor = value }
 
   protected computeOffset(): Vertex {
     const standardOffset = super.computeOffset();

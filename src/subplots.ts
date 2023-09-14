@@ -1846,6 +1846,8 @@ export class Figure extends PlotData {
     this.translation = translation;
   }
 
+  protected activateSelection(emittedRubberband: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
+
   public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
       var clickedObject: any = null;
@@ -1857,6 +1859,9 @@ export class Figure extends PlotData {
       const canvas = document.getElementById(this.canvas_id);
       var ctrlKey = false; var shiftKey = false;
       var zoomBox = new SelectionBox();
+
+      this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
+
       window.addEventListener('keydown', e => {
         if (e.key == "Control") ctrlKey = true;
         if (e.key == "Shift") {
@@ -1879,7 +1884,7 @@ export class Figure extends PlotData {
             const translation = this.mouseTranslate(canvasMouse, canvasDown);
             if (!(clickedObject instanceof newAxis)) {
               if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
-            } else this.is_drawing_rubber_band = clickedObject.is_drawing_rubberband;
+            }
             if (this.isSelecting) {
               if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
               else this.updateSelectionBox(frameDown, frameMouse);
@@ -1894,8 +1899,7 @@ export class Figure extends PlotData {
 
       canvas.addEventListener('mousedown', e => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-        if (clickedObject instanceof newAxis) this.is_drawing_rubber_band = clickedObject.is_drawing_rubberband
-        else this.is_drawing_rubber_band = this.isSelecting;
+        if (!(clickedObject instanceof newAxis)) this.is_drawing_rubber_band = this.isSelecting;
         if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
       });
@@ -2105,13 +2109,18 @@ export class Frame extends Figure {
     return [new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue), new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue)]
   }
 
-  public mouse_interaction(isParallelPlot: boolean): void {
-    this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => {
-      this.is_drawing_rubber_band = true;
-      this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
-    }));
-    super.mouse_interaction(isParallelPlot);
+  protected activateSelection(emittedRubberband: RubberBand, index: number): void {
+    super.activateSelection(emittedRubberband, index)
+    this.selectionBox.rubberBandUpdate(emittedRubberband, ["x", "y"][index]);
   }
+
+  // public mouse_interaction(isParallelPlot: boolean): void {
+  //   this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => {
+  //     this.is_drawing_rubber_band = true;
+  //     this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
+  //   }));
+  //   super.mouse_interaction(isParallelPlot);
+  // }
 }
 
 export class Histogram extends Frame {

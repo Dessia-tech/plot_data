@@ -1833,9 +1833,9 @@ export class Figure extends PlotData {
     return [canvasMouse, frameMouse, clickedObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+  public mouseUp(ctrlKey: boolean): void {
     if (this.interaction_ON) {
-      if (!this.isSelecting && !this.is_drawing_rubber_band) {
+      if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
         this.absoluteObjects.mouseUp(this.context_show, ctrlKey);
         this.relativeObjects.mouseUp(this.context_show, ctrlKey);
       }
@@ -1903,13 +1903,13 @@ export class Figure extends PlotData {
       });
 
       canvas.addEventListener('mouseup', e => {
-        if (!shiftKey) canvas.style.cursor = 'default';
         if (this.isZooming) {
           this.switchZoom();
           this.zoomBoxUpdateAxes(zoomBox);
         }
-        this.mouseUp(canvasMouse, canvasDown, ctrlKey);
+        this.mouseUp(ctrlKey);
         this.draw();
+        if (!shiftKey) canvas.style.cursor = 'default';
         [clickedObject, isDrawing] = this.resetMouseEvents();
       })
 
@@ -2045,8 +2045,8 @@ export class Frame extends Figure {
     this.hoveredIndices = this.sampleDrawings.updateSampleStates('isHovered');
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+  public mouseUp(ctrlKey: boolean): void {
+    super.mouseUp(ctrlKey);
     this.clickedIndices = this.sampleDrawings.updateSampleStates('isClicked');
   }
 
@@ -2556,8 +2556,8 @@ export class newScatter extends Frame {
     return [superCanvasMouse, superFrameMouse, clickedObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+  public mouseUp(ctrlKey: boolean): void {
+    super.mouseUp(ctrlKey);
     this.previousCoords = [];
   }
 
@@ -2669,8 +2669,8 @@ export class newGraph2D extends newScatter {
     this.draw();
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+  public mouseUp(ctrlKey: boolean): void {
+    super.mouseUp(ctrlKey);
     this.curves.forEach(curve => curve.previousTooltipOrigin = curve.tooltipOrigin);
   }
 
@@ -2839,7 +2839,7 @@ export class newParallelPlot extends Figure {
         else curve.points[featureIndex] = new newPoint2D(this.axes[featureIndex].relativeToAbsolute(this.features.get(axis.name)[i]), this.axes[featureIndex].origin.y).scale(this.initScale);
       })
       curve.buildPath();
-      curve.isHovered = this.hoveredIndices.includes(i);
+      curve.isHovered = this.hoveredIndices.includes(i) && !this.isSelecting && !this.is_drawing_rubber_band;
       curve.isClicked = this.clickedIndices.includes(i);
       curve.isSelected = this.selectedIndices.includes(i);
       curve.strokeStyle = this.curveColor;
@@ -2848,7 +2848,7 @@ export class newParallelPlot extends Figure {
 
   private drawCurves(context: CanvasRenderingContext2D): void {
     const unpickedIndices = newParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
-    [unpickedIndices, this.hoveredIndices, this.clickedIndices, this.selectedIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
+    [unpickedIndices, this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
   }
 
   public static arraySetDiff(A: any[], B: any[]): any[] {
@@ -2897,10 +2897,10 @@ export class newParallelPlot extends Figure {
     });
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+  public mouseUp(ctrlKey: boolean): void {
     if (this.changedAxes.length != 0) this.updateAxesLocation();
-    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
-    this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
+    super.mouseUp(ctrlKey);
+    if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
   }
 
   public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor

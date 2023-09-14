@@ -1494,8 +1494,8 @@ export class Figure extends PlotData {
 
   protected offset: Vertex;
   protected margin: Vertex;
-  protected _offset_factor: Vertex; // = new Vertex(0.035, 0.07);
-  protected _margin_factor: number; // = 0.01;
+  protected _offsetFactor: Vertex; // = new Vertex(0.035, 0.07);
+  protected _marginFactor: Vertex; // = 0.01;
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
@@ -1547,13 +1547,13 @@ export class Figure extends PlotData {
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
-  get offset_factor(): Vertex { return this._offset_factor ?? new Vertex(0.035, 0.07) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.07) }
 
-  set offset_factor(value: Vertex) { this._offset_factor = value }
+  set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
-  get margin_factor(): number { return this._margin_factor ?? 0.01 }
+  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.01, 0.02) }
 
-  set margin_factor(value: number) { this._margin_factor = value }
+  set marginFactor(value: Vertex) { this._marginFactor = value }
 
   protected unpackAxisStyle(data:any): void {
     if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
@@ -1592,13 +1592,13 @@ export class Figure extends PlotData {
   protected setFeatures(data: any): string[] { return data.attribute_names ?? Array.from(this.features.keys()) }
 
   protected computeOffset(): Vertex {
-    const naturalOffset = new Vertex(this.width * this.offset_factor.x, this.height * this.offset_factor.y);
+    const naturalOffset = new Vertex(this.width * this.offsetFactor.x, this.height * this.offsetFactor.y);
     return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
   protected setBounds(): Vertex {
     this.offset = this.computeOffset();
-    this.margin = new Vertex(this.size.x * this.margin_factor, this.size.y * this.margin_factor).add(new Vertex(10, 10));
+    this.margin = new Vertex(this.size.x * this.marginFactor.x, this.size.y * this.marginFactor.y).add(new Vertex(10, 10));
     return this.computeBounds()
   }
 
@@ -2700,13 +2700,13 @@ export class newParallelPlot extends Figure {
 
   set isVertical(value: boolean) { this._isVertical = value }
 
-  get offset_factor(): Vertex { return this._offset_factor ?? new Vertex(0.035, 0.1) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.1) }
 
-  set offset_factor(value: Vertex) { this._offset_factor = value }
+  set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
-  get margin_factor(): number { return this._margin_factor ?? 0.01 }
+  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.025, 0.0025) }
 
-  set margin_factor(value: number) { this._margin_factor = value }
+  set marginFactor(value: Vertex) { this._marginFactor = value }
 
   protected computeOffset(): Vertex {
     const standardOffset = super.computeOffset();

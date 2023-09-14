@@ -1846,7 +1846,7 @@ export class Figure extends PlotData {
     this.translation = translation;
   }
 
-  protected activateSelection(emittedRubberband: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
+  protected activateSelection(emittedRubberBand: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
 
   public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
@@ -2034,8 +2034,8 @@ export class Frame extends Figure {
 
   protected unpackAxisStyle(data: any): void {
     super.unpackAxisStyle(data);
-    if (data.axis?.nb_points_x) this.nXTicks = data.axis.nb_points_x;
-    if (data.axis?.nb_points_y) this.nYTicks = data.axis.nb_points_y;
+    this.nXTicks = data.axis?.nb_points_x ?? this.nXTicks;
+    this.nYTicks = data.axis?.nb_points_y ?? this.nYTicks;
   }
 
   public mouseMove(canvasMouse: Vertex, absoluteMouse: Vertex, frameMouse: Vertex): void {
@@ -2108,18 +2108,10 @@ export class Frame extends Figure {
     return [new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue), new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue)]
   }
 
-  protected activateSelection(emittedRubberband: RubberBand, index: number): void {
-    super.activateSelection(emittedRubberband, index)
-    this.selectionBox.rubberBandUpdate(emittedRubberband, ["x", "y"][index]);
+  protected activateSelection(emittedRubberBand: RubberBand, index: number): void {
+    super.activateSelection(emittedRubberBand, index)
+    this.selectionBox.rubberBandUpdate(emittedRubberBand, ["x", "y"][index]);
   }
-
-  // public mouse_interaction(isParallelPlot: boolean): void {
-  //   this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => {
-  //     this.is_drawing_rubber_band = true;
-  //     this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
-  //   }));
-  //   super.mouse_interaction(isParallelPlot);
-  // }
 }
 
 export class Histogram extends Frame {
@@ -2654,7 +2646,6 @@ export class newGraph2D extends newScatter {
       this.absoluteObjects.drawings = [...this.curves, ...this.absoluteObjects.drawings];
     } else {
       this.absoluteObjects = new GroupCollection([...this.curves]);
-      this.drawSelectionBox(context);
     }
   }
 

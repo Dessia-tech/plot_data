@@ -1848,7 +1848,7 @@ export class Figure extends PlotData {
     this.translation = translation;
   }
 
-  protected activateSelection(emittedRubberband: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
+  protected activateSelection(emittedRubberBand: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
 
   public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
@@ -1976,14 +1976,13 @@ export class Figure extends PlotData {
 
   public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
     this.fusion_coeff = 1.2;
-    if (deltaY>0) var coeff = this.fusion_coeff
-    else coeff = 1/this.fusion_coeff;
-    this.scaleX = this.scaleX * coeff;
-    this.scaleY = this.scaleY * coeff;
+    const zoomFactor = deltaY > 0 ? this.fusion_coeff : 1 / this.fusion_coeff;
+    this.scaleX = this.scaleX * zoomFactor;
+    this.scaleY = this.scaleY * zoomFactor;
     this.scroll_x = this.scroll_x + deltaY;
     this.scroll_y = this.scroll_y + deltaY;
-    this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
-    this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
+    this.originX = mouse3X - this.X + zoomFactor * (this.originX - mouse3X + this.X);
+    this.originY = mouse3Y - this.Y + zoomFactor * (this.originY - mouse3Y + this.Y);
     if (isNaN(this.scroll_x)) this.scroll_x = 0;
     if (isNaN(this.scroll_y)) this.scroll_y = 0;
     return [mouse3X, mouse3Y];
@@ -2040,8 +2039,8 @@ export class Frame extends Figure {
 
   protected unpackAxisStyle(data: any): void {
     super.unpackAxisStyle(data);
-    if (data.axis?.nb_points_x) this.nXTicks = data.axis.nb_points_x;
-    if (data.axis?.nb_points_y) this.nYTicks = data.axis.nb_points_y;
+    this.nXTicks = data.axis?.nb_points_x ?? this.nXTicks;
+    this.nYTicks = data.axis?.nb_points_y ?? this.nYTicks;
   }
 
   public mouseMove(canvasMouse: Vertex, absoluteMouse: Vertex, frameMouse: Vertex): void {
@@ -2114,18 +2113,10 @@ export class Frame extends Figure {
     return [new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue), new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue)]
   }
 
-  protected activateSelection(emittedRubberband: RubberBand, index: number): void {
-    super.activateSelection(emittedRubberband, index)
-    this.selectionBox.rubberBandUpdate(emittedRubberband, ["x", "y"][index]);
+  protected activateSelection(emittedRubberBand: RubberBand, index: number): void {
+    super.activateSelection(emittedRubberBand, index)
+    this.selectionBox.rubberBandUpdate(emittedRubberBand, ["x", "y"][index]);
   }
-
-  // public mouse_interaction(isParallelPlot: boolean): void {
-  //   this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => {
-  //     this.is_drawing_rubber_band = true;
-  //     this.selectionBox.rubberBandUpdate(e, ["x", "y"][index]);
-  //   }));
-  //   super.mouse_interaction(isParallelPlot);
-  // }
 }
 
 export class Histogram extends Frame {
@@ -2660,7 +2651,6 @@ export class newGraph2D extends newScatter {
       this.absoluteObjects.drawings = [...this.curves, ...this.absoluteObjects.drawings];
     } else {
       this.absoluteObjects = new GroupCollection([...this.curves]);
-      this.drawSelectionBox(context);
     }
   }
 
@@ -2690,7 +2680,7 @@ export class newGraph2D extends newScatter {
   }
 }
 
-
+const FREE_SPACE_FACTOR = 0.95;
 export class newParallelPlot extends Figure {
   public axes: ParallelAxis[];
   public curves: LineSequence[];
@@ -2769,7 +2759,6 @@ export class newParallelPlot extends Figure {
   }
 
   private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const FREE_SPACE_FACTOR = 0.95;
     const boundingBox = new newRect(axisOrigin.copy());
     const relativeY = Math.abs(axisOrigin.y) - this.Y;
     boundingBox.size = new Vertex(axisSize, step * FREE_SPACE_FACTOR);
@@ -2782,7 +2771,6 @@ export class newParallelPlot extends Figure {
   }
 
   private verticalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const FREE_SPACE_FACTOR = 0.95;
     const boundingBox = new newRect(axisOrigin.copy());
     const relativeX = axisOrigin.x - this.X;
     boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
@@ -2826,14 +2814,17 @@ export class newParallelPlot extends Figure {
     return axes
   }
 
+  public computePoint(axis: newAxis, featureValue: number): newPoint2D {
+    const xCoord = this.isVertical ? axis.origin.x : axis.relativeToAbsolute(featureValue);
+    const yCoord = this.isVertical ? axis.relativeToAbsolute(featureValue) : axis.origin.y;
+    return new newPoint2D(xCoord, yCoord).scale(this.initScale);
+  }
+
   public computeCurves(): void {
     this.curves = [];
     for (let i=0; i < this.nSamples; i++) {
       const curve = new LineSequence([], String(i));
-      this.drawnFeatures.forEach((feature, j) => {
-        if (this.isVertical) curve.points.push(new newPoint2D(this.axes[j].origin.x, this.axes[j].relativeToAbsolute(this.features.get(feature)[i])).scale(this.initScale))
-        else curve.points.push(new newPoint2D(this.axes[j].relativeToAbsolute(this.features.get(feature)[i]), this.axes[j].origin.y).scale(this.initScale));
-      })
+      this.drawnFeatures.forEach((feature, j) => curve.points.push(this.computePoint(this.axes[j], this.features.get(feature)[i])));
       curve.hoveredFactor = curve.clickedFactor = 1;
       curve.selectedFactor = 1.5;
       this.curves.push(curve);
@@ -2844,8 +2835,7 @@ export class newParallelPlot extends Figure {
     this.curves.forEach((curve, i) => {
       this.changedAxes.forEach(axis => {
         const featureIndex = this.drawnFeatures.indexOf(axis.name);
-        if (axis.isVertical) curve.points[featureIndex] = new newPoint2D(this.axes[featureIndex].origin.x, this.axes[featureIndex].relativeToAbsolute(this.features.get(axis.name)[i])).scale(this.initScale)
-        else curve.points[featureIndex] = new newPoint2D(this.axes[featureIndex].relativeToAbsolute(this.features.get(axis.name)[i]), this.axes[featureIndex].origin.y).scale(this.initScale);
+        curve.points[featureIndex] = this.computePoint(axis, this.features.get(axis.name)[i]);
       })
       curve.buildPath();
       curve.isHovered = this.hoveredIndices.includes(i) && !this.isSelecting && !this.is_drawing_rubber_band;
@@ -2915,10 +2905,10 @@ export class newParallelPlot extends Figure {
   public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
     const mouseCoords = new Vertex(...super.mouseWheel(mouse3X, mouse3Y, deltaY));
     this.viewPoint = mouseCoords.scale(this.initScale);
-    for (let i = 0; i < this.axes.length; i++) {
-      if (this.axes[i].boundingBox.isPointInShape(this.context_show, this.viewPoint)) {
-        this.axes[i].update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-        this.axes[i].saveLocation()
+    for (let axis of this.axes) {
+      if (axis.boundingBox.isPointInShape(this.context_show, this.viewPoint)) {
+        axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+        axis.saveLocation();
         break;
       }
     }

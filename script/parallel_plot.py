@@ -8,7 +8,7 @@ random.seed(4)
 elements = []
 SHAPES = ['round', 'square', 'triangle', 'ellipse']
 COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
-for i in range(50):
+for i in range(1000):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
     elements.append({'a b c_d_e f ' * 50: random.uniform(0, 20),

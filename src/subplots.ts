@@ -1909,12 +1909,8 @@ export class Figure extends PlotData {
           this.zoomBoxUpdateAxes(zoomBox);
         }
         this.mouseUp(canvasMouse, canvasDown, ctrlKey);
-        if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
-        clickedObject = null;
         this.draw();
-        this.axes.forEach(axis => axis.saveLocation());
-        this.translation = new Vertex(0, 0);
-        isDrawing = false;
+        [clickedObject, isDrawing] = this.resetMouseEvents();
       })
 
       canvas.addEventListener('wheel', e => {
@@ -1932,6 +1928,13 @@ export class Figure extends PlotData {
         canvas.style.cursor = 'default';
       });
     }
+  }
+
+  protected resetMouseEvents(): [any, boolean] {
+    if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
+    this.axes.forEach(axis => axis.saveLocation());
+    this.translation = new Vertex(0, 0);
+    return [null, false]
   }
 
   protected regulateScale(scale: Vertex): void {
@@ -2683,6 +2686,7 @@ export class newParallelPlot extends Figure {
   public axes: ParallelAxis[];
   public curves: LineSequence[];
   public curveColor: string = 'hsl(203, 90%, 85%)';
+  public changedAxes: ParallelAxis[] = [];
   private _isVertical: boolean;
   private emitter: EventEmitter = new EventEmitter();
   constructor(
@@ -2829,11 +2833,10 @@ export class newParallelPlot extends Figure {
 
   public updateCurves(context: CanvasRenderingContext2D): void {
     this.curves.forEach((curve, i) => {
-      this.drawnFeatures.forEach((feature, j) => {
-        if ((this.axes[j].boundingBox.isClicked && !this.axes[j].isClicked) || this.axes[j].title.isClicked) {
-          if (this.isVertical) curve.points[j] = new newPoint2D(this.axes[j].origin.x, this.axes[j].relativeToAbsolute(this.features.get(feature)[i])).scale(this.initScale)
-          else curve.points[j] = new newPoint2D(this.axes[j].relativeToAbsolute(this.features.get(feature)[i]), this.axes[j].origin.y).scale(this.initScale);
-        }
+      this.changedAxes.forEach(axis => {
+        const featureIndex = this.drawnFeatures.indexOf(axis.name);
+        if (axis.isVertical) curve.points[featureIndex] = new newPoint2D(this.axes[featureIndex].origin.x, this.axes[featureIndex].relativeToAbsolute(this.features.get(axis.name)[i])).scale(this.initScale)
+        else curve.points[featureIndex] = new newPoint2D(this.axes[featureIndex].relativeToAbsolute(this.features.get(axis.name)[i]), this.axes[featureIndex].origin.y).scale(this.initScale);
       })
       curve.buildPath();
       curve.isHovered = this.hoveredIndices.includes(i);
@@ -2878,12 +2881,6 @@ export class newParallelPlot extends Figure {
       return axis.name;
     });
     this.hoveredIndices = this.absoluteObjects.updateSampleStates('isHovered');
-    this.curves.forEach((curve, i) => {
-      this.axes.forEach((axis, j) => axis.emitter.on('changeAxisState', e => {
-        if (this.isVertical) curve.points[j] = new newPoint2D(e.origin.x, e.relativeToAbsolute(this.features.get(e.name)[i])).scale(this.initScale)
-        else curve.points[j] = new newPoint2D(e.relativeToAbsolute(this.features.get(e.name)[i]), e.origin.y).scale(this.initScale);
-      }))
-    })
   }
 
   public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
@@ -2892,12 +2889,6 @@ export class newParallelPlot extends Figure {
     }
     super.mouseUp(canvasMouse, canvasDown, ctrlKey);
     this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
-    this.curves.forEach((curve, i) => {
-      this.axes.forEach((axis, j) => axis.emitter.on('changeAxisState', e => {
-        if (this.isVertical) curve.points[j] = new newPoint2D(e.origin.x, e.relativeToAbsolute(this.features.get(e.name)[i])).scale(this.initScale)
-        else curve.points[j] = new newPoint2D(e.relativeToAbsolute(this.features.get(e.name)[i]), e.origin.y).scale(this.initScale);
-      }))
-    })
   }
 
   public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
@@ -2922,6 +2913,16 @@ export class newParallelPlot extends Figure {
       if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
     })
     this.updateSelection(axesSelections);
+  }
+
+  public mouse_interaction(isParallelPlot: boolean): void {
+    this.axes.forEach(axis => axis.emitter.on('changeAxisState', e => this.changedAxes.push(e)));
+    super.mouse_interaction(isParallelPlot);
+  }
+
+  protected resetMouseEvents(): [any, boolean] {
+    this.changedAxes = [];
+    return super.resetMouseEvents()
   }
 }
 

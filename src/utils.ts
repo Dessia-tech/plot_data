@@ -2636,12 +2636,12 @@ export class newAxis extends newShape{
   protected _isDiscrete: boolean;
 
   public emitter: EventEmitter = new EventEmitter();
-  public minValue: number;
-  public maxValue: number;
   public initMinValue: number;
   public initMaxValue: number;
   private _previousMin: number;
   private _previousMax: number;
+  private _minValue: number;
+  private _maxValue: number;
 
   private _marginRatio: number = 0.05;
   protected offsetTicks: number;
@@ -2712,6 +2712,14 @@ export class newAxis extends newShape{
 
   get tickOrientation(): string { return this.isVertical ? 'right' : 'up' }
 
+  get minValue(): number { return this._minValue }
+
+  set minValue(value: number) { this._minValue = value; this.emitter.emit("changeAxisState", this); }
+
+  get maxValue(): number { return this._maxValue }
+
+  set maxValue(value: number) { this._maxValue = value } // emitter set in minValue
+
   set nTicks(value: number) { this._nTicks = value };
 
   get nTicks(): number {
@@ -2739,6 +2747,7 @@ export class newAxis extends newShape{
     this.rubberBand.isVertical = this.isVertical;
     this.drawPath = this.buildDrawPath();
     this.buildPath();
+    this.emitter.emit("changeAxisState", this);
   }
 
   public resetScale(): void {
@@ -3082,7 +3091,6 @@ export class newAxis extends newShape{
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
     } else this.rubberBand.mouseMove(downValue, currentValue);
-    this.emitter.emit("rubberBandChange", this.rubberBand);
   }
 
   public mouseMoveClickedTitle(mouseCoords: Vertex): void {}
@@ -3195,7 +3203,7 @@ export class newAxis extends newShape{
 
 export class ParallelAxis extends newAxis {
   public titleZone: newRect = new newRect();
-  public hasMoved: boolean = false;
+  private _hasMoved: boolean = false;
   private _previousOrigin: Vertex;
   private _previousEnd: Vertex;
 
@@ -3216,6 +3224,10 @@ export class ParallelAxis extends newAxis {
   get tickMarker(): string { return "line" }
 
   get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
+
+  get hasMoved(): boolean { return this._hasMoved }
+
+  set hasMoved(value: boolean) { this._hasMoved = value; if (this._hasMoved) this.emitter.emit("changeAxisState", this) }
 
   public resetScale(): void {
     this.isInverted = false;
@@ -3284,19 +3296,14 @@ export class ParallelAxis extends newAxis {
     const translation = mouseCoords.subtract(this.mouseClick);
     this.translate(this._previousOrigin.add(translation), this._previousEnd.add(translation));
     if (translation.norm > 10) this.hasMoved = true;
-    this.emitter.emit("changeAxisState", this);
   }
 
   public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
     if (this.title.isClicked && this.title.isHovered && !this.hasMoved) {
       this.title.isClicked = false;
       this.flip();
-      this.emitter.emit("changeAxisState", this);
     }
-    if (this.hasMoved) {
-      this.updateEnds();
-      this.emitter.emit("changeAxisState", this);
-    } 
+    if (this.hasMoved) this.updateEnds();
     this.hasMoved = false;
     super.mouseUp(context, keepState);
   }

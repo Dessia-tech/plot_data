@@ -2602,6 +2602,7 @@ export class TitleSettings {
   ) {}
 }
 
+export const SIZE_END = 7;
 export class newAxis extends newShape{
   public ticksPoints: newPoint2D[];
   public drawPath: Path2D;
@@ -2643,7 +2644,6 @@ export class newAxis extends newShape{
 
   readonly DRAW_START_OFFSET = 0;
   readonly SELECTION_RECT_SIZE = 10;
-  readonly SIZE_END = 7;
   readonly FONT_SIZE = 12;
   readonly isFilled = true;
 
@@ -2786,12 +2786,12 @@ export class newAxis extends newShape{
 
   public adjustBoundingBox(): void {
     if (this.isVertical) {
-      this.boundingBox.size.x += this.SIZE_END / 2;
-      this.boundingBox.size.y += this.SIZE_END;
+      this.boundingBox.size.x += SIZE_END / 2;
+      this.boundingBox.size.y += SIZE_END;
     }
     else {
-      this.boundingBox.size.x += this.SIZE_END;
-      this.boundingBox.size.y += this.SIZE_END / 2;
+      this.boundingBox.size.x += SIZE_END;
+      this.boundingBox.size.y += SIZE_END / 2;
     }
     this.boundingBox.buildPath();
   }
@@ -2802,9 +2802,9 @@ export class newAxis extends newShape{
     const path = new Path2D();
     let endArrow: newPoint2D;
     if (this.isInverted) {
-      endArrow = new newPoint2D(this.origin.x - this.SIZE_END / 2 * horizontalIdx, this.origin.y - this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['left', 'down'][verticalIdx]);
+      endArrow = new newPoint2D(this.origin.x - SIZE_END / 2 * horizontalIdx, this.origin.y - SIZE_END / 2 * verticalIdx, SIZE_END, 'triangle', ['left', 'down'][verticalIdx]);
     } else {
-      endArrow = new newPoint2D(this.end.x + this.SIZE_END / 2 * horizontalIdx, this.end.y + this.SIZE_END / 2 * verticalIdx, this.SIZE_END, 'triangle', ['right', 'up'][verticalIdx]);
+      endArrow = new newPoint2D(this.end.x + SIZE_END / 2 * horizontalIdx, this.end.y + SIZE_END / 2 * verticalIdx, SIZE_END, 'triangle', ['right', 'up'][verticalIdx]);
     }
     path.moveTo(this.origin.x - this.DRAW_START_OFFSET * horizontalIdx, this.origin.y - this.DRAW_START_OFFSET * verticalIdx);
     path.lineTo(this.end.x, this.end.y);
@@ -2850,8 +2850,8 @@ export class newAxis extends newShape{
   public computeTextBoxes(context: CanvasRenderingContext2D): void {
     context.save();
     const [calibratedTickText, calibratedMeasure] = this.getCalibratedTextWidth(context);
-    this.maxTickWidth = Math.min(this.boundingBox.size.x - this.offsetTicks - 3 - this.SIZE_END / 2, calibratedMeasure);
-    this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - this.SIZE_END / 2, calibratedTickText.fontsize);
+    this.maxTickWidth = Math.min(this.boundingBox.size.x - this.offsetTicks - 3 - SIZE_END / 2, calibratedMeasure);
+    this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - SIZE_END / 2, calibratedTickText.fontsize);
     if (this.centeredTitle) this.centeredTitleTextBoxes(calibratedMeasure);
     context.restore();
   }
@@ -3021,7 +3021,7 @@ export class newAxis extends newShape{
   }
 
   protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
-    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), this.SIZE_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
+    const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), SIZE_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
     point.draw(context);
     return point
   }
@@ -3254,10 +3254,10 @@ export class ParallelAxis extends newAxis {
     const SIZE_FACTOR = 0.35;
     let offset = 0;
     if (this.isVertical) {
-      offset = this.drawLength + this.SIZE_END * 2;
+      offset = this.drawLength + SIZE_END * 2;
       this.titleZone.origin.y += offset;
     } else {
-      offset = this.SIZE_END + this.offsetTicks + this.FONT_SIZE;
+      offset = SIZE_END + this.offsetTicks + this.FONT_SIZE;
       this.titleZone.size.x *= SIZE_FACTOR;
     }
     this.titleZone.size.y -= offset;
@@ -3286,9 +3286,9 @@ export class ParallelAxis extends newAxis {
     super.computeEnds();
     if (this.isVertical) {
       this.end.y -= this.drawLength * 0.1;
-      this.boundingBox.size.x -= this.SIZE_END / 2;
+      this.boundingBox.size.x -= SIZE_END / 2;
     }
-    else this.boundingBox.size.y -= this.SIZE_END / 2;
+    else this.boundingBox.size.y -= SIZE_END / 2;
   }
 
   public mouseMoveClickedTitle(mouseCoords: Vertex): void {
@@ -3347,8 +3347,8 @@ export class ParallelAxis extends newAxis {
   public computeTextBoxes(context: CanvasRenderingContext2D): void {
     context.save();
     const [calibratedTickText, calibratedMeasure] = this.getCalibratedTextWidth(context);
-    this.maxTickWidth = this.origin.x - this.boundingBox.origin.x - this.offsetTicks - 3; //Math.min(this.boundingBox.size.x - this.offsetTicks - 3 - this.SIZE_END / 2, calibratedMeasure);
-    this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - this.SIZE_END / 2, calibratedTickText.fontsize);
+    this.maxTickWidth = this.origin.x - this.boundingBox.origin.x - this.offsetTicks - 3; //Math.min(this.boundingBox.size.x - this.offsetTicks - 3 - SIZE_END / 2, calibratedMeasure);
+    this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - SIZE_END / 2, calibratedTickText.fontsize);
     context.restore();
   }
 }

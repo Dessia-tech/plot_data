@@ -1,6 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle, ParallelAxis, Line, newPoint2D } from "./utils";
+  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1594,12 +1594,14 @@ export class Figure extends PlotData {
 
   protected computeOffset(): Vertex {
     const naturalOffset = new Vertex(this.width * this.offsetFactor.x, this.height * this.offsetFactor.y);
-    return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y, MIN_FONTSIZE));
+    return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y * 1.5, MIN_FONTSIZE));
   }
+
+  protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
 
   protected setBounds(): Vertex {
     this.offset = this.computeOffset();
-    this.margin = new Vertex(this.size.x * this.marginFactor.x, this.size.y * this.marginFactor.y).add(new Vertex(10, 10));
+    this.margin = new Vertex(this.size.x * this.marginFactor.x, this.size.y * this.marginFactor.y).add(this.marginOffset);
     return this.computeBounds()
   }
 
@@ -2710,7 +2712,7 @@ export class newParallelPlot extends Figure {
 
   set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
-  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.025, 0.0025) }
+  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.0035, 0.0025) }
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
@@ -2719,6 +2721,8 @@ export class newParallelPlot extends Figure {
     if (this.isVertical) return new Vertex(Math.max(standardOffset.x, MIN_OFFSET), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
     return new Vertex(standardOffset.x / 3, Math.max(standardOffset.y, MIN_OFFSET));
   }
+
+  protected get marginOffset(): Vertex { return new Vertex(this.isVertical ? 0 : SIZE_END, this.isVertical ? SIZE_END : SIZE_END * 4) }
 
   public reset_scales(): void { // TODO: merge with resetView
     super.reset_scales();

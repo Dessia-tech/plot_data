@@ -1594,7 +1594,7 @@ export class HorizontalLine extends AbstractLine {
   }
 }
 
-export class SlashLine extends AbstractLine {
+export class PositiveLine extends AbstractLine {
   public buildPath(): void {
     this.path = new Path2D();
     const halfSize = this.size / 2;
@@ -1603,7 +1603,7 @@ export class SlashLine extends AbstractLine {
   }
 }
 
-export class BackSlashLine extends AbstractLine {
+export class NegativeLine extends AbstractLine {
   public buildPath(): void {
     this.path = new Path2D();
     const halfSize = this.size / 2;
@@ -1625,9 +1625,9 @@ export class Line extends AbstractLine {
   public buildPath(): void {
     if (this.orientation == 'vertical') this.path = new VerticalLine(this.center, this.size).path;
     if (this.orientation == 'horizontal') this.path = new HorizontalLine(this.center, this.size).path;
-    if (this.orientation == 'slash') this.path = new SlashLine(this.center, this.size).path;
-    if (this.orientation == 'backslash') this.path = new BackSlashLine(this.center, this.size).path;
-    if (!['vertical', 'horizontal', 'slash', 'backslash'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
+    if (['slash', 'positive'].includes(this.orientation)) this.path = new PositiveLine(this.center, this.size).path;
+    if (['backslash', 'negative'].includes(this.orientation)) this.path = new NegativeLine(this.center, this.size).path;
+    if (!['vertical', 'horizontal', 'slash', 'backslash', 'positive', 'negative'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
   }
 }
 
@@ -1884,9 +1884,9 @@ export class newText extends newShape {
     context.fillStyle = this.fillStyle;
     if (writtenText.length != 1) {
       const nRows: number = writtenText.length - 1;
-      writtenText.forEach((row, index) => context.fillText(row, 0, (index - nRows) * this.fontsize + this.offset));
+      writtenText.forEach((row, index) => context.fillText(index == 0 ? newText.capitalize(row) : row, 0, (index - nRows) * this.fontsize + this.offset));
     } else {
-      context.fillText(writtenText[0], 0, this.offset);
+      context.fillText(newText.capitalize(writtenText[0]), 0, this.offset);
     }
   }
 
@@ -1926,7 +1926,7 @@ export class newText extends newShape {
   public multiLineSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     context.font = newText.buildFont(this.style, fontsize, this.font);
     const oneRowLength = context.measureText(this.text).width;
-    if (oneRowLength <= this.boundingBox.size.x) return [[this.text], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y : fontsize];
+    if (oneRowLength <= this.boundingBox.size.x) return [[this.text.trimStart()], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y : fontsize];
     if (!this.boundingBox.size.y) return [this.fixedFontSplit(context), fontsize];
     return this.autoFontSplit(fontsize, context);
   }
@@ -1974,15 +1974,7 @@ export class newText extends newShape {
     return this.cleanStartAllRows(rows)
   }
 
-  private cleanStartAllRows(rows: string[]): string[] {
-    return rows.map(row => { return this.removeFirstSpaces(row) })
-  }
-
-  private removeFirstSpaces(row: string): string {
-    let charIndex = 0;
-    while (SEPARATORS.includes(row[charIndex])) charIndex++;
-    return row.slice(charIndex);
-  }
+  private cleanStartAllRows(rows: string[]): string[] { return rows.map(row => row.trimStart()) }
 
   private autoFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     let rows = [];
@@ -2628,7 +2620,7 @@ export class newAxis extends newShape{
   protected _ticks: number[];
   public tickPrecision: number;
   public ticksFontsize: number = 12;
-  protected _isDiscrete: boolean;
+  protected _isDiscrete: boolean = true;
 
   public emitter: EventEmitter = new EventEmitter();
   public minValue: number;
@@ -2654,7 +2646,7 @@ export class newAxis extends newShape{
   public is_drawing_rubberband: boolean = false;
 
   constructor(
-    vector: any[],
+    vector: any[] = null,
     public boundingBox: newRect,
     public origin: Vertex,
     public end: Vertex,
@@ -2663,10 +2655,7 @@ export class newAxis extends newShape{
     protected _nTicks: number = 10
     ) {
       super();
-      this.isDiscrete = vector === undefined ? true : typeof vector[0] == 'string';
-      if (this.isDiscrete) {
-        this.labels = vector === undefined ? ["0", "1"] : newAxis.uniqueValues(vector)
-      }
+      this.discretePropertiesFromVector(vector);
       const [minValue, maxValue] = this.computeMinMax(vector);
       [this._previousMin, this._previousMax] = [this.initMinValue, this.initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
       this.ticks = this.computeTicks();
@@ -2727,6 +2716,16 @@ export class newAxis extends newShape{
   private verticalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.x)) }
 
   protected computeEnds(): void {}
+
+  private discretePropertiesFromVector(vector: any[]): void {
+    if (vector) {
+      if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
+      if (this.isDiscrete) this.labels = vector.length != 0 ? newAxis.uniqueValues(vector) : ["0", "1"];
+    } else {
+      this.isDiscrete = true;
+      this.labels = ["0", "1"];
+    }
+  }
 
   public transform(newOrigin: Vertex, newEnd: Vertex): void {
     this.origin = newOrigin.copy();
@@ -2824,7 +2823,7 @@ export class newAxis extends newShape{
     if (this.isDiscrete) return [0, this.labels.length - 1];
     const min = Math.min(...vector);
     const max = Math.max(...vector);
-    return min != max ? [min ,max] : [min * 0.7, max * 1.3]
+    return min != max ? [min ,max] : [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)]
   }
 
   public computeTextBoxes(context: CanvasRenderingContext2D): void {

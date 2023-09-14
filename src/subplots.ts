@@ -1971,14 +1971,13 @@ export class Figure extends PlotData {
 
   public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
     this.fusion_coeff = 1.2;
-    if (deltaY>0) var coeff = this.fusion_coeff
-    else coeff = 1/this.fusion_coeff;
-    this.scaleX = this.scaleX * coeff;
-    this.scaleY = this.scaleY * coeff;
+    const zoomFactor = deltaY > 0 ? this.fusion_coeff : 1 / this.fusion_coeff;
+    this.scaleX = this.scaleX * zoomFactor;
+    this.scaleY = this.scaleY * zoomFactor;
     this.scroll_x = this.scroll_x + deltaY;
     this.scroll_y = this.scroll_y + deltaY;
-    this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
-    this.originY = mouse3Y - this.Y + coeff * (this.originY - mouse3Y + this.Y);
+    this.originX = mouse3X - this.X + zoomFactor * (this.originX - mouse3X + this.X);
+    this.originY = mouse3Y - this.Y + zoomFactor * (this.originY - mouse3Y + this.Y);
     if (isNaN(this.scroll_x)) this.scroll_x = 0;
     if (isNaN(this.scroll_y)) this.scroll_y = 0;
     return [mouse3X, mouse3Y];
@@ -2685,7 +2684,7 @@ export class newGraph2D extends newScatter {
   }
 }
 
-
+const FREE_SPACE_FACTOR = 0.95;
 export class newParallelPlot extends Figure {
   public axes: ParallelAxis[];
   public curves: LineSequence[];
@@ -2760,7 +2759,6 @@ export class newParallelPlot extends Figure {
   }
 
   private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const FREE_SPACE_FACTOR = 0.95;
     const boundingBox = new newRect(axisOrigin.copy());
     boundingBox.size = new Vertex(axisSize, step * FREE_SPACE_FACTOR);
     if (index == this.drawnFeatures.length - 1) {
@@ -2773,7 +2771,6 @@ export class newParallelPlot extends Figure {
   }
 
   private verticalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const FREE_SPACE_FACTOR = 0.95;
     const boundingBox = new newRect(axisOrigin.copy());
     boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
     if (index == 0) {
@@ -2825,8 +2822,9 @@ export class newParallelPlot extends Figure {
     this.curves.forEach((curve, i) => {
       curve.points = [];
       this.drawnFeatures.forEach((feature, j) => {
-        if (this.isVertical) curve.points.push(new newPoint2D(this.axes[j].origin.x, this.axes[j].relativeToAbsolute(this.features.get(feature)[i])).scale(this.initScale))
-        else curve.points.push(new newPoint2D(this.axes[j].relativeToAbsolute(this.features.get(feature)[i]), this.axes[j].origin.y).scale(this.initScale));
+        const xCoord = this.isVertical ? this.axes[j].origin.x : this.axes[j].relativeToAbsolute(this.features.get(feature)[i]);
+        const yCoord = this.isVertical ? this.axes[j].relativeToAbsolute(this.features.get(feature)[i]) : this.axes[j].origin.y;
+        curve.points.push(new newPoint2D(xCoord, yCoord).scale(this.initScale));
       })
       curve.buildPath();
     })
@@ -2836,8 +2834,7 @@ export class newParallelPlot extends Figure {
     this.updateCurves();
     const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
     this.curves.forEach((curve, i) => {
-      if (this.selectedIndices.includes(i)) curve.isSelected = true
-      else curve.isSelected = false;
+      curve.isSelected = this.selectedIndices.includes(i);
       curve.strokeStyle = this.curveColor;
       curve.draw(context);
     });
@@ -2880,10 +2877,10 @@ export class newParallelPlot extends Figure {
   public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
     const mouseCoords = new Vertex(...super.mouseWheel(mouse3X, mouse3Y, deltaY));
     this.viewPoint = mouseCoords.scale(this.initScale);
-    for (let i = 0; i < this.axes.length; i++) {
-      if (this.axes[i].boundingBox.isPointInShape(this.context_show, this.viewPoint)) {
-        this.axes[i].update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
-        this.axes[i].saveLocation()
+    for (let axis of this.axes) {
+      if (axis.boundingBox.isPointInShape(this.context_show, this.viewPoint)) {
+        axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
+        axis.saveLocation();
         break;
       }
     }

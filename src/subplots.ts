@@ -2831,7 +2831,7 @@ export class newParallelPlot extends Figure {
     }
   }
 
-  public updateCurves(context: CanvasRenderingContext2D): void {
+  public updateCurves(): void {
     this.curves.forEach((curve, i) => {
       this.changedAxes.forEach(axis => {
         const featureIndex = this.drawnFeatures.indexOf(axis.name);
@@ -2843,13 +2843,23 @@ export class newParallelPlot extends Figure {
       curve.isClicked = this.clickedIndices.includes(i);
       curve.isSelected = this.selectedIndices.includes(i);
       curve.strokeStyle = this.curveColor;
-      curve.draw(context);
     })
   }
 
-  public drawCurves(context: CanvasRenderingContext2D): void {
+  private drawCurves(context: CanvasRenderingContext2D): void {
+    const unpickedIndices = newParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
+    [unpickedIndices, this.hoveredIndices, this.clickedIndices, this.selectedIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
+  }
+
+  public static arraySetDiff(A: any[], B: any[]): any[] {
+    if (B.length == 0) return A
+    return A.filter(x => !B.includes(x))
+  }
+
+  public updateCurveDrawings(context: CanvasRenderingContext2D): void {
     const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
-    this.updateCurves(context);
+    this.updateCurves();
+    this.drawCurves(context);
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
     const axesEnd = new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
     const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
@@ -2862,7 +2872,7 @@ export class newParallelPlot extends Figure {
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
-    this.drawCurves(context);
+    this.updateCurveDrawings(context);
     this.absoluteObjects = new GroupCollection([...this.curves]);
   }
 

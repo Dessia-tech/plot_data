@@ -60,7 +60,7 @@ primitive_group4 = [circle3]
 primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primitive_group4]
 
 primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups,
-                                                               # associated_elements=[1, 2, 3, 4],
+                                                               associated_elements=[1, 2, 3, 4],
                                                                x_variable='x', y_variable='y')
 
 histogram = plot_data.Histogram(x_variable='x')

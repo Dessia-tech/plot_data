@@ -1594,7 +1594,7 @@ export class Figure extends PlotData {
 
   protected computeOffset(): Vertex {
     const naturalOffset = new Vertex(this.width * this.offsetFactor.x, this.height * this.offsetFactor.y);
-    return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y * 1.5, MIN_FONTSIZE));
+    return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
   protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
@@ -2719,7 +2719,7 @@ export class newParallelPlot extends Figure {
   protected computeOffset(): Vertex {
     const standardOffset = super.computeOffset();
     if (this.isVertical) return new Vertex(Math.max(standardOffset.x, MIN_OFFSET), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
-    return new Vertex(standardOffset.x / 3, Math.max(standardOffset.y, MIN_OFFSET));
+    return new Vertex(standardOffset.x / 3, Math.max(standardOffset.y * 1.5, MIN_OFFSET));
   }
 
   protected get marginOffset(): Vertex { return new Vertex(this.isVertical ? 0 : SIZE_END, this.isVertical ? SIZE_END : SIZE_END * 4) }

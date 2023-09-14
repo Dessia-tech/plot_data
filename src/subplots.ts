@@ -2874,19 +2874,21 @@ export class newParallelPlot extends Figure {
       this.absoluteObjects.mouseMove(this.context_show, absoluteMouse);
       this.relativeObjects.mouseMove(this.context_show, frameMouse);
     };
+    this.changeDisplayOrder();
+    this.hoveredIndices = this.absoluteObjects.updateSampleStates('isHovered');
+  }
+
+  private changeDisplayOrder(): void {
     if (this.isVertical) this.axes.sort((a, b) => a.origin.x - b.origin.x)
     else this.axes.sort((a, b) => b.origin.y - a.origin.y);
     this.drawnFeatures = this.axes.map((axis, i) => {
       if (this.drawnFeatures[i] != axis.name) axis.hasMoved = true;
       return axis.name;
     });
-    this.hoveredIndices = this.absoluteObjects.updateSampleStates('isHovered');
   }
 
   public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    for (let i = 0; i < this.axes.length; i++) {
-      if (this.axes[i].hasMoved) { this.updateAxesLocation(); break }
-    }
+    if (this.changedAxes.length != 0) this.updateAxesLocation();
     super.mouseUp(canvasMouse, canvasDown, ctrlKey);
     this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
   }

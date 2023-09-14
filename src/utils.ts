@@ -2714,7 +2714,7 @@ export class newAxis extends newShape{
 
   get minValue(): number { return this._minValue }
 
-  set minValue(value: number) { this._minValue = value; this.emitter.emit("changeAxisState", this); }
+  set minValue(value: number) { this._minValue = value; this.emitter.emit("axisStateChange", this); }
 
   get maxValue(): number { return this._maxValue }
 
@@ -2747,7 +2747,7 @@ export class newAxis extends newShape{
     this.rubberBand.isVertical = this.isVertical;
     this.drawPath = this.buildDrawPath();
     this.buildPath();
-    this.emitter.emit("changeAxisState", this);
+    this.emitter.emit("axisStateChange", this);
   }
 
   public resetScale(): void {
@@ -3227,7 +3227,7 @@ export class ParallelAxis extends newAxis {
 
   get hasMoved(): boolean { return this._hasMoved }
 
-  set hasMoved(value: boolean) { this._hasMoved = value; if (this._hasMoved) this.emitter.emit("changeAxisState", this) }
+  set hasMoved(value: boolean) { this._hasMoved = value; if (this._hasMoved) this.emitter.emit("axisStateChange", this) }
 
   public resetScale(): void {
     this.isInverted = false;
@@ -3313,7 +3313,7 @@ export class ParallelAxis extends newAxis {
     this._previousEnd = this.end.copy();
   }
 
-  protected flip(): void { this.isInverted = !this.isInverted; this.emitter.emit("changeAxisState", this) }
+  protected flip(): void { this.isInverted = !this.isInverted; this.emitter.emit("axisStateChange", this) }
 
   public updateLocation(newOrigin: Vertex, newEnd: Vertex, boundingBox: newRect, index: number, nAxis: number): void {
     this.boundingBox = boundingBox;

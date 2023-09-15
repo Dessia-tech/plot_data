@@ -1501,7 +1501,7 @@ export class Figure extends PlotData {
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   readonly features: Map<string, any[]>;
-  readonly MAX_PRINTED_NUMBERS = 16;
+  readonly MAX_PRINTED_NUMBERS = 8;
   readonly TRL_THRESHOLD = 20;
   constructor(
     data: any,
@@ -1921,8 +1921,9 @@ export class Figure extends PlotData {
 
       canvas.addEventListener('wheel', e => {
         if (this.interaction_ON) {
-          [mouse3X, mouse3Y] = this.wheelFromEvent(e);
-          this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(this.scaleX, this.scaleY));
+          this.wheelFromEvent(e);
+          this.updateWithScale();
+          this.draw();
         }
       });
 
@@ -1943,26 +1944,14 @@ export class Figure extends PlotData {
     return [null, false]
   }
 
-  protected regulateScale(scale: Vertex): void {
-    for (let axis of this.axes) {
-      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
-        if (this.scaleX > scale.x) this.scaleX = scale.x;
-        if (this.scaleY > scale.y) this.scaleY = scale.y;
-      } else if (axis.tickPrecision < 1) {
-        if (this.scaleX < scale.x) this.scaleX = scale.x;
-        if (this.scaleX < scale.x) this.scaleX = scale.x;
-      }
-    }
-  }
+  protected regulateScale(): void {}
 
-  protected drawAfterRescale(mouse3X: number, mouse3Y: number, scale: Vertex): void {
-    this.regulateScale(scale);
-    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
+  protected updateWithScale(): void {
+    this.regulateScale();
     this.updateAxes(); // needs a refactor
     this.axes.forEach(axis => axis.saveLocation());
     [this.scaleX, this.scaleY] = [1, 1];
     this.viewPoint = new Vertex(0, 0);
-    this.draw(); // needs a refactor
   }
 
   public zoomIn(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), 342) }
@@ -1970,13 +1959,14 @@ export class Figure extends PlotData {
   public zoomOut(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), -342) }
 
   private zoom(center: Vertex, zFactor: number): void {
-    const [mouse3X, mouse3Y] = this.mouseWheel(center.x, center.y, zFactor);
-    this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(1, 1));
+    this.mouseWheel(center.x, center.y, zFactor);
+    this.updateWithScale();
+    this.draw();
   }
 
-  public wheelFromEvent(e: WheelEvent): [number, number] { return this.mouseWheel(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
+  public wheelFromEvent(e: WheelEvent): void { this.mouseWheel(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
+  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): void { //TODO: This is still not a refactor
     this.fusion_coeff = 1.2;
     const zoomFactor = deltaY > 0 ? this.fusion_coeff : 1 / this.fusion_coeff;
     this.scaleX = this.scaleX * zoomFactor;
@@ -1987,7 +1977,7 @@ export class Figure extends PlotData {
     this.originY = mouse3Y - this.Y + zoomFactor * (this.originY - mouse3Y + this.Y);
     if (isNaN(this.scroll_x)) this.scroll_x = 0;
     if (isNaN(this.scroll_y)) this.scroll_y = 0;
-    return [mouse3X, mouse3Y];
+    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
   }
 }
 
@@ -2118,6 +2108,21 @@ export class Frame extends Figure {
   protected activateSelection(emittedRubberBand: RubberBand, index: number): void {
     super.activateSelection(emittedRubberBand, index)
     this.selectionBox.rubberBandUpdate(emittedRubberBand, ["x", "y"][index]);
+  }
+
+  protected regulateScale(): void {
+    for (const axis of this.axes) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > 1) this.scaleX = 1;
+        if (this.scaleY > 1) this.scaleY = 1;
+      } else if (axis.tickPrecision < 1) {
+        if (this.scaleX < 1) this.scaleX = 1;
+        if (this.scaleY < 1) this.scaleY = 1;
+      } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+        if (this.scaleX < 1) this.scaleX = 1;
+        if (this.scaleY < 1) this.scaleY = 1;
+      }
+    }
   }
 }
 
@@ -2253,27 +2258,17 @@ export class Histogram extends Frame {
     return new Vertex(this.axes[0].isDiscrete ? 0 : translation.x, 0)
   }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
-    this.fusion_coeff = 1.2;
-    if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
-      if (deltaY>0) {
-        this.scaleX = this.scaleX * this.fusion_coeff;
-        this.scroll_x++;
-        this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-      } else if (deltaY<0) {
-        this.scaleX = this.scaleX/this.fusion_coeff;
-        this.scroll_x--;
-        this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
+  protected regulateScale(): void {
+    this.scaleY = 1;
+    for (const axis of this.axes) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > 1) this.scaleX = 1;
+      } else if (axis.tickPrecision < 1) {
+        if (this.scaleX < 1) this.scaleX = 1;
+      } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+        if (this.scaleX < 1) this.scaleX = 1;
       }
-    } else {
-        if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
-        this.scaleX = this.scaleX*coeff;
-        this.scroll_x = this.scroll_x + deltaY;
-        this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
     }
-    if (isNaN(this.scroll_x)) this.scroll_x = 0;
-    if (isNaN(this.scroll_y)) this.scroll_y = 0;
-    return [mouse3X, mouse3Y];
   }
 }
 
@@ -2563,25 +2558,9 @@ export class newScatter extends Frame {
     this.previousCoords = [];
   }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] {
-    const scale = new Vertex(this.scaleX, this.scaleY);
-    [mouse3X, mouse3Y] = super.mouseWheel(mouse3X, mouse3Y, deltaY);
-    for (const axis of this.axes) {
-      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) { // code style only
-        if (this.scaleX > scale.x) this.scaleX = scale.x;
-        if (this.scaleY > scale.y) this.scaleY = scale.y;
-      } else if (axis.tickPrecision < 1) {
-        if (this.scaleX < scale.x) this.scaleX = scale.x;
-        if (this.scaleX < scale.x) this.scaleX = scale.x;
-      }
-    }
-    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
-    this.updateAxes(); // needs a refactor
-    this.axes.forEach(axis => axis.saveLocation());
-    [this.scaleX, this.scaleY] = [1, 1];
-    this.viewPoint = new Vertex(0, 0);
+  protected updateWithScale(): void {
+    super.updateWithScale();
     if (this.nSamples > 0) this.computePoints();
-    return [mouse3X, mouse3Y];
   }
 }
 
@@ -2689,7 +2668,6 @@ export class newParallelPlot extends Figure {
   public curveColor: string = 'hsl(203, 90%, 85%)';
   public changedAxes: ParallelAxis[] = [];
   private _isVertical: boolean;
-  private emitter: EventEmitter = new EventEmitter();
   constructor(
     data: any,
     public width: number,
@@ -2906,11 +2884,19 @@ export class newParallelPlot extends Figure {
     if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
   }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
-    const mouseCoords = new Vertex(...super.mouseWheel(mouse3X, mouse3Y, deltaY));
-    this.viewPoint = mouseCoords.scale(this.initScale);
-    for (let axis of this.axes) {
-      if (axis.boundingBox.isPointInShape(this.context_show, this.viewPoint)) {
+  protected regulateScale(): void {
+    for (const axis of this.axes) {
+      if (axis.boundingBox.isHovered) {
+        if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) { // code style only
+          if (this.scaleX > 1) this.scaleX = 1;
+          if (this.scaleY > 1) this.scaleY = 1;
+        } else if (axis.tickPrecision < 1) {
+          if (this.scaleX < 1) this.scaleX = 1;
+          if (this.scaleY < 1) this.scaleY = 1;
+        } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+          if (this.scaleX < 1) this.scaleX = 1;
+          if (this.scaleY < 1) this.scaleY = 1;
+        }
         axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
         axis.saveLocation();
         break;
@@ -2918,7 +2904,6 @@ export class newParallelPlot extends Figure {
     }
     this.scaleX = this.scaleY = 1;
     this.viewPoint = new Vertex(0, 0);
-    return [mouse3X, mouse3Y];
   }
 
   public updateAxes(): void {

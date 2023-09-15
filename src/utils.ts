@@ -1980,7 +1980,7 @@ export class newText extends newShape {
   private autoFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     let rows = [];
     let criterion = Number.POSITIVE_INFINITY;
-    while (criterion > this.boundingBox.size.y) {
+    while (criterion > this.boundingBox.size.y && fontsize > 1) {
       context.font = newText.buildFont(this.style, fontsize, this.font);
       rows = this.fixedFontSplit(context);
       criterion = fontsize * rows.length;
@@ -3312,7 +3312,10 @@ export class ParallelAxis extends newAxis {
     this._previousEnd = this.end.copy();
   }
 
-  protected flip(): void { this.isInverted = !this.isInverted; this.emitter.emit("axisStateChange", this) }
+  protected flip(): void {
+    this.isInverted = !this.isInverted;
+    this.emitter.emit("axisStateChange", this);
+  }
 
   public updateLocation(newOrigin: Vertex, newEnd: Vertex, boundingBox: newRect, index: number, nAxis: number): void {
     this.boundingBox = boundingBox;

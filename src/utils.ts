@@ -2,6 +2,7 @@ import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, colorHex, color_to_string, isHex, isRgb, string_to_hex, rgb_to_string, hslToArray, colorHsl } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
+import { Circle2D } from "./primitives";
 
 export class Axis {
   color_stroke: any;
@@ -1426,6 +1427,12 @@ export class newCircle extends newShape {
   public buildPath(): void {
     this.path = new Path2D();
     this.path.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
+  }
+
+  public static unpackData(data: any): newCircle {
+    const circle = new newCircle(new Vertex(data.cx, data.cy), data.r);
+    circle.fillStyle = colorHsl(data.surface_style?.color_fill ??circle.fillStyle);
+    return circle
   }
 }
 
@@ -3359,8 +3366,20 @@ export class ParallelAxis extends newAxis {
 export class ShapeCollection {
   constructor(
     public drawings: newShape[] = [],
-    public frame: DOMMatrix = new DOMMatrix()
+    public frame: DOMMatrix = new DOMMatrix([1, 0, 0, -1, 0, 0])
   ) {}
+
+  public static unpackData(data: Map<string, any[]>, frame: DOMMatrix = new DOMMatrix([1, 0, 0, -1, 0, 0])): ShapeCollection {
+    const drawings = [];
+    data.get("shape").forEach(shape => {
+      if (shape.type_ == "circle") drawings.push(newCircle.unpackData(shape));
+      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
+      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
+      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
+      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
+    })
+    return new ShapeCollection(drawings, frame)
+  }
 
   public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
     this.drawings.forEach(drawing => { if (!inMultiPlot && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });

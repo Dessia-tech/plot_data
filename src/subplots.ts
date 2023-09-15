@@ -2939,6 +2939,29 @@ export class newParallelPlot extends Figure {
   }
 }
 
+export class Draw extends Figure {
+  constructor(
+    data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      console.log(data, this.features)
+    }
+  
+  protected unpackData(data: any): Map<string, any[]> {
+    const unpackedData = new Map<string, any[]>([["shape", data.primitives]]);
+    const drawings = ShapeCollection.unpackData(unpackedData, this.canvasMatrix);
+    console.log(drawings)
+    return unpackedData
+  }
+}
+
 
 function range(start: number, end: number, step: number = 1): number[] {
   let array = [];

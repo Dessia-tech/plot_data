@@ -1556,6 +1556,10 @@ export class Figure extends PlotData {
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
+  private isInCanvas(vertex: Vertex): boolean {
+    return vertex.x >= this.X && vertex.x <= this.X + this.size.x && vertex.y >= this.Y && vertex.y <= this.Y + this.size.y
+  }
+
   protected unpackAxisStyle(data:any): void {
     if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
     if (data.axis?.axis_style?.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
@@ -1725,7 +1729,6 @@ export class Figure extends PlotData {
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) {
     this.relativeObjects = new GroupCollection([], this.relativeMatrix);
-    this.drawSelectionBox(context);
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D) { this.absoluteObjects = new GroupCollection() }
@@ -1745,6 +1748,9 @@ export class Figure extends PlotData {
 
     this.context_show.resetTransform();
     this.drawAbsoluteObjects(this.context_show);
+
+    this.context_show.setTransform(this.relativeMatrix);
+    this.drawSelectionBox(this.context_show);
 
     this.context_show.setTransform(this.canvasMatrix);
     this.drawFixedObjects(this.context_show);
@@ -1861,21 +1867,29 @@ export class Figure extends PlotData {
       var absoluteMouse = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
       const canvas = document.getElementById(this.canvas_id);
-      var ctrlKey = false; var shiftKey = false;
+      var ctrlKey = false; var shiftKey = false; var spaceKey = false;
       var zoomBox = new SelectionBox();
 
       this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
 
       window.addEventListener('keydown', e => {
-        if (e.key == "Control") ctrlKey = true;
+        if (e.key == "Control") {
+          ctrlKey = true;
+          if (spaceKey && this.isInCanvas(absoluteMouse)) this.resetView();
+        }
         if (e.key == "Shift") {
           shiftKey = true;
           if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
+        }
+        if (e.key == " ") {
+          spaceKey = true;
+          if (ctrlKey && this.isInCanvas(absoluteMouse)) this.resetView();
         }
       });
 
       window.addEventListener('keyup', e => {
         if (e.key == "Control") ctrlKey = false;
+        if (e.key == " ") spaceKey = false;
         if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; this.is_drawing_rubber_band = false; canvas.style.cursor = 'default'; this.draw() };
       });
 

@@ -1897,7 +1897,7 @@ export class MultiplePlots {
       });
 
       window.addEventListener('keyup', e => {
-        if (e.key == "Control") {ctrlKey = false}
+        if (e.key == "Control") ctrlKey = false;
         if (e.key == "Shift") {
           shiftKey = false;
           this.isSelecting = false;

@@ -2707,7 +2707,7 @@ export class newAxis extends newShape{
 
   get maxValue(): number { return this._maxValue }
 
-  set maxValue(value: number) { this._maxValue = value } // emitter set in minValue
+  set maxValue(value: number) { this._maxValue = value }
 
   set nTicks(value: number) { this._nTicks = value };
 
@@ -3350,7 +3350,7 @@ export class ParallelAxis extends newAxis {
   public computeTextBoxes(context: CanvasRenderingContext2D): void {
     context.save();
     const [calibratedTickText, calibratedMeasure] = this.getCalibratedTextWidth(context);
-    this.maxTickWidth = this.origin.x - this.boundingBox.origin.x - this.offsetTicks - 3; //Math.min(this.boundingBox.size.x - this.offsetTicks - 3 - SIZE_END / 2, calibratedMeasure);
+    this.maxTickWidth = this.origin.x - this.boundingBox.origin.x - this.offsetTicks - 3;
     this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - SIZE_END / 2, calibratedTickText.fontsize);
     context.restore();
   }

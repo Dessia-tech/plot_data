@@ -2102,18 +2102,6 @@ export class MultiplePlots {
         }, 100);
         double_click = false;
       });
-
-    // Not working well actually, but I let it here in case somebody wants to give it a try
-      // canvas.addEventListener('keydown', e => {
-      //   if (ctrlKey) {
-      //     e.preventDefault();
-      //     if (e.key === 'z') {
-      //       this.restore_previous_canvas();
-      //     } else if (e.key === 'y') {
-      //       this.restore_next_canvas();
-      //     }
-      //   }
-      // });
     }
 }
 

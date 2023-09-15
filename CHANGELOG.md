@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.17.0]
 ### Fixes
 - Handle empty elements in Scatter
+- Offset & Margin in ParallelPlot
+- Performance for curves drawing in ParallelPlot
 
 ### Add
 - Parallel plot feature with:
@@ -19,11 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - Possibility to switch orientation
     - Possibility to change sense of axes by clicking on their title
 - Line shape with its variants
+- ParallelPlot in multiplot with mouse interactions
 
 ### Refactor
 - newAxis
 - newText
 - Mouse handling in objects
+- MouseWheel interactions
 
 ## [0.16.0]
 ### Refactor

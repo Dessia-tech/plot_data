@@ -6,7 +6,6 @@ import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
 import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
-import { EventEmitter } from "events";
 
 var alert_count = 0;
 /**
@@ -1495,13 +1494,13 @@ export class Figure extends PlotData {
 
   protected offset: Vertex;
   protected margin: Vertex;
-  protected _offsetFactor: Vertex; // = new Vertex(0.035, 0.07);
-  protected _marginFactor: Vertex; // = 0.01;
+  protected _offsetFactor: Vertex;
+  protected _marginFactor: Vertex;
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   readonly features: Map<string, any[]>;
-  readonly MAX_PRINTED_NUMBERS = 8;
+  readonly MAX_PRINTED_NUMBERS = 6;
   readonly TRL_THRESHOLD = 20;
   constructor(
     data: any,
@@ -2901,7 +2900,7 @@ export class newParallelPlot extends Figure {
   protected regulateScale(): void {
     for (const axis of this.axes) {
       if (axis.boundingBox.isHovered) {
-        if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) { // code style only
+        if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
           if (this.scaleX > 1) this.scaleX = 1;
           if (this.scaleY > 1) this.scaleY = 1;
         } else if (axis.tickPrecision < 1) {

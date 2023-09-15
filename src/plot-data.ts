@@ -131,16 +131,11 @@ export abstract class PlotData extends EventEmitter {
   x_step:number=0;
   move_index:number = -1;
   elements:any;
-  vertical:boolean=false;
   disp_x:number = 0;
   disp_y:number = 0;
   disp_w:number = 0;
   disp_h:number = 0;
-  selected_axis_name:string='';
-  inverted_axis_list:boolean[]=[];
-  rubber_bands: RubberBand[]=[];
-  rubber_last_min:number=0;
-  rubber_last_max:number=0;
+
   edge_style:EdgeStyle;
   bandWidth:number=30;
   bandColor:string=string_to_hex('lightblue');
@@ -148,11 +143,6 @@ export abstract class PlotData extends EventEmitter {
   axisNameSize:number=12;
   gradSize:number=10;
   axisNbGrad:number=10;
-  interpolation_colors:string[]=[];
-  rgbs:[number, number, number][]=[];
-  hexs:string[];
-  pp_selected_index:number[]=[];
-  click_on_button:boolean=false;
   vertical_axis_coords:number[][]=[];
   horizontal_axis_coords:number[][]=[];
   display_list_to_elements_dict:any;
@@ -167,12 +157,7 @@ export abstract class PlotData extends EventEmitter {
   manipulation_rect_dashline:number[]=[15,15];
 
   isSelecting:boolean=false;
-  selection_coords:[number, number][]=[];
   is_drawing_rubber_band: boolean = false;
-
-  point_families:PointFamily[]=[];
-  latest_selected_points:Point2D[]=[];
-  latest_selected_points_index:number[]=[];
 
   // primitive_group_container's attributes
   manipulation_bool:boolean=false;
@@ -186,12 +171,6 @@ export abstract class PlotData extends EventEmitter {
   primitive_dict:any={};
   elements_dict:any={};
   dep_mouse_over:boolean=false;
-
-  // Heatmap
-  heatmap: Heatmap;
-  heatmap_view: boolean = false;
-  selected_areas: number[][];
-  heatmap_table;
 
   // HOTFIXES
   axisNamesBoxes: newRect[];
@@ -637,188 +616,6 @@ export abstract class PlotData extends EventEmitter {
     }
   }
 
-  refresh_heatmap_table(scatter) {
-    let table = [];
-    let w = this.heatmap.size[0];
-    let h = this.heatmap.size[1];
-    for (let i=0; i<h; i++) {
-      table.push(Array(w).fill(0));
-    }
-    let wstep, hstep;
-    [wstep, hstep] = this.get_heatmap_steps();
-
-    for (let point of scatter.point_list) {
-      let x = this.real_to_scatter_length(point.cx - this.minX, "x");
-      let y = this.real_to_scatter_length(-point.cy + this.maxY, "y");
-
-      let kx = Math.floor(x/wstep);
-      let ky = Math.floor(y/hstep);
-      table[ky][kx]++;
-    }
-    this.heatmap_table = table;
-  }
-
-
-  draw_gradient_axis(max_density) {
-    let start = 0.25 * this.width + this.X;
-    let end = 0.75 * this.width + this.X;
-    let y = 0.03 * this.height + this.Y;
-    let nb_rect = this.heatmap.colors.length - 1;
-    let w = (end - start) / nb_rect;
-    let h = Math.max(0.015 * this.height, 15);
-    for (let i=0; i<nb_rect; i++) {
-      var gradient = this.context.createLinearGradient(start + i*w, y, start + (i+1)*w, y);
-      gradient.addColorStop(0, this.heatmap.colors[i]);
-      gradient.addColorStop(1, this.heatmap.colors[i+1]);
-      this.context.fillStyle = gradient;
-      this.context.fillRect(start + i*w, y, w, h);
-    }
-    this.context.strokeStyle = "black";
-    this.context.lineWidth = 1;
-    this.context.strokeRect(start, y, end - start, h);
-
-    this.context.fillStyle = string_to_hex("black");
-    this.context.font = "12px sans-serif";
-    this.context.textAlign = "center";
-    this.context.textBaseline = "hanging";
-
-    let step = max_density / nb_rect;
-    for (let i=0; i<this.heatmap.colors.length; i++) {
-      this.context.fillText(Math.floor(i*step), start + i*w, y + h + 5);
-    }
-  }
-
-  get_heatmap_steps() {
-    let w = this.heatmap.size[0];
-    let h = this.heatmap.size[1];
-    let wstep = this.real_to_scatter_length(1.001 * (this.maxX - this.minX), "x")/w;
-    let hstep = this.real_to_scatter_length(1.001 * (this.maxY - this.minY), "y")/h;
-    return [wstep, hstep];
-  }
-
-  draw_heatmap(hidden) {
-    if (hidden) return;
-    let scatter = this.plotObject;
-    this.refresh_heatmap_table(scatter);
-    let w = this.heatmap.size[0];
-    let h = this.heatmap.size[1];
-    let wstep, hstep;
-    [wstep, hstep] = this.get_heatmap_steps();
-    let max_density = scatter.point_list.length;
-    let x1 = this.real_to_scatter_coords(this.minX, "x");
-    let x2 = this.real_to_scatter_coords(this.maxX, "x");
-    let y1 = this.real_to_scatter_coords(-this.minY, "y");
-    let y2 = this.real_to_scatter_coords(-this.maxY, "y");
-
-    this.context.beginPath();
-    this.context.save();
-    this.context.rect(this.decalage_axis_x + this.X, this.Y,
-      this.width - this.decalage_axis_x, this.height - this.decalage_axis_y);
-    this.context.clip();
-
-    for (let i=0; i<w; i++) {
-      for (let j=0; j<h; j++) {
-        let density = this.heatmap_table[j][i];
-        let color = heatmap_color(density, max_density, this.heatmap.colors);
-        this.context.fillStyle = color;
-        this.context.fillRect(x1 + i*wstep, y1 + j*hstep, wstep, hstep);
-      }
-    }
-
-    for (let i=1; i<w; i++) {
-      this.context.moveTo(x1 + i*wstep, y1);
-      this.context.lineTo(x1 + i*wstep, y2);
-      this.context.stroke();
-    }
-    for (let i=1; i<h; i++) {
-      this.context.moveTo(x1, y1 + i*hstep);
-      this.context.lineTo(x2, y1 + i*hstep);
-      this.context.stroke();
-    }
-    // The following loops could have been included in the previous one but drawing selection rectangles
-    // after the heatmap makes the result more aesthetic
-    for (let i=0; i<w; i++) {
-      for (let j=0; j<h; j++) {
-        if (this.selected_areas[i][j] === 1) {
-          this.context.strokeStyle = string_to_hex("blue");
-          this.context.lineWidth = 2;
-          this.context.strokeRect(x1 + i*wstep, y1 + j*hstep, wstep, hstep);
-        }
-      }
-    }
-
-    this.context.restore();
-    this.context.closePath();
-    this.draw_gradient_axis(max_density);
-    let temp = scatter.axis.grid_on;
-    scatter.axis.grid_on = false;
-    this.draw_scatterplot_axis(scatter.axis, scatter.lists, scatter.to_display_attributes);
-    scatter.axis.grid_on = temp;
-  }
-
-  draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
-    if (d['type_'] == 'scatterplot') {
-      this.draw_scatterplot_axis(d.axis, d.lists, d.to_display_attributes);
-      if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
-        let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
-        if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
-          this.scatter_points = refreshed_points;
-        }
-        this.refresh_point_list_bool = false;
-      } else if (this.mergeON === false) {
-        if (!this.point_list_equals(this.scatter_points, d.point_list)) {
-          this.scatter_points = d.point_list;
-        }
-      }
-      if ((this.scroll_x % 5 != 0) && (this.scroll_y % 5 != 0)) {
-        this.refresh_point_list_bool = true;
-      }
-
-      this.context.save();
-      this.context.rect(this.decalage_axis_x + this.X, this.Y,
-        this.width - this.decalage_axis_x, this.height - this.decalage_axis_y);
-      this.context.clip();
-      if (this.point_families.length == 0) {
-        for (var i=0; i<this.scatter_points.length; i++) {
-          var point:Point2D = this.scatter_points[i];
-          this.draw_point(hidden, point);
-        }
-      } else {
-        var point_order = this.get_point_order();
-        for (let i=0; i<point_order.length; i++) {
-          for (let j=0; j<point_order[i].length; j++) {
-            let index = point_order[i][j];
-            let point:Point2D = this.scatter_points[index];
-            this.draw_point(hidden, point);
-          }
-        }
-      }
-      this.context.restore();
-
-      for (var i=0; i<this.tooltip_list.length; i++) {
-        if (!List.is_include(this.tooltip_list[i],this.scatter_points)) {
-          this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
-        }
-      }
-      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
-        d.attribute_names);
-    }
-  }
-
-  get_point_order() {
-    var point_order = [];
-    for (let i=0; i<this.point_families.length; i++) point_order.push([]);
-
-    for (let i=0; i<this.scatter_points.length; i++) {
-      let point_point_families = this.scatter_points[i].point_families;
-      for (let j=0; j<point_point_families.length; j++) {
-        let point_family_index_in_list = List.get_index_of_element(point_point_families[j], this.point_families);
-        point_order[point_family_index_in_list].push(i);
-      }
-    }
-    return point_order;
-  }
-
   get_extremas_wrappers(min, max) {
     var unit = Math.pow(10, Math.floor(Math.log10(max - min)));
     let max_unit = (max - min) / unit;
@@ -836,243 +633,6 @@ export abstract class PlotData extends EventEmitter {
     return [minW, maxW, grad_step];
   }
 
-  draw_vertical_parallel_axis(nb_axis:number, mvx:number) {
-    this.axisNamesBoxes = [];
-    for (var i=0; i < nb_axis; i++) {
-      if (i == this.move_index) {
-        var current_x = Math.min(Math.max(this.axis_x_start + i*this.x_step + mvx, this.X), this.X + this.width);
-      } else {
-        var current_x = this.axis_x_start + i*this.x_step;
-      }
-      this.context.beginPath();
-      this.context.lineWidth = 2;
-      Shape.drawLine(this.context, [[current_x, this.axis_y_start], [current_x, this.axis_y_end]]);
-
-      let origin = new Vertex(current_x, this.axis_y_end - 10);
-      let width = this.x_step * 0.95;
-      let align = "center";
-      const textParams: TextParams = {
-        width: width, height: origin.y - 2 - this.Y, align: align, baseline: "bottom",
-        multiLine: true, color: 'black', backgroundColor: "hsla(0, 0%, 100%, 0.5)" };
-      let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
-      axisTitle.format(this.context);
-
-      let boxOriginX = 0;
-      let axisLocation = 0;
-      const offset = Math.min(axisTitle.width, this.x_step / 2);
-      if (i == 0 && axisTitle.width > (this.axis_x_start - this.X) * 2) {
-        axisLocation = -1;
-        axisTitle.origin.x = current_x + offset * 0.95;
-        axisTitle.width = offset * 0.95 + (this.axis_x_start - this.X) * 0.9;
-        axisTitle.align = "right";
-      } else if (i == nb_axis - 1 && axisTitle.width > (this.width - this.X - this.axis_x_end) * 2) {
-        axisLocation = 1;
-        axisTitle.origin.x = current_x - offset * 0.95;
-        axisTitle.width =  offset * 0.95 + (this.width - this.axis_x_end + this.X) * 0.9;
-        axisTitle.align = "left";
-      }
-      axisTitle.format(this.context);
-
-      // Weird but vowed to disappear
-      if (axisLocation == 0) {
-        boxOriginX = origin.x - axisTitle.width / 2;
-        axisTitle.format(this.context);
-      } else if (axisLocation == -1) {
-        boxOriginX = axisTitle.origin.x - axisTitle.width;
-      } else if (axisLocation == 1) {
-        boxOriginX = axisTitle.origin.x;
-        axisTitle.format(this.context);
-      }
-
-      let boxOrigin = new Vertex(boxOriginX, origin.y - axisTitle.nRows * axisTitle.fontsize);
-      this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize)));
-
-      this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'
-      this.context.fillStyle = 'black';
-      axisTitle.draw(this.context);
-
-      this.context.textBaseline = "alphabetic";
-      var attribute_type = this.axis_list[i]['type_'];
-      var list = this.axis_list[i]['list'];
-      this.context.font = this.gradSize.toString() + 'px sans-serif';
-      if (attribute_type == 'float') {
-        var min = list[0];
-        var max = list[1];
-        if (min == max) {
-          let current_y = (this.axis_y_start + this.axis_y_end)/2;
-          Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
-          let current_grad = MyMath.round(min,3);
-          this.context.textAlign = 'end';
-          this.context.textBaseline = 'middle';
-          this.context.fillText(current_grad, current_x - 5, current_y);
-        } else {
-          let minW, maxW, grad_step;
-          [minW, maxW, grad_step] = this.get_extremas_wrappers(min, max);
-          let nb_graduations = (maxW - minW) / grad_step;
-          var y_step = (this.axis_y_end - this.axis_y_start) / nb_graduations;
-          for (let j=0; j<nb_graduations + 1; j++) {
-            var current_y = this.axis_y_start + j*y_step;
-            if (this.inverted_axis_list[i]) {
-              var current_grad:any = maxW - j*grad_step;
-            } else {
-              current_grad = minW + j*grad_step;
-            }
-            if (Math.log10(max - min) < 0) {
-              current_grad = MyMath.round(current_grad, -Math.floor(Math.log10(max-min) - 1));
-            }
-            Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
-            this.context.textAlign = 'end';
-            this.context.textBaseline = 'middle';
-            this.context.fillText(current_grad, current_x - 5, current_y);
-          }
-        }
-      } else { //ie string
-        var nb_attribute = list.length;
-        if (nb_attribute == 1) {
-          var current_y = (this.axis_y_end + this.axis_y_start)/2;
-          current_grad = list[0].toString();
-          Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
-          this.context.textAlign = 'end';
-          this.context.textBaseline = 'middle';
-          this.context.fillText(current_grad, current_x - 5, current_y);
-        } else {
-          y_step = (this.axis_y_end - this.axis_y_start)/(nb_attribute - 1);
-          for (var j=0; j<nb_attribute; j++) {
-            var current_y = this.axis_y_start + j*y_step;
-            if (this.inverted_axis_list[i] === true) {
-              current_grad = list[nb_attribute-j-1].toString();
-            } else {
-              current_grad = list[j].toString();
-            }
-            Shape.drawLine(this.context, [[current_x - 3, current_y], [current_x + 3, current_y]]);
-            this.context.textAlign = 'end';
-            this.context.textBaseline = 'middle';
-            this.context.fillText(current_grad, current_x - 5, current_y);
-          }
-        }
-      }
-      this.context.stroke();
-      this.context.fill();
-      this.context.closePath();
-    }
-  }
-
-  draw_horizontal_parallel_axis(nb_axis:number, mvy:number) {
-    const RIGHT_SPACE = this.axis_x_start - this.X;
-    this.axisNamesBoxes = [];
-    for (var i=0; i<nb_axis; i++) {
-      if (i == this.move_index) {
-        var current_y = Math.min(Math.max(this.axis_y_start + i*this.y_step + mvy, this.Y), this.Y + this.height);
-      } else {
-        var current_y = this.axis_y_start + i*this.y_step;
-      }
-      this.context.beginPath();
-      this.context.lineWidth = 2;
-      Shape.drawLine(this.context, [[this.axis_x_start, current_y], [this.axis_x_end, current_y]]);
-
-      let origin = new Vertex(this.axis_x_start, current_y + 10);
-      const textParams: TextParams = {
-        width: this.width * 0.25, height: this.y_step * 0.98, align: "center",
-        baseline: "hanging", multiLine: true, color: 'black', backgroundColor: "hsla(0, 0%, 100%, 0.5)" };
-      let axisTitle = new newText(this.axis_list[i]['name'], origin, textParams);
-
-      axisTitle.format(this.context);
-
-      let standard = true;
-      if (axisTitle.width > RIGHT_SPACE * 2) {
-        standard = false;
-        axisTitle.align = "left";
-        axisTitle.origin.x -= RIGHT_SPACE * 0.8;
-        if (i == nb_axis - 1) {
-          axisTitle.width = this.width - axisTitle.origin.x + this.X;
-          axisTitle.height = this.height - origin.y + this.Y;
-          axisTitle.fontsize = null;
-        }
-      }
-
-      axisTitle.format(this.context);
-      let boxOrigin = new Vertex(origin.x, axisTitle.origin.y);
-
-      if (!standard) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) };
-      if (standard) { boxOrigin.x -= axisTitle.width / 2 };
-
-      let boxSize = new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize);
-      this.axisNamesBoxes.push(new newRect(boxOrigin, boxSize));
-
-      this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'
-      this.context.fillStyle = 'black';
-      axisTitle.draw(this.context);
-
-      this.context.textBaseline = "alphabetic";
-      var attribute_type = this.axis_list[i]['type_'];
-      var list = this.axis_list[i]['list'];
-      this.context.font = this.gradSize.toString() + 'px sans-serif';
-      if (attribute_type == 'float') {
-        var min = list[0];
-        var max = list[1];
-        if (max == min) {
-          let current_x = (this.axis_x_start + this.axis_x_end)/2;
-          Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
-          let current_grad = min;
-          this.context.fillText(current_grad, current_x, current_y - 5);
-        } else {
-          let minW, maxW, grad_step;
-          [minW, maxW, grad_step] = this.get_extremas_wrappers(min, max);
-          let nb_graduations = (maxW - minW) / grad_step;
-          var x_step = (this.axis_x_end - this.axis_x_start) / nb_graduations;
-          for (let j=0; j<nb_graduations + 1; j++) {
-            var current_x = this.axis_x_start + j*x_step;
-            if (this.inverted_axis_list[i]) {
-              var current_grad = maxW - j*grad_step;
-            } else {
-              current_grad = minW + j*grad_step;
-            }
-            if (Math.log10(max - min) < 0) {
-              current_grad = MyMath.round(current_grad, -Math.floor(Math.log10(max-min) - 1));
-            }
-            Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
-            this.context.textAlign = 'center';
-            this.context.fillText(current_grad, current_x, current_y - 5);
-          }
-        }
-
-      } else {
-        var nb_attribute = list.length;
-        if (nb_attribute == 1) {
-          var current_x = (this.axis_x_end + this.axis_x_start)/2;
-          current_grad = list[0].toString();
-          Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
-          this.context.textAlign = 'middle';
-          this.context.fillText(current_grad, current_x, current_y - 5);
-        } else {
-          x_step = (this.axis_x_end - this.axis_x_start)/(nb_attribute - 1);
-          for (var j=0; j<nb_attribute; j++) {
-            var current_x = this.axis_x_start + j*x_step;
-            if (this.inverted_axis_list[i] === true) {
-              current_grad = list[nb_attribute-j-1].toString();
-            } else {
-              current_grad = list[j].toString();
-            }
-            Shape.drawLine(this.context, [[current_x, current_y - 3], [current_x, current_y + 3]]);
-            this.context.textAlign = 'middle';
-            this.context.fillText(current_grad, current_x, current_y - 5);
-          }
-        }
-      }
-      this.context.stroke();
-      this.context.fill();
-      this.context.closePath();
-    }
-  }
-
-  draw_parallel_axis(nb_axis:number, mv:number) {
-    if (this.vertical === true) {
-      this.draw_vertical_parallel_axis(nb_axis, mv);
-    } else {
-      this.draw_horizontal_parallel_axis(nb_axis, mv);
-    }
-  }
-
   point_list_equals(p_list1:Point2D[], p_list2:Point2D[]): boolean {
     if (p_list1.length != p_list2.length) {
       return false;
@@ -1083,138 +643,6 @@ export abstract class PlotData extends EventEmitter {
       }
     }
     return true;
-  }
-
-  real_to_axis_coord(real_coord, type_, list, inverted) { // axis coordinate belongs to [0,1]
-    if (type_ == 'float') {
-      if (this.vertical) {
-        var axis_coord_start = this.axis_y_start;
-        var axis_coord_end = this.axis_y_end;
-      } else {
-        var axis_coord_start = this.axis_x_start;
-        var axis_coord_end = this.axis_x_end;
-      }
-      let pp_coord = this.get_coord_on_parallel_plot(type_, list, real_coord, axis_coord_start, axis_coord_end, inverted);
-      if (this.vertical) {
-        var axis_coord = Math.min(Math.max((pp_coord - this.axis_y_end)/(this.axis_y_start - this.axis_y_end), 0), 1);
-      } else {
-        var axis_coord = Math.min(Math.max((pp_coord - this.axis_x_start)/(this.axis_x_end - this.axis_x_start), 0), 1);
-      }
-      return axis_coord;
-    } else {
-      var nb_values = list.length;
-      if (nb_values == 1) {
-        return 0.5;
-      } else {
-        if ((inverted && this.vertical) || (!inverted && !this.vertical)) {
-          return real_coord/(nb_values-1);
-        } else {
-          return 1 - real_coord/(nb_values-1);
-        }
-      }
-    }
-  }
-
-  get_coord_on_parallel_plot(attribute_type, current_list, elt, axis_coord_start, axis_coord_end, inverted) { // From [0,1] to axis display coords
-    if (attribute_type == 'float') {
-      var min = current_list[0];
-      var max = current_list[1];
-      if (min == max) {
-        var current_axis_coord = (axis_coord_start + axis_coord_end)/2;
-      } else {
-        let minW, maxW, grad_step;
-        [minW, maxW, grad_step] = this.get_extremas_wrappers(min, max);
-        var delta_y = elt - minW;
-        var delta_axis_coord = (axis_coord_end - axis_coord_start) * delta_y/(maxW - minW);
-        if (inverted === true) {
-          var current_axis_coord = axis_coord_end - delta_axis_coord;
-        } else {
-          current_axis_coord = axis_coord_start + delta_axis_coord;
-        }
-      }
-    } else { // string
-      var color = elt;
-      if (current_list.length == 1) {
-        current_axis_coord = (axis_coord_start + axis_coord_end)/2;
-      } else {
-        var color_index = List.get_index_of_element(color, current_list);
-        var axis_coord_step = (axis_coord_end - axis_coord_start)/(current_list.length - 1);
-        if (inverted === true) {
-          current_axis_coord = axis_coord_end - color_index*axis_coord_step;
-        } else {
-          current_axis_coord = axis_coord_start + color_index*axis_coord_step;
-        }
-      }
-    }
-    return current_axis_coord;
-  }
-
-  refresh_axis_coords() {
-    var old_vertical = this.vertical;
-    this.vertical = true;
-    this.refresh_axis_bounds(this.axis_list.length);
-    this.vertical_axis_coords=this.get_axis_coords(true);
-
-    this.vertical = false;
-    this.refresh_axis_bounds(this.axis_list.length);
-    this.horizontal_axis_coords=this.get_axis_coords(false);
-    this.vertical = old_vertical;
-    this.refresh_axis_bounds(this.axis_list.length);
-  }
-
-  get_axis_coords(vertical:boolean) {
-    var axis_coords = [];
-    for (var i=0; i<this.to_display_list.length; i++) {
-      var to_display_list_i = this.to_display_list[i];
-      var current_attribute_type = this.axis_list[0]['type_'];
-      var current_list = this.axis_list[0]['list'];
-      var seg_list = [];
-      for (var j=0; j<this.axis_list.length; j++) {
-        var current_attribute_type = this.axis_list[j]['type_'];
-        var current_list = this.axis_list[j]['list'];
-        if (vertical) {
-          var current_x = this.axis_x_start + j*this.x_step;
-          var current_axis_y = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[j]);
-        } else {
-          var current_x = this.get_coord_on_parallel_plot(current_attribute_type, current_list, to_display_list_i[j], this.axis_x_start, this.axis_x_end, this.inverted_axis_list[j]);
-          var current_axis_y = this.axis_y_start + j*this.y_step;
-        }
-        seg_list.push([current_x, current_axis_y]);
-      }
-      axis_coords.push(seg_list);
-    }
-    return axis_coords;
-  }
-
-
-  sort_to_display_list() {
-    if (List.is_name_include(this.selected_axis_name, this.axis_list)) {
-      for (var i=0; i<this.axis_list.length; i++) {
-        if (this.axis_list[i].name == this.selected_axis_name) {
-          break;
-        }
-      }
-      var attribute = this.axis_list[i];
-      for (let j=0; j<this.to_display_list.length - 1; j++) {
-        let current_minElt = this.get_coord_on_parallel_plot(attribute['type_'], attribute['list'], this.to_display_list[j][i], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[i]);
-        let current_min = j;
-        for (let k=j+1; k<this.to_display_list.length; k++) {
-          let current_eltCoord = this.get_coord_on_parallel_plot(attribute['type_'], attribute['list'], this.to_display_list[k][i], this.axis_y_start, this.axis_y_end, this.inverted_axis_list[i]);
-          if (current_eltCoord < current_minElt) {
-            current_minElt = current_eltCoord;
-            current_min = k;
-          }
-        }
-        if (current_min != j) {
-          this.to_display_list = List.move_elements(current_min, j, this.to_display_list);
-        }
-      }
-    } else {
-      let sort = new Sort();
-      let sorted_elements = sort.sortObjsByAttribute(Array.from(this.elements), this.selected_axis_name);
-      this.refresh_to_display_list(sorted_elements);
-    }
-    this.refresh_display_to_elements_dict();
   }
 
 
@@ -1241,136 +669,6 @@ export abstract class PlotData extends EventEmitter {
       }
     }
     this.display_list_to_elements_dict = Object.fromEntries(entries);
-  }
-
-  pp_color_management(index:number, selected:boolean, clicked:boolean, over:boolean, heatmap_select:boolean) {
-    if (this.selected_axis_name == '') {
-      if (over) {
-        this.context.strokeStyle = string_to_hex("yellow");
-        this.context.lineWidth = 3*this.edge_style.line_width;
-      } else if (clicked) {
-        this.context.strokeStyle = string_to_hex("red");
-        this.context.lineWidth = 3*this.edge_style.line_width;
-      } else if (heatmap_select) {
-        this.context.strokeStyle = this.color_heatmap_selection;
-        this.context.lineWidth = 3*this.edge_style.line_width;
-      } else if (selected) {
-        this.context.strokeStyle = this.edge_style.color_stroke;
-        this.context.lineWidth = this.edge_style.line_width;
-      } else {
-        this.context.strokeStyle = string_to_hex('lightgrey');
-        this.context.lineWidth = this.edge_style.line_width;
-      }
-    } else {
-      if (over) {
-        this.context.strokeStyle = string_to_hex("yellow");
-        this.context.lineWidth = 3 * this.edge_style.line_width;
-      } else if (clicked) {
-        this.context.strokeStyle = string_to_hex("black");
-        this.context.lineWidth = 3 * this.edge_style.line_width;
-      } else if (selected) {
-        this.context.strokeStyle = colorHex(this.interpolation_colors[index]);
-        this.context.lineWidth = this.edge_style.line_width;
-      } else {
-        this.context.strokeStyle = colorHex(tint_rgb(this.interpolation_colors[index], 0.8));
-        this.context.lineWidth = this.edge_style.line_width;
-      }
-    }
-  }
-
-  //reset parallel plot's rubber bands
-  reset_rubberbands() {
-    this.rubber_bands.forEach((rubberBand) => {rubberBand.reset()});
-  }
-
-  from_to_display_list_to_elements(i) {
-    return this.display_list_to_elements_dict[i.toString()];
-
-  }
-
-  draw_rubber_bands(mvx) {
-    var color_stroke = string_to_hex('white');
-    var line_width = 0.1;
-    this.rubber_bands.forEach((rubberBand, idx) => {
-      if (rubberBand.canvasLength >= rubberBand.MIN_LENGTH) {
-        if (rubberBand.isVertical) var origin = this.axis_x_start + idx * this.x_step
-        else var origin = this.axis_y_start + idx * this.y_step;
-        if (idx == this.move_index) {
-          rubberBand.draw(origin + mvx, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
-        } else {
-          rubberBand.draw(origin, this.context, this.bandColor, color_stroke, line_width, this.bandOpacity);
-        }
-      }
-    })
-  }
-
-  refresh_interpolation_colors(): void {
-    this.interpolation_colors = [];
-    this.interpolation_colors = get_interpolation_colors(this.rgbs, this.to_display_list.length);
-  }
-
-  add_to_hexs(hex:string): void {
-    this.hexs.push(hex);
-    this.rgbs.push(rgb_strToVector(hex_to_rgb(hex)));
-    this.refresh_interpolation_colors();
-  }
-
-  remove_from_hexs(index:number): void {
-    this.hexs = List.remove_at_index(index, this.hexs);
-    this.rgbs = List.remove_at_index(index, this.rgbs);
-    this.refresh_interpolation_colors();
-  }
-
-
-  dep_color_propagation(vertical:boolean, inverted:boolean, hexs:string[], attribute_name:string): void {
-    var sort: Sort = new Sort();
-    var sorted_elements = sort.sortObjsByAttribute(List.copy(this.plotObject.elements), attribute_name);
-    var nb_points = this.plotObject.point_list.length;
-    for (let i=0; i<nb_points; i++) {
-      let j = List.get_index_of_element(sorted_elements[i], this.plotObject.elements);
-      if ((vertical && inverted) || (!vertical && !inverted)) {
-        this.plotObject.point_list[j].point_style.color_fill = hexs[i];
-      } else {
-        this.plotObject.point_list[j].point_style.color_fill = hexs[nb_points - 1 - i];
-      }
-    }
-    this.refresh_point_list_bool = true;
-  }
-
-
-  refresh_to_display_list(elements) {
-    this.to_display_list = [];
-    for (var i=0; i<elements.length; i++) {
-      var to_display = [];
-      for (var j=0; j<this.axis_list.length; j++) {
-        var attribute_name = this.axis_list[j]['name'];
-        var type_ = this.axis_list[j]['type_'];
-        if (type_ == 'color') {
-          var elt = rgb_to_string(elements[i][attribute_name]);
-        } else {
-          elt = elements[i][attribute_name];
-        }
-        to_display.push(elt);
-      }
-      this.to_display_list.push(to_display);
-    }
-  }
-
-
-  refresh_axis_bounds(nb_axis) {
-    if (this.vertical === true) {
-      this.axis_x_start = 50 + this.X;
-      this.axis_x_end = this.width - 50 + this.X;
-      this.x_step = (this.axis_x_end - this.axis_x_start)/(nb_axis-1);
-      this.axis_y_start = this.height - 25 + this.Y;
-      this.axis_y_end = 50 + this.Y;
-    } else {
-      this.axis_x_start = 40 + this.X;
-      this.axis_x_end = this.width - 50 + this.X;
-      this.axis_y_start = 25 + this.Y;
-      this.axis_y_end = this.height - 25 + this.Y;
-      this.y_step = (this.axis_y_end - this.axis_y_start)/(nb_axis - 1);
-    }
   }
 
   refresh_buttons_coords() {
@@ -1433,58 +731,6 @@ export abstract class PlotData extends EventEmitter {
     }
   }
 
-  add_points_to_selection(index_list:number[]) {
-    for (let index of index_list) {
-      let point = this.plotObject.point_list[index];
-      for (let i=0; i<this.scatter_points.length; i++) {
-        if (List.is_include(point, this.scatter_points[i].points_inside) && !List.is_include(point, this.select_on_click)) {
-          this.select_on_click.push(point);
-          this.plotObject.point_list[index].selected = true;
-          this.latest_selected_points.push(point);
-        }
-      }
-    }
-    this.refresh_selected_point_index();
-    this.refresh_latest_selected_points_index();
-    this.draw();
-  }
-
-  add_axis_to_parallelplot(name:string):void { //Adding a new axis to the plot and redraw the canvas
-    for (let i=0; i<this.axis_list.length; i++) {
-      if (name == this.axis_list[i]['name']) {
-        throw new Error('Cannot add an attribute that is already displayed');
-      }
-    }
-    this.add_to_axis_list([name]);
-    this.refresh_axis_bounds(this.axis_list.length);
-    this.refresh_all_attributes();
-    this.refresh_attribute_booleans();
-    this.rubber_bands.push(new RubberBand(name, 0, 0, this.vertical));
-    this.refresh_to_display_list(this.elements);
-    this.draw();
-  }
-
-  remove_axis_from_parallelplot(name:string) { //Remove an existing axis and redraw the whole canvas
-    var is_in_axislist = false;
-    for (var i=0; i<this.axis_list.length; i++) {
-      if (this.axis_list[i]['name'] == name) {
-        is_in_axislist = true;
-        this.axis_list = List.remove_element(this.axis_list[i], this.axis_list);
-        break;
-      }
-    }
-    if (is_in_axislist === false) {
-      throw new Error('Cannot remove axis that is not displayed');
-    }
-    this.refresh_attribute_booleans();
-    this.refresh_to_display_list(this.elements);
-    this.rubber_bands = List.remove_at_index(i, this.rubber_bands);
-    this.refresh_axis_bounds(this.axis_list.length);
-    this.refresh_all_attributes();
-    this.refresh_attribute_booleans();
-    this.draw();
-  }
-
   get_scatterplot_displayed_axis():Attribute[] {
     return this.plotObject.to_display_attributes;
   }
@@ -1497,60 +743,6 @@ export abstract class PlotData extends EventEmitter {
     for (let i=0; i<this.plotObject.point_list.length; i++) {
       this.plotObject.point_list[i].point_families = [];
     }
-  }
-
-  refresh_scatter_point_family() {
-    this.reset_scatter_point_families();
-    for (let i=0; i<this.point_families.length; i++) {
-      let point_index = this.point_families[i].pointIndices;
-      for (let index of point_index) {
-        this.plotObject.point_list[index].point_families.push(this.point_families[i]);
-      }
-    }
-  }
-
-  set_scatterplot_x_axis(attribute_name:string):void {
-    var isAttributeInList:boolean = false;
-    var attribute:Attribute;
-    for (let i=0; i<this.plotObject.all_attributes.length; i++) {
-      if (this.plotObject.all_attributes[i].name == attribute_name) {
-        isAttributeInList = true;
-        attribute = this.plotObject.all_attributes[i];
-      }
-    }
-    if (isAttributeInList === false) {
-      throw new Error('Attribute not found');
-    }
-    this.plotObject.to_display_attributes[0] = attribute;
-    this.plotObject.initialize_lists();
-    this.plotObject.initialize_point_list(this.plotObject.elements);
-    this.refresh_scatter_point_family();
-    this.refresh_MinMax(this.plotObject.point_list);
-    this.reset_scales();
-    if (this.mergeON) {this.scatter_points = this.refresh_point_list(this.plotObject.point_list, this.originX, this.originY);}
-    this.draw();
-  }
-
-  set_scatterplot_y_axis(attribute_name:string):void {
-    var isAttributeInList:boolean = false;
-    var attribute:Attribute;
-    for (let i=0; i<this.plotObject.all_attributes.length; i++) {
-      if (this.plotObject.all_attributes[i].name == attribute_name) {
-        isAttributeInList = true;
-        attribute = this.plotObject.all_attributes[i];
-      }
-    }
-    if (isAttributeInList === false) {
-      throw new Error('Attribute not found');
-    }
-    this.plotObject.to_display_attributes[1] = attribute;
-    this.plotObject.initialize_lists();
-    this.plotObject.initialize_point_list(this.plotObject.elements);
-    this.refresh_scatter_point_family();
-    this.refresh_MinMax(this.plotObject.point_list);
-    this.reset_scales();
-    if (this.mergeON) {this.scatter_points = this.refresh_point_list(this.plotObject.point_list, this.originX, this.originY);}
-    this.draw();
   }
 
   add_to_tooltip(tooltip:Tooltip, str:string): Tooltip {
@@ -1635,59 +827,6 @@ export abstract class PlotData extends EventEmitter {
     }
   }
 
-  axis_to_real_coords(x:number, type_:string, list, inverted):number { //from parallel plot axis coord (between 0 and 1) to real coord (between min_coord and max_coord)
-    if (type_ == 'float') {
-      let real_min = list[0];
-      let real_max = list[1];
-      if ((this.vertical && !inverted) || (!this.vertical && inverted)) {
-        return (1-x)*real_max + x*real_min; //x must be between 0 and 1
-      } else {
-        return x*real_max + (1-x)*real_min;
-      }
-    } else {
-      let nb_values = list.length;
-      if ((this.vertical && !inverted) || (!this.vertical && inverted)) {
-        return (1-x)*(nb_values - 1);
-      } else {
-        return x*(nb_values - 1);
-      }
-
-    }
-  }
-
-  get_nb_intersections(attrNum1, attrNum2) { //get the number of segment intersections given two axis index from the initial axis_list
-    var compareList = [];
-    var firstElts = []
-    for (let i=0; i<this.to_display_list.length; i++) {
-      let elt1 = this.get_coord_on_parallel_plot(this.axis_list[attrNum1]['type_'], this.axis_list[attrNum1]['list'], this.to_display_list[i][attrNum1], this.axis_y_start, this.axis_y_end, false);
-      let elt2 = this.get_coord_on_parallel_plot(this.axis_list[attrNum2]['type_'], this.axis_list[attrNum2]['list'], this.to_display_list[i][attrNum2], this.axis_y_start, this.axis_y_end, false);
-      let elts = [elt1, elt2]
-      compareList.push(elts);
-      firstElts.push(elt1);
-    }
-    var sort = new Sort();
-    firstElts = sort.MergeSort(firstElts);
-    var sortedCompareList = [];
-    for (let i=0; i<firstElts.length; i++) {
-      var firstElement = firstElts[i];
-      for (let j=0; j<compareList.length; j++) {
-        if (compareList[j][0] == firstElement) {
-          sortedCompareList.push(compareList[j]);
-          compareList = List.remove_at_index(j, compareList);
-          break;
-        }
-      }
-    }
-    var secondElts = [];
-    for (let i=0; i<sortedCompareList.length; i++) {
-      secondElts.push(sortedCompareList[i][1]);
-    }
-    var sort1 = new Sort();
-    secondElts = sort1.MergeSort(secondElts);
-    return sort1.nbPermutations;
-
-  }
-
   delete_inverted_list(lists) { //Delete all inverted lists (ex : [3,2,1] if [1,2,3] already exist in the parameter lists) as the inverted list has the same number of intersections
     var new_list = [];
     for (let i=0; i<lists.length; i++) {
@@ -1702,232 +841,7 @@ export abstract class PlotData extends EventEmitter {
     return new_list;
   }
 
-  getOptimalAxisDisposition() { //gives the optimal disposition for axis in order to minimize segment intersections
-    var list = [];
-    for (let i=0; i<this.axis_list.length; i++) {
-      list.push(i);
-    }
-    var permutations = permutator(list);
-    permutations = this.delete_inverted_list(permutations);
-    var optimal = permutations[0];
-    var optiNbPermu = 0;
-    for (let k=0; k<permutations[0].length - 1; k++) {
-      optiNbPermu = optiNbPermu + this.get_nb_intersections(permutations[0][k], permutations[0][k+1]);
-    }
 
-    for (let i=0; i<permutations.length; i++) {
-      var currentNbPermu = 0;
-      for (let j=0; j<permutations[i].length - 1; j++) {
-        currentNbPermu = currentNbPermu + this.get_nb_intersections(permutations[i][j], permutations[i][j+1]);
-        if (currentNbPermu >= optiNbPermu) {
-          break;
-        }
-      }
-      if (currentNbPermu<optiNbPermu) {
-        optiNbPermu = currentNbPermu;
-        optimal = permutations[i];
-      }
-    }
-    return optimal;
-  }
-
-  OptimizeAxisList() {
-    var optimal = this.getOptimalAxisDisposition();
-    var new_axis_list = [];
-    optimal.forEach(element => {
-      new_axis_list.push(this.axis_list[element]);
-    });
-    this.axis_list = new_axis_list;
-    this.refresh_to_display_list(this.elements);
-    this.refresh_all_attributes();
-    this.refresh_attribute_booleans();
-  }
-
-
-  refresh_selected_points_from_indices() {
-    this.select_on_click = [];
-    for (let index of this.selected_point_index) {
-      if (this.plotObject['type_'] === "graph2D") {
-
-      } else if (this.plotObject["type_"] === "scatterplot") {
-        let point = this.plotObject.point_list[index];
-        point.selected = true;
-        this.select_on_click.push(point);
-      }
-    }
-  }
-
-
-  refresh_selected_point_index() {  //selected_point_index : index of selected points in the initial point list
-    this.selected_point_index = [];
-    for (let i=0; i<this.select_on_click.length; i++) {
-      if (this.select_on_click[i] === undefined) continue;
-      if ((this.plotObject['type_'] == 'scatterplot') && this.select_on_click[i]) {
-        let clicked_points = this.select_on_click[i].points_inside;
-        for (let j=0; j<clicked_points.length; j++) {
-          this.selected_point_index.push(clicked_points[j].index);
-        }
-      } else if (this.plotObject['type_'] == 'graph2D') {
-        for (let j=0; j<this.plotObject.graphs.length; j++) {
-          if ((List.is_include(this.select_on_click[i], this.plotObject.graphs[j].point_list)) && this.select_on_click[i]) {
-            this.selected_point_index.push([this.select_on_click[i], j]);
-          }
-        }
-      }
-    }
-  }
-
-  reset_selected_areas() {
-    let w = this.heatmap.size[0];
-    let h = this.heatmap.size[1];
-    for (let i=0; i<h; i++) {
-      for (let j=0; j<w; j++) {
-        this.selected_areas[i][j] = 0;
-      }
-    }
-  }
-
-
-  refresh_heatmap_selected_point_indices() {
-    this.heatmap_selected_points_indices = [];
-    for (let i=0; i<this.heatmap_selected_points.length; i++) {
-      let points_inside = this.heatmap_selected_points[i].points_inside;
-      for (let j=0; j<points_inside.length; j++) {
-        this.heatmap_selected_points_indices.push(points_inside[j].index);
-      }
-    }
-  }
-
-  // Refreshes value of selected_by_heatmap attributes (Point2D)
-  refresh_selected_by_heatmap() {
-    this.reset_selected_areas();
-    let wstep, hstep;
-    [wstep, hstep] = this.get_heatmap_steps();
-    for (let i=0; i<this.scatter_points.length; i++) {
-      let bool = false;
-      for (let point_inside of this.scatter_points[i].points_inside) {
-        if (List.is_include(point_inside.index, this.heatmap_selected_points_indices)) {
-          bool = true;
-          break;
-        }
-      }
-      this.scatter_points[i].selected_by_heatmap = bool;
-      if (bool) {
-        let x = this.real_to_scatter_length(this.scatter_points[i].cx - this.minX, "x");
-        let y = this.real_to_scatter_length(-this.scatter_points[i].cy + this.maxY, "y");
-        let kx = Math.floor(x/wstep);
-        let ky = Math.floor(y/hstep);
-        this.selected_areas[kx][ky] = 1;
-      }
-    }
-  }
-
-
-  refresh_clicked_point_index() {  //selected_clicked_index : index of selected points in the initial point list
-    this.clicked_point_index = [];
-    for (let i=0; i<this.clicked_points.length; i++) {
-      if (this.clicked_points[i] === undefined) continue;
-      if ((this.plotObject['type_'] == 'scatterplot') && this.clicked_points[i]) {
-        let true_clicked_points = this.clicked_points[i].points_inside;
-        for (let j=0; j<true_clicked_points.length; j++) {
-          this.clicked_point_index.push(List.get_index_of_element(true_clicked_points[j], this.plotObject.point_list));
-        }
-      } else if (this.plotObject['type_'] == 'graph2D') {
-        for (let j=0; j<this.plotObject.graphs.length; j++) {
-          if ((List.is_include(this.clicked_points[i], this.plotObject.graphs[j].point_list)) && this.clicked_points[i]) {
-            this.clicked_point_index.push([List.get_index_of_element(this.clicked_points[i], this.plotObject.graphs[j].point_list), j]);
-          }
-        }
-      }
-    }
-  }
-
-
-  refresh_latest_selected_points_index() {
-    this.latest_selected_points_index = [];
-    for (let i=0; i<this.latest_selected_points.length; i++) {
-      let selected_point = this.latest_selected_points[i];
-      if (selected_point != undefined) {
-        for (let j=0; j<selected_point.points_inside.length; j++) {
-          let point_index = List.get_index_of_element(selected_point.points_inside[j], this.plotObject.point_list);
-          this.latest_selected_points_index.push(point_index);
-        }
-      }
-    }
-  }
-
-  selecting_point_action(mouse1X, mouse1Y) {
-    var col = this.context_hidden.getImageData(mouse1X, mouse1Y, 1, 1).data;
-    var colKey = 'rgb(' + col[0] + ',' + col[1] + ',' + col[2] + ')';
-    var click_plot_data = this.color_to_plot_data[colKey];
-    if (click_plot_data) {
-      if (this.type_ === "primitivegroup") {
-        if (this.select_on_click.includes(click_plot_data)) {
-          this.select_on_click = List.remove_element(click_plot_data, this.select_on_click);
-          if (click_plot_data.type_ === "point") {
-            click_plot_data.selected = false;
-          }
-        } else {
-          this.select_on_click.push(click_plot_data);
-          if (click_plot_data.type_ === "point") {
-            click_plot_data.selected = true;
-          }
-        }
-      } else {
-        if (click_plot_data.clicked) {
-          this.clicked_points = List.remove_element(click_plot_data, this.clicked_points);
-          click_plot_data.clicked = false;
-          this.latest_selected_points = [];
-        } else {
-          this.clicked_points.push(click_plot_data);
-          click_plot_data.clicked = true;
-          this.latest_selected_points = [click_plot_data];
-        }
-      }
-    }
-    // else {
-      // this.select_on_click.push(click_plot_data); // used to add undefined to select_on_click
-    // }
-    if (this.tooltip_ON && click_plot_data) {
-      let is_in_tooltip_list = List.is_include(click_plot_data, this.tooltip_list);
-      if (is_in_tooltip_list && !click_plot_data.selected) {
-        this.tooltip_list = List.remove_element(click_plot_data, this.tooltip_list);
-      } else if (!is_in_tooltip_list && click_plot_data.selected) {
-        this.tooltip_list.push(click_plot_data);
-      }
-    }
-
-    // The following commented lines add a feature that unselect all points when the user is not clicking on a point (in such case,
-    // an undefined element is pushed into this.select_on_click).
-    // It has been removed but I let it here in case it'd be useful someday.
-
-    // if (List.contains_undefined(this.select_on_click) && !this.click_on_button) {
-    //   this.reset_select_on_click();
-    //   this.tooltip_list = [];
-    //   this.latest_selected_points = [];
-    //   Interactions.reset_permanent_window(this);
-    // }
-    this.refresh_clicked_point_index();
-    if (this.type_ == 'scatterplot') {this.refresh_latest_selected_points_index();}
-  }
-
-
-  refresh_selected_areas(mouse1X, mouse1Y) {
-    let wstep, hstep;
-    [wstep, hstep] = this.get_heatmap_steps();
-
-    let x1 = this.real_to_scatter_coords(this.minX, "x");
-    let y1 = this.real_to_scatter_coords(-this.minY, "y");
-    let x2 = this.real_to_scatter_coords(this.maxX, "x");
-    let y2 = this.real_to_scatter_coords(-this.maxY, "y");
-
-    if (mouse1X < x1 || mouse1X > x2 || mouse1Y < y1 || mouse1Y > y2) return;
-
-    let i = Math.floor((mouse1X - x1)/wstep);
-    let j = Math.floor((mouse1Y - y1)/hstep);
-
-    this.selected_areas[i][j] = 1 - this.selected_areas[i][j];
-  }
 
   reset_select_on_click(reset_clicked_points:boolean=true) {
     this.select_on_click = [];
@@ -1995,7 +909,6 @@ export abstract class PlotData extends EventEmitter {
             Interactions.mouse_move_select_win_action(mouse1X, mouse1Y, mouse2X, mouse2Y, this);
           }
           Interactions.selection_window_action(this);
-          this.refresh_selected_point_index();
           let abs_min = this.scatter_to_real_coords(
             Math.min(
               this.real_to_scatter_coords(this.perm_window_x, 'x'),
@@ -2016,7 +929,6 @@ export abstract class PlotData extends EventEmitter {
               this.real_to_scatter_coords(this.perm_window_y, 'y'),
               this.real_to_scatter_coords(this.perm_window_y - this.perm_window_h, 'y')),
               'y');
-          this.selection_coords = [[abs_min, abs_max], [ord_min, ord_max]];
         }
         this.zoom_box_x = Math.min(mouse1X, mouse2X);
         this.zoom_box_y = Math.min(mouse1Y, mouse2Y);
@@ -2084,10 +996,6 @@ export abstract class PlotData extends EventEmitter {
       click_on_graph = click_on_graph || click_on_graph_i;
       text_spacing_sum_i = text_spacing_sum_i + this.graph_text_spacing_list[i];
     }
-    this.click_on_button = false;
-    this.click_on_button = click_on_plus || click_on_minus || click_on_zoom_window || click_on_reset || click_on_select
-    || click_on_graph || click_on_merge || click_on_perm || click_on_clear || click_on_xlog || click_on_ylog || click_on_heatmap
-    || click_on_csv;
 
     if (mouse_moving) {
       if (this.zw_bool) {
@@ -2097,7 +1005,6 @@ export abstract class PlotData extends EventEmitter {
         Interactions.refresh_permanent_rect(this);
       }
     } else {
-        this.selecting_point_action(mouse1X, mouse1Y);
         if ((click_on_plus === true) && (this.scaleX*1.2 < scale_ceil) && (this.scaleY*1.2 < scale_ceil)) {
           Interactions.zoom_in_button_action(this);
 
@@ -2130,11 +1037,6 @@ export abstract class PlotData extends EventEmitter {
           Interactions.click_on_heatmap_action(this);
         } else if (click_on_csv && this.type_ === "graph2d") {
           Interactions.click_on_csv_action(this);
-        } else {
-          if (this.heatmap_view) {
-            this.refresh_selected_areas(mouse1X, mouse1Y);
-            Interactions.refresh_heatmap_selected_points(this);
-          }
         }
       }
       Interactions.reset_zoom_box(this);
@@ -2384,34 +1286,6 @@ export abstract class PlotData extends EventEmitter {
         i++;
       }
     }
-  }
-
-  is_intersecting(seg1:[[number, number], [number, number]], seg2:[[number, number], [number, number]]) { //only works for parallel plot
-    var p0 = seg1[0];
-    var p1 = seg1[1];
-    var q0 = seg2[0];
-    var q1 = seg2[1];
-    if (this.vertical===true && ((p0[1]<q0[1] && p1[1]>q1[1]) || (p0[1]>q0[1] && p1[1]<q1[1]))) {
-      return true;
-    } else if (this.vertical===false && ((p0[0]<q0[0] && p1[0]>q1[0]) || (p0[0]>q0[0] && p1[0]<q1[0]))) {
-      return true;
-    }
-    return false;
-  }
-
-  counting_intersections(segments) {
-    if (segments.length<2) {
-      return 0;
-    }
-    var nb = 0;
-    for (let i=1; i<segments.length; i++) {
-      for (let j=0; j<i; j++) {
-        if (this.is_intersecting(segments[i], segments[j])) {
-          nb++;
-        }
-      }
-    }
-    return nb;
   }
 }
 

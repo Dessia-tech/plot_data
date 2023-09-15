@@ -212,15 +212,6 @@ export class MultiplePlots {
       }
     }
 
-
-    change_point_family_order(index1:number, index2:number) {
-      List.switchElements(this.point_families, index1, index2);
-      for (let i=0; i<this.nbObjects; i++) {
-        this.objectList[i].point_families = this.point_families;
-      }
-    }
-
-
     resize_multiplot(new_width:number, new_height:number): void {
       var old_width = this.width;
       this.width = new_width;
@@ -354,7 +345,6 @@ export class MultiplePlots {
 
     initialize_new_plot_data(new_plot_data:PlotData) {
       this.initializeObjectContext(new_plot_data);
-      new_plot_data.point_families = this.point_families;
       if (new_plot_data.type_ == 'scatterplot') {
         for (let family of this.point_families) {
           for (let index of family.pointIndices) {
@@ -718,12 +708,6 @@ export class MultiplePlots {
       }
     }
 
-    refresh_objects_point_families() {
-      for (let i=0; i<this.nbObjects; i++) {
-        this.objectList[i].point_families = this.point_families;
-      }
-    }
-
     add_point_family(point_family:PointFamily): void {
       this.point_families.push(new PointFamily(colorHsl(point_family.color), point_family.pointIndices, point_family.name));
       var point_index = point_family.pointIndices;
@@ -731,60 +715,6 @@ export class MultiplePlots {
         if (this.objectList[i].type_ == 'scatterplot') {
           for (let j=0; j<point_index.length; j++) {
             this.objectList[i].plotObject.point_list[point_index[j]].point_families.push(point_family);
-          }
-        }
-      }
-      this.refresh_objects_point_families();
-      this.redrawAllObjects();
-    }
-
-    remove_point_family(index:number): void {
-      for (let i=0; i<this.nbObjects; i++) {
-        let obj = this.objectList[i];
-        if (obj.type_ == 'scatterplot') {
-          for (let j=0; j<obj.plotObject.point_list.length; j++) {
-            if (List.is_include(this.point_families[index], obj.plotObject.point_list[j].point_families)) {
-              this.objectList[i].plotObject.point_list[j].point_families = List.remove_element(this.point_families[index],
-                                                          this.objectList[i].plotObject.point_list[j].point_families);
-            }
-          }
-        }
-      }
-      this.point_families = List.remove_at_index(index, this.point_families);
-      this.refresh_objects_point_families();
-      this.redrawAllObjects();
-    }
-
-    add_points_to_family(points_index_to_add:number[], family_index:number): void {
-      for (let i=0; i<points_index_to_add.length; i++) {
-        if (points_index_to_add[i] !== undefined) {
-          this.point_families[family_index].pointIndices.push(points_index_to_add[i]);
-          for (let j=0; j<this.nbObjects; j++) {
-            if (this.objectList[j].type_ == 'scatterplot') {
-              if (!(List.is_include(this.point_families[family_index],
-                this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families))) {
-                  this.objectList[j].plotObject.point_list[points_index_to_add[i]].point_families.push(this.point_families[family_index]);
-                }
-            }
-          }
-        }
-      }
-      this.refresh_objects_point_families();
-      this.redrawAllObjects();
-    }
-
-    remove_points_from_family(points_index_to_remove:number[], family_index:number): void {
-      this.point_families[family_index].pointIndices = List.remove_selection(points_index_to_remove, this.point_families[family_index].pointIndices);
-      for (let i=0; i<points_index_to_remove.length; i++) {
-        if (points_index_to_remove[i] !== undefined) {
-          for (let j=0; j<this.nbObjects; j++) {
-            this.objectList[j].point_families = this.point_families;
-            if (this.objectList[j].type_ == 'scatterplot') {
-              if (List.is_include(this.point_families[family_index], this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families)) {
-                this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families = List.remove_element(this.point_families[family_index],
-                  this.objectList[j].plotObject.point_list[points_index_to_remove[i]].point_families);
-              }
-            }
           }
         }
       }
@@ -987,47 +917,6 @@ export class MultiplePlots {
       return sorted_list;
     }
 
-    clear_objects_selected_points(object_index:number) {
-      if (this.selectDependency_bool) {
-        for (let i=0; i<this.nbObjects; i++) {
-          if (this.objectList[i].type_ == 'scatterplot') {
-            this.objectList[i].selected_point_index = [];
-            this.objectList[i].latest_selected_points_index = [];
-          }
-        }
-      } else {
-        this.objectList[object_index].selected_point_index = [];
-        this.objectList[object_index].latest_selected_points_index = [];
-      }
-    }
-
-
-    select_points_manually(index_list:number[], object_index:number): void {
-      if (this.objectList[object_index].type_ != 'scatterplot') {throw new Error('selected object must be a scatterplot');}
-      this.clear_objects_selected_points(object_index);
-      for (let index of index_list) {
-        if (index >= this.data['elements'].length) {throw new Error('Point index out of range');}
-        if (this.selectDependency_bool) {
-          for (let i=0; i<this.nbObjects; i++) {
-            if (this.objectList[i].type_ == 'scatterplot') {
-              if (!List.is_include(index, this.objectList[i].selected_point_index)) {
-                this.objectList[i].plotObject.point_list[index].selected = true;
-                this.objectList[i].selected_point_index.push(index);
-                this.objectList[i].latest_selected_points_index.push(index);
-              }
-            }
-          }
-        } else {
-          if (!List.is_include(index, this.objectList[object_index].selected_point_index)) {
-            this.objectList[object_index].plotObject.point_list[index].selected = true;
-            this.objectList[object_index].selected_point_index.push(index);
-            this.objectList[object_index].latest_selected_points_index.push(index);
-          }
-        }
-      }
-      this.redrawAllObjects();
-    }
-
     clean_view():void {
       if (this.nbObjects === 1) {
         let obj = this.objectList[0];
@@ -1169,14 +1058,23 @@ export class MultiplePlots {
     mouse_move_frame_communication() {
       let index = this.get_drawing_rubberbands_figure_index();
       if (index === -1) return;
-      this.frame_communication(index);
+      this.figureCommunication(index);
     }
 
-    frame_communication(index) {
-      let frame = this.objectList[index];
+    public figureCommunication(index) {
+      let frame = this.objectList[index] as Figure;
       this.objectList.forEach((plot, plotIndex) => {
-        if (plot instanceof Figure)
-          MultiplotCom.frame_to_frame_communication(frame as Figure, plot);
+        if (plot instanceof Figure) {
+          plot.axes.forEach(otherAxis => {
+            frame.axes.forEach(currentAxis => {
+              if (currentAxis.name == otherAxis.name && currentAxis.name != 'number') {
+                otherAxis.rubberBand.minValue = currentAxis.rubberBand.minValue;
+                otherAxis.rubberBand.maxValue = currentAxis.rubberBand.maxValue;
+                otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
+              }
+            })
+          })
+        }
       })
       this.refreshSelectedIndices();
     }
@@ -1193,23 +1091,6 @@ export class MultiplePlots {
           plot.select_primitive_groups();
         }
       });
-    }
-
-    dependency_color_propagation(selected_axis_name:string, vertical:boolean, inverted:boolean, hexs: string[]):void {
-      for (let i=0; i<this.nbObjects; i++) {
-        let obj = this.objectList[i];
-        if (obj.type_ == 'scatterplot') {
-          let to_display_attributes = obj.plotObject.to_display_attributes;
-          let attribute_index = -1;
-          for (let j=0; j<to_display_attributes.length; j++) {
-            if (to_display_attributes[j].name == selected_axis_name) {
-              attribute_index = j;
-            }
-          }
-          obj.dep_color_propagation(vertical, inverted, hexs, selected_axis_name);
-          obj.sc_interpolation_ON = true;
-        }
-      }
     }
 
     manage_mouse_interactions(mouse2X:number, mouse2Y:number):void {
@@ -1249,32 +1130,6 @@ export class MultiplePlots {
         }
       }
       return -1;
-    }
-
-    get_selected_axis_info(): [string, boolean, boolean, string[], boolean] {
-      var isSelectingppAxis = false;
-      var selected_axis_name = '';
-      var vertical = true;
-      var inverted = false;
-      var hexs = [];
-      for (let i=0; i<this.nbObjects; i++) {
-        let obj = this.objectList[i];
-        if ((obj.type_ == 'parallelplot') && (obj.isSelectingppAxis)) {
-          isSelectingppAxis = true;
-          selected_axis_name = obj.selected_axis_name;
-          let att_index = 0;
-          for (let j=0; j<obj.axis_list.length; j++) {
-            if (obj.axis_list[j].name == selected_axis_name) {
-              att_index = j;
-              break;
-            }
-          }
-          vertical = obj.vertical;
-          inverted = obj.inverted_axis_list[att_index];
-          hexs = obj.hexs;
-        }
-      }
-      return [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis];
     }
 
     zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
@@ -1318,7 +1173,6 @@ export class MultiplePlots {
       obj.height = coef*this.settings_on_initial_heights[index];
       obj.X = center_x - obj.width/2;
       obj.Y = center_y - obj.height/2;
-      if (obj.type_ === 'parallelplot') obj.refresh_axis_coords();
     }
 
 
@@ -1629,25 +1483,6 @@ export class MultiplePlots {
             if (this.clickedPlotIndex !== -1) {
               let type_ = this.objectList[this.clickedPlotIndex].type_
               this.mouse_move_frame_communication();
-              if (type_ === 'parallelplot') {
-                var selected_axis_name: string, vertical: boolean, inverted: boolean;
-                var hexs: string[], isSelectingppAxis: boolean;
-                [selected_axis_name, vertical, inverted, hexs, isSelectingppAxis] = this.get_selected_axis_info();
-                if (isSelectingppAxis) {
-                  for (let i=0; i<this.nbObjects; i++) {
-                    if (this.objectList[i].type_ == 'parallelplot') {
-                      this.objectList[i].selected_axis_name = selected_axis_name;
-                    }
-                  }
-                  if (selected_axis_name != '') {
-                    this.dependency_color_propagation(selected_axis_name, vertical, inverted, hexs);
-                  } else {
-                    this.setAllInterpolationToOFF();
-                  }
-                  this.reset_selected_points_except([this.clickedPlotIndex]);
-                  this.objectList[this.clickedPlotIndex].mouse_interaction(true);
-                }
-              }
               if (this.objectList[this.last_index] instanceof Figure && !(this.objectList[this.last_index] instanceof newGraph2D)) {
                 this.hoveredIndices = (this.objectList[this.last_index] as Figure).hoveredIndices;
                 this.clickedIndices = (this.objectList[this.last_index] as Figure).clickedIndices;
@@ -1717,123 +1552,6 @@ export class MultiplePlots {
     }
 }
 
-
-export class MultiplotCom {
-    public static sc_to_pp_communication(coordinates:[number, number], attribute, index, plot_data:PlotData):void {
-      var attribute_type = attribute['type_'];
-      var axis_coord0 = plot_data.real_to_axis_coord(coordinates[0], attribute_type, plot_data.axis_list[index]['list'], plot_data.inverted_axis_list[index]);
-      var axis_coord1 = plot_data.real_to_axis_coord(coordinates[1], attribute_type, plot_data.axis_list[index]['list'], plot_data.inverted_axis_list[index]);
-      var axis_min = Math.min(axis_coord0, axis_coord1);
-      var axis_max = Math.max(axis_coord0, axis_coord1);
-      var min = Math.max(axis_min, 0);
-      var max = Math.min(axis_max, 1);
-      plot_data.rubber_bands[index].axisMin = min;
-      plot_data.rubber_bands[index].axisMax = max;
-      plot_data.rubber_bands[index].minValue = coordinates[0];
-      plot_data.rubber_bands[index].maxValue = coordinates[1];
-      let axisOrigin = plot_data.axis_x_start;
-      let axisEnd = plot_data.axis_x_end;
-      if (plot_data.vertical) {
-        axisOrigin = plot_data.axis_y_end;
-        axisEnd = plot_data.axis_y_start;
-      }
-    }
-
-    public static sc_to_sc_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], plot_data:PlotData) {
-      let obj_to_display_attributes = plot_data.plotObject.to_display_attributes;
-      if (equals(obj_to_display_attributes, to_display_attributes) || equals(obj_to_display_attributes, List.reverse(to_display_attributes))) {
-        if (equals(obj_to_display_attributes, List.reverse(to_display_attributes))) {
-          selection_coords = selection_coords.reverse();
-        }
-        var abs_min = selection_coords[0][0];
-        var abs_max = selection_coords[0][1];
-        var ord_min = selection_coords[1][0];
-        var ord_max = selection_coords[1][1];
-        plot_data.perm_window_x = abs_min;
-        plot_data.perm_window_w = abs_max - abs_min;
-        plot_data.perm_window_y = ord_min;
-        plot_data.perm_window_h = ord_min - ord_max;
-      } else {
-        for (let i=0; i<to_display_attributes.length; i++) {
-          for (let j=0; j<obj_to_display_attributes.length; j++) {
-            if (to_display_attributes[i]['name'] == obj_to_display_attributes[j]['name']) {
-              if (j == 0) {
-                var abs_min = selection_coords[i][0];
-                var abs_max = selection_coords[i][1];
-                ord_min = -plot_data.maxY;
-                ord_max = -plot_data.minY;
-              } else {
-                var ord_min = selection_coords[i][0];
-                var ord_max = selection_coords[i][1];
-                abs_min = plot_data.minX;
-                abs_max = plot_data.maxX;
-              }
-              plot_data.perm_window_x = abs_min;
-              plot_data.perm_window_w = abs_max - abs_min;
-              plot_data.perm_window_y = ord_min;
-              plot_data.perm_window_h = ord_min - ord_max;
-            }
-          }
-        }
-      }
-      Interactions.selection_window_action(plot_data);
-    }
-
-    public static frame_to_frame_communication(currentFigure: Figure, otherFigure: Figure): void {
-      otherFigure.axes.forEach(otherAxis => {
-        currentFigure.axes.forEach(currentAxis => {
-          if (currentAxis.name == otherAxis.name && currentAxis.name != 'number') {
-            otherAxis.rubberBand.minValue = currentAxis.rubberBand.minValue;
-            otherAxis.rubberBand.maxValue = currentAxis.rubberBand.maxValue;
-            otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
-          }
-        })
-      })
-    }
-
-    public static frame_to_pp_communication(frame, parallel_plot) {
-      let axisOrigin = parallel_plot.axis_x_start;
-      let axisEnd = parallel_plot.axis_x_end;
-      if (parallel_plot.vertical) {
-        axisOrigin = parallel_plot.axis_y_end;
-        axisEnd = parallel_plot.axis_y_start;
-      }
-
-      frame.axes.forEach(axis => {
-        parallel_plot.axis_list.forEach((pp_axis, ppIndex) => {
-          if (axis.name == pp_axis.name) {
-            if (typeof pp_axis.list[0] == "string") {
-              axis.rubberBand.valueToAxis(1, pp_axis.list.length)
-            } else {
-              axis.rubberBand.valueToAxis(pp_axis.list[0], pp_axis.list[1])
-            }
-            parallel_plot.rubber_bands[ppIndex].updateFromOther(axis.rubberBand, axisOrigin, axisEnd,
-              parallel_plot.inverted_axis_list[ppIndex], axis.isInverted);
-          }
-        })
-      })
-    }
-
-
-    public static frame_to_scatter_communication(frame, scatter) {
-      let scatter_x = scatter.plotObject.attribute_names[0];
-      let scatter_y = scatter.plotObject.attribute_names[1];
-      if (frame.axes[0].name === scatter_x) {
-        scatter.perm_window_x = frame.axes[0].rubberBand.minValue;
-        scatter.perm_window_y = -scatter.minY;
-        scatter.perm_window_w = frame.axes[0].rubberBand.maxValue - frame.axes[0].rubberBand.minValue;
-        scatter.perm_window_h = scatter.maxY - scatter.minY;
-      } else if (frame.axes[0].name === scatter_y) {
-        scatter.perm_window_x = scatter.minX;
-        scatter.perm_window_y = frame.axes[0].rubberBand.maxValue;
-        scatter.perm_window_w = scatter.maxX - scatter.minX;
-        scatter.perm_window_h = frame.axes[0].rubberBand.maxValue - frame.axes[0].rubberBand.minValue;
-      }
-      Interactions.selection_window_action(scatter)
-    }
-}
-
-
 export function save_multiplot(multiplot: MultiplePlots) {
   let temp_objs = [], sizes = [], coords = [];
   for (let obj of multiplot.objectList) {
@@ -1849,16 +1567,11 @@ export function save_multiplot(multiplot: MultiplePlots) {
                       ["originX", obj.originX],
                       ["originY", obj.originY],
                       ["selected_point_index", obj.selected_point_index],
-                      ["selection_window", [obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h]],
-                      ["interpolation_colors", obj.interpolation_colors]);
+                      ["selection_window", [obj.perm_window_x, obj.perm_window_y, obj.perm_window_w, obj.perm_window_h]]);
     } else if (obj.type_ === "parallelplot") {
       let names = [];
       for (let axis of obj.axis_list) names.push(axis.name);
-      obj_to_dict.push(["attribute_names", names],
-                     ["rubber_bands", obj.rubber_bands],
-                     ["inversions", obj.inverted_axis_list],
-                     ["interpolation_colors", obj.interpolation_colors],
-                     ["vertical", obj.vertical]);
+      obj_to_dict.push(["attribute_names", names]);
     } temp_objs.push(Object.fromEntries(obj_to_dict));
   }
 
@@ -1895,16 +1608,6 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
       obj.perm_window_y = temp_objs[i]["selection_window"][1];
       obj.perm_window_w = temp_objs[i]["selection_window"][2];
       obj.perm_window_h = temp_objs[i]["selection_window"][3];
-      obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
-
-      obj.refresh_selected_points_from_indices();
-
-    } else if (obj.type_ === "parallelplot") {
-      obj.rubber_bands = temp_objs[i]["rubber_bands"];
-      obj.inverted_axis_list = temp_objs[i]["inversions"];
-      obj.interpolation_colors = temp_objs[i]["interpolation_colors"];
-      obj.vertical = temp_objs[i]["vertical"];
-
     }
   }
   multiplot.selectedIndices = dict_["selectedIndices"];

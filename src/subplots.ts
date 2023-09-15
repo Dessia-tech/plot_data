@@ -2708,7 +2708,7 @@ export class newParallelPlot extends Figure {
 
   set isVertical(value: boolean) { this._isVertical = value }
 
-  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.1) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.05) }
 
   set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
@@ -2748,7 +2748,7 @@ export class newParallelPlot extends Figure {
 
   private computeAxesStep(): number {
     if (this.isVertical) return (this.drawEnd.x - this.drawOrigin.x - Math.abs(this.offset.x) - Math.abs(this.margin.x)) / (this.drawnFeatures.length - 1)
-    return (this.drawEnd.y - this.drawOrigin.y) / (this.drawnFeatures.length - 1)
+    return (this.drawEnd.y - this.drawOrigin.y - Math.abs(this.margin.y)) / (this.drawnFeatures.length - 1)
   }
 
   protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
@@ -2799,7 +2799,7 @@ export class newParallelPlot extends Figure {
 
   private getAxisLocation(step: number, axisIndex: number): [Vertex, Vertex] {
     const verticalX = this.drawOrigin.x + axisIndex * step;
-    const horizontalY = this.drawOrigin.y + (this.drawnFeatures.length - 1 - axisIndex) * step;
+    const horizontalY = this.drawOrigin.y + (this.drawnFeatures.length - 1 - axisIndex) * step + this.margin.y;
     if (this.isVertical) return [new Vertex(verticalX, this.drawOrigin.y), new Vertex(verticalX, this.drawEnd.y)]
     return [new Vertex(this.drawOrigin.x, horizontalY), new Vertex(this.drawEnd.x, horizontalY)]
   }

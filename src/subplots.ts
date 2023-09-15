@@ -2931,7 +2931,7 @@ export class newParallelPlot extends Figure {
   }
 
   public mouse_interaction(isParallelPlot: boolean): void {
-    this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.changedAxes.push(e)));
+    this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => {if (!this.changedAxes.includes(e)) this.changedAxes.push(e)}));
     super.mouse_interaction(isParallelPlot);
   }
 

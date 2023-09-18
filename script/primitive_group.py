@@ -8,6 +8,7 @@ import plot_data.colors as colors
 contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
                                                     plot_data.LineSegment2D([1, 2], [2, 2]),
                                                     plot_data.LineSegment2D([2, 2], [2, 1]),
+                                                    plot_data.Arc2D(cx=10, cy=2, r=10, start_angle=0, end_angle=3.14),
                                                     plot_data.LineSegment2D([2, 1], [1, 1])],
                               surface_style=plot_data.SurfaceStyle(colors.LIGHTORANGE))
 

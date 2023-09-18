@@ -2940,6 +2940,7 @@ export class newParallelPlot extends Figure {
   }
 }
 
+const DRAW_BOUNDS_FACTOR = 1.025;
 export class Draw extends Frame {
   constructor(
     data: any,
@@ -2959,7 +2960,11 @@ export class Draw extends Frame {
   protected unpackData(data: any): Map<string, any[]> {
     const drawing = ShapeCollection.fromPrimitives(data.primitives);
     const [minimum, maximum] = drawing.getBounds();
-    return new Map<string, any[]>([["x", [minimum.x, maximum.x]], ["y", [minimum.y, maximum.y]], ["shapes", drawing.drawings]]);
+    return new Map<string, any[]>([
+      ["x", [minimum.x * DRAW_BOUNDS_FACTOR, maximum.x * DRAW_BOUNDS_FACTOR]],
+      ["y", [minimum.y * DRAW_BOUNDS_FACTOR, maximum.y * DRAW_BOUNDS_FACTOR]],
+      ["shapes", drawing.drawings]
+    ])
   }
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.relativeObjects.draw(context) }

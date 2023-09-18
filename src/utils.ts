@@ -1433,10 +1433,13 @@ export class newShape {
   }
 }
 
-export class newCircle extends newShape {
+export class Arc extends newShape {
   constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public radius: number = 1
+    public center: Vertex,
+    public radius: number,
+    public startAngle: number,
+    public endAngle: number,
+    public clockWise: boolean = false
   ) {
     super();
     this.buildPath();
@@ -1444,13 +1447,12 @@ export class newCircle extends newShape {
 
   public buildPath(): void {
     this.path = new Path2D();
-    this.path.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
+    this.path.arc(this.center.x, this.center.y, this.radius, this.startAngle, this.endAngle, this.clockWise);
   }
 
   public static deserialize(data: any): newCircle {
-    const circle = new newCircle(new Vertex(data.cx, data.cy), data.r);
-    circle.fillStyle = colorHsl(data.surface_style?.color_fill ??circle.fillStyle);
-    return circle
+    const arc = new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle);
+    return arc
   }
 
   public getBounds(): [Vertex, Vertex] {
@@ -1458,6 +1460,21 @@ export class newCircle extends newShape {
       new Vertex(this.center.x - this.radius, this.center.y - this.radius),
       new Vertex(this.center.x + this.radius, this.center.y + this.radius)
     ]
+  }
+}
+
+export class newCircle extends Arc {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public radius: number = 1
+  ) {
+    super(center, radius, 0, 2 * Math.PI);
+  }
+
+  public static deserialize(data: any): newCircle {
+    const circle = new newCircle(new Vertex(data.cx, data.cy), data.r);
+    circle.fillStyle = colorHsl(data.surface_style?.color_fill ??circle.fillStyle);
+    return circle
   }
 }
 
@@ -1610,6 +1627,12 @@ export class LineSegment extends newShape {
     this.path = new Path2D();
     this.path.moveTo(this.origin.x, this.origin.y);
     this.path.lineTo(this.end.x, this.end.y);
+  }
+
+  public static deserialize(data: any): LineSegment {
+    const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    if (data.edge_style) {}
+    return line
   }
 }
 
@@ -1811,14 +1834,18 @@ export class Contour extends newShape {
     const lines = [];
     data.plot_data_primitives.forEach(primitive => {
       if (primitive.type_ == "linesegment2d") {
-        lines.push(
-          new LineSegment(
-            new Vertex(primitive.point1[0], primitive.point1[1]),
-            new Vertex(primitive.point2[0], primitive.point2[1])
-            )
-          )
+        // lines.push(
+        //   new LineSegment(
+        //     new Vertex(primitive.point1[0], primitive.point1[1]),
+        //     new Vertex(primitive.point2[0], primitive.point2[1])
+        //     )
+        //   )
+        lines.push(LineSegment.deserialize(primitive))
+
         }
-      if (primitive.type_ == "arc") {}
+      if (primitive.type_ == "arc") {
+        lines.push(Arc.deserialize(primitive))
+      }
     })
     return new Contour(lines)
   }

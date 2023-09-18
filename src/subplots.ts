@@ -1487,8 +1487,8 @@ export class Figure extends PlotData {
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: ShapeCollection;
-  public absoluteObjects: GroupCollection;
-  public relativeObjects: GroupCollection;
+  public absoluteObjects: ShapeCollection;
+  public relativeObjects: ShapeCollection;
 
   public font: string = "sans-serif";
 
@@ -1632,7 +1632,7 @@ export class Figure extends PlotData {
 
   protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] { return }
 
-  protected buildAxes(axisBoundingBox: newRect[]): newAxis[] { return }
+  protected buildAxes(axisBoundingBox: newRect[]): newAxis[] { return [] }
 
   protected transformAxes(axisBoundingBoxes: newRect[]): void {
     axisBoundingBoxes.forEach((box, index) => this.axes[index].boundingBox = box);
@@ -2032,7 +2032,7 @@ export class Frame extends Figure {
 
   set nYTicks(value: number) { this._nYTicks = value }
 
-  get sampleDrawings(): GroupCollection { return this.relativeObjects }
+  get sampleDrawings(): ShapeCollection { return this.relativeObjects }
 
   public get drawingZone(): [Vertex, Vertex] {
     const origin = new Vertex();
@@ -2317,7 +2317,7 @@ export class newScatter extends Frame {
       }
     }
 
-  get sampleDrawings(): GroupCollection { return this.absoluteObjects }
+  get sampleDrawings(): ShapeCollection { return this.absoluteObjects }
 
   public unpackPointStyle(data: any): void {
     if (data.point_style?.color_fill) this.fillStyle = data.point_style.color_fill;
@@ -2951,15 +2951,14 @@ export class Draw extends Figure {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      console.log(data, this.features)
+      this.absoluteObjects = ShapeCollection.fromPrimitives(data.primitives, this.canvasMatrix);
     }
   
   protected unpackData(data: any): Map<string, any[]> {
-    const unpackedData = new Map<string, any[]>([["shape", data.primitives]]);
-    const drawings = ShapeCollection.unpackData(unpackedData, this.canvasMatrix);
-    console.log(drawings)
-    return unpackedData
+    return new Map<string, any[]>([["shape", data.primitives]]);
   }
+
+  protected drawAbsoluteObjects(context: CanvasRenderingContext2D) { this.absoluteObjects.draw(context) }
 }
 
 

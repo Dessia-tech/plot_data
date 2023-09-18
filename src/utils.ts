@@ -1352,6 +1352,7 @@ export class newShape {
   public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
 
   public draw(context: CanvasRenderingContext2D): void {
+    console.log("drawn", this)
     context.save();
     const scaledPath = new Path2D();
     if (this.isScaled) {
@@ -1429,7 +1430,7 @@ export class newCircle extends newShape {
     this.path.arc(this.center.x, this.center.y, this.radius, 0, 2 * Math.PI);
   }
 
-  public static unpackData(data: any): newCircle {
+  public static deserialize(data: any): newCircle {
     const circle = new newCircle(new Vertex(data.cx, data.cy), data.r);
     circle.fillStyle = colorHsl(data.surface_style?.color_fill ??circle.fillStyle);
     return circle
@@ -3369,10 +3370,10 @@ export class ShapeCollection {
     public frame: DOMMatrix = new DOMMatrix([1, 0, 0, -1, 0, 0])
   ) {}
 
-  public static unpackData(data: Map<string, any[]>, frame: DOMMatrix = new DOMMatrix([1, 0, 0, -1, 0, 0])): ShapeCollection {
+  public static fromPrimitives(primitives: {[key: string]: any}, frame: DOMMatrix = new DOMMatrix([1, 0, 0, -1, 0, 0])): ShapeCollection {
     const drawings = [];
-    data.get("shape").forEach(shape => {
-      if (shape.type_ == "circle") drawings.push(newCircle.unpackData(shape));
+    primitives.forEach(primitive => {
+      if (primitive.type_ == "circle") drawings.push(newCircle.deserialize(primitive));
       // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
       // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
       // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
@@ -3405,6 +3406,14 @@ export class ShapeCollection {
   }
 
   public draw(context: CanvasRenderingContext2D): void { this.drawings.forEach(drawing => drawing.draw(context)) }
+
+  public updateSampleStates(stateName: string): number[] {
+    const newSampleStates = [];
+    this.drawings.forEach((drawing, index) => {
+      if (drawing[stateName] && !(drawing instanceof SelectionBox)) newSampleStates.push(index);
+    });
+    return newSampleStates
+  }
 }
 
 export class GroupCollection extends ShapeCollection {

@@ -2,13 +2,16 @@
 # In the same way, primitive_groups contain primitives (ie: Arc2D, Circle2D, Contour2D,
 # LineSegment and Text)
 
+import math
 import plot_data
 import plot_data.colors as colors
 
 contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
-                                                    plot_data.LineSegment2D([1, 2], [2, 2]),
+                                                    plot_data.Arc2D(cx=1.25, cy=2, r=0.25, start_angle=math.pi, end_angle=math.pi/2),
+                                                    plot_data.LineSegment2D([1.25, 2.25], [1.75, 2.25]),
+                                                    plot_data.Arc2D(cx=1.75, cy=2, r=0.25, start_angle=math.pi/2, end_angle=0),
+
                                                     plot_data.LineSegment2D([2, 2], [2, 1]),
-                                                    plot_data.Arc2D(cx=10, cy=2, r=10, start_angle=0, end_angle=3.14),
                                                     plot_data.LineSegment2D([2, 1], [1, 1])],
                               surface_style=plot_data.SurfaceStyle(colors.LIGHTORANGE))
 

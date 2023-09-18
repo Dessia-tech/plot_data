@@ -1439,7 +1439,7 @@ export class Arc extends newShape {
     public radius: number,
     public startAngle: number,
     public endAngle: number,
-    public clockWise: boolean = false
+    public clockWise: boolean = true
   ) {
     super();
     this.buildPath();
@@ -1451,7 +1451,7 @@ export class Arc extends newShape {
   }
 
   public static deserialize(data: any): newCircle {
-    const arc = new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle);
+    const arc = new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle, data.clockwise ?? true);
     return arc
   }
 
@@ -1833,19 +1833,8 @@ export class Contour extends newShape {
   public static deserialize(data: any): Contour {
     const lines = [];
     data.plot_data_primitives.forEach(primitive => {
-      if (primitive.type_ == "linesegment2d") {
-        // lines.push(
-        //   new LineSegment(
-        //     new Vertex(primitive.point1[0], primitive.point1[1]),
-        //     new Vertex(primitive.point2[0], primitive.point2[1])
-        //     )
-        //   )
-        lines.push(LineSegment.deserialize(primitive))
-
-        }
-      if (primitive.type_ == "arc") {
-        lines.push(Arc.deserialize(primitive))
-      }
+      if (primitive.type_ == "linesegment2d") lines.push(LineSegment.deserialize(primitive));
+      if (primitive.type_ == "arc") lines.push(Arc.deserialize(primitive));
     })
     return new Contour(lines)
   }

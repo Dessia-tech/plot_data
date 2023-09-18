@@ -1042,14 +1042,14 @@ class Arc2D(PlotDataObject):
     """
 
     def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, data=None,
-                 anticlockwise: bool = None, edge_style: EdgeStyle = None, name: str = ''):
+                 clockwise: bool = None, edge_style: EdgeStyle = None, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.r = r
         self.start_angle = start_angle
         self.end_angle = end_angle
         self.data = data
-        self.anticlockwise = anticlockwise
+        self.clockwise = clockwise
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='arc', name=name)
 

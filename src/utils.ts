@@ -1323,6 +1323,8 @@ export class Vertex {
 const TOOLTIP_PRECISION = 100;
 export class newShape {
   public path: Path2D = new Path2D();
+  public scaledPath: Path2D;
+  public inStrokeScale: Vertex = new Vertex(1, 1);
 
   public lineWidth: number = 1;
   public dashLine: number[] = [];
@@ -1353,7 +1355,7 @@ export class newShape {
 
   public static deserialize(data: {[key: string]: any}): newShape {
     if (data.type_ == "circle") return newCircle.deserialize(data);
-      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
+    if (data.type_ == "contour") return Contour.deserialize(data);
       // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
       // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
       // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
@@ -1370,10 +1372,12 @@ export class newShape {
       const contextMatrix = context.getTransform();
       scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
       context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
+      this.inStrokeScale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
     } else scaledPath.addPath(this.path);
     this.setDrawingProperties(context);
     if (this.isFilled) context.fill(scaledPath);
     context.stroke(scaledPath);
+    this.scaledPath = scaledPath;
     context.restore();
   }
 
@@ -1408,8 +1412,10 @@ export class newShape {
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
     context.save();
+    context.resetTransform();
     context.lineWidth = 10;
-    const isHovered = context.isPointInStroke(this.path, point.x, point.y);
+    if (this.isScaled) context.scale(this.inStrokeScale.x, this.inStrokeScale.y)
+    const isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
     context.restore();
     return isHovered
   }
@@ -1590,7 +1596,46 @@ export class HalfLine extends AbstractHalfLine {
   }
 }
 
-export abstract class AbstractLine extends newShape {
+export class LineSegment extends newShape {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public end: Vertex = new Vertex(0, 0)
+  ) {
+    super();
+    this.isFilled = false;
+    this.buildPath();
+  }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.path.moveTo(this.origin.x, this.origin.y);
+    this.path.lineTo(this.end.x, this.end.y);
+  }
+}
+
+export class Line extends LineSegment { // TODO: Does not work => make it work
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public end: Vertex = new Vertex(0, 0)
+  ) {
+    super();
+  }
+
+  private computeSlope(): number {
+    return (this.end.y - this.origin.y) / (this.end.x - this.origin.x);
+  }
+
+  public buildPath(): void {
+    const slope = this.computeSlope();
+    const fakeOrigin = new Vertex(this.origin.x != 0 ? this.origin.x * 1e16 : -1e16, 0);
+    const fakeEnd = new Vertex(this.end.x != 0 ? this.end.x * 1e16 : -1e16, 0);
+    fakeOrigin.y = fakeOrigin.x * slope;
+    fakeEnd.y = fakeEnd.x * slope;
+    this.path = new LineSegment(fakeOrigin, fakeEnd).path;
+  }
+}
+
+export abstract class AbstractLinePoint extends newShape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
@@ -1602,7 +1647,7 @@ export abstract class AbstractLine extends newShape {
   }
 }
 
-export class VerticalLine extends AbstractLine {
+export class VerticalLinePoint extends AbstractLinePoint {
   public buildPath(): void {
     this.path = new Path2D();
     const halfSize = this.size / 2;
@@ -1611,7 +1656,7 @@ export class VerticalLine extends AbstractLine {
   }
 }
 
-export class HorizontalLine extends AbstractLine {
+export class HorizontalLinePoint extends AbstractLinePoint {
   public buildPath(): void {
     this.path = new Path2D();
     const halfSize = this.size / 2;
@@ -1620,7 +1665,7 @@ export class HorizontalLine extends AbstractLine {
   }
 }
 
-export class PositiveLine extends AbstractLine {
+export class PositiveLinePoint extends AbstractLinePoint {
   public buildPath(): void {
     this.path = new Path2D();
     const halfSize = this.size / 2;
@@ -1629,7 +1674,7 @@ export class PositiveLine extends AbstractLine {
   }
 }
 
-export class NegativeLine extends AbstractLine {
+export class NegativeLinePoint extends AbstractLinePoint {
   public buildPath(): void {
     this.path = new Path2D();
     const halfSize = this.size / 2;
@@ -1638,7 +1683,7 @@ export class NegativeLine extends AbstractLine {
   }
 }
 
-export class Line extends AbstractLine {
+export class LinePoint extends AbstractLinePoint {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
@@ -1649,10 +1694,10 @@ export class Line extends AbstractLine {
   }
 
   public buildPath(): void {
-    if (this.orientation == 'vertical') this.path = new VerticalLine(this.center, this.size).path;
-    if (this.orientation == 'horizontal') this.path = new HorizontalLine(this.center, this.size).path;
-    if (['slash', 'positive'].includes(this.orientation)) this.path = new PositiveLine(this.center, this.size).path;
-    if (['backslash', 'negative'].includes(this.orientation)) this.path = new NegativeLine(this.center, this.size).path;
+    if (this.orientation == 'vertical') this.path = new VerticalLinePoint(this.center, this.size).path;
+    if (this.orientation == 'horizontal') this.path = new HorizontalLinePoint(this.center, this.size).path;
+    if (['slash', 'positive'].includes(this.orientation)) this.path = new PositiveLinePoint(this.center, this.size).path;
+    if (['backslash', 'negative'].includes(this.orientation)) this.path = new NegativeLinePoint(this.center, this.size).path;
     if (!['vertical', 'horizontal', 'slash', 'backslash', 'positive', 'negative'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
   }
 }
@@ -1749,6 +1794,38 @@ export class Triangle extends AbstractTriangle {
     if (this.orientation == 'right') this.path = new RightTriangle(this.center, this.size).path
     if (this.orientation == 'left') this.path = new LeftTriangle(this.center, this.size).path
     if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
+  }
+}
+
+
+export class Contour extends newShape {
+  constructor(
+    public lines: newShape[] = []
+  ) {
+    super();
+    this.isFilled = false;
+    this.buildPath();
+  }
+
+  public static deserialize(data: any): Contour {
+    const lines = [];
+    data.plot_data_primitives.forEach(primitive => {
+      if (primitive.type_ == "linesegment2d") {
+        lines.push(
+          new LineSegment(
+            new Vertex(primitive.point1[0], primitive.point1[1]),
+            new Vertex(primitive.point2[0], primitive.point2[1])
+            )
+          )
+        }
+      if (primitive.type_ == "arc") {}
+    })
+    return new Contour(lines)
+  }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.lines.forEach(line => this.path.addPath(line.path));
   }
 }
 
@@ -2119,7 +2196,7 @@ export class newPoint2D extends newShape {
     };
     if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center, this.size, this.markerOrientation);
     if (this.marker == 'halfLine') marker = new HalfLine(this.center, this.size, this.markerOrientation);
-    if (this.marker == 'line') marker = new Line(this.center, this.size, this.markerOrientation);
+    if (this.marker == 'line') marker = new LinePoint(this.center, this.size, this.markerOrientation);
     marker.lineWidth = this.lineWidth;
     this.isFilled = marker.isFilled;
     return marker

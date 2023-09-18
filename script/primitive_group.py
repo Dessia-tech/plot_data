@@ -11,9 +11,10 @@ contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 
                                                     plot_data.LineSegment2D([2, 1], [1, 1])],
                               surface_style=plot_data.SurfaceStyle(colors.LIGHTORANGE))
 
-circle1 = plot_data.Circle2D(cx=-100, cy=-100, r=10)
-circle2 = plot_data.Circle2D(cx=150, cy=150, r=50, surface_style=plot_data.SurfaceStyle(colors.RED))
-circle3 = plot_data.Circle2D(cx=100, cy=100, r=5, surface_style=plot_data.SurfaceStyle(colors.LIGHTBROWN))
+circle1 = plot_data.Circle2D(cx=8, cy=4, r=1)
+circle4 = plot_data.Circle2D(cx=12, cy=4, r=1)
+circle2 = plot_data.Circle2D(cx=9, cy=1.5, r=2, surface_style=plot_data.SurfaceStyle(colors.RED))
+circle3 = plot_data.Circle2D(cx=10, cy=6, r=5, surface_style=plot_data.SurfaceStyle(colors.LIGHTBROWN))
 
 primitive_group1 = plot_data.PrimitiveGroup(primitives=[circle1])
 primitive_group2 = plot_data.PrimitiveGroup(primitives=[contour])
@@ -21,7 +22,7 @@ primitive_group3 = plot_data.PrimitiveGroup(primitives=[circle2])
 primitive_group4 = plot_data.PrimitiveGroup(primitives=[circle3])
 primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primitive_group4]
 
-plot_data_object = plot_data.PrimitiveGroup(primitives=[circle1, circle2, circle3])#, contour])
+plot_data_object = plot_data.PrimitiveGroup(primitives=[circle2, circle3, circle1, circle4, contour])
 
 # if debug_mode is True, set it to False
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

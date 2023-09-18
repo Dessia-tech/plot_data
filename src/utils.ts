@@ -1345,6 +1345,7 @@ export class newShape {
 
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
+  public hasTooltip: boolean = true;
   constructor() {};
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
@@ -1356,11 +1357,14 @@ export class newShape {
   public static deserialize(data: {[key: string]: any}): newShape {
     if (data.type_ == "circle") return newCircle.deserialize(data);
     if (data.type_ == "contour") return Contour.deserialize(data);
-      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
-      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
-      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
-    // throw new Error(`${data.type_} is shape is not implemented.`);
-    return
+    if (data.type_ == "line2d") return Line.deserialize(data);
+    if (data.type_ == "linesegment2d") return LineSegment.deserialize(data);
+    if (data.type_ == "wire") { // TODO: make it better
+      const wire = LineSequence.deserialize(data);
+      wire.hasTooltip = false;
+      return wire
+    }
+    throw new Error(`${data.type_} is shape is not implemented.`);
   }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
@@ -1401,7 +1405,7 @@ export class newShape {
   public initTooltip(context: CanvasRenderingContext2D): newTooltip { return new newTooltip(this.tooltipOrigin, this.tooltipMap, context) }
 
   public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
-    if (this.isClicked && this.tooltipMap.size != 0) {
+    if (this.isClicked && this.tooltipMap.size != 0 && this.hasTooltip) {
       const tooltip = this.initTooltip(context);
       tooltip.draw(plotOrigin, plotSize, context);
     }
@@ -1641,17 +1645,23 @@ export class Line extends LineSegment { // TODO: Does not work => make it work
     public origin: Vertex = new Vertex(0, 0),
     public end: Vertex = new Vertex(0, 0)
   ) {
-    super();
+    super(origin, end);
   }
 
   private computeSlope(): number {
     return (this.end.y - this.origin.y) / (this.end.x - this.origin.x);
   }
 
+  public static deserialize(data: any): Line {
+    const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    if (data.edge_style) {}
+    return line
+  }
+
   public buildPath(): void {
     const slope = this.computeSlope();
-    const fakeOrigin = new Vertex(this.origin.x != 0 ? this.origin.x * 1e16 : -1e16, 0);
-    const fakeEnd = new Vertex(this.end.x != 0 ? this.end.x * 1e16 : -1e16, 0);
+    const fakeOrigin = new Vertex(-1e6, 0);
+    const fakeEnd = new Vertex(1e6, 0);
     fakeOrigin.y = fakeOrigin.x * slope;
     fakeEnd.y = fakeEnd.x * slope;
     this.path = new LineSegment(fakeOrigin, fakeEnd).path;
@@ -2329,6 +2339,15 @@ export class LineSequence extends newShape {
     this.isScaled = false;
     this.isFilled = false;
     this.updateTooltipMap();
+  }
+
+  public static deserialize(data: {[key: string]: any}): LineSequence {
+    const points = [];
+    data.lines.forEach(line => points.push(new newPoint2D(line[0], line[1])));
+    const line = new LineSequence(points, data.name ?? "");
+    line.isScaled = true;
+    line.buildPath();
+    return line
   }
 
   public initTooltip(context: CanvasRenderingContext2D): newTooltip {

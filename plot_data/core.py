@@ -446,7 +446,8 @@ class Line2D(PlotDataObject):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None, name: str = ''):
-        self.data = point1 + point2
+        self.point1 = point1
+        self.point2 = point2
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='line2d', name=name)
 

@@ -55,7 +55,7 @@ describe('HISTOGRAM CANVAS', function () {
 
       histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
       [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
-      clickedObject.mouseMove(frameDown, frameDown.add(new Vertex(200, 200)));
+      clickedObject.mouseMove(histogram.context_show, mouseCoords.add(new Vertex(200, 200)));
       histogram.draw()
       const selectedBars = histogram.bars.reduce((sum, current) => sum + (current.isSelected ? 1 : 0), 0);
 
@@ -74,7 +74,7 @@ describe('HISTOGRAM CANVAS', function () {
       expect(histogram.hoveredIndices.length).to.equal(7);
 
       [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
-      histogram.mouseUp(canvasMouse, frameMouse, mouseCoords, canvasDown, false)
+      histogram.mouseUp(canvasMouse, canvasDown, false)
       expect(histogram.clickedIndices[2]).to.equal(11);
       expect(histogram.clickedIndices[6]).to.equal(47);
     })

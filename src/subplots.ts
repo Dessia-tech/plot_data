@@ -1567,8 +1567,9 @@ export class Figure extends PlotData {
   }
 
   protected unpackData(data: any): Map<string, any[]> {
-    const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
     const unpackedData = new Map<string, any[]>();
+    if (!data.elements) return unpackedData;
+    const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
     featureKeys.push("name");
     featureKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
@@ -2939,7 +2940,7 @@ export class newParallelPlot extends Figure {
   }
 }
 
-export class Draw extends Figure {
+export class Draw extends Frame {
   constructor(
     data: any,
     public width: number,
@@ -2951,14 +2952,24 @@ export class Draw extends Figure {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.absoluteObjects = ShapeCollection.fromPrimitives(data.primitives, this.canvasMatrix);
+      this.axisEqual();
+      this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.frameMatrix);
     }
   
   protected unpackData(data: any): Map<string, any[]> {
-    return new Map<string, any[]>([["shape", data.primitives]]);
+    const drawing = ShapeCollection.fromPrimitives(data.primitives);
+    const [minimum, maximum] = drawing.getBounds();
+    return new Map<string, any[]>([["x", [minimum.x, maximum.x]], ["y", [minimum.y, maximum.y]], ["shapes", drawing.drawings]]);
   }
 
-  protected drawAbsoluteObjects(context: CanvasRenderingContext2D) { this.absoluteObjects.draw(context) }
+  protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.relativeObjects.draw(context) }
+
+  protected axisEqual(): void {
+    if (this.axes[0].drawLength > this.axes[1].drawLength) this.axes[0].otherAxisScaling(this.axes[1])
+    else this.axes[1].otherAxisScaling(this.axes[0]);
+    this.axes.forEach(axis => axis.saveLocation());
+    this.updateAxes();
+  }
 }
 
 

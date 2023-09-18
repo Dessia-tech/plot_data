@@ -1351,8 +1351,19 @@ export class newShape {
 
   public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
 
+  public static deserialize(data: {[key: string]: any}): newShape {
+    if (data.type_ == "circle") return newCircle.deserialize(data);
+      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
+      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
+      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
+      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
+    // throw new Error(`${data.type_} is shape is not implemented.`);
+    return
+  }
+
+  public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
+
   public draw(context: CanvasRenderingContext2D): void {
-    console.log("drawn", this)
     context.save();
     const scaledPath = new Path2D();
     if (this.isScaled) {
@@ -1434,6 +1445,13 @@ export class newCircle extends newShape {
     const circle = new newCircle(new Vertex(data.cx, data.cy), data.r);
     circle.fillStyle = colorHsl(data.surface_style?.color_fill ??circle.fillStyle);
     return circle
+  }
+
+  public getBounds(): [Vertex, Vertex] {
+    return [
+      new Vertex(this.center.x - this.radius, this.center.y - this.radius),
+      new Vertex(this.center.x + this.radius, this.center.y + this.radius)
+    ]
   }
 }
 
@@ -2695,6 +2713,8 @@ export class newAxis extends newShape{
 
   get interval(): number { return Math.abs(this.maxValue - this.minValue) };
 
+  get center(): number { return (this.maxValue + this.minValue) / 2}
+
   get isVertical(): boolean { return this.origin.x == this.end.x };
 
   get isDiscrete(): boolean { return this._isDiscrete };
@@ -2747,6 +2767,14 @@ export class newAxis extends newShape{
       this.labels = ["0", "1"];
     }
   }
+
+  public otherAxisScaling(otherAxis: newAxis): void {
+    const center = this.center;
+    this.maxValue = this.minValue + otherAxis.interval * this.drawLength / otherAxis.drawLength;
+    const newCenter = this.center;
+    this.minValue += center - newCenter; 
+    this.maxValue += center - newCenter; 
+  } 
 
   public transform(newOrigin: Vertex, newEnd: Vertex): void {
     this.origin = newOrigin.copy();
@@ -3365,21 +3393,32 @@ export class ParallelAxis extends newAxis {
 }
 
 export class ShapeCollection {
+  public minimum: Vertex;
+  public maximum: Vertex;
   constructor(
     public drawings: newShape[] = [],
-    public frame: DOMMatrix = new DOMMatrix([1, 0, 0, -1, 0, 0])
-  ) {}
+    public frame: DOMMatrix = new DOMMatrix([1, 0, 0, 1, 0, 0])
+  ) {
+    [this.minimum, this.maximum] = this.getBounds();
+  }
 
-  public static fromPrimitives(primitives: {[key: string]: any}, frame: DOMMatrix = new DOMMatrix([1, 0, 0, -1, 0, 0])): ShapeCollection {
+  public static fromPrimitives(primitives: {[key: string]: any}, frame: DOMMatrix = new DOMMatrix([1, 0, 0, 1, 0, 0])): ShapeCollection {
     const drawings = [];
-    primitives.forEach(primitive => {
-      if (primitive.type_ == "circle") drawings.push(newCircle.deserialize(primitive));
-      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
-      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
-      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
-      // if (shape.type_ == "circle") drawings.push(new newCircle(new Vertex(shape.cx, shape.cy), shape.r));
-    })
+    primitives.forEach(primitive => drawings.push(newShape.deserialize(primitive)))
     return new ShapeCollection(drawings, frame)
+  }
+
+  public getBounds(): [Vertex, Vertex] {
+    let minimum = new Vertex(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+    let maximum = new Vertex(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+    this.drawings.forEach(drawing => {
+      const [shapeMin, shapeMax] = drawing.getBounds();
+      if (shapeMin.x <= minimum.x) minimum.x = shapeMin.x;
+      if (shapeMin.y <= minimum.y) minimum.y = shapeMin.y;
+      if (shapeMax.x >= maximum.x) maximum.x = shapeMax.x;
+      if (shapeMax.y >= maximum.y) maximum.y = shapeMax.y;
+    })
+    return [minimum, maximum]
   }
 
   public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
@@ -3392,11 +3431,11 @@ export class ShapeCollection {
     return inTranslation
   }
 
-  public mouseDown(mouseCoords: Vertex): any {
+  public mouseDown(mouseCoords: Vertex): any { // TODO: refactor this. Code is insane
     let clickedObject: any = null;
     this.drawings.forEach(drawing => {
       drawing.mouseDown(mouseCoords);
-      if (drawing.isHovered) clickedObject = drawing;
+      if (drawing.isHovered) clickedObject = drawing; // this is insane
     });
     return clickedObject
   }
@@ -3419,7 +3458,7 @@ export class ShapeCollection {
 export class GroupCollection extends ShapeCollection {
   constructor(
     public drawings: any[] = [],
-    public frame: DOMMatrix = new DOMMatrix()
+    public frame: DOMMatrix =  new DOMMatrix([1, 0, 0, 1, 0, 0])
   ) {
     super(drawings, frame);
   }

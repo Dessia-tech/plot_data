@@ -1418,18 +1418,18 @@ export class newShape {
     context.save();
     context.resetTransform();
     context.lineWidth = 10;
-    if (this.isScaled) context.scale(this.inStrokeScale.x, this.inStrokeScale.y)
-    const isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
+    let isHovered = false;
+    if (this.isScaled) {
+      context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
+      isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
+    } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
     context.restore();
     return isHovered
   }
 
   public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
 
-  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
-    this.isHovered = this.isPointInShape(context, mouseCoords);
-    return false
-  }
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void { this.isHovered = this.isPointInShape(context, mouseCoords) }
 
   public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
     this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
@@ -2704,13 +2704,12 @@ export class SelectionBox extends newRect {
     }
   }
 
-  mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
-    const mouseMoveBool = super.mouseMove(context, mouseCoords);
+  mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
+    super.mouseMove(context, mouseCoords);
     if (!(this.leftUpdate || this.rightUpdate || this.downUpdate || this.upUpdate) && this.isClicked) {
       const translation = mouseCoords.subtract(this.mouseClick);
       this.minVertex = this._previousMin.add(translation);
       this.maxVertex = this._previousMax.add(translation);
-      return false
     }
     if (this.leftUpdate) this.minVertex.x = Math.min(this._previousMax.x, mouseCoords.x);
     if (this.rightUpdate) this.maxVertex.x = Math.max(this._previousMin.x, mouseCoords.x);
@@ -2722,7 +2721,6 @@ export class SelectionBox extends newRect {
       if (this.minVertex.y == this._previousMax.y) this.maxVertex.y = mouseCoords.y;
       if (this.maxVertex.y == this._previousMin.y) this.minVertex.y = mouseCoords.y;
     }
-    return mouseMoveBool
   }
 
   public mouseUp(context: CanvasRenderingContext2D, keepState: boolean) {
@@ -3220,7 +3218,7 @@ export class newAxis extends newShape{
 
   protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void {}
 
-  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
     super.mouseMove(context, mouseCoords);
     this.boundingBox.mouseMove(context, mouseCoords);
     this.title.mouseMove(context, mouseCoords.scale(this.initScale));
@@ -3228,7 +3226,6 @@ export class newAxis extends newShape{
       if (this.isClicked && !this.title.isClicked) this.mouseMoveClickedArrow(mouseCoords)
       else if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords);
     }
-    return false
   }
 
   public mouseMoveClickedArrow(mouseCoords: Vertex): void {
@@ -3268,10 +3265,6 @@ export class newAxis extends newShape{
     this.rubberBand.mouseUp();
     if (this.is_drawing_rubberband) this.emitter.emit("rubberBandChange", this.rubberBand);
     this.is_drawing_rubberband = false;
-  }
-
-  protected isInTitleBox(context, coords: Vertex): boolean {
-    return this.title.boundingBox.isPointInShape(context, coords)
   }
 
   protected clickOnTitle(mouseDown: Vertex): void { this.title.mouseDown(mouseDown); this.title.isClicked = true }
@@ -3537,10 +3530,8 @@ export class ShapeCollection {
     this.drawings.forEach(drawing => { if (!inMultiPlot && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
   }
 
-  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): boolean {
-    let inTranslation = false;
-    this.drawings.forEach(drawing => inTranslation = inTranslation || drawing.mouseMove(context, mouseCoords));
-    return inTranslation
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
+    this.drawings.forEach(drawing => drawing.mouseMove(context, mouseCoords));
   }
 
   public mouseDown(mouseCoords: Vertex): any { // TODO: refactor this. Code is insane

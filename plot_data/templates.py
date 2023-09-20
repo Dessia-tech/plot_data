@@ -66,7 +66,7 @@ SCATTER_COMMANDS = """
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 CONTOUR_COMMANDS = """
-            var plot_data = new PlotData.Draw(data, width, height, true, 0, 0, $canvas_id.id);
+            var plot_data = new PlotData.PlotContour(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""

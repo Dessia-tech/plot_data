@@ -2,7 +2,6 @@ import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
 import { string_to_rgb, colorHex, color_to_string, isHex, isRgb, string_to_hex, rgb_to_string, hslToArray, colorHsl } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
-import { Circle2D } from "./primitives";
 
 export class Axis {
   color_stroke: any;
@@ -1364,7 +1363,10 @@ export class newShape {
       wire.hasTooltip = false;
       return wire
     }
-    throw new Error(`${data.type_} is shape is not implemented.`);
+    if (data.type_ == "point") return newPoint2D.deserialize(data);
+    if (data.type_ == "arc") return Arc.deserialize(data);
+    if (data.type_ == "text") return newText.deserialize(data);
+    throw new Error(`${data.type_} deserialization is not implemented.`);
   }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
@@ -1921,6 +1923,24 @@ export class newText extends newShape {
     return `${style} ${fontsize}px ${font}`
   }
 
+  public static deserialize(data: any): newText {
+    const style = `${data.text_style?.bold ? "bold" : ""}${data.text_style?.bold || data.text_style?.italic ? " " : ""}${data.text_style?.italic ? "italic" : ""}`;
+    const textParams: TextParams = {
+      width: data.max_width ?? null,
+      fontsize: data.text_style?.font_size ?? null,
+      multiLine: data.multi_line ?? false,
+      font: data.text_style?.font ?? 'sans-serif',
+      align: data.text_style?.text_align_x ?? "left",
+      baseline: data.text_style?.text_align_y ?? "alphabetic",
+      style: style,
+      orientation: data.text_style?.angle ?? 0,
+      color: data.text_style?.text_color ?? "hsl(0, 0%, 0%)"
+    };
+    const text = new newText(data.comment, new Vertex(data.position_x, data.position_x), textParams);
+    text.isScaled = data.text_scaling ?? false;
+    return text
+  }
+
   get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
@@ -2177,6 +2197,12 @@ export class newPoint2D extends newShape {
     this.strokeStyle = strokeStyle || this.setStrokeStyle(this.fillStyle);
     this.lineWidth = 1;
   };
+
+  public static deserialize(data: any): newPoint2D {
+    const point = new newPoint2D(data.cx, data.cy);
+    point.updateStyle(new newPointStyle(data.point_style));
+    return point
+  }
 
   public updateStyle(style: newPointStyle): void {
     this.size = style.size ?? this.size;

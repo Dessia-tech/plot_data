@@ -1720,6 +1720,29 @@ export class Figure extends PlotData {
     return isRubberBanded
   }
 
+  public drawInZone(context: CanvasRenderingContext2D): void {
+    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    this.updateDrawnObjects(context);
+    this.updateCuttingZone(context);
+    const cutDraw = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
+    context.globalCompositeOperation = "source-over";
+    context.putImageData(previousCanvas, 0, 0);
+    context.putImageData(cutDraw, this.X, this.Y);
+  }
+
+  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {}
+
+  protected updateCuttingZone(context: CanvasRenderingContext2D): void {
+    context.globalCompositeOperation = "destination-in";
+    context.fill(this.cuttingZone.path);
+  }
+
+  protected get cuttingZone(): newRect {
+    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
+    const axesEnd = new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
+    return new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
+  }
+
   protected drawFixedObjects(context: CanvasRenderingContext2D): void { this.fixedObjects.draw(context) }
 
   private drawZoneRectangle(context: CanvasRenderingContext2D): void {
@@ -2622,25 +2645,21 @@ export class newGraph2D extends newScatter {
     this.is_in_multiplot = inMultiplot;
   }
 
-  public drawCurves(context: CanvasRenderingContext2D): void {
-    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
-    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
-    const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
-    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
     this.curves.forEach((curve, curveIndex) => {
       curve.update(this.curvesIndices[curveIndex].map(index => { return this.points[index] }));
       curve.draw(context);
     })
-    context.globalCompositeOperation = "destination-in";
-    context.fill(drawingZone.path);
-    const cutGraph = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
-    context.globalCompositeOperation = "source-over";
-    context.putImageData(previousCanvas, 0, 0);
-    context.putImageData(cutGraph, this.X, this.Y);
+  }
+
+  protected get cuttingZone(): newRect {
+    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
+    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
+    return new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
-    this.drawCurves(context);
+    this.drawInZone(context);
     if (this.showPoints) {
       super.drawAbsoluteObjects(context);
       this.absoluteObjects.drawings = [...this.curves, ...this.absoluteObjects.drawings];
@@ -2851,23 +2870,13 @@ export class newParallelPlot extends Figure {
     return A.filter(x => !B.includes(x))
   }
 
-  public updateCurveDrawings(context: CanvasRenderingContext2D): void {
-    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
     this.updateCurves();
     this.drawCurves(context);
-    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
-    const axesEnd = new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
-    const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
-    context.globalCompositeOperation = "destination-in";
-    context.fill(drawingZone.path);
-    const cutGraph = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
-    context.globalCompositeOperation = "source-over";
-    context.putImageData(previousCanvas, 0, 0);
-    context.putImageData(cutGraph, this.X, this.Y);
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
-    this.updateCurveDrawings(context);
+    this.drawInZone(context);
     this.absoluteObjects = new GroupCollection([...this.curves]);
   }
 
@@ -2967,7 +2976,15 @@ export class Draw extends Frame {
     ])
   }
 
-  protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.relativeObjects.draw(context) }
+  protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.drawInZone(context) }
+
+  protected updateDrawnObjects(context: CanvasRenderingContext2D): void { this.relativeObjects.draw(context) }
+
+  protected get cuttingZone(): newRect {
+    const axesOrigin = this.axes[0].origin.transform(this.frameMatrix.inverse());
+    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.frameMatrix.inverse());
+    return new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
+  }
 
   protected axisEqual(): void {
     if (this.axes[0].drawLength > this.axes[1].drawLength) this.axes[0].otherAxisScaling(this.axes[1])

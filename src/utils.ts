@@ -1504,6 +1504,8 @@ export class newRect extends newShape {
     this.origin = this.origin.add(translation);
     this.buildPath();
   }
+
+  public getBounds(): [Vertex, Vertex] { return [this.origin, this.origin.add(new Vertex(Math.abs(this.size.x), Math.abs(this.size.y)))] }
 }
 
 export class newRoundRect extends newRect {
@@ -1550,6 +1552,12 @@ export class Mark extends newShape {
     this.path.moveTo(this.center.x, this.center.y - halfSize);
     this.path.lineTo(this.center.x, this.center.y + halfSize);
   }
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
+  }
 }
 
 export abstract class AbstractHalfLine extends newShape {
@@ -1562,6 +1570,11 @@ export abstract class AbstractHalfLine extends newShape {
     this.isFilled = false;
     this.buildPath();
   }
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)] }
 }
 
 export class UpHalfLine extends AbstractHalfLine {
@@ -1619,7 +1632,7 @@ export class HalfLine extends AbstractHalfLine {
   }
 }
 
-export class LineSegment extends newShape {
+export class Line extends newShape { // TODO: Does not work => make it work
   constructor(
     public origin: Vertex = new Vertex(0, 0),
     public end: Vertex = new Vertex(0, 0)
@@ -1627,27 +1640,6 @@ export class LineSegment extends newShape {
     super();
     this.isFilled = false;
     this.buildPath();
-  }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    this.path.moveTo(this.origin.x, this.origin.y);
-    this.path.lineTo(this.end.x, this.end.y);
-  }
-
-  public static deserialize(data: any): LineSegment {
-    const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    if (data.edge_style) {}
-    return line
-  }
-}
-
-export class Line extends LineSegment { // TODO: Does not work => make it work
-  constructor(
-    public origin: Vertex = new Vertex(0, 0),
-    public end: Vertex = new Vertex(0, 0)
-  ) {
-    super(origin, end);
   }
 
   private computeSlope(): number {
@@ -1670,6 +1662,29 @@ export class Line extends LineSegment { // TODO: Does not work => make it work
   }
 }
 
+export class LineSegment extends Line {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public end: Vertex = new Vertex(0, 0)
+  ) {
+    super(origin, end);
+  }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.path.moveTo(this.origin.x, this.origin.y);
+    this.path.lineTo(this.end.x, this.end.y);
+  }
+
+  public static deserialize(data: any): LineSegment {
+    const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    if (data.edge_style) {}
+    return line
+  }
+
+  public getBounds(): [Vertex, Vertex] { return [this.origin, this.end] }
+}
+
 export abstract class AbstractLinePoint extends newShape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
@@ -1679,6 +1694,12 @@ export abstract class AbstractLinePoint extends newShape {
     super();
     this.isFilled = false;
     this.buildPath();
+  }
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
   }
 }
 
@@ -1755,6 +1776,12 @@ export class Cross extends newShape {
     this.path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
     this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
   }
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
+  }
 }
 
 export abstract class AbstractTriangle extends newShape {
@@ -1767,6 +1794,12 @@ export abstract class AbstractTriangle extends newShape {
     this.buildPath();
   }
   public abstract buildPath(): void;
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
+  }
 }
 
 export class UpTriangle extends AbstractTriangle {
@@ -1855,6 +1888,19 @@ export class Contour extends newShape {
     this.path = new Path2D();
     this.lines.forEach(line => this.path.addPath(line.path));
   }
+
+  public getBounds(): [Vertex, Vertex] {
+    let minimum = new Vertex(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
+    let maximum = new Vertex(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
+    this.lines.forEach(line => {
+      const [shapeMin, shapeMax] = line.getBounds();
+      if (shapeMin.x <= minimum.x) minimum.x = shapeMin.x;
+      if (shapeMin.y <= minimum.y) minimum.y = shapeMin.y;
+      if (shapeMax.x >= maximum.x) maximum.x = shapeMax.x;
+      if (shapeMax.y >= maximum.y) maximum.y = shapeMax.y;
+    })
+    return [minimum, maximum]
+  }
 }
 
 export interface TextParams {
@@ -1908,6 +1954,8 @@ export class newText extends newShape {
       this.boundingBox = new newRect(origin, new Vertex(width, height));
       this.boundingBox.fillStyle = backgroundColor;
       this.boundingBox.strokeStyle = backgroundColor;
+      this.width = width;
+      this.height = height;
       this.fontsize = fontsize;
       this.multiLine = multiLine;
       this.font = font;
@@ -1928,7 +1976,7 @@ export class newText extends newShape {
     const textParams: TextParams = {
       width: data.max_width ?? null,
       fontsize: data.text_style?.font_size ?? null,
-      multiLine: data.multi_line ?? false,
+      multiLine: data.multi_lines ?? false,
       font: data.text_style?.font ?? 'sans-serif',
       align: data.text_style?.text_align_x ?? "left",
       baseline: data.text_style?.text_align_y ?? "alphabetic",
@@ -1936,12 +1984,17 @@ export class newText extends newShape {
       orientation: data.text_style?.angle ?? 0,
       color: data.text_style?.text_color ?? "hsl(0, 0%, 0%)"
     };
-    const text = new newText(data.comment, new Vertex(data.position_x, data.position_x), textParams);
+    const text = new newText(data.comment, new Vertex(data.position_x, data.position_y), textParams);
     text.isScaled = data.text_scaling ?? false;
     return text
   }
 
   get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
+
+  public getBounds(): [Vertex, Vertex] {
+    // this.buildPath();
+    return this.boundingBox.getBounds()
+  }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let pxMaxWidth: number = this.boundingBox.size.x * this.scale;
@@ -1973,13 +2026,17 @@ export class newText extends newShape {
   }
 
   public buildPath(): void {
+    this.boundingBox.buildPath();
+    this.path = this.boundingBox.path;
+  }
+
+  private computeBoundingBox(contextMatrix: DOMMatrix): void {
     this.boundingBox.origin = this.origin.copy();
     this.boundingBox.origin.x += this.setRectOffsetX();
     this.boundingBox.origin.y += this.setRectOffsetY() + this.offset;
     this.boundingBox.size.x = this.width;
     this.boundingBox.size.y = this.computeRectHeight();
-    this.boundingBox.buildPath();
-    this.path = this.boundingBox.path;
+    this.boundingBox.fillStyle = "hsl(0,0,30%)"
   }
 
   public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
@@ -1988,13 +2045,16 @@ export class newText extends newShape {
 
   public draw(context: CanvasRenderingContext2D): void {
     if (this.text) {
-      this.words = this.getWords();
+      const contextMatrix = context.getTransform();
       context.save();
+      // context.resetTransform();
+      // context.scale(Math.sign(contextMatrix.a), Math.sign(contextMatrix.d))
       this.setBoundingBoxState();
       const writtenText = this.format(context);
       this.computeOffsetY();
+      this.computeBoundingBox(contextMatrix);
       this.buildPath();
-      this.boundingBox.draw(context)
+      this.boundingBox.draw(context);
 
       context.font = this.fullFont;
       context.textAlign = this.align as CanvasTextAlign;
@@ -2004,6 +2064,7 @@ export class newText extends newShape {
       context.globalAlpha = this.alpha;
       context.translate(this.origin.x, this.origin.y);
       context.rotate(Math.PI / 180 * this.orientation);
+      // context.scale(1 / contextMatrix.a, 1 / contextMatrix.d)
       this.write(writtenText, context);
       context.restore();
     }
@@ -2016,27 +2077,26 @@ export class newText extends newShape {
   }
 
   public updateParameters(textParams: TextParams): void {
-    if (textParams.width) this.boundingBox.size.x = textParams.width;
-    if (textParams.height) this.boundingBox.size.y = textParams.height;
-    if (textParams.fontsize) this.fontsize = textParams.fontsize;
-    if (textParams.multiLine) this.multiLine = textParams.multiLine;
-    if (textParams.font) this.font = textParams.font;
-    if (textParams.align) this.align = textParams.align;
-    if (textParams.baseline) this.baseline = textParams.baseline;
-    if (textParams.style) this.style = textParams.style;
-    if (textParams.orientation) this.orientation = textParams.orientation;
-    if (textParams.backgroundColor) this.boundingBox.fillStyle = textParams.backgroundColor;
-    if (textParams.color) this.fillStyle = textParams.color;
+    this.boundingBox.size.x = textParams.width ?? null;
+    this.boundingBox.size.y = textParams.height ?? null;
+    this.fontsize = textParams.fontsize ?? 12;
+    this.multiLine = textParams.multiLine ?? false;
+    this.font = textParams.font ?? "sans-serif";
+    this.align = textParams.align ?? "left";
+    this.baseline = textParams.baseline ?? "alphabetic";
+    this.style = textParams.style ?? "";
+    this.orientation = textParams.orientation ?? 0;
+    this.boundingBox.fillStyle = textParams.backgroundColor ?? "hsla(0, 0%, 100%, 0)";
+    this.fillStyle = textParams.color ?? "hsl(0, 0%, 0%)";
   }
 
   private write(writtenText: string[], context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle;
-    if (writtenText.length != 1) {
-      const nRows: number = writtenText.length - 1;
-      writtenText.forEach((row, index) => context.fillText(index == 0 ? newText.capitalize(row) : row, 0, (index - nRows) * this.fontsize + this.offset));
-    } else {
-      context.fillText(newText.capitalize(writtenText[0]), 0, this.offset);
-    }
+    const nRows = writtenText.length - 1;
+    if (nRows != 0) writtenText.forEach((row, index) => {
+      context.fillText(index == 0 ? newText.capitalize(row) : row, 0, (index - nRows) * this.fontsize + this.offset)
+    })
+    else context.fillText(newText.capitalize(writtenText[0]), 0, this.offset);
   }
 
   public removeEndZeros(): void {
@@ -2110,7 +2170,8 @@ export class newText extends newShape {
   private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
     const rows: string[] = [];
     let pickedWords = 0;
-    while (pickedWords < this.words.length) {
+    let count = 0;
+    while (pickedWords < this.words.length && count < 100) {
       let newRow = '';
       while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
         if (context.measureText(newRow + this.words[pickedWords]).width > this.boundingBox.size.x) break
@@ -2120,6 +2181,7 @@ export class newText extends newShape {
         }
       }
       if (newRow.length != 0) rows.push(newRow);
+      count++;
     }
     return this.cleanStartAllRows(rows)
   }
@@ -2127,14 +2189,19 @@ export class newText extends newShape {
   private cleanStartAllRows(rows: string[]): string[] { return rows.map(row => row.trimStart()) }
 
   private autoFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
+    let increment = 1;
     let rows = [];
     let criterion = Number.POSITIVE_INFINITY;
-    while (criterion > this.boundingBox.size.y && fontsize > 1) {
+    let count = 0;
+    while (criterion > this.boundingBox.size.y && fontsize > 1 && count < 100) {
       context.font = newText.buildFont(this.style, fontsize, this.font);
       rows = this.fixedFontSplit(context);
       criterion = fontsize * rows.length;
+      // if (fontsize <= 1 * increment) increment /= 10;
       fontsize--;
+      count++;
     }
+    console.log(fontsize)
     return [rows, fontsize + 1]
   }
 }
@@ -2243,8 +2310,8 @@ export class newPoint2D extends newShape {
     if (CROSSES.includes(this.marker)) marker = new Cross(this.center, this.size);
     if (SQUARES.includes(this.marker)) {
       const halfSize = this.size * 0.5;
-      const origin = new Vertex(this.center.x - halfSize, this.center.y - halfSize)
-      marker = new newRect(origin, new Vertex(this.size, this.size))
+      const origin = new Vertex(this.center.x - halfSize, this.center.y - halfSize);
+      marker = new newRect(origin, new Vertex(this.size, this.size));
     };
     if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center, this.size, this.markerOrientation);
     if (this.marker == 'halfLine') marker = new HalfLine(this.center, this.size, this.markerOrientation);
@@ -3544,7 +3611,7 @@ export class ShapeCollection {
     let maximum = new Vertex(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
     this.drawings.forEach(drawing => {
       const [shapeMin, shapeMax] = drawing.getBounds();
-      if (shapeMin.x <= minimum.x) minimum.x = shapeMin.x;
+      if (shapeMin.x <= minimum.x) minimum.x = shapeMin.x; //for NaN reasons, must change
       if (shapeMin.y <= minimum.y) minimum.y = shapeMin.y;
       if (shapeMax.x >= maximum.x) maximum.x = shapeMax.x;
       if (shapeMax.y >= maximum.y) maximum.y = shapeMax.y;
@@ -3574,6 +3641,23 @@ export class ShapeCollection {
   }
 
   public draw(context: CanvasRenderingContext2D): void { this.drawings.forEach(drawing => drawing.draw(context)) }
+
+  public updateBounds(context: CanvasRenderingContext2D): void {
+    this.drawings.forEach(drawing => {
+      // if (drawing instanceof newText) {
+      //   drawing.format(context);
+      //   const [textMin, textMax] = drawing.getBounds();
+      //   this.minimum.x = Math.min(this.minimum.x, textMin.x);
+      //   this.minimum.y = Math.min(this.minimum.y, textMin.y);
+      //   this.maximum.x = Math.max(this.maximum.x, textMax.x);
+      //   this.maximum.y = Math.max(this.maximum.y, textMax.y);
+      // }
+    })
+    if (Number.isNaN(this.minimum.x)) this.minimum.x = this.maximum.x - 1;
+    if (Number.isNaN(this.minimum.y)) this.minimum.y = this.maximum.y - 1;
+    if (Number.isNaN(this.maximum.x)) this.maximum.x = this.maximum.x + 1;
+    if (Number.isNaN(this.maximum.y)) this.maximum.y = this.maximum.y + 1;
+  }
 
   public updateSampleStates(stateName: string): number[] {
     const newSampleStates = [];

@@ -2965,6 +2965,11 @@ export class Draw extends Frame {
       this.axisEqual();
       this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.frameMatrix);
     }
+
+  public define_canvas(canvas_id: string):void {
+    super.define_canvas(canvas_id);
+    // this.computeTextBorders(this.context_show);
+  }
   
   protected unpackData(data: any): Map<string, any[]> {
     const drawing = ShapeCollection.fromPrimitives(data.primitives);
@@ -2974,6 +2979,20 @@ export class Draw extends Frame {
       ["y", [minimum.y * DRAW_BOUNDS_FACTOR, maximum.y * DRAW_BOUNDS_FACTOR]],
       ["shapes", drawing.drawings]
     ])
+  }
+
+  protected computeTextBorders(context: CanvasRenderingContext2D) {
+    this.relativeObjects.updateBounds(context);
+    this.updateBounds();
+  }
+
+  public updateBounds(): void {
+    this.axes[0].minValue = this.features.get("x")[0] = Math.min(this.features.get("x")[0], this.relativeObjects.minimum.x * DRAW_BOUNDS_FACTOR);
+    this.axes[1].minValue = this.features.get("y")[0] = Math.min(this.features.get("y")[0], this.relativeObjects.minimum.y * DRAW_BOUNDS_FACTOR);
+    this.axes[0].maxValue = this.features.get("x")[1] = Math.max(this.features.get("x")[1], this.relativeObjects.maximum.x * DRAW_BOUNDS_FACTOR);
+    this.axes[1].maxValue = this.features.get("y")[1] = Math.max(this.features.get("y")[1], this.relativeObjects.maximum.y * DRAW_BOUNDS_FACTOR);
+    this.axes.forEach(axis => axis.saveLocation());
+    this.axisEqual();
   }
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.drawInZone(context) }

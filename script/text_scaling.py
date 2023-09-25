@@ -40,7 +40,7 @@ class Box:
         text = plot_data.Text(comment=self.name, position_x=0.,
                               position_y=pos_y, text_style=text_style,
                               text_scaling=True, max_width=self.length,
-                              multi_lines=True)
+                              height=self.height, multi_lines=True)
 
         return [plot_data.PrimitiveGroup(primitives=[plot_data_contour, text])]
 

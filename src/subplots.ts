@@ -1496,7 +1496,7 @@ export class Figure extends PlotData {
   protected margin: Vertex;
   protected _offsetFactor: Vertex;
   protected _marginFactor: Vertex;
-  protected initScale: Vertex = new Vertex(-1, 1);
+  protected initScale: Vertex = new Vertex(1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   readonly features: Map<string, any[]>;
@@ -1525,7 +1525,7 @@ export class Figure extends PlotData {
       this.pointSets = new Array(this.nSamples).fill(-1);
       this.drawnFeatures = this.setFeatures(data);
       this.axes = this.setAxes();
-      this.fixedObjects = new ShapeCollection(this.axes, this.canvasMatrix);
+      this.fixedObjects = new ShapeCollection(this.axes);
       this.relativeObjects = new GroupCollection();
       this.absoluteObjects = new GroupCollection();
     }
@@ -1536,6 +1536,8 @@ export class Figure extends PlotData {
     this.minY = this.origin.y;
     this.maxY = this.origin.y + this.size.y;
   }
+
+  get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
 
   set axisStyle(newAxisStyle: Map<string, any>) { newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
 
@@ -1751,7 +1753,7 @@ export class Figure extends PlotData {
   }
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) {
-    this.relativeObjects = new GroupCollection([], this.relativeMatrix);
+    this.relativeObjects = new GroupCollection([]);
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D) { this.absoluteObjects = new GroupCollection() }
@@ -2963,7 +2965,7 @@ export class Draw extends Frame {
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       this.axisEqual();
-      this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.frameMatrix);
+      this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives);
     }
 
   public define_canvas(canvas_id: string):void {

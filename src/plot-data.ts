@@ -25,7 +25,6 @@ export abstract class PlotData extends EventEmitter {
   init_scale:number=1;
   init_scaleX:number=1;
   init_scaleY:number=1;
-  scale:number=1;
   scaleX:number=1;
   scaleY:number=1;
   scroll_x:number=0;
@@ -275,7 +274,6 @@ export abstract class PlotData extends EventEmitter {
 
   reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.maxX - this.minX), this.height/(this.maxY - this.minY));
-    this.scale = this.init_scale;
     if ((this.axis_ON) && !(this.graph_ON)) { // rescale and avoid axis
       this.init_scaleX = 0.95*(this.width - this.decalage_axis_x - 2*this.pointLength)/(this.maxX - this.minX);
       this.init_scaleY = 0.95*(this.height - this.decalage_axis_y - 2*this.pointLength)/(this.maxY - this.minY);
@@ -2120,8 +2118,8 @@ export abstract class PlotData extends EventEmitter {
       if (this.select_on_mouse !== old_select_on_mouse) {
       } else if (this.select_on_mouse && ["wire", "contour", "circle"].includes(this.select_on_mouse["type_"])
                 && this.select_on_mouse["tooltip"]) {
-        this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale,
-          this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
+        // this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale,
+        //   this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
       }
     }
     var is_inside_canvas = (mouse2X>=this.X) && (mouse2X<=this.width + this.X) && (mouse2Y>=this.Y) && (mouse2Y<=this.height + this.Y);

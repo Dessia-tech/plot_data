@@ -1965,22 +1965,20 @@ export class newText extends newShape {
       this.words = this.getWords();
       [this.align, this.baseline] = newText.setAlignments(align, baseline, scale);
       this.scale = scale;
-      console.log(this.text, this.scale)
     }
 
   private static buildFont(style: string, fontsize: number, font: string): string { return `${style} ${fontsize}px ${font}` }
 
   public static deserialize(data: any, scale: Vertex): newText {
     const style = `${data.text_style?.bold ? "bold" : ""}${data.text_style?.bold || data.text_style?.italic ? " " : ""}${data.text_style?.italic ? "italic" : ""}`;
-    const [align, baseline] = newText.setAlignments(data.text_style.text_align_x, data.text_style.text_align_y, scale);
     const textParams: TextParams = {
       width: data.max_width ?? null,
       height: data.height ?? null,
       fontsize: data.text_style?.font_size ?? null,
       multiLine: data.multi_lines ?? false,
       font: data.text_style?.font ?? 'sans-serif',
-      align: align,
-      baseline: baseline ?? "alphabetic",
+      align: data.text_style.text_align_x,
+      baseline: ["top", "hanging"].includes(data.text_style.text_align_y) ? (scale.y == 1 ? "bottom" : "top") : ["bottom", "alphabetic"].includes(data.text_style.text_align_y) ? (scale.y == 1 ? "top" : "bottom") : "middle",
       style: style,
       orientation: data.text_style?.angle ?? 0,
       color: data.text_style?.text_color ?? "hsl(0, 0%, 0%)"
@@ -2014,7 +2012,6 @@ export class newText extends newShape {
         }
       }
     if (scale.y > 0) {
-      console.log(baseline)
       switch (baseline) {
         case "top":
           baseline = "bottom";
@@ -2050,30 +2047,24 @@ export class newText extends newShape {
 
   private setRectOffsetX(): number {
     if (this.align == "center") return -this.width / 2;
-    if (["right", "end"].includes(this.align)) return -this.width;
+    if ((["right", "end"].includes(this.align) && this.scale.x == 1) || (["left", "start"].includes(this.align) && this.scale.x == -1)) return -this.width;
     return 0;
-    // return this.scale.x == -1 ? -this.width : 0;
   }
 
   private computeOffsetY(): void {
-    if (this.multiLine) {
-      if (["top", "hanging"].includes(this.baseline)) this.offset = this.height - this.boundingBox.size.y - this.fontsize
-      else if (this.baseline == 'middle') this.offset = (this.height - this.fontsize) / 2;
-      else this.offset = 0;
-    }
+    // if (this.multiLine) {
+      // if ((["top", "hanging"].includes(this.baseline) && this.scale.y == -1) || (["bottom", "alphabetic"].includes(this.align) && this.scale.y == 1)) this.offset = this.height - this.boundingBox.size.y - this.fontsize
+      // else if (this.baseline == 'middle') this.offset = (this.height - this.fontsize) / 2;
+      // else this.offset = 0;
+    // }
   }
 
   private setRectOffsetY(): number {
-    if (this.baseline == "middle") return this.nRows == 1 ? -this.height / 2 : -this.height + this.fontsize / 2;
-    if (["top", "hanging"].includes(this.baseline)) return -this.height + this.fontsize;
+    console.log(this.text, this.align, this.baseline, this.scale.y, this.height)
+    if (this.baseline == "middle") return this.scale.y == -1 ? -this.fontsize / 2 : -this.height + this.fontsize / 2;
+    if (["top", "hanging"].includes(this.baseline)) return -this.fontsize * (this.nRows - 1);
+    if (["bottom", "alphabetic"].includes(this.baseline)) return this.fontsize * (this.nRows - 1);
     return 0;
-    // console.log(this.text, this.scale)
-    // return this.scale.y == -1 ? this.height : 0;
-  }
-
-  private computeRectHeight(): number {
-    if (["alphabetic", "bottom"].includes(this.baseline)) return -this.height;
-    return this.height;
   }
 
   public buildPath(): void {
@@ -2081,7 +2072,7 @@ export class newText extends newShape {
     this.boundingBox.origin.x += this.setRectOffsetX();
     this.boundingBox.origin.y += this.setRectOffsetY() + this.offset;
     this.boundingBox.size.x = this.width;
-    this.boundingBox.size.y = this.computeRectHeight();
+    this.boundingBox.size.y = this.height;
     this.boundingBox.fillStyle = "hsl(203, 90%, 85%)";
     this.boundingBox.buildPath();
     this.path = this.boundingBox.path;

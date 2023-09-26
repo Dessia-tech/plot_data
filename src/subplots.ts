@@ -1496,7 +1496,7 @@ export class Figure extends PlotData {
   protected margin: Vertex;
   protected _offsetFactor: Vertex;
   protected _marginFactor: Vertex;
-  protected initScale: Vertex = new Vertex(-1, 1);
+  protected initScale: Vertex = new Vertex(1, 1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   readonly features: Map<string, any[]>;
@@ -2965,12 +2965,12 @@ export class Draw extends Frame {
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       this.axisEqual();
-      this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives);
+      this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.scale);
     }
 
   public define_canvas(canvas_id: string):void {
     super.define_canvas(canvas_id);
-    // this.computeTextBorders(this.context_show);
+    this.computeTextBorders(this.context_show);
   }
   
   protected unpackData(data: any): Map<string, any[]> {

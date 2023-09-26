@@ -52,16 +52,25 @@ font_size = None
 primitives = []
 name = ("Super ! Ce grand texte se comporte exactement comme je l'attends ! Sauf pour les cas très ambigüs pour " +
         "lesquels il a bien fallu choisir un compromis, arbitraire :)")
-for i in range(nb_boxes):
+for i in range(1):
     primitives.extend(Box(length=length, height=height,
                       font_size=font_size, name=name).plot_data(i * 1.5 * height)[0].primitives)
 
 text_style = plot_data.TextStyle(text_color='rgb(100, 100, 100)', font_size=20)
-text = plot_data.Text(comment="Ce texte doit s'afficher dans le canvas, pas nécessairement centré sur le canvas",
-                      position_x=50., position_y=100, text_style=text_style,
-                      multi_lines=True, text_scaling=True, height=12, max_width=20)
+no_height_no_width = plot_data.Text(comment="Text_ with no height_nor /width and quite long..." * 4,
+                                    position_x=250., position_y=40, text_style=text_style,
+                                    multi_lines=True, text_scaling=True)
+height_no_width = plot_data.Text(comment="Text_ with height_and no[ /width and quite long..." * 4,
+                                 position_x=150., position_y=100, text_style=text_style,
+                                 multi_lines=True, text_scaling=True, height=15)
+height_width = plot_data.Text(comment="Text_ with height and ;width and, quite long..." * 4,
+                              position_x=-50., position_y=150, text_style=text_style,
+                              multi_lines=True, text_scaling=True, height=40, max_width=100)
+no_height_width = plot_data.Text(comment="Text_ with no, height_and[ /width and quite long..." * 4,
+                                 position_x=50., position_y=200, text_style=text_style,
+                                 multi_lines=True, text_scaling=True, max_width=100)
 
-ff = [text, text]
+ff = [no_height_no_width, height_no_width, height_width, no_height_width]
 plot_data_object = plot_data.PrimitiveGroup(primitives=primitives + ff)
 plot_data.plot_canvas(plot_data_object, debug_mode=True)
-plot_data.plot_canvas(plot_data.PrimitiveGroup(primitives=ff), debug_mode=True)
+# plot_data.plot_canvas(plot_data.PrimitiveGroup(primitives=ff), debug_mode=True)

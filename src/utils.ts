@@ -3524,18 +3524,8 @@ export class ParallelAxis extends newAxis {
   }
 
   public setTitleSettings(): void {
-    this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
-  }
-
-  private horizontalTitleProperties(): void {
     if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleZone.origin.y + this.titleZone.size.y;
-    this.titleSettings.baseline = this.initScale.y > 0 ? "bottom" : "top";
-    this.titleSettings.orientation = 0;
-  }
-
-  private verticalTitleProperties(): void {
-    if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleZone.origin.y + this.titleZone.size.y;
-    this.titleSettings.baseline = this.initScale.y > 0 ? "top" : "bottom";
+    this.titleSettings.baseline = this.isVertical ? "bottom" : "top";
     this.titleSettings.orientation = 0;
   }
 
@@ -3553,11 +3543,11 @@ export class ParallelAxis extends newAxis {
     this.titleZone.size.y -= offset;
     this.titleZone.buildPath();
     this.titleSettings.origin = this.titleZone.origin.copy();
-    this.titleSettings.align = this.initScale.x > 0 ? "left" : "right";
+    this.titleSettings.align = "left";
 
     if (index != 0) {
       if (this.isVertical) {
-        this.titleSettings.align = index == nAxis - 1 ? (this.initScale.x > 0 ? "right" : "left") : "center";
+        this.titleSettings.align = index == nAxis - 1 ? "right" : "center";
         this.titleSettings.origin.x += (index == nAxis - 1 ? 1 : 0.5) * this.boundingBox.size.x ;
       }
     }

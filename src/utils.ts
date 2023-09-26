@@ -1945,7 +1945,7 @@ export class newText extends newShape {
       multiLine = false,
       font = 'sans-serif',
       align = 'left',
-      baseline = 'alphabetic',
+      baseline = 'top',
       style = '',
       orientation = 0,
       color = "hsl(0, 0%, 0%)",
@@ -1963,7 +1963,8 @@ export class newText extends newShape {
       this.orientation = orientation;
       this.fillStyle = color;
       this.words = this.getWords();
-      [this.align, this.baseline] = newText.setAlignments(align, baseline, scale);
+      this.align = align;
+      this.baseline = baseline;
       this.scale = scale;
     }
 
@@ -1972,16 +1973,16 @@ export class newText extends newShape {
   public static deserialize(data: any, scale: Vertex): newText {
     const style = `${data.text_style?.bold ? "bold" : ""}${data.text_style?.bold || data.text_style?.italic ? " " : ""}${data.text_style?.italic ? "italic" : ""}`;
     const textParams: TextParams = {
-      width: data.max_width ?? null,
-      height: data.height ?? null,
-      fontsize: data.text_style?.font_size ?? null,
-      multiLine: data.multi_lines ?? false,
-      font: data.text_style?.font ?? 'sans-serif',
+      width: data.max_width,
+      height: data.height,
+      fontsize: data.text_style?.font_size,
+      multiLine: data.multi_lines,
+      font: data.text_style?.font,
       align: data.text_style.text_align_x,
-      baseline: ["top", "hanging"].includes(data.text_style.text_align_y) ? (scale.y == 1 ? "bottom" : "top") : ["bottom", "alphabetic"].includes(data.text_style.text_align_y) ? (scale.y == 1 ? "top" : "bottom") : "middle",
+      baseline: data.text_style.text_align_y ,
       style: style,
-      orientation: data.text_style?.angle ?? 0,
-      color: data.text_style?.text_color ?? "hsl(0, 0%, 0%)"
+      orientation: data.text_style?.angle,
+      color: data.text_style?.text_color
     };
     const text = new newText(data.comment, new Vertex(data.position_x, data.position_y), textParams);
     text.isScaled = data.text_scaling ?? false;
@@ -1989,120 +1990,87 @@ export class newText extends newShape {
     return text
   }
 
-  private static setAlignments(align: string, baseline: string, scale: Vertex): [string, string] {
-    if (scale.x < 0) {
-      switch (align) {
-        case "right":
-          align = "left";
-          break;
-        case "end":
-          align = "start";
-          break;
-        case "left":
-          align = "right";
-          break;
-        case "start":
-          align = "end";
-          break
-        case "center":
-          break
-        default: 
-          align = "left";
-          break;
-        }
-      }
-    if (scale.y > 0) {
-      switch (baseline) {
-        case "top":
-          baseline = "bottom";
-          break;
-        case "hanging":
-          baseline = "alphabetic";
-          break;
-        case "bottom":
-          baseline = "top";
-          break;
-        case "alphabetic":
-          baseline = "hanging";
-          break
-        case "middle":
-          break
-        default: 
-          baseline = "top";
-          break;
-        }
-    }
-    return [align, baseline]
-  }
-
   get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
 
   public getBounds(): [Vertex, Vertex] { return this.boundingBox.getBounds() }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
-    let pxMaxWidth: number = this.boundingBox.size.x * this.scale.x;
-    context.font = '1px ' + this.font;
-    return Math.min(pxMaxWidth / context.measureText(this.text).width, DEFAULT_FONTSIZE)
+    let fontsize = Math.min(this.boundingBox.size.y ?? Number.POSITIVE_INFINITY, this.fontsize ?? Number.POSITIVE_INFINITY);
+    if (fontsize == Number.POSITIVE_INFINITY) fontsize = DEFAULT_FONTSIZE;
+    if (context.measureText(this.text).width >= this.boundingBox.size.x) fontsize = fontsize * this.boundingBox.size.x / context.measureText(this.text).width;
+    return fontsize
   }
+
+  // private setBoundingBox(origin: Vertex, width: number, height: number, align: string, baseline: string): newRect {
+  //   const boundingBox = new newRect(origin, new Vertex(width, height));
+  //   if (["bottom", "alphabetic"].includes(this.baseline)) 
+  //   return
+  // }
+
+  // private automaticFontSize(context: CanvasRenderingContext2D): number {
+  //   let pxMaxWidth: number = this.boundingBox.size.x * this.scale.x;
+  //   context.font = '1px ' + this.font;
+  //   return Math.min(pxMaxWidth / context.measureText(this.text).width, DEFAULT_FONTSIZE)
+  // }
 
   private setRectOffsetX(): number {
     if (this.align == "center") return -this.width / 2;
+    if (["left", "start"].includes(this.align) && this.scale.x == -1) return this.width;
     if ((["right", "end"].includes(this.align) && this.scale.x == 1) || (["left", "start"].includes(this.align) && this.scale.x == -1)) return -this.width;
     return 0;
   }
 
-  private computeOffsetY(): void {
-    // if (this.multiLine) {
-      // if ((["top", "hanging"].includes(this.baseline) && this.scale.y == -1) || (["bottom", "alphabetic"].includes(this.align) && this.scale.y == 1)) this.offset = this.height - this.boundingBox.size.y - this.fontsize
-      // else if (this.baseline == 'middle') this.offset = (this.height - this.fontsize) / 2;
-      // else this.offset = 0;
-    // }
-  }
-
   private setRectOffsetY(): number {
-    console.log(this.text, this.align, this.baseline, this.scale.y, this.height)
-    if (this.baseline == "middle") return this.scale.y == -1 ? -this.fontsize / 2 : -this.height + this.fontsize / 2;
-    if (["top", "hanging"].includes(this.baseline)) return -this.fontsize * (this.nRows - 1);
-    if (["bottom", "alphabetic"].includes(this.baseline)) return this.fontsize * (this.nRows - 1);
+    if (this.baseline == "middle") return -this.height / 2;
+    if (["top", "hanging"].includes(this.baseline) && this.scale.y == -1) return this.height;
+    // if (["top", "hanging"].includes(this.baseline)) return -this.fontsize * (this.scale.y == -1 ? 1 : this.nRows - 1);
+    if (["bottom", "alphabetic"].includes(this.baseline)) return this.scale.y == -1 ? 0 : -this.fontsize * (this.nRows);
     return 0;
   }
 
-  public buildPath(): void {
-    this.boundingBox.origin = this.origin.copy();
-    this.boundingBox.origin.x += this.setRectOffsetX();
-    this.boundingBox.origin.y += this.setRectOffsetY() + this.offset;
-    this.boundingBox.size.x = this.width;
-    this.boundingBox.size.y = this.height;
-    this.boundingBox.fillStyle = "hsl(203, 90%, 85%)";
-    this.boundingBox.buildPath();
-    this.path = this.boundingBox.path;
-  }
+  public buildPath(): void { this.path = this.boundingBox.path }
 
   public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
 
   public capitalizeSelf(): void { this.text = newText.capitalize(this.text) }
 
+  public updateBoundingBox(origin: Vertex, matrix: DOMMatrix, context: CanvasRenderingContext2D): void {
+    this.boundingBox.origin = this.origin.copy();
+    this.boundingBox.origin.x += this.setRectOffsetX() / (this.isScaled ? Math.sign(this.scale.x) : matrix.a);
+    this.boundingBox.origin.y += this.setRectOffsetY() / (this.isScaled ? Math.sign(this.scale.y) : matrix.d);
+    this.boundingBox.size.x = this.width;
+    this.boundingBox.size.y = this.height;
+    this.boundingBox.fillStyle = "hsla(203, 90%, 85%, 0.5)";
+    if (!this.isScaled) {
+      const boundingBox = new newRect(this.boundingBox.origin.copy(), this.boundingBox.size.scale(new Vertex(Math.abs(1 / matrix.a), Math.abs(1 / matrix.d))));
+      boundingBox.fillStyle = "hsl(203, 90%, 85%)";
+      boundingBox.buildPath();
+      this.boundingBox.path = boundingBox.path;
+    } else this.boundingBox.buildPath();
+  }
+
   public draw(context: CanvasRenderingContext2D): void {
     if (this.text) {
       const contextMatrix = context.getTransform();
+      const origin = this.origin.transform(contextMatrix);
       context.save();
       this.setBoundingBoxState();
       const writtenText = this.format(context);
-      this.computeOffsetY();
+      this.updateBoundingBox(origin, contextMatrix, context);
       this.buildPath();
-      // if (!this.isScaled) this.boundingBox.size = this.boundingBox.size.scale(new Vertex(contextMatrix.a, contextMatrix.d));
-      this.boundingBox.draw(context);
+      this.boundingBox.draw(context)
 
       context.font = this.fullFont;
       context.textAlign = this.align as CanvasTextAlign;
-      context.textBaseline = this.baseline as CanvasTextBaseline;
-
+      context.textBaseline = 
+      this.baseline as CanvasTextBaseline;
       context.fillStyle = this.fillStyle;
       context.globalAlpha = this.alpha;
-      context.translate(this.origin.x, this.origin.y);
+
+      context.resetTransform();
+      context.translate(origin.x, origin.y);
       context.rotate(Math.PI / 180 * this.orientation);
-      if (this.isScaled) context.scale(Math.sign(contextMatrix.a), Math.sign(contextMatrix.d))
-      else context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
+      if (this.isScaled) context.scale(Math.abs(contextMatrix.a), Math.abs(contextMatrix.d))
       this.write(writtenText, context);
       context.restore();
     }
@@ -2115,14 +2083,13 @@ export class newText extends newShape {
   }
 
   public updateParameters(textParams: TextParams): void {
-    const [align, baseline] = newText.setAlignments(textParams.align, textParams.baseline, textParams.scale)
     this.boundingBox.size.x = textParams.width ?? null;
     this.boundingBox.size.y = textParams.height ?? null;
     this.fontsize = textParams.fontsize ?? 12;
     this.multiLine = textParams.multiLine ?? false;
     this.font = textParams.font ?? "sans-serif";
-    this.align = align;
-    this.baseline = baseline;
+    this.align = textParams.align ?? null;
+    this.baseline = textParams.baseline ?? null;
     this.style = textParams.style ?? "";
     this.orientation = textParams.orientation ?? 0;
     this.boundingBox.fillStyle = textParams.backgroundColor ?? "hsla(0, 0%, 100%, 0)";
@@ -2133,10 +2100,15 @@ export class newText extends newShape {
   private write(writtenText: string[], context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle;
     const nRows = writtenText.length - 1;
+    const middleFactor = this.baseline == "middle" ?  2 : 1;
     if (nRows != 0) writtenText.forEach((row, index) => {
-      context.fillText(index == 0 ? newText.capitalize(row) : row, 0, (index - nRows) * this.fontsize + this.offset)
+      if (["top", "hanging"].includes(this.baseline)) {
+        context.fillText(index == 0 ? newText.capitalize(row) : row, 0, index * this.fontsize + this.offset)
+      } else {
+        context.fillText(index == 0 ? newText.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset)
+      }
     })
-    else context.fillText(newText.capitalize(writtenText[0]), 0, this.offset);
+    else context.fillText(newText.capitalize(writtenText[0]), 0, this.offset / middleFactor);
   }
 
   public removeEndZeros(): void {
@@ -2166,7 +2138,9 @@ export class newText extends newShape {
     if (this.boundingBox.size.x) {
       if (this.multiLine) [writtenText, fontsize] = this.multiLineSplit(fontsize, context);
       else {
-        if (!this.fontsize || context.measureText(this.text).width > this.boundingBox.size.x) fontsize = this.automaticFontSize(context);
+        // if (!this.fontsize || context.measureText(this.text).width > this.boundingBox.size.x) {console.log(this.text);fontsize = this.automaticFontSize(context);}
+        fontsize = this.automaticFontSize(context);
+
       }
     } else if (this.boundingBox.size.y) fontsize = this.boundingBox.size.y;
     this.fontsize = Math.abs(fontsize);
@@ -3206,9 +3180,10 @@ export class newAxis extends newShape{
   }
 
   protected getTextScaler(): Vertex {
-    return this.isVertical ? 
-      new Vertex([1, -1][this.verticalPickIdx()], this.initScale.y):
-      new Vertex(this.initScale.x, [1, -1][this.horizontalPickIdx()])
+    return new Vertex(1, 1)
+    // return this.isVertical ? 
+    //   new Vertex([1, -1][this.verticalPickIdx()], this.initScale.y):
+    //   new Vertex(this.initScale.x, [1, -1][this.horizontalPickIdx()])
   }
 
   protected formatTitle(text: newText, context: CanvasRenderingContext2D): void { text.format(context) }
@@ -3224,7 +3199,6 @@ export class newAxis extends newShape{
   protected drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
     this.setTitleSettings();
     const textParams = this.getTitleTextParams(color, this.titleSettings.align, this.titleSettings.baseline, this.titleSettings.orientation);
-    console.log(textParams)
     this.updateTitle(context, this.titleText, this.titleSettings.origin.transform(canvasHTMatrix), textParams);
     this.title.draw(context);
     this.path.addPath(this.title.path, new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]));
@@ -3235,23 +3209,26 @@ export class newAxis extends newShape{
   private centeredTitleProperties(): void {
     this.titleSettings.origin = this.end.add(this.origin).divide(2);
     this.titleSettings.align = "center";
-    this.titleSettings.baseline = 'top';
-    if (this.isVertical) this.titleSettings.origin.x -= this.offsetTitle
-    else this.titleSettings.origin.y -= this.offsetTitle;
+    this.titleSettings.baseline = ['bottom', 'top'][this.horizontalPickIdx()];
+    if (this.isVertical) {
+      this.titleSettings.origin.x -= this.offsetTitle;
+      this.titleSettings.baseline = ['bottom', 'top'][this.verticalPickIdx()];
+    } else this.titleSettings.origin.y -= this.offsetTitle;
     this.titleSettings.orientation = this.isVertical ? -90 : 0;
   }
+
 
   private topArrowTitleProperties(): void {
     this.titleSettings.origin = this.end.copy();
     if (this.isVertical) {
       this.titleSettings.origin.x += this.FONT_SIZE;
-      this.titleSettings.align = "start";
-      this.titleSettings.baseline = "top";
+      this.titleSettings.align = ["start", "end"][this.verticalPickIdx()];
+      this.titleSettings.baseline = ['bottom', 'top'][this.horizontalPickIdx()];
     }
     else {
       this.titleSettings.origin.y += this.FONT_SIZE;
-      this.titleSettings.align = "end";
-      this.titleSettings.baseline = "bottom";
+      this.titleSettings.align = ["end", "start"][this.verticalPickIdx()];
+      this.titleSettings.baseline = ['top', 'bottom'][this.horizontalPickIdx()];
     }
     this.titleSettings.orientation = 0;
   }
@@ -3436,7 +3413,9 @@ export class newAxis extends newShape{
   }
 
   protected textAlignments(): [string, string] {
-    return this.isVertical ? ['end', 'middle'] : ['center', 'top']
+    const forVertical = this.initScale.x > 0 ? 'end' : 'start';
+    const forHorizontal = this.initScale.y > 0 ? 'bottom' : 'top';
+    return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
   }
 
   private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): Vertex {
@@ -3515,8 +3494,18 @@ export class ParallelAxis extends newAxis {
   }
 
   public setTitleSettings(): void {
+    this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
+  }
+
+  private horizontalTitleProperties(): void {
     if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleZone.origin.y + this.titleZone.size.y;
-    this.titleSettings.baseline = this.isVertical ? "bottom" : "top";
+    this.titleSettings.baseline = this.initScale.y > 0 ? "bottom" : "top";
+    this.titleSettings.orientation = 0;
+  }
+
+  private verticalTitleProperties(): void {
+    // if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleZone.origin.y + this.titleZone.size.y;
+    this.titleSettings.baseline = this.initScale.y > 0 ? "top" : "bottom";
     this.titleSettings.orientation = 0;
   }
 
@@ -3534,11 +3523,11 @@ export class ParallelAxis extends newAxis {
     this.titleZone.size.y -= offset;
     this.titleZone.buildPath();
     this.titleSettings.origin = this.titleZone.origin.copy();
-    this.titleSettings.align = "left";
+    this.titleSettings.align = this.initScale.x > 0 ? "left" : "right";
 
     if (index != 0) {
       if (this.isVertical) {
-        this.titleSettings.align = index == nAxis - 1 ? "right" : "center";
+        this.titleSettings.align = index == nAxis - 1 ? (this.initScale.x > 0 ? "right" : "left") : "center";
         this.titleSettings.origin.x += (index == nAxis - 1 ? 1 : 0.5) * this.boundingBox.size.x ;
       }
     }

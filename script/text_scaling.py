@@ -56,7 +56,7 @@ for i in range(1):
     primitives.extend(Box(length=length, height=height,
                       font_size=font_size, name=name).plot_data(i * 1.5 * height)[0].primitives)
 
-text_style = plot_data.TextStyle(text_color='rgb(100, 100, 100)', font_size=20)
+text_style = plot_data.TextStyle(text_color='rgb(100, 100, 100)', font_size=20, text_align_x="right", text_align_y="top")
 no_height_no_width = plot_data.Text(comment="Text_ with no height_nor /width and quite long..." * 4,
                                     position_x=250., position_y=40, text_style=text_style,
                                     multi_lines=True, text_scaling=True)
@@ -70,7 +70,41 @@ no_height_width = plot_data.Text(comment="Text_ with no, height_and[ /width and 
                                  position_x=50., position_y=200, text_style=text_style,
                                  multi_lines=True, text_scaling=True, max_width=100)
 
-ff = [no_height_no_width, height_no_width, height_width, no_height_width]
-plot_data_object = plot_data.PrimitiveGroup(primitives=primitives + ff)
+texts = []
+top_left_scale = plot_data.TextStyle(text_align_x="left", text_align_y="top")
+top_left_no_scale = plot_data.TextStyle(text_align_x="left", text_align_y="top", font_size=20)
+top_right = plot_data.TextStyle(text_align_x="right", text_align_y="top")
+bottom_left = plot_data.TextStyle(text_align_x="left", text_align_y="bottom")
+bottom_right_scale = plot_data.TextStyle(text_align_x="right", text_align_y="bottom")
+bottom_right_no_scale = plot_data.TextStyle(text_align_x="right", text_align_y="bottom", font_size=20)
+
+texts.append(plot_data.Text(comment="Top left ; (0,0) ; monoline ; no scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=0, position_y=0, text_style=top_left_no_scale,
+                            multi_lines=False, text_scaling=False, height=40, max_width=400))
+texts.append(plot_data.Text(comment="Top left ; (0,0) ; multiline ; no scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=0, position_y=50, text_style=top_left_no_scale,
+                            multi_lines=True, text_scaling=False, height=40, max_width=100))
+texts.append(plot_data.Text(comment="Top left ; (0,0) ; monoline ; scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=0, position_y=100, text_style=top_left_scale,
+                            multi_lines=False, text_scaling=True, height=40, max_width=400))
+texts.append(plot_data.Text(comment="Top left ; (0,0) ; multiline ; scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=0, position_y=150, text_style=top_left_scale,
+                            multi_lines=True, text_scaling=True, height=40, max_width=100))
+
+texts.append(plot_data.Text(comment="Bottom right ; (0,0) ; monoline ; no scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=120, position_y=0, text_style=bottom_right_no_scale,
+                            multi_lines=False, text_scaling=False, height=40, max_width=100))
+texts.append(plot_data.Text(comment="Bottom right ; (0,0) ; multiline ; no scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=120, position_y=50, text_style=bottom_right_no_scale,
+                            multi_lines=True, text_scaling=False, height=40, max_width=100))
+texts.append(plot_data.Text(comment="Bottom right ; (0,0) ; monoline ; scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=120, position_y=100, text_style=bottom_right_scale,
+                            multi_lines=False, text_scaling=True, height=40, max_width=100))
+texts.append(plot_data.Text(comment="Bottom right ; (0,0) ; multiline ; scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=120, position_y=150, text_style=bottom_right_scale,
+                            multi_lines=True, text_scaling=True, height=40, max_width=200))
+
+ff = texts
+plot_data_object = plot_data.PrimitiveGroup(primitives=ff)
 plot_data.plot_canvas(plot_data_object, debug_mode=True)
 # plot_data.plot_canvas(plot_data.PrimitiveGroup(primitives=ff), debug_mode=True)

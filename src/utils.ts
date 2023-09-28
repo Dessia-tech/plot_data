@@ -3525,7 +3525,6 @@ export class ParallelAxis extends newAxis {
   }
 
   private verticalTitleProperties(): void {
-    // if (this.initScale.y > 0) this.titleSettings.origin.y = this.titleZone.origin.y + this.titleZone.size.y;
     this.titleSettings.baseline = this.initScale.y > 0 ? "top" : "bottom";
     this.titleSettings.orientation = 0;
   }

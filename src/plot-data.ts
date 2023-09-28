@@ -882,8 +882,8 @@ export abstract class PlotData extends EventEmitter {
         axisTitle.format(this.context);
       }
 
-      let boxOrigin = new Vertex(boxOriginX, origin.y - axisTitle.nRows * axisTitle.fontsize);
-      this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize)));
+      let boxOrigin = new Vertex(boxOriginX, origin.y - axisTitle.fontsize);
+      this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.fontsize)));
 
       this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'
       this.context.fillStyle = 'black';
@@ -991,10 +991,10 @@ export abstract class PlotData extends EventEmitter {
       axisTitle.format(this.context);
       let boxOrigin = new Vertex(origin.x, axisTitle.origin.y);
 
-      if (!standard) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) };
+      if (!standard) { axisTitle.origin.y += axisTitle.fontsize  };
       if (standard) { boxOrigin.x -= axisTitle.width / 2 };
 
-      let boxSize = new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize);
+      let boxSize = new Vertex(axisTitle.width, axisTitle.fontsize);
       this.axisNamesBoxes.push(new newRect(boxOrigin, boxSize));
 
       this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'

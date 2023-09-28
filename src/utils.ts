@@ -1222,7 +1222,7 @@ export class RubberBand {
     return [isClicked, onMinBorder, onMaxBorder]
   }
 
-  private get borderSize() {return Math.min(BORDER_SIZE, this.canvasLength / 3)}
+  private get borderSize() { return Math.min(BORDER_SIZE, this.canvasLength / 3) }
 
   public mouseDown(mouseAxis: number) {
     this.isClicked = true;
@@ -1252,7 +1252,7 @@ export class RubberBand {
 }
 
 export class Vertex {
-  constructor(public x: number = 0, public y: number = 0) {}
+  constructor(public x: number = 0, public y: number = 0) { }
 
   get coordinates(): [number, number] { return [this.x, this.y] }
 
@@ -1272,7 +1272,7 @@ export class Vertex {
     return copy
   }
 
-  public distance(other: Vertex): number { return Math.sqrt((this.x - other.x)**2 + (this.y - other.y)**2) }
+  public distance(other: Vertex): number { return Math.sqrt((this.x - other.x) ** 2 + (this.y - other.y) ** 2) }
 
   public multiply(value: number): Vertex {
     let copy = this.copy();
@@ -1345,15 +1345,15 @@ export class newShape {
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
   public hasTooltip: boolean = true;
-  constructor() {};
+  constructor() { };
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
 
-  set tooltipMap(value: Map<string, any> ) { this._tooltipMap = value };
+  set tooltipMap(value: Map<string, any>) { this._tooltipMap = value };
 
   public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
 
-  public static deserialize(data: {[key: string]: any}, scale: Vertex): newShape {
+  public static deserialize(data: { [key: string]: any }, scale: Vertex): newShape {
     if (data.type_ == "circle") return newCircle.deserialize(data, scale);
     if (data.type_ == "contour") return Contour.deserialize(data, scale);
     if (data.type_ == "line2d") return Line.deserialize(data, scale);
@@ -1413,7 +1413,7 @@ export class newShape {
     }
   }
 
-  public buildPath(): void {}
+  public buildPath(): void { }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
@@ -1479,7 +1479,7 @@ export class newCircle extends Arc {
 
   public static deserialize(data: any, scale: Vertex): newCircle {
     const circle = new newCircle(new Vertex(data.cx, data.cy), data.r);
-    circle.fillStyle = colorHsl(data.surface_style?.color_fill ??circle.fillStyle);
+    circle.fillStyle = colorHsl(data.surface_style?.color_fill ?? circle.fillStyle);
     return circle
   }
 }
@@ -1513,10 +1513,10 @@ export class newRoundRect extends newRect {
     public origin: Vertex = new Vertex(0, 0),
     public size: Vertex = new Vertex(0, 0),
     public radius: number = 2
-    ) {
-      super();
-      this.buildPath();
-    }
+  ) {
+    super();
+    this.buildPath();
+  }
 
   public buildPath(): void {
     this.path = new Path2D();
@@ -1574,7 +1574,8 @@ export abstract class AbstractHalfLine extends newShape {
   public getBounds(): [Vertex, Vertex] {
     const halfSize = this.size / 2;
     const halfSizeVertex = new Vertex(halfSize, halfSize);
-    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)] }
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
+  }
 }
 
 export class UpHalfLine extends AbstractHalfLine {
@@ -1648,7 +1649,7 @@ export class Line extends newShape { // TODO: Does not work => make it work
 
   public static deserialize(data: any, scale: Vertex): Line {
     const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    if (data.edge_style) {}
+    if (data.edge_style) { }
     return line
   }
 
@@ -1678,7 +1679,7 @@ export class LineSegment extends Line {
 
   public static deserialize(data: any, scale: Vertex): LineSegment {
     const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    if (data.edge_style) {}
+    if (data.edge_style) { }
     return line
   }
 
@@ -1789,7 +1790,7 @@ export abstract class AbstractTriangle extends newShape {
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
     public orientation: string = 'up'
-    ) {
+  ) {
     super();
     this.buildPath();
   }
@@ -1932,7 +1933,7 @@ export class newText extends newShape {
   public style: string;
   public orientation: number;
   public multiLine: boolean;
-  public nRows: number;
+  public rowIndices: number[] = [];
   public boundingBox: newRect;
   public offset: number = 0;
   private words: string[];
@@ -1952,21 +1953,21 @@ export class newText extends newShape {
       backgroundColor = "hsla(0, 0%, 100%, 0)",
       scale = new Vertex(1, 1)
     }: TextParams = {}) {
-      super();
-      this.boundingBox = new newRect(origin, new Vertex(width, height));
-      this.boundingBox.fillStyle = backgroundColor;
-      this.boundingBox.strokeStyle = backgroundColor;
-      this.fontsize = fontsize;
-      this.multiLine = multiLine;
-      this.font = font;
-      this.style = style;
-      this.orientation = orientation;
-      this.fillStyle = color;
-      this.words = this.getWords();
-      this.align = align;
-      this.baseline = baseline;
-      this.scale = scale;
-    }
+    super();
+    this.boundingBox = new newRect(origin, new Vertex(width, height));
+    this.boundingBox.fillStyle = backgroundColor;
+    this.boundingBox.strokeStyle = backgroundColor;
+    this.fontsize = fontsize;
+    this.multiLine = multiLine;
+    this.font = font;
+    this.style = style;
+    this.orientation = orientation;
+    this.fillStyle = color;
+    this.words = this.getWords();
+    this.align = align;
+    this.baseline = baseline;
+    this.scale = scale;
+  }
 
   private static buildFont(style: string, fontsize: number, font: string): string { return `${style} ${fontsize}px ${font}` }
 
@@ -1979,7 +1980,7 @@ export class newText extends newShape {
       multiLine: data.multi_lines,
       font: data.text_style?.font,
       align: data.text_style.text_align_x,
-      baseline: data.text_style.text_align_y ,
+      baseline: data.text_style.text_align_y,
       style: style,
       orientation: data.text_style?.angle,
       color: data.text_style?.text_color
@@ -1993,7 +1994,7 @@ export class newText extends newShape {
   get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
 
   private getCoonsUnscaled(): [Vertex, Vertex] {
-    const firstCoon = this.boundingBox.origin.copy();
+    const firstCoon = this.origin.copy();
     const secondCoon = firstCoon.copy();
     const xMinMaxFactor = Math.sign(secondCoon.x) * 0.01 * Math.sign(this.scale.x);
     const yMinMaxFactor = Math.sign(secondCoon.y) * 0.01 * Math.sign(this.scale.y);
@@ -2033,12 +2034,12 @@ export class newText extends newShape {
       new Vertex(Math.min(firstCoon.x, secondCoon.x), Math.min(firstCoon.y, secondCoon.y)),
       new Vertex(Math.max(firstCoon.x, secondCoon.x), Math.max(firstCoon.y, secondCoon.y))
     ]
-   }
+  }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let fontsize = Math.min(this.boundingBox.size.y ?? Number.POSITIVE_INFINITY, this.fontsize ?? Number.POSITIVE_INFINITY);
     if (fontsize == Number.POSITIVE_INFINITY) fontsize = DEFAULT_FONTSIZE;
-    context.font = newText.buildFont(this.style, fontsize, this.font); 
+    context.font = newText.buildFont(this.style, fontsize, this.font);
     if (context.measureText(this.text).width >= this.boundingBox.size.x) fontsize = fontsize * this.boundingBox.size.x / context.measureText(this.text).width;
     return fontsize
   }
@@ -2053,7 +2054,7 @@ export class newText extends newShape {
   private setRectOffsetY(): number {
     if (this.baseline == "middle") return -Math.sign(this.scale.y) * this.height / 2;
     if (["top", "hanging"].includes(this.baseline) && this.scale.y < 0) return this.height;
-    if (["bottom", "alphabetic"].includes(this.baseline) && this.scale.y > 0) return -this.fontsize * (this.nRows);
+    if (["bottom", "alphabetic"].includes(this.baseline) && this.scale.y > 0) return -this.fontsize * (this.rowIndices.length - 1);
     return 0;
   }
 
@@ -2084,15 +2085,14 @@ export class newText extends newShape {
       const origin = this.origin.transform(contextMatrix);
       context.save();
       this.setBoundingBoxState();
-      const writtenText = this.format(context);
+      const writtenText = this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows();
       this.updateBoundingBox(context);
       this.buildPath();
       this.boundingBox.draw(context)
 
       context.font = this.fullFont;
       context.textAlign = this.align as CanvasTextAlign;
-      context.textBaseline = 
-      this.baseline as CanvasTextBaseline;
+      context.textBaseline = this.baseline as CanvasTextBaseline;
       context.fillStyle = this.fillStyle;
       context.globalAlpha = this.alpha;
 
@@ -2129,7 +2129,7 @@ export class newText extends newShape {
   private write(writtenText: string[], context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle;
     const nRows = writtenText.length - 1;
-    const middleFactor = this.baseline == "middle" ?  2 : 1;
+    const middleFactor = this.baseline == "middle" ? 2 : 1;
     if (nRows != 0) writtenText.forEach((row, index) => {
       if (["top", "hanging"].includes(this.baseline)) context.fillText(index == 0 ? newText.capitalize(row) : row, 0, index * this.fontsize + this.offset)
       else context.fillText(index == 0 ? newText.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset);
@@ -2157,6 +2157,14 @@ export class newText extends newShape {
     return longestRow
   }
 
+  public formattedTextRows(): string[] {
+    const writtenText = []
+    this.rowIndices.slice(0, this.rowIndices.length - 1).forEach((_, rowIndex) => {
+      writtenText.push(this.text.slice(this.rowIndices[rowIndex], this.rowIndices[rowIndex + 1]));
+    })
+    return writtenText
+  }
+
   public format(context: CanvasRenderingContext2D): string[] {
     let writtenText = [this.text];
     let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
@@ -2169,15 +2177,15 @@ export class newText extends newShape {
     this.height = writtenText.length * this.fontsize;
     const longestRow = this.getLongestRow(writtenText);
     this.width = context.measureText(longestRow).width;
-    this.nRows = writtenText.length;
-    const contextMatrix = context.getTransform();
+    this.rowIndices = [0];
+    writtenText.forEach((row, index) => this.rowIndices.push(this.rowIndices[index] + row.length));
     return writtenText
   }
 
   public multiLineSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     context.font = newText.buildFont(this.style, fontsize, this.font);
     const oneRowLength = context.measureText(this.text).width;
-    if (oneRowLength <= this.boundingBox.size.x) return [[this.text.trimStart()], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y : fontsize];
+    if (oneRowLength < this.boundingBox.size.x) return [[this.text.trimStart()], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y : fontsize];
     if (!this.boundingBox.size.y) return [this.fixedFontSplit(context), fontsize];
     return this.autoFontSplit(fontsize, context);
   }
@@ -2227,7 +2235,7 @@ export class newText extends newShape {
   private cleanStartAllRows(rows: string[]): string[] { return rows.map(row => row.trimStart()) }
 
   private checkWordsLength(context: CanvasRenderingContext2D): boolean {
-    for (let i=0; i < this.words.length - 1; i++) {
+    for (let i = 0; i < this.words.length - 1; i++) {
       if (context.measureText(this.words[i]).width > this.boundingBox.size.x) return false;
     }
     return true
@@ -2272,13 +2280,13 @@ export class newPointStyle implements PointStyleInterface {
       shape = 'circle',
       name = ''
     }: PointStyleInterface = {}
-    ) {
-      this.size = size;
-      this.fillStyle = color_fill;
-      this.strokeStyle = color_stroke;
-      this.marker = shape;
-      this.lineWidth = stroke_width;
-    }
+  ) {
+    this.size = size;
+    this.fillStyle = color_fill;
+    this.strokeStyle = color_stroke;
+    this.marker = shape;
+    this.lineWidth = stroke_width;
+  }
 }
 
 const CIRCLES = ['o', 'circle', 'round'];
@@ -2414,15 +2422,15 @@ export class ScatterPoint extends newPoint2D {
     this.isScaled = false;
   }
 
-  public static fromPlottedValues(indices: number[], pointsData: {[key: string]: number[]}, pointSize: number, marker: string,
+  public static fromPlottedValues(indices: number[], pointsData: { [key: string]: number[] }, pointSize: number, marker: string,
     thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[],
     xName: string, yName: string): ScatterPoint {
-      const newPoint = new ScatterPoint(indices, 0, 0, pointSize, marker);
-      newPoint.computeValues(pointsData, thresholdDist);
-      newPoint.updateTooltip(tooltipAttributes, features, axes, xName, yName);
-      newPoint.update();
-      return newPoint
-    }
+    const newPoint = new ScatterPoint(indices, 0, 0, pointSize, marker);
+    newPoint.computeValues(pointsData, thresholdDist);
+    newPoint.updateTooltip(tooltipAttributes, features, axes, xName, yName);
+    newPoint.update();
+    return newPoint
+  }
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
 
@@ -2444,23 +2452,23 @@ export class ScatterPoint extends newPoint2D {
     this.marker = this.values.length > 1 ? this.marker : style.marker ?? this.marker;
   }
 
-  public computeValues(pointsData: {[key: string]: number[]}, thresholdDist: number): void {
-      let centerX = 0;
-      let centerY = 0;
-      let meanX = 0;
-      let meanY = 0;
-      this.values.forEach(index => {
-        centerX += pointsData.xCoords[index];
-        centerY += pointsData.yCoords[index];
-        meanX += pointsData.xValues[index];
-        meanY += pointsData.yValues[index];
-      });
-      this.center.x = centerX / this.values.length;
-      this.center.y = centerY / this.values.length;
-      this.size = Math.min(this.size * 1.15**(this.values.length - 1), thresholdDist);
-      this.mean.x = meanX / this.values.length;
-      this.mean.y = meanY / this.values.length;
-    }
+  public computeValues(pointsData: { [key: string]: number[] }, thresholdDist: number): void {
+    let centerX = 0;
+    let centerY = 0;
+    let meanX = 0;
+    let meanY = 0;
+    this.values.forEach(index => {
+      centerX += pointsData.xCoords[index];
+      centerY += pointsData.yCoords[index];
+      meanX += pointsData.xValues[index];
+      meanY += pointsData.yValues[index];
+    });
+    this.center.x = centerX / this.values.length;
+    this.center.y = centerY / this.values.length;
+    this.size = Math.min(this.size * 1.15 ** (this.values.length - 1), thresholdDist);
+    this.mean.x = meanX / this.values.length;
+    this.mean.y = meanY / this.values.length;
+  }
 }
 
 export class LineSequence extends newShape {
@@ -2478,7 +2486,7 @@ export class LineSequence extends newShape {
     this.updateTooltipMap();
   }
 
-  public static deserialize(data: {[key: string]: any}, scale: Vertex): LineSequence {
+  public static deserialize(data: { [key: string]: any }, scale: Vertex): LineSequence {
     const points = [];
     data.lines.forEach(line => points.push(new newPoint2D(line[0], line[1])));
     const line = new LineSequence(points, data.name ?? "");
@@ -2507,13 +2515,13 @@ export class LineSequence extends newShape {
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Name", this.name]]) }
 
-  private getEdgeStyle(edgeStyle: {[key: string]: any}): void {
+  private getEdgeStyle(edgeStyle: { [key: string]: any }): void {
     if (edgeStyle.line_width) this.lineWidth = edgeStyle.line_width;
     if (edgeStyle.color_stroke) this.strokeStyle = edgeStyle.color_stroke;
     if (edgeStyle.dashline) this.dashLine = edgeStyle.dashline;
   }
 
-  public static getGraphProperties(graph: {[key: string]: any}): LineSequence {
+  public static getGraphProperties(graph: { [key: string]: any }): LineSequence {
     const emptyLineSequence = new LineSequence([], graph.name);
     if (graph.edge_style) emptyLineSequence.getEdgeStyle(graph.edge_style);
     return emptyLineSequence
@@ -2528,7 +2536,7 @@ export class LineSequence extends newShape {
   public buildPath(): void {
     this.path = new Path2D();
     this.path.moveTo(this.points[0].center.x, this.points[0].center.y);
-    this.points.slice(1).forEach(point=> this.path.lineTo(point.center.x, point.center.y));
+    this.points.slice(1).forEach(point => this.path.lineTo(point.center.x, point.center.y));
   }
 
   public update(points: newPoint2D[]): void {
@@ -2614,10 +2622,10 @@ export class newTooltip {
     public origin,
     public dataToPrint: Map<string, any>,
     context: CanvasRenderingContext2D
-    ) {
-      [this.printedRows, this.size] = this.buildText(context);
-      this.squareOrigin = new Vertex(this.origin.x, this.origin.y);
-    }
+  ) {
+    [this.printedRows, this.size] = this.buildText(context);
+    this.squareOrigin = new Vertex(this.origin.x, this.origin.y);
+  }
 
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
     context.save();
@@ -2664,7 +2672,7 @@ export class newTooltip {
     const regexSamples: RegExp = /^[0-9]+\ssamples/;
     this.printedRows.forEach((row, index) => {
       textOrigin.y += index == 0 ? 0 : this.fontsize;
-      const text = new newText(row, textOrigin, {fontsize: this.fontsize, baseline: "middle", style: regexSamples.test(row) ? 'bold' : ''});
+      const text = new newText(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: regexSamples.test(row) ? 'bold' : '' });
       text.fillStyle = this.textColor;
       text.draw(context)
     })
@@ -2688,7 +2696,7 @@ export class newTooltip {
         this.origin.y += upRightDiff.y;
       }
 
-    } else if (upRightDiff.y > plotSize.y){
+    } else if (upRightDiff.y > plotSize.y) {
       if (this.isFlipper) {
         this.squareOrigin.y += this.size.y + TOOLTIP_TRIANGLE_SIZE * 2;
         this.flip();
@@ -2872,11 +2880,11 @@ export class TitleSettings {
     public align: string = null,
     public baseline: string = null,
     public orientation: number = null
-  ) {}
+  ) { }
 }
 
 export const SIZE_END = 7;
-export class newAxis extends newShape{
+export class newAxis extends newShape {
   public ticksPoints: newPoint2D[];
   public drawPath: Path2D;
   public path: Path2D;
@@ -2931,22 +2939,22 @@ export class newAxis extends newShape{
     public name: string = '',
     public initScale: Vertex,
     protected _nTicks: number = 10
-    ) {
-      super();
-      this.discretePropertiesFromVector(vector);
-      const [minValue, maxValue] = this.computeMinMax(vector);
-      [this._previousMin, this._previousMax] = [this.initMinValue, this.initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
-      this.ticks = this.computeTicks();
-      if (!this.isDiscrete) this.labels = this.numericLabels();
-      this.computeEnds();
-      this.adjustBoundingBox();
-      this.drawPath = this.buildDrawPath();
-      this.buildPath();
-      this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
-      this.offsetTicks = this.ticksFontsize * 0.8;
-      this.offsetTitle = 0;
-      this.title = new newText(this.titleText, new Vertex(0, 0), {});
-    };
+  ) {
+    super();
+    this.discretePropertiesFromVector(vector);
+    const [minValue, maxValue] = this.computeMinMax(vector);
+    [this._previousMin, this._previousMax] = [this.initMinValue, this.initMaxValue] = [this.minValue, this.maxValue] = this.marginedBounds(minValue, maxValue);
+    this.ticks = this.computeTicks();
+    if (!this.isDiscrete) this.labels = this.numericLabels();
+    this.computeEnds();
+    this.adjustBoundingBox();
+    this.drawPath = this.buildDrawPath();
+    this.buildPath();
+    this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
+    this.offsetTicks = this.ticksFontsize * 0.8;
+    this.offsetTitle = 0;
+    this.title = new newText(this.titleText, new Vertex(0, 0), {});
+  };
 
   public get drawLength(): number {
     return this.isVertical ? Math.abs(this.origin.y - this.end.y) : Math.abs(this.origin.x - this.end.x);
@@ -2960,7 +2968,7 @@ export class newAxis extends newShape{
 
   get interval(): number { return Math.abs(this.maxValue - this.minValue) };
 
-  get center(): number { return (this.maxValue + this.minValue) / 2}
+  get center(): number { return (this.maxValue + this.minValue) / 2 }
 
   get isVertical(): boolean { return this.origin.x == this.end.x };
 
@@ -2972,7 +2980,7 @@ export class newAxis extends newShape{
 
   get marginRatio(): number { return this._marginRatio };
 
-  get tickMarker(): string { return "halfLine"}
+  get tickMarker(): string { return "halfLine" }
 
   get tickOrientation(): string { return this.isVertical ? 'right' : 'up' }
 
@@ -3003,7 +3011,7 @@ export class newAxis extends newShape{
 
   private verticalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.x)) }
 
-  protected computeEnds(): void {}
+  protected computeEnds(): void { }
 
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
@@ -3019,9 +3027,9 @@ export class newAxis extends newShape{
     const center = this.center;
     this.maxValue = this.minValue + otherAxis.interval * this.drawLength / otherAxis.drawLength;
     const translation = center - this.center;
-    this.minValue += translation; 
-    this.maxValue += translation; 
-  } 
+    this.minValue += translation;
+    this.maxValue += translation;
+  }
 
   public transform(newOrigin: Vertex, newEnd: Vertex): void {
     this.origin = newOrigin.copy();
@@ -3120,7 +3128,7 @@ export class newAxis extends newShape{
     if (this.isDiscrete) return [0, this.labels.length - 1];
     const min = Math.min(...vector);
     const max = Math.max(...vector);
-    return min != max ? [min ,max] : [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)]
+    return min != max ? [min, max] : [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)]
   }
 
   protected getCalibratedTextWidth(context: CanvasRenderingContext2D): [newText, number] {
@@ -3363,7 +3371,7 @@ export class newAxis extends newShape{
     if (this.rubberBand.isClicked) this.emitter.emit("rubberBandChange", this.rubberBand);
   }
 
-  protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void {}
+  protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void { }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
     super.mouseMove(context, mouseCoords);
@@ -3384,7 +3392,7 @@ export class newAxis extends newShape{
     } else this.rubberBand.mouseMove(downValue, currentValue);
   }
 
-  public mouseMoveClickedTitle(mouseCoords: Vertex): void {}
+  public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
 
   public mouseDown(mouseDown: Vertex): void {
     super.mouseDown(mouseDown);
@@ -3471,7 +3479,7 @@ export class newAxis extends newShape{
 
   private updateTickPrecision(): number {
     this.tickPrecision = 1;
-    for (let index = 0 ; index < this.ticks.length - 1 ; index++) {
+    for (let index = 0; index < this.ticks.length - 1; index++) {
       const rightTick = this.ticks[index + 1];
       const leftTick = this.ticks[index];
       while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
@@ -3502,11 +3510,11 @@ export class ParallelAxis extends newAxis {
     public name: string = '',
     public initScale: Vertex,
     protected _nTicks: number = 10
-    ) {
-      super(vector, boundingBox, origin, end, name, initScale, _nTicks);
-      this.centeredTitle = false;
-      this.updateEnds();
-    }
+  ) {
+    super(vector, boundingBox, origin, end, name, initScale, _nTicks);
+    this.centeredTitle = false;
+    this.updateEnds();
+  }
 
   get tickMarker(): string { return "line" }
 
@@ -3555,7 +3563,7 @@ export class ParallelAxis extends newAxis {
     if (index != 0) {
       if (this.isVertical) {
         this.titleSettings.align = index == nAxis - 1 ? (this.initScale.x > 0 ? "right" : "left") : "center";
-        this.titleSettings.origin.x += (index == nAxis - 1 ? 1 : 0.5) * this.boundingBox.size.x ;
+        this.titleSettings.origin.x += (index == nAxis - 1 ? 1 : 0.5) * this.boundingBox.size.x;
       }
     }
     return this
@@ -3652,7 +3660,7 @@ export class ShapeCollection {
     [this.minimum, this.maximum] = this.getBounds();
   }
 
-  public static fromPrimitives(primitives: {[key: string]: any}, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
+  public static fromPrimitives(primitives: { [key: string]: any }, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
     const drawings = [];
     primitives.forEach(primitive => drawings.push(newShape.deserialize(primitive, scale)))
     return new ShapeCollection(drawings)

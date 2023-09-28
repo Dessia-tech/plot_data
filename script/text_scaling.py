@@ -52,7 +52,7 @@ font_size = None
 primitives = []
 name = ("Super ! Ce grand texte se comporte exactement comme je l'attends ! Sauf pour les cas très ambigüs pour " +
         "lesquels il a bien fallu choisir un compromis, arbitraire :)")
-for i in range(20):
+for i in range(5):
     primitives.extend(Box(length=length, height=height,
                       font_size=font_size, name=name).plot_data(i * 1.5 * height)[0].primitives)
 
@@ -61,7 +61,7 @@ texts.append(plot_data.Text(comment="Top left ; (0, 0) ; monoline ; no scale ; f
                             position_x=0, position_y=0, text_style=plot_data.TextStyle(text_align_x="left", text_align_y="top"),
                             multi_lines=False, text_scaling=False, height=40, max_width=1000))
 
-texts.append(plot_data.Text(comment="Bottom left ; (400, 0) ; monoline ; no scale ; fontsize = 30 ; size (400, 40)" * 2,
+texts.append(plot_data.Text(comment="Bottom left ; (0, 0) ; monoline ; no scale ; fontsize = 30 ; size (400, 40)" * 2,
                             position_x=0, position_y=0, text_style=plot_data.TextStyle(text_align_x="left", text_align_y="bottom", font_size=30),
                             multi_lines=False, text_scaling=False, height=40, max_width=1000))
 
@@ -97,9 +97,9 @@ texts.append(plot_data.Text(comment="Bottom right ; (0, 0) ; monoline ; no scale
                             position_x=0, position_y=-170, text_style=plot_data.TextStyle(text_align_x="right", text_align_y="middle", font_size=12),
                             multi_lines=False, text_scaling=False))
 
-# texts.append(plot_data.Text(comment="Middle right ; (0, 0) ; multiline ; scale ; fontsize = 12 ; size (400, 100)" * 4,
-#                             position_x=0, position_y=210, text_style=plot_data.TextStyle(text_align_x="right", text_align_y="middle", font_size=12),
-#                             multi_lines=True, text_scaling=True, height=100, max_width=400))
+texts.append(plot_data.Text(comment="Middle right ; (0, 0) ; multiline ; scale ; fontsize = 12 ; size (400, 100)" * 4,
+                            position_x=0, position_y=210, text_style=plot_data.TextStyle(text_align_x="right", text_align_y="middle", font_size=12),
+                            multi_lines=True, text_scaling=True, height=100, max_width=400))
 
 
 
@@ -141,17 +141,17 @@ middle_center_no_scale = plot_data.TextStyle(text_align_x="center", text_align_y
 texts.append(plot_data.Text(comment="Middle right ; (-300, -30) ; multiline ; no scale ; fontsize = None ; size (400, 40)" * 4,
                             position_x=-300, position_y=-30, text_style=middle_right_scale,
                             multi_lines=True, text_scaling=False, height=40, max_width=400))
-# texts.append(plot_data.Text(comment="Middle right ; (0,0) ; multiline ; no scale ; fontsize = 12 ; height and width" * 4,
-#                             position_x=320, position_y=50, text_style=middle_right_scale,
-#                             multi_lines=True, text_scaling=False, height=40, max_width=180))
-# texts.append(plot_data.Text(comment="Middle center ; (0,0) ; monoline ; scale ; fontsize = 12 ; height and width" * 4,
-#                             position_x=320, position_y=100, text_style=middle_center_no_scale,
-#                             multi_lines=False, text_scaling=True, height=40, max_width=180))
-# texts.append(plot_data.Text(comment="Middle center ; (0,0) ; multiline ; scale ; fontsize = 12 ; height and width" * 4,
-#                             position_x=320, position_y=150, text_style=middle_center_no_scale,
-#                             multi_lines=True, text_scaling=True, height=40, max_width=180))
+texts.append(plot_data.Text(comment="Middle right ; (0,0) ; multiline ; no scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=320, position_y=50, text_style=middle_right_scale,
+                            multi_lines=True, text_scaling=False, height=40, max_width=180))
+texts.append(plot_data.Text(comment="Middle center ; (0,0) ; monoline ; scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=320, position_y=100, text_style=middle_center_no_scale,
+                            multi_lines=False, text_scaling=True, height=40, max_width=180))
+texts.append(plot_data.Text(comment="Middle center ; (0,0) ; multiline ; scale ; fontsize = 12 ; height and width" * 4,
+                            position_x=320, position_y=150, text_style=middle_center_no_scale,
+                            multi_lines=True, text_scaling=True, height=40, max_width=180))
 
-ff = primitives + texts
+ff = primitives
 plot_data_object = plot_data.PrimitiveGroup(primitives=ff)
 plot_data.plot_canvas(plot_data_object, debug_mode=True)
-# plot_data.plot_canvas(plot_data.PrimitiveGroup(primitives=ff), debug_mode=True)
+plot_data.plot_canvas(plot_data.PrimitiveGroup(primitives=texts), debug_mode=True)

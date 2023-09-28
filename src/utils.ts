@@ -1986,45 +1986,74 @@ export class newText extends newShape {
     };
     const text = new newText(data.comment, new Vertex(data.position_x, data.position_y), textParams);
     text.isScaled = data.text_scaling ?? false;
-    text.scale = new Vertex(Math.sign(scale.x), Math.sign(scale.y));
+    text.scale = new Vertex(scale.x, scale.y);
     return text
   }
 
   get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
 
-  public getBounds(): [Vertex, Vertex] { return this.boundingBox.getBounds() }
+  private getCoonsUnscaled(): [Vertex, Vertex] {
+    const firstCoon = this.boundingBox.origin.copy();
+    const secondCoon = firstCoon.copy();
+    const xMinMaxFactor = Math.sign(secondCoon.x) * 0.01 * Math.sign(this.scale.x);
+    const yMinMaxFactor = Math.sign(secondCoon.y) * 0.01 * Math.sign(this.scale.y);
+    if (this.align == "center") {
+      firstCoon.x *= 0.99;
+      secondCoon.x *= 1.01;
+    } else if (["right", "end"].includes(this.align)) {
+      if (secondCoon.x != 0) secondCoon.x *= 1 - xMinMaxFactor;
+      else secondCoon.x = -Math.sign(this.scale.x);
+    } else if (["left", "start"].includes(this.align)) {
+      if (secondCoon.x != 0) secondCoon.x *= 1 + xMinMaxFactor;
+      else secondCoon.x = Math.sign(this.scale.x);
+    }
+    if (this.baseline == "middle") {
+      firstCoon.y *= 0.99;
+      secondCoon.y *= 1.01;
+    } else if (["top", "hanging"].includes(this.baseline)) {
+      if (secondCoon.y != 0) secondCoon.y *= 1 + yMinMaxFactor;
+      else secondCoon.y = Math.sign(this.scale.y);
+    } else if (["bottom", "alphabetic"].includes(this.baseline)) {
+      if (secondCoon.y != 0) secondCoon.y *= 1 - yMinMaxFactor;
+      else secondCoon.y = -Math.sign(this.scale.y);
+    }
+    return [firstCoon, secondCoon]
+  }
+
+  private getCoonsScaled(): [Vertex, Vertex] {
+    const firstCoon = this.boundingBox.origin.copy();
+    const diagonalVector = this.boundingBox.size.copy();
+    const secondCoon = firstCoon.add(diagonalVector);
+    return [firstCoon, secondCoon]
+  }
+
+  public getBounds(): [Vertex, Vertex] {
+    const [firstCoon, secondCoon] = this.isScaled ? this.getCoonsScaled() : this.getCoonsUnscaled();
+    return [
+      new Vertex(Math.min(firstCoon.x, secondCoon.x), Math.min(firstCoon.y, secondCoon.y)),
+      new Vertex(Math.max(firstCoon.x, secondCoon.x), Math.max(firstCoon.y, secondCoon.y))
+    ]
+   }
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let fontsize = Math.min(this.boundingBox.size.y ?? Number.POSITIVE_INFINITY, this.fontsize ?? Number.POSITIVE_INFINITY);
     if (fontsize == Number.POSITIVE_INFINITY) fontsize = DEFAULT_FONTSIZE;
+    context.font = newText.buildFont(this.style, fontsize, this.font); 
     if (context.measureText(this.text).width >= this.boundingBox.size.x) fontsize = fontsize * this.boundingBox.size.x / context.measureText(this.text).width;
     return fontsize
   }
 
-  // private setBoundingBox(origin: Vertex, width: number, height: number, align: string, baseline: string): newRect {
-  //   const boundingBox = new newRect(origin, new Vertex(width, height));
-  //   if (["bottom", "alphabetic"].includes(this.baseline)) 
-  //   return
-  // }
-
-  // private automaticFontSize(context: CanvasRenderingContext2D): number {
-  //   let pxMaxWidth: number = this.boundingBox.size.x * this.scale.x;
-  //   context.font = '1px ' + this.font;
-  //   return Math.min(pxMaxWidth / context.measureText(this.text).width, DEFAULT_FONTSIZE)
-  // }
-
   private setRectOffsetX(): number {
-    if (this.align == "center") return -this.width / 2;
-    if (["left", "start"].includes(this.align) && this.scale.x == -1) return this.width;
-    if ((["right", "end"].includes(this.align) && this.scale.x == 1) || (["left", "start"].includes(this.align) && this.scale.x == -1)) return -this.width;
+    if (this.align == "center") return -Math.sign(this.scale.x) * this.width / 2;
+    if (["left", "start"].includes(this.align) && this.scale.x < 0) return this.width;
+    if ((["right", "end"].includes(this.align) && this.scale.x > 0) || (["left", "start"].includes(this.align) && this.scale.x < 0)) return -this.width;
     return 0;
   }
 
   private setRectOffsetY(): number {
-    if (this.baseline == "middle") return -this.height / 2;
-    if (["top", "hanging"].includes(this.baseline) && this.scale.y == -1) return this.height;
-    // if (["top", "hanging"].includes(this.baseline)) return -this.fontsize * (this.scale.y == -1 ? 1 : this.nRows - 1);
-    if (["bottom", "alphabetic"].includes(this.baseline)) return this.scale.y == -1 ? 0 : -this.fontsize * (this.nRows);
+    if (this.baseline == "middle") return -Math.sign(this.scale.y) * this.height / 2;
+    if (["top", "hanging"].includes(this.baseline) && this.scale.y < 0) return this.height;
+    if (["bottom", "alphabetic"].includes(this.baseline) && this.scale.y > 0) return -this.fontsize * (this.nRows);
     return 0;
   }
 
@@ -2034,7 +2063,8 @@ export class newText extends newShape {
 
   public capitalizeSelf(): void { this.text = newText.capitalize(this.text) }
 
-  public updateBoundingBox(origin: Vertex, matrix: DOMMatrix, context: CanvasRenderingContext2D): void {
+  public updateBoundingBox(context: CanvasRenderingContext2D): void {
+    const matrix = context.getTransform();
     this.boundingBox.origin = this.origin.copy();
     this.boundingBox.origin.x += this.setRectOffsetX() / (this.isScaled ? Math.sign(this.scale.x) : matrix.a);
     this.boundingBox.origin.y += this.setRectOffsetY() / (this.isScaled ? Math.sign(this.scale.y) : matrix.d);
@@ -2043,7 +2073,6 @@ export class newText extends newShape {
     this.boundingBox.fillStyle = "hsla(203, 90%, 85%, 0.5)";
     if (!this.isScaled) {
       const boundingBox = new newRect(this.boundingBox.origin.copy(), this.boundingBox.size.scale(new Vertex(Math.abs(1 / matrix.a), Math.abs(1 / matrix.d))));
-      boundingBox.fillStyle = "hsl(203, 90%, 85%)";
       boundingBox.buildPath();
       this.boundingBox.path = boundingBox.path;
     } else this.boundingBox.buildPath();
@@ -2056,7 +2085,7 @@ export class newText extends newShape {
       context.save();
       this.setBoundingBoxState();
       const writtenText = this.format(context);
-      this.updateBoundingBox(origin, contextMatrix, context);
+      this.updateBoundingBox(context);
       this.buildPath();
       this.boundingBox.draw(context)
 
@@ -2070,7 +2099,7 @@ export class newText extends newShape {
       context.resetTransform();
       context.translate(origin.x, origin.y);
       context.rotate(Math.PI / 180 * this.orientation);
-      if (this.isScaled) context.scale(Math.abs(contextMatrix.a), Math.abs(contextMatrix.d))
+      if (this.isScaled) context.scale(Math.abs(contextMatrix.a), Math.abs(contextMatrix.d));
       this.write(writtenText, context);
       context.restore();
     }
@@ -2102,11 +2131,8 @@ export class newText extends newShape {
     const nRows = writtenText.length - 1;
     const middleFactor = this.baseline == "middle" ?  2 : 1;
     if (nRows != 0) writtenText.forEach((row, index) => {
-      if (["top", "hanging"].includes(this.baseline)) {
-        context.fillText(index == 0 ? newText.capitalize(row) : row, 0, index * this.fontsize + this.offset)
-      } else {
-        context.fillText(index == 0 ? newText.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset)
-      }
+      if (["top", "hanging"].includes(this.baseline)) context.fillText(index == 0 ? newText.capitalize(row) : row, 0, index * this.fontsize + this.offset)
+      else context.fillText(index == 0 ? newText.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset);
     })
     else context.fillText(newText.capitalize(writtenText[0]), 0, this.offset / middleFactor);
   }
@@ -2134,15 +2160,10 @@ export class newText extends newShape {
   public format(context: CanvasRenderingContext2D): string[] {
     let writtenText = [this.text];
     let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
-    context.font = newText.buildFont(this.style, fontsize, this.font);
     if (this.boundingBox.size.x) {
-      if (this.multiLine) [writtenText, fontsize] = this.multiLineSplit(fontsize, context);
-      else {
-        // if (!this.fontsize || context.measureText(this.text).width > this.boundingBox.size.x) {console.log(this.text);fontsize = this.automaticFontSize(context);}
-        fontsize = this.automaticFontSize(context);
-
-      }
-    } else if (this.boundingBox.size.y) fontsize = this.boundingBox.size.y;
+      if (this.multiLine) [writtenText, fontsize] = this.multiLineSplit(fontsize, context)
+      else fontsize = this.automaticFontSize(context);
+    } else if (this.boundingBox.size.y) fontsize = this.fontsize ?? this.boundingBox.size.y;
     this.fontsize = Math.abs(fontsize);
     context.font = newText.buildFont(this.style, this.fontsize, this.font);
     this.height = writtenText.length * this.fontsize;
@@ -2990,9 +3011,9 @@ export class newAxis extends newShape{
   public otherAxisScaling(otherAxis: newAxis): void {
     const center = this.center;
     this.maxValue = this.minValue + otherAxis.interval * this.drawLength / otherAxis.drawLength;
-    const newCenter = this.center;
-    this.minValue += center - newCenter; 
-    this.maxValue += center - newCenter; 
+    const translation = center - this.center;
+    this.minValue += translation; 
+    this.maxValue += translation; 
   } 
 
   public transform(newOrigin: Vertex, newEnd: Vertex): void {
@@ -3670,8 +3691,8 @@ export class ShapeCollection {
   public updateBounds(context: CanvasRenderingContext2D): void {
     this.drawings.forEach(drawing => {
       if (drawing instanceof newText) {
-        // drawing.format(context);
-        // drawing.buildPath();
+        drawing.format(context);
+        drawing.updateBoundingBox(context);
         const [textMin, textMax] = drawing.getBounds();
         this.minimum.x = Math.min(this.minimum.x, textMin.x);
         this.minimum.y = Math.min(this.minimum.y, textMin.y);

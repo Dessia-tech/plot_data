@@ -2951,7 +2951,6 @@ export class newParallelPlot extends Figure {
   }
 }
 
-const DRAW_BOUNDS_FACTOR = 1.025;
 export class Draw extends Frame {
   constructor(
     data: any,
@@ -2964,7 +2963,6 @@ export class Draw extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.axisEqual();
       this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.scale);
     }
 
@@ -2977,8 +2975,8 @@ export class Draw extends Frame {
     const drawing = ShapeCollection.fromPrimitives(data.primitives);
     const [minimum, maximum] = drawing.getBounds();
     return new Map<string, any[]>([
-      ["x", [minimum.x * DRAW_BOUNDS_FACTOR, maximum.x * DRAW_BOUNDS_FACTOR]],
-      ["y", [minimum.y * DRAW_BOUNDS_FACTOR, maximum.y * DRAW_BOUNDS_FACTOR]],
+      ["x", [minimum.x, maximum.x]],
+      ["y", [minimum.y, maximum.y]],
       ["shapes", drawing.drawings]
     ])
   }
@@ -2989,10 +2987,10 @@ export class Draw extends Frame {
   }
 
   public updateBounds(): void {
-    this.axes[0].minValue = this.features.get("x")[0] = Math.min(this.features.get("x")[0], this.relativeObjects.minimum.x * DRAW_BOUNDS_FACTOR);
-    this.axes[1].minValue = this.features.get("y")[0] = Math.min(this.features.get("y")[0], this.relativeObjects.minimum.y * DRAW_BOUNDS_FACTOR);
-    this.axes[0].maxValue = this.features.get("x")[1] = Math.max(this.features.get("x")[1], this.relativeObjects.maximum.x * DRAW_BOUNDS_FACTOR);
-    this.axes[1].maxValue = this.features.get("y")[1] = Math.max(this.features.get("y")[1], this.relativeObjects.maximum.y * DRAW_BOUNDS_FACTOR);
+    this.axes[0].minValue = this.features.get("x")[0] = Math.min(this.features.get("x")[0], this.relativeObjects.minimum.x);
+    this.axes[1].minValue = this.features.get("y")[0] = Math.min(this.features.get("y")[0], this.relativeObjects.minimum.y);
+    this.axes[0].maxValue = this.features.get("x")[1] = Math.max(this.features.get("x")[1], this.relativeObjects.maximum.x);
+    this.axes[1].maxValue = this.features.get("y")[1] = Math.max(this.features.get("y")[1], this.relativeObjects.maximum.y);
     this.axes.forEach(axis => axis.saveLocation());
     this.axisEqual();
   }
@@ -3008,11 +3006,11 @@ export class Draw extends Frame {
   }
 
   protected axisEqual(): void {
-    if (this.axes[0].drawLength > this.axes[1].drawLength) this.axes[0].otherAxisScaling(this.axes[1])
+    if (this.axes[0].drawLength / this.axes[0].interval > this.axes[1].drawLength / this.axes[1].interval) this.axes[0].otherAxisScaling(this.axes[1])
     else this.axes[1].otherAxisScaling(this.axes[0]);
     this.axes.forEach(axis => axis.saveLocation());
     this.updateAxes();
-  }
+    }
 }
 
 

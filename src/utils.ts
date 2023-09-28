@@ -1918,7 +1918,7 @@ export interface TextParams {
   scale?: Vertex
 }
 
-const SEPARATORS = ["_", "/", "\\", " ", ",", ";", ":"];
+const SEPARATORS = ["_", "/", "\\", " ", ",", ";", ":", "!", "?", ")", "(", "{", "}", "[", "]", "=", "+", "-"];
 const DEFAULT_FONTSIZE = 12;
 export class newText extends newShape {
   public scale: Vertex = new Vertex(1, 1);
@@ -2190,13 +2190,16 @@ export class newText extends newShape {
   private splitInWords(): string[] {
     const words = [];
     let pickedChars = 0;
-    while (pickedChars < this.text.length - 1) {
-      let word = this.text[pickedChars];
-      if (SEPARATORS.includes(this.text[pickedChars])) pickedChars++;
+    while (pickedChars < this.text.length) {
+      let word = "";
+      if (SEPARATORS.includes(this.text[pickedChars])) {
+        word = this.text[pickedChars];
+        pickedChars++;
+      }
       else {
-        while (!SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length - 1) {
-          pickedChars++;
+        while (!SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length) {
           word += this.text[pickedChars];
+          pickedChars++;
         }
       }
       words.push(word);
@@ -2207,7 +2210,7 @@ export class newText extends newShape {
   private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
     const rows: string[] = [];
     let pickedWords = 0;
-    while (pickedWords < this.words.length - 1) {
+    while (pickedWords < this.words.length) {
       let newRow = '';
       while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
         if (context.measureText(newRow + this.words[pickedWords]).width > this.boundingBox.size.x) break

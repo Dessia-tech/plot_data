@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0]
+### Fixes
+- Handle empty elements in Scatter
+- Offset & Margin in ParallelPlot
+- Performance for curves drawing in ParallelPlot
+
+### Add
+- Parallel plot feature with:
+    - Movable axes
+    - Scalable axes
+    - Possibility to translate local values of axes
+    - Rubberbands
+    - Mouse handling on curves
+    - Possibility to switch orientation
+    - Possibility to change sense of axes by clicking on their title
+- Line shape with its variants
+- ParallelPlot in multiplot with mouse interactions
+
+### Refactor
+- newAxis
+- newText
+- Mouse handling in objects
+- MouseWheel interactions
+
 ## [0.16.0]
 ### Refactor
 - First implementation of Scatter as a Frame plot

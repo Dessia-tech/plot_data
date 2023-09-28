@@ -35,7 +35,7 @@ class Box:
 
         text_style = plot_data.TextStyle(text_color='rgb(0, 0, 0)',
                                          font_size=self.font_size,
-                                         text_align_x='left',
+                                         text_align_x='center',
                                          text_align_y='middle')
         text = plot_data.Text(comment=self.name, position_x=0.,
                               position_y=pos_y, text_style=text_style,
@@ -151,7 +151,7 @@ texts.append(plot_data.Text(comment="Middle right ; (-300, -30) ; multiline ; no
 #                             position_x=320, position_y=150, text_style=middle_center_no_scale,
 #                             multi_lines=True, text_scaling=True, height=40, max_width=180))
 
-ff = texts
+ff = primitives + texts
 plot_data_object = plot_data.PrimitiveGroup(primitives=ff)
 plot_data.plot_canvas(plot_data_object, debug_mode=True)
 # plot_data.plot_canvas(plot_data.PrimitiveGroup(primitives=ff), debug_mode=True)

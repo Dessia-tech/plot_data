@@ -2207,8 +2207,7 @@ export class newText extends newShape {
   private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
     const rows: string[] = [];
     let pickedWords = 0;
-    let count = 0;
-    while (pickedWords < this.words.length && count < 1000) {
+    while (pickedWords < this.words.length - 1) {
       let newRow = '';
       while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
         if (context.measureText(newRow + this.words[pickedWords]).width > this.boundingBox.size.x) break
@@ -2218,25 +2217,30 @@ export class newText extends newShape {
         }
       }
       if (newRow.length != 0) rows.push(newRow);
-      count++;
     }
     return this.cleanStartAllRows(rows)
   }
 
   private cleanStartAllRows(rows: string[]): string[] { return rows.map(row => row.trimStart()) }
 
+  private checkWordsLength(context: CanvasRenderingContext2D): boolean {
+    for (let i=0; i < this.words.length - 1; i++) {
+      if (context.measureText(this.words[i]).width > this.boundingBox.size.x) return false;
+    }
+    return true
+  }
+
   private autoFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     let increment = 1;
     let rows = [];
     let criterion = Number.POSITIVE_INFINITY;
-    let count = 0;
-    while (criterion > this.boundingBox.size.y && fontsize > 1 && count < 1000) {
+    while (criterion > this.boundingBox.size.y && fontsize > 1) {
       context.font = newText.buildFont(this.style, fontsize, this.font);
-      rows = this.fixedFontSplit(context);
-      criterion = fontsize * rows.length;
-      // if (fontsize <= 1 * increment) increment /= 10;
+      if (this.checkWordsLength(context)) {
+        rows = this.fixedFontSplit(context);
+        criterion = fontsize * rows.length;
+      }
       fontsize--;
-      count++;
     }
     return [rows, fontsize + 1]
   }

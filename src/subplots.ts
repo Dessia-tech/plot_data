@@ -1,6 +1,6 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
 import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle, ParallelAxis, Line, newPoint2D } from "./utils";
+  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END } from "./utils";
 import { Heatmap, PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
 import { Graph2D, Scatter } from "./primitives";
@@ -1494,13 +1494,13 @@ export class Figure extends PlotData {
 
   protected offset: Vertex;
   protected margin: Vertex;
-  protected _offsetFactor: Vertex; // = new Vertex(0.035, 0.07);
-  protected _marginFactor: Vertex; // = 0.01;
+  protected _offsetFactor: Vertex;
+  protected _marginFactor: Vertex;
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   readonly features: Map<string, any[]>;
-  readonly MAX_PRINTED_NUMBERS = 16;
+  readonly MAX_PRINTED_NUMBERS = 6;
   readonly TRL_THRESHOLD = 20;
   constructor(
     data: any,
@@ -1555,6 +1555,10 @@ export class Figure extends PlotData {
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
+  private isInCanvas(vertex: Vertex): boolean {
+    return vertex.x >= this.X && vertex.x <= this.X + this.size.x && vertex.y >= this.Y && vertex.y <= this.Y + this.size.y
+  }
+
   protected unpackAxisStyle(data:any): void {
     if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
     if (data.axis?.axis_style?.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
@@ -1596,9 +1600,11 @@ export class Figure extends PlotData {
     return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
+  protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
+
   protected setBounds(): Vertex {
     this.offset = this.computeOffset();
-    this.margin = new Vertex(this.size.x * this.marginFactor.x, this.size.y * this.marginFactor.y).add(new Vertex(10, 10));
+    this.margin = new Vertex(this.size.x * this.marginFactor.x, this.size.y * this.marginFactor.y).add(this.marginOffset);
     return this.computeBounds()
   }
 
@@ -1669,6 +1675,7 @@ export class Figure extends PlotData {
 
   public reset_scales(): void { // TODO: merge with resetView
     this.updateSize();
+    this.computeOffset();
     this.relocateAxes();
     this.axes.forEach(axis => axis.resetScale());
   }
@@ -1721,7 +1728,6 @@ export class Figure extends PlotData {
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) {
     this.relativeObjects = new GroupCollection([], this.relativeMatrix);
-    this.drawSelectionBox(context);
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D) { this.absoluteObjects = new GroupCollection() }
@@ -1741,6 +1747,9 @@ export class Figure extends PlotData {
 
     this.context_show.resetTransform();
     this.drawAbsoluteObjects(this.context_show);
+
+    this.context_show.setTransform(this.relativeMatrix);
+    this.drawSelectionBox(this.context_show);
 
     this.context_show.setTransform(this.canvasMatrix);
     this.drawFixedObjects(this.context_show);
@@ -1831,9 +1840,9 @@ export class Figure extends PlotData {
     return [canvasMouse, frameMouse, clickedObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
+  public mouseUp(ctrlKey: boolean): void {
     if (this.interaction_ON) {
-      if (!this.isSelecting && !this.is_drawing_rubber_band) {
+      if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
         this.absoluteObjects.mouseUp(this.context_show, ctrlKey);
         this.relativeObjects.mouseUp(this.context_show, ctrlKey);
       }
@@ -1857,21 +1866,29 @@ export class Figure extends PlotData {
       var absoluteMouse = new Vertex(0, 0);
       var mouse3X = 0; var mouse3Y = 0;
       const canvas = document.getElementById(this.canvas_id);
-      var ctrlKey = false; var shiftKey = false;
+      var ctrlKey = false; var shiftKey = false; var spaceKey = false;
       var zoomBox = new SelectionBox();
 
       this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
 
       window.addEventListener('keydown', e => {
-        if (e.key == "Control") ctrlKey = true;
+        if (e.key == "Control") {
+          ctrlKey = true;
+          if (spaceKey && this.isInCanvas(absoluteMouse)) this.resetView();
+        }
         if (e.key == "Shift") {
           shiftKey = true;
           if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
+        }
+        if (e.key == " ") {
+          spaceKey = true;
+          if (ctrlKey && this.isInCanvas(absoluteMouse)) this.resetView();
         }
       });
 
       window.addEventListener('keyup', e => {
         if (e.key == "Control") ctrlKey = false;
+        if (e.key == " ") spaceKey = false;
         if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; this.is_drawing_rubber_band = false; canvas.style.cursor = 'default'; this.draw() };
       });
 
@@ -1905,24 +1922,21 @@ export class Figure extends PlotData {
       });
 
       canvas.addEventListener('mouseup', e => {
-        if (!shiftKey) canvas.style.cursor = 'default';
         if (this.isZooming) {
           this.switchZoom();
           this.zoomBoxUpdateAxes(zoomBox);
         }
-        this.mouseUp(canvasMouse, canvasDown, ctrlKey);
-        if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
-        clickedObject = null;
+        this.mouseUp(ctrlKey);
         this.draw();
-        this.axes.forEach(axis => axis.saveLocation());
-        this.translation = new Vertex(0, 0);
-        isDrawing = false;
+        if (!shiftKey) canvas.style.cursor = 'default';
+        [clickedObject, isDrawing] = this.resetMouseEvents();
       })
 
       canvas.addEventListener('wheel', e => {
         if (this.interaction_ON) {
-          [mouse3X, mouse3Y] = this.wheelFromEvent(e);
-          this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(this.scaleX, this.scaleY));
+          this.wheelFromEvent(e);
+          this.updateWithScale();
+          this.draw();
         }
       });
 
@@ -1936,26 +1950,21 @@ export class Figure extends PlotData {
     }
   }
 
-  protected regulateScale(scale: Vertex): void {
-    for (let axis of this.axes) {
-      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
-        if (this.scaleX > scale.x) this.scaleX = scale.x;
-        if (this.scaleY > scale.y) this.scaleY = scale.y;
-      } else if (axis.tickPrecision < 1) {
-        if (this.scaleX < scale.x) this.scaleX = scale.x;
-        if (this.scaleX < scale.x) this.scaleX = scale.x;
-      }
-    }
+  protected resetMouseEvents(): [any, boolean] {
+    if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
+    this.axes.forEach(axis => axis.saveLocation());
+    this.translation = new Vertex(0, 0);
+    return [null, false]
   }
 
-  protected drawAfterRescale(mouse3X: number, mouse3Y: number, scale: Vertex): void {
-    this.regulateScale(scale);
-    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
+  protected regulateScale(): void {}
+
+  protected updateWithScale(): void {
+    this.regulateScale();
     this.updateAxes(); // needs a refactor
     this.axes.forEach(axis => axis.saveLocation());
     [this.scaleX, this.scaleY] = [1, 1];
     this.viewPoint = new Vertex(0, 0);
-    this.draw(); // needs a refactor
   }
 
   public zoomIn(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), 342) }
@@ -1963,13 +1972,14 @@ export class Figure extends PlotData {
   public zoomOut(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), -342) }
 
   private zoom(center: Vertex, zFactor: number): void {
-    const [mouse3X, mouse3Y] = this.mouseWheel(center.x, center.y, zFactor);
-    this.drawAfterRescale(mouse3X, mouse3Y, new Vertex(1, 1));
+    this.mouseWheel(center.x, center.y, zFactor);
+    this.updateWithScale();
+    this.draw();
   }
 
-  public wheelFromEvent(e: WheelEvent): [number, number] { return this.mouseWheel(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
+  public wheelFromEvent(e: WheelEvent): void { this.mouseWheel(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
+  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): void { //TODO: This is still not a refactor
     this.fusion_coeff = 1.2;
     const zoomFactor = deltaY > 0 ? this.fusion_coeff : 1 / this.fusion_coeff;
     this.scaleX = this.scaleX * zoomFactor;
@@ -1980,7 +1990,7 @@ export class Figure extends PlotData {
     this.originY = mouse3Y - this.Y + zoomFactor * (this.originY - mouse3Y + this.Y);
     if (isNaN(this.scroll_x)) this.scroll_x = 0;
     if (isNaN(this.scroll_y)) this.scroll_y = 0;
-    return [mouse3X, mouse3Y];
+    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
   }
 }
 
@@ -2043,8 +2053,8 @@ export class Frame extends Figure {
     this.hoveredIndices = this.sampleDrawings.updateSampleStates('isHovered');
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+  public mouseUp(ctrlKey: boolean): void {
+    super.mouseUp(ctrlKey);
     this.clickedIndices = this.sampleDrawings.updateSampleStates('isClicked');
   }
 
@@ -2111,6 +2121,21 @@ export class Frame extends Figure {
   protected activateSelection(emittedRubberBand: RubberBand, index: number): void {
     super.activateSelection(emittedRubberBand, index)
     this.selectionBox.rubberBandUpdate(emittedRubberBand, ["x", "y"][index]);
+  }
+
+  protected regulateScale(): void {
+    for (const axis of this.axes) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > 1) this.scaleX = 1;
+        if (this.scaleY > 1) this.scaleY = 1;
+      } else if (axis.tickPrecision < 1) {
+        if (this.scaleX < 1) this.scaleX = 1;
+        if (this.scaleY < 1) this.scaleY = 1;
+      } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+        if (this.scaleX < 1) this.scaleX = 1;
+        if (this.scaleY < 1) this.scaleY = 1;
+      }
+    }
   }
 }
 
@@ -2246,27 +2271,17 @@ export class Histogram extends Frame {
     return new Vertex(this.axes[0].isDiscrete ? 0 : translation.x, 0)
   }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { // TODO: REALLY NEEDS A REFACTOR
-    this.fusion_coeff = 1.2;
-    if ((mouse3Y >= this.height - this.decalage_axis_y + this.Y) && (mouse3X > this.decalage_axis_x + this.X) && this.axis_ON) {
-      if (deltaY>0) {
-        this.scaleX = this.scaleX * this.fusion_coeff;
-        this.scroll_x++;
-        this.originX = this.width/2 + this.fusion_coeff * (this.originX - this.width/2);
-      } else if (deltaY<0) {
-        this.scaleX = this.scaleX/this.fusion_coeff;
-        this.scroll_x--;
-        this.originX = this.width/2 + 1/this.fusion_coeff * (this.originX - this.width/2);
+  protected regulateScale(): void {
+    this.scaleY = 1;
+    for (const axis of this.axes) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > 1) this.scaleX = 1;
+      } else if (axis.tickPrecision < 1) {
+        if (this.scaleX < 1) this.scaleX = 1;
+      } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+        if (this.scaleX < 1) this.scaleX = 1;
       }
-    } else {
-        if (deltaY>0)  var coeff = this.fusion_coeff; else coeff = 1/this.fusion_coeff;
-        this.scaleX = this.scaleX*coeff;
-        this.scroll_x = this.scroll_x + deltaY;
-        this.originX = mouse3X - this.X + coeff * (this.originX - mouse3X + this.X);
     }
-    if (isNaN(this.scroll_x)) this.scroll_x = 0;
-    if (isNaN(this.scroll_y)) this.scroll_y = 0;
-    return [mouse3X, mouse3Y];
   }
 }
 
@@ -2551,30 +2566,14 @@ export class newScatter extends Frame {
     return [superCanvasMouse, superFrameMouse, clickedObject]
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+  public mouseUp(ctrlKey: boolean): void {
+    super.mouseUp(ctrlKey);
     this.previousCoords = [];
   }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] {
-    const scale = new Vertex(this.scaleX, this.scaleY);
-    [mouse3X, mouse3Y] = super.mouseWheel(mouse3X, mouse3Y, deltaY);
-    for (const axis of this.axes) {
-      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) { // code style only
-        if (this.scaleX > scale.x) this.scaleX = scale.x;
-        if (this.scaleY > scale.y) this.scaleY = scale.y;
-      } else if (axis.tickPrecision < 1) {
-        if (this.scaleX < scale.x) this.scaleX = scale.x;
-        if (this.scaleX < scale.x) this.scaleX = scale.x;
-      }
-    }
-    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
-    this.updateAxes(); // needs a refactor
-    this.axes.forEach(axis => axis.saveLocation());
-    [this.scaleX, this.scaleY] = [1, 1];
-    this.viewPoint = new Vertex(0, 0);
+  protected updateWithScale(): void {
+    super.updateWithScale();
     if (this.nSamples > 0) this.computePoints();
-    return [mouse3X, mouse3Y];
   }
 }
 
@@ -2663,8 +2662,8 @@ export class newGraph2D extends newScatter {
     this.draw();
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+  public mouseUp(ctrlKey: boolean): void {
+    super.mouseUp(ctrlKey);
     this.curves.forEach(curve => curve.previousTooltipOrigin = curve.tooltipOrigin);
   }
 
@@ -2680,6 +2679,7 @@ export class newParallelPlot extends Figure {
   public axes: ParallelAxis[];
   public curves: LineSequence[];
   public curveColor: string = 'hsl(203, 90%, 85%)';
+  public changedAxes: ParallelAxis[] = [];
   private _isVertical: boolean;
   constructor(
     data: any,
@@ -2699,23 +2699,25 @@ export class newParallelPlot extends Figure {
 
   set isVertical(value: boolean) { this._isVertical = value }
 
-  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.1) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.05) }
 
   set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
-  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.025, 0.0025) }
+  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.0035, 0.0025) }
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
   protected computeOffset(): Vertex {
     const standardOffset = super.computeOffset();
     if (this.isVertical) return new Vertex(Math.max(standardOffset.x, MIN_OFFSET), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
-    return standardOffset
+    return new Vertex(standardOffset.x / 3, Math.max(standardOffset.y * 1.5, MIN_OFFSET));
   }
 
-  public resetView(): void {
-    this.axes.forEach(axis => axis.resetScale());
-    this.draw();
+  protected get marginOffset(): Vertex { return new Vertex(this.isVertical ? 0 : SIZE_END, this.isVertical ? SIZE_END : SIZE_END * 4) }
+
+  public reset_scales(): void { // TODO: merge with resetView
+    super.reset_scales();
+    this.updateAxesLocation();
   }
 
   public switchOrientation(): void {
@@ -2731,11 +2733,13 @@ export class newParallelPlot extends Figure {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
       axis.updateLocation(axisOrigin, axisEnd, axisBoundingBoxes[index], index, this.drawnFeatures.length);
     });
+    this.computeCurves();
     this.draw();
   }
 
   private computeAxesStep(): number {
-    return (this.isVertical ? this.drawEnd.x - this.drawOrigin.x : this.drawEnd.y - this.drawOrigin.y) / (this.drawnFeatures.length - 1)
+    if (this.isVertical) return (this.drawEnd.x - this.drawOrigin.x - Math.abs(this.offset.x) - Math.abs(this.margin.x)) / (this.drawnFeatures.length - 1)
+    return (this.drawEnd.y - this.drawOrigin.y - Math.abs(this.margin.y)) / (this.drawnFeatures.length - 1)
   }
 
   protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
@@ -2751,11 +2755,11 @@ export class newParallelPlot extends Figure {
 
   private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
     const boundingBox = new newRect(axisOrigin.copy());
+    const relativeY = Math.abs(axisOrigin.y) - this.Y;
     boundingBox.size = new Vertex(axisSize, step * FREE_SPACE_FACTOR);
     if (index == this.drawnFeatures.length - 1) {
-      boundingBox.size.x = axisSize;
-      if (this.initScale.y < 0) boundingBox.size.y = (this.size.y - Math.abs(axisOrigin.y)) * FREE_SPACE_FACTOR
-      else boundingBox.size.y = Math.abs(axisOrigin.y) * FREE_SPACE_FACTOR
+      if (this.initScale.y < 0) boundingBox.size.y = (this.size.y - relativeY) * FREE_SPACE_FACTOR
+      else boundingBox.size.y = relativeY * FREE_SPACE_FACTOR
     }
     boundingBox.origin.y -= boundingBox.size.y;
     return boundingBox
@@ -2763,21 +2767,22 @@ export class newParallelPlot extends Figure {
 
   private verticalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
     const boundingBox = new newRect(axisOrigin.copy());
+    const relativeX = axisOrigin.x - this.X;
     boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
     if (index == 0) {
       if (this.initScale.x < 0) {
-        boundingBox.origin.x -= (this.size.x + axisOrigin.x) * FREE_SPACE_FACTOR;
-        boundingBox.size.x = (step / 2 + this.width + axisOrigin.x) * FREE_SPACE_FACTOR;
+        boundingBox.origin.x -= (this.size.x + relativeX) * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (step / 2 + this.width + relativeX) * FREE_SPACE_FACTOR;
       } else {
-        boundingBox.origin.x -= axisOrigin.x * FREE_SPACE_FACTOR;
-        boundingBox.size.x = (step / 2 + axisOrigin.x) * FREE_SPACE_FACTOR;
+        boundingBox.origin.x -= relativeX * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (step / 2 + relativeX) * FREE_SPACE_FACTOR;
       }
     } else if (index == this.drawnFeatures.length - 1) {
       boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
       if (this.initScale.x < 0) {
-        boundingBox.size.x = (step / 2 - axisOrigin.x) * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (step / 2 - relativeX) * FREE_SPACE_FACTOR;
       } else {
-        boundingBox.size.x = (this.size.x - boundingBox.origin.x) * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (this.size.x - boundingBox.origin.x + this.X) * FREE_SPACE_FACTOR;
       }
     } else boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
     return boundingBox
@@ -2785,7 +2790,7 @@ export class newParallelPlot extends Figure {
 
   private getAxisLocation(step: number, axisIndex: number): [Vertex, Vertex] {
     const verticalX = this.drawOrigin.x + axisIndex * step;
-    const horizontalY = this.drawOrigin.y + (this.drawnFeatures.length - 1 - axisIndex) * step;
+    const horizontalY = this.drawOrigin.y + (this.drawnFeatures.length - 1 - axisIndex) * step + this.margin.y;
     if (this.isVertical) return [new Vertex(verticalX, this.drawOrigin.y), new Vertex(verticalX, this.drawEnd.y)]
     return [new Vertex(this.drawOrigin.x, horizontalY), new Vertex(this.drawEnd.x, horizontalY)]
   }
@@ -2804,31 +2809,51 @@ export class newParallelPlot extends Figure {
     return axes
   }
 
+  public computePoint(axis: newAxis, featureValue: number): newPoint2D {
+    const xCoord = this.isVertical ? axis.origin.x : axis.relativeToAbsolute(featureValue);
+    const yCoord = this.isVertical ? axis.relativeToAbsolute(featureValue) : axis.origin.y;
+    return new newPoint2D(xCoord, yCoord).scale(this.initScale);
+  }
+
   public computeCurves(): void {
     this.curves = [];
-    for (let i=0; i < this.nSamples; i++) this.curves.push(new LineSequence([], String(i)));
+    for (let i=0; i < this.nSamples; i++) {
+      const curve = new LineSequence([], String(i));
+      this.drawnFeatures.forEach((feature, j) => curve.points.push(this.computePoint(this.axes[j], this.features.get(feature)[i])));
+      curve.hoveredFactor = curve.clickedFactor = 1;
+      curve.selectedFactor = 1.5;
+      this.curves.push(curve);
+    }
   }
 
   public updateCurves(): void {
     this.curves.forEach((curve, i) => {
-      curve.points = [];
-      this.drawnFeatures.forEach((feature, j) => {
-        const xCoord = this.isVertical ? this.axes[j].origin.x : this.axes[j].relativeToAbsolute(this.features.get(feature)[i]);
-        const yCoord = this.isVertical ? this.axes[j].relativeToAbsolute(this.features.get(feature)[i]) : this.axes[j].origin.y;
-        curve.points.push(new newPoint2D(xCoord, yCoord).scale(this.initScale));
+      this.changedAxes.forEach(axis => {
+        const featureIndex = this.drawnFeatures.indexOf(axis.name);
+        curve.points[featureIndex] = this.computePoint(axis, this.features.get(axis.name)[i]);
       })
       curve.buildPath();
+      curve.isHovered = this.hoveredIndices.includes(i) && !this.isSelecting && !this.is_drawing_rubber_band;
+      curve.isClicked = this.clickedIndices.includes(i);
+      curve.isSelected = this.selectedIndices.includes(i);
+      curve.strokeStyle = this.curveColor;
     })
   }
 
-  public drawCurves(context: CanvasRenderingContext2D): void {
-    this.updateCurves();
+  private drawCurves(context: CanvasRenderingContext2D): void {
+    const unpickedIndices = newParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
+    [unpickedIndices, this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
+  }
+
+  public static arraySetDiff(A: any[], B: any[]): any[] {
+    if (B.length == 0) return A
+    return A.filter(x => !B.includes(x))
+  }
+
+  public updateCurveDrawings(context: CanvasRenderingContext2D): void {
     const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
-    this.curves.forEach((curve, i) => {
-      curve.isSelected = this.selectedIndices.includes(i);
-      curve.strokeStyle = this.curveColor;
-      curve.draw(context);
-    });
+    this.updateCurves();
+    this.drawCurves(context);
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
     const axesEnd = new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
     const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
@@ -2841,7 +2866,7 @@ export class newParallelPlot extends Figure {
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
-    this.drawCurves(context);
+    this.updateCurveDrawings(context);
     this.absoluteObjects = new GroupCollection([...this.curves]);
   }
 
@@ -2853,23 +2878,38 @@ export class newParallelPlot extends Figure {
       this.absoluteObjects.mouseMove(this.context_show, absoluteMouse);
       this.relativeObjects.mouseMove(this.context_show, frameMouse);
     };
+    this.changeDisplayOrder();
+    this.hoveredIndices = this.absoluteObjects.updateSampleStates('isHovered');
+  }
+
+  private changeDisplayOrder(): void {
     if (this.isVertical) this.axes.sort((a, b) => a.origin.x - b.origin.x)
     else this.axes.sort((a, b) => b.origin.y - a.origin.y);
-    this.drawnFeatures = this.axes.map(axis => axis.name);
+    this.drawnFeatures = this.axes.map((axis, i) => {
+      if (this.drawnFeatures[i] != axis.name) axis.hasMoved = true;
+      return axis.name;
+    });
   }
 
-  public mouseUp(canvasMouse: Vertex, canvasDown: Vertex, ctrlKey: boolean): void {
-    for (let i = 0; i < this.axes.length; i++) {
-      if (this.axes[i].hasMoved) { this.updateAxesLocation(); break }
-    }
-    super.mouseUp(canvasMouse, canvasDown, ctrlKey);
+  public mouseUp(ctrlKey: boolean): void {
+    if (this.changedAxes.length != 0) this.updateAxesLocation();
+    super.mouseUp(ctrlKey);
+    if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
   }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): [number, number] { //TODO: This is still not a refactor
-    const mouseCoords = new Vertex(...super.mouseWheel(mouse3X, mouse3Y, deltaY));
-    this.viewPoint = mouseCoords.scale(this.initScale);
-    for (let axis of this.axes) {
-      if (axis.boundingBox.isPointInShape(this.context_show, this.viewPoint)) {
+  protected regulateScale(): void {
+    for (const axis of this.axes) {
+      if (axis.boundingBox.isHovered) {
+        if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+          if (this.scaleX > 1) this.scaleX = 1;
+          if (this.scaleY > 1) this.scaleY = 1;
+        } else if (axis.tickPrecision < 1) {
+          if (this.scaleX < 1) this.scaleX = 1;
+          if (this.scaleY < 1) this.scaleY = 1;
+        } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+          if (this.scaleX < 1) this.scaleX = 1;
+          if (this.scaleY < 1) this.scaleY = 1;
+        }
         axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
         axis.saveLocation();
         break;
@@ -2877,7 +2917,6 @@ export class newParallelPlot extends Figure {
     }
     this.scaleX = this.scaleY = 1;
     this.viewPoint = new Vertex(0, 0);
-    return [mouse3X, mouse3Y];
   }
 
   public updateAxes(): void {
@@ -2887,6 +2926,16 @@ export class newParallelPlot extends Figure {
       if (axis.rubberBand.length != 0) axesSelections.push(this.updateSelected(axis));
     })
     this.updateSelection(axesSelections);
+  }
+
+  public mouse_interaction(isParallelPlot: boolean): void {
+    this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => {if (!this.changedAxes.includes(e)) this.changedAxes.push(e)}));
+    super.mouse_interaction(isParallelPlot);
+  }
+
+  protected resetMouseEvents(): [any, boolean] {
+    this.changedAxes = [];
+    return super.resetMouseEvents()
   }
 }
 

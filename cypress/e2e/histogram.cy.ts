@@ -44,7 +44,7 @@ describe('HISTOGRAM CANVAS', function () {
     cy.window().then(win => {
       const histogram = win.eval('plot_data') as Histogram;
       [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 291, "offsetY": 601} as MouseEvent);
-      expect(frameMouse.x).to.closeTo(3749, 10);
+      expect(frameMouse.x).to.closeTo(3737, 10);
     })
   })
 
@@ -59,8 +59,8 @@ describe('HISTOGRAM CANVAS', function () {
       histogram.draw()
       const selectedBars = histogram.bars.reduce((sum, current) => sum + (current.isSelected ? 1 : 0), 0);
 
-      expect(histogram.axes[0].rubberBand.minValue).to.closeTo(4324, 10);
-      expect(histogram.axes[0].rubberBand.maxValue).to.closeTo(10224, 10);
+      expect(histogram.axes[0].rubberBand.minValue).to.closeTo(4311, 10);
+      expect(histogram.axes[0].rubberBand.maxValue).to.closeTo(10211, 10);
       expect(selectedBars).to.equal(5);
     })
   })
@@ -74,7 +74,7 @@ describe('HISTOGRAM CANVAS', function () {
       expect(histogram.hoveredIndices.length).to.equal(7);
 
       [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
-      histogram.mouseUp(canvasMouse, canvasDown, false)
+      histogram.mouseUp(false)
       expect(histogram.clickedIndices[2]).to.equal(11);
       expect(histogram.clickedIndices[6]).to.equal(47);
     })

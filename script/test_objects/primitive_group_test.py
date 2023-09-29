@@ -18,7 +18,7 @@ surface_style = plot_data.SurfaceStyle(color_fill=colors.WHITE, opacity=1,
 # a volmdlr object into a plot_data object
 
 # Point2D
-point1 = plot_data.Point2D(0.1, 0.2)
+point1 = plot_data.Point2D(0, 0)
 
 # arc
 arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi / 2)

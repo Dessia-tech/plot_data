@@ -1322,7 +1322,7 @@ export class Vertex {
 const TOOLTIP_PRECISION = 100;
 export class newShape {
   public path: Path2D = new Path2D();
-  public scaledPath: Path2D;
+  public scaledPath: Path2D = new Path2D();
   public inStrokeScale: Vertex = new Vertex(1, 1);
 
   public lineWidth: number = 1;
@@ -1387,9 +1387,12 @@ export class newShape {
     context.restore();
   }
 
-  protected buildUnscaledPath(context: CanvasRenderingContext2D) {
+  protected buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {
+    const contextMatrix = context.getTransform();
     context.resetTransform();
-    return this.path
+    const path = new Path2D();
+    path.addPath(this.path);
+    return path
   }
 
   public setStrokeStyle(fillStyle: string): string {
@@ -2407,9 +2410,11 @@ export class newPoint2D extends newShape {
     const matrix = context.getTransform();
     context.resetTransform();
     const center = new Vertex(matrix.e, matrix.f).add(this.center.scale(new Vertex(matrix.a, matrix.d))).subtract(this.center);
+    const path = new Path2D();
+    path.addPath(this.drawnShape.path, new DOMMatrix([1, 0, 0, 1, center.x, center.y]));
     this.path = new Path2D();
-    this.path.addPath(this.drawnShape.path, new DOMMatrix([1, 0, 0, 1, center.x, center.y]));
-    return this.path
+    this.path.addPath(path, matrix.inverse());
+    return path
   }
 
   public isInFrame(origin: Vertex, end: Vertex, scale: Vertex): boolean {

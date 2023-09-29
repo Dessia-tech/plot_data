@@ -1426,10 +1426,10 @@ export class newShape {
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
     context.save();
-    context.resetTransform();
-    context.lineWidth = 10;
     let isHovered = false;
     if (this.isScaled) {
+      context.resetTransform();
+      context.lineWidth = 10;
       context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
       isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
     } else isHovered = context.isPointInStroke(this.path, point.x, point.y);

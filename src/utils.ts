@@ -1345,7 +1345,7 @@ export class newShape {
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
   public hasTooltip: boolean = true;
-  constructor() { };
+  constructor() {};
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
 
@@ -1374,17 +1374,22 @@ export class newShape {
   public draw(context: CanvasRenderingContext2D): void {
     context.save();
     const scaledPath = new Path2D();
+    const contextMatrix = context.getTransform();
     if (this.isScaled) {
-      const contextMatrix = context.getTransform();
       scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
       context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
       this.inStrokeScale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
-    } else scaledPath.addPath(this.path);
+    } else scaledPath.addPath(this.buildUnscaledPath(context));
     this.setDrawingProperties(context);
     if (this.isFilled) context.fill(scaledPath);
     context.stroke(scaledPath);
     this.scaledPath = scaledPath;
     context.restore();
+  }
+
+  protected buildUnscaledPath(context: CanvasRenderingContext2D) {
+    context.resetTransform();
+    return this.path
   }
 
   public setStrokeStyle(fillStyle: string): string {
@@ -1413,7 +1418,7 @@ export class newShape {
     }
   }
 
-  public buildPath(): void { }
+  public buildPath(): void {}
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
@@ -2302,7 +2307,7 @@ export class newPoint2D extends newShape {
   constructor(
     x: number = 0,
     y: number = 0,
-    protected _size: number = 2,
+    protected _size: number = 12,
     protected _marker: string = 'circle',
     protected _markerOrientation: string = 'up',
     fillStyle: string = null,
@@ -2396,7 +2401,16 @@ export class newPoint2D extends newShape {
 
   set marker(value: string) { this._marker = value };
 
-  public buildPath(): void { this.path = this.drawnShape.path };
+  public buildPath(): void { this.path = this.drawnShape.path }
+
+  protected buildUnscaledPath(context: CanvasRenderingContext2D) {
+    const matrix = context.getTransform();
+    context.resetTransform();
+    const center = new Vertex(matrix.e, matrix.f).add(this.center.scale(new Vertex(matrix.a, matrix.d))).subtract(this.center);
+    this.path = new Path2D();
+    this.path.addPath(this.drawnShape.path, new DOMMatrix([1, 0, 0, 1, center.x, center.y]));
+    return this.path
+  }
 
   public isInFrame(origin: Vertex, end: Vertex, scale: Vertex): boolean {
     const inCanvasX = this.center.x * scale.x < end.x && this.center.x * scale.x > origin.x;
@@ -2412,7 +2426,7 @@ export class ScatterPoint extends newPoint2D {
     public values: number[],
     x: number = 0,
     y: number = 0,
-    protected _size: number = 3,
+    protected _size: number = 12,
     protected _marker: string = 'circle',
     protected _markerOrientation: string = 'up',
     fillStyle: string = null,

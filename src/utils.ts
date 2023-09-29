@@ -1371,7 +1371,7 @@ export class newShape {
     else throw new Error(`${data.type_} deserialization is not implemented.`);
     shape.fillStyle = colorHsl(data.surface_style?.color_fill ?? shape.fillStyle);
     shape.strokeStyle = colorHsl(data.surface_style?.color_stroke ?? shape.strokeStyle);
-    // shape.dashLine = data.surface_style?.hatching ? [data.surface_style?.hatching.stroke_width, data.surface_style?.hatching.hatch_spacing] : shape.dashLine;
+    shape.dashLine = data.edge_style?.dashline ?? shape.dashLine;
     shape.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
     return shape
   }

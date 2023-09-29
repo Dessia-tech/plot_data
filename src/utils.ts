@@ -1,4 +1,4 @@
-import { TextStyle, EdgeStyle, SurfaceStyle } from "./style";
+import { TextStyle, EdgeStyle, SurfaceStyle, HatchingSet } from "./style";
 import { string_to_rgb, colorHex, color_to_string, isHex, isRgb, string_to_hex, rgb_to_string, hslToArray, colorHsl } from "./color_conversion";
 import { Shape, MyMath, List } from "./toolbox";
 import { EventEmitter } from "events";
@@ -1327,6 +1327,7 @@ export class newShape {
 
   public lineWidth: number = 1;
   public dashLine: number[] = [];
+  public hatching: HatchingSet;
   public strokeStyle: string = 'hsl(0, 0%, 0%)';
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
@@ -1354,19 +1355,25 @@ export class newShape {
   public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
 
   public static deserialize(data: { [key: string]: any }, scale: Vertex): newShape {
-    if (data.type_ == "circle") return newCircle.deserialize(data, scale);
-    if (data.type_ == "contour") return Contour.deserialize(data, scale);
-    if (data.type_ == "line2d") return Line.deserialize(data, scale);
-    if (data.type_ == "linesegment2d") return LineSegment.deserialize(data, scale);
-    if (data.type_ == "wire") { // TODO: make it better
+    let shape: newShape;
+    if (data.type_ == "circle") shape = newCircle.deserialize(data, scale)
+    else if (data.type_ == "contour") shape = Contour.deserialize(data, scale);
+    else if (data.type_ == "line2d") shape = Line.deserialize(data, scale);
+    else if (data.type_ == "linesegment2d") shape = LineSegment.deserialize(data, scale);
+    else if (data.type_ == "wire") { // TODO: make it better
       const wire = LineSequence.deserialize(data, scale);
       wire.hasTooltip = false;
-      return wire
+      shape = wire
     }
-    if (data.type_ == "point") return newPoint2D.deserialize(data, scale);
-    if (data.type_ == "arc") return Arc.deserialize(data, scale);
-    if (data.type_ == "text") return newText.deserialize(data, scale);
-    throw new Error(`${data.type_} deserialization is not implemented.`);
+    else if (data.type_ == "point") return newPoint2D.deserialize(data, scale);
+    else if (data.type_ == "arc") shape = Arc.deserialize(data, scale);
+    else if (data.type_ == "text") return newText.deserialize(data, scale);
+    else throw new Error(`${data.type_} deserialization is not implemented.`);
+    shape.fillStyle = colorHsl(data.surface_style?.color_fill ?? shape.fillStyle);
+    shape.strokeStyle = colorHsl(data.surface_style?.color_stroke ?? shape.strokeStyle);
+    // shape.dashLine = data.surface_style?.hatching ? [data.surface_style?.hatching.stroke_width, data.surface_style?.hatching.hatch_spacing] : shape.dashLine;
+    shape.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
+    return shape
   }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
@@ -1409,6 +1416,7 @@ export class newShape {
     if (this.isFilled) {
       context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
       context.strokeStyle = this.setStrokeStyle(context.fillStyle);
+      if (this.hatching) context.fillStyle = context.createPattern(this.hatching.generate_canvas(context.fillStyle), 'repeat');
     } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle;
   }
 
@@ -1486,9 +1494,7 @@ export class newCircle extends Arc {
   }
 
   public static deserialize(data: any, scale: Vertex): newCircle {
-    const circle = new newCircle(new Vertex(data.cx, data.cy), data.r);
-    circle.fillStyle = colorHsl(data.surface_style?.color_fill ?? circle.fillStyle);
-    return circle
+    return new newCircle(new Vertex(data.cx, data.cy), data.r);
   }
 }
 
@@ -1656,9 +1662,7 @@ export class Line extends newShape { // TODO: Does not work => make it work
   }
 
   public static deserialize(data: any, scale: Vertex): Line {
-    const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    if (data.edge_style) { }
-    return line
+    return new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
   }
 
   public buildPath(): void {
@@ -1686,9 +1690,7 @@ export class LineSegment extends Line {
   }
 
   public static deserialize(data: any, scale: Vertex): LineSegment {
-    const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    if (data.edge_style) { }
-    return line
+    return new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
   }
 
   public getBounds(): [Vertex, Vertex] { return [this.origin, this.end] }

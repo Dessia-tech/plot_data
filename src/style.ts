@@ -32,42 +32,41 @@ export class EdgeStyle {
 }
 
 export class HatchingSet {
-    canvas_hatching:any;
-
-    constructor(public name:string,
-                public stroke_width:number,
-                public hatch_spacing:number) {
-        this.canvas_hatching = this.generate_canvas();
-    }
+    constructor(public name: string,
+                public lineWidth: number = 0,
+                public step: number = 0) {}
 
     public static deserialize(serialized) {
-        return new HatchingSet(serialized['name'],
-                                serialized['stroke_width'],
-                                serialized['hatch_spacing']);
+        return new HatchingSet(serialized['name'], serialized['stroke_width'], serialized['hatch_spacing']);
     }
 
-    generate_canvas() {
-        var nb_hatch = 20;
-        var max_size = nb_hatch*this.hatch_spacing;
+    generate_canvas(fillStyle: string) { // TODO: Study this
+      const nLines = this.lineWidth == 0 ? 0 : 20;
+      const maxSize = nLines * this.step;
+      const hatchCanvas = document.createElement("canvas");
+      hatchCanvas.width = maxSize;
+      hatchCanvas.height = maxSize;
+      const context = this.setContext(hatchCanvas.getContext("2d"), fillStyle);
+      context.beginPath();
+      let xCoord = -((maxSize ** 2 / 2) ** 0.5);
+      let yCoord = (maxSize ** 2 / 2) ** 0.5;
+      for (let i = 0; i <= 2 * nLines; i++) {
+        xCoord += this.step;
+        yCoord -= this.step;
+        context.moveTo(xCoord, yCoord);
+        context.lineTo(xCoord + maxSize, yCoord + maxSize);
+      }
+      context.fillRect(0, 0, maxSize, maxSize);
+      context.stroke();
+      return hatchCanvas;
+    }
 
-        var p_hatch = document.createElement("canvas");
-        p_hatch.width = max_size;
-        p_hatch.height = max_size;
-        var pctx = p_hatch.getContext("2d");
-        pctx.lineCap = 'square';
-        pctx.strokeStyle = 'black';
-        pctx.lineWidth = this.stroke_width;
-        pctx.beginPath();
-        var pos_x = - Math.pow(Math.pow(max_size,2)/2, 0.5);
-        var pos_y = Math.pow(Math.pow(max_size,2)/2, 0.5);
-        for (var i = 0; i <= 2*nb_hatch; i++) {
-        pos_x = pos_x + this.hatch_spacing;
-        pos_y = pos_y - this.hatch_spacing;
-        pctx.moveTo(pos_x, pos_y);
-        pctx.lineTo(pos_x + max_size, pos_y + max_size);
-        }
-        pctx.stroke();
-        return p_hatch;
+    private setContext(context: CanvasRenderingContext2D, fillStyle: string): CanvasRenderingContext2D {
+      context.lineCap = 'square';
+      context.fillStyle = fillStyle;
+      context.strokeStyle = 'black';
+      context.lineWidth = this.lineWidth;
+      return context
     }
 }
 

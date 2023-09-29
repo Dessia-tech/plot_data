@@ -407,7 +407,6 @@ export abstract class PlotData extends EventEmitter {
       this.context.fill();
       this.context.globalAlpha = 1;
       if (d.surface_style.hatching != null) {
-        this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
       }
       if (this.select_on_mouse == d) {
         this.context.fillStyle = this.color_surface_on_mouse;
@@ -445,7 +444,6 @@ export abstract class PlotData extends EventEmitter {
       this.context.fill();
       this.context.globalAlpha = 1;
       if (d.surface_style.hatching != null) {
-        this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
         this.context.fill();
       }
       if (this.select_on_mouse == d) {

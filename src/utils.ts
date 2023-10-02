@@ -1433,17 +1433,21 @@ export class newShape {
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
+    return this.isPointInStroke(context, point)
+  }
+
+  protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    let isHovered: boolean
     context.save();
-    let isHovered = false;
+    context.resetTransform();
+    context.lineWidth = 10;
     if (this.isScaled) {
-      context.resetTransform();
-      context.lineWidth = 10;
       context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
       isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
     } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
     context.restore();
     return isHovered
-  }
+    }
 
   public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
 
@@ -2425,6 +2429,18 @@ export class newPoint2D extends newShape {
     this.inFrame = inCanvasX && inCanvasY;
     return this.inFrame
   }
+
+  protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    this.setContextPointInStroke(context);
+    const isHovered = context.isPointInStroke(this.path, point.x, point.y);
+    context.restore();
+    return isHovered
+  }
+
+  protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
+    context.save();
+    context.resetTransform();
+  }
 }
 
 export class ScatterPoint extends newPoint2D {
@@ -2451,6 +2467,12 @@ export class ScatterPoint extends newPoint2D {
     newPoint.updateTooltip(tooltipAttributes, features, axes, xName, yName);
     newPoint.update();
     return newPoint
+  }
+
+  protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
+    context.save();
+    context.resetTransform();
+    context.lineWidth = 10;
   }
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };

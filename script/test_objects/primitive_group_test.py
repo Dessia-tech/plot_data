@@ -68,7 +68,7 @@ labels = plot_data.MultipleLabels(labels=[label1, label2])
 
 wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire")
 
-point2 = plot_data.Point2D(15, 10, plot_data.PointStyle(color_fill=colors.ORANGE, shape="triangle", size = 50))
+point2 = plot_data.Point2D(15, 10, plot_data.PointStyle(color_fill=colors.ORANGE, shape="cross", size = 12))
 
 primitives = [point1, contour, line, arc, circle, text, wire, point2]
 

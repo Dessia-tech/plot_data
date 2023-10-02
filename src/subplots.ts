@@ -2951,6 +2951,7 @@ export class newParallelPlot extends Figure {
   }
 }
 
+const DRAW_MARGIN_FACTOR = 0.025;
 export class Draw extends Frame {
   constructor(
     data: any,
@@ -2973,12 +2974,16 @@ export class Draw extends Frame {
   
   protected unpackData(data: any): Map<string, any[]> {
     const drawing = ShapeCollection.fromPrimitives(data.primitives);
-    const [minimum, maximum] = drawing.getBounds();
-    return new Map<string, any[]>([
-      ["x", [minimum.x, maximum.x]],
-      ["y", [minimum.y, maximum.y]],
-      ["shapes", drawing.drawings]
-    ])
+    const [minX, minY, maxX, maxY] = Draw.boundsDilatation(...drawing.getBounds());
+    return new Map<string, any[]>([["x", [minX, maxX]], ["y", [minY, maxY]], ["shapes", drawing.drawings]])
+  }
+
+  private static boundsDilatation(minimum: Vertex, maximum: Vertex): [number, number, number, number] {
+    const minX = minimum.x * (1 - Math.sign(minimum.x) * DRAW_MARGIN_FACTOR);
+    const minY = minimum.y * (1 - Math.sign(minimum.y) * DRAW_MARGIN_FACTOR);
+    const maxX = maximum.x * (1 + Math.sign(maximum.x) * DRAW_MARGIN_FACTOR);
+    const maxY = maximum.y * (1 + Math.sign(maximum.y) * DRAW_MARGIN_FACTOR);
+    return [minX, minY, maxX, maxY]
   }
 
   protected computeTextBorders(context: CanvasRenderingContext2D) {
@@ -2987,10 +2992,11 @@ export class Draw extends Frame {
   }
 
   public updateBounds(): void {
-    this.axes[0].minValue = this.features.get("x")[0] = Math.min(this.features.get("x")[0], this.relativeObjects.minimum.x);
-    this.axes[1].minValue = this.features.get("y")[0] = Math.min(this.features.get("y")[0], this.relativeObjects.minimum.y);
-    this.axes[0].maxValue = this.features.get("x")[1] = Math.max(this.features.get("x")[1], this.relativeObjects.maximum.x);
-    this.axes[1].maxValue = this.features.get("y")[1] = Math.max(this.features.get("y")[1], this.relativeObjects.maximum.y);
+    const [minX, minY, maxX, maxY] = Draw.boundsDilatation(this.relativeObjects.minimum, this.relativeObjects.maximum);
+    this.axes[0].minValue = this.features.get("x")[0] = Math.min(this.features.get("x")[0], minX);
+    this.axes[1].minValue = this.features.get("y")[0] = Math.min(this.features.get("y")[0], minY);
+    this.axes[0].maxValue = this.features.get("x")[1] = Math.max(this.features.get("x")[1], maxX);
+    this.axes[1].maxValue = this.features.get("y")[1] = Math.max(this.features.get("y")[1], maxY);
     this.axes.forEach(axis => axis.saveLocation());
     this.axisEqual();
   }

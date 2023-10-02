@@ -18,7 +18,7 @@ surface_style = plot_data.SurfaceStyle(color_fill=colors.LIGHTGREEN, opacity=1,
 # a volmdlr object into a plot_data object
 
 # Point2D
-point1 = plot_data.Point2D(-10, 0)
+point1 = plot_data.Point2D(-1, 0)
 
 # arc
 arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi / 2, edge_style=edge_style, clockwise=False)
@@ -68,7 +68,7 @@ labels = plot_data.MultipleLabels(labels=[label1, label2])
 
 wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire", edge_style=edge1)
 
-point2 = plot_data.Point2D(15, 10, plot_data.PointStyle(color_fill=colors.ORANGE, stroke_width=2, shape="cross", size = 12))
+point2 = plot_data.Point2D(15, 10, plot_data.PointStyle(color_fill=colors.ORANGE, stroke_width=12, shape="circle", size = 25))
 
 primitives = [contour, point1, line, arc, circle, text, wire, point2]
 

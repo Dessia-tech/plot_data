@@ -1381,7 +1381,7 @@ export class newShape {
   protected deserializeSurfaceStyle(data: any): void {
     this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
     this.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
-    this.strokeStyle = data.edge_style?.color_stroke ?? this.strokeStyle;
+    // this.strokeStyle = data.edge_style?.color_stroke ?? this.strokeStyle;
   }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
@@ -2381,17 +2381,37 @@ export class newPoint2D extends newShape {
     this.lineWidth = 1;
   };
 
+  public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf newText)
+    const factor = 0.025;
+    const minX = this.center.x != 0 ? this.center.x - Math.abs(this.center.x) * factor : -1;
+    const minY = this.center.y != 0 ? this.center.y - Math.abs(this.center.y) * factor : -1;
+    const maxX = this.center.x != 0 ? this.center.x + Math.abs(this.center.x) * factor : 1;
+    const maxY = this.center.y != 0 ? this.center.y + Math.abs(this.center.y) * factor : 1;
+    return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
+  }
+
   public static deserialize(data: any, scale: Vertex): newPoint2D {
     const point = new newPoint2D(data.cx, data.cy);
-    point.updateStyle(new newPointStyle(data.point_style));
+    point.deserializeEdgeStyle(data);
+    point.deserializeSurfaceStyle(data);
+    point.deserializePointStyle(data.point_style ?? {});
     point.isScaled = false;
     return point
+  }
+
+  protected deserializePointStyle(data: any): void {
+    this.size = data.size ?? this.size;
+    this.fillStyle = data.color_fill ?? this.fillStyle;
+    this.strokeStyle = data.color_stroke ?? this.strokeStyle;
+    this.lineWidth = data.stroke_width ?? this.lineWidth;
+    this.marker = data.marker ?? this.marker;
   }
 
   public updateStyle(style: newPointStyle): void {
     this.size = style.size ?? this.size;
     this.fillStyle = style.fillStyle ?? this.fillStyle;
     this.strokeStyle = style.strokeStyle ?? this.strokeStyle;
+    this.lineWidth = style.lineWidth ?? this.lineWidth;
     this.marker = style.marker ?? this.marker;
   }
 
@@ -2588,6 +2608,20 @@ export class LineSequence extends newShape {
     line.isScaled = true;
     line.buildPath();
     return line
+  }
+
+  public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf newText)
+    let minX = Number.POSITIVE_INFINITY;
+    let minY = Number.POSITIVE_INFINITY;
+    let maxX = Number.NEGATIVE_INFINITY;
+    let maxY = Number.NEGATIVE_INFINITY;
+    this.points.forEach(point => {
+      if (point.center.x < minX) minX = point.center.x;
+      if (point.center.y < minY) minY = point.center.y;
+      if (point.center.x > maxX) maxX = point.center.x;
+      if (point.center.y > maxY) maxY = point.center.y;
+    })
+    return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
   }
 
   public initTooltip(context: CanvasRenderingContext2D): newTooltip {

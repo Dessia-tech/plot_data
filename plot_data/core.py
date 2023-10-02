@@ -543,6 +543,8 @@ class Wire(PlotDataObject):
 
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
+        if not ax:
+            _, ax = plt.subplots()
         if self.edge_style:
             edge_style = self.edge_style
         else:

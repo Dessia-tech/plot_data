@@ -1468,6 +1468,7 @@ export class Arc extends newShape {
     public clockWise: boolean = true
   ) {
     super();
+    this.isFilled = false;
     this.buildPath();
   }
 
@@ -1495,6 +1496,7 @@ export class newCircle extends Arc {
     public radius: number = 1
   ) {
     super(center, radius, 0, 2 * Math.PI);
+    this.isFilled = true;
   }
 
   public static deserialize(data: any, scale: Vertex): newCircle {

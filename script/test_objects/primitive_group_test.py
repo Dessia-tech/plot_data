@@ -21,7 +21,7 @@ surface_style = plot_data.SurfaceStyle(color_fill=colors.WHITE, opacity=1,
 point1 = plot_data.Point2D(0, 0)
 
 # arc
-arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi / 2)
+arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi / 2, clockwise=False)
 
 # square contour
 rectangle_size = 2

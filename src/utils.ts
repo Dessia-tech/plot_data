@@ -1474,7 +1474,11 @@ export class Arc extends newShape {
 
   public buildPath(): void {
     this.path = new Path2D();
-    this.path.arc(this.center.x, this.center.y, this.radius, this.startAngle, this.endAngle, this.clockWise);
+    this.pathInContour(this.path);
+  }
+
+  public pathInContour(path: Path2D): void {
+    path.arc(this.center.x, this.center.y, this.radius, this.startAngle, this.endAngle, this.clockWise);
   }
 
   public static deserialize(data: any, scale: Vertex): newCircle {
@@ -1692,12 +1696,14 @@ export class LineSegment extends Line {
   public buildPath(): void {
     this.path = new Path2D();
     this.path.moveTo(this.origin.x, this.origin.y);
-    this.path.lineTo(this.end.x, this.end.y);
+    this.pathInContour(this.path);
   }
 
   public static deserialize(data: any, scale: Vertex): LineSegment {
     return new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
   }
+
+  public pathInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
 
   public getBounds(): [Vertex, Vertex] { return [this.origin, this.end] }
 }
@@ -1885,10 +1891,10 @@ export class Triangle extends AbstractTriangle {
 
 export class Contour extends newShape {
   constructor(
-    public lines: newShape[] = []
+    public lines: (Arc | LineSegment)[] = [],
+    public isFilled: boolean = false
   ) {
     super();
-    this.isFilled = false;
     this.buildPath();
   }
 
@@ -1898,12 +1904,15 @@ export class Contour extends newShape {
       if (primitive.type_ == "linesegment2d") lines.push(LineSegment.deserialize(primitive, scale));
       if (primitive.type_ == "arc") lines.push(Arc.deserialize(primitive, scale));
     })
-    return new Contour(lines)
+    const contour = new Contour(lines, data.is_filled ?? false);
+    return contour
   }
 
   public buildPath(): void {
     this.path = new Path2D();
-    this.lines.forEach(line => this.path.addPath(line.path));
+    if (this.lines[0] instanceof LineSegment) this.path.moveTo(this.lines[0].origin.x, this.lines[0].origin.y);
+    this.lines.forEach(line => line.pathInContour(this.path));
+    if (this.isFilled) this.path.closePath();
   }
 
   public getBounds(): [Vertex, Vertex] {

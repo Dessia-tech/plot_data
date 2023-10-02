@@ -1096,11 +1096,12 @@ class Contour2D(PlotDataObject):
     """
 
     def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]], edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, is_filled: bool = None, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.tooltip = tooltip
+        self.is_filled = is_filled
         PlotDataObject.__init__(self, type_='contour', name=name)
 
     def bounding_box(self):

@@ -12,7 +12,7 @@ contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 
                                                     plot_data.Arc2D(cx=1.75, cy=2, r=0.25, start_angle=math.pi/2, end_angle=0),
                                                     plot_data.LineSegment2D([2, 2], [2, 1]),
                                                     plot_data.LineSegment2D([2, 1], [1, 1])],
-                              surface_style=plot_data.SurfaceStyle(colors.LIGHTORANGE))
+                              surface_style=plot_data.SurfaceStyle(colors.LIGHTORANGE), is_filled=True)
 
 circle1 = plot_data.Circle2D(cx=8, cy=4, r=1)
 line1 = plot_data.Line2D(point1=[0,1], point2=[100, 1000])

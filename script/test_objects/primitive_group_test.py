@@ -11,7 +11,7 @@ import plot_data.colors as colors
 edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=colors.RED, dashline=[3, 3])
 # surfaces customization
 hatching = plot_data.HatchingSet(0.5, 3)
-surface_style = plot_data.SurfaceStyle(color_fill=colors.WHITE, opacity=1,
+surface_style = plot_data.SurfaceStyle(color_fill=colors.LIGHTGREEN, opacity=1,
                                        hatching=hatching)
 
 # Creating several primitives. plot_data() functions are used to convert
@@ -33,7 +33,7 @@ contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([0, 
                                                     plot_data.LineSegment2D([rectangle_size, 0], [0, 0])],
                               edge_style=edge_style,
                               surface_style=surface_style,
-                              tooltip="It's a square")
+                              tooltip="It's a square", is_filled=True)
 
 # LineSegment2D
 line = plot_data.LineSegment2D(point1=[4, 0], point2=[6, 2], edge_style=edge_style)

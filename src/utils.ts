@@ -1381,7 +1381,6 @@ export class newShape {
   protected deserializeSurfaceStyle(data: any): void {
     this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
     this.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
-    // this.strokeStyle = data.edge_style?.color_stroke ?? this.strokeStyle;
   }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
@@ -2587,9 +2586,9 @@ export class ScatterPoint extends newPoint2D {
 
 export class LineSequence extends newShape {
   public previousTooltipOrigin: Vertex;
-  public hoveredFactor: number = 2;
-  public clickedFactor: number = 2;
-  public selectedFactor: number = 2;
+  public hoveredThickener: number = 2;
+  public clickedThickener: number = 2;
+  public selectedThickener: number = 2;
   constructor(
     public points: newPoint2D[] = [],
     public name: string = ""
@@ -2658,8 +2657,8 @@ export class LineSequence extends newShape {
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     super.setDrawingProperties(context);
-    const factor = this.isSelected ? this.selectedFactor : this.isClicked ? this.clickedFactor : this.isHovered ? this.hoveredFactor : 1;
-    context.lineWidth = this.lineWidth * factor;
+    const thickener = this.isSelected ? this.selectedThickener : this.isClicked ? this.clickedThickener : this.isHovered ? this.hoveredThickener : 0;
+    context.lineWidth = this.lineWidth + thickener;
   }
 
   public buildPath(): void {

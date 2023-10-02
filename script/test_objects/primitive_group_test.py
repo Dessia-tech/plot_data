@@ -21,7 +21,7 @@ surface_style = plot_data.SurfaceStyle(color_fill=colors.LIGHTGREEN, opacity=1,
 point1 = plot_data.Point2D(-1, 0)
 
 # arc
-arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi / 2, edge_style=edge_style, clockwise=False)
+arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi, edge_style=edge_style, clockwise=True)
 
 # square contour
 rectangle_size = 5
@@ -59,7 +59,7 @@ label1 = plot_data.Label(title='label1')
 
 # This label is created using all customizations
 fill1 = plot_data.SurfaceStyle(color_fill=colors.RED, opacity=0.5)
-edge1 = plot_data.EdgeStyle(line_width=1, color_stroke=colors.BLUE, dashline=[5, 5])
+edge1 = plot_data.EdgeStyle(line_width=5, color_stroke=colors.BLUE, dashline=[5, 5])
 text_style = plot_data.TextStyle(text_color=colors.ORANGE, font_size=14, italic=True, bold=True)
 label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surface_style=fill1,
                          rectangle_edge_style=edge1)

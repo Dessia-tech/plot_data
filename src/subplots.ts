@@ -2842,8 +2842,8 @@ export class newParallelPlot extends Figure {
     for (let i=0; i < this.nSamples; i++) {
       const curve = new LineSequence([], String(i));
       this.drawnFeatures.forEach((feature, j) => curve.points.push(this.computePoint(this.axes[j], this.features.get(feature)[i])));
-      curve.hoveredFactor = curve.clickedFactor = 1;
-      curve.selectedFactor = 1.5;
+      curve.hoveredThickener = curve.clickedThickener = 0;
+      curve.selectedThickener = 1;
       this.curves.push(curve);
     }
   }

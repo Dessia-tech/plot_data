@@ -8,7 +8,7 @@ import plot_data.colors as colors
 
 # defining a couple style objects
 # edges customization
-edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=colors.RED, dashline=[3, 3])
+edge_style = plot_data.EdgeStyle(line_width=3, color_stroke=colors.RED, dashline=[3, 3])
 # surfaces customization
 hatching = plot_data.HatchingSet(1, 10)
 surface_style = plot_data.SurfaceStyle(color_fill=colors.LIGHTGREEN, opacity=1,
@@ -39,7 +39,7 @@ contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([-10
 line = plot_data.LineSegment2D(point1=[4, 0], point2=[6, 2], edge_style=edge_style)
 
 # Circle
-circle_edge_style = plot_data.EdgeStyle(2, colors.RED)
+circle_edge_style = plot_data.EdgeStyle(5, colors.BLUE, dashline=[10, 10])
 circle_surface_style = plot_data.SurfaceStyle(color_fill=colors.YELLOW, opacity=0.5,
                                               hatching=hatching)
 

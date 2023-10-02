@@ -1346,7 +1346,7 @@ export class newShape {
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
   public hasTooltip: boolean = true;
-  constructor() { };
+  constructor() {};
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
 
@@ -1373,7 +1373,7 @@ export class newShape {
   }
 
   protected deserializeEdgeStyle(data: any): void {
-    this.lineWidth = data.edge_style?.stroke_width ?? this.lineWidth;
+    this.lineWidth = data.edge_style?.line_width ?? this.lineWidth;
     this.dashLine = data.edge_style?.dashline ?? this.dashLine;
     this.strokeStyle = data.edge_style?.color_stroke ? colorHsl(data.edge_style?.color_stroke) : null;
   }
@@ -1437,7 +1437,7 @@ export class newShape {
     }
   }
 
-  public buildPath(): void { }
+  public buildPath(): void {}
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
@@ -1933,7 +1933,7 @@ export class Contour extends newShape {
 
   public draw(context: CanvasRenderingContext2D): void {
     super.draw(context);
-    context.lineWidth = this.lineWidth;
+    super.setDrawingProperties(context);
     this.lines.forEach(line => line.draw(context));
   }
 
@@ -3263,6 +3263,7 @@ export class newAxis extends newShape {
     const color = this.drawingColor;
 
     context.strokeStyle = color;
+    context.setLineDash([]);
     context.fillStyle = color;
     context.lineWidth = this.lineWidth;
     context.stroke(this.drawPath);

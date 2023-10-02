@@ -8,7 +8,7 @@ import plot_data.colors as colors
 
 # defining a couple style objects
 # edges customization
-edge_style = plot_data.EdgeStyle(line_width=3, color_stroke=colors.RED, dashline=[3, 3])
+edge_style = plot_data.EdgeStyle(line_width=6, color_stroke=colors.RED, dashline=[3, 3])
 # surfaces customization
 hatching = plot_data.HatchingSet(1, 10)
 surface_style = plot_data.SurfaceStyle(color_fill=colors.LIGHTGREEN, opacity=1,

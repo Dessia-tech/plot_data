@@ -1418,14 +1418,13 @@ export class newShape {
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
-    context.strokeStyle = this.strokeStyle;
     context.setLineDash(this.dashLine);
     context.globalAlpha = this.alpha;
     if (this.isFilled) {
       context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-      context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected) ? this.setStrokeStyle(context.fillStyle) : this.strokeStyle ?? this.setStrokeStyle(context.fillStyle);
+      context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected) ? this.setStrokeStyle(context.fillStyle) : this.strokeStyle ? colorHsl(this.strokeStyle) : this.setStrokeStyle(context.fillStyle);
       if (this.hatching) context.fillStyle = context.createPattern(this.hatching.generate_canvas(context.fillStyle), 'repeat');
-    } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle ?? 'hsl(0, 0%, 0%)';
+    } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle :  this.strokeStyle ? colorHsl(this.strokeStyle) : 'hsl(0, 0%, 0%)';
   }
 
   public initTooltip(context: CanvasRenderingContext2D): newTooltip { return new newTooltip(this.tooltipOrigin, this.tooltipMap, context) }
@@ -1928,13 +1927,25 @@ export class Contour extends newShape {
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     super.setDrawingProperties(context);
-    context.lineWidth = 0;
+    context.strokeStyle = "hsla(0, 0%, 100%, 0)";
+  }
+
+  private setLineStyle(context: CanvasRenderingContext2D, line: newShape): void {
+    line.dashLine = line.dashLine.length != 0 ? line.dashLine : this.dashLine;
+    line.strokeStyle = line.strokeStyle ?? this.strokeStyle;
+    line.lineWidth = line.lineWidth != 1 ? line.lineWidth : this.lineWidth;
+    line.isHovered = this.isHovered;
+    line.isClicked = this.isClicked;
+    line.isSelected = this.isSelected;
   }
 
   public draw(context: CanvasRenderingContext2D): void {
     super.draw(context);
     super.setDrawingProperties(context);
-    this.lines.forEach(line => line.draw(context));
+    this.lines.forEach(line => {
+      this.setLineStyle(context, line);
+      line.draw(context)
+    });
   }
 
   public buildPath(): void {

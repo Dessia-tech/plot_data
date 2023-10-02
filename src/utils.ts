@@ -1328,7 +1328,7 @@ export class newShape {
   public lineWidth: number = 1;
   public dashLine: number[] = [];
   public hatching: HatchingSet;
-  public strokeStyle: string = 'hsl(0, 0%, 0%)';
+  public strokeStyle: string = null;
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public hoverStyle: string = 'hsl(203, 90%, 60%)';
   public clickedStyle: string = 'hsl(203, 90%, 35%)';
@@ -1346,7 +1346,7 @@ export class newShape {
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
   public hasTooltip: boolean = true;
-  constructor() {};
+  constructor() { };
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
 
@@ -1369,11 +1369,19 @@ export class newShape {
     else if (data.type_ == "arc") shape = Arc.deserialize(data, scale);
     else if (data.type_ == "text") return newText.deserialize(data, scale);
     else throw new Error(`${data.type_} deserialization is not implemented.`);
-    shape.fillStyle = colorHsl(data.surface_style?.color_fill ?? shape.fillStyle);
-    shape.strokeStyle = colorHsl(data.surface_style?.color_stroke ?? shape.strokeStyle);
-    shape.dashLine = data.edge_style?.dashline ?? shape.dashLine;
-    shape.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
     return shape
+  }
+
+  protected deserializeEdgeStyle(data: any): void {
+    this.lineWidth = data.edge_style?.stroke_width ?? this.lineWidth;
+    this.dashLine = data.edge_style?.dashline ?? this.dashLine;
+    this.strokeStyle = data.edge_style?.color_stroke ? colorHsl(data.edge_style?.color_stroke) : null;
+  }
+
+  protected deserializeSurfaceStyle(data: any): void {
+    this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
+    this.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
+    this.strokeStyle = data.edge_style?.color_stroke ?? this.strokeStyle;
   }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
@@ -1415,9 +1423,9 @@ export class newShape {
     context.globalAlpha = this.alpha;
     if (this.isFilled) {
       context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-      context.strokeStyle = this.setStrokeStyle(context.fillStyle);
+      context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected) ? this.setStrokeStyle(context.fillStyle) : this.strokeStyle ?? this.setStrokeStyle(context.fillStyle);
       if (this.hatching) context.fillStyle = context.createPattern(this.hatching.generate_canvas(context.fillStyle), 'repeat');
-    } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle;
+    } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle ?? 'hsl(0, 0%, 0%)';
   }
 
   public initTooltip(context: CanvasRenderingContext2D): newTooltip { return new newTooltip(this.tooltipOrigin, this.tooltipMap, context) }
@@ -1429,7 +1437,7 @@ export class newShape {
     }
   }
 
-  public buildPath(): void {}
+  public buildPath(): void { }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
@@ -1447,7 +1455,7 @@ export class newShape {
     } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
     context.restore();
     return isHovered
-    }
+  }
 
   public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
 
@@ -1474,15 +1482,16 @@ export class Arc extends newShape {
 
   public buildPath(): void {
     this.path = new Path2D();
-    this.pathInContour(this.path);
+    this.drawInContour(this.path);
   }
 
-  public pathInContour(path: Path2D): void {
+  public drawInContour(path: Path2D): void {
     path.arc(this.center.x, this.center.y, this.radius, this.startAngle, this.endAngle, this.clockWise);
   }
 
-  public static deserialize(data: any, scale: Vertex): newCircle {
+  public static deserialize(data: any, scale: Vertex): Arc {
     const arc = new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle, data.clockwise ?? true);
+    arc.deserializeEdgeStyle(data);
     return arc
   }
 
@@ -1504,7 +1513,10 @@ export class newCircle extends Arc {
   }
 
   public static deserialize(data: any, scale: Vertex): newCircle {
-    return new newCircle(new Vertex(data.cx, data.cy), data.r);
+    const circle = new newCircle(new Vertex(data.cx, data.cy), data.r);
+    circle.deserializeEdgeStyle(data);
+    circle.deserializeSurfaceStyle(data);
+    return circle
   }
 }
 
@@ -1671,8 +1683,10 @@ export class Line extends newShape { // TODO: Does not work => make it work
     return (this.end.y - this.origin.y) / (this.end.x - this.origin.x);
   }
 
-  public static deserialize(data: any, scale: Vertex): Line {
-    return new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+  public static deserialize(data: any, scale: Vertex): Line { // TODO: Don't know how to factor this and the LineSegment one
+    const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    line.deserializeEdgeStyle(data);
+    return line
   }
 
   public buildPath(): void {
@@ -1696,14 +1710,16 @@ export class LineSegment extends Line {
   public buildPath(): void {
     this.path = new Path2D();
     this.path.moveTo(this.origin.x, this.origin.y);
-    this.pathInContour(this.path);
+    this.drawInContour(this.path);
   }
 
   public static deserialize(data: any, scale: Vertex): LineSegment {
-    return new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    line.deserializeEdgeStyle(data);
+    return line
   }
 
-  public pathInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
+  public drawInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
 
   public getBounds(): [Vertex, Vertex] { return [this.origin, this.end] }
 }
@@ -1905,13 +1921,26 @@ export class Contour extends newShape {
       if (primitive.type_ == "arc") lines.push(Arc.deserialize(primitive, scale));
     })
     const contour = new Contour(lines, data.is_filled ?? false);
+    contour.deserializeEdgeStyle(data);
+    if (contour.isFilled) contour.deserializeSurfaceStyle(data);
     return contour
+  }
+
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
+    super.setDrawingProperties(context);
+    context.lineWidth = 0;
+  }
+
+  public draw(context: CanvasRenderingContext2D): void {
+    super.draw(context);
+    context.lineWidth = this.lineWidth;
+    this.lines.forEach(line => line.draw(context));
   }
 
   public buildPath(): void {
     this.path = new Path2D();
     if (this.lines[0] instanceof LineSegment) this.path.moveTo(this.lines[0].origin.x, this.lines[0].origin.y);
-    this.lines.forEach(line => line.pathInContour(this.path));
+    this.lines.forEach(line => line.drawInContour(this.path));
     if (this.isFilled) this.path.closePath();
   }
 
@@ -2544,6 +2573,7 @@ export class LineSequence extends newShape {
     const points = [];
     data.lines.forEach(line => points.push(new newPoint2D(line[0], line[1])));
     const line = new LineSequence(points, data.name ?? "");
+    line.deserializeEdgeStyle(data);
     line.isScaled = true;
     line.buildPath();
     return line

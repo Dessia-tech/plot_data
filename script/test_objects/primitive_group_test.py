@@ -10,7 +10,7 @@ import plot_data.colors as colors
 # edges customization
 edge_style = plot_data.EdgeStyle(line_width=1, color_stroke=colors.RED, dashline=[3, 3])
 # surfaces customization
-hatching = plot_data.HatchingSet(0.5, 3)
+hatching = plot_data.HatchingSet(1, 10)
 surface_style = plot_data.SurfaceStyle(color_fill=colors.LIGHTGREEN, opacity=1,
                                        hatching=hatching)
 
@@ -18,19 +18,19 @@ surface_style = plot_data.SurfaceStyle(color_fill=colors.LIGHTGREEN, opacity=1,
 # a volmdlr object into a plot_data object
 
 # Point2D
-point1 = plot_data.Point2D(0, 0)
+point1 = plot_data.Point2D(-10, 0)
 
 # arc
-arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi / 2, clockwise=False)
+arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi / 2, edge_style=edge_style, clockwise=False)
 
 # square contour
-rectangle_size = 2
-contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([0, 0], [0, rectangle_size]),
-                                                    plot_data.LineSegment2D([0, rectangle_size],
-                                                                            [rectangle_size, rectangle_size]),
-                                                    plot_data.LineSegment2D([rectangle_size, rectangle_size],
-                                                                            [rectangle_size, 0]),
-                                                    plot_data.LineSegment2D([rectangle_size, 0], [0, 0])],
+rectangle_size = 5
+contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([-10, 0], [-10, rectangle_size]),
+                                                    plot_data.LineSegment2D([-10, rectangle_size],
+                                                                            [rectangle_size - 10, rectangle_size]),
+                                                    plot_data.LineSegment2D([rectangle_size - 10, rectangle_size],
+                                                                            [rectangle_size - 10, 0]),
+                                                    plot_data.LineSegment2D([rectangle_size - 10, 0], [-10, 0])],
                               edge_style=edge_style,
                               surface_style=surface_style,
                               tooltip="It's a square", is_filled=True)
@@ -39,9 +39,9 @@ contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([0, 
 line = plot_data.LineSegment2D(point1=[4, 0], point2=[6, 2], edge_style=edge_style)
 
 # Circle
-circle_edge_style = plot_data.EdgeStyle(1, colors.RED)
+circle_edge_style = plot_data.EdgeStyle(2, colors.RED)
 circle_surface_style = plot_data.SurfaceStyle(color_fill=colors.YELLOW, opacity=0.5,
-                                              hatching=plot_data.HatchingSet())
+                                              hatching=hatching)
 
 circle = plot_data.Circle2D(cx=5, cy=10, r=5, edge_style=circle_edge_style,
                             surface_style=circle_surface_style, tooltip="Circle")
@@ -68,9 +68,9 @@ labels = plot_data.MultipleLabels(labels=[label1, label2])
 
 wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire")
 
-point2 = plot_data.Point2D(15, 10, plot_data.PointStyle(color_fill=colors.ORANGE, shape="cross", size = 12))
+point2 = plot_data.Point2D(15, 10, plot_data.PointStyle(color_fill=colors.ORANGE, stroke_width=2, shape="cross", size = 12))
 
-primitives = [point1, contour, line, arc, circle, text, wire, point2]
+primitives = [contour, point1, line, arc, circle, text, wire, point2]
 
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 # plot_data.plot_canvas(primitive_group, debug_mode=True)

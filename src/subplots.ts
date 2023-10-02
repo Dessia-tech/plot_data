@@ -2169,7 +2169,7 @@ export class Histogram extends Frame {
   public bars: Bar[] = [];
 
   public fillStyle: string = 'hsl(203, 90%, 85%)';
-  public strokeStyle: string = 'hsl(0, 0%, 0%)';
+  public strokeStyle: string = null;
   public lineWidth: number = 1;
   public dashLine: number[] = [];
 

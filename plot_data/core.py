@@ -1067,7 +1067,7 @@ class Arc2D(PlotDataObject):
         if not ax:
             _, ax = plt.subplots()
         if self.edge_style:
-            edgecolor = self.edge_style.color_stroke
+            edgecolor = self.edge_style.mpl_arguments(surface=False)['color']
         else:
             edgecolor = plot_data.colors.BLACK.rgb
 

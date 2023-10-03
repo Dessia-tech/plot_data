@@ -29,16 +29,16 @@ left_triangle = plot_data.Point2D(10, 5, plot_data.PointStyle(color_fill=colors.
 right_triangle = plot_data.Point2D(15, 5, plot_data.PointStyle(color_fill=colors.BLUE, color_stroke=colors.DARK_BLUE, stroke_width=5, shape="triangle", orientation="right", size = 20))
 
 ## Half Lines
-up_halfline = plot_data.Point2D(0, 10, plot_data.PointStyle(color_stroke=colors.PINK, stroke_width=2, shape="halfline", orientation="up", size = 20))
-down_halfline = plot_data.Point2D(5, 10, plot_data.PointStyle(color_stroke=colors.PURPLE, stroke_width=3, shape="halfline", orientation="down", size = 20))
+up_halfline = plot_data.Point2D(0, 10, plot_data.PointStyle(color_stroke=colors.PINK, stroke_width=4, shape="halfline", orientation="up", size = 20))
+down_halfline = plot_data.Point2D(5, 10, plot_data.PointStyle(color_stroke=colors.PURPLE, stroke_width=4, shape="halfline", orientation="down", size = 20))
 left_halfline = plot_data.Point2D(10, 10, plot_data.PointStyle(color_stroke=colors.ORANGE, stroke_width=4, shape="halfline", orientation="left", size = 20))
-right_halfline = plot_data.Point2D(15, 10, plot_data.PointStyle(color_stroke=colors.BLACK, stroke_width=5, shape="halfline", orientation="right", size = 20))
+right_halfline = plot_data.Point2D(15, 10, plot_data.PointStyle(color_stroke=colors.BLACK, stroke_width=4, shape="halfline", orientation="right", size = 20))
 
 ## Lines
 vline = plot_data.Point2D(0, 15, plot_data.PointStyle(color_stroke=colors.LIGHTBLUE, stroke_width=2, shape="line", orientation="vertical", size = 20))
-hline = plot_data.Point2D(5, 15, plot_data.PointStyle(color_stroke=colors.LIGHTPURPLE, stroke_width=3, shape="line", orientation="horizontal", size = 20))
-slash = plot_data.Point2D(10, 15, plot_data.PointStyle(color_stroke=colors.ANGEL_BLUE, stroke_width=4, shape="line", orientation="slash", size = 20))
-backslash = plot_data.Point2D(15, 15, plot_data.PointStyle(color_stroke=colors.BRIGHT_LIME_GREEN, stroke_width=5, shape="line", orientation="backslash", size = 20))
+hline = plot_data.Point2D(5, 15, plot_data.PointStyle(color_stroke=colors.LIGHTPURPLE, stroke_width=2, shape="line", orientation="horizontal", size = 20))
+slash = plot_data.Point2D(10, 15, plot_data.PointStyle(color_stroke=colors.ANGEL_BLUE, stroke_width=2, shape="line", orientation="slash", size = 20))
+backslash = plot_data.Point2D(15, 15, plot_data.PointStyle(color_stroke=colors.BRIGHT_LIME_GREEN, stroke_width=2, shape="line", orientation="backslash", size = 20))
 
 points = [cross, circle, square_1, square_2,
           up_triangle, down_triangle, left_triangle, right_triangle,
@@ -47,8 +47,8 @@ points = [cross, circle, square_1, square_2,
 
 # ============================================= SHAPES =================================================================
 # Lines
-line_segment = plot_data.LineSegment2D(point1=[-15, 0], point2=[-5, 5], edge_style=edge_style_purple)
-line_2d = plot_data.Line2D(point1=[-10, -10], point2=[0, -5], edge_style=edge_style_blue)
+line_segment = plot_data.LineSegment2D(point1=[-22, -5], point2=[-12, 15], edge_style=edge_style_blue)
+line_2d = plot_data.Line2D(point1=[-30, -10], point2=[-20, 10], edge_style=edge_style_red)
 
 # Arcs
 circle = plot_data.Circle2D(cx=25, cy=10, r=5, edge_style=edge_style_red, surface_style=surface_style_yellow, tooltip="It's a circle")

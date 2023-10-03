@@ -1681,6 +1681,16 @@ export class Line extends newShape { // TODO: Does not work => make it work
     return (this.end.y - this.origin.y) / (this.end.x - this.origin.x);
   }
 
+  private computeAffinity(slope: number): number {
+    return this.origin.y - slope * this.origin.x
+  }
+
+  public getEquation(): [number, number] {
+    const slope = this.computeSlope();
+    const affinity = this.computeAffinity(slope);
+    return [slope, affinity]
+  }
+
   public static deserialize(data: any, scale: Vertex): Line { // TODO: Don't know how to factor this and the LineSegment one
     const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
     line.deserializeEdgeStyle(data);
@@ -1688,11 +1698,11 @@ export class Line extends newShape { // TODO: Does not work => make it work
   }
 
   public buildPath(): void {
-    const slope = this.computeSlope();
+    const [slope, affinity] = this.getEquation();
     const fakeOrigin = new Vertex(-1e6, 0);
     const fakeEnd = new Vertex(1e6, 0);
-    fakeOrigin.y = fakeOrigin.x * slope;
-    fakeEnd.y = fakeEnd.x * slope;
+    fakeOrigin.y = fakeOrigin.x * slope + affinity;
+    fakeEnd.y = fakeEnd.x * slope + affinity;
     this.path = new LineSegment(fakeOrigin, fakeEnd).path;
   }
 }
@@ -2362,6 +2372,7 @@ const MARKERS = ['+', 'crux', 'mark'];
 const CROSSES = ['x', 'cross', 'oblique'];
 const SQUARES = ['square'];
 const TRIANGLES = ['^', 'triangle', 'tri'];
+const HALF_LINES = ['halfLine', 'halfline'];
 const STROKE_STYLE_OFFSET = 15;
 export class newPoint2D extends newShape {
   public path: Path2D;
@@ -2456,7 +2467,7 @@ export class newPoint2D extends newShape {
       marker = new newRect(origin, new Vertex(this.size, this.size));
     };
     if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center, this.size, this.markerOrientation);
-    if (this.marker == 'halfLine') marker = new HalfLine(this.center, this.size, this.markerOrientation);
+    if (HALF_LINES.includes(this.marker)) marker = new HalfLine(this.center, this.size, this.markerOrientation);
     if (this.marker == 'line') marker = new LinePoint(this.center, this.size, this.markerOrientation);
     marker.lineWidth = this.lineWidth;
     this.isFilled = marker.isFilled;

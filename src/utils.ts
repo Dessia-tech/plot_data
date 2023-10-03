@@ -1862,7 +1862,6 @@ export class UpTriangle extends AbstractTriangle {
     this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
     this.path.lineTo(this.center.x, this.center.y + halfSize);
     this.path.closePath();
-    // this.path.lineTo(this.center.x - halfSize, this.center.y - halfSize);
   }
 }
 
@@ -1874,7 +1873,6 @@ export class DownTriangle extends AbstractTriangle {
     this.path.lineTo(this.center.x, this.center.y - halfSize);
     this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
     this.path.closePath();
-    // this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
   }
 }
 
@@ -1886,7 +1884,6 @@ export class LeftTriangle extends AbstractTriangle {
     this.path.lineTo(this.center.x - halfSize, this.center.y);
     this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
     this.path.closePath();
-    // this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
   }
 }
 
@@ -1898,7 +1895,6 @@ export class RightTriangle extends AbstractTriangle {
     this.path.lineTo(this.center.x + halfSize, this.center.y);
     this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
     this.path.closePath();
-    // this.path.lineTo(this.center.x - halfSize, this.center.y - halfSize);
   }
 }
 
@@ -2301,16 +2297,19 @@ export class newText extends newShape {
   private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
     const rows: string[] = [];
     let pickedWords = 0;
-    while (pickedWords < this.words.length) {
+    let count = 0;
+    while (pickedWords < this.words.length && count<100) {
       let newRow = '';
       while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
-        if (context.measureText(newRow + this.words[pickedWords]).width > this.boundingBox.size.x) break
+        if (context.measureText(newRow + this.words[pickedWords]).width > this.boundingBox.size.x && newRow != '') break
         else {
           newRow += this.words[pickedWords];
           pickedWords++;
         }
       }
       if (newRow.length != 0) rows.push(newRow);
+      count++;
+      console.log("fixed", count, rows, this.words)
     }
     return this.cleanStartAllRows(rows)
   }

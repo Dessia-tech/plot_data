@@ -100,10 +100,11 @@ shapes = [line_segment, line_2d, arc, arc_anti, circle, contour_filled, contour_
 # Circle
 
 
-text = plot_data.Text(comment='Hello', position_x=20, position_y=0, text_scaling=False,
-                      text_style=plot_data.TextStyle(text_color=colors.RED,
-                                                     font_size=12,
-                                                     font_style='sans-serif'))
+text_unscaled = plot_data.Text(comment='Hello', position_x=20, position_y=0, text_scaling=False,
+                               text_style=plot_data.TextStyle(text_color=colors.RED, font_size=12, font_style='sans-serif'))
+text_scaled = plot_data.Text(comment='Hello', position_x=23, position_y=20, text_scaling=True, max_width=25, height=5,
+                             text_style=plot_data.TextStyle(text_color=colors.YELLOW, font_size=12, text_align_y="bottom"))
+texts = [text_scaled, text_unscaled]
 
 # Label
 # This label is created with minimum information
@@ -119,8 +120,7 @@ label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surfac
 labels = plot_data.MultipleLabels(labels=[label1, label2])
 
 
-primitives = points + shapes
-primitives.append(text)
+primitives = points + shapes + texts
 
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 # plot_data.plot_canvas(primitive_group, debug_mode=True)

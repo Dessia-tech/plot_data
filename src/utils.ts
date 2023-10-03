@@ -1667,7 +1667,7 @@ export class HalfLine extends AbstractHalfLine {
   }
 }
 
-export class Line extends newShape { // TODO: Does not work => make it work
+export class Line extends newShape {
   constructor(
     public origin: Vertex = new Vertex(0, 0),
     public end: Vertex = new Vertex(0, 0)
@@ -1861,7 +1861,8 @@ export class UpTriangle extends AbstractTriangle {
     this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
     this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
     this.path.lineTo(this.center.x, this.center.y + halfSize);
-    this.path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
+    this.path.closePath();
+    // this.path.lineTo(this.center.x - halfSize, this.center.y - halfSize);
   }
 }
 
@@ -1872,7 +1873,8 @@ export class DownTriangle extends AbstractTriangle {
     this.path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
     this.path.lineTo(this.center.x, this.center.y - halfSize);
     this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-    this.path.lineTo(this.center.x + halfSize + this.lineWidth, this.center.y + halfSize);
+    this.path.closePath();
+    // this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
   }
 }
 
@@ -1883,7 +1885,8 @@ export class LeftTriangle extends AbstractTriangle {
     this.path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
     this.path.lineTo(this.center.x - halfSize, this.center.y);
     this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize - this.lineWidth);
+    this.path.closePath();
+    // this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
   }
 }
 
@@ -1894,7 +1897,8 @@ export class RightTriangle extends AbstractTriangle {
     this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
     this.path.lineTo(this.center.x + halfSize, this.center.y);
     this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-    this.path.lineTo(this.center.x - halfSize, this.center.y - halfSize - this.lineWidth);
+    this.path.closePath();
+    // this.path.lineTo(this.center.x - halfSize, this.center.y - halfSize);
   }
 }
 

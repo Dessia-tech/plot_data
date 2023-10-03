@@ -23,10 +23,10 @@ square = plot_data.Point2D(10, 0, plot_data.PointStyle(color_fill=colors.PINK, c
 mark = plot_data.Point2D(15, 0, plot_data.PointStyle(color_stroke=colors.BLUE, stroke_width=3, shape="mark", size = 20))
 
 ## Triangles
-up_triangle = plot_data.Point2D(0, 5, plot_data.PointStyle(color_fill=colors.RED, color_stroke=colors.DARK_PURPLE, stroke_width=2, shape="triangle", orientation="up", size = 20))
-down_triangle = plot_data.Point2D(5, 5, plot_data.PointStyle(color_fill=colors.YELLOW, color_stroke=colors.EMPIRE_YELLOW, stroke_width=3, shape="triangle", orientation="down", size = 20))
+up_triangle = plot_data.Point2D(0, 5, plot_data.PointStyle(color_fill=colors.RED, color_stroke=colors.DARK_PURPLE, stroke_width=4, shape="triangle", orientation="up", size = 20))
+down_triangle = plot_data.Point2D(5, 5, plot_data.PointStyle(color_fill=colors.YELLOW, color_stroke=colors.EMPIRE_YELLOW, stroke_width=4, shape="triangle", orientation="down", size = 20))
 left_triangle = plot_data.Point2D(10, 5, plot_data.PointStyle(color_fill=colors.GREEN, color_stroke=colors.EMERALD, stroke_width=4, shape="triangle", orientation="left", size = 20))
-right_triangle = plot_data.Point2D(15, 5, plot_data.PointStyle(color_fill=colors.BLUE, color_stroke=colors.DARK_BLUE, stroke_width=5, shape="triangle", orientation="right", size = 20))
+right_triangle = plot_data.Point2D(15, 5, plot_data.PointStyle(color_fill=colors.BLUE, color_stroke=colors.DARK_BLUE, stroke_width=4, shape="triangle", orientation="right", size = 20))
 
 ## Half Lines
 up_halfline = plot_data.Point2D(0, 10, plot_data.PointStyle(color_stroke=colors.PINK, stroke_width=4, shape="halfline", orientation="up", size = 20))

@@ -1869,10 +1869,10 @@ export class Figure extends PlotData {
   public mouseUp(ctrlKey: boolean): void {
     if (this.interaction_ON) {
       if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
-        this.absoluteObjects.mouseUp(this.context_show, ctrlKey);
-        this.relativeObjects.mouseUp(this.context_show, ctrlKey);
+        this.absoluteObjects.mouseUp(ctrlKey);
+        this.relativeObjects.mouseUp(ctrlKey);
       }
-      this.fixedObjects.mouseUp(this.context_show, ctrlKey);
+      this.fixedObjects.mouseUp(ctrlKey);
     }
   }
 

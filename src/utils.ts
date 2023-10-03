@@ -1360,15 +1360,12 @@ export class newShape {
     else if (data.type_ == "contour") shape = Contour.deserialize(data, scale);
     else if (data.type_ == "line2d") shape = Line.deserialize(data, scale);
     else if (data.type_ == "linesegment2d") shape = LineSegment.deserialize(data, scale);
-    else if (data.type_ == "wire") { // TODO: make it better
-      const wire = LineSequence.deserialize(data, scale);
-      // wire.hasTooltip = false;
-      shape = wire
-    }
+    else if (data.type_ == "wire") shape = LineSequence.deserialize(data, scale);
     else if (data.type_ == "point") return newPoint2D.deserialize(data, scale);
     else if (data.type_ == "arc") shape = Arc.deserialize(data, scale);
     else if (data.type_ == "text") return newText.deserialize(data, scale);
     else throw new Error(`${data.type_} deserialization is not implemented.`);
+    shape.deserializeTooltip(data);
     return shape
   }
 
@@ -1381,6 +1378,10 @@ export class newShape {
   protected deserializeSurfaceStyle(data: any): void {
     this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
     this.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
+  }
+
+  protected deserializeTooltip(data: any): void {
+    if (data.tooltip) this.tooltipMap.set(data.tooltip, "");
   }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
@@ -1429,7 +1430,8 @@ export class newShape {
   public initTooltip(context: CanvasRenderingContext2D): newTooltip { return new newTooltip(this.tooltipOrigin, this.tooltipMap, context) }
 
   public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
-    if (this.isClicked && this.tooltipMap.size != 0 && this.hasTooltip) {
+    if (this.isClicked && this.tooltipMap.size != 0) {
+      
       const tooltip = this.initTooltip(context);
       tooltip.draw(plotOrigin, plotSize, context);
     }
@@ -1455,11 +1457,16 @@ export class newShape {
     return isHovered
   }
 
-  public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
+  public mouseDown(mouseDown: Vertex) {
+    if (this.isHovered) {
+      this.mouseClick = mouseDown.copy();
+      this.tooltipOrigin = mouseDown.copy();
+    }
+  }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void { this.isHovered = this.isPointInShape(context, mouseCoords) }
 
-  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
+  public mouseUp(keepState: boolean): void {
     this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
     this.mouseClick = null;
   }
@@ -2297,8 +2304,7 @@ export class newText extends newShape {
   private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
     const rows: string[] = [];
     let pickedWords = 0;
-    let count = 0;
-    while (pickedWords < this.words.length && count<100) {
+    while (pickedWords < this.words.length) {
       let newRow = '';
       while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
         if (context.measureText(newRow + this.words[pickedWords]).width > this.boundingBox.size.x && newRow != '') break
@@ -2308,8 +2314,6 @@ export class newText extends newShape {
         }
       }
       if (newRow.length != 0) rows.push(newRow);
-      count++;
-      console.log("fixed", count, rows, this.words)
     }
     return this.cleanStartAllRows(rows)
   }
@@ -2790,7 +2794,10 @@ export class newTooltip {
       if (key == "Number") {
         if (value != 1) text = `${value} samples`;
       } else {
-        if (!(key == "name" && value == '')) text = `${key}: ${this.formatValue(value)}`;
+        if (key != "name") {
+          if (value != '') text = `${key}: ${this.formatValue(value)}`
+          else text = key;
+        }
       };
       const textWidth = context.measureText(text).width;
       if (textWidth > textLength) textLength = textWidth;
@@ -3021,8 +3028,8 @@ export class SelectionBox extends newRect {
     }
   }
 
-  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean) {
-    super.mouseUp(context, keepState);
+  public mouseUp(keepState: boolean) {
+    super.mouseUp(keepState);
     this.isClicked = this.leftUpdate = this.rightUpdate = this.upUpdate = this.downUpdate = false;
   }
 }
@@ -3565,11 +3572,11 @@ export class newAxis extends newShape {
     this.saveLocation();
   }
 
-  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
-    super.mouseUp(context, keepState);
+  public mouseUp(keepState: boolean): void {
+    super.mouseUp(keepState);
     this.isClicked = false;
     this.boundingBox.isClicked = false;
-    this.title.mouseUp(context, false);
+    this.title.mouseUp(false);
     this.title.isClicked = false;
     this.rubberBand.mouseUp();
     if (this.is_drawing_rubberband) this.emitter.emit("rubberBandChange", this.rubberBand);
@@ -3746,14 +3753,14 @@ export class ParallelAxis extends newAxis {
     if (translation.norm > 10) this.hasMoved = true;
   }
 
-  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
+  public mouseUp(keepState: boolean): void {
     if (this.title.isClicked && this.title.isHovered && !this.hasMoved) {
       this.title.isClicked = false;
       this.flip();
     }
     if (this.hasMoved) this.updateEnds();
     this.hasMoved = false;
-    super.mouseUp(context, keepState);
+    super.mouseUp(keepState);
   }
 
   private updateEnds(): void {
@@ -3850,9 +3857,7 @@ export class ShapeCollection {
     return clickedObject
   }
 
-  public mouseUp(context: CanvasRenderingContext2D, keepState: boolean): void {
-    this.drawings.forEach(drawing => drawing.mouseUp(context, keepState));
-  }
+  public mouseUp(keepState: boolean): void { this.drawings.forEach(drawing => drawing.mouseUp(keepState)) }
 
   public draw(context: CanvasRenderingContext2D): void { this.drawings.forEach(drawing => drawing.draw(context)) }
 

@@ -1,57 +1,109 @@
-# An example of primitive_group instantiation.
-# primitive_group: an object that contains multiple primitives. A primitive
-# is either a Circle2D, a LineSegment, a Contour2D, an Arc2D or a Text
-
+""" Examples for drawing primitives (simple shapes). """
 import math
 import plot_data
 import plot_data.colors as colors
 
-# defining a couple style objects
-# edges customization
-edge_style = plot_data.EdgeStyle(line_width=6, color_stroke=colors.RED, dashline=[3, 3])
-# surfaces customization
+# ============================================= STYLES =================================================================
+# Edge styles
+edge_style_red = plot_data.EdgeStyle(line_width=3, color_stroke=colors.RED, dashline=[5, 2])
+edge_style_blue = plot_data.EdgeStyle(line_width=1, color_stroke=colors.BLUE, dashline=[20, 10])
+edge_style_purple = plot_data.EdgeStyle(line_width=2, color_stroke=colors.PURPLE)
+
+# Surface styles
 hatching = plot_data.HatchingSet(1, 10)
-surface_style = plot_data.SurfaceStyle(color_fill=colors.LIGHTGREEN, opacity=1,
-                                       hatching=hatching)
+surface_style_green = plot_data.SurfaceStyle(color_fill=colors.LIGHTGREEN, opacity=0.8, hatching=hatching)
+surface_style_yellow = plot_data.SurfaceStyle(color_fill=colors.YELLOW, hatching=hatching)
+
+
+# ============================================= POINTS =================================================================
+# Symmetric shapes
+cross = plot_data.Point2D(0, 0, plot_data.PointStyle(color_stroke=colors.ORANGE, stroke_width=5, shape="cross", size = 20))
+circle = plot_data.Point2D(5, 0, plot_data.PointStyle(color_fill=colors.ORANGE, color_stroke=colors.BLACK, stroke_width=2, shape="circle", size = 20))
+square_1 = plot_data.Point2D(10, 0, plot_data.PointStyle(color_fill=colors.PINK, color_stroke=colors.PURPLE, stroke_width=3, shape="square", size = 20))
+square_2 = plot_data.Point2D(15, 0, plot_data.PointStyle(color_fill=colors.BLUE, shape="square", size = 20))
+
+## Triangles
+up_triangle = plot_data.Point2D(0, 5, plot_data.PointStyle(color_fill=colors.RED, color_stroke=colors.DARK_PURPLE, stroke_width=2, shape="triangle", orientation="up", size = 20))
+down_triangle = plot_data.Point2D(5, 5, plot_data.PointStyle(color_fill=colors.YELLOW, color_stroke=colors.EMPIRE_YELLOW, stroke_width=3, shape="triangle", orientation="down", size = 20))
+left_triangle = plot_data.Point2D(10, 5, plot_data.PointStyle(color_fill=colors.GREEN, color_stroke=colors.EMERALD, stroke_width=4, shape="triangle", orientation="left", size = 20))
+right_triangle = plot_data.Point2D(15, 5, plot_data.PointStyle(color_fill=colors.BLUE, color_stroke=colors.DARK_BLUE, stroke_width=5, shape="triangle", orientation="right", size = 20))
+
+## Half Lines
+up_halfline = plot_data.Point2D(0, 10, plot_data.PointStyle(color_stroke=colors.PINK, stroke_width=2, shape="halfline", orientation="up", size = 20))
+down_halfline = plot_data.Point2D(5, 10, plot_data.PointStyle(color_stroke=colors.PURPLE, stroke_width=3, shape="halfline", orientation="down", size = 20))
+left_halfline = plot_data.Point2D(10, 10, plot_data.PointStyle(color_stroke=colors.ORANGE, stroke_width=4, shape="halfline", orientation="left", size = 20))
+right_halfline = plot_data.Point2D(15, 10, plot_data.PointStyle(color_stroke=colors.BLACK, stroke_width=5, shape="halfline", orientation="right", size = 20))
+
+## Lines
+vline = plot_data.Point2D(0, 15, plot_data.PointStyle(color_stroke=colors.LIGHTBLUE, stroke_width=2, shape="line", orientation="vertical", size = 20))
+hline = plot_data.Point2D(5, 15, plot_data.PointStyle(color_stroke=colors.LIGHTPURPLE, stroke_width=3, shape="line", orientation="horizontal", size = 20))
+slash = plot_data.Point2D(10, 15, plot_data.PointStyle(color_stroke=colors.ANGEL_BLUE, stroke_width=4, shape="line", orientation="slash", size = 20))
+backslash = plot_data.Point2D(15, 15, plot_data.PointStyle(color_stroke=colors.BRIGHT_LIME_GREEN, stroke_width=5, shape="line", orientation="backslash", size = 20))
+
+points = [cross, circle, square_1, square_2,
+          up_triangle, down_triangle, left_triangle, right_triangle,
+          up_halfline, down_halfline, left_halfline, right_halfline,
+          vline, hline, slash, backslash]
+
+# ============================================= SHAPES =================================================================
+# Lines
+line_segment = plot_data.LineSegment2D(point1=[-15, 0], point2=[-5, 5], edge_style=edge_style_purple)
+line_2d = plot_data.Line2D(point1=[-10, -10], point2=[0, -5], edge_style=edge_style_blue)
+
+# Arcs
+circle = plot_data.Circle2D(cx=25, cy=10, r=5, edge_style=edge_style_red, surface_style=surface_style_yellow, tooltip="It's a circle")
+arc = plot_data.Arc2D(cx=30, cy=12.5, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_red, clockwise=True)
+arc_anti = plot_data.Arc2D(cx=30, cy=12.5, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_blue, clockwise=False)
+
+# Contours
+polygon_lines_closed = [plot_data.LineSegment2D([0, 20], [5, 21]),
+                        plot_data.LineSegment2D([5, 21], [7, 23]),
+                        plot_data.LineSegment2D([7, 23], [15, 25]),
+                        plot_data.LineSegment2D([15, 25], [30, 30]),
+                        plot_data.LineSegment2D([30, 30], [20, 27]),
+                        plot_data.LineSegment2D([20, 27], [10, 30]),
+                        plot_data.LineSegment2D([10, 30], [5, 22]),
+                        plot_data.LineSegment2D([5, 22], [0, 20])]
+
+polygon_lines_open = [plot_data.LineSegment2D([0, 32], [5, 33]),
+                      plot_data.Arc2D(cx=6, cy=33, r=1, start_angle=math.pi, end_angle=math.pi/2, clockwise=True),
+                      plot_data.LineSegment2D([6, 34], [7, 40]),
+                      plot_data.LineSegment2D([7, 40], [15, 43]),
+                      plot_data.LineSegment2D([15, 43], [30, 40]),
+                      plot_data.LineSegment2D([30, 40], [20, 38]),
+                      plot_data.LineSegment2D([20, 38], [10, 32]),
+                      plot_data.LineSegment2D([10, 32], [5, 31]),
+                      plot_data.LineSegment2D([5, 31], [0, 30])]
+
+contour_filled = plot_data.Contour2D(plot_data_primitives=polygon_lines_closed, edge_style=edge_style_blue,
+                                     surface_style=surface_style_green, tooltip="It's not a square but it is filled.")
+
+contour_empty = plot_data.Contour2D(plot_data_primitives=polygon_lines_open, edge_style=edge_style_purple,
+                                     tooltip="It's not a square and it is open so it is not filled.")
+
+# Wire
+wire = plot_data.Wire([[-2, 0], [-1, 37], [15, 45], [40, 45], [42, 0]], tooltip="It is a wire",
+                      edge_style=edge_style_blue)
+
+shapes = [line_segment, line_2d, arc, arc_anti, circle, contour_filled, contour_empty, wire]
+
+# rectangle
+# triangle
+
+
 
 # Creating several primitives. plot_data() functions are used to convert
 # a volmdlr object into a plot_data object
 
-# Point2D
-point1 = plot_data.Point2D(-1, 0)
 
-# arc
-arc = plot_data.Arc2D(cx=8, cy=0, r=2, start_angle=0, end_angle=math.pi, edge_style=edge_style, clockwise=True)
-
-# square contour
-rectangle_size = 5
-contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([-10, 0], [-10, rectangle_size]),
-                                                    plot_data.LineSegment2D([-10, rectangle_size],
-                                                                            [rectangle_size - 10, rectangle_size]),
-                                                    plot_data.LineSegment2D([rectangle_size - 10, rectangle_size],
-                                                                            [rectangle_size - 10, 0]),
-                                                    plot_data.LineSegment2D([rectangle_size - 10, 0], [-10, 0])],
-                              edge_style=edge_style,
-                              surface_style=surface_style,
-                              tooltip="It's a square", is_filled=True)
-
-# LineSegment2D
-line = plot_data.LineSegment2D(point1=[4, 0], point2=[6, 2], edge_style=edge_style)
 
 # Circle
-circle_edge_style = plot_data.EdgeStyle(5, colors.BLUE, dashline=[10, 10])
-circle_surface_style = plot_data.SurfaceStyle(color_fill=colors.YELLOW, opacity=0.5,
-                                              hatching=hatching)
 
-circle = plot_data.Circle2D(cx=5, cy=10, r=5, edge_style=circle_edge_style,
-                            surface_style=circle_surface_style, tooltip="Circle")
 
-# Text
 text = plot_data.Text(comment='Hello', position_x=6, position_y=4, text_scaling=False,
                       text_style=plot_data.TextStyle(text_color=colors.RED,
                                                      font_size=12,
-                                                     font_style='sans-serif')#, max_width=30, height=12
-                      )
+                                                     font_style='sans-serif'))
 
 # Label
 # This label is created with minimum information
@@ -66,11 +118,9 @@ label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surfac
 
 labels = plot_data.MultipleLabels(labels=[label1, label2])
 
-wire = plot_data.Wire([[15, 0], [15,10], [20,10]], tooltip="It is a wire", edge_style=edge1)
 
-point2 = plot_data.Point2D(15, 10, plot_data.PointStyle(color_fill=colors.ORANGE, stroke_width=12, shape="circle", size = 25))
-
-primitives = [contour, point1, line, arc, circle, text, wire, point2]
+primitives = points + shapes
+primitives.append(text)
 
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 # plot_data.plot_canvas(primitive_group, debug_mode=True)

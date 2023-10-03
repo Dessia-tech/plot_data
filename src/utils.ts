@@ -1362,7 +1362,7 @@ export class newShape {
     else if (data.type_ == "linesegment2d") shape = LineSegment.deserialize(data, scale);
     else if (data.type_ == "wire") { // TODO: make it better
       const wire = LineSequence.deserialize(data, scale);
-      wire.hasTooltip = false;
+      // wire.hasTooltip = false;
       shape = wire
     }
     else if (data.type_ == "point") return newPoint2D.deserialize(data, scale);
@@ -1663,7 +1663,7 @@ export class HalfLine extends AbstractHalfLine {
     if (this.orientation == 'down') this.path = new DownHalfLine(this.center, this.size).path;
     if (this.orientation == 'left') this.path = new LeftHalfLine(this.center, this.size).path;
     if (this.orientation == 'right') this.path = new RightHalfLine(this.center, this.size).path;
-    if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
+    if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation halfline ${this.orientation} is unknown.`);
   }
 }
 
@@ -1780,7 +1780,7 @@ export class LinePoint extends AbstractLinePoint {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
-    public orientation: string = 'up'
+    public orientation: string = 'vertical'
   ) {
     super(center, size, orientation);
     this.buildPath();
@@ -2327,6 +2327,7 @@ export interface PointStyleInterface {
   color_stroke?: string,
   stroke_width?: number,
   shape?: string,
+  orientation?: string,
   name?: string
 }
 
@@ -2336,12 +2337,14 @@ export class newPointStyle implements PointStyleInterface {
   public strokeStyle: string;
   public marker: string;
   public lineWidth: number;
+  public orientation: string;
   constructor(
     { size = null,
       color_fill = null,
       color_stroke = null,
       stroke_width = null,
       shape = 'circle',
+      orientation = null,
       name = ''
     }: PointStyleInterface = {}
   ) {
@@ -2350,6 +2353,7 @@ export class newPointStyle implements PointStyleInterface {
     this.strokeStyle = color_stroke;
     this.marker = shape;
     this.lineWidth = stroke_width;
+    this.orientation = orientation;
   }
 }
 
@@ -2403,7 +2407,8 @@ export class newPoint2D extends newShape {
     this.fillStyle = data.color_fill ?? this.fillStyle;
     this.strokeStyle = data.color_stroke ?? this.strokeStyle;
     this.lineWidth = data.stroke_width ?? this.lineWidth;
-    this.marker = data.marker ?? this.marker;
+    this.marker = data.shape ?? this.marker;
+    this.markerOrientation = data.orientation ?? this.markerOrientation;
   }
 
   public updateStyle(style: newPointStyle): void {
@@ -2412,6 +2417,7 @@ export class newPoint2D extends newShape {
     this.strokeStyle = style.strokeStyle ?? this.strokeStyle;
     this.lineWidth = style.lineWidth ?? this.lineWidth;
     this.marker = style.marker ?? this.marker;
+    this.markerOrientation = style.orientation ?? this.markerOrientation;
   }
 
   public copy(): newPoint2D {

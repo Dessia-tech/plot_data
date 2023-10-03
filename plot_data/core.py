@@ -244,12 +244,13 @@ class PointStyle(DessiaObject):
     """
 
     def __init__(self, color_fill: str = None, color_stroke: str = None, stroke_width: float = None, size: float = None,
-                 shape: str = None, name: str = ''):
+                 shape: str = None, orientation: str = None, name: str = ''):
         self.color_fill = color_fill
         self.color_stroke = color_stroke
         self.stroke_width = stroke_width
         self.size = size  # 1, 2, 3 or 4
         self.shape = shape
+        self.orientation = orientation
         DessiaObject.__init__(self, name=name)
 
     def mpl_arguments(self):
@@ -1065,12 +1066,22 @@ class Arc2D(PlotDataObject):
         """ Get 2D bounding box of current Circle2D. """
         return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
 
+    def polygon_points(self):
+        """ Get lists of points in a merged list. """
+        points = []
+        # for primitive in self.plot_data_primitives:
+        #     points.extend(primitive.polygon_points())
+        return points
+
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
         if not ax:
             _, ax = plt.subplots()
         if self.edge_style:
             edgecolor = self.edge_style.mpl_arguments(surface=False)['color']
+        elif "edge_style" in kwargs:
+            edgecolor = kwargs['edge_style'].mpl_arguments(surface=False)["color"]
+            kwargs.pop("edge_style")
         else:
             edgecolor = plot_data.colors.BLACK.rgb
 
@@ -1099,12 +1110,12 @@ class Contour2D(PlotDataObject):
     """
 
     def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]], edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, tooltip: str = None, is_filled: bool = None, name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.tooltip = tooltip
-        self.is_filled = is_filled
+        self.is_filled = surface_style is not None
         PlotDataObject.__init__(self, type_='contour', name=name)
 
     def bounding_box(self):
@@ -1138,6 +1149,7 @@ class Contour2D(PlotDataObject):
         if surface_style.color_fill:
             points = self.polygon_points()
             ax.add_patch(Polygon(points, closed=True, **surface_style.mpl_arguments()), **kwargs)
+
         return ax
 
 

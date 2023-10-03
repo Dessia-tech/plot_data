@@ -463,13 +463,11 @@ class Line2D(PlotDataObject):
         style = self.edge_style
         if edge_style:
             style = edge_style
-        if style is None:
-            style = DEFAULT_EDGESTYLE
-
-        color = style.color_stroke.rgb
-        dashes = style.dashline
-
-        ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]), color=color, dashes=dashes, **kwargs)
+            color = style.color_stroke.rgb
+            dashes = style.dashline
+            ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]), color=color, dashes=dashes, **kwargs)
+        else:
+            ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]), **kwargs)
         return ax
 
 

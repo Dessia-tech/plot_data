@@ -1698,13 +1698,20 @@ export class Line extends newShape { // TODO: Does not work => make it work
   }
 
   public buildPath(): void {
+    const infiniteFactor = 1e3;
     const [slope, affinity] = this.getEquation();
-    const fakeOrigin = new Vertex(-1e6, 0);
-    const fakeEnd = new Vertex(1e6, 0);
-    fakeOrigin.y = fakeOrigin.x * slope + affinity;
-    fakeEnd.y = fakeEnd.x * slope + affinity;
-    this.path = new LineSegment(fakeOrigin, fakeEnd).path;
+    if (this.end.x == this.origin.x) {
+      this.path = new LineSegment(new Vertex(this.origin.x, -this.end.y * infiniteFactor), new Vertex(this.origin.x, this.end.y * infiniteFactor)).path;
+    } else {
+      const fakeOrigin = new Vertex(-this.origin.x * infiniteFactor, 0);
+      const fakeEnd = new Vertex(this.origin.x * infiniteFactor, 0);
+      fakeOrigin.y = fakeOrigin.x * slope + affinity;
+      fakeEnd.y = fakeEnd.x * slope + affinity;
+      this.path = new LineSegment(fakeOrigin, fakeEnd).path;
+    }
   }
+
+  public getBounds(): [Vertex, Vertex] { return [this.origin, this.end] }
 }
 
 export class LineSegment extends Line {
@@ -1728,8 +1735,6 @@ export class LineSegment extends Line {
   }
 
   public drawInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
-
-  public getBounds(): [Vertex, Vertex] { return [this.origin, this.end] }
 }
 
 export abstract class AbstractLinePoint extends newShape {

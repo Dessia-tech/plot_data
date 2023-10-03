@@ -19,8 +19,8 @@ surface_style_yellow = plot_data.SurfaceStyle(color_fill=colors.YELLOW, hatching
 # Symmetric shapes
 cross = plot_data.Point2D(0, 0, plot_data.PointStyle(color_stroke=colors.ORANGE, stroke_width=5, shape="cross", size = 20))
 circle = plot_data.Point2D(5, 0, plot_data.PointStyle(color_fill=colors.ORANGE, color_stroke=colors.BLACK, stroke_width=2, shape="circle", size = 20))
-square_1 = plot_data.Point2D(10, 0, plot_data.PointStyle(color_fill=colors.PINK, color_stroke=colors.PURPLE, stroke_width=3, shape="square", size = 20))
-square_2 = plot_data.Point2D(15, 0, plot_data.PointStyle(color_fill=colors.BLUE, shape="square", size = 20))
+square = plot_data.Point2D(10, 0, plot_data.PointStyle(color_fill=colors.PINK, color_stroke=colors.PURPLE, stroke_width=3, shape="square", size = 20))
+mark = plot_data.Point2D(15, 0, plot_data.PointStyle(color_stroke=colors.BLUE, stroke_width=3, shape="mark", size = 20))
 
 ## Triangles
 up_triangle = plot_data.Point2D(0, 5, plot_data.PointStyle(color_fill=colors.RED, color_stroke=colors.DARK_PURPLE, stroke_width=2, shape="triangle", orientation="up", size = 20))
@@ -40,7 +40,7 @@ hline = plot_data.Point2D(5, 15, plot_data.PointStyle(color_stroke=colors.LIGHTP
 slash = plot_data.Point2D(10, 15, plot_data.PointStyle(color_stroke=colors.ANGEL_BLUE, stroke_width=2, shape="line", orientation="slash", size = 20))
 backslash = plot_data.Point2D(15, 15, plot_data.PointStyle(color_stroke=colors.BRIGHT_LIME_GREEN, stroke_width=2, shape="line", orientation="backslash", size = 20))
 
-points = [cross, circle, square_1, square_2,
+points = [cross, circle, square, mark,
           up_triangle, down_triangle, left_triangle, right_triangle,
           up_halfline, down_halfline, left_halfline, right_halfline,
           vline, hline, slash, backslash]
@@ -48,12 +48,12 @@ points = [cross, circle, square_1, square_2,
 # ============================================= SHAPES =================================================================
 # Lines
 line_segment = plot_data.LineSegment2D(point1=[-22, -5], point2=[-12, 15], edge_style=edge_style_blue)
-line_2d = plot_data.Line2D(point1=[-30, -10], point2=[-20, 10], edge_style=edge_style_red)
+line_2d = plot_data.Line2D(point1=[-30, -10], point2=[-25, 10], edge_style=edge_style_red)
 
 # Arcs
 circle = plot_data.Circle2D(cx=25, cy=10, r=5, edge_style=edge_style_red, surface_style=surface_style_yellow, tooltip="It's a circle")
-arc = plot_data.Arc2D(cx=30, cy=12.5, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_red, clockwise=True)
-arc_anti = plot_data.Arc2D(cx=30, cy=12.5, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_blue, clockwise=False)
+arc = plot_data.Arc2D(cx=36, cy=10, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_red, clockwise=True)
+arc_anti = plot_data.Arc2D(cx=36, cy=10, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_blue, clockwise=False)
 
 # Contours
 polygon_lines_closed = [plot_data.LineSegment2D([0, 20], [5, 21]),
@@ -82,7 +82,7 @@ contour_empty = plot_data.Contour2D(plot_data_primitives=polygon_lines_open, edg
                                      tooltip="It's not a square and it is open so it is not filled.")
 
 # Wire
-wire = plot_data.Wire([[-2, 0], [-1, 37], [15, 45], [40, 45], [42, 0]], tooltip="It is a wire",
+wire = plot_data.Wire([[-2, -5], [-1, 37], [15, 45], [40, 45], [42, -5]], tooltip="It is a wire",
                       edge_style=edge_style_blue)
 
 shapes = [line_segment, line_2d, arc, arc_anti, circle, contour_filled, contour_empty, wire]
@@ -100,7 +100,7 @@ shapes = [line_segment, line_2d, arc, arc_anti, circle, contour_filled, contour_
 # Circle
 
 
-text = plot_data.Text(comment='Hello', position_x=6, position_y=4, text_scaling=False,
+text = plot_data.Text(comment='Hello', position_x=20, position_y=0, text_scaling=False,
                       text_style=plot_data.TextStyle(text_color=colors.RED,
                                                      font_size=12,
                                                      font_style='sans-serif'))

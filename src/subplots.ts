@@ -1749,12 +1749,10 @@ export class Figure extends PlotData {
 
   private drawZoneRectangle(context: CanvasRenderingContext2D): void {
     // TODO: change with newRect
-    Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15,15]);
+    Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15, 15]);
   }
 
-  protected drawRelativeObjects(context: CanvasRenderingContext2D) {
-    this.relativeObjects = new GroupCollection([]);
-  }
+  protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.relativeObjects = new GroupCollection([]) }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D) { this.absoluteObjects = new GroupCollection() }
 
@@ -1782,7 +1780,7 @@ export class Figure extends PlotData {
     this.drawTooltips();
 
     this.context_show.resetTransform();
-    if (this.multiplot_manipulation) { this.drawZoneRectangle(this.context_show) };
+    if (this.multiplot_manipulation) this.drawZoneRectangle(this.context_show);
     this.context_show.restore();
   }
 
@@ -2641,7 +2639,7 @@ export class newGraph2D extends newScatter {
   }
 
   public updateSelection(axesSelections: number[][]): void {
-    const inMultiplot = this.is_in_multiplot
+    const inMultiplot = this.is_in_multiplot;
     this.is_in_multiplot = false;
     super.updateSelection(axesSelections);
     this.is_in_multiplot = inMultiplot;
@@ -2671,9 +2669,7 @@ export class newGraph2D extends newScatter {
   }
 
   public reset_scales(): void {
-    const scale = new Vertex(this.frameMatrix.a, this.frameMatrix.d).scale(this.initScale);
-    const translation = new Vertex(this.axes[0].maxValue - this.axes[0].initMaxValue, this.axes[1].maxValue - this.axes[1].initMaxValue).scale(scale);
-    this.curves.forEach(curve => curve.translateTooltip(translation));
+    this.curves.forEach(curve => { if (curve.mouseClick) curve.mouseClick = curve.previousTooltipOrigin });
     super.reset_scales();
   }
 
@@ -2684,14 +2680,9 @@ export class newGraph2D extends newScatter {
     this.draw();
   }
 
-  public mouseUp(ctrlKey: boolean): void {
-    super.mouseUp(ctrlKey);
-    this.curves.forEach(curve => curve.previousTooltipOrigin = curve.tooltipOrigin);
-  }
-
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
     const translation = super.mouseTranslate(currentMouse, mouseDown);
-    this.curves.forEach(curve => { if (curve.previousTooltipOrigin) curve.tooltipOrigin = curve.previousTooltipOrigin.add(translation.scale(this.initScale)) });
+    this.curves.forEach(curve => { if (curve.mouseClick) curve.mouseClick = curve.previousTooltipOrigin.add(translation.scale(this.initScale)) });
     return translation
   }
 }

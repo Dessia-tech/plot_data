@@ -1380,16 +1380,19 @@ export class newShape {
     this.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
   }
 
-  protected deserializeTooltip(data: any): void {
-    if (data.tooltip) this.tooltipMap.set(data.tooltip, "");
-  }
+  protected deserializeTooltip(data: any): void { if (data.tooltip) this.tooltipMap.set(data.tooltip, "") }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
+
+  protected updateTooltipOrigin(matrix: DOMMatrix): void {
+    if (this.mouseClick) this.tooltipOrigin = this.mouseClick.transform(matrix);
+  }
 
   public draw(context: CanvasRenderingContext2D): void {
     context.save();
     const scaledPath = new Path2D();
     const contextMatrix = context.getTransform();
+    this.updateTooltipOrigin(contextMatrix);
     if (this.isScaled) {
       scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
       context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
@@ -1431,7 +1434,6 @@ export class newShape {
 
   public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
     if (this.isClicked && this.tooltipMap.size != 0) {
-      
       const tooltip = this.initTooltip(context);
       tooltip.draw(plotOrigin, plotSize, context);
     }
@@ -1457,18 +1459,12 @@ export class newShape {
     return isHovered
   }
 
-  public mouseDown(mouseDown: Vertex) {
-    if (this.isHovered) {
-      this.mouseClick = mouseDown.copy();
-      this.tooltipOrigin = mouseDown.copy();
-    }
-  }
+  public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void { this.isHovered = this.isPointInShape(context, mouseCoords) }
 
   public mouseUp(keepState: boolean): void {
     this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
-    this.mouseClick = null;
   }
 }
 
@@ -2486,10 +2482,7 @@ export class newPoint2D extends newShape {
     return marker
   }
 
-  public draw(context: CanvasRenderingContext2D): void {
-    this.tooltipOrigin = this.center.copy();
-    super.draw(context);
-  }
+  protected updateTooltipOrigin(matrix: DOMMatrix): void { this.tooltipOrigin = this.center.copy() }
 
   public initTooltip(context: CanvasRenderingContext2D): newTooltip {
     const tooltip = super.initTooltip(context);
@@ -2652,25 +2645,14 @@ export class LineSequence extends newShape {
     return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
   }
 
-  public initTooltip(context: CanvasRenderingContext2D): newTooltip {
-    const tooltip = super.initTooltip(context);
-    tooltip.isFlipper = true;
-    return tooltip
-  }
-
-  public setTooltipOrigin(vertex: Vertex): void {
-    this.previousTooltipOrigin = vertex.copy();
-    this.tooltipOrigin = this.previousTooltipOrigin.copy();
-  }
-
   public translateTooltip(translation: Vertex): void { this.tooltipOrigin?.translateSelf(translation) }
 
   public mouseDown(mouseDown: Vertex) {
     super.mouseDown(mouseDown);
-    if (this.isHovered) this.setTooltipOrigin(mouseDown);
+    if (this.isHovered) this.previousTooltipOrigin = mouseDown.copy();
   }
 
-  public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Name", this.name]]) }
+  public updateTooltipMap() { this._tooltipMap = new Map<string, any>(this.name ? [["Name", this.name]] : []) }
 
   private getEdgeStyle(edgeStyle: { [key: string]: any }): void {
     if (edgeStyle.line_width) this.lineWidth = edgeStyle.line_width;
@@ -2724,6 +2706,12 @@ export class Bar extends newRect {
     return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
   }
 
+  public initTooltip(context: CanvasRenderingContext2D): newTooltip {
+    const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
+    tooltip.isFlipper = false;
+    return tooltip
+  }
+
   public setGeometry(origin: Vertex, size: Vertex): void {
     this.origin = origin;
     this.size = size;
@@ -2774,7 +2762,7 @@ export class newTooltip {
   private squareOrigin: Vertex;
   private size: Vertex;
   private isUp = true;
-  public isFlipper = false;
+  public isFlipper = true;
   constructor(
     public origin,
     public dataToPrint: Map<string, any>,
@@ -3538,9 +3526,9 @@ export class newAxis extends newShape {
     super.mouseMove(context, mouseCoords);
     this.boundingBox.mouseMove(context, mouseCoords);
     this.title.mouseMove(context, mouseCoords.scale(this.initScale));
-    if (this.mouseClick) {
-      if (this.isClicked && !this.title.isClicked) this.mouseMoveClickedArrow(mouseCoords)
-      else if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords);
+    if (this.isClicked) {
+      if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords)
+      else this.mouseMoveClickedArrow(mouseCoords);
     }
   }
 
@@ -3553,7 +3541,7 @@ export class newAxis extends newShape {
     } else this.rubberBand.mouseMove(downValue, currentValue);
   }
 
-  public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
+  public mouseMoveClickedTitle(mouseCoords: Vertex): void {}
 
   public mouseDown(mouseDown: Vertex): void {
     super.mouseDown(mouseDown);

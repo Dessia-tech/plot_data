@@ -1881,17 +1881,29 @@ export class Figure extends PlotData {
 
   protected activateSelection(emittedRubberBand: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
 
+  public shiftOnAction(canvas: HTMLElement): void {
+    this.isSelecting = true;
+    canvas.style.cursor = 'crosshair';
+    this.draw();
+  }
+
+  public shiftOffAction(canvas: HTMLElement): void {
+    this.isSelecting = false;
+    this.is_drawing_rubber_band = false;
+    canvas.style.cursor = 'default';
+    this.draw();
+  }
+
   public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
-      var clickedObject: any = null;
-      var isDrawing = false;
-      var canvasMouse = new Vertex(0, 0); var canvasDown = new Vertex(0, 0);
-      var frameMouse = new Vertex(0, 0); var frameDown = new Vertex(0, 0);
-      var absoluteMouse = new Vertex(0, 0);
-      var mouse3X = 0; var mouse3Y = 0;
+      let clickedObject: any = null;
+      let isDrawing = false;
+      let canvasMouse = new Vertex(0, 0); let canvasDown = new Vertex(0, 0);
+      let frameMouse = new Vertex(0, 0); let frameDown = new Vertex(0, 0);
+      let absoluteMouse = new Vertex(0, 0);
       const canvas = document.getElementById(this.canvas_id);
-      var ctrlKey = false; var shiftKey = false; var spaceKey = false;
-      var zoomBox = new SelectionBox();
+      let ctrlKey = false; let shiftKey = false; let spaceKey = false;
+      const zoomBox = new SelectionBox();
 
       this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
 
@@ -1902,7 +1914,7 @@ export class Figure extends PlotData {
         }
         if (e.key == "Shift") {
           shiftKey = true;
-          if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
+          if (!ctrlKey) this.shiftOnAction(canvas);
         }
         if (e.key == " ") {
           spaceKey = true;
@@ -1913,7 +1925,10 @@ export class Figure extends PlotData {
       window.addEventListener('keyup', e => {
         if (e.key == "Control") ctrlKey = false;
         if (e.key == " ") spaceKey = false;
-        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; this.is_drawing_rubber_band = false; canvas.style.cursor = 'default'; this.draw() };
+        if (e.key == "Shift") {
+          shiftKey = false;
+          this.shiftOffAction(canvas);
+        };
       });
 
       canvas.addEventListener('mousemove', e => {
@@ -2731,6 +2746,8 @@ export class newParallelPlot extends Figure {
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
+  public shiftOnAction(canvas: HTMLElement): void {}
+
   protected computeOffset(): Vertex {
     const standardOffset = super.computeOffset();
     if (this.isVertical) return new Vertex(Math.max(standardOffset.x, MIN_OFFSET), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
@@ -2864,6 +2881,8 @@ export class newParallelPlot extends Figure {
     })
   }
 
+  protected drawSelectionBox(context: CanvasRenderingContext2D): void {}
+
   private drawCurves(context: CanvasRenderingContext2D): void {
     const unpickedIndices = newParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
     [unpickedIndices, this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
@@ -2968,6 +2987,8 @@ export class Draw extends Frame {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.scale);
     }
+
+  public shiftOnAction(canvas: HTMLElement): void {}
 
   public define_canvas(canvas_id: string):void {
     super.define_canvas(canvas_id);

@@ -1991,11 +1991,13 @@ export class Contour extends newShape {
 
   public draw(context: CanvasRenderingContext2D): void {
     super.draw(context);
+    context.save();
     super.setDrawingProperties(context);
     this.lines.forEach(line => {
       this.setLineStyle(context, line);
       line.draw(context)
     });
+    context.restore();
   }
 
   public buildPath(): void {
@@ -3895,6 +3897,10 @@ export class ShapeCollection {
   ) {
     [this.minimum, this.maximum] = this.getBounds();
   }
+
+  public get length(): number { return this.drawings.length }
+
+  public includes(shape: newShape) { return this.drawings.includes(shape) }
 
   public static fromPrimitives(primitives: { [key: string]: any }, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
     const drawings = [];

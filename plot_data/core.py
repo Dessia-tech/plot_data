@@ -1167,11 +1167,12 @@ class Label(PlotDataObject):
     """
 
     def __init__(self, title: str, text_style: TextStyle = None, rectangle_surface_style: SurfaceStyle = None,
-                 rectangle_edge_style: EdgeStyle = None, name: str = ''):
+                 rectangle_edge_style: EdgeStyle = None, shape: PlotDataObject = None, name: str = ''):
         self.title = title
         self.text_style = text_style
         self.rectangle_surface_style = rectangle_surface_style
         self.rectangle_edge_style = rectangle_edge_style
+        self.shape = shape
         PlotDataObject.__init__(self, type_='label', name=name)
 
 

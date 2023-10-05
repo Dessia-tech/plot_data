@@ -1354,6 +1354,17 @@ export class newShape {
 
   public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
 
+  public getStyle(): { [key: string]: any } {
+    const style = {};
+    style["lineWidth"] = this.lineWidth;
+    style["dashLine"] = this.dashLine;
+    style["hatching"] = this.hatching;
+    style["strokeStyle"] = this.strokeStyle;
+    style["fillStyle"] = this.fillStyle;
+    style["alpha"] = this.alpha;
+    return style
+  }
+
   public static deserialize(data: { [key: string]: any }, scale: Vertex): newShape {
     let shape: newShape;
     if (data.type_ == "circle") shape = newCircle.deserialize(data, scale)
@@ -1364,6 +1375,7 @@ export class newShape {
     else if (data.type_ == "point") return newPoint2D.deserialize(data, scale);
     else if (data.type_ == "arc") shape = Arc.deserialize(data, scale);
     else if (data.type_ == "text") return newText.deserialize(data, scale);
+    else if (data.type_ == "label") return newLabel.deserialize(data, scale);
     else throw new Error(`${data.type_} deserialization is not implemented.`);
     shape.deserializeTooltip(data);
     return shape
@@ -1542,6 +1554,8 @@ export class newRect extends newShape {
     this.buildPath();
   }
 
+  public get center(): Vertex { return this.origin.add(this.size).scale(new Vertex(0.5, 0.5)) }
+
   public getBounds(): [Vertex, Vertex] { return [this.origin, this.origin.add(new Vertex(Math.abs(this.size.x), Math.abs(this.size.y)))] }
 }
 
@@ -1606,6 +1620,12 @@ export abstract class AbstractHalfLine extends newShape {
     super();
     this.isFilled = false;
     this.buildPath();
+  }
+
+  public getStyle(): { [key: string]: any } {
+    const style = super.getStyle();
+    style["orientation"] = this.orientation;
+    return style
   }
 
   public getBounds(): [Vertex, Vertex] {
@@ -1751,6 +1771,12 @@ export abstract class AbstractLinePoint extends newShape {
     this.buildPath();
   }
 
+  public getStyle(): { [key: string]: any } {
+    const style = super.getStyle();
+    style["orientation"] = this.orientation;
+    return style
+  }
+
   public getBounds(): [Vertex, Vertex] {
     const halfSize = this.size / 2;
     const halfSizeVertex = new Vertex(halfSize, halfSize);
@@ -1848,6 +1874,13 @@ export abstract class AbstractTriangle extends newShape {
     super();
     this.buildPath();
   }
+
+  public getStyle(): { [key: string]: any } {
+    const style = super.getStyle();
+    style["orientation"] = this.orientation;
+    return style
+  }
+  
   public abstract buildPath(): void;
 
   public getBounds(): [Vertex, Vertex] {
@@ -2053,20 +2086,24 @@ export class newText extends newShape {
 
   private static buildFont(style: string, fontsize: number, font: string): string { return `${style} ${fontsize}px ${font}` }
 
-  public static deserialize(data: any, scale: Vertex): newText {
+  public static deserializeTextParams(data: any): TextParams {
     const style = `${data.text_style?.bold ? "bold" : ""}${data.text_style?.bold || data.text_style?.italic ? " " : ""}${data.text_style?.italic ? "italic" : ""}`;
-    const textParams: TextParams = {
+    return {
       width: data.max_width,
       height: data.height,
       fontsize: data.text_style?.font_size,
       multiLine: data.multi_lines,
       font: data.text_style?.font,
-      align: data.text_style.text_align_x,
-      baseline: data.text_style.text_align_y,
+      align: data.text_style?.text_align_x,
+      baseline: data.text_style?.text_align_y,
       style: style,
       orientation: data.text_style?.angle,
       color: data.text_style?.text_color
-    };
+    } as TextParams
+  }
+
+  public static deserialize(data: any, scale: Vertex): newText {
+    const textParams = newText.deserializeTextParams(data);
     const text = new newText(data.comment, new Vertex(data.position_x, data.position_y), textParams);
     text.isScaled = data.text_scaling ?? false;
     text.scale = new Vertex(scale.x, scale.y);
@@ -2402,6 +2439,14 @@ export class newPoint2D extends newShape {
     this.strokeStyle = strokeStyle || this.setStrokeStyle(this.fillStyle);
     this.lineWidth = 1;
   };
+
+  public getStyle(): { [key: string]: any } {
+    const style = super.getStyle();
+    style["markerOrientation"] = this.markerOrientation;
+    style["marker"] = this.marker;
+    style["size"] = this.size;
+    return style
+  }
 
   public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf newText)
     const factor = 0.025;
@@ -2739,6 +2784,51 @@ export class Bar extends newRect {
     if (this.values.some(valIdx => clickedIndices.includes(valIdx))) this.isClicked = true;
     if (this.values.some(valIdx => selectedIndices.includes(valIdx))) this.isSelected = true;
     this.buildPath();
+  }
+}
+
+export class newLabel extends newShape {
+  private shapeSize: Vertex = new Vertex(30, 12);
+  private legendBoundingBox: newRect;
+  private legend: newRect | LineSegment | newPoint2D;
+  constructor(
+    shape: newShape,
+    public text: newText,
+    ) {
+      super();
+      this.legendBoundingBox = new newRect(new Vertex(0, 0), this.shapeSize);
+      this.getShapeStyle(shape);
+    }
+
+  public getShapeStyle(shape: newShape): void {
+    const style = shape.getStyle();
+    if (!shape.isFilled || !(shape instanceof newPoint2D)) this.legend = new LineSegment(new Vertex(0, 0), new Vertex(0, 0).add(this.shapeSize));
+    else if (shape instanceof newPoint2D) this.legend = this.shapeFromPoint(shape);
+    else this.legend = new newRect(new Vertex(0, 0), this.shapeSize);
+    Object.entries(style).map((key, value) => this.legend["key"] = value);
+  }
+
+  private shapeFromPoint(shape: newPoint2D): newPoint2D {
+    const center = this.legendBoundingBox.center;
+    return new newPoint2D(center.x, center.y)
+  }
+
+  public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): newLabel {
+    const textParams = newText.deserializeTextParams(data);
+    const shape = data.shape ? newShape.deserialize(data.shape, scale) : new newRect();
+    const text = new newText(data.title, new Vertex(0, 0), textParams)
+    return new newLabel(shape, text);
+  }
+
+  public draw(context: CanvasRenderingContext2D) {
+    context.save()
+    context.resetTransform();
+    context.translate(500, 350);
+    this.legendBoundingBox.size = this.shapeSize;
+    this.legendBoundingBox.draw(context);
+    context.translate(this.shapeSize.x + 5, 0);
+    this.text.draw(context);
+    context.restore();
   }
 }
 

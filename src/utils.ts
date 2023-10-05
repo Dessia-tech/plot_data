@@ -2607,7 +2607,7 @@ export class ScatterPoint extends newPoint2D {
 }
 
 export class LineSequence extends newShape {
-  public previousTooltipOrigin: Vertex;
+  public previousMouseClick: Vertex;
   public hoveredThickener: number = 2;
   public clickedThickener: number = 2;
   public selectedThickener: number = 2;
@@ -2645,11 +2645,9 @@ export class LineSequence extends newShape {
     return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
   }
 
-  public translateTooltip(translation: Vertex): void { this.tooltipOrigin?.translateSelf(translation) }
-
   public mouseDown(mouseDown: Vertex) {
     super.mouseDown(mouseDown);
-    if (this.isHovered) this.previousTooltipOrigin = mouseDown.copy();
+    if (this.isHovered) this.previousMouseClick = mouseDown.copy();
   }
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>(this.name ? [["Name", this.name]] : []) }
@@ -2744,10 +2742,9 @@ export class Bar extends newRect {
   }
 }
 
-
 const TOOLTIP_TEXT_OFFSET = 10;
 const TOOLTIP_TRIANGLE_SIZE = 10;
-export class newTooltip {
+export class newTooltip {// TODO: make it a newShape
   public path: Path2D;
 
   public lineWidth: number = 1;
@@ -2857,7 +2854,7 @@ export class newTooltip {
     if (downLeftDiff.x < 0) this.squareOrigin.x -= downLeftDiff.x
     else if (downLeftDiff.x > plotSize.x) this.squareOrigin.x -= downLeftDiff.x - plotSize.x;
 
-    if (downLeftDiff.y < 0) { // Maybe wrong, did not met the case
+    if (downLeftDiff.y < 0) { // Maybe wrong, did not meet the case
       this.squareOrigin.y -= downLeftDiff.y;
       this.origin.y -= downLeftDiff.y;
     } else if (downLeftDiff.y > plotSize.y) {

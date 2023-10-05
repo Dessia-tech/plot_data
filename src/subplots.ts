@@ -2669,7 +2669,14 @@ export class newGraph2D extends newScatter {
   }
 
   public reset_scales(): void {
-    this.curves.forEach(curve => { if (curve.mouseClick) curve.mouseClick = curve.previousTooltipOrigin });
+    const scale = new Vertex(this.frameMatrix.a, this.frameMatrix.d).scale(this.initScale);
+    const translation = new Vertex(this.axes[0].maxValue - this.axes[0].initMaxValue, this.axes[1].maxValue - this.axes[1].initMaxValue).scale(scale);
+    this.curves.forEach(curve => { 
+      if (curve.mouseClick) {
+        curve.previousMouseClick = curve.previousMouseClick.add(translation);
+        curve.mouseClick = curve.previousMouseClick.copy();
+      }
+    });
     super.reset_scales();
   }
 
@@ -2680,10 +2687,14 @@ export class newGraph2D extends newScatter {
     this.draw();
   }
 
-  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
-    const translation = super.mouseTranslate(currentMouse, mouseDown);
-    this.curves.forEach(curve => { if (curve.mouseClick) curve.mouseClick = curve.previousTooltipOrigin.add(translation.scale(this.initScale)) });
-    return translation
+  public translate(canvas: HTMLElement, translation: Vertex): void {
+    super.translate(canvas, translation);
+    this.curves.forEach(curve => { if (curve.mouseClick) curve.mouseClick = curve.previousMouseClick.add(translation.scale(this.initScale)) });
+  }
+
+  public mouseUp(ctrlKey: boolean): void {
+    super.mouseUp(ctrlKey);
+    this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
   }
 }
 
@@ -2962,6 +2973,11 @@ export class Draw extends Frame {
     super.define_canvas(canvas_id);
     this.computeTextBorders(this.context_show);
   }
+
+  public reset_scales(): void { // TODO: merge with resetView
+    super.reset_scales();
+    this.updateBounds();
+  }
   
   protected unpackData(data: any): Map<string, any[]> {
     const drawing = ShapeCollection.fromPrimitives(data.primitives);
@@ -3007,7 +3023,7 @@ export class Draw extends Frame {
     else this.axes[1].otherAxisScaling(this.axes[0]);
     this.axes.forEach(axis => axis.saveLocation());
     this.updateAxes();
-    }
+  }
 }
 
 

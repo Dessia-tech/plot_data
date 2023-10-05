@@ -120,7 +120,7 @@ label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surfac
 labels = plot_data.MultipleLabels(labels=[label1, label2])
 
 
-primitives = points + shapes + texts + [label1]
+primitives = points + shapes + texts + [label1, label2]
 
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 # plot_data.plot_canvas(primitive_group, debug_mode=True)

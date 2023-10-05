@@ -1741,7 +1741,7 @@ export class Figure extends PlotData {
 
   protected get cuttingZone(): newRect {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
-    const axesEnd = new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
+    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
     return new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
   }
 
@@ -1811,7 +1811,7 @@ export class Figure extends PlotData {
         this.selectionBox.buildPath();
         this.selectionBox.draw(context);
       }
-      this.relativeObjects.drawings.push(this.selectionBox);
+      this.relativeObjects.shapes.push(this.selectionBox);
     }
   }
 
@@ -2275,7 +2275,7 @@ export class Histogram extends Frame {
   protected drawRelativeObjects(context: CanvasRenderingContext2D): void {
     super.drawRelativeObjects(context);
     this.bars.forEach(bar => bar.draw(this.context_show));
-    this.relativeObjects.drawings = [...this.bars, ...this.relativeObjects.drawings];
+    this.relativeObjects.shapes = [...this.bars, ...this.relativeObjects.shapes];
   }
 
   private getBarsDrawing(): void {
@@ -2389,7 +2389,7 @@ export class newScatter extends Frame {
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
     super.drawAbsoluteObjects(context);
     this.drawPoints(context);
-    this.absoluteObjects.drawings = [...this.points, ...this.absoluteObjects.drawings];
+    this.absoluteObjects.shapes = [...this.points, ...this.absoluteObjects.shapes];
   };
 
   protected drawPoints(context: CanvasRenderingContext2D): void {
@@ -2677,7 +2677,7 @@ export class newGraph2D extends newScatter {
     this.drawInZone(context);
     if (this.showPoints) {
       super.drawAbsoluteObjects(context);
-      this.absoluteObjects.drawings = [...this.curves, ...this.absoluteObjects.drawings];
+      this.absoluteObjects.shapes = [...this.curves, ...this.absoluteObjects.shapes];
     } else {
       this.absoluteObjects = new GroupCollection([...this.curves]);
     }
@@ -3003,7 +3003,7 @@ export class Draw extends Frame {
   protected unpackData(data: any): Map<string, any[]> {
     const drawing = ShapeCollection.fromPrimitives(data.primitives);
     const [minX, minY, maxX, maxY] = Draw.boundsDilatation(...drawing.getBounds());
-    return new Map<string, any[]>([["x", [minX, maxX]], ["y", [minY, maxY]], ["shapes", drawing.drawings]])
+    return new Map<string, any[]>([["x", [minX, maxX]], ["y", [minY, maxY]], ["shapes", drawing.shapes]])
   }
 
   private static boundsDilatation(minimum: Vertex, maximum: Vertex): [number, number, number, number] {
@@ -3031,7 +3031,10 @@ export class Draw extends Frame {
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.drawInZone(context) }
 
-  protected updateDrawnObjects(context: CanvasRenderingContext2D): void { this.relativeObjects.draw(context) }
+  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
+    this.relativeObjects.locateFixedShapes(super.cuttingZone, this.initScale);
+    this.relativeObjects.draw(context);
+  }
 
   protected get cuttingZone(): newRect {
     const axesOrigin = this.axes[0].origin.transform(this.frameMatrix.inverse());
@@ -3046,7 +3049,6 @@ export class Draw extends Frame {
     this.updateAxes();
   }
 }
-
 
 function range(start: number, end: number, step: number = 1): number[] {
   let array = [];

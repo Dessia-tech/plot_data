@@ -1397,6 +1397,7 @@ export class newShape {
 
   public deserializeSurfaceStyle(data: any): void {
     this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
+    this.alpha = data.surface_style?.opacity ?? this.alpha;
     this.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
   }
 
@@ -1442,7 +1443,8 @@ export class newShape {
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     context.setLineDash(this.dashLine);
-    context.globalAlpha = this.alpha;
+    if (this.alpha == 0) this.isFilled = false
+    else if (this.alpha != 1) context.globalAlpha = this.alpha;
     if (this.isFilled) {
       context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
       context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected) ? this.setStrokeStyle(context.fillStyle) : this.strokeStyle ? colorHsl(this.strokeStyle) : this.setStrokeStyle(context.fillStyle);
@@ -1754,7 +1756,13 @@ export class Line extends newShape {
     }
   }
 
-  public getBounds(): [Vertex, Vertex] { return [this.origin, this.end] }
+  public getBounds(): [Vertex, Vertex] {
+    const minX = Math.min(this.origin.x, this.end.x);
+    const minY = Math.min(this.origin.y, this.end.y);
+    const maxX = Math.max(this.origin.x, this.end.x);
+    const maxY = Math.max(this.origin.y, this.end.y);
+    return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
+  }
 }
 
 export class LineSegment extends Line {

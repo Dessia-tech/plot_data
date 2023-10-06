@@ -2886,6 +2886,10 @@ export class newLabel extends newShape {
     this.text.draw(context);
     context.restore();
   }
+
+  public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    return context.isPointInPath(this.path, point.x, point.y) || context.isPointInStroke(this.path, point.x, point.y)
+  }
 }
 
 const TOOLTIP_TEXT_OFFSET = 10;
@@ -3957,16 +3961,16 @@ export class ShapeCollection {
   public includes(shape: newShape) { return this.shapes.includes(shape) }
 
   public static fromPrimitives(primitives: { [key: string]: any }, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
-    const drawings = [];
-    primitives.forEach(primitive => drawings.push(newShape.deserialize(primitive, scale)))
-    return new ShapeCollection(drawings)
+    const shapes = [];
+    primitives.forEach(primitive => shapes.push(newShape.deserialize(primitive, scale)))
+    return new ShapeCollection(shapes)
   }
 
   public getBounds(): [Vertex, Vertex] {
     let minimum = new Vertex(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
     let maximum = new Vertex(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
-    this.shapes.forEach(drawing => {
-      const [shapeMin, shapeMax] = drawing.getBounds();
+    this.shapes.forEach(shape => {
+      const [shapeMin, shapeMax] = shape.getBounds();
       if (shapeMin.x <= minimum.x) minimum.x = shapeMin.x; //for NaN reasons, must change
       if (shapeMin.y <= minimum.y) minimum.y = shapeMin.y;
       if (shapeMax.x >= maximum.x) maximum.x = shapeMax.x;
@@ -3976,32 +3980,32 @@ export class ShapeCollection {
   }
 
   public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
-    this.shapes.forEach(drawing => { if (!inMultiPlot && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
+    this.shapes.forEach(shape => { if (!inMultiPlot && shape.inFrame) shape.drawTooltip(canvasOrigin, canvasSize, context) });
   }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
-    this.shapes.forEach(drawing => drawing.mouseMove(context, mouseCoords));
+    this.shapes.forEach(shape => shape.mouseMove(context, mouseCoords));
   }
 
   public mouseDown(mouseCoords: Vertex): any { // TODO: refactor this. Code is insane
     let clickedObject: any = null;
-    this.shapes.forEach(drawing => {
-      drawing.mouseDown(mouseCoords);
-      if (drawing.isHovered) clickedObject = drawing; // this is insane
+    this.shapes.forEach(shape => {
+      shape.mouseDown(mouseCoords);
+      if (shape.isHovered) clickedObject = shape; // this is insane
     });
     return clickedObject
   }
 
-  public mouseUp(keepState: boolean): void { this.shapes.forEach(drawing => drawing.mouseUp(keepState)) }
+  public mouseUp(keepState: boolean): void { this.shapes.forEach(shape => shape.mouseUp(keepState)) }
 
-  public draw(context: CanvasRenderingContext2D): void { this.shapes.forEach(drawing => drawing.draw(context)) }
+  public draw(context: CanvasRenderingContext2D): void { this.shapes.forEach(shape => shape.draw(context)) }
 
   public updateBounds(context: CanvasRenderingContext2D): void {
-    this.shapes.forEach(drawing => {
-      if (drawing instanceof newText) {
-        drawing.format(context);
-        drawing.updateBoundingBox(context);
-        const [textMin, textMax] = drawing.getBounds();
+    this.shapes.forEach(shape => {
+      if (shape instanceof newText) {
+        shape.format(context);
+        shape.updateBoundingBox(context);
+        const [textMin, textMax] = shape.getBounds();
         this.minimum.x = Math.min(this.minimum.x, textMin.x);
         this.minimum.y = Math.min(this.minimum.y, textMin.y);
         this.maximum.x = Math.max(this.maximum.x, textMax.x);
@@ -4016,8 +4020,8 @@ export class ShapeCollection {
 
   public updateSampleStates(stateName: string): number[] {
     const newSampleStates = [];
-    this.shapes.forEach((drawing, index) => {
-      if (drawing[stateName] && !(drawing instanceof SelectionBox)) newSampleStates.push(index);
+    this.shapes.forEach((shape, index) => {
+      if (shape[stateName] && !(shape instanceof SelectionBox)) newSampleStates.push(index);
     });
     return newSampleStates
   }
@@ -4040,19 +4044,19 @@ export class GroupCollection extends ShapeCollection {
     super(shapes);
   }
 
-  public drawingIsContainer(drawing: any): boolean { return drawing.values?.length > 1 || drawing instanceof LineSequence }
+  public shapeIsContainer(shape: any): boolean { return shape.values?.length > 1 || shape instanceof LineSequence }
 
   public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
-    this.shapes.forEach(drawing => { if ((this.drawingIsContainer(drawing) || !inMultiPlot) && drawing.inFrame) drawing.drawTooltip(canvasOrigin, canvasSize, context) });
+    this.shapes.forEach(shape => { if ((this.shapeIsContainer(shape) || !inMultiPlot) && shape.inFrame) shape.drawTooltip(canvasOrigin, canvasSize, context) });
   }
 
   public updateSampleStates(stateName: string): number[] {
     const newSampleStates = [];
-    this.shapes.forEach((drawing, index) => {
-      if (drawing.values) {
-        if (drawing[stateName]) drawing.values.forEach(sample => newSampleStates.push(sample));
+    this.shapes.forEach((shape, index) => {
+      if (shape.values) {
+        if (shape[stateName]) shape.values.forEach(sample => newSampleStates.push(sample));
       } else {
-        if (drawing[stateName] && !(drawing instanceof SelectionBox)) newSampleStates.push(index);
+        if (shape[stateName] && !(shape instanceof SelectionBox)) newSampleStates.push(index);
       }
     });
     return newSampleStates

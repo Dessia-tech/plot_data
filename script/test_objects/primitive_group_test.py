@@ -112,15 +112,17 @@ label1 = plot_data.Label(title='label1')
 
 # This label is created using all customizations
 fill1 = plot_data.SurfaceStyle(color_fill=colors.RED, opacity=0.5)
-edge1 = plot_data.EdgeStyle(line_width=5, color_stroke=colors.BLUE, dashline=[5, 5])
+edge1 = plot_data.EdgeStyle(line_width=1, color_stroke=colors.BLUE, dashline=[5, 5])
 text_style = plot_data.TextStyle(text_color=colors.ORANGE, font_size=14, italic=True, bold=True)
-label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surface_style=fill1,
+label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surface_style=surface_style_green,
                          rectangle_edge_style=edge1)
+label3 = plot_data.Label(title='label3', shape=mark)
+label4 = plot_data.Label(title='label4', shape=contour_empty)
 
-labels = plot_data.MultipleLabels(labels=[label1, label2])
+labels = plot_data.MultipleLabels(labels=[label1, label2, label3])
 
 
-primitives = points + shapes + texts + [label1, label2]
+primitives = points + shapes + texts + [label1, label2, label3, label4]
 
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 # plot_data.plot_canvas(primitive_group, debug_mode=True)

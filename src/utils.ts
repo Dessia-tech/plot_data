@@ -1381,13 +1381,13 @@ export class newShape {
     return shape
   }
 
-  protected deserializeEdgeStyle(data: any): void {
+  public deserializeEdgeStyle(data: any): void {
     this.lineWidth = data.edge_style?.line_width ?? this.lineWidth;
     this.dashLine = data.edge_style?.dashline ?? this.dashLine;
     this.strokeStyle = data.edge_style?.color_stroke ? colorHsl(data.edge_style?.color_stroke) : null;
   }
 
-  protected deserializeSurfaceStyle(data: any): void {
+  public deserializeSurfaceStyle(data: any): void {
     this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
     this.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
   }
@@ -2791,7 +2791,6 @@ export class Bar extends newRect {
 
 export class newLabel extends newShape {
   public shapeSize: Vertex = new Vertex(30, 12);
-  private legendBoundingBox: newRect;
   private legend: newRect | LineSegment | newPoint2D;
   public maxWidth: number = 150;
   public readonly textOffset = 5;
@@ -2802,15 +2801,14 @@ export class newLabel extends newShape {
     ) {
       super();
       this.isScaled = false;
-      this.legendBoundingBox = new newRect(this.origin, this.shapeSize);
       this.text.width = this.maxWidth - this.shapeSize.x;
-      this.getShapeStyle(shape);
+      this.getShapeStyle(shape, this.origin);
       this.buildPath();
     }
 
   public buildPath(): void {
-    this.legendBoundingBox.buildPath();
-    this.path = this.legendBoundingBox.path;
+    this.legend.buildPath();
+    this.path = this.legend.path;
   }
 
   protected buildUnscaledPath(context: CanvasRenderingContext2D) {
@@ -2826,17 +2824,29 @@ export class newLabel extends newShape {
     return path
   }
 
-  public getShapeStyle(shape: newShape): void {
-    const style = shape.getStyle();
-    if (!shape.isFilled || !(shape instanceof newPoint2D)) this.legend = new LineSegment(new Vertex(0, 0), new Vertex(0, 0).add(this.shapeSize));
-    else if (shape instanceof newPoint2D) this.legend = this.shapeFromPoint(shape);
-    else this.legend = new newRect(new Vertex(0, 0), this.shapeSize);
-    Object.entries(style).map(([key, value]) => this.legend[key] = value);
+  private updateLegendGeometry(): void {
+    if (this.legend instanceof LineSegment) {
+      const margin = 2;
+      this.legend.origin.x = this.origin.x;
+      this.legend.origin.y = this.origin.y + margin;
+      this.legend.end.x = this.origin.x + this.shapeSize.x;
+      this.legend.end.y = this.origin.y + this.shapeSize.y - margin;
+    }
+    else if (this.legend instanceof newPoint2D) this.legend.center = this.origin.add(this.shapeSize.divide(2));
+    else this.legend = new newRect(this.origin, this.shapeSize);
   }
 
-  private shapeFromPoint(shape: newPoint2D): newPoint2D {
-    const center = this.legendBoundingBox.center;
-    return new newPoint2D(center.x, center.y)
+  public getShapeStyle(shape: newShape, origin: Vertex): void {
+    const style = shape.getStyle();
+    if (!shape.isFilled && !(shape instanceof newPoint2D)) this.legend = new LineSegment(origin.copy(), origin.add(this.shapeSize));
+    else if (shape instanceof newPoint2D) {
+      this.legend = new newPoint2D(origin.x, origin.y);
+      this.legend.size = this.shapeSize.y * 0.9;
+      this.legend.marker = shape.marker;
+      this.legend.markerOrientation = shape.markerOrientation;
+    }
+    else this.legend = new newRect(origin.copy(), this.shapeSize);
+    Object.entries(style).map(([key, value]) => this[key] = value);
   }
 
   public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): newLabel {
@@ -2844,15 +2854,29 @@ export class newLabel extends newShape {
     const shape = data.shape ? newShape.deserialize(data.shape, scale) : new newRect();
     const text = new newText(data.title, new Vertex(0, 0), textParams);
     text.isScaled = false;
-    text.baseline = "top";
+    text.baseline = "middle";
     text.align = "start";
-    return new newLabel(shape, text);
+    const label = new newLabel(shape, text);
+    label.deserializeStyle(data);
+    return label
+  }
+
+  private deserializeStyle(data): void {
+    if (data.rectangle_edge_style) {
+      data.edge_style = data.rectangle_edge_style;
+      this.deserializeEdgeStyle(data);
+    }
+    if (data.rectangle_surface_style) {
+      data.surface_style = data.rectangle_surface_style;
+      this.deserializeSurfaceStyle(data);
+    }
   }
 
   public updateOrigin(drawingZone: newRect, initScale: Vertex, nLabels: number): void {
     this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
     this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.5 * initScale.y;
-    this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + this.textOffset, 0));
+    this.updateLegendGeometry();
+    this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + this.textOffset, this.shapeSize.y / 2));
   }
 
   public draw(context: CanvasRenderingContext2D): void {
@@ -3962,7 +3986,6 @@ export class ShapeCollection {
   public mouseDown(mouseCoords: Vertex): any { // TODO: refactor this. Code is insane
     let clickedObject: any = null;
     this.shapes.forEach(drawing => {
-      if (drawing instanceof newLabel) {console.log(mouseCoords, drawing); }
       drawing.mouseDown(mouseCoords);
       if (drawing.isHovered) clickedObject = drawing; // this is insane
     });

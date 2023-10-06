@@ -1741,9 +1741,10 @@ export class Figure extends PlotData {
 
   protected get cuttingZone(): newRect {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
-    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
-    return new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
+    return new newRect(axesOrigin, this.axesEnd.subtract(axesOrigin));
   }
+
+  protected get axesEnd() { return new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix) }
 
   protected drawFixedObjects(context: CanvasRenderingContext2D): void { this.fixedObjects.draw(context) }
 
@@ -2080,6 +2081,8 @@ export class Frame extends Figure {
     const size = new Vertex(Math.abs(this.axes[0].end.x - this.axes[0].origin.x), Math.abs(this.axes[1].end.y - this.axes[1].origin.y))
     return [origin.transform(this.canvasMatrix.inverse()), size]
   }
+
+  protected get axesEnd() { return new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix) }
 
   protected unpackAxisStyle(data: any): void {
     super.unpackAxisStyle(data);

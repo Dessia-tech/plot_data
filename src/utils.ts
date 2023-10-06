@@ -2888,7 +2888,7 @@ export class newLabel extends newShape {
   }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    return context.isPointInPath(this.path, point.x, point.y) || context.isPointInStroke(this.path, point.x, point.y)
+    return this.legend.isFilled ? context.isPointInPath(this.path, point.x, point.y) : (context.isPointInPath(this.path, point.x, point.y) || context.isPointInStroke(this.path, point.x, point.y))
   }
 }
 

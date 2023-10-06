@@ -2801,10 +2801,30 @@ export class newLabel extends newShape {
     public origin: Vertex = new Vertex(0, 0)
     ) {
       super();
-      this.legendBoundingBox = new newRect(new Vertex(0, 0), this.shapeSize);
-      this.text.width = this.maxWidth - this.shapeSize.x
+      this.isScaled = false;
+      this.legendBoundingBox = new newRect(this.origin, this.shapeSize);
+      this.text.width = this.maxWidth - this.shapeSize.x;
       this.getShapeStyle(shape);
+      this.buildPath();
     }
+
+  public buildPath(): void {
+    this.legendBoundingBox.buildPath();
+    this.path = this.legendBoundingBox.path;
+  }
+
+  protected buildUnscaledPath(context: CanvasRenderingContext2D) {
+    const matrix = context.getTransform();
+    context.resetTransform();
+    const origin = this.origin.transform(matrix);
+    this.buildPath();
+    const path = new Path2D();
+    path.addPath(this.path);
+    this.path = new Path2D();
+    this.path.addPath(path, matrix.inverse());
+    this.path.addPath(this.text.path, matrix.inverse());
+    return path
+  }
 
   public getShapeStyle(shape: newShape): void {
     const style = shape.getStyle();
@@ -2822,17 +2842,23 @@ export class newLabel extends newShape {
   public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): newLabel {
     const textParams = newText.deserializeTextParams(data);
     const shape = data.shape ? newShape.deserialize(data.shape, scale) : new newRect();
-    const text = new newText(data.title, new Vertex(0, 0), textParams)
+    const text = new newText(data.title, new Vertex(0, 0), textParams);
+    text.isScaled = false;
+    text.baseline = "top";
+    text.align = "start";
     return new newLabel(shape, text);
   }
 
-  public draw(context: CanvasRenderingContext2D) {
+  public updateOrigin(drawingZone: newRect, initScale: Vertex, nLabels: number): void {
+    this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
+    this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.5 * initScale.y;
+    this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + this.textOffset, 0));
+  }
+
+  public draw(context: CanvasRenderingContext2D): void {
+    super.draw(context);
     context.save();
     context.resetTransform();
-    context.translate(this.origin.x, this.origin.y);
-    this.legendBoundingBox.size = this.shapeSize;
-    this.legendBoundingBox.draw(context);
-    context.translate(this.shapeSize.x + this.textOffset, 0);
     this.text.draw(context);
     context.restore();
   }
@@ -3936,6 +3962,7 @@ export class ShapeCollection {
   public mouseDown(mouseCoords: Vertex): any { // TODO: refactor this. Code is insane
     let clickedObject: any = null;
     this.shapes.forEach(drawing => {
+      if (drawing instanceof newLabel) {console.log(mouseCoords, drawing); }
       drawing.mouseDown(mouseCoords);
       if (drawing.isHovered) clickedObject = drawing; // this is insane
     });
@@ -3972,17 +3999,15 @@ export class ShapeCollection {
     return newSampleStates
   }
 
-  public locateFixedShapes(drawingZone: newRect, initScale: Vertex): void {
+  public locateLabels(drawingZone: newRect, initScale: Vertex): void {
     let nLabels = 1 + 0.5 * initScale.y;
     this.shapes.forEach(shape => {
       if (shape instanceof newLabel) {
-        shape.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : shape.maxWidth);
-        shape.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * shape.shapeSize.y * 1.5 * initScale.y;
+        shape.updateOrigin(drawingZone, initScale, nLabels);
         nLabels++;
       }
     })
   }
-
 }
 
 export class GroupCollection extends ShapeCollection {

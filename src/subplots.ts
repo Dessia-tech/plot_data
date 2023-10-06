@@ -3032,7 +3032,7 @@ export class Draw extends Frame {
   protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.drawInZone(context) }
 
   protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
-    this.relativeObjects.locateFixedShapes(super.cuttingZone, this.initScale);
+    this.relativeObjects.locateLabels(super.cuttingZone, this.initScale);
     this.relativeObjects.draw(context);
   }
 

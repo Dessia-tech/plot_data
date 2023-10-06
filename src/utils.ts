@@ -2220,7 +2220,6 @@ export class newText extends newShape {
     this.boundingBox.origin.y += this.setRectOffsetY() / (this.isScaled ? Math.sign(this.scale.y) : matrix.d);
     this.boundingBox.size.x = this.width;
     this.boundingBox.size.y = this.height;
-    this.boundingBox.fillStyle = "hsla(203, 90%, 85%, 0.5)";
     if (!this.isScaled) {
       const boundingBox = new newRect(this.boundingBox.origin.copy(), this.boundingBox.size.scale(new Vertex(Math.abs(1 / matrix.a), Math.abs(1 / matrix.d))));
       boundingBox.buildPath();
@@ -2237,7 +2236,6 @@ export class newText extends newShape {
       const writtenText = this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows();
       this.updateBoundingBox(context);
       this.buildPath();
-      this.boundingBox.draw(context)
 
       context.font = this.fullFont;
       context.textAlign = this.align as CanvasTextAlign;

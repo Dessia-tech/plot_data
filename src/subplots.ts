@@ -2689,7 +2689,7 @@ export class newGraph2D extends newScatter {
   public reset_scales(): void {
     const scale = new Vertex(this.frameMatrix.a, this.frameMatrix.d).scale(this.initScale);
     const translation = new Vertex(this.axes[0].maxValue - this.axes[0].initMaxValue, this.axes[1].maxValue - this.axes[1].initMaxValue).scale(scale);
-    this.curves.forEach(curve => { 
+    this.curves.forEach(curve => {
       if (curve.mouseClick) {
         curve.previousMouseClick = curve.previousMouseClick.add(translation);
         curve.mouseClick = curve.previousMouseClick.copy();
@@ -3002,7 +3002,7 @@ export class Draw extends Frame {
     super.reset_scales();
     this.updateBounds();
   }
-  
+
   protected unpackData(data: any): Map<string, any[]> {
     const drawing = ShapeCollection.fromPrimitives(data.primitives);
     const [minX, minY, maxX, maxY] = Draw.boundsDilatation(...drawing.getBounds());

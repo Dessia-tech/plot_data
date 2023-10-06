@@ -1911,7 +1911,7 @@ export abstract class AbstractTriangle extends newShape {
     style["orientation"] = this.orientation;
     return style
   }
-  
+
   public abstract buildPath(): void;
 
   public getBounds(): [Vertex, Vertex] {
@@ -3545,7 +3545,7 @@ export class newAxis extends newShape {
 
   protected getTextScaler(): Vertex {
     return new Vertex(1, 1)
-    // return this.isVertical ? 
+    // return this.isVertical ?
     //   new Vertex([1, -1][this.verticalPickIdx()], this.initScale.y):
     //   new Vertex(this.initScale.x, [1, -1][this.horizontalPickIdx()])
   }

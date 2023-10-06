@@ -88,7 +88,7 @@ polygon_lines_open = [plot_data.LineSegment2D([51, 26], [47, 33]),
 contour_filled = plot_data.Contour2D(plot_data_primitives=star_lines_closed, edge_style=edge_style_blue,
                                      surface_style=surface_style_green, tooltip="It looks like a green star.")
 contour_empty = plot_data.Contour2D(plot_data_primitives=polygon_lines_open, edge_style=edge_style_purple_plain,
-                                     tooltip="It's not a square and it is open so it is not filled.")
+                                     tooltip="It is a Contour with no filling.")
 
 # Wire
 wire = plot_data.Wire([[25, 35], [28, 26], [29, 30], [30, 26], [33, 35], [34, 35], [34, 26], [35, 26],
@@ -99,49 +99,32 @@ wire = plot_data.Wire([[25, 35], [28, 26], [29, 30], [30, 26], [33, 35], [34, 35
 shapes = [line_segment_1, line_segment_2, line_2d, arc, arc_anti, circle, contour_filled, contour_empty, wire,
           round_rect, points_text, round_rect_shapes, points_text_shapes, rectangle]
 
-# rectangle
-# triangle
 
-# Labels
+# ============================================= LABELS =================================================================
 primitives = points + shapes
 labels = []
 for primitive in primitives:
     labels.append(plot_data.Label(title=type(primitive).__name__, shape=primitive))
 primitives += labels
 
-# Creating several primitives. plot_data() functions are used to convert
-# a volmdlr object into a plot_data object
-
-
-
-# Circle
-
-
+# ============================================= TEXTS =================================================================
 text_unscaled = plot_data.Text(comment='This text never changes its size because text_scaling is False.', position_x=-14,
                                position_y=28, text_scaling=False, text_style=plot_data.TextStyle(font_size=16, text_align_y="top"))
 text_scaled = plot_data.Text(comment='Dessia', position_x=-14, position_y=29, text_scaling=True, max_width=30, multi_lines=False,
                              text_style=plot_data.TextStyle(text_color=colors.LIGHTBLUE, text_align_y="bottom", bold=True))
 texts = [text_scaled, text_unscaled]
-
 primitives += texts
 
 # This label is created with minimum information
 
 # This label is created using all customizations
-fill1 = plot_data.SurfaceStyle(color_fill=colors.RED, opacity=0.5)
 edge1 = plot_data.EdgeStyle(line_width=1, color_stroke=colors.BLUE, dashline=[5, 5])
 text_style = plot_data.TextStyle(text_color=colors.ORANGE, font_size=14, italic=True, bold=True)
-
-
-
-
-label2 = plot_data.Label(title='Extra Label 1', text_style=text_style, rectangle_surface_style=surface_style_green,
+label_custo_1 = plot_data.Label(title='Extra Label 1', text_style=text_style, rectangle_surface_style=surface_style_green,
                          rectangle_edge_style=edge1)
-label4 = plot_data.Label(title='Extra Label 2', shape=contour_empty)
+label_custo_2 = plot_data.Label(title='Extra Label 2', shape=contour_empty)
 
-labels = plot_data.MultipleLabels(labels=[label2, label4])
-
-primitives += [label2, label4]
-
+# labels = plot_data.MultipleLabels(labels=[label_custo_1, label_custo_2])
+primitives += [label_custo_1, label_custo_2]
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 # plot_data.plot_canvas(primitive_group, debug_mode=True)

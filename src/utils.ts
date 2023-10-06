@@ -1449,7 +1449,7 @@ export class newShape {
       context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
       context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected) ? this.setStrokeStyle(context.fillStyle) : this.strokeStyle ? colorHsl(this.strokeStyle) : this.setStrokeStyle(context.fillStyle);
       if (this.hatching) context.fillStyle = context.createPattern(this.hatching.generate_canvas(context.fillStyle), 'repeat');
-    } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle :  this.strokeStyle ? colorHsl(this.strokeStyle) : 'hsl(0, 0%, 0%)';
+    } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle ? colorHsl(this.strokeStyle) : 'hsl(0, 0%, 0%)';
   }
 
   public initTooltip(context: CanvasRenderingContext2D): newTooltip { return new newTooltip(this.tooltipOrigin, this.tooltipMap, context) }
@@ -1738,7 +1738,6 @@ export class Line extends newShape {
 
   public static deserialize(data: any, scale: Vertex): Line { // TODO: Don't know how to factor this and the LineSegment one
     const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    line.deserializeEdgeStyle(data);
     return line
   }
 
@@ -1748,8 +1747,12 @@ export class Line extends newShape {
     if (this.end.x == this.origin.x) {
       this.path = new LineSegment(new Vertex(this.origin.x, -this.end.y * infiniteFactor), new Vertex(this.origin.x, this.end.y * infiniteFactor)).path;
     } else {
-      const fakeOrigin = new Vertex(-this.origin.x * infiniteFactor, 0);
-      const fakeEnd = new Vertex(this.origin.x * infiniteFactor, 0);
+      const fakeOrigin = new Vertex(-infiniteFactor, 0);
+      const fakeEnd = new Vertex(infiniteFactor, 0);
+      if (this.origin.x != 0) {
+        fakeOrigin.x *= this.origin.x;
+        fakeEnd.x *= this.origin.x;
+      }
       fakeOrigin.y = fakeOrigin.x * slope + affinity;
       fakeEnd.y = fakeEnd.x * slope + affinity;
       this.path = new LineSegment(fakeOrigin, fakeEnd).path;
@@ -2102,6 +2105,7 @@ export class newText extends newShape {
     this.boundingBox = new newRect(origin, new Vertex(width, height));
     this.boundingBox.fillStyle = backgroundColor;
     this.boundingBox.strokeStyle = backgroundColor;
+    this.boundingBox.lineWidth = 1e-6; //TODO: this is a HOT FIX
     this.fontsize = fontsize;
     this.multiLine = multiLine;
     this.font = font;
@@ -2236,6 +2240,7 @@ export class newText extends newShape {
       const writtenText = this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows();
       this.updateBoundingBox(context);
       this.buildPath();
+      this.boundingBox.draw(context);
 
       context.font = this.fullFont;
       context.textAlign = this.align as CanvasTextAlign;

@@ -1372,13 +1372,21 @@ export class newShape {
     else if (data.type_ == "line2d") shape = Line.deserialize(data, scale);
     else if (data.type_ == "linesegment2d") shape = LineSegment.deserialize(data, scale);
     else if (data.type_ == "wire") shape = LineSequence.deserialize(data, scale);
-    else if (data.type_ == "point") return newPoint2D.deserialize(data, scale);
+    else if (data.type_ == "point") shape = newPoint2D.deserialize(data, scale);
     else if (data.type_ == "arc") shape = Arc.deserialize(data, scale);
     else if (data.type_ == "text") return newText.deserialize(data, scale);
-    else if (data.type_ == "label") return newLabel.deserialize(data, scale);
+    else if (data.type_ == "label") shape = newLabel.deserialize(data, scale);
+    else if (data.type_ == "rectangle") shape = newRect.deserialize(data, scale);
+    else if (data.type_ == "roundrectangle") shape = newRoundRect.deserialize(data, scale);
     else throw new Error(`${data.type_} deserialization is not implemented.`);
-    shape.deserializeTooltip(data);
+    shape.deserializeStyle(data)
     return shape
+  }
+
+  public deserializeStyle(data: any): void {
+    this.deserializeEdgeStyle(data);
+    this.deserializeSurfaceStyle(data);
+    this.deserializeTooltip(data);
   }
 
   public deserializeEdgeStyle(data: any): void {
@@ -1549,6 +1557,13 @@ export class newRect extends newShape {
     this.path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
   }
 
+  public static deserialize(data: any, scale: Vertex): newRect {
+    const rectangle = new newRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height));
+    return rectangle
+  }
+
+  public deserializeStyle
+
   public translate(translation: Vertex): void {
     this.origin = this.origin.add(translation);
     this.buildPath();
@@ -1582,6 +1597,11 @@ export class newRoundRect extends newRect {
     this.path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
     this.path.lineTo(this.origin.x, this.origin.y + this.radius);
     this.path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
+  }
+
+  public static deserialize(data: any, scale: Vertex): newRect {
+    const roundRectangle = new newRoundRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height), data.radius);
+    return roundRectangle
   }
 }
 
@@ -2461,11 +2481,13 @@ export class newPoint2D extends newShape {
 
   public static deserialize(data: any, scale: Vertex): newPoint2D {
     const point = new newPoint2D(data.cx, data.cy);
-    point.deserializeEdgeStyle(data);
-    point.deserializeSurfaceStyle(data);
-    point.deserializePointStyle(data.point_style ?? {});
     point.isScaled = false;
     return point
+  }
+
+  public deserializeStyle(data: any): void {
+    this.deserializeTooltip(data);
+    this.deserializePointStyle(data.point_style ?? {});
   }
 
   protected deserializePointStyle(data: any): void {
@@ -2857,11 +2879,10 @@ export class newLabel extends newShape {
     text.baseline = "middle";
     text.align = "start";
     const label = new newLabel(shape, text);
-    label.deserializeStyle(data);
     return label
   }
 
-  private deserializeStyle(data): void {
+  public deserializeStyle(data): void {
     if (data.rectangle_edge_style) {
       data.edge_style = data.rectangle_edge_style;
       this.deserializeEdgeStyle(data);
@@ -2874,7 +2895,7 @@ export class newLabel extends newShape {
 
   public updateOrigin(drawingZone: newRect, initScale: Vertex, nLabels: number): void {
     this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
-    this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.5 * initScale.y;
+    this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.75 * initScale.y;
     this.updateLegendGeometry();
     this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + this.textOffset, this.shapeSize.y / 2));
   }

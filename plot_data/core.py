@@ -15,6 +15,7 @@ from typing import Dict, List, Tuple, Union  # , Any
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Circle, Arc
+from matplotlib.patches import Rectangle as Rect
 
 try:
     # dessia_common >= 0.12.0
@@ -449,7 +450,7 @@ class Line2D(PlotDataObject):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None, name: str = ''):
-        self.data = point1 + point2 # Retrocompatibility
+        self.data = point1 + point2  # Retrocompatibility
         self.point1 = point1
         self.point2 = point2
         self.edge_style = edge_style
@@ -595,7 +596,8 @@ class Circle2D(PlotDataObject):
             edge_style = DEFAULT_EDGESTYLE
             # dashes = DEFAULT_EDGESTYLE.dashline
         args = edge_style.mpl_arguments(surface=True)
-        if ('dashes' in args): args.pop("dashes")
+        if ('dashes' in args):
+            args.pop("dashes")
 
         if self.surface_style:
             surface_style = self.surface_style
@@ -606,6 +608,58 @@ class Circle2D(PlotDataObject):
 
         ax.add_patch(Circle((self.cx, self.cy), self.r, **args), **kwargs)
         return ax
+
+
+class Rectangle(PlotDataObject):
+    """ Class to draw a rectangle. """
+
+    def __init__(self, x_coord: float, y_coord: float, width: float, height: float, edge_style: EdgeStyle = None,
+                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
+        self.x_coord = x_coord
+        self.y_coord = y_coord
+        self.width = width
+        self.height = height
+        self.surface_style = surface_style
+        self.edge_style = edge_style
+        self.tooltip = tooltip
+        PlotDataObject.__init__(self, type_='rectangle', name=name)
+
+    def bounding_box(self):
+        """ Get 2D bounding box of current Circle2D. """
+        return self.x_coord, self.x_coord + self.width, self.y_coord, self.y_coord + self.height
+
+    def mpl_plot(self, ax=None, **kwargs):
+        """ Plots using matplotlib. """
+        if not ax:
+            _, ax = plt.subplots()
+        if self.edge_style:
+            edge_style = self.edge_style
+        else:
+            edge_style = DEFAULT_EDGESTYLE
+            # dashes = DEFAULT_EDGESTYLE.dashline
+        args = edge_style.mpl_arguments(surface=True)
+        if ('dashes' in args):
+            args.pop("dashes")
+
+        if self.surface_style:
+            surface_style = self.surface_style
+        else:
+            surface_style = DEFAULT_SURFACESTYLE
+
+        args.update(surface_style.mpl_arguments())
+
+        ax.add_patch(Rect([self.x_coord, self.y_coord], self.width, self.height, **args), **kwargs)
+        return ax
+
+
+class RoundRectangle(Rectangle):
+    """ Class to draw a round rectangle. """
+
+    def __init__(self, x_coord: float, y_coord: float, width: float, height: float, radius: float = 2,
+                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
+        super().__init__(x_coord, y_coord, width, height, edge_style, surface_style, tooltip, name=name)
+        self.type_ = "roundrectangle"
+        self.radius = radius
 
 
 class Point2D(PlotDataObject):

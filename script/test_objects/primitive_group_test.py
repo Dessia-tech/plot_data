@@ -54,6 +54,8 @@ line_2d = plot_data.Line2D(point1=[-30, -10], point2=[-25, 10], edge_style=edge_
 circle = plot_data.Circle2D(cx=25, cy=10, r=5, edge_style=edge_style_red, surface_style=surface_style_yellow, tooltip="It's a circle")
 arc = plot_data.Arc2D(cx=36, cy=10, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_red, clockwise=True)
 arc_anti = plot_data.Arc2D(cx=36, cy=10, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_blue, clockwise=False)
+rectangle = plot_data.Rectangle(-10, -10, 50, 20)
+round_rect = plot_data.RoundRectangle(-50, -50, 50, 20, 5)
 
 # Contours
 polygon_lines_closed = [plot_data.LineSegment2D([0, 20], [5, 21]),
@@ -85,12 +87,17 @@ contour_empty = plot_data.Contour2D(plot_data_primitives=polygon_lines_open, edg
 wire = plot_data.Wire([[-2, -5], [-1, 37], [15, 45], [40, 45], [42, -5]], tooltip="It is a wire",
                       edge_style=edge_style_blue)
 
-shapes = [line_segment, line_2d, arc, arc_anti, circle, contour_filled, contour_empty, wire]
+shapes = [line_segment, line_2d, arc, arc_anti, circle, contour_filled, contour_empty, wire, rectangle, round_rect]
 
 # rectangle
 # triangle
 
-
+# Labels
+primitives = points + shapes
+labels = []
+for primitive in primitives:
+    labels.append(plot_data.Label(title=type(primitive).__name__, shape=primitive))
+primitives += labels
 
 # Creating several primitives. plot_data() functions are used to convert
 # a volmdlr object into a plot_data object
@@ -106,23 +113,25 @@ text_scaled = plot_data.Text(comment='Dessia', position_x=23, position_y=20, tex
                              text_style=plot_data.TextStyle(text_color=colors.YELLOW, font_size=12, text_align_y="bottom"))
 texts = [text_scaled, text_unscaled]
 
-# Label
+primitives += texts
+
 # This label is created with minimum information
-label1 = plot_data.Label(title='label1')
 
 # This label is created using all customizations
 fill1 = plot_data.SurfaceStyle(color_fill=colors.RED, opacity=0.5)
 edge1 = plot_data.EdgeStyle(line_width=1, color_stroke=colors.BLUE, dashline=[5, 5])
 text_style = plot_data.TextStyle(text_color=colors.ORANGE, font_size=14, italic=True, bold=True)
-label2 = plot_data.Label(title='label2', text_style=text_style, rectangle_surface_style=surface_style_green,
+
+
+
+
+label2 = plot_data.Label(title='Extra Label 1', text_style=text_style, rectangle_surface_style=surface_style_green,
                          rectangle_edge_style=edge1)
-label3 = plot_data.Label(title='label3', shape=mark)
-label4 = plot_data.Label(title='label4', shape=contour_empty)
+label4 = plot_data.Label(title='Extra Label 2', shape=contour_empty)
 
-labels = plot_data.MultipleLabels(labels=[label1, label2, label3])
+labels = plot_data.MultipleLabels(labels=[label2, label4])
 
-
-primitives = points + shapes + texts + [label1, label2, label3, label4]
+primitives += [label2, label4]
 
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
 # plot_data.plot_canvas(primitive_group, debug_mode=True)

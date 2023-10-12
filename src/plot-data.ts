@@ -194,6 +194,7 @@ export abstract class PlotData extends EventEmitter {
 
   // HOTFIXES
   axisNamesBoxes: newRect[];
+  origin: Vertex;
 
   public constructor(
     public data:any,
@@ -208,6 +209,7 @@ export abstract class PlotData extends EventEmitter {
       this.initial_width = width;
       this.initial_height = height;
       this.name = data["name"];
+      this.origin = new Vertex(this.X, this.Y);
     }
 
 
@@ -302,12 +304,12 @@ export abstract class PlotData extends EventEmitter {
   }
 
   draw_settings_rect() {
-    Shape.rect(this.X + 1, this.Y + 1, this.width - 2, this.height - 2, this.context, 'white', string_to_hex('blue'), 1, 1, [10,10]);
+    Shape.rect(this.origin.x + 1, this.origin.y + 1, this.width - 2, this.height - 2, this.context, 'white', string_to_hex('blue'), 1, 1, [10,10]);
   }
 
   draw_rect() {
     if (this.multiplot_manipulation === false) {
-      Shape.rect(this.X, this.Y, this.width, this.height, this.context, 'white', this.initial_rect_color_stroke, this.initial_rect_line_width, 1, this.initial_rect_dashline);
+      Shape.rect(this.origin.x, this.origin.y, this.width, this.height, this.context, 'white', this.initial_rect_color_stroke, this.initial_rect_line_width, 1, this.initial_rect_dashline);
     }
   }
 
@@ -320,16 +322,16 @@ export abstract class PlotData extends EventEmitter {
   }
 
   draw_empty_canvas(context) {
-    context.clearRect(this.X - 1, this.Y - 1, this.width + 2, this.height + 2);
+    context.clearRect(this.origin.x - 1, this.origin.y - 1, this.width + 2, this.height + 2);
   }
 
   draw_manipulable_rect() {
-    Shape.rect(this.X, this.Y, this.width, this.height, this.context, this.manipulation_rect_color_fill, this.manipulation_rect_color_stroke,
+    Shape.rect(this.origin.x, this.origin.y, this.width, this.height, this.context, this.manipulation_rect_color_fill, this.manipulation_rect_color_stroke,
       this.manipulation_rect_line_width, this.manipulation_rect_opacity, this.manipulation_rect_dashline);
   }
 
   draw_mouse_over_rect() {
-    Shape.rect(this.X, this.Y, this.width, this.height, this.context, string_to_hex('yellow'), string_to_hex('grey'),
+    Shape.rect(this.origin.x, this.origin.y, this.width, this.height, this.context, string_to_hex('yellow'), string_to_hex('grey'),
       1, 0.5, [10,10]);
   }
 

@@ -414,7 +414,7 @@ export class ParallelPlot extends PlotData {
     mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
       var mouseX = e.offsetX;
       var mouseY = e.offsetY;
-      var click_on_disp = Shape.isInRect(mouseX, mouseY, this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h);
+      var click_on_disp = Shape.isInRect(mouseX, mouseY, this.disp_x + this.X, this.disp_y + this.origin.y, this.disp_w, this.disp_h);
       if (click_on_axis && !mouse_moving) {
         this.select_axis_action(selected_axis_index, click_on_band, click_on_border);
       } else if (click_on_name && mouse_moving) {
@@ -580,8 +580,8 @@ export class PrimitiveGroupContainer extends PlotData {
     refresh_buttons_coords() {
       this.button_w = 40;
       this.button_h = 20;
-      this.button_y = this.height - 5 - this.button_h + this.Y;
-      this.manip_button_x = 5 + this.X;
+      this.button_y = this.height - 5 - this.button_h + this.origin.y;
+      this.manip_button_x = 5 + this.origin.x;
       this.reset_button_x = this.manip_button_x + this.button_w + 5;
     }
 
@@ -670,7 +670,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
     refresh_spacing() {
       var zoom_coeff_x = (this.width - this.decalage_axis_x)/(this.maxX - this.minX);
-      var container_center_x = this.X + this.width/2;
+      var container_center_x = this.origin.x + this.width/2;
       for (let i=0; i<this.primitive_groups.length; i++) {
         let primitive_center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
         primitive_center_x = container_center_x + zoom_coeff_x*(primitive_center_x - container_center_x);
@@ -683,11 +683,11 @@ export class PrimitiveGroupContainer extends PlotData {
 
       if (this.layout_mode === 'two_axis') { // Then the algo does the same with the y-axis
         let zoom_coeff_y = (this.height - this.decalage_axis_y)/(this.maxY - this.minY);
-        var container_center_y = this.Y + this.height/2;
+        var container_center_y = this.origin.y + this.height/2;
         for (let i=0; i<this.primitive_groups.length; i++) {
           let primitive_center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
           primitive_center_y = container_center_y + zoom_coeff_y*(primitive_center_y - container_center_y);
-          this.primitive_groups[i].Y = primitive_center_y - this.primitive_groups[i].height/2;
+          this.primitive_groups[i].origin.y = primitive_center_y - this.primitive_groups[i].height/2;
         }
         this.scaleY = this.scaleY*zoom_coeff_y;
         this.originY = this.height/2 + zoom_coeff_y * (this.originY - this.height/2);
@@ -699,9 +699,9 @@ export class PrimitiveGroupContainer extends PlotData {
 
     translate_inside_canvas() {
       if (this.layout_mode == 'one_axis') {
-        this.translateAllPrimitives(-this.minX + this.X, this.height/2 - this.minY + this.Y);
+        this.translateAllPrimitives(-this.minX + this.origin.x, this.height/2 - this.minY + this.origin.y);
       } else if (this.layout_mode == 'two_axis') {
-        this.translateAllPrimitives(this.decalage_axis_x - this.minX + this.X, -this.minY + this.Y);
+        this.translateAllPrimitives(this.decalage_axis_x - this.minX + this.origin.x, -this.minY + this.origin.y);
       }
       this.draw();
     }
@@ -734,7 +734,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.context.save();
       this.draw_empty_canvas(this.context);
       if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
-      this.context.clip(this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2));
+      this.context.clip(this.context.rect(this.origin.x-1, this.origin.y-1, this.width+2, this.height+2));
       if (this.width > 100 && this.height > 100) {
         this.draw_layout_axis();
         if (this.layout_mode !== 'regular') {
@@ -752,7 +752,7 @@ export class PrimitiveGroupContainer extends PlotData {
       } else {
         this.context.strokeStyle = this.initial_rect_color_stroke;
         this.context.lineWidth = this.initial_rect_line_width;
-        this.context.strokeRect(this.X, this.Y, this.width, this.height);
+        this.context.strokeRect(this.origin.x, this.origin.y, this.width, this.height);
       }
       if (this.buttons_ON) { this.draw_buttons(); }
       this.context.restore();
@@ -811,14 +811,14 @@ export class PrimitiveGroupContainer extends PlotData {
           if (!primitive.selected) continue;
           let x = primitive.X + primitive.width/2;
           let y = primitive.Y + primitive.height;
-          Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y + this.Y]]);
+          Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y + this.origin.y]]);
         }
       } else if (this.layout_mode == 'two_axis') {
         for (let primitive of this.primitive_groups) {
           if (!primitive.selected) continue;
           let x = primitive.X + primitive.width/2;
           let y = primitive.Y + primitive.height/2;
-          Shape.drawLine(this.context, [[this.decalage_axis_x + this.X, y], [x, y], [x, this.height - this.decalage_axis_y + this.Y]]);
+          Shape.drawLine(this.context, [[this.decalage_axis_x + this.origin.x, y], [x, y], [x, this.height - this.decalage_axis_y + this.origin.y]]);
         }
       }
       this.context.stroke();
@@ -839,7 +839,7 @@ export class PrimitiveGroupContainer extends PlotData {
 
 
     add_primitive_group(serialized, point_index) {
-      var new_plot_data = new PlotContour(serialized, 560, 300, this.buttons_ON, this.X, this.Y, this.canvas_id);
+      var new_plot_data = new PlotContour(serialized, 560, 300, this.buttons_ON, this.origin.x, this.origin.y, this.canvas_id);
       new_plot_data.context_hidden = this.context_hidden;
       new_plot_data.context_show = this.context_show;
       this.primitive_groups.push(new_plot_data);
@@ -918,13 +918,13 @@ export class PrimitiveGroupContainer extends PlotData {
         if (this.layout_mode == 'one_axis') {
           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
               this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x,
-              this.decalage_axis_y, this.X, this.Y, this.width);
+              this.decalage_axis_y, this.origin.x, this.origin.y, this.width);
         } else if (this.layout_mode == 'two_axis') {
           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
-            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
+            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.origin.x, this.origin.y, this.width);
 
           this.layout_axis.draw_sc_vertical_axis(this.context, this.originY, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
-            this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.height);
+            this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.origin.x, this.origin.y, this.height);
 
         }
       }
@@ -1083,8 +1083,8 @@ export class PrimitiveGroupContainer extends PlotData {
           if (List.is_include(real_x, real_xs)) {y_incs[i] += - this.primitive_groups[i].height;} else {real_xs.push(real_x);}
         }
         var center_x = this.scaleX*real_x + this.originX;
-        this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
-        this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
+        this.primitive_groups[i].X = this.origin.x + center_x - this.primitive_groups[i].width/2;
+        this.primitive_groups[i].Y = this.origin.y + this.height/2 - this.primitive_groups[i].height/2;
         if (type_ !== 'float') this.primitive_groups[i].Y += y_incs[i];
       }
       if (this.primitive_groups.length >= 1) this.reset_scales();
@@ -1127,7 +1127,7 @@ export class PrimitiveGroupContainer extends PlotData {
           real_x = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[0].name], this.layout_attributes[0].list);
         }
         var center_x = this.scaleX*real_x + this.originX;
-        this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
+        this.primitive_groups[i].X = this.origin.x + center_x - this.primitive_groups[i].width/2;
 
         if (this.layout_attributes[1].type_ == 'float') {
           var real_y = this.elements_dict[i.toString()][this.layout_attributes[1].name];
@@ -1138,7 +1138,7 @@ export class PrimitiveGroupContainer extends PlotData {
           real_y = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[1].name], this.layout_attributes[1].list);
         }
         var center_y = -this.scaleX*real_y + this.originY;
-        this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height/2;
+        this.primitive_groups[i].Y = this.origin.y + center_y - this.primitive_groups[i].height/2;
       }
       if (this.primitive_groups.length >= 2) this.reset_scales();
       this.resetAllObjects();
@@ -1166,10 +1166,10 @@ export class PrimitiveGroupContainer extends PlotData {
     }
 
     zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
-      if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
-        this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
+      if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.origin.x + this.decalage_axis_x,
+        this.height - this.decalage_axis_y + this.origin.y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
           this.x_zoom_elements(event);
-      } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.X, this.Y, this.decalage_axis_x,
+      } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.origin.x, this.origin.y, this.decalage_axis_x,
         this.height - this.decalage_axis_y))) {
           this.y_zoom_elements(event);
       } else {
@@ -1191,8 +1191,8 @@ export class PrimitiveGroupContainer extends PlotData {
       }
       this.resetAllObjects();
       this.scaleX = this.scaleX*zoom_coeff; this.scaleY = this.scaleY*zoom_coeff;
-      this.originX = mouse3X - this.X + zoom_coeff * (this.originX - mouse3X + this.X);
-      this.originY = mouse3Y - this.Y + zoom_coeff * (this.originY - mouse3Y + this.Y);
+      this.originX = mouse3X - this.origin.x + zoom_coeff * (this.originX - mouse3X + this.origin.x);
+      this.originY = mouse3Y - this.origin.y + zoom_coeff * (this.originY - mouse3Y + this.origin.y);
       this.draw();
     }
 
@@ -1202,7 +1202,7 @@ export class PrimitiveGroupContainer extends PlotData {
       } else {
         zoom_coeff = 1/1.1;
       }
-      var container_center_x = this.X + this.width/2;
+      var container_center_x = this.origin.x + this.width/2;
       for (let i=0; i<this.primitive_groups.length; i++) {
         let primitive_center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
         primitive_center_x = container_center_x + zoom_coeff*(primitive_center_x - container_center_x);
@@ -1220,7 +1220,7 @@ export class PrimitiveGroupContainer extends PlotData {
       } else {
         zoom_coeff = 1/1.1;
       }
-      var container_center_y = this.Y + this.height/2;
+      var container_center_y = this.origin.y + this.height/2;
       for (let i=0; i<this.primitive_groups.length; i++) {
         let primitive_center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
         primitive_center_y = container_center_y + zoom_coeff*(primitive_center_y - container_center_y);
@@ -1233,10 +1233,10 @@ export class PrimitiveGroupContainer extends PlotData {
     }
 
     manage_scroll(mouse3X, mouse3Y, event) {
-      if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
-        this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
+      if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.origin.x + this.decalage_axis_x,
+        this.height - this.decalage_axis_y + this.origin.y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
           this.scroll_x = this.scroll_x + event;
-      } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.X, this.Y, this.decalage_axis_x,
+      } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.origin.x, this.origin.y, this.decalage_axis_x,
         this.height - this.decalage_axis_y))) {
           this.scroll_y = this.scroll_y + event;
       } else {
@@ -1507,21 +1507,20 @@ export class Figure extends PlotData {
     public width: number,
     public height: number,
     public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
+    X: number,
+    Y: number,
     public canvas_id: string,
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       this.unpackAxisStyle(data);
-      this.origin = new Vertex(0, 0);
+      this.origin = new Vertex(X, Y);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
       this.nSamples = this.features.entries().next().value[1].length;
       this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
-      this.refresh_MinMax();
       this.pointSets = new Array(this.nSamples).fill(-1);
       this.drawnFeatures = this.setFeatures(data);
       this.axes = this.setAxes();
@@ -1530,22 +1529,15 @@ export class Figure extends PlotData {
       this.absoluteObjects = new GroupCollection();
     }
 
-  refresh_MinMax(): void {
-    this.minX = this.origin.x;
-    this.maxX = this.origin.x + this.size.x;
-    this.minY = this.origin.y;
-    this.maxY = this.origin.y + this.size.y;
-  }
-
   get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
 
   set axisStyle(newAxisStyle: Map<string, any>) { newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
 
   get axisStyle(): Map<string, any> { return this._axisStyle }
 
-  get canvasMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
+  get canvasMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]) }
 
-  get relativeMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
+  get relativeMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]) }
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
@@ -1558,7 +1550,7 @@ export class Figure extends PlotData {
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
   private isInCanvas(vertex: Vertex): boolean {
-    return vertex.x >= this.X && vertex.x <= this.X + this.size.x && vertex.y >= this.Y && vertex.y <= this.Y + this.size.y
+    return vertex.x >= this.origin.x && vertex.x <= this.origin.x + this.size.x && vertex.y >= this.origin.y && vertex.y <= this.origin.y + this.size.y
   }
 
   protected unpackAxisStyle(data:any): void {
@@ -1583,7 +1575,7 @@ export class Figure extends PlotData {
     if (this.settings_on) this.draw_settings_rect()
     else this.draw_rect();
     this.context_show.beginPath();
-    this.context_show.rect(this.X, this.Y, this.width, this.height);
+    this.context_show.rect(this.origin.x, this.origin.y, this.width, this.height);
     this.context_show.closePath();
   }
 
@@ -1612,10 +1604,10 @@ export class Figure extends PlotData {
   }
 
   protected computeBounds(): Vertex {
-    const canvasOrigin = new Vertex(this.X, this.Y).scale(this.initScale);
+    const canvasOrigin = this.origin.scale(this.initScale);
     this.drawOrigin = this.offset.add(canvasOrigin);
     this.drawEnd = canvasOrigin.add(this.size.subtract(this.margin));
-    const freeSpace = new Vertex(Math.abs(this.drawOrigin.x - this.X), Math.abs(this.drawOrigin.y - this.Y));
+    const freeSpace = new Vertex(Math.abs(this.drawOrigin.x - this.origin.x), Math.abs(this.drawOrigin.y - this.origin.y));
     if (this.canvasMatrix.a < 0) this.swapDimension("x", this.drawOrigin, this.drawEnd, freeSpace);
     if (this.canvasMatrix.d < 0) this.swapDimension("y", this.drawOrigin, this.drawEnd, freeSpace);
     return freeSpace
@@ -1624,7 +1616,7 @@ export class Figure extends PlotData {
   protected swapDimension(dimension: string, origin: Vertex, end: Vertex, freeSpace: Vertex): void {
     origin[dimension] = origin[dimension] - this.size[dimension];
     end[dimension] = end[dimension] - this.size[dimension];
-    freeSpace[dimension] = Math.abs(new Vertex(this.X, this.Y)[dimension] - origin[dimension] * this.initScale[dimension] + this.size[dimension]);
+    freeSpace[dimension] = Math.abs(this.origin[dimension] - origin[dimension] * this.initScale[dimension] + this.size[dimension]);
   }
 
   protected setAxes(): newAxis[] {
@@ -1726,10 +1718,10 @@ export class Figure extends PlotData {
     const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
     this.updateDrawnObjects(context);
     this.updateCuttingZone(context);
-    const cutDraw = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
+    const cutDraw = context.getImageData(this.origin.x, this.origin.y, this.size.x, this.size.y);
     context.globalCompositeOperation = "source-over";
     context.putImageData(previousCanvas, 0, 0);
-    context.putImageData(cutDraw, this.X, this.Y);
+    context.putImageData(cutDraw, this.origin.x, this.origin.y);
   }
 
   protected updateDrawnObjects(context: CanvasRenderingContext2D): void {}
@@ -1750,7 +1742,7 @@ export class Figure extends PlotData {
 
   private drawZoneRectangle(context: CanvasRenderingContext2D): void {
     // TODO: change with newRect
-    Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15, 15]);
+    Shape.rect(this.origin.x, this.origin.y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15, 15]);
   }
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.relativeObjects = new GroupCollection([]) }
@@ -1799,7 +1791,7 @@ export class Figure extends PlotData {
 
   protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex): void { this.selectionBox.update(frameDown, frameMouse) }
 
-  public get drawingZone(): [Vertex, Vertex] { return [new Vertex(this.X, this.Y), this.size] }
+  public get drawingZone(): [Vertex, Vertex] { return [this.origin, this.size] }
 
   protected drawSelectionBox(context: CanvasRenderingContext2D) {
     if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
@@ -1838,8 +1830,8 @@ export class Figure extends PlotData {
   }
 
   protected drawTooltips(): void {
-    this.relativeObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
-    this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
+    this.relativeObjects.drawTooltips(this.origin, this.size, this.context_show, this.is_in_multiplot);
+    this.absoluteObjects.drawTooltips(this.origin, this.size, this.context_show, this.is_in_multiplot);
   }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
@@ -1854,7 +1846,6 @@ export class Figure extends PlotData {
 
   public projectMouse(e: MouseEvent): [Vertex, Vertex, Vertex] {
     const mouseCoords = new Vertex(e.offsetX, e.offsetY);
-    console.log(mouseCoords)
     return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.relativeMatrix.inverse()), mouseCoords]
   }
 
@@ -1951,7 +1942,7 @@ export class Figure extends PlotData {
         }
         this.draw();
         if (this.isZooming && isDrawing) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
-        const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
+        const mouseInCanvas = (e.offsetX >= this.origin.x) && (e.offsetX <= this.width + this.origin.x) && (e.offsetY >= this.origin.y) && (e.offsetY <= this.height + this.origin.y);
         if (!mouseInCanvas) isDrawing = false;
       });
 
@@ -2008,9 +1999,9 @@ export class Figure extends PlotData {
     this.viewPoint = new Vertex(0, 0);
   }
 
-  public zoomIn(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), 342) }
+  public zoomIn(): void { this.zoom(new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2), 342) }
 
-  public zoomOut(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), -342) }
+  public zoomOut(): void { this.zoom(new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2), -342) }
 
   private zoom(center: Vertex, zFactor: number): void {
     this.mouseWheel(center.x, center.y, zFactor);
@@ -2027,8 +2018,8 @@ export class Figure extends PlotData {
     this.scaleY = this.scaleY * zoomFactor;
     this.scroll_x = this.scroll_x + deltaY;
     this.scroll_y = this.scroll_y + deltaY;
-    this.originX = mouse3X - this.X + zoomFactor * (this.originX - mouse3X + this.X);
-    this.originY = mouse3Y - this.Y + zoomFactor * (this.originY - mouse3Y + this.Y);
+    this.originX = mouse3X - this.origin.x + zoomFactor * (this.originX - mouse3X + this.origin.x);
+    this.originY = mouse3Y - this.origin.y + zoomFactor * (this.originY - mouse3Y + this.origin.y);
     if (isNaN(this.scroll_x)) this.scroll_x = 0;
     if (isNaN(this.scroll_y)) this.scroll_y = 0;
     this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
@@ -2800,7 +2791,7 @@ export class newParallelPlot extends Figure {
 
   private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
     const boundingBox = new newRect(axisOrigin.copy());
-    const relativeY = Math.abs(axisOrigin.y) - this.Y;
+    const relativeY = Math.abs(axisOrigin.y) - this.origin.y;
     boundingBox.size = new Vertex(axisSize, step * FREE_SPACE_FACTOR);
     if (index == this.drawnFeatures.length - 1) {
       if (this.initScale.y < 0) boundingBox.size.y = (this.size.y - relativeY) * FREE_SPACE_FACTOR
@@ -2812,7 +2803,7 @@ export class newParallelPlot extends Figure {
 
   private verticalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
     const boundingBox = new newRect(axisOrigin.copy());
-    const relativeX = axisOrigin.x - this.X;
+    const relativeX = axisOrigin.x - this.origin.x;
     boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
     if (index == 0) {
       if (this.initScale.x < 0) {
@@ -2827,7 +2818,7 @@ export class newParallelPlot extends Figure {
       if (this.initScale.x < 0) {
         boundingBox.size.x = (step / 2 - relativeX) * FREE_SPACE_FACTOR;
       } else {
-        boundingBox.size.x = (this.size.x - boundingBox.origin.x + this.X) * FREE_SPACE_FACTOR;
+        boundingBox.size.x = (this.size.x - boundingBox.origin.x + this.origin.x) * FREE_SPACE_FACTOR;
       }
     } else boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
     return boundingBox

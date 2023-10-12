@@ -227,8 +227,8 @@ export class MultiplePlots {
       var ratio = new_width/old_width;
       this.height = new_height;
       for (let i=0; i<this.nbObjects; i++) {
-        this.objectList[i].X = this.objectList[i].X * ratio;
-        this.objectList[i].Y = this.objectList[i].Y * ratio;
+        this.objectList[i].origin.x = this.objectList[i].origin.x * ratio;
+        this.objectList[i].origin.y = this.objectList[i].origin.y * ratio;
       }
       this.define_canvas(this.canvas_id);
       this.clean_view();
@@ -543,7 +543,7 @@ export class MultiplePlots {
       var index_list = [];
       for (let i=0; i<this.nbObjects; i++) {
         let display_index = this.display_order[i];
-        let isInObject = Shape.isInRect(x, y, this.objectList[display_index].X, this.objectList[display_index].Y, this.objectList[display_index].width, this.objectList[display_index].height);
+        let isInObject = Shape.isInRect(x, y, this.objectList[display_index].origin.x, this.objectList[display_index].origin.y, this.objectList[display_index].width, this.objectList[display_index].height);
         if (isInObject === true) {
           index_list.push(display_index);
         }
@@ -557,7 +557,7 @@ export class MultiplePlots {
       for (let i=0; i<this.nbObjects; i++) {
         let display_index = this.display_order[i];
         if (List.is_include(display_index, this.to_display_plots)) {
-          let isInObject = Shape.isInRect(x, y, this.objectList[display_index].X, this.objectList[display_index].Y, this.objectList[display_index].width, this.objectList[display_index].height);
+          let isInObject = Shape.isInRect(x, y, this.objectList[display_index].origin.x, this.objectList[display_index].origin.y, this.objectList[display_index].width, this.objectList[display_index].height);
           if (isInObject === true) {
             index = display_index;
           }
@@ -645,8 +645,8 @@ export class MultiplePlots {
         if (display_index == this.clickedPlotIndex) {
           this.objectList[display_index].draw();
         } else {
-           this.context_show.putImageData(this.shown_datas[display_index], obj.X, obj.Y);
-           this.context_hidden.putImageData(this.hidden_datas[display_index], obj.X, obj.Y);
+           this.context_show.putImageData(this.shown_datas[display_index], obj.origin.x, obj.origin.y);
+           this.context_hidden.putImageData(this.hidden_datas[display_index], obj.origin.x, obj.origin.y);
         }
       }
       if (this.buttons_ON) { this.draw_buttons() };
@@ -656,8 +656,8 @@ export class MultiplePlots {
       this.shown_datas = []; this.hidden_datas = [];
       for (let i=0; i<this.nbObjects; i++) {
         let obj = this.objectList[i];
-        this.shown_datas.push(this.context_show.getImageData(obj.X, obj.Y, obj.width, obj.height));
-        this.hidden_datas.push(this.context_hidden.getImageData(obj.X, obj.Y, obj.width, obj.height));
+        this.shown_datas.push(this.context_show.getImageData(obj.origin.x, obj.origin.y, obj.width, obj.height));
+        this.hidden_datas.push(this.context_hidden.getImageData(obj.origin.x, obj.origin.y, obj.width, obj.height));
       }
     }
 
@@ -672,13 +672,13 @@ export class MultiplePlots {
 
     translateSelectedObject(move_plot_index, tx, ty):void {
       var obj:any = this.objectList[move_plot_index]
-      obj.X = obj.X + tx;
-      obj.Y = obj.Y + ty;
+      obj.origin.x = obj.origin.x + tx;
+      obj.origin.y = obj.origin.y + ty;
       if (obj instanceof Figure) obj.reset_scales();
       if (obj.type_ == 'primitivegroupcontainer') {
         for (let i=0; i<obj['primitive_groups'].length; i++) {
-          obj['primitive_groups'][i].X = obj['primitive_groups'][i].X + tx;
-          obj['primitive_groups'][i].Y = obj['primitive_groups'][i].Y + ty;
+          obj['primitive_groups'][i].origin.x = obj['primitive_groups'][i].origin.x + tx;
+          obj['primitive_groups'][i].origin.y = obj['primitive_groups'][i].origin.y + ty;
         }
       }
     }
@@ -838,10 +838,10 @@ export class MultiplePlots {
       var vertex_infos = [];
       for (let i=0; i<this.nbObjects; i++) {
         let obj:PlotData = this.objectList[this.display_order[i]];
-        let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, obj.width + thickness*2/3, thickness);
-        let down = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
-        let left = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
-        let right = Shape.isInRect(mouse1X, mouse1Y, obj.X + obj.width - thickness*2/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+        let up = Shape.isInRect(mouse1X, mouse1Y, obj.origin.x - thickness*1/3, obj.origin.y - thickness*1/3, obj.width + thickness*2/3, thickness);
+        let down = Shape.isInRect(mouse1X, mouse1Y, obj.origin.x - thickness*1/3, obj.origin.y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
+        let left = Shape.isInRect(mouse1X, mouse1Y, obj.origin.x - thickness*1/3, obj.origin.y - thickness*1/3, thickness, obj.height + thickness*2/3);
+        let right = Shape.isInRect(mouse1X, mouse1Y, obj.origin.x + obj.width - thickness*2/3, obj.origin.y - thickness*1/3, thickness, obj.height + thickness*2/3);
         var clickOnVertex_i = up || down || left || right;
         if (clickOnVertex_i) {
           vertex_infos.push({'index': this.display_order[i], 'up': up, 'down': down, 'left':left, 'right': right});
@@ -869,10 +869,10 @@ export class MultiplePlots {
         var resize_style:any = '';
         for (let i=0; i<this.nbObjects; i++) {
           let obj:PlotData = this.objectList[i];
-          let up = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, obj.width + thickness*2/3, thickness);
-          let down = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
-          let left = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
-          let right = Shape.isInRect(mouse2X, mouse2Y, obj.X + obj.width - thickness*2/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+          let up = Shape.isInRect(mouse2X, mouse2Y, obj.origin.x - thickness*1/3, obj.origin.y - thickness*1/3, obj.width + thickness*2/3, thickness);
+          let down = Shape.isInRect(mouse2X, mouse2Y, obj.origin.x - thickness*1/3, obj.origin.y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
+          let left = Shape.isInRect(mouse2X, mouse2Y, obj.origin.x - thickness*1/3, obj.origin.y - thickness*1/3, thickness, obj.height + thickness*2/3);
+          let right = Shape.isInRect(mouse2X, mouse2Y, obj.origin.x + obj.width - thickness*2/3, obj.origin.y - thickness*1/3, thickness, obj.height + thickness*2/3);
           if (up && !resize_style.includes('n')) {resize_style = resize_style + 'n';}
           if (down && !resize_style.includes('s')) {resize_style = resize_style + 's';}
           if (left && !resize_style.includes('w')) {resize_style = resize_style + 'w';}
@@ -930,8 +930,8 @@ export class MultiplePlots {
       this.initial_objectsX = [];
       this.initial_objectsY = [];
       for (let i=0; i<this.nbObjects; i++) {
-        this.initial_objectsX.push(this.objectList[i].X);
-        this.initial_objectsY.push(this.objectList[i].Y);
+        this.initial_objectsX.push(this.objectList[i].origin.x);
+        this.initial_objectsY.push(this.objectList[i].origin.y);
       }
     }
 
@@ -1085,14 +1085,14 @@ export class MultiplePlots {
     clean_view():void {
       if (this.nbObjects === 1) {
         let obj = this.objectList[0];
-        obj.X = 0;
-        obj.Y = 0;
+        obj.origin.x = 0;
+        obj.origin.y = 0;
         obj.width = this.width;
         obj.height = this.height;
         return;
       }
-      var big_coord = 'X';
-      var small_coord = 'Y';
+      var big_coord = 'x';
+      var small_coord = 'y';
       var big_length = 'width';
       var small_length = 'height';
       if (this.width < this.height) {
@@ -1111,19 +1111,19 @@ export class MultiplePlots {
           var current_index = i*this.small_length_nb_objects + j; //current_index in sorted_list
           // The three following lines are useful for primitive group containers only
           let obj:any = this.objectList[this.sorted_list[current_index]];
-          let old_small_coord = obj[small_coord];
-          let old_big_coord = obj[big_coord];
+          let old_small_coord = obj.origin[small_coord];
+          let old_big_coord = obj.origin[big_coord];
 
-          this.objectList[this.sorted_list[current_index]][big_coord] = i*big_length_step + (i+1)*blank_space;
-          this.objectList[this.sorted_list[current_index]][small_coord] = j*small_length_step + (j+1)*blank_space;
+          this.objectList[this.sorted_list[current_index]].origin[big_coord] = i*big_length_step + (i+1)*blank_space;
+          this.objectList[this.sorted_list[current_index]].origin[small_coord] = j*small_length_step + (j+1)*blank_space;
 
           this.objectList[this.sorted_list[current_index]][big_length] = big_length_step;
           this.objectList[this.sorted_list[current_index]][small_length] = small_length_step;
 
           if (obj.type_ === 'primitivegroupcontainer') {
             for (let k=0; k<obj.primitive_groups.length; k++) {
-              obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
-              obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord;
+              obj.primitive_groups[k].origin[big_coord] += obj.origin[big_coord] - old_big_coord;
+              obj.primitive_groups[k].origin[small_coord] += obj.origin[small_coord] - old_small_coord;
             }
           }
         }
@@ -1134,19 +1134,18 @@ export class MultiplePlots {
       for (let j=0; j<remaining_obj; j++) {
         // The three following lines are useful for primitive group containers only
         let obj:any = this.objectList[this.sorted_list[last_index + j]];
-        let old_small_coord = obj[small_coord];
-        let old_big_coord = obj[big_coord];
+        let old_small_coord = obj.origin[small_coord];
+        let old_big_coord = obj.origin[big_coord];
 
-        this.objectList[this.sorted_list[last_index + j]][big_coord] = (this.big_length_nb_objects - 1)*big_length_step
-                                                                       + this.big_length_nb_objects*blank_space;
-        this.objectList[this.sorted_list[last_index + j]][small_coord] = j*last_small_length_step + (j+1)*blank_space;
+        this.objectList[this.sorted_list[last_index + j]].origin[big_coord] = (this.big_length_nb_objects - 1)*big_length_step + this.big_length_nb_objects*blank_space;
+        this.objectList[this.sorted_list[last_index + j]].origin[small_coord] = j*last_small_length_step + (j+1)*blank_space;
         this.objectList[this.sorted_list[last_index + j]][big_length] = big_length_step;
         this.objectList[this.sorted_list[last_index + j]][small_length] = last_small_length_step;
 
         if (obj.type_ === 'primitivegroupcontainer') {
           for (let k=0; k<obj.primitive_groups.length; k++) {
-            obj.primitive_groups[k][big_coord] += obj[big_coord] - old_big_coord;
-            obj.primitive_groups[k][small_coord] += obj[small_coord] - old_small_coord;
+            obj.primitive_groups[k].origin[big_coord] += obj.origin[big_coord] - old_big_coord;
+            obj.primitive_groups[k].origin[small_coord] += obj.origin[small_coord] - old_small_coord;
           }
         }
       }
@@ -1164,7 +1163,7 @@ export class MultiplePlots {
         let obj:any = this.objectList[vertex_object_index];
         if (vertex_infos[i].up === true) {
           if (obj.height - ty > heightSizeLimit) {
-            this.objectList[vertex_object_index].Y = obj.Y + ty;
+            this.objectList[vertex_object_index].origin.y = obj.origin.y + ty;
             this.objectList[vertex_object_index].height = obj.height - ty;
           } else {
             this.objectList[vertex_object_index].height = heightSizeLimit;
@@ -1179,7 +1178,7 @@ export class MultiplePlots {
         }
         if (vertex_infos[i].left === true) {
           if (obj.width - tx > widthSizeLimit) {
-            this.objectList[vertex_object_index].X = obj.X + tx;
+            this.objectList[vertex_object_index].origin.x = obj.origin.x + tx;
             this.objectList[vertex_object_index].width = obj.width - tx;
           } else {
             this.objectList[vertex_object_index].width = widthSizeLimit;
@@ -1197,12 +1196,12 @@ export class MultiplePlots {
           let obj:any = this.objectList[vertex_object_index];
           if (vertex_infos[i].left) {
             for (let j=0; j<obj.primitive_groups.length; j++) {
-              obj.primitive_groups[j].X = obj.primitive_groups[j].X + tx;
+              obj.primitive_groups[j].origin.x = obj.primitive_groups[j].origin.x + tx;
             }
           }
           if (vertex_infos[i].up) {
             for (let j=0; j<obj.primitive_groups.length; j++) {
-              obj.primitive_groups[j].Y = obj.primitive_groups[j].Y + ty;
+              obj.primitive_groups[j].origin.y = obj.primitive_groups[j].origin.y + ty;
             }
           }
         }
@@ -1575,18 +1574,18 @@ export class MultiplePlots {
     zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
       if (event > 0) {var zoom_coeff = 1.1} else {var zoom_coeff = 1/1.1}
       for (let i=0; i<this.nbObjects; i++) {
-        let old_X = this.objectList[i].X; let old_Y = this.objectList[i].Y;
-        this.objectList[i].X = mouse3X + zoom_coeff*(this.objectList[i].X - mouse3X);
-        this.objectList[i].Y = mouse3Y + zoom_coeff*(this.objectList[i].Y - mouse3Y);
+        let old_X = this.objectList[i].origin.x; let old_Y = this.objectList[i].origin.y;
+        this.objectList[i].origin.x = mouse3X + zoom_coeff*(this.objectList[i].origin.x - mouse3X);
+        this.objectList[i].origin.y = mouse3Y + zoom_coeff*(this.objectList[i].origin.y - mouse3Y);
         this.objectList[i].width = this.objectList[i].width*zoom_coeff;
         this.objectList[i].height = this.objectList[i].height*zoom_coeff;
         if (this.objectList[i].type_ == 'primitivegroupcontainer') {
           let obj:any = this.objectList[i];
-          let tx = obj.X - old_X;
-          let ty = obj.Y - old_Y;
+          let tx = obj.origin.x - old_X;
+          let ty = obj.origin.y - old_Y;
           for (let i=0; i<obj.primitive_groups.length; i++) {
-            obj.primitive_groups[i].X = obj.primitive_groups[i].X + tx;
-            obj.primitive_groups[i].Y = obj.primitive_groups[i].Y + ty;
+            obj.primitive_groups[i].origin.x = obj.primitive_groups[i].origin.x + tx;
+            obj.primitive_groups[i].origin.y = obj.primitive_groups[i].origin.y + ty;
           }
         }
       }
@@ -1607,12 +1606,12 @@ export class MultiplePlots {
       if (!this.view_bool) return;
       var obj = this.objectList[index];
       this.clear_object(index);
-      var center_x = obj.X + obj.width/2;
-      var center_y = obj.Y + obj.height/2;
+      var center_x = obj.origin.x + obj.width/2;
+      var center_y = obj.origin.y + obj.height/2;
       obj.width = coef*this.settings_on_initial_widths[index];
       obj.height = coef*this.settings_on_initial_heights[index];
-      obj.X = center_x - obj.width/2;
-      obj.Y = center_y - obj.height/2;
+      obj.origin.x = center_x - obj.width/2;
+      obj.origin.y = center_y - obj.height/2;
       if (obj.type_ === 'parallelplot') obj.refresh_axis_coords();
     }
 
@@ -2229,7 +2228,7 @@ export class MultiplotCom {
 export function save_multiplot(multiplot: MultiplePlots) {
   let temp_objs = [], sizes = [], coords = [];
   for (let obj of multiplot.objectList) {
-    coords.push([obj.X, obj.Y]);
+    coords.push([obj.origin.x, obj.origin.y]);
     sizes.push([obj.width, obj.height]);
 
     let obj_to_dict = [];
@@ -2273,8 +2272,8 @@ export function load_multiplot(dict_, elements, width, height, buttons_ON, canva
   let sizes = dict_["sizes"];
   for (let i=0; i<nbObjects; i++) {
     let obj = multiplot.objectList[i];
-    obj.X = coords[i][0];
-    obj.Y = coords[i][1];
+    obj.origin.x = coords[i][0];
+    obj.origin.y = coords[i][1];
     obj.width = sizes[i][0];
     obj.height = sizes[i][1];
     if (obj.type_ === "scatterplot") {

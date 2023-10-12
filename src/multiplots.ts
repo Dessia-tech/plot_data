@@ -47,7 +47,6 @@ export class MultiplePlots {
     display_order:number[]=[];
     all_attributes:Attribute[]=[];
     selected_point_index:number[]=[];
-    selectedIndices:number[]=[]; //Intersection of objectList[i]'s selected points when dependency is enabled
     point_families:PointFamily[]=[];
     to_display_plots:number[]=[];
     primitive_dict={};
@@ -70,6 +69,7 @@ export class MultiplePlots {
     public isZooming: boolean = false;
     public clickedIndices: number[] = [];
     public hoveredIndices: number[] = [];
+    public selectedIndices: number[] = [];
 
     constructor(public data: any, public width: number, public height: number, public buttons_ON: boolean, public canvas_id: string) {
       this.define_canvas(canvas_id);
@@ -115,7 +115,7 @@ export class MultiplePlots {
         this.initial_coords = [[0, 0]];
         this.nbObjects = 1;
         this.initialize_sizes();
-        var emptyMPData = {
+        const emptyMPData = {
           "name": "",
           "primitives": [
             {

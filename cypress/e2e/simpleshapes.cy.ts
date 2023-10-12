@@ -1,5 +1,6 @@
 import { parseHTML } from '../support/parseHTML';
 import simpleshapesData from '../data_src/simpleshapes.data.json';
+import { Draw } from '../../src/subplots';
 
 const FEATURE_NAME = "simpleshapes"
 
@@ -27,22 +28,24 @@ describe('SIMPLE SHAPES CANVAS', function () {
     })
   })
 
-  // it("should draw tooltip on line", function () {
-  //   cy.window().then((win) => {
-  //     let plot_data = win.eval('plot_data');
-  //     plot_data.relativeObjects.shapes[23].isClicked = true;
-  //     plot_data.draw();
-  //     cy.compareSnapshot(describeTitle + this.test.title, 0.05);
-  //   })
-  // })
+  it("should draw tooltip on line", function () {
+    cy.window().then((win) => {
+      const draw = win.eval('plot_data') as Draw;
+      const [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 746, "offsetY": 176} as MouseEvent);
+      draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
+      draw.mouseDown(canvasMouse, frameMouse, mouseCoords);
+      draw.mouseUp(false);
+      draw.draw();
+      cy.compareSnapshot(describeTitle + this.test.title, 0.05);
+    })
+  })
 
-  // it("should be hovered near line", function () {
-  //   cy.window().then((win) => {
-  //     let plot_data = win.eval('plot_data');
-  //     cy.get('canvas').click(572, 275)
-  //     .then( () => {
-  //       expect(plot_data.select_on_click[0]).to.equal(plot_data.plot_datas[0].primitives[6]);
-  //     })
-  //   })
-  // })
+  it("should be hovered near line", function () {
+    cy.window().then((win) => {
+      const draw = win.eval('plot_data');
+      const [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 804, "offsetY": 204} as MouseEvent);
+      draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
+      expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
+    })
+  })
 })

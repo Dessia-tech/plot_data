@@ -596,7 +596,7 @@ class Circle2D(PlotDataObject):
             edge_style = DEFAULT_EDGESTYLE
             # dashes = DEFAULT_EDGESTYLE.dashline
         args = edge_style.mpl_arguments(surface=True)
-        if ('dashes' in args):
+        if 'dashes' in args:
             args.pop("dashes")
 
         if self.surface_style:
@@ -638,7 +638,7 @@ class Rectangle(PlotDataObject):
             edge_style = DEFAULT_EDGESTYLE
             # dashes = DEFAULT_EDGESTYLE.dashline
         args = edge_style.mpl_arguments(surface=True)
-        if ('dashes' in args):
+        if 'dashes' in args:
             args.pop("dashes")
 
         if self.surface_style:

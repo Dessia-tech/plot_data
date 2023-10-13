@@ -103,7 +103,7 @@ texts.append(plot_data.Text(comment="Middle right ; (0, 0) ; multiline ; scale ;
                             multi_lines=True, text_scaling=True, height=100, max_width=400))
 
 
-middle_right_scale = plot_data.TextStyle(text_align_x="center", text_align_y="middle", font_size=12)
+middle_right_scale = plot_data.TextStyle(text_align_x="right", text_align_y="middle", font_size=12)
 middle_center_no_scale = plot_data.TextStyle(text_align_x="center", text_align_y="middle")
 
 texts.append(plot_data.Text(comment="Middle right ; (-300, -30) ; multiline ; no scale ; fontsize = None ; size (400, 40)" * 4,

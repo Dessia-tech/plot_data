@@ -1854,7 +1854,6 @@ export class Figure extends PlotData {
 
   public projectMouse(e: MouseEvent): [Vertex, Vertex, Vertex] {
     const mouseCoords = new Vertex(e.offsetX, e.offsetY);
-    console.log(mouseCoords)
     return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.relativeMatrix.inverse()), mouseCoords]
   }
 

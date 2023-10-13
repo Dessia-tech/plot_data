@@ -2303,10 +2303,13 @@ export class newText extends newShape {
     }
   }
 
-  private getLongestRow(writtenText: string[]): string {
-    let longestRow = writtenText[0];
-    writtenText.forEach(row => { if (row.length > longestRow.length) longestRow = row });
-    return longestRow
+  private getLongestRow(context: CanvasRenderingContext2D, writtenText: string[]): number {
+    let maxWidth = Number.NEGATIVE_INFINITY;
+    writtenText.forEach(row => {
+      const width = context.measureText(row).width;
+      if (width > maxWidth) maxWidth = width;
+    });
+    return maxWidth
   }
 
   public formattedTextRows(): string[] {
@@ -2327,8 +2330,7 @@ export class newText extends newShape {
     this.fontsize = Math.abs(fontsize);
     context.font = newText.buildFont(this.style, this.fontsize, this.font);
     this.height = writtenText.length * this.fontsize;
-    const longestRow = this.getLongestRow(writtenText);
-    this.width = context.measureText(longestRow).width;
+    this.width = this.getLongestRow(context, writtenText);
     this.rowIndices = [0];
     writtenText.forEach((row, index) => this.rowIndices.push(this.rowIndices[index] + row.length));
     return writtenText

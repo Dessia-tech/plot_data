@@ -60,37 +60,37 @@ html_template = Template('''
 ''')
 
 SCATTER_COMMANDS = """
-            var plot_data = new PlotData.newScatter(data, width, height, true, 0, 0, $canvas_id.id);
+            var plot_data = new PlotData.Scatter(data, width, height, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 CONTOUR_COMMANDS = """
-            var plot_data = new PlotData.Draw(data, width, height, true, 0, 0, $canvas_id.id);
+            var plot_data = new PlotData.Draw(data, width, height, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 GRAPH_COMMANDS = """
-            var plot_data = new PlotData.newGraph2D(data, width, height, true, 0, 0, $canvas_id.id);
+            var plot_data = new PlotData.Graph2D(data, width, height, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 PARALLELPLOT_COMMANDS = """
-            var plot_data = new PlotData.newParallelPlot(data, width, height, true, 0, 0, $canvas_id.id);
+            var plot_data = new PlotData.ParallelPlot(data, width, height, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 HISTOGRAM_COMMANDS = """
-            var plot_data = new PlotData.Histogram(data, width, height, true, 0, 0, $canvas_id.id);
+            var plot_data = new PlotData.Histogram(data, width, height, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 MULTIPLOT_COMMANDS = """
-            var plot_data = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);"""
+            var plot_data = new PlotData.Multiplot(data, width, height, true, $canvas_id.id);"""
 
 PRIMITIVE_GROUP_CONTAINER_COMMANDS = """
             var primitive_group_container = new PlotData.PrimitiveGroupContainer(data, width, height,

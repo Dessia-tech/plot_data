@@ -1259,7 +1259,7 @@ class PrimitiveGroup(Figure):
                                               Line2D, MultipleLabels, Wire, Point2D]], width: int = 750,
                  height: int = 400, name: str = ''):
         self.primitives = primitives
-        super().__init__(width=width, height=height, type_='primitivegroup', name=name)
+        super().__init__(width=width, height=height, type_='draw', name=name)
 
     def mpl_plot(self, ax=None, equal_aspect=True, **kwargs):
         """ Plots using matplotlib. """
@@ -1420,7 +1420,7 @@ class Histogram(Figure):
         self.graduation_nb = graduation_nb
         self.edge_style = edge_style
         self.surface_style = surface_style
-        super().__init__(width=width, height=height, type_='frame', name=name)
+        super().__init__(width=width, height=height, type_='histogram', name=name)
 
 
 class MultiplePlots(Figure):
@@ -1457,7 +1457,7 @@ class MultiplePlots(Figure):
         self.plots = plots
         self.sizes = sizes
         self.coords = coords
-        self.point_families = point_families
+        self.points_sets = point_families
         self.initial_view_on = initial_view_on
         super().__init__(width=width, height=height, type_='multiplot', name=name)
 

@@ -1,5 +1,5 @@
 import { heatmap_color, string_to_hex } from "./color_conversion";
-import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Graph2D, Scatter, Heatmap, Wire } from "./primitives";
+import { Point2D, PrimitiveGroup, Contour2D, Circle2D, Dataset, Heatmap, Wire } from "./primitives";
 import { Attribute, PointFamily, Axis, Tooltip, Sort, permutator, export_to_csv, RubberBand, newText, TextParams, Vertex, newRect } from "./utils";
 import { EdgeStyle } from "./style";
 import { Shape, List, MyMath } from "./toolbox";
@@ -197,7 +197,7 @@ export abstract class PlotData extends EventEmitter {
   origin: Vertex;
 
   public constructor(
-    public data:any,
+    data:any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -620,21 +620,6 @@ export abstract class PlotData extends EventEmitter {
     }
   }
 
-  draw_graph2D(d:Graph2D, hidden, mvx, mvy) {
-    if (d['type_'] == 'graph2d') {
-      this.draw_axis(mvx, mvy, this.scaleX, this.scaleY, d.axis, this.log_scale_x, this.log_scale_y);
-      for (let i=0; i<d.graphs.length; i++) {
-        let graph = d.graphs[i];
-        this.draw_dataset(graph, hidden, mvx, mvy);
-      }
-      for (let i=0; i<d.graphs.length; i++) {
-        let graph: Dataset = d.graphs[i];
-        this.draw_tooltip(graph.tooltip, mvx, mvy, graph.point_list, graph.point_list,
-          graph.elements, false, d.attribute_names);
-      }
-    }
-  }
-
   refresh_heatmap_table(scatter) {
     let table = [];
     let w = this.heatmap.size[0];
@@ -753,56 +738,7 @@ export abstract class PlotData extends EventEmitter {
     this.draw_scatterplot_axis(scatter.axis, scatter.lists, scatter.to_display_attributes);
     scatter.axis.grid_on = temp;
   }
-
-  draw_scatterplot(d:Scatter, hidden, mvx, mvy) {
-    if (d['type_'] == 'scatterplot') {
-      this.draw_scatterplot_axis(d.axis, d.lists, d.to_display_attributes);
-      if (((this.scroll_x%5==0) || (this.scroll_y%5==0)) && this.refresh_point_list_bool && this.mergeON){
-        let refreshed_points = this.refresh_point_list(d.point_list,mvx,mvy);
-        if (!this.point_list_equals(refreshed_points, this.scatter_points)) {
-          this.scatter_points = refreshed_points;
-        }
-        this.refresh_point_list_bool = false;
-      } else if (this.mergeON === false) {
-        if (!this.point_list_equals(this.scatter_points, d.point_list)) {
-          this.scatter_points = d.point_list;
-        }
-      }
-      if ((this.scroll_x % 5 != 0) && (this.scroll_y % 5 != 0)) {
-        this.refresh_point_list_bool = true;
-      }
-
-      this.context.save();
-      this.context.rect(this.decalage_axis_x + this.X, this.Y,
-        this.width - this.decalage_axis_x, this.height - this.decalage_axis_y);
-      this.context.clip();
-      if (this.point_families.length == 0) {
-        for (var i=0; i<this.scatter_points.length; i++) {
-          var point:Point2D = this.scatter_points[i];
-          this.draw_point(hidden, point);
-        }
-      } else {
-        var point_order = this.get_point_order();
-        for (let i=0; i<point_order.length; i++) {
-          for (let j=0; j<point_order[i].length; j++) {
-            let index = point_order[i][j];
-            let point:Point2D = this.scatter_points[index];
-            this.draw_point(hidden, point);
-          }
-        }
-      }
-      this.context.restore();
-
-      for (var i=0; i<this.tooltip_list.length; i++) {
-        if (!List.is_include(this.tooltip_list[i],this.scatter_points)) {
-          this.tooltip_list = List.remove_element(this.tooltip_list[i], this.tooltip_list);
-        }
-      }
-      this.draw_tooltip(d.tooltip, mvx, mvy, this.scatter_points, d.point_list, d.elements, this.mergeON,
-        d.attribute_names);
-    }
-  }
-
+  
   get_point_order() {
     var point_order = [];
     for (let i=0; i<this.point_families.length; i++) point_order.push([]);

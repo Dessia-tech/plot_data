@@ -1,7 +1,7 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, Figure, newGraph2D, newParallelPlot, Draw } from './subplots';
+import { PlotContour, PrimitiveGroupContainer, Histogram, Frame, Scatter, Figure, Graph2D, ParallelPlot, Draw } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
 
@@ -29,6 +29,85 @@ const EMPTY_PLOT = {
   "type_": "primitivegroup"
 };
 
+const PG_CONTAINER_PLOT = {
+  "name": "",
+  "primitives": [
+    {
+      "name": "",
+      "comment": "PrimitiveGroupContainer is not supported anymore in plot_data 0.18.0 and further versions.",
+      "text_style": {
+        "object_class": "plot_data.core.TextStyle",
+        "name": "",
+        "text_color": "rgb(100, 100, 100)",
+        "font_size": 20,
+        "text_align_x": "left"
+      },
+      "position_x": 50.0,
+      "position_y": 100,
+      "text_scaling": false,
+      "max_width": 400,
+      "multi_lines": true,
+      "type_": "text"
+    }
+  ],
+  "type_": "primitivegroup"
+};
+
+
+export class Multiplot {
+  public context: CanvasRenderingContext2D;
+
+  public features: Map<string, any[]>;
+  public plots: Figure[];
+
+  public clickedIndices: number[] = [];
+  public hoveredIndices: number[] = [];
+  public selectedIndices: number[] = [];
+
+  public pointSets: number[];
+  public pointSetColors: string[] = [];
+
+  constructor(
+    data: any,
+    public width: number,
+    public height: number,
+    public canvas: string
+  ) {
+    [this.features, this.plots] = this.unpackData(data);
+    console.log(this)
+  }
+
+  private unpackData(data: any): [Map<string, any[]>, Figure[]] {
+    const features = Figure.deserializeData(data);
+    const plots: Figure[] = [];
+    if (data.plots.length == 0) plots.push(this.newEmptyPlot());
+    else {
+      data.plots.forEach(plot => {
+        const localData = {...plot, "elements": data.elements};
+        let newPlot: Figure;
+        if (plot.type_ == "histogram") newPlot = new Histogram(localData, this.width, this.height, 0, 0, this.canvas, true);
+        else if (plot.type_ == "parallelplot") newPlot = new ParallelPlot(localData, this.width, this.height, 0, 0, this.canvas, true);
+        else if (plot.type_ == "draw") newPlot = new Draw(localData, this.width, this.height, 0, 0, this.canvas, true);
+        else if (plot.type_ == "graph2d") newPlot = new Graph2D(localData, this.width, this.height, 0, 0, this.canvas, true);
+        else if (plot.type_ == "primitivegroupcontainer") newPlot = new Draw(PG_CONTAINER_PLOT, this.width, this.height, 0, 0, this.canvas, true);
+        else if (plot.type_ == "scatterplot") {
+          localData.points_sets = data.points_sets;
+          newPlot = new Scatter(localData, this.width, this.height, 0, 0, this.canvas, true);
+          this.pointSets = newPlot.pointSets;
+          this.pointSetColors = newPlot.pointSetColors;
+        }
+        if (!(newPlot instanceof Graph2D || newPlot instanceof Draw)) newPlot.features = features;
+        plots.push(newPlot)
+      })
+    }
+    return [features, plots]
+  }
+
+  private newEmptyPlot(): Draw {
+    return new Draw(EMPTY_PLOT, this.width, this.height, 0, 0, this.canvas);
+  }
+
+}
 
 /**
  * MultiplePlots takes a list of elements (dictionaries) that represent vectors and displays it through different representations
@@ -108,12 +187,12 @@ export class MultiplePlots {
           let object_type_ = this.dataObjects[i]['type_'];
           if (this.dataObjects[i]['type_'] == 'graph2d') {
             this.dataObjects[i]['elements'] = elements;
-            var newObject:any = new newGraph2D(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            var newObject:any = new Graph2D(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'parallelplot') {
             this.dataObjects[i]['elements'] = elements;
-            newObject = new newParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            newObject = new ParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'primitivegroup') {
-            newObject = new Draw(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            newObject = new Draw(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'primitivegroupcontainer') {
             newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
             if (this.dataObjects[i]['association']) {
@@ -124,10 +203,10 @@ export class MultiplePlots {
             }
           } else if (object_type_ === 'frame' || object_type_ == 'histogram') {
             this.dataObjects[i]['elements'] = elements;
-            newObject = new Histogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            newObject = new Histogram(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'scatterplot') {
             this.dataObjects[i]['elements'] = elements;
-            newObject = new newScatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            newObject = new Scatter(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else {
             throw new Error('MultiplePlots constructor : invalid object type');
           }
@@ -138,7 +217,7 @@ export class MultiplePlots {
         this.initial_coords = [[0, 0]];
         this.nbObjects = 1;
         this.initialize_sizes();
-        newObject = new Draw(EMPTY_PLOT, this.width, this.height, true, 0, 0, canvas_id);
+        newObject = new Draw(EMPTY_PLOT, this.width, this.height, 0, 0, canvas_id);
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       }
@@ -164,8 +243,8 @@ export class MultiplePlots {
     }
 
     public initPointSets(data: any) {
-      if (data.point_families) {
-        this.point_families = data.point_families.map(
+      if (data.points_sets) {
+        this.point_families = data.points_sets.map(
           pointFamily => new PointFamily(colorHsl(pointFamily.color), pointFamily.point_index, '')
        )
       }
@@ -204,9 +283,9 @@ export class MultiplePlots {
       }
       let new_point_family = new PointFamily(string_to_hex('grey'), point_index, 'Initial family');
       this.add_point_family(new_point_family);
-      if (this.data['point_families'] != undefined) {
-        for (let i=0; i<this.data['point_families'].length; i++) {
-          let new_point_family = PointFamily.deserialize(this.data['point_families'][i]);
+      if (this.data['points_sets'] != undefined) {
+        for (let i=0; i<this.data['points_sets'].length; i++) {
+          let new_point_family = PointFamily.deserialize(this.data['points_sets'][i]);
           this.add_point_family(new_point_family);
         }
       }
@@ -385,7 +464,7 @@ export class MultiplePlots {
       var new_scatter = {attribute_names: [attr_x.name, attr_y.name], elements:this.data['elements'], type_:'frame', name:''};
       var DEFAULT_WIDTH = 560;
       var DEFAULT_HEIGHT = 300;
-      var new_plot_data = new newScatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
+      var new_plot_data = new Scatter(new_scatter, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, 0, this.canvas_id);
       this.initialize_new_plot_data(new_plot_data);
     }
 
@@ -405,7 +484,7 @@ export class MultiplePlots {
       };
       var DEFAULT_WIDTH = 560;
       var DEFAULT_HEIGHT = 300;
-      var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, this.buttons_ON, 0, 0, this.canvas_id);
+      var new_plot_data = new ParallelPlot(pp_data, DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, 0, this.canvas_id);
       this.initialize_new_plot_data(new_plot_data);
     }
 
@@ -614,7 +693,7 @@ export class MultiplePlots {
           if (plot.type_ == 'parallelplot') { plot.refresh_axis_coords() }
           if (plot instanceof Figure) {
             // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
-            if ( !(plot instanceof newGraph2D) ) {
+            if ( !(plot instanceof Graph2D) ) {
               plot.selectedIndices = this.selectedIndices;
               plot.clickedIndices = [...this.clickedIndices];
               plot.hoveredIndices = [...this.hoveredIndices];
@@ -627,9 +706,6 @@ export class MultiplePlots {
                 }
               }
             }
-          } else if (plot instanceof ParallelPlot) {
-            plot.select_on_mouse_indices = [...this.hoveredIndices];
-            plot.clicked_point_index = this.clickedIndices;
           }
           plot.draw();
         }
@@ -908,7 +984,7 @@ export class MultiplePlots {
         } else if (obj instanceof Figure) {
           obj.axes.forEach(axis => {
             // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
-            if ( !(obj instanceof newGraph2D) ) {
+            if ( !(obj instanceof Graph2D) ) {
               if (axis.rubberBand.length != 0) {
                 isSelecting = true;
                 const selectedIndices = (obj as Figure).updateSelected(axis);
@@ -945,27 +1021,10 @@ export class MultiplePlots {
     }
 
     resetAllObjects(): void {
-      this.objectList.forEach(plot =>  {
-        if (plot instanceof PlotScatter) Interactions.click_on_reset_action(plot)
-        else plot.reset_scales();
-      })
+      this.objectList.forEach(plot => plot.reset_scales());
     }
 
     reset_all_selected_points() {
-      this.selectedIndices = [];
-      this.selected_point_index = [];
-      for (let i=0; i<this.nbObjects; i++) {
-        let otherPlot: any = this.objectList[i];
-        if (otherPlot instanceof PlotScatter) {
-          otherPlot.reset_select_on_click();
-          Interactions.reset_permanent_window(this.objectList[i])
-        } else if (otherPlot instanceof ParallelPlot) {
-          otherPlot.reset_pp_selected();
-          otherPlot.reset_rubberbands();
-        } else if (otherPlot instanceof PrimitiveGroupContainer) {
-          otherPlot.reset_selection();
-        }
-      }
       this.resetSelection();
       this.redrawAllObjects();
     }
@@ -973,19 +1032,6 @@ export class MultiplePlots {
     reset_selected_points_except(list:number[]) {
       this.selectedIndices = [];
       this.selected_point_index = [];
-      for (let i=0; i<this.nbObjects; i++) {
-        if (list.includes(i)) continue;
-        let obj = this.objectList[i];
-        if (obj instanceof PlotScatter) {
-          obj.reset_select_on_click(false);
-          Interactions.reset_permanent_window(obj)
-        } else if (obj instanceof ParallelPlot) {
-          obj.reset_pp_selected();
-          obj.rubber_bands.forEach((rubberBand) => {
-            rubberBand.reset()
-          })
-        }
-      }
       this.redrawAllObjects();
     }
 
@@ -1150,7 +1196,7 @@ export class MultiplePlots {
         }
       }
       this.resetAllObjects();
-      this.objectList.forEach(plot => {if (plot instanceof newScatter) plot.computePoints() });
+      this.objectList.forEach(plot => {if (plot instanceof Scatter) plot.computePoints() });
       this.redrawAllObjects();
       this.view_on_disposition = true;
     }
@@ -1290,130 +1336,6 @@ export class MultiplePlots {
           obj.select_primitive_groups();
         }
       }
-    }
-
-    mouse_move_pp_communication() {
-      const isDrawingRubberObjIndex = this.get_drawing_rubberbands_obj_index('parallelplot');
-      if (isDrawingRubberObjIndex != -1) {
-        const isDrawingPP = this.objectList[isDrawingRubberObjIndex];
-        this.pp_communication(isDrawingPP.rubber_bands, isDrawingPP);
-      }
-    }
-
-    pp_communication(rubberBands: RubberBand[], currentPP: any) { // process received data from a parallelplot and send it to the other objects
-      const selectedIndices = currentPP.getObjectsInRubberBands(rubberBands);
-      this.refreshSelectedIndices();
-      let rubberBandNames = [];
-      rubberBands.forEach((rubberBand) => rubberBandNames.push(rubberBand.attributeName));
-
-      this.objectList.forEach((subplot) => {
-        const WAS_MERGE_ON = subplot.mergeON;
-        const subplotData = subplot.data;
-        let rubberBandsInPlot = [];
-        rubberBands.forEach((rubberBand) => {
-          if (["scatterplot", "parallelplot", "graph2d"].includes(subplotData.type_)) {
-            if (subplotData.attribute_names.includes(rubberBand.attributeName)) {
-              rubberBandsInPlot.push(rubberBand);
-            }
-          } else if (subplot.type_ === "frame") {
-            if ((subplot as Frame).xFeature === rubberBand.attributeName) {
-              rubberBandsInPlot.push(rubberBand);
-            }
-          } else if (subplotData.type_ === "primitivegroupcontainer") {
-            if (subplotData.association.attribute_names.includes(rubberBand.attributeName)) {
-              rubberBandsInPlot.push(rubberBand);
-            }
-          }
-        })
-
-        if (subplot instanceof ParallelPlot) {
-          if (subplot !== currentPP) {
-            subplot.rubber_bands.forEach((rubberBand, index) => {
-              const currentRubberIndex = rubberBandNames.indexOf(rubberBand.attributeName)
-              if (currentRubberIndex != -1) {
-                let axisOrigin = subplot.axis_x_start;
-                let axisEnd = subplot.axis_x_end;
-                if (subplot.vertical) {
-                  axisOrigin = subplot.axis_y_end;
-                  axisEnd = subplot.axis_y_start;
-                }
-                rubberBand.updateFromOther(currentPP.rubber_bands[currentRubberIndex], axisOrigin, axisEnd,
-                  subplot.inverted_axis_list[index], currentPP.inverted_axis_list[currentRubberIndex]);
-              }
-            })
-          }
-        } else if (subplot instanceof PlotScatter && subplot.type_ !== "graph2d") {
-          if (WAS_MERGE_ON == true) {
-            Interactions.click_on_merge_action(subplot)
-            subplot.draw();
-          }
-          let completedAxis = [];
-          rubberBandsInPlot.forEach((rubberBand) => {
-            const axisIndex = subplotData.attribute_names.indexOf(rubberBand.attributeName);
-            if (rubberBand.length != 0) {completedAxis.push(axisIndex)};
-            if (axisIndex == 0) {
-              subplot.perm_window_x = rubberBand.minValue;
-              subplot.perm_window_w = rubberBand.maxValue - subplot.perm_window_x;
-            } else if (axisIndex == 1) {
-              subplot.perm_window_y = rubberBand.maxValue;
-              subplot.perm_window_h = subplot.perm_window_y - rubberBand.minValue;
-            }
-          })
-          if (completedAxis.length < 2 && rubberBands.length !== 0) {
-            if (!completedAxis.includes(0)) {
-              let minValue = subplot.plotObject.lists[0][0];
-              let maxValue = subplot.plotObject.lists[0][1];
-              if (typeof minValue == "string") {
-                minValue = 0;
-                maxValue = subplot.plotObject.lists[0].length - 1;
-              }
-              subplot.perm_window_x = minValue;
-              subplot.perm_window_w = maxValue - subplot.perm_window_x;
-            }
-            if (!completedAxis.includes(1)) {
-              let minValue = subplot.plotObject.lists[1][0];
-              let maxValue = subplot.plotObject.lists[1][1];
-              if (typeof minValue == "string") {
-                minValue = 0;
-                maxValue = subplot.plotObject.lists[1].length - 1;
-              }
-              subplot.perm_window_y = minValue;
-              subplot.perm_window_h = subplot.perm_window_y - maxValue;
-            }
-          }
-          subplot.scatter_points.forEach((scatterPoint, pointIndex) => {
-            scatterPoint.selected = false;
-            if (selectedIndices.includes(pointIndex)) {
-              scatterPoint.selected = true;
-              subplot.select_on_click.push(scatterPoint)
-            }
-          })
-          if (WAS_MERGE_ON == true) {
-            Interactions.click_on_merge_action(subplot)
-            subplot.draw();
-          }
-        } else if (subplot instanceof Figure) {
-          rubberBandsInPlot.forEach((rubberBand) => {
-            subplot.axes.forEach(axis => {
-              if (axis.name == rubberBand.attributeName) {
-                axis.rubberBand.minValue = rubberBand.minValue;
-                axis.rubberBand.maxValue = rubberBand.maxValue;
-              }
-            })
-          })
-          subplot.draw()
-        } else if (subplot instanceof PrimitiveGroupContainer) {
-          subplot.selected_point_index = selectedIndices;
-          if (selectedIndices.length == 0) {
-            let sumRubberLength = 0;
-            rubberBands.forEach((rubberBand) => {sumRubberLength += rubberBand.length})
-            if (sumRubberLength == 0 && selectedIndices.length == 0) {
-              subplot.selected_point_index = Array.from(Array(this.data["elements"].length).keys());
-            }
-          }
-          subplot.select_primitive_groups();
-        }
-      })
     }
 
     mouse_move_frame_communication() {
@@ -1819,7 +1741,6 @@ export class MultiplePlots {
       this.rubberBands = new Map<string, RubberBand>();
       this.objectList.forEach(plot => {
         if (plot instanceof Figure) plot.axes.forEach(axis => axis.sendRubberBand(this.rubberBands))
-        else if (plot instanceof ParallelPlot) plot.rubber_bands.forEach(rubberBand => rubberBand.selfSend(this.rubberBands));
       })
     }
 
@@ -1827,7 +1748,6 @@ export class MultiplePlots {
       if (!this.rubberBands) this.initRubberBands();
       this.objectList.forEach(plot => {
         if (plot instanceof Figure) plot.axes.forEach(axis => axis.sendRubberBandRange(this.rubberBands))
-        else if (plot instanceof ParallelPlot) plot.rubber_bands.forEach(rubberBand => rubberBand.selfSendRange(this.rubberBands));
       })
     }
 
@@ -1849,9 +1769,9 @@ export class MultiplePlots {
 
     public zoomOut() { (this.objectList[this.clickedPlotIndex] as Figure).zoomOut() }
 
-    public simpleCluster(inputValue: number) { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.simpleCluster(inputValue) })};
+    public simpleCluster(inputValue: number) { this.objectList.forEach(plot => { if (plot instanceof Scatter) plot.simpleCluster(inputValue) })};
 
-    public resetClusters(): void { this.objectList.forEach(plot => { if (plot instanceof newScatter) plot.resetClusters() })};
+    public resetClusters(): void { this.objectList.forEach(plot => { if (plot instanceof Scatter) plot.resetClusters() })};
 
     public resetSelection(): void {
       this.selectedIndices = [];
@@ -1868,7 +1788,7 @@ export class MultiplePlots {
     }
 
     public switchOrientation(): void {
-      this.objectList.forEach(plot => { if (plot instanceof newParallelPlot) plot.switchOrientation() });
+      this.objectList.forEach(plot => { if (plot instanceof ParallelPlot) plot.switchOrientation() });
     }
 
     mouse_interaction(): void { //TODO: this has to be totally refactored, with special behaviors defined in each plot class
@@ -1973,11 +1893,10 @@ export class MultiplePlots {
               mouse_moving = true;
               if (this.selectDependency_bool) {
                 this.mouse_move_scatter_communication();
-                this.mouse_move_pp_communication();
                 this.mouse_move_frame_communication();
                 this.refreshRubberBands();
                 // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
-                if ( !(currentPlot instanceof newGraph2D) ) this.updateSelectedPrimitives();
+                if ( !(currentPlot instanceof Graph2D) ) this.updateSelectedPrimitives();
                 this.redrawAllObjects();
               }
               this.redraw_object();
@@ -1985,7 +1904,7 @@ export class MultiplePlots {
               if (this.selectDependency_bool) {
                 this.mouse_over_primitive_group();
                 this.mouse_over_scatter_plot();
-                if (currentPlot instanceof Figure && !(currentPlot instanceof newGraph2D)) {
+                if (currentPlot instanceof Figure && !(currentPlot instanceof Graph2D)) {
                   this.hoveredIndices = (currentPlot as Figure).hoveredIndices;
                   this.clickedIndices = (currentPlot as Figure).clickedIndices;
                 }
@@ -2032,10 +1951,9 @@ export class MultiplePlots {
                   }
                   this.reset_selected_points_except([this.clickedPlotIndex]);
                   this.objectList[this.clickedPlotIndex].mouse_interaction(true);
-                  this.pp_communication(this.objectList[this.clickedPlotIndex].rubber_bands, this.objectList[this.clickedPlotIndex]);
                 }
               }
-              if (this.objectList[this.last_index] instanceof Figure && !(this.objectList[this.last_index] instanceof newGraph2D)) {
+              if (this.objectList[this.last_index] instanceof Figure && !(this.objectList[this.last_index] instanceof Graph2D)) {
                 this.hoveredIndices = (this.objectList[this.last_index] as Figure).hoveredIndices;
                 this.clickedIndices = (this.objectList[this.last_index] as Figure).clickedIndices;
               }
@@ -2047,7 +1965,7 @@ export class MultiplePlots {
         this.refreshRubberBands();
         this.manage_selected_point_index_changes(old_selected_index);
         // TODO: not so beautiful but here to avoid selecting points with unlinked graph points
-        if ( !(this.objectList[this.last_index] instanceof newGraph2D) ) this.updateSelectedPrimitives();
+        if ( !(this.objectList[this.last_index] instanceof Graph2D) ) this.updateSelectedPrimitives();
         if (!shiftKey) this.isSelecting = false;
         this.isZooming = false;
         this.objectList.forEach(plot => {
@@ -2125,9 +2043,6 @@ export class MultiplotCom {
         axisEnd = plot_data.axis_y_start;
       }
       plot_data.rubber_bands[index].axisToReal(axisOrigin, axisEnd);
-      if (plot_data instanceof ParallelPlot){
-        plot_data.refresh_pp_selected();
-      }
     }
 
     public static sc_to_sc_communication(selection_coords:[number, number][], to_display_attributes:Attribute[], plot_data:PlotData) {

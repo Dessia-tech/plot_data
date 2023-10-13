@@ -1,18 +1,41 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
 import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, Figure, newGraph2D, newParallelPlot } from './subplots';
+import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, Figure, newGraph2D, newParallelPlot, Draw } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
 
-var multiplot_saves:MultiplePlots[]=[];
-var current_save:number=0;
+const emptyPlot = {
+  "name": "",
+  "primitives": [
+    {
+      "name": "",
+      "comment": "No data to plot because workflow result is empty.",
+      "text_style": {
+        "object_class": "plot_data.core.TextStyle",
+        "name": "",
+        "text_color": "rgb(100, 100, 100)",
+        "font_size": 20,
+        "text_align_x": "left"
+      },
+      "position_x": 50.0,
+      "position_y": 100,
+      "text_scaling": false,
+      "max_width": 400,
+      "multi_lines": true,
+      "type_": "text"
+    }
+  ],
+  "type_": "primitivegroup"
+};
 
 
 /**
- * MultiplePlots takes a list of elements (dictionaries) that represent vectors and displays it throught different representations
+ * MultiplePlots takes a list of elements (dictionaries) that represent vectors and displays it through different representations
  * such as ParallelPlot or ScatterPlot. On top of that, each element can be represented by a PrimitiveGroup or a Graph2D.
  */
+var multiplot_saves:MultiplePlots[]=[];
+var current_save:number=0;
 export class MultiplePlots {
     context_show:any;
     context_hidden:any;
@@ -90,7 +113,7 @@ export class MultiplePlots {
             this.dataObjects[i]['elements'] = elements;
             newObject = new newParallelPlot(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'primitivegroup') {
-            newObject = new PlotContour(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
+            newObject = new Draw(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
           } else if (object_type_ === 'primitivegroupcontainer') {
             newObject = new PrimitiveGroupContainer(this.dataObjects[i], this.sizes[i]['width'], this.sizes[i]['height'], buttons_ON, this.initial_coords[i][0], this.initial_coords[i][1], canvas_id, true);
             if (this.dataObjects[i]['association']) {
@@ -115,30 +138,7 @@ export class MultiplePlots {
         this.initial_coords = [[0, 0]];
         this.nbObjects = 1;
         this.initialize_sizes();
-        const emptyMPData = {
-          "name": "",
-          "primitives": [
-            {
-              "name": "",
-              "comment": "No data to plot because workflow result is empty.",
-              "text_style": {
-                "object_class": "plot_data.core.TextStyle",
-                "name": "",
-                "text_color": "rgb(100, 100, 100)",
-                "font_size": 20,
-                "text_align_x": "left"
-              },
-              "position_x": 50.0,
-              "position_y": 100,
-              "text_scaling": false,
-              "max_width": 20,
-              "multi_lines": true,
-              "type_": "text"
-            }
-          ],
-          "type_": "primitivegroup"
-        };
-        newObject = new PlotContour(emptyMPData, this.width, this.height, true, 0, 0, canvas_id);
+        newObject = new Draw(emptyPlot, this.width, this.height, true, 0, 0, canvas_id);
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       }

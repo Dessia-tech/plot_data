@@ -2237,7 +2237,7 @@ export class newText extends newShape {
       const origin = this.origin.transform(contextMatrix);
       context.save();
       this.setBoundingBoxState();
-      const writtenText = this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows();
+      const writtenText = this.cleanStartAllRows(this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows());
       this.updateBoundingBox(context);
       this.buildPath();
       this.boundingBox.draw(context);
@@ -2337,7 +2337,9 @@ export class newText extends newShape {
   public multiLineSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     context.font = newText.buildFont(this.style, fontsize, this.font);
     const oneRowLength = context.measureText(this.text).width;
-    if (oneRowLength < this.boundingBox.size.x) return [[this.text.trimStart()], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y : fontsize];
+    if (oneRowLength < this.boundingBox.size.x) {
+      return [[this.text.trimStart()], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y ?? fontsize : fontsize];
+    }
     if (!this.boundingBox.size.y) return [this.fixedFontSplit(context), fontsize];
     return this.autoFontSplit(fontsize, context);
   }
@@ -2381,7 +2383,7 @@ export class newText extends newShape {
       }
       if (newRow.length != 0) rows.push(newRow);
     }
-    return this.cleanStartAllRows(rows)
+    return rows
   }
 
   private cleanStartAllRows(rows: string[]): string[] { return rows.map(row => row.trimStart()) }

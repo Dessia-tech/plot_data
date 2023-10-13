@@ -5,7 +5,7 @@ import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histog
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
 
-const emptyPlot = {
+const EMPTY_PLOT = {
   "name": "",
   "primitives": [
     {
@@ -138,7 +138,7 @@ export class MultiplePlots {
         this.initial_coords = [[0, 0]];
         this.nbObjects = 1;
         this.initialize_sizes();
-        newObject = new Draw(emptyPlot, this.width, this.height, true, 0, 0, canvas_id);
+        newObject = new Draw(EMPTY_PLOT, this.width, this.height, true, 0, 0, canvas_id);
         this.initializeObjectContext(newObject);
         this.objectList.push(newObject);
       }

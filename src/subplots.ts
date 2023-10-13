@@ -2672,7 +2672,7 @@ export class newGraph2D extends newScatter {
     this.drawInZone(context);
     if (this.showPoints) {
       super.drawAbsoluteObjects(context);
-      this.absoluteObjects.shapes = [...this.curves, ...this.absoluteObjects.shapes];
+      this.absoluteObjects.shapes = [...this.absoluteObjects.shapes, ...this.curves];
     } else {
       this.absoluteObjects = new GroupCollection([...this.curves]);
     }

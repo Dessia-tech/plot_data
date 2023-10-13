@@ -2304,12 +2304,7 @@ export class newText extends newShape {
   }
 
   private getLongestRow(context: CanvasRenderingContext2D, writtenText: string[]): number {
-    let maxWidth = Number.NEGATIVE_INFINITY;
-    writtenText.forEach(row => {
-      const width = context.measureText(row).width;
-      if (width > maxWidth) maxWidth = width;
-    });
-    return maxWidth
+    return Math.max(...writtenText.map(row => context.measureText(row).width))
   }
 
   public formattedTextRows(): string[] {

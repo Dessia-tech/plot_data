@@ -409,7 +409,8 @@ export class MultiplePlots {
     }
 
     initializeObjectContext(object:PlotData):void {
-      object.context_show = this.context_show;
+      if (object.type_ == "primitivegroupcontainer") object.context_show = this.context_show;
+      object.context = this.context_show;
       object.context_hidden = this.context_hidden;
       if (object.type_ == 'primitivegroupcontainer') {
         for (let i=0; i<object['primitive_groups'].length; i++) {

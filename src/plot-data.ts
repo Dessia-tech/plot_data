@@ -738,7 +738,7 @@ export abstract class PlotData extends EventEmitter {
     this.draw_scatterplot_axis(scatter.axis, scatter.lists, scatter.to_display_attributes);
     scatter.axis.grid_on = temp;
   }
-  
+
   get_point_order() {
     var point_order = [];
     for (let i=0; i<this.point_families.length; i++) point_order.push([]);

@@ -1144,13 +1144,18 @@ export class Figure extends PlotData {
   }
 
   private drawCanvas(): void {
-    this.context = this.context_show;
-    this.draw_empty_canvas(this.context_show);
-    if (this.settings_on) this.draw_settings_rect()
-    else this.draw_rect();
-    this.context_show.beginPath();
-    this.context_show.rect(this.origin.x, this.origin.y, this.width, this.height);
-    this.context_show.closePath();
+    this.draw_empty_canvas(this.context);
+    this.draw_rect();
+    this.context.beginPath();
+    this.context.rect(this.origin.x, this.origin.y, this.width, this.height);
+    this.context.closePath();
+  }
+
+  public setCanvas(canvasID: string):void {
+    const canvas = document.getElementById(canvasID) as HTMLCanvasElement;
+    canvas.width = this.width;
+		canvas.height = this.height;
+    this.context = canvas.getContext("2d");
   }
 
   public updateAxes(): void {
@@ -1326,29 +1331,29 @@ export class Figure extends PlotData {
   protected computeRelativeObjects() {}
 
   public draw(): void {
-    this.context_show.save();
+    this.context.save();
     this.drawCanvas();
-    this.context_show.setTransform(this.canvasMatrix);
+    this.context.setTransform(this.canvasMatrix);
 
     this.updateAxes();
     this.computeRelativeObjects();
 
-    this.context_show.setTransform(this.relativeMatrix);
-    this.drawRelativeObjects(this.context_show);
+    this.context.setTransform(this.relativeMatrix);
+    this.drawRelativeObjects(this.context);
 
-    this.context_show.resetTransform();
-    this.drawAbsoluteObjects(this.context_show);
+    this.context.resetTransform();
+    this.drawAbsoluteObjects(this.context);
 
-    this.context_show.setTransform(this.relativeMatrix);
-    this.drawSelectionBox(this.context_show);
+    this.context.setTransform(this.relativeMatrix);
+    this.drawSelectionBox(this.context);
 
-    this.context_show.setTransform(this.canvasMatrix);
-    this.drawFixedObjects(this.context_show);
+    this.context.setTransform(this.canvasMatrix);
+    this.drawFixedObjects(this.context);
     this.drawTooltips();
 
-    this.context_show.resetTransform();
-    if (this.multiplot_manipulation) this.drawZoneRectangle(this.context_show);
-    this.context_show.restore();
+    this.context.resetTransform();
+    if (this.multiplot_manipulation) this.drawZoneRectangle(this.context);
+    this.context.restore();
   }
 
   public draw_initial(): void { this.draw() }
@@ -1404,8 +1409,8 @@ export class Figure extends PlotData {
   }
 
   protected drawTooltips(): void {
-    this.relativeObjects.drawTooltips(this.origin, this.size, this.context_show, this.is_in_multiplot);
-    this.absoluteObjects.drawTooltips(this.origin, this.size, this.context_show, this.is_in_multiplot);
+    this.relativeObjects.drawTooltips(this.origin, this.size, this.context, this.is_in_multiplot);
+    this.absoluteObjects.drawTooltips(this.origin, this.size, this.context, this.is_in_multiplot);
   }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
@@ -1413,9 +1418,9 @@ export class Figure extends PlotData {
   }
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
-    this.fixedObjects.mouseMove(this.context_show, canvasMouse);
-    this.absoluteObjects.mouseMove(this.context_show, absoluteMouse);
-    this.relativeObjects.mouseMove(this.context_show, frameMouse);
+    this.fixedObjects.mouseMove(this.context, canvasMouse);
+    this.absoluteObjects.mouseMove(this.context, absoluteMouse);
+    this.relativeObjects.mouseMove(this.context, frameMouse);
   }
 
   public projectMouse(e: MouseEvent): [Vertex, Vertex, Vertex] {
@@ -1515,7 +1520,7 @@ export class Figure extends PlotData {
           }
         }
         this.draw();
-        if (this.isZooming && isDrawing) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
+        if (this.isZooming && isDrawing) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context);
         const mouseInCanvas = (e.offsetX >= this.origin.x) && (e.offsetX <= this.width + this.origin.x) && (e.offsetY >= this.origin.y) && (e.offsetY <= this.height + this.origin.y);
         if (!mouseInCanvas) isDrawing = false;
       });
@@ -1840,7 +1845,7 @@ export class Histogram extends Frame {
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D): void {
     super.drawRelativeObjects(context);
-    this.bars.forEach(bar => bar.draw(this.context_show));
+    this.bars.forEach(bar => bar.draw(this.context));
     this.relativeObjects.shapes = [...this.bars, ...this.relativeObjects.shapes];
   }
 
@@ -2469,10 +2474,10 @@ export class ParallelPlot extends Figure {
   protected drawTooltips(): void {}
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
-    this.fixedObjects.mouseMove(this.context_show, canvasMouse);
+    this.fixedObjects.mouseMove(this.context, canvasMouse);
     if (!this.is_drawing_rubber_band) {
-      this.absoluteObjects.mouseMove(this.context_show, absoluteMouse);
-      this.relativeObjects.mouseMove(this.context_show, frameMouse);
+      this.absoluteObjects.mouseMove(this.context, absoluteMouse);
+      this.relativeObjects.mouseMove(this.context, frameMouse);
     };
     this.changeDisplayOrder();
     this.hoveredIndices = this.absoluteObjects.updateSampleStates('isHovered');
@@ -2554,7 +2559,7 @@ export class Draw extends Frame {
 
   public define_canvas(canvas_id: string):void {
     super.define_canvas(canvas_id);
-    this.computeTextBorders(this.context_show);
+    this.computeTextBorders(this.context);
   }
 
   public reset_scales(): void { // TODO: merge with resetView

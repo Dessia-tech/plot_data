@@ -61,31 +61,31 @@ html_template = Template('''
 
 SCATTER_COMMANDS = """
             var plot_data = new PlotData.Scatter(data, width, height, 0, 0, $canvas_id.id);
-            plot_data.define_canvas($canvas_id.id);
+            plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 CONTOUR_COMMANDS = """
             var plot_data = new PlotData.Draw(data, width, height, 0, 0, $canvas_id.id);
-            plot_data.define_canvas($canvas_id.id);
+            plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 GRAPH_COMMANDS = """
             var plot_data = new PlotData.Graph2D(data, width, height, 0, 0, $canvas_id.id);
-            plot_data.define_canvas($canvas_id.id);
+            plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 PARALLELPLOT_COMMANDS = """
             var plot_data = new PlotData.ParallelPlot(data, width, height, 0, 0, $canvas_id.id);
-            plot_data.define_canvas($canvas_id.id);
+            plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 HISTOGRAM_COMMANDS = """
             var plot_data = new PlotData.Histogram(data, width, height, 0, 0, $canvas_id.id);
-            plot_data.define_canvas($canvas_id.id);
+            plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 

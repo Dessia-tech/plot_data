@@ -1033,6 +1033,29 @@ export class PrimitiveGroupContainer extends PlotData {
     }
 }
 
+const PG_CONTAINER_PLOT = {
+  "name": "",
+  "primitives": [
+    {
+      "name": "",
+      "comment": "PrimitiveGroupContainer is not supported anymore in plot_data 0.18.0 and further versions.",
+      "text_style": {
+        "object_class": "plot_data.core.TextStyle",
+        "name": "",
+        "text_color": "rgb(100, 100, 100)",
+        "font_size": 20,
+        "text_align_x": "left"
+      },
+      "position_x": 50.0,
+      "position_y": 100,
+      "text_scaling": false,
+      "max_width": 400,
+      "multi_lines": true,
+      "type_": "text"
+    }
+  ],
+  "type_": "primitivegroup"
+};
 
 const MIN_FONTSIZE: number = 6;
 const MIN_OFFSET: number = 33;
@@ -1093,7 +1116,7 @@ export class Figure extends PlotData {
       this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
-      this.pointSets = new Array(this.nSamples).fill(-1);
+      this.buildPointSets(data);
       this.drawnFeatures = this.setFeatures(data);
       this.axes = this.setAxes();
       this.fixedObjects = new ShapeCollection(this.axes);
@@ -1121,6 +1144,15 @@ export class Figure extends PlotData {
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
+  public static fromMultiplot(data: any, width: number, height: number, canvasID: string): Figure {
+    if (data.type_ == "histogram") return new Histogram(data, width, height, 0, 0, canvasID, true);
+    else if (data.type_ == "parallelplot")return new ParallelPlot(data, width, height, 0, 0, canvasID, true);
+    else if (data.type_ == "draw") return new Draw(data, width, height, 0, 0, canvasID, true);
+    else if (data.type_ == "graph2d") return new Graph2D(data, width, height, 0, 0, canvasID, true);
+    else if (data.type_ == "primitivegroupcontainer") return new Draw(PG_CONTAINER_PLOT, width, height, 0, 0, canvasID, true);
+    else if (data.type_ == "scatterplot") return new Scatter(data, width, height, 0, 0, canvasID, true);
+  }
+
   private isInCanvas(vertex: Vertex): boolean {
     return vertex.x >= this.origin.x && vertex.x <= this.origin.x + this.size.x && vertex.y >= this.origin.y && vertex.y <= this.origin.y + this.size.y
   }
@@ -1132,7 +1164,19 @@ export class Figure extends PlotData {
     if (data.axis?.graduation_style?.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
   }
 
+  protected unpackPointsSets(data: any): void {
+    data.points_sets.forEach((pointSet, setIndex) => {
+      pointSet.point_index.forEach(pointIndex => this.pointSets[pointIndex] = setIndex);
+      this.pointSetColors.push(pointSet.color);
+    })
+  }
+
   protected unpackData(data: any): Map<string, any[]> { return Figure.deserializeData(data) }
+
+  private buildPointSets(data: any): void {
+    this.pointSets = new Array(this.nSamples).fill(-1);
+    if (data.points_sets) this.unpackPointsSets(data);
+  }
 
   public static deserializeData(data: any): Map<string, any[]> {
     const unpackedData = new Map<string, any[]>();
@@ -1935,14 +1979,6 @@ export class Scatter extends Frame {
     if (data.point_style?.stroke_width) this.lineWidth = data.point_style.stroke_width;
     if (data.point_style?.size) this.pointSize = data.point_style.size;
     if (data.tooltip) this.tooltipAttributes = data.tooltip.attributes;
-    if (data.points_sets) this.unpackPointsSets(data);
-  }
-
-  private unpackPointsSets(data: any): void {
-    data.points_sets.forEach((pointSet, setIndex) => {
-      pointSet.point_index.forEach(pointIndex => this.pointSets[pointIndex] = setIndex);
-      this.pointSetColors.push(pointSet.color);
-    })
   }
 
   public reset_scales(): void {

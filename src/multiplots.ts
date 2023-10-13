@@ -29,30 +29,6 @@ const EMPTY_PLOT = {
   "type_": "primitivegroup"
 };
 
-const PG_CONTAINER_PLOT = {
-  "name": "",
-  "primitives": [
-    {
-      "name": "",
-      "comment": "PrimitiveGroupContainer is not supported anymore in plot_data 0.18.0 and further versions.",
-      "text_style": {
-        "object_class": "plot_data.core.TextStyle",
-        "name": "",
-        "text_color": "rgb(100, 100, 100)",
-        "font_size": 20,
-        "text_align_x": "left"
-      },
-      "position_x": 50.0,
-      "position_y": 100,
-      "text_scaling": false,
-      "max_width": 400,
-      "multi_lines": true,
-      "type_": "text"
-    }
-  ],
-  "type_": "primitivegroup"
-};
-
 
 export class Multiplot {
   public context: CanvasRenderingContext2D;
@@ -71,7 +47,7 @@ export class Multiplot {
     data: any,
     public width: number,
     public height: number,
-    public canvas: string
+    public canvasID: string
   ) {
     [this.features, this.plots] = this.unpackData(data);
     console.log(this)
@@ -83,16 +59,9 @@ export class Multiplot {
     if (data.plots.length == 0) plots.push(this.newEmptyPlot());
     else {
       data.plots.forEach(plot => {
-        const localData = {...plot, "elements": data.elements};
-        let newPlot: Figure;
-        if (plot.type_ == "histogram") newPlot = new Histogram(localData, this.width, this.height, 0, 0, this.canvas, true);
-        else if (plot.type_ == "parallelplot") newPlot = new ParallelPlot(localData, this.width, this.height, 0, 0, this.canvas, true);
-        else if (plot.type_ == "draw") newPlot = new Draw(localData, this.width, this.height, 0, 0, this.canvas, true);
-        else if (plot.type_ == "graph2d") newPlot = new Graph2D(localData, this.width, this.height, 0, 0, this.canvas, true);
-        else if (plot.type_ == "primitivegroupcontainer") newPlot = new Draw(PG_CONTAINER_PLOT, this.width, this.height, 0, 0, this.canvas, true);
-        else if (plot.type_ == "scatterplot") {
-          localData.points_sets = data.points_sets;
-          newPlot = new Scatter(localData, this.width, this.height, 0, 0, this.canvas, true);
+        const localData = {...plot, "elements": data.elements, "points_sets": data.points_sets};
+        const newPlot = Figure.fromMultiplot(localData, this.width, this.height, this.canvasID);
+        if (newPlot instanceof Scatter) {
           this.pointSets = newPlot.pointSets;
           this.pointSetColors = newPlot.pointSetColors;
         }
@@ -103,9 +72,7 @@ export class Multiplot {
     return [features, plots]
   }
 
-  private newEmptyPlot(): Draw {
-    return new Draw(EMPTY_PLOT, this.width, this.height, 0, 0, this.canvas);
-  }
+  private newEmptyPlot(): Draw { return new Draw(EMPTY_PLOT, this.width, this.height, 0, 0, this.canvasID) }
 
 }
 

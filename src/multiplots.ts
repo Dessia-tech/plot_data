@@ -29,13 +29,17 @@ const EMPTY_PLOT = {
   "type_": "primitivegroup"
 };
 
-
+const BLANK_SPACE = 5;
 export class Multiplot {
   public context: CanvasRenderingContext2D;
   public canvas: HTMLCanvasElement;
 
   public features: Map<string, any[]>;
   public plots: Figure[];
+  public rubberBands: Map<string, RubberBand>;
+
+  public isSelecting: boolean = false;
+  public isZooming: boolean = false;
 
   public clickedIndices: number[] = [];
   public hoveredIndices: number[] = [];
@@ -53,7 +57,7 @@ export class Multiplot {
     this.buildCanvas(canvasID);
     [this.features, this.plots] = this.unpackData(data);
     this.computeTable();
-    console.log(this)
+    this.draw();
   }
 
   private unpackData(data: any): [Map<string, any[]>, Figure[]] {
@@ -96,7 +100,7 @@ export class Multiplot {
       const yCoord = i * height;
       for (let j=0; j < nCols; j++) {
         const xCoord = j * width;
-        this.plots[k].multiplotInstantiation(new Vertex(xCoord, yCoord), width, height);
+        this.plots[k].multiplotInstantiation(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE, height - BLANK_SPACE);
         k++;
         if (k == this.plots.length) break;
       }
@@ -108,6 +112,50 @@ export class Multiplot {
       plot.draw();
       plot.mouse_interaction();
     })
+  }
+
+  public switchSelection() {
+    this.isSelecting = !this.isSelecting;
+    this.plots.forEach(plot => { if (plot instanceof Figure) plot.switchSelection() });
+  }
+
+  public switchMerge() { this.plots.forEach(plot => { if (plot instanceof Figure) plot.switchMerge() })};
+
+  public togglePoints() { this.plots.forEach(plot => { if (plot instanceof Figure) plot.togglePoints() })};
+
+  public switchZoom() {
+    this.isZooming = !this.isZooming;
+    this.plots.forEach(plot => { if (plot instanceof Figure) plot.switchZoom() });
+  }
+
+  // public zoomIn() { (this.plots[this.clickedPlotIndex] as Figure).zoomIn() }
+
+  // public zoomOut() { (this.plots[this.clickedPlotIndex] as Figure).zoomOut() }
+
+  public simpleCluster(inputValue: number) { this.plots.forEach(plot => { if (plot instanceof Scatter) plot.simpleCluster(inputValue) })};
+
+  public resetClusters(): void { this.plots.forEach(plot => { if (plot instanceof Scatter) plot.resetClusters() })};
+
+  public resetSelection(): void {
+    this.selectedIndices = [];
+    this.clickedIndices = [];
+    this.hoveredIndices = [];
+    this.rubberBands.forEach(rubberBand => rubberBand.reset());
+    this.plots.forEach(plot => {if (plot instanceof Figure) plot.initSelectors()});
+    this.draw();
+  }
+
+  public resetView(): void {
+    this.resetAllObjects();
+    this.draw();
+  }
+
+  resetAllObjects(): void {
+    this.plots.forEach(plot => plot.reset_scales());
+  }
+
+  public switchOrientation(): void {
+    this.plots.forEach(plot => { if (plot instanceof ParallelPlot) plot.switchOrientation() });
   }
 }
 

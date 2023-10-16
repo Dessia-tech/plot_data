@@ -418,7 +418,7 @@ export class PrimitiveGroupContainer extends PlotData {
       this.primitive_groups.push(new_plot_data);
       this.display_order.push(this.primitive_groups.length - 1);
       new_plot_data.draw_initial();
-      new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
+      new_plot_data.mouse_interaction();
       new_plot_data.interaction_ON = false;
       this.primitive_dict[point_index.toString()] = this.primitive_groups.length - 1;
       this.refresh_layout();
@@ -952,7 +952,7 @@ export class PrimitiveGroupContainer extends PlotData {
       var clickOnVertex:boolean = false;
 
       for (let i=0; i<nbObjects; i++) {
-        this.primitive_groups[i].mouse_interaction(this.primitive_groups[i].isParallelPlot);
+        this.primitive_groups[i].mouse_interaction();
       }
       this.setAllInteractionsToOff();
 
@@ -1518,7 +1518,7 @@ export class Figure extends PlotData {
     this.draw();
   }
 
-  public mouse_interaction(isParallelPlot: boolean): void {
+  public mouse_interaction(): void {
     if (this.interaction_ON === true) {
       let clickedObject: any = null;
       let isDrawing = false;
@@ -2573,9 +2573,9 @@ export class ParallelPlot extends Figure {
     this.updateSelection(axesSelections);
   }
 
-  public mouse_interaction(isParallelPlot: boolean): void {
+  public mouse_interaction(): void {
     this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => {if (!this.changedAxes.includes(e)) this.changedAxes.push(e)}));
-    super.mouse_interaction(isParallelPlot);
+    super.mouse_interaction();
   }
 
   protected resetMouseEvents(): [any, boolean] {

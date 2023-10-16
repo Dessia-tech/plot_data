@@ -106,7 +106,7 @@ export class Multiplot {
   public draw(): void {
     this.plots.forEach(plot => {
       plot.draw();
-      plot.mouse_interaction(false);
+      plot.mouse_interaction();
     })
   }
 }
@@ -449,7 +449,7 @@ export class MultiplePlots {
       this.display_order.push(this.nbObjects-1);
       this.to_display_plots.push(this.nbObjects-1);
       new_plot_data.draw_initial();
-      new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
+      new_plot_data.mouse_interaction();
       new_plot_data.interaction_ON = false;
       // this.redrawAllObjects();
     }
@@ -1804,7 +1804,7 @@ export class MultiplePlots {
       var double_click = false;
       var ctrlKey = false; var shiftKey = false;
 
-      this.objectList.forEach(plot => { plot.mouse_interaction(plot.isParallelPlot) });
+      this.objectList.forEach(plot => { plot.mouse_interaction() });
       this.setAllInteractionsToOff();
 
       window.addEventListener('keydown', e => {
@@ -1953,7 +1953,7 @@ export class MultiplePlots {
                     this.setAllInterpolationToOFF();
                   }
                   this.reset_selected_points_except([this.clickedPlotIndex]);
-                  this.objectList[this.clickedPlotIndex].mouse_interaction(true);
+                  this.objectList[this.clickedPlotIndex].mouse_interaction();
                 }
               }
               if (this.objectList[this.last_index] instanceof Figure && !(this.objectList[this.last_index] instanceof Graph2D)) {

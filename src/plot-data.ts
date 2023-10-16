@@ -2197,46 +2197,46 @@ export abstract class PlotData extends EventEmitter {
   }
 
 
-  mouse_interaction(is_parallelplot:boolean) {
-    if (this.interaction_ON === true) {
-      var isDrawing = false;
-      var mouse_moving = false;
-      var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
-      var click_on_selectw_border:boolean = false;
-      var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
+  mouse_interaction() {
+  //   if (this.interaction_ON === true) {
+  //     var isDrawing = false;
+  //     var mouse_moving = false;
+  //     var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
+  //     var click_on_selectw_border:boolean = false;
+  //     var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
 
-      var canvas = document.getElementById(this.canvas_id);
+  //     var canvas = document.getElementById(this.canvas_id);
 
-      canvas.addEventListener('mousedown', e => {
-        if (this.interaction_ON) {
-          [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
-        }
-      });
+  //     canvas.addEventListener('mousedown', e => {
+  //       if (this.interaction_ON) {
+  //         [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
+  //       }
+  //     });
 
-      canvas.addEventListener('mousemove', e => {
-        if (this.interaction_ON) {
-          [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
-        }
-      });
+  //     canvas.addEventListener('mousemove', e => {
+  //       if (this.interaction_ON) {
+  //         [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_move_interaction(isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y, e, canvas, click_on_selectw_border, up, down, left, right);
+  //       }
+  //     });
 
-      canvas.addEventListener('mouseup', e => {
-        if (this.interaction_ON) {
-          [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
-        }
-      })
+  //     canvas.addEventListener('mouseup', e => {
+  //       if (this.interaction_ON) {
+  //         [isDrawing, mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y] = this.mouse_up_interaction(mouse_moving, mouse1X, mouse1Y, mouse2X, mouse2Y);
+  //       }
+  //     })
 
-      canvas.addEventListener('wheel', e => {
-        if (!is_parallelplot && this.interaction_ON) {
-          [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
-        }
-      });
+  //     canvas.addEventListener('wheel', e => {
+  //       if (!is_parallelplot && this.interaction_ON) {
+  //         [mouse3X, mouse3Y] = this.wheel_interaction(mouse3X, mouse3Y, e);
+  //       }
+  //     });
 
-      canvas.addEventListener('mouseleave', e => {
-        isDrawing = false;
-        mouse_moving = false;
-      });
+  //     canvas.addEventListener('mouseleave', e => {
+  //       isDrawing = false;
+  //       mouse_moving = false;
+  //     });
 
-    }
+    // }
   }
 
   get_nb_points_inside_canvas(list_points, mvx, mvy) { //given the fact that list_point ([[x0,y0],...,[xn,yn]]) x is in an increasing order

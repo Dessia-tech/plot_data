@@ -29,7 +29,7 @@ const EMPTY_PLOT = {
   "type_": "primitivegroup"
 };
 
-const BLANK_SPACE = 5;
+const BLANK_SPACE = 4;
 export class Multiplot {
   public context: CanvasRenderingContext2D;
   public canvas: HTMLCanvasElement;
@@ -100,19 +100,14 @@ export class Multiplot {
       const yCoord = i * height;
       for (let j=0; j < nCols; j++) {
         const xCoord = j * width;
-        this.plots[k].multiplotInstantiation(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE, height - BLANK_SPACE);
+        this.plots[k].multiplotInstantiation(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE * 2, height - BLANK_SPACE * 2);
         k++;
         if (k == this.plots.length) break;
       }
     }
   }
 
-  public draw(): void {
-    this.plots.forEach(plot => {
-      plot.draw();
-      plot.mouse_interaction();
-    })
-  }
+  public draw(): void { this.plots.forEach(plot => plot.draw()) }
 
   public switchSelection() {
     this.isSelecting = !this.isSelecting;
@@ -150,9 +145,7 @@ export class Multiplot {
     this.draw();
   }
 
-  resetAllObjects(): void {
-    this.plots.forEach(plot => plot.reset_scales());
-  }
+  public resetAllObjects(): void { this.plots.forEach(plot => plot.resetScales()) }
 
   public switchOrientation(): void {
     this.plots.forEach(plot => { if (plot instanceof ParallelPlot) plot.switchOrientation() });

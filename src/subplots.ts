@@ -1188,12 +1188,16 @@ export class Figure extends PlotData {
     return unpackedData
   }
 
+  public drawBorders() {
+    const rect = new newRect(this.origin, this.size);
+    rect.lineWidth = 0.5;
+    rect.strokeStyle = "hsl(0, 0%, 83%)";
+    rect.isFilled = false;
+    rect.draw(this.context);
+  }
+
   private drawCanvas(): void {
-    this.draw_empty_canvas(this.context);
-    this.draw_rect();
-    this.context.beginPath();
-    this.context.rect(this.origin.x, this.origin.y, this.width, this.height);
-    this.context.closePath();
+    this.context.clearRect(this.origin.x - 1, this.origin.y - 1, this.width + 2, this.height + 2);
   }
 
   public setCanvas(canvasID: string):void {
@@ -1292,7 +1296,7 @@ export class Figure extends PlotData {
 
   protected resetAxes(): void { this.axes.forEach(axis => axis.reset()) }
 
-  public reset_scales(): void { // TODO: merge with resetView
+  public resetScales(): void { // TODO: merge with resetView
     this.updateSize();
     this.computeOffset();
     this.relocateAxes();
@@ -1300,7 +1304,7 @@ export class Figure extends PlotData {
   }
 
   public resetView(): void {
-    this.reset_scales();
+    this.resetScales();
     this.draw();
   }
 
@@ -1308,7 +1312,7 @@ export class Figure extends PlotData {
     this.origin = origin;
     this.width = width;
     this.height = height;
-    this.reset_scales();
+    this.resetScales();
   }
 
   public initSelectors(): void {
@@ -1405,6 +1409,7 @@ export class Figure extends PlotData {
 
     this.context.resetTransform();
     if (this.multiplot_manipulation) this.drawZoneRectangle(this.context);
+    this.drawBorders();
     this.context.restore();
   }
 
@@ -1989,8 +1994,8 @@ export class Scatter extends Frame {
     if (data.tooltip) this.tooltipAttributes = data.tooltip.attributes;
   }
 
-  public reset_scales(): void {
-    super.reset_scales();
+  public resetScales(): void {
+    super.resetScales();
     this.computePoints();
   }
 
@@ -2296,7 +2301,7 @@ export class Graph2D extends Scatter {
     }
   }
 
-  public reset_scales(): void {
+  public resetScales(): void {
     const scale = new Vertex(this.frameMatrix.a, this.frameMatrix.d).scale(this.initScale);
     const translation = new Vertex(this.axes[0].maxValue - this.axes[0].initMaxValue, this.axes[1].maxValue - this.axes[1].initMaxValue).scale(scale);
     this.curves.forEach(curve => {
@@ -2305,7 +2310,7 @@ export class Graph2D extends Scatter {
         curve.mouseClick = curve.previousMouseClick.copy();
       }
     });
-    super.reset_scales();
+    super.resetScales();
   }
 
   public switchMerge(): void { this.isMerged = false }
@@ -2368,8 +2373,8 @@ export class ParallelPlot extends Figure {
 
   protected get marginOffset(): Vertex { return new Vertex(this.isVertical ? 0 : SIZE_END, this.isVertical ? SIZE_END : SIZE_END * 4) }
 
-  public reset_scales(): void { // TODO: merge with resetView
-    super.reset_scales();
+  public resetScales(): void { // TODO: merge with resetView
+    super.resetScales();
     this.updateAxesLocation();
   }
 
@@ -2606,8 +2611,8 @@ export class Draw extends Frame {
     this.computeTextBorders(this.context);
   }
 
-  public reset_scales(): void { // TODO: merge with resetView
-    super.reset_scales();
+  public resetScales(): void { // TODO: merge with resetView
+    super.resetScales();
     this.updateBounds();
   }
 

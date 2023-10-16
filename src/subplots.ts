@@ -1043,13 +1043,14 @@ const PG_CONTAINER_PLOT = {
         "object_class": "plot_data.core.TextStyle",
         "name": "",
         "text_color": "rgb(100, 100, 100)",
-        "font_size": 20,
-        "text_align_x": "left"
+        "font_size": 16,
+        "text_align_x": "center",
+        "text_align_y": "middle"
       },
       "position_x": 50.0,
       "position_y": 100,
       "text_scaling": false,
-      "max_width": 400,
+      "max_width": 250,
       "multi_lines": true,
       "type_": "text"
     }
@@ -1104,10 +1105,10 @@ export class Figure extends PlotData {
     public height: number,
     X: number,
     Y: number,
-    public canvas_id: string,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, false, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, false, X, Y, canvasID, is_in_multiplot);
       this.unpackAxisStyle(data);
       this.origin = new Vertex(X, Y);
       this.size = new Vertex(width - X, height - Y);
@@ -1301,6 +1302,13 @@ export class Figure extends PlotData {
   public resetView(): void {
     this.reset_scales();
     this.draw();
+  }
+
+  public multiplotInstantiation(origin: Vertex, width: number, height: number): void {
+    this.origin = origin;
+    this.width = width;
+    this.height = height;
+    this.resetView();
   }
 
   public initSelectors(): void {
@@ -1517,7 +1525,7 @@ export class Figure extends PlotData {
       let canvasMouse = new Vertex(0, 0); let canvasDown = new Vertex(0, 0);
       let frameMouse = new Vertex(0, 0); let frameDown = new Vertex(0, 0);
       let absoluteMouse = new Vertex(0, 0);
-      const canvas = document.getElementById(this.canvas_id);
+      const canvas = document.getElementById(this.canvasID);
       let ctrlKey = false; let shiftKey = false; let spaceKey = false;
       const zoomBox = new SelectionBox();
 
@@ -1662,10 +1670,10 @@ export class Frame extends Figure {
     public height: number,
     X: number,
     Y: number,
-    public canvas_id: string,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
     }
 
   get frameMatrix(): DOMMatrix {
@@ -1808,10 +1816,10 @@ export class Histogram extends Frame {
     public height: number,
     X: number,
     Y: number,
-    public canvas_id: string,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
       this.unpackBarStyle(data);
     }
 
@@ -1959,10 +1967,10 @@ export class Scatter extends Frame {
     public height: number,
     X: number,
     Y: number,
-    public canvas_id: string,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
       if (this.nSamples > 0) {
         this.tooltipAttributes = data.tooltip ? data.tooltip.attribute : Array.from(this.features.keys());
         this.unpackPointStyle(data);
@@ -2232,10 +2240,10 @@ export class Graph2D extends Scatter {
     public height: number,
     X: number,
     Y: number,
-    public canvas_id: string,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
     }
 
   protected unpackData(data: any): Map<string, any[]> {
@@ -2331,10 +2339,10 @@ export class ParallelPlot extends Figure {
     public height: number,
     X: number,
     Y: number,
-    public canvas_id: string,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
       this.computeCurves();
     }
 
@@ -2584,17 +2592,17 @@ export class Draw extends Frame {
     public height: number,
     X: number,
     Y: number,
-    public canvas_id: string,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
       this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.scale);
     }
 
   public shiftOnAction(canvas: HTMLElement): void {}
 
-  public define_canvas(canvas_id: string):void {
-    super.define_canvas(canvas_id);
+  public define_canvas(canvasID: string):void {
+    super.define_canvas(canvasID);
     this.computeTextBorders(this.context);
   }
 

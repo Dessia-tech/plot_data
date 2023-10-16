@@ -1,6 +1,6 @@
 import {PlotData, Interactions} from './plot-data';
 import {Point2D} from './primitives';
-import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
+import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand, Vertex } from './utils';
 import { PlotContour, PrimitiveGroupContainer, Histogram, Frame, Scatter, Figure, Graph2D, ParallelPlot, Draw } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
@@ -32,6 +32,7 @@ const EMPTY_PLOT = {
 
 export class Multiplot {
   public context: CanvasRenderingContext2D;
+  public canvas: HTMLCanvasElement;
 
   public features: Map<string, any[]>;
   public plots: Figure[];
@@ -49,7 +50,9 @@ export class Multiplot {
     public height: number,
     public canvasID: string
   ) {
+    this.buildCanvas(canvasID);
     [this.features, this.plots] = this.unpackData(data);
+    this.computeTable();
     console.log(this)
   }
 
@@ -66,6 +69,7 @@ export class Multiplot {
           this.pointSetColors = newPlot.pointSetColors;
         }
         if (!(newPlot instanceof Graph2D || newPlot instanceof Draw)) newPlot.features = features;
+        newPlot.context = this.context;
         plots.push(newPlot)
       })
     }
@@ -74,6 +78,35 @@ export class Multiplot {
 
   private newEmptyPlot(): Draw { return new Draw(EMPTY_PLOT, this.width, this.height, 0, 0, this.canvasID) }
 
+  public buildCanvas(canvasID: string):void {
+    this.canvas = document.getElementById(canvasID) as HTMLCanvasElement;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+    this.context = this.canvas.getContext("2d");
+  }
+
+  public computeTable(): void {
+    const ratio = Math.ceil(this.width > this.height ? this.width / this.height : this.height / this.width);
+    const nRows = Math.ceil(this.plots.length / ratio);
+    const nCols = Math.ceil(this.plots.length / nRows);
+    const height = this.height / nRows;
+    const width = this.width / nCols;
+    let k = 0;
+    for (let i=0; i < nRows; i++) {
+      const yCoord = i * height;
+      for (let j=0; j < nCols; j++) {
+        const xCoord = j * width;
+        this.plots[k].multiplotInstantiation(new Vertex(xCoord, yCoord), width, height);
+        this.plots[k].mouse_interaction(false);
+        k++;
+        if (k == this.plots.length) break;
+      }
+    }
+  }
+
+  public draw(): void {
+
+  }
 }
 
 /**

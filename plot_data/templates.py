@@ -90,7 +90,7 @@ HISTOGRAM_COMMANDS = """
             plot_data.mouse_interaction(plot_data.isParallelPlot);"""
 
 MULTIPLOT_COMMANDS = """
-            var plot_data = new PlotData.Multiplot(data, width, height, true, $canvas_id.id);"""
+            var plot_data = new PlotData.Multiplot(data, width, height, $canvas_id.id);"""
 
 PRIMITIVE_GROUP_CONTAINER_COMMANDS = """
             var primitive_group_container = new PlotData.PrimitiveGroupContainer(data, width, height,

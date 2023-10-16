@@ -97,7 +97,6 @@ export class Multiplot {
       for (let j=0; j < nCols; j++) {
         const xCoord = j * width;
         this.plots[k].multiplotInstantiation(new Vertex(xCoord, yCoord), width, height);
-        this.plots[k].mouse_interaction(false);
         k++;
         if (k == this.plots.length) break;
       }
@@ -105,7 +104,10 @@ export class Multiplot {
   }
 
   public draw(): void {
-
+    this.plots.forEach(plot => {
+      plot.draw();
+      plot.mouse_interaction(false);
+    })
   }
 }
 

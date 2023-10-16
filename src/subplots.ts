@@ -1308,7 +1308,7 @@ export class Figure extends PlotData {
     this.origin = origin;
     this.width = width;
     this.height = height;
-    this.resetView();
+    this.reset_scales();
   }
 
   public initSelectors(): void {
@@ -2376,6 +2376,7 @@ export class ParallelPlot extends Figure {
   public switchOrientation(): void {
     this.isVertical = !this.isVertical;
     this.updateAxesLocation();
+    this.draw();
   }
 
   private updateAxesLocation(): void {
@@ -2387,7 +2388,6 @@ export class ParallelPlot extends Figure {
       axis.updateLocation(axisOrigin, axisEnd, axisBoundingBoxes[index], index, this.drawnFeatures.length);
     });
     this.computeCurves();
-    this.draw();
   }
 
   private computeAxesStep(): number {

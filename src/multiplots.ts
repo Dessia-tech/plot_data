@@ -58,6 +58,7 @@ export class Multiplot {
     [this.features, this.plots] = this.unpackData(data);
     this.computeTable();
     this.draw();
+    this.mouseHandler();
   }
 
   private unpackData(data: any): [Map<string, any[]>, Figure[]] {
@@ -111,16 +112,16 @@ export class Multiplot {
 
   public switchSelection() {
     this.isSelecting = !this.isSelecting;
-    this.plots.forEach(plot => { if (plot instanceof Figure) plot.switchSelection() });
+    this.plots.forEach(plot => plot.switchSelection());
   }
 
-  public switchMerge() { this.plots.forEach(plot => { if (plot instanceof Figure) plot.switchMerge() })};
+  public switchMerge() { this.plots.forEach(plot => plot.switchMerge())};
 
-  public togglePoints() { this.plots.forEach(plot => { if (plot instanceof Figure) plot.togglePoints() })};
+  public togglePoints() { this.plots.forEach(plot => plot.togglePoints())};
 
   public switchZoom() {
     this.isZooming = !this.isZooming;
-    this.plots.forEach(plot => { if (plot instanceof Figure) plot.switchZoom() });
+    this.plots.forEach(plot => plot.switchZoom());
   }
 
   // public zoomIn() { (this.plots[this.clickedPlotIndex] as Figure).zoomIn() }
@@ -150,6 +151,43 @@ export class Multiplot {
   public switchOrientation(): void {
     this.plots.forEach(plot => { if (plot instanceof ParallelPlot) plot.switchOrientation() });
   }
+
+  public mouseHandler(): void {
+    let ctrlKey = false;
+    let shiftKey = false;
+
+    this.plots.forEach(plot => plot.mouse_interaction())
+
+    window.addEventListener('keydown', e => {
+      if (e.key == "Control") {
+        ctrlKey = true;
+        this.canvas.style.cursor = 'default';
+      }
+      if (e.key == "Shift") {
+        shiftKey = true;
+        if (!ctrlKey) { this.isSelecting = true; this.canvas.style.cursor = 'crosshair'; this.draw() }
+      }
+    });
+
+    window.addEventListener('keyup', e => {
+      if (e.key == "Control") ctrlKey = false;
+      if (e.key == "Shift") {
+        shiftKey = false;
+        this.isSelecting = false;
+        this.plots.forEach(plot => {plot.isSelecting = false; plot.is_drawing_rubber_band = false});
+        this.canvas.style.cursor = 'default';
+        this.draw() }
+    });
+
+    this.canvas.addEventListener('mousemove', e => {
+      // this.plots.forEach(plot => {
+      //   console.log(new Vertex(e.offsetX, e.offsetY), plot.origin, plot.size)
+      //   if (plot.isInCanvas(new Vertex(e.offsetX, e.offsetY))) plot.mouse_interaction();
+      // })
+    })
+
+  }
+
 }
 
 /**

@@ -1154,7 +1154,7 @@ export class Figure extends PlotData {
     else if (data.type_ == "scatterplot") return new Scatter(data, width, height, 0, 0, canvasID, true);
   }
 
-  private isInCanvas(vertex: Vertex): boolean {
+  public isInCanvas(vertex: Vertex): boolean {
     return vertex.x >= this.origin.x && vertex.x <= this.origin.x + this.size.x && vertex.y >= this.origin.y && vertex.y <= this.origin.y + this.size.y
   }
 

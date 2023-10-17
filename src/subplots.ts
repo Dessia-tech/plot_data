@@ -2644,7 +2644,7 @@ export class newGraph2D extends newScatter {
     if (data.graphs) {
       data.graphs.forEach(graph => {
         if (graph.elements.length != 0) {
-          this.curves.push(LineSequence.getGraphProperties(graph));
+          this.curves.push(LineSequence.unpackGraphProperties(graph));
           const curveIndices = range(graphSamples.length, graphSamples.length + graph.elements.length);
           const graphPointStyle = new newPointStyle(graph.point_style);
           this.pointStyles.push(...new Array(curveIndices.length).fill(graphPointStyle));
@@ -3046,7 +3046,7 @@ export class Draw extends Frame {
   }
 
   protected axisEqual(): void {
-    if (this.axes[0].drawLength / this.axes[0].interval > this.axes[1].drawLength / this.axes[1].interval) this.axes[0].otherAxisScaling(this.axes[1])
+    if (this.axes[0].drawScale > this.axes[1].drawScale) this.axes[0].otherAxisScaling(this.axes[1])
     else this.axes[1].otherAxisScaling(this.axes[0]);
     this.axes.forEach(axis => axis.saveLocation());
     this.updateAxes();

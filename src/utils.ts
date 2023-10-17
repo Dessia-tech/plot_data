@@ -1354,7 +1354,7 @@ export class newShape {
 
   public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
 
-  public getStyle(): { [key: string]: any } {
+  public get drawingStyle(): { [key: string]: any } {
     const style = {};
     style["lineWidth"] = this.lineWidth;
     style["dashLine"] = this.dashLine;
@@ -1363,6 +1363,11 @@ export class newShape {
     style["fillStyle"] = this.fillStyle;
     style["alpha"] = this.alpha;
     return style
+  }
+
+  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): LineSegment | newRect | newPoint2D {
+    if (!this.isFilled) return new LineSegment(legendOrigin.copy(), legendOrigin.add(legendSize))
+    return new newRect(legendOrigin.copy(), legendSize);
   }
 
   public static deserialize(data: { [key: string]: any }, scale: Vertex): newShape {
@@ -1644,10 +1649,8 @@ export abstract class AbstractHalfLine extends newShape {
     this.buildPath();
   }
 
-  public getStyle(): { [key: string]: any } {
-    const style = super.getStyle();
-    style["orientation"] = this.orientation;
-    return style
+  public get drawingStyle(): { [key: string]: any } {
+    return {...super.drawingStyle, "orientation": this.orientation}
   }
 
   public getBounds(): [Vertex, Vertex] {
@@ -1802,10 +1805,8 @@ export abstract class AbstractLinePoint extends newShape {
     this.buildPath();
   }
 
-  public getStyle(): { [key: string]: any } {
-    const style = super.getStyle();
-    style["orientation"] = this.orientation;
-    return style
+  public get drawingStyle(): { [key: string]: any } {
+    return {...super.drawingStyle, "orientation": this.orientation}
   }
 
   public getBounds(): [Vertex, Vertex] {
@@ -1906,10 +1907,8 @@ export abstract class AbstractTriangle extends newShape {
     this.buildPath();
   }
 
-  public getStyle(): { [key: string]: any } {
-    const style = super.getStyle();
-    style["orientation"] = this.orientation;
-    return style
+  public get drawingStyle(): { [key: string]: any } {
+    return {...super.drawingStyle, "orientation": this.orientation}
   }
 
   public abstract buildPath(): void;
@@ -1983,7 +1982,6 @@ export class Triangle extends AbstractTriangle {
     if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
   }
 }
-
 
 export class Contour extends newShape {
   constructor(
@@ -2472,8 +2470,8 @@ export class newPoint2D extends newShape {
     this.lineWidth = 1;
   };
 
-  public getStyle(): { [key: string]: any } {
-    const style = super.getStyle();
+  public get drawingStyle(): { [key: string]: any } {
+    const style = super.drawingStyle;
     style["markerOrientation"] = this.markerOrientation;
     style["marker"] = this.marker;
     style["size"] = this.size;
@@ -2516,6 +2514,14 @@ export class newPoint2D extends newShape {
     this.lineWidth = style.lineWidth ?? this.lineWidth;
     this.marker = style.marker ?? this.marker;
     this.markerOrientation = style.orientation ?? this.markerOrientation;
+  }
+
+  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): newPoint2D {
+    const legend = new newPoint2D(legendOrigin.x, legendOrigin.y);
+    legend.size = legendSize.y * 0.9;
+    legend.marker = this.marker;
+    legend.markerOrientation = this.markerOrientation;
+    return legend
   }
 
   public copy(): newPoint2D {
@@ -2731,15 +2737,9 @@ export class LineSequence extends newShape {
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>(this.name ? [["Name", this.name]] : []) }
 
-  private getEdgeStyle(edgeStyle: { [key: string]: any }): void {
-    if (edgeStyle.line_width) this.lineWidth = edgeStyle.line_width;
-    if (edgeStyle.color_stroke) this.strokeStyle = edgeStyle.color_stroke;
-    if (edgeStyle.dashline) this.dashLine = edgeStyle.dashline;
-  }
-
-  public static getGraphProperties(graph: { [key: string]: any }): LineSequence {
+  public static unpackGraphProperties(graph: { [key: string]: any }): LineSequence {
     const emptyLineSequence = new LineSequence([], graph.name);
-    if (graph.edge_style) emptyLineSequence.getEdgeStyle(graph.edge_style);
+    if (graph.edge_style) emptyLineSequence.deserializeEdgeStyle(graph.edge_style);
     return emptyLineSequence
   }
 
@@ -2869,16 +2869,8 @@ export class newLabel extends newShape {
   }
 
   public getShapeStyle(shape: newShape, origin: Vertex): void {
-    const style = shape.getStyle();
-    if (!shape.isFilled && !(shape instanceof newPoint2D)) this.legend = new LineSegment(origin.copy(), origin.add(this.shapeSize));
-    else if (shape instanceof newPoint2D) {
-      this.legend = new newPoint2D(origin.x, origin.y);
-      this.legend.size = this.shapeSize.y * 0.9;
-      this.legend.marker = shape.marker;
-      this.legend.markerOrientation = shape.markerOrientation;
-    }
-    else this.legend = new newRect(origin.copy(), this.shapeSize);
-    Object.entries(style).map(([key, value]) => this[key] = value);
+    this.legend = shape.styleToLegend(origin, this.shapeSize);
+    Object.entries(shape.drawingStyle).map(([key, value]) => this[key] = value);
   }
 
   public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): newLabel {
@@ -3293,6 +3285,8 @@ export class newAxis extends newShape {
   }
 
   get interval(): number { return Math.abs(this.maxValue - this.minValue) };
+
+  get drawScale(): number { return this.drawLength / this.interval }
 
   get center(): number { return (this.maxValue + this.minValue) / 2 }
 

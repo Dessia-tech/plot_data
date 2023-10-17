@@ -1993,11 +1993,7 @@ export class Contour extends newShape {
   }
 
   public static deserialize(data: any, scale: Vertex): Contour {
-    const lines = [];
-    data.plot_data_primitives.forEach(primitive => {
-      if (primitive.type_ == "linesegment2d") lines.push(LineSegment.deserialize(primitive, scale));
-      if (primitive.type_ == "arc") lines.push(Arc.deserialize(primitive, scale));
-    })
+    const lines = data.plot_data_primitives.map(primitive => newShape.deserialize(primitive, scale));
     const contour = new Contour(lines, data.is_filled ?? false);
     contour.deserializeEdgeStyle(data);
     if (contour.isFilled) contour.deserializeSurfaceStyle(data);
@@ -2144,46 +2140,46 @@ export class newText extends newShape {
 
   get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
 
-  private getCoonsUnscaled(): [Vertex, Vertex] {
-    const firstCoon = this.origin.copy();
-    const secondCoon = firstCoon.copy();
-    const xMinMaxFactor = Math.sign(secondCoon.x) * 0.01 * Math.sign(this.scale.x);
-    const yMinMaxFactor = Math.sign(secondCoon.y) * 0.01 * Math.sign(this.scale.y);
+  private getCornersUnscaled(): [Vertex, Vertex] {
+    const firstCorner = this.origin.copy();
+    const secondCorner = firstCorner.copy();
+    const xMinMaxFactor = Math.sign(secondCorner.x) * 0.01 * Math.sign(this.scale.x);
+    const yMinMaxFactor = Math.sign(secondCorner.y) * 0.01 * Math.sign(this.scale.y);
     if (this.align == "center") {
-      firstCoon.x *= 0.99;
-      secondCoon.x *= 1.01;
+      firstCorner.x *= 0.99;
+      secondCorner.x *= 1.01;
     } else if (["right", "end"].includes(this.align)) {
-      if (secondCoon.x != 0) secondCoon.x *= 1 - xMinMaxFactor;
-      else secondCoon.x = -Math.sign(this.scale.x);
+      if (secondCorner.x != 0) secondCorner.x *= 1 - xMinMaxFactor;
+      else secondCorner.x = -Math.sign(this.scale.x);
     } else if (["left", "start"].includes(this.align)) {
-      if (secondCoon.x != 0) secondCoon.x *= 1 + xMinMaxFactor;
-      else secondCoon.x = Math.sign(this.scale.x);
+      if (secondCorner.x != 0) secondCorner.x *= 1 + xMinMaxFactor;
+      else secondCorner.x = Math.sign(this.scale.x);
     }
     if (this.baseline == "middle") {
-      firstCoon.y *= 0.99;
-      secondCoon.y *= 1.01;
+      firstCorner.y *= 0.99;
+      secondCorner.y *= 1.01;
     } else if (["top", "hanging"].includes(this.baseline)) {
-      if (secondCoon.y != 0) secondCoon.y *= 1 + yMinMaxFactor;
-      else secondCoon.y = Math.sign(this.scale.y);
+      if (secondCorner.y != 0) secondCorner.y *= 1 + yMinMaxFactor;
+      else secondCorner.y = Math.sign(this.scale.y);
     } else if (["bottom", "alphabetic"].includes(this.baseline)) {
-      if (secondCoon.y != 0) secondCoon.y *= 1 - yMinMaxFactor;
-      else secondCoon.y = -Math.sign(this.scale.y);
+      if (secondCorner.y != 0) secondCorner.y *= 1 - yMinMaxFactor;
+      else secondCorner.y = -Math.sign(this.scale.y);
     }
-    return [firstCoon, secondCoon]
+    return [firstCorner, secondCorner]
   }
 
-  private getCoonsScaled(): [Vertex, Vertex] {
-    const firstCoon = this.boundingBox.origin.copy();
+  private getCornersScaled(): [Vertex, Vertex] {
+    const firstCorner = this.boundingBox.origin.copy();
     const diagonalVector = this.boundingBox.size.copy();
-    const secondCoon = firstCoon.add(diagonalVector);
-    return [firstCoon, secondCoon]
+    const secondCorner = firstCorner.add(diagonalVector);
+    return [firstCorner, secondCorner]
   }
 
   public getBounds(): [Vertex, Vertex] {
-    const [firstCoon, secondCoon] = this.isScaled ? this.getCoonsScaled() : this.getCoonsUnscaled();
+    const [firstCorner, secondCorner] = this.isScaled ? this.getCornersScaled() : this.getCornersUnscaled();
     return [
-      new Vertex(Math.min(firstCoon.x, secondCoon.x), Math.min(firstCoon.y, secondCoon.y)),
-      new Vertex(Math.max(firstCoon.x, secondCoon.x), Math.max(firstCoon.y, secondCoon.y))
+      new Vertex(Math.min(firstCorner.x, secondCorner.x), Math.min(firstCorner.y, secondCorner.y)),
+      new Vertex(Math.max(firstCorner.x, secondCorner.x), Math.max(firstCorner.y, secondCorner.y))
     ]
   }
 
@@ -2880,8 +2876,7 @@ export class newLabel extends newShape {
     text.isScaled = false;
     text.baseline = "middle";
     text.align = "start";
-    const label = new newLabel(shape, text);
-    return label
+    return new newLabel(shape, text)
   }
 
   public deserializeStyle(data): void {
@@ -3986,9 +3981,7 @@ export class ShapeCollection {
   public includes(shape: newShape) { return this.shapes.includes(shape) }
 
   public static fromPrimitives(primitives: { [key: string]: any }, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
-    const shapes = [];
-    primitives.forEach(primitive => shapes.push(newShape.deserialize(primitive, scale)))
-    return new ShapeCollection(shapes)
+    return new ShapeCollection(primitives.map(primitive => newShape.deserialize(primitive, scale)))
   }
 
   public getBounds(): [Vertex, Vertex] {

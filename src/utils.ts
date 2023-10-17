@@ -1354,7 +1354,7 @@ export class newShape {
 
   public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
 
-  public getStyle(): { [key: string]: any } {
+  public get drawingStyle(): { [key: string]: any } {
     const style = {};
     style["lineWidth"] = this.lineWidth;
     style["dashLine"] = this.dashLine;
@@ -1363,6 +1363,11 @@ export class newShape {
     style["fillStyle"] = this.fillStyle;
     style["alpha"] = this.alpha;
     return style
+  }
+
+  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): LineSegment | newRect | newPoint2D {
+    if (!this.isFilled) return new LineSegment(legendOrigin.copy(), legendOrigin.add(legendSize))
+    return new newRect(legendOrigin.copy(), legendSize);
   }
 
   public static deserialize(data: { [key: string]: any }, scale: Vertex): newShape {
@@ -1644,10 +1649,8 @@ export abstract class AbstractHalfLine extends newShape {
     this.buildPath();
   }
 
-  public getStyle(): { [key: string]: any } {
-    const style = super.getStyle();
-    style["orientation"] = this.orientation;
-    return style
+  public get drawingStyle(): { [key: string]: any } {
+    return {...super.drawingStyle, "orientation": this.orientation}
   }
 
   public getBounds(): [Vertex, Vertex] {
@@ -1802,10 +1805,8 @@ export abstract class AbstractLinePoint extends newShape {
     this.buildPath();
   }
 
-  public getStyle(): { [key: string]: any } {
-    const style = super.getStyle();
-    style["orientation"] = this.orientation;
-    return style
+  public get drawingStyle(): { [key: string]: any } {
+    return {...super.drawingStyle, "orientation": this.orientation}
   }
 
   public getBounds(): [Vertex, Vertex] {
@@ -1906,10 +1907,8 @@ export abstract class AbstractTriangle extends newShape {
     this.buildPath();
   }
 
-  public getStyle(): { [key: string]: any } {
-    const style = super.getStyle();
-    style["orientation"] = this.orientation;
-    return style
+  public get drawingStyle(): { [key: string]: any } {
+    return {...super.drawingStyle, "orientation": this.orientation}
   }
 
   public abstract buildPath(): void;
@@ -1984,7 +1983,6 @@ export class Triangle extends AbstractTriangle {
   }
 }
 
-
 export class Contour extends newShape {
   constructor(
     public lines: (Arc | LineSegment)[] = [],
@@ -1995,11 +1993,7 @@ export class Contour extends newShape {
   }
 
   public static deserialize(data: any, scale: Vertex): Contour {
-    const lines = [];
-    data.plot_data_primitives.forEach(primitive => {
-      if (primitive.type_ == "linesegment2d") lines.push(LineSegment.deserialize(primitive, scale));
-      if (primitive.type_ == "arc") lines.push(Arc.deserialize(primitive, scale));
-    })
+    const lines = data.plot_data_primitives.map(primitive => newShape.deserialize(primitive, scale));
     const contour = new Contour(lines, data.is_filled ?? false);
     contour.deserializeEdgeStyle(data);
     if (contour.isFilled) contour.deserializeSurfaceStyle(data);
@@ -2146,46 +2140,46 @@ export class newText extends newShape {
 
   get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
 
-  private getCoonsUnscaled(): [Vertex, Vertex] {
-    const firstCoon = this.origin.copy();
-    const secondCoon = firstCoon.copy();
-    const xMinMaxFactor = Math.sign(secondCoon.x) * 0.01 * Math.sign(this.scale.x);
-    const yMinMaxFactor = Math.sign(secondCoon.y) * 0.01 * Math.sign(this.scale.y);
+  private getCornersUnscaled(): [Vertex, Vertex] {
+    const firstCorner = this.origin.copy();
+    const secondCorner = firstCorner.copy();
+    const xMinMaxFactor = Math.sign(secondCorner.x) * 0.01 * Math.sign(this.scale.x);
+    const yMinMaxFactor = Math.sign(secondCorner.y) * 0.01 * Math.sign(this.scale.y);
     if (this.align == "center") {
-      firstCoon.x *= 0.99;
-      secondCoon.x *= 1.01;
+      firstCorner.x *= 0.99;
+      secondCorner.x *= 1.01;
     } else if (["right", "end"].includes(this.align)) {
-      if (secondCoon.x != 0) secondCoon.x *= 1 - xMinMaxFactor;
-      else secondCoon.x = -Math.sign(this.scale.x);
+      if (secondCorner.x != 0) secondCorner.x *= 1 - xMinMaxFactor;
+      else secondCorner.x = -Math.sign(this.scale.x);
     } else if (["left", "start"].includes(this.align)) {
-      if (secondCoon.x != 0) secondCoon.x *= 1 + xMinMaxFactor;
-      else secondCoon.x = Math.sign(this.scale.x);
+      if (secondCorner.x != 0) secondCorner.x *= 1 + xMinMaxFactor;
+      else secondCorner.x = Math.sign(this.scale.x);
     }
     if (this.baseline == "middle") {
-      firstCoon.y *= 0.99;
-      secondCoon.y *= 1.01;
+      firstCorner.y *= 0.99;
+      secondCorner.y *= 1.01;
     } else if (["top", "hanging"].includes(this.baseline)) {
-      if (secondCoon.y != 0) secondCoon.y *= 1 + yMinMaxFactor;
-      else secondCoon.y = Math.sign(this.scale.y);
+      if (secondCorner.y != 0) secondCorner.y *= 1 + yMinMaxFactor;
+      else secondCorner.y = Math.sign(this.scale.y);
     } else if (["bottom", "alphabetic"].includes(this.baseline)) {
-      if (secondCoon.y != 0) secondCoon.y *= 1 - yMinMaxFactor;
-      else secondCoon.y = -Math.sign(this.scale.y);
+      if (secondCorner.y != 0) secondCorner.y *= 1 - yMinMaxFactor;
+      else secondCorner.y = -Math.sign(this.scale.y);
     }
-    return [firstCoon, secondCoon]
+    return [firstCorner, secondCorner]
   }
 
-  private getCoonsScaled(): [Vertex, Vertex] {
-    const firstCoon = this.boundingBox.origin.copy();
+  private getCornersScaled(): [Vertex, Vertex] {
+    const firstCorner = this.boundingBox.origin.copy();
     const diagonalVector = this.boundingBox.size.copy();
-    const secondCoon = firstCoon.add(diagonalVector);
-    return [firstCoon, secondCoon]
+    const secondCorner = firstCorner.add(diagonalVector);
+    return [firstCorner, secondCorner]
   }
 
   public getBounds(): [Vertex, Vertex] {
-    const [firstCoon, secondCoon] = this.isScaled ? this.getCoonsScaled() : this.getCoonsUnscaled();
+    const [firstCorner, secondCorner] = this.isScaled ? this.getCornersScaled() : this.getCornersUnscaled();
     return [
-      new Vertex(Math.min(firstCoon.x, secondCoon.x), Math.min(firstCoon.y, secondCoon.y)),
-      new Vertex(Math.max(firstCoon.x, secondCoon.x), Math.max(firstCoon.y, secondCoon.y))
+      new Vertex(Math.min(firstCorner.x, secondCorner.x), Math.min(firstCorner.y, secondCorner.y)),
+      new Vertex(Math.max(firstCorner.x, secondCorner.x), Math.max(firstCorner.y, secondCorner.y))
     ]
   }
 
@@ -2472,8 +2466,8 @@ export class newPoint2D extends newShape {
     this.lineWidth = 1;
   };
 
-  public getStyle(): { [key: string]: any } {
-    const style = super.getStyle();
+  public get drawingStyle(): { [key: string]: any } {
+    const style = super.drawingStyle;
     style["markerOrientation"] = this.markerOrientation;
     style["marker"] = this.marker;
     style["size"] = this.size;
@@ -2516,6 +2510,14 @@ export class newPoint2D extends newShape {
     this.lineWidth = style.lineWidth ?? this.lineWidth;
     this.marker = style.marker ?? this.marker;
     this.markerOrientation = style.orientation ?? this.markerOrientation;
+  }
+
+  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): newPoint2D {
+    const legend = new newPoint2D(legendOrigin.x, legendOrigin.y);
+    legend.size = legendSize.y * 0.9;
+    legend.marker = this.marker;
+    legend.markerOrientation = this.markerOrientation;
+    return legend
   }
 
   public copy(): newPoint2D {
@@ -2731,15 +2733,9 @@ export class LineSequence extends newShape {
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>(this.name ? [["Name", this.name]] : []) }
 
-  private getEdgeStyle(edgeStyle: { [key: string]: any }): void {
-    if (edgeStyle.line_width) this.lineWidth = edgeStyle.line_width;
-    if (edgeStyle.color_stroke) this.strokeStyle = edgeStyle.color_stroke;
-    if (edgeStyle.dashline) this.dashLine = edgeStyle.dashline;
-  }
-
-  public static getGraphProperties(graph: { [key: string]: any }): LineSequence {
+  public static unpackGraphProperties(graph: { [key: string]: any }): LineSequence {
     const emptyLineSequence = new LineSequence([], graph.name);
-    if (graph.edge_style) emptyLineSequence.getEdgeStyle(graph.edge_style);
+    if (graph.edge_style) emptyLineSequence.deserializeEdgeStyle(graph.edge_style);
     return emptyLineSequence
   }
 
@@ -2869,16 +2865,8 @@ export class newLabel extends newShape {
   }
 
   public getShapeStyle(shape: newShape, origin: Vertex): void {
-    const style = shape.getStyle();
-    if (!shape.isFilled && !(shape instanceof newPoint2D)) this.legend = new LineSegment(origin.copy(), origin.add(this.shapeSize));
-    else if (shape instanceof newPoint2D) {
-      this.legend = new newPoint2D(origin.x, origin.y);
-      this.legend.size = this.shapeSize.y * 0.9;
-      this.legend.marker = shape.marker;
-      this.legend.markerOrientation = shape.markerOrientation;
-    }
-    else this.legend = new newRect(origin.copy(), this.shapeSize);
-    Object.entries(style).map(([key, value]) => this[key] = value);
+    this.legend = shape.styleToLegend(origin, this.shapeSize);
+    Object.entries(shape.drawingStyle).map(([key, value]) => this[key] = value);
   }
 
   public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): newLabel {
@@ -2888,8 +2876,7 @@ export class newLabel extends newShape {
     text.isScaled = false;
     text.baseline = "middle";
     text.align = "start";
-    const label = new newLabel(shape, text);
-    return label
+    return new newLabel(shape, text)
   }
 
   public deserializeStyle(data): void {
@@ -3293,6 +3280,8 @@ export class newAxis extends newShape {
   }
 
   get interval(): number { return Math.abs(this.maxValue - this.minValue) };
+
+  get drawScale(): number { return this.drawLength / this.interval }
 
   get center(): number { return (this.maxValue + this.minValue) / 2 }
 
@@ -3992,9 +3981,7 @@ export class ShapeCollection {
   public includes(shape: newShape) { return this.shapes.includes(shape) }
 
   public static fromPrimitives(primitives: { [key: string]: any }, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
-    const shapes = [];
-    primitives.forEach(primitive => shapes.push(newShape.deserialize(primitive, scale)))
-    return new ShapeCollection(shapes)
+    return new ShapeCollection(primitives.map(primitive => newShape.deserialize(primitive, scale)))
   }
 
   public getBounds(): [Vertex, Vertex] {

@@ -18,13 +18,13 @@ import plot_data.colors as colors
 random.seed(0)
 
 elements = []
-nb_elements = 100
+nb_elements = 1000
 available_colors = ["purple", "Blue", "green", "red", "Yellow", "Cyan", "rose"]
 directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
     random_color = available_colors[random.randint(0, len(available_colors) - 1)]
     random_direction = directions[random.randint(0, len(directions) - 1)]
-    elements.append({'x': random.uniform(0, 200),
+    elements.append({'x': random.uniform(0, 50),
                      'y': random.uniform(0, 100),
                      'color': random_color,
                      'direction': random_direction})

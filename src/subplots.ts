@@ -1,9 +1,9 @@
 import { PlotData, Buttons, Interactions } from "./plot-data";
-import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END } from "./utils";
-import { Heatmap, PrimitiveGroup } from "./primitives";
+import { Attribute, Axis, Sort, RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
+  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END, newShape } from "./utils";
+import { PrimitiveGroup } from "./primitives";
 import { List, Shape, MyObject } from "./toolbox";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl } from "./color_conversion";
+import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from "./color_conversion";
 import { EdgeStyle, TextStyle } from "./style";
 
 var alert_count = 0;
@@ -1081,6 +1081,7 @@ export class Figure extends PlotData {
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
   public isZooming: boolean = false;
+  public zoomBox = new SelectionBox();
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: ShapeCollection;
@@ -1402,6 +1403,7 @@ export class Figure extends PlotData {
 
     this.context.setTransform(this.relativeMatrix);
     this.drawSelectionBox(this.context);
+    this.drawZoomBox(this.context);
 
     this.context.setTransform(this.canvasMatrix);
     this.drawFixedObjects(this.context);
@@ -1444,17 +1446,17 @@ export class Figure extends PlotData {
     }
   }
 
-  private drawZoomBox(zoomBox: SelectionBox, frameDown: Vertex, frameMouse: Vertex, context: CanvasRenderingContext2D): void {
-    zoomBox.update(frameDown, frameMouse);
-    zoomBox.buildRectangle(
-      new Vertex(this.axes[0].minValue, this.axes[1].minValue),
-      new Vertex(this.axes[0].interval, this.axes[1].interval)
-    );
-    context.save();
-    context.setTransform(this.relativeMatrix);
-    zoomBox.draw(context);
-    context.restore();
+  private drawZoomBox(context: CanvasRenderingContext2D): void {
+    if (this.isZooming && this.zoomBox.isDefined) {
+      this.zoomBox.buildRectangle(
+        new Vertex(this.axes[0].minValue, this.axes[1].minValue),
+        new Vertex(this.axes[0].interval, this.axes[1].interval)
+      );
+      this.zoomBox.draw(context);
+    }
   }
+
+  private updateZoomBox(frameDown: Vertex, frameMouse: Vertex): void { this.zoomBox.update(frameDown, frameMouse) }
 
   protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
     this.axes[0].minValue = Math.min(zoomBox.minVertex.x, zoomBox.maxVertex.x);
@@ -1485,7 +1487,7 @@ export class Figure extends PlotData {
     return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.relativeMatrix.inverse()), mouseCoords]
   }
 
-  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape] {
     const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
     const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
     const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);
@@ -1501,6 +1503,41 @@ export class Figure extends PlotData {
       }
       this.fixedObjects.mouseUp(ctrlKey);
     }
+  }
+
+  public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: newShape): [Vertex, Vertex, Vertex] {
+    const [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
+    this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
+    if (this.interaction_ON) {
+      if (canvasDown) {
+        const translation = this.mouseTranslate(canvasMouse, canvasDown);
+        if (!(clickedObject instanceof newAxis)) {
+          if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
+        }
+        if (this.isSelecting) {
+          if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
+          else this.updateSelectionBox(frameDown, frameMouse);
+        }
+        if (this.isZooming) this.updateZoomBox(frameDown, frameMouse);
+      }
+    }
+    return [canvasMouse, frameMouse, absoluteMouse]
+  }
+
+  public mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape]  {
+    const [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+    if (!(clickedObject instanceof newAxis)) this.is_drawing_rubber_band = this.isSelecting;
+    return [canvasDown, frameDown, clickedObject]
+  }
+
+  public mouseUpDrawer(ctrlKey: boolean): [newShape, Vertex] {
+    if (this.isZooming) {
+      this.switchZoom();
+      this.zoomBoxUpdateAxes(this.zoomBox);
+      this.zoomBox.update(new Vertex(0, 0), new Vertex(0, 0));
+    }
+    this.mouseUp(ctrlKey);
+    return this.resetMouseEvents()
   }
 
   public translate(canvas: HTMLElement, translation: Vertex): void {
@@ -1523,18 +1560,20 @@ export class Figure extends PlotData {
     this.draw();
   }
 
+  public axisChangeUpdate(e: newAxis): void {}
+
   public mouse_interaction(): void {
     if (this.interaction_ON === true) {
-      let clickedObject: any = null;
-      let isDrawing = false;
-      let canvasMouse = new Vertex(0, 0); let canvasDown = new Vertex(0, 0);
-      let frameMouse = new Vertex(0, 0); let frameDown = new Vertex(0, 0);
-      let absoluteMouse = new Vertex(0, 0);
-      const canvas = document.getElementById(this.canvasID);
+      let clickedObject: newShape = null;
+      let canvasMouse: Vertex = null; let canvasDown: Vertex = null;
+      let frameMouse: Vertex = null; let frameDown: Vertex = null;
+      let absoluteMouse: Vertex = null;
+      const canvas = document.getElementById(this.canvasID) as HTMLCanvasElement;
       let ctrlKey = false; let shiftKey = false; let spaceKey = false;
-      const zoomBox = new SelectionBox();
 
       this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
+
+      this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 
       window.addEventListener('keydown', e => {
         if (e.key == "Control") {
@@ -1561,43 +1600,21 @@ export class Figure extends PlotData {
       });
 
       canvas.addEventListener('mousemove', e => {
-        [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
-        this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
-        if (this.isZooming) canvas.style.cursor = 'crosshair';
-        if (this.interaction_ON) {
-          if (isDrawing) {
-            const translation = this.mouseTranslate(canvasMouse, canvasDown);
-            if (!(clickedObject instanceof newAxis)) {
-              if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
-            }
-            if (this.isSelecting) {
-              if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
-              else this.updateSelectionBox(frameDown, frameMouse);
-            }
-          }
-        }
+        [canvasMouse, frameMouse, absoluteMouse] = this.mouseMoveDrawer(canvas, e, canvasDown, frameDown, clickedObject);
         this.draw();
-        if (this.isZooming && isDrawing) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context);
         const mouseInCanvas = (e.offsetX >= this.origin.x) && (e.offsetX <= this.width + this.origin.x) && (e.offsetY >= this.origin.y) && (e.offsetY <= this.height + this.origin.y);
-        if (!mouseInCanvas) isDrawing = false;
+        if (!mouseInCanvas) canvasDown = null;
       });
 
-      canvas.addEventListener('mousedown', e => {
-        [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-        if (!(clickedObject instanceof newAxis)) this.is_drawing_rubber_band = this.isSelecting;
+      canvas.addEventListener('mousedown', () => {
+        [canvasDown, frameDown, clickedObject] = this.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
         if (ctrlKey && shiftKey) this.reset();
-        isDrawing = true;
       });
 
-      canvas.addEventListener('mouseup', e => {
-        if (this.isZooming) {
-          this.switchZoom();
-          this.zoomBoxUpdateAxes(zoomBox);
-        }
-        this.mouseUp(ctrlKey);
+      canvas.addEventListener('mouseup',() => {
+        [clickedObject, canvasDown] = this.mouseUpDrawer(ctrlKey);
         this.draw();
         if (!shiftKey) canvas.style.cursor = 'default';
-        [clickedObject, isDrawing] = this.resetMouseEvents();
       })
 
       canvas.addEventListener('wheel', e => {
@@ -1608,8 +1625,8 @@ export class Figure extends PlotData {
         }
       });
 
-      canvas.addEventListener('mouseleave', e => {
-        isDrawing = false;
+      canvas.addEventListener('mouseleave', () => {
+        canvasDown = null;
         ctrlKey = false;
         this.axes.forEach(axis => axis.saveLocation());
         this.translation = new Vertex(0, 0);
@@ -1618,11 +1635,11 @@ export class Figure extends PlotData {
     }
   }
 
-  protected resetMouseEvents(): [any, boolean] {
+  protected resetMouseEvents(): [newShape, Vertex] {
     if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
     this.axes.forEach(axis => axis.saveLocation());
     this.translation = new Vertex(0, 0);
-    return [null, false]
+    return [null, null]
   }
 
   protected regulateScale(): void {}
@@ -2578,12 +2595,9 @@ export class ParallelPlot extends Figure {
     this.updateSelection(axesSelections);
   }
 
-  public mouse_interaction(): void {
-    this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => {if (!this.changedAxes.includes(e)) this.changedAxes.push(e)}));
-    super.mouse_interaction();
-  }
+  public axisChangeUpdate(e: ParallelAxis) { if (!this.changedAxes.includes(e)) this.changedAxes.push(e); }
 
-  protected resetMouseEvents(): [any, boolean] {
+  protected resetMouseEvents(): [newShape, Vertex] {
     this.changedAxes = [];
     return super.resetMouseEvents()
   }

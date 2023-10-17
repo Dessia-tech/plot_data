@@ -70,7 +70,7 @@ tooltip = plot_data.Tooltip(attributes=['mass', 'length', 'shape'])
 heatmap = plot_data.Heatmap([4, 2], colors=[YELLOW, ORANGE, RED])
 
 # Now, here is the new scatterplot
-customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='shape',
+customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='length',
                                            point_style=point_style,
                                            elements=elements,
                                            points_sets=points_sets,

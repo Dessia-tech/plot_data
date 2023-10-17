@@ -3443,7 +3443,7 @@ export class newAxis extends newShape {
     if (this.isDiscrete) return [0, this.labels.length - 1];
     const min = Math.min(...vector);
     const max = Math.max(...vector);
-    return min != max ? [min, max] : [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)]
+    return min != max ? [min, max] : min != 0 ? [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)] : [-1, 1]
   }
 
   protected getCalibratedTextWidth(context: CanvasRenderingContext2D): [newText, number] {
@@ -3527,15 +3527,8 @@ export class newAxis extends newShape {
       style: 'bold',
       orientation: orientation,
       backgroundColor: "hsla(0, 0%, 100%, 0.5)",
-      scale: this.getTextScaler()
+      scale: new Vertex(1, 1)
     }
-  }
-
-  protected getTextScaler(): Vertex {
-    return new Vertex(1, 1)
-    // return this.isVertical ?
-    //   new Vertex([1, -1][this.verticalPickIdx()], this.initScale.y):
-    //   new Vertex(this.initScale.x, [1, -1][this.horizontalPickIdx()])
   }
 
   protected formatTitle(text: newText, context: CanvasRenderingContext2D): void { text.format(context) }
@@ -3632,7 +3625,7 @@ export class newAxis extends newShape {
       textHeight = this.maxTickHeight;
     }
     return {
-      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.font, scale: this.getTextScaler(),
+      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.font, scale: new Vertex(1, 1),
       align: textAlign, baseline: baseline, color: this.strokeStyle, backgroundColor: "hsl(0, 0%, 100%, 0.5)"
     }
   }

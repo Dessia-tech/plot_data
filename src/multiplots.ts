@@ -1,6 +1,6 @@
 import { PlotData, Interactions } from './plot-data';
 import { Point2D } from './primitives';
-import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand, Vertex } from './utils';
+import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand, Vertex, newShape } from './utils';
 import { PlotContour, PrimitiveGroupContainer, Histogram, Frame, Scatter, Figure, Graph2D, ParallelPlot, Draw, range } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
@@ -192,8 +192,15 @@ export class Multiplot {
   public mouseHandler(): void {
     let ctrlKey = false;
     let shiftKey = false;
+    let clickedObject: newShape = null;
+    let canvasMouse: Vertex = null;
+    let frameMouse: Vertex = null;
+    let absoluteMouse: Vertex = null;
+    let canvasDown: Vertex = null;
+    let frameDown: Vertex = null;
+    let currentPlot: Figure = null;
 
-    this.plots.forEach(plot => plot.mouse_interaction());
+    this.plots.forEach(plot => plot.axes.forEach(axis => axis.emitter.on('axisStateChange', e => plot.axisChangeUpdate(e))));
 
     window.addEventListener('keydown', e => {
       if (e.key == "Control") {
@@ -225,10 +232,12 @@ export class Multiplot {
     });
 
     this.canvas.addEventListener('mousemove', e => {
-      for (const plot of this.plots) {
+      for (let plot of this.plots) {
         if (plot.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
+          [canvasMouse, frameMouse, absoluteMouse] = plot.mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
           if (!(plot instanceof Graph2D || plot instanceof Draw)) this.hoveredIndices = plot.hoveredIndices;
           else this.hoveredIndices = [];
+          currentPlot = plot;
           break
         }
       }
@@ -236,14 +245,17 @@ export class Multiplot {
       this.draw();
     })
 
-    this.canvas.addEventListener('mouseup', e => {
-      for (const plot of this.plots) {
-        if (plot.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
-          if (!(plot instanceof Graph2D || plot instanceof Draw)) this.clickedIndices = plot.clickedIndices;
-          break
-        }
-      }
+    this.canvas.addEventListener('mousedown', () => {
+      [canvasDown, frameDown, clickedObject] = currentPlot.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
       this.refreshSelectedIndices();
+      this.draw();
+    })
+
+    this.canvas.addEventListener('mouseup', () => {
+      [clickedObject, canvasDown] = currentPlot.mouseUpDrawer(ctrlKey);
+      if (!(currentPlot instanceof Graph2D || currentPlot instanceof Draw)) this.clickedIndices = currentPlot.clickedIndices;
+      this.refreshSelectedIndices();
+      this.canvas.style.cursor = 'default';
       this.draw();
     })
   }

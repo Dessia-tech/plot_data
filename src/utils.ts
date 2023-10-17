@@ -3443,7 +3443,7 @@ export class newAxis extends newShape {
     if (this.isDiscrete) return [0, this.labels.length - 1];
     const min = Math.min(...vector);
     const max = Math.max(...vector);
-    return min != max ? [min, max] : [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)]
+    return min != max ? [min, max] : min != 0 ? [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)] : [-1, 1]
   }
 
   protected getCalibratedTextWidth(context: CanvasRenderingContext2D): [newText, number] {

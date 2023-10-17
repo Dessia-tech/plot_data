@@ -113,7 +113,7 @@ export class Multiplot {
 
   public draw(): void {
     this.plots.forEach(plot => {
-      if ( !(plot instanceof Graph2D) ) {
+      if ( !(plot instanceof Graph2D) && !(plot instanceof Draw)) {
         plot.selectedIndices = this.selectedIndices;
         plot.clickedIndices = [...this.clickedIndices];
         plot.hoveredIndices = [...this.hoveredIndices];
@@ -202,7 +202,11 @@ export class Multiplot {
       }
       if (e.key == "Shift") {
         shiftKey = true;
-        if (!ctrlKey) { this.isSelecting = true; this.canvas.style.cursor = 'crosshair'; this.draw() }
+        if (!ctrlKey) {
+          this.isSelecting = true;
+          this.canvas.style.cursor = 'crosshair';
+          this.draw();
+        }
       }
     });
 
@@ -211,15 +215,20 @@ export class Multiplot {
       if (e.key == "Shift") {
         shiftKey = false;
         this.isSelecting = false;
-        this.plots.forEach(plot => {plot.isSelecting = false; plot.is_drawing_rubber_band = false});
+        this.plots.forEach(plot => {
+          plot.isSelecting = false;
+          plot.is_drawing_rubber_band = false;
+        });
         this.canvas.style.cursor = 'default';
-        this.draw() }
+        this.draw();
+      }
     });
 
     this.canvas.addEventListener('mousemove', e => {
       for (const plot of this.plots) {
         if (plot.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
-          this.hoveredIndices = plot.hoveredIndices;
+          if (!(plot instanceof Graph2D || plot instanceof Draw)) this.hoveredIndices = plot.hoveredIndices;
+          else this.hoveredIndices = [];
           break
         }
       }
@@ -230,7 +239,7 @@ export class Multiplot {
     this.canvas.addEventListener('mouseup', e => {
       for (const plot of this.plots) {
         if (plot.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
-          this.clickedIndices = plot.clickedIndices;
+          if (!(plot instanceof Graph2D || plot instanceof Draw)) this.clickedIndices = plot.clickedIndices;
           break
         }
       }

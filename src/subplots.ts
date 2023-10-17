@@ -2666,7 +2666,7 @@ export class Draw extends Frame {
   }
 }
 
-function range(start: number, end: number, step: number = 1): number[] {
+export function range(start: number, end: number, step: number = 1): number[] {
   let array = [];
   for (let i = start; i < end; i = i + step) array.push(i);
   return array

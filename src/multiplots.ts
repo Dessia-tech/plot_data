@@ -1,7 +1,7 @@
-import {PlotData, Interactions} from './plot-data';
-import {Point2D} from './primitives';
+import { PlotData, Interactions } from './plot-data';
+import { Point2D } from './primitives';
 import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand, Vertex } from './utils';
-import { PlotContour, PrimitiveGroupContainer, Histogram, Frame, Scatter, Figure, Graph2D, ParallelPlot, Draw } from './subplots';
+import { PlotContour, PrimitiveGroupContainer, Histogram, Frame, Scatter, Figure, Graph2D, ParallelPlot, Draw, range } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
 
@@ -35,6 +35,7 @@ export class Multiplot {
   public canvas: HTMLCanvasElement;
 
   public features: Map<string, any[]>;
+  public nSamples: number;
   public plots: Figure[];
   public rubberBands: Map<string, RubberBand>;
 
@@ -56,10 +57,12 @@ export class Multiplot {
   ) {
     this.buildCanvas(canvasID);
     [this.features, this.plots] = this.unpackData(data);
+    this.nSamples = this.features.entries().next().value[1].length;
     this.computeTable();
     this.draw();
     this.mouseHandler();
   }
+
 
   private unpackData(data: any): [Map<string, any[]>, Figure[]] {
     const features = Figure.deserializeData(data);
@@ -108,7 +111,24 @@ export class Multiplot {
     }
   }
 
-  public draw(): void { this.plots.forEach(plot => plot.draw()) }
+  public draw(): void {
+    this.plots.forEach(plot => {
+      if ( !(plot instanceof Graph2D) ) {
+        plot.selectedIndices = this.selectedIndices;
+        plot.clickedIndices = [...this.clickedIndices];
+        plot.hoveredIndices = [...this.hoveredIndices];
+      }
+        // if (plot instanceof Frame) {
+        //   if (this.pointSets.length != 0) {
+        //     plot.pointSetColors = this.pointSets.map((pointFamily, familyIdx) => {
+        //       pointFamily.pointIndices.forEach(pointIdx => plot.pointSets[pointIdx] = familyIdx);
+        //       return pointFamily.color
+        //     })
+        //   }
+        // }
+      plot.draw();
+    });
+  }
 
   public switchSelection() {
     this.isSelecting = !this.isSelecting;
@@ -152,11 +172,28 @@ export class Multiplot {
     this.plots.forEach(plot => { if (plot instanceof ParallelPlot) plot.switchOrientation() });
   }
 
+  refreshSelectedIndices() {
+    this.selectedIndices = range(0, this.nSamples);
+    let isSelecting = false;
+    for (let plot of this.plots) {
+      plot.axes.forEach(axis => {
+        if (!(plot instanceof Graph2D)) {
+          if (axis.rubberBand.length != 0) {
+            isSelecting = true;
+            const selectedIndices = plot.updateSelected(axis);
+            this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
+          }
+        }
+      })
+    }
+    if (this.selectedIndices.length == this.nSamples && !isSelecting) this.selectedIndices = [];
+  }
+
   public mouseHandler(): void {
     let ctrlKey = false;
     let shiftKey = false;
 
-    this.plots.forEach(plot => plot.mouse_interaction())
+    this.plots.forEach(plot => plot.mouse_interaction());
 
     window.addEventListener('keydown', e => {
       if (e.key == "Control") {
@@ -180,12 +217,26 @@ export class Multiplot {
     });
 
     this.canvas.addEventListener('mousemove', e => {
-      // this.plots.forEach(plot => {
-      //   console.log(new Vertex(e.offsetX, e.offsetY), plot.origin, plot.size)
-      //   if (plot.isInCanvas(new Vertex(e.offsetX, e.offsetY))) plot.mouse_interaction();
-      // })
+      for (const plot of this.plots) {
+        if (plot.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
+          this.hoveredIndices = plot.hoveredIndices;
+          break
+        }
+      }
+      this.refreshSelectedIndices();
+      this.draw();
     })
 
+    this.canvas.addEventListener('mouseup', e => {
+      for (const plot of this.plots) {
+        if (plot.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
+          this.clickedIndices = plot.clickedIndices;
+          break
+        }
+      }
+      this.refreshSelectedIndices();
+      this.draw();
+    })
   }
 
 }
@@ -832,7 +883,7 @@ export class MultiplePlots {
       var obj:any = this.objectList[move_plot_index]
       obj.origin.x = obj.origin.x + tx;
       obj.origin.y = obj.origin.y + ty;
-      if (obj instanceof Figure) obj.reset_scales();
+      if (obj instanceof Figure) obj.resetScales();
       if (obj.type_ == 'primitivegroupcontainer') {
         for (let i=0; i<obj['primitive_groups'].length; i++) {
           obj['primitive_groups'][i].origin.x = obj['primitive_groups'][i].origin.x + tx;
@@ -1103,7 +1154,10 @@ export class MultiplePlots {
     }
 
     resetAllObjects(): void {
-      this.objectList.forEach(plot => plot.reset_scales());
+      this.objectList.forEach(plot => {
+        if (plot instanceof Figure) plot.resetScales()
+        else plot.reset_scales();
+      });
     }
 
     reset_all_selected_points() {

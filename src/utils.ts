@@ -3096,8 +3096,10 @@ export class SelectionBox extends newRect {
 
   public rubberBandUpdate(rubberBand: RubberBand, coordName: string) {
     if (this.isDefined) {
-      this.minVertex[coordName] = rubberBand.minValue;
-      this.maxVertex[coordName] = rubberBand.maxValue;
+      if (rubberBand.minValue != rubberBand.maxValue) {
+        this.minVertex[coordName] = rubberBand.minValue;
+        this.maxVertex[coordName] = rubberBand.maxValue;
+      } else this.minVertex = this.maxVertex = null;
     }
   }
 

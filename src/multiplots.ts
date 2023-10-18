@@ -165,8 +165,7 @@ export class Multiplot {
     this.clickedIndices = [];
     this.hoveredIndices = [];
     this.rubberBands.forEach(rubberBand => rubberBand.reset());
-    this.figures.forEach(figure => figure.initSelectors());
-    this.resetScales();
+    this.figures.forEach(figure => figure.reset());
     this.draw();
   }
 
@@ -174,7 +173,7 @@ export class Multiplot {
     this.figures.forEach(figure => { if (figure instanceof ParallelPlot) figure.switchOrientation() });
   }
 
-  private refreshSelectedIndices() {
+  private updateSelectedIndices() {
     this.selectedIndices = range(0, this.nSamples);
     let isSelecting = false;
     for (let figure of this.figures) {
@@ -196,10 +195,12 @@ export class Multiplot {
     this.figures.forEach(figure => figure.initRubberBandMultiplot(this.rubberBands));
   }
 
-  public refreshRubberBands(currentFigure: Figure): void {
-    if (!this.rubberBands) this.initRubberBands();
-    currentFigure.sendRubberBandsMultiplot(this.figures);
-    this.figures.forEach(figure => figure.refreshRubberBandMultiplot(this.rubberBands));
+  public updateRubberBands(currentFigure: Figure): void {
+    if (this.isSelecting) {
+      if (!this.rubberBands) this.initRubberBands();
+      currentFigure.sendRubberBandsMultiplot(this.figures);
+      this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
+    }
   }
 
   public mouseHandler(): void {
@@ -216,16 +217,23 @@ export class Multiplot {
 
     this.figures.forEach(figure => figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e))));
 
-    window.addEventListener('keydown', e => {
-      if (e.key == "Control") ctrlKey = true;
-      if (e.key == "Shift") shiftKey = true;
-      if (e.key == " ") spaceKey = true;
-      currentFigure.keyDownDrawer(this.canvas, e, ctrlKey, shiftKey, spaceKey);
+    this.figures.forEach(figure => figure.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => {
+      figure.activateSelection(e, index);
+      this.isSelecting = true;
+    })));
 
-      // if (e.key == "Control") {
-      //   ctrlKey = true;
-      //   this.canvas.style.cursor = 'default';
-      // }
+    window.addEventListener('keydown', e => {
+      if (e.key == "Control") {
+        ctrlKey = true;
+        this.canvas.style.cursor = 'default';
+      }
+      if (e.key == "Shift") {
+        shiftKey = true;
+        if (!ctrlKey) this.canvas.style.cursor = 'crosshair';
+      }
+      if (e.key == " ") spaceKey = true;
+      this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
+
       // if (e.key == "Shift") {
       //   shiftKey = true;
       //   if (!ctrlKey) {
@@ -237,10 +245,17 @@ export class Multiplot {
     });
 
     window.addEventListener('keyup', e => {
-      if (e.key == "Control") ctrlKey = false;
       if (e.key == "Shift") shiftKey = false;
+      if (e.key == "Control") {
+        ctrlKey = false;
+        if (shiftKey) {
+          this.canvas.style.cursor = 'crosshair';
+          this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, "Shift", ctrlKey, shiftKey, spaceKey));
+        }
+      }
       if (e.key == " ") spaceKey = false;
-      currentFigure.keyUpDrawer(this.canvas, e, ctrlKey, shiftKey, spaceKey);
+      this.figures.forEach(figure => figure.keyUpDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
+      // currentFigure.keyUpDrawer(this.canvas, e, ctrlKey, shiftKey, spaceKey);
 
       // if (e.key == "Control") ctrlKey = false;
       // if (e.key == "Shift") {
@@ -262,25 +277,35 @@ export class Multiplot {
           if (!(figure instanceof Graph2D || figure instanceof Draw)) this.hoveredIndices = figure.hoveredIndices;
           else this.hoveredIndices = [];
           currentFigure = figure;
-          break
         }
       }
-      this.refreshRubberBands(currentFigure);
-      this.refreshSelectedIndices();
+      this.updateRubberBands(currentFigure);
+      this.updateSelectedIndices();
       this.draw();
     })
 
     this.canvas.addEventListener('mousedown', () => {
       [canvasDown, frameDown, clickedObject] = currentFigure.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
-      if (ctrlKey && shiftKey) this.reset();
     })
 
     this.canvas.addEventListener('mouseup', () => {
       [clickedObject, canvasDown] = currentFigure.mouseUpDrawer(ctrlKey);
       if (!(currentFigure instanceof Graph2D || currentFigure instanceof Draw)) this.clickedIndices = currentFigure.clickedIndices;
-      this.canvas.style.cursor = 'default';
-      this.refreshRubberBands(currentFigure);
-      this.refreshSelectedIndices();
+      if (ctrlKey && shiftKey) this.reset();
+      this.updateRubberBands(currentFigure);
+      if (!shiftKey) {
+        this.canvas.style.cursor = 'default';
+        this.isSelecting = false;
+      }
+      this.figures.forEach(figure => {
+        if (!shiftKey) {
+          figure.is_drawing_rubber_band = false;
+          figure.isSelecting = false;
+        }
+        figure.isZooming = false;
+      })
+      
+      this.updateSelectedIndices();
       this.draw();
     })
   }

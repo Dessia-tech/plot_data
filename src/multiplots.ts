@@ -36,7 +36,7 @@ export class Multiplot {
 
   public features: Map<string, any[]>;
   public nSamples: number;
-  public plots: Figure[];
+  public figures: Figure[];
   public rubberBands: Map<string, RubberBand>;
 
   public isSelecting: boolean = false;
@@ -56,18 +56,19 @@ export class Multiplot {
     public canvasID: string
   ) {
     this.buildCanvas(canvasID);
-    [this.features, this.plots] = this.unpackData(data);
+    [this.features, this.figures] = this.unpackData(data);
     this.nSamples = this.features.entries().next().value[1].length;
     this.computeTable();
     this.draw();
+    this.initRubberBands();
     this.mouseHandler();
   }
 
 
   private unpackData(data: any): [Map<string, any[]>, Figure[]] {
     const features = Figure.deserializeData(data);
-    const plots: Figure[] = [];
-    if (data.plots.length == 0) plots.push(this.newEmptyPlot());
+    const figures: Figure[] = [];
+    if (data.plots.length == 0) figures.push(this.newEmptyPlot());
     else {
       data.plots.forEach(plot => {
         const localData = {...plot, "elements": data.elements, "points_sets": data.points_sets};
@@ -78,25 +79,25 @@ export class Multiplot {
         }
         if (!(newPlot instanceof Graph2D || newPlot instanceof Draw)) newPlot.features = features;
         newPlot.context = this.context;
-        plots.push(newPlot)
+        figures.push(newPlot)
       })
     }
-    return [features, plots]
+    return [features, figures]
   }
 
   private newEmptyPlot(): Draw { return new Draw(EMPTY_PLOT, this.width, this.height, 0, 0, this.canvasID) }
 
-  public buildCanvas(canvasID: string):void {
+  private buildCanvas(canvasID: string):void {
     this.canvas = document.getElementById(canvasID) as HTMLCanvasElement;
     this.canvas.width = this.width;
     this.canvas.height = this.height;
     this.context = this.canvas.getContext("2d");
   }
 
-  public computeTable(): void {
+  private computeTable(): void {
     const ratio = Math.ceil(this.width > this.height ? this.width / this.height : this.height / this.width);
-    const nRows = Math.ceil(this.plots.length / ratio);
-    const nCols = Math.ceil(this.plots.length / nRows);
+    const nRows = Math.ceil(this.figures.length / ratio);
+    const nCols = Math.ceil(this.figures.length / nRows);
     const height = this.height / nRows;
     const width = this.width / nCols;
     let k = 0;
@@ -104,83 +105,84 @@ export class Multiplot {
       const yCoord = i * height;
       for (let j=0; j < nCols; j++) {
         const xCoord = j * width;
-        this.plots[k].multiplotInstantiation(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE * 2, height - BLANK_SPACE * 2);
+        this.figures[k].multiplotInstantiation(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE * 2, height - BLANK_SPACE * 2);
         k++;
-        if (k == this.plots.length) break;
+        if (k == this.figures.length) break;
       }
     }
   }
 
   public draw(): void {
-    this.plots.forEach(plot => {
-      if ( !(plot instanceof Graph2D) && !(plot instanceof Draw)) {
-        plot.selectedIndices = this.selectedIndices;
-        plot.clickedIndices = [...this.clickedIndices];
-        plot.hoveredIndices = [...this.hoveredIndices];
+    this.figures.forEach(figure => {
+      if ( !(figure instanceof Graph2D) && !(figure instanceof Draw)) {
+        figure.selectedIndices = this.selectedIndices;
+        figure.clickedIndices = [...this.clickedIndices];
+        figure.hoveredIndices = [...this.hoveredIndices];
       }
-        // if (plot instanceof Frame) {
+        // if (figure instanceof Frame) {
         //   if (this.pointSets.length != 0) {
-        //     plot.pointSetColors = this.pointSets.map((pointFamily, familyIdx) => {
-        //       pointFamily.pointIndices.forEach(pointIdx => plot.pointSets[pointIdx] = familyIdx);
+        //     figure.pointSetColors = this.pointSets.map((pointFamily, familyIdx) => {
+        //       pointFamily.pointIndices.forEach(pointIdx => figure.pointSets[pointIdx] = familyIdx);
         //       return pointFamily.color
         //     })
         //   }
         // }
-      plot.draw();
+        figure.draw();
     });
   }
 
   public switchSelection() {
     this.isSelecting = !this.isSelecting;
-    this.plots.forEach(plot => plot.switchSelection());
+    this.figures.forEach(figure => figure.switchSelection());
   }
 
-  public switchMerge() { this.plots.forEach(plot => plot.switchMerge())};
+  public switchMerge() { this.figures.forEach(figure => figure.switchMerge())};
 
-  public togglePoints() { this.plots.forEach(plot => plot.togglePoints())};
+  public togglePoints() { this.figures.forEach(figure => figure.togglePoints())};
 
   public switchZoom() {
     this.isZooming = !this.isZooming;
-    this.plots.forEach(plot => plot.switchZoom());
+    this.figures.forEach(figure => figure.switchZoom());
   }
 
-  // public zoomIn() { (this.plots[this.clickedPlotIndex] as Figure).zoomIn() }
+  // public zoomIn() { (this.figures[this.clickedPlotIndex] as Figure).zoomIn() }
 
-  // public zoomOut() { (this.plots[this.clickedPlotIndex] as Figure).zoomOut() }
+  // public zoomOut() { (this.figures[this.clickedPlotIndex] as Figure).zoomOut() }
 
-  public simpleCluster(inputValue: number) { this.plots.forEach(plot => { if (plot instanceof Scatter) plot.simpleCluster(inputValue) })};
+  public simpleCluster(inputValue: number) { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.simpleCluster(inputValue) })};
 
-  public resetClusters(): void { this.plots.forEach(plot => { if (plot instanceof Scatter) plot.resetClusters() })};
+  public resetClusters(): void { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.resetClusters() })};
 
-  public resetSelection(): void {
+  public resetView(): void {
+    this.resetScales();
+    this.draw();
+  }
+
+  public resetScales(): void { this.figures.forEach(figure => figure.resetScales()) }
+  
+  public reset(): void {
     this.selectedIndices = [];
     this.clickedIndices = [];
     this.hoveredIndices = [];
     this.rubberBands.forEach(rubberBand => rubberBand.reset());
-    this.plots.forEach(plot => {if (plot instanceof Figure) plot.initSelectors()});
+    this.figures.forEach(figure => figure.initSelectors());
+    this.resetScales();
     this.draw();
   }
-
-  public resetView(): void {
-    this.resetAllObjects();
-    this.draw();
-  }
-
-  public resetAllObjects(): void { this.plots.forEach(plot => plot.resetScales()) }
 
   public switchOrientation(): void {
-    this.plots.forEach(plot => { if (plot instanceof ParallelPlot) plot.switchOrientation() });
+    this.figures.forEach(figure => { if (figure instanceof ParallelPlot) figure.switchOrientation() });
   }
 
-  refreshSelectedIndices() {
+  private refreshSelectedIndices() {
     this.selectedIndices = range(0, this.nSamples);
     let isSelecting = false;
-    for (let plot of this.plots) {
-      plot.axes.forEach(axis => {
-        if (!(plot instanceof Graph2D)) {
+    for (let figure of this.figures) {
+      figure.axes.forEach(axis => {
+        if (!(figure instanceof Graph2D || figure instanceof Draw)) {
           if (axis.rubberBand.length != 0) {
             isSelecting = true;
-            const selectedIndices = plot.updateSelected(axis);
+            const selectedIndices = figure.updateSelected(axis);
             this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
           }
         }
@@ -189,71 +191,96 @@ export class Multiplot {
     if (this.selectedIndices.length == this.nSamples && !isSelecting) this.selectedIndices = [];
   }
 
+  public initRubberBands(): void {
+    this.rubberBands = new Map<string, RubberBand>();
+    this.figures.forEach(figure => figure.initRubberBandMultiplot(this.rubberBands));
+  }
+
+  public refreshRubberBands(currentFigure: Figure): void {
+    if (!this.rubberBands) this.initRubberBands();
+    currentFigure.sendRubberBandsMultiplot(this.figures);
+    this.figures.forEach(figure => figure.refreshRubberBandMultiplot(this.rubberBands));
+  }
+
   public mouseHandler(): void {
     let ctrlKey = false;
     let shiftKey = false;
+    let spaceKey = false;
     let clickedObject: newShape = null;
     let canvasMouse: Vertex = null;
     let frameMouse: Vertex = null;
     let absoluteMouse: Vertex = null;
     let canvasDown: Vertex = null;
     let frameDown: Vertex = null;
-    let currentPlot: Figure = null;
+    let currentFigure: Figure = this.figures[0];
 
-    this.plots.forEach(plot => plot.axes.forEach(axis => axis.emitter.on('axisStateChange', e => plot.axisChangeUpdate(e))));
+    this.figures.forEach(figure => figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e))));
 
     window.addEventListener('keydown', e => {
-      if (e.key == "Control") {
-        ctrlKey = true;
-        this.canvas.style.cursor = 'default';
-      }
-      if (e.key == "Shift") {
-        shiftKey = true;
-        if (!ctrlKey) {
-          this.isSelecting = true;
-          this.canvas.style.cursor = 'crosshair';
-          this.draw();
-        }
-      }
+      if (e.key == "Control") ctrlKey = true;
+      if (e.key == "Shift") shiftKey = true;
+      if (e.key == " ") spaceKey = true;
+      currentFigure.keyDownDrawer(this.canvas, e, ctrlKey, shiftKey, spaceKey);
+
+      // if (e.key == "Control") {
+      //   ctrlKey = true;
+      //   this.canvas.style.cursor = 'default';
+      // }
+      // if (e.key == "Shift") {
+      //   shiftKey = true;
+      //   if (!ctrlKey) {
+      //     this.isSelecting = true;
+      //     this.canvas.style.cursor = 'crosshair';
+      //     this.draw();
+      //   }
+      // }
     });
 
     window.addEventListener('keyup', e => {
       if (e.key == "Control") ctrlKey = false;
-      if (e.key == "Shift") {
-        shiftKey = false;
-        this.isSelecting = false;
-        this.plots.forEach(plot => {
-          plot.isSelecting = false;
-          plot.is_drawing_rubber_band = false;
-        });
-        this.canvas.style.cursor = 'default';
-        this.draw();
-      }
+      if (e.key == "Shift") shiftKey = false;
+      if (e.key == " ") spaceKey = false;
+      currentFigure.keyUpDrawer(this.canvas, e, ctrlKey, shiftKey, spaceKey);
+
+      // if (e.key == "Control") ctrlKey = false;
+      // if (e.key == "Shift") {
+      //   shiftKey = false;
+      //   this.isSelecting = false;
+      //   this.plots.forEach(plot => {
+      //     plot.isSelecting = false;
+      //     plot.is_drawing_rubber_band = false;
+      //   });
+      //   this.canvas.style.cursor = 'default';
+      //   this.draw();
+      // }
     });
 
     this.canvas.addEventListener('mousemove', e => {
-      for (let plot of this.plots) {
-        if (plot.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
-          [canvasMouse, frameMouse, absoluteMouse] = plot.mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
-          if (!(plot instanceof Graph2D || plot instanceof Draw)) this.hoveredIndices = plot.hoveredIndices;
+      for (let figure of this.figures) {
+        if (figure.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
+          [canvasMouse, frameMouse, absoluteMouse] = figure.mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
+          if (!(figure instanceof Graph2D || figure instanceof Draw)) this.hoveredIndices = figure.hoveredIndices;
           else this.hoveredIndices = [];
-          currentPlot = plot;
+          currentFigure = figure;
           break
         }
       }
+      this.refreshRubberBands(currentFigure);
       this.refreshSelectedIndices();
       this.draw();
     })
 
     this.canvas.addEventListener('mousedown', () => {
-      [canvasDown, frameDown, clickedObject] = currentPlot.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
+      [canvasDown, frameDown, clickedObject] = currentFigure.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
+      if (ctrlKey && shiftKey) this.reset();
     })
 
     this.canvas.addEventListener('mouseup', () => {
-      [clickedObject, canvasDown] = currentPlot.mouseUpDrawer(ctrlKey);
-      if (!(currentPlot instanceof Graph2D || currentPlot instanceof Draw)) this.clickedIndices = currentPlot.clickedIndices;
-      this.refreshSelectedIndices();
+      [clickedObject, canvasDown] = currentFigure.mouseUpDrawer(ctrlKey);
+      if (!(currentFigure instanceof Graph2D || currentFigure instanceof Draw)) this.clickedIndices = currentFigure.clickedIndices;
       this.canvas.style.cursor = 'default';
+      this.refreshRubberBands(currentFigure);
+      this.refreshSelectedIndices();
       this.draw();
     })
   }

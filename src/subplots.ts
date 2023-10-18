@@ -1078,6 +1078,7 @@ export class Figure extends PlotData {
   public pointSetColors: string[] = [];
   public pointStyles: newPointStyle[] = null;
 
+  public isHovered: boolean = false;
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
   public isZooming: boolean = false;
@@ -1507,6 +1508,7 @@ export class Figure extends PlotData {
 
   public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: newShape): [Vertex, Vertex, Vertex] {
     const [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
+    this.isHovered = this.isInCanvas(absoluteMouse);
     this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
     if (this.interaction_ON) {
       if (canvasDown) {
@@ -1538,6 +1540,54 @@ export class Figure extends PlotData {
     }
     this.mouseUp(ctrlKey);
     return this.resetMouseEvents()
+  }
+
+  public keyDownDrawer(canvas: HTMLElement, e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
+    if (e.key == "Control") {
+      ctrlKey = true;
+      if (spaceKey && this.isHovered) this.resetView();
+    }
+    if (e.key == "Shift") {
+      shiftKey = true;
+      if (!ctrlKey) this.shiftOnAction(canvas);
+    }
+    if (e.key == " ") {
+      spaceKey = true;
+      if (ctrlKey && this.isHovered) this.resetView();
+    }
+    return [ctrlKey, shiftKey, spaceKey]
+  }
+
+  public keyUpDrawer(canvas: HTMLElement, e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
+    if (e.key == "Control") ctrlKey = false;
+    if (e.key == " ") spaceKey = false;
+    if (e.key == "Shift") {
+      shiftKey = false;
+      this.shiftOffAction(canvas);
+    }
+    return [ctrlKey, shiftKey, spaceKey]
+  }
+
+  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+    this.axes.forEach(axis => axis.sendRubberBand(multiplotRubberBands));
+  }
+
+  public refreshRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+    this.axes.forEach(axis => axis.sendRubberBandRange(multiplotRubberBands));
+  }
+
+  public sendRubberBandsMultiplot(figures: Figure[]): void {
+    figures.forEach(figure => {
+      figure.axes.forEach(otherAxis => {
+        this.axes.forEach(thisAxis => {
+          if (thisAxis.name == otherAxis.name && thisAxis.name != 'number') {
+            otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
+            otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
+            otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
+          }
+        })
+      })
+    })
   }
 
   public translate(canvas: HTMLElement, translation: Vertex): void {
@@ -1576,27 +1626,11 @@ export class Figure extends PlotData {
       this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 
       window.addEventListener('keydown', e => {
-        if (e.key == "Control") {
-          ctrlKey = true;
-          if (spaceKey && this.isInCanvas(absoluteMouse)) this.resetView();
-        }
-        if (e.key == "Shift") {
-          shiftKey = true;
-          if (!ctrlKey) this.shiftOnAction(canvas);
-        }
-        if (e.key == " ") {
-          spaceKey = true;
-          if (ctrlKey && this.isInCanvas(absoluteMouse)) this.resetView();
-        }
+        [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(canvas, e, ctrlKey, shiftKey, spaceKey);
       });
 
       window.addEventListener('keyup', e => {
-        if (e.key == "Control") ctrlKey = false;
-        if (e.key == " ") spaceKey = false;
-        if (e.key == "Shift") {
-          shiftKey = false;
-          this.shiftOffAction(canvas);
-        };
+        [ctrlKey, shiftKey, spaceKey] = this.keyUpDrawer(canvas, e, ctrlKey, shiftKey, spaceKey);
       });
 
       canvas.addEventListener('mousemove', e => {
@@ -2346,6 +2380,12 @@ export class Graph2D extends Scatter {
     super.mouseUp(ctrlKey);
     this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
   }
+
+  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+
+  public refreshRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+
+  public sendRubberBandsMultiplot(figures: Figure[]): void {}
 }
 
 const FREE_SPACE_FACTOR = 0.95;
@@ -2678,6 +2718,12 @@ export class Draw extends Frame {
     this.axes.forEach(axis => axis.saveLocation());
     this.updateAxes();
   }
+
+  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+
+  public refreshRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+
+  public sendRubberBandsMultiplot(figures: Figure[]): void {}
 }
 
 export function range(start: number, end: number, step: number = 1): number[] {

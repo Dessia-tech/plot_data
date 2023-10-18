@@ -2420,7 +2420,7 @@ export class ParallelPlot extends Figure {
   protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
     const step = this.computeAxesStep();
     const boundingBoxes: newRect[] = [];
-    this.drawnFeatures.forEach((drawnFeature, index) => {
+    this.drawnFeatures.forEach((_, index) => {
       const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
       if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(axisOrigin, axisEnd.y - axisOrigin.y, step, index));
       else boundingBoxes.push(this.horizontalAxisBoundingBox(axisOrigin, axisEnd.x - axisOrigin.x, step, index));

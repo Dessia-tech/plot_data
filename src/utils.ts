@@ -3499,7 +3499,6 @@ export class newAxis extends newShape {
     context.lineWidth = this.lineWidth;
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
-
     context.resetTransform();
     this.computeTextBoxes(context);
 
@@ -3998,8 +3997,8 @@ export class ShapeCollection {
     this.shapes.forEach(shape => shape.mouseMove(context, mouseCoords));
   }
 
-  public mouseDown(mouseCoords: Vertex): any { // TODO: refactor this. Code is insane
-    let clickedObject: any = null;
+  public mouseDown(mouseCoords: Vertex): newShape { // TODO: refactor this. Code is insane
+    let clickedObject: newShape = null;
     this.shapes.forEach(shape => {
       shape.mouseDown(mouseCoords);
       if (shape.isHovered) clickedObject = shape; // this is insane

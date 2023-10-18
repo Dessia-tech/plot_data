@@ -247,8 +247,6 @@ export class Multiplot {
 
     this.canvas.addEventListener('mousedown', () => {
       [canvasDown, frameDown, clickedObject] = currentPlot.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
-      this.refreshSelectedIndices();
-      this.draw();
     })
 
     this.canvas.addEventListener('mouseup', () => {

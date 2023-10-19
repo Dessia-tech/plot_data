@@ -1623,6 +1623,7 @@ export class Figure extends PlotData {
   public axisChangeUpdate(e: newAxis): void {}
 
   public mouseListener(): void {
+    // TODO: mouseListener generally suffers from a bad initial design that should be totally rethink in a specific refactor development
     if (this.interaction_ON === true) {
       let clickedObject: newShape = null;
       let canvasMouse: Vertex = null; let canvasDown: Vertex = null;

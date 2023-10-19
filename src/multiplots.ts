@@ -41,6 +41,8 @@ export class Multiplot {
 
   public isSelecting: boolean = false;
   public isZooming: boolean = false;
+  public hoveredIndex: number = 0;
+  public clickedIndex: number = null;
 
   public clickedIndices: number[] = [];
   public hoveredIndices: number[] = [];
@@ -136,18 +138,18 @@ export class Multiplot {
     this.figures.forEach(figure => figure.switchSelection());
   }
 
-  public switchMerge() { this.figures.forEach(figure => figure.switchMerge())};
+  public switchMerge() { this.figures.forEach(figure => figure.switchMerge()) }
 
-  public togglePoints() { this.figures.forEach(figure => figure.togglePoints())};
+  public togglePoints() { this.figures.forEach(figure => figure.togglePoints()) }
 
   public switchZoom() {
     this.isZooming = !this.isZooming;
     this.figures.forEach(figure => figure.switchZoom());
   }
 
-  // public zoomIn() { (this.figures[this.clickedPlotIndex] as Figure).zoomIn() }
+  public zoomIn() { (this.figures[this.clickedIndex] as Figure).zoomIn() }
 
-  // public zoomOut() { (this.figures[this.clickedPlotIndex] as Figure).zoomOut() }
+  public zoomOut() { (this.figures[this.clickedIndex] as Figure).zoomOut() }
 
   public simpleCluster(inputValue: number) { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.simpleCluster(inputValue) })};
 
@@ -203,7 +205,8 @@ export class Multiplot {
     }
   }
 
-  public mouseListener(): void {
+  public mouseListener(): void { 
+    // TODO: mouseListener generally suffers from a bad initial design that should be totally rethink in a specific refactor development
     let ctrlKey = false;
     let shiftKey = false;
     let spaceKey = false;
@@ -213,7 +216,6 @@ export class Multiplot {
     let absoluteMouse: Vertex = null;
     let canvasDown: Vertex = null;
     let frameDown: Vertex = null;
-    let currentFigure: Figure = this.figures[0];
 
     this.figures.forEach(figure => figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e))));
 
@@ -237,7 +239,7 @@ export class Multiplot {
         }
       }
       if (e.key == " ") spaceKey = true;
-      currentFigure.keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey);
+      this.figures[this.hoveredIndex].keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey);
     });
 
     window.addEventListener('keyup', e => {
@@ -257,29 +259,32 @@ export class Multiplot {
     });
 
     this.canvas.addEventListener('mousemove', e => {
-      for (let figure of this.figures) {
+      for (const [index, figure] of this.figures.entries()) {
         if (figure.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
           [canvasMouse, frameMouse, absoluteMouse] = figure.mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
           if (!(figure instanceof Graph2D || figure instanceof Draw)) this.hoveredIndices = figure.hoveredIndices;
           else this.hoveredIndices = [];
-          currentFigure = figure;
+          this.hoveredIndex = index;
           break
         }
       }
-      this.updateRubberBands(currentFigure);
+      this.updateRubberBands(this.figures[this.hoveredIndex]);
       this.updateSelectedIndices();
       this.draw();
-    })
+    });
 
     this.canvas.addEventListener('mousedown', () => {
-      [canvasDown, frameDown, clickedObject] = currentFigure.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
-    })
+      [canvasDown, frameDown, clickedObject] = this.figures[this.hoveredIndex].mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
+      this.clickedIndex = this.hoveredIndex;
+    });
 
     this.canvas.addEventListener('mouseup', () => {
-      [clickedObject, canvasDown] = currentFigure.mouseUpDrawer(ctrlKey);
-      if (!(currentFigure instanceof Graph2D || currentFigure instanceof Draw)) this.clickedIndices = currentFigure.clickedIndices;
+      [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
+      if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
+        this.clickedIndices = this.figures[this.hoveredIndex].clickedIndices;
+      }
       if (ctrlKey && shiftKey) this.reset();
-      this.updateRubberBands(currentFigure);
+      this.updateRubberBands(this.figures[this.hoveredIndex]);
       if (!shiftKey) {
         this.canvas.style.cursor = 'default';
         this.isSelecting = false;
@@ -291,14 +296,12 @@ export class Multiplot {
         }
         figure.isZooming = false;
       })
-      
       this.updateSelectedIndices();
       this.draw();
-    })
+    });
 
-    this.canvas.addEventListener('wheel', e => currentFigure.mouseWheelDrawer(e))
+    this.canvas.addEventListener('wheel', e => this.figures[this.hoveredIndex].mouseWheelDrawer(e));
   }
-
 }
 
 /**

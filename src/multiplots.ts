@@ -2000,7 +2000,10 @@ export class MultiplePlots {
       var double_click = false;
       var ctrlKey = false; var shiftKey = false;
 
-      this.objectList.forEach(plot => { plot.mouse_interaction() });
+      this.objectList.forEach(plot => {
+        if (plot instanceof Figure) plot.mouseListener()
+        else plot.mouse_interaction();
+      });
       this.setAllInteractionsToOff();
 
       window.addEventListener('keydown', e => {

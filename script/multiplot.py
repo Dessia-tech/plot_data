@@ -9,6 +9,7 @@ customization and optional parameters, feel free read the plots' specific script
 import random
 
 from test_objects.graph_test import graph2d
+from test_objects.primitive_group_test import primitive_group
 
 import plot_data
 import plot_data.colors as colors
@@ -70,7 +71,7 @@ histogram3 = plot_data.Histogram(x_variable='color')
 # Creating the multiplot
 plots = [parallelplot1, scatterplot1]
 plots2 = [parallelplot1, scatterplot1, scatterplot2, scatterplot3, graph2d, primitive_group_container, parallelplot2,
-          histogram]
+          histogram, primitive_group]
 # multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True,
                                            point_families=[plot_data.PointFamily('rgb(25, 178, 200)', [1,2,3,4,5,6,7]),

@@ -226,25 +226,18 @@ export class Multiplot {
       if (e.key == "Control") {
         ctrlKey = true;
         this.canvas.style.cursor = 'default';
-      }
+        if (shiftKey) this.figures.forEach(figure => figure.keyUpDrawer(this.canvas, "Shift", ctrlKey, shiftKey, spaceKey));
+      } 
       if (e.key == "Shift") {
         shiftKey = true;
         if (!ctrlKey) {
           this.canvas.style.cursor = 'crosshair';
           this.isSelecting = true;
+          this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
         }
       }
       if (e.key == " ") spaceKey = true;
-      this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
-
-      // if (e.key == "Shift") {
-      //   shiftKey = true;
-      //   if (!ctrlKey) {
-      //     this.isSelecting = true;
-      //     this.canvas.style.cursor = 'crosshair';
-      //     this.draw();
-      //   }
-      // }
+      currentFigure.keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey);
     });
 
     window.addEventListener('keyup', e => {
@@ -261,19 +254,6 @@ export class Multiplot {
       }
       if (e.key == " ") spaceKey = false;
       this.figures.forEach(figure => figure.keyUpDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
-      // currentFigure.keyUpDrawer(this.canvas, e, ctrlKey, shiftKey, spaceKey);
-
-      // if (e.key == "Control") ctrlKey = false;
-      // if (e.key == "Shift") {
-      //   shiftKey = false;
-      //   this.isSelecting = false;
-      //   this.plots.forEach(plot => {
-      //     plot.isSelecting = false;
-      //     plot.is_drawing_rubber_band = false;
-      //   });
-      //   this.canvas.style.cursor = 'default';
-      //   this.draw();
-      // }
     });
 
     this.canvas.addEventListener('mousemove', e => {

@@ -2669,8 +2669,8 @@ export class Draw extends Frame {
 
   public shiftOnAction(canvas: HTMLElement): void {}
 
-  public define_canvas(canvasID: string):void {
-    super.define_canvas(canvasID);
+  public setCanvas(canvasID: string):void {
+    super.setCanvas(canvasID);
     this.computeTextBorders(this.context);
   }
 

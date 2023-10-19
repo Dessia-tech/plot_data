@@ -61,7 +61,7 @@ export class Multiplot {
     this.computeTable();
     this.draw();
     this.initRubberBands();
-    this.mouseHandler();
+    this.mouseListener();
   }
 
 
@@ -203,7 +203,7 @@ export class Multiplot {
     }
   }
 
-  public mouseHandler(): void {
+  public mouseListener(): void {
     let ctrlKey = false;
     let shiftKey = false;
     let spaceKey = false;
@@ -229,7 +229,10 @@ export class Multiplot {
       }
       if (e.key == "Shift") {
         shiftKey = true;
-        if (!ctrlKey) this.canvas.style.cursor = 'crosshair';
+        if (!ctrlKey) {
+          this.canvas.style.cursor = 'crosshair';
+          this.isSelecting = true;
+        }
       }
       if (e.key == " ") spaceKey = true;
       this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
@@ -245,7 +248,10 @@ export class Multiplot {
     });
 
     window.addEventListener('keyup', e => {
-      if (e.key == "Shift") shiftKey = false;
+      if (e.key == "Shift") {
+        shiftKey = false;
+        this.isSelecting = false;
+      }
       if (e.key == "Control") {
         ctrlKey = false;
         if (shiftKey) {
@@ -277,6 +283,7 @@ export class Multiplot {
           if (!(figure instanceof Graph2D || figure instanceof Draw)) this.hoveredIndices = figure.hoveredIndices;
           else this.hoveredIndices = [];
           currentFigure = figure;
+          break
         }
       }
       this.updateRubberBands(currentFigure);

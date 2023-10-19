@@ -18,7 +18,7 @@ import plot_data.colors as colors
 random.seed(0)
 
 elements = []
-nb_elements = 1000
+nb_elements = 500
 available_colors = ["purple", "Blue", "green", "red", "Yellow", "Cyan", "rose"]
 directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):

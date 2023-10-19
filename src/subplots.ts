@@ -1424,7 +1424,7 @@ export class Figure extends PlotData {
 
   public switchMerge(): void {}
 
-  public switchZoom(): void { this.isZooming = !this.isZooming }
+  public switchZoom(): void {}
 
   public togglePoints(): void {}
 
@@ -1457,7 +1457,7 @@ export class Figure extends PlotData {
     }
   }
 
-  private updateZoomBox(frameDown: Vertex, frameMouse: Vertex): void { this.zoomBox.update(frameDown, frameMouse) }
+  public updateZoomBox(frameDown: Vertex, frameMouse: Vertex): void {}
 
   protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
     this.axes[0].minValue = Math.min(zoomBox.minVertex.x, zoomBox.maxVertex.x);
@@ -1492,7 +1492,7 @@ export class Figure extends PlotData {
     const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
     const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
     const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);
-    const clickedObject = fixedClickedObject ? fixedClickedObject : absoluteClickedObject ? absoluteClickedObject : relativeClickedObject ? relativeClickedObject : null
+    const clickedObject = fixedClickedObject ?? relativeClickedObject ?? absoluteClickedObject ?? null;
     return [canvasMouse, frameMouse, clickedObject]
   }
 
@@ -1520,8 +1520,9 @@ export class Figure extends PlotData {
           if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
           else this.updateSelectionBox(frameDown, frameMouse);
         }
-        if (this.isZooming) this.updateZoomBox(frameDown, frameMouse);
+        this.updateZoomBox(frameDown, frameMouse);
       }
+      if (this.isZooming) canvas.style.cursor = 'crosshair';
     }
     return [canvasMouse, frameMouse, absoluteMouse]
   }
@@ -1535,10 +1536,11 @@ export class Figure extends PlotData {
   public mouseUpDrawer(ctrlKey: boolean): [newShape, Vertex] {
     if (this.isZooming) {
       this.switchZoom();
-      this.zoomBoxUpdateAxes(this.zoomBox);
+      if (this.zoomBox.area != 0) this.zoomBoxUpdateAxes(this.zoomBox);
       this.zoomBox.update(new Vertex(0, 0), new Vertex(0, 0));
     }
     this.mouseUp(ctrlKey);
+    this.draw();
     return this.resetMouseEvents()
   }
 
@@ -1612,7 +1614,7 @@ export class Figure extends PlotData {
 
   public axisChangeUpdate(e: newAxis): void {}
 
-  public mouse_interaction(): void {
+  public mouseListener(): void {
     if (this.interaction_ON === true) {
       let clickedObject: newShape = null;
       let canvasMouse: Vertex = null; let canvasDown: Vertex = null;
@@ -1647,7 +1649,6 @@ export class Figure extends PlotData {
 
       canvas.addEventListener('mouseup',() => {
         [clickedObject, canvasDown] = this.mouseUpDrawer(ctrlKey);
-        this.draw();
         if (!shiftKey) canvas.style.cursor = 'default';
       })
 
@@ -1831,6 +1832,12 @@ export class Frame extends Figure {
     this.axes[0].rubberBand.maxValue = Math.max(frameDown.x, frameMouse.x);
     this.axes[1].rubberBand.maxValue = Math.max(frameDown.y, frameMouse.y);
     super.updateSelectionBox(...this.rubberBandsCorners);
+  }
+
+  public switchZoom(): void { this.isZooming = !this.isZooming }
+
+  public updateZoomBox(frameDown: Vertex, frameMouse: Vertex): void {
+    if (this.isZooming) this.zoomBox.update(frameDown, frameMouse);
   }
 
   public get rubberBandsCorners(): [Vertex, Vertex] {
@@ -2556,6 +2563,8 @@ export class ParallelPlot extends Figure {
   }
 
   protected drawSelectionBox(context: CanvasRenderingContext2D): void {}
+
+  public switchZoom(): void {}
 
   private drawCurves(context: CanvasRenderingContext2D): void {
     const unpickedIndices = ParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);

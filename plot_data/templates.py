@@ -63,31 +63,31 @@ SCATTER_COMMANDS = """
             var plot_data = new PlotData.Scatter(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
-            plot_data.mouse_interaction();"""
+            plot_data.mouseListener();"""
 
 CONTOUR_COMMANDS = """
             var plot_data = new PlotData.Draw(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
-            plot_data.mouse_interaction();"""
+            plot_data.mouseListener();"""
 
 GRAPH_COMMANDS = """
             var plot_data = new PlotData.Graph2D(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
-            plot_data.mouse_interaction();"""
+            plot_data.mouseListener();"""
 
 PARALLELPLOT_COMMANDS = """
             var plot_data = new PlotData.ParallelPlot(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
-            plot_data.mouse_interaction();"""
+            plot_data.mouseListener();"""
 
 HISTOGRAM_COMMANDS = """
             var plot_data = new PlotData.Histogram(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
-            plot_data.mouse_interaction();"""
+            plot_data.mouseListener();"""
 
 MULTIPLOT_COMMANDS = """
             var plot_data = new PlotData.Multiplot(data, width, height, $canvas_id.id);"""

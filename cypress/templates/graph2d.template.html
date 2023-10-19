@@ -50,7 +50,7 @@
             var plot_data = new PlotData.newGraph2D(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.define_canvas($canvas_id.id);
             plot_data.draw_initial();
-            plot_data.mouse_interaction(plot_data.isParallelPlot);
+            plot_data.mouseListener(plot_data.isParallelPlot);
         </script>
     </div>
 </html>

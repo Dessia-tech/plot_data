@@ -3999,11 +3999,11 @@ export class ShapeCollection {
     this.shapes.forEach(shape => shape.mouseMove(context, mouseCoords));
   }
 
-  public mouseDown(mouseCoords: Vertex): newShape { // TODO: refactor this. Code is insane
+  public mouseDown(mouseCoords: Vertex): newShape {
     let clickedObject: newShape = null;
     this.shapes.forEach(shape => {
       shape.mouseDown(mouseCoords);
-      if (shape.isHovered) clickedObject = shape; // this is insane
+      if (shape.isHovered) clickedObject = shape; //TODO: still insane ?
     });
     return clickedObject
   }

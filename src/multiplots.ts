@@ -295,6 +295,8 @@ export class Multiplot {
       this.updateSelectedIndices();
       this.draw();
     })
+
+    this.canvas.addEventListener('wheel', e => currentFigure.mouseWheelDrawer(e))
   }
 
 }

@@ -1544,6 +1544,14 @@ export class Figure extends PlotData {
     return this.resetMouseEvents()
   }
 
+  public mouseWheelDrawer(e: WheelEvent): void {
+    if (this.interaction_ON) {
+      this.wheelFromEvent(e);
+      this.updateWithScale();
+      this.draw();
+    }
+  }
+
   public keyDownDrawer(canvas: HTMLElement, keyString: string, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
     if (keyString == "Control") {
       ctrlKey = true;
@@ -1652,13 +1660,7 @@ export class Figure extends PlotData {
         if (!shiftKey) canvas.style.cursor = 'default';
       })
 
-      canvas.addEventListener('wheel', e => {
-        if (this.interaction_ON) {
-          this.wheelFromEvent(e);
-          this.updateWithScale();
-          this.draw();
-        }
-      });
+      canvas.addEventListener('wheel', e => this.mouseWheelDrawer(e));
 
       canvas.addEventListener('mouseleave', () => {
         canvasDown = null;

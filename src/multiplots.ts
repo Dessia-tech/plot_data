@@ -115,6 +115,7 @@ export class Multiplot {
   }
 
   public draw(): void {
+    this.context.clearRect(0, 0, this.width, this.height);
     this.figures.forEach(figure => {
       if ( !(figure instanceof Graph2D) && !(figure instanceof Draw)) {
         figure.selectedIndices = this.selectedIndices;
@@ -192,6 +193,11 @@ export class Multiplot {
     if (this.selectedIndices.length == this.nSamples && !isSelecting) this.selectedIndices = [];
   }
 
+  public updateHoveredIndices(figure: Figure): void {
+    if (!(figure instanceof Graph2D || figure instanceof Draw)) this.hoveredIndices = figure.hoveredIndices;
+    else this.hoveredIndices = [];
+  }
+
   public initRubberBands(): void {
     this.rubberBands = new Map<string, RubberBand>();
     this.figures.forEach(figure => figure.initRubberBandMultiplot(this.rubberBands));
@@ -261,13 +267,18 @@ export class Multiplot {
     this.canvas.addEventListener('mousemove', e => {
       for (const [index, figure] of this.figures.entries()) {
         if (figure.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
-          [canvasMouse, frameMouse, absoluteMouse] = figure.mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
-          if (!(figure instanceof Graph2D || figure instanceof Draw)) this.hoveredIndices = figure.hoveredIndices;
-          else this.hoveredIndices = [];
           this.hoveredIndex = index;
           break
         }
       }
+      // if (this.hoveredIndex != this.clickedIndex && this.clickedIndex) {
+      //   [ctrlKey, canvasDown] = this.figures[this.clickedIndex].mouseLeaveDrawer(this.canvas);
+      //   this.clickedIndex = null;
+      // }
+      // else {
+        [canvasMouse, frameMouse, absoluteMouse] = this.figures[this.hoveredIndex].mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
+      // }
+      this.updateHoveredIndices(this.figures[this.hoveredIndex]);
       this.updateRubberBands(this.figures[this.hoveredIndex]);
       this.updateSelectedIndices();
       this.draw();

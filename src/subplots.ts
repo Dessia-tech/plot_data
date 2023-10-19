@@ -1139,7 +1139,7 @@ export class Figure extends PlotData {
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
-  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.07) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.025, 0.035) }
 
   set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
@@ -1552,6 +1552,17 @@ export class Figure extends PlotData {
     }
   }
 
+  public mouseLeaveDrawer(canvas: HTMLElement): [boolean, Vertex] {
+    this.mouseUpDrawer(true);
+    this.axes.forEach(axis => {
+      axis.saveLocation();
+      axis.isClicked = axis.isHovered = false;
+    });
+    this.translation = new Vertex(0, 0);
+    canvas.style.cursor = 'default';
+    return [false, null]
+  }
+
   public keyDownDrawer(canvas: HTMLElement, keyString: string, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
     if (keyString == "Control") {
       ctrlKey = true;
@@ -1645,6 +1656,7 @@ export class Figure extends PlotData {
       });
 
       canvas.addEventListener('mousemove', e => {
+        console.log(canvasDown);
         [canvasMouse, frameMouse, absoluteMouse] = this.mouseMoveDrawer(canvas, e, canvasDown, frameDown, clickedObject);
         this.draw();
         const mouseInCanvas = (e.offsetX >= this.origin.x) && (e.offsetX <= this.width + this.origin.x) && (e.offsetY >= this.origin.y) && (e.offsetY <= this.height + this.origin.y);
@@ -1663,13 +1675,7 @@ export class Figure extends PlotData {
 
       canvas.addEventListener('wheel', e => this.mouseWheelDrawer(e));
 
-      canvas.addEventListener('mouseleave', () => {
-        canvasDown = null;
-        ctrlKey = false;
-        this.axes.forEach(axis => axis.saveLocation());
-        this.translation = new Vertex(0, 0);
-        canvas.style.cursor = 'default';
-      });
+      canvas.addEventListener('mouseleave', () => [ctrlKey, canvasDown] = this.mouseLeaveDrawer(canvas));
     }
   }
 

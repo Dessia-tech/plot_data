@@ -3212,6 +3212,14 @@ export class TitleSettings {
 export const SIZE_END = 7;
 export class newAxis extends newShape {
   public ticksPoints: newPoint2D[];
+  public rubberBand: RubberBand;
+
+  public labels: string[];
+  protected _ticks: number[];
+  public tickPrecision: number;
+  public ticksFontsize: number = 12;
+  protected _isDiscrete: boolean = true;
+  
   public drawPath: Path2D;
   public path: Path2D;
   public lineWidth: number = 1;
@@ -3219,21 +3227,15 @@ export class newAxis extends newShape {
   public hoverStyle: string = 'hsl(0, 100%, 48%)';
   public clickedStyle: string = 'hsl(126, 67%, 72%)';
   public rubberColor: string = 'hsl(200, 95%, 50%)';//'hsla(127, 95%, 60%, 0.85)';
-  public labels: string[];
+  public mouseStyleON: boolean = false;
+
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isInverted: boolean = false;
-  public mouseStyleON: boolean = false;
-  public rubberBand: RubberBand;
   public title: newText;
   public centeredTitle: boolean = false;
   public titleSettings: TitleSettings = new TitleSettings();
   public font: string = 'sans-serif';
-
-  protected _ticks: number[];
-  public tickPrecision: number;
-  public ticksFontsize: number = 12;
-  protected _isDiscrete: boolean = true;
 
   public emitter: EventEmitter = new EventEmitter();
   public initMinValue: number;
@@ -3277,7 +3279,7 @@ export class newAxis extends newShape {
     this.drawPath = this.buildDrawPath();
     this.buildPath();
     this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
-    this.offsetTicks = this.ticksFontsize * 0.8;
+    this.updateOffsetTicks();
     this.offsetTitle = 0;
     this.title = new newText(this.titleText, new Vertex(0, 0), {});
   };
@@ -3333,7 +3335,9 @@ export class newAxis extends newShape {
 
   get titleText(): string { return newText.capitalize(this.name) }
 
-  get transformMatrix(): DOMMatrix { return this.getValueToDrawMatrix() };
+  get transformMatrix(): DOMMatrix { return this.getValueToDrawMatrix() }
+
+  protected updateOffsetTicks(): void { this.offsetTicks = Math.abs(this.boundingBox.size[this.isVertical ? "x" : "y"]) * 0.25 }
 
   private horizontalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.y)) }
 
@@ -3469,8 +3473,8 @@ export class newAxis extends newShape {
   public computeTextBoxes(context: CanvasRenderingContext2D): void {
     context.save();
     const [calibratedTickText, calibratedMeasure] = this.getCalibratedTextWidth(context);
-    this.maxTickWidth = Math.min(this.boundingBox.size.x - this.offsetTicks - 3 - SIZE_END / 2, calibratedMeasure);
-    this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - SIZE_END / 2, calibratedTickText.fontsize);
+    this.maxTickWidth = Math.min(this.boundingBox.size.x - this.offsetTicks - 3, calibratedMeasure);
+    this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3, calibratedTickText.fontsize);
     if (this.centeredTitle) this.centeredTitleTextBoxes(calibratedMeasure);
     context.restore();
   }
@@ -3573,7 +3577,6 @@ export class newAxis extends newShape {
     } else this.titleSettings.origin.y -= this.offsetTitle;
     this.titleSettings.orientation = this.isVertical ? -90 : 0;
   }
-
 
   private topArrowTitleProperties(): void {
     this.titleSettings.origin = this.end.copy();
@@ -3845,6 +3848,8 @@ export class ParallelAxis extends newAxis {
 
   set hasMoved(value: boolean) { this._hasMoved = value; if (this._hasMoved) this.emitter.emit("axisStateChange", this) }
 
+  protected updateOffsetTicks(): void { this.offsetTicks = 10 } // TODO: make it responsive
+
   public resetScale(): void {
     this.isInverted = false;
     super.resetScale();
@@ -3870,7 +3875,7 @@ export class ParallelAxis extends newAxis {
     const SIZE_FACTOR = 0.35;
     let offset = 0;
     if (this.isVertical) {
-      offset = this.drawLength + SIZE_END * 2;
+      offset = this.drawLength + Math.min(SIZE_END * 2, this.drawLength * 0.05);
       this.titleZone.origin.y += offset;
     } else {
       offset = SIZE_END + this.offsetTicks + this.FONT_SIZE;

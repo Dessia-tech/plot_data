@@ -21,8 +21,7 @@ for i in range(50):
                      })
 
 plot_data_object = plot_data.ParallelPlot(elements=elements,
-                                          axes=['a b c_d_e f ' * 50, 'mass', 'length', 'shape', 'color',
-                                                'long middle_attribute name ' * 10, 'long right attribute name ' * 7])
+                                          axes=['a b c_d_e f ' * 50, 'mass'])
 
 # The line above shows the minimum requirements for creating a
 # parallel plot. However, many options are available for further customization.

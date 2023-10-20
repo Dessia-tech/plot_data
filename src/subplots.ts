@@ -1220,8 +1220,10 @@ export class Figure extends PlotData {
 
   protected setFeatures(data: any): string[] { return data.attribute_names ?? Array.from(this.features.keys()) }
 
+  protected computeNaturalOffset(): Vertex { return new Vertex(this.width * this.offsetFactor.x, this.height * this.offsetFactor.y) }
+
   protected computeOffset(): Vertex {
-    const naturalOffset = new Vertex(this.width * this.offsetFactor.x, this.height * this.offsetFactor.y);
+    const naturalOffset = this.computeNaturalOffset();
     return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
@@ -1344,7 +1346,7 @@ export class Figure extends PlotData {
   public updateSelected(axis: newAxis): number[] {
     const selection = [];
     const vector = axis.stringsToValues(this.features.get(axis.name));
-    vector.forEach((value, index) => { if (axis.isInRubberBand(value)) selection.push(index) });
+    vector.forEach((value, index) => axis.isInRubberBand(value) ? selection.push(index) : {});
     return selection
   }
 
@@ -1602,15 +1604,17 @@ export class Figure extends PlotData {
 
   public sendRubberBandsMultiplot(figures: Figure[]): void {
     figures.forEach(figure => {
-      figure.axes.forEach(otherAxis => {
-        this.axes.forEach(thisAxis => {
-          if (thisAxis.name == otherAxis.name && thisAxis.name != 'number') {
-            otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
-            otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
-            otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
-          }
+      if (!(figure instanceof Draw)) {
+        figure.axes.forEach(otherAxis => {
+          this.axes.forEach(thisAxis => {
+            if (thisAxis.name == otherAxis.name && thisAxis.name != 'number') {
+              otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
+              otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
+              otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
+            }
+          })
         })
-      })
+      }
     })
   }
 
@@ -2436,23 +2440,19 @@ export class ParallelPlot extends Figure {
 
   set isVertical(value: boolean) { this._isVertical = value }
 
-  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.05) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.005, 0.005) }
 
   set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
-  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.0035, 0.0025) }
+  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.005, 0.0025) }
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
   public shiftOnAction(canvas: HTMLElement): void {}
 
-  protected computeOffset(): Vertex {
-    const standardOffset = super.computeOffset();
-    if (this.isVertical) return new Vertex(Math.max(standardOffset.x, MIN_OFFSET), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
-    return new Vertex(standardOffset.x / 3, Math.max(standardOffset.y * 1.5, MIN_OFFSET));
-  }
+  protected computeOffset(): Vertex { return this.computeNaturalOffset() }
 
-  protected get marginOffset(): Vertex { return new Vertex(this.isVertical ? 0 : SIZE_END, this.isVertical ? SIZE_END : SIZE_END * 4) }
+  protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
 
   public resetScales(): void { // TODO: merge with resetView
     super.resetScales();
@@ -2468,78 +2468,56 @@ export class ParallelPlot extends Figure {
   private updateAxesLocation(): void {
     const freeSpace = this.setBounds();
     const axisBoundingBoxes = this.buildAxisBoundingBoxes(freeSpace);
-    const step = this.computeAxesStep();
+    const boxSize = this.computeBoxesSize();
     this.axes.forEach((axis, index) => {
-      const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
+      const [axisOrigin, axisEnd] = this.getAxisLocation(boxSize, index);
       axis.updateLocation(axisOrigin, axisEnd, axisBoundingBoxes[index], index, this.drawnFeatures.length);
     });
     this.computeCurves();
   }
 
-  private computeAxesStep(): number {
-    if (this.isVertical) return (this.drawEnd.x - this.drawOrigin.x - Math.abs(this.offset.x) - Math.abs(this.margin.x)) / (this.drawnFeatures.length - 1)
-    return (this.drawEnd.y - this.drawOrigin.y - Math.abs(this.margin.y)) / (this.drawnFeatures.length - 1)
+  private computeBoxesSize(): number {
+    if (this.isVertical) return (this.drawEnd.x - this.drawOrigin.x) / this.drawnFeatures.length
+    return (this.drawEnd.y - this.drawOrigin.y) / this.drawnFeatures.length
   }
 
   protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
-    const step = this.computeAxesStep();
+    const size = this.computeBoxesSize();
     const boundingBoxes: newRect[] = [];
     this.drawnFeatures.forEach((_, index) => {
-      const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
-      if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(axisOrigin, axisEnd.y - axisOrigin.y, step, index));
-      else boundingBoxes.push(this.horizontalAxisBoundingBox(axisOrigin, axisEnd.x - axisOrigin.x, step, index));
+      if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(this.drawOrigin, this.drawEnd.y - this.drawOrigin.y, size, index));
+      else boundingBoxes.push(this.horizontalAxisBoundingBox(this.drawOrigin, this.drawEnd.x - this.drawOrigin.x, size, index));
     });
     return boundingBoxes
   }
 
-  private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const boundingBox = new newRect(axisOrigin.copy());
-    const relativeY = Math.abs(axisOrigin.y) - this.origin.y;
-    boundingBox.size = new Vertex(axisSize, step * FREE_SPACE_FACTOR);
-    if (index == this.drawnFeatures.length - 1) {
-      if (this.initScale.y < 0) boundingBox.size.y = (this.size.y - relativeY) * FREE_SPACE_FACTOR
-      else boundingBox.size.y = relativeY * FREE_SPACE_FACTOR
+  private horizontalAxisBoundingBox(drawOrigin: Vertex, axisSize: number, size: number, index: number): newRect {
+    const boundingBox = new newRect(drawOrigin.copy(), new Vertex(axisSize, size * FREE_SPACE_FACTOR));
+    boundingBox.origin.y += (this.drawnFeatures.length - 1 - index) * size;
+    return boundingBox
+  }
+
+  private verticalAxisBoundingBox(drawOrigin: Vertex, axisSize: number, size: number, index: number): newRect {
+    const boundingBox = new newRect(drawOrigin.copy(), new Vertex(size * FREE_SPACE_FACTOR, axisSize));
+    boundingBox.origin.x += size * index;
+    return boundingBox
+  }
+
+  private getAxisLocation(boxSize: number, axisIndex: number): [Vertex, Vertex] {
+    if (this.isVertical) {
+      const verticalX = this.drawOrigin.x + (axisIndex + 0.5) * boxSize;
+      return [new Vertex(verticalX, this.drawOrigin.y), new Vertex(verticalX, this.drawEnd.y)]
     }
-    boundingBox.origin.y -= boundingBox.size.y;
-    return boundingBox
-  }
-
-  private verticalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const boundingBox = new newRect(axisOrigin.copy());
-    const relativeX = axisOrigin.x - this.origin.x;
-    boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
-    if (index == 0) {
-      if (this.initScale.x < 0) {
-        boundingBox.origin.x -= (this.size.x + relativeX) * FREE_SPACE_FACTOR;
-        boundingBox.size.x = (step / 2 + this.width + relativeX) * FREE_SPACE_FACTOR;
-      } else {
-        boundingBox.origin.x -= relativeX * FREE_SPACE_FACTOR;
-        boundingBox.size.x = (step / 2 + relativeX) * FREE_SPACE_FACTOR;
-      }
-    } else if (index == this.drawnFeatures.length - 1) {
-      boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
-      if (this.initScale.x < 0) {
-        boundingBox.size.x = (step / 2 - relativeX) * FREE_SPACE_FACTOR;
-      } else {
-        boundingBox.size.x = (this.size.x - boundingBox.origin.x + this.origin.x) * FREE_SPACE_FACTOR;
-      }
-    } else boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
-    return boundingBox
-  }
-
-  private getAxisLocation(step: number, axisIndex: number): [Vertex, Vertex] {
-    const verticalX = this.drawOrigin.x + axisIndex * step;
-    const horizontalY = this.drawOrigin.y + (this.drawnFeatures.length - 1 - axisIndex) * step + this.margin.y;
-    if (this.isVertical) return [new Vertex(verticalX, this.drawOrigin.y), new Vertex(verticalX, this.drawEnd.y)]
+    const horizontalY = this.drawOrigin.y + ((this.drawnFeatures.length - axisIndex) * boxSize - SIZE_END);
     return [new Vertex(this.drawOrigin.x, horizontalY), new Vertex(this.drawEnd.x, horizontalY)]
   }
 
   protected buildAxes(axisBoundingBoxes: newRect[]): ParallelAxis[] {
     super.buildAxes(axisBoundingBoxes);
-    const step = this.computeAxesStep();
+    const boxSize = this.computeBoxesSize();
     const axes: ParallelAxis[] = [];
     this.drawnFeatures.forEach((featureName, index) => {
-      const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
+      const [axisOrigin, axisEnd] = this.getAxisLocation(boxSize, index);
       const axis = new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale);
       axis.updateStyle(this.axisStyle);
       axis.computeTitle(index, this.drawnFeatures.length);
@@ -2681,6 +2659,7 @@ export class Draw extends Frame {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, X, Y, canvasID, is_in_multiplot);
+      this.is_in_multiplot = false;
       this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.scale);
     }
 

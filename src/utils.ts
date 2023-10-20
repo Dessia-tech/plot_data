@@ -2819,7 +2819,7 @@ export class Bar extends newRect {
 
 export class newLabel extends newShape {
   public shapeSize: Vertex = new Vertex(30, 12);
-  private legend: newRect | LineSegment | newPoint2D;
+  public legend: newRect | LineSegment | newPoint2D;
   public maxWidth: number = 150;
   public readonly textOffset = 5;
   constructor(
@@ -2867,6 +2867,17 @@ export class newLabel extends newShape {
   public getShapeStyle(shape: newShape, origin: Vertex): void {
     this.legend = shape.styleToLegend(origin, this.shapeSize);
     Object.entries(shape.drawingStyle).map(([key, value]) => this[key] = value);
+  }
+
+  public updateHeight(height: number): void {
+    const heightRatio = height / this.shapeSize.y;
+    this.shapeSize.x *= heightRatio;
+    this.maxWidth *= heightRatio;
+    this.shapeSize.y = height;
+    if (this.legend instanceof newRect) this.legend.size.y = height
+    else if (this.legend instanceof LineSegment) this.legend.end.y = this.legend.origin.y + height
+    else this.legend.size = height;
+    this.text.fontsize = height;
   }
 
   public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): newLabel {
@@ -4039,13 +4050,22 @@ export class ShapeCollection {
   }
 
   public locateLabels(drawingZone: newRect, initScale: Vertex): void {
-    let nLabels = 1 + 0.5 * initScale.y;
+    const nLabels = 0.5 * initScale.y;
+    const labels: newLabel[] = [];
+    const others = [];
     this.shapes.forEach(shape => {
-      if (shape instanceof newLabel) {
-        shape.updateOrigin(drawingZone, initScale, nLabels);
-        nLabels++;
-      }
+      if (shape instanceof newLabel) labels.push(shape)
+      else others.push(shape);
     })
+    if (labels.length != 0) {
+      const labelHeight = Math.min(Math.abs(drawingZone.size.y) / (labels.length * 1.75 + 1), labels[0].shapeSize.y);
+      labels.forEach((label, index) => {
+        label.updateHeight(labelHeight);
+        label.updateOrigin(drawingZone, initScale, index - nLabels);
+      });
+
+    }
+    this.shapes = [...others, ...labels];
   }
 }
 

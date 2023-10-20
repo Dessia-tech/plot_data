@@ -1648,14 +1648,17 @@ export class Figure extends PlotData {
       this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 
       window.addEventListener('keydown', e => {
+        e.preventDefault();
         [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
       });
 
       window.addEventListener('keyup', e => {
+        e.preventDefault();
         [ctrlKey, shiftKey, spaceKey] = this.keyUpDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
       });
 
       canvas.addEventListener('mousemove', e => {
+        e.preventDefault();
         [canvasMouse, frameMouse, absoluteMouse] = this.mouseMoveDrawer(canvas, e, canvasDown, frameDown, clickedObject);
         this.draw();
         const mouseInCanvas = (e.offsetX >= this.origin.x) && (e.offsetX <= this.width + this.origin.x) && (e.offsetY >= this.origin.y) && (e.offsetY <= this.height + this.origin.y);
@@ -1672,7 +1675,10 @@ export class Figure extends PlotData {
         if (!shiftKey) canvas.style.cursor = 'default';
       })
 
-      canvas.addEventListener('wheel', e => this.mouseWheelDrawer(e));
+      canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        this.mouseWheelDrawer(e);
+      });
 
       canvas.addEventListener('mouseleave', () => [ctrlKey, canvasDown] = this.mouseLeaveDrawer(canvas, shiftKey));
     }
@@ -2063,7 +2069,6 @@ export class Scatter extends Frame {
   public resetScales(): void {
     super.resetScales();
     this.computePoints();
-    console.log(this.isMerged)
   }
 
   public reset(): void {

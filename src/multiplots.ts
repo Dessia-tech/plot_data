@@ -231,6 +231,7 @@ export class Multiplot {
     })));
 
     window.addEventListener('keydown', e => {
+      e.preventDefault();
       if (e.key == "Control") {
         ctrlKey = true;
         this.canvas.style.cursor = 'default';
@@ -249,6 +250,7 @@ export class Multiplot {
     });
 
     window.addEventListener('keyup', e => {
+      e.preventDefault();
       if (e.key == "Shift") {
         shiftKey = false;
         this.isSelecting = false;
@@ -265,6 +267,7 @@ export class Multiplot {
     });
 
     this.canvas.addEventListener('mousemove', e => {
+      e.preventDefault();
       for (const [index, figure] of this.figures.entries()) {
         if (figure.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
           this.hoveredIndex = index;
@@ -312,7 +315,10 @@ export class Multiplot {
       this.draw();
     });
 
-    this.canvas.addEventListener('wheel', e => this.figures[this.hoveredIndex].mouseWheelDrawer(e));
+    this.canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      this.figures[this.hoveredIndex].mouseWheelDrawer(e);
+    });
   }
 }
 

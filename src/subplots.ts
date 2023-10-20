@@ -1671,7 +1671,7 @@ export class Figure extends PlotData {
       });
 
       canvas.addEventListener('mouseup',() => {
-        [clickedObject, canvasDown] = this.mouseUpDrawer(ctrlKey);
+        if (canvasDown) [clickedObject, canvasDown] = this.mouseUpDrawer(ctrlKey);
         if (!shiftKey) canvas.style.cursor = 'default';
       })
 

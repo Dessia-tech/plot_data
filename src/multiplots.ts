@@ -222,6 +222,7 @@ export class Multiplot {
     let absoluteMouse: Vertex = null;
     let canvasDown: Vertex = null;
     let frameDown: Vertex = null;
+    let hasLeftFigure = false;
 
     this.figures.forEach(figure => figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e))));
 
@@ -268,20 +269,22 @@ export class Multiplot {
 
     this.canvas.addEventListener('mousemove', e => {
       e.preventDefault();
+      const mouseVertex = new Vertex(e.offsetX, e.offsetY);
       for (const [index, figure] of this.figures.entries()) {
-        if (figure.isInCanvas(new Vertex(e.offsetX, e.offsetY))) {
+        if (figure.isInCanvas(mouseVertex)) {
           this.hoveredIndex = index;
           break
         }
       }
-      if (this.hoveredIndex != this.clickedIndex && this.clickedIndex != null) {
-        this.figures[this.clickedIndex].mouseLeaveDrawer(this.canvas, shiftKey);
-        this.clickedIndex = null;
-        canvasDown = null;
+      if (this.clickedIndex != null) {
+        if (!this.figures[this.clickedIndex].isInCanvas(mouseVertex)) {
+          this.figures[this.clickedIndex].mouseLeaveDrawer(this.canvas, shiftKey);
+          this.clickedIndex = null;
+          canvasDown = null;
+          hasLeftFigure = true;
+        }
       }
-      else {
-        [canvasMouse, frameMouse, absoluteMouse] = this.figures[this.hoveredIndex].mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
-      }
+      if (!hasLeftFigure) [canvasMouse, frameMouse, absoluteMouse] = this.figures[this.hoveredIndex].mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
       this.updateHoveredIndices(this.figures[this.hoveredIndex]);
       this.updateRubberBands(this.figures[this.hoveredIndex]);
       this.updateSelectedIndices();
@@ -294,7 +297,7 @@ export class Multiplot {
     });
 
     this.canvas.addEventListener('mouseup', () => {
-      [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
+      if (!hasLeftFigure) [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
       if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
         this.clickedIndices = this.figures[this.hoveredIndex].clickedIndices;
       }
@@ -311,6 +314,8 @@ export class Multiplot {
         }
         figure.isZooming = false;
       })
+      hasLeftFigure = false;
+      this.clickedIndex = null;
       this.updateSelectedIndices();
       this.draw();
     });

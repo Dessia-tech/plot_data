@@ -4086,15 +4086,15 @@ export class GroupCollection extends ShapeCollection {
     this.shapes.forEach(shape => { if ((this.shapeIsContainer(shape) || !inMultiPlot) && shape.inFrame) shape.drawTooltip(canvasOrigin, canvasSize, context) });
   }
 
-  public updateSampleStates(stateName: string): number[] {
-    const newSampleStates = [];
+  public updateShapeStates(stateName: string): number[] {
+    const newShapeStates = [];
     this.shapes.forEach((shape, index) => {
       if (shape.values) {
-        if (shape[stateName]) shape.values.forEach(sample => newSampleStates.push(sample));
+        if (shape[stateName]) shape.values.forEach(sample => newShapeStates.push(sample));
       } else {
-        if (shape[stateName] && !(shape instanceof SelectionBox)) newSampleStates.push(index);
+        if (shape[stateName] && !(shape instanceof SelectionBox)) newShapeStates.push(index);
       }
     });
-    return newSampleStates
+    return newShapeStates
   }
 }

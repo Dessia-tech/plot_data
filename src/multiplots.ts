@@ -271,13 +271,14 @@ export class Multiplot {
           break
         }
       }
-      // if (this.hoveredIndex != this.clickedIndex && this.clickedIndex) {
-      //   [ctrlKey, canvasDown] = this.figures[this.clickedIndex].mouseLeaveDrawer(this.canvas);
-      //   this.clickedIndex = null;
-      // }
-      // else {
+      if (this.hoveredIndex != this.clickedIndex && this.clickedIndex != null) {
+        this.figures[this.clickedIndex].mouseLeaveDrawer(this.canvas, shiftKey);
+        this.clickedIndex = null;
+        canvasDown = null;
+      }
+      else {
         [canvasMouse, frameMouse, absoluteMouse] = this.figures[this.hoveredIndex].mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
-      // }
+      }
       this.updateHoveredIndices(this.figures[this.hoveredIndex]);
       this.updateRubberBands(this.figures[this.hoveredIndex]);
       this.updateSelectedIndices();

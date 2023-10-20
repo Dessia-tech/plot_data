@@ -1552,14 +1552,14 @@ export class Figure extends PlotData {
     }
   }
 
-  public mouseLeaveDrawer(canvas: HTMLElement): [boolean, Vertex] {
+  public mouseLeaveDrawer(canvas: HTMLElement, shiftKey: boolean): [boolean, Vertex] {
     this.mouseUpDrawer(true);
     this.axes.forEach(axis => {
       axis.saveLocation();
       axis.isClicked = axis.isHovered = false;
     });
     this.translation = new Vertex(0, 0);
-    canvas.style.cursor = 'default';
+    if (!shiftKey) canvas.style.cursor = 'default';
     return [false, null]
   }
 
@@ -1675,7 +1675,7 @@ export class Figure extends PlotData {
 
       canvas.addEventListener('wheel', e => this.mouseWheelDrawer(e));
 
-      canvas.addEventListener('mouseleave', () => [ctrlKey, canvasDown] = this.mouseLeaveDrawer(canvas));
+      canvas.addEventListener('mouseleave', () => [ctrlKey, canvasDown] = this.mouseLeaveDrawer(canvas, shiftKey));
     }
   }
 

@@ -1321,6 +1321,9 @@ export class Figure extends PlotData {
     this.hoveredIndices = [];
     this.clickedIndices = [];
     this.selectedIndices = [];
+    this.fixedObjects?.resetShapeStates();
+    this.absoluteObjects?.resetShapeStates();
+    this.relativeObjects?.resetShapeStates();
   }
 
   protected resetSelectors(): void {
@@ -1784,12 +1787,12 @@ export class Frame extends Figure {
 
   public mouseMove(canvasMouse: Vertex, absoluteMouse: Vertex, frameMouse: Vertex): void {
     super.mouseMove(canvasMouse, absoluteMouse, frameMouse);
-    this.hoveredIndices = this.sampleDrawings.updateSampleStates('isHovered');
+    this.hoveredIndices = this.sampleDrawings.updateShapeStates('isHovered');
   }
 
   public mouseUp(ctrlKey: boolean): void {
     super.mouseUp(ctrlKey);
-    this.clickedIndices = this.sampleDrawings.updateSampleStates('isClicked');
+    this.clickedIndices = this.sampleDrawings.updateShapeStates('isClicked');
   }
 
   protected setFeatures(data: any): [string, string] {
@@ -2609,7 +2612,7 @@ export class ParallelPlot extends Figure {
       this.relativeObjects.mouseMove(this.context, frameMouse);
     };
     this.changeDisplayOrder();
-    this.hoveredIndices = this.absoluteObjects.updateSampleStates('isHovered');
+    this.hoveredIndices = this.absoluteObjects.updateShapeStates('isHovered');
   }
 
   private changeDisplayOrder(): void {
@@ -2624,7 +2627,7 @@ export class ParallelPlot extends Figure {
   public mouseUp(ctrlKey: boolean): void {
     if (this.changedAxes.length != 0) this.updateAxesLocation();
     super.mouseUp(ctrlKey);
-    if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
+    if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateShapeStates('isClicked');
   }
 
   protected regulateScale(): void {
@@ -2691,6 +2694,13 @@ export class Draw extends Frame {
   public resetScales(): void { // TODO: merge with resetView
     super.resetScales();
     this.updateBounds();
+    this.draw();
+  }
+
+  public reset(): void {
+    super.reset();
+    this.updateBounds();
+    this.draw();
   }
 
   protected unpackData(data: any): Map<string, any[]> {

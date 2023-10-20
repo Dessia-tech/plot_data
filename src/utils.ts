@@ -4041,12 +4041,16 @@ export class ShapeCollection {
     if (Number.isNaN(this.maximum.y)) this.maximum.y = this.maximum.y + 1;
   }
 
-  public updateSampleStates(stateName: string): number[] {
-    const newSampleStates = [];
+  public updateShapeStates(stateName: string): number[] {
+    const newShapeStates = [];
     this.shapes.forEach((shape, index) => {
-      if (shape[stateName] && !(shape instanceof SelectionBox)) newSampleStates.push(index);
+      if (shape[stateName] && !(shape instanceof SelectionBox)) newShapeStates.push(index);
     });
-    return newSampleStates
+    return newShapeStates
+  }
+
+  public resetShapeStates(): void {
+    this.shapes.forEach(shape => shape.isHovered = shape.isClicked = shape.isSelected = false);
   }
 
   public locateLabels(drawingZone: newRect, initScale: Vertex): void {

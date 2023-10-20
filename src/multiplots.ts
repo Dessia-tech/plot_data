@@ -301,19 +301,20 @@ export class Multiplot {
       if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
         this.clickedIndices = this.figures[this.hoveredIndex].clickedIndices;
       }
-      if (ctrlKey && shiftKey) this.reset();
+      // if (ctrlKey && shiftKey) this.reset();
       this.updateRubberBands(this.figures[this.hoveredIndex]);
-      if (!shiftKey) {
-        this.canvas.style.cursor = 'default';
-        this.isSelecting = false;
-      }
-      this.figures.forEach(figure => {
-        if (!shiftKey) {
-          figure.is_drawing_rubber_band = false;
-          figure.isSelecting = false;
-        }
-        figure.isZooming = false;
-      })
+      this.resetStateAttributes(shiftKey, ctrlKey);
+      // if (!shiftKey) {
+      //   this.canvas.style.cursor = 'default';
+      //   this.isSelecting = false;
+      // }
+      // this.figures.forEach(figure => {
+      //   if (!shiftKey) {
+      //     figure.is_drawing_rubber_band = false;
+      //     figure.isSelecting = false;
+      //   }
+      //   figure.isZooming = false;
+      // })
       hasLeftFigure = false;
       this.clickedIndex = null;
       this.updateSelectedIndices();
@@ -324,6 +325,21 @@ export class Multiplot {
       e.preventDefault();
       this.figures[this.hoveredIndex].mouseWheelDrawer(e);
     });
+  }
+
+  private resetStateAttributes(shiftKey: boolean, ctrlKey: boolean): void {
+    if (ctrlKey && shiftKey) this.reset();
+    if (!shiftKey) {
+      this.canvas.style.cursor = 'default';
+      this.isSelecting = false;
+    }
+    this.figures.forEach(figure => {
+      if (!shiftKey) {
+        figure.is_drawing_rubber_band = false;
+        figure.isSelecting = false;
+      }
+      figure.isZooming = false;
+    })
   }
 }
 

@@ -1656,7 +1656,6 @@ export class Figure extends PlotData {
       });
 
       canvas.addEventListener('mousemove', e => {
-        console.log(canvasDown);
         [canvasMouse, frameMouse, absoluteMouse] = this.mouseMoveDrawer(canvas, e, canvasDown, frameDown, clickedObject);
         this.draw();
         const mouseInCanvas = (e.offsetX >= this.origin.x) && (e.offsetX <= this.width + this.origin.x) && (e.offsetY >= this.origin.y) && (e.offsetY <= this.height + this.origin.y);
@@ -2064,6 +2063,7 @@ export class Scatter extends Frame {
   public resetScales(): void {
     super.resetScales();
     this.computePoints();
+    console.log(this.isMerged)
   }
 
   public reset(): void {

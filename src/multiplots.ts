@@ -269,19 +269,19 @@ export class Multiplot {
 
   private keyUpDrawer(e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
     e.preventDefault();
-      if (e.key == "Shift") {
-        shiftKey = false;
-        this.isSelecting = false;
+    if (e.key == "Shift") {
+      shiftKey = false;
+      this.isSelecting = false;
+    }
+    if (e.key == "Control") {
+      ctrlKey = false;
+      if (shiftKey) {
+        this.canvas.style.cursor = 'crosshair';
+        this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, "Shift", ctrlKey, shiftKey, spaceKey));
       }
-      if (e.key == "Control") {
-        ctrlKey = false;
-        if (shiftKey) {
-          this.canvas.style.cursor = 'crosshair';
-          this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, "Shift", ctrlKey, shiftKey, spaceKey));
-        }
-      }
-      if (e.key == " ") spaceKey = false;
-      this.figures.forEach(figure => figure.keyUpDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
+    }
+    if (e.key == " ") spaceKey = false;
+    this.figures.forEach(figure => figure.keyUpDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
     return [ctrlKey, shiftKey, spaceKey]
   }
 

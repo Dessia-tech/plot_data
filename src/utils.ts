@@ -2712,6 +2712,11 @@ export class LineSequence extends newShape {
     return line
   }
 
+  public initTooltip(context: CanvasRenderingContext2D): newTooltip {
+    if (!this.tooltipOrigin) this.tooltipOrigin = this.points[Math.floor(this.points.length / 2)].center;
+    return super.initTooltip(context);
+  }
+
   public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf newText)
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;

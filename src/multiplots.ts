@@ -232,47 +232,43 @@ export class Multiplot {
     }
   }
 
-  public mouseListener(): void { 
-    // TODO: mouseListener generally suffers from a bad initial design that should be totally rethink in a specific refactor development
-    let ctrlKey = false;
-    let shiftKey = false;
-    let spaceKey = false;
-    let clickedObject: newShape = null;
-    let canvasMouse: Vertex = null;
-    let frameMouse: Vertex = null;
-    let absoluteMouse: Vertex = null;
-    let canvasDown: Vertex = null;
-    let frameDown: Vertex = null;
-    let hasLeftFigure = false;
-
+  private listenAxisStateChange(): void {
     this.figures.forEach(figure => figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e))));
+  }
 
-    this.figures.forEach(figure => figure.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => {
-      figure.activateSelection(e, index);
-      this.isSelecting = true;
-    })));
-
-    window.addEventListener('keydown', e => {
-      e.preventDefault();
-      if (e.key == "Control") {
-        ctrlKey = true;
-        this.canvas.style.cursor = 'default';
-        if (shiftKey) this.figures.forEach(figure => figure.keyUpDrawer(this.canvas, "Shift", ctrlKey, shiftKey, spaceKey));
-      } 
-      if (e.key == "Shift") {
-        shiftKey = true;
-        if (!ctrlKey) {
-          this.canvas.style.cursor = 'crosshair';
+  private listenRubberBandChange(): void {
+    this.figures.forEach(figure => {
+      figure.axes.forEach((axis, index) => {
+        axis.emitter.on('rubberBandChange', e => {
+          figure.activateSelection(e, index);
           this.isSelecting = true;
-          this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
-        }
-      }
-      if (e.key == " ") spaceKey = true;
-      this.figures[this.hoveredIndex].keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey);
-    });
+        })
+      })
+    })
+  }
 
-    window.addEventListener('keyup', e => {
-      e.preventDefault();
+  private keyDownDrawer(e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
+    e.preventDefault();
+    if (e.key == "Control") {
+      ctrlKey = true;
+      this.canvas.style.cursor = 'default';
+      if (shiftKey) this.figures.forEach(figure => figure.keyUpDrawer(this.canvas, "Shift", ctrlKey, shiftKey, spaceKey));
+    } 
+    if (e.key == "Shift") {
+      shiftKey = true;
+      if (!ctrlKey) {
+        this.canvas.style.cursor = 'crosshair';
+        this.isSelecting = true;
+        this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
+      }
+    }
+    if (e.key == " ") spaceKey = true;
+    this.figures[this.hoveredIndex].keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey);
+    return [ctrlKey, shiftKey, spaceKey]
+  }
+
+  private keyUpDrawer(e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
+    e.preventDefault();
       if (e.key == "Shift") {
         shiftKey = false;
         this.isSelecting = false;
@@ -286,74 +282,121 @@ export class Multiplot {
       }
       if (e.key == " ") spaceKey = false;
       this.figures.forEach(figure => figure.keyUpDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
-    });
+    return [ctrlKey, shiftKey, spaceKey]
+  }
 
-    this.canvas.addEventListener('mousemove', e => {
-      e.preventDefault();
-      absoluteMouse = new Vertex(e.offsetX, e.offsetY);
-      for (const [index, figure] of this.figures.entries()) {
-        if (figure.isInCanvas(absoluteMouse)) {
-          this.hoveredIndex = index;
-          break
-        }
+  private getHoveredIndex(mouseCoords: Vertex): void {
+    for (const [index, figure] of this.figures.entries()) {
+      if (figure.isInCanvas(mouseCoords)) {
+        this.hoveredIndex = index;
+        break
       }
+    }
+  }
+
+  private mouseLeaveFigure(figure: Figure, shiftKey: boolean): [Vertex, boolean] {
+    figure.mouseLeaveDrawer(this.canvas, shiftKey);
+    return [null, true]
+  }
+
+  private resizeWithMouse(mouseCoords: Vertex, clickedObject: newShape): void {
+    if (clickedObject instanceof SelectionBox) {
+      clickedObject.mouseMove(this.context, mouseCoords);
+      clickedObject.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
+      this.figures[this.clickedIndex].origin = clickedObject.origin;
+      this.figures[this.clickedIndex].width = clickedObject.size.x;
+      this.figures[this.clickedIndex].height = clickedObject.size.y;
+      this.figures[this.clickedIndex].resetScales();
+    }
+    else this.zoneRectangles.mouseMove(this.context, mouseCoords);
+  }
+
+  private mouseMoveDrawer(e: MouseEvent, hasLeftFigure: boolean, canvasMouse: Vertex, frameMouse: Vertex, 
+    canvasDown: Vertex, frameDown: Vertex, clickedObject: newShape, shiftKey: boolean): [Vertex, Vertex, Vertex, Vertex, boolean] { // TODO: ill conditioned method
+      e.preventDefault();
+      let absoluteMouse = new Vertex(e.offsetX, e.offsetY);
+      this.getHoveredIndex(absoluteMouse);
+      
       if (!this.isResizing) {
         if (this.clickedIndex != null && canvasDown) {
-          if (!this.figures[this.clickedIndex].isInCanvas(absoluteMouse)) {
-            this.figures[this.clickedIndex].mouseLeaveDrawer(this.canvas, shiftKey);
-            canvasDown = null;
-            hasLeftFigure = true;
-          }
+          if (!this.figures[this.clickedIndex].isInCanvas(absoluteMouse)) [canvasDown, hasLeftFigure] = this.mouseLeaveFigure(this.figures[this.clickedIndex], shiftKey);
         }
         if (!hasLeftFigure) [canvasMouse, frameMouse, absoluteMouse] = this.figures[this.hoveredIndex].mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
-        this.updateHoveredIndices(this.figures[this.hoveredIndex]);
-        this.updateRubberBands(this.figures[this.hoveredIndex]);
-        this.updateSelectedIndices();
-      } else {
-        if (clickedObject instanceof SelectionBox) {
-          clickedObject.mouseMove(this.context, absoluteMouse);
-          clickedObject.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
-          this.figures[this.clickedIndex].origin = clickedObject.origin;
-          this.figures[this.clickedIndex].width = clickedObject.size.x;
-          this.figures[this.clickedIndex].height = clickedObject.size.y;
-          this.figures[this.clickedIndex].resetScales();
-        }
-        else this.zoneRectangles.mouseMove(this.context, absoluteMouse);
-      }
-      this.draw();
-    });
+      } else this.resizeWithMouse(absoluteMouse, clickedObject);
 
-    this.canvas.addEventListener('mousedown', () => {
-      this.clickedIndex = this.hoveredIndex;
-      if (!this.isResizing) {
-        [canvasDown, frameDown, clickedObject] = this.figures[this.hoveredIndex].mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
-      } else {
-        clickedObject = this.zoneRectangles.mouseDown(absoluteMouse.copy());
-      }
-    });
-
-    this.canvas.addEventListener('mouseup', () => {
-      if (this.isResizing && clickedObject instanceof SelectionBox) clickedObject.mouseUp(false);
-      if (!hasLeftFigure) [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
-      if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
-        this.clickedIndices = this.figures[this.hoveredIndex].clickedIndices;
-      }
+      this.updateHoveredIndices(this.figures[this.hoveredIndex]);
       this.updateRubberBands(this.figures[this.hoveredIndex]);
-      hasLeftFigure = this.resetStateAttributes(shiftKey, ctrlKey);
-      clickedObject = null;
       this.updateSelectedIndices();
       this.draw();
+      return [canvasMouse, frameMouse, absoluteMouse, canvasDown, hasLeftFigure]
+    }
+
+  private mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape] {
+    this.clickedIndex = this.hoveredIndex;
+    if (this.isResizing) return [null, null, this.zoneRectangles.mouseDown(absoluteMouse.copy())];
+    return this.figures[this.hoveredIndex].mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
+  }
+
+  private mouseUpDrawer(canvasDown: Vertex, clickedObject: newShape, ctrlKey: boolean, shiftKey: boolean, hasLeftFigure: boolean): [Vertex, newShape, boolean] {
+    if (this.isResizing && clickedObject instanceof SelectionBox) clickedObject.mouseUp(false);
+    if (!hasLeftFigure) [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
+    if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
+      this.clickedIndices = this.figures[this.hoveredIndex].clickedIndices;
+    }
+    this.updateRubberBands(this.figures[this.hoveredIndex]);
+    hasLeftFigure = this.resetStateAttributes(shiftKey, ctrlKey);
+    clickedObject = null;
+    this.updateSelectedIndices();
+    this.draw();
+    return [canvasDown, clickedObject, hasLeftFigure]
+  }
+
+  private mouseWheelDrawer(e: WheelEvent): void {
+    e.preventDefault();
+    this.figures[this.hoveredIndex].mouseWheelDrawer(e);
+  }
+
+  private mouseLeaveDrawer(): [Vertex, boolean] {
+    this.resetStateAttributes(false, false);
+    return [null, true]
+  }
+
+  private mouseEnterDrawer(): [Vertex, boolean] { return [null, false] }
+
+  public mouseListener(): void { 
+    // TODO: mouseListener generally suffers from a bad initial design that should be totally rethink in a specific refactor development
+    let ctrlKey = false;
+    let shiftKey = false;
+    let spaceKey = false;
+    let clickedObject: newShape = null;
+    let canvasMouse: Vertex = null;
+    let frameMouse: Vertex = null;
+    let absoluteMouse: Vertex = null;
+    let canvasDown: Vertex = null;
+    let frameDown: Vertex = null;
+    let hasLeftFigure = false;
+
+    this.listenAxisStateChange(); 
+
+    this.listenRubberBandChange();
+    
+    window.addEventListener('keydown', e => [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(e, ctrlKey, shiftKey, spaceKey));
+
+    window.addEventListener('keyup', e => [ctrlKey, shiftKey, spaceKey] = this.keyUpDrawer(e, ctrlKey, shiftKey, spaceKey));
+
+    this.canvas.addEventListener('mousemove', e => {
+      [canvasMouse, frameMouse, absoluteMouse, canvasDown, hasLeftFigure] = this.mouseMoveDrawer(e, hasLeftFigure, canvasMouse, frameMouse, canvasDown, frameDown, clickedObject, shiftKey);
     });
 
-    this.canvas.addEventListener('wheel', e => {
-      e.preventDefault();
-      this.figures[this.hoveredIndex].mouseWheelDrawer(e);
-    });
+    this.canvas.addEventListener('mousedown', () => [canvasDown, frameDown, clickedObject] = this.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse));
 
-    this.canvas.addEventListener("mouseleave", () => {
-      hasLeftFigure = this.resetStateAttributes(false, false);
-      canvasDown = null;
-    })
+    this.canvas.addEventListener('mouseup', () => [canvasDown, clickedObject, hasLeftFigure] = this.mouseUpDrawer(canvasDown, clickedObject, ctrlKey, shiftKey, hasLeftFigure));
+
+    this.canvas.addEventListener('wheel', e => this.mouseWheelDrawer(e));
+
+    this.canvas.addEventListener("mouseleave", () => [canvasDown, hasLeftFigure] = this.mouseLeaveDrawer());
+
+    this.canvas.addEventListener("mouseenter", () => [canvasDown, hasLeftFigure] = this.mouseEnterDrawer());
   }
 
   private resetStateAttributes(shiftKey: boolean, ctrlKey: boolean): boolean {

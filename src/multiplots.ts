@@ -97,16 +97,18 @@ export class Multiplot {
   }
 
   private computeTable(): void {
-    const ratio = Math.ceil(this.width > this.height ? this.width / this.height : this.height / this.width);
+    const sqrtNPlots = this.figures.length ** 0.5;
+    const ratio = Number.isInteger(sqrtNPlots) ? sqrtNPlots : Math.ceil(this.width > this.height ? this.width / this.height : this.height / this.width);
     const nRows = Math.ceil(this.figures.length / ratio);
     const nCols = Math.ceil(this.figures.length / nRows);
     const height = this.height / nRows;
     const width = this.width / nCols;
     let k = 0;
-    for (let i=0; i < nRows; i++) {
-      const yCoord = i * height;
-      for (let j=0; j < nCols; j++) {
-        const xCoord = j * width;
+    
+    for (let j=0; j < nCols; j++) {
+      const xCoord = j * width;
+      for (let i=0; i < nRows; i++) {
+        const yCoord = i * height;
         this.figures[k].multiplotInstantiation(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE * 2, height - BLANK_SPACE * 2);
         k++;
         if (k == this.figures.length) break;
@@ -148,9 +150,9 @@ export class Multiplot {
     this.figures.forEach(figure => figure.switchZoom());
   }
 
-  public zoomIn() { (this.figures[this.clickedIndex] as Figure).zoomIn() }
+  public zoomIn() { (this.figures[this.clickedIndex ?? this.hoveredIndex]).zoomIn() }
 
-  public zoomOut() { (this.figures[this.clickedIndex] as Figure).zoomOut() }
+  public zoomOut() { (this.figures[this.clickedIndex ?? this.hoveredIndex]).zoomOut() }
 
   public simpleCluster(inputValue: number) { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.simpleCluster(inputValue) })};
 
@@ -276,10 +278,9 @@ export class Multiplot {
           break
         }
       }
-      if (this.clickedIndex != null) {
+      if (this.clickedIndex != null && canvasDown) {
         if (!this.figures[this.clickedIndex].isInCanvas(mouseVertex)) {
           this.figures[this.clickedIndex].mouseLeaveDrawer(this.canvas, shiftKey);
-          this.clickedIndex = null;
           canvasDown = null;
           hasLeftFigure = true;
         }
@@ -311,6 +312,11 @@ export class Multiplot {
       e.preventDefault();
       this.figures[this.hoveredIndex].mouseWheelDrawer(e);
     });
+
+    this.canvas.addEventListener("mouseleave", () => {
+      hasLeftFigure = this.resetStateAttributes(false, false);
+      canvasDown = null;
+    })
   }
 
   private resetStateAttributes(shiftKey: boolean, ctrlKey: boolean): boolean {
@@ -326,7 +332,6 @@ export class Multiplot {
       }
       figure.isZooming = false;
     })
-    this.clickedIndex = null;
     return false
   }
 }

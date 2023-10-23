@@ -1176,7 +1176,7 @@ export class Figure extends PlotData {
 
   protected unpackData(data: any): Map<string, any[]> { return Figure.deserializeData(data) }
 
-  private buildPointSets(data: any): void {
+  protected buildPointSets(data: any): void {
     this.pointSets = new Array(this.nSamples).fill(-1);
     if (data.points_sets) this.unpackPointsSets(data);
   }
@@ -1668,8 +1668,7 @@ export class Figure extends PlotData {
         e.preventDefault();
         [canvasMouse, frameMouse, absoluteMouse] = this.mouseMoveDrawer(canvas, e, canvasDown, frameDown, clickedObject);
         this.draw();
-        const mouseInCanvas = (e.offsetX >= this.origin.x) && (e.offsetX <= this.width + this.origin.x) && (e.offsetY >= this.origin.y) && (e.offsetY <= this.height + this.origin.y);
-        if (!mouseInCanvas) canvasDown = null;
+        if (!this.isInCanvas(absoluteMouse)) canvasDown = null;
       });
 
       canvas.addEventListener('mousedown', () => {
@@ -1677,7 +1676,7 @@ export class Figure extends PlotData {
         if (ctrlKey && shiftKey) this.reset();
       });
 
-      canvas.addEventListener('mouseup',() => {
+      canvas.addEventListener('mouseup', () => {
         if (canvasDown) [clickedObject, canvasDown] = this.mouseUpDrawer(ctrlKey);
         if (!shiftKey) canvas.style.cursor = 'default';
       })
@@ -2363,6 +2362,8 @@ export class Graph2D extends Scatter {
       curve.draw(context);
     })
   }
+
+  protected buildPointSets(data: any): void { this.pointSets = new Array(this.nSamples).fill(-1) }
 
   protected get cuttingZone(): newRect {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);

@@ -2817,8 +2817,9 @@ export class Bar extends newRect {
   }
 }
 
+const MAX_LABEL_HEIGHT = 12;
 export class newLabel extends newShape {
-  public shapeSize: Vertex = new Vertex(30, 12);
+  public shapeSize: Vertex = new Vertex(30, MAX_LABEL_HEIGHT);
   public legend: newRect | LineSegment | newPoint2D;
   public maxWidth: number = 150;
   public readonly textOffset = 5;
@@ -4072,7 +4073,7 @@ export class ShapeCollection {
       else others.push(shape);
     })
     if (labels.length != 0) {
-      const labelHeight = Math.min(Math.abs(drawingZone.size.y) / (labels.length * 1.75 + 1), labels[0].shapeSize.y);
+      const labelHeight = Math.min(Math.abs(drawingZone.size.y) / (labels.length * 1.75 + 1), MAX_LABEL_HEIGHT);
       labels.forEach((label, index) => {
         label.updateHeight(labelHeight);
         label.updateOrigin(drawingZone, initScale, index - nLabels);

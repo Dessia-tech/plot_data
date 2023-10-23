@@ -1382,9 +1382,15 @@ export class Figure extends PlotData {
 
   protected drawFixedObjects(context: CanvasRenderingContext2D): void { this.fixedObjects.draw(context) }
 
-  private drawZoneRectangle(context: CanvasRenderingContext2D): void {
-    // TODO: change with newRect
-    Shape.rect(this.origin.x, this.origin.y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15, 15]);
+  public drawZoneRectangle(context: CanvasRenderingContext2D): SelectionBox {
+    const zoneRect = new SelectionBox(this.origin, this.size);
+    zoneRect.fillStyle = "hsl(203, 90%, 88%)";
+    zoneRect.hoverStyle = zoneRect.clickedStyle = zoneRect.strokeStyle = "hsl(203, 90%, 73%)";
+    zoneRect.alpha = 0.3;
+    zoneRect.lineWidth = 1;
+    zoneRect.dashLine = [7, 7];
+    zoneRect.draw(context);
+    return zoneRect
   }
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.relativeObjects = new GroupCollection([]) }
@@ -1416,14 +1422,12 @@ export class Figure extends PlotData {
     this.drawTooltips();
 
     this.context.resetTransform();
-    if (this.multiplot_manipulation) this.drawZoneRectangle(this.context);
+    // if (this.multiplot_manipulation) this.drawZoneRectangle(this.context);
     this.drawBorders();
     this.context.restore();
   }
 
   public draw_initial(): void { this.draw() }
-
-  public draw_from_context(hidden: any) {}
 
   public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() }
 

@@ -4,7 +4,7 @@ from string import Template
 
 EMPTY_TEMPLATE = Template('''''')
 
-html_template = Template('''
+HTML_TEMPLATE = Template('''
 <!DOCTYPE html>
 <html lang="en">
     <style>
@@ -42,6 +42,7 @@ html_template = Template('''
         <button name="resetView" value="OK" type="button" onclick="plot_data.resetView()"> Reset view </button> &nbsp;&nbsp;
         <button name="showPoints" value="OK" type="button" onclick="plot_data.togglePoints()"> Show points </button>
         <button name="switchOrientation" value="OK" type="button" onclick="plot_data.switchOrientation()"> Change Disposition </button>
+        $specific_buttons
     <hr style="border-top: 2px;">
     </div>
     <div id="app">
@@ -58,6 +59,11 @@ html_template = Template('''
     </div>
 </html>
 ''')
+
+EMPTY_BUTTONS = """"""
+
+MULTIPLOT_BUTTONS = """
+        <button name="resize" value="OK" type="button" onclick="plot_data.switchResize()"> Resize Figures </button>"""
 
 SCATTER_COMMANDS = """
             var plot_data = new PlotData.Scatter(data, width, height, 0, 0, $canvas_id.id);
@@ -101,5 +107,6 @@ PRIMITIVE_GROUP_CONTAINER_COMMANDS = """
             primitive_group_container.regular_layout();"""
 
 
-def get_html_string(command_name: str):
-    return Template(html_template.safe_substitute(plot_commands=globals()[command_name]))
+def get_html_string(command_name: str, button_name: str):
+    return Template(HTML_TEMPLATE.safe_substitute(plot_commands=globals()[command_name],
+                                                  specific_buttons=globals()[button_name]))

@@ -1,6 +1,6 @@
 import { PlotData, Interactions } from './plot-data';
 import { Point2D } from './primitives';
-import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand, Vertex, newShape } from './utils';
+import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand, Vertex, newShape, SelectionBox, ShapeCollection } from './utils';
 import { PlotContour, PrimitiveGroupContainer, Histogram, Frame, Scatter, Figure, Graph2D, ParallelPlot, Draw, range } from './subplots';
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
@@ -38,9 +38,11 @@ export class Multiplot {
   public nSamples: number;
   public figures: Figure[];
   public rubberBands: Map<string, RubberBand>;
+  public zoneRectangles = new ShapeCollection([]);
 
   public isSelecting: boolean = false;
   public isZooming: boolean = false;
+  public isResizing: boolean = false;
   public hoveredIndex: number = 0;
   public clickedIndex: number = null;
 
@@ -132,8 +134,9 @@ export class Multiplot {
         //     })
         //   }
         // }
-        figure.draw();
+      figure.draw();
     });
+    this.drawZoneRectangles();
   }
 
   public switchSelection() {
@@ -142,6 +145,22 @@ export class Multiplot {
   }
 
   public switchMerge() { this.figures.forEach(figure => figure.switchMerge()) }
+
+  public switchResize() {
+    this.isResizing = !this.isResizing;
+    this.canvas.style.cursor = 'default';
+    this.draw();
+  }
+
+  public drawZoneRectangles(): void {
+    if (this.isResizing) {
+      if (this.zoneRectangles.shapes.length == 0) {
+        const zoneRectangles = this.figures.map(figure => figure.drawZoneRectangle(this.context));
+        this.zoneRectangles = new ShapeCollection(zoneRectangles);
+      }
+      else this.zoneRectangles.draw(this.context);
+    }
+  }
 
   public togglePoints() { this.figures.forEach(figure => figure.togglePoints()) }
 
@@ -271,39 +290,57 @@ export class Multiplot {
 
     this.canvas.addEventListener('mousemove', e => {
       e.preventDefault();
-      const mouseVertex = new Vertex(e.offsetX, e.offsetY);
+      absoluteMouse = new Vertex(e.offsetX, e.offsetY);
       for (const [index, figure] of this.figures.entries()) {
-        if (figure.isInCanvas(mouseVertex)) {
+        if (figure.isInCanvas(absoluteMouse)) {
           this.hoveredIndex = index;
           break
         }
       }
-      if (this.clickedIndex != null && canvasDown) {
-        if (!this.figures[this.clickedIndex].isInCanvas(mouseVertex)) {
-          this.figures[this.clickedIndex].mouseLeaveDrawer(this.canvas, shiftKey);
-          canvasDown = null;
-          hasLeftFigure = true;
+      if (!this.isResizing) {
+        if (this.clickedIndex != null && canvasDown) {
+          if (!this.figures[this.clickedIndex].isInCanvas(absoluteMouse)) {
+            this.figures[this.clickedIndex].mouseLeaveDrawer(this.canvas, shiftKey);
+            canvasDown = null;
+            hasLeftFigure = true;
+          }
         }
+        if (!hasLeftFigure) [canvasMouse, frameMouse, absoluteMouse] = this.figures[this.hoveredIndex].mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
+        this.updateHoveredIndices(this.figures[this.hoveredIndex]);
+        this.updateRubberBands(this.figures[this.hoveredIndex]);
+        this.updateSelectedIndices();
+      } else {
+        if (clickedObject instanceof SelectionBox) {
+          clickedObject.mouseMove(this.context, absoluteMouse);
+          clickedObject.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
+          this.figures[this.clickedIndex].origin = clickedObject.origin;
+          this.figures[this.clickedIndex].width = clickedObject.size.x;
+          this.figures[this.clickedIndex].height = clickedObject.size.y;
+          this.figures[this.clickedIndex].resetScales();
+        }
+        else this.zoneRectangles.mouseMove(this.context, absoluteMouse);
       }
-      if (!hasLeftFigure) [canvasMouse, frameMouse, absoluteMouse] = this.figures[this.hoveredIndex].mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
-      this.updateHoveredIndices(this.figures[this.hoveredIndex]);
-      this.updateRubberBands(this.figures[this.hoveredIndex]);
-      this.updateSelectedIndices();
       this.draw();
     });
 
     this.canvas.addEventListener('mousedown', () => {
-      [canvasDown, frameDown, clickedObject] = this.figures[this.hoveredIndex].mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
       this.clickedIndex = this.hoveredIndex;
+      if (!this.isResizing) {
+        [canvasDown, frameDown, clickedObject] = this.figures[this.hoveredIndex].mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
+      } else {
+        clickedObject = this.zoneRectangles.mouseDown(absoluteMouse.copy());
+      }
     });
 
     this.canvas.addEventListener('mouseup', () => {
+      if (this.isResizing && clickedObject instanceof SelectionBox) clickedObject.mouseUp(false);
       if (!hasLeftFigure) [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
       if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
         this.clickedIndices = this.figures[this.hoveredIndex].clickedIndices;
       }
       this.updateRubberBands(this.figures[this.hoveredIndex]);
       hasLeftFigure = this.resetStateAttributes(shiftKey, ctrlKey);
+      clickedObject = null;
       this.updateSelectedIndices();
       this.draw();
     });

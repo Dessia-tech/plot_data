@@ -3086,8 +3086,7 @@ export class SelectionBox extends newRect {
   ) {
     super(origin, size);
     this.mouseClick = this.origin.copy();
-    this._previousMin = this.origin.copy();
-    this._previousMax = this.origin.copy();
+    this.initBoundariesVertex();
     this.dashLine = DASH_SELECTION_WINDOW;
     this.selectedStyle = this.clickedStyle = this.hoverStyle = this.fillStyle = "hsla(0, 0%, 100%, 0)";
     this.lineWidth = 0.5
@@ -3098,6 +3097,12 @@ export class SelectionBox extends newRect {
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     super.setDrawingProperties(context);
     context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
+  }
+
+  private initBoundariesVertex(): void {
+    this.minVertex = this.origin.copy();
+    this.maxVertex = this.origin.add(this.size);
+    this.saveState();
   }
 
   public update(minVertex: Vertex, maxVertex: Vertex) {
@@ -3169,9 +3174,9 @@ export class SelectionBox extends newRect {
       this.isClicked = true;
       this.saveState();
       this.leftUpdate = Math.abs(this.mouseClick.x - this.minVertex.x) <= this.borderSizeX;
-      this.rightUpdate = Math.abs(this.mouseClick.x - (this.maxVertex.x)) <= this.borderSizeX;
+      this.rightUpdate = Math.abs(this.mouseClick.x - this.maxVertex.x) <= this.borderSizeX;
       this.downUpdate = Math.abs(this.mouseClick.y - this.minVertex.y) <= this.borderSizeY;
-      this.upUpdate = Math.abs(this.mouseClick.y - (this.maxVertex.y)) <= this.borderSizeY;
+      this.upUpdate = Math.abs(this.mouseClick.y - this.maxVertex.y) <= this.borderSizeY;
     }
   }
 

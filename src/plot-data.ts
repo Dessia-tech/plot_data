@@ -215,7 +215,7 @@ export abstract class PlotData extends EventEmitter {
 
   abstract draw();
 
-  abstract draw_from_context(hidden);
+  public draw_from_context(hidden) {}
 
   define_canvas(canvas_id: string):void {
     var canvas:any = document.getElementById(canvas_id);

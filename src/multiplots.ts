@@ -331,7 +331,6 @@ export class Multiplot {
       this.updateHoveredIndices(this.figures[this.hoveredIndex]);
       this.updateRubberBands(this.figures[this.hoveredIndex]);
       this.updateSelectedIndices();
-      this.draw();
       return [canvasMouse, frameMouse, absoluteMouse, canvasDown, hasLeftFigure]
     }
 
@@ -351,7 +350,6 @@ export class Multiplot {
     hasLeftFigure = this.resetStateAttributes(shiftKey, ctrlKey);
     clickedObject = null;
     this.updateSelectedIndices();
-    this.draw();
     return [canvasDown, clickedObject, hasLeftFigure]
   }
 
@@ -390,11 +388,18 @@ export class Multiplot {
 
     this.canvas.addEventListener('mousemove', e => {
       [canvasMouse, frameMouse, absoluteMouse, canvasDown, hasLeftFigure] = this.mouseMoveDrawer(e, hasLeftFigure, canvasMouse, frameMouse, canvasDown, frameDown, clickedObject, shiftKey);
+      this.draw();
     });
 
-    this.canvas.addEventListener('mousedown', () => [canvasDown, frameDown, clickedObject] = this.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse));
+    this.canvas.addEventListener('mousedown', () => {
+      [canvasDown, frameDown, clickedObject] = this.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse)
+      this.draw();
+    });
 
-    this.canvas.addEventListener('mouseup', () => [canvasDown, clickedObject, hasLeftFigure] = this.mouseUpDrawer(canvasDown, clickedObject, ctrlKey, shiftKey, hasLeftFigure));
+    this.canvas.addEventListener('mouseup', () => {
+      [canvasDown, clickedObject, hasLeftFigure] = this.mouseUpDrawer(canvasDown, clickedObject, ctrlKey, shiftKey, hasLeftFigure);
+      this.draw();
+    })
 
     this.canvas.addEventListener('wheel', e => this.mouseWheelDrawer(e));
 

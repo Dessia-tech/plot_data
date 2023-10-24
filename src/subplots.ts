@@ -1507,33 +1507,29 @@ export class Figure extends PlotData {
   }
 
   public mouseUp(ctrlKey: boolean): void {
-    if (this.interaction_ON) {
-      if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
-        this.absoluteObjects.mouseUp(ctrlKey);
-        this.relativeObjects.mouseUp(ctrlKey);
-      }
-      this.fixedObjects.mouseUp(ctrlKey);
+    if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
+      this.absoluteObjects.mouseUp(ctrlKey);
+      this.relativeObjects.mouseUp(ctrlKey);
     }
+    this.fixedObjects.mouseUp(ctrlKey);
   }
 
   public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: newShape): [Vertex, Vertex, Vertex] {
     const [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
     this.isHovered = this.isInCanvas(absoluteMouse);
     this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
-    if (this.interaction_ON) {
-      if (canvasDown) {
-        const translation = this.mouseTranslate(canvasMouse, canvasDown);
-        if (!(clickedObject instanceof newAxis)) {
-          if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
-        }
-        if (this.isSelecting) {
-          if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
-          else this.updateSelectionBox(frameDown, frameMouse);
-        }
-        this.updateZoomBox(frameDown, frameMouse);
+    if (canvasDown) {
+      const translation = this.mouseTranslate(canvasMouse, canvasDown);
+      if (!(clickedObject instanceof newAxis)) {
+        if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
       }
-      if (this.isZooming || this.isSelecting) canvas.style.cursor = 'crosshair';
+      if (this.isSelecting) {
+        if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
+        else this.updateSelectionBox(frameDown, frameMouse);
+      }
+      this.updateZoomBox(frameDown, frameMouse);
     }
+    if (this.isZooming || this.isSelecting) canvas.style.cursor = 'crosshair';
     return [canvasMouse, frameMouse, absoluteMouse]
   }
 
@@ -1550,16 +1546,12 @@ export class Figure extends PlotData {
       this.zoomBox.update(new Vertex(0, 0), new Vertex(0, 0));
     }
     this.mouseUp(ctrlKey);
-    this.draw();
     return this.resetMouseEvents()
   }
 
   public mouseWheelDrawer(e: WheelEvent): void {
-    if (this.interaction_ON) {
-      this.wheelFromEvent(e);
-      this.updateWithScale();
-      this.draw();
-    }
+    this.wheelFromEvent(e);
+    this.updateWithScale();
   }
 
   public mouseLeaveDrawer(canvas: HTMLElement, shiftKey: boolean): [boolean, Vertex] {
@@ -1649,52 +1641,53 @@ export class Figure extends PlotData {
 
   public mouseListener(): void {
     // TODO: mouseListener generally suffers from a bad initial design that should be totally rethink in a specific refactor development
-    if (this.interaction_ON === true) {
-      let clickedObject: newShape = null;
-      let canvasMouse: Vertex = null; let canvasDown: Vertex = null;
-      let frameMouse: Vertex = null; let frameDown: Vertex = null;
-      let absoluteMouse: Vertex = null;
-      const canvas = document.getElementById(this.canvasID) as HTMLCanvasElement;
-      let ctrlKey = false; let shiftKey = false; let spaceKey = false;
+    let clickedObject: newShape = null;
+    let canvasMouse: Vertex = null; let canvasDown: Vertex = null;
+    let frameMouse: Vertex = null; let frameDown: Vertex = null;
+    let absoluteMouse: Vertex = null;
+    const canvas = document.getElementById(this.canvasID) as HTMLCanvasElement;
+    let ctrlKey = false; let shiftKey = false; let spaceKey = false;
 
-      this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
+    this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
 
-      this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
+    this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 
-      window.addEventListener('keydown', e => {
-        e.preventDefault();
-        [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
-      });
+    window.addEventListener('keydown', e => {
+      e.preventDefault();
+      [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
+    });
 
-      window.addEventListener('keyup', e => {
-        e.preventDefault();
-        [ctrlKey, shiftKey, spaceKey] = this.keyUpDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
-      });
+    window.addEventListener('keyup', e => {
+      e.preventDefault();
+      [ctrlKey, shiftKey, spaceKey] = this.keyUpDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
+    });
 
-      canvas.addEventListener('mousemove', e => {
-        e.preventDefault();
-        [canvasMouse, frameMouse, absoluteMouse] = this.mouseMoveDrawer(canvas, e, canvasDown, frameDown, clickedObject);
-        this.draw();
-        if (!this.isInCanvas(absoluteMouse)) canvasDown = null;
-      });
+    canvas.addEventListener('mousemove', e => {
+      e.preventDefault();
+      [canvasMouse, frameMouse, absoluteMouse] = this.mouseMoveDrawer(canvas, e, canvasDown, frameDown, clickedObject);
+      this.draw();
+      if (!this.isInCanvas(absoluteMouse)) canvasDown = null;
+    });
 
-      canvas.addEventListener('mousedown', () => {
-        [canvasDown, frameDown, clickedObject] = this.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
-        if (ctrlKey && shiftKey) this.reset();
-      });
+    canvas.addEventListener('mousedown', () => {
+      [canvasDown, frameDown, clickedObject] = this.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
+      if (ctrlKey && shiftKey) this.reset();
+      this.draw();
+    });
 
-      canvas.addEventListener('mouseup', () => {
-        if (canvasDown) [clickedObject, canvasDown] = this.mouseUpDrawer(ctrlKey);
-        if (!shiftKey) canvas.style.cursor = 'default';
-      })
+    canvas.addEventListener('mouseup', () => {
+      if (canvasDown) [clickedObject, canvasDown] = this.mouseUpDrawer(ctrlKey);
+      if (!shiftKey) canvas.style.cursor = 'default';
+      this.draw();
+    })
 
-      canvas.addEventListener('wheel', e => {
-        e.preventDefault();
-        this.mouseWheelDrawer(e);
-      });
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      this.mouseWheelDrawer(e);
+      this.draw();
+    });
 
-      canvas.addEventListener('mouseleave', () => [ctrlKey, canvasDown] = this.mouseLeaveDrawer(canvas, shiftKey));
-    }
+    canvas.addEventListener('mouseleave', () => [ctrlKey, canvasDown] = this.mouseLeaveDrawer(canvas, shiftKey));
   }
 
   protected resetMouseEvents(): [newShape, Vertex] {
@@ -1740,7 +1733,6 @@ export class Figure extends PlotData {
     this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
   }
 }
-
 
 export class Frame extends Figure {
   public xFeature: string;

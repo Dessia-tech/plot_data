@@ -3527,6 +3527,7 @@ export class newAxis extends newShape {
     context.lineWidth = this.lineWidth;
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
+    // this.boundingBox.draw(context)
     context.resetTransform();
     this.computeTextBoxes(context);
 
@@ -3706,7 +3707,7 @@ export class newAxis extends newShape {
     if (this.rubberBand.isClicked) this.emitter.emit("rubberBandChange", this.rubberBand);
   }
 
-  protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void { }
+  protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void {}
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
     super.mouseMove(context, mouseCoords);

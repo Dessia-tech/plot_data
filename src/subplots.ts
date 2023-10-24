@@ -1531,7 +1531,7 @@ export class Figure extends PlotData {
         }
         this.updateZoomBox(frameDown, frameMouse);
       }
-      if (this.isZooming) canvas.style.cursor = 'crosshair';
+      if (this.isZooming || this.isSelecting) canvas.style.cursor = 'crosshair';
     }
     return [canvasMouse, frameMouse, absoluteMouse]
   }

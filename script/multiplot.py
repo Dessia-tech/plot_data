@@ -41,7 +41,7 @@ scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes
 # points' appearance
 
-scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction')
+scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction', point_style=plot_data.PointStyle(shape='square'))
 
 # PrimitiveGroupContainers
 contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),

@@ -86,7 +86,8 @@ polygon_lines_open = [plot_data.LineSegment2D([51, 26], [47, 33]),
                       plot_data.LineSegment2D([55, 33], [51, 26])]
 
 contour_filled = plot_data.Contour2D(plot_data_primitives=star_lines_closed, edge_style=edge_style_blue,
-                                     surface_style=surface_style_green, tooltip="It looks like a green star.")
+                                     surface_style=surface_style_green,
+                                     tooltip="It looks like a green star but it is a contour.")
 contour_empty = plot_data.Contour2D(plot_data_primitives=polygon_lines_open, edge_style=edge_style_purple_plain,
                                      tooltip="It is a Contour with no filling.")
 

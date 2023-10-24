@@ -1886,6 +1886,7 @@ export class MultiplePlots {
       this.setAllInteractionsToOff();
 
       window.addEventListener('keydown', e => {
+        e.preventDefault();
         if (e.key == "Control") {
           ctrlKey = true;
           this.canvas.style.cursor = 'default';
@@ -1897,6 +1898,7 @@ export class MultiplePlots {
       });
 
       window.addEventListener('keyup', e => {
+        e.preventDefault();
         if (e.key == "Control") ctrlKey = false;
         if (e.key == "Shift") {
           shiftKey = false;
@@ -1907,6 +1909,7 @@ export class MultiplePlots {
       });
 
       this.canvas.addEventListener('mousedown', e => {
+        e.preventDefault();
         isDrawing = true;
         mouse1X = e.offsetX;
         mouse1Y = e.offsetY;
@@ -1937,6 +1940,7 @@ export class MultiplePlots {
       });
 
       this.canvas.addEventListener('mousemove', e => {
+        e.preventDefault();
         var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
         mouse2X = e.offsetX; mouse2Y = e.offsetY;
         if (this.isSelecting) this.canvas.style.cursor = 'crosshair';
@@ -1999,6 +2003,7 @@ export class MultiplePlots {
       });
 
       this.canvas.addEventListener('mouseup', e => {
+        e.preventDefault();
         mouse3X = e.offsetX;
         mouse3Y = e.offsetY;
         var click_on_manip_button = Shape.isInRect(mouse3X, mouse3Y, this.transbutton_x, this.button_y, this.button_w, this.button_h);

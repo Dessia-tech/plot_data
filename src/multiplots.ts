@@ -68,7 +68,6 @@ export class Multiplot {
     this.mouseListener();
   }
 
-
   private unpackData(data: any): [Map<string, any[]>, Figure[]] {
     const features = Figure.deserializeData(data);
     const figures: Figure[] = [];
@@ -193,9 +192,7 @@ export class Multiplot {
     this.draw();
   }
 
-  public switchOrientation(): void {
-    this.figures.forEach(figure => { if (figure instanceof ParallelPlot) figure.switchOrientation() });
-  }
+  public switchOrientation(): void { this.figures.forEach(figure => figure.switchOrientation()) }
 
   private updateSelectedIndices() {
     this.selectedIndices = range(0, this.nSamples);
@@ -203,7 +200,7 @@ export class Multiplot {
     for (let figure of this.figures) {
       figure.axes.forEach(axis => {
         if (!(figure instanceof Graph2D || figure instanceof Draw)) {
-          if (axis.rubberBand.length != 0) {
+          if (axis.rubberBand.length != 0 && axis.name != "number") {
             isSelecting = true;
             const selectedIndices = figure.updateSelected(axis);
             this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
@@ -248,7 +245,6 @@ export class Multiplot {
   }
 
   private keyDownDrawer(e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
-    e.preventDefault();
     if (e.key == "Control") {
       ctrlKey = true;
       this.canvas.style.cursor = 'default';
@@ -262,7 +258,10 @@ export class Multiplot {
         this.figures.forEach(figure => figure.keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey));
       }
     }
-    if (e.key == " ") spaceKey = true;
+    if (e.key == " ") {
+      e.preventDefault();
+      spaceKey = true;
+    }
     this.figures[this.hoveredIndex].keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey);
     return [ctrlKey, shiftKey, spaceKey]
   }

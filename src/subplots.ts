@@ -1422,7 +1422,6 @@ export class Figure extends PlotData {
     this.drawTooltips();
 
     this.context.resetTransform();
-    // if (this.multiplot_manipulation) this.drawZoneRectangle(this.context);
     this.drawBorders();
     this.context.restore();
   }
@@ -1434,6 +1433,8 @@ export class Figure extends PlotData {
   public switchMerge(): void {}
 
   public switchZoom(): void {}
+
+  public switchOrientation(): void {}
 
   public togglePoints(): void {}
 
@@ -1607,20 +1608,22 @@ export class Figure extends PlotData {
   }
 
   public sendRubberBandsMultiplot(figures: Figure[]): void {
-    figures.forEach(figure => {
-      if (!(figure instanceof Draw)) {
-        figure.axes.forEach(otherAxis => {
-          this.axes.forEach(thisAxis => {
-            if (thisAxis.name == otherAxis.name && thisAxis.name != 'number') {
-              otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
-              otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
-              otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
-            }
-          })
-        })
-      }
+    figures.forEach(figure => figure.receiveRubberBandFromFigure(this));
+  }
+
+  protected sendRubberBandsInFigure(figure: Figure): void {
+    figure.axes.forEach(otherAxis => {
+      this.axes.forEach(thisAxis => {
+        if (thisAxis.name == otherAxis.name && thisAxis.name != "number") {
+          otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
+          otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
+          otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
+        }
+      })
     })
   }
+
+  protected receiveRubberBandFromFigure(figure: Figure): void { figure.sendRubberBandsInFigure(this) }
 
   public translate(canvas: HTMLElement, translation: Vertex): void {
     canvas.style.cursor = 'move';
@@ -2032,6 +2035,24 @@ export class Histogram extends Frame {
       }
     }
   }
+
+  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+    this.axes[0].sendRubberBand(multiplotRubberBands);
+  }
+
+  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+    this.axes[0].sendRubberBandRange(multiplotRubberBands);
+  }
+
+  protected sendRubberBandsInFigure(figure: Figure): void {
+    figure.axes.forEach(otherAxis => {
+      if (this.axes[0].name == otherAxis.name) {
+        otherAxis.rubberBand.minValue = this.axes[0].rubberBand.minValue;
+        otherAxis.rubberBand.maxValue = this.axes[0].rubberBand.maxValue;
+        otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
+      }
+    })
+  }
 }
 
 const DEFAULT_POINT_COLOR: string = 'hsl(203, 90%, 85%)';
@@ -2419,6 +2440,8 @@ export class Graph2D extends Scatter {
   public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
 
   public sendRubberBandsMultiplot(figures: Figure[]): void {}
+
+  protected receiveRubberBandFromFigure(figure: Figure): void {}
 }
 
 const FREE_SPACE_FACTOR = 0.95;
@@ -2741,6 +2764,8 @@ export class Draw extends Frame {
   public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
 
   public sendRubberBandsMultiplot(figures: Figure[]): void {}
+
+  protected receiveRubberBandFromFigure(figure: Figure): void {}
 }
 
 export function range(start: number, end: number, step: number = 1): number[] {

@@ -35,6 +35,7 @@
       <button name="resetView" value="OK" type="button"  onclick="plot_data.resetView()"> Reset view </button>
       <button name="showPoints" value="OK" type="button" onclick="plot_data.togglePoints()"> Show points </button>
       <button name="switchOrientation" value="OK" type="button" onclick="plot_data.switchOrientation()"> Change Disposition </button>
+      <button name="resize" value="OK" type="button" onclick="plot_data.switchResize()"> Resize Figures </button>
     <hr style="border-top: 2px;">
     </div>
     <div id="app">
@@ -47,7 +48,7 @@
 
             var data = $data;
 
-            var plot_data = new PlotData.MultiplePlots(data, width, height, true, $canvas_id.id);
+            var plot_data = new PlotData.Multiplot(data, width, height, $canvas_id.id);
         </script>
     </div>
 </html>

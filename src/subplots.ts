@@ -2468,7 +2468,7 @@ export class ParallelPlot extends Figure {
 
   set isVertical(value: boolean) { this._isVertical = value }
 
-  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.005, 0.005) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.005, 0.015) }
 
   set offsetFactor(value: Vertex) { this._offsetFactor = value }
 

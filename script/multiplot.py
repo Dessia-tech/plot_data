@@ -28,10 +28,10 @@ for i in range(nb_elements):
     elements.append({'x': random.uniform(0, 50),
                      'y': random.uniform(0, 100),
                      'color': random_color,
-                     'direction': random_direction})
+                     'direction '*10: random_direction})
 
 # ParallelPlot
-parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color', 'direction'])
+parallelplot1 = plot_data.ParallelPlot(axes=['x', 'y', 'color', 'direction '*10])
 parallelplot2 = plot_data.ParallelPlot(axes=['x', 'y', 'color'])
 
 # Scatterplots
@@ -41,7 +41,7 @@ scatterplot2 = plot_data.Scatter(x_variable='y', y_variable='color',
                                  point_style=plot_data.PointStyle(shape='square'))  # optional argument that changes
 # points' appearance
 
-scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction', point_style=plot_data.PointStyle(shape='square'))
+scatterplot3 = plot_data.Scatter(x_variable='x', y_variable='direction '*10, point_style=plot_data.PointStyle(shape='square'))
 
 # PrimitiveGroupContainers
 contour = plot_data.Contour2D(plot_data_primitives=[plot_data.LineSegment2D([1, 1], [1, 2]),
@@ -65,12 +65,12 @@ primitive_group_container = plot_data.PrimitiveGroupsContainer(primitive_groups=
                                                                x_variable='x', y_variable='y')
 
 histogram = plot_data.Histogram(x_variable='x')
-histogram2 = plot_data.Histogram(x_variable='direction')
+histogram2 = plot_data.Histogram(x_variable='direction '*10)
 histogram3 = plot_data.Histogram(x_variable='color')
 
 # Creating the multiplot
 plots = [parallelplot1, scatterplot1]
-plots2 = [scatterplot1, scatterplot3, graph2d, primitive_group_container, parallelplot2,
+plots2 = [scatterplot1, scatterplot3, graph2d, primitive_group_container, parallelplot1,
           histogram,histogram2, primitive_group]
 # multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True,

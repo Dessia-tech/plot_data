@@ -3897,11 +3897,9 @@ export class ParallelAxis extends newAxis {
     this.titleSettings.origin = this.titleZone.origin.copy();
     this.titleSettings.align = this.initScale.x > 0 ? "left" : "right";
 
-    if (index != 0) {
-      if (this.isVertical) {
-        this.titleSettings.align = index == nAxis - 1 ? (this.initScale.x > 0 ? "right" : "left") : "center";
-        this.titleSettings.origin.x += (index == nAxis - 1 ? 1 : 0.5) * this.boundingBox.size.x;
-      }
+    if (this.isVertical) {
+      this.titleSettings.align = "center";
+      this.titleSettings.origin.x += 0.5 * this.boundingBox.size.x;
     }
     return this
   }

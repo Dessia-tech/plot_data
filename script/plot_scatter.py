@@ -14,7 +14,7 @@ for i in range(1000):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
     elements.append({'mass': random.uniform(0, 50),
-                     'length ' * 100: random.uniform(0, 100),
+                     'length': random.uniform(0, 100),
                      'shape': random_shape,
                      'color': random_color})
 
@@ -24,7 +24,7 @@ points_sets = [plot_data.PointFamily(plot_data.colors.RED, [0,1,2,3,4,5,6,7,8,9]
                plot_data.PointFamily(plot_data.colors.PINK, [30,31,32,33,34,35,36,37,38,39])]
 
 plot_data_object = plot_data.Scatter(elements=elements, points_sets=points_sets,
-                                     x_variable='mass', y_variable='length '*100)
+                                     x_variable='mass', y_variable='length')
 
 # The previous scripts shows the simplest way of creating a scatterplot.
 # However, many options are available for further customization
@@ -37,7 +37,7 @@ text_style = plot_data.TextStyle(text_color=GREY,
                                  font_size=10,
                                  font_style='sans-serif')
 surface_style = plot_data.SurfaceStyle(color_fill=LIGHTVIOLET, opacity=0.3)
-custom_tooltip = plot_data.Tooltip(attributes=['mass', 'length '*100],
+custom_tooltip = plot_data.Tooltip(attributes=['mass', 'length'],
                                    surface_style=surface_style,
                                    text_style=text_style,
                                    tooltip_radius=10)
@@ -64,13 +64,13 @@ axis = plot_data.Axis(nb_points_x=7, nb_points_y=5,
 
 # a tooltip is drawn when clicking on a point. Users can choose what information
 # they want to be displayed.
-tooltip = plot_data.Tooltip(attributes=['mass', 'length '*100, 'shape'])
+tooltip = plot_data.Tooltip(attributes=['mass', 'length', 'shape'])
 
 # Heatmap settings
 heatmap = plot_data.Heatmap([4, 2], colors=[YELLOW, ORANGE, RED])
 
 # Now, here is the new scatterplot
-customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='length '*100,
+customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='length',
                                            point_style=point_style,
                                            elements=elements,
                                            points_sets=points_sets,

@@ -1271,6 +1271,8 @@ export class Figure extends PlotData {
     return axis
   }
 
+  protected setAxesTitleWidth(): void {}
+
   private relocateAxes(): void {
     const freeSpace = this.computeBounds();
     const axisBoundingBoxes = this.buildAxisBoundingBoxes(freeSpace);
@@ -1305,6 +1307,7 @@ export class Figure extends PlotData {
     this.computeOffset();
     this.relocateAxes();
     this.axes.forEach(axis => axis.resetScale());
+    this.setAxesTitleWidth();
   }
 
   public resetView(): void {
@@ -1750,6 +1753,7 @@ export class Frame extends Figure {
     public is_in_multiplot: boolean = false
     ) {
       super(data, width, height, X, Y, canvasID, is_in_multiplot);
+      this.setAxesTitleWidth();
     }
 
   get frameMatrix(): DOMMatrix {
@@ -1780,6 +1784,10 @@ export class Frame extends Figure {
   }
 
   protected get axesEnd() { return new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix) }
+
+  protected setAxesTitleWidth(): void {
+    this.axes.forEach(axis => axis.titleWidth = this.drawingZone[1].x - 5);
+  }
 
   protected unpackAxisStyle(data: any): void {
     super.unpackAxisStyle(data);

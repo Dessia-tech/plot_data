@@ -304,10 +304,7 @@ export class Multiplot {
     }
     clickedZone.mouseMove(this.context, mouseCoords);
     clickedZone.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
-    this.figures[this.clickedIndex].origin = clickedZone.origin;
-    this.figures[this.clickedIndex].width = clickedZone.size.x;
-    this.figures[this.clickedIndex].height = clickedZone.size.y;
-    this.figures[this.clickedIndex].resetScales();
+    this.figures[this.clickedIndex].multiplotInstantiation(clickedZone.origin, clickedZone.size.x, clickedZone.size.y);
   }
 
   private resizeWithMouse(mouseCoords: Vertex, clickedObject: newShape): void {

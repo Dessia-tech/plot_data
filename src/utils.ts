@@ -3246,6 +3246,7 @@ export class newAxis extends newShape {
   public title: newText;
   public centeredTitle: boolean = false;
   public titleSettings: TitleSettings = new TitleSettings();
+  public titleWidth: number;
   public font: string = 'sans-serif';
 
   public emitter: EventEmitter = new EventEmitter();
@@ -3258,7 +3259,7 @@ export class newAxis extends newShape {
 
   private _marginRatio: number = 0.05;
   protected offsetTicks: number;
-  protected offsetTitle: number;
+  public offsetTitle: number;
   protected maxTickWidth: number;
   protected maxTickHeight: number;
 
@@ -3527,7 +3528,6 @@ export class newAxis extends newShape {
     context.lineWidth = this.lineWidth;
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
-    // this.boundingBox.draw(context)
     context.resetTransform();
     this.computeTextBoxes(context);
 
@@ -3546,7 +3546,7 @@ export class newAxis extends newShape {
 
   protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
     return {
-      width: this.drawLength,
+      width: this.titleWidth,
       fontsize: this.FONT_SIZE,
       font: this.font,
       align: align,
@@ -3567,6 +3567,7 @@ export class newAxis extends newShape {
     this.title.updateParameters(textParams);
     this.title.boundingBox.buildPath();
     this.title.boundingBox.hoverStyle = this.title.boundingBox.clickedStyle = this.title.boundingBox.selectedStyle = this.title.boundingBox.fillStyle;
+    this.title.rowIndices = [];
   }
 
   protected drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {

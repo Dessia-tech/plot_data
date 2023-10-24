@@ -1886,7 +1886,6 @@ export class MultiplePlots {
       this.setAllInteractionsToOff();
 
       window.addEventListener('keydown', e => {
-        e.preventDefault();
         if (e.key == "Control") {
           ctrlKey = true;
           this.canvas.style.cursor = 'default';

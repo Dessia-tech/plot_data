@@ -1872,7 +1872,6 @@ export class Figure extends PlotData {
       this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
 
       window.addEventListener('keydown', e => {
-        e.preventDefault();
         if (e.key == "Control") {
           ctrlKey = true;
           if (spaceKey && this.isInCanvas(absoluteMouse)) this.resetView();
@@ -1882,6 +1881,7 @@ export class Figure extends PlotData {
           if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
         }
         if (e.key == " ") {
+          e.preventDefault();
           spaceKey = true;
           if (ctrlKey && this.isInCanvas(absoluteMouse)) this.resetView();
         }

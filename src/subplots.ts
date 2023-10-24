@@ -1898,7 +1898,7 @@ export class Figure extends PlotData {
         e.preventDefault();
         [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
-        if (this.isZooming) canvas.style.cursor = 'crosshair';
+        if (this.isZooming || this.isSelecting) canvas.style.cursor = 'crosshair';
         if (this.interaction_ON) {
           if (isDrawing) {
             const translation = this.mouseTranslate(canvasMouse, canvasDown);

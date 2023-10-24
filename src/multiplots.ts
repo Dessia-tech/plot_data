@@ -298,15 +298,20 @@ export class Multiplot {
     return [null, true]
   }
 
-  private resizeWithMouse(mouseCoords: Vertex, clickedObject: newShape): void {
-    if (clickedObject instanceof SelectionBox) {
-      clickedObject.mouseMove(this.context, mouseCoords);
-      clickedObject.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
-      this.figures[this.clickedIndex].origin = clickedObject.origin;
-      this.figures[this.clickedIndex].width = clickedObject.size.x;
-      this.figures[this.clickedIndex].height = clickedObject.size.y;
-      this.figures[this.clickedIndex].resetScales();
+  private zoneToFigure(mouseCoords: Vertex, clickedZone: SelectionBox): void {
+    for (let [i, zoneRectangle] of this.zoneRectangles.shapes.entries()) {
+      if (zoneRectangle === clickedZone) this.clickedIndex = i;
     }
+    clickedZone.mouseMove(this.context, mouseCoords);
+    clickedZone.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
+    this.figures[this.clickedIndex].origin = clickedZone.origin;
+    this.figures[this.clickedIndex].width = clickedZone.size.x;
+    this.figures[this.clickedIndex].height = clickedZone.size.y;
+    this.figures[this.clickedIndex].resetScales();
+  }
+
+  private resizeWithMouse(mouseCoords: Vertex, clickedObject: newShape): void {
+    if (clickedObject instanceof SelectionBox) this.zoneToFigure(mouseCoords, clickedObject)
     else this.zoneRectangles.mouseMove(this.context, mouseCoords);
   }
 
@@ -337,7 +342,7 @@ export class Multiplot {
   }
 
   private mouseUpDrawer(canvasDown: Vertex, clickedObject: newShape, ctrlKey: boolean, shiftKey: boolean, hasLeftFigure: boolean): [Vertex, newShape, boolean] {
-    if (this.isResizing && clickedObject instanceof SelectionBox) clickedObject.mouseUp(false);
+    if (this.isResizing && clickedObject instanceof SelectionBox) clickedObject.mouseUp(ctrlKey);
     if (!hasLeftFigure) [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
     if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
       this.clickedIndices = this.figures[this.hoveredIndex].clickedIndices;

@@ -19,7 +19,7 @@ import plot_data.colors as colors
 random.seed(0)
 
 elements = []
-nb_elements = 500
+nb_elements = 0
 available_colors = ["purple", "Blue", "green", "red", "Yellow", "Cyan", "rose"]
 directions = ['north', 'south', 'west', 'east']
 for i in range(nb_elements):
@@ -71,7 +71,7 @@ histogram3 = plot_data.Histogram(x_variable='color')
 # Creating the multiplot
 plots = [parallelplot1, scatterplot1]
 plots2 = [scatterplot1, scatterplot3, graph2d, primitive_group_container, parallelplot1,
-          histogram,histogram2, primitive_group]
+          histogram, histogram2, primitive_group]
 # multiplot = plot_data.MultiplePlots(plots=plots, elements=elements, initial_view_on=True)
 plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, initial_view_on=True,
                                            point_families=[plot_data.PointFamily('rgb(25, 178, 200)', [1,2,3,4,5,6,7]),

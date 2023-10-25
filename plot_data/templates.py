@@ -99,12 +99,10 @@ MULTIPLOT_COMMANDS = """
             var plot_data = new PlotData.Multiplot(data, width, height, $canvas_id.id);"""
 
 PRIMITIVE_GROUP_CONTAINER_COMMANDS = """
-            var primitive_group_container = new PlotData.PrimitiveGroupContainer(data, width, height,
-                                                                                 true, 0, 0, $canvas_id.id);
-            primitive_group_container.define_canvas($canvas_id.id);
-            primitive_group_container.draw_initial();
-            primitive_group_container.mouse_interaction(primitive_group_container.isParallelPlot);
-            primitive_group_container.regular_layout();"""
+            var plot_data = new PlotData.PrimitiveGroupContainer(data, width, height, true, 0, 0, $canvas_id.id);
+            plot_data.setCanvas($canvas_id.id);
+            plot_data.draw_initial();
+            plot_data.mouseListener();"""
 
 
 def get_html_string(command_name: str, button_name: str):

@@ -1676,7 +1676,6 @@ export class Figure extends PlotData {
     canvas.addEventListener('mousedown', () => {
       [canvasDown, frameDown, clickedObject] = this.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
       if (ctrlKey && shiftKey) this.reset();
-      this.draw();
     });
 
     canvas.addEventListener('mouseup', () => {

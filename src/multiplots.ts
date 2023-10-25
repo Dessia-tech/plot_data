@@ -397,7 +397,10 @@ export class Multiplot {
       this.draw();
     })
 
-    this.canvas.addEventListener('wheel', e => this.mouseWheelDrawer(e));
+    this.canvas.addEventListener('wheel', e => {
+      this.mouseWheelDrawer(e);
+      this.draw();
+    });
 
     this.canvas.addEventListener("mouseleave", () => [canvasDown, hasLeftFigure] = this.mouseLeaveDrawer());
 

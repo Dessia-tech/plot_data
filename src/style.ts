@@ -1,5 +1,4 @@
 import { string_to_hex, string_to_rgb, colorHex } from "./color_conversion";
-import { set_default_values } from "./utils";
 
 /**
  * A settings class for the customizing objects that have edges such as lines and contours.
@@ -23,7 +22,6 @@ export class EdgeStyle {
     public static deserialize(serialized) {
         var default_dict_ = {line_width: 0.5, color_stroke:string_to_rgb('black'), dashline:[],
                             name:''};
-        serialized = set_default_values(serialized, default_dict_);
         return new EdgeStyle(serialized['line_width'],
                             colorHex(serialized['color_stroke']),
                             serialized['dashline'],
@@ -100,7 +98,6 @@ export class PointStyle {
     public static deserialize(serialized) {
       let default_dict_ = {color_fill:string_to_hex('lightviolet'), color_stroke:string_to_hex('lightgrey'),
                                  stroke_width:0.5, size:2, shape:'circle', name:''};
-      serialized = set_default_values(serialized, default_dict_);
       return new PointStyle(colorHex(serialized['color_fill']),
       colorHex(serialized['color_stroke']),
                             serialized['stroke_width'],
@@ -128,7 +125,6 @@ export class SurfaceStyle {
 
     public static deserialize(serialized) {
       let default_dict_ = {color_fill:string_to_rgb('white'), opacity:1, hatching:null};
-      serialized = set_default_values(serialized, default_dict_);
       if (serialized['hatching'] != null) {
         var hatching = HatchingSet.deserialize(serialized['hatching']);
       }
@@ -178,7 +174,6 @@ export class TextStyle {
       let default_dict_ = {text_color:string_to_rgb('black'), font_size:12,
                            font_style:'sans-serif', text_align_x:'start',
                            text_align_y: 'alphabetic', name:''};
-      serialized = set_default_values(serialized,default_dict_);
       return new TextStyle(colorHex(serialized['text_color']),
                               serialized['font_size'],
                               serialized['font_style'],

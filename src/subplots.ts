@@ -1,12 +1,6 @@
-import { PlotData, Buttons, Interactions } from "./plot-data";
-import { Attribute, Axis, Sort, RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
+import { RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
   LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END, newShape } from "./utils";
-import { PrimitiveGroup } from "./primitives";
-import { List, Shape, MyObject } from "./toolbox";
-import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from "./color_conversion";
-import { EdgeStyle, TextStyle } from "./style";
-
-var alert_count = 0;
+import { colorHsl } from "./color_conversion";
 
 // All following rows are purely deleted
 
@@ -37,7 +31,9 @@ export const PG_CONTAINER_PLOT = {
 
 const MIN_FONTSIZE: number = 6;
 const MIN_OFFSET: number = 33;
-export class Figure extends PlotData {
+const ZOOM_FACTOR: number = 1.2;
+export class Figure {
+  public context: CanvasRenderingContext2D;
   public axes: newAxis[] = [];
   public drawOrigin: Vertex;
   public drawEnd: Vertex;
@@ -78,6 +74,12 @@ export class Figure extends PlotData {
   public features: Map<string, any[]>;
   readonly MAX_PRINTED_NUMBERS = 6;
   readonly TRL_THRESHOLD = 20;
+
+  // TODO: refactor these legacy attribute
+  public scaleX: number = 1;
+  public scaleY: number = 1;
+  public is_drawing_rubber_band: boolean = false;
+
   constructor(
     data: any,
     public width: number,
@@ -87,7 +89,6 @@ export class Figure extends PlotData {
     public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, false, X, Y, canvasID, is_in_multiplot);
       this.unpackAxisStyle(data);
       this.origin = new Vertex(X, Y);
       this.size = new Vertex(width - X, height - Y);
@@ -716,25 +717,18 @@ export class Figure extends PlotData {
   public zoomOut(): void { this.zoom(new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2), -342) }
 
   private zoom(center: Vertex, zFactor: number): void {
-    this.mouseWheel(center.x, center.y, zFactor);
+    this.mouseWheel(center, zFactor);
     this.updateWithScale();
     this.draw();
   }
 
-  public wheelFromEvent(e: WheelEvent): void { this.mouseWheel(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
+  public wheelFromEvent(e: WheelEvent): void { this.mouseWheel(new Vertex(e.offsetX, e.offsetY), -Math.sign(e.deltaY)) }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): void { //TODO: This is still not a refactor
-    this.fusion_coeff = 1.2;
-    const zoomFactor = deltaY > 0 ? this.fusion_coeff : 1 / this.fusion_coeff;
-    this.scaleX = this.scaleX * zoomFactor;
-    this.scaleY = this.scaleY * zoomFactor;
-    this.scroll_x = this.scroll_x + deltaY;
-    this.scroll_y = this.scroll_y + deltaY;
-    this.originX = mouse3X - this.origin.x + zoomFactor * (this.originX - mouse3X + this.origin.x);
-    this.originY = mouse3Y - this.origin.y + zoomFactor * (this.originY - mouse3Y + this.origin.y);
-    if (isNaN(this.scroll_x)) this.scroll_x = 0;
-    if (isNaN(this.scroll_y)) this.scroll_y = 0;
-    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
+  public mouseWheel(mouseCoords: Vertex, deltaY: number): void {
+    const zoomFactor = deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+    this.scaleX *= zoomFactor;
+    this.scaleY *= zoomFactor;
+    this.viewPoint = new Vertex(mouseCoords.x, mouseCoords.y).scale(this.initScale);
   }
 }
 

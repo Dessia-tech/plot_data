@@ -1038,7 +1038,7 @@ const PG_CONTAINER_PLOT = {
   "primitives": [
     {
       "name": "",
-      "comment": "PrimitiveGroupContainer is not supported anymore in plot_data 0.18.0 and further versions.",
+      "comment": "PrimitiveGroupContainer is not supported anymore in plot_data 0.19.0 and further versions.",
       "text_style": {
         "object_class": "plot_data.core.TextStyle",
         "name": "",

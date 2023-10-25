@@ -1302,12 +1302,16 @@ export class Figure extends PlotData {
 
   protected resetAxes(): void { this.axes.forEach(axis => axis.reset()) }
 
-  public resetScales(): void { // TODO: merge with resetView
+  public updateDimensions(): void {
     this.updateSize();
     this.computeOffset();
     this.relocateAxes();
-    this.axes.forEach(axis => axis.resetScale());
     this.setAxesTitleWidth();
+  }
+
+  public resetScales(): void {
+    this.updateDimensions();
+    this.axes.forEach(axis => axis.resetScale());
   }
 
   public resetView(): void {
@@ -1315,11 +1319,30 @@ export class Figure extends PlotData {
     this.draw();
   }
 
+  public resize(): void {
+    this.updateDimensions();
+    this.axes.forEach(axis => axis.updateTicks());
+  }
+
+  public resizeUpdate(): void {
+    this.resize();
+    this.draw();
+  }
+
   public multiplotInstantiation(origin: Vertex, width: number, height: number): void {
     this.origin = origin;
     this.width = width;
     this.height = height;
-    this.resetScales();
+  }
+
+  public multiplotDraw(origin: Vertex, width: number, height: number): void {
+    this.multiplotInstantiation(origin, width, height);
+    this.resetView();
+  }
+
+  public multiplotResize(origin: Vertex, width: number, height: number): void {
+    this.multiplotInstantiation(origin, width, height);
+    this.resizeUpdate();
   }
 
   public initSelectors(): void {
@@ -2101,6 +2124,11 @@ export class Scatter extends Frame {
     this.computePoints();
   }
 
+  public multiplotResize(origin: Vertex, width: number, height: number): void {
+    super.multiplotResize(origin, width, height);
+    this.computePoints();
+  }
+
   public reset(): void {
     super.reset();
     this.computePoints();
@@ -2481,8 +2509,8 @@ export class ParallelPlot extends Figure {
 
   protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
 
-  public resetScales(): void { // TODO: merge with resetView
-    super.resetScales();
+  public updateDimensions(): void {
+    super.updateDimensions();
     this.updateAxesLocation();
   }
 
@@ -2697,10 +2725,9 @@ export class Draw extends Frame {
     this.computeTextBorders(this.context);
   }
 
-  public resetScales(): void { // TODO: merge with resetView
+  public resetScales(): void {
     super.resetScales();
     this.updateBounds();
-    this.draw();
   }
 
   public reset(): void {

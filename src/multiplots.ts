@@ -110,7 +110,7 @@ export class Multiplot {
       const xCoord = j * width;
       for (let i=0; i < nRows; i++) {
         const yCoord = i * height;
-        this.figures[k].multiplotInstantiation(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE * 2, height - BLANK_SPACE * 2);
+        this.figures[k].multiplotDraw(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE * 2, height - BLANK_SPACE * 2);
         k++;
         if (k == this.figures.length) break;
       }
@@ -177,11 +177,9 @@ export class Multiplot {
   public resetClusters(): void { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.resetClusters() })};
 
   public resetView(): void {
-    this.resetScales();
+    this.figures.forEach(figure => figure.resetView());
     this.draw();
   }
-
-  public resetScales(): void { this.figures.forEach(figure => figure.resetScales()) }
   
   public reset(): void {
     this.selectedIndices = [];
@@ -304,7 +302,7 @@ export class Multiplot {
     }
     clickedZone.mouseMove(this.context, mouseCoords);
     clickedZone.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
-    this.figures[this.clickedIndex].multiplotInstantiation(clickedZone.origin, clickedZone.size.x, clickedZone.size.y);
+    this.figures[this.clickedIndex].multiplotResize(clickedZone.origin, clickedZone.size.x, clickedZone.size.y);
   }
 
   private resizeWithMouse(mouseCoords: Vertex, clickedObject: newShape): void {
@@ -339,7 +337,7 @@ export class Multiplot {
 
   private mouseUpDrawer(canvasDown: Vertex, clickedObject: newShape, ctrlKey: boolean, shiftKey: boolean, hasLeftFigure: boolean): [Vertex, newShape, boolean] {
     if (this.isResizing && clickedObject instanceof SelectionBox) clickedObject.mouseUp(ctrlKey);
-    if (!hasLeftFigure) [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
+    if (!hasLeftFigure && !this.isResizing) [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
     if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
       this.clickedIndices = this.figures[this.hoveredIndex].clickedIndices;
     }
@@ -1061,7 +1059,7 @@ export class MultiplePlots {
       var obj:any = this.objectList[move_plot_index]
       obj.origin.x = obj.origin.x + tx;
       obj.origin.y = obj.origin.y + ty;
-      if (obj instanceof Figure) obj.resetScales();
+      if (obj instanceof Figure) obj.resetView();
       if (obj.type_ == 'primitivegroupcontainer') {
         for (let i=0; i<obj['primitive_groups'].length; i++) {
           obj['primitive_groups'][i].origin.x = obj['primitive_groups'][i].origin.x + tx;
@@ -1333,7 +1331,7 @@ export class MultiplePlots {
 
     resetAllObjects(): void {
       this.objectList.forEach(plot => {
-        if (plot instanceof Figure) plot.resetScales()
+        if (plot instanceof Figure) plot.resetView()
         else plot.reset_scales();
       });
     }

@@ -1,14 +1,7 @@
-<<<<<<< HEAD
 import { PlotData, Interactions } from './plot-data';
 import { Point2D } from './primitives';
 import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand, Vertex, newShape, SelectionBox, ShapeCollection } from './utils';
 import { PlotContour, PrimitiveGroupContainer, Histogram, Frame, Scatter, Figure, Graph2D, ParallelPlot, Draw, range } from './subplots';
-=======
-import {PlotData, Interactions} from './plot-data';
-import {Point2D} from './primitives';
-import { Attribute, PointFamily, Window, TypeOf, equals, Sort, export_to_txt, RubberBand } from './utils';
-import { PlotContour, PlotScatter, ParallelPlot, PrimitiveGroupContainer, Histogram, Frame, newScatter, Figure, newGraph2D, newParallelPlot, Draw } from './subplots';
->>>>>>> origin/feat/primitives
 import { List, Shape, MyObject } from './toolbox';
 import { string_to_hex, string_to_rgb, rgb_to_string, colorHsl } from './color_conversion';
 

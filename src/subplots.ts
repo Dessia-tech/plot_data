@@ -1549,6 +1549,7 @@ export class Figure extends PlotData {
       this.zoomBox.update(new Vertex(0, 0), new Vertex(0, 0));
     }
     this.mouseUp(ctrlKey);
+    this.draw();
     return this.resetMouseEvents()
   }
 
@@ -1681,7 +1682,6 @@ export class Figure extends PlotData {
     canvas.addEventListener('mouseup', () => {
       if (canvasDown) [clickedObject, canvasDown] = this.mouseUpDrawer(ctrlKey);
       if (!shiftKey) canvas.style.cursor = 'default';
-      this.draw();
     })
 
     canvas.addEventListener('wheel', e => {

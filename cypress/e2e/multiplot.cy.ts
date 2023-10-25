@@ -1,5 +1,4 @@
 import { parseHTML } from '../support/parseHTML';
-import { MultiplePlots } from '../../src/multiplots';
 import multiplotData from '../data_src/multiplot.data.json';
 import primitiveGroupContainerData from '../data_src/primitivegroupcontainer.data.json';
 

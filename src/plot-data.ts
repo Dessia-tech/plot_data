@@ -197,7 +197,7 @@ export abstract class PlotData extends EventEmitter {
   origin: Vertex;
 
   public constructor(
-    data:any,
+    public data:any,
     public width: number,
     public height: number,
     public buttons_ON: boolean,

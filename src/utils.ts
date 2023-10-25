@@ -47,7 +47,7 @@ export function equals(a, b) {
 
 const BORDER_SIZE = 20;
 const SMALL_RUBBERBAND_SIZE = 10;
-
+// Changes in rubberbands are only code deletion
 export class RubberBand {
   public axisMin: number = 0;
   public axisMax: number = 0;

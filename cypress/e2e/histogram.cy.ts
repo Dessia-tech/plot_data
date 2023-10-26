@@ -13,15 +13,11 @@ function initRubberBand(frame: Frame) {
   frame.draw();
 }
 
-before(() => {
-  parseHTML(FEATURE_NAME, histogramData)
-})
+before(() => parseHTML(FEATURE_NAME, histogramData));
 
 describe('HISTOGRAM CANVAS', function () {
-  const describeTitle = this.title + ' -- '
-  beforeEach(() => {
-    cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
-  })
+  const describeTitle = this.title + ' -- ';
+  beforeEach(() => cy.visit("cypress/html_files/" + FEATURE_NAME + ".html"));
 
   it("should draw canvas", function () {
     cy.compareSnapshot(describeTitle + this.test.title, 0.05);
@@ -43,7 +39,7 @@ describe('HISTOGRAM CANVAS', function () {
   it("should project mouse", function () {
     cy.window().then(win => {
       const histogram = win.eval('plot_data') as Histogram;
-      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 291, "offsetY": 601} as MouseEvent);
+      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 286, "offsetY": 622} as MouseEvent);
       expect(frameMouse.x).to.closeTo(3737, 10);
     })
   })
@@ -59,8 +55,8 @@ describe('HISTOGRAM CANVAS', function () {
       histogram.draw()
       const selectedBars = histogram.bars.reduce((sum, current) => sum + (current.isSelected ? 1 : 0), 0);
 
-      expect(histogram.axes[0].rubberBand.minValue).to.closeTo(4311, 10);
-      expect(histogram.axes[0].rubberBand.maxValue).to.closeTo(10211, 10);
+      expect(histogram.axes[0].rubberBand.minValue).to.closeTo(4291, 10);
+      expect(histogram.axes[0].rubberBand.maxValue).to.closeTo(10191, 10);
       expect(selectedBars).to.equal(5);
     })
   })

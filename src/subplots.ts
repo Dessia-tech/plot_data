@@ -506,6 +506,7 @@ export class Figure {
   }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape] {
+    console.log(absoluteMouse, frameMouse);
     const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
     const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
     const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);

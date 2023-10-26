@@ -29,6 +29,7 @@ export const PG_CONTAINER_PLOT = {
   "type_": "primitivegroup"
 };
 
+const BLANK_SPACE = 3;
 const MIN_FONTSIZE: number = 6;
 const MIN_OFFSET: number = 33;
 const ZOOM_FACTOR: number = 1.2;
@@ -117,7 +118,7 @@ export class Figure {
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
-  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.025, 0.035) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.027, 0.035) }
 
   set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
@@ -204,7 +205,7 @@ export class Figure {
 
   protected computeOffset(): Vertex {
     const naturalOffset = this.computeNaturalOffset();
-    return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y, MIN_FONTSIZE));
+    return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET) + BLANK_SPACE, Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
   protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
@@ -837,7 +838,7 @@ export class Frame extends Figure {
     );
     const yBoundingBox = new newRect(
       new Vertex(this.drawOrigin.x - freeSpace.x, this.drawOrigin.y),
-      new Vertex(freeSpace.x, this.drawEnd.y - this.drawOrigin.y)
+      new Vertex(freeSpace.x - BLANK_SPACE, this.drawEnd.y - this.drawOrigin.y)
     );
     return [xBoundingBox, yBoundingBox]
   }

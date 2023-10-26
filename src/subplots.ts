@@ -660,12 +660,11 @@ export class Figure {
     this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 
     window.addEventListener('keydown', e => {
-      e.preventDefault();
+      if (e.key == " ") e.preventDefault();
       [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
     });
 
     window.addEventListener('keyup', e => {
-      e.preventDefault();
       [ctrlKey, shiftKey, spaceKey] = this.keyUpDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
     });
 
@@ -1718,6 +1717,12 @@ export class Draw extends Frame {
     super.reset();
     this.updateBounds();
     this.draw();
+  }
+
+  public resize(): void {
+    super.resize();
+    this.updateBounds();
+    this.axisEqual();
   }
 
   protected unpackData(data: any): Map<string, any[]> {

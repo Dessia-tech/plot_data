@@ -324,7 +324,6 @@ export class newShape {
   }
 
   protected buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {
-    const contextMatrix = context.getTransform();
     context.resetTransform();
     const path = new Path2D();
     path.addPath(this.path);

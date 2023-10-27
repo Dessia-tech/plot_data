@@ -1115,7 +1115,7 @@ export class newShape {
   public deserializeEdgeStyle(data: any): void {
     this.lineWidth = data.edge_style?.line_width ?? this.lineWidth;
     this.dashLine = data.edge_style?.dashline ?? this.dashLine;
-    this.strokeStyle = data.edge_style?.color_stroke ? colorHsl(data.edge_style?.color_stroke) : null;
+    this.strokeStyle = data.edge_style?.color_stroke ? colorHsl(data.edge_style.color_stroke) : null;
   }
 
   public deserializeSurfaceStyle(data: any): void {
@@ -2457,7 +2457,7 @@ export class LineSequence extends newShape {
 
   public static unpackGraphProperties(graph: { [key: string]: any }): LineSequence {
     const emptyLineSequence = new LineSequence([], graph.name);
-    if (graph.edge_style) emptyLineSequence.deserializeEdgeStyle(graph.edge_style);
+    emptyLineSequence.deserializeEdgeStyle(graph);
     return emptyLineSequence
   }
 

@@ -1,4 +1,4 @@
-import { RubberBand, Vertex, newShape, SelectionBox, ShapeCollection } from './utils';
+import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection } from './utils';
 import { Scatter, Figure, Graph2D, Draw, range } from './subplots';
 import { List } from './toolbox';
 
@@ -38,7 +38,7 @@ export class Multiplot {
   public nSamples: number;
   public figures: Figure[];
   public rubberBands: Map<string, RubberBand>;
-  public zoneRectangles = new ShapeCollection([]);
+  public figureZones = new SelectionBoxCollection([]);
 
   public isSelecting: boolean = false;
   public isZooming: boolean = false;
@@ -108,8 +108,8 @@ export class Multiplot {
     const nCols = Math.ceil(this.figures.length / nRows);
     const height = this.height / nRows;
     const width = this.width / nCols;
+
     let k = 0;
-    
     for (let j=0; j < nCols; j++) {
       const xCoord = j * width;
       for (let i=0; i < nRows; i++) {
@@ -157,11 +157,11 @@ export class Multiplot {
 
   public drawZoneRectangles(): void {
     if (this.isResizing) {
-      if (this.zoneRectangles.shapes.length == 0) {
-        const zoneRectangles = this.figures.map(figure => figure.drawZoneRectangle(this.context));
-        this.zoneRectangles = new ShapeCollection(zoneRectangles);
+      if (this.figureZones.shapes.length == 0) {
+        const figureZones = this.figures.map(figure => figure.drawZoneRectangle(this.context));
+        this.figureZones = new SelectionBoxCollection(figureZones);
       }
-      else this.zoneRectangles.draw(this.context);
+      else this.figureZones.draw(this.context);
     }
   }
 
@@ -195,6 +195,24 @@ export class Multiplot {
   }
 
   public switchOrientation(): void { this.figures.forEach(figure => figure.switchOrientation()) }
+
+  public resize(width: number, height: number): void {
+    const widthRatio = width / this.width;
+    const heightRatio = height / this.height;    
+    this.figures.forEach((figure, index) => {
+      figure.multiplotResize(figure.origin.scale(new Vertex(widthRatio, heightRatio)), figure.size.x * widthRatio, figure.size.y * heightRatio);
+      if (this.figureZones.length != 0) {
+        this.figureZones.shapes[index].origin = figure.origin.copy();
+        this.figureZones.shapes[index].size = figure.size.copy();
+        this.figureZones.shapes[index].buildPath();
+      }
+    })
+    this.canvas.width = width;
+    this.canvas.height = height;
+    this.width = width;
+    this.height = height;
+    this.draw();
+  }
 
   private updateSelectedIndices() {
     this.selectedIndices = range(0, this.nSamples);
@@ -301,8 +319,8 @@ export class Multiplot {
   }
 
   private zoneToFigure(mouseCoords: Vertex, clickedZone: SelectionBox): void {
-    for (let [i, zoneRectangle] of this.zoneRectangles.shapes.entries()) {
-      if (zoneRectangle === clickedZone) this.clickedIndex = i;
+    for (let [i, figureZone] of this.figureZones.shapes.entries()) {
+      if (figureZone === clickedZone) this.clickedIndex = i;
     }
     clickedZone.mouseMove(this.context, mouseCoords);
     clickedZone.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
@@ -311,7 +329,7 @@ export class Multiplot {
 
   private resizeWithMouse(mouseCoords: Vertex, clickedObject: newShape): void {
     if (clickedObject instanceof SelectionBox) this.zoneToFigure(mouseCoords, clickedObject)
-    else this.zoneRectangles.mouseMove(this.context, mouseCoords);
+    else this.figureZones.mouseMove(this.context, mouseCoords);
   }
 
   private mouseMoveDrawer(e: MouseEvent, hasLeftFigure: boolean, canvasMouse: Vertex, frameMouse: Vertex, 
@@ -335,7 +353,7 @@ export class Multiplot {
 
   private mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape] {
     this.clickedIndex = this.hoveredIndex;
-    if (this.isResizing) return [null, null, this.zoneRectangles.mouseDown(absoluteMouse.copy())];
+    if (this.isResizing) return [null, null, this.figureZones.mouseDown(absoluteMouse.copy())];
     return this.figures[this.hoveredIndex].mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
   }
 

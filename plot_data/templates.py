@@ -49,11 +49,8 @@ HTML_TEMPLATE = Template('''
         <canvas id="$canvas_id" style="border: 1px solid black;"></canvas>
 
         <script type="text/javascript">
-            var buttonsContainer = document.querySelector("#buttons");
-            var width = 0.95*window.innerWidth;
-            var height = Math.max(0.95*window.innerHeight, 350) - buttonsContainer.scrollHeight;
-
-            var data = $data;
+            const [width, height] = PlotData.computeCanvasSize("#buttons");
+            const data = $data;
             $plot_commands
         </script>
     </div>
@@ -63,43 +60,44 @@ HTML_TEMPLATE = Template('''
 EMPTY_BUTTONS = """"""
 
 MULTIPLOT_BUTTONS = """
-        <button name="resize" value="OK" type="button" onclick="plot_data.switchResize()"> Resize Figures </button>"""
+        <button name="resize" value="OK" type="button" onclick="plot_data.switchResize()"> Resize Figures </button>
+        <button name="resizeMP" value="OK" type="button" onclick="plot_data.resize(...PlotData.computeCanvasSize('#buttons'))"> Resize Multiplot </button>"""
 
 SCATTER_COMMANDS = """
-            var plot_data = new PlotData.Scatter(data, width, height, 0, 0, $canvas_id.id);
+            const plot_data = new PlotData.Scatter(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouseListener();"""
 
 CONTOUR_COMMANDS = """
-            var plot_data = new PlotData.Draw(data, width, height, 0, 0, $canvas_id.id);
+            const plot_data = new PlotData.Draw(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouseListener();"""
 
 GRAPH_COMMANDS = """
-            var plot_data = new PlotData.Graph2D(data, width, height, 0, 0, $canvas_id.id);
+            const plot_data = new PlotData.Graph2D(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouseListener();"""
 
 PARALLELPLOT_COMMANDS = """
-            var plot_data = new PlotData.ParallelPlot(data, width, height, 0, 0, $canvas_id.id);
+            const plot_data = new PlotData.ParallelPlot(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouseListener();"""
 
 HISTOGRAM_COMMANDS = """
-            var plot_data = new PlotData.Histogram(data, width, height, 0, 0, $canvas_id.id);
+            const plot_data = new PlotData.Histogram(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouseListener();"""
 
 MULTIPLOT_COMMANDS = """
-            var plot_data = new PlotData.Multiplot(data, width, height, $canvas_id.id);"""
+            const plot_data = new PlotData.Multiplot(data, width, height, $canvas_id.id);"""
 
 PRIMITIVE_GROUP_CONTAINER_COMMANDS = """
-            var plot_data = new PlotData.PrimitiveGroupContainer(data, width, height, true, 0, 0, $canvas_id.id);
+            const plot_data = new PlotData.PrimitiveGroupContainer(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw_initial();
             plot_data.mouseListener();"""

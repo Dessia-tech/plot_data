@@ -1,5 +1,5 @@
 import { RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END, newShape } from "./utils";
+  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END, newShape, uniqueValues } from "./utils";
 import { colorHsl } from "./color_conversion";
 
 
@@ -1326,6 +1326,11 @@ export const PG_CONTAINER_PLOT = {
   "type_": "primitivegroup"
 };
 
+export function computeCanvasSize(buttonContainerName: string): [number, number] {
+  const buttonsContainer = document.querySelector(buttonContainerName);
+  return [0.95 * window.innerWidth, 0.95 * window.innerHeight - buttonsContainer.scrollHeight]
+}
+
 const BLANK_SPACE = 3;
 const MIN_FONTSIZE: number = 6;
 const MIN_OFFSET: number = 33;
@@ -1573,7 +1578,7 @@ export class Figure {
       }
       if (inAllArrays) arraysIntersection.push(value);
     })
-    return newAxis.uniqueValues(arraysIntersection)
+    return uniqueValues(arraysIntersection)
   }
 
   protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
@@ -1803,7 +1808,6 @@ export class Figure {
   }
 
   public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape] {
-    console.log(absoluteMouse, frameMouse);
     const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
     const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
     const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);
@@ -2177,7 +2181,7 @@ export class Frame extends Figure {
       } else if (axis.tickPrecision < 1) {
         if (this.scaleX < 1) this.scaleX = 1;
         if (this.scaleY < 1) this.scaleY = 1;
-      } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+      } else if (axis.isDiscrete && axis.ticks.length > uniqueValues(axis.labels).length + 2) {
         if (this.scaleX < 1) this.scaleX = 1;
         if (this.scaleY < 1) this.scaleY = 1;
       }
@@ -2328,7 +2332,7 @@ export class Histogram extends Frame {
         if (this.scaleX > 1) this.scaleX = 1;
       } else if (axis.tickPrecision < 1) {
         if (this.scaleX < 1) this.scaleX = 1;
-      } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+      } else if (axis.isDiscrete && axis.ticks.length > uniqueValues(axis.labels).length + 2) {
         if (this.scaleX < 1) this.scaleX = 1;
       }
     }
@@ -2805,12 +2809,24 @@ export class ParallelPlot extends Figure {
   private updateAxesLocation(): void {
     const freeSpace = this.setBounds();
     const axisBoundingBoxes = this.buildAxisBoundingBoxes(freeSpace);
-    const boxSize = this.computeBoxesSize();
+    const axesEnds = this.getAxesLocations();
     this.axes.forEach((axis, index) => {
-      const [axisOrigin, axisEnd] = this.getAxisLocation(boxSize, index);
-      axis.updateLocation(axisOrigin, axisEnd, axisBoundingBoxes[index], index, this.drawnFeatures.length);
+      axis.updateLocation(...axesEnds[index], axisBoundingBoxes[index], index, this.drawnFeatures.length);
     });
     this.computeCurves();
+  }
+
+  protected buildAxes(axisBoundingBoxes: newRect[]): ParallelAxis[] {
+    super.buildAxes(axisBoundingBoxes);
+    const axesEnds = this.getAxesLocations();
+    const axes: ParallelAxis[] = [];
+    this.drawnFeatures.forEach((featureName, index) => {
+      const axis = new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], ...axesEnds[index], featureName, this.initScale);
+      axis.updateStyle(this.axisStyle);
+      axis.computeTitle(index, this.drawnFeatures.length);
+      axes.push(axis);
+    })
+    return axes
   }
 
   private computeBoxesSize(): number {
@@ -2835,32 +2851,48 @@ export class ParallelPlot extends Figure {
   }
 
   private verticalAxisBoundingBox(drawOrigin: Vertex, axisSize: number, size: number, index: number): newRect {
-    const boundingBox = new newRect(drawOrigin.copy(), new Vertex(size * FREE_SPACE_FACTOR, axisSize));
+    const freeSpaceOffset = size * (1 - FREE_SPACE_FACTOR) / 2;
+    const boundingBox = new newRect(new Vertex(drawOrigin.x + freeSpaceOffset, drawOrigin.y), new Vertex(size - freeSpaceOffset, axisSize));
     boundingBox.origin.x += size * index;
     return boundingBox
   }
 
-  private getAxisLocation(boxSize: number, axisIndex: number): [Vertex, Vertex] {
-    if (this.isVertical) {
-      const verticalX = this.drawOrigin.x + (axisIndex + 0.5) * boxSize;
-      return [new Vertex(verticalX, this.drawOrigin.y), new Vertex(verticalX, this.drawEnd.y)]
-    }
-    const horizontalY = this.drawOrigin.y + ((this.drawnFeatures.length - axisIndex) * boxSize - SIZE_END);
-    return [new Vertex(this.drawOrigin.x, horizontalY), new Vertex(this.drawEnd.x, horizontalY)]
+  private getAxesLocations(): [Vertex, Vertex][] {
+    return this.isVertical ? this.verticalAxesLocation() : this.horizontalAxesLocation()
   }
 
-  protected buildAxes(axisBoundingBoxes: newRect[]): ParallelAxis[] {
-    super.buildAxes(axisBoundingBoxes);
-    const boxSize = this.computeBoxesSize();
-    const axes: ParallelAxis[] = [];
-    this.drawnFeatures.forEach((featureName, index) => {
-      const [axisOrigin, axisEnd] = this.getAxisLocation(boxSize, index);
-      const axis = new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale);
-      axis.updateStyle(this.axisStyle);
-      axis.computeTitle(index, this.drawnFeatures.length);
-      axes.push(axis);
+  private verticalAxesLocation(): [Vertex, Vertex][] {
+    const boxSize = (this.drawEnd.x - this.drawOrigin.x) / this.drawnFeatures.length;
+    const freeSpace = (this.drawEnd.x - this.drawOrigin.x) / this.drawnFeatures.length * (1 - FREE_SPACE_FACTOR) / 4;
+    const axesEnds: [Vertex, Vertex][] = [];
+    this.drawnFeatures.forEach((_, index) => {
+      const verticalX = this.drawOrigin.x + (index + 0.5) * boxSize + freeSpace;
+      axesEnds.push([new Vertex(verticalX, this.drawOrigin.y), new Vertex(verticalX, this.drawEnd.y)])
     })
-    return axes
+    return axesEnds
+  }
+
+  private horizontalAxesLocation(): [Vertex, Vertex][] {
+    const drawHeight = this.drawEnd.y - this.drawOrigin.y;
+    const LOCAL_MIN_OFFSET = drawHeight - MIN_OFFSET * 1.2;
+    const firstEnds: [Vertex, Vertex] = [
+      new Vertex(this.drawOrigin.x, this.drawEnd.y - 0.015 * drawHeight),
+      new Vertex(this.drawEnd.x, this.drawEnd.y - 0.015 * drawHeight)
+    ];
+    const lastEnds: [Vertex, Vertex] = [
+      new Vertex(this.drawOrigin.x, this.drawEnd.y - Math.min(0.9 * drawHeight, LOCAL_MIN_OFFSET)),
+      new Vertex(this.drawEnd.x, this.drawEnd.y - Math.min(0.9 * drawHeight, LOCAL_MIN_OFFSET))
+    ];
+    const yStep = (lastEnds[0].y - firstEnds[0].y) / (this.drawnFeatures.length - 1);
+    const axesEnds: [Vertex, Vertex][] = [firstEnds];
+    this.drawnFeatures.slice(1, this.drawnFeatures.length - 1).forEach((_, index) => {
+      axesEnds.push([
+        new Vertex(firstEnds[0].x, firstEnds[0].y + (index + 1) * yStep),
+        new Vertex(firstEnds[1].x, firstEnds[1].y + (index + 1) * yStep)
+      ]);
+    });
+    axesEnds.push(lastEnds);
+    return axesEnds
   }
 
   public computePoint(axis: newAxis, featureValue: number): newPoint2D {
@@ -2954,7 +2986,7 @@ export class ParallelPlot extends Figure {
         } else if (axis.tickPrecision < 1) {
           if (this.scaleX < 1) this.scaleX = 1;
           if (this.scaleY < 1) this.scaleY = 1;
-        } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+        } else if (axis.isDiscrete && axis.ticks.length > uniqueValues(axis.labels).length + 2) {
           if (this.scaleX < 1) this.scaleX = 1;
           if (this.scaleY < 1) this.scaleY = 1;
         }

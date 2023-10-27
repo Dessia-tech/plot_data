@@ -867,6 +867,9 @@ export function equals(a, b) {
   return a !== a && b !== b;
 }
 
+export function uniqueValues(vector: string[]): string[] {
+  return vector.filter((value, index, array) => array.indexOf(value) === index)
+}
 
 const BORDER_SIZE = 20;
 const SMALL_RUBBERBAND_SIZE = 10;
@@ -3074,7 +3077,7 @@ export class newAxis extends newShape {
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
       if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
-      if (this.isDiscrete) this.labels = vector.length != 0 ? newAxis.uniqueValues(vector) : ["0", "1"];
+      if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"];
     } else {
       this.isDiscrete = true;
       this.labels = ["0", "1"];
@@ -3127,10 +3130,6 @@ export class newAxis extends newShape {
     const normedValue = Math.floor(value / Math.pow(10, tenPower - 2));
     const fiveMultiple = Math.floor(normedValue / 50);
     return (50 * fiveMultiple) * Math.pow(10, tenPower - 2);
-  }
-
-  public static uniqueValues(vector: string[]): string[] {
-    return vector.filter((value, index, array) => array.indexOf(value) === index)
   }
 
   public adjustBoundingBox(): void {
@@ -3598,25 +3597,24 @@ export class ParallelAxis extends newAxis {
   }
 
   public computeTitle(index: number, nAxis: number): ParallelAxis {
-    this.titleZone = new newRect(this.boundingBox.origin.copy(), this.boundingBox.size.copy());
+    this.titleZone = new newRect(this.origin.copy(), this.boundingBox.size.copy());
     const SIZE_FACTOR = 0.35;
     let offset = 0;
     if (this.isVertical) {
       offset = this.drawLength + Math.min(SIZE_END * 2, this.drawLength * 0.05);
       this.titleZone.origin.y += offset;
     } else {
-      offset = SIZE_END + this.offsetTicks + this.FONT_SIZE;
-      this.titleZone.size.x *= SIZE_FACTOR;
+      offset = this.offsetTicks + this.FONT_SIZE + SIZE_END;
+      if (index != nAxis - 1) this.titleZone.size.x *= SIZE_FACTOR;
+      this.titleZone.size.y = Math.abs(this.boundingBox.origin.y) - Math.abs(this.origin.y);
+      this.titleZone.origin.y -= this.titleZone.size.y;
     }
     this.titleZone.size.y -= offset;
     this.titleZone.buildPath();
     this.titleSettings.origin = this.titleZone.origin.copy();
     this.titleSettings.align = this.initScale.x > 0 ? "left" : "right";
 
-    if (this.isVertical) {
-      this.titleSettings.align = "center";
-      this.titleSettings.origin.x += 0.5 * this.boundingBox.size.x;
-    }
+    if (this.isVertical) this.titleSettings.align = "center";
     return this
   }
 
@@ -3801,6 +3799,10 @@ export class ShapeCollection {
     }
     this.shapes = [...others, ...labels];
   }
+}
+
+export class SelectionBoxCollection extends ShapeCollection {
+  constructor(public shapes: SelectionBox[] = []) { super(shapes) }
 }
 
 export class GroupCollection extends ShapeCollection {

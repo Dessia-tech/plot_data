@@ -6,7 +6,7 @@ from plot_data.colors import BLUE, GREEN, ORANGE, RED, VIOLET, YELLOW
 random.seed(4)
 
 elements = []
-SHAPES = ['round']
+SHAPES = ['round', 'square', 'triangle', 'ellipse']
 COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
 for i in range(50):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
@@ -23,7 +23,8 @@ for i in range(50):
         elements[-1]['length'] = None
 
 plot_data_object = plot_data.ParallelPlot(elements=elements,
-                                          axes=['long middle_attribute name ' * 15, 'mass '*30])
+                                          axes=['long middle_attribute name ' * 15, 'mass '*30, 'color', 'length', 'shape',
+                                                'long middle_attribute name ' * 10, 'long right attribute name ' * 7])
 
 # The line above shows the minimum requirements for creating a
 # parallel plot. However, many options are available for further customization.

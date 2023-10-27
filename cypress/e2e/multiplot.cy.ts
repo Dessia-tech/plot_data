@@ -23,7 +23,7 @@ describe('MULTIPLOT CANVAS', function () {
   it("should draw canvas", function () {
     cy.compareSnapshot(describeTitle + this.test.title, 0.05);
   })
-
+  //TODO: Removed because methods are removed because they don't seem useful to me but kept to remember they were tested
   // it("should remove primitive group from container in multiplot", function () {
   //   cy.window().then((win) => {
   //     win.eval('plot_data').remove_all_primitive_groups_from_container(6);
@@ -54,31 +54,4 @@ describe('MULTIPLOT CANVAS', function () {
     cy.visit("cypress/html_files/emptyMultiplot.html");
     cy.compareSnapshot(describeTitle + this.test.title, 0.05);
   })
-
-  // describe('MULTIPLOT FRONTEND INTERFACE', () => {
-  //   it("should return a list of 10 points", () => {
-  //     cy.window().then((win) => {
-  //       let plot_data = win.eval('plot_data')
-
-  //     })
-  //   })
-  //   it("should return a list of 10 points", () => {
-  //     cy.window().then((win) => {
-  //       let plot_data = win.eval('plot_data')
-
-  //     })
-  //   })
-  //   it("should return a list of 10 points", () => {
-  //     cy.window().then((win) => {
-  //       let plot_data = win.eval('plot_data')
-
-  //     })
-  //   })
-  //   it("should return a list of 10 points", () => {
-  //     cy.window().then((win) => {
-  //       let plot_data = win.eval('plot_data')
-
-  //     })
-  //   })
-  // })
 })

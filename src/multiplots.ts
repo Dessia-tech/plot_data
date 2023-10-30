@@ -1,5 +1,5 @@
 import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals } from './utils';
-import { Scatter, Figure, Graph2D, Draw, range } from './subplots';
+import { Scatter, Figure, Graph2D, Draw, range, ParallelPlot } from './subplots';
 import { List } from './toolbox';
 
 const EMPTY_MULTIPLOT = {
@@ -35,6 +35,7 @@ export class Multiplot {
   public canvas: HTMLCanvasElement;
 
   public features: Map<string, any[]>;
+  public featureNames: string[];
   public nSamples: number;
   public figures: Figure[];
   public rubberBands: Map<string, RubberBand>;
@@ -61,6 +62,7 @@ export class Multiplot {
   ) {
     this.buildCanvas(canvasID);
     [this.features, this.figures] = this.unpackData(data);
+    this.featureNames = Array.from(this.features.keys());
     this.nSamples = this.features.entries().next().value[1].length;
     this.computeTable();
     this.draw();
@@ -86,6 +88,17 @@ export class Multiplot {
       })
     }
     return [features, figures]
+  }
+
+  public serializeFeatures(): any {
+    const elements = [];
+    for (let i=0; i < this.nSamples; i++) {
+      const newSample = {};
+      this.featureNames.forEach(feature => newSample[feature] = this.features.get(feature)[i]);
+      newSample["values"] = {...newSample};
+      elements.push(newSample);
+    }
+    return elements
   }
 
   private newEmptyPlot(data: any): Draw {
@@ -140,6 +153,25 @@ export class Multiplot {
       figure.draw();
     });
     this.drawZoneRectangles();
+  }
+
+  public addParallelPlot(featureNames: string[]): void {
+    const data = {type_: "parallelplot", attribute_names: featureNames, elements: this.serializeFeatures()};
+    const newFigure = ParallelPlot.createFromMultiplot(data, this.features, this.context, this.canvasID);
+    this.figures.push(newFigure);
+    this.computeTable();
+    this.draw();
+    this.activateAxisEvents(newFigure);
+  }
+
+  private activateAxisEvents(figure: Figure): void {
+    figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e)));
+    figure.axes.forEach((axis, index) => {
+      axis.emitter.on('rubberBandChange', e => {
+        figure.activateSelection(e, index);
+        this.isSelecting = true;
+      })
+    })
   }
 
   public switchSelection() {

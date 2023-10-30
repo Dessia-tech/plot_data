@@ -1354,6 +1354,10 @@ export class Figure {
   public pointSetColors: string[] = [];
   public pointStyles: newPointStyle[] = null;
 
+  public lineWidth: number = 1;
+  public hoveredStyle: string = null;
+  public clickedStyle: string = null;
+
   public isHovered: boolean = false;
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
@@ -1375,6 +1379,7 @@ export class Figure {
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   public features: Map<string, any[]>;
+  public featureNames: string[];
   readonly MAX_PRINTED_NUMBERS = 6;
   readonly TRL_THRESHOLD = 20;
 
@@ -1396,6 +1401,7 @@ export class Figure {
       this.origin = new Vertex(X, Y);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
+      this.featureNames = Array.from(this.features.keys());
       this.nSamples = this.features.entries().next().value[1].length;
       this.initSelectors();
       this.scaleX = this.scaleY = 1;
@@ -1457,6 +1463,16 @@ export class Figure {
 
   protected unpackData(data: any): Map<string, any[]> { return Figure.deserializeData(data) }
 
+  public serializeFeatures(): any {
+    const elements = [];
+    for (let i=0; i < this.nSamples; i++) {
+      const newSample = {};
+      this.featureNames.forEach(feature => newSample[feature] = this.features.get(feature)[i]);
+      elements.push(newSample);
+    }
+    return elements
+  }
+
   protected buildPointSets(data: any): void {
     this.pointSets = new Array(this.nSamples).fill(-1);
     if (data.points_sets) this.unpackPointsSets(data);
@@ -1501,10 +1517,11 @@ export class Figure {
     this.updateSelection(axesSelections);
   }
 
-  public changeAxisName(name: string, index: number): void {
-    this.axes[index].name = this.drawnFeatures[index] = name;
-    this.features.set(name, this.features.get(this.drawnFeatures[index]));
-    this.features.delete(this.drawnFeatures[index]);
+  public changeAxisFeature(name: string, index: number): void {
+    this.drawnFeatures[index] = name;
+    this.axes[index] = this.setAxis(name, this.axes[index].boundingBox, this.axes[index].origin, this.axes[index].end, this.axes[index].nTicks);
+    this.resetScales();
+    this.draw();
   }
 
   protected setFeatures(data: any): string[] { return data.attribute_names ?? Array.from(this.features.keys()) }
@@ -1632,6 +1649,13 @@ export class Figure {
   public multiplotResize(origin: Vertex, width: number, height: number): void {
     this.multiplotInstantiation(origin, width, height);
     this.resizeUpdate();
+  }
+
+  public static createFromMultiplot(data: any, features: Map<string, any>, context: CanvasRenderingContext2D, canvasID: string): Figure {
+    const plot = Figure.fromMultiplot(data, 500, 500, canvasID);
+    plot.features = features;
+    plot.context = context;
+    return plot
   }
 
   public initSelectors(): void {
@@ -2128,6 +2152,12 @@ export class Frame extends Figure {
     return [this.xFeature, this.yFeature]
   }
 
+  public changeAxisFeature(name: string, index: number): void {
+    if (index == 0) this.xFeature = name
+    else this.yFeature = name;
+    super.changeAxisFeature(name, index);
+  }
+
   protected transformAxes(axisBoundingBoxes: newRect[]): void {
     super.transformAxes(axisBoundingBoxes);
     this.axes[0].transform(this.drawOrigin, new Vertex(this.drawEnd.x, this.drawOrigin.y));
@@ -2203,7 +2233,6 @@ export class Histogram extends Frame {
 
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public strokeStyle: string = null;
-  public lineWidth: number = 1;
   public dashLine: number[] = [];
 
   constructor(
@@ -2374,7 +2403,6 @@ export class Scatter extends Frame {
   public strokeStyle: string = null;
   public marker: string = 'circle';
   public pointSize: number = 8;
-  public lineWidth: number = 1;
 
   public tooltipAttributes: string[];
   public isMerged: boolean = false;
@@ -2936,6 +2964,7 @@ export class ParallelPlot extends Figure {
       curve.isHovered = this.hoveredIndices.includes(i) && !this.isSelecting && !this.is_drawing_rubber_band;
       curve.isClicked = this.clickedIndices.includes(i);
       curve.isSelected = this.selectedIndices.includes(i);
+      curve.lineWidth = this.lineWidth;
       curve.strokeStyle = this.curveColor;
     })
   }

@@ -1,4 +1,4 @@
-import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection } from './utils';
+import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals } from './utils';
 import { Scatter, Figure, Graph2D, Draw, range } from './subplots';
 import { List } from './toolbox';
 
@@ -186,12 +186,16 @@ export class Multiplot {
   }
   
   public reset(): void {
-    this.selectedIndices = [];
     this.clickedIndices = [];
     this.hoveredIndices = [];
-    this.rubberBands.forEach(rubberBand => rubberBand.reset());
+    this.resetSelection();
     this.figures.forEach(figure => figure.reset());
     this.draw();
+  }
+
+  public resetSelection(): void {
+    this.resetRubberBands();
+    this.selectedIndices = [];
   }
 
   public switchOrientation(): void { this.figures.forEach(figure => figure.switchOrientation()) }
@@ -215,6 +219,7 @@ export class Multiplot {
   }
 
   private updateSelectedIndices() {
+    const previousIndices = [...this.selectedIndices];
     this.selectedIndices = range(0, this.nSamples);
     let isSelecting = false;
     for (let figure of this.figures) {
@@ -229,6 +234,11 @@ export class Multiplot {
       })
     }
     if (this.selectedIndices.length == this.nSamples && !isSelecting) this.selectedIndices = [];
+    if (!equals(previousIndices, this.selectedIndices)) this.emitSelectionChange();
+  }
+
+  private emitSelectionChange(): void {
+    this.canvas.dispatchEvent(new CustomEvent('selectionchange', { detail: { 'selectedIndices': this.selectedIndices } }));
   }
 
   public updateHoveredIndices(figure: Figure): void {
@@ -247,6 +257,11 @@ export class Multiplot {
       currentFigure.sendRubberBandsMultiplot(this.figures);
       this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
     }
+  }
+
+  public resetRubberBands(): void {
+    this.rubberBands.forEach(rubberBand => rubberBand.reset());
+    this.figures.forEach(figure => figure.resetRubberBands());
   }
 
   private listenAxisStateChange(): void {

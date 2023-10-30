@@ -66,31 +66,31 @@ MULTIPLOT_BUTTONS = """
 SCATTER_COMMANDS = """
             const plot_data = new PlotData.Scatter(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
-            plot_data.draw_initial();
+            plot_data.draw();
             plot_data.mouseListener();"""
 
 CONTOUR_COMMANDS = """
             const plot_data = new PlotData.Draw(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
-            plot_data.draw_initial();
+            plot_data.draw();
             plot_data.mouseListener();"""
 
 GRAPH_COMMANDS = """
             const plot_data = new PlotData.Graph2D(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
-            plot_data.draw_initial();
+            plot_data.draw();
             plot_data.mouseListener();"""
 
 PARALLELPLOT_COMMANDS = """
             const plot_data = new PlotData.ParallelPlot(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
-            plot_data.draw_initial();
+            plot_data.draw();
             plot_data.mouseListener();"""
 
 HISTOGRAM_COMMANDS = """
             const plot_data = new PlotData.Histogram(data, width, height, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
-            plot_data.draw_initial();
+            plot_data.draw();
             plot_data.mouseListener();"""
 
 MULTIPLOT_COMMANDS = """
@@ -99,7 +99,7 @@ MULTIPLOT_COMMANDS = """
 PRIMITIVE_GROUP_CONTAINER_COMMANDS = """
             const plot_data = new PlotData.PrimitiveGroupContainer(data, width, height, true, 0, 0, $canvas_id.id);
             plot_data.setCanvas($canvas_id.id);
-            plot_data.draw_initial();
+            plot_data.draw();
             plot_data.mouseListener();"""
 
 

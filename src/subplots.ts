@@ -1501,6 +1501,12 @@ export class Figure {
     this.updateSelection(axesSelections);
   }
 
+  public changeAxisName(name: string, index: number): void {
+    this.axes[index].name = this.drawnFeatures[index] = name;
+    this.features.set(name, this.features.get(this.drawnFeatures[index]));
+    this.features.delete(this.drawnFeatures[index]);
+  }
+
   protected setFeatures(data: any): string[] { return data.attribute_names ?? Array.from(this.features.keys()) }
 
   protected computeNaturalOffset(): Vertex { return new Vertex(this.width * this.offsetFactor.x, this.height * this.offsetFactor.y) }
@@ -1648,8 +1654,13 @@ export class Figure {
   }
 
   protected resetSelection(): void {
-    this.axes.forEach(axis => axis.rubberBand.reset());
+    this.resetRubberBands();
     this.resetSelectors();
+  }
+
+  public resetRubberBands(): void {
+    this.axes.forEach(axis => axis.rubberBand.reset());
+    this.selectedIndices = [];
   }
 
   public updateSelected(axis: newAxis): number[] {
@@ -1734,8 +1745,6 @@ export class Figure {
     this.drawBorders();
     this.context.restore();
   }
-
-  public draw_initial(): void { this.draw() }
 
   public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() }
 
@@ -2413,6 +2422,11 @@ export class Scatter extends Frame {
     super.reset();
     this.computePoints();
     this.resetClusters();
+  }
+
+  public resize(): void {
+    super.resize();
+    this.computePoints();
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {

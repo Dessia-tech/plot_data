@@ -837,9 +837,9 @@ export function equals(a, b) {
     var length, i, keys;
     if (Array.isArray(a)) {
       length = a.length;
-      if (length != b.length) return false;
-      for (i = length; i-- !== 0;)
-        if (!equals(a[i], b[i])) return false;
+      if (a.length != b.length) return false;
+      for (i = a.length; i-- !== 0;)
+        if (!b.includes(a[i])) return false;
       return true;
     }
 

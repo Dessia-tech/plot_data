@@ -1476,6 +1476,11 @@ export class Figure {
     if (data.points_sets) this.unpackPointsSets(data);
   }
 
+  public getSetColorOfIndex(index: number): string {
+    for (let set of this.pointSets) { if (set.indices.includes(index)) return set.color }
+    return null
+  }
+
   public static deserializeData(data: any): Map<string, any[]> {
     const unpackedData = new Map<string, any[]>();
     if (data.x_variable) unpackedData.set(data.x_variable, []);
@@ -2329,6 +2334,17 @@ export class Histogram extends Frame {
     this.relativeObjects.shapes = [...this.bars, ...this.relativeObjects.shapes];
   }
 
+  private getBarSetColor(bar: Bar): string {
+    const setMaps = new Map<number, number>();
+    bar.values.forEach(pointIndex => {
+      this.pointSets.forEach((pointSet, index) => {
+        if (pointSet.includes(pointIndex)) setMaps.set(index, setMaps.get(index) ? setMaps.get(index) + 1 : 1);
+      })
+    })
+    const pointsSetIndex = mapMax(setMaps)[0];
+    if (pointsSetIndex !== null) return colorHsl(this.pointSets[pointsSetIndex].color);
+  }
+
   private getBarsDrawing(): void {
     const fullTicks = this.boundedTicks(this.axes[0]);
     const minY = this.boundedTicks(this.axes[1])[0];
@@ -2336,10 +2352,11 @@ export class Histogram extends Frame {
       let origin = new Vertex(fullTicks[index], minY);
       let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length > minY ? bar.length - minY : 0);
       if (this.axes[0].isDiscrete) origin.x = origin.x - (fullTicks[2] - fullTicks[1]) / 2;
+      const color = this.getBarSetColor(bar) ?? this.fillStyle;
       bar.updateStyle(
         origin, size,
         this.hoveredIndices, this.clickedIndices, this.selectedIndices,
-        this.fillStyle, this.strokeStyle, this.dashLine, this.lineWidth
+        color, this.strokeStyle, this.dashLine, this.lineWidth
       );
     })
   }
@@ -2478,10 +2495,8 @@ export class Scatter extends Frame {
         if (this.selectedIndices.includes(index)) point.isSelected = true;
       });
       if (colors.size != 0) color = mapMax(colors)[0]
-      else {
-        const pointsSetIndex = this.getPointSet(point);
-        if (pointsSetIndex !== null) color = colorHsl(this.pointSets[pointsSetIndex].color);
-      };
+      else color = this.getPointSetColor(point) ?? color;
+
       point.lineWidth = this.lineWidth;
       point.setColors(color);
       if (this.pointStyles) {
@@ -2496,14 +2511,15 @@ export class Scatter extends Frame {
     })
   }
 
-  private getPointSet(point: ScatterPoint): number {
+  private getPointSetColor(point: ScatterPoint): string {
     const setMaps = new Map<number, number>();
     point.values.forEach(pointIndex => {
       this.pointSets.forEach((pointSet, index) => {
         if (pointSet.includes(pointIndex)) setMaps.set(index, setMaps.get(index) ? setMaps.get(index) + 1 : 1);
       })
     })
-    return mapMax(setMaps)[0]
+    const pointsSetIndex = mapMax(setMaps)[0];
+    if (pointsSetIndex !== null) return colorHsl(this.pointSets[pointsSetIndex].color);
   }
 
   public switchMerge(): void {
@@ -2963,7 +2979,7 @@ export class ParallelPlot extends Figure {
       curve.isClicked = this.clickedIndices.includes(i);
       curve.isSelected = this.selectedIndices.includes(i);
       curve.lineWidth = this.lineWidth;
-      curve.strokeStyle = this.curveColor;
+      curve.strokeStyle = this.getSetColorOfIndex(i) ?? this.curveColor;
     })
   }
 
@@ -2973,7 +2989,9 @@ export class ParallelPlot extends Figure {
 
   private drawCurves(context: CanvasRenderingContext2D): void {
     const unpickedIndices = ParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
-    [unpickedIndices, this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
+    unpickedIndices.forEach(i => this.curves[i].draw(context));
+    this.pointSets.forEach(pointSet => pointSet.indices.forEach(i => this.curves[i].draw(context)));
+    [this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
   }
 
   public static arraySetDiff(A: any[], B: any[]): any[] {

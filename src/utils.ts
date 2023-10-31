@@ -871,6 +871,12 @@ export function uniqueValues(vector: string[]): string[] {
   return vector.filter((value, index, array) => array.indexOf(value) === index)
 }
 
+export function arrayDiff(a: any[], b: any[]): any[] { // TODO: this seems duplicated in PP
+  const diff = [];
+  a.forEach(value => { if (!b.includes(value)) diff.push(value) });
+  return diff
+}
+
 export class PointSet {
   public color: string;
   constructor(

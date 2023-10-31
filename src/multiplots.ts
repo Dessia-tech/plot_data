@@ -1,4 +1,4 @@
-import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals, PointSet } from './utils';
+import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals, PointSet, arrayDiff, uniqueValues } from './utils';
 import { Scatter, Figure, Graph2D, Draw, range, ParallelPlot } from './subplots';
 import { List } from './toolbox';
 
@@ -143,13 +143,22 @@ export class Multiplot {
 
   public addParallelPlot(featureNames: string[]): void {
     const data = {type_: "parallelplot", attribute_names: featureNames, elements: this.serializeFeatures()};
-    const newFigure = ParallelPlot.createFromMultiplot(data, this.features, this.context, this.canvasID);
-    this.figures.push(newFigure);
+    this.addFigure(ParallelPlot.createFromMultiplot(data, this.features, this.context, this.canvasID));
+  }
+
+  public addScatter(xFeature: string, yFeature: string): void {
+    const data = {type_: "scatterplot", x_variable: xFeature, y_variable: yFeature, elements: this.serializeFeatures()};
+    this.addFigure(Scatter.createFromMultiplot(data, this.features, this.context, this.canvasID));
+  }
+
+  public addFigure(figure: Figure): void {
+    this.figures.push(figure);
     this.figureZones.shapes = [];
     this.computeTable();
     this.draw();
-    this.activateAxisEvents(newFigure);
+    this.activateAxisEvents(figure);
   }
+
 
   private activateAxisEvents(figure: Figure): void {
     figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e)));
@@ -235,6 +244,17 @@ export class Multiplot {
   }
 
   public addPointSet(pointSet: PointSet): void { this.pointSets.push(pointSet) }
+
+  public removePointSet(index: number): void { this.pointSets.splice(index, 1) }
+
+  public addPointsToSet(pointIndices: number[], setIndex: number): void {
+    this.pointSets[setIndex].indices.push(...pointIndices);
+    this.pointSets[setIndex].indices = Array.from(new Set(this.pointSets[setIndex].indices));
+  }
+
+  public removePointsFromSet(pointIndices: number[], setIndex: number): void {
+    this.pointSets[setIndex].indices = arrayDiff(this.pointSets[setIndex].indices, pointIndices);
+  }
 
   private updateSelectedIndices() {
     const previousIndices = [...this.selectedIndices];

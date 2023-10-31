@@ -2817,7 +2817,7 @@ export class SelectionBox extends newRect {
 
   get isDefined(): boolean { return (this.minVertex != null && this.maxVertex != null) }
 
-  public setDrawingProperties(context: CanvasRenderingContext2D) {
+  public setDrawingProperties(context: CanvasRenderingContext2D): void {
     super.setDrawingProperties(context);
     context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
   }
@@ -2828,12 +2828,19 @@ export class SelectionBox extends newRect {
     this.saveState();
   }
 
-  public update(minVertex: Vertex, maxVertex: Vertex) {
+  public update(minVertex: Vertex, maxVertex: Vertex): void {
     this.minVertex = minVertex;
     this.maxVertex = maxVertex;
   }
 
-  public rubberBandUpdate(rubberBand: RubberBand, coordName: string) {
+  public updateRectangle(origin: Vertex, size: Vertex): void {
+    this.origin = origin;
+    this.size = size;
+    this.initBoundariesVertex();
+    this.buildPath();
+  }
+
+  public rubberBandUpdate(rubberBand: RubberBand, coordName: string): void {
     if (this.isDefined) {
       if (rubberBand.minValue != rubberBand.maxValue) {
         this.minVertex[coordName] = rubberBand.minValue;
@@ -2842,7 +2849,7 @@ export class SelectionBox extends newRect {
     }
   }
 
-  public buildRectangle(frameOrigin: Vertex, frameSize: Vertex) {
+  public buildRectangle(frameOrigin: Vertex, frameSize: Vertex): void {
     this.origin = this.minVertex.copy();
     this.size = this.maxVertex.subtract(this.origin);
     this.insideCanvas(frameOrigin, frameSize);

@@ -159,6 +159,7 @@ export class Multiplot {
     const data = {type_: "parallelplot", attribute_names: featureNames, elements: this.serializeFeatures()};
     const newFigure = ParallelPlot.createFromMultiplot(data, this.features, this.context, this.canvasID);
     this.figures.push(newFigure);
+    this.figureZones.shapes = [];
     this.computeTable();
     this.draw();
     this.activateAxisEvents(newFigure);
@@ -228,6 +229,7 @@ export class Multiplot {
   public resetSelection(): void {
     this.resetRubberBands();
     this.selectedIndices = [];
+    this.draw();
   }
 
   public switchOrientation(): void { this.figures.forEach(figure => figure.switchOrientation()) }
@@ -237,11 +239,7 @@ export class Multiplot {
     const heightRatio = height / this.height;    
     this.figures.forEach((figure, index) => {
       figure.multiplotResize(figure.origin.scale(new Vertex(widthRatio, heightRatio)), figure.size.x * widthRatio, figure.size.y * heightRatio);
-      if (this.figureZones.length != 0) {
-        this.figureZones.shapes[index].origin = figure.origin.copy();
-        this.figureZones.shapes[index].size = figure.size.copy();
-        this.figureZones.shapes[index].buildPath();
-      }
+      if (this.figureZones.shapes.length != 0) this.figureZones.shapes[index].updateRectangle(figure.origin, figure.size);
     })
     this.canvas.width = width;
     this.canvas.height = height;

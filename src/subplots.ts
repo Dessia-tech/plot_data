@@ -1,5 +1,5 @@
 import { RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END, newShape, uniqueValues } from "./utils";
+  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END, newShape, uniqueValues, PointSet } from "./utils";
 import { colorHsl } from "./color_conversion";
 
 
@@ -1350,8 +1350,7 @@ export class Figure {
   public selectedIndices: number[];
 
   public nSamples: number;
-  public pointSets: number[];
-  public pointSetColors: string[] = [];
+  public pointSets: PointSet[];
   public pointStyles: newPointStyle[] = null;
 
   public lineWidth: number = 1;
@@ -1455,10 +1454,9 @@ export class Figure {
   }
 
   protected unpackPointsSets(data: any): void {
-    data.points_sets.forEach((pointSet, setIndex) => {
-      pointSet.point_index.forEach(pointIndex => this.pointSets[pointIndex] = setIndex);
-      this.pointSetColors.push(pointSet.color);
-    })
+    data.points_sets.forEach((pointSet, index) => {
+      this.pointSets.push(new PointSet(pointSet.point_index, colorHsl(pointSet.color), pointSet.name ?? `Point set ${index}`));
+    });
   }
 
   protected unpackData(data: any): Map<string, any[]> { return Figure.deserializeData(data) }
@@ -1474,7 +1472,7 @@ export class Figure {
   }
 
   protected buildPointSets(data: any): void {
-    this.pointSets = new Array(this.nSamples).fill(-1);
+    this.pointSets = [];
     if (data.points_sets) this.unpackPointsSets(data);
   }
 
@@ -2482,7 +2480,7 @@ export class Scatter extends Frame {
       if (colors.size != 0) color = mapMax(colors)[0]
       else {
         const pointsSetIndex = this.getPointSet(point);
-        if (pointsSetIndex != -1) color = colorHsl(this.pointSetColors[pointsSetIndex]);
+        if (pointsSetIndex) color = colorHsl(this.pointSets[pointsSetIndex].color);
       };
       point.lineWidth = this.lineWidth;
       point.setColors(color);
@@ -2499,13 +2497,14 @@ export class Scatter extends Frame {
   }
 
   private getPointSet(point: ScatterPoint): number {
-    const pointSets = new Map<number, number>();
+    const setMaps = new Map<number, number>();
     point.values.forEach(pointIndex => {
-      const currentPoint = this.pointSets[pointIndex];
-      pointSets.set(currentPoint, pointSets.get(currentPoint) ? pointSets.get(currentPoint) + 1 : 1);
+      this.pointSets.forEach((pointSet, index) => {
+        if (pointSet.includes(pointIndex)) setMaps.set(index, setMaps.get(index) ? setMaps.get(index) + 1 : 1);
+      })
     })
-    if (pointSets.size > 1) pointSets.delete(-1);
-    return mapMax(pointSets)[0]
+    if (setMaps.size > 1) setMaps.delete(-1);
+    return mapMax(setMaps)[0]
   }
 
   public switchMerge(): void {
@@ -2743,7 +2742,7 @@ export class Graph2D extends Scatter {
     })
   }
 
-  protected buildPointSets(data: any): void { this.pointSets = new Array(this.nSamples).fill(-1) }
+  protected buildPointSets(data: any): void { this.pointSets = []; }
 
   protected get cuttingZone(): newRect {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);

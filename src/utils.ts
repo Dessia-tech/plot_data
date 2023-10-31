@@ -308,7 +308,7 @@ import { EventEmitter } from "events";
 //   draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, 
 //     to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, canvas_height,
 //     log_scale_x, log_scale_y) {
-    
+
 //     this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0], 
 //       scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, log_scale_x);
 //     this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1], 
@@ -871,6 +871,18 @@ export function uniqueValues(vector: string[]): string[] {
   return vector.filter((value, index, array) => array.indexOf(value) === index)
 }
 
+export class PointSet {
+  constructor(
+    public indices: number[] = [],
+    public color: string = "hsl(32, 100%, 50%)",
+    public name: string = ""
+  ) { }
+
+  public includes(pointIndex: number): boolean { return this.indices.includes(pointIndex) }
+
+  public indexOf(pointIndex: number): number { return this.indices.indexOf(pointIndex) }
+}
+
 const BORDER_SIZE = 20;
 const SMALL_RUBBERBAND_SIZE = 10;
 // Changes in rubberbands are only code deletion
@@ -923,7 +935,6 @@ export class RubberBand {
     }
   }
 
-  
   public reset() {
     this.minValue = 0;
     this.maxValue = 0;
@@ -938,7 +949,7 @@ export class RubberBand {
       [this.minValue, this.maxValue] = [this.maxValue, this.minValue];
       [this.minUpdate, this.maxUpdate] = [this.maxUpdate, this.minUpdate];
     }
-  } 
+  }
 
   private get borderSize() { return Math.min(BORDER_SIZE, this.canvasLength / 3) }
 
@@ -1064,7 +1075,7 @@ export class newShape {
   public tooltipOrigin: Vertex;
   protected _tooltipMap = new Map<string, any>();
   public hasTooltip: boolean = true;
-  constructor() {};
+  constructor() { };
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap };
 
@@ -1183,7 +1194,7 @@ export class newShape {
     }
   }
 
-  public buildPath(): void {}
+  public buildPath(): void { }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
@@ -1367,7 +1378,7 @@ export abstract class AbstractHalfLine extends newShape {
   }
 
   public get drawingStyle(): { [key: string]: any } {
-    return {...super.drawingStyle, "orientation": this.orientation}
+    return { ...super.drawingStyle, "orientation": this.orientation }
   }
 
   public getBounds(): [Vertex, Vertex] {
@@ -1523,7 +1534,7 @@ export abstract class AbstractLinePoint extends newShape {
   }
 
   public get drawingStyle(): { [key: string]: any } {
-    return {...super.drawingStyle, "orientation": this.orientation}
+    return { ...super.drawingStyle, "orientation": this.orientation }
   }
 
   public getBounds(): [Vertex, Vertex] {
@@ -1625,7 +1636,7 @@ export abstract class AbstractTriangle extends newShape {
   }
 
   public get drawingStyle(): { [key: string]: any } {
-    return {...super.drawingStyle, "orientation": this.orientation}
+    return { ...super.drawingStyle, "orientation": this.orientation }
   }
 
   public abstract buildPath(): void;
@@ -2352,11 +2363,11 @@ export class ScatterPoint extends newPoint2D {
   public static fromPlottedValues(indices: number[], pointsData: { [key: string]: number[] }, pointSize: number, marker: string,
     thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[],
     xName: string, yName: string): ScatterPoint {
-      const newPoint = new ScatterPoint(indices, 0, 0, pointSize, marker);
-      newPoint.computeValues(pointsData, thresholdDist);
-      newPoint.updateTooltip(tooltipAttributes, features, axes, xName, yName);
-      newPoint.update();
-      return newPoint
+    const newPoint = new ScatterPoint(indices, 0, 0, pointSize, marker);
+    newPoint.computeValues(pointsData, thresholdDist);
+    newPoint.updateTooltip(tooltipAttributes, features, axes, xName, yName);
+    newPoint.update();
+    return newPoint
   }
 
   protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
@@ -2549,13 +2560,13 @@ export class newLabel extends newShape {
     shape: newShape,
     public text: newText,
     public origin: Vertex = new Vertex(0, 0)
-    ) {
-      super();
-      this.isScaled = false;
-      this.text.width = this.maxWidth - this.shapeSize.x;
-      this.getShapeStyle(shape, this.origin);
-      this.buildPath();
-    }
+  ) {
+    super();
+    this.isScaled = false;
+    this.text.width = this.maxWidth - this.shapeSize.x;
+    this.getShapeStyle(shape, this.origin);
+    this.buildPath();
+  }
 
   public buildPath(): void {
     this.legend.buildPath();
@@ -2954,7 +2965,7 @@ export class newAxis extends newShape {
   public tickPrecision: number;
   public ticksFontsize: number = 12;
   protected _isDiscrete: boolean = true;
-  
+
   public drawPath: Path2D;
   public path: Path2D;
   public lineWidth: number = 1;
@@ -3428,7 +3439,7 @@ export class newAxis extends newShape {
     if (this.rubberBand.isClicked) this.emitter.emit("rubberBandChange", this.rubberBand);
   }
 
-  protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void {}
+  protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void { }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
     super.mouseMove(context, mouseCoords);
@@ -3449,7 +3460,7 @@ export class newAxis extends newShape {
     } else this.rubberBand.mouseMove(downValue, currentValue);
   }
 
-  public mouseMoveClickedTitle(mouseCoords: Vertex): void {}
+  public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
 
   public mouseDown(mouseDown: Vertex): void {
     super.mouseDown(mouseDown);

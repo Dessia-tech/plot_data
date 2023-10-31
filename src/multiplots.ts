@@ -1,4 +1,4 @@
-import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals } from './utils';
+import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals, PointSet } from './utils';
 import { Scatter, Figure, Graph2D, Draw, range, ParallelPlot } from './subplots';
 import { List } from './toolbox';
 
@@ -7,7 +7,7 @@ const EMPTY_MULTIPLOT = {
   "primitives": [
     {
       "name": "",
-      "comment": "No data to plot because workflow result is empty.",
+      "comment": "No plot defined in multiplot so there is nothing to draw.",
       "text_style": {
         "object_class": "plot_data.core.TextStyle",
         "name": "",
@@ -25,11 +25,8 @@ const EMPTY_MULTIPLOT = {
   ],
   "type_": "primitivegroup"
 };
-
-// const EMPTY_MULTIPLOT = JSON.parse(JSON.stringify(EMPTY_PLOT));
-EMPTY_MULTIPLOT.primitives[0].comment = "No plot defined in multiplot so there is nothing to draw."
-
 const BLANK_SPACE = 4;
+
 export class Multiplot {
   public context: CanvasRenderingContext2D;
   public canvas: HTMLCanvasElement;
@@ -51,7 +48,7 @@ export class Multiplot {
   public hoveredIndices: number[] = [];
   public selectedIndices: number[] = [];
 
-  public pointSets: number[];
+  public pointSets: PointSet[];
   public pointSetColors: string[] = [];
 
   constructor(
@@ -78,10 +75,7 @@ export class Multiplot {
       data.plots.forEach(plot => {
         const localData = {...plot, "elements": data.elements, "points_sets": data.points_sets};
         const newPlot = Figure.fromMultiplot(localData, this.width, this.height, this.canvasID);
-        if (newPlot instanceof Scatter) {
-          this.pointSets = newPlot.pointSets;
-          this.pointSetColors = newPlot.pointSetColors;
-        }
+        if (newPlot instanceof Scatter) this.pointSets = newPlot.pointSets;
         if (!(newPlot instanceof Graph2D || newPlot instanceof Draw)) newPlot.features = features;
         newPlot.context = this.context;
         figures.push(newPlot)

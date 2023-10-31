@@ -1881,21 +1881,24 @@ export class Figure extends PlotData {
           if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
         }
         if (e.key == " ") {
+          e.preventDefault();
           spaceKey = true;
           if (ctrlKey && this.isInCanvas(absoluteMouse)) this.resetView();
         }
       });
 
       window.addEventListener('keyup', e => {
+        e.preventDefault();
         if (e.key == "Control") ctrlKey = false;
         if (e.key == " ") spaceKey = false;
         if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; this.is_drawing_rubber_band = false; canvas.style.cursor = 'default'; this.draw() };
       });
 
       canvas.addEventListener('mousemove', e => {
+        e.preventDefault();
         [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
         this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
-        if (this.isZooming) canvas.style.cursor = 'crosshair';
+        if (this.isZooming || this.isSelecting) canvas.style.cursor = 'crosshair';
         if (this.interaction_ON) {
           if (isDrawing) {
             const translation = this.mouseTranslate(canvasMouse, canvasDown);
@@ -1914,14 +1917,14 @@ export class Figure extends PlotData {
         if (!mouseInCanvas) isDrawing = false;
       });
 
-      canvas.addEventListener('mousedown', e => {
+      canvas.addEventListener('mousedown', () => {
         [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
         if (!(clickedObject instanceof newAxis)) this.is_drawing_rubber_band = this.isSelecting;
         if (ctrlKey && shiftKey) this.reset();
         isDrawing = true;
       });
 
-      canvas.addEventListener('mouseup', e => {
+      canvas.addEventListener('mouseup', () => {
         if (this.isZooming) {
           this.switchZoom();
           this.zoomBoxUpdateAxes(zoomBox);
@@ -1933,6 +1936,7 @@ export class Figure extends PlotData {
       })
 
       canvas.addEventListener('wheel', e => {
+        e.preventDefault();
         if (this.interaction_ON) {
           this.wheelFromEvent(e);
           this.updateWithScale();
@@ -1940,7 +1944,7 @@ export class Figure extends PlotData {
         }
       });
 
-      canvas.addEventListener('mouseleave', e => {
+      canvas.addEventListener('mouseleave', () => {
         isDrawing = false;
         ctrlKey = false;
         this.axes.forEach(axis => axis.saveLocation());

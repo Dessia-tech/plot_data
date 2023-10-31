@@ -49,7 +49,6 @@ export class Multiplot {
   public selectedIndices: number[] = [];
 
   public pointSets: PointSet[];
-  public pointSetColors: string[] = [];
 
   constructor(
     data: any,
@@ -75,7 +74,7 @@ export class Multiplot {
       data.plots.forEach(plot => {
         const localData = {...plot, "elements": data.elements, "points_sets": data.points_sets};
         const newPlot = Figure.fromMultiplot(localData, this.width, this.height, this.canvasID);
-        if (newPlot instanceof Scatter) this.pointSets = newPlot.pointSets;
+        if (!(newPlot instanceof Graph2D)) this.pointSets = newPlot.pointSets;
         if (!(newPlot instanceof Graph2D || newPlot instanceof Draw)) newPlot.features = features;
         newPlot.context = this.context;
         figures.push(newPlot)
@@ -131,19 +130,12 @@ export class Multiplot {
   public draw(): void {
     this.context.clearRect(0, 0, this.width, this.height);
     this.figures.forEach(figure => {
-      if ( !(figure instanceof Graph2D) && !(figure instanceof Draw)) {
+      if (!(figure instanceof Graph2D) && !(figure instanceof Draw)) {
         figure.selectedIndices = this.selectedIndices;
         figure.clickedIndices = [...this.clickedIndices];
         figure.hoveredIndices = [...this.hoveredIndices];
       }
-        // if (figure instanceof Frame) { // TODO: Kept for future devs
-        //   if (this.pointSets.length != 0) {
-        //     figure.pointSetColors = this.pointSets.map((pointFamily, familyIdx) => {
-        //       pointFamily.pointIndices.forEach(pointIdx => figure.pointSets[pointIdx] = familyIdx);
-        //       return pointFamily.color
-        //     })
-        //   }
-        // }
+      if (!(figure instanceof Graph2D)) figure.pointSets = this.pointSets;
       figure.draw();
     });
     this.drawZoneRectangles();
@@ -241,6 +233,8 @@ export class Multiplot {
     this.height = height;
     this.draw();
   }
+
+  public addPointSet(pointSet: PointSet): void { this.pointSets.push(pointSet) }
 
   private updateSelectedIndices() {
     const previousIndices = [...this.selectedIndices];

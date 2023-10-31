@@ -2480,7 +2480,7 @@ export class Scatter extends Frame {
       if (colors.size != 0) color = mapMax(colors)[0]
       else {
         const pointsSetIndex = this.getPointSet(point);
-        if (pointsSetIndex) color = colorHsl(this.pointSets[pointsSetIndex].color);
+        if (pointsSetIndex !== null) color = colorHsl(this.pointSets[pointsSetIndex].color);
       };
       point.lineWidth = this.lineWidth;
       point.setColors(color);
@@ -2503,7 +2503,6 @@ export class Scatter extends Frame {
         if (pointSet.includes(pointIndex)) setMaps.set(index, setMaps.get(index) ? setMaps.get(index) + 1 : 1);
       })
     })
-    if (setMaps.size > 1) setMaps.delete(-1);
     return mapMax(setMaps)[0]
   }
 
@@ -3238,7 +3237,7 @@ function mapMin(map: Map<any, number>): [any, number] {
 
 function mapMax(map: Map<any, number>): [any, number] {
   let max = Number.NEGATIVE_INFINITY;
-  let keyMax: string;
+  let keyMax: string = null;
   map.forEach((value, key) => {
     if (value >= max) {
       max = value;

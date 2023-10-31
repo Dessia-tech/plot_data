@@ -872,11 +872,14 @@ export function uniqueValues(vector: string[]): string[] {
 }
 
 export class PointSet {
+  public color: string;
   constructor(
     public indices: number[] = [],
-    public color: string = "hsl(32, 100%, 50%)",
+    color: string = "hsl(32, 100%, 50%)",
     public name: string = ""
-  ) { }
+  ) {
+    this.color = colorHsl(color);
+  }
 
   public includes(pointIndex: number): boolean { return this.indices.includes(pointIndex) }
 

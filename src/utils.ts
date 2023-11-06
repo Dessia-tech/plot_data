@@ -2982,6 +2982,7 @@ export class newAxis extends newShape {
   public hoverStyle: string = 'hsl(0, 100%, 48%)';
   public clickedStyle: string = 'hsl(126, 67%, 72%)';
   public rubberColor: string = 'hsl(200, 95%, 50%)';//'hsla(127, 95%, 60%, 0.85)';
+  public rubberAlpha: number = 0.5;
   public mouseStyleON: boolean = false;
 
   public isHovered: boolean = false;
@@ -3444,7 +3445,7 @@ export class newAxis extends newShape {
     this.rubberBand.realMax = Math.min(Math.max(realMin, realMax), this.end[coord]);
     this.rubberBand.realMin = Math.min(this.rubberBand.realMin, this.rubberBand.realMax);
     this.rubberBand.realMax = Math.max(this.rubberBand.realMin, this.rubberBand.realMax);
-    this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, this.rubberColor, 0.1, 0.5);
+    this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, this.rubberColor, 0.1, this.rubberAlpha);
     if (this.rubberBand.isClicked) this.emitter.emit("rubberBandChange", this.rubberBand);
   }
 
@@ -3777,6 +3778,11 @@ export class ShapeCollection {
   public mouseUp(keepState: boolean): void { this.shapes.forEach(shape => shape.mouseUp(keepState)) }
 
   public draw(context: CanvasRenderingContext2D): void { this.shapes.forEach(shape => shape.draw(context)) }
+
+  public removeShape(index: number): void {
+    this.shapes.splice(index, 1);
+    [this.minimum, this.maximum] = this.getBounds();
+  }
 
   public updateBounds(context: CanvasRenderingContext2D): void {
     this.shapes.forEach(shape => {

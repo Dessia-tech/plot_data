@@ -43,6 +43,7 @@ export class Multiplot {
   public isResizing: boolean = false;
   public hoveredIndex: number = 0;
   public clickedIndex: number = null;
+  public hiddenIndices: number[] = [];
 
   public clickedIndices: number[] = [];
   public hoveredIndices: number[] = [];
@@ -65,6 +66,8 @@ export class Multiplot {
     this.initRubberBands();
     this.mouseListener();
   }
+
+  get className(): string { return "Multiplot" }
 
   private unpackData(data: any): [Map<string, any[]>, Figure[]] {
     const features = Figure.deserializeData(data);
@@ -129,14 +132,14 @@ export class Multiplot {
 
   public draw(): void {
     this.context.clearRect(0, 0, this.width, this.height);
-    this.figures.forEach(figure => {
+    this.figures.forEach((figure, index) => {
       if (!(figure instanceof Graph2D) && !(figure instanceof Draw)) {
         figure.selectedIndices = this.selectedIndices;
         figure.clickedIndices = [...this.clickedIndices];
         figure.hoveredIndices = [...this.hoveredIndices];
       }
       if (!(figure instanceof Graph2D)) figure.pointSets = this.pointSets;
-      figure.draw();
+      if (!this.hiddenIndices.includes(index)) figure.draw();
     });
     this.drawZoneRectangles();
   }
@@ -154,11 +157,34 @@ export class Multiplot {
   public addFigure(figure: Figure): void {
     this.figures.push(figure);
     this.figureZones.shapes = [];
-    this.computeTable();
-    this.draw();
     this.activateAxisEvents(figure);
+    this.resetLayout();
   }
 
+  public deleteFigure(index: number): void {
+    this.figures.splice(index, 1);
+    this.figureZones.removeShape(index);
+    this.resetLayout();
+  }
+
+  public hideFigure(index: number): void { this.hiddenIndices.push(index) }
+
+  public showFigure(index: number): void { this.hiddenIndices.splice(this.hiddenIndices.indexOf(index), 1) }
+
+  public switchFigureVisibility(index: number): void {
+    this.hiddenIndices.includes(index)
+      ? this.showFigure(index)
+      : this.hideFigure(index);
+    this.draw();
+  }
+
+  public resetLayout(): void {
+    this.computeTable();
+    if (this.figureZones.shapes.length != 0) {
+      this.figures.forEach((figure, index) => this.figureZones.shapes[index].updateRectangle(figure.origin, figure.size));
+    }
+    this.draw();
+  }
 
   private activateAxisEvents(figure: Figure): void {
     figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e)));
@@ -198,6 +224,7 @@ export class Multiplot {
   public switchZoom() {
     this.isZooming = !this.isZooming;
     this.figures.forEach(figure => figure.switchZoom());
+    if (!this.isZooming) this.canvas.style.cursor = 'default';
   }
 
   public zoomIn() { (this.figures[this.clickedIndex ?? this.hoveredIndex]).zoomIn() }
@@ -481,16 +508,13 @@ export class Multiplot {
   private resetStateAttributes(shiftKey: boolean, ctrlKey: boolean): boolean {
     if (ctrlKey && shiftKey) this.reset();
     if (!shiftKey) {
-      this.canvas.style.cursor = 'default';
+      if (!this.isZooming) this.canvas.style.cursor = 'default';
       this.isSelecting = false;
-    }
-    this.figures.forEach(figure => {
-      if (!shiftKey) {
+      this.figures.forEach(figure => {
         figure.is_drawing_rubber_band = false;
         figure.isSelecting = false;
-      }
-      figure.isZooming = false;
-    })
+      })
+    }
     return false
   }
 }

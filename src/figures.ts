@@ -2,10 +2,10 @@ import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_X, DEFAULT_SHAPE_COLOR, FRE
   DRAW_MARGIN_FACTOR, PG_CONTAINER_PLOT } from "./constants"
 import { range, mapMax, sum, argMax, normalizeArray, uniqueValues } from "./functions"
 import { colorHsl } from "./colors";
-import { newPointStyle } from "./styles"
-import { Vertex, LineSequence, newRect, newPoint2D, newShape } from "./shapes"
+import { PointStyle } from "./styles"
+import { Vertex, LineSequence, Rect, Point, Shape } from "./shapes"
 import { ScatterPoint, Bar, SelectionBox } from "./shapedObjects"
-import { RubberBand, newAxis, ParallelAxis } from "./axes";
+import { RubberBand, Axis, ParallelAxis } from "./axes";
 import { ShapeCollection, GroupCollection } from "./collections"
 import { AloneFigure } from "./aloneFigure";
 
@@ -158,13 +158,13 @@ export class Frame extends Figure {
     super.changeAxisFeature(name, index);
   }
 
-  protected transformAxes(axisBoundingBoxes: newRect[]): void {
+  protected transformAxes(axisBoundingBoxes: Rect[]): void {
     super.transformAxes(axisBoundingBoxes);
     this.axes[0].transform(this.drawOrigin, new Vertex(this.drawEnd.x, this.drawOrigin.y));
     this.axes[1].transform(this.drawOrigin, new Vertex(this.drawOrigin.x, this.drawEnd.y));
   }
 
-  protected buildAxes(axisBoundingBoxes: newRect[]): [newAxis, newAxis] {
+  protected buildAxes(axisBoundingBoxes: Rect[]): [Axis, Axis] {
     super.buildAxes(axisBoundingBoxes);
     return [
       this.setAxis(this.xFeature, axisBoundingBoxes[0], this.drawOrigin, new Vertex(this.drawEnd.x, this.drawOrigin.y), this.nXTicks),
@@ -172,12 +172,12 @@ export class Frame extends Figure {
     ]
   }
 
-  protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
-    const xBoundingBox = new newRect(
+  protected buildAxisBoundingBoxes(freeSpace: Vertex): Rect[] {
+    const xBoundingBox = new Rect(
       new Vertex(this.drawOrigin.x, this.drawOrigin.y - freeSpace.y),
       new Vertex(this.drawEnd.x - this.drawOrigin.x, freeSpace.y)
     );
-    const yBoundingBox = new newRect(
+    const yBoundingBox = new Rect(
       new Vertex(this.drawOrigin.x - freeSpace.x, this.drawOrigin.y),
       new Vertex(freeSpace.x - AXES_BLANK_SPACE, this.drawEnd.y - this.drawOrigin.y)
     );
@@ -275,7 +275,7 @@ export class Histogram extends Frame {
     this.bars = [];
   }
 
-  private updateNumberAxis(numberAxis: newAxis, bars: Bar[]): newAxis {
+  private updateNumberAxis(numberAxis: Axis, bars: Bar[]): Axis {
     this.features.set('number', this.getNumberFeature(bars));
     numberAxis.minValue = 0;
     numberAxis.maxValue = Math.max(...this.features.get(this.yFeature)) + 1;
@@ -290,7 +290,7 @@ export class Histogram extends Frame {
     return numberFeature
   }
 
-  private boundedTicks(axis: newAxis): number[] {
+  private boundedTicks(axis: Axis): number[] {
     let fakeTicks = [axis.minValue].concat(axis.ticks);
     fakeTicks.push(axis.maxValue)
     return fakeTicks
@@ -302,7 +302,7 @@ export class Histogram extends Frame {
 
   private computeBars(vector: number[]): Bar[] {
     this.fakeFeatures();
-    const baseAxis = this.axes[0] ?? this.setAxis(this.xFeature, new newRect(), new Vertex(), new Vertex(), this.nXTicks);
+    const baseAxis = this.axes[0] ?? this.setAxis(this.xFeature, new Rect(), new Vertex(), new Vertex(), this.nXTicks);
     const numericVector = baseAxis.stringsToValues(vector ?? []);
     let fakeTicks = this.boundedTicks(baseAxis);
     let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar([]));
@@ -360,7 +360,7 @@ export class Histogram extends Frame {
     })
   }
 
-  protected buildAxes(axisBoundingBoxes: newRect[]): [newAxis, newAxis] {
+  protected buildAxes(axisBoundingBoxes: Rect[]): [Axis, Axis] {
     const bars = this.computeBars(this.features.get(this.xFeature));
     this.features.set('number', this.getNumberFeature(bars));
     const [xAxis, yAxis] = super.buildAxes(axisBoundingBoxes)
@@ -733,7 +733,7 @@ export class Graph2D extends Scatter {
         if (graph.elements.length != 0) {
           this.curves.push(LineSequence.unpackGraphProperties(graph));
           const curveIndices = range(graphSamples.length, graphSamples.length + graph.elements.length);
-          const graphPointStyle = new newPointStyle(graph.point_style);
+          const graphPointStyle = new PointStyle(graph.point_style);
           this.pointStyles.push(...new Array(curveIndices.length).fill(graphPointStyle));
           this.curvesIndices.push(curveIndices);
           graphSamples.push(...graph.elements);
@@ -761,10 +761,10 @@ export class Graph2D extends Scatter {
 
   protected buildPointSets(data: any): void { this.pointSets = []; }
 
-  protected get cuttingZone(): newRect {
+  protected get cuttingZone(): Rect {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
     const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
-    return new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
+    return new Rect(axesOrigin, axesEnd.subtract(axesOrigin));
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
@@ -875,7 +875,7 @@ export class ParallelPlot extends Figure {
     this.computeCurves();
   }
 
-  protected buildAxes(axisBoundingBoxes: newRect[]): ParallelAxis[] {
+  protected buildAxes(axisBoundingBoxes: Rect[]): ParallelAxis[] {
     super.buildAxes(axisBoundingBoxes);
     const axesEnds = this.getAxesLocations();
     const axes: ParallelAxis[] = [];
@@ -893,9 +893,9 @@ export class ParallelPlot extends Figure {
     return (this.drawEnd.y - this.drawOrigin.y) / this.drawnFeatures.length
   }
 
-  protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
+  protected buildAxisBoundingBoxes(freeSpace: Vertex): Rect[] {
     const size = this.computeBoxesSize();
-    const boundingBoxes: newRect[] = [];
+    const boundingBoxes: Rect[] = [];
     this.drawnFeatures.forEach((_, index) => {
       if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(this.drawOrigin, this.drawEnd.y - this.drawOrigin.y, size, index));
       else boundingBoxes.push(this.horizontalAxisBoundingBox(this.drawOrigin, this.drawEnd.x - this.drawOrigin.x, size, index));
@@ -903,15 +903,15 @@ export class ParallelPlot extends Figure {
     return boundingBoxes
   }
 
-  private horizontalAxisBoundingBox(drawOrigin: Vertex, axisSize: number, size: number, index: number): newRect {
-    const boundingBox = new newRect(drawOrigin.copy(), new Vertex(axisSize, size * FREE_SPACE_FACTOR));
+  private horizontalAxisBoundingBox(drawOrigin: Vertex, axisSize: number, size: number, index: number): Rect {
+    const boundingBox = new Rect(drawOrigin.copy(), new Vertex(axisSize, size * FREE_SPACE_FACTOR));
     boundingBox.origin.y += (this.drawnFeatures.length - 1 - index) * size;
     return boundingBox
   }
 
-  private verticalAxisBoundingBox(drawOrigin: Vertex, axisSize: number, size: number, index: number): newRect {
+  private verticalAxisBoundingBox(drawOrigin: Vertex, axisSize: number, size: number, index: number): Rect {
     const freeSpaceOffset = size * (1 - FREE_SPACE_FACTOR) / 2;
-    const boundingBox = new newRect(new Vertex(drawOrigin.x + freeSpaceOffset, drawOrigin.y), new Vertex(size - freeSpaceOffset, axisSize));
+    const boundingBox = new Rect(new Vertex(drawOrigin.x + freeSpaceOffset, drawOrigin.y), new Vertex(size - freeSpaceOffset, axisSize));
     boundingBox.origin.x += size * index;
     return boundingBox
   }
@@ -954,10 +954,10 @@ export class ParallelPlot extends Figure {
     return axesEnds
   }
 
-  public computePoint(axis: newAxis, featureValue: number): newPoint2D {
+  public computePoint(axis: Axis, featureValue: number): Point {
     const xCoord = this.isVertical ? axis.origin.x : axis.relativeToAbsolute(featureValue);
     const yCoord = this.isVertical ? axis.relativeToAbsolute(featureValue) : axis.origin.y;
-    return new newPoint2D(xCoord, yCoord).scale(this.initScale);
+    return new Point(xCoord, yCoord).scale(this.initScale);
   }
 
   public computeCurves(): void {
@@ -1072,7 +1072,7 @@ export class ParallelPlot extends Figure {
 
   public axisChangeUpdate(e: ParallelAxis) { if (!this.changedAxes.includes(e)) this.changedAxes.push(e); }
 
-  protected resetMouseEvents(): [newShape, Vertex] {
+  protected resetMouseEvents(): [Shape, Vertex] {
     this.changedAxes = [];
     return super.resetMouseEvents()
   }
@@ -1155,10 +1155,10 @@ export class Draw extends Frame {
     this.relativeObjects.draw(context);
   }
 
-  protected get cuttingZone(): newRect {
+  protected get cuttingZone(): Rect {
     const axesOrigin = this.axes[0].origin.transform(this.frameMatrix.inverse());
     const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.frameMatrix.inverse());
-    return new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
+    return new Rect(axesOrigin, axesEnd.subtract(axesOrigin));
   }
 
   protected axisEqual(): void {

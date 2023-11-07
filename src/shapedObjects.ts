@@ -1,9 +1,9 @@
 import { PICKABLE_BORDER_SIZE, DASH_SELECTION_WINDOW } from "./constants"
-import { newPointStyle } from "./styles"
-import { Vertex, newRect, newPoint2D, newTooltip } from "./shapes"
-import { RubberBand, newAxis } from "./axes"
+import { PointStyle } from "./styles"
+import { Vertex, Rect, Point, Tooltip } from "./shapes"
+import { RubberBand, Axis } from "./axes"
 
-export class ScatterPoint extends newPoint2D {
+export class ScatterPoint extends Point {
     public mean = new Vertex();
     constructor(
       public values: number[],
@@ -20,13 +20,13 @@ export class ScatterPoint extends newPoint2D {
     }
   
     public static fromPlottedValues(indices: number[], pointsData: { [key: string]: number[] }, pointSize: number, marker: string,
-      thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[],
+      thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[],
       xName: string, yName: string): ScatterPoint {
-      const newPoint = new ScatterPoint(indices, 0, 0, pointSize, marker);
-      newPoint.computeValues(pointsData, thresholdDist);
-      newPoint.updateTooltip(tooltipAttributes, features, axes, xName, yName);
-      newPoint.update();
-      return newPoint
+      const Point = new ScatterPoint(indices, 0, 0, pointSize, marker);
+      Point.computeValues(pointsData, thresholdDist);
+      Point.updateTooltip(tooltipAttributes, features, axes, xName, yName);
+      Point.update();
+      return Point
     }
   
     protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
@@ -37,10 +37,10 @@ export class ScatterPoint extends newPoint2D {
   
     public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
   
-    public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: newAxis[], xName: string, yName: string) {
+    public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[], xName: string, yName: string) {
       this.updateTooltipMap();
       if (this.values.length == 1) {
-        this.newTooltipMap();
+        this.TooltipMap();
         tooltipAttributes.forEach(attr => this.tooltipMap.set(attr, features.get(attr)[this.values[0]]));
         return;
       }
@@ -50,7 +50,7 @@ export class ScatterPoint extends newPoint2D {
       this.tooltipMap.delete('Y mean');
     }
   
-    public updateStyle(style: newPointStyle): void {
+    public updateStyle(style: PointStyle): void {
       super.updateStyle(style);
       this.marker = this.values.length > 1 ? this.marker : style.marker ?? this.marker;
     }
@@ -74,7 +74,7 @@ export class ScatterPoint extends newPoint2D {
     }
   }
   
-  export class Bar extends newRect {
+  export class Bar extends Rect {
     public min: number;
     public max: number;
     public mean: number;
@@ -96,8 +96,8 @@ export class ScatterPoint extends newPoint2D {
       return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
     }
   
-    public initTooltip(context: CanvasRenderingContext2D): newTooltip {
-      const tooltip = new newTooltip(this.tooltipOrigin, this.tooltipMap, context);
+    public initTooltip(context: CanvasRenderingContext2D): Tooltip {
+      const tooltip = new Tooltip(this.tooltipOrigin, this.tooltipMap, context);
       tooltip.isFlipper = false;
       return tooltip
     }
@@ -134,7 +134,7 @@ export class ScatterPoint extends newPoint2D {
     }
   }
   
-  export class SelectionBox extends newRect {
+  export class SelectionBox extends Rect {
     public minVertex: Vertex = null;
     public maxVertex: Vertex = null;
     private _previousMin: Vertex;

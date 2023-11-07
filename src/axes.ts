@@ -1,6 +1,6 @@
 import { SMALL_RUBBERBAND_SIZE, PICKABLE_BORDER_SIZE, SIZE_AXIS_END } from "./constants"
 import { uniqueValues } from "./functions";
-import { Vertex, newShape, newRect, TextParams, newText, newPoint2D } from "./shapes"
+import { Vertex, Shape, Rect, TextParams, Text, Point } from "./shapes"
 import { EventEmitter } from "events";
 
 // TODO: make rubberband a Shape ?
@@ -53,7 +53,7 @@ export class RubberBand {
         rectOrigin = new Vertex(this.canvasMin, origin - SMALL_RUBBERBAND_SIZE / 2);
         rectSize = new Vertex(this.canvasLength, SMALL_RUBBERBAND_SIZE)
       }
-      const draw = new newRect(rectOrigin, rectSize);
+      const draw = new Rect(rectOrigin, rectSize);
       draw.lineWidth = lineWidth;
       draw.fillStyle = colorFill;
       draw.strokeStyle = colorStroke;
@@ -113,8 +113,8 @@ export class RubberBand {
     ) { }
   }
 
-  export class newAxis extends newShape {
-    public ticksPoints: newPoint2D[];
+  export class Axis extends Shape {
+    public ticksPoints: Point[];
     public rubberBand: RubberBand;
   
     public labels: string[];
@@ -136,7 +136,7 @@ export class RubberBand {
     public isHovered: boolean = false;
     public isClicked: boolean = false;
     public isInverted: boolean = false;
-    public title: newText;
+    public title: Text;
     public centeredTitle: boolean = false;
     public titleSettings: TitleSettings = new TitleSettings();
     public titleWidth: number;
@@ -166,7 +166,7 @@ export class RubberBand {
   
     constructor(
       vector: any[] = null,
-      public boundingBox: newRect,
+      public boundingBox: Rect,
       public origin: Vertex,
       public end: Vertex,
       public name: string = '',
@@ -186,7 +186,7 @@ export class RubberBand {
       this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
       this.updateOffsetTicks();
       this.offsetTitle = 0;
-      this.title = new newText(this.titleText, new Vertex(0, 0), {});
+      this.title = new Text(this.titleText, new Vertex(0, 0), {});
     };
   
     public get drawLength(): number {
@@ -238,7 +238,7 @@ export class RubberBand {
   
     set ticks(value: number[]) { this._ticks = value }
   
-    get titleText(): string { return newText.capitalize(this.name) }
+    get titleText(): string { return Text.capitalize(this.name) }
   
     get transformMatrix(): DOMMatrix { return this.getValueToDrawMatrix() }
   
@@ -260,7 +260,7 @@ export class RubberBand {
       }
     }
   
-    public otherAxisScaling(otherAxis: newAxis): void {
+    public otherAxisScaling(otherAxis: Axis): void {
       const center = this.center;
       this.maxValue = this.minValue + otherAxis.interval * this.drawLength / otherAxis.drawLength;
       const translation = center - this.center;
@@ -324,11 +324,11 @@ export class RubberBand {
       const verticalIdx = Number(this.isVertical);
       const horizontalIdx = Number(!this.isVertical);
       const path = new Path2D();
-      let endArrow: newPoint2D;
+      let endArrow: Point;
       if (this.isInverted) {
-        endArrow = new newPoint2D(this.origin.x - SIZE_AXIS_END / 2 * horizontalIdx, this.origin.y - SIZE_AXIS_END / 2 * verticalIdx, SIZE_AXIS_END, 'triangle', ['left', 'down'][verticalIdx]);
+        endArrow = new Point(this.origin.x - SIZE_AXIS_END / 2 * horizontalIdx, this.origin.y - SIZE_AXIS_END / 2 * verticalIdx, SIZE_AXIS_END, 'triangle', ['left', 'down'][verticalIdx]);
       } else {
-        endArrow = new newPoint2D(this.end.x + SIZE_AXIS_END / 2 * horizontalIdx, this.end.y + SIZE_AXIS_END / 2 * verticalIdx, SIZE_AXIS_END, 'triangle', ['right', 'up'][verticalIdx]);
+        endArrow = new Point(this.end.x + SIZE_AXIS_END / 2 * horizontalIdx, this.end.y + SIZE_AXIS_END / 2 * verticalIdx, SIZE_AXIS_END, 'triangle', ['right', 'up'][verticalIdx]);
       }
       path.moveTo(this.origin.x - this.DRAW_START_OFFSET * horizontalIdx, this.origin.y - this.DRAW_START_OFFSET * verticalIdx);
       path.lineTo(this.end.x, this.end.y);
@@ -364,8 +364,8 @@ export class RubberBand {
       return min != max ? [min, max] : min != 0 ? [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)] : [-1, 1]
     }
   
-    protected getCalibratedTextWidth(context: CanvasRenderingContext2D): [newText, number] {
-      const calibratedTickText = new newText("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.font });
+    protected getCalibratedTextWidth(context: CanvasRenderingContext2D): [Text, number] {
+      const calibratedTickText = new Text("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.font });
       context.font = calibratedTickText.fullFont;
       const calibratedMeasure = context.measureText(calibratedTickText.text).width;
       return [calibratedTickText, calibratedMeasure]
@@ -394,7 +394,7 @@ export class RubberBand {
     }
   
     protected computeTicks(): number[] {
-      const increment = this.isDiscrete ? 1 : newAxis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+      const increment = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
       const remainder = this.minValue % increment;
       let ticks = [this.minValue - remainder];
       while (ticks.slice(-1)[0] <= this.maxValue) ticks.push(ticks.slice(-1)[0] + increment);
@@ -448,7 +448,7 @@ export class RubberBand {
       }
     }
   
-    protected formatTitle(text: newText, context: CanvasRenderingContext2D): void { text.format(context) }
+    protected formatTitle(text: Text, context: CanvasRenderingContext2D): void { text.format(context) }
   
     protected updateTitle(context: CanvasRenderingContext2D, text: string, origin: Vertex, textParams: TextParams): void {
       this.title.text = text;
@@ -495,9 +495,9 @@ export class RubberBand {
       this.titleSettings.orientation = 0;
     }
   
-    private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string): [newPoint2D[], newText[]] {
+    private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string): [Point[], Text[]] {
       const ticksPoints = [];
-      const ticksText: newText[] = [];
+      const ticksText: Text[] = [];
       const tickTextParams = this.computeTickTextParams();
       let count = Math.max(0, this.ticks[0]);
       while (this.labels[count] == '') count++;
@@ -517,12 +517,12 @@ export class RubberBand {
       return [ticksPoints, ticksText]
     }
   
-    private drawTickTexts(ticksTexts: newText[], color: string, context: CanvasRenderingContext2D): void {
+    private drawTickTexts(ticksTexts: Text[], color: string, context: CanvasRenderingContext2D): void {
       this.ticksFontsize = Math.min(...ticksTexts.map(tickText => tickText.fontsize));
       ticksTexts.forEach(tickText => this.drawTickText(tickText, color, context));
     }
   
-    private drawTickText(tickText: newText, color: string, context: CanvasRenderingContext2D): void {
+    private drawTickText(tickText: Text, color: string, context: CanvasRenderingContext2D): void {
       tickText.fillStyle = color;
       tickText.fontsize = this.ticksFontsize;
       tickText.draw(context);
@@ -547,15 +547,15 @@ export class RubberBand {
       }
     }
   
-    protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
-      const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), SIZE_AXIS_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
+    protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): Point {
+      const point = new Point(tick * Number(!vertical), tick * Number(vertical), SIZE_AXIS_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
       point.draw(context);
       return point
     }
   
-    private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: newPoint2D, HTMatrix: DOMMatrix): newText {
+    private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: Point, HTMatrix: DOMMatrix): Text {
       const textOrigin = this.tickTextPositions(point, HTMatrix);
-      const tickText = new newText(newText.capitalize(text), textOrigin, tickTextParams);
+      const tickText = new Text(Text.capitalize(text), textOrigin, tickTextParams);
       tickText.removeEndZeros();
       tickText.format(context);
       return tickText
@@ -680,7 +680,7 @@ export class RubberBand {
       return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
     }
   
-    private tickTextPositions(point: newPoint2D, HTMatrix: DOMMatrix): Vertex {
+    private tickTextPositions(point: Point, HTMatrix: DOMMatrix): Vertex {
       const origin = point.center.transform(HTMatrix);
       const inversionFactor = this.isInverted ? 1 : -1
       if (this.isVertical) origin.x += inversionFactor * Math.sign(HTMatrix.a) * this.offsetTicks
@@ -721,15 +721,15 @@ export class RubberBand {
     }
   }
   
-  export class ParallelAxis extends newAxis {
-    public titleZone: newRect = new newRect();
+  export class ParallelAxis extends Axis {
+    public titleZone: Rect = new Rect();
     private _hasMoved: boolean = false;
     private _previousOrigin: Vertex;
     private _previousEnd: Vertex;
   
     constructor(
       vector: any[],
-      public boundingBox: newRect,
+      public boundingBox: Rect,
       public origin: Vertex,
       public end: Vertex,
       public name: string = '',
@@ -772,7 +772,7 @@ export class RubberBand {
     }
   
     public computeTitle(index: number, nAxis: number): ParallelAxis {
-      this.titleZone = new newRect(this.origin.copy(), this.boundingBox.size.copy());
+      this.titleZone = new Rect(this.origin.copy(), this.boundingBox.size.copy());
       const SIZE_FACTOR = 0.35;
       let offset = 0;
       if (this.isVertical) {
@@ -837,7 +837,7 @@ export class RubberBand {
       this.emitter.emit("axisStateChange", this);
     }
   
-    public updateLocation(newOrigin: Vertex, newEnd: Vertex, boundingBox: newRect, index: number, nAxis: number): void {
+    public updateLocation(newOrigin: Vertex, newEnd: Vertex, boundingBox: Rect, index: number, nAxis: number): void {
       this.boundingBox = boundingBox;
       this.transform(newOrigin, newEnd);
       this.computeEnds();

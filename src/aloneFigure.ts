@@ -1,15 +1,15 @@
 import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_Y, MIN_OFFSET_X, ZOOM_FACTOR } from "./constants"
 import { intersectArrays } from "./functions"
 import { colorHsl } from "./colors";
-import { newPointStyle } from "./styles"
-import { Vertex, newRect, newShape } from "./shapes"
+import { PointStyle } from "./styles"
+import { Vertex, Rect, Shape } from "./shapes"
 import { SelectionBox } from "./shapedObjects"
-import { RubberBand, newAxis } from "./axes";
+import { RubberBand, Axis } from "./axes";
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
 
 export class AloneFigure {
     public context: CanvasRenderingContext2D;
-    public axes: newAxis[] = [];
+    public axes: Axis[] = [];
     public drawOrigin: Vertex;
     public drawEnd: Vertex;
     public drawnFeatures: string[];
@@ -23,7 +23,7 @@ export class AloneFigure {
   
     public nSamples: number;
     public pointSets: PointSet[];
-    public pointStyles: newPointStyle[] = null;
+    public pointStyles: PointStyle[] = null;
   
     public lineWidth: number = 1;
   
@@ -87,7 +87,7 @@ export class AloneFigure {
   
     get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
   
-    set axisStyle(newAxisStyle: Map<string, any>) { newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
+    set axisStyle(AxisStyle: Map<string, any>) { AxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
   
     get axisStyle(): Map<string, any> { return this._axisStyle }
   
@@ -156,7 +156,7 @@ export class AloneFigure {
     }
   
     public drawBorders() {
-      const rect = new newRect(this.origin, this.size);
+      const rect = new Rect(this.origin, this.size);
       rect.lineWidth = 0.5;
       rect.strokeStyle = "hsl(0, 0%, 83%)";
       rect.isFilled = false;
@@ -223,22 +223,22 @@ export class AloneFigure {
       freeSpace[dimension] = Math.abs(this.origin[dimension] - origin[dimension] * this.initScale[dimension] + this.size[dimension]);
     }
   
-    protected setAxes(): newAxis[] {
+    protected setAxes(): Axis[] {
       const freeSpace = this.setBounds();
       const axisBoundingBoxes = this.buildAxisBoundingBoxes(freeSpace);
       return this.buildAxes(axisBoundingBoxes)
     }
   
-    protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] { return }
+    protected buildAxisBoundingBoxes(freeSpace: Vertex): Rect[] { return }
   
-    protected buildAxes(axisBoundingBox: newRect[]): newAxis[] { return [] }
+    protected buildAxes(axisBoundingBox: Rect[]): Axis[] { return [] }
   
-    protected transformAxes(axisBoundingBoxes: newRect[]): void {
+    protected transformAxes(axisBoundingBoxes: Rect[]): void {
       axisBoundingBoxes.forEach((box, index) => this.axes[index].boundingBox = box);
     }
   
-    protected setAxis(feature: string, axisBoundingBox: newRect, origin: Vertex, end: Vertex, nTicks: number = undefined): newAxis {
-      const axis = new newAxis(this.features.get(feature), axisBoundingBox, origin, end, feature, this.initScale, nTicks);
+    protected setAxis(feature: string, axisBoundingBox: Rect, origin: Vertex, end: Vertex, nTicks: number = undefined): Axis {
+      const axis = new Axis(this.features.get(feature), axisBoundingBox, origin, end, feature, this.initScale, nTicks);
       axis.updateStyle(this.axisStyle);
       return axis
     }
@@ -331,7 +331,7 @@ export class AloneFigure {
       this.selectedIndices = [];
     }
   
-    public updateSelected(axis: newAxis): number[] {
+    public updateSelected(axis: Axis): number[] {
       const selection = [];
       const vector = axis.stringsToValues(this.features.get(axis.name));
       vector.forEach((value, index) => axis.isInRubberBand(value) ? selection.push(index) : {});
@@ -361,9 +361,9 @@ export class AloneFigure {
       context.fill(this.cuttingZone.path);
     }
   
-    protected get cuttingZone(): newRect {
+    protected get cuttingZone(): Rect {
       const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
-      return new newRect(axesOrigin, this.axesEnd.subtract(axesOrigin));
+      return new Rect(axesOrigin, this.axesEnd.subtract(axesOrigin));
     }
   
     protected get axesEnd() { return new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix) }
@@ -484,7 +484,7 @@ export class AloneFigure {
       return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.relativeMatrix.inverse()), mouseCoords]
     }
   
-    public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape] {
+    public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape] {
       const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
       const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
       const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);
@@ -500,13 +500,13 @@ export class AloneFigure {
       this.fixedObjects.mouseUp(ctrlKey);
     }
   
-    public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: newShape): [Vertex, Vertex, Vertex] {
+    public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: Shape): [Vertex, Vertex, Vertex] {
       const [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
       this.isHovered = this.isInCanvas(absoluteMouse);
       this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
       if (canvasDown) {
         const translation = this.mouseTranslate(canvasMouse, canvasDown);
-        if (!(clickedObject instanceof newAxis)) {
+        if (!(clickedObject instanceof Axis)) {
           if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
         }
         if (this.isSelecting) {
@@ -519,13 +519,13 @@ export class AloneFigure {
       return [canvasMouse, frameMouse, absoluteMouse]
     }
   
-    public mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape]  {
+    public mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape]  {
       const [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-      if (!(clickedObject instanceof newAxis)) this.is_drawing_rubber_band = this.isSelecting;
+      if (!(clickedObject instanceof Axis)) this.is_drawing_rubber_band = this.isSelecting;
       return [canvasDown, frameDown, clickedObject]
     }
   
-    public mouseUpDrawer(ctrlKey: boolean): [newShape, Vertex] {
+    public mouseUpDrawer(ctrlKey: boolean): [Shape, Vertex] {
       if (this.isZooming) {
         if (this.zoomBox.area != 0) this.zoomBoxUpdateAxes(this.zoomBox);
         this.zoomBox.update(new Vertex(0, 0), new Vertex(0, 0));
@@ -599,11 +599,11 @@ export class AloneFigure {
       this.draw();
     }
   
-    public axisChangeUpdate(e: newAxis): void {}
+    public axisChangeUpdate(e: Axis): void {}
   
     public mouseListener(): void {
       // TODO: mouseListener generally suffers from a bad initial design that should be totally rethink in a specific refactor development
-      let clickedObject: newShape = null;
+      let clickedObject: Shape = null;
       let canvasMouse: Vertex = null; let canvasDown: Vertex = null;
       let frameMouse: Vertex = null; let frameDown: Vertex = null;
       let absoluteMouse: Vertex = null;
@@ -649,7 +649,7 @@ export class AloneFigure {
       canvas.addEventListener('mouseleave', () => [ctrlKey, canvasDown] = this.mouseLeaveDrawer(canvas, shiftKey));
     }
   
-    protected resetMouseEvents(): [newShape, Vertex] {
+    protected resetMouseEvents(): [Shape, Vertex] {
       this.is_drawing_rubber_band = false;
       this.isZooming = false;
       this.axes.forEach(axis => axis.saveLocation());

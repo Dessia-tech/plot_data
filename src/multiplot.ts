@@ -1,6 +1,6 @@
 import { FIGURES_BLANK_SPACE, EMPTY_MULTIPLOT } from "./constants"
 import { equals, arrayDiff, arrayIntersection, range } from './functions';
-import { Vertex, newShape } from "./shapes"
+import { Vertex, Shape } from "./shapes"
 import { SelectionBox } from "./shapedObjects"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { RubberBand } from "./axes"
@@ -410,13 +410,13 @@ export class Multiplot {
     this.figures[this.clickedIndex].multiplotResize(clickedZone.origin, clickedZone.size.x, clickedZone.size.y);
   }
 
-  private resizeWithMouse(mouseCoords: Vertex, clickedObject: newShape): void {
+  private resizeWithMouse(mouseCoords: Vertex, clickedObject: Shape): void {
     if (clickedObject instanceof SelectionBox) this.zoneToFigure(mouseCoords, clickedObject)
     else this.figureZones.mouseMove(this.context, mouseCoords);
   }
 
   private mouseMoveDrawer(e: MouseEvent, hasLeftFigure: boolean, canvasMouse: Vertex, frameMouse: Vertex, 
-    canvasDown: Vertex, frameDown: Vertex, clickedObject: newShape, shiftKey: boolean): [Vertex, Vertex, Vertex, Vertex, boolean] { // TODO: ill conditioned method
+    canvasDown: Vertex, frameDown: Vertex, clickedObject: Shape, shiftKey: boolean): [Vertex, Vertex, Vertex, Vertex, boolean] { // TODO: ill conditioned method
       e.preventDefault();
       let absoluteMouse = new Vertex(e.offsetX, e.offsetY);
       this.getHoveredIndex(absoluteMouse);
@@ -434,13 +434,13 @@ export class Multiplot {
       return [canvasMouse, frameMouse, absoluteMouse, canvasDown, hasLeftFigure]
     }
 
-  private mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape] {
+  private mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape] {
     this.clickedIndex = this.hoveredIndex;
     if (this.isResizing) return [null, null, this.figureZones.mouseDown(absoluteMouse.copy())];
     return this.figures[this.hoveredIndex].mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
   }
 
-  private mouseUpDrawer(canvasDown: Vertex, clickedObject: newShape, ctrlKey: boolean, shiftKey: boolean, hasLeftFigure: boolean): [Vertex, newShape, boolean] {
+  private mouseUpDrawer(canvasDown: Vertex, clickedObject: Shape, ctrlKey: boolean, shiftKey: boolean, hasLeftFigure: boolean): [Vertex, Shape, boolean] {
     if (this.isResizing && clickedObject instanceof SelectionBox) clickedObject.mouseUp(ctrlKey);
     if (!hasLeftFigure && !this.isResizing) [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
     if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
@@ -470,7 +470,7 @@ export class Multiplot {
     let ctrlKey = false;
     let shiftKey = false;
     let spaceKey = false;
-    let clickedObject: newShape = null;
+    let clickedObject: Shape = null;
     let canvasMouse: Vertex = null;
     let frameMouse: Vertex = null;
     let absoluteMouse: Vertex = null;

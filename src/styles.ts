@@ -7,7 +7,7 @@ export interface PointStyleInterface {
   orientation?: string,
 }
 
-export class newPointStyle implements PointStyleInterface {
+export class PointStyle implements PointStyleInterface {
   public size: number;
   public fillStyle: string;
   public strokeStyle: string;

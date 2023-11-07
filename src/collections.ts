@@ -93,11 +93,11 @@ export class ShapeCollection {
     }
   
     public updateShapeStates(stateName: string): number[] {
-      const ShapeStates = [];
+      const newStates = [];
       this.shapes.forEach((shape, index) => {
-        if (shape[stateName] && !(shape instanceof SelectionBox)) ShapeStates.push(index);
+        if (shape[stateName] && !(shape instanceof SelectionBox)) newStates.push(index);
       });
-      return ShapeStates
+      return newStates
     }
   
     public resetShapeStates(): void {

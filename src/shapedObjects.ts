@@ -22,11 +22,11 @@ export class ScatterPoint extends Point {
     public static fromPlottedValues(indices: number[], pointsData: { [key: string]: number[] }, pointSize: number, marker: string,
       thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[],
       xName: string, yName: string): ScatterPoint {
-      const Point = new ScatterPoint(indices, 0, 0, pointSize, marker);
-      Point.computeValues(pointsData, thresholdDist);
-      Point.updateTooltip(tooltipAttributes, features, axes, xName, yName);
-      Point.update();
-      return Point
+      const newPoint = new ScatterPoint(indices, 0, 0, pointSize, marker);
+      newPoint.computeValues(pointsData, thresholdDist);
+      newPoint.updateTooltip(tooltipAttributes, features, axes, xName, yName);
+      newPoint.update();
+      return newPoint
     }
   
     protected setContextPointInStroke(context: CanvasRenderingContext2D): void {

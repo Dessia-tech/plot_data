@@ -1,4 +1,4 @@
-import * as colors  from "../../src/color_conversion";
+import * as colors  from "../../src/colors";
 
 const rgb = [163, 112, 41];
 const hsl = [35, 60, 40];

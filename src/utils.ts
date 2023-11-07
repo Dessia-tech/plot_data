@@ -895,31 +895,30 @@ export class PointSet {
 const BORDER_SIZE = 20;
 const SMALL_RUBBERBAND_SIZE = 10;
 // Changes in rubberbands are only code deletion
+// TODO: make rubberband a Shape
 export class RubberBand {
-  public axisMin: number = 0;
-  public axisMax: number = 0;
-  public realMin: number = 0;
-  public realMax: number = 0;
-  public isHover: boolean = false;
+  public canvasMin: number = 0;
+  public canvasMax: number = 0;
+
+  public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
-  public path: Path2D; // unused for the moment
+
+  public path: Path2D;
+  public isInverted: boolean = false;
+
   public minUpdate: boolean = false;
   public maxUpdate: boolean = false;
   public lastValues: Vertex = new Vertex(null, null);
-  readonly MIN_LENGTH = 5;
-  readonly BORDER = 5;
   constructor(
     public attributeName: string,
     private _minValue: number,
     private _maxValue: number,
     public isVertical: boolean) { }
 
-  public get canvasLength() { return Math.abs(this.realMax - this.realMin) }
+  public get canvasLength() { return Math.abs(this.canvasMax - this.canvasMin) }
 
   public get length() { return Math.abs(this.maxValue - this.minValue) }
-
-  public get normedLength() { return Math.abs(this.axisMax - this.axisMin) }
 
   public set minValue(value: number) { this._minValue = value }
 
@@ -938,19 +937,17 @@ export class RubberBand {
 
   public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
     if (this.isVertical) {
-      Shape.rect(origin - SMALL_RUBBERBAND_SIZE / 2, this.realMin, SMALL_RUBBERBAND_SIZE, this.canvasLength, context, colorFill, colorStroke, lineWidth, alpha);
+      Shape.rect(origin - SMALL_RUBBERBAND_SIZE / 2, this.canvasMin, SMALL_RUBBERBAND_SIZE, this.canvasLength, context, colorFill, colorStroke, lineWidth, alpha);
     } else {
-      Shape.rect(this.realMin, origin - SMALL_RUBBERBAND_SIZE / 2, this.canvasLength, SMALL_RUBBERBAND_SIZE, context, colorFill, colorStroke, lineWidth, alpha);
+      Shape.rect(this.canvasMin, origin - SMALL_RUBBERBAND_SIZE / 2, this.canvasLength, SMALL_RUBBERBAND_SIZE, context, colorFill, colorStroke, lineWidth, alpha);
     }
   }
 
   public reset() {
     this.minValue = 0;
     this.maxValue = 0;
-    this.axisMin = 0;
-    this.axisMax = 0;
-    this.realMin = 0;
-    this.realMax = 0;
+    this.canvasMin = 0;
+    this.canvasMax = 0;
   }
 
   public flipMinMax() {
@@ -964,8 +961,8 @@ export class RubberBand {
 
   public mouseDown(mouseAxis: number) {
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.realMin) <= this.borderSize) this.minUpdate = true
-    else if (Math.abs(mouseAxis - this.realMax) <= this.borderSize) this.maxUpdate = true
+    if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.isInverted ? this.maxUpdate = true : this.minUpdate = true
+    else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.isInverted ? this.minUpdate = true : this.maxUpdate = true
     else this.lastValues = new Vertex(this.minValue, this.maxValue);
   }
 
@@ -3438,13 +3435,13 @@ export class newAxis extends newShape {
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D): void {
-    const realMin = this.relativeToAbsolute(this.rubberBand.minValue);
-    const realMax = this.relativeToAbsolute(this.rubberBand.maxValue);
+    const canvasMin = this.relativeToAbsolute(this.rubberBand.minValue);
+    const canvasMax = this.relativeToAbsolute(this.rubberBand.maxValue);
     const coord = this.isVertical ? "y" : "x";
-    this.rubberBand.realMin = Math.max(Math.min(realMin, realMax), this.origin[coord]);
-    this.rubberBand.realMax = Math.min(Math.max(realMin, realMax), this.end[coord]);
-    this.rubberBand.realMin = Math.min(this.rubberBand.realMin, this.rubberBand.realMax);
-    this.rubberBand.realMax = Math.max(this.rubberBand.realMin, this.rubberBand.realMax);
+    this.rubberBand.canvasMin = Math.max(Math.min(canvasMin, canvasMax), this.origin[coord]);
+    this.rubberBand.canvasMax = Math.min(Math.max(canvasMin, canvasMax), this.end[coord]);
+    this.rubberBand.canvasMin = Math.min(this.rubberBand.canvasMin, this.rubberBand.canvasMax);
+    this.rubberBand.canvasMax = Math.max(this.rubberBand.canvasMin, this.rubberBand.canvasMax);
     this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, this.rubberColor, 0.1, this.rubberAlpha);
     if (this.rubberBand.isClicked) this.emitter.emit("rubberBandChange", this.rubberBand);
   }
@@ -3686,6 +3683,7 @@ export class ParallelAxis extends newAxis {
 
   protected flip(): void {
     this.isInverted = !this.isInverted;
+    this.rubberBand.isInverted = this.isInverted;
     this.emitter.emit("axisStateChange", this);
   }
 

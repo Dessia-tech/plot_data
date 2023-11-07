@@ -103,7 +103,7 @@ export class Multiplot {
     return figure
   }
 
-  private buildCanvas(canvasID: string):void {
+  private buildCanvas(canvasID: string): void {
     this.canvas = document.getElementById(canvasID) as HTMLCanvasElement;
     this.canvas.width = this.width;
     this.canvas.height = this.height;
@@ -196,14 +196,28 @@ export class Multiplot {
     })
   }
 
-  public switchSelection() {
-    this.isSelecting = !this.isSelecting;
-    this.figures.forEach(figure => figure.switchSelection());
+  public selectionOn(): void {
+    this.isSelecting = true;
+    this.figures.forEach(figure => figure.isSelecting = true);
+    this.canvas.style.cursor = 'crosshair';
   }
 
-  public switchMerge() { this.figures.forEach(figure => figure.switchMerge()) }
+  public selectionOff(): void {
+    if (this.isSelecting) this.canvas.style.cursor = 'default';
+    this.isSelecting = false;
+    this.figures.forEach(figure => {
+      figure.isSelecting = false;
+      figure.is_drawing_rubber_band = false;
+    });
+  }
 
-  public switchResize() {
+  public switchSelection(): void {
+    this.isSelecting ? this.selectionOff() : this.selectionOn();
+  }
+
+  public switchMerge(): void { this.figures.forEach(figure => figure.switchMerge()) }
+
+  public switchResize(): void {
     this.isResizing = !this.isResizing;
     this.canvas.style.cursor = 'default';
     this.draw();
@@ -219,19 +233,29 @@ export class Multiplot {
     }
   }
 
-  public togglePoints() { this.figures.forEach(figure => figure.togglePoints()) }
+  public togglePoints(): void { this.figures.forEach(figure => figure.togglePoints()) }
 
-  public switchZoom() {
-    this.isZooming = !this.isZooming;
-    this.figures.forEach(figure => figure.switchZoom());
-    if (!this.isZooming) this.canvas.style.cursor = 'default';
+  public zoomOn(): void {
+    this.isZooming = true;
+    this.figures.forEach(figure => figure.isZooming = true);
+    this.canvas.style.cursor = 'crosshair';
   }
 
-  public zoomIn() { (this.figures[this.clickedIndex ?? this.hoveredIndex]).zoomIn() }
+  public zoomOff(): void {
+    if (this.isZooming) this.canvas.style.cursor = 'default';
+    this.isZooming = false;
+    this.figures.forEach(figure => figure.isZooming = false);
+  }
 
-  public zoomOut() { (this.figures[this.clickedIndex ?? this.hoveredIndex]).zoomOut() }
+  public switchZoom(): void {
+    this.isZooming ? this.zoomOff() : this.zoomOn();
+  }
 
-  public simpleCluster(inputValue: number) { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.simpleCluster(inputValue) })};
+  public zoomIn(): void { (this.figures[this.clickedIndex ?? this.hoveredIndex]).zoomIn() }
+
+  public zoomOut(): void { (this.figures[this.clickedIndex ?? this.hoveredIndex]).zoomOut() }
+
+  public simpleCluster(inputValue: number): void { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.simpleCluster(inputValue) })};
 
   public resetClusters(): void { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.resetClusters() })};
 
@@ -283,7 +307,7 @@ export class Multiplot {
     this.pointSets[setIndex].indices = arrayDiff(this.pointSets[setIndex].indices, pointIndices);
   }
 
-  private updateSelectedIndices() {
+  private updateSelectedIndices(): void {
     const previousIndices = [...this.selectedIndices];
     this.selectedIndices = range(0, this.nSamples);
     let isSelecting = false;
@@ -493,6 +517,7 @@ export class Multiplot {
     this.canvas.addEventListener('mouseup', () => {
       [canvasDown, clickedObject, hasLeftFigure] = this.mouseUpDrawer(canvasDown, clickedObject, ctrlKey, shiftKey, hasLeftFigure);
       this.draw();
+      this.zoomOff();
     })
 
     this.canvas.addEventListener('wheel', e => {
@@ -507,14 +532,8 @@ export class Multiplot {
 
   private resetStateAttributes(shiftKey: boolean, ctrlKey: boolean): boolean {
     if (ctrlKey && shiftKey) this.reset();
-    if (!shiftKey) {
-      if (!this.isZooming) this.canvas.style.cursor = 'default';
-      this.isSelecting = false;
-      this.figures.forEach(figure => {
-        figure.is_drawing_rubber_band = false;
-        figure.isSelecting = false;
-      })
-    }
+    if (!this.isZooming && !this.isSelecting) this.canvas.style.cursor = 'default';
+    if (!shiftKey) this.selectionOff();
     return false
   }
 }

@@ -59,9 +59,9 @@ HTML_TEMPLATE = Template('''
 
 EMPTY_BUTTONS = """"""
 
-MULTIPLOT_BUTTONS = """
+MULTIPLOT_BUTTONS = '''
         <button name="resize" value="OK" type="button" onclick="plot_data.switchResize()"> Resize Figures </button>
-        <button name="resizeMP" value="OK" type="button" onclick="plot_data.resize(...PlotData.computeCanvasSize('#buttons'))"> Resize Multiplot </button>"""
+        <button name="resizeMP" value="OK" type="button" onclick="plot_data.resize(...PlotData.computeCanvasSize('#buttons'))"> Resize Multiplot </button>'''
 
 SCATTER_COMMANDS = """
             const plot_data = new PlotData.Scatter(data, width, height, 0, 0, $canvas_id.id);

@@ -33,15 +33,22 @@ HTML_TEMPLATE = Template('''
         <script src=$core_path></script>
     </head>
     <div id="buttons">
-        <button name="mergeON" value="OK" type="button" onclick="plot_data.switchMerge()"> Switch Point Merge </button> &nbsp;&nbsp;
-        <button name="Zoom" value="OK" type="button" onclick="plot_data.switchZoom()"> Zoom Box </button>
+        <button name="mergeON" value="OK" type="button"
+        onclick="plot_data.switchMerge()"> Switch Point Merge </button> &nbsp;&nbsp;
+        <button name="Zoom" value="OK" type="button"
+        onclick="plot_data.switchZoom()"> Zoom Box </button>
         <button name="Zoom+" value="OK" type="button" onclick="plot_data.zoomIn()"> Zoom+ </button>
         <button name="Zoom-" value="OK" type="button" onclick="plot_data.zoomOut()"> Zoom- </button> &nbsp;&nbsp;
-        Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250" onclick="plot_data.simpleCluster(value / 10000)"></input>
-        <button name="resetClusters" value="OK" type="button" onclick="plot_data.resetClusters()"> Reset clusters </button> &nbsp;&nbsp;
-        <button name="resetView" value="OK" type="button" onclick="plot_data.resetView()"> Reset view </button> &nbsp;&nbsp;
-        <button name="showPoints" value="OK" type="button" onclick="plot_data.togglePoints()"> Show points </button>
-        <button name="switchOrientation" value="OK" type="button" onclick="plot_data.switchOrientation()"> Change Disposition </button>
+        Cluster:&nbsp; <input type="range" class="slider" min="0" max="2500" value="1250"
+        onclick="plot_data.simpleCluster(value / 10000)"></input>
+        <button name="resetClusters" value="OK" type="button"
+        onclick="plot_data.resetClusters()"> Reset clusters </button> &nbsp;&nbsp;
+        <button name="resetView" value="OK" type="button"
+        onclick="plot_data.resetView()"> Reset view </button> &nbsp;&nbsp;
+        <button name="showPoints" value="OK" type="button"
+        onclick="plot_data.togglePoints()"> Show points </button>
+        <button name="switchOrientation" value="OK" type="button"
+        onclick="plot_data.switchOrientation()"> Change Disposition </button>
         $specific_buttons
     <hr style="border-top: 2px;">
     </div>
@@ -59,9 +66,10 @@ HTML_TEMPLATE = Template('''
 
 EMPTY_BUTTONS = """"""
 
-MULTIPLOT_BUTTONS = '''
+MULTIPLOT_BUTTONS = """
         <button name="resize" value="OK" type="button" onclick="plot_data.switchResize()"> Resize Figures </button>
-        <button name="resizeMP" value="OK" type="button" onclick="plot_data.resize(...PlotData.computeCanvasSize('#buttons'))"> Resize Multiplot </button>'''
+        <button name="resizeMP" value="OK" type="button"
+        onclick="plot_data.resize(...PlotData.computeCanvasSize('#buttons'))"> Resize Multiplot </button"""
 
 SCATTER_COMMANDS = """
             const plot_data = new PlotData.Scatter(data, width, height, 0, 0, $canvas_id.id);

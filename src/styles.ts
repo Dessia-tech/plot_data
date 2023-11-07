@@ -1,5 +1,3 @@
-
-  
 export interface PointStyleInterface {
   size?: number,
   color_fill?: string,

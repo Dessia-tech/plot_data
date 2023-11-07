@@ -1,5 +1,5 @@
-import { SIZE_END, BLANK_SPACE, MIN_FONTSIZE, MIN_OFFSET, ZOOM_FACTOR, DEFAULT_POINT_COLOR,
-  FREE_SPACE_FACTOR, DRAW_MARGIN_FACTOR, PG_CONTAINER_PLOT } from "./constants"
+import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_X, DEFAULT_SHAPE_COLOR, FREE_SPACE_FACTOR,
+  DRAW_MARGIN_FACTOR, PG_CONTAINER_PLOT } from "./constants"
 import { range, mapMax, sum, argMax, normalizeArray, uniqueValues } from "./functions"
 import { colorHsl } from "./colors";
 import { newPointStyle } from "./styles"
@@ -179,7 +179,7 @@ export class Frame extends Figure {
     );
     const yBoundingBox = new newRect(
       new Vertex(this.drawOrigin.x - freeSpace.x, this.drawOrigin.y),
-      new Vertex(freeSpace.x - BLANK_SPACE, this.drawEnd.y - this.drawOrigin.y)
+      new Vertex(freeSpace.x - AXES_BLANK_SPACE, this.drawEnd.y - this.drawOrigin.y)
     );
     return [xBoundingBox, yBoundingBox]
   }
@@ -231,7 +231,7 @@ export class Frame extends Figure {
 export class Histogram extends Frame {
   public bars: Bar[] = [];
 
-  public fillStyle: string = 'hsl(203, 90%, 85%)';
+  public fillStyle: string = DEFAULT_SHAPE_COLOR;
   public strokeStyle: string = null;
   public dashLine: number[] = [];
 
@@ -412,7 +412,7 @@ export class Histogram extends Frame {
 export class Scatter extends Frame {
   public points: ScatterPoint[] = [];
 
-  public fillStyle: string = DEFAULT_POINT_COLOR;
+  public fillStyle: string = DEFAULT_SHAPE_COLOR;
   public strokeStyle: string = null;
   public marker: string = 'circle';
   public pointSize: number = 8;
@@ -661,7 +661,7 @@ export class Scatter extends Frame {
 
   public resetClusters(): void {
     this.clusterColors = null;
-    this.points.forEach(point => point.setColors(DEFAULT_POINT_COLOR));
+    this.points.forEach(point => point.setColors(DEFAULT_SHAPE_COLOR));
     this.draw();
    }
 
@@ -818,7 +818,7 @@ export class Graph2D extends Scatter {
 export class ParallelPlot extends Figure {
   public axes: ParallelAxis[];
   public curves: LineSequence[];
-  public curveColor: string = 'hsl(203, 90%, 85%)';
+  public curveColor: string = DEFAULT_SHAPE_COLOR;
   public changedAxes: ParallelAxis[] = [];
   private _isVertical: boolean;
   constructor(
@@ -852,7 +852,7 @@ export class ParallelPlot extends Figure {
 
   protected computeOffset(): Vertex { return this.computeNaturalOffset() }
 
-  protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
+  protected get marginOffset(): Vertex { return new Vertex(SIZE_AXIS_END, SIZE_AXIS_END) }
 
   public updateDimensions(): void {
     super.updateDimensions();
@@ -933,14 +933,14 @@ export class ParallelPlot extends Figure {
 
   private horizontalAxesLocation(): [Vertex, Vertex][] {
     const drawHeight = this.drawEnd.y - this.drawOrigin.y;
-    const LOCAL_MIN_OFFSET = drawHeight - MIN_OFFSET * 1.2;
+    const LOCAL_MIN_OFFSET_X = drawHeight - MIN_OFFSET_X * 1.2;
     const firstEnds: [Vertex, Vertex] = [
       new Vertex(this.drawOrigin.x, this.drawEnd.y - 0.015 * drawHeight),
       new Vertex(this.drawEnd.x, this.drawEnd.y - 0.015 * drawHeight)
     ];
     const lastEnds: [Vertex, Vertex] = [
-      new Vertex(this.drawOrigin.x, this.drawEnd.y - Math.min(0.9 * drawHeight, LOCAL_MIN_OFFSET)),
-      new Vertex(this.drawEnd.x, this.drawEnd.y - Math.min(0.9 * drawHeight, LOCAL_MIN_OFFSET))
+      new Vertex(this.drawOrigin.x, this.drawEnd.y - Math.min(0.9 * drawHeight, LOCAL_MIN_OFFSET_X)),
+      new Vertex(this.drawEnd.x, this.drawEnd.y - Math.min(0.9 * drawHeight, LOCAL_MIN_OFFSET_X))
     ];
     const yStep = (lastEnds[0].y - firstEnds[0].y) / (this.drawnFeatures.length - 1);
     const axesEnds: [Vertex, Vertex][] = [firstEnds];

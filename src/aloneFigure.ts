@@ -1,4 +1,4 @@
-import { SIZE_END, BLANK_SPACE, MIN_FONTSIZE, MIN_OFFSET, ZOOM_FACTOR } from "./constants"
+import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_Y, MIN_OFFSET_X, ZOOM_FACTOR } from "./constants"
 import { intersectArrays } from "./functions"
 import { colorHsl } from "./colors";
 import { newPointStyle } from "./styles"
@@ -196,10 +196,10 @@ export class AloneFigure {
   
     protected computeOffset(): Vertex {
       const naturalOffset = this.computeNaturalOffset();
-      return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET) + BLANK_SPACE, Math.max(naturalOffset.y, MIN_FONTSIZE));
+      return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET_X) + AXES_BLANK_SPACE, Math.max(naturalOffset.y, MIN_OFFSET_Y));
     }
   
-    protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
+    protected get marginOffset(): Vertex { return new Vertex(SIZE_AXIS_END, SIZE_AXIS_END) }
   
     protected setBounds(): Vertex {
       this.offset = this.computeOffset();

@@ -1,4 +1,4 @@
-import { BORDER_SIZE } from "./constants"
+import { PICKABLE_BORDER_SIZE } from "./constants"
 import { newPointStyle } from "./styles"
 import { Vertex, newRect, newPoint2D, newTooltip } from "./shapes"
 import { RubberBand, newAxis } from "./axes"
@@ -227,9 +227,9 @@ export class ScatterPoint extends newPoint2D {
       }
     }
   
-    private get borderSizeX() { return Math.min(BORDER_SIZE / Math.abs(this._scale.x), Math.abs(this.size.x) / 3) }
+    private get borderSizeX() { return Math.min(PICKABLE_BORDER_SIZE / Math.abs(this._scale.x), Math.abs(this.size.x) / 3) }
   
-    private get borderSizeY() { return Math.min(BORDER_SIZE / Math.abs(this._scale.y), Math.abs(this.size.y) / 3) }
+    private get borderSizeY() { return Math.min(PICKABLE_BORDER_SIZE / Math.abs(this._scale.y), Math.abs(this.size.y) / 3) }
   
     private saveState() {
       this._previousMin = this.minVertex.copy();

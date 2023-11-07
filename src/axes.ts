@@ -1,4 +1,4 @@
-import { SMALL_RUBBERBAND_SIZE, BORDER_SIZE, SIZE_END } from "./constants"
+import { SMALL_RUBBERBAND_SIZE, PICKABLE_BORDER_SIZE, SIZE_AXIS_END } from "./constants"
 import { uniqueValues } from "./functions";
 import { Vertex, newShape, newRect, TextParams, newText, newPoint2D } from "./shapes"
 import { EventEmitter } from "events";
@@ -75,7 +75,7 @@ export class RubberBand {
       }
     }
   
-    private get borderSize() { return Math.min(BORDER_SIZE, this.canvasLength / 3) }
+    private get borderSize() { return Math.min(PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
   
     public mouseDown(mouseAxis: number) {
       this.isClicked = true;
@@ -129,7 +129,7 @@ export class RubberBand {
     public strokeStyle: string = 'hsl(0, 0%, 0%)';
     public hoverStyle: string = 'hsl(0, 100%, 48%)';
     public clickedStyle: string = 'hsl(126, 67%, 72%)';
-    public rubberColor: string = 'hsl(200, 95%, 50%)';//'hsla(127, 95%, 60%, 0.85)';
+    public rubberColor: string = 'hsl(200, 95%, 50%)';
     public rubberAlpha: number = 0.5;
     public mouseStyleON: boolean = false;
   
@@ -310,12 +310,12 @@ export class RubberBand {
   
     public adjustBoundingBox(): void {
       if (this.isVertical) {
-        this.boundingBox.size.x += SIZE_END / 2;
-        this.boundingBox.size.y += SIZE_END;
+        this.boundingBox.size.x += SIZE_AXIS_END / 2;
+        this.boundingBox.size.y += SIZE_AXIS_END;
       }
       else {
-        this.boundingBox.size.x += SIZE_END;
-        this.boundingBox.size.y += SIZE_END / 2;
+        this.boundingBox.size.x += SIZE_AXIS_END;
+        this.boundingBox.size.y += SIZE_AXIS_END / 2;
       }
       this.boundingBox.buildPath();
     }
@@ -326,9 +326,9 @@ export class RubberBand {
       const path = new Path2D();
       let endArrow: newPoint2D;
       if (this.isInverted) {
-        endArrow = new newPoint2D(this.origin.x - SIZE_END / 2 * horizontalIdx, this.origin.y - SIZE_END / 2 * verticalIdx, SIZE_END, 'triangle', ['left', 'down'][verticalIdx]);
+        endArrow = new newPoint2D(this.origin.x - SIZE_AXIS_END / 2 * horizontalIdx, this.origin.y - SIZE_AXIS_END / 2 * verticalIdx, SIZE_AXIS_END, 'triangle', ['left', 'down'][verticalIdx]);
       } else {
-        endArrow = new newPoint2D(this.end.x + SIZE_END / 2 * horizontalIdx, this.end.y + SIZE_END / 2 * verticalIdx, SIZE_END, 'triangle', ['right', 'up'][verticalIdx]);
+        endArrow = new newPoint2D(this.end.x + SIZE_AXIS_END / 2 * horizontalIdx, this.end.y + SIZE_AXIS_END / 2 * verticalIdx, SIZE_AXIS_END, 'triangle', ['right', 'up'][verticalIdx]);
       }
       path.moveTo(this.origin.x - this.DRAW_START_OFFSET * horizontalIdx, this.origin.y - this.DRAW_START_OFFSET * verticalIdx);
       path.lineTo(this.end.x, this.end.y);
@@ -548,7 +548,7 @@ export class RubberBand {
     }
   
     protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): newPoint2D {
-      const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), SIZE_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
+      const point = new newPoint2D(tick * Number(!vertical), tick * Number(vertical), SIZE_AXIS_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
       point.draw(context);
       return point
     }
@@ -776,10 +776,10 @@ export class RubberBand {
       const SIZE_FACTOR = 0.35;
       let offset = 0;
       if (this.isVertical) {
-        offset = this.drawLength + Math.min(SIZE_END * 2, this.drawLength * 0.05);
+        offset = this.drawLength + Math.min(SIZE_AXIS_END * 2, this.drawLength * 0.05);
         this.titleZone.origin.y += offset;
       } else {
-        offset = this.offsetTicks + this.FONT_SIZE + SIZE_END;
+        offset = this.offsetTicks + this.FONT_SIZE + SIZE_AXIS_END;
         if (index != nAxis - 1) this.titleZone.size.x *= SIZE_FACTOR;
         this.titleZone.size.y = Math.abs(this.boundingBox.origin.y) - Math.abs(this.origin.y);
         this.titleZone.origin.y -= this.titleZone.size.y;
@@ -805,9 +805,9 @@ export class RubberBand {
       super.computeEnds();
       if (this.isVertical) {
         this.end.y -= this.drawLength * 0.1;
-        this.boundingBox.size.x -= SIZE_END / 2;
+        this.boundingBox.size.x -= SIZE_AXIS_END / 2;
       }
-      else this.boundingBox.size.y -= SIZE_END / 2;
+      else this.boundingBox.size.y -= SIZE_AXIS_END / 2;
     }
   
     public mouseMoveClickedTitle(mouseCoords: Vertex): void {
@@ -871,7 +871,7 @@ export class RubberBand {
       context.save();
       const [calibratedTickText, calibratedMeasure] = this.getCalibratedTextWidth(context);
       this.maxTickWidth = this.origin.x - this.boundingBox.origin.x - this.offsetTicks - 3;
-      this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - SIZE_END / 2, calibratedTickText.fontsize);
+      this.maxTickHeight = Math.min(this.boundingBox.size.y - this.offsetTicks - 3 - SIZE_AXIS_END / 2, calibratedTickText.fontsize);
       context.restore();
     }
   }

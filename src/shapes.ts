@@ -1,4 +1,5 @@
-import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, STROKE_STYLE_OFFSET,
+import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, DEFAULT_SHAPE_COLOR, 
+  HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED_SHAPE_COLOR, STROKE_STYLE_OFFSET,
   TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE, TOOLTIP_TEXT_OFFSET, 
   CIRCLES, MARKERS, TRIANGLES, SQUARES, CROSSES, HALF_LINES } from "./constants";
 import { hslToArray, colorHsl } from "./colors";
@@ -83,10 +84,10 @@ export class newShape {
   public dashLine: number[] = [];
   public hatching: HatchingSet;
   public strokeStyle: string = null;
-  public fillStyle: string = 'hsl(203, 90%, 85%)';
-  public hoverStyle: string = 'hsl(203, 90%, 60%)';
-  public clickedStyle: string = 'hsl(203, 90%, 35%)';
-  public selectedStyle: string = 'hsl(140, 65%, 60%)';
+  public fillStyle: string = DEFAULT_SHAPE_COLOR;
+  public hoverStyle: string = HOVERED_SHAPE_COLOR;
+  public clickedStyle: string = CLICKED_SHAPE_COLOR;
+  public selectedStyle: string = SELECTED_SHAPE_COLOR;
   public alpha: number = 1;
 
   public mouseClick: Vertex = null;

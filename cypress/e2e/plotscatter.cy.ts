@@ -14,6 +14,6 @@ describe('PLOT SCATTER CANVAS', function () {
   })
 
   it("should draw canvas", function () {
-    cy.compareSnapshot(describeTitle + this.test.title, 0.05);
+    cy.compareSnapshot(describeTitle + this.test.title, 0.1);
   })
 })

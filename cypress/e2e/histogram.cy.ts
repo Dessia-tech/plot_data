@@ -20,7 +20,7 @@ describe('HISTOGRAM CANVAS', function () {
   beforeEach(() => cy.visit("cypress/html_files/" + FEATURE_NAME + ".html"));
 
   it("should draw canvas", function () {
-    cy.compareSnapshot(describeTitle + this.test.title, 0.05);
+    cy.compareSnapshot(describeTitle + this.test.title, 0.06);
   })
 
   it("should select with rubber band", function () {

@@ -933,7 +933,7 @@ export class ParallelPlot extends Figure {
 
   private horizontalAxesLocation(): [Vertex, Vertex][] {
     const drawHeight = this.drawEnd.y - this.drawOrigin.y;
-    const LOCAL_MIN_OFFSET_X = drawHeight - MIN_OFFSET_X * 1.2;
+    const LOCAL_MIN_OFFSET_X = drawHeight - MIN_OFFSET_X * 1.2; //TODO: is it a constant ?
     const firstEnds: [Vertex, Vertex] = [
       new Vertex(this.drawOrigin.x, this.drawEnd.y - 0.015 * drawHeight),
       new Vertex(this.drawEnd.x, this.drawEnd.y - 0.015 * drawHeight)

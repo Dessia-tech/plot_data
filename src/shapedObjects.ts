@@ -1,4 +1,4 @@
-import { PICKABLE_BORDER_SIZE } from "./constants"
+import { PICKABLE_BORDER_SIZE, DASH_SELECTION_WINDOW } from "./constants"
 import { newPointStyle } from "./styles"
 import { Vertex, newRect, newPoint2D, newTooltip } from "./shapes"
 import { RubberBand, newAxis } from "./axes"
@@ -134,7 +134,6 @@ export class ScatterPoint extends newPoint2D {
     }
   }
   
-  const DASH_SELECTION_WINDOW = [7, 3];
   export class SelectionBox extends newRect {
     public minVertex: Vertex = null;
     public maxVertex: Vertex = null;

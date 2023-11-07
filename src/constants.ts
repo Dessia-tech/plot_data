@@ -1,10 +1,13 @@
 export const PICKABLE_BORDER_SIZE = 20;
 export const SMALL_RUBBERBAND_SIZE = 10;
+export const DASH_SELECTION_WINDOW = [7, 3];
 
+export const INFINITE_LINE_FACTOR = 1e3;
 export const SIZE_AXIS_END = 7;
 export const MAX_LABEL_HEIGHT = 12;
 export const AXES_BLANK_SPACE = 3;
 export const FIGURES_BLANK_SPACE = 4;
+export const LEGEND_MARGIN = 2;
 export const ZOOM_FACTOR = 1.2;
 
 export const MIN_OFFSET_Y = 6;

@@ -1,7 +1,7 @@
 import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, DEFAULT_SHAPE_COLOR, 
   HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED_SHAPE_COLOR, STROKE_STYLE_OFFSET,
-  TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE, TOOLTIP_TEXT_OFFSET, 
-  CIRCLES, MARKERS, TRIANGLES, SQUARES, CROSSES, HALF_LINES } from "./constants";
+  TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE, TOOLTIP_TEXT_OFFSET, INFINITE_LINE_FACTOR,
+  CIRCLES, MARKERS, TRIANGLES, SQUARES, CROSSES, HALF_LINES, LEGEND_MARGIN } from "./constants";
 import { hslToArray, colorHsl } from "./colors";
 import { HatchingSet, newPointStyle } from "./styles";
 
@@ -499,13 +499,12 @@ export class Line extends newShape {
   }
 
   public buildPath(): void {
-    const infiniteFactor = 1e3;
     const [slope, affinity] = this.getEquation();
     if (this.end.x == this.origin.x) {
-      this.path = new LineSegment(new Vertex(this.origin.x, -this.end.y * infiniteFactor), new Vertex(this.origin.x, this.end.y * infiniteFactor)).path;
+      this.path = new LineSegment(new Vertex(this.origin.x, -this.end.y * INFINITE_LINE_FACTOR), new Vertex(this.origin.x, this.end.y * INFINITE_LINE_FACTOR)).path;
     } else {
-      const fakeOrigin = new Vertex(-infiniteFactor, 0);
-      const fakeEnd = new Vertex(infiniteFactor, 0);
+      const fakeOrigin = new Vertex(-INFINITE_LINE_FACTOR, 0);
+      const fakeEnd = new Vertex(INFINITE_LINE_FACTOR, 0);
       if (this.origin.x != 0) {
         fakeOrigin.x *= this.origin.x;
         fakeEnd.x *= this.origin.x;
@@ -1436,11 +1435,10 @@ export class newLabel extends newShape {
 
   private updateLegendGeometry(): void {
     if (this.legend instanceof LineSegment) {
-      const margin = 2;
       this.legend.origin.x = this.origin.x;
-      this.legend.origin.y = this.origin.y + margin;
+      this.legend.origin.y = this.origin.y + LEGEND_MARGIN;
       this.legend.end.x = this.origin.x + this.shapeSize.x;
-      this.legend.end.y = this.origin.y + this.shapeSize.y - margin;
+      this.legend.end.y = this.origin.y + this.shapeSize.y - LEGEND_MARGIN;
     }
     else if (this.legend instanceof newPoint2D) this.legend.center = this.origin.add(this.shapeSize.divide(2));
     else this.legend = new newRect(this.origin, this.shapeSize);

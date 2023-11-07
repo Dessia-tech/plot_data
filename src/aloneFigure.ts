@@ -87,7 +87,7 @@ export class AloneFigure {
   
     get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
   
-    set axisStyle(AxisStyle: Map<string, any>) { AxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
+    set axisStyle(newAxisStyle: Map<string, any>) { newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
   
     get axisStyle(): Map<string, any> { return this._axisStyle }
   

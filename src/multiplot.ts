@@ -4,7 +4,7 @@ import { Vertex, Shape } from "./shapes"
 import { SelectionBox } from "./shapedObjects"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { RubberBand } from "./axes"
-import { Scatter, Figure, Graph2D, Draw, ParallelPlot } from './figures';
+import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures';
 
 export class Multiplot {
   public context: CanvasRenderingContext2D;

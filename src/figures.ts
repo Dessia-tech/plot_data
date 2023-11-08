@@ -7,9 +7,9 @@ import { Vertex, LineSequence, Rect, Point, Shape } from "./shapes"
 import { ScatterPoint, Bar, SelectionBox } from "./shapedObjects"
 import { RubberBand, Axis, ParallelAxis } from "./axes";
 import { ShapeCollection, GroupCollection } from "./collections"
-import { AloneFigure } from "./aloneFigure";
+import { RemoteFigure } from "./remoteFigure";
 
-export class Figure extends AloneFigure {
+export class Figure extends RemoteFigure {
   constructor(
     data: any,
     public width: number,

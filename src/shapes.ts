@@ -3,7 +3,7 @@ import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, DEFAULT_SHAPE_COLO
   TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE, TOOLTIP_TEXT_OFFSET, INFINITE_LINE_FACTOR,
   CIRCLES, MARKERS, TRIANGLES, SQUARES, CROSSES, HALF_LINES, LEGEND_MARGIN } from "./constants";
 import { hslToArray, colorHsl } from "./colors";
-import { HatchingSet, PointStyle } from "./styles";
+import { Hatching, PointStyle } from "./styles";
 
 // TODO: There is some problem of circular imports. Shapes should be divided in two or three subclasses to get light files
 
@@ -82,7 +82,7 @@ export class Shape {
 
   public lineWidth: number = 1;
   public dashLine: number[] = [];
-  public hatching: HatchingSet;
+  public hatching: Hatching;
   public strokeStyle: string = null;
   public fillStyle: string = DEFAULT_SHAPE_COLOR;
   public hoverStyle: string = HOVERED_SHAPE_COLOR;
@@ -158,7 +158,7 @@ export class Shape {
   public deserializeSurfaceStyle(data: any): void {
     this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
     this.alpha = data.surface_style?.opacity ?? this.alpha;
-    this.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
+    this.hatching = data.surface_style?.hatching ? new Hatching("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
   }
 
   protected deserializeTooltip(data: any): void { if (data.tooltip) this.tooltipMap.set(data.tooltip, "") }

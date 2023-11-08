@@ -22,7 +22,7 @@ export class Figure extends RemoteFigure {
   ) {
     super(data, width, height, X, Y, canvasID, is_in_multiplot);
   }
-  
+
   public static fromMultiplot(data: any, width: number, height: number, canvasID: string): Figure {
     if (data.type_ == "histogram") return new Histogram(data, width, height, 0, 0, canvasID, true);
     else if (data.type_ == "parallelplot")return new ParallelPlot(data, width, height, 0, 0, canvasID, true);
@@ -248,7 +248,7 @@ export class Histogram extends Frame {
       super(data, width, height, X, Y, canvasID, is_in_multiplot);
       this.unpackBarStyle(data);
     }
-  
+
   get className(): string { return "Histogram" }
 
   get nXTicks() {return this._nXTicks ? this._nXTicks : 20}
@@ -438,7 +438,7 @@ export class Scatter extends Frame {
         this.computePoints();
       }
     }
-  
+
   get className(): string { return "Scatter" }
 
   get sampleDrawings(): ShapeCollection { return this.absoluteObjects }
@@ -745,7 +745,7 @@ export class Graph2D extends Scatter {
   }
 
   get className(): string { return "Graph2D" }
-  
+
   public updateSelection(axesSelections: number[][]): void {
     const inMultiplot = this.is_in_multiplot;
     this.is_in_multiplot = false;

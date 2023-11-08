@@ -153,4 +153,3 @@ export function sum(array: number[]): number {
   array.forEach(value => sum += value);
   return sum
 }
-  

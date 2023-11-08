@@ -116,7 +116,7 @@ export class Shape {
     style["alpha"] = this.alpha;
     return style
   }
-  
+
   public deserializeStyle(data: any): void {
     this.deserializeEdgeStyle(data);
     this.deserializeSurfaceStyle(data);
@@ -204,7 +204,7 @@ export class Shape {
               : 'hsl(0, 0%, 0%)';
     }
   }
-  
+
   public initTooltipOrigin(): void {}
 
   public buildPath(): void { }

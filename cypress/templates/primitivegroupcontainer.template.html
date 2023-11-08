@@ -46,7 +46,7 @@
             var height = Math.max(0.95*window.innerHeight, 350) - buttonsContainer.scrollHeight;
             var data = $data;
             var plot_data = new PlotData.PrimitiveGroupContainer(data, width, height, true, 0, 0, $canvas_id.id);
-            
+
             plot_data.setCanvas($canvas_id.id);
             plot_data.draw();
             plot_data.mouseListener();

@@ -4,7 +4,7 @@ import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
 import { EventEmitter } from "events"
-  
+
 export class TitleSettings {
   constructor(
     public origin: Vertex = null,

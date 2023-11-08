@@ -1,8 +1,9 @@
 import { MAX_LABEL_HEIGHT } from "./constants"
 import { colorHsl } from "./colors"
-import { Vertex, Shape } from "./base.shapes"
-import { Rect, LineSequence } from "./primitives.shapes"
-import { Label, Text, SelectionBox } from "./shapes.shapes"
+import { Vertex, Shape } from "./baseShape"
+import { Rect, LineSequence } from "./primitives"
+import { Label, Text, SelectionBox } from "./shapes"
+import { deserialize } from "./shapeFunctions"
 
 export class PointSet {
     public color: string;
@@ -33,7 +34,7 @@ export class ShapeCollection {
     public includes(shape: Shape) { return this.shapes.includes(shape) }
   
     public static fromPrimitives(primitives: { [key: string]: any }, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
-      return new ShapeCollection(primitives.map(primitive => Shape.deserialize(primitive, scale)))
+      return new ShapeCollection(primitives.map(primitive => deserialize(primitive, scale)))
     }
   
     public getBounds(): [Vertex, Vertex] {

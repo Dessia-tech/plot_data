@@ -45,7 +45,7 @@
     "@types/mocha": "^10.0.1",
     "@types/node": "^14.17.23",
     "browserify": "^17.0.0",
-    "cypress": "^12.4.1",
+    "cypress": "^12.17.4",
     "cypress-localstorage-commands": "^2.2.2",
     "cypress-real-events": "^1.7.6",
     "cypress-visual-regression": "^2.1.0",

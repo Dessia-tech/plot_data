@@ -2,6 +2,7 @@ import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, TOOLTIP_PRECISION,
   TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, SMALL_RUBBERBAND_SIZE } from "./constants"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
+import { styleToLegend } from "./shapeFunctions"
 import { Rect, RoundRect, Triangle, LineSegment, Point } from "./primitives"
 import { Axis } from "./axes"
 
@@ -404,8 +405,7 @@ export class Label extends Shape {
   }
 
   public getShapeStyle(shape: Shape, origin: Vertex): void {
-    // this.legend = shape.styleToLegend(origin, this.shapeSize);
-    this.legend = new Rect();
+    this.legend = styleToLegend(shape, origin, this.shapeSize);
     Object.entries(shape.drawingStyle).map(([key, value]) => this[key] = value);
   }
 
@@ -422,7 +422,6 @@ export class Label extends Shape {
 
   public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): Label {
     const textParams = Text.deserializeTextParams(data);
-    // const shape = data.shape ? Shape.deserialize(data.shape, scale) : new Rect();
     const text = new Text(data.title, new Vertex(0, 0), textParams);
     text.isScaled = false;
     text.baseline = "middle";

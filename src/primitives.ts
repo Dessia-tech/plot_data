@@ -627,14 +627,6 @@ export class Point extends Shape {
     this.markerOrientation = style.orientation ?? this.markerOrientation;
   }
 
-  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): Point {
-    const legend = new Point(legendOrigin.x, legendOrigin.y);
-    legend.size = legendSize.y * 0.9;
-    legend.marker = this.marker;
-    legend.markerOrientation = this.markerOrientation;
-    return legend
-  }
-
   public copy(): Point {
     const copy = new Point();
     copy.center = this.center.copy();

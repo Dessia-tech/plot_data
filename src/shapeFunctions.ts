@@ -20,7 +20,6 @@ export function deserialize(data: { [key: string]: any }, scale: Vertex): Shape 
   else if (data.type_ == "rectangle") shape = Rect.deserialize(data, scale);
   else if (data.type_ == "roundrectangle") shape = RoundRect.deserialize(data, scale);
   else throw new Error(`${data.type_} deserialization is not implemented.`);
-  console.log(shape, data)
   shape.deserializeStyle(data)
   return shape
 }
@@ -33,6 +32,14 @@ export function initializeTooltip(shape: Shape, context: CanvasRenderingContext2
 }
 
 export function styleToLegend(shape: Shape, legendOrigin: Vertex, legendSize: Vertex): Shape {
+  if (!shape) return new Rect();
+  if (shape instanceof Point) {
+    const legend = new Point(legendOrigin.x, legendOrigin.y);
+    legend.size = legendSize.y * 0.9;
+    legend.marker = shape.marker;
+    legend.markerOrientation = shape.markerOrientation;
+    return legend
+  }
   if (!shape.isFilled) return new LineSegment(legendOrigin.copy(), legendOrigin.add(legendSize))
   return new Rect(legendOrigin.copy(), legendSize);
 }

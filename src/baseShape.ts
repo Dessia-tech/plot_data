@@ -1,7 +1,6 @@
 import { DEFAULT_SHAPE_COLOR, HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED_SHAPE_COLOR, STROKE_STYLE_OFFSET } from "./constants"
 import { hslToArray, colorHsl } from "./colors"
 import { Hatching } from "./styles"
-import { deserialize, initializeTooltip, styleToLegend } from "./shapeFunctions"
 
 export class Vertex {
     constructor(public x: number = 0, public y: number = 0) { }
@@ -117,9 +116,7 @@ export class Vertex {
       style["alpha"] = this.alpha;
       return style
     }
-  
-    // public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): Shape { return styleToLegend(this, legendOrigin, legendSize) }
-  
+    
     public deserializeStyle(data: any): void {
       this.deserializeEdgeStyle(data);
       this.deserializeSurfaceStyle(data);

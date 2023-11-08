@@ -1,8 +1,9 @@
 import { SMALL_RUBBERBAND_SIZE, PICKABLE_BORDER_SIZE, SIZE_AXIS_END } from "./constants"
-import { uniqueValues } from "./functions";
-import { Vertex, Shape, Rect, TextParams, Text, Point } from "./shapes"
-import { EventEmitter } from "events";
-
+import { uniqueValues } from "./functions"
+import { Vertex, Shape } from "./base.shapes"
+import { Rect, Point } from "./primitives.shapes"
+import { TextParams, Text } from "./shapes.shapes"
+import { EventEmitter } from "events"
 // TODO: make rubberband a Shape ?
 export class RubberBand {
     public canvasMin: number = 0;

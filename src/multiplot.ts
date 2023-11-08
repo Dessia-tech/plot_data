@@ -1,10 +1,10 @@
 import { FIGURES_BLANK_SPACE, EMPTY_MULTIPLOT } from "./constants"
-import { equals, arrayDiff, arrayIntersection, range } from './functions';
-import { Vertex, Shape } from "./shapes"
-import { SelectionBox } from "./shapedObjects"
+import { equals, arrayDiff, arrayIntersection, range } from './functions'
+import { Vertex, Shape } from "./base.shapes"
+import { SelectionBox } from "./shapes.shapes"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { RubberBand } from "./axes"
-import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures';
+import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
 
 export class Multiplot {
   public context: CanvasRenderingContext2D;

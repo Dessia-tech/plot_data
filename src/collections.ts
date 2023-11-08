@@ -1,7 +1,8 @@
 import { MAX_LABEL_HEIGHT } from "./constants"
-import { colorHsl } from "./colors";
-import { Vertex, Shape, Rect, Text, LineSequence, Label } from "./shapes";
-import { SelectionBox } from "./shapedObjects";
+import { colorHsl } from "./colors"
+import { Vertex, Shape } from "./base.shapes"
+import { Rect, LineSequence } from "./primitives.shapes"
+import { Label, Text, SelectionBox } from "./shapes.shapes"
 
 export class PointSet {
     public color: string;

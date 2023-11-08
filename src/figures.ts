@@ -1,13 +1,14 @@
 import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_X, DEFAULT_SHAPE_COLOR, FREE_SPACE_FACTOR,
   DRAW_MARGIN_FACTOR, PG_CONTAINER_PLOT } from "./constants"
 import { range, mapMax, sum, argMax, normalizeArray, uniqueValues } from "./functions"
-import { colorHsl } from "./colors";
+import { colorHsl } from "./colors"
 import { PointStyle } from "./styles"
-import { Vertex, LineSequence, Rect, Point, Shape } from "./shapes"
-import { ScatterPoint, Bar, SelectionBox } from "./shapedObjects"
-import { RubberBand, Axis, ParallelAxis } from "./axes";
+import { Vertex, Shape } from "./base.shapes"
+import { Rect, Point, LineSequence } from "./primitives.shapes"
+import { ScatterPoint, Bar, SelectionBox } from "./shapes.shapes"
+import { RubberBand, Axis, ParallelAxis } from "./axes"
 import { ShapeCollection, GroupCollection } from "./collections"
-import { RemoteFigure } from "./remoteFigure";
+import { RemoteFigure } from "./remoteFigure"
 
 export class Figure extends RemoteFigure {
   constructor(

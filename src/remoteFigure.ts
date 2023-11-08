@@ -1,10 +1,11 @@
 import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_Y, MIN_OFFSET_X, ZOOM_FACTOR } from "./constants"
 import { intersectArrays } from "./functions"
-import { colorHsl } from "./colors";
+import { colorHsl } from "./colors"
 import { PointStyle } from "./styles"
-import { Vertex, Rect, Shape } from "./shapes"
-import { SelectionBox } from "./shapedObjects"
-import { RubberBand, Axis } from "./axes";
+import { Vertex, Shape } from "./base.shapes"
+import { Rect } from "./primitives.shapes"
+import { SelectionBox } from "./shapes.shapes"
+import { RubberBand, Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
 
 export class RemoteFigure {

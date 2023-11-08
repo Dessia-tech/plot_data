@@ -1,4 +1,4 @@
-export * from './aloneFigure';
+export * from './remoteFigure';
 export * from './axes';
 export * from "./collections";
 export * from "./colors";

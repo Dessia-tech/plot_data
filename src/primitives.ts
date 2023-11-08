@@ -3,491 +3,491 @@ import { Vertex, Shape } from "./baseShape"
 import { PointStyle } from "./styles"
 
 export class Arc extends Shape {
-    constructor(
-      public center: Vertex,
-      public radius: number,
-      public startAngle: number,
-      public endAngle: number,
-      public clockWise: boolean = true
-    ) {
-      super();
-      this.isFilled = false;
-      this.buildPath();
-    }
-  
-    public buildPath(): void {
-      this.path = new Path2D();
-      this.drawInContour(this.path);
-    }
-  
-    public drawInContour(path: Path2D): void {
-      path.arc(this.center.x, this.center.y, this.radius, this.startAngle, this.endAngle, this.clockWise);
-    }
-  
-    public static deserialize(data: any, scale: Vertex): Arc {
-      const arc = new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle, data.clockwise ?? true);
-      arc.deserializeEdgeStyle(data);
-      return arc
-    }
-  
-    public getBounds(): [Vertex, Vertex] {
-      return [
-        new Vertex(this.center.x - this.radius, this.center.y - this.radius),
-        new Vertex(this.center.x + this.radius, this.center.y + this.radius)
-      ]
-    }
+  constructor(
+    public center: Vertex,
+    public radius: number,
+    public startAngle: number,
+    public endAngle: number,
+    public clockWise: boolean = true
+  ) {
+    super();
+    this.isFilled = false;
+    this.buildPath();
   }
-  
-  export class Circle extends Arc {
-    constructor(
-      public center: Vertex = new Vertex(0, 0),
-      public radius: number = 1
-    ) {
-      super(center, radius, 0, 2 * Math.PI);
-      this.isFilled = true;
-    }
-  
-    public static deserialize(data: any, scale: Vertex): Circle {
-      const circle = new Circle(new Vertex(data.cx, data.cy), data.r);
-      circle.deserializeEdgeStyle(data);
-      circle.deserializeSurfaceStyle(data);
-      return circle
-    }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.drawInContour(this.path);
   }
-  
-  export class Rect extends Shape {
-    constructor(
-      public origin: Vertex = new Vertex(0, 0),
-      public size: Vertex = new Vertex(0, 0)
-    ) {
-      super();
-      this.buildPath();
-    }
-  
-    get area(): number { return this.size.x * this.size.y }
-  
-    public buildPath(): void {
-      this.path = new Path2D();
-      this.path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
-    }
-  
-    public static deserialize(data: any, scale: Vertex): Rect {
-      const rectangle = new Rect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height));
-      return rectangle
-    }
-  
-    public deserializeStyle
-  
-    public translate(translation: Vertex): void {
-      this.origin = this.origin.add(translation);
-      this.buildPath();
-    }
-  
-    public get center(): Vertex { return this.origin.add(this.size).scale(new Vertex(0.5, 0.5)) }
-  
-    public getBounds(): [Vertex, Vertex] { return [this.origin, this.origin.add(new Vertex(Math.abs(this.size.x), Math.abs(this.size.y)))] }
+
+  public drawInContour(path: Path2D): void {
+    path.arc(this.center.x, this.center.y, this.radius, this.startAngle, this.endAngle, this.clockWise);
   }
-  
-  export class RoundRect extends Rect {
-    constructor(
-      public origin: Vertex = new Vertex(0, 0),
-      public size: Vertex = new Vertex(0, 0),
-      public radius: number = 2
-    ) {
-      super();
-      this.buildPath();
-    }
-  
-    public buildPath(): void {
-      this.path = new Path2D();
-      const hLength = this.origin.x + this.size.x;
-      const vLength = this.origin.y + this.size.y;
-      this.path.moveTo(this.origin.x + this.radius, this.origin.y);
-      this.path.lineTo(hLength - this.radius, this.origin.y);
-      this.path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
-      this.path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
-      this.path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
-      this.path.lineTo(this.origin.x + this.radius, vLength);
-      this.path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
-      this.path.lineTo(this.origin.x, this.origin.y + this.radius);
-      this.path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
-    }
-  
-    public static deserialize(data: any, scale: Vertex): Rect {
-      const roundRectangle = new RoundRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height), data.radius);
-      return roundRectangle
-    }
+
+  public static deserialize(data: any, scale: Vertex): Arc {
+    const arc = new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle, data.clockwise ?? true);
+    arc.deserializeEdgeStyle(data);
+    return arc
   }
-  
-  export class Mark extends Shape {
-    constructor(
-      public center: Vertex = new Vertex(0, 0),
-      public size: number = 1
-    ) {
-      super();
-      this.isFilled = false;
-      this.buildPath();
-    }
-  
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x - halfSize, this.center.y);
-      this.path.lineTo(this.center.x + halfSize, this.center.y);
-      this.path.moveTo(this.center.x, this.center.y - halfSize);
-      this.path.lineTo(this.center.x, this.center.y + halfSize);
-    }
-  
-    public getBounds(): [Vertex, Vertex] {
-      const halfSize = this.size / 2;
-      const halfSizeVertex = new Vertex(halfSize, halfSize);
-      return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-    }
+
+  public getBounds(): [Vertex, Vertex] {
+    return [
+      new Vertex(this.center.x - this.radius, this.center.y - this.radius),
+      new Vertex(this.center.x + this.radius, this.center.y + this.radius)
+    ]
   }
-  
-  export abstract class AbstractHalfLine extends Shape {
-    constructor(
-      public center: Vertex = new Vertex(0, 0),
-      public size: number = 1,
-      public orientation: string = 'up'
-    ) {
-      super();
-      this.isFilled = false;
-      this.buildPath();
-    }
-  
-    public get drawingStyle(): { [key: string]: any } {
-      return { ...super.drawingStyle, "orientation": this.orientation }
-    }
-  
-    public getBounds(): [Vertex, Vertex] {
-      const halfSize = this.size / 2;
-      const halfSizeVertex = new Vertex(halfSize, halfSize);
-      return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-    }
+}
+
+export class Circle extends Arc {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public radius: number = 1
+  ) {
+    super(center, radius, 0, 2 * Math.PI);
+    this.isFilled = true;
   }
-  
-  export class UpHalfLine extends AbstractHalfLine {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x, this.center.y);
-      this.path.lineTo(this.center.x, this.center.y + halfSize);
-    }
+
+  public static deserialize(data: any, scale: Vertex): Circle {
+    const circle = new Circle(new Vertex(data.cx, data.cy), data.r);
+    circle.deserializeEdgeStyle(data);
+    circle.deserializeSurfaceStyle(data);
+    return circle
   }
-  
-  export class DownHalfLine extends AbstractHalfLine {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x, this.center.y);
-      this.path.lineTo(this.center.x, this.center.y - halfSize);
-    }
+}
+
+export class Rect extends Shape {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0)
+  ) {
+    super();
+    this.buildPath();
   }
-  
-  export class LeftHalfLine extends AbstractHalfLine {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x, this.center.y);
-      this.path.lineTo(this.center.x - halfSize, this.center.y);
-    }
+
+  get area(): number { return this.size.x * this.size.y }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
   }
-  
-  export class RightHalfLine extends AbstractHalfLine {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x, this.center.y);
-      this.path.lineTo(this.center.x + halfSize, this.center.y);
-    }
+
+  public static deserialize(data: any, scale: Vertex): Rect {
+    const rectangle = new Rect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height));
+    return rectangle
   }
-  
-  export class HalfLine extends AbstractHalfLine {
-    constructor(
-      public center: Vertex = new Vertex(0, 0),
-      public size: number = 1,
-      public orientation: string = 'up'
-    ) {
-      super(center, size, orientation);
-      this.buildPath();
-    }
-  
-    public buildPath(): void {
-      if (this.orientation == 'up') this.path = new UpHalfLine(this.center, this.size).path;
-      if (this.orientation == 'down') this.path = new DownHalfLine(this.center, this.size).path;
-      if (this.orientation == 'left') this.path = new LeftHalfLine(this.center, this.size).path;
-      if (this.orientation == 'right') this.path = new RightHalfLine(this.center, this.size).path;
-      if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation halfline ${this.orientation} is unknown.`);
-    }
+
+  public deserializeStyle
+
+  public translate(translation: Vertex): void {
+    this.origin = this.origin.add(translation);
+    this.buildPath();
   }
-  
-  export class Line extends Shape {
-    constructor(
-      public origin: Vertex = new Vertex(0, 0),
-      public end: Vertex = new Vertex(0, 0)
-    ) {
-      super();
-      this.isFilled = false;
-      this.buildPath();
-    }
-  
-    private computeSlope(): number {
-      return (this.end.y - this.origin.y) / (this.end.x - this.origin.x);
-    }
-  
-    private computeAffinity(slope: number): number {
-      return this.origin.y - slope * this.origin.x
-    }
-  
-    public getEquation(): [number, number] {
-      const slope = this.computeSlope();
-      const affinity = this.computeAffinity(slope);
-      return [slope, affinity]
-    }
-  
-    public static deserialize(data: any, scale: Vertex): Line { // TODO: Don't know how to factor this and the LineSegment one
-      const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-      return line
-    }
-  
-    public buildPath(): void {
-      const [slope, affinity] = this.getEquation();
-      if (this.end.x == this.origin.x) {
-        this.path = new LineSegment(new Vertex(this.origin.x, -this.end.y * INFINITE_LINE_FACTOR), new Vertex(this.origin.x, this.end.y * INFINITE_LINE_FACTOR)).path;
-      } else {
-        const fakeOrigin = new Vertex(-INFINITE_LINE_FACTOR, 0);
-        const fakeEnd = new Vertex(INFINITE_LINE_FACTOR, 0);
-        if (this.origin.x != 0) {
-          fakeOrigin.x *= this.origin.x;
-          fakeEnd.x *= this.origin.x;
-        }
-        fakeOrigin.y = fakeOrigin.x * slope + affinity;
-        fakeEnd.y = fakeEnd.x * slope + affinity;
-        this.path = new LineSegment(fakeOrigin, fakeEnd).path;
+
+  public get center(): Vertex { return this.origin.add(this.size).scale(new Vertex(0.5, 0.5)) }
+
+  public getBounds(): [Vertex, Vertex] { return [this.origin, this.origin.add(new Vertex(Math.abs(this.size.x), Math.abs(this.size.y)))] }
+}
+
+export class RoundRect extends Rect {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0),
+    public radius: number = 2
+  ) {
+    super();
+    this.buildPath();
+  }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    const hLength = this.origin.x + this.size.x;
+    const vLength = this.origin.y + this.size.y;
+    this.path.moveTo(this.origin.x + this.radius, this.origin.y);
+    this.path.lineTo(hLength - this.radius, this.origin.y);
+    this.path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
+    this.path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
+    this.path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
+    this.path.lineTo(this.origin.x + this.radius, vLength);
+    this.path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
+    this.path.lineTo(this.origin.x, this.origin.y + this.radius);
+    this.path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
+  }
+
+  public static deserialize(data: any, scale: Vertex): Rect {
+    const roundRectangle = new RoundRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height), data.radius);
+    return roundRectangle
+  }
+}
+
+export class Mark extends Shape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1
+  ) {
+    super();
+    this.isFilled = false;
+    this.buildPath();
+  }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y);
+    this.path.lineTo(this.center.x + halfSize, this.center.y);
+    this.path.moveTo(this.center.x, this.center.y - halfSize);
+    this.path.lineTo(this.center.x, this.center.y + halfSize);
+  }
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
+  }
+}
+
+export abstract class AbstractHalfLine extends Shape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super();
+    this.isFilled = false;
+    this.buildPath();
+  }
+
+  public get drawingStyle(): { [key: string]: any } {
+    return { ...super.drawingStyle, "orientation": this.orientation }
+  }
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
+  }
+}
+
+export class UpHalfLine extends AbstractHalfLine {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x, this.center.y);
+    this.path.lineTo(this.center.x, this.center.y + halfSize);
+  }
+}
+
+export class DownHalfLine extends AbstractHalfLine {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x, this.center.y);
+    this.path.lineTo(this.center.x, this.center.y - halfSize);
+  }
+}
+
+export class LeftHalfLine extends AbstractHalfLine {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x, this.center.y);
+    this.path.lineTo(this.center.x - halfSize, this.center.y);
+  }
+}
+
+export class RightHalfLine extends AbstractHalfLine {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x, this.center.y);
+    this.path.lineTo(this.center.x + halfSize, this.center.y);
+  }
+}
+
+export class HalfLine extends AbstractHalfLine {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super(center, size, orientation);
+    this.buildPath();
+  }
+
+  public buildPath(): void {
+    if (this.orientation == 'up') this.path = new UpHalfLine(this.center, this.size).path;
+    if (this.orientation == 'down') this.path = new DownHalfLine(this.center, this.size).path;
+    if (this.orientation == 'left') this.path = new LeftHalfLine(this.center, this.size).path;
+    if (this.orientation == 'right') this.path = new RightHalfLine(this.center, this.size).path;
+    if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation halfline ${this.orientation} is unknown.`);
+  }
+}
+
+export class Line extends Shape {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public end: Vertex = new Vertex(0, 0)
+  ) {
+    super();
+    this.isFilled = false;
+    this.buildPath();
+  }
+
+  private computeSlope(): number {
+    return (this.end.y - this.origin.y) / (this.end.x - this.origin.x);
+  }
+
+  private computeAffinity(slope: number): number {
+    return this.origin.y - slope * this.origin.x
+  }
+
+  public getEquation(): [number, number] {
+    const slope = this.computeSlope();
+    const affinity = this.computeAffinity(slope);
+    return [slope, affinity]
+  }
+
+  public static deserialize(data: any, scale: Vertex): Line { // TODO: Don't know how to factor this and the LineSegment one
+    const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    return line
+  }
+
+  public buildPath(): void {
+    const [slope, affinity] = this.getEquation();
+    if (this.end.x == this.origin.x) {
+      this.path = new LineSegment(new Vertex(this.origin.x, -this.end.y * INFINITE_LINE_FACTOR), new Vertex(this.origin.x, this.end.y * INFINITE_LINE_FACTOR)).path;
+    } else {
+      const fakeOrigin = new Vertex(-INFINITE_LINE_FACTOR, 0);
+      const fakeEnd = new Vertex(INFINITE_LINE_FACTOR, 0);
+      if (this.origin.x != 0) {
+        fakeOrigin.x *= this.origin.x;
+        fakeEnd.x *= this.origin.x;
       }
-    }
-  
-    public getBounds(): [Vertex, Vertex] {
-      const minX = Math.min(this.origin.x, this.end.x);
-      const minY = Math.min(this.origin.y, this.end.y);
-      const maxX = Math.max(this.origin.x, this.end.x);
-      const maxY = Math.max(this.origin.y, this.end.y);
-      return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
+      fakeOrigin.y = fakeOrigin.x * slope + affinity;
+      fakeEnd.y = fakeEnd.x * slope + affinity;
+      this.path = new LineSegment(fakeOrigin, fakeEnd).path;
     }
   }
-  
-  export class LineSegment extends Line {
-    constructor(
-      public origin: Vertex = new Vertex(0, 0),
-      public end: Vertex = new Vertex(0, 0)
-    ) {
-      super(origin, end);
-    }
-  
-    public buildPath(): void {
-      this.path = new Path2D();
-      this.path.moveTo(this.origin.x, this.origin.y);
-      this.drawInContour(this.path);
-    }
-  
-    public static deserialize(data: any, scale: Vertex): LineSegment {
-      const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-      line.deserializeEdgeStyle(data);
-      return line
-    }
-  
-    public drawInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
+
+  public getBounds(): [Vertex, Vertex] {
+    const minX = Math.min(this.origin.x, this.end.x);
+    const minY = Math.min(this.origin.y, this.end.y);
+    const maxX = Math.max(this.origin.x, this.end.x);
+    const maxY = Math.max(this.origin.y, this.end.y);
+    return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
   }
-  
-  export abstract class AbstractLinePoint extends Shape {
-    constructor(
-      public center: Vertex = new Vertex(0, 0),
-      public size: number = 1,
-      public orientation: string = 'up'
-    ) {
-      super();
-      this.isFilled = false;
-      this.buildPath();
-    }
-  
-    public get drawingStyle(): { [key: string]: any } {
-      return { ...super.drawingStyle, "orientation": this.orientation }
-    }
-  
-    public getBounds(): [Vertex, Vertex] {
-      const halfSize = this.size / 2;
-      const halfSizeVertex = new Vertex(halfSize, halfSize);
-      return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-    }
+}
+
+export class LineSegment extends Line {
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public end: Vertex = new Vertex(0, 0)
+  ) {
+    super(origin, end);
   }
-  
-  export class VerticalLinePoint extends AbstractLinePoint {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x, this.center.y - halfSize);
-      this.path.lineTo(this.center.x, this.center.y + halfSize);
-    }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    this.path.moveTo(this.origin.x, this.origin.y);
+    this.drawInContour(this.path);
   }
-  
-  export class HorizontalLinePoint extends AbstractLinePoint {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x - halfSize, this.center.y);
-      this.path.lineTo(this.center.x + halfSize, this.center.y);
-    }
+
+  public static deserialize(data: any, scale: Vertex): LineSegment {
+    const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    line.deserializeEdgeStyle(data);
+    return line
   }
-  
-  export class PositiveLinePoint extends AbstractLinePoint {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-      this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-    }
+
+  public drawInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
+}
+
+export abstract class AbstractLinePoint extends Shape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super();
+    this.isFilled = false;
+    this.buildPath();
   }
-  
-  export class NegativeLinePoint extends AbstractLinePoint {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
-      this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
-    }
+
+  public get drawingStyle(): { [key: string]: any } {
+    return { ...super.drawingStyle, "orientation": this.orientation }
   }
-  
-  export class LinePoint extends AbstractLinePoint {
-    constructor(
-      public center: Vertex = new Vertex(0, 0),
-      public size: number = 1,
-      public orientation: string = 'vertical'
-    ) {
-      super(center, size, orientation);
-      this.buildPath();
-    }
-  
-    public buildPath(): void {
-      if (this.orientation == 'vertical') this.path = new VerticalLinePoint(this.center, this.size).path;
-      if (this.orientation == 'horizontal') this.path = new HorizontalLinePoint(this.center, this.size).path;
-      if (['slash', 'positive'].includes(this.orientation)) this.path = new PositiveLinePoint(this.center, this.size).path;
-      if (['backslash', 'negative'].includes(this.orientation)) this.path = new NegativeLinePoint(this.center, this.size).path;
-      if (!['vertical', 'horizontal', 'slash', 'backslash', 'positive', 'negative'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
-    }
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
   }
-  
-  export class Cross extends Shape {
-    constructor(
-      public center: Vertex = new Vertex(0, 0),
-      public size: number = 1
-    ) {
-      super();
-      this.isFilled = false;
-      this.buildPath();
-    }
-  
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-      this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-      this.path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
-      this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
-    }
-  
-    public getBounds(): [Vertex, Vertex] {
-      const halfSize = this.size / 2;
-      const halfSizeVertex = new Vertex(halfSize, halfSize);
-      return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-    }
+}
+
+export class VerticalLinePoint extends AbstractLinePoint {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x, this.center.y - halfSize);
+    this.path.lineTo(this.center.x, this.center.y + halfSize);
   }
-  
-  export abstract class AbstractTriangle extends Shape {
-    constructor(
-      public center: Vertex = new Vertex(0, 0),
-      public size: number = 1,
-      public orientation: string = 'up'
-    ) {
-      super();
-      this.buildPath();
-    }
-  
-    public get drawingStyle(): { [key: string]: any } {
-      return { ...super.drawingStyle, "orientation": this.orientation }
-    }
-  
-    public abstract buildPath(): void;
-  
-    public getBounds(): [Vertex, Vertex] {
-      const halfSize = this.size / 2;
-      const halfSizeVertex = new Vertex(halfSize, halfSize);
-      return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-    }
+}
+
+export class HorizontalLinePoint extends AbstractLinePoint {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y);
+    this.path.lineTo(this.center.x + halfSize, this.center.y);
   }
-  
-  export class UpTriangle extends AbstractTriangle {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-      this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
-      this.path.lineTo(this.center.x, this.center.y + halfSize);
-      this.path.closePath();
-    }
+}
+
+export class PositiveLinePoint extends AbstractLinePoint {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
   }
-  
-  export class DownTriangle extends AbstractTriangle {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
-      this.path.lineTo(this.center.x, this.center.y - halfSize);
-      this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-      this.path.closePath();
-    }
+}
+
+export class NegativeLinePoint extends AbstractLinePoint {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
   }
-  
-  export class LeftTriangle extends AbstractTriangle {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
-      this.path.lineTo(this.center.x - halfSize, this.center.y);
-      this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-      this.path.closePath();
-    }
+}
+
+export class LinePoint extends AbstractLinePoint {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'vertical'
+  ) {
+    super(center, size, orientation);
+    this.buildPath();
   }
-  
-  export class RightTriangle extends AbstractTriangle {
-    public buildPath(): void {
-      this.path = new Path2D();
-      const halfSize = this.size / 2;
-      this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-      this.path.lineTo(this.center.x + halfSize, this.center.y);
-      this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-      this.path.closePath();
-    }
+
+  public buildPath(): void {
+    if (this.orientation == 'vertical') this.path = new VerticalLinePoint(this.center, this.size).path;
+    if (this.orientation == 'horizontal') this.path = new HorizontalLinePoint(this.center, this.size).path;
+    if (['slash', 'positive'].includes(this.orientation)) this.path = new PositiveLinePoint(this.center, this.size).path;
+    if (['backslash', 'negative'].includes(this.orientation)) this.path = new NegativeLinePoint(this.center, this.size).path;
+    if (!['vertical', 'horizontal', 'slash', 'backslash', 'positive', 'negative'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
   }
-  
-  export class Triangle extends AbstractTriangle {
-    constructor(
-      public center: Vertex = new Vertex(0, 0),
-      public size: number = 1,
-      public orientation: string = 'up'
-    ) {
-      super();
-      this.buildPath();
-    }
-  
-    public buildPath(): void {
-      if (this.orientation == 'up') this.path = new UpTriangle(this.center, this.size).path
-      if (this.orientation == 'down') this.path = new DownTriangle(this.center, this.size).path
-      if (this.orientation == 'right') this.path = new RightTriangle(this.center, this.size).path
-      if (this.orientation == 'left') this.path = new LeftTriangle(this.center, this.size).path
-      if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
-    }
+}
+
+export class Cross extends Shape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1
+  ) {
+    super();
+    this.isFilled = false;
+    this.buildPath();
   }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+    this.path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
+  }
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
+  }
+}
+
+export abstract class AbstractTriangle extends Shape {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super();
+    this.buildPath();
+  }
+
+  public get drawingStyle(): { [key: string]: any } {
+    return { ...super.drawingStyle, "orientation": this.orientation }
+  }
+
+  public abstract buildPath(): void;
+
+  public getBounds(): [Vertex, Vertex] {
+    const halfSize = this.size / 2;
+    const halfSizeVertex = new Vertex(halfSize, halfSize);
+    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
+  }
+}
+
+export class UpTriangle extends AbstractTriangle {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x, this.center.y + halfSize);
+    this.path.closePath();
+  }
+}
+
+export class DownTriangle extends AbstractTriangle {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
+    this.path.lineTo(this.center.x, this.center.y - halfSize);
+    this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
+    this.path.closePath();
+  }
+}
+
+export class LeftTriangle extends AbstractTriangle {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x - halfSize, this.center.y);
+    this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
+    this.path.closePath();
+  }
+}
+
+export class RightTriangle extends AbstractTriangle {
+  public buildPath(): void {
+    this.path = new Path2D();
+    const halfSize = this.size / 2;
+    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
+    this.path.lineTo(this.center.x + halfSize, this.center.y);
+    this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
+    this.path.closePath();
+  }
+}
+
+export class Triangle extends AbstractTriangle {
+  constructor(
+    public center: Vertex = new Vertex(0, 0),
+    public size: number = 1,
+    public orientation: string = 'up'
+  ) {
+    super();
+    this.buildPath();
+  }
+
+  public buildPath(): void {
+    if (this.orientation == 'up') this.path = new UpTriangle(this.center, this.size).path
+    if (this.orientation == 'down') this.path = new DownTriangle(this.center, this.size).path
+    if (this.orientation == 'right') this.path = new RightTriangle(this.center, this.size).path
+    if (this.orientation == 'left') this.path = new LeftTriangle(this.center, this.size).path
+    if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
+  }
+}
 
 export class Contour extends Shape {
   constructor(
@@ -672,12 +672,6 @@ export class Point extends Shape {
 
   protected updateTooltipOrigin(matrix: DOMMatrix): void { this.tooltipOrigin = this.center.copy() }
 
-  // public initTooltip(context: CanvasRenderingContext2D): Tooltip {
-  //   const tooltip = super.initTooltip(context);
-  //   tooltip.isFlipper = true;
-  //   return tooltip
-  // }
-
   get markerOrientation(): string { return this._markerOrientation };
 
   set markerOrientation(value: string) { this._markerOrientation = value };
@@ -751,11 +745,6 @@ export class LineSequence extends Shape {
   public initTooltipOrigin(): void {
     if (!this.tooltipOrigin) this.tooltipOrigin = this.points[Math.floor(this.points.length / 2)].center;
   }
-
-  // public initTooltip(context: CanvasRenderingContext2D): Tooltip {
-  //   if (!this.tooltipOrigin) this.tooltipOrigin = this.points[Math.floor(this.points.length / 2)].center;
-  //   return super.initTooltip(context);
-  // }
 
   public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf Text)
     let minX = Number.POSITIVE_INFINITY;

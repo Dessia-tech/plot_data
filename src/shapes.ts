@@ -700,11 +700,7 @@ export class Bar extends Rect {
     return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
   }
 
-  public initTooltip(context: CanvasRenderingContext2D): Tooltip {
-    const tooltip = new Tooltip(this.tooltipOrigin, this.tooltipMap, context);
-    tooltip.isFlipper = false;
-    return tooltip
-  }
+  get tooltipFlip(): boolean { return false }
 
   public setGeometry(origin: Vertex, size: Vertex): void {
     this.origin = origin;

@@ -31,6 +31,13 @@ export function initializeTooltip(shape: Shape, context: CanvasRenderingContext2
   return tooltip
 }
 
+export function drawTooltip(shape: Shape, plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
+  if (shape.isClicked && shape.tooltipMap.size != 0) {
+    const tooltip = initializeTooltip(shape, context);
+    tooltip.draw(plotOrigin, plotSize, context);
+  }
+}
+
 export function styleToLegend(shape: Shape, legendOrigin: Vertex, legendSize: Vertex): Shape {
   if (!shape) return new Rect();
   if (shape instanceof Point) {

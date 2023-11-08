@@ -189,12 +189,12 @@ export class Vertex {
   
     public initTooltipOrigin(): void {}
 
-    public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
-      // if (this.isClicked && this.tooltipMap.size != 0) {
-      //   const tooltip = initializeTooltip(this, context);
-      //   tooltip.draw(plotOrigin, plotSize, context);
-      // }
-    }
+    // public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
+    //   // if (this.isClicked && this.tooltipMap.size != 0) {
+    //   //   const tooltip = initializeTooltip(this, context);
+    //   //   tooltip.draw(plotOrigin, plotSize, context);
+    //   // }
+    // }
   
     public buildPath(): void { }
   

@@ -3,7 +3,7 @@ import { colorHsl } from "./colors"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, LineSequence } from "./primitives"
 import { Label, Text, SelectionBox } from "./shapes"
-import { deserialize } from "./shapeFunctions"
+import { deserialize, drawTooltip } from "./shapeFunctions"
 
 export class PointSet {
     public color: string;
@@ -51,7 +51,7 @@ export class ShapeCollection {
     }
   
     public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
-      this.shapes.forEach(shape => { if (!inMultiPlot && shape.inFrame) shape.drawTooltip(canvasOrigin, canvasSize, context) });
+      this.shapes.forEach(shape => { if (!inMultiPlot && shape.inFrame) drawTooltip(shape, canvasOrigin, canvasSize, context) });
     }
   
     public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
@@ -140,7 +140,7 @@ export class ShapeCollection {
     public shapeIsContainer(shape: any): boolean { return shape.values?.length > 1 || shape instanceof LineSequence }
   
     public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
-      this.shapes.forEach(shape => { if ((this.shapeIsContainer(shape) || !inMultiPlot) && shape.inFrame) shape.drawTooltip(canvasOrigin, canvasSize, context) });
+      this.shapes.forEach(shape => { if ((this.shapeIsContainer(shape) || !inMultiPlot) && shape.inFrame) drawTooltip(shape, canvasOrigin, canvasSize, context) });
     }
   
     public updateShapeStates(stateName: string): number[] {

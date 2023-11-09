@@ -6,7 +6,7 @@ import { colorHsl } from "./color_conversion";
 
 // All following rows are purely deleted
 // var alert_count = 0;
-// /** 
+// /**
 //  * A class that inherits from PlotData and is specific for drawing PrimitiveGroups.
 //  */
 // export class PlotContour extends PlotData {
@@ -28,7 +28,7 @@ import { colorHsl } from "./color_conversion";
 //       this.plot_datas = [];
 //       this.type_ = 'primitivegroup';
 //       var d = this.data;
-//       if (d['type_'] == 'primitivegroup') { 
+//       if (d['type_'] == 'primitivegroup') {
 //         var a = PrimitiveGroup.deserialize(d);
 //         this.plot_datas.push(a);
 //         let multiple_labels_index = -1;
@@ -50,19 +50,19 @@ import { colorHsl } from "./color_conversion";
 //           a.primitives = List.move_elements(multiple_labels_index, a.primitives.length - 1, a.primitives);
 //         }
 //       }
-  
+
 //       if (buttons_ON) this.refresh_buttons_coords();
 //       this.plotObject = this.plot_datas[0];
 //       this.isParallelPlot = false;
 //       this.interaction_ON = true;
 //     }
-  
+
 //     draw() {
 //       this.draw_from_context(true);
 //       this.draw_from_context(false);
-  
+
 //     }
-  
+
 //     draw_from_context(hidden) {
 //       this.define_context(hidden);
 //       this.context.save();
@@ -76,27 +76,27 @@ import { colorHsl } from "./color_conversion";
 //         let d = this.plot_datas[i];
 //         this.draw_primitivegroup(hidden, this.originX, this.originY, this.scaleX, this.scaleY, d);
 //       }
-  
+
 //       if (this.dep_mouse_over) {
 //         this.draw_mouse_over_rect();
 //       } else if (this.multiplot_manipulation) {
 //         this.draw_manipulable_rect();
 //       }
-      
+
 //       if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
 //         this.draw_zoom_rectangle();
 //       }
 //       this.context.restore();
-  
+
 //       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
-  
+
 //         this.refresh_buttons_coords();
 //         //Drawing the zooming button
 //         Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
-  
+
 //         //Drawing the button for zooming window selection
 //         Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
-  
+
 //         //Drawing the reset button
 //         Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
 //       }
@@ -105,7 +105,7 @@ import { colorHsl } from "./color_conversion";
 
 
 
-// /** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds 
+// /** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds
 //  */
 // export class PlotScatter extends PlotData {
 //     public constructor(public data:any,
@@ -123,7 +123,7 @@ import { colorHsl } from "./color_conversion";
 //         }
 //         if (this.buttons_ON) {
 //           this.refresh_buttons_coords();
-//         }        
+//         }
 //         this.log_scale_x = data['log_scale_x'];
 //         this.log_scale_y = data['log_scale_y'];
 //         if (data['type_'] == 'graph2d') {
@@ -157,12 +157,12 @@ import { colorHsl } from "./color_conversion";
 //           // merge_alert();
 //         }
 //     }
-  
+
 //     draw() {
 //       this.draw_from_context(false);
 //       this.draw_from_context(true);
 //     }
-  
+
 //     draw_from_context(hidden) {
 //       this.define_context(hidden);
 //       this.context.save();
@@ -180,33 +180,33 @@ import { colorHsl } from "./color_conversion";
 //       if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
 //         this.draw_zoom_rectangle();
 //       }
-  
+
 //       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
 //         this.refresh_buttons_coords();
-  
+
 //         //Drawing the zooming button
 //         Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
-  
+
 //         //Drawing the button for zooming window selection
 //         Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
-  
+
 //         //Drawing the reset button
 //         Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
-  
+
 //         //Drawing the selection button
 //         Buttons.selection_button(this.button_x, this.select_y, this.button_w, this.button_h, this);
-  
+
 //         //Drawing the enable/disable graph button
 //         Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
-  
+
 //         if (this.plotObject.type_ == 'scatterplot') {
 //           // TODO To check, 'this' in args is weird
 //           Buttons.merge_button(this.button_x, this.merge_y, this.button_w, this.button_h, '10px Arial', this);
 //         }
-  
+
 //         //draw permanent window button
 //         Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
-  
+
 //         //draw clear point button
 //         Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
 
@@ -270,21 +270,21 @@ import { colorHsl } from "./color_conversion";
 //       this.initialize_display_list_to_elements_dict();
 //       this.refresh_pp_selected();
 //     }
-  
+
 //     refresh_pp_buttons_coords() {
 //       this.disp_x = this.width - 35;
 //       this.disp_y = this.height - 25;
 //       this.disp_w = 30;
 //       this.disp_h = 20;
 //     }
-  
+
 //     initialize_display_list_to_elements_dict() {
 //       this.display_list_to_elements_dict = {};
 //       for (let i=0; i<this.elements.length; i++) {
 //         this.display_list_to_elements_dict[i.toString()] = i;
 //       }
 //     }
-  
+
 //     initialize_all_attributes() {
 //       var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
 //       var exceptions = ['name', 'package_version', 'object_class'];
@@ -296,7 +296,7 @@ import { colorHsl } from "./color_conversion";
 //         }
 //       }
 //     }
-  
+
 //     initialize_attributes_list() { //Initialize 'list' and 'alias' of all_attributes's elements'
 //       for (var i=0; i<this.all_attributes.length; i++) {
 //         var attribute_name = this.all_attributes[i]['name'];
@@ -331,13 +331,13 @@ import { colorHsl } from "./color_conversion";
 //         }
 //       }
 //     }
-  
+
 //     draw_initial() {
 //       this.init_scale = 1;
 //       this.originX = 0;
 //       this.draw();
 //     }
-  
+
 //     draw() {
 //       this.refresh_axis_bounds(this.axis_list.length);
 //       this.context = this.context_show;
@@ -361,18 +361,18 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       this.context.restore();
 //     }
-  
-  
+
+
 //     draw_from_context(hidden) {};
-  
-  
+
+
 //     initialize_data_lists() {
 //       for (let i=0; i<this.axis_list.length; i++) {
 //         this.inverted_axis_list.push(false);
 //         this.rubber_bands.push([]);
 //       }
 //     }
-  
+
 //     initialize_hexs() {
 //       this.hexs = [];
 //       this.interpolation_colors.forEach(rgb => {
@@ -390,7 +390,7 @@ import { colorHsl } from "./color_conversion";
 //     layout_attributes:Attribute[]=[];
 //     selected_primitive:number=-1;
 //     custom_sizes:boolean=false;
-  
+
 //     constructor(public data:any,
 //                 public width: number,
 //                 public height: number,
@@ -416,27 +416,27 @@ import { colorHsl } from "./color_conversion";
 //         this.display_order.push(i);
 //       }
 //     }
-  
-  
+
+
 //     define_canvas(canvas_id) {
 //       super.define_canvas(canvas_id);
 //       this.initialize_primitive_groups_contexts();
 //     }
-  
+
 //     initialize_primitive_groups_contexts() {
 //       for (let i=0; i<this.primitive_groups.length; i++) {
 //         this.primitive_groups[i].context_hidden = this.context_hidden;
 //         this.primitive_groups[i].context_show = this.context_show;
 //       }
 //     }
-  
+
 //     reinitialize_all() {
 //       this.elements_dict = {};
 //       this.primitive_dict = {};
 //       this.primitive_groups = [];
 //       this.display_order = [];
 //     }
-  
+
 //     refresh_buttons_coords() {
 //       this.button_w = 40;
 //       this.button_h = 20;
@@ -444,14 +444,14 @@ import { colorHsl } from "./color_conversion";
 //       this.manip_button_x = 5 + this.X;
 //       this.reset_button_x = this.manip_button_x + this.button_w + 5;
 //     }
-  
+
 //     draw_buttons() {
 //       this.refresh_buttons_coords();
 //       this.draw_manipulation_button();
 //       this.draw_reset_button();
 //     }
-  
-  
+
+
 //     draw_manipulation_button() {
 //       if (this.manipulation_bool) {
 //         Shape.createButton(this.manip_button_x, this.button_y, this.button_w, this.button_h, this.context, 'ON', '10px sans-serif');
@@ -459,11 +459,11 @@ import { colorHsl } from "./color_conversion";
 //         Shape.createButton(this.manip_button_x, this.button_y, this.button_w, this.button_h, this.context, 'OFF', '10px sans-serif');
 //       }
 //     }
-  
+
 //     draw_reset_button() {
 //       Shape.createButton(this.reset_button_x, this.button_y, this.button_w, this.button_h, this.context, 'reset', '10px sans-serif');
 //     }
-  
+
 //     click_on_button_check(mouse1X, mouse1Y) {
 //       if (Shape.isInRect(mouse1X, mouse1Y, this.manip_button_x, this.button_y, this.button_w, this.button_h)) {
 //         this.click_on_manipulation_action();
@@ -471,7 +471,7 @@ import { colorHsl } from "./color_conversion";
 //         this.reset_action();
 //       }
 //     }
-  
+
 //     click_on_manipulation_action() {
 //       this.manipulation_bool = !this.manipulation_bool;
 //       for (let i=0; i<this.primitive_groups.length; i++) {
@@ -481,7 +481,7 @@ import { colorHsl } from "./color_conversion";
 //         this.setAllInteractionsToOff();
 //       }
 //     }
-  
+
 //     reset_action() {
 //       if (this.primitive_groups.length !== 0) {
 //         if (this.layout_mode == 'regular') {
@@ -491,7 +491,7 @@ import { colorHsl } from "./color_conversion";
 //         }
 //       }
 //     }
-  
+
 //     reset_sizes() {
 //       var nb_primitives = this.primitive_groups.length;
 //       if (!this.custom_sizes) {
@@ -501,7 +501,7 @@ import { colorHsl } from "./color_conversion";
 //         } else {
 //           primitive_width = this.width/nb_primitives;
 //           primitive_height = this.height/nb_primitives;
-//         } 
+//         }
 //       }
 //       for (let i=0; i<nb_primitives; i++) {
 //         let center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
@@ -517,7 +517,7 @@ import { colorHsl } from "./color_conversion";
 //         this.primitive_groups[i].Y = center_y - this.primitive_groups[i].height/2;
 //       }
 //     }
-  
+
 //     refresh_MinMax() {
 //       this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
 //       for (let primitive of this.primitive_groups) {
@@ -527,7 +527,7 @@ import { colorHsl } from "./color_conversion";
 //         this.maxY = Math.max(this.maxY, primitive.Y + primitive.height);
 //       }
 //     }
-  
+
 //     refresh_spacing() {
 //       var zoom_coeff_x = (this.width - this.decalage_axis_x)/(this.maxX - this.minX);
 //       var container_center_x = this.X + this.width/2;
@@ -540,8 +540,8 @@ import { colorHsl } from "./color_conversion";
 //       this.originX = this.width/2 + zoom_coeff_x * (this.originX - this.width/2);
 //       this.scroll_x = 0;
 //       this.refresh_MinMax();
-      
-  
+
+
 //       if (this.layout_mode === 'two_axis') { // Then the algo does the same with the y-axis
 //         let zoom_coeff_y = (this.height - this.decalage_axis_y)/(this.maxY - this.minY);
 //         var container_center_y = this.Y + this.height/2;
@@ -554,10 +554,10 @@ import { colorHsl } from "./color_conversion";
 //         this.originY = this.height/2 + zoom_coeff_y * (this.originY - this.height/2);
 //         this.scroll_y = 0;
 //       }
-      
+
 //       this.resetAllObjects();
 //     }
-  
+
 //     translate_inside_canvas() {
 //       if (this.layout_mode == 'one_axis') {
 //         this.translateAllPrimitives(-this.minX + this.X, this.height/2 - this.minY + this.Y);
@@ -566,7 +566,7 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       this.draw();
 //     }
-  
+
 //     reset_scales() {
 //       this.reset_sizes();
 //       if (this.primitive_groups.length >= 2) {
@@ -579,13 +579,13 @@ import { colorHsl } from "./color_conversion";
 //       this.refresh_MinMax();
 //       this.translate_inside_canvas();
 //     }
-  
+
 //     draw_initial() {
 //       for (let i=0; i<this.primitive_groups.length; i++) {
 //         this.primitive_groups[i].draw_initial();
 //       }
 //     }
-  
+
 //     draw() {
 //       if (this.clickedPlotIndex != -1) {
 //         let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
@@ -605,22 +605,22 @@ import { colorHsl } from "./color_conversion";
 //           this.primitive_groups[index].draw();
 //         }
 //       }
-  
-//       if (this.multiplot_manipulation) { 
-//         this.draw_manipulable_rect(); 
-//       } else { 
+
+//       if (this.multiplot_manipulation) {
+//         this.draw_manipulable_rect();
+//       } else {
 //         this.context.strokeStyle = this.initial_rect_color_stroke;
 //         this.context.lineWidth = this.initial_rect_line_width;
-//         this.context.strokeRect(this.X, this.Y, this.width, this.height); 
+//         this.context.strokeRect(this.X, this.Y, this.width, this.height);
 //       }
 //       if (this.buttons_ON) { this.draw_buttons(); }
 //       this.context.restore();
 //     }
-  
-  
+
+
 //     draw_from_context(hidden) {}
-  
-  
+
+
 //     redraw_object() {
 //       this.store_datas();
 //       this.draw_empty_canvas(this.context);
@@ -635,7 +635,7 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       if (this.buttons_ON) { this.draw_buttons(); }
 //     }
-  
+
 //     store_datas() {
 //       this.shown_datas = []; this.hidden_datas = [];
 //       for (let i=0; i<this.primitive_groups.length; i++) {
@@ -644,7 +644,7 @@ import { colorHsl } from "./color_conversion";
 //         this.hidden_datas.push(this.context_hidden.getImageData(obj.X, obj.Y, obj.width, obj.height));
 //       }
 //     }
-  
+
 //     draw_coordinate_lines() {
 //       this.context.lineWidth = 0.5;
 //       this.context.setLineDash([5,5]);
@@ -665,23 +665,23 @@ import { colorHsl } from "./color_conversion";
 //       this.context.stroke();
 //       this.context.setLineDash([]);
 //     }
-  
-  
+
+
 //     /**
 //      * Calls the layout function of a PrimitiveGroupContainer whose layout_mode and axis are already set.
 //      */
-//     refresh_layout() { 
+//     refresh_layout() {
 //       if (this.layout_mode === 'one_axis') {
 //         this.multiplot_one_axis_layout(this.layout_attributes[0]);
 //       } else if (this.layout_mode === 'two_axis') {
 //         this.multiplot_two_axis_layout(this.layout_attributes);
 //       }
 //     }
-  
-  
+
+
 //     add_primitive_group(serialized, point_index) {
 //       var new_plot_data = new PlotContour(serialized, 560, 300, this.buttons_ON, this.X, this.Y, this.canvas_id);
-//       new_plot_data.context_hidden = this.context_hidden; 
+//       new_plot_data.context_hidden = this.context_hidden;
 //       new_plot_data.context_show = this.context_show;
 //       this.primitive_groups.push(new_plot_data);
 //       this.display_order.push(this.primitive_groups.length - 1);
@@ -692,9 +692,9 @@ import { colorHsl } from "./color_conversion";
 //       this.refresh_layout();
 //       this.reset_action();
 //       this.draw();
-//     } 
-  
-  
+//     }
+
+
 //     remove_primitive_group(point_index) {
 //       var primitive_index = this.primitive_dict[point_index.toString()];
 //       this.primitive_groups = List.remove_at_index(primitive_index, this.primitive_groups);
@@ -722,15 +722,15 @@ import { colorHsl } from "./color_conversion";
 //       this.reset_action();
 //       this.draw();
 //     }
-  
-  
+
+
 //     setAllInteractionsToOff() {
 //       for (let i=0; i<this.primitive_groups.length; i++) {
 //         this.primitive_groups[i].interaction_ON = false;
 //       }
 //     }
-  
-  
+
+
 //     manage_mouse_interactions(selected_primitive:number):void {
 //       for (let i=0; i<this.primitive_groups.length; i++) {
 //         if (i == selected_primitive) {
@@ -740,8 +740,8 @@ import { colorHsl } from "./color_conversion";
 //         }
 //       }
 //     }
-  
-  
+
+
 //     get_selected_primitive(mouse2X, mouse2Y) {
 //       var selected_index = -1;
 //       for (let index of this.display_order) {
@@ -752,26 +752,26 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       return selected_index;
 //     }
-  
-  
+
+
 //     draw_layout_axis() {
 //       if (this.primitive_groups.length !== 0) {
 //         if (this.layout_mode == 'one_axis') {
 //           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
-//               this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, 
+//               this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x,
 //               this.decalage_axis_y, this.X, this.Y, this.width);
 //         } else if (this.layout_mode == 'two_axis') {
 //           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
 //             this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
-  
+
 //           this.layout_axis.draw_sc_vertical_axis(this.context, this.originY, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
 //             this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.height);
-  
+
 //         }
 //       }
 //     }
-  
-  
+
+
 //     regular_layout():void {
 //       var big_coord = 'X';
 //       var small_coord = 'Y';
@@ -807,8 +807,8 @@ import { colorHsl } from "./color_conversion";
 //       this.resetAllObjects();
 //       this.draw();
 //     }
-  
-  
+
+
 //     getSortedList() {
 //       var big_coord = 'X';
 //       var small_coord = 'Y';
@@ -819,7 +819,7 @@ import { colorHsl } from "./color_conversion";
 //       var nb_primitives = this.primitive_groups.length;
 //       for (let i=0; i<nb_primitives; i++) {
 //         let sorted_index = List.get_index_of_element(sortedObjectList[i], this.primitive_groups);
-//         sorted_list.push(sorted_index); 
+//         sorted_list.push(sorted_index);
 //       }
 //       var sortedDisplayedObjectList = [];
 //       for (let i=0; i<sorted_list.length; i++) {
@@ -834,7 +834,7 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       return sorted_list;
 //     }
-  
+
 //     initialize_list(attribute:Attribute) {
 //       var elements_dict_values = Object.values(this.elements_dict);
 //       var value = [];
@@ -875,18 +875,18 @@ import { colorHsl } from "./color_conversion";
 //           }
 //         }
 //         return value;
-//       } 
+//       }
 //     }
-  
+
 //     is_element_dict_empty() {
 //       return Object.keys(this.elements_dict).length === 0;
 //     }
-  
+
 //     multiplot_one_axis_layout(attribute:Attribute) {
 //       this.refresh_one_axis_layout_list(attribute);
 //       this.one_axis_layout();
 //     }
-  
+
 //     refresh_one_axis_layout_list(attribute:Attribute) {
 //       this.layout_mode = 'one_axis';
 //       if (!this.is_element_dict_empty()) {
@@ -894,8 +894,8 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       this.layout_attributes = [attribute];
 //     }
-  
-  
+
+
 //     one_axis_layout() {
 //       var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
 //       var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
@@ -918,7 +918,7 @@ import { colorHsl } from "./color_conversion";
 //         } else if (this.layout_attributes[0].type_ == 'color') {
 //           real_x = List.get_index_of_element(rgb_to_string(this.elements_dict[i.toString()][name]), this.layout_attributes[0].list);
 //           if (List.is_include(real_x, real_xs)) { y_incs[i] += - this.primitive_groups[i].height; } else {real_xs.push(real_x);}
-  
+
 //         } else {
 //           real_x = List.get_index_of_element(this.elements_dict[i.toString()][name], this.layout_attributes[0].list);
 //           if (List.is_include(real_x, real_xs)) {y_incs[i] += - this.primitive_groups[i].height;} else {real_xs.push(real_x);}
@@ -932,7 +932,7 @@ import { colorHsl } from "./color_conversion";
 //       this.resetAllObjects();
 //       this.draw();
 //     }
-  
+
 //     refresh_two_axis_layout_list(attributes:Attribute[]) {
 //       this.layout_mode = 'two_axis';
 //       if (!this.is_element_dict_empty()) {
@@ -941,13 +941,13 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       this.layout_attributes = attributes;
 //     }
-  
+
 //     multiplot_two_axis_layout(attributes:Attribute[]) {
 //       this.refresh_two_axis_layout_list(attributes);
 //       this.two_axis_layout();
 //     }
-  
-  
+
+
 //     two_axis_layout() {
 //       var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
 //       var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
@@ -969,7 +969,7 @@ import { colorHsl } from "./color_conversion";
 //         }
 //         var center_x = this.scaleX*real_x + this.originX;
 //         this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
-  
+
 //         if (this.layout_attributes[1].type_ == 'float') {
 //           var real_y = this.elements_dict[i.toString()][this.layout_attributes[1].name];
 //         } else if (this.layout_attributes[1].type_ == 'color') {
@@ -985,12 +985,12 @@ import { colorHsl } from "./color_conversion";
 //       this.resetAllObjects();
 //       this.draw();
 //     }
-  
+
 //     translatePrimitive(index, tx, ty) {
 //       this.primitive_groups[index].X = this.primitive_groups[index].X + tx;
 //       this.primitive_groups[index].Y = this.primitive_groups[index].Y + ty;
 //     }
-  
+
 //     translateAllPrimitives(tx, ty) {
 //       for (let i=0; i<this.primitive_groups.length; i++) {
 //         this.translatePrimitive(i, tx, ty);
@@ -998,14 +998,14 @@ import { colorHsl } from "./color_conversion";
 //       this.originX = this.originX + tx;
 //       this.originY = this.originY + ty;
 //     }
-  
-  
+
+
 //     resetAllObjects() {
 //       for (let i=0; i<this.primitive_groups.length; i++) {
 //         this.primitive_groups[i].reset_scales();
 //       }
 //     }
-  
+
 //     zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
 //       if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
 //         this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
@@ -1017,7 +1017,7 @@ import { colorHsl } from "./color_conversion";
 //         this.regular_zoom_elements(mouse3X, mouse3Y, event);
 //       }
 //     }
-  
+
 //     regular_zoom_elements(mouse3X, mouse3Y, event) {
 //       if (event > 0) {
 //         var zoom_coeff = 1.1;
@@ -1036,7 +1036,7 @@ import { colorHsl } from "./color_conversion";
 //       this.originY = mouse3Y - this.Y + zoom_coeff * (this.originY - mouse3Y + this.Y);
 //       this.draw();
 //     }
-  
+
 //     x_zoom_elements(event) {
 //       if (event > 0) {
 //         var zoom_coeff = 1.1;
@@ -1054,7 +1054,7 @@ import { colorHsl } from "./color_conversion";
 //       this.originX = this.width/2 + zoom_coeff * (this.originX - this.width/2);
 //       this.draw();
 //     }
-  
+
 //     y_zoom_elements(event) {
 //       if (event > 0) {
 //         var zoom_coeff = 1.1;
@@ -1072,7 +1072,7 @@ import { colorHsl } from "./color_conversion";
 //       this.originY = this.height/2 + zoom_coeff * (this.originY - this.height/2);
 //       this.draw();
 //     }
-  
+
 //     manage_scroll(mouse3X, mouse3Y, event) {
 //       if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
 //         this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
@@ -1087,7 +1087,7 @@ import { colorHsl } from "./color_conversion";
 //       if (isNaN(this.scroll_x)) this.scroll_x = 0;
 //       if (isNaN(this.scroll_y)) this.scroll_y = 0;
 //     }
-  
+
 //     delete_unwanted_vertex(vertex_infos) {
 //       var i = 0;
 //       while (i < vertex_infos.length) {
@@ -1112,7 +1112,7 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       return vertex_infos;
 //     }
-  
+
 //     initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] {
 //       var thickness = 15;
 //       var vertex_infos = [];
@@ -1131,7 +1131,7 @@ import { colorHsl } from "./color_conversion";
 //       var clickOnVertex = !(vertex_infos.length == 0);
 //       return [clickOnVertex, vertex_infos];
 //     }
-  
+
 //     resizeObject(vertex_infos, deltaX, deltaY):void {
 //       var widthSizeLimit = 100;
 //       var heightSizeLimit = 100;
@@ -1170,7 +1170,7 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       this.draw();
 //     }
-  
+
 //     reorder_resize_style(resize_style) {
 //       var resize_dict = ['n', 'ns', 'ne', 'nwse', 'nw', 'e', 'ew', 's', 'se', 'sw', 'w'];
 //       for (let i=0; i<resize_dict.length; i++) {
@@ -1181,7 +1181,7 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       return resize_style;
 //     }
-  
+
 //     setCursorStyle(mouse2X, mouse2Y, canvas, selected_primitive):void {
 //       if (selected_primitive != -1) {
 //         var thickness = 15;
@@ -1208,8 +1208,8 @@ import { colorHsl } from "./color_conversion";
 //       }
 //       this.draw();
 //     }
-  
-  
+
+
 //     mouse_interaction() {
 //       var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
 //       var nbObjects:number = this.primitive_groups.length;
@@ -1219,12 +1219,12 @@ import { colorHsl } from "./color_conversion";
 //       var isDrawing = false;
 //       var vertex_infos:Object;
 //       var clickOnVertex:boolean = false;
-  
+
 //       for (let i=0; i<nbObjects; i++) {
 //         this.primitive_groups[i].mouse_interaction(this.primitive_groups[i].isParallelPlot);
 //       }
 //       this.setAllInteractionsToOff();
-  
+
 //       canvas.addEventListener('mousedown', e => {
 //         isDrawing = true;
 //         if (this.interaction_ON) {
@@ -1240,7 +1240,7 @@ import { colorHsl } from "./color_conversion";
 //           }
 //         }
 //       });
-  
+
 //       canvas.addEventListener('mousemove', e => {
 //         if (this.interaction_ON) {
 //           var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
@@ -1274,14 +1274,14 @@ import { colorHsl } from "./color_conversion";
 //           isDrawing = false;
 //         }
 //       });
-  
+
 //       canvas.addEventListener('mouseup', e => {
 //         if (this.interaction_ON) {
 //           isDrawing = false;
 //           this.draw();
 //         }
 //       });
-  
+
 //       canvas.addEventListener('wheel', e => {
 //         if (this.interaction_ON) {
 //           e.preventDefault();
@@ -1293,7 +1293,7 @@ import { colorHsl } from "./color_conversion";
 //           }
 //         }
 //       });
-  
+
 //       canvas.addEventListener('mouseleave', e => {
 //         this.clickedPlotIndex = -1;
 //         this.selected_primitive = -1;
@@ -2254,7 +2254,7 @@ export class Histogram extends Frame {
       super(data, width, height, X, Y, canvasID, is_in_multiplot);
       this.unpackBarStyle(data);
     }
-  
+
   get className(): string { return "Histogram" }
 
   get nXTicks() {return this._nXTicks ? this._nXTicks : 20}
@@ -2445,7 +2445,7 @@ export class Scatter extends Frame {
         this.computePoints();
       }
     }
-  
+
   get className(): string { return "Scatter" }
 
   get sampleDrawings(): ShapeCollection { return this.absoluteObjects }
@@ -2752,7 +2752,7 @@ export class Graph2D extends Scatter {
   }
 
   get className(): string { return "Graph2D" }
-  
+
   public updateSelection(axesSelections: number[][]): void {
     const inMultiplot = this.is_in_multiplot;
     this.is_in_multiplot = false;

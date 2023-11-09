@@ -22,7 +22,7 @@ import { EventEmitter } from "events";
 //   public static deserialize(serialized) {
 //     let default_axis_style = {line_width:0.5, color_stroke:string_to_rgb('grey'), dashline:[], name:''};
 //     let default_graduation_style = {text_color:string_to_rgb('grey'), font_size:12, font_style:'sans-serif', name:''};
-//     let default_dict_ = {nb_points_x:10, nb_points_y:10, graduation_style:default_graduation_style, 
+//     let default_dict_ = {nb_points_x:10, nb_points_y:10, graduation_style:default_graduation_style,
 //                         axis_style:default_axis_style, arrow_on:false, grid_on:true, name:''};
 //     serialized = set_default_values(serialized, default_dict_);
 //     var graduation_style = TextStyle.deserialize(serialized['graduation_style']);
@@ -103,7 +103,7 @@ import { EventEmitter } from "events";
 //         }
 //         context.fillText(x_coord, scaleX*Math.log10(x_coord) + mvx + X, axis_y_end + font_size);
 //       }
-//     } 
+//     }
 //     context.stroke();
 //   }
 
@@ -148,7 +148,7 @@ import { EventEmitter } from "events";
 //     context.textAlign = 'end';
 //     context.textBaseline = 'middle';
 //     while (i * y_step < max_frequency + y_step) {
-//       Shape.drawLine(context, [[axis_x_start - 3, grad_beg_y - scale * (i * y_step) + Y], 
+//       Shape.drawLine(context, [[axis_x_start - 3, grad_beg_y - scale * (i * y_step) + Y],
 //                      [axis_x_start + 3, grad_beg_y - scale * (i * y_step) + Y]]);
 //       context.fillText(i * y_step, axis_x_start - 5, grad_beg_y - scale * (i * y_step) + Y);
 //       i++;
@@ -157,7 +157,7 @@ import { EventEmitter } from "events";
 //   }
 
 
-//   draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x, 
+//   draw_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, minX, maxX, scroll_x,
 //     decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, log_scale_x, x_step?) {
 //     context.beginPath();
 //     context.strokeStyle = this.axis_style.color_stroke;
@@ -186,17 +186,17 @@ import { EventEmitter } from "events";
 //     // draw_horizontal_graduations
 //     context.font = this.graduation_style.font_size.toString() + 'px Arial';
 //     if (log_scale_x) {
-//       this.draw_horizontal_log_graduations(context, mvx, scaleX, minX, maxX, axis_y_start, axis_y_end, 
+//       this.draw_horizontal_log_graduations(context, mvx, scaleX, minX, maxX, axis_y_start, axis_y_end,
 //         this.graduation_style.font_size, X, width);
 //     } else {
-//       this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end, 
+//       this.draw_horizontal_graduations(context, mvx, scaleX, axis_x_start, axis_y_start, axis_y_end,
 //         this.x_step, this.graduation_style.font_size, X, width);
 //     }
 //     context.closePath();
 //   }
 
 
-//   draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY, 
+//   draw_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, minY, maxY,
 //     scroll_y, decalage_axis_x, decalage_axis_y, X, Y, to_disp_attribute_name, log_scale_y, y_step?) {
 //     context.beginPath();
 //     context.strokeStyle = this.axis_style.color_stroke;
@@ -232,7 +232,7 @@ import { EventEmitter } from "events";
 //   }
 
 
-//   draw_histogram_x_axis(context, scaleX, init_scaleX, mvx, width, height, graduations, decalage_axis_x, 
+//   draw_histogram_x_axis(context, scaleX, init_scaleX, mvx, width, height, graduations, decalage_axis_x,
 //                         decalage_axis_y, scroll_x, X, Y, to_disp_attribute_name, x_step?) {
 //     context.beginPath();
 //     context.strokeStyle = this.axis_style.color_stroke;
@@ -275,7 +275,7 @@ import { EventEmitter } from "events";
 //   }
 
 
-//   draw_histogram_y_axis(context, width, height, max_frequency, decalage_axis_x, 
+//   draw_histogram_y_axis(context, width, height, max_frequency, decalage_axis_x,
 //                         decalage_axis_y, X, Y, to_disp_attribute_name, y_step, coeff?) {
 //     context.beginPath();
 //     context.strokeStyle = this.axis_style.color_stroke;
@@ -305,17 +305,17 @@ import { EventEmitter } from "events";
 //     context.closePath();
 //   }
 
-//   draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists, 
+//   draw_scatter_axis(context, mvx, mvy, scaleX, scaleY, width, height, init_scaleX, init_scaleY, lists,
 //     to_display_attributes, scroll_x, scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, canvas_height,
 //     log_scale_x, log_scale_y) {
 
-//     this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0], 
+//     this.draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, lists[0], to_display_attributes[0],
 //       scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, log_scale_x);
-//     this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1], 
+//     this.draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, lists[1], to_display_attributes[1],
 //       scroll_y, decalage_axis_x, decalage_axis_y, X, Y, canvas_height, log_scale_y);
 //   }
 
-//   draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute:Attribute, 
+//   draw_sc_horizontal_axis(context, mvx, scaleX, width, height, init_scaleX, list, to_display_attribute:Attribute,
 //     scroll_x, decalage_axis_x, decalage_axis_y, X, Y, canvas_width, log_scale_x=false) {
 //     // Drawing the coordinate system
 //     context.beginPath();
@@ -335,7 +335,7 @@ import { EventEmitter } from "events";
 //     //Axis
 //     Shape.drawLine(context, [[axis_x_start, axis_y_end], [axis_x_end, axis_y_end]]);
 //     context.fillStyle = this.graduation_style.text_color;
-//     context.strokeStyle = this.axis_style.color_stroke;    
+//     context.strokeStyle = this.axis_style.color_stroke;
 //     context.font = 'bold 20px Arial';
 //     context.textAlign = 'end';
 //     context.fillText(to_display_attribute['name'], axis_x_end - 5, axis_y_end - 10);
@@ -349,14 +349,14 @@ import { EventEmitter } from "events";
 //       this.draw_horizontal_log_graduations(context, mvx, scaleX, Math.log10(list[0]), Math.log10(list[1]), axis_y_start,
 //         axis_y_end, this.graduation_style.font_size, X, width);
 //     } else {
-//       this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end, 
-//         axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X, canvas_width);  
+//       this.draw_sc_horizontal_graduations(context, mvx, scaleX, init_scaleX, axis_x_start, axis_x_end,
+//         axis_y_start, axis_y_end, list, to_display_attribute, scroll_x, X, canvas_width);
 //     }
 //     context.stroke();
-//     context.closePath();  
+//     context.closePath();
 //   }
 
-//   draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y, 
+//   draw_sc_vertical_axis(context, mvy, scaleY, width, height, init_scaleY, list, to_display_attribute, scroll_y,
 //     decalage_axis_x, decalage_axis_y, X, Y, canvas_height, log_scale_y=false) {
 //     // Drawing the coordinate system
 //     context.beginPath();
@@ -386,10 +386,10 @@ import { EventEmitter } from "events";
 //       if (TypeOf(list[0]) === 'string') {
 //         throw new Error("Cannot use log scale on a non float axis.")
 //       }
-//       this.draw_vertical_log_graduations(context, mvy, scaleY, -Math.log10(list[0]), -Math.log10(list[1]), 
+//       this.draw_vertical_log_graduations(context, mvy, scaleY, -Math.log10(list[0]), -Math.log10(list[1]),
 //       axis_x_start, axis_x_end, axis_y_end, canvas_height, Y);
 //     } else {
-//       this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start, 
+//       this.draw_sc_vertical_graduations(context, mvy, scaleY, init_scaleY, axis_x_start, axis_x_end, axis_y_start,
 //         axis_y_end, list, to_display_attribute, scroll_y, Y, canvas_height);
 //     }
 //     context.stroke();
@@ -604,7 +604,7 @@ import { EventEmitter } from "events";
 
 //   public static deserialize(serialized) {
 //     let default_surface_style = {color_fill:string_to_rgb('black'), opacity:0.9, hatching:undefined};
-//     let default_text_style = {text_color:string_to_rgb('lightgrey'), font_size:12, font_style:'Calibri', 
+//     let default_text_style = {text_color:string_to_rgb('lightgrey'), font_size:12, font_style:'Calibri',
 //                               text_align_x:'start', text_align_y:'alphabetic', name:''};
 //     let default_dict_ = {surface_style:default_surface_style, text_style:default_text_style, tooltip_radius:7};
 //     serialized = set_default_values(serialized, default_dict_);
@@ -666,7 +666,7 @@ import { EventEmitter } from "events";
 //     for (let i=0; i<this.attribute_names.length; i++) {
 //       let attribute_name = this.attribute_names[i];
 //       let attribute_type = TypeOf(elements[0][attribute_name]);
-//       if (attribute_type == 'float') { 
+//       if (attribute_type == 'float') {
 //         if (attribute_name === axes[0]) {
 //           var text = attribute_name + ' : ' + MyMath.round(point.cx, Math.max(x_nb_digits, y_nb_digits,2)); //x_nb_digits évidemment pas définie lorsque l'axe des x est un string...
 //         } else if (attribute_name === axes[1]) {
@@ -686,8 +686,8 @@ import { EventEmitter } from "events";
 //     return [textfills, text_max_length];
 //   }
 
-//   draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, 
-//     X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, 
+//   draw(context, point, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height,
+//     X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements,
 //     mergeON, axes, log_scale_x, log_scale_y) {
 //     var textfills = [];
 //     var text_max_length = 0;
@@ -752,7 +752,7 @@ import { EventEmitter } from "events";
 //           context.font = this.text_style.font;
 //           current_y += this.text_style.font_size * 1.1;
 //         } else {
-//           context.fillText(textfills[i], tp_x + tp_width/2, current_y); 
+//           context.fillText(textfills[i], tp_x + tp_width/2, current_y);
 //           current_y += this.text_style.font_size;
 //         }
 //       }
@@ -764,18 +764,18 @@ import { EventEmitter } from "events";
 
 //   }
 
-//   manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list, 
-//     X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes, 
+//   manage_tooltip(context, mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, tooltip_list,
+//     X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
 //     log_scale_x, log_scale_y) {
 
 //     for (var i=0; i<tooltip_list.length; i++) {
 //       let cx = tooltip_list[i].cx, cy = tooltip_list[i].cy;
 //       if (log_scale_x) cx = Math.log10(cx);
 //       if (log_scale_y) cy = -Math.log10(-cy);
-//       if (tooltip_list[i] && this.isTooltipInsideCanvas(cx, cy, tooltip_list[i].size, mvx, mvy, 
+//       if (tooltip_list[i] && this.isTooltipInsideCanvas(cx, cy, tooltip_list[i].size, mvx, mvy,
 //         scaleX, scaleY, canvas_width, canvas_height)) {
 
-//         this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height, 
+//         this.draw(context, tooltip_list[i], mvx, mvy, scaleX, scaleY, canvas_width, canvas_height,
 //           X, Y, x_nb_digits, y_nb_digits, point_list, initial_point_list, elements, mergeON, axes,
 //           log_scale_x, log_scale_y);
 

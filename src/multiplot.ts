@@ -242,7 +242,7 @@ export class Multiplot {
     this.figures.forEach(figure => figure.resetView());
     this.draw();
   }
-  
+
   public reset(): void {
     this.clickedIndices = [];
     this.hoveredIndices = [];
@@ -261,7 +261,7 @@ export class Multiplot {
 
   public resize(width: number, height: number): void {
     const widthRatio = width / this.width;
-    const heightRatio = height / this.height;    
+    const heightRatio = height / this.height;
     this.figures.forEach((figure, index) => {
       figure.multiplotResize(figure.origin.scale(new Vertex(widthRatio, heightRatio)), figure.size.x * widthRatio, figure.size.y * heightRatio);
       if (this.figureZones.shapes.length != 0) this.figureZones.shapes[index].updateRectangle(figure.origin, figure.size);
@@ -352,7 +352,7 @@ export class Multiplot {
       ctrlKey = true;
       this.canvas.style.cursor = 'default';
       if (shiftKey) this.figures.forEach(figure => figure.keyUpDrawer(this.canvas, "Shift", ctrlKey, shiftKey, spaceKey));
-    } 
+    }
     if (e.key == "Shift") {
       shiftKey = true;
       if (!ctrlKey) {
@@ -420,7 +420,7 @@ export class Multiplot {
       e.preventDefault();
       let absoluteMouse = new Vertex(e.offsetX, e.offsetY);
       this.getHoveredIndex(absoluteMouse);
-      
+
       if (!this.isResizing) {
         if (this.clickedIndex != null && canvasDown) {
           if (!this.figures[this.clickedIndex].isInCanvas(absoluteMouse)) [canvasDown, hasLeftFigure] = this.mouseLeaveFigure(this.figures[this.clickedIndex], shiftKey);
@@ -465,7 +465,7 @@ export class Multiplot {
 
   private mouseEnterDrawer(): [Vertex, boolean] { return [null, false] }
 
-  public mouseListener(): void { 
+  public mouseListener(): void {
     // TODO: mouseListener generally suffers from a bad initial design that should be totally rethink in a specific refactor development
     let ctrlKey = false;
     let shiftKey = false;
@@ -478,10 +478,10 @@ export class Multiplot {
     let frameDown: Vertex = null;
     let hasLeftFigure = false;
 
-    this.listenAxisStateChange(); 
+    this.listenAxisStateChange();
 
     this.listenRubberBandChange();
-    
+
     window.addEventListener('keydown', e => [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(e, ctrlKey, shiftKey, spaceKey));
 
     window.addEventListener('keyup', e => [ctrlKey, shiftKey, spaceKey] = this.keyUpDrawer(e, ctrlKey, shiftKey, spaceKey));

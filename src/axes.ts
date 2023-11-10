@@ -237,9 +237,9 @@ export class RubberBand {
     get ticks(): number[] { return this._ticks }
 
     set ticks(value: number[]) { this._ticks = value }
-  
+
     get titleText(): string { return Text.capitalize(this.name) }
-  
+
     get transformMatrix(): DOMMatrix { return this.getValueToDrawMatrix() }
 
     protected updateOffsetTicks(): void { this.offsetTicks = Math.abs(this.boundingBox.size[this.isVertical ? "x" : "y"]) * 0.25 }
@@ -259,7 +259,7 @@ export class RubberBand {
         this.labels = ["0", "1"];
       }
     }
-  
+
     public otherAxisScaling(otherAxis: Axis): void {
       const center = this.center;
       this.maxValue = this.minValue + otherAxis.interval * this.drawLength / otherAxis.drawLength;
@@ -363,7 +363,7 @@ export class RubberBand {
       const max = Math.max(...vector);
       return min != max ? [min, max] : min != 0 ? [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)] : [-1, 1]
     }
-  
+
     protected getCalibratedTextWidth(context: CanvasRenderingContext2D): [Text, number] {
       const calibratedTickText = new Text("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.font });
       context.font = calibratedTickText.fullFont;
@@ -447,9 +447,9 @@ export class RubberBand {
         scale: new Vertex(1, 1)
       }
     }
-  
+
     protected formatTitle(text: Text, context: CanvasRenderingContext2D): void { text.format(context) }
-  
+
     protected updateTitle(context: CanvasRenderingContext2D, text: string, origin: Vertex, textParams: TextParams): void {
       this.title.text = text;
       this.title.origin = origin;
@@ -494,7 +494,7 @@ export class RubberBand {
       }
       this.titleSettings.orientation = 0;
     }
-  
+
     private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string): [Point[], Text[]] {
       const ticksPoints = [];
       const ticksText: Text[] = [];
@@ -516,12 +516,12 @@ export class RubberBand {
       })
       return [ticksPoints, ticksText]
     }
-  
+
     private drawTickTexts(ticksTexts: Text[], color: string, context: CanvasRenderingContext2D): void {
       this.ticksFontsize = Math.min(...ticksTexts.map(tickText => tickText.fontsize));
       ticksTexts.forEach(tickText => this.drawTickText(tickText, color, context));
     }
-  
+
     private drawTickText(tickText: Text, color: string, context: CanvasRenderingContext2D): void {
       tickText.fillStyle = color;
       tickText.fontsize = this.ticksFontsize;
@@ -546,13 +546,13 @@ export class RubberBand {
         align: textAlign, baseline: baseline, color: this.strokeStyle, backgroundColor: "hsl(0, 0%, 100%, 0.5)"
       }
     }
-  
+
     protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): Point {
       const point = new Point(tick * Number(!vertical), tick * Number(vertical), SIZE_AXIS_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
       point.draw(context);
       return point
     }
-  
+
     private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: Point, HTMatrix: DOMMatrix): Text {
       const textOrigin = this.tickTextPositions(point, HTMatrix);
       const tickText = new Text(Text.capitalize(text), textOrigin, tickTextParams);
@@ -679,7 +679,7 @@ export class RubberBand {
       const forHorizontal = this.initScale.y > 0 ? 'bottom' : 'top';
       return this.isVertical ? [forVertical, 'middle'] : ['center', forHorizontal]
     }
-  
+
     private tickTextPositions(point: Point, HTMatrix: DOMMatrix): Vertex {
       const origin = point.center.transform(HTMatrix);
       const inversionFactor = this.isInverted ? 1 : -1
@@ -720,7 +720,7 @@ export class RubberBand {
       if (!this.isDiscrete) this.labels = this.numericLabels();
     }
   }
-  
+
   export class ParallelAxis extends Axis {
     public titleZone: Rect = new Rect();
     private _hasMoved: boolean = false;
@@ -836,7 +836,7 @@ export class RubberBand {
       this.rubberBand.isInverted = this.isInverted;
       this.emitter.emit("axisStateChange", this);
     }
-  
+
     public updateLocation(newOrigin: Vertex, newEnd: Vertex, boundingBox: Rect, index: number, nAxis: number): void {
       this.boundingBox = boundingBox;
       this.transform(newOrigin, newEnd);

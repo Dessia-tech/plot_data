@@ -24,7 +24,7 @@ export class RemoteFigure {
     public nSamples: number;
     public pointSets: PointSet[];
     public pointStyles: PointStyle[] = null;
-  
+
     public lineWidth: number = 1;
 
     public isHovered: boolean = false;
@@ -121,9 +121,9 @@ export class RemoteFigure {
         this.pointSets.push(new PointSet(pointSet.point_index, colorHsl(pointSet.color), pointSet.name ?? `Point set ${index}`));
       });
     }
-  
+
     protected unpackData(data: any): Map<string, any[]> { return RemoteFigure.deserializeData(data) }
-  
+
     public serializeFeatures(): any {
       const elements = [];
       for (let i=0; i < this.nSamples; i++) {
@@ -222,21 +222,21 @@ export class RemoteFigure {
       end[dimension] = end[dimension] - this.size[dimension];
       freeSpace[dimension] = Math.abs(this.origin[dimension] - origin[dimension] * this.initScale[dimension] + this.size[dimension]);
     }
-  
+
     protected setAxes(): Axis[] {
       const freeSpace = this.setBounds();
       const axisBoundingBoxes = this.buildAxisBoundingBoxes(freeSpace);
       return this.buildAxes(axisBoundingBoxes)
     }
-  
+
     protected buildAxisBoundingBoxes(freeSpace: Vertex): Rect[] { return }
-  
+
     protected buildAxes(axisBoundingBox: Rect[]): Axis[] { return [] }
-  
+
     protected transformAxes(axisBoundingBoxes: Rect[]): void {
       axisBoundingBoxes.forEach((box, index) => this.axes[index].boundingBox = box);
     }
-  
+
     protected setAxis(feature: string, axisBoundingBox: Rect, origin: Vertex, end: Vertex, nTicks: number = undefined): Axis {
       const axis = new Axis(this.features.get(feature), axisBoundingBox, origin, end, feature, this.initScale, nTicks);
       axis.updateStyle(this.axisStyle);
@@ -330,7 +330,7 @@ export class RemoteFigure {
       this.axes.forEach(axis => axis.rubberBand.reset());
       this.selectedIndices = [];
     }
-  
+
     public updateSelected(axis: Axis): number[] {
       const selection = [];
       const vector = axis.stringsToValues(this.features.get(axis.name));
@@ -360,7 +360,7 @@ export class RemoteFigure {
       context.globalCompositeOperation = "destination-in";
       context.fill(this.cuttingZone.path);
     }
-  
+
     protected get cuttingZone(): Rect {
       const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
       return new Rect(axesOrigin, this.axesEnd.subtract(axesOrigin));
@@ -483,7 +483,7 @@ export class RemoteFigure {
       const mouseCoords = new Vertex(e.offsetX, e.offsetY);
       return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.relativeMatrix.inverse()), mouseCoords]
     }
-  
+
     public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape] {
       const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
       const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
@@ -499,7 +499,7 @@ export class RemoteFigure {
       }
       this.fixedObjects.mouseUp(ctrlKey);
     }
-  
+
     public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: Shape): [Vertex, Vertex, Vertex] {
       const [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
       this.isHovered = this.isInCanvas(absoluteMouse);
@@ -518,13 +518,13 @@ export class RemoteFigure {
       if (this.isZooming || this.isSelecting) canvas.style.cursor = 'crosshair';
       return [canvasMouse, frameMouse, absoluteMouse]
     }
-  
+
     public mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape]  {
       const [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
       if (!(clickedObject instanceof Axis)) this.is_drawing_rubber_band = this.isSelecting;
       return [canvasDown, frameDown, clickedObject]
     }
-  
+
     public mouseUpDrawer(ctrlKey: boolean): [Shape, Vertex] {
       if (this.isZooming) {
         if (this.zoomBox.area != 0) this.zoomBoxUpdateAxes(this.zoomBox);
@@ -598,9 +598,9 @@ export class RemoteFigure {
       canvas.style.cursor = 'default';
       this.draw();
     }
-  
+
     public axisChangeUpdate(e: Axis): void {}
-  
+
     public mouseListener(): void {
       // TODO: mouseListener generally suffers from a bad initial design that should be totally rethink in a specific refactor development
       let clickedObject: Shape = null;
@@ -648,7 +648,7 @@ export class RemoteFigure {
 
       canvas.addEventListener('mouseleave', () => [ctrlKey, canvasDown] = this.mouseLeaveDrawer(canvas, shiftKey));
     }
-  
+
     protected resetMouseEvents(): [Shape, Vertex] {
       this.is_drawing_rubber_band = false;
       this.isZooming = false;

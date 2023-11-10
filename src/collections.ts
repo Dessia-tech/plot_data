@@ -28,9 +28,9 @@ export class ShapeCollection {
     }
 
     public get length(): number { return this.shapes.length }
-  
+
     public includes(shape: Shape) { return this.shapes.includes(shape) }
-  
+
     public static fromPrimitives(primitives: { [key: string]: any }, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
       return new ShapeCollection(primitives.map(primitive => Shape.deserialize(primitive, scale)))
     }
@@ -55,7 +55,7 @@ export class ShapeCollection {
     public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
       this.shapes.forEach(shape => shape.mouseMove(context, mouseCoords));
     }
-  
+
     public mouseDown(mouseCoords: Vertex): Shape {
       let clickedObject: Shape = null;
       this.shapes.forEach(shape => {
@@ -103,7 +103,7 @@ export class ShapeCollection {
     public resetShapeStates(): void {
       this.shapes.forEach(shape => shape.isHovered = shape.isClicked = shape.isSelected = false);
     }
-  
+
     public locateLabels(drawingZone: Rect, initScale: Vertex): void {
       const nLabels = 0.5 * initScale.y;
       const labels: Label[] = [];

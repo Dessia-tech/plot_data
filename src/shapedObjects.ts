@@ -36,7 +36,7 @@ export class ScatterPoint extends Point {
     }
 
     public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
-  
+
     public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[], xName: string, yName: string) {
       this.updateTooltipMap();
       if (this.values.length == 1) {
@@ -49,7 +49,7 @@ export class ScatterPoint extends Point {
       this.tooltipMap.delete('X mean');
       this.tooltipMap.delete('Y mean');
     }
-  
+
     public updateStyle(style: PointStyle): void {
       super.updateStyle(style);
       this.marker = this.values.length > 1 ? this.marker : style.marker ?? this.marker;
@@ -73,7 +73,7 @@ export class ScatterPoint extends Point {
       this.mean.y = meanY / this.values.length;
     }
   }
-  
+
   export class Bar extends Rect {
     public min: number;
     public max: number;
@@ -95,7 +95,7 @@ export class ScatterPoint extends Point {
     protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
       return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
     }
-  
+
     public initTooltip(context: CanvasRenderingContext2D): Tooltip {
       const tooltip = new Tooltip(this.tooltipOrigin, this.tooltipMap, context);
       tooltip.isFlipper = false;
@@ -133,7 +133,7 @@ export class ScatterPoint extends Point {
       this.buildPath();
     }
   }
-  
+
   export class SelectionBox extends Rect {
     public minVertex: Vertex = null;
     public maxVertex: Vertex = null;

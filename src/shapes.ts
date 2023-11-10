@@ -248,7 +248,7 @@ export class Shape {
     this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
   }
 }
-  
+
 export class Arc extends Shape {
   constructor(
     public center: Vertex,

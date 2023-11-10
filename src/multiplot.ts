@@ -415,7 +415,7 @@ export class Multiplot {
     else this.figureZones.mouseMove(this.context, mouseCoords);
   }
 
-  private mouseMoveDrawer(e: MouseEvent, hasLeftFigure: boolean, canvasMouse: Vertex, frameMouse: Vertex, 
+  private mouseMoveDrawer(e: MouseEvent, hasLeftFigure: boolean, canvasMouse: Vertex, frameMouse: Vertex,
     canvasDown: Vertex, frameDown: Vertex, clickedObject: Shape, shiftKey: boolean): [Vertex, Vertex, Vertex, Vertex, boolean] { // TODO: ill conditioned method
       e.preventDefault();
       let absoluteMouse = new Vertex(e.offsetX, e.offsetY);

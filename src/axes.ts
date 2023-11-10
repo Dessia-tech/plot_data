@@ -7,14 +7,14 @@ import { EventEmitter } from "events";
 export class RubberBand {
     public canvasMin: number = 0;
     public canvasMax: number = 0;
-  
+
     public isHovered: boolean = false;
     public isClicked: boolean = false;
     public isSelected: boolean = false;
-  
+
     public path: Path2D;
     public isInverted: boolean = false;
-  
+
     public minUpdate: boolean = false;
     public maxUpdate: boolean = false;
     public lastValues: Vertex = new Vertex(null, null);
@@ -23,32 +23,32 @@ export class RubberBand {
       private _minValue: number,
       private _maxValue: number,
       public isVertical: boolean) { }
-  
+
     public get canvasLength() { return Math.abs(this.canvasMax - this.canvasMin) }
-  
+
     public get length() { return Math.abs(this.maxValue - this.minValue) }
-  
+
     public set minValue(value: number) { this._minValue = value }
-  
+
     public get minValue() { return this._minValue }
-  
+
     public set maxValue(value: number) { this._maxValue = value }
-  
+
     public get maxValue() { return this._maxValue }
-  
+
     public selfSend(rubberBands: Map<string, RubberBand>) { rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical)) }
-  
+
     public selfSendRange(rubberBands: Map<string, RubberBand>) {
       rubberBands.get(this.attributeName).minValue = this.minValue;
       rubberBands.get(this.attributeName).maxValue = this.maxValue;
     }
-  
+
     public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
       let rectOrigin: Vertex;
       let rectSize: Vertex;
       if (this.isVertical) {
         rectOrigin = new Vertex(origin - SMALL_RUBBERBAND_SIZE / 2, this.canvasMin);
-        rectSize = new Vertex(SMALL_RUBBERBAND_SIZE, this.canvasLength); 
+        rectSize = new Vertex(SMALL_RUBBERBAND_SIZE, this.canvasLength);
       } else {
         rectOrigin = new Vertex(this.canvasMin, origin - SMALL_RUBBERBAND_SIZE / 2);
         rectSize = new Vertex(this.canvasLength, SMALL_RUBBERBAND_SIZE)
@@ -60,30 +60,30 @@ export class RubberBand {
       draw.alpha = alpha;
       draw.draw(context);
     }
-  
+
     public reset() {
       this.minValue = 0;
       this.maxValue = 0;
       this.canvasMin = 0;
       this.canvasMax = 0;
     }
-  
+
     public flipMinMax() {
       if (this.minValue >= this.maxValue) {
         [this.minValue, this.maxValue] = [this.maxValue, this.minValue];
         [this.minUpdate, this.maxUpdate] = [this.maxUpdate, this.minUpdate];
       }
     }
-  
+
     private get borderSize() { return Math.min(PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
-  
+
     public mouseDown(mouseAxis: number) {
       this.isClicked = true;
       if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.isInverted ? this.maxUpdate = true : this.minUpdate = true
       else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.isInverted ? this.minUpdate = true : this.maxUpdate = true
       else this.lastValues = new Vertex(this.minValue, this.maxValue);
     }
-  
+
     public mouseMove(downValue: number, currentValue: number) {
       if (this.isClicked) {
         if (this.minUpdate) this.minValue = currentValue
@@ -96,14 +96,14 @@ export class RubberBand {
         this.flipMinMax();
       }
     }
-  
+
     public mouseUp() {
       this.minUpdate = false;
       this.maxUpdate = false;
       this.isClicked = false;
     }
   }
-  
+
   export class TitleSettings {
     constructor(
       public origin: Vertex = null,
@@ -116,13 +116,13 @@ export class RubberBand {
   export class Axis extends Shape {
     public ticksPoints: Point[];
     public rubberBand: RubberBand;
-  
+
     public labels: string[];
     protected _ticks: number[];
     public tickPrecision: number;
     public ticksFontsize: number = 12;
     protected _isDiscrete: boolean = true;
-  
+
     public drawPath: Path2D;
     public path: Path2D;
     public lineWidth: number = 1;
@@ -132,7 +132,7 @@ export class RubberBand {
     public rubberColor: string = 'hsl(200, 95%, 50%)';
     public rubberAlpha: number = 0.5;
     public mouseStyleON: boolean = false;
-  
+
     public isHovered: boolean = false;
     public isClicked: boolean = false;
     public isInverted: boolean = false;
@@ -141,7 +141,7 @@ export class RubberBand {
     public titleSettings: TitleSettings = new TitleSettings();
     public titleWidth: number;
     public font: string = 'sans-serif';
-  
+
     public emitter: EventEmitter = new EventEmitter();
     public initMinValue: number;
     public initMaxValue: number;
@@ -149,21 +149,21 @@ export class RubberBand {
     private _previousMax: number;
     private _minValue: number;
     private _maxValue: number;
-  
+
     private _marginRatio: number = 0.05;
     protected offsetTicks: number;
     public offsetTitle: number;
     protected maxTickWidth: number;
     protected maxTickHeight: number;
-  
+
     readonly DRAW_START_OFFSET = 0;
     readonly SELECTION_RECT_SIZE = 10;
     readonly FONT_SIZE = 12;
     readonly isFilled = true;
-  
+
     // OLD
     public is_drawing_rubberband: boolean = false;
-  
+
     constructor(
       vector: any[] = null,
       public boundingBox: Rect,
@@ -188,68 +188,68 @@ export class RubberBand {
       this.offsetTitle = 0;
       this.title = new Text(this.titleText, new Vertex(0, 0), {});
     };
-  
+
     public get drawLength(): number {
       return this.isVertical ? Math.abs(this.origin.y - this.end.y) : Math.abs(this.origin.x - this.end.x);
     }
-  
+
     private get drawingColor(): string {
       let color = this.strokeStyle;
       if (this.mouseStyleON) { color = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle };
       return color
     }
-  
+
     get interval(): number { return Math.abs(this.maxValue - this.minValue) };
-  
+
     get drawScale(): number { return this.drawLength / this.interval }
-  
+
     get center(): number { return (this.maxValue + this.minValue) / 2 }
-  
+
     get isVertical(): boolean { return this.origin.x == this.end.x };
-  
+
     get isDiscrete(): boolean { return this._isDiscrete };
-  
+
     set isDiscrete(value: boolean) { this._isDiscrete = value };
-  
+
     set marginRatio(value: number) { this._marginRatio = value };
-  
+
     get marginRatio(): number { return this._marginRatio };
-  
+
     get tickMarker(): string { return "halfLine" }
-  
+
     get tickOrientation(): string { return this.isVertical ? 'right' : 'up' }
-  
+
     get minValue(): number { return this._minValue }
-  
+
     set minValue(value: number) { this._minValue = value; this.emitter.emit("axisStateChange", this); }
-  
+
     get maxValue(): number { return this._maxValue }
-  
+
     set maxValue(value: number) { this._maxValue = value }
-  
+
     set nTicks(value: number) { this._nTicks = value };
-  
+
     get nTicks(): number {
       if (this.isDiscrete) return this.labels.length + 1
       return this._nTicks
     }
-  
+
     get ticks(): number[] { return this._ticks }
-  
+
     set ticks(value: number[]) { this._ticks = value }
   
     get titleText(): string { return Text.capitalize(this.name) }
   
     get transformMatrix(): DOMMatrix { return this.getValueToDrawMatrix() }
-  
+
     protected updateOffsetTicks(): void { this.offsetTicks = Math.abs(this.boundingBox.size[this.isVertical ? "x" : "y"]) * 0.25 }
-  
+
     private horizontalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.y)) }
-  
+
     private verticalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.x)) }
-  
+
     protected computeEnds(): void { }
-  
+
     private discretePropertiesFromVector(vector: any[]): void {
       if (vector) {
         if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
@@ -267,7 +267,7 @@ export class RubberBand {
       this.minValue += translation;
       this.maxValue += translation;
     }
-  
+
     public transform(newOrigin: Vertex, newEnd: Vertex): void {
       this.origin = newOrigin.copy();
       this.end = newEnd.copy();
@@ -276,7 +276,7 @@ export class RubberBand {
       this.buildPath();
       this.emitter.emit("axisStateChange", this);
     }
-  
+
     public resetScale(): void {
       this.minValue = this.initMinValue;
       this.maxValue = this.initMaxValue;
@@ -284,30 +284,30 @@ export class RubberBand {
       this._previousMax = this.initMaxValue;
       this.updateTicks();
     }
-  
+
     public reset(): void {
       this.rubberBand.reset();
       this.resetScale();
     }
-  
+
     public update(axisStyle: Map<string, any>, viewPoint: Vertex, scale: Vertex, translation: Vertex): void {
       axisStyle.forEach((value, key) => this[key] = value);
       this.updateScale(viewPoint, scale, translation);
     }
-  
+
     public updateStyle(axisStyle: Map<string, any>) { axisStyle.forEach((value, key) => this[key] = value) }
-  
+
     public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }
-  
+
     public sendRubberBandRange(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSendRange(rubberBands) }
-  
+
     private static nearestFive(value: number): number {
       const tenPower = Math.floor(Math.log10(Math.abs(value)));
       const normedValue = Math.floor(value / Math.pow(10, tenPower - 2));
       const fiveMultiple = Math.floor(normedValue / 50);
       return (50 * fiveMultiple) * Math.pow(10, tenPower - 2);
     }
-  
+
     public adjustBoundingBox(): void {
       if (this.isVertical) {
         this.boundingBox.size.x += SIZE_AXIS_END / 2;
@@ -319,7 +319,7 @@ export class RubberBand {
       }
       this.boundingBox.buildPath();
     }
-  
+
     protected buildDrawPath(): Path2D {
       const verticalIdx = Number(this.isVertical);
       const horizontalIdx = Number(!this.isVertical);
@@ -335,7 +335,7 @@ export class RubberBand {
       path.addPath(endArrow.path);
       return path
     }
-  
+
     public buildPath(): void {
       this.path = new Path2D();
       const offset = new Vertex(this.SELECTION_RECT_SIZE * Number(this.isVertical), this.SELECTION_RECT_SIZE * Number(!this.isVertical));
@@ -343,19 +343,19 @@ export class RubberBand {
       const size = this.end.subtract(origin).add(offset);
       this.path.rect(origin.x, origin.y, size.x, size.y);
     }
-  
+
     public absoluteToRelative(value: string | number): number {
       const numberedValue = this.stringToValue(value);
       return this.isVertical ? (numberedValue - this.transformMatrix.f) / this.transformMatrix.d : (numberedValue - this.transformMatrix.e) / this.transformMatrix.a
     }
-  
+
     public relativeToAbsolute(value: string | number): number {
       const numberedValue = this.stringToValue(value);
       return this.isVertical ? numberedValue * this.transformMatrix.d + this.transformMatrix.f : numberedValue * this.transformMatrix.a + this.transformMatrix.e
     }
-  
+
     public normedValue(value: number): number { return value / this.interval }
-  
+
     private computeMinMax(vector: any[]): number[] {
       if (!vector?.length) return [0, 1];
       if (this.isDiscrete) return [0, this.labels.length - 1];
@@ -370,7 +370,7 @@ export class RubberBand {
       const calibratedMeasure = context.measureText(calibratedTickText.text).width;
       return [calibratedTickText, calibratedMeasure]
     }
-  
+
     public computeTextBoxes(context: CanvasRenderingContext2D): void {
       context.save();
       const [calibratedTickText, calibratedMeasure] = this.getCalibratedTextWidth(context);
@@ -379,7 +379,7 @@ export class RubberBand {
       if (this.centeredTitle) this.centeredTitleTextBoxes(calibratedMeasure);
       context.restore();
     }
-  
+
     private centeredTitleTextBoxes(calibratedMeasure: number): void {
       let freeSpace: number;
       if (this.isVertical) {
@@ -392,7 +392,7 @@ export class RubberBand {
         this.maxTickWidth -= this.offsetTitle;
       }
     }
-  
+
     protected computeTicks(): number[] {
       const increment = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
       const remainder = this.minValue % increment;
@@ -402,7 +402,7 @@ export class RubberBand {
       if (ticks.slice(-1)[0] >= this.maxValue) ticks.splice(-1, 1);
       return ticks
     }
-  
+
     public draw(context: CanvasRenderingContext2D): void {
       context.save();
       this.drawPath = this.buildDrawPath();
@@ -410,7 +410,7 @@ export class RubberBand {
       const canvasHTMatrix = context.getTransform();
       const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
       const color = this.drawingColor;
-  
+
       context.strokeStyle = color;
       context.setLineDash([]);
       context.fillStyle = color;
@@ -419,20 +419,20 @@ export class RubberBand {
       context.fill(this.drawPath);
       context.resetTransform();
       this.computeTextBoxes(context);
-  
+
       context.setTransform(pointHTMatrix);
       const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
       this.ticksPoints = ticksPoints;
-  
+
       context.resetTransform();
       this.drawTickTexts(ticksTexts, color, context);
       this.drawTitle(context, canvasHTMatrix, color);
-  
+
       context.setTransform(canvasHTMatrix);
       this.drawRubberBand(context);
       context.restore();
     }
-  
+
     protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
       return {
         width: this.titleWidth,
@@ -458,7 +458,7 @@ export class RubberBand {
       this.title.boundingBox.hoverStyle = this.title.boundingBox.clickedStyle = this.title.boundingBox.selectedStyle = this.title.boundingBox.fillStyle;
       this.title.rowIndices = [];
     }
-  
+
     protected drawTitle(context: CanvasRenderingContext2D, canvasHTMatrix: DOMMatrix, color: string): void {
       this.setTitleSettings();
       const textParams = this.getTitleTextParams(color, this.titleSettings.align, this.titleSettings.baseline, this.titleSettings.orientation);
@@ -466,9 +466,9 @@ export class RubberBand {
       this.title.draw(context);
       this.path.addPath(this.title.path, new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]));
     }
-  
+
     public setTitleSettings(): void { this.centeredTitle ? this.centeredTitleProperties() : this.topArrowTitleProperties() }
-  
+
     private centeredTitleProperties(): void {
       this.titleSettings.origin = this.end.add(this.origin).divide(2);
       this.titleSettings.align = "center";
@@ -479,7 +479,7 @@ export class RubberBand {
       } else this.titleSettings.origin.y -= this.offsetTitle;
       this.titleSettings.orientation = this.isVertical ? -90 : 0;
     }
-  
+
     private topArrowTitleProperties(): void {
       this.titleSettings.origin = this.end.copy();
       if (this.isVertical) {
@@ -527,7 +527,7 @@ export class RubberBand {
       tickText.fontsize = this.ticksFontsize;
       tickText.draw(context);
     }
-  
+
     private computeTickTextParams(): TextParams {
       const [textAlign, baseline] = this.textAlignments();
       let textWidth = null;
@@ -560,7 +560,7 @@ export class RubberBand {
       tickText.format(context);
       return tickText
     }
-  
+
     private getValueToDrawMatrix(): DOMMatrix {
       const scale = this.drawLength / this.interval;
       if (this.isInverted) {
@@ -576,7 +576,7 @@ export class RubberBand {
         this.origin.y - this.minValue * Number(this.isVertical) * scale
       ]);
     }
-  
+
     private marginedBounds(minValue: number, maxValue: number): [number, number] {
       const valueRange = Math.abs(maxValue - minValue);
       if (this.isDiscrete) return [minValue - 1, maxValue + 1]
@@ -584,7 +584,7 @@ export class RubberBand {
         minValue - valueRange * this.marginRatio,
         maxValue + valueRange * this.marginRatio];
     }
-  
+
     public drawRubberBand(context: CanvasRenderingContext2D): void {
       const canvasMin = this.relativeToAbsolute(this.rubberBand.minValue);
       const canvasMax = this.relativeToAbsolute(this.rubberBand.maxValue);
@@ -596,9 +596,9 @@ export class RubberBand {
       this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, this.rubberColor, 0.1, this.rubberAlpha);
       if (this.rubberBand.isClicked) this.emitter.emit("rubberBandChange", this.rubberBand);
     }
-  
+
     protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void { }
-  
+
     public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
       super.mouseMove(context, mouseCoords);
       this.boundingBox.mouseMove(context, mouseCoords);
@@ -608,7 +608,7 @@ export class RubberBand {
         else this.mouseMoveClickedArrow(mouseCoords);
       }
     }
-  
+
     public mouseMoveClickedArrow(mouseCoords: Vertex): void {
       const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
       const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
@@ -617,9 +617,9 @@ export class RubberBand {
         this.rubberBand.maxValue = Math.max(downValue, currentValue);
       } else this.rubberBand.mouseMove(downValue, currentValue);
     }
-  
+
     public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
-  
+
     public mouseDown(mouseDown: Vertex): void {
       super.mouseDown(mouseDown);
       if (this.isHovered) {
@@ -636,7 +636,7 @@ export class RubberBand {
       if (this.boundingBox.isHovered) this.boundingBox.isClicked = true;
       this.saveLocation();
     }
-  
+
     public mouseUp(keepState: boolean): void {
       super.mouseUp(keepState);
       this.isClicked = false;
@@ -647,33 +647,33 @@ export class RubberBand {
       if (this.is_drawing_rubberband) this.emitter.emit("rubberBandChange", this.rubberBand);
       this.is_drawing_rubberband = false;
     }
-  
+
     protected clickOnTitle(mouseDown: Vertex): void { this.title.mouseDown(mouseDown); this.title.isClicked = true }
-  
+
     public isInRubberBand(value: number): boolean {
       return (value >= this.rubberBand.minValue && value <= this.rubberBand.maxValue)
     }
-  
+
     public numericLabels(): string[] {
       this.updateTickPrecision();
       return this.ticks.map(tick => tick.toPrecision(this.tickPrecision))
     }
-  
+
     public saveLocation(): void {
       this._previousMin = this.minValue;
       this._previousMax = this.maxValue;
     }
-  
+
     public stringsToValues(vector: any[]): number[] {
       if (this.isDiscrete) return vector.map(value => this.labels.indexOf(value))
       return vector
     }
-  
+
     public stringToValue(value: string | number): number {
       if (typeof value == 'string') return this.labels.indexOf(value)
       return value
     }
-  
+
     protected textAlignments(): [string, string] {
       const forVertical = this.initScale.x > 0 ? 'end' : 'start';
       const forHorizontal = this.initScale.y > 0 ? 'bottom' : 'top';
@@ -687,7 +687,7 @@ export class RubberBand {
       else origin.y += inversionFactor * Math.sign(HTMatrix.d) * this.offsetTicks;
       return origin
     }
-  
+
     public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {
       const HTMatrix = this.transformMatrix;
       let center = (viewPoint.x - HTMatrix.e) / HTMatrix.a;
@@ -702,7 +702,7 @@ export class RubberBand {
       this.maxValue = (this._previousMax - center) / scale + center - offset / HTMatrix.a;
       this.updateTicks();
     }
-  
+
     private updateTickPrecision(): number {
       this.tickPrecision = 1;
       for (let index = 0; index < this.ticks.length - 1; index++) {
@@ -714,7 +714,7 @@ export class RubberBand {
       }
       return
     };
-  
+
     public updateTicks(): void {
       this.ticks = this.computeTicks();
       if (!this.isDiscrete) this.labels = this.numericLabels();
@@ -726,7 +726,7 @@ export class RubberBand {
     private _hasMoved: boolean = false;
     private _previousOrigin: Vertex;
     private _previousEnd: Vertex;
-  
+
     constructor(
       vector: any[],
       public boundingBox: Rect,
@@ -740,37 +740,37 @@ export class RubberBand {
       this.centeredTitle = false;
       this.updateEnds();
     }
-  
+
     get tickMarker(): string { return "line" }
-  
+
     get tickOrientation(): string { return this.isVertical ? "horizontal" : "vertical" }
-  
+
     get hasMoved(): boolean { return this._hasMoved }
-  
+
     set hasMoved(value: boolean) { this._hasMoved = value; if (this._hasMoved) this.emitter.emit("axisStateChange", this) }
-  
+
     protected updateOffsetTicks(): void { this.offsetTicks = 10 } // TODO: make it responsive
-  
+
     public resetScale(): void {
       this.isInverted = false;
       super.resetScale();
     }
-  
+
     public setTitleSettings(): void {
       this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
     }
-  
+
     private horizontalTitleProperties(): void {
       this.titleSettings.origin.y = this.titleZone.origin.y + this.titleZone.size.y;
       this.titleSettings.baseline = this.initScale.y > 0 ? "bottom" : "top";
       this.titleSettings.orientation = 0;
     }
-  
+
     private verticalTitleProperties(): void {
       this.titleSettings.baseline = this.initScale.y > 0 ? "top" : "bottom";
       this.titleSettings.orientation = 0;
     }
-  
+
     public computeTitle(index: number, nAxis: number): ParallelAxis {
       this.titleZone = new Rect(this.origin.copy(), this.boundingBox.size.copy());
       const SIZE_FACTOR = 0.35;
@@ -788,11 +788,11 @@ export class RubberBand {
       this.titleZone.buildPath();
       this.titleSettings.origin = this.titleZone.origin.copy();
       this.titleSettings.align = this.initScale.x > 0 ? "left" : "right";
-  
+
       if (this.isVertical) this.titleSettings.align = "center";
       return this
     }
-  
+
     protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
       const titleTextParams = super.getTitleTextParams(color, align, baseline, orientation);
       titleTextParams.multiLine = true;
@@ -800,7 +800,7 @@ export class RubberBand {
       titleTextParams.height = this.titleZone.size.y;
       return titleTextParams
     }
-  
+
     protected computeEnds(): void {
       super.computeEnds();
       if (this.isVertical) {
@@ -809,13 +809,13 @@ export class RubberBand {
       }
       else this.boundingBox.size.y -= SIZE_AXIS_END / 2;
     }
-  
+
     public mouseMoveClickedTitle(mouseCoords: Vertex): void {
       const translation = mouseCoords.subtract(this.mouseClick);
       this.translate(this._previousOrigin.add(translation), this._previousEnd.add(translation));
       if (translation.norm > 10) this.hasMoved = true;
     }
-  
+
     public mouseUp(keepState: boolean): void {
       if (this.title.isClicked && this.title.isHovered && !this.hasMoved) {
         this.title.isClicked = false;
@@ -825,12 +825,12 @@ export class RubberBand {
       this.hasMoved = false;
       super.mouseUp(keepState);
     }
-  
+
     private updateEnds(): void {
       this._previousOrigin = this.origin.copy();
       this._previousEnd = this.end.copy();
     }
-  
+
     protected flip(): void {
       this.isInverted = !this.isInverted;
       this.rubberBand.isInverted = this.isInverted;
@@ -847,7 +847,7 @@ export class RubberBand {
       this.buildPath();
       this.computeTitle(index, nAxis);
     }
-  
+
     public translate(newOrigin: Vertex, newEnd: Vertex): void {
       const translation = newOrigin.subtract(this.origin);
       this.boundingBox.translate(translation);
@@ -855,7 +855,7 @@ export class RubberBand {
       this.titleZone.origin = this.titleZone.origin.add(translation);
       this.transform(newOrigin, newEnd);
     }
-  
+
     protected updateTitle(context: CanvasRenderingContext2D, text: string, origin: Vertex, textParams: TextParams): void {
       super.updateTitle(context, text, origin, textParams);
       const writtenText = this.title.format(context);
@@ -866,7 +866,7 @@ export class RubberBand {
         this.title.align = "center";
       }
     }
-  
+
     public computeTextBoxes(context: CanvasRenderingContext2D): void {
       context.save();
       const [calibratedTickText, calibratedMeasure] = this.getCalibratedTextWidth(context);

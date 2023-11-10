@@ -12,9 +12,9 @@ export class PointSet {
     ) {
       this.color = colorHsl(color);
     }
-  
+
     public includes(pointIndex: number): boolean { return this.indices.includes(pointIndex) }
-  
+
     public indexOf(pointIndex: number): number { return this.indices.indexOf(pointIndex) }
   }
 
@@ -26,7 +26,7 @@ export class ShapeCollection {
     ) {
       [this.minimum, this.maximum] = this.getBounds();
     }
-  
+
     public get length(): number { return this.shapes.length }
   
     public includes(shape: Shape) { return this.shapes.includes(shape) }
@@ -34,7 +34,7 @@ export class ShapeCollection {
     public static fromPrimitives(primitives: { [key: string]: any }, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
       return new ShapeCollection(primitives.map(primitive => Shape.deserialize(primitive, scale)))
     }
-  
+
     public getBounds(): [Vertex, Vertex] {
       let minimum = new Vertex(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
       let maximum = new Vertex(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
@@ -47,11 +47,11 @@ export class ShapeCollection {
       })
       return [minimum, maximum]
     }
-  
+
     public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
       this.shapes.forEach(shape => { if (!inMultiPlot && shape.inFrame) shape.drawTooltip(canvasOrigin, canvasSize, context) });
     }
-  
+
     public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
       this.shapes.forEach(shape => shape.mouseMove(context, mouseCoords));
     }
@@ -64,16 +64,16 @@ export class ShapeCollection {
       });
       return clickedObject
     }
-  
+
     public mouseUp(keepState: boolean): void { this.shapes.forEach(shape => shape.mouseUp(keepState)) }
-  
+
     public draw(context: CanvasRenderingContext2D): void { this.shapes.forEach(shape => shape.draw(context)) }
-  
+
     public removeShape(index: number): void {
       this.shapes.splice(index, 1);
       [this.minimum, this.maximum] = this.getBounds();
     }
-  
+
     public updateBounds(context: CanvasRenderingContext2D): void {
       this.shapes.forEach(shape => {
         if (shape instanceof Text) {
@@ -91,7 +91,7 @@ export class ShapeCollection {
       if (Number.isNaN(this.maximum.x)) this.maximum.x = this.maximum.x + 1;
       if (Number.isNaN(this.maximum.y)) this.maximum.y = this.maximum.y + 1;
     }
-  
+
     public updateShapeStates(stateName: string): number[] {
       const newStates = [];
       this.shapes.forEach((shape, index) => {
@@ -99,7 +99,7 @@ export class ShapeCollection {
       });
       return newStates
     }
-  
+
     public resetShapeStates(): void {
       this.shapes.forEach(shape => shape.isHovered = shape.isClicked = shape.isSelected = false);
     }
@@ -118,29 +118,29 @@ export class ShapeCollection {
           label.updateHeight(labelHeight);
           label.updateOrigin(drawingZone, initScale, index - nLabels);
         });
-  
+
       }
       this.shapes = [...others, ...labels];
     }
   }
-  
+
   export class SelectionBoxCollection extends ShapeCollection {
     constructor(public shapes: SelectionBox[] = []) { super(shapes) }
   }
-  
+
   export class GroupCollection extends ShapeCollection {
     constructor(
       public shapes: any[] = [],
     ) {
       super(shapes);
     }
-  
+
     public shapeIsContainer(shape: any): boolean { return shape.values?.length > 1 || shape instanceof LineSequence }
-  
+
     public drawTooltips(canvasOrigin: Vertex, canvasSize: Vertex, context: CanvasRenderingContext2D, inMultiPlot: boolean): void {
       this.shapes.forEach(shape => { if ((this.shapeIsContainer(shape) || !inMultiPlot) && shape.inFrame) shape.drawTooltip(canvasOrigin, canvasSize, context) });
     }
-  
+
     public updateShapeStates(stateName: string): number[] {
       const ShapeStates = [];
       this.shapes.forEach((shape, index) => {
@@ -153,4 +153,3 @@ export class ShapeCollection {
       return ShapeStates
     }
   }
-  

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 - Multiplot Drawing
 
+### Refactor
+- Remove ill code
+
 ## [0.18.0]
 ### Add
 - Draw to replace PrimitiveGroups

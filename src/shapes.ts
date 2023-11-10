@@ -1,4 +1,4 @@
-import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, DEFAULT_SHAPE_COLOR, 
+import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, DEFAULT_SHAPE_COLOR,
   HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED_SHAPE_COLOR, STROKE_STYLE_OFFSET,
   TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE, TOOLTIP_TEXT_OFFSET, INFINITE_LINE_FACTOR,
   CIRCLES, MARKERS, TRIANGLES, SQUARES, CROSSES, HALF_LINES, LEGEND_MARGIN } from "./constants";
@@ -248,7 +248,7 @@ export class newShape {
     this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
   }
 }
-  
+
 export class Arc extends newShape {
   constructor(
     public center: Vertex,

@@ -21,7 +21,7 @@ export class Figure extends AloneFigure {
   ) {
     super(data, width, height, X, Y, canvasID, is_in_multiplot);
   }
-  
+
   public static fromMultiplot(data: any, width: number, height: number, canvasID: string): Figure {
     if (data.type_ == "histogram") return new Histogram(data, width, height, 0, 0, canvasID, true);
     else if (data.type_ == "parallelplot")return new ParallelPlot(data, width, height, 0, 0, canvasID, true);

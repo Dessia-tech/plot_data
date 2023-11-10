@@ -117,7 +117,7 @@ export class RubberBand {
     let rectSize: Vertex;
     if (this.isVertical) {
       rectOrigin = new Vertex(origin - SMALL_RUBBERBAND_SIZE / 2, this.canvasMin);
-      rectSize = new Vertex(SMALL_RUBBERBAND_SIZE, this.canvasLength); 
+      rectSize = new Vertex(SMALL_RUBBERBAND_SIZE, this.canvasLength);
     } else {
       rectOrigin = new Vertex(this.canvasMin, origin - SMALL_RUBBERBAND_SIZE / 2);
       rectSize = new Vertex(this.canvasLength, SMALL_RUBBERBAND_SIZE)

@@ -120,7 +120,6 @@ export class ShapeCollection {
         label.updateHeight(labelHeight);
         label.updateOrigin(drawingZone, initScale, index - nLabels);
       });
-
     }
     this.shapes = [...others, ...labels];
   }

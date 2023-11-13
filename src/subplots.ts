@@ -1487,8 +1487,8 @@ export class Figure extends PlotData {
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: ShapeCollection;
-  public absoluteObjects: GroupCollection;
-  public relativeObjects: GroupCollection;
+  public absoluteObjects: ShapeCollection;
+  public relativeObjects: ShapeCollection;
 
   public font: string = "sans-serif";
 
@@ -1525,7 +1525,7 @@ export class Figure extends PlotData {
       this.pointSets = new Array(this.nSamples).fill(-1);
       this.drawnFeatures = this.setFeatures(data);
       this.axes = this.setAxes();
-      this.fixedObjects = new ShapeCollection(this.axes, this.canvasMatrix);
+      this.fixedObjects = new ShapeCollection(this.axes);
       this.relativeObjects = new GroupCollection();
       this.absoluteObjects = new GroupCollection();
     }
@@ -1536,6 +1536,8 @@ export class Figure extends PlotData {
     this.minY = this.origin.y;
     this.maxY = this.origin.y + this.size.y;
   }
+
+  get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
 
   set axisStyle(newAxisStyle: Map<string, any>) { newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
 
@@ -1567,8 +1569,9 @@ export class Figure extends PlotData {
   }
 
   protected unpackData(data: any): Map<string, any[]> {
-    const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
     const unpackedData = new Map<string, any[]>();
+    if (!data.elements) return unpackedData;
+    const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
     featureKeys.push("name");
     featureKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
     return unpackedData
@@ -1632,7 +1635,7 @@ export class Figure extends PlotData {
 
   protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] { return }
 
-  protected buildAxes(axisBoundingBox: newRect[]): newAxis[] { return }
+  protected buildAxes(axisBoundingBox: newRect[]): newAxis[] { return [] }
 
   protected transformAxes(axisBoundingBoxes: newRect[]): void {
     axisBoundingBoxes.forEach((box, index) => this.axes[index].boundingBox = box);
@@ -1719,16 +1722,38 @@ export class Figure extends PlotData {
     return isRubberBanded
   }
 
+  public drawInZone(context: CanvasRenderingContext2D): void {
+    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+    this.updateDrawnObjects(context);
+    this.updateCuttingZone(context);
+    const cutDraw = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
+    context.globalCompositeOperation = "source-over";
+    context.putImageData(previousCanvas, 0, 0);
+    context.putImageData(cutDraw, this.X, this.Y);
+  }
+
+  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {}
+
+  protected updateCuttingZone(context: CanvasRenderingContext2D): void {
+    context.globalCompositeOperation = "destination-in";
+    context.fill(this.cuttingZone.path);
+  }
+
+  protected get cuttingZone(): newRect {
+    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
+    return new newRect(axesOrigin, this.axesEnd.subtract(axesOrigin));
+  }
+
+  protected get axesEnd() { return new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix) }
+
   protected drawFixedObjects(context: CanvasRenderingContext2D): void { this.fixedObjects.draw(context) }
 
   private drawZoneRectangle(context: CanvasRenderingContext2D): void {
     // TODO: change with newRect
-    Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15,15]);
+    Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15, 15]);
   }
 
-  protected drawRelativeObjects(context: CanvasRenderingContext2D) {
-    this.relativeObjects = new GroupCollection([], this.relativeMatrix);
-  }
+  protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.relativeObjects = new GroupCollection([]) }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D) { this.absoluteObjects = new GroupCollection() }
 
@@ -1756,7 +1781,7 @@ export class Figure extends PlotData {
     this.drawTooltips();
 
     this.context_show.resetTransform();
-    if (this.multiplot_manipulation) { this.drawZoneRectangle(this.context_show) };
+    if (this.multiplot_manipulation) this.drawZoneRectangle(this.context_show);
     this.context_show.restore();
   }
 
@@ -1787,7 +1812,7 @@ export class Figure extends PlotData {
         this.selectionBox.buildPath();
         this.selectionBox.draw(context);
       }
-      this.relativeObjects.drawings.push(this.selectionBox);
+      this.relativeObjects.shapes.push(this.selectionBox);
     }
   }
 
@@ -1843,10 +1868,10 @@ export class Figure extends PlotData {
   public mouseUp(ctrlKey: boolean): void {
     if (this.interaction_ON) {
       if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
-        this.absoluteObjects.mouseUp(this.context_show, ctrlKey);
-        this.relativeObjects.mouseUp(this.context_show, ctrlKey);
+        this.absoluteObjects.mouseUp(ctrlKey);
+        this.relativeObjects.mouseUp(ctrlKey);
       }
-      this.fixedObjects.mouseUp(this.context_show, ctrlKey);
+      this.fixedObjects.mouseUp(ctrlKey);
     }
   }
 
@@ -1857,17 +1882,29 @@ export class Figure extends PlotData {
 
   protected activateSelection(emittedRubberBand: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
 
+  public shiftOnAction(canvas: HTMLElement): void {
+    this.isSelecting = true;
+    canvas.style.cursor = 'crosshair';
+    this.draw();
+  }
+
+  public shiftOffAction(canvas: HTMLElement): void {
+    this.isSelecting = false;
+    this.is_drawing_rubber_band = false;
+    canvas.style.cursor = 'default';
+    this.draw();
+  }
+
   public mouse_interaction(isParallelPlot: boolean): void {
     if (this.interaction_ON === true) {
-      var clickedObject: any = null;
-      var isDrawing = false;
-      var canvasMouse = new Vertex(0, 0); var canvasDown = new Vertex(0, 0);
-      var frameMouse = new Vertex(0, 0); var frameDown = new Vertex(0, 0);
-      var absoluteMouse = new Vertex(0, 0);
-      var mouse3X = 0; var mouse3Y = 0;
+      let clickedObject: any = null;
+      let isDrawing = false;
+      let canvasMouse = new Vertex(0, 0); let canvasDown = new Vertex(0, 0);
+      let frameMouse = new Vertex(0, 0); let frameDown = new Vertex(0, 0);
+      let absoluteMouse = new Vertex(0, 0);
       const canvas = document.getElementById(this.canvas_id);
-      var ctrlKey = false; var shiftKey = false; var spaceKey = false;
-      var zoomBox = new SelectionBox();
+      let ctrlKey = false; let shiftKey = false; let spaceKey = false;
+      const zoomBox = new SelectionBox();
 
       this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
 
@@ -1878,7 +1915,7 @@ export class Figure extends PlotData {
         }
         if (e.key == "Shift") {
           shiftKey = true;
-          if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
+          if (!ctrlKey) this.shiftOnAction(canvas);
         }
         if (e.key == " ") {
           e.preventDefault();
@@ -1891,7 +1928,10 @@ export class Figure extends PlotData {
         e.preventDefault();
         if (e.key == "Control") ctrlKey = false;
         if (e.key == " ") spaceKey = false;
-        if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; this.is_drawing_rubber_band = false; canvas.style.cursor = 'default'; this.draw() };
+        if (e.key == "Shift") {
+          shiftKey = false;
+          this.shiftOffAction(canvas);
+        };
       });
 
       canvas.addEventListener('mousemove', e => {
@@ -2036,7 +2076,7 @@ export class Frame extends Figure {
 
   set nYTicks(value: number) { this._nYTicks = value }
 
-  get sampleDrawings(): GroupCollection { return this.relativeObjects }
+  get sampleDrawings(): ShapeCollection { return this.relativeObjects }
 
   public get drawingZone(): [Vertex, Vertex] {
     const origin = new Vertex();
@@ -2045,6 +2085,8 @@ export class Frame extends Figure {
     const size = new Vertex(Math.abs(this.axes[0].end.x - this.axes[0].origin.x), Math.abs(this.axes[1].end.y - this.axes[1].origin.y))
     return [origin.transform(this.canvasMatrix.inverse()), size]
   }
+
+  protected get axesEnd() { return new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix) }
 
   protected unpackAxisStyle(data: any): void {
     super.unpackAxisStyle(data);
@@ -2147,7 +2189,7 @@ export class Histogram extends Frame {
   public bars: Bar[] = [];
 
   public fillStyle: string = 'hsl(203, 90%, 85%)';
-  public strokeStyle: string = 'hsl(0, 0%, 0%)';
+  public strokeStyle: string = null;
   public lineWidth: number = 1;
   public dashLine: number[] = [];
 
@@ -2240,7 +2282,7 @@ export class Histogram extends Frame {
   protected drawRelativeObjects(context: CanvasRenderingContext2D): void {
     super.drawRelativeObjects(context);
     this.bars.forEach(bar => bar.draw(this.context_show));
-    this.relativeObjects.drawings = [...this.bars, ...this.relativeObjects.drawings];
+    this.relativeObjects.shapes = [...this.bars, ...this.relativeObjects.shapes];
   }
 
   private getBarsDrawing(): void {
@@ -2321,7 +2363,7 @@ export class newScatter extends Frame {
       }
     }
 
-  get sampleDrawings(): GroupCollection { return this.absoluteObjects }
+  get sampleDrawings(): ShapeCollection { return this.absoluteObjects }
 
   public unpackPointStyle(data: any): void {
     if (data.point_style?.color_fill) this.fillStyle = data.point_style.color_fill;
@@ -2354,7 +2396,7 @@ export class newScatter extends Frame {
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
     super.drawAbsoluteObjects(context);
     this.drawPoints(context);
-    this.absoluteObjects.drawings = [...this.points, ...this.absoluteObjects.drawings];
+    this.absoluteObjects.shapes = [...this.points, ...this.absoluteObjects.shapes];
   };
 
   protected drawPoints(context: CanvasRenderingContext2D): void {
@@ -2606,7 +2648,7 @@ export class newGraph2D extends newScatter {
     if (data.graphs) {
       data.graphs.forEach(graph => {
         if (graph.elements.length != 0) {
-          this.curves.push(LineSequence.getGraphProperties(graph));
+          this.curves.push(LineSequence.unpackGraphProperties(graph));
           const curveIndices = range(graphSamples.length, graphSamples.length + graph.elements.length);
           const graphPointStyle = new newPointStyle(graph.point_style);
           this.pointStyles.push(...new Array(curveIndices.length).fill(graphPointStyle));
@@ -2619,34 +2661,30 @@ export class newGraph2D extends newScatter {
   }
 
   public updateSelection(axesSelections: number[][]): void {
-    const inMultiplot = this.is_in_multiplot
+    const inMultiplot = this.is_in_multiplot;
     this.is_in_multiplot = false;
     super.updateSelection(axesSelections);
     this.is_in_multiplot = inMultiplot;
   }
 
-  public drawCurves(context: CanvasRenderingContext2D): void {
-    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
-    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
-    const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
-    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
     this.curves.forEach((curve, curveIndex) => {
       curve.update(this.curvesIndices[curveIndex].map(index => { return this.points[index] }));
       curve.draw(context);
     })
-    context.globalCompositeOperation = "destination-in";
-    context.fill(drawingZone.path);
-    const cutGraph = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
-    context.globalCompositeOperation = "source-over";
-    context.putImageData(previousCanvas, 0, 0);
-    context.putImageData(cutGraph, this.X, this.Y);
+  }
+
+  protected get cuttingZone(): newRect {
+    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
+    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
+    return new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
-    this.drawCurves(context);
+    this.drawInZone(context);
     if (this.showPoints) {
       super.drawAbsoluteObjects(context);
-      this.absoluteObjects.drawings = [...this.curves, ...this.absoluteObjects.drawings];
+      this.absoluteObjects.shapes = [...this.curves, ...this.absoluteObjects.shapes];
     } else {
       this.absoluteObjects = new GroupCollection([...this.curves]);
     }
@@ -2655,7 +2693,12 @@ export class newGraph2D extends newScatter {
   public reset_scales(): void {
     const scale = new Vertex(this.frameMatrix.a, this.frameMatrix.d).scale(this.initScale);
     const translation = new Vertex(this.axes[0].maxValue - this.axes[0].initMaxValue, this.axes[1].maxValue - this.axes[1].initMaxValue).scale(scale);
-    this.curves.forEach(curve => curve.translateTooltip(translation));
+    this.curves.forEach(curve => {
+      if (curve.mouseClick) {
+        curve.previousMouseClick = curve.previousMouseClick.add(translation);
+        curve.mouseClick = curve.previousMouseClick.copy();
+      }
+    });
     super.reset_scales();
   }
 
@@ -2666,15 +2709,14 @@ export class newGraph2D extends newScatter {
     this.draw();
   }
 
-  public mouseUp(ctrlKey: boolean): void {
-    super.mouseUp(ctrlKey);
-    this.curves.forEach(curve => curve.previousTooltipOrigin = curve.tooltipOrigin);
+  public translate(canvas: HTMLElement, translation: Vertex): void {
+    super.translate(canvas, translation);
+    this.curves.forEach(curve => { if (curve.mouseClick) curve.mouseClick = curve.previousMouseClick.add(translation.scale(this.initScale)) });
   }
 
-  public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
-    const translation = super.mouseTranslate(currentMouse, mouseDown);
-    this.curves.forEach(curve => { if (curve.previousTooltipOrigin) curve.tooltipOrigin = curve.previousTooltipOrigin.add(translation.scale(this.initScale)) });
-    return translation
+  public mouseUp(ctrlKey: boolean): void {
+    super.mouseUp(ctrlKey);
+    this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
   }
 }
 
@@ -2710,6 +2752,8 @@ export class newParallelPlot extends Figure {
   get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.0035, 0.0025) }
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
+
+  public shiftOnAction(canvas: HTMLElement): void {}
 
   protected computeOffset(): Vertex {
     const standardOffset = super.computeOffset();
@@ -2824,8 +2868,8 @@ export class newParallelPlot extends Figure {
     for (let i=0; i < this.nSamples; i++) {
       const curve = new LineSequence([], String(i));
       this.drawnFeatures.forEach((feature, j) => curve.points.push(this.computePoint(this.axes[j], this.features.get(feature)[i])));
-      curve.hoveredFactor = curve.clickedFactor = 1;
-      curve.selectedFactor = 1.5;
+      curve.hoveredThickener = curve.clickedThickener = 0;
+      curve.selectedThickener = 1;
       this.curves.push(curve);
     }
   }
@@ -2844,6 +2888,8 @@ export class newParallelPlot extends Figure {
     })
   }
 
+  protected drawSelectionBox(context: CanvasRenderingContext2D): void {}
+
   private drawCurves(context: CanvasRenderingContext2D): void {
     const unpickedIndices = newParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
     [unpickedIndices, this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
@@ -2854,23 +2900,13 @@ export class newParallelPlot extends Figure {
     return A.filter(x => !B.includes(x))
   }
 
-  public updateCurveDrawings(context: CanvasRenderingContext2D): void {
-    const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
+  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
     this.updateCurves();
     this.drawCurves(context);
-    const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
-    const axesEnd = new Vertex(this.axes[this.axes.length - 1].end.x, this.axes[this.axes.length - 1].end.y).transform(this.canvasMatrix);
-    const drawingZone = new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
-    context.globalCompositeOperation = "destination-in";
-    context.fill(drawingZone.path);
-    const cutGraph = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
-    context.globalCompositeOperation = "source-over";
-    context.putImageData(previousCanvas, 0, 0);
-    context.putImageData(cutGraph, this.X, this.Y);
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
-    this.updateCurveDrawings(context);
+    this.drawInZone(context);
     this.absoluteObjects = new GroupCollection([...this.curves]);
   }
 
@@ -2943,6 +2979,83 @@ export class newParallelPlot extends Figure {
   }
 }
 
+const DRAW_MARGIN_FACTOR = 0.025;
+export class Draw extends Frame {
+  constructor(
+    data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    public X: number,
+    public Y: number,
+    public canvas_id: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.scale);
+    }
+
+  public shiftOnAction(canvas: HTMLElement): void {}
+
+  public define_canvas(canvas_id: string):void {
+    super.define_canvas(canvas_id);
+    this.computeTextBorders(this.context_show);
+  }
+
+  public reset_scales(): void { // TODO: merge with resetView
+    super.reset_scales();
+    this.updateBounds();
+  }
+
+  protected unpackData(data: any): Map<string, any[]> {
+    const drawing = ShapeCollection.fromPrimitives(data.primitives);
+    const [minX, minY, maxX, maxY] = Draw.boundsDilatation(...drawing.getBounds());
+    return new Map<string, any[]>([["x", [minX, maxX]], ["y", [minY, maxY]], ["shapes", drawing.shapes]])
+  }
+
+  private static boundsDilatation(minimum: Vertex, maximum: Vertex): [number, number, number, number] {
+    const minX = minimum.x * (1 - Math.sign(minimum.x) * DRAW_MARGIN_FACTOR);
+    const minY = minimum.y * (1 - Math.sign(minimum.y) * DRAW_MARGIN_FACTOR);
+    const maxX = maximum.x * (1 + Math.sign(maximum.x) * DRAW_MARGIN_FACTOR);
+    const maxY = maximum.y * (1 + Math.sign(maximum.y) * DRAW_MARGIN_FACTOR);
+    return [minX, minY, maxX, maxY]
+  }
+
+  protected computeTextBorders(context: CanvasRenderingContext2D) {
+    this.relativeObjects.updateBounds(context);
+    this.updateBounds();
+  }
+
+  public updateBounds(): void {
+    const [minX, minY, maxX, maxY] = Draw.boundsDilatation(this.relativeObjects.minimum, this.relativeObjects.maximum);
+    this.axes[0].minValue = this.features.get("x")[0] = Math.min(this.features.get("x")[0], minX);
+    this.axes[1].minValue = this.features.get("y")[0] = Math.min(this.features.get("y")[0], minY);
+    this.axes[0].maxValue = this.features.get("x")[1] = Math.max(this.features.get("x")[1], maxX);
+    this.axes[1].maxValue = this.features.get("y")[1] = Math.max(this.features.get("y")[1], maxY);
+    this.axes.forEach(axis => axis.saveLocation());
+    this.axisEqual();
+  }
+
+  protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.drawInZone(context) }
+
+  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
+    this.relativeObjects.locateLabels(super.cuttingZone, this.initScale);
+    this.relativeObjects.draw(context);
+  }
+
+  protected get cuttingZone(): newRect {
+    const axesOrigin = this.axes[0].origin.transform(this.frameMatrix.inverse());
+    const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.frameMatrix.inverse());
+    return new newRect(axesOrigin, axesEnd.subtract(axesOrigin));
+  }
+
+  protected axisEqual(): void {
+    if (this.axes[0].drawScale > this.axes[1].drawScale) this.axes[0].otherAxisScaling(this.axes[1])
+    else this.axes[1].otherAxisScaling(this.axes[0]);
+    this.axes.forEach(axis => axis.saveLocation());
+    this.updateAxes();
+  }
+}
 
 function range(start: number, end: number, step: number = 1): number[] {
   let array = [];

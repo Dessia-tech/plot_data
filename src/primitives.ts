@@ -70,22 +70,24 @@ export class Arc2D {
                   scaleX*this.r,
                   this.start_angle,
                   this.end_angle,
-                  this.anticlockwise);
+                  !this.anticlockwise);
     }
 
 
     contour_draw(context, first_elem, mvx, mvy, scaleX, scaleY, X, Y) {
-      context.lineWidth = this.edge_style.line_width;
-      context.strokeStyle = this.edge_style.color_stroke;
-      var ptsa = [];
-      for (var l = 0; l < this.data.length; l++) {
-        ptsa.push(scaleX*this.data[l]['x']+ mvx + X);
-        ptsa.push(-scaleY*this.data[l]['y']+ mvy + Y);
-      }
-      var tension = 0.4;
-      var isClosed = false;
-      var numOfSegments = 16;
-      drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
+      if (this.data) {
+        context.lineWidth = this.edge_style.line_width;
+        context.strokeStyle = this.edge_style.color_stroke;
+        var ptsa = [];
+        for (var l = 0; l < this.data.length; l++) {
+          ptsa.push(scaleX*this.data[l]['x']+ mvx + X);
+          ptsa.push(-scaleY*this.data[l]['y']+ mvy + Y);
+        }
+        var tension = 0.4;
+        var isClosed = false;
+        var numOfSegments = 16;
+        drawLines(context, getCurvePoints(ptsa, tension, isClosed, numOfSegments), first_elem);
+      } else this.draw(context, mvx, mvy, scaleX, scaleY, X, Y)
     }
 }
 

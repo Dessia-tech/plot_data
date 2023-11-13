@@ -25,7 +25,6 @@ export abstract class PlotData extends EventEmitter {
   init_scale:number=1;
   init_scaleX:number=1;
   init_scaleY:number=1;
-  scale:number=1;
   scaleX:number=1;
   scaleY:number=1;
   scroll_x:number=0;
@@ -275,7 +274,6 @@ export abstract class PlotData extends EventEmitter {
 
   reset_scales(): void {
     this.init_scale = Math.min(this.width/(this.maxX - this.minX), this.height/(this.maxY - this.minY));
-    this.scale = this.init_scale;
     if ((this.axis_ON) && !(this.graph_ON)) { // rescale and avoid axis
       this.init_scaleX = 0.95*(this.width - this.decalage_axis_x - 2*this.pointLength)/(this.maxX - this.minX);
       this.init_scaleY = 0.95*(this.height - this.decalage_axis_y - 2*this.pointLength)/(this.maxY - this.minY);
@@ -409,7 +407,6 @@ export abstract class PlotData extends EventEmitter {
       this.context.fill();
       this.context.globalAlpha = 1;
       if (d.surface_style.hatching != null) {
-        this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
       }
       if (this.select_on_mouse == d) {
         this.context.fillStyle = this.color_surface_on_mouse;
@@ -447,7 +444,6 @@ export abstract class PlotData extends EventEmitter {
       this.context.fill();
       this.context.globalAlpha = 1;
       if (d.surface_style.hatching != null) {
-        this.context.fillStyle = this.context.createPattern(d.surface_style.hatching.canvas_hatching,'repeat');
         this.context.fill();
       }
       if (this.select_on_mouse == d) {
@@ -884,8 +880,8 @@ export abstract class PlotData extends EventEmitter {
         axisTitle.format(this.context);
       }
 
-      let boxOrigin = new Vertex(boxOriginX, origin.y - axisTitle.nRows * axisTitle.fontsize);
-      this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize)));
+      let boxOrigin = new Vertex(boxOriginX, origin.y - axisTitle.fontsize);
+      this.axisNamesBoxes.push(new newRect(boxOrigin, new Vertex(axisTitle.width, axisTitle.fontsize)));
 
       this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'
       this.context.fillStyle = 'black';
@@ -993,10 +989,10 @@ export abstract class PlotData extends EventEmitter {
       axisTitle.format(this.context);
       let boxOrigin = new Vertex(origin.x, axisTitle.origin.y);
 
-      if (!standard) { axisTitle.origin.y += axisTitle.fontsize * (axisTitle.nRows - 1) };
+      if (!standard) { axisTitle.origin.y += axisTitle.fontsize  };
       if (standard) { boxOrigin.x -= axisTitle.width / 2 };
 
-      let boxSize = new Vertex(axisTitle.width, axisTitle.nRows * axisTitle.fontsize);
+      let boxSize = new Vertex(axisTitle.width, axisTitle.fontsize);
       this.axisNamesBoxes.push(new newRect(boxOrigin, boxSize));
 
       this.context.strokeStyle = axisTitle.text == this.selected_axis_name? 'blue' : 'black'
@@ -2120,8 +2116,8 @@ export abstract class PlotData extends EventEmitter {
       if (this.select_on_mouse !== old_select_on_mouse) {
       } else if (this.select_on_mouse && ["wire", "contour", "circle"].includes(this.select_on_mouse["type_"])
                 && this.select_on_mouse["tooltip"]) {
-        this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale,
-          this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
+        // this.select_on_mouse.tooltip.draw_primitive_tooltip(this.context, this.scale,
+        //   this.originX, this.originY, this.X, this.Y, mouse2X, mouse2Y, this.width, this.height);
       }
     }
     var is_inside_canvas = (mouse2X>=this.X) && (mouse2X<=this.width + this.X) && (mouse2Y>=this.Y) && (mouse2Y<=this.height + this.Y);

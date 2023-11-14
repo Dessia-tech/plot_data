@@ -1,5 +1,5 @@
-import { DEFAULT_SHAPE_COLOR, HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED_SHAPE_COLOR } from "../../src/constants"
-import { Vertex, Shape } from "../../src/baseShape"
+import { DEFAULT_SHAPE_COLOR, HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED_SHAPE_COLOR } from "../../instrumented/constants"
+import { Vertex, Shape } from "../../instrumented/baseShape"
 
 describe('VERTEX', function() {
 

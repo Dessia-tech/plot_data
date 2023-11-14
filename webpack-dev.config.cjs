@@ -5,7 +5,7 @@ const path = require("path");
 const isProduction = process.env.NODE_ENV == "production";
 
 const config = {
-  entry: "./src/core.ts",
+  entry: "./instrumented/core.ts",
   output: {
     path: path.resolve(__dirname, "libdev"),
     filename: "plot-data.js",

@@ -126,8 +126,8 @@ describe('Axis', function() {
     numericStringVector.forEach((value, index) => expect(stringAxis.labels[value], `string value ${index}`).to.equal(stringVector[index]));
     numericNumberVector.forEach((value, index) => expect(value, `number value ${index}`).to.equal(numberVector[index]));
   })
-   
-   
+
+
 });
 
 describe('ParallelAxis', function() {

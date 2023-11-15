@@ -77,12 +77,12 @@ describe('COLORS CONVERSION', function () {
         expect(colors.componentToHex(255)).to.equal('ff');
         expect(colors.componentToHex(128)).to.equal('80');
     });
-  
+
     // Returns  null for a non conform color name.
     it('should return null for a non conform color name', function() {
         expect(colors.arrayHexToRgb("colorName")).to.be.null;
     });
-  
+
     // Returns a two-digit hexadecimal string for the component 255.
     it('should return a two-digit hexadecimal string for the component 255', function() {
         expect(colors.componentToHex(255)).to.equal('ff');

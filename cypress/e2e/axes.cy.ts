@@ -76,17 +76,23 @@ describe('Axis', function() {
     expect(axis.maxValue, "maxValue").to.be.closeTo(8.7, 0.05);
   });
 
-  it('should change translate scale', function() {
+  it('should update axis with translation and style', function() {
     const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
     const viewPoint = new Vertex(0, 0);
     const scaling = new Vertex(1, 1);
     const translation = new Vertex(4 * axis.transformMatrix.a, 4 * axis.transformMatrix.a);
-    axis.updateScale(viewPoint, scaling, translation);
+    const axisStyle = new Map<string, any>([
+      ["lineWidth", 3],
+      ["strokeStyle", "hsl(12, 45%, 80%)"]
+    ])
+    axis.update(axisStyle, viewPoint, scaling, translation);
     expect(axis.minValue, "minValue").to.be.closeTo(-3.2, 0.1);
     expect(axis.maxValue, "maxValue").to.be.closeTo(1.2, 0.1);
+    expect(axis.lineWidth, "lineWidth").to.be.equal(3);
+    expect(axis.strokeStyle, "strokeStyle").to.equal("hsl(12, 45%, 80%)")
   });
 
-  it('should change reset scale', function() {
+  it('should reset scale and translation', function() {
     const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
     axis.updateScale(new Vertex(20, 20), new Vertex(2, 0.5), new Vertex());
     axis.updateScale(new Vertex(), new Vertex(1, 1), new Vertex(25, 25));
@@ -95,7 +101,7 @@ describe('Axis', function() {
     expect(axis.maxValue, "maxValue").to.be.equal(5.2);
   });
 
-  it("should draw rubberBand", function() {
+  it("should draw rubberBand and reset it", function() {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
@@ -104,9 +110,23 @@ describe('Axis', function() {
     axis.mouseDown(mouseClick);
     axis.mouseMove(context, new Vertex(0, 75));
     axis.mouseUp(false);
-    console.log(axis)
     expect(axis.rubberBand.minValue, "rubberBand minValue").to.be.closeTo(3, 0.001);
     expect(axis.rubberBand.maxValue, "rubberBand maxValue").to.be.closeTo(4.1, 0.001);
+    axis.reset();
+    expect(axis.rubberBand.minValue, "reset rubberBand minValue").to.equal(0);
+    expect(axis.rubberBand.maxValue, "reset rubberBand maxValue").to.equal(0);
+  })
+
+  it("should transform a string array into values array for ticks to be drawn", function() {
+    const stringVector = ["z", "e", "z", "y", "o", "u", "p", "i", "p", "p"];
+    const stringAxis = new Axis(stringVector, boundingBox, origin, end, name, initScale, nTicks);
+    const numberVector = [1, 1, 1, 2, 3, 3, 3, 4, 5, 5, 5, 5];
+    const numberAxis = new Axis(numberVector, boundingBox, origin, end, name, initScale, nTicks);
+    const numericStringVector = stringAxis.stringsToValues(stringVector);
+    const numericNumberVector = numberAxis.stringsToValues(numberVector);
+    console.log(numberAxis)
+    numericStringVector.forEach((value, index) => expect(stringAxis.labels[value], `string value ${index}`).to.equal(stringVector[index]));
+    numericNumberVector.forEach((value, index) => expect(value, `number value ${index}`).to.equal(numberVector[index]));
   })
    
    

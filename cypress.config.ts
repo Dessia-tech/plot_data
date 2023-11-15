@@ -29,7 +29,7 @@ export default defineConfig({
   e2e: {
     experimentalStudio : true,
     setupNodeEvents(on, config) {
-      registerCodeCoverageTasks(on, config)
+      registerCodeCoverageTasks(on, config);
 
       getCompareSnapshotsPlugin(on, config);
 

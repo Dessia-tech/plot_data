@@ -2,12 +2,11 @@
 
 const path = require("path");
 
-const isProduction = process.env.NODE_ENV == "production";
-
 const config = {
-  entry: "./instrumented/core.ts",
+  mode:"development",
+  entry: process.env.NODE_ENV == "development" ? "./src/core.ts" : "./instrumented/core.ts",
   output: {
-    path: path.resolve(__dirname, "libdev"),
+    path: path.resolve(__dirname, process.env.NODE_ENV == "development" ? "libdev" : "libtest"),
     filename: "plot-data.js",
     library: {
       name: "PlotData",
@@ -40,11 +39,4 @@ const config = {
   },
 };
 
-module.exports = () => {
-  if (isProduction) {
-    config.mode = "production";
-  } else {
-    config.mode = "development";
-  }
-  return config;
-};
+module.exports = () => { return config };

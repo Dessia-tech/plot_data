@@ -2,17 +2,16 @@ import { Vertex } from "../../instrumented/baseShape";
 import { Rect } from "../../instrumented/primitives";
 import { Axis, ParallelAxis } from "../../instrumented/axes";
 
-const vector = [1, 2, 3, 4, 5];
-const boundingBox = new Rect(new Vertex(0, 0), new Vertex(500, 500));
-const origin = new Vertex(0, 0);
-const end = new Vertex(0, 100);
-const name = "";
-const initScale = new Vertex(1, 1);
-const nTicks = 5;
-
 describe('Axis', function() {
 
-  // The draw() method successfully draws the axis on the canvas.
+  const vector = [1, 2, 3, 4, 5];
+  const boundingBox = new Rect(new Vertex(0, 0), new Vertex(500, 500));
+  const origin = new Vertex(0, 0);
+  const end = new Vertex(0, 100);
+  const name = "";
+  const initScale = new Vertex(1, 1);
+  const nTicks = 5;
+
   it('should draw the axis on the canvas', function() {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -124,10 +123,45 @@ describe('Axis', function() {
     const numberAxis = new Axis(numberVector, boundingBox, origin, end, name, initScale, nTicks);
     const numericStringVector = stringAxis.stringsToValues(stringVector);
     const numericNumberVector = numberAxis.stringsToValues(numberVector);
-    console.log(numberAxis)
     numericStringVector.forEach((value, index) => expect(stringAxis.labels[value], `string value ${index}`).to.equal(stringVector[index]));
     numericNumberVector.forEach((value, index) => expect(value, `number value ${index}`).to.equal(numberVector[index]));
   })
    
    
+});
+
+describe('ParallelAxis', function() {
+
+  const vector = [1, 2, 3, 4, 5];
+  const boundingBox = new Rect(new Vertex(-50, 0), new Vertex(50, 150));
+  const origin = new Vertex(0, 0);
+  const end = new Vertex(0, 100);
+  const name = "parallel axis";
+  const initScale = new Vertex(1, 1);
+  const nTicks = 5;
+
+  it('should draw a vertical axis on the canvas', function() {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    const parallelAxis = new ParallelAxis(vector, boundingBox, origin, end, name, initScale, nTicks);
+
+    parallelAxis.computeTitle(0, 1);
+    expect(parallelAxis.titleSettings.baseline, "default baseline").to.be.null;
+    expect(parallelAxis.titleSettings.orientation, "default orientation").to.be.null;
+    parallelAxis.draw(context);
+    expect(parallelAxis.titleSettings.baseline, "updated baseline").to.be.equal("top");
+    expect(parallelAxis.titleSettings.orientation, "updated orientation").to.be.equal(0);
+  });
+
+  it('should draw a horizontal axis on the canvas', function() {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    const parallelAxis = new ParallelAxis(vector, boundingBox, new Vertex(0, 0), new Vertex(100, 0), name, initScale, nTicks);
+
+    parallelAxis.computeTitle(0, 1);
+    expect(parallelAxis.titleSettings.baseline, "default baseline").to.be.null;
+    parallelAxis.draw(context);
+    expect(parallelAxis.titleSettings.baseline, "updated baseline").to.be.equal("bottom");
+  });
+
 });

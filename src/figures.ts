@@ -837,7 +837,7 @@ export class ParallelPlot extends Figure {
 
   get className(): string { return "ParallelPlot" }
 
-  get isVertical(): boolean { return this._isVertical ?? true }
+  get isVertical(): boolean { return this._isVertical ?? false }
 
   set isVertical(value: boolean) { this._isVertical = value }
 

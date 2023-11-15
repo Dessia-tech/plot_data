@@ -658,7 +658,7 @@ export class ParallelAxis extends Axis {
   }
 
   public setTitleSettings(): void {
-    this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties()
+    this.isVertical ? this.verticalTitleProperties() : this.horizontalTitleProperties();
   }
 
   private horizontalTitleProperties(): void {

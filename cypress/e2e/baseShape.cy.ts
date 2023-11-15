@@ -1,7 +1,7 @@
 import { DEFAULT_SHAPE_COLOR, HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED_SHAPE_COLOR } from "../../instrumented/constants"
 import { Vertex, Shape } from "../../instrumented/baseShape"
 
-describe('VERTEX', function() {
+describe('Vertex', function() {
 
   // Vertex class can be instantiated with default values for x and y.
   it('should instantiate Vertex class with default values for x and y', function() {
@@ -147,7 +147,7 @@ describe('VERTEX', function() {
   });
 })
 
-describe('SHAPE', function() {
+describe('Shape', function() {
 
   // Shape can be initialized without any arguments
   it('should initialize Shape without any arguments', function() {

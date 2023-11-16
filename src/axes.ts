@@ -1,4 +1,4 @@
-import { SIZE_AXIS_END } from "./constants"
+import { SIZE_AXIS_END, AXIS_TAIL_SIZE, RUBBERBAND_SMALL_SIZE, DEFAULT_FONTSIZE } from "./constants"
 import { uniqueValues } from "./functions"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
@@ -22,7 +22,7 @@ export class Axis extends Shape {
   protected _ticks: number[];
   public tickPrecision: number;
   public ticksFontsize: number = 12;
-  protected _isDiscrete: boolean = true;
+  public isDiscrete: boolean = true;
 
   public drawPath: Path2D;
   public path: Path2D;
@@ -56,11 +56,6 @@ export class Axis extends Shape {
   public offsetTitle: number;
   protected maxTickWidth: number;
   protected maxTickHeight: number;
-
-  readonly DRAW_START_OFFSET = 0;
-  readonly SELECTION_RECT_SIZE = 10;
-  readonly FONT_SIZE = 12;
-  readonly isFilled = true;
 
   // OLD
   public is_drawing_rubberband: boolean = false;
@@ -107,10 +102,6 @@ export class Axis extends Shape {
   get center(): number { return (this.maxValue + this.minValue) / 2 }
 
   get isVertical(): boolean { return this.origin.x == this.end.x };
-
-  get isDiscrete(): boolean { return this._isDiscrete };
-
-  set isDiscrete(value: boolean) { this._isDiscrete = value };
 
   set marginRatio(value: number) { this._marginRatio = value };
 
@@ -231,7 +222,7 @@ export class Axis extends Shape {
     } else {
       endArrow = new Point(this.end.x + SIZE_AXIS_END / 2 * horizontalIdx, this.end.y + SIZE_AXIS_END / 2 * verticalIdx, SIZE_AXIS_END, 'triangle', ['right', 'up'][verticalIdx]);
     }
-    path.moveTo(this.origin.x - this.DRAW_START_OFFSET * horizontalIdx, this.origin.y - this.DRAW_START_OFFSET * verticalIdx);
+    path.moveTo(this.origin.x - AXIS_TAIL_SIZE * horizontalIdx, this.origin.y - AXIS_TAIL_SIZE * verticalIdx);
     path.lineTo(this.end.x, this.end.y);
     path.addPath(endArrow.path);
     return path
@@ -239,7 +230,7 @@ export class Axis extends Shape {
 
   public buildPath(): void {
     this.path = new Path2D();
-    const offset = new Vertex(this.SELECTION_RECT_SIZE * Number(this.isVertical), this.SELECTION_RECT_SIZE * Number(!this.isVertical));
+    const offset = new Vertex(RUBBERBAND_SMALL_SIZE * Number(this.isVertical), RUBBERBAND_SMALL_SIZE * Number(!this.isVertical));
     const origin = new Vertex(this.origin.x, this.origin.y).subtract(offset.multiply(2));
     const size = this.end.subtract(origin).add(offset);
     this.path.rect(origin.x, origin.y, size.x, size.y);
@@ -266,7 +257,7 @@ export class Axis extends Shape {
   }
 
   protected getCalibratedTextWidth(context: CanvasRenderingContext2D): [Text, number] {
-    const calibratedTickText = new Text("88.88e+88", new Vertex(0, 0), { fontsize: this.FONT_SIZE, font: this.font });
+    const calibratedTickText = new Text("88.88e+88", new Vertex(0, 0), { fontsize: DEFAULT_FONTSIZE, font: this.font });
     context.font = calibratedTickText.fullFont;
     const calibratedMeasure = context.measureText(calibratedTickText.text).width;
     return [calibratedTickText, calibratedMeasure]
@@ -284,12 +275,12 @@ export class Axis extends Shape {
   private centeredTitleTextBoxes(calibratedMeasure: number): void {
     let freeSpace: number;
     if (this.isVertical) {
-      freeSpace = this.boundingBox.size.x - this.FONT_SIZE - 0.3 * this.maxTickWidth;
+      freeSpace = this.boundingBox.size.x - DEFAULT_FONTSIZE - 0.3 * this.maxTickWidth;
       this.offsetTitle = Math.min(freeSpace, calibratedMeasure);
       this.maxTickHeight -= this.offsetTitle;
     } else {
-      freeSpace = this.boundingBox.size.y - this.FONT_SIZE - 0.3 * this.maxTickHeight;
-      this.offsetTitle = Math.min(freeSpace, this.FONT_SIZE * 1.5 + this.offsetTicks);
+      freeSpace = this.boundingBox.size.y - DEFAULT_FONTSIZE - 0.3 * this.maxTickHeight;
+      this.offsetTitle = Math.min(freeSpace, DEFAULT_FONTSIZE * 1.5 + this.offsetTicks);
       this.maxTickWidth -= this.offsetTitle;
     }
   }
@@ -337,7 +328,7 @@ export class Axis extends Shape {
   protected getTitleTextParams(color: string, align: string, baseline: string, orientation: number): TextParams {
     return {
       width: this.titleWidth,
-      fontsize: this.FONT_SIZE,
+      fontsize: DEFAULT_FONTSIZE,
       font: this.font,
       align: align,
       color: color,
@@ -384,12 +375,12 @@ export class Axis extends Shape {
   private topArrowTitleProperties(): void {
     this.titleSettings.origin = this.end.copy();
     if (this.isVertical) {
-      this.titleSettings.origin.x += this.FONT_SIZE;
+      this.titleSettings.origin.x += DEFAULT_FONTSIZE;
       this.titleSettings.align = ["start", "end"][this.verticalPickIdx()];
       this.titleSettings.baseline = ['bottom', 'top'][this.horizontalPickIdx()];
     }
     else {
-      this.titleSettings.origin.y += this.FONT_SIZE;
+      this.titleSettings.origin.y += DEFAULT_FONTSIZE;
       this.titleSettings.align = ["end", "start"][this.verticalPickIdx()];
       this.titleSettings.baseline = ['top', 'bottom'][this.horizontalPickIdx()];
     }
@@ -443,7 +434,7 @@ export class Axis extends Shape {
       textHeight = this.maxTickHeight;
     }
     return {
-      width: textWidth, height: textHeight, fontsize: this.FONT_SIZE, font: this.font, scale: new Vertex(1, 1),
+      width: textWidth, height: textHeight, fontsize: DEFAULT_FONTSIZE, font: this.font, scale: new Vertex(1, 1),
       align: textAlign, baseline: baseline, color: this.strokeStyle, backgroundColor: "hsl(0, 0%, 100%, 0.5)"
     }
   }
@@ -680,7 +671,7 @@ export class ParallelAxis extends Axis {
       offset = this.drawLength + Math.min(SIZE_AXIS_END * 2, this.drawLength * 0.05);
       this.titleZone.origin.y += offset;
     } else {
-      offset = this.offsetTicks + this.FONT_SIZE + SIZE_AXIS_END;
+      offset = this.offsetTicks + DEFAULT_FONTSIZE + SIZE_AXIS_END;
       if (index != nAxis - 1) this.titleZone.size.x *= SIZE_FACTOR;
       this.titleZone.size.y = Math.abs(this.boundingBox.origin.y) - Math.abs(this.origin.y);
       this.titleZone.origin.y -= this.titleZone.size.y;

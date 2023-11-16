@@ -1,5 +1,5 @@
 import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE,
-  TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, SMALL_RUBBERBAND_SIZE } from "./constants"
+  TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, RUBBERBAND_SMALL_SIZE } from "./constants"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { styleToLegend } from "./shapeFunctions"
@@ -778,11 +778,11 @@ export class RubberBand {
     let rectOrigin: Vertex;
     let rectSize: Vertex;
     if (this.isVertical) {
-      rectOrigin = new Vertex(origin - SMALL_RUBBERBAND_SIZE / 2, this.canvasMin);
-      rectSize = new Vertex(SMALL_RUBBERBAND_SIZE, this.canvasLength);
+      rectOrigin = new Vertex(origin - RUBBERBAND_SMALL_SIZE / 2, this.canvasMin);
+      rectSize = new Vertex(RUBBERBAND_SMALL_SIZE, this.canvasLength);
     } else {
-      rectOrigin = new Vertex(this.canvasMin, origin - SMALL_RUBBERBAND_SIZE / 2);
-      rectSize = new Vertex(this.canvasLength, SMALL_RUBBERBAND_SIZE)
+      rectOrigin = new Vertex(this.canvasMin, origin - RUBBERBAND_SMALL_SIZE / 2);
+      rectSize = new Vertex(this.canvasLength, RUBBERBAND_SMALL_SIZE)
     }
     const draw = new Rect(rectOrigin, rectSize);
     draw.lineWidth = lineWidth;

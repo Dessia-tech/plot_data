@@ -125,10 +125,10 @@ export function argMax(array: number[]): [number, number] {
 }
 
 export function mapMin(map: Map<any, number>): [any, number] {
-  let min = Number.NEGATIVE_INFINITY;
+  let min = Number.POSITIVE_INFINITY;
   let keyMin: string;
   map.forEach((value, key) => {
-    if (value >= min) {
+    if (value <= min) {
       min = value;
       keyMin = key;
     }

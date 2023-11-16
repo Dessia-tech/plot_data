@@ -76,8 +76,6 @@ export class Rect extends Shape {
     return rectangle
   }
 
-  public deserializeStyle
-
   public translate(translation: Vertex): void {
     this.origin = this.origin.add(translation);
     this.buildPath();

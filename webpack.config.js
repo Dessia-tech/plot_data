@@ -22,7 +22,7 @@ export default {
       {
         test: /\.(ts|tsx)$/i,
         loader: "ts-loader",
-        exclude: ["/node_modules/", "/cypress/"],
+        exclude: ["/node_modules/"],
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,

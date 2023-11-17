@@ -20,8 +20,8 @@ describe('Vertex', function() {
 
   // Vertex class can calculate its L1 norm.
   it('should calculate L1 norm', function() {
-  const vertex = new Vertex(-2, 3);
-  expect(vertex.normL1, "normL1").to.equal(5);
+    const vertex = new Vertex(-2, 3);
+    expect(vertex.normL1, "normL1").to.equal(5);
   });
 
   // Vertex class can calculate its Euclidean norm.
@@ -33,11 +33,11 @@ describe('Vertex', function() {
 
   // Vertex class can be deep copied.
   it("should deep copy a vertex", function () {
-      const vertex = new Vertex(3, 4);
-      const copy = vertex.copy();
-      copy.x = 0;
-      expect(copy.x, "x coord").to.not.equal(vertex.x);
-      expect(copy.y, "y coord").to.equal(vertex.y);
+    const vertex = new Vertex(3, 4);
+    const copy = vertex.copy();
+    copy.x = 0;
+    expect(copy.x, "x coord").to.not.equal(vertex.x);
+    expect(copy.y, "y coord").to.equal(vertex.y);
   })
 
   // Vertex class can add another Vertex to itself.
@@ -51,34 +51,34 @@ describe('Vertex', function() {
 
   // Vertex class can divide itself by a scalar value.
   it('should divide Vertex class by value', function() {
-      const vertex = new Vertex(2, 3);
-      const result = vertex.divide(3);
-      expect(result.x, "x coord").to.equal(2 / 3);
-      expect(result.y, "y coord").to.equal(1);
+    const vertex = new Vertex(2, 3);
+    const result = vertex.divide(3);
+    expect(result.x, "x coord").to.equal(2 / 3);
+    expect(result.y, "y coord").to.equal(1);
   });
 
   // Vertex class can divide itself by zero.
   it('should divide the vertex by zero', function() {
-      const vertex = new Vertex(4, 6);
-      const dividedVertex = vertex.divide(0);
-      expect(dividedVertex.x, "x coord").to.equal(Infinity);
-      expect(dividedVertex.y, "y coord").to.equal(Infinity);
+    const vertex = new Vertex(4, 6);
+    const dividedVertex = vertex.divide(0);
+    expect(dividedVertex.x, "x coord").to.equal(Infinity);
+    expect(dividedVertex.y, "y coord").to.equal(Infinity);
   });
 
   // Vertex class can multiply itself by a scalar value.
   it('should multiply the vertex by a scalar value', function() {
-      const vertex = new Vertex(2, 3);
-      const scalar = 2;
-      const result = vertex.multiply(scalar);
-      expect(result.x, "x coord").to.equal(4);
-      expect(result.y, "y coord").to.equal(6);
+    const vertex = new Vertex(2, 3);
+    const scalar = 2;
+    const result = vertex.multiply(scalar);
+    expect(result.x, "x coord").to.equal(4);
+    expect(result.y, "y coord").to.equal(6);
   });
 
   // Vertex class can calculate its distance from itself.
   it('should calculate distance from itself', function() {
-      const vertex = new Vertex(2, 3);
-      const distance = vertex.distance(vertex);
-      expect(distance, "distance").to.equal(0);
+    const vertex = new Vertex(2, 3);
+    const distance = vertex.distance(vertex);
+    expect(distance, "distance").to.equal(0);
   });
 
   // Vertex class can calculate its distance from another Vertex.
@@ -118,18 +118,18 @@ describe('Vertex', function() {
 
   // Vertex class can transform itself by a DOMMatrix.
   it('should transform the vertex itself by a DOMMatrix', function() {
-      const vertex = new Vertex(2, 3);
-      const matrix = new DOMMatrix();
-      matrix.a = 2;
-      matrix.b = 0;
-      matrix.c = 0;
-      matrix.d = 3;
-      matrix.e = 5;
-      matrix.f = -2;
-      vertex.transformSelf(matrix);
-      expect(vertex.x, "x coord").to.equal(9);
-      expect(vertex.y, "y coord").to.equal(7);
-    });
+    const vertex = new Vertex(2, 3);
+    const matrix = new DOMMatrix();
+    matrix.a = 2;
+    matrix.b = 0;
+    matrix.c = 0;
+    matrix.d = 3;
+    matrix.e = 5;
+    matrix.f = -2;
+    vertex.transformSelf(matrix);
+    expect(vertex.x, "x coord").to.equal(9);
+    expect(vertex.y, "y coord").to.equal(7);
+  });
 
   // Vertex class can create a transformed Vertex by a DOMMatrix.
   it('should transform the vertex by a DOMMatrix', function() {
@@ -203,14 +203,14 @@ describe('Shape', function() {
 
   // Shape can be clicked over
   it('should click shape when mouse is clicked over it', function() {
-      const shape = new Shape();
-      const context = document.createElement('canvas').getContext('2d');
-      const mouseCoords = new Vertex(10, 10);
-      shape.path.rect(8, 8, 3, 3);
-      shape.mouseMove(context, mouseCoords);
-      shape.mouseDown(mouseCoords);
-      shape.mouseUp(false);
-      expect(shape.isClicked, "isClicked").to.be.true;
-      expect(shape.mouseClick.x, "mouseClick").to.equal(10);
+    const shape = new Shape();
+    const context = document.createElement('canvas').getContext('2d');
+    const mouseCoords = new Vertex(10, 10);
+    shape.path.rect(8, 8, 3, 3);
+    shape.mouseMove(context, mouseCoords);
+    shape.mouseDown(mouseCoords);
+    shape.mouseUp(false);
+    expect(shape.isClicked, "isClicked").to.be.true;
+    expect(shape.mouseClick.x, "mouseClick").to.equal(10);
   });
 });

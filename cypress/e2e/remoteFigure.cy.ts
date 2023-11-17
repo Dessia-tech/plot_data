@@ -34,7 +34,6 @@ const data = {
 };
 
 describe('RemoteFigure.unpackAxisStyle', function() {
-
     it("should create RemoteFigure with no elements", function() {
         const figure = new RemoteFigure(emptyData, 800, 600, 100, 100, "canvasID");
         expect(figure.features, "features").to.deep.equal(new Map<string, any>([["x", []], ["y", []]]));

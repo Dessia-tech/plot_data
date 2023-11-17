@@ -27,6 +27,7 @@ export default defineConfig({
     type: 'actual' //'base',
   },
   e2e: {
+    specPattern: 'cypress/e2e/*',
     experimentalStudio : true,
     setupNodeEvents(on, config) {
       registerCodeCoverageTasks(on, config);

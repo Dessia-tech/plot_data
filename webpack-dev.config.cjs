@@ -1,12 +1,12 @@
 // Generated using webpack-cli https://github.com/webpack/webpack-cli
 
 const path = require("path");
-
+const isCoverage = process.env.NODE_ENV != "development";
 const config = {
   mode:"development",
-  entry: process.env.NODE_ENV == "development" ? "./src/core.ts" : "./instrumented/core.ts",
+  entry: isCoverage ? "./instrumented/core.ts" : "./src/core.ts",
   output: {
-    path: path.resolve(__dirname, process.env.NODE_ENV == "development" ? "libdev" : "libtest"),
+    path: path.resolve(__dirname, isCoverage ? "libtest" : "libdev"),
     filename: "plot-data.js",
     library: {
       name: "PlotData",
@@ -23,7 +23,7 @@ const config = {
       {
         test: /\.(ts|tsx)$/i,
         loader: "ts-loader",
-        exclude: ["/node_modules/"],
+        exclude: ["/node_modules/", "/cypress/"],
       },
       {
         test: /\.(eot|svg|ttf|woff|woff2|png|jpg|gif)$/i,

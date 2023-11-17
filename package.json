@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "instrument": "nyc instrument --compact=false src instrumented",
-    "build": "npm run instrument && NODE_ENV=production webpack --config webpack.config.js",
-    "dev": "npm run instrument && NODE_ENV=development webpack --config webpack-dev.config.cjs",
+    "build": "NODE_ENV=production webpack --config webpack.config.js",
+    "dev": "NODE_ENV=development webpack --config webpack-dev.config.cjs",
     "cov": "npm run instrument && NODE_ENV=coverage webpack --config webpack-dev.config.cjs",
 
     "format": "prettier --write \"src/**/*.ts\"",

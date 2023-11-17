@@ -96,15 +96,9 @@ export class RemoteFigure {
 
   get relativeMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]) }
 
-  get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
-
   get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.027, 0.035) }
 
-  set offsetFactor(value: Vertex) { this._offsetFactor = value }
-
   get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.01, 0.02) }
-
-  set marginFactor(value: Vertex) { this._marginFactor = value }
 
   public isInCanvas(vertex: Vertex): boolean {
     return vertex.x >= this.origin.x && vertex.x <= this.origin.x + this.size.x && vertex.y >= this.origin.y && vertex.y <= this.origin.y + this.size.y
@@ -128,8 +122,11 @@ export class RemoteFigure {
   public serializeFeatures(): any {
     const elements = [];
     for (let i=0; i < this.nSamples; i++) {
-      const newSample = {};
-      this.featureNames.forEach(feature => newSample[feature] = this.features.get(feature)[i]);
+      const newSample = { "values": {} };
+      this.featureNames.forEach(feature => {
+        newSample[feature] = this.features.get(feature)[i];
+        if (feature != "name") newSample["values"][feature] = newSample[feature];
+      });
       elements.push(newSample);
     }
     return elements
@@ -148,8 +145,11 @@ export class RemoteFigure {
   public static deserializeData(data: any): Map<string, any[]> {
     const unpackedData = new Map<string, any[]>();
     if (data.x_variable) unpackedData.set(data.x_variable, []);
-    if (data.y_variable) unpackedData.set(data.y_variable, []);
-    if (!data.elements) return unpackedData;
+    if (!data.elements) {
+      unpackedData.set("x", []);
+      unpackedData.set("y", []);
+      return unpackedData
+    };
     const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
     featureKeys.push("name");
     featureKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
@@ -171,7 +171,7 @@ export class RemoteFigure {
   public setCanvas(canvasID: string):void {
     const canvas = document.getElementById(canvasID) as HTMLCanvasElement;
     canvas.width = this.width;
-        canvas.height = this.height;
+    canvas.height = this.height;
     this.context = canvas.getContext("2d");
   }
 
@@ -230,7 +230,7 @@ export class RemoteFigure {
     return this.buildAxes(axisBoundingBoxes)
   }
 
-  protected buildAxisBoundingBoxes(freeSpace: Vertex): Rect[] { return }
+  protected buildAxisBoundingBoxes(freeSpace: Vertex): Rect[] { return [] }
 
   protected buildAxes(axisBoundingBox: Rect[]): Axis[] { return [] }
 
@@ -285,22 +285,6 @@ export class RemoteFigure {
   public resizeUpdate(): void {
     this.resize();
     this.draw();
-  }
-
-  public multiplotInstantiation(origin: Vertex, width: number, height: number): void {
-    this.origin = origin;
-    this.width = width;
-    this.height = height;
-  }
-
-  public multiplotDraw(origin: Vertex, width: number, height: number): void {
-    this.multiplotInstantiation(origin, width, height);
-    this.resetView();
-  }
-
-  public multiplotResize(origin: Vertex, width: number, height: number): void {
-    this.multiplotInstantiation(origin, width, height);
-    this.resizeUpdate();
   }
 
   public initSelectors(): void {

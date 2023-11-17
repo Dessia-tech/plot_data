@@ -39,6 +39,22 @@ export class Figure extends RemoteFigure {
     return plot
   }
 
+  public multiplotInstantiation(origin: Vertex, width: number, height: number): void {
+    this.origin = origin;
+    this.width = width;
+    this.height = height;
+  }
+
+  public multiplotDraw(origin: Vertex, width: number, height: number): void {
+    this.multiplotInstantiation(origin, width, height);
+    this.resetView();
+  }
+
+  public multiplotResize(origin: Vertex, width: number, height: number): void {
+    this.multiplotInstantiation(origin, width, height);
+    this.resizeUpdate();
+  }
+
   public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
     this.axes.forEach(axis => axis.sendRubberBand(multiplotRubberBands));
   }

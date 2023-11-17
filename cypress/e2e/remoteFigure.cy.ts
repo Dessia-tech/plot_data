@@ -33,7 +33,7 @@ const data = {
     ]
 };
 
-describe('unpackAxisStyle', function() {
+describe('RemoteFigure.unpackAxisStyle', function() {
 
     it("should create RemoteFigure with no elements", function() {
         const figure = new RemoteFigure(emptyData, 800, 600, 100, 100, "canvasID");
@@ -102,7 +102,7 @@ describe('unpackAxisStyle', function() {
     });
 });
 
-describe("serializedFeatures", function() {
+describe("RemoteFigure.serializedFeatures", function() {
     it('should build a data object that matches with input data of any RemoteFigure', function() {
         const figure = new RemoteFigure(data, 800, 600, 100, 100, "canvasID");
         const serializedFeatures = figure.serializeFeatures();
@@ -117,7 +117,7 @@ canvas.height = 1000;
 canvas.width = 1000;
 document.body.appendChild(canvas);
 
-describe("changeAxisFeature", function() {
+describe("RemoteFigure.changeAxisFeature", function() {
     it('should update the feature name of the given axis', function() { 
         const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
         figure.setCanvas(canvas.id);
@@ -136,7 +136,7 @@ describe("changeAxisFeature", function() {
       });
 })
 
-describe("resizeUpdate", function() {
+describe("RemoteFigure.resizeUpdate", function() {
     it("should resize figure", function() {
         const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
         figure.setCanvas(canvas.id);

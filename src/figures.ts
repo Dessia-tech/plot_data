@@ -30,6 +30,7 @@ export class Figure extends RemoteFigure {
     else if (data.type_ == "graph2d") return new Graph2D(data, width, height, 0, 0, canvasID, true);
     else if (data.type_ == "primitivegroupcontainer") return new PrimitiveGroupContainer(data, width, height, false, 0, 0, canvasID, true);
     else if (data.type_ == "scatterplot") return new Scatter(data, width, height, 0, 0, canvasID, true);
+    throw new Error(`${data.type_} is not a know type of figure.`)
   }
 
   public static createFromMultiplot(data: any, features: Map<string, any>, context: CanvasRenderingContext2D, canvasID: string): Figure {

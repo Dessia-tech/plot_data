@@ -146,3 +146,137 @@ describe("RemoteFigure.resizeUpdate", function() {
         expect(figure.size.y, "size.y").to.be.equal(500);
     });
 })
+
+describe("RemoteFigure.reset", function() {
+    it("should reset scales and selectors", function() {
+        const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
+        figure.setCanvas(canvas.id);
+        figure.axes[0] = new Axis(figure.features.get("x"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(100, 0), "x", new Vertex());
+        figure.axes[0].rubberBand.minValue = 10;
+        figure.axes[0].rubberBand.maxValue = 100;
+        figure.axes[0].minValue = 17;
+        figure.axes[0].maxValue = 27;
+        figure.hoveredIndices = [1, 4];
+        figure.clickedIndices = [2, 3];
+        figure.selectedIndices = [0, 5];
+
+        expect(figure.axes[0].minValue, "changed axis minValue").to.be.equal(17);
+        expect(figure.axes[0].maxValue, "changed axis maxValue").to.be.equal(27);
+
+        figure.reset();
+
+        expect(figure.axes[0].minValue, "initial axis minValue").to.be.equal(-0.1);
+        expect(figure.axes[0].maxValue, "initial axis maxValue").to.be.equal(2.1);
+        expect(figure.axes[0].rubberBand.minValue, "rubberBand minValue").to.be.equal(0);
+        expect(figure.axes[0].rubberBand.maxValue, "rubberBand maxValue").to.be.equal(0);
+        expect(figure.hoveredIndices.length, "hoveredIndices").to.be.equal(0);
+        expect(figure.clickedIndices.length, "clickedIndices").to.be.equal(0);
+        expect(figure.selectedIndices.length, "selectedIndices").to.be.equal(0);
+    });
+})
+
+describe("RemoteFigure.resetSelection", function() {
+    it("should reset selectors", function() {
+        const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
+        figure.setCanvas(canvas.id);
+        figure.axes[0] = new Axis(figure.features.get("x"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(100, 0), "x", new Vertex());
+        figure.axes[0].minValue = 17;
+        figure.axes[0].maxValue = 27;
+        figure.axes[0].rubberBand.minValue = 10;
+        figure.axes[0].rubberBand.maxValue = 100;
+        figure.hoveredIndices = [1, 4];
+        figure.clickedIndices = [2, 3];
+        figure.selectedIndices = [0, 5];
+        figure.resetSelection();
+
+        expect(figure.axes[0].minValue, "initial axis minValue").to.be.equal(17);
+        expect(figure.axes[0].maxValue, "initial axis maxValue").to.be.equal(27);
+        expect(figure.axes[0].rubberBand.minValue, "rubberBand minValue").to.be.equal(0);
+        expect(figure.axes[0].rubberBand.maxValue, "rubberBand maxValue").to.be.equal(0);
+        expect(figure.hoveredIndices.length, "hoveredIndices").to.be.equal(0);
+        expect(figure.clickedIndices.length, "clickedIndices").to.be.equal(0);
+        expect(figure.selectedIndices.length, "selectedIndices").to.be.equal(0);
+    });
+})
+
+describe("RemoteFigure.mouseListener", function() {
+    const mouseUp = new MouseEvent('mouseup', { clientX: 150, clientY: 150 });
+    const mouseDown = new MouseEvent('mousedown', { clientX: 150, clientY: 150 });
+    const mouseMove1 = new MouseEvent('mousemove', { clientX: 150, clientY: 150 });
+    const mouseMove2 = new MouseEvent('mousemove', { clientX: 370, clientY: 520 });
+    const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
+    figure.axes[0] = new Axis(figure.features.get("x"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(800, 0), "x", new Vertex());
+    figure.setCanvas(canvas.id);
+    figure.mouseListener();
+
+    it("should handle mouseMove", function() {
+        canvas.dispatchEvent(mouseMove1);
+        expect(figure.isHovered).to.be.true;
+        if (canvas.style.cursor.length != 0) expect(canvas.style.cursor, "cursor").to.be.equal("default")
+        else expect(canvas.style.cursor, "cursor").to.be.equal("");
+    });
+
+    it("should have a crosshair cursor when zooming", function() {
+        figure.isZooming = true;
+        canvas.dispatchEvent(mouseMove1);
+        expect(canvas.style.cursor, "zooming cursor").to.be.equal("crosshair");
+    });
+
+    it("should set default cursor when mouse up while zooming switched to false", function() {
+        figure.isZooming = false;
+        canvas.dispatchEvent(mouseUp);
+        expect(canvas.style.cursor, "default cursor").to.be.equal("default");
+    });
+
+    it("should have a crosshair cursor when selecting", function() {
+        figure.isSelecting = true;
+        canvas.dispatchEvent(mouseMove1);
+        expect(canvas.style.cursor, "selecting cursor").to.be.equal("crosshair");
+    });
+
+    it("should set default cursor when mouse up while selecting switched to false", function() {
+        figure.isSelecting = false;
+        canvas.dispatchEvent(mouseUp);
+        expect(canvas.style.cursor, "default cursor").to.be.equal("default");
+    });
+
+    it("should translate figure", function() {
+        canvas.dispatchEvent(mouseMove1);
+        canvas.dispatchEvent(mouseDown);
+        canvas.dispatchEvent(mouseMove2);
+        expect(figure.translation, "translation").to.deep.equal(new Vertex(220, -370));
+        expect(canvas.style.cursor, "moving cursor").to.be.equal("move");
+
+        canvas.dispatchEvent(mouseUp);
+
+        expect(figure.translation, "translation").to.deep.equal(new Vertex());
+    });
+
+    it("should draw a SelectionBox", function() {
+        figure.axes[1] = new Axis(figure.features.get("y"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(0, -800), "y", new Vertex());
+        figure.isSelecting = true;
+        canvas.dispatchEvent(mouseMove1);
+        canvas.dispatchEvent(mouseDown);
+        canvas.dispatchEvent(mouseMove2);
+
+        expect(figure.translation, "translation").to.deep.equal(new Vertex());
+        expect(canvas.style.cursor, "selecting cursor").to.be.equal("crosshair");
+        expect(figure.selectionBox.minVertex, "selectionBox.minVertex").to.deep.equal(new Vertex(142, -142));
+        expect(figure.selectionBox.maxVertex, "selectionBox.maxVertex").to.deep.equal(new Vertex(362, -512));
+
+        figure.draw();
+        
+        expect(figure.selectionBox.origin, "selectionBox.origin").to.not.be.deep.equal(new Vertex());
+        expect(figure.selectionBox.size, "selectionBox.size").to.not.be.deep.equal(new Vertex());
+    });
+
+
+
+    // it("should reset state attributes after mouseup", function() {
+    //     const event = new MouseEvent('mouseup', { clientX: 150, clientY: 150 });
+    //     canvas.dispatchEvent(event);
+    //     expect(canvas.style.cursor, "cursor").to.be.equal("default");
+    //     expect(figure.isHovered, "isHovered").to.be.true;
+    //     expect(figure.isSelecting, "isSelecting").to.be.false;
+    // });
+})

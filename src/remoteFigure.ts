@@ -306,7 +306,7 @@ export class RemoteFigure {
     this.resetSelectors();
   }
 
-  protected resetSelection(): void {
+  public resetSelection(): void {
     this.resetRubberBands();
     this.resetSelectors();
   }

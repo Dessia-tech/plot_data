@@ -1,8 +1,6 @@
 import { Vertex } from "../../instrumented/baseShape";
-import { Rect } from "../../instrumented/primitives";
 import { RubberBand } from "../../instrumented/shapes";
-import { Axis } from "../../instrumented/axes";
-import { Figure, PrimitiveGroupContainer, Histogram, Scatter, Draw, ParallelPlot, Graph2D } from "../../instrumented/figures";
+import { Figure, Frame, Histogram, Scatter, Draw, ParallelPlot, Graph2D, PrimitiveGroupContainer } from "../../instrumented/figures";
 
 const data = {
     "name": "", 
@@ -126,4 +124,28 @@ describe("Figure", function() {
 
         expect(multiplotRubberBands, "edited multiplotRubberBands").to.deep.equal(referenceRubberBands);
     })
+});
+
+describe("Frame", function() {
+    it("should be build without attribute_names", function() {
+        const data = {
+            "name": "", "elements": [
+                { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
+                { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+                { "name": "", "values": { "x": 2, "y": 3 }, "x": 2, "y": 3 }
+            ]
+        };
+        const frame = new Frame(data, canvas.width, canvas.height, 0, 0, canvasID, false);
+        expect(frame.xFeature, "xFeature").to.be.equal("x");
+        expect(frame.yFeature, "yFeature").to.be.equal("y");
+        expect(frame.axes[0].ticks[0], "axes[0].ticks[0]").to.be.equal(0);
+        expect(frame.axes[0].ticks[4], "axes[0].ticks[4]").to.be.equal(0.8);
+    });
+
+    it("should change axis feature", function() {
+        const frame = new Frame(data, canvas.width, canvas.height, 0, 0, canvasID, false);
+        frame.setCanvas(canvasID);
+        frame.changeAxisFeature("name", 0);
+        expect(frame.axes[0].name, "axes[0].name").to.be.equal("name");
+    });
 });

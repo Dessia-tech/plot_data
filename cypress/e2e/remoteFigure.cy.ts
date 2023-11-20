@@ -1,3 +1,4 @@
+
 import { Vertex } from "../../instrumented/baseShape";
 import { Rect } from "../../instrumented/primitives";
 import { Axis } from "../../instrumented/axes";
@@ -49,13 +50,12 @@ describe('RemoteFigure.unpackAxisStyle', function() {
     })
 
     it("should not change axisStyle of RemoteFigure when axis is empty", function() {
-      data["axis"] = {};
-      const figure = new RemoteFigure(data, 800, 600, 100, 100, "canvasID");
-      expect(figure.axisStyle.get("strokeStyle")).to.be.equal("hsl(0, 0%, 30%)");
-      expect(figure.axisStyle.get("lineWidth"), "lineWidth").to.be.undefined;
-      expect(figure.axisStyle.get("font"), "font").to.be.undefined;
-      expect(figure.axisStyle.get("ticksFontsize"), "ticksFontSize").to.be.undefined;
-      
+        data["axis"] = {};
+        const figure = new RemoteFigure(data, 800, 600, 100, 100, "canvasID");
+        expect(figure.axisStyle.get("strokeStyle")).to.be.equal("hsl(0, 0%, 30%)");
+        expect(figure.axisStyle.get("lineWidth"), "lineWidth").to.be.undefined;
+        expect(figure.axisStyle.get("font"), "font").to.be.undefined;
+        expect(figure.axisStyle.get("ticksFontsize"), "ticksFontSize").to.be.undefined;
     });
 
     it("should not change axisStyle of RemoteFigure when axis.axis_style is empty", function() {
@@ -204,8 +204,18 @@ describe("RemoteFigure.mouseListener", function() {
     const mouseDown = new MouseEvent('mousedown', { clientX: 150, clientY: 150 });
     const mouseMove1 = new MouseEvent('mousemove', { clientX: 150, clientY: 150 });
     const mouseMove2 = new MouseEvent('mousemove', { clientX: 370, clientY: 520 });
+
+    const ctrlKeyDown = new KeyboardEvent("keydown", { key: 'Control' });
+    const shiftKeyDown = new KeyboardEvent("keydown", { key: 'Shift' });
+    const spaceKeyDown = new KeyboardEvent("keydown", { key: ' ' });
+
+    const ctrlKeyUp = new KeyboardEvent("keyup", { key: 'Control' });
+    const shiftKeyUp = new KeyboardEvent("keyup", { key: 'Shift' });
+    const spaceKeyUp = new KeyboardEvent("keyup", { key: ' ' });
+
     const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
     figure.axes[0] = new Axis(figure.features.get("x"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(800, 0), "x", new Vertex());
+    figure.axes.push(new Axis(figure.features.get("y"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(0, -800), "y", new Vertex()));
     figure.setCanvas(canvas.id);
     figure.mouseListener();
 
@@ -253,7 +263,6 @@ describe("RemoteFigure.mouseListener", function() {
     });
 
     it("should draw a SelectionBox", function() {
-        figure.axes[1] = new Axis(figure.features.get("y"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(0, -800), "y", new Vertex());
         figure.isSelecting = true;
         canvas.dispatchEvent(mouseMove1);
         canvas.dispatchEvent(mouseDown);
@@ -268,7 +277,48 @@ describe("RemoteFigure.mouseListener", function() {
         
         expect(figure.selectionBox.origin, "selectionBox.origin").to.not.be.deep.equal(new Vertex());
         expect(figure.selectionBox.size, "selectionBox.size").to.not.be.deep.equal(new Vertex());
+        canvas.dispatchEvent(mouseUp);
     });
+
+    it("should reset on Control + Shift + click action", function() {
+        cy.spy(figure, 'reset');
+        window.dispatchEvent(ctrlKeyDown);
+        window.dispatchEvent(shiftKeyDown);
+        canvas.dispatchEvent(mouseMove1);
+        canvas.dispatchEvent(mouseDown);
+        canvas.dispatchEvent(mouseUp);
+
+        cy.wrap(figure.reset).should('have.been.calledOnce');
+
+        window.dispatchEvent(ctrlKeyUp);
+        window.dispatchEvent(shiftKeyUp);
+    })
+
+    it("should resetView on Control + Space", function() {
+        cy.spy(figure, 'resetView');
+        window.dispatchEvent(ctrlKeyDown);
+        window.dispatchEvent(spaceKeyDown);
+        canvas.dispatchEvent(mouseMove1);
+        canvas.dispatchEvent(mouseDown);
+        canvas.dispatchEvent(mouseUp);
+
+        cy.wrap(figure.resetView).should('have.been.calledOnce');
+
+        window.dispatchEvent(ctrlKeyUp);
+        window.dispatchEvent(spaceKeyUp);
+    })
+
+    it("should handle Shift key", function() {
+        window.dispatchEvent(shiftKeyDown);
+        expect(figure.isSelecting, "isSelecting").to.be.true;
+        window.dispatchEvent(ctrlKeyDown);
+        expect(figure.isSelecting, "isSelecting").to.be.false;
+        window.dispatchEvent(ctrlKeyUp);
+        expect(figure.isSelecting, "isSelecting").to.be.true;
+        
+    })
+
+
 
 
 

@@ -542,10 +542,18 @@ export class RemoteFigure {
     if (keyString == "Control") {
       ctrlKey = true;
       if (spaceKey && this.isHovered) this.resetView();
+      if (shiftKey) {
+        canvas.style.cursor = "default";
+        this.isSelecting = false;
+      }
     }
     if (keyString == "Shift") {
       shiftKey = true;
       if (!ctrlKey) this.shiftOnAction(canvas);
+      else {
+        canvas.style.cursor = "default";
+        this.isSelecting = false;
+      }
     }
     if (keyString == " ") {
       spaceKey = true;
@@ -555,7 +563,13 @@ export class RemoteFigure {
   }
 
   public keyUpDrawer(canvas: HTMLElement, keyString: string, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
-    if (keyString == "Control") ctrlKey = false;
+    if (keyString == "Control") {
+      ctrlKey = false;
+      if (shiftKey) {
+        this.isSelecting = true;
+        canvas.style.cursor = "crosshair";
+      }
+    }
     if (keyString == " ") spaceKey = false;
     if (keyString == "Shift") {
       shiftKey = false;

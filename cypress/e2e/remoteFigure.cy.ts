@@ -1,4 +1,4 @@
-
+import { ZOOM_FACTOR } from "../../instrumented/constants";
 import { Vertex } from "../../instrumented/baseShape";
 import { Rect } from "../../instrumented/primitives";
 import { Axis } from "../../instrumented/axes";
@@ -107,7 +107,7 @@ describe("RemoteFigure.serializedFeatures", function() {
         const serializedFeatures = figure.serializeFeatures();
         expect(serializedFeatures, "serializedFeatures").to.deep.equal(data["elements"]);
     });
-})
+});
 
 const canvasID = "canvas";
 const canvas = document.createElement(canvasID);
@@ -133,7 +133,7 @@ describe("RemoteFigure.changeAxisFeature", function() {
         expect(figure.axes[0].minValue, "axis.minValue").to.be.equal(0.9);
         expect(figure.axes[0].maxValue, "axis.maxValue").to.be.equal(3.1);
       });
-})
+});
 
 describe("RemoteFigure.resizeUpdate", function() {
     it("should resize figure", function() {
@@ -145,7 +145,7 @@ describe("RemoteFigure.resizeUpdate", function() {
         expect(figure.size.x, "size.x").to.be.equal(700);
         expect(figure.size.y, "size.y").to.be.equal(500);
     });
-})
+});
 
 describe("RemoteFigure.reset", function() {
     it("should reset scales and selectors", function() {
@@ -173,7 +173,7 @@ describe("RemoteFigure.reset", function() {
         expect(figure.clickedIndices.length, "clickedIndices").to.be.equal(0);
         expect(figure.selectedIndices.length, "selectedIndices").to.be.equal(0);
     });
-})
+});
 
 describe("RemoteFigure.resetSelection", function() {
     it("should reset selectors", function() {
@@ -197,13 +197,15 @@ describe("RemoteFigure.resetSelection", function() {
         expect(figure.clickedIndices.length, "clickedIndices").to.be.equal(0);
         expect(figure.selectedIndices.length, "selectedIndices").to.be.equal(0);
     });
-})
+});
 
 describe("RemoteFigure.mouseListener", function() {
     const mouseUp = new MouseEvent('mouseup', { clientX: 150, clientY: 150 });
     const mouseDown = new MouseEvent('mousedown', { clientX: 150, clientY: 150 });
     const mouseMove1 = new MouseEvent('mousemove', { clientX: 150, clientY: 150 });
     const mouseMove2 = new MouseEvent('mousemove', { clientX: 370, clientY: 520 });
+    const mouseWheel = new WheelEvent('wheel', { clientX: 150, clientY: 150, deltaY: ZOOM_FACTOR });
+    const mouseLeave = new MouseEvent('mouseleave', {});
 
     const ctrlKeyDown = new KeyboardEvent("keydown", { key: 'Control' });
     const shiftKeyDown = new KeyboardEvent("keydown", { key: 'Shift' });
@@ -262,6 +264,54 @@ describe("RemoteFigure.mouseListener", function() {
         expect(figure.translation, "translation").to.deep.equal(new Vertex());
     });
 
+    it("should handle wheel events", function() {
+        const minValue0 = figure.axes[0].minValue;
+        const maxValue0 = figure.axes[0].maxValue;
+        const minValue1 = figure.axes[1].minValue;
+        const maxValue1 = figure.axes[1].maxValue;
+        canvas.dispatchEvent(mouseMove1);
+        canvas.dispatchEvent(mouseWheel);
+
+        expect(figure.axes[0].minValue, "minValue0").to.not.be.equal(minValue0);
+        expect(figure.axes[0].maxValue, "maxValue0").to.not.be.equal(maxValue0);
+        expect(figure.axes[1].minValue, "minValue0").to.not.be.equal(minValue1);
+        expect(figure.axes[1].maxValue, "maxValue1").to.not.be.equal(maxValue1);
+    });
+
+    it("should handle zoom", function() {
+        const minValue0 = figure.axes[0].minValue;
+        const maxValue0 = figure.axes[0].maxValue;
+        const minValue1 = figure.axes[1].minValue;
+        const maxValue1 = figure.axes[1].maxValue;
+
+        figure.zoomIn();
+        expect(figure.axes[0].minValue, "minValue0").to.not.be.equal(minValue0);
+        expect(figure.axes[0].maxValue, "maxValue0").to.not.be.equal(maxValue0);
+        expect(figure.axes[1].minValue, "minValue0").to.not.be.equal(minValue1);
+        expect(figure.axes[1].maxValue, "maxValue1").to.not.be.equal(maxValue1);
+
+        figure.zoomOut();
+        expect(figure.axes[0].minValue, "minValue0").to.be.equal(minValue0);
+        expect(figure.axes[0].maxValue, "maxValue0").to.be.equal(maxValue0);
+        expect(figure.axes[1].minValue, "minValue0").to.be.equal(minValue1);
+        expect(figure.axes[1].maxValue, "maxValue1").to.be.equal(maxValue1);
+    });
+
+    it("should reset state correctly on mouseleave", function() {
+        figure.is_drawing_rubber_band = true;
+        figure.isZooming = true;
+        figure.translation = new Vertex(20, 20);
+        figure.axes.forEach(axis => axis.isClicked = axis.isHovered = true);
+        canvas.dispatchEvent(mouseLeave);
+        expect(figure.is_drawing_rubber_band, "is_drawing_rubber_band").to.be.false;
+        expect(figure.isZooming, "isZooming").to.be.true;
+        expect(figure.translation, "translation").to.deep.equal(new Vertex());
+        figure.axes.forEach((axis, i) => {
+            expect(axis.isHovered, `axis[${i}].isHovered`).to.be.false;
+            expect(axis.isClicked, `axis[${i}].isClicked`).to.be.false;
+        })
+    });
+
     it("should draw a SelectionBox", function() {
         figure.isSelecting = true;
         canvas.dispatchEvent(mouseMove1);
@@ -292,7 +342,7 @@ describe("RemoteFigure.mouseListener", function() {
 
         window.dispatchEvent(ctrlKeyUp);
         window.dispatchEvent(shiftKeyUp);
-    })
+    });
 
     it("should resetView on Control + Space", function() {
         cy.spy(figure, 'resetView');
@@ -306,7 +356,7 @@ describe("RemoteFigure.mouseListener", function() {
 
         window.dispatchEvent(ctrlKeyUp);
         window.dispatchEvent(spaceKeyUp);
-    })
+    });
 
     it("should handle Shift key", function() {
         window.dispatchEvent(shiftKeyDown);
@@ -315,18 +365,7 @@ describe("RemoteFigure.mouseListener", function() {
         expect(figure.isSelecting, "isSelecting").to.be.false;
         window.dispatchEvent(ctrlKeyUp);
         expect(figure.isSelecting, "isSelecting").to.be.true;
-        
-    })
-
-
-
-
-
-    // it("should reset state attributes after mouseup", function() {
-    //     const event = new MouseEvent('mouseup', { clientX: 150, clientY: 150 });
-    //     canvas.dispatchEvent(event);
-    //     expect(canvas.style.cursor, "cursor").to.be.equal("default");
-    //     expect(figure.isHovered, "isHovered").to.be.true;
-    //     expect(figure.isSelecting, "isSelecting").to.be.false;
-    // });
-})
+        window.dispatchEvent(shiftKeyUp);
+        expect(figure.isSelecting, "isSelecting").to.be.false;
+    });
+});

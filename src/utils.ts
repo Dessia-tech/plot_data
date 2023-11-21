@@ -834,11 +834,11 @@ export function equals(a, b) {
   if (a && b && typeof a == 'object' && typeof b == 'object') {
     if (a.constructor !== b.constructor) return false;
 
-    var length, i, keys;
+    var length, i;
     if (Array.isArray(a)) {
       length = a.length;
-      if (a.length != b.length) return false;
-      for (i = a.length; i-- !== 0;)
+      if (length != b.length) return false;
+      for (i = length; i-- !== 0;)
         if (!b.includes(a[i])) return false;
       return true;
     }
@@ -847,7 +847,7 @@ export function equals(a, b) {
     if (a.valueOf !== Object.prototype.valueOf) return a.valueOf() === b.valueOf();
     if (a.toString !== Object.prototype.toString) return a.toString() === b.toString();
 
-    keys = Object.keys(a);
+    const keys = Object.keys(a);
     length = keys.length;
     if (length !== Object.keys(b).length) return false;
 

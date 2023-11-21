@@ -123,13 +123,14 @@ describe("Figure", function() {
         scatter.updateRubberBandMultiplot(multiplotRubberBands);
 
         expect(multiplotRubberBands, "edited multiplotRubberBands").to.deep.equal(referenceRubberBands);
-    })
+    });
 });
 
 describe("Frame", function() {
     it("should be build without attribute_names", function() {
         const data = {
-            "name": "", "elements": [
+            "name": "",
+            "elements": [
                 { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
                 { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
                 { "name": "", "values": { "x": 2, "y": 3 }, "x": 2, "y": 3 }

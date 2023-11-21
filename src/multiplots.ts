@@ -25,12 +25,7 @@ const EMPTY_MULTIPLOT = {
   ],
   "type_": "primitivegroup"
 };
-
 const BLANK_SPACE = 4;
-
-interface Data {
-  
-}
 
 export class Multiplot {
   public context: CanvasRenderingContext2D;

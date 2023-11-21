@@ -1411,8 +1411,6 @@ export class Figure {
       this.absoluteObjects = new GroupCollection();
     }
 
-  get className(): string { return "Figure" }
-
   get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
 
   set axisStyle(newAxisStyle: Map<string, any>) { newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
@@ -2098,8 +2096,6 @@ export class Frame extends Figure {
     return relativeMatrix
   }
 
-  get className(): string { return "Frame" }
-
   get relativeMatrix(): DOMMatrix { return this.canvasMatrix.multiply(this.frameMatrix) }
 
   get nXTicks(): number { return this._nXTicks ?? 10 }
@@ -2254,8 +2250,6 @@ export class Histogram extends Frame {
       super(data, width, height, X, Y, canvasID, is_in_multiplot);
       this.unpackBarStyle(data);
     }
-
-  get className(): string { return "Histogram" }
 
   get nXTicks() {return this._nXTicks ? this._nXTicks : 20}
 
@@ -2445,8 +2439,6 @@ export class Scatter extends Frame {
         this.computePoints();
       }
     }
-
-  get className(): string { return "Scatter" }
 
   get sampleDrawings(): ShapeCollection { return this.absoluteObjects }
 
@@ -2751,8 +2743,6 @@ export class Graph2D extends Scatter {
     return Figure.deserializeData({"elements": graphSamples})
   }
 
-  get className(): string { return "Graph2D" }
-
   public updateSelection(axesSelections: number[][]): void {
     const inMultiplot = this.is_in_multiplot;
     this.is_in_multiplot = false;
@@ -2842,8 +2832,6 @@ export class ParallelPlot extends Figure {
       super(data, width, height, X, Y, canvasID, is_in_multiplot);
       this.computeCurves();
     }
-
-  get className(): string { return "ParallelPlot" }
 
   get isVertical(): boolean { return this._isVertical ?? true }
 
@@ -3102,8 +3090,6 @@ export class Draw extends Frame {
       this.is_in_multiplot = false;
       this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.scale);
     }
-
-  get className(): string { return "Draw" }
 
   public shiftOnAction(canvas: HTMLElement): void {}
 

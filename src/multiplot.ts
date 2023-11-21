@@ -45,8 +45,6 @@ export class Multiplot {
     this.mouseListener();
   }
 
-  get className(): string { return "Multiplot" }
-
   private unpackData(data: any): [Map<string, any[]>, Figure[]] {
     const features = Figure.deserializeData(data);
     const figures: Figure[] = [];

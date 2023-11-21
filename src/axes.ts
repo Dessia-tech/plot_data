@@ -5,6 +5,33 @@ import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
 import { EventEmitter } from "events"
 
+export interface AxisStyleInterface {
+  color_stroke?: string,
+  dashline?: number[],
+  line_width?: number,
+  name?: string,
+  object_class?: string
+}
+
+export interface GraduationStyleInterface {
+  font_size?: number,
+  font_style?: string,
+  name?: string,
+  object_class?: string,
+  text_color?: string
+}
+
+export interface AxisInterface {
+  arrow_on?: boolean,
+  axis_style?: AxisStyleInterface,
+  graduation_style?: GraduationStyleInterface,
+  grid_on?: boolean,
+  name?: string,
+  nb_point_x?: number,
+  nb_point_y?: number,
+  type_: string
+}
+
 export class TitleSettings {
   constructor(
     public origin: Vertex = null,

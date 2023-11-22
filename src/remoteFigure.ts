@@ -118,9 +118,10 @@ export class RemoteFigure {
   }
 
   protected unpackPointsSets(data: DataInterface): void {
-    data.points_sets.forEach((pointSet, index) => {
-      this.pointSets.push(new PointSet(pointSet.indices, colorHsl(pointSet.color), pointSet.name ?? `Point set ${index}`));
-    });
+    this.pointSets = data.points_sets.map((pointSet, index) => {
+      const name = pointSet.name ?? `Point set ${index}`;
+      return new PointSet(pointSet.indices, colorHsl(pointSet.color), name)
+    })
   }
 
   protected unpackData(data: any): Map<string, any[]> { return RemoteFigure.deserializeData(data) }

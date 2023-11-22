@@ -239,10 +239,7 @@ export class Frame extends Figure {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
         if (this.scaleX > 1) this.scaleX = 1;
         if (this.scaleY > 1) this.scaleY = 1;
-      } else if (axis.tickPrecision < 1) {
-        if (this.scaleX < 1) this.scaleX = 1;
-        if (this.scaleY < 1) this.scaleY = 1;
-      } else if (axis.isDiscrete && axis.ticks.length > uniqueValues(axis.labels).length + 2) {
+      } else if (axis.areAllLabelsDisplayed || axis.tickPrecision < 1) {
         if (this.scaleX < 1) this.scaleX = 1;
         if (this.scaleY < 1) this.scaleY = 1;
       }
@@ -402,9 +399,7 @@ export class Histogram extends Frame {
     for (const axis of this.axes) {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
         if (this.scaleX > 1) this.scaleX = 1;
-      } else if (axis.tickPrecision < 1) {
-        if (this.scaleX < 1) this.scaleX = 1;
-      } else if (axis.isDiscrete && axis.ticks.length > uniqueValues(axis.labels).length + 2) {
+      } else if (axis.tickPrecision < 1 || axis.areAllLabelsDisplayed) {
         if (this.scaleX < 1) this.scaleX = 1;
       }
     }
@@ -1067,10 +1062,7 @@ export class ParallelPlot extends Figure {
         if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
           if (this.scaleX > 1) this.scaleX = 1;
           if (this.scaleY > 1) this.scaleY = 1;
-        } else if (axis.tickPrecision < 1) {
-          if (this.scaleX < 1) this.scaleX = 1;
-          if (this.scaleY < 1) this.scaleY = 1;
-        } else if (axis.isDiscrete && axis.ticks.length > uniqueValues(axis.labels).length + 2) {
+        } else if (axis.areAllLabelsDisplayed || axis.tickPrecision < 1) {
           if (this.scaleX < 1) this.scaleX = 1;
           if (this.scaleY < 1) this.scaleY = 1;
         }

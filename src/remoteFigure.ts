@@ -425,6 +425,10 @@ export class RemoteFigure {
 
   public togglePoints(): void {}
 
+  public simpleCluster(inputValue: number): void {}
+
+  public resetClusters(): void {}
+
   protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex): void { this.selectionBox.update(frameDown, frameMouse) }
 
   public get drawingZone(): [Vertex, Vertex] { return [this.origin, this.size] }

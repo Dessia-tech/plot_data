@@ -1,13 +1,13 @@
 import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_X, DEFAULT_SHAPE_COLOR, FREE_SPACE_FACTOR,
   DRAW_MARGIN_FACTOR, PG_CONTAINER_PLOT } from "./constants"
-import { range, mapMax, sum, argMax, normalizeArray, uniqueValues } from "./functions"
+import { range, mapMax, sum, argMax, normalizeArray, uniqueValues, arrayIntersection } from "./functions"
 import { colorHsl } from "./colors"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point, LineSequence } from "./primitives"
 import { ScatterPoint, Bar, RubberBand, SelectionBox } from "./shapes"
 import { Axis, ParallelAxis } from "./axes"
-import { ShapeCollection, GroupCollection } from "./collections"
+import { ShapeCollection, GroupCollection, PointSet } from "./collections"
 import { RemoteFigure } from "./remoteFigure"
 import { DataInterface } from "./dataInterfaces"
 
@@ -39,6 +39,27 @@ export class Figure extends RemoteFigure {
     plot.context = context;
     return plot
   }
+
+  public sendHoveredIndicesMultiplot(): number[] { return this.hoveredIndices }
+
+  public receiveMultiplotMouseIndices(multiplotHovered: number[], multiplotClicked: number[], multiplotSelected: number[]): void {
+    this.selectedIndices = multiplotSelected;
+    this.clickedIndices = [...multiplotClicked];
+    this.hoveredIndices = [...multiplotHovered];
+  }
+
+  public multiplotSelectedIntersection(multiplotSelected: number[], isSelecting: boolean): [number[], boolean] {
+    this.axes.forEach(axis => {
+      if (axis.rubberBand.length != 0 && axis.name != "number") {
+        isSelecting = true;
+        const selectedIndices = this.updateSelected(axis);
+        multiplotSelected = arrayIntersection(multiplotSelected, selectedIndices);
+      }
+    });
+    return [multiplotSelected, isSelecting]
+  }
+
+  public receivePointSets(pointSets: PointSet[]): void { this.pointSets = pointSets }
 
   public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
     this.axes.forEach(axis => axis.sendRubberBand(multiplotRubberBands));
@@ -799,6 +820,14 @@ export class Graph2D extends Scatter {
     super.mouseUp(ctrlKey);
     this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
   }
+  //TODO: Code duplicate, there is a middle class here between Scatter, Frame, Draw and Graph2D. Not so obvious.
+  public sendHoveredIndicesMultiplot(): number[] { return [] }
+
+  public receiveMultiplotMouseIndices(multiplotHovered: number[], multiplotClicked: number[], multiplotSelected: number[]): void {}
+
+  public multiplotSelectedIntersection(multiplotSelected: number[], isSelecting: boolean): [number[], boolean] { return [multiplotSelected, isSelecting] }
+
+  public receivePointSets(pointSets: PointSet[]): void {}
 
   public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
 
@@ -1157,6 +1186,14 @@ export class Draw extends Frame {
     this.axes.forEach(axis => axis.saveLocation());
     this.updateAxes();
   }
+
+  public sendHoveredIndicesMultiplot(): number[] { return [] }
+
+  public receiveMultiplotMouseIndices(multiplotHovered: number[], multiplotClicked: number[], multiplotSelected: number[]): void {}
+
+  public multiplotSelectedIntersection(multiplotSelected: number[], isSelecting: boolean): [number[], boolean] { return [multiplotSelected, isSelecting] }
+
+  public receivePointSets(pointSets: PointSet[]): void {}
 
   public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
 

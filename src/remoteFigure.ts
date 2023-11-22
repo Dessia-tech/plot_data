@@ -1,29 +1,13 @@
 import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_Y, MIN_OFFSET_X, ZOOM_FACTOR } from "./constants"
 import { intersectArrays } from "./functions"
 import { colorHsl } from "./colors"
-import { PointStyleInterface, PointStyle } from "./styles"
+import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { Rect } from "./primitives"
 import { RubberBand, SelectionBox } from "./shapes"
-import { AxisInterface, Axis } from "./axes"
+import { Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
-
-// This interface will be reworked when designing a new Python language
-export interface DataInterface {
-  attribute_names?: string[],
-  axis: AxisInterface,
-  elements?: Object[],
-  points_sets?: PointSet[], //for now, needs a specific interface
-  point_style?: PointStyleInterface,
-  name?: string,
-  width?: number,
-  height?: number,
-  heatmap?: any, //for now
-  graphs?: Object[], //for now, needs a specific interface
-  primitives?: Object[], //for now, needs a specific interface
-  tooltip?: Object[], //for now, needs a specific interface ?
-  type_: string
-}
+import { DataInterface } from "./dataInterfaces"
 
 export class RemoteFigure {
   public context: CanvasRenderingContext2D;

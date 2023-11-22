@@ -9,10 +9,11 @@ import { ScatterPoint, Bar, RubberBand, SelectionBox } from "./shapes"
 import { Axis, ParallelAxis } from "./axes"
 import { ShapeCollection, GroupCollection } from "./collections"
 import { RemoteFigure } from "./remoteFigure"
+import { DataInterface } from "./dataInterfaces"
 
 export class Figure extends RemoteFigure {
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     X: number,
@@ -23,7 +24,7 @@ export class Figure extends RemoteFigure {
     super(data, width, height, X, Y, canvasID, is_in_multiplot);
   }
 
-  public static fromMultiplot(data: any, width: number, height: number, canvasID: string): Figure {
+  public static fromMultiplot(data: DataInterface, width: number, height: number, canvasID: string): Figure {
     if (data.type_ == "histogram") return new Histogram(data, width, height, 0, 0, canvasID, true);
     else if (data.type_ == "parallelplot")return new ParallelPlot(data, width, height, 0, 0, canvasID, true);
     else if (data.type_ == "draw") return new Draw(data, width, height, 0, 0, canvasID, true);
@@ -32,7 +33,7 @@ export class Figure extends RemoteFigure {
     else if (data.type_ == "scatterplot") return new Scatter(data, width, height, 0, 0, canvasID, true);
   }
 
-  public static createFromMultiplot(data: any, features: Map<string, any>, context: CanvasRenderingContext2D, canvasID: string): Figure {
+  public static createFromMultiplot(data: DataInterface, features: Map<string, any>, context: CanvasRenderingContext2D, canvasID: string): Figure {
     const plot = Figure.fromMultiplot(data, 500, 500, canvasID);
     plot.features = features;
     plot.context = context;
@@ -73,7 +74,7 @@ export class Frame extends Figure {
   protected _nXTicks: number;
   protected _nYTicks: number;
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     X: number,
@@ -118,7 +119,7 @@ export class Frame extends Figure {
     this.axes.forEach(axis => axis.titleWidth = this.drawingZone[1].x - 5);
   }
 
-  protected unpackAxisStyle(data: any): void {
+  protected unpackAxisStyle(data: DataInterface): void {
     super.unpackAxisStyle(data);
     this.nXTicks = data.axis?.nb_points_x ?? this.nXTicks;
     this.nYTicks = data.axis?.nb_points_y ?? this.nYTicks;
@@ -134,7 +135,7 @@ export class Frame extends Figure {
     this.clickedIndices = this.sampleDrawings.updateShapeStates('isClicked');
   }
 
-  protected setFeatures(data: any): [string, string] {
+  protected setFeatures(data: DataInterface): [string, string] {
     [this.xFeature, this.yFeature] = super.setFeatures(data);
     if (!this.xFeature) {
       this.xFeature = "indices";
@@ -235,7 +236,7 @@ export class Histogram extends Frame {
   public dashLine: number[] = [];
 
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     X: number,
@@ -255,12 +256,12 @@ export class Histogram extends Frame {
 
   set nYTicks(value: number) {this._nYTicks = value}
 
-  protected unpackAxisStyle(data: any): void {
+  protected unpackAxisStyle(data: DataInterface): void {
     super.unpackAxisStyle(data);
     if (data.graduation_nb) this.nXTicks = data.graduation_nb;
   }
 
-  public unpackBarStyle(data: any): void {
+  public unpackBarStyle(data: DataInterface): void {
     if (data.surface_style?.color_fill) this.fillStyle = data.surface_style.color_fill;
     if (data.edge_style?.line_width) this.lineWidth = data.edge_style.line_width;
     if (data.edge_style?.color_stroke) this.strokeStyle = data.edge_style.color_stroke;
@@ -364,7 +365,7 @@ export class Histogram extends Frame {
     return [xAxis, this.updateNumberAxis(yAxis, bars)]
   }
 
-  protected setFeatures(data: any): [string, string] {
+  protected setFeatures(data: DataInterface): [string, string] {
     data["attribute_names"] = [data.x_variable, 'number']; // legacy, will disappear
     return super.setFeatures(data);
   }
@@ -419,7 +420,7 @@ export class Scatter extends Frame {
   public clusterColors: string[];
   public previousCoords: Vertex[];
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     X: number,
@@ -437,7 +438,7 @@ export class Scatter extends Frame {
 
   get sampleDrawings(): ShapeCollection { return this.absoluteObjects }
 
-  public unpackPointStyle(data: any): void {
+  public unpackPointStyle(data: DataInterface): void {
     if (data.point_style?.color_fill) this.fillStyle = data.point_style.color_fill;
     if (data.point_style?.color_stroke) this.strokeStyle = data.point_style.color_stroke;
     if (data.point_style?.shape) this.marker = data.point_style.shape;
@@ -707,7 +708,7 @@ export class Graph2D extends Scatter {
   private curvesIndices: number[][];
   public showPoints: boolean = false;
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     X: number,
@@ -718,7 +719,7 @@ export class Graph2D extends Scatter {
       super(data, width, height, X, Y, canvasID, is_in_multiplot);
     }
 
-  protected unpackData(data: any): Map<string, any[]> {
+  protected unpackData(data: DataInterface): Map<string, any[]> {
     const graphSamples = [];
     this.pointStyles = [];
     this.curvesIndices = [];
@@ -752,7 +753,7 @@ export class Graph2D extends Scatter {
     })
   }
 
-  protected buildPointSets(data: any): void { this.pointSets = []; }
+  protected buildPointSets(data: DataInterface): void { this.pointSets = []; }
 
   protected get cuttingZone(): Rect {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
@@ -815,7 +816,7 @@ export class ParallelPlot extends Figure {
   public changedAxes: ParallelAxis[] = [];
   private _isVertical: boolean;
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     X: number,
@@ -1071,7 +1072,7 @@ export class ParallelPlot extends Figure {
 
 export class Draw extends Frame {
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     X: number,
@@ -1108,7 +1109,7 @@ export class Draw extends Frame {
     this.axisEqual();
   }
 
-  protected unpackData(data: any): Map<string, any[]> {
+  protected unpackData(data: DataInterface): Map<string, any[]> {
     const drawing = ShapeCollection.fromPrimitives(data.primitives);
     const [minX, minY, maxX, maxY] = Draw.boundsDilatation(...drawing.getBounds());
     return new Map<string, any[]>([["x", [minX, maxX]], ["y", [minY, maxY]], ["shapes", drawing.shapes]])
@@ -1168,7 +1169,7 @@ export class Draw extends Frame {
 
 export class PrimitiveGroupContainer extends Draw {
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     public buttons_ON: boolean,
@@ -1177,6 +1178,6 @@ export class PrimitiveGroupContainer extends Draw {
     public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(PG_CONTAINER_PLOT, width, height, X, Y, canvasID, is_in_multiplot);
+      super(PG_CONTAINER_PLOT as DataInterface, width, height, X, Y, canvasID, is_in_multiplot);
     }
 }

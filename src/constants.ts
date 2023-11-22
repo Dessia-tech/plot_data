@@ -1,3 +1,5 @@
+
+
 export const PICKABLE_BORDER_SIZE = 20;
 export const SMALL_RUBBERBAND_SIZE = 10;
 export const DASH_SELECTION_WINDOW = [7, 3];

@@ -4,6 +4,7 @@ import { Vertex, Shape } from "./baseShape"
 import { RubberBand, SelectionBox } from "./shapes"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
+import { DataInterface, MultiplotDataInterface } from "./dataInterfaces"
 
 export class Multiplot {
   public context: CanvasRenderingContext2D;
@@ -30,7 +31,7 @@ export class Multiplot {
   public pointSets: PointSet[];
 
   constructor(
-    data: any,
+    data: MultiplotDataInterface,
     public width: number,
     public height: number,
     public canvasID: string
@@ -45,7 +46,7 @@ export class Multiplot {
     this.mouseListener();
   }
 
-  private unpackData(data: any): [Map<string, any[]>, Figure[]] {
+  private unpackData(data: MultiplotDataInterface): [Map<string, any[]>, Figure[]] {
     const features = Figure.deserializeData(data);
     const figures: Figure[] = [];
     if (data.plots.length == 0) figures.push(this.newEmptyPlot(EMPTY_MULTIPLOT));
@@ -73,7 +74,7 @@ export class Multiplot {
     return elements
   }
 
-  private newEmptyPlot(data: any): Draw {
+  private newEmptyPlot(data: DataInterface): Draw {
     const figure = new Draw(data, this.width, this.height, 0, 0, this.canvasID);
     figure.context = this.context;
     return figure

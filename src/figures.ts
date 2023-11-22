@@ -512,8 +512,7 @@ export class Scatter extends Frame {
         if (this.clickedIndices.includes(index)) point.isClicked = true;
         if (this.selectedIndices.includes(index)) point.isSelected = true;
       });
-      if (colors.size != 0) color = mapMax(colors)[0]
-      else color = this.getPointSetColor(point) ?? color;
+      color = colors.size != 0 ? mapMax(colors)[0] : (this.getPointSetColor(point) ?? color);
 
       point.lineWidth = this.lineWidth;
       point.setColors(color);
@@ -529,15 +528,16 @@ export class Scatter extends Frame {
     })
   }
 
-  private getPointSetColor(point: ScatterPoint): string {
+  private getPointSetColor(point: ScatterPoint): string { // TODO: Code duplicate with Histogram's one
     const setMaps = new Map<number, number>();
     point.values.forEach(pointIndex => {
       this.pointSets.forEach((pointSet, index) => {
         if (pointSet.includes(pointIndex)) setMaps.set(index, setMaps.get(index) ? setMaps.get(index) + 1 : 1);
       })
     })
-    const pointsSetIndex = mapMax(setMaps)[0];
+    const pointsSetIndex = mapMax(setMaps)[0]; // TODO: there is a refactor to do here
     if (pointsSetIndex !== null) return colorHsl(this.pointSets[pointsSetIndex].color);
+    return null
   }
 
   public switchMerge(): void {

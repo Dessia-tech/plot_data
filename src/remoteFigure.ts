@@ -24,7 +24,7 @@ export class RemoteFigure {
   public selectedIndices: number[];
 
   public nSamples: number;
-  public pointSets: PointSet[];
+  public pointSets: PointSet[] = [];
   public pointStyles: PointStyle[] = null;
 
   public lineWidth: number = 1;
@@ -118,10 +118,12 @@ export class RemoteFigure {
   }
 
   protected unpackPointsSets(data: DataInterface): void {
-    this.pointSets = data.points_sets.map((pointSet, index) => {
-      const name = pointSet.name ?? `Point set ${index}`;
-      return new PointSet(pointSet.indices, colorHsl(pointSet.color), name)
-    })
+    if (data.points_sets) {
+      this.pointSets = data.points_sets.map((pointSet, index) => {
+        const name = pointSet.name ?? `Point set ${index}`;
+        return new PointSet(pointSet.indices, colorHsl(pointSet.color), name)
+      })
+    }
   }
 
   protected unpackData(data: any): Map<string, any[]> { return RemoteFigure.deserializeData(data) }
@@ -136,10 +138,7 @@ export class RemoteFigure {
     return elements
   }
 
-  protected buildPointSets(data: any): void {
-    this.pointSets = [];
-    if (data.points_sets) this.unpackPointsSets(data);
-  }
+  protected buildPointSets(data: any): void { this.unpackPointsSets(data) }
 
   public getSetColorOfIndex(index: number): string {
     for (let set of this.pointSets) { if (set.indices.includes(index)) return set.color }

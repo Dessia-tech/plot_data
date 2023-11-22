@@ -22,7 +22,7 @@ export class Multiplot {
   public isResizing: boolean = false;
   public hoveredIndex: number = 0;
   public clickedIndex: number = null;
-  public hiddenIndices: number[] = [];
+  public hiddenFigureIndices: number[] = [];
 
   public clickedIndices: number[] = [];
   public hoveredIndices: number[] = [];
@@ -116,7 +116,7 @@ export class Multiplot {
         figure.hoveredIndices = [...this.hoveredIndices];
       }
       if (!(figure instanceof Graph2D)) figure.pointSets = this.pointSets;
-      if (!this.hiddenIndices.includes(index)) figure.draw();
+      if (!this.hiddenFigureIndices.includes(index)) figure.draw();
     });
     this.drawZoneRectangles();
   }
@@ -144,12 +144,12 @@ export class Multiplot {
     this.resetLayout();
   }
 
-  public hideFigure(index: number): void { this.hiddenIndices.push(index) }
+  public hideFigure(index: number): void { this.hiddenFigureIndices.push(index) }
 
-  public showFigure(index: number): void { this.hiddenIndices.splice(this.hiddenIndices.indexOf(index), 1) }
+  public showFigure(index: number): void { this.hiddenFigureIndices.splice(this.hiddenFigureIndices.indexOf(index), 1) }
 
   public switchFigureVisibility(index: number): void {
-    this.hiddenIndices.includes(index)
+    this.hiddenFigureIndices.includes(index)
       ? this.showFigure(index)
       : this.hideFigure(index);
     this.draw();

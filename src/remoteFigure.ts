@@ -1,28 +1,12 @@
 import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_Y, MIN_OFFSET_X, ZOOM_FACTOR } from "./constants"
 import { intersectArrays } from "./functions"
 import { colorHsl } from "./colors"
-import { PointStyleInterface, PointStyle } from "./styles"
+import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { Rect } from "./primitives"
 import { RubberBand, SelectionBox } from "./shapes"
-import { AxisInterface, Axis } from "./axes"
+import { Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
-
-export interface DataInterface {
-  attribute_names?: string[],
-  axis: AxisInterface,
-  elements?: Object[],
-  points_sets?: PointSet[],
-  point_style?: PointStyleInterface,
-  name?: string,
-  width?: number,
-  height?: number,
-  heatmap?: any, //for now
-  graphs?: Object[], //for now
-  primitives?: Object[], //for now
-  tooltip?: any, //for now
-  type_: string
-}
 
 export class RemoteFigure {
   public context: CanvasRenderingContext2D;
@@ -83,7 +67,6 @@ export class RemoteFigure {
     public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      console.log(data);
       this.unpackAxisStyle(data);
       this.origin = new Vertex(X, Y);
       this.size = new Vertex(width - X, height - Y);
@@ -100,6 +83,8 @@ export class RemoteFigure {
       this.relativeObjects = new GroupCollection();
       this.absoluteObjects = new GroupCollection();
     }
+
+  get className(): string { return "Figure" }
 
   get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
 

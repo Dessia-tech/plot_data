@@ -8,19 +8,20 @@ import { RubberBand, SelectionBox } from "./shapes"
 import { AxisInterface, Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
 
+// This interface will be reworked when designing a new Python language
 export interface DataInterface {
   attribute_names?: string[],
   axis: AxisInterface,
   elements?: Object[],
-  points_sets?: PointSet[],
+  points_sets?: PointSet[], //for now, needs a specific interface
   point_style?: PointStyleInterface,
   name?: string,
   width?: number,
   height?: number,
   heatmap?: any, //for now
-  graphs?: Object[], //for now
-  primitives?: Object[], //for now
-  tooltip?: any, //for now
+  graphs?: Object[], //for now, needs a specific interface
+  primitives?: Object[], //for now, needs a specific interface
+  tooltip?: Object[], //for now, needs a specific interface ?
   type_: string
 }
 
@@ -75,7 +76,7 @@ export class RemoteFigure {
   public is_drawing_rubber_band: boolean = false;
 
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     X: number,
@@ -125,16 +126,16 @@ export class RemoteFigure {
     return vertex.x >= this.origin.x && vertex.x <= this.origin.x + this.size.x && vertex.y >= this.origin.y && vertex.y <= this.origin.y + this.size.y
   }
 
-  protected unpackAxisStyle(data:any): void {
+  protected unpackAxisStyle(data: DataInterface): void {
     if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
     if (data.axis?.axis_style?.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
     if (data.axis?.graduation_style?.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
     if (data.axis?.graduation_style?.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
   }
 
-  protected unpackPointsSets(data: any): void {
+  protected unpackPointsSets(data: DataInterface): void {
     data.points_sets.forEach((pointSet, index) => {
-      this.pointSets.push(new PointSet(pointSet.point_index, colorHsl(pointSet.color), pointSet.name ?? `Point set ${index}`));
+      this.pointSets.push(new PointSet(pointSet.indices, colorHsl(pointSet.color), pointSet.name ?? `Point set ${index}`));
     });
   }
 

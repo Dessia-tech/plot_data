@@ -15,6 +15,7 @@ from typing import Dict, List, Tuple, Union  # , Any
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Circle, Arc
+from matplotlib.patches import Rectangle as Rect
 
 try:
     # dessia_common >= 0.12.0
@@ -244,12 +245,13 @@ class PointStyle(DessiaObject):
     """
 
     def __init__(self, color_fill: str = None, color_stroke: str = None, stroke_width: float = None, size: float = None,
-                 shape: str = None, name: str = ''):
+                 shape: str = None, orientation: str = None, name: str = ''):
         self.color_fill = color_fill
         self.color_stroke = color_stroke
         self.stroke_width = stroke_width
         self.size = size  # 1, 2, 3 or 4
         self.shape = shape
+        self.orientation = orientation
         DessiaObject.__init__(self, name=name)
 
     def mpl_arguments(self):
@@ -415,13 +417,15 @@ class Text(PlotDataObject):
     """
 
     def __init__(self, comment: str, position_x: float, position_y: float, text_style: TextStyle = None,
-                 text_scaling: bool = None, max_width: float = None, multi_lines: bool = True, name: str = ''):
+                 text_scaling: bool = None, max_width: float = None, height: float = None, multi_lines: bool = True,
+                 name: str = ''):
         self.comment = comment
         self.text_style = text_style
         self.position_x = position_x
         self.position_y = position_y
         self.text_scaling = text_scaling
         self.max_width = max_width
+        self.height = height
         self.multi_lines = multi_lines
         PlotDataObject.__init__(self, type_='text', name=name)
 
@@ -446,7 +450,9 @@ class Line2D(PlotDataObject):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None, name: str = ''):
-        self.data = point1 + point2
+        self.data = point1 + point2  # Retrocompatibility
+        self.point1 = point1
+        self.point2 = point2
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='line2d', name=name)
 
@@ -458,13 +464,11 @@ class Line2D(PlotDataObject):
         style = self.edge_style
         if edge_style:
             style = edge_style
-        if style is None:
-            style = DEFAULT_EDGESTYLE
-
-        color = style.color_stroke.rgb
-        dashes = style.dashline
-
-        ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]), color=color, dashes=dashes, **kwargs)
+            color = style.color_stroke.rgb
+            dashes = style.dashline
+            ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]), color=color, dashes=dashes, **kwargs)
+        else:
+            ax.axline((self.data[0], self.data[1]), (self.data[2], self.data[3]), **kwargs)
         return ax
 
 
@@ -539,6 +543,8 @@ class Wire(PlotDataObject):
 
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
+        if not ax:
+            _, ax = plt.subplots()
         if self.edge_style:
             edge_style = self.edge_style
         else:
@@ -590,6 +596,8 @@ class Circle2D(PlotDataObject):
             edge_style = DEFAULT_EDGESTYLE
             # dashes = DEFAULT_EDGESTYLE.dashline
         args = edge_style.mpl_arguments(surface=True)
+        if 'dashes' in args:
+            args.pop("dashes")
 
         if self.surface_style:
             surface_style = self.surface_style
@@ -600,6 +608,58 @@ class Circle2D(PlotDataObject):
 
         ax.add_patch(Circle((self.cx, self.cy), self.r, **args), **kwargs)
         return ax
+
+
+class Rectangle(PlotDataObject):
+    """ Class to draw a rectangle. """
+
+    def __init__(self, x_coord: float, y_coord: float, width: float, height: float, edge_style: EdgeStyle = None,
+                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
+        self.x_coord = x_coord
+        self.y_coord = y_coord
+        self.width = width
+        self.height = height
+        self.surface_style = surface_style
+        self.edge_style = edge_style
+        self.tooltip = tooltip
+        PlotDataObject.__init__(self, type_='rectangle', name=name)
+
+    def bounding_box(self):
+        """ Get 2D bounding box of current Circle2D. """
+        return self.x_coord, self.x_coord + self.width, self.y_coord, self.y_coord + self.height
+
+    def mpl_plot(self, ax=None, **kwargs):
+        """ Plots using matplotlib. """
+        if not ax:
+            _, ax = plt.subplots()
+        if self.edge_style:
+            edge_style = self.edge_style
+        else:
+            edge_style = DEFAULT_EDGESTYLE
+            # dashes = DEFAULT_EDGESTYLE.dashline
+        args = edge_style.mpl_arguments(surface=True)
+        if 'dashes' in args:
+            args.pop("dashes")
+
+        if self.surface_style:
+            surface_style = self.surface_style
+        else:
+            surface_style = DEFAULT_SURFACESTYLE
+
+        args.update(surface_style.mpl_arguments())
+
+        ax.add_patch(Rect([self.x_coord, self.y_coord], self.width, self.height, **args), **kwargs)
+        return ax
+
+
+class RoundRectangle(Rectangle):
+    """ Class to draw a round rectangle. """
+
+    def __init__(self, x_coord: float, y_coord: float, width: float, height: float, radius: float = 2,
+                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
+        super().__init__(x_coord, y_coord, width, height, edge_style, surface_style, tooltip, name=name)
+        self.type_ = "roundrectangle"
+        self.radius = radius
 
 
 class Point2D(PlotDataObject):
@@ -1042,14 +1102,15 @@ class Arc2D(PlotDataObject):
     """
 
     def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, data=None,
-                 anticlockwise: bool = None, edge_style: EdgeStyle = None, name: str = ''):
+                 clockwise: bool = None, edge_style: EdgeStyle = None, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.r = r
         self.start_angle = start_angle
         self.end_angle = end_angle
         self.data = data
-        self.anticlockwise = anticlockwise
+        self.anticlockwise = not clockwise
+        self.clockwise = clockwise
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='arc', name=name)
 
@@ -1057,12 +1118,22 @@ class Arc2D(PlotDataObject):
         """ Get 2D bounding box of current Circle2D. """
         return self.cx - self.r, self.cx + self.r, self.cy - self.r, self.cy + self.r
 
+    def polygon_points(self):
+        """ Get lists of points in a merged list. """
+        points = []
+        # for primitive in self.plot_data_primitives:
+        #     points.extend(primitive.polygon_points())
+        return points
+
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
         if not ax:
             _, ax = plt.subplots()
         if self.edge_style:
-            edgecolor = self.edge_style.color_stroke
+            edgecolor = self.edge_style.mpl_arguments(surface=False)['color']
+        elif "edge_style" in kwargs:
+            edgecolor = kwargs['edge_style'].mpl_arguments(surface=False)["color"]
+            kwargs.pop("edge_style")
         else:
             edgecolor = plot_data.colors.BLACK.rgb
 
@@ -1096,6 +1167,7 @@ class Contour2D(PlotDataObject):
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.tooltip = tooltip
+        self.is_filled = surface_style is not None
         PlotDataObject.__init__(self, type_='contour', name=name)
 
     def bounding_box(self):
@@ -1129,6 +1201,7 @@ class Contour2D(PlotDataObject):
         if surface_style.color_fill:
             points = self.polygon_points()
             ax.add_patch(Polygon(points, closed=True, **surface_style.mpl_arguments()), **kwargs)
+
         return ax
 
 
@@ -1148,11 +1221,12 @@ class Label(PlotDataObject):
     """
 
     def __init__(self, title: str, text_style: TextStyle = None, rectangle_surface_style: SurfaceStyle = None,
-                 rectangle_edge_style: EdgeStyle = None, name: str = ''):
+                 rectangle_edge_style: EdgeStyle = None, shape: PlotDataObject = None, name: str = ''):
         self.title = title
         self.text_style = text_style
         self.rectangle_surface_style = rectangle_surface_style
         self.rectangle_edge_style = rectangle_edge_style
+        self.shape = shape
         PlotDataObject.__init__(self, type_='label', name=name)
 
 

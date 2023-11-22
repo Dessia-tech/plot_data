@@ -148,7 +148,7 @@ export class Multiplot {
 
   public showFigure(index: number): void { this.hiddenFigureIndices.splice(this.hiddenFigureIndices.indexOf(index), 1) }
 
-  public switchFigureVisibility(index: number): void {
+  public toggleFigure(index: number): void {
     this.hiddenFigureIndices.includes(index)
       ? this.showFigure(index)
       : this.hideFigure(index);

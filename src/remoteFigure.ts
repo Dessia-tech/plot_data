@@ -171,7 +171,7 @@ export class RemoteFigure {
   public setCanvas(canvasID: string):void {
     const canvas = document.getElementById(canvasID) as HTMLCanvasElement;
     canvas.width = this.width;
-        canvas.height = this.height;
+    canvas.height = this.height;
     this.context = canvas.getContext("2d");
   }
 

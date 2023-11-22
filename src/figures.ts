@@ -26,11 +26,12 @@ export class Figure extends RemoteFigure {
 
   public static fromMultiplot(data: DataInterface, width: number, height: number, canvasID: string): Figure {
     if (data.type_ == "histogram") return new Histogram(data, width, height, 0, 0, canvasID, true);
-    else if (data.type_ == "parallelplot")return new ParallelPlot(data, width, height, 0, 0, canvasID, true);
-    else if (data.type_ == "draw") return new Draw(data, width, height, 0, 0, canvasID, true);
-    else if (data.type_ == "graph2d") return new Graph2D(data, width, height, 0, 0, canvasID, true);
-    else if (data.type_ == "primitivegroupcontainer") return new PrimitiveGroupContainer(data, width, height, false, 0, 0, canvasID, true);
-    else if (data.type_ == "scatterplot") return new Scatter(data, width, height, 0, 0, canvasID, true);
+    if (data.type_ == "parallelplot")return new ParallelPlot(data, width, height, 0, 0, canvasID, true);
+    if (data.type_ == "draw") return new Draw(data, width, height, 0, 0, canvasID, true);
+    if (data.type_ == "graph2d") return new Graph2D(data, width, height, 0, 0, canvasID, true);
+    if (data.type_ == "primitivegroupcontainer") return new PrimitiveGroupContainer(data, width, height, false, 0, 0, canvasID, true);
+    if (data.type_ == "scatterplot") return new Scatter(data, width, height, 0, 0, canvasID, true);
+    throw Error(`${data.type_} is not a know type of plot. Possible plots <type_> attributes are 'scatterplot', 'graph2d', 'parallelplot', 'histogram', 'draw', 'primitivegroupcontainer'.`)
   }
 
   public static createFromMultiplot(data: DataInterface, features: Map<string, any>, context: CanvasRenderingContext2D, canvasID: string): Figure {

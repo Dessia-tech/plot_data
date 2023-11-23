@@ -82,7 +82,7 @@ export class List {
     return false;
   }
 
-  public static getExtremum(list: number[]): [number, number] { 
+  public static getExtremum(list: number[]): [number, number] {
     var min = list[0];
     var max = list[0];
     for (let i=0; i<list.length; i++) {
@@ -181,4 +181,3 @@ export class List {
     return new_list;
   }
 }
-  

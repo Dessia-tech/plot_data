@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.19.0]
 ### Fixes
-- Multiplot Drawing
+- Multiplot Drawing + its review
 
 ### Refactor
 - Remove ill code

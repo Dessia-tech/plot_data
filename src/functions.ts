@@ -7,9 +7,9 @@ export function equals(a, b) {
     var length, i, keys;
     if (Array.isArray(a)) {
       length = a.length;
-      if (a.length != b.length) return false;
-      for (i = a.length; i-- !== 0;)
-        if (!b.includes(a[i])) return false;
+      if (length != b.length) return false;
+      for (i = length; i-- !== 0;)
+        if (!equals(a[i], b[i])) return false;
       return true;
     }
 
@@ -41,21 +41,20 @@ export function uniqueValues<T>(vector: T[]): T[] {
   return vector.filter((value, index, array) => array.indexOf(value) === index)
 }
 
-export function arrayDiff<T>(a: T[], b: T[]): T[] { // TODO: this seems duplicated in PP
-  const diff = [];
-  a.forEach(value => { if (!b.includes(value)) diff.push(value) });
-  return diff
+export function arrayDiff<T>(a: T[], b: T[]): T[] {
+  if (b.length == 0) return a;
+  return a.filter(value => !b.includes(value));
 }
 
-export function arrayIntersection(a: any[], b: any[]): any[] {
+export function arrayIntersection<T>(a: T[], b: T[]): T[] {
   return a.filter(value => b.includes(value));
 }
 
-export function intersectArrays(arrays: any[][]): any[] {
+export function intersectArrays<T>(arrays: T[][]): T[] {
   if (arrays.length == 1) return arrays[0]
   if (arrays.length == 0) return []
   const arraysIntersection = [];
-  const allValues = arrays.concat(...arrays)
+  const allValues = [].concat(...arrays);
   allValues.forEach(value => {
     let inAllArrays = true;
     for (let i=0; i < arrays.length; i++) {

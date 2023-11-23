@@ -11,3 +11,4 @@ export * from "./primitives";
 export * from './remoteFigure';
 export * from "./shapes";
 export * from "./styles";
+export * from "./old";

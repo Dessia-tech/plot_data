@@ -134,6 +134,8 @@ export class Axis extends Shape {
 
   get transformMatrix(): DOMMatrix { return this.getValueToDrawMatrix() }
 
+  get areAllLabelsDisplayed(): boolean { return this.isDiscrete && this.ticks.length > uniqueValues(this.labels).length + 2 }
+
   protected updateOffsetTicks(): void { this.offsetTicks = Math.abs(this.boundingBox.size[this.isVertical ? "x" : "y"]) * 0.25 }
 
   private horizontalPickIdx(): number { return Math.sign(1 - Math.sign(this.initScale.y)) }

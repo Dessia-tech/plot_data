@@ -391,7 +391,7 @@ class PointFamily(PlotDataObject):
 
     def __init__(self, point_color: str, point_index: List[int], name: str = ''):
         self.color = point_color
-        self.point_index = point_index
+        self.indices = point_index
         PlotDataObject.__init__(self, type_=None, name=name)
 
 

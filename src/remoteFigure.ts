@@ -7,6 +7,7 @@ import { Rect } from "./primitives"
 import { RubberBand, SelectionBox } from "./shapes"
 import { Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
+import { DataInterface } from "./dataInterfaces"
 
 export class RemoteFigure {
   public context: CanvasRenderingContext2D;
@@ -23,7 +24,7 @@ export class RemoteFigure {
   public selectedIndices: number[];
 
   public nSamples: number;
-  public pointSets: PointSet[];
+  public pointSets: PointSet[] = [];
   public pointStyles: PointStyle[] = null;
 
   public lineWidth: number = 1;
@@ -59,7 +60,7 @@ export class RemoteFigure {
   public is_drawing_rubber_band: boolean = false;
 
   constructor(
-    data: any,
+    data: DataInterface,
     public width: number,
     public height: number,
     X: number,
@@ -84,8 +85,6 @@ export class RemoteFigure {
       this.absoluteObjects = new GroupCollection();
     }
 
-  get className(): string { return "Figure" }
-
   get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
 
   set axisStyle(newAxisStyle: Map<string, any>) { newAxisStyle.forEach((value, key) => this._axisStyle.set(key, value)) }
@@ -104,17 +103,20 @@ export class RemoteFigure {
     return vertex.x >= this.origin.x && vertex.x <= this.origin.x + this.size.x && vertex.y >= this.origin.y && vertex.y <= this.origin.y + this.size.y
   }
 
-  protected unpackAxisStyle(data:any): void {
+  protected unpackAxisStyle(data: DataInterface): void {
     if (data.axis?.axis_style?.color_stroke) this.axisStyle.set("strokeStyle", data.axis.axis_style.color_stroke);
     if (data.axis?.axis_style?.line_width) this.axisStyle.set("lineWidth", data.axis.axis_style.line_width);
     if (data.axis?.graduation_style?.font_style) this.axisStyle.set("font", data.axis.graduation_style.font_style);
     if (data.axis?.graduation_style?.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
   }
 
-  protected unpackPointsSets(data: any): void {
-    data.points_sets.forEach((pointSet, index) => {
-      this.pointSets.push(new PointSet(pointSet.point_index, colorHsl(pointSet.color), pointSet.name ?? `Point set ${index}`));
-    });
+  protected unpackPointsSets(data: DataInterface): void {
+    if (data.points_sets) {
+      this.pointSets = data.points_sets.map((pointSet, index) => {
+        const name = pointSet.name ?? `Point set ${index}`;
+        return new PointSet(pointSet.indices, colorHsl(pointSet.color), name)
+      })
+    }
   }
 
   protected unpackData(data: any): Map<string, any[]> { return RemoteFigure.deserializeData(data) }
@@ -132,10 +134,7 @@ export class RemoteFigure {
     return elements
   }
 
-  protected buildPointSets(data: any): void {
-    this.pointSets = [];
-    if (data.points_sets) this.unpackPointsSets(data);
-  }
+  protected buildPointSets(data: any): void { this.unpackPointsSets(data) }
 
   public getSetColorOfIndex(index: number): string {
     for (let set of this.pointSets) { if (set.indices.includes(index)) return set.color }
@@ -408,6 +407,10 @@ export class RemoteFigure {
   public switchOrientation(): void {}
 
   public togglePoints(): void {}
+
+  public simpleCluster(inputValue: number): void {}
+
+  public resetClusters(): void {}
 
   protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex): void { this.selectionBox.update(frameDown, frameMouse) }
 

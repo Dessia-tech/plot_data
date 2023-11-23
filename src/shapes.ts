@@ -299,6 +299,7 @@ export class Text extends Shape {
   }
 
   private splitInWords(): string[] {
+    if (this.text.length == 0) return [""]
     const words = [];
     let pickedChars = 0;
     while (pickedChars < this.text.length) {
@@ -315,7 +316,7 @@ export class Text extends Shape {
       }
       words.push(word);
     }
-    return words
+    return words.length > 1 ? words : this.text.split("")
   }
 
   private fixedFontSplit(context: CanvasRenderingContext2D): string[] {

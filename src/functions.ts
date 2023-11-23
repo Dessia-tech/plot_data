@@ -41,10 +41,9 @@ export function uniqueValues<T>(vector: T[]): T[] {
   return vector.filter((value, index, array) => array.indexOf(value) === index)
 }
 
-export function arrayDiff<T>(a: T[], b: T[]): T[] { // TODO: this seems duplicated in PP
-  const diff = [];
-  a.forEach(value => { if (!b.includes(value)) diff.push(value) });
-  return diff
+export function arrayDiff<T>(a: T[], b: T[]): T[] {
+  if (b.length == 0) return a;
+  return a.filter(value => !b.includes(value));
 }
 
 export function arrayIntersection<T>(a: T[], b: T[]): T[] {

@@ -1,6 +1,6 @@
 import { SIZE_AXIS_END, AXES_BLANK_SPACE, MIN_OFFSET_X, DEFAULT_SHAPE_COLOR, FREE_SPACE_FACTOR,
   DRAW_MARGIN_FACTOR, PG_CONTAINER_PLOT } from "./constants"
-import { range, mapMax, sum, argMax, normalizeArray, uniqueValues, arrayIntersection } from "./functions"
+import { range, mapMax, sum, argMax, normalizeArray, arrayDiff, arrayIntersection } from "./functions"
 import { colorHsl } from "./colors"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
@@ -1008,7 +1008,7 @@ export class ParallelPlot extends Figure {
   public switchZoom(): void {}
 
   private drawCurves(context: CanvasRenderingContext2D): void {
-    const unpickedIndices = ParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
+    const unpickedIndices = arrayDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
     unpickedIndices.forEach(i => this.curves[i].draw(context));
     this.pointSets.forEach(pointSet => pointSet.indices.forEach(i => this.curves[i].draw(context)));
     [this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });

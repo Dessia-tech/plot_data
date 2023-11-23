@@ -1,5 +1,5 @@
 import { FIGURES_BLANK_SPACE, EMPTY_MULTIPLOT } from "./constants"
-import { equals, arrayDiff, arrayIntersection, range } from './functions'
+import { equals, arrayDiff, range } from './functions'
 import { Vertex, Shape } from "./baseShape"
 import { RubberBand, SelectionBox } from "./shapes"
 import { SelectionBoxCollection, PointSet } from "./collections"

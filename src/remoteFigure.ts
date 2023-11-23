@@ -68,7 +68,6 @@ export class RemoteFigure {
     public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      console.log(data);
       this.unpackAxisStyle(data);
       this.origin = new Vertex(X, Y);
       this.size = new Vertex(width - X, height - Y);

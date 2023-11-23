@@ -31,7 +31,7 @@ export class Figure extends RemoteFigure {
     if (data.type_ == "graph2d") return new Graph2D(data, width, height, 0, 0, canvasID, true);
     if (data.type_ == "primitivegroupcontainer") return new PrimitiveGroupContainer(data, width, height, false, 0, 0, canvasID, true);
     if (data.type_ == "scatterplot") return new Scatter(data, width, height, 0, 0, canvasID, true);
-    throw Error(`${data.type_} is not a know type of plot. Possible plots <type_> attributes are 'scatterplot', 'graph2d', 'parallelplot', 'histogram', 'draw', 'primitivegroupcontainer'.`)
+    throw Error(`${data.type_} is not a known type of plot. Possible plots <type_> attributes are 'scatterplot', 'graph2d', 'parallelplot', 'histogram', 'draw', 'primitivegroupcontainer'.`)
   }
 
   public static createFromMultiplot(data: DataInterface, features: Map<string, any>, context: CanvasRenderingContext2D, canvasID: string): Figure {

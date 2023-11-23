@@ -5,31 +5,31 @@ import { Axis } from "../../instrumented/axes";
 import { RemoteFigure } from "../../instrumented/remoteFigure";
 
 const emptyData = {
-    "name": "", 
-    "attribute_names": ["x", "y"], 
+    "name": "",
+    "attribute_names": ["x", "y"],
 };
 
 const data = {
-    "name": "", 
-    "attribute_names": ["x", "y"], 
+    "name": "",
+    "attribute_names": ["x", "y"],
     "elements": [
         {
-            "name": "", 
+            "name": "",
             "values": { "x": 0, "y": 1 },
-            "x": 0, 
-            "y": 1 
+            "x": 0,
+            "y": 1
         },
         {
-            "name": "", 
+            "name": "",
             "values": { "x": 1, "y": 2 },
-            "x": 1, 
+            "x": 1,
             "y": 2
         },
         {
-            "name": "", 
+            "name": "",
             "values": { "x": 2, "y": 3 },
-            "x": 2, 
-            "y": 3 
+            "x": 2,
+            "y": 3
         }
     ]
 };
@@ -64,7 +64,7 @@ describe('RemoteFigure.unpackAxisStyle', function() {
         expect(figure.axisStyle.get("strokeStyle")).to.be.equal("hsl(0, 0%, 30%)");
         expect(figure.axisStyle.get("lineWidth"), "lineWidth").to.be.undefined;
         expect(figure.axisStyle.get("font"), "font").to.be.undefined;
-        expect(figure.axisStyle.get("ticksFontsize"), "ticksFontSize").to.be.undefined;  
+        expect(figure.axisStyle.get("ticksFontsize"), "ticksFontSize").to.be.undefined;
     });
 
     it("should not change axisStyle of RemoteFigure when axis.graduation_style is empty", function() {
@@ -85,7 +85,7 @@ describe('RemoteFigure.unpackAxisStyle', function() {
         expect(figure.axisStyle.get("strokeStyle")).to.be.equal("hsl(24, 35%, 97%)");
         expect(figure.axisStyle.get("lineWidth"), "lineWidth").to.be.equal(3);
         expect(figure.axisStyle.get("font"), "font").to.be.undefined;
-        expect(figure.axisStyle.get("ticksFontsize"), "ticksFontSize").to.be.undefined;  
+        expect(figure.axisStyle.get("ticksFontsize"), "ticksFontSize").to.be.undefined;
     });
 
     it("should change axisStyle of RemoteFigure when axis.graduation_style is given", function() {
@@ -97,7 +97,7 @@ describe('RemoteFigure.unpackAxisStyle', function() {
         expect(figure.axisStyle.get("strokeStyle")).to.be.equal("hsl(24, 35%, 97%)");
         expect(figure.axisStyle.get("lineWidth"), "lineWidth").to.be.equal(3);
         expect(figure.axisStyle.get("font"), "font").to.be.equal("serif");
-        expect(figure.axisStyle.get("ticksFontsize"), "ticksFontSize").to.be.equal(20);  
+        expect(figure.axisStyle.get("ticksFontsize"), "ticksFontSize").to.be.equal(20);
     });
 });
 
@@ -117,7 +117,7 @@ canvas.width = 1000;
 document.body.appendChild(canvas);
 
 describe("RemoteFigure.changeAxisFeature", function() {
-    it('should update the feature name of the given axis', function() { 
+    it('should update the feature name of the given axis', function() {
         const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
         figure.setCanvas(canvas.id);
         figure.axes[0] = new Axis(figure.features.get("x"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(100, 0), "x", new Vertex());
@@ -127,7 +127,7 @@ describe("RemoteFigure.changeAxisFeature", function() {
         expect(figure.axes[0].maxValue, "axis.maxValue").to.be.equal(2.1);
 
         figure.changeAxisFeature("y", 0);
-  
+
         expect(figure.drawnFeatures[0], "figure.drawnFeatures[0]").to.be.equal("y");
         expect(figure.axes[0].name, "axis.name").to.be.equal("y");
         expect(figure.axes[0].minValue, "axis.minValue").to.be.equal(0.9);
@@ -324,7 +324,7 @@ describe("RemoteFigure.mouseListener", function() {
         expect(figure.selectionBox.maxVertex, "selectionBox.maxVertex").to.deep.equal(new Vertex(362, -512));
 
         figure.draw();
-        
+
         expect(figure.selectionBox.origin, "selectionBox.origin").to.not.be.deep.equal(new Vertex());
         expect(figure.selectionBox.size, "selectionBox.size").to.not.be.deep.equal(new Vertex());
         canvas.dispatchEvent(mouseUp);

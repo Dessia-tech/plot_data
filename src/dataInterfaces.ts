@@ -8,7 +8,7 @@ export interface AxisStyleInterface {
     name?: string,
     object_class?: string,
 }
-  
+
 export interface GraduationStyleInterface {
     font_size?: number,
     font_style?: string,
@@ -88,4 +88,3 @@ export interface MultiplotDataInterface {
     height?: number,
     name?: string,
 }
-  

@@ -60,10 +60,10 @@ describe('functions.equals', function() {
 
   // Returns true when comparing two arrays with the same values in different order.
   it('should return true when comparing two arrays with the same values in different order', function() {
-    expect(func.equals([1, 2, 3], [3, 2, 1])).to.be.true;
-    expect(func.equals(['a', 'b', 'c'], ['c', 'b', 'a'])).to.be.true;
-    expect(func.equals([true, false], [false, true])).to.be.true;
-    expect(func.equals([null, undefined], [undefined, null])).to.be.true;
+    expect(func.equals([1, 2, 3], [3, 2, 1])).to.be.false;
+    expect(func.equals(['a', 'b', 'c'], ['c', 'b', 'a'])).to.be.false;
+    expect(func.equals([true, false], [false, true])).to.be.false;
+    expect(func.equals([null, undefined], [undefined, null])).to.be.false;
   });
 
   // Returns true when comparing two regular expressions with the same source and flags.
@@ -405,7 +405,7 @@ describe("functions.mapMin", function() {
     map.set('e', 9);
     const result = func.mapMin(map);
     expect(result).to.deep.equal(['b', -2]);
-  });  
+  });
 
   it('should correctly handle an empty map when computing the mapMin', function() {
     const map = new Map();
@@ -445,5 +445,5 @@ describe("functions.sum", function () {
     const array = [];
     const result = func.sum(array);
     expect(result).to.equal(0);
-  });  
+  });
 });

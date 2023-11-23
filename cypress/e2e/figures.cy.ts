@@ -3,27 +3,27 @@ import { RubberBand } from "../../instrumented/shapes";
 import { Figure, Frame, Histogram, Scatter, Draw, ParallelPlot, Graph2D, PrimitiveGroupContainer } from "../../instrumented/figures";
 
 const data = {
-    "name": "", 
-    "attribute_names": ["x", "y"], 
+    "name": "",
+    "attribute_names": ["x", "y"],
     "x_variable": "x",
     "elements": [
         {
-            "name": "", 
+            "name": "",
             "values": { "x": 0, "y": 1 },
-            "x": 0, 
-            "y": 1 
+            "x": 0,
+            "y": 1
         },
         {
-            "name": "", 
+            "name": "",
             "values": { "x": 1, "y": 2 },
-            "x": 1, 
+            "x": 1,
             "y": 2
         },
         {
-            "name": "", 
+            "name": "",
             "values": { "x": 2, "y": 3 },
-            "x": 2, 
-            "y": 3 
+            "x": 2,
+            "y": 3
         }
     ],
     "primitives": [
@@ -42,12 +42,12 @@ document.body.appendChild(canvas);
 
 describe("Figure", function() {
     it('should create a new instance of Figure from multiplot data with valid arguments', function() {
-        const dataTypes = ["histogram", "parallelplot", "draw", "primitivegroupcontainer", "graph2d"];
         data["type_"] = "scatterplot";
-        const classes = [Histogram, ParallelPlot, Draw, PrimitiveGroupContainer, Graph2D];
         const scatter = Figure.fromMultiplot(data, canvas.width, canvas.height, canvasID);
         expect(scatter, `Scatter`).to.be.instanceof(Scatter);
 
+        const dataTypes = ["histogram", "parallelplot", "draw", "primitivegroupcontainer", "graph2d"];
+        const classes = [Histogram, ParallelPlot, Draw, PrimitiveGroupContainer, Graph2D];
         const features = scatter.features;
         dataTypes.forEach((dataType, i) => {
             data.attribute_names = ["x", "y"];
@@ -55,6 +55,17 @@ describe("Figure", function() {
             const figure = Figure.createFromMultiplot(data, features, scatter.context, canvasID);
             expect(figure, `${dataType}`).to.be.instanceof(classes[i]);
         });
+    });
+
+    it('should throw an error while instancing plot with wrong type_', function() {
+        data["type_"] = "scatterplot";
+        const scatter = Figure.fromMultiplot(data, canvas.width, canvas.height, canvasID);
+
+        data["type_"] = "unknown";
+        const features = scatter.features;
+        expect(() => {
+            Figure.createFromMultiplot(data, features, scatter.context, canvasID);
+        }, "unknown").to.throw("unknown is not a known type of plot. Possible plots <type_> attributes are 'scatterplot', 'graph2d', 'parallelplot', 'histogram', 'draw', 'primitivegroupcontainer'.");
     });
 
     it("should be resized with new inputs", function() {
@@ -96,7 +107,7 @@ describe("Figure", function() {
         expect(scatter2.axes[0].rubberBand.maxValue, "scatter2.axes[0].rubberBand.maxValue").to.be.equal(scatter.axes[1].rubberBand.maxValue);
         expect(scatter2.axes[1].rubberBand.minValue, "scatter2.axes[1].rubberBand.minValue").to.be.equal(scatter.axes[0].rubberBand.minValue);
         expect(scatter2.axes[1].rubberBand.maxValue, "scatter2.axes[1].rubberBand.maxValue").to.be.equal(scatter.axes[0].rubberBand.maxValue);
-        
+
         expect(parallelPlot.axes[0].rubberBand.minValue, "parallelPlot.axes[0].rubberBand.minValue").to.be.equal(scatter.axes[1].rubberBand.minValue);
         expect(parallelPlot.axes[1].rubberBand.maxValue, "parallelPlot.axes[1].rubberBand.maxValue").to.be.equal(scatter.axes[0].rubberBand.maxValue);
         expect(parallelPlot.axes[0].rubberBand.minValue, "parallelPlot.axes[0].rubberBand.minValue").to.be.equal(scatter.axes[1].rubberBand.minValue);
@@ -127,7 +138,7 @@ describe("Figure", function() {
 });
 
 describe("Frame", function() {
-    it("should be build without attribute_names", function() {
+    it("should be built without attribute_names", function() {
         const data = {
             "name": "",
             "elements": [
@@ -142,6 +153,24 @@ describe("Frame", function() {
         expect(frame.axes[0].ticks[0], "axes[0].ticks[0]").to.be.equal(0);
         expect(frame.axes[0].ticks[4], "axes[0].ticks[4]").to.be.equal(0.8);
     });
+
+    it("should be built with empty attribute_names", function() {
+        const data = {
+            "name": "",
+            "attribute_names": [],
+            "elements": [
+                { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
+                { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+                { "name": "", "values": { "x": 2, "y": 3 }, "x": 2, "y": 3 }
+            ]
+        };
+        const frame = new Frame(data, canvas.width, canvas.height, 0, 0, canvasID, false);
+        expect(frame.xFeature, "xFeature").to.be.equal("indices");
+        expect(frame.yFeature, "yFeature").to.be.equal("x");
+        expect(frame.axes[0].ticks[0], "axes[0].ticks[0]").to.be.equal(0);
+        expect(frame.axes[0].ticks[4], "axes[0].ticks[4]").to.be.equal(0.8);
+    });
+
 
     it("should change axis feature", function() {
         const frame = new Frame(data, canvas.width, canvas.height, 0, 0, canvasID, false);

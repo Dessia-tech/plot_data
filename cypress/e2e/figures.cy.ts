@@ -1,3 +1,4 @@
+import { ZOOM_FACTOR } from "../../instrumented/constants";
 import { Vertex } from "../../instrumented/baseShape";
 import { RubberBand } from "../../instrumented/shapes";
 import { Figure, Frame, Histogram, Scatter, Draw, ParallelPlot, Graph2D, PrimitiveGroupContainer } from "../../instrumented/figures";
@@ -7,24 +8,14 @@ const data = {
     "attribute_names": ["x", "y"],
     "x_variable": "x",
     "elements": [
-        {
-            "name": "",
-            "values": { "x": 0, "y": 1 },
-            "x": 0,
-            "y": 1
-        },
-        {
-            "name": "",
-            "values": { "x": 1, "y": 2 },
-            "x": 1,
-            "y": 2
-        },
-        {
-            "name": "",
-            "values": { "x": 2, "y": 3 },
-            "x": 2,
-            "y": 3
-        }
+        { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
+        { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+        { "name": "", "values": { "x": 1, "y": 2 }, "x": 4, "y": 12 },
+        { "name": "", "values": { "x": 1, "y": 2 }, "x": 2, "y": 1 },
+        { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+        { "name": "", "values": { "x": 1, "y": 2 }, "x": 2, "y": 2 },
+        { "name": "", "values": { "x": 1, "y": 2 }, "x": 3, "y": 2 },
+        { "name": "", "values": { "x": 2, "y": 3 }, "x": 4, "y": 3 }
     ],
     "primitives": [
         { "name": "", "cx": 3, "cy": 3, "type_": "point" },
@@ -32,6 +23,9 @@ const data = {
         { "name": "", "data": [66, 11.5, 73, 11.5], "point1": [66, 11.5], "point2": [73, 11.5], "type_": "linesegment2d" }
     ]
 }
+
+const mouseMove = new MouseEvent('mousemove', { clientX: 150, clientY: 150 });
+const mouseWheel = new WheelEvent('wheel', { clientX: 150, clientY: 150, deltaY: ZOOM_FACTOR });
 
 const canvasID = "canvas";
 const canvas = document.createElement(canvasID);
@@ -74,7 +68,7 @@ describe("Figure", function() {
         const newOrigin = new Vertex(15, 15);
         const newWidth = 250;
         const newHeight = 400;
-        figure.multiplotResize(newOrigin, newWidth, newHeight);
+        figure.boundingBoxResize(newOrigin, newWidth, newHeight);
 
         expect(figure.origin, "origin").to.deep.equal(newOrigin);
         expect(figure.size, "size").to.deep.equal(new Vertex(newWidth, newHeight));
@@ -171,11 +165,82 @@ describe("Frame", function() {
         expect(frame.axes[0].ticks[4], "axes[0].ticks[4]").to.be.equal(0.8);
     });
 
-
     it("should change axis feature", function() {
         const frame = new Frame(data, canvas.width, canvas.height, 0, 0, canvasID, false);
         frame.setCanvas(canvasID);
         frame.changeAxisFeature("name", 0);
         expect(frame.axes[0].name, "axes[0].name").to.be.equal("name");
     });
+
+    it("should handle wheel events", function() {
+        const frame = new Frame(data, canvas.width, canvas.height, 0, 0, canvasID, false);
+        const minValue0 = frame.axes[0].minValue;
+        const maxValue0 = frame.axes[0].maxValue;
+        const minValue1 = frame.axes[1].minValue;
+        const maxValue1 = frame.axes[1].maxValue;
+
+        frame.setCanvas(canvas.id);
+        frame.mouseListener();
+        canvas.dispatchEvent(mouseMove);
+        canvas.dispatchEvent(mouseWheel);
+
+        expect(frame.axes[0].minValue, "minValue0").to.not.be.equal(minValue0);
+        expect(frame.axes[0].maxValue, "maxValue0").to.not.be.equal(maxValue0);
+        expect(frame.axes[1].minValue, "minValue0").to.not.be.equal(minValue1);
+        expect(frame.axes[1].maxValue, "maxValue1").to.not.be.equal(maxValue1);
+    });
+});
+
+describe("Histogram", function() {
+    const histogram = new Histogram(data, canvas.width, canvas.height, 0, 0, canvasID, false);
+    histogram.setCanvas(canvas.id);
+    histogram.mouseListener();
+    histogram.draw();
+    const initBars = histogram.bars;
+
+    it("should zoom correctly", function() {
+        canvas.dispatchEvent(mouseMove);
+        canvas.dispatchEvent(mouseWheel);
+        canvas.dispatchEvent(mouseWheel);
+        expect(histogram.bars, "bars").to.not.deep.equal(initBars);
+    });
+
+    it("should reset correctly", function() {
+        histogram.reset();
+        expect(histogram.bars, "bars").to.deep.equal(initBars);
+    });
+});
+
+describe("Scatter", function() {
+    const scatter = new Scatter(data, canvas.width, canvas.height, 0, 0, canvasID, false);
+    const frameMatrix = new DOMMatrix([
+        scatter.frameMatrix.a,
+        scatter.frameMatrix.b,
+        scatter.frameMatrix.c,
+        scatter.frameMatrix.d,
+        scatter.frameMatrix.e,
+        scatter.frameMatrix.f
+    ]);
+    scatter.setCanvas(canvas.id);
+    scatter.mouseListener();
+    scatter.draw();
+
+    it("should zoom correctly", function() {
+        canvas.dispatchEvent(mouseMove);
+        canvas.dispatchEvent(mouseWheel);
+        canvas.dispatchEvent(mouseWheel);
+        expect(scatter.frameMatrix, "zoomed frameMatrix").to.not.deep.equal(frameMatrix);
+    });
+    
+    it("should reset correctly", function() {
+        scatter.reset();
+        expect(scatter.frameMatrix, "init frameMatrix").to.deep.equal(frameMatrix);
+    });
+
+    it("should resize correctly", function() {
+        scatter.boundingBoxResize(new Vertex(20, 20), 450, 250);
+        scatter.reset();
+        expect(scatter.frameMatrix, "init frameMatrix").to.deep.equal(frameMatrix);
+    });
+
 });

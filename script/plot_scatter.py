@@ -51,16 +51,11 @@ point_style = plot_data.PointStyle(color_fill=LIGHTBLUE,
                                    shape='cross')  # 'circle', 'square' or 'crux'
 
 # Finally, axis can be personalized too
-graduation_style = plot_data.TextStyle(text_color=BLUE, font_size=10,
-                                       font_style='Arial')
+graduation_style = plot_data.TextStyle(text_color=BLUE, font_size=10, font_style='Arial')
 
-axis_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=ROSE,
-                                 dashline=[])
+axis_style = plot_data.EdgeStyle(line_width=0.5, color_stroke=ROSE, dashline=[])
 
-axis = plot_data.Axis(nb_points_x=7, nb_points_y=5,
-                      graduation_style=graduation_style,
-                      axis_style=axis_style
-                      )
+axis = plot_data.Axis(nb_points_x=7, nb_points_y=5, graduation_style=graduation_style, axis_style=axis_style)
 
 # a tooltip is drawn when clicking on a point. Users can choose what information
 # they want to be displayed.
@@ -70,7 +65,7 @@ tooltip = plot_data.Tooltip(attributes=['mass', 'length', 'shape'])
 heatmap = plot_data.Heatmap([4, 2], colors=[YELLOW, ORANGE, RED])
 
 # Now, here is the new scatterplot
-customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='length',
+plot_data_object = plot_data.Scatter(x_variable='mass', y_variable='length',
                                            point_style=point_style,
                                            elements=elements,
                                            points_sets=points_sets,
@@ -79,4 +74,4 @@ customized_scatterplot = plot_data.Scatter(x_variable='mass', y_variable='length
                                            heatmap=heatmap)
 
 # if debug_mode is True, set it to False
-plot_data.plot_canvas(plot_data_object=customized_scatterplot, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

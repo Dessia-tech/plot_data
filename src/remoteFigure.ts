@@ -276,6 +276,17 @@ export class RemoteFigure {
     this.draw();
   }
 
+  public changeLocationInCanvas(origin: Vertex, width: number, height: number): void {
+    this.origin = origin;
+    this.width = width;
+    this.height = height;
+  }
+
+  public boundingBoxResize(origin: Vertex, width: number, height: number): void {
+    this.changeLocationInCanvas(origin, width, height);
+    this.resizeUpdate();
+  }
+
   public resize(): void {
     this.updateDimensions();
     this.axes.forEach(axis => axis.updateTicks());

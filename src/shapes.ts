@@ -640,6 +640,31 @@ export class ScatterPoint extends Point {
     context.lineWidth = 10;
   }
 
+  public updateMouseState(clusterColors: string[], hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[]): Map<string, number> {
+    const colors = new Map<string, number>();
+    this.isHovered = this.isClicked = this.isSelected = false;
+    this.values.forEach(index => {
+      if (clusterColors) {
+        const currentColorCounter = clusterColors[index];
+        colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
+      }
+      if (hoveredIndices.includes(index)) this.isHovered = true;
+      if (clickedIndices.includes(index)) this.isClicked = true;
+      if (selectedIndices.includes(index)) this.isSelected = true;
+    });
+    return colors
+  }
+
+  public updateDrawProperties(pointStyles: PointStyle[], clusterColors: string[], color: string, lineWidth: number, marker: string): void {
+    this.lineWidth = lineWidth;
+    this.setColors(color);
+    if (pointStyles) {
+      const clusterPointStyle = clusterColors ? Object.assign({}, pointStyles[this.values[0]], { strokeStyle: null }) : pointStyles[this.values[0]];
+      this.updateStyle(clusterPointStyle);
+    } else this.marker = marker;
+    this.update();
+  }
+
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
 
   public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[], xName: string, yName: string) {

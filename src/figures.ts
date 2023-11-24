@@ -41,20 +41,9 @@ export class Figure extends RemoteFigure {
     return plot
   }
 
-  public multiplotInstantiation(origin: Vertex, width: number, height: number): void {
-    this.origin = origin;
-    this.width = width;
-    this.height = height;
-  }
-
   public multiplotDraw(origin: Vertex, width: number, height: number): void {
-    this.multiplotInstantiation(origin, width, height);
+    this.changeLocationInCanvas(origin, width, height);
     this.resetView();
-  }
-
-  public multiplotResize(origin: Vertex, width: number, height: number): void {
-    this.multiplotInstantiation(origin, width, height);
-    this.resizeUpdate();
   }
 
   public sendHoveredIndicesMultiplot(): number[] { return this.hoveredIndices }
@@ -251,7 +240,7 @@ export class Frame extends Figure {
   }
 
   protected regulateScale(): void {
-    for (const axis of this.axes) {
+    this.axes.forEach(axis => {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
         if (this.scaleX > 1) this.scaleX = 1;
         if (this.scaleY > 1) this.scaleY = 1;
@@ -259,7 +248,7 @@ export class Frame extends Figure {
         if (this.scaleX < 1) this.scaleX = 1;
         if (this.scaleY < 1) this.scaleY = 1;
       }
-    }
+    })
   }
 }
 
@@ -306,6 +295,7 @@ export class Histogram extends Frame {
   public reset(): void {
     super.reset();
     this.bars = [];
+    this.draw();
   }
 
   private updateNumberAxis(numberAxis: Axis, bars: Bar[]): Axis {
@@ -412,13 +402,13 @@ export class Histogram extends Frame {
 
   protected regulateScale(): void {
     this.scaleY = 1;
-    for (const axis of this.axes) {
+    this.axes.forEach(axis => {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
         if (this.scaleX > 1) this.scaleX = 1;
       } else if (axis.tickPrecision < 1 || axis.areAllLabelsDisplayed) {
         if (this.scaleX < 1) this.scaleX = 1;
       }
-    }
+    })
   }
 
   public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
@@ -485,8 +475,8 @@ export class Scatter extends Frame {
     this.computePoints();
   }
 
-  public multiplotResize(origin: Vertex, width: number, height: number): void {
-    super.multiplotResize(origin, width, height);
+  public boundingBoxResize(origin: Vertex, width: number, height: number): void {
+    super.boundingBoxResize(origin, width, height);
     this.computePoints();
   }
 
@@ -510,33 +500,14 @@ export class Scatter extends Frame {
   protected drawPoints(context: CanvasRenderingContext2D): void {
     const axesOrigin = this.axes[0].origin;
     const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y);
-    this.points.forEach(point => {
-      let color = this.fillStyle;
-      const colors = new Map<string, number>();
-      point.isHovered = point.isClicked = point.isSelected = false;
-      point.values.forEach(index => {
-        if (this.clusterColors) {
-          const currentColorCounter = this.clusterColors[index];
-          colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
-        }
-        if (this.hoveredIndices.includes(index)) point.isHovered = true;
-        if (this.clickedIndices.includes(index)) point.isClicked = true;
-        if (this.selectedIndices.includes(index)) point.isSelected = true;
-      });
-      color = colors.size != 0 ? mapMax(colors)[0] : (this.getPointSetColor(point) ?? color);
+    this.points.forEach(point => this.drawPoint(point, axesOrigin, axesEnd, context));
+  }
 
-      point.lineWidth = this.lineWidth;
-      point.setColors(color);
-      if (this.pointStyles) {
-        if (!this.clusterColors) point.updateStyle(this.pointStyles[point.values[0]])
-        else {
-          let clusterPointStyle = Object.assign({}, this.pointStyles[point.values[0]], { strokeStyle: null });
-          point.updateStyle(clusterPointStyle);
-        }
-      } else point.marker = this.marker;
-      point.update();
-      if (point.isInFrame(axesOrigin, axesEnd, this.initScale)) point.draw(context);
-    })
+  private drawPoint(point: ScatterPoint, axesOrigin: Vertex, axesEnd: Vertex, context: CanvasRenderingContext2D): void {
+    const colors = point.updateMouseState(this.clusterColors, this.hoveredIndices, this.clickedIndices, this.selectedIndices);
+    const color = colors.size != 0 ? mapMax(colors)[0] : (this.getPointSetColor(point) ?? this.fillStyle);
+    point.updateDrawProperties(this.pointStyles, this.clusterColors, color, this.lineWidth, this.marker);
+    if (point.isInFrame(axesOrigin, axesEnd, this.initScale)) point.draw(context);
   }
 
   private getPointSetColor(point: ScatterPoint): string { // TODO: Code duplicate with Histogram's one

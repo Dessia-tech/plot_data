@@ -1,7 +1,7 @@
 import { parseHTML } from '../support/parseHTML';
 import histogramData from '../data_src/histogram.data.json';
-import { Frame, Histogram } from '../../instrumented/figures';
-import { Vertex } from '../../instrumented/baseShape';
+import { Frame, Histogram } from '../../src/figures';
+import { Vertex } from '../../src/baseShape';
 
 const FEATURE_NAME = "histogram"
 
@@ -19,9 +19,9 @@ describe('HISTOGRAM CANVAS', function () {
   const describeTitle = this.title + ' -- ';
   beforeEach(() => cy.visit("cypress/html_files/" + FEATURE_NAME + ".html"));
 
-  // it("should draw canvas", function () {
-  //   cy.compareSnapshot(describeTitle + this.test.title, 0.06);
-  // })
+  it("should draw canvas", function () {
+    cy.compareSnapshot(describeTitle + this.test.title, 0.06);
+  })
 
   it("should select with rubber band", function () {
     cy.window().then(win => {

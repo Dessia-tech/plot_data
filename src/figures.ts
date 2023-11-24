@@ -1001,11 +1001,6 @@ export class ParallelPlot extends Figure {
     [this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
   }
 
-  public static arraySetDiff(A: any[], B: any[]): any[] {
-    if (B.length == 0) return A
-    return A.filter(x => !B.includes(x))
-  }
-
   protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
     this.updateCurves();
     this.drawCurves(context);

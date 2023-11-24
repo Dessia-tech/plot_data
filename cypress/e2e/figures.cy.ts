@@ -3,31 +3,9 @@ import { Vertex } from "../../instrumented/baseShape";
 import { RubberBand } from "../../instrumented/shapes";
 import { Figure, Frame, Histogram, Scatter, Draw, ParallelPlot, Graph2D, PrimitiveGroupContainer } from "../../instrumented/figures";
 
-const data = {
-    "name": "",
-    "attribute_names": ["x", "y"],
-    "x_variable": "x",
-    "elements": [
-        { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
-        { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
-        { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
-        { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
-        { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
-        { "name": "", "values": { "x": 2, "y": 1 }, "x": 2, "y": 1 },
-        { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
-        { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
-        { "name": "", "values": { "x": 3, "y": 2 }, "x": 3, "y": 2 },
-        { "name": "", "values": { "x": 4, "y": 3 }, "x": 4, "y": 3 }
-    ],
-    "primitives": [
-        { "name": "", "cx": 3, "cy": 3, "type_": "point" },
-        { "name": "", "cx": 8, "cy": 3, "type_": "point" },
-        { "name": "", "data": [66, 11.5, 73, 11.5], "point1": [66, 11.5], "point2": [73, 11.5], "type_": "linesegment2d" }
-    ]
-}
-
-const mouseMove = new MouseEvent('mousemove', { clientX: 150, clientY: 150 });
-const mouseWheel = new WheelEvent('wheel', { clientX: 150, clientY: 150, deltaY: ZOOM_FACTOR });
+const MOUSE_OFFSET = new Vertex(8, 8); // TODO: I f****** don't understand why this add (8, 8) is required for mouse to be as specified
+const mouseMove = new MouseEvent('mousemove', { clientX: 150 + MOUSE_OFFSET.x, clientY: 150 + MOUSE_OFFSET.y });
+const mouseWheel = new WheelEvent('wheel', { clientX: 150 + MOUSE_OFFSET.x, clientY: 150 + MOUSE_OFFSET.y, deltaY: ZOOM_FACTOR });
 
 const canvasID = "canvas";
 const canvas = document.createElement(canvasID);
@@ -37,6 +15,29 @@ canvas.height = 1000;
 document.body.appendChild(canvas);
 
 describe("Figure", function() {
+    const data = {
+        "name": "",
+        "attribute_names": ["x", "y"],
+        "x_variable": "x",
+        "elements": [
+            { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 2, "y": 1 }, "x": 2, "y": 1 },
+            { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
+            { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
+            { "name": "", "values": { "x": 3, "y": 2 }, "x": 3, "y": 2 },
+            { "name": "", "values": { "x": 4, "y": 3 }, "x": 4, "y": 3 }
+        ],
+        "primitives": [
+            { "name": "", "cx": 3, "cy": 3, "type_": "point" },
+            { "name": "", "cx": 8, "cy": 3, "type_": "point" },
+            { "name": "", "data": [66, 11.5, 73, 11.5], "point1": [66, 11.5], "point2": [73, 11.5], "type_": "linesegment2d" }
+        ]
+    };
+
     it('should create a new instance of Figure from multiplot data with valid arguments', function() {
         data["type_"] = "scatterplot";
         const scatter = Figure.fromMultiplot(data, canvas.width, canvas.height, canvasID);
@@ -134,15 +135,16 @@ describe("Figure", function() {
 });
 
 describe("Frame", function() {
+    const data = {
+        "name": "",
+        "elements": [
+            { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 2, "y": 3 }, "x": 2, "y": 3 }
+        ]
+    };
+
     it("should be built without attribute_names", function() {
-        const data = {
-            "name": "",
-            "elements": [
-                { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
-                { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
-                { "name": "", "values": { "x": 2, "y": 3 }, "x": 2, "y": 3 }
-            ]
-        };
         const frame = new Frame(data, canvas.width, canvas.height, 0, 0, canvasID, false);
         expect(frame.xFeature, "xFeature").to.be.equal("x");
         expect(frame.yFeature, "yFeature").to.be.equal("y");
@@ -151,16 +153,7 @@ describe("Frame", function() {
     });
 
     it("should be built with empty attribute_names", function() {
-        const data = {
-            "name": "",
-            "attribute_names": [],
-            "elements": [
-                { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
-                { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
-                { "name": "", "values": { "x": 2, "y": 3 }, "x": 2, "y": 3 }
-            ],
-            "type_": "frame"
-        };
+        data["attribute_names"] = [];
         const frame = new Frame(data, canvas.width, canvas.height, 0, 0, canvasID, false);
         expect(frame.xFeature, "xFeature").to.be.equal("indices");
         expect(frame.yFeature, "yFeature").to.be.equal("x");
@@ -195,7 +188,23 @@ describe("Frame", function() {
 });
 
 describe("Histogram", function() {
-    data["type_"] = "histogram";
+    const data = {
+        "name": "",
+        "x_variable": "x",
+        "elements": [
+            { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 2, "y": 1 }, "x": 2, "y": 1 },
+            { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
+            { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
+            { "name": "", "values": { "x": 3, "y": 2 }, "x": 3, "y": 2 },
+            { "name": "", "values": { "x": 4, "y": 3 }, "x": 4, "y": 3 }
+        ],
+        "type_": "histogram"
+    };
     const histogram = new Histogram(data, canvas.width, canvas.height, 0, 0, canvasID, false);
     histogram.setCanvas(canvas.id);
     histogram.mouseListener();
@@ -295,7 +304,7 @@ describe("Graph2D", function() {
                 ]
             },
         ],
-        "type_": "scatterplot"
+        "type_": "graph2d"
     }
     const graph = new Graph2D(data, canvas.width, canvas.height, 0, 0, canvasID, false);
 
@@ -310,3 +319,70 @@ describe("Graph2D", function() {
         expect(graph.isMerged, "graph isMerged").to.be.false;
     });
 });
+
+describe("ParallelPlot", function() {
+    const data = {
+        "name": "",
+        "attribute_names": ["x", "y", "z"],
+        "elements": [
+            { "name": "", "values": { "x": 0, "y": 1, "z": 0 }, "x": 0, "y": 1, "z": 0 },
+            { "name": "", "values": { "x": 1, "y": 2, "z": 2 }, "x": 1, "y": 2, "z": 2 },
+            { "name": "", "values": { "x": 1, "y": 2, "z": 1 }, "x": 1, "y": 2, "z": 1 },
+            { "name": "", "values": { "x": 1, "y": 2, "z": 5 }, "x": 1, "y": 2, "z": 5 },
+            { "name": "", "values": { "x": 1, "y": 2, "z": 7 }, "x": 1, "y": 2, "z": 7 },
+            { "name": "", "values": { "x": 2, "y": 1, "z": 1 }, "x": 2, "y": 1, "z": 1 },
+            { "name": "", "values": { "x": 2, "y": 2, "z": 2 }, "x": 2, "y": 2, "z": 2 },
+            { "name": "", "values": { "x": 2, "y": 2, "z": 1 }, "x": 2, "y": 2, "z": 1 },
+            { "name": "", "values": { "x": 3, "y": 2, "z": 2 }, "x": 3, "y": 2, "z": 2 },
+            { "name": "", "values": { "x": 4, "y": 3, "z": 5 }, "x": 4, "y": 3, "z": 5 }
+        ],
+        "type_": "parallelplot"
+    }
+    const parallelplot = new ParallelPlot(data, canvas.width, canvas.height, 0, 0, canvasID, false);
+    parallelplot.setCanvas(canvas.id);
+    parallelplot.mouseListener();
+    parallelplot.draw();
+
+    it("should invert axis", function() {
+        const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET); 
+        const mouseMove = new MouseEvent('mousemove', { clientX: titleCenter.x, clientY: titleCenter.y });
+        const mouseDown = new MouseEvent('mousedown', { clientX: titleCenter.x, clientY: titleCenter.y });
+        const mouseUp = new MouseEvent('mouseup', { clientX: titleCenter.x, clientY: titleCenter.y });
+        canvas.dispatchEvent(mouseMove);
+        canvas.dispatchEvent(mouseDown);
+        canvas.dispatchEvent(mouseUp);
+        expect(parallelplot.axes[1].isInverted, "invert axis").to.be.true;
+
+        canvas.dispatchEvent(mouseMove);
+        canvas.dispatchEvent(mouseDown);
+        canvas.dispatchEvent(mouseUp);
+        expect(parallelplot.axes[1].isInverted, "invert axis").to.be.false;
+    });
+
+    it("should move axis", function() {
+        const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET); 
+        const mouseMove = new MouseEvent('mousemove', { clientX: titleCenter.x, clientY: titleCenter.y });
+        const mouseDown = new MouseEvent('mousedown', { clientX: titleCenter.x, clientY: titleCenter.y });
+        const mouseMove2 = new MouseEvent('mousemove', { clientX: titleCenter.x + 500, clientY: titleCenter.y });
+        const mouseUp = new MouseEvent('mouseup', { clientX: titleCenter.x, clientY: titleCenter.y });
+        
+        expect(parallelplot.drawnFeatures, "drawnFeatures").to.deep.equal(["x", "y", "z"]);
+        canvas.dispatchEvent(mouseMove);
+        canvas.dispatchEvent(mouseDown);
+        canvas.dispatchEvent(mouseMove2);
+        canvas.dispatchEvent(mouseUp);
+        expect(parallelplot.drawnFeatures, "drawnFeatures").to.deep.equal(["x", "z", "y"]);
+    });
+
+    it("should move axis", function() {
+        const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET); 
+        const mouseMove = new MouseEvent('mousemove', { clientX: titleCenter.x, clientY: titleCenter.y });
+        const mouseWheel = new WheelEvent('wheel', { clientX: titleCenter.x, clientY: titleCenter.y, deltaY: ZOOM_FACTOR * 3 });
+        const initMinValue = parallelplot.axes[1].minValue;
+        const initMaxValue = parallelplot.axes[1].maxValue;
+        canvas.dispatchEvent(mouseMove);
+        canvas.dispatchEvent(mouseWheel);
+        expect(parallelplot.axes[1].minValue, "minValue").to.not.be.equal(initMinValue);
+        expect(parallelplot.axes[1].maxValue, "maxValue").to.not.be.equal(initMaxValue);
+    });
+})

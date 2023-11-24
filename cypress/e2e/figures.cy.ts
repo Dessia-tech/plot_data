@@ -10,12 +10,14 @@ const data = {
     "elements": [
         { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
         { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
-        { "name": "", "values": { "x": 1, "y": 2 }, "x": 4, "y": 12 },
-        { "name": "", "values": { "x": 1, "y": 2 }, "x": 2, "y": 1 },
         { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
-        { "name": "", "values": { "x": 1, "y": 2 }, "x": 2, "y": 2 },
-        { "name": "", "values": { "x": 1, "y": 2 }, "x": 3, "y": 2 },
-        { "name": "", "values": { "x": 2, "y": 3 }, "x": 4, "y": 3 }
+        { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+        { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+        { "name": "", "values": { "x": 2, "y": 1 }, "x": 2, "y": 1 },
+        { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
+        { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
+        { "name": "", "values": { "x": 3, "y": 2 }, "x": 3, "y": 2 },
+        { "name": "", "values": { "x": 4, "y": 3 }, "x": 4, "y": 3 }
     ],
     "primitives": [
         { "name": "", "cx": 3, "cy": 3, "type_": "point" },
@@ -156,7 +158,8 @@ describe("Frame", function() {
                 { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
                 { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
                 { "name": "", "values": { "x": 2, "y": 3 }, "x": 2, "y": 3 }
-            ]
+            ],
+            "type_": "frame"
         };
         const frame = new Frame(data, canvas.width, canvas.height, 0, 0, canvasID, false);
         expect(frame.xFeature, "xFeature").to.be.equal("indices");
@@ -192,6 +195,7 @@ describe("Frame", function() {
 });
 
 describe("Histogram", function() {
+    data["type_"] = "histogram";
     const histogram = new Histogram(data, canvas.width, canvas.height, 0, 0, canvasID, false);
     histogram.setCanvas(canvas.id);
     histogram.mouseListener();
@@ -212,6 +216,23 @@ describe("Histogram", function() {
 });
 
 describe("Scatter", function() {
+    const data = {
+        "name": "",
+        "attribute_names": ["y", "x"],
+        "elements": [
+            { "name": "", "values": { "x": 0, "y": 1 }, "x": 0, "y": 1 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 2, "y": 1 }, "x": 2, "y": 1 },
+            { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
+            { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
+            { "name": "", "values": { "x": 3, "y": 2 }, "x": 3, "y": 2 },
+            { "name": "", "values": { "x": 4, "y": 3 }, "x": 4, "y": 3 }
+        ],
+        "type_": "scatterplot"
+    }
     const scatter = new Scatter(data, canvas.width, canvas.height, 0, 0, canvasID, false);
     const frameMatrix = new DOMMatrix([
         scatter.frameMatrix.a,
@@ -225,22 +246,67 @@ describe("Scatter", function() {
     scatter.mouseListener();
     scatter.draw();
 
-    it("should zoom correctly", function() {
+    it("should zoom frame correctly", function() {
         canvas.dispatchEvent(mouseMove);
         canvas.dispatchEvent(mouseWheel);
         canvas.dispatchEvent(mouseWheel);
         expect(scatter.frameMatrix, "zoomed frameMatrix").to.not.deep.equal(frameMatrix);
     });
     
-    it("should reset correctly", function() {
+    it("should reset frame correctly", function() {
         scatter.reset();
         expect(scatter.frameMatrix, "init frameMatrix").to.deep.equal(frameMatrix);
     });
 
-    it("should resize correctly", function() {
+    it("should resize frame correctly", function() {
         scatter.boundingBoxResize(new Vertex(20, 20), 450, 250);
         scatter.reset();
-        expect(scatter.frameMatrix, "init frameMatrix").to.deep.equal(frameMatrix);
+        expect(scatter.frameMatrix, "init frameMatrix").to.not.deep.equal(frameMatrix);
     });
 
+    it("should merge points", function() {
+        expect(scatter.points.length, "drawn points length").to.be.equal(10);
+        scatter.switchMerge();
+        expect(scatter.isMerged, "isMerged").to.be.true;
+        expect(scatter.points.length, "drawn points length").to.be.equal(6);
+    });
+});
+
+describe("Graph2D", function() {
+    const data = {
+        "name": "",
+        "graphs": [
+            {
+                "name": "I = f(t)",
+                "edge_style": { "object_class": "plot_data.core.EdgeStyle", "name": "", "color_stroke": "rgb(0, 194, 139)", "dashline": [10, 5] },
+                "point_style": { "object_class": "plot_data.core.PointStyle", "name": "", "color_fill": "rgb(247,0,0)", "color_stroke": "rgb(247,0,0)", "shape": "crux"},
+                "elements": [
+                    { "name": "", "values": {"time": 1, "electric current": 1}, "type_": "sample", "time": 1, "electric current": 1 },
+                    { "name": "", "values": {"time": 2, "electric current": 4}, "type_": "sample", "time": 2, "electric current": 4 }
+                ]
+            },
+            {
+                "name": "I = g(t)",
+                "edge_style": { "object_class": "plot_data.core.EdgeStyle", "name": "", "color_stroke": "rgb(0,19,254)", "dashline": [10, 5] },
+                "point_style": { "object_class": "plot_data.core.PointStyle", "name": "", "color_fill": "rgb(247,0,0)", "color_stroke": "rgb(247,0,0)", "shape": "square" },
+                "elements": [
+                    { "name": "", "values": {"time": 3, "electric current": 2}, "type_": "sample", "time": 1, "electric current": 1 },
+                    { "name": "", "values": {"time": 12, "electric current": 64}, "type_": "sample", "time": 2, "electric current": 4 }
+                ]
+            },
+        ],
+        "type_": "scatterplot"
+    }
+    const graph = new Graph2D(data, canvas.width, canvas.height, 0, 0, canvasID, false);
+
+    it("should deserialize styles", function() {
+        expect(graph.pointStyles.length, "pointStyles").to.be.equal(4);
+        expect(graph.curves[0].strokeStyle, "strokeStyle").to.not.be.null;
+        expect(graph.curves[0].dashLine, "dashLine").to.deep.equal([10, 5]);
+    });
+
+    it("should not merge points", function() {
+        graph.switchMerge();
+        expect(graph.isMerged, "graph isMerged").to.be.false;
+    });
 });

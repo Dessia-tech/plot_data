@@ -261,7 +261,7 @@ describe("Scatter", function() {
         canvas.dispatchEvent(mouseWheel);
         expect(scatter.frameMatrix, "zoomed frameMatrix").to.not.deep.equal(frameMatrix);
     });
-    
+
     it("should reset frame correctly", function() {
         scatter.reset();
         expect(scatter.frameMatrix, "init frameMatrix").to.deep.equal(frameMatrix);
@@ -344,7 +344,7 @@ describe("ParallelPlot", function() {
     parallelplot.draw();
 
     it("should invert axis", function() {
-        const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET); 
+        const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET);
         const mouseMove = new MouseEvent('mousemove', { clientX: titleCenter.x, clientY: titleCenter.y });
         const mouseDown = new MouseEvent('mousedown', { clientX: titleCenter.x, clientY: titleCenter.y });
         const mouseUp = new MouseEvent('mouseup', { clientX: titleCenter.x, clientY: titleCenter.y });
@@ -360,12 +360,12 @@ describe("ParallelPlot", function() {
     });
 
     it("should move axis", function() {
-        const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET); 
+        const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET);
         const mouseMove = new MouseEvent('mousemove', { clientX: titleCenter.x, clientY: titleCenter.y });
         const mouseDown = new MouseEvent('mousedown', { clientX: titleCenter.x, clientY: titleCenter.y });
         const mouseMove2 = new MouseEvent('mousemove', { clientX: titleCenter.x + 500, clientY: titleCenter.y });
         const mouseUp = new MouseEvent('mouseup', { clientX: titleCenter.x, clientY: titleCenter.y });
-        
+
         expect(parallelplot.drawnFeatures, "drawnFeatures").to.deep.equal(["x", "y", "z"]);
         canvas.dispatchEvent(mouseMove);
         canvas.dispatchEvent(mouseDown);
@@ -375,7 +375,7 @@ describe("ParallelPlot", function() {
     });
 
     it("should move axis", function() {
-        const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET); 
+        const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET);
         const mouseMove = new MouseEvent('mousemove', { clientX: titleCenter.x, clientY: titleCenter.y });
         const mouseWheel = new WheelEvent('wheel', { clientX: titleCenter.x, clientY: titleCenter.y, deltaY: ZOOM_FACTOR * 3 });
         const initMinValue = parallelplot.axes[1].minValue;

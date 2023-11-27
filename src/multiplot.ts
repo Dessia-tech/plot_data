@@ -123,7 +123,7 @@ export class Multiplot {
   }
 
   public addScatter(xFeature: string, yFeature: string): void {
-    const data = {type_: "scatterplot", x_variable: xFeature, y_variable: yFeature, elements: this.serializeFeatures()};
+    const data = {type_: "scatterplot", attribute_names: [xFeature, yFeature], elements: this.serializeFeatures()};
     this.addFigure(Scatter.createFromMultiplot(data, this.features, this.context, this.canvasID));
   }
 

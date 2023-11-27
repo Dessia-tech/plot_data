@@ -6,6 +6,7 @@ import primitiveGroupContainerData from '../data_src/primitivegroupcontainer.dat
 import scattermatrixData from '../data_src/scattermatrix.data.json';
 import simpleshapesData from '../data_src/simpleshapes.data.json';
 import textscalingData from '../data_src/textscaling.data.json';
+import multiplotData from '../data_src/multiplot.data.json';
 import { parseHTML } from '../support/parseHTML';
 
 const FIGURES_DATA = [
@@ -16,7 +17,8 @@ const FIGURES_DATA = [
     { name: "primitivegroupcontainer", data: primitiveGroupContainerData },
     { name: "scattermatrix", data: scattermatrixData },
     { name: "simpleshapes", data: simpleshapesData },
-    { name: "textscaling", data: textscalingData }
+    { name: "textscaling", data: textscalingData },
+    { name: "multiplot", data: multiplotData }
 ]
 
 FIGURES_DATA.forEach(figureData => {
@@ -54,13 +56,12 @@ FIGURES_DATA.forEach(figureData => {
         if (figureData.name == "simpleshapes") {
             it("should color hovered circle", function () {
                 cy.window().then((win) => {
-                  let plot_data = win.eval('plot_data');
-                  cy.get('canvas').click(544, 376)
-                  .then( () => {
-                    expect(plot_data.relativeObjects.shapes[21].isClicked).to.be.true;
-                  });
+                    let plot_data = win.eval('plot_data');
+                    cy.get('canvas').click(544, 376).then( () => {
+                        expect(plot_data.relativeObjects.shapes[21].isClicked).to.be.true;
+                    });
                 });
-              });
+            });
             
             it("should draw tooltip on line", function () {
                 cy.window().then((win) => {
@@ -85,6 +86,14 @@ FIGURES_DATA.forEach(figureData => {
                     draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
                     expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
                 });
+            });
+        }
+
+        if (figureData.name == "multiplot") {
+            it("should draw a canvas with text of empty data", function () {
+                parseHTML("emptyMultiplot", {});
+                cy.visit("cypress/html_files/emptyMultiplot.html");
+                cy.compareSnapshot(describeTitle + this.test.title, 0.05);
             });
         }
     });

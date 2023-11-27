@@ -374,14 +374,18 @@ describe("ParallelPlot", function() {
         expect(parallelplot.drawnFeatures, "drawnFeatures").to.deep.equal(["x", "z", "y"]);
     });
 
-    it("should move axis", function() {
+    it("should zoom on axis", function() {
         const titleCenter = parallelplot.axes[1].title.boundingBox.center.add(MOUSE_OFFSET);
         const mouseMove = new MouseEvent('mousemove', { clientX: titleCenter.x, clientY: titleCenter.y });
         const mouseWheel = new WheelEvent('wheel', { clientX: titleCenter.x, clientY: titleCenter.y, deltaY: ZOOM_FACTOR * 3 });
+        const minValue0 = parallelplot.axes[0].minValue;
+        const maxValue0 = parallelplot.axes[0].maxValue;
         const initMinValue = parallelplot.axes[1].minValue;
         const initMaxValue = parallelplot.axes[1].maxValue;
         canvas.dispatchEvent(mouseMove);
         canvas.dispatchEvent(mouseWheel);
+        expect(parallelplot.axes[0].minValue, "minValue").to.be.equal(minValue0);
+        expect(parallelplot.axes[0].maxValue, "maxValue").to.be.equal(maxValue0);
         expect(parallelplot.axes[1].minValue, "minValue").to.not.be.equal(initMinValue);
         expect(parallelplot.axes[1].maxValue, "maxValue").to.not.be.equal(initMaxValue);
     });

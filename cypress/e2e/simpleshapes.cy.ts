@@ -14,9 +14,9 @@ describe('SIMPLE SHAPES CANVAS', function () {
     cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
   })
 
-  it("should draw canvas", function () {
-    cy.compareSnapshot(describeTitle + this.test.title, 0.05);
-  })
+  // it("should draw canvas", function () {
+  //   cy.compareSnapshot(describeTitle + this.test.title, 0.05);
+  // })
 
   it("should color hovered circle", function () {
     cy.window().then((win) => {

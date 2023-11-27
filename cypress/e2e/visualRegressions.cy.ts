@@ -22,11 +22,70 @@ const FIGURES_DATA = [
 FIGURES_DATA.forEach(figureData => {
     describe(figureData.name.toUpperCase(), function () {
         const describeTitle = this.title + ' -- ';
-        
+
         it("should draw canvas", function () {
             parseHTML(figureData.name, figureData.data);
             cy.visit("cypress/html_files/" + figureData.name + ".html");
             cy.compareSnapshot(describeTitle + this.test.title, 0.05);
-        })
-    })
-})
+        });
+
+        beforeEach(() => cy.visit("cypress/html_files/" + figureData.name + ".html"));
+
+        if (figureData.name == "parallelplot") {
+            it("should draw a nice horizontal parallel plot", function () {
+                cy.window().then((win) => {
+                  let parallelPlot = win.eval('plot_data')
+                  parallelPlot.switchOrientation();
+                  cy.compareSnapshot(describeTitle + this.test.title, 0.05);
+                });
+            });
+        }
+
+        if (figureData.name == "graph2d") {
+            it("should draw a nice horizontal parallel plot", function () {
+                cy.window().then((win) => {
+                  let graph2d = win.eval('plot_data');
+                  graph2d.togglePoints();
+                  cy.compareSnapshot(describeTitle + this.test.title, 0.05);
+                });
+            });
+        }
+
+        if (figureData.name == "simpleshapes") {
+            it("should color hovered circle", function () {
+                cy.window().then((win) => {
+                  let plot_data = win.eval('plot_data');
+                  cy.get('canvas').click(544, 376)
+                  .then( () => {
+                    expect(plot_data.relativeObjects.shapes[21].isClicked).to.be.true;
+                  });
+                });
+              });
+            
+            it("should draw tooltip on line", function () {
+                cy.window().then((win) => {
+                    const draw = win.eval('plot_data');
+                    const [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 746, "offsetY": 176} as MouseEvent);
+                    draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
+                    draw.mouseDown(canvasMouse, frameMouse, mouseCoords);
+                    draw.mouseUp(false);
+                    draw.draw();
+                    cy.compareSnapshot(describeTitle + this.test.title, 0.05);
+                });
+            });
+        
+            it("should hover line even if mouse is not exactly on line", function () {
+                cy.window().then((win) => {
+                    const draw = win.eval('plot_data');
+                    let [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 814, "offsetY": 196} as MouseEvent);
+                    draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
+                    expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
+            
+                    [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 822, "offsetY": 196} as MouseEvent);
+                    draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
+                    expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
+                });
+            });
+        }
+    });
+});

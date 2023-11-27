@@ -197,6 +197,7 @@ describe("Histogram", function() {
             { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
             { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
             { "name": "", "values": { "x": 1, "y": 2 }, "x": 1, "y": 2 },
+            { "name": "", "values": { "x": 1.5, "y": 1 }, "x": 1.5, "y": 1 },
             { "name": "", "values": { "x": 2, "y": 1 }, "x": 2, "y": 1 },
             { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
             { "name": "", "values": { "x": 2, "y": 2 }, "x": 2, "y": 2 },
@@ -216,6 +217,30 @@ describe("Histogram", function() {
         canvas.dispatchEvent(mouseWheel);
         canvas.dispatchEvent(mouseWheel);
         expect(histogram.bars, "bars").to.not.deep.equal(initBars);
+    });
+
+    it("should select with rubber band", function () {
+        histogram.axes[0].rubberBand.minValue = 0.5;
+        histogram.axes[0].rubberBand.maxValue = 2;
+        histogram.axes[1].rubberBand.minValue = 0;
+        histogram.axes[1].rubberBand.maxValue = 4.5;
+        histogram.draw();
+        const nSelected = histogram.selectedIndices.reduce((sum, current) => sum + (current ? 1 : 0), 0);
+        const selectedBars = histogram.bars.reduce((sum, current) => sum + (current.isSelected ? 1 : 0), 0);
+        expect(nSelected, "selected samples").to.equal(8);
+        expect(selectedBars, "selected bars").to.equal(3);
+    });
+    
+    it("should hover/click on bar", function () {
+        const [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 350, "offsetY": 420} as MouseEvent);
+        histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
+        expect(histogram.hoveredIndices[1], "hoveredIndices[1]").to.equal(7);
+        expect(histogram.hoveredIndices.length, "hoveredIndices.length").to.equal(3);
+
+        histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
+        histogram.mouseUp(false)
+        expect(histogram.clickedIndices[2], "clickedIndices[2]").to.equal(8);
+        expect(histogram.clickedIndices[0], "clickedIndices[0]").to.equal(6);
     });
 
     it("should reset correctly", function() {

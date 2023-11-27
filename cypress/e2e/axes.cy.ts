@@ -2,16 +2,15 @@ import { Vertex } from "../../instrumented/baseShape";
 import { Rect } from "../../instrumented/primitives";
 import { Axis, ParallelAxis } from "../../instrumented/axes";
 
+const vector = [1, 2, 3, 4, 5];
+const boundingBox = new Rect(new Vertex(0, 0), new Vertex(500, 500));
+const origin = new Vertex(0, 0);
+const end = new Vertex(0, 100);
+const name = "";
+const initScale = new Vertex(1, 1);
+const nTicks = 5;
+
 describe('Axis', function() {
-
-  const vector = [1, 2, 3, 4, 5];
-  const boundingBox = new Rect(new Vertex(0, 0), new Vertex(500, 500));
-  const origin = new Vertex(0, 0);
-  const end = new Vertex(0, 100);
-  const name = "";
-  const initScale = new Vertex(1, 1);
-  const nTicks = 5;
-
   it('should draw the axis on the canvas', function() {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -103,25 +102,6 @@ describe('Axis', function() {
     expect(axis.maxValue, "maxValue").to.be.equal(5.2);
   });
 
-  it("should draw rubberBand and reset it", function() {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
-    const mouseClick = new Vertex(0, 50);
-    axis.mouseMove(context, mouseClick);
-    axis.mouseDown(mouseClick);
-    axis.mouseMove(context, new Vertex(0, 75));
-    axis.mouseUp(false);
-
-    expect(axis.rubberBand.minValue, "rubberBand minValue").to.be.closeTo(3, 0.001);
-    expect(axis.rubberBand.maxValue, "rubberBand maxValue").to.be.closeTo(4.1, 0.001);
-
-    axis.reset();
-
-    expect(axis.rubberBand.minValue, "reset rubberBand minValue").to.equal(0);
-    expect(axis.rubberBand.maxValue, "reset rubberBand maxValue").to.equal(0);
-  })
-
   it("should transform a string array into values array for ticks to be drawn", function() {
     const stringVector = ["z", "e", "z", "y", "o", "u", "p", "i", "p", "p"];
     const stringAxis = new Axis(stringVector, boundingBox, origin, end, name, initScale, nTicks);
@@ -133,6 +113,41 @@ describe('Axis', function() {
     numericStringVector.forEach((value, index) => expect(stringAxis.labels[value], `string value ${index}`).to.equal(stringVector[index]));
     numericNumberVector.forEach((value, index) => expect(value, `number value ${index}`).to.equal(numberVector[index]));
   })
+});
+
+describe("RubberBand", function() {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d');
+  const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
+  const mouseClick = new Vertex(0, 50);
+  axis.mouseMove(context, mouseClick);
+  axis.mouseDown(mouseClick);
+  axis.mouseMove(context, new Vertex(0, 75));
+  axis.mouseUp(false);
+
+  it("should draw rubberBand", function() {
+    expect(axis.rubberBand.minValue, "rubberBand minValue").to.be.closeTo(3, 0.001);
+    expect(axis.rubberBand.maxValue, "rubberBand maxValue").to.be.closeTo(4.1, 0.001);
+  });
+
+  it("should translate rubberBand", function () {
+    const mouseClickInRubberBand = new Vertex(0, 60);
+    const previousMinValue = axis.rubberBand.minValue;
+    const previousMaxValue = axis.rubberBand.maxValue;
+    axis.mouseMove(context, mouseClickInRubberBand);
+    axis.mouseDown(mouseClickInRubberBand);
+    axis.mouseMove(context, new Vertex(0, 90));
+    axis.mouseUp(false);
+    expect(axis.rubberBand.minValue, "translated rubberBand minValue").to.not.be.equal(previousMinValue);
+    expect(axis.rubberBand.maxValue, "translated rubberBand maxValue").to.not.be.equal(previousMaxValue);
+    expect(axis.rubberBand.length, "translated rubberBand maxValue").to.be.closeTo(Math.abs(previousMaxValue - previousMinValue), 0.00001);
+  });
+
+  it("should reset rubberBand", function () {
+      axis.reset();
+      expect(axis.rubberBand.minValue, "reset rubberBand minValue").to.equal(0);
+      expect(axis.rubberBand.maxValue, "reset rubberBand maxValue").to.equal(0);
+  });
 });
 
 describe('ParallelAxis', function() {

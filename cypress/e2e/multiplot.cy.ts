@@ -1,4 +1,6 @@
+import { ZOOM_FACTOR } from "../../instrumented/constants";
 import { Vertex } from "../../instrumented/baseShape";
+import { PointSet } from "../../instrumented/collections";
 import { Scatter, Graph2D, Draw, ParallelPlot } from "../../instrumented/figures";
 import { Multiplot } from "../../instrumented/multiplot";
 import multiplotData from '../data_src/multiplot.data.json';
@@ -18,7 +20,7 @@ describe('Multiplot.figures', function () {
     const serializedFeatures = multiplot.serializeFeatures();
     expect(serializedFeatures.length, "as many elements").to.be.equal(multiplot.nSamples);
 
-    for (let i = 0; i < 10; i++) {
+    for (let i of [0, 2, 25, 345, 14, 64, 85, 123, 465, 51, 212, 326]) {
       const sample = serializedFeatures[i];
       expect(Object.keys(sample).length, "as many features").to.be.equal(multiplot.featureNames.length + 1);
 
@@ -36,6 +38,18 @@ describe('Multiplot.figures', function () {
     expect(multiplot.figureZones.length, "figureZones length").to.equal(8);
     expect(multiplot.figureZones.shapes[6].origin, "figureZones.shapes[6].origin").to.deep.equal(new Vertex(404, 304));
     expect(multiplot.figureZones.shapes[5].size, "figureZones.shapes[5].size").to.deep.equal(new Vertex(392, 142));
+  });
+
+  it("should resize multiplot with figures inside", function() {
+    const originalFigureSizes = multiplot.figures.map(figure => { return [figure.origin, figure.size] });
+    const originalZoneSizes = multiplot.figureZones.shapes.map(zone => { return [zone.origin, zone.size] });
+    multiplot.resize(750, 750);
+    multiplot.figures.forEach((figure, i) => {
+      expect(figure.origin, `figure[${i}].origin`).to.not.deep.equal(originalFigureSizes[i][0]);
+      expect(figure.size, `figure[${i}].size`).to.not.deep.equal(originalFigureSizes[i][1]);
+      expect(multiplot.figureZones.shapes[i].origin, `figureZones.shapes[${i}].origin`).to.not.deep.equal(originalZoneSizes[i][0]);
+      expect(multiplot.figureZones.shapes[i].size, `figureZones.shapes[${i}].size`).to.not.deep.equal(originalZoneSizes[i][1]);
+    })
   });
 
   it("should add a ParallelPlot with 'x' and 'y' axes", function() {
@@ -74,7 +88,10 @@ describe('Multiplot.figures', function () {
 });
 
 describe("Multiplot.mouseListener", function() {
+  const fIndex = 1;
   const multiplot = new Multiplot(multiplotData, 800, 600, canvasID);
+  const [axis0Min, axis0Max] = [multiplot.figures[fIndex].axes[0].minValue, multiplot.figures[fIndex].axes[0].maxValue];
+  const [axis1Min, axis1Max] = [multiplot.figures[fIndex].axes[1].minValue, multiplot.figures[fIndex].axes[1].maxValue];
 
   const scatter1 = multiplot.figures[0] as Scatter;
   const scatter2 = multiplot.figures[1] as Scatter;
@@ -165,6 +182,70 @@ describe("Multiplot.mouseListener", function() {
     });
   });
 
+  it("should add new PointSet to pointSets", function() {
+    const pointSet = new PointSet(multiplot.selectedIndices, "hsl(80, 35%, 45%)");
+    const initPointSetLength = multiplot.pointSets.length;
+    multiplot.addPointSet(pointSet);
+    multiplot.draw();
+    expect(multiplot.pointSets.length, "pointSets.length").to.be.equal(initPointSetLength + 1);
+    multiplot.figures.forEach((figure, i) => {
+      if (figure.pointSets) expect(multiplot.figures[fIndex].pointSets, `figures[${i}].pointSets`).to.deep.equal(multiplot.pointSets);
+    });
+  });
+
+  it("should add indices to pointSet[3]", function() {
+    const initPointSetLength = multiplot.pointSets.length;
+    const addedIndices = [0, 1, 2, 3, 4, 5];
+    multiplot.addPointsToSet(addedIndices, 3);
+    multiplot.draw();
+    expect(multiplot.pointSets.length, "pointSets.length").to.be.equal(initPointSetLength);
+    multiplot.figures.forEach((figure, i) => {
+      if (figure.pointSets) expect(multiplot.figures[fIndex].pointSets, `figures[${i}].pointSets`).to.deep.equal(multiplot.pointSets);
+    });
+  });
+
+  it("should remove indices to pointSet[3]", function() {
+    const initPointSetLength = multiplot.pointSets.length;
+    const removedIndices = [6, 17,18, 25, 27, 36, 41, 44, 62, 66, 73, 75, 76, 78, 79, 87];
+    multiplot.removePointsFromSet(removedIndices, 3);
+    multiplot.draw();
+    expect(multiplot.pointSets.length, "pointSets.length").to.be.equal(initPointSetLength);
+    multiplot.figures.forEach((figure, i) => {
+      if (figure.pointSets) expect(multiplot.figures[fIndex].pointSets, `figures[${i}].pointSets`).to.deep.equal(multiplot.pointSets);
+    });
+  });
+
+  it("should remove pointSet[3]", function() {
+    const initPointSetLength = multiplot.pointSets.length;
+    multiplot.removePointSet(3);
+    multiplot.draw();
+    expect(multiplot.pointSets.length, "pointSets.length").to.be.equal(initPointSetLength - 1);
+    multiplot.figures.forEach((figure, i) => {
+      if (figure.pointSets) expect(multiplot.figures[fIndex].pointSets, `figures[${i}].pointSets`).to.deep.equal(multiplot.pointSets);
+    });
+  });
+
+  it("should zoom on hovered figure", function() {
+    const figureCenter = multiplot.figures[fIndex].origin.add(multiplot.figures[fIndex].size.divide(2));
+    const mouseMove = new MouseEvent('mousemove', { clientX: figureCenter.x, clientY: figureCenter.y });
+    const mouseWheel = new WheelEvent('wheel', { clientX: figureCenter.x, clientY: figureCenter.y, deltaY: ZOOM_FACTOR });
+    canvas.dispatchEvent(mouseMove);
+    canvas.dispatchEvent(mouseWheel);
+    expect(multiplot.figures[fIndex].axes[0].minValue, "axes[0].minValue").to.not.be.equal(axis0Min);
+    expect(multiplot.figures[fIndex].axes[0].maxValue, "axes[0].maxValue").to.not.be.equal(axis0Max);
+    expect(multiplot.figures[fIndex].axes[1].minValue, "axes[1].minValue").to.not.be.equal(axis1Min);
+    expect(multiplot.figures[fIndex].axes[1].maxValue, "axes[1].maxValue").to.not.be.equal(axis1Max);
+  });
+
+  it("should reset view on hovered figure", function() {
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: 'Control' }));
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: ' ' }));
+    expect(multiplot.figures[fIndex].axes[0].minValue, "axes[0].minValue").to.be.equal(axis0Min);
+    expect(multiplot.figures[fIndex].axes[0].maxValue, "axes[0].maxValue").to.be.equal(axis0Max);
+    expect(multiplot.figures[fIndex].axes[1].minValue, "axes[1].minValue").to.be.equal(axis1Min);
+    expect(multiplot.figures[fIndex].axes[1].maxValue, "axes[1].maxValue").to.be.equal(axis1Max);
+  })
+
   it("should reset everything", function() {
     expect(multiplot.clickedIndices.length).to.not.be.equal(0);
     expect(multiplot.selectedIndices.length).to.not.be.equal(0);    
@@ -179,4 +260,66 @@ describe("Multiplot.mouseListener", function() {
 
 describe("Multiplot.diverse", function() {
 
+  const multiplot = new Multiplot(multiplotData, 800, 600, canvasID);
+
+  it("should hide figure", function() {
+    cy.spy(multiplot.figures[3], 'draw');
+    multiplot.toggleFigure(3);
+    expect(multiplot.hiddenFigureIndices, "3 is in hiddenIndices").to.include(3);
+    cy.wrap(multiplot.figures[3].draw).should('have.not.been.called');
+
+    cy.spy(multiplot.figures[4], 'draw');
+    multiplot.toggleFigure(4);
+    expect(multiplot.hiddenFigureIndices, "4 is in hiddenIndices").to.include(4);
+    cy.wrap(multiplot.figures[4].draw).should('have.not.been.called');
+  });
+
+  it("should show figure", function() {
+    cy.spy(multiplot.figures[3], 'draw');
+    cy.spy(multiplot.figures[4], 'draw');
+    multiplot.toggleFigure(3);
+
+    expect(multiplot.hiddenFigureIndices, "3 is not in hiddenIndices").to.not.include(3);
+    expect(multiplot.hiddenFigureIndices, "4 is not in hiddenIndices").to.include(4);
+    cy.wrap(multiplot.figures[3].draw).should('have.been.calledOnce');
+    cy.wrap(multiplot.figures[4].draw).should('have.not.been.called');
+  });
+
+  it("should enable selection properly", function() {
+    multiplot.switchSelection();
+    expect(multiplot.isSelecting, "isSelecting").to.be.true;
+    expect(canvas.style.cursor, "cursor").to.be.equal("crosshair");
+    multiplot.figures.forEach((figure, i) => {
+      expect(figure.isSelecting, `figure[${i}].isSelecting`).to.be.true;
+      expect(figure.is_drawing_rubber_band, `figure[${i}].is_drawing_rubber_band`).to.be.false;
+    });
+  });
+
+  it("should disable selection properly", function() {
+    multiplot.switchSelection();
+    expect(multiplot.isSelecting, "isSelecting").to.be.false;
+    expect(canvas.style.cursor, "cursor").to.be.equal("default");
+    multiplot.figures.forEach((figure, i) => {
+      expect(figure.isSelecting, `figure[${i}].isSelecting`).to.be.false;
+      expect(figure.is_drawing_rubber_band, `figure[${i}].is_drawing_rubber_band`).to.be.false;
+    });
+  });
+
+  it("should enable zoom properly", function() {
+    multiplot.switchZoom();
+    expect(multiplot.isZooming, "isZooming").to.be.true;
+    expect(canvas.style.cursor, "cursor").to.be.equal("crosshair");
+    multiplot.figures.forEach((figure, i) => {
+      expect(figure.isZooming, `figure[${i}].isZooming`).to.be.true;
+    });
+  });
+
+  it("should disable zoom properly", function() {
+    multiplot.switchZoom();
+    expect(multiplot.isZooming, "isZooming").to.be.false;
+    expect(canvas.style.cursor, "cursor").to.be.equal("default");
+    multiplot.figures.forEach((figure, i) => {
+      expect(figure.isZooming, `figure[${i}].isZooming`).to.be.false;
+    });
+  });
 });

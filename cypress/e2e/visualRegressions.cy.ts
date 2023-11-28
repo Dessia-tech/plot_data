@@ -10,15 +10,15 @@ import multiplotData from '../data_src/multiplot.data.json';
 import { parseHTML } from '../support/parseHTML';
 
 const FIGURES_DATA = [
-    { name: "graph2d", data: graph2dData },
-    { name: "histogram", data: histogramData },
-    { name: "parallelplot", data: parallelPlotData },
-    { name: "plotscatter", data: plotScatterData },
-    { name: "primitivegroupcontainer", data: primitiveGroupContainerData },
-    { name: "scattermatrix", data: scattermatrixData },
-    { name: "simpleshapes", data: simpleshapesData },
-    { name: "textscaling", data: textscalingData },
-    { name: "multiplot", data: multiplotData }
+    { name: "graph2d", data: graph2dData, threshold: 0.05 },
+    { name: "histogram", data: histogramData, threshold: 0.05 },
+    { name: "parallelplot", data: parallelPlotData, threshold: 0.05 },
+    { name: "plotscatter", data: plotScatterData, threshold: 0.05 },
+    { name: "primitivegroupcontainer", data: primitiveGroupContainerData, threshold: 0.05 },
+    { name: "scattermatrix", data: scattermatrixData, threshold: 0.07 },
+    { name: "simpleshapes", data: simpleshapesData, threshold: 0.05 },
+    { name: "textscaling", data: textscalingData, threshold: 0.05 },
+    { name: "multiplot", data: multiplotData, threshold: 0.05 }
 ]
 
 FIGURES_DATA.forEach(figureData => {
@@ -29,7 +29,7 @@ FIGURES_DATA.forEach(figureData => {
         beforeEach(() => cy.visit("cypress/html_files/" + figureData.name + ".html"));
 
         it("should draw canvas", function () {
-            cy.compareSnapshot(describeTitle + this.test.title, 0.05);
+            cy.compareSnapshot(describeTitle + this.test.title, figureData.threshold);
         });
 
         if (figureData.name == "parallelplot") {

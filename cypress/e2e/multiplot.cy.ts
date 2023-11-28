@@ -65,7 +65,7 @@ describe('Multiplot.figures', function () {
   it("should add a Scatter with 'color' and 'y' axes", function() {
     const initialNFigures = multiplot.figures.length;
     multiplot.addScatter("color", "y");
-    
+
     expect(multiplot.figures.length, "n figures").to.be.equal(initialNFigures + 1);
     expect(multiplot.figures[initialNFigures], "last figure is Scatter").to.be.instanceof(Scatter);
     expect(multiplot.figures[initialNFigures].drawnFeatures, "drawnFeatures").to.deep.equal(["color", "y"]);
@@ -127,7 +127,7 @@ describe("Multiplot.mouseListener", function() {
     multiplot.figures.forEach(figure => {
       if (!(figure instanceof Draw || figure instanceof Graph2D)) {
         expect(figure.hoveredIndices, `sample is hovered in ${figure.constructor.name}`).to.include(12);
-      }  
+      }
     });
   });
 
@@ -145,7 +145,7 @@ describe("Multiplot.mouseListener", function() {
     multiplot.figures.forEach(figure => {
       if (!(figure instanceof Draw || figure instanceof Graph2D)) {
         expect(figure.clickedIndices, "samples are clicked in all figures").to.deep.equal([12, 25, 35, 142, 210, 308, 423]);
-      }  
+      }
     });
   });
 
@@ -178,7 +178,7 @@ describe("Multiplot.mouseListener", function() {
             expect(axis.rubberBand.maxValue).to.be.equal(scatter2.axes[i].rubberBand.maxValue);
           }
         })
-      }  
+      }
     });
   });
 
@@ -248,12 +248,12 @@ describe("Multiplot.mouseListener", function() {
 
   it("should reset everything", function() {
     expect(multiplot.clickedIndices.length).to.not.be.equal(0);
-    expect(multiplot.selectedIndices.length).to.not.be.equal(0);    
+    expect(multiplot.selectedIndices.length).to.not.be.equal(0);
     expect(countNonNullRubberBands(multiplot)).to.not.be.equal(0);
     multiplot.reset();
 
     expect(multiplot.clickedIndices.length).to.be.equal(0);
-    expect(multiplot.selectedIndices.length).to.be.equal(0);    
+    expect(multiplot.selectedIndices.length).to.be.equal(0);
     expect(countNonNullRubberBands(multiplot)).to.be.equal(0);
   });
 });

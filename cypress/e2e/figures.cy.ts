@@ -230,7 +230,7 @@ describe("Histogram", function() {
         expect(nSelected, "selected samples").to.equal(8);
         expect(selectedBars, "selected bars").to.equal(3);
     });
-    
+
     it("should hover/click on bar", function () {
         const [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 350, "offsetY": 420} as MouseEvent);
         histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);

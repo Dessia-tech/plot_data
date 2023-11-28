@@ -61,7 +61,7 @@ FIGURES_DATA.forEach(figureData => {
                     });
                 });
             });
-            
+
             it("should draw tooltip on line", function () {
                 cy.window().then((win) => {
                     const draw = win.eval('plot_data');
@@ -73,14 +73,14 @@ FIGURES_DATA.forEach(figureData => {
                     cy.compareSnapshot(describeTitle + this.test.title, 0.05);
                 });
             });
-        
+
             it("should hover line even if mouse is not exactly on line", function () {
                 cy.window().then((win) => {
                     const draw = win.eval('plot_data');
                     let [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 814, "offsetY": 196} as MouseEvent);
                     draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
                     expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
-            
+
                     [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 822, "offsetY": 196} as MouseEvent);
                     draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
                     expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;

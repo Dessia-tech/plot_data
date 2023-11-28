@@ -22,16 +22,15 @@ const FIGURES_DATA = [
 ]
 
 FIGURES_DATA.forEach(figureData => {
+    before(() => { parseHTML(figureData.name, figureData.data) });
     describe(figureData.name.toUpperCase(), function () {
         const describeTitle = this.title + ' -- ';
 
+        beforeEach(() => cy.visit("cypress/html_files/" + figureData.name + ".html"));
+
         it("should draw canvas", function () {
-            parseHTML(figureData.name, figureData.data);
-            cy.visit("cypress/html_files/" + figureData.name + ".html");
             cy.compareSnapshot(describeTitle + this.test.title, 0.05);
         });
-
-        beforeEach(() => cy.visit("cypress/html_files/" + figureData.name + ".html"));
 
         if (figureData.name == "parallelplot") {
             it("should draw a nice horizontal parallel plot", function () {

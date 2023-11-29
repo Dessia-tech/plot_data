@@ -1,1469 +1,1342 @@
-import { PlotData, Buttons, Interactions } from "./plot-data";
-import { Attribute, Axis, Sort, set_default_values, TypeOf, RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
-  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END } from "./utils";
-import { Heatmap, PrimitiveGroup } from "./primitives";
-import { List, Shape, MyObject } from "./toolbox";
-import { Graph2D, Scatter } from "./primitives";
-import { string_to_hex, string_to_rgb, get_interpolation_colors, rgb_to_string, colorHex, colorHsl } from "./color_conversion";
-import { EdgeStyle, TextStyle } from "./style";
+import { RubberBand, Vertex, newAxis, ScatterPoint, Bar, ShapeCollection, SelectionBox, GroupCollection,
+  LineSequence, newRect, newPointStyle, ParallelAxis, newPoint2D, SIZE_END, newShape, uniqueValues, PointSet } from "./utils";
+import { colorHsl } from "./color_conversion";
 
-var alert_count = 0;
-/**
- * A class that inherits from PlotData and is specific for drawing PrimitiveGroups.
- */
-export class PlotContour extends PlotData {
-    plot_datas:any;
-    selected: boolean = true;
-    public constructor(public data:any,
-                       public width: number,
-                       public height: number,
-                       public buttons_ON: boolean,
-                       public X: number,
-                       public Y: number,
-                       public canvas_id: string,
-                       public is_in_multiplot = false) {
-      super(data, width, height, buttons_ON, 0, 0, canvas_id, is_in_multiplot);
-      this.plot_datas = [];
-      this.type_ = 'primitivegroup';
-      var d = this.data;
-      if (d['type_'] == 'primitivegroup') {
-        var a = PrimitiveGroup.deserialize(d);
-        this.plot_datas.push(a);
-        let multiple_labels_index = -1;
-        for (let i=0; i<a.primitives.length; i++) {
-          let primitive = a.primitives[i];
-          if (primitive.type_ === 'multiplelabels') {
-            multiple_labels_index = i;
-          } else {
-            this.minX = Math.min(this.minX, primitive.minX);
-            this.maxX = Math.max(this.maxX, primitive.maxX);
-            this.minY = Math.min(this.minY, primitive.minY);
-            this.maxY = Math.max(this.maxY, primitive.maxY);
-            if (["contour", "circle", "wire", "point"].includes(primitive.type_)) {
-              this.color_to_plot_data[primitive.hidden_color] = primitive;
-            }
-          }
-        }
-        if (multiple_labels_index !== -1) { // So that labels are drawn at last
-          a.primitives = List.move_elements(multiple_labels_index, a.primitives.length - 1, a.primitives);
-        }
-      }
 
-      if (buttons_ON) this.refresh_buttons_coords();
-      this.plotObject = this.plot_datas[0];
-      this.isParallelPlot = false;
-      this.interaction_ON = true;
+
+// All following rows are purely deleted
+// var alert_count = 0;
+// /**
+//  * A class that inherits from PlotData and is specific for drawing PrimitiveGroups.
+//  */
+// export class PlotContour extends PlotData {
+//     plot_datas:any;
+//     public constructor(public data:any,
+//                        public width: number,
+//                        public height: number,
+//                        public buttons_ON: boolean,
+//                        public X: number,
+//                        public Y: number,
+//                        public canvas_id: string,
+//                        public is_in_multiplot = false) {
+//       super(data, width, height, buttons_ON, 0, 0, canvas_id, is_in_multiplot);
+//       if (!is_in_multiplot) {
+//         var requirement = '0.6.0';
+//         check_package_version(data['package_version'], requirement);
+//       }
+
+//       this.plot_datas = [];
+//       this.type_ = 'primitivegroup';
+//       var d = this.data;
+//       if (d['type_'] == 'primitivegroup') {
+//         var a = PrimitiveGroup.deserialize(d);
+//         this.plot_datas.push(a);
+//         let multiple_labels_index = -1;
+//         for (let i=0; i<a.primitives.length; i++) {
+//           let primitive = a.primitives[i];
+//           if (primitive.type_ === 'multiplelabels') {
+//             multiple_labels_index = i;
+//           } else {
+//             if (isNaN(this.minX)) {this.minX = primitive.minX} else {this.minX = Math.min(this.minX, primitive.minX)};
+//             if (isNaN(this.maxX)) {this.maxX = primitive.maxX} else {this.maxX = Math.max(this.maxX, primitive.maxX)};
+//             if (isNaN(this.minY)) {this.minY = primitive.minY} else {this.minY = Math.min(this.minY, primitive.minY)};
+//             if (isNaN(this.maxY)) {this.maxY = primitive.maxY} else {this.maxY = Math.max(this.maxY, primitive.maxY)};
+//             if ((primitive.type_ == 'contour') || (primitive.type_ == 'circle')) {
+//               this.colour_to_plot_data[primitive.mouse_selection_color] = primitive;
+//             }
+//           }
+//         }
+//         if (multiple_labels_index !== -1) { // So that labels are drawn at last
+//           a.primitives = List.move_elements(multiple_labels_index, a.primitives.length - 1, a.primitives);
+//         }
+//       }
+
+//       if (buttons_ON) this.refresh_buttons_coords();
+//       this.plotObject = this.plot_datas[0];
+//       this.isParallelPlot = false;
+//       this.interaction_ON = true;
+//     }
+
+//     draw() {
+//       this.draw_from_context(true);
+//       this.draw_from_context(false);
+
+//     }
+
+//     draw_from_context(hidden) {
+//       this.define_context(hidden);
+//       this.context.save();
+//       this.draw_empty_canvas(this.context);
+//       if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
+//       this.context.beginPath();
+//       this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
+//       this.context.clip();
+//       this.context.closePath();
+//       for (let i=0; i<this.plot_datas.length; i++) {
+//         let d = this.plot_datas[i];
+//         this.draw_primitivegroup(hidden, this.originX, this.originY, this.scaleX, this.scaleY, d);
+//       }
+
+//       if (this.dep_mouse_over) {
+//         this.draw_mouse_over_rect();
+//       } else if (this.multiplot_manipulation) {
+//         this.draw_manipulable_rect();
+//       }
+
+//       if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+//         this.draw_zoom_rectangle();
+//       }
+//       this.context.restore();
+
+//       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
+
+//         this.refresh_buttons_coords();
+//         //Drawing the zooming button
+//         Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
+
+//         //Drawing the button for zooming window selection
+//         Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
+
+//         //Drawing the reset button
+//         Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
+//       }
+//     }
+// }
+
+
+
+// /** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds
+//  */
+// export class PlotScatter extends PlotData {
+//     public constructor(public data:any,
+//       public width: number,
+//       public height: number,
+//       public buttons_ON: boolean,
+//       public X: number,
+//       public Y: number,
+//       public canvas_id: string,
+//       public is_in_multiplot = false) {
+//         super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+//         if (!is_in_multiplot) {
+//           var requirement = '0.6.0';
+//           check_package_version(data['package_version'], requirement);
+//         }
+//         if (this.buttons_ON) {
+//           this.refresh_buttons_coords();
+//         }
+//         this.log_scale_x = data['log_scale_x'];
+//         this.log_scale_y = data['log_scale_y'];
+//         if (data['type_'] == 'graph2d') {
+//           this.type_ = 'graph2d';
+//           this.graph_ON = true;
+//           this.axis_ON = true;
+//           this.plotObject = Graph2D.deserialize(data);
+//           this.plot_datas['value'] = this.plotObject.graphs;
+//           for (let i=0; i<this.plotObject.graphs.length; i++) {
+//             let graph = this.plotObject.graphs[i];
+//             this.graph_colorlist.push(graph.point_list[0].point_style.color_fill);
+//             this.graph_to_display.push(true);
+//             this.graph_name_list.push(graph.name);
+//             graph.id = i;
+//             this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
+//             this.refresh_MinMax(graph.point_list, true);
+//           }
+//           this.nb_graph = this.plotObject.graphs.length;
+//         } else if (data['type_'] == 'scatterplot') {
+//           this.type_ = 'scatterplot';
+//           this.axis_ON = true;
+//           this.mergeON = true;
+//           this.plotObject = Scatter.deserialize(data);
+//           this.plot_datas['value'] = [this.plotObject];
+//           this.pointLength = this.plotObject.point_list[0].size;
+//           this.scatter_init_points = this.plotObject.point_list;
+//           this.refresh_MinMax(this.plotObject.point_list);
+//         }
+//         this.isParallelPlot = false;
+//         if (this.mergeON && alert_count === 0) {
+//           // merge_alert();
+//         }
+//     }
+
+//     draw() {
+//       this.draw_from_context(false);
+//       this.draw_from_context(true);
+//     }
+
+//     draw_from_context(hidden) {
+//       this.define_context(hidden);
+//       this.context.save();
+//       this.draw_empty_canvas(this.context);
+//       if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
+//       this.context.beginPath();
+//       this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
+//       this.context.clip();
+//       this.context.closePath();
+//       this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
+//       this.draw_scatterplot(this.plotObject, hidden, this.originX, this.originY);
+//       if (this.permanent_window) {
+//         this.draw_selection_rectangle();
+//       }
+//       if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
+//         this.draw_zoom_rectangle();
+//       }
+
+//       if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
+//         this.refresh_buttons_coords();
+
+//         //Drawing the zooming button
+//         Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
+
+//         //Drawing the button for zooming window selection
+//         Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
+
+//         //Drawing the reset button
+//         Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
+
+//         //Drawing the selection button
+//         Buttons.selection_button(this.button_x, this.select_y, this.button_w, this.button_h, this);
+
+//         //Drawing the enable/disable graph button
+//         Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
+
+//         if (this.plotObject.type_ == 'scatterplot') {
+//           // TODO To check, 'this' in args is weird
+//           Buttons.merge_button(this.button_x, this.merge_y, this.button_w, this.button_h, '10px Arial', this);
+//         }
+
+//         //draw permanent window button
+//         Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
+
+//         //draw clear point button
+//         Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
+
+//         // Draw log scale buttons
+//         Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
+//           "10px Arial", this);
+//       }
+//       if (this.multiplot_manipulation) {
+//         this.draw_manipulable_rect();
+//       }
+//       this.context.restore();
+//     }
+// }
+
+
+// /** A class thtat inherits from PlotData and is specific for drawing ParallelPlots  */
+// export class ParallelPlot extends PlotData {
+
+//     constructor(public data, public width, public height, public buttons_ON, X, Y, public canvas_id: string,
+//                 public is_in_multiplot = false) {
+//       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+//       if (!is_in_multiplot) {
+//         var requirement = '0.6.1';
+//         check_package_version(data['package_version'], requirement);
+//       }
+//       this.type_ = 'parallelplot';
+//       if (this.buttons_ON) {
+//         this.disp_x = this.width - 35;
+//         this.disp_y = this.height - 25;
+//         this.disp_w = 30;
+//         this.disp_h = 20;
+//       }
+//       let default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:0.5, name:''};
+//       let default_dict_ = {edge_style:default_edge_style, disposition: 'vertical', rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]]};
+//       data = set_default_values(data, default_dict_);
+//       this.elements = data['elements'];
+//       this.edge_style = EdgeStyle.deserialize(data['edge_style']);
+//       var attribute_names = data['attribute_names'];
+//       if (data['disposition'] == 'vertical') {
+//         this.vertical = true;
+//       } else if (data['disposition'] == 'horizontal') {
+//         this.vertical = false;
+//       } else {
+//         throw new Error('Axis disposition must be vertical or horizontal');
+//       }
+//       this.initialize_all_attributes();
+//       this.initialize_attributes_list();
+//       this.add_to_axis_list(attribute_names);
+//       this.initialize_data_lists();
+//       var nb_axis = this.axis_list.length;
+//       if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
+//       this.refresh_to_display_list(this.elements);
+//       this.refresh_all_attributes();
+//       this.refresh_attribute_booleans();
+//       this.refresh_axis_bounds(nb_axis);
+//       this.refresh_axis_coords();
+//       this.isParallelPlot = true;
+//       this.rgbs = data['rgbs'];
+//       this.interpolation_colors = rgb_interpolations(this.rgbs, this.to_display_list.length);
+//       this.initialize_hexs();
+//       this.initialize_display_list_to_elements_dict();
+//       this.refresh_pp_selected();
+//     }
+
+//     refresh_pp_buttons_coords() {
+//       this.disp_x = this.width - 35;
+//       this.disp_y = this.height - 25;
+//       this.disp_w = 30;
+//       this.disp_h = 20;
+//     }
+
+//     initialize_display_list_to_elements_dict() {
+//       this.display_list_to_elements_dict = {};
+//       for (let i=0; i<this.elements.length; i++) {
+//         this.display_list_to_elements_dict[i.toString()] = i;
+//       }
+//     }
+
+//     initialize_all_attributes() {
+//       var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
+//       var exceptions = ['name', 'package_version', 'object_class'];
+//       for (let i=0; i<attribute_names.length; i++) {
+//         if (!(List.is_include(attribute_names[i], exceptions))) {
+//           let name = attribute_names[i];
+//           let type_ = TypeOf(this.elements[0][name]);
+//           this.all_attributes.push(new Attribute(name, type_));
+//         }
+//       }
+//     }
+
+//     initialize_attributes_list() { //Initialize 'list' and 'alias' of all_attributes's elements'
+//       for (var i=0; i<this.all_attributes.length; i++) {
+//         var attribute_name = this.all_attributes[i]['name'];
+//         this.all_attributes[i]['alias'] = this.all_attributes[i]['name'];
+//         var type_ = this.all_attributes[i]['type_'];
+//         if (type_ == 'float') {
+//           var min = this.elements[0][attribute_name];
+//           var max = this.elements[0][attribute_name];
+//           for (var j=0; j<this.elements.length; j++) {
+//             var elt = this.elements[j][attribute_name];
+//             if (elt<min) {
+//               min = elt;
+//             }
+//             if (elt>max) {
+//               max = elt;
+//             }
+//           }
+//           this.all_attributes[i]['list'] = [min, max];
+//         } else { //ie string
+//           var list = [];
+//           for (var j=0; j<this.elements.length; j++) {
+//             if (type_ == 'color') {
+//               var elt:any = rgb_to_string(this.elements[j][attribute_name]);
+//             } else {
+//               var elt = this.elements[j][attribute_name];
+//             }
+//             if (!List.is_include(elt, list)) {
+//               list.push(elt);
+//             }
+//           }
+//           this.all_attributes[i]['list'] = list;
+//         }
+//       }
+//     }
+
+//     draw_initial() {
+//       this.init_scale = 1;
+//       this.originX = 0;
+//       this.draw();
+//     }
+
+//     draw() {
+//       this.refresh_axis_bounds(this.axis_list.length);
+//       this.context = this.context_show;
+//       this.context.save();
+//       this.draw_empty_canvas(this.context);
+//       if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
+//       this.context.beginPath();
+//       this.context.rect(this.X-1, this.Y-1, this.width+2, this.height + 2);
+//       this.context.clip();
+//       this.context.closePath();
+//       this.draw_rubber_bands(this.originX);
+//       var nb_axis = this.axis_list.length;
+//       this.draw_parallel_coord_lines();
+//       this.draw_parallel_axis(nb_axis, this.originX);
+//       if (this.buttons_ON) {
+//         this.refresh_pp_buttons_coords();
+//         Buttons.disp_button(this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h, '10px Arial', this);
+//       }
+//       if (this.multiplot_manipulation) {
+//         this.draw_manipulable_rect();
+//       }
+//       this.context.restore();
+//     }
+
+
+//     draw_from_context(hidden) {};
+
+
+//     initialize_data_lists() {
+//       for (let i=0; i<this.axis_list.length; i++) {
+//         this.inverted_axis_list.push(false);
+//         this.rubber_bands.push([]);
+//       }
+//     }
+
+//     initialize_hexs() {
+//       this.hexs = [];
+//       this.interpolation_colors.forEach(rgb => {
+//         this.hexs.push(rgb_to_hex(rgb));
+//       });
+//     }
+// }
+
+
+// /** A class that inherits from PlotData and is specific for drawing PrimitiveGroupContainers.  */
+// export class PrimitiveGroupContainer extends PlotData {
+//     primitive_groups:PlotContour[]=[];
+//     layout_mode:string='regular';
+//     layout_axis:Axis;
+//     layout_attributes:Attribute[]=[];
+//     selected_primitive:number=-1;
+//     custom_sizes:boolean=false;
+
+//     constructor(public data:any,
+//                 public width: number,
+//                 public height: number,
+//                 public buttons_ON: boolean,
+//                 public X: number,
+//                 public Y: number,
+//                 public canvas_id: string,
+//                 public is_in_multiplot: boolean = false) {
+//       super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+//       if (!is_in_multiplot) {
+//         var requirement = '0.6.0';
+//         check_package_version(data['package_version'], requirement);
+//       }
+//       this.type_ = 'primitivegroupcontainer';
+//       var serialized = data['primitive_groups'];
+//       var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
+//       if (data['sizes']) {
+//         this.custom_sizes = true;
+//       }
+//       var initial_sizes = data['sizes'] || Array(serialized.length).fill([560, 300]);
+//       for (let i=0; i<serialized.length; i++) { // Warning: is_in_multiplot is set to true for primitive groups
+//         this.primitive_groups.push(new PlotContour(serialized[i], initial_sizes[i][0], initial_sizes[i][1], buttons_ON, X+initial_coords[i][0], Y+initial_coords[i][1], canvas_id, true));
+//         this.display_order.push(i);
+//       }
+//     }
+
+
+//     define_canvas(canvas_id) {
+//       super.define_canvas(canvas_id);
+//       this.initialize_primitive_groups_contexts();
+//     }
+
+//     initialize_primitive_groups_contexts() {
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         this.primitive_groups[i].context_hidden = this.context_hidden;
+//         this.primitive_groups[i].context_show = this.context_show;
+//       }
+//     }
+
+//     reinitialize_all() {
+//       this.elements_dict = {};
+//       this.primitive_dict = {};
+//       this.primitive_groups = [];
+//       this.display_order = [];
+//     }
+
+//     refresh_buttons_coords() {
+//       this.button_w = 40;
+//       this.button_h = 20;
+//       this.button_y = this.height - 5 - this.button_h + this.Y;
+//       this.manip_button_x = 5 + this.X;
+//       this.reset_button_x = this.manip_button_x + this.button_w + 5;
+//     }
+
+//     draw_buttons() {
+//       this.refresh_buttons_coords();
+//       this.draw_manipulation_button();
+//       this.draw_reset_button();
+//     }
+
+
+//     draw_manipulation_button() {
+//       if (this.manipulation_bool) {
+//         Shape.createButton(this.manip_button_x, this.button_y, this.button_w, this.button_h, this.context, 'ON', '10px sans-serif');
+//       } else {
+//         Shape.createButton(this.manip_button_x, this.button_y, this.button_w, this.button_h, this.context, 'OFF', '10px sans-serif');
+//       }
+//     }
+
+//     draw_reset_button() {
+//       Shape.createButton(this.reset_button_x, this.button_y, this.button_w, this.button_h, this.context, 'reset', '10px sans-serif');
+//     }
+
+//     click_on_button_check(mouse1X, mouse1Y) {
+//       if (Shape.isInRect(mouse1X, mouse1Y, this.manip_button_x, this.button_y, this.button_w, this.button_h)) {
+//         this.click_on_manipulation_action();
+//       } else if (Shape.isInRect(mouse1X, mouse1Y, this.reset_button_x, this.button_y, this.button_w, this.button_h)) {
+//         this.reset_action();
+//       }
+//     }
+
+//     click_on_manipulation_action() {
+//       this.manipulation_bool = !this.manipulation_bool;
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         this.primitive_groups[i].multiplot_manipulation = this.manipulation_bool;
+//       }
+//       if (this.manipulation_bool) {
+//         this.setAllInteractionsToOff();
+//       }
+//     }
+
+//     reset_action() {
+//       if (this.primitive_groups.length !== 0) {
+//         if (this.layout_mode == 'regular') {
+//           this.regular_layout();
+//         } else {
+//           if (this.primitive_groups.length >= 1) this.reset_scales();
+//         }
+//       }
+//     }
+
+//     reset_sizes() {
+//       var nb_primitives = this.primitive_groups.length;
+//       if (!this.custom_sizes) {
+//         if (nb_primitives === 1) {
+//           var primitive_width = this.width/3;
+//           var primitive_height = this.height/3;
+//         } else {
+//           primitive_width = this.width/nb_primitives;
+//           primitive_height = this.height/nb_primitives;
+//         }
+//       }
+//       for (let i=0; i<nb_primitives; i++) {
+//         let center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
+//         let center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
+//         if (this.custom_sizes) {
+//           this.primitive_groups[i].width = Math.min(this.data['sizes'][i][0], this.width);
+//           this.primitive_groups[i].height = Math.min(this.data['sizes'][i][1], this.height);
+//         } else {
+//           this.primitive_groups[i].width = primitive_width;
+//           this.primitive_groups[i].height = primitive_height;
+//         }
+//         this.primitive_groups[i].X = center_x - this.primitive_groups[i].width/2;
+//         this.primitive_groups[i].Y = center_y - this.primitive_groups[i].height/2;
+//       }
+//     }
+
+//     refresh_MinMax() {
+//       this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
+//       for (let primitive of this.primitive_groups) {
+//         this.minX = Math.min(this.minX, primitive.X);
+//         this.maxX = Math.max(this.maxX, primitive.X + primitive.width);
+//         this.minY = Math.min(this.minY, primitive.Y);
+//         this.maxY = Math.max(this.maxY, primitive.Y + primitive.height);
+//       }
+//     }
+
+//     refresh_spacing() {
+//       var zoom_coeff_x = (this.width - this.decalage_axis_x)/(this.maxX - this.minX);
+//       var container_center_x = this.X + this.width/2;
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         let primitive_center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
+//         primitive_center_x = container_center_x + zoom_coeff_x*(primitive_center_x - container_center_x);
+//         this.primitive_groups[i].X = primitive_center_x - this.primitive_groups[i].width/2;
+//       }
+//       this.scaleX = this.scaleX*zoom_coeff_x;
+//       this.originX = this.width/2 + zoom_coeff_x * (this.originX - this.width/2);
+//       this.scroll_x = 0;
+//       this.refresh_MinMax();
+
+
+//       if (this.layout_mode === 'two_axis') { // Then the algo does the same with the y-axis
+//         let zoom_coeff_y = (this.height - this.decalage_axis_y)/(this.maxY - this.minY);
+//         var container_center_y = this.Y + this.height/2;
+//         for (let i=0; i<this.primitive_groups.length; i++) {
+//           let primitive_center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
+//           primitive_center_y = container_center_y + zoom_coeff_y*(primitive_center_y - container_center_y);
+//           this.primitive_groups[i].Y = primitive_center_y - this.primitive_groups[i].height/2;
+//         }
+//         this.scaleY = this.scaleY*zoom_coeff_y;
+//         this.originY = this.height/2 + zoom_coeff_y * (this.originY - this.height/2);
+//         this.scroll_y = 0;
+//       }
+
+//       this.resetAllObjects();
+//     }
+
+//     translate_inside_canvas() {
+//       if (this.layout_mode == 'one_axis') {
+//         this.translateAllPrimitives(-this.minX + this.X, this.height/2 - this.minY + this.Y);
+//       } else if (this.layout_mode == 'two_axis') {
+//         this.translateAllPrimitives(this.decalage_axis_x - this.minX + this.X, -this.minY + this.Y);
+//       }
+//       this.draw();
+//     }
+
+//     reset_scales() {
+//       this.reset_sizes();
+//       if (this.primitive_groups.length >= 2) {
+//         this.refresh_MinMax();
+//         for (let i=0; i<10; i++) {
+//           this.refresh_spacing();
+//         }
+//       }
+//       else if (this.primitive_groups.length === 1) Interactions.click_on_reset_action(this.primitive_groups[0]);
+//       this.refresh_MinMax();
+//       this.translate_inside_canvas();
+//     }
+
+//     draw_initial() {
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         this.primitive_groups[i].draw_initial();
+//       }
+//     }
+
+//     draw() {
+//       if (this.clickedPlotIndex != -1) {
+//         let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
+//         this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
+//       }
+//       this.context = this.context_show;
+//       this.context.save();
+//       this.draw_empty_canvas(this.context);
+//       if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
+//       this.context.clip(this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2));
+//       if (this.width > 100 && this.height > 100) {
+//         this.draw_layout_axis();
+//         if (this.layout_mode !== 'regular') {
+//           this.draw_coordinate_lines();
+//         }
+//         for (let index of this.display_order) {
+//           this.primitive_groups[index].draw();
+//         }
+//       }
+
+//       if (this.multiplot_manipulation) {
+//         this.draw_manipulable_rect();
+//       } else {
+//         this.context.strokeStyle = this.initial_rect_color_stroke;
+//         this.context.lineWidth = this.initial_rect_line_width;
+//         this.context.strokeRect(this.X, this.Y, this.width, this.height);
+//       }
+//       if (this.buttons_ON) { this.draw_buttons(); }
+//       this.context.restore();
+//     }
+
+
+//     draw_from_context(hidden) {}
+
+
+//     redraw_object() {
+//       this.store_datas();
+//       this.draw_empty_canvas(this.context);
+//       for (let display_index of this.display_order) {
+//         let obj = this.primitive_groups[display_index];
+//         if (display_index == this.clickedPlotIndex) {
+//           this.primitive_groups[display_index].draw();
+//         } else {
+//            this.context_show.putImageData(this.shown_datas[display_index], obj.X, obj.Y);
+//            this.context_hidden.putImageData(this.hidden_datas[display_index], obj.X, obj.Y);
+//         }
+//       }
+//       if (this.buttons_ON) { this.draw_buttons(); }
+//     }
+
+//     store_datas() {
+//       this.shown_datas = []; this.hidden_datas = [];
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         let obj = this.primitive_groups[i];
+//         this.shown_datas.push(this.context_show.getImageData(obj.X, obj.Y, obj.width, obj.height));
+//         this.hidden_datas.push(this.context_hidden.getImageData(obj.X, obj.Y, obj.width, obj.height));
+//       }
+//     }
+
+//     draw_coordinate_lines() {
+//       this.context.lineWidth = 0.5;
+//       this.context.setLineDash([5,5]);
+//       this.context.strokeStyle = string_to_hex('grey');
+//       if (this.layout_mode == 'one_axis') {
+//         for (let primitive of this.primitive_groups) {
+//           let x = primitive.X + primitive.width/2;
+//           let y = primitive.Y + primitive.height;
+//           Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y + this.Y]]);
+//         }
+//       } else if (this.layout_mode == 'two_axis') {
+//         for (let primitive of this.primitive_groups) {
+//           let x = primitive.X + primitive.width/2;
+//           let y = primitive.Y + primitive.height/2;
+//           Shape.drawLine(this.context, [[this.decalage_axis_x + this.X, y], [x, y], [x, this.height - this.decalage_axis_y + this.Y]]);
+//         }
+//       }
+//       this.context.stroke();
+//       this.context.setLineDash([]);
+//     }
+
+
+//     /**
+//      * Calls the layout function of a PrimitiveGroupContainer whose layout_mode and axis are already set.
+//      */
+//     refresh_layout() {
+//       if (this.layout_mode === 'one_axis') {
+//         this.multiplot_one_axis_layout(this.layout_attributes[0]);
+//       } else if (this.layout_mode === 'two_axis') {
+//         this.multiplot_two_axis_layout(this.layout_attributes);
+//       }
+//     }
+
+
+//     add_primitive_group(serialized, point_index) {
+//       var new_plot_data = new PlotContour(serialized, 560, 300, this.buttons_ON, this.X, this.Y, this.canvas_id);
+//       new_plot_data.context_hidden = this.context_hidden;
+//       new_plot_data.context_show = this.context_show;
+//       this.primitive_groups.push(new_plot_data);
+//       this.display_order.push(this.primitive_groups.length - 1);
+//       new_plot_data.draw_initial();
+//       new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
+//       new_plot_data.interaction_ON = false;
+//       this.primitive_dict[point_index.toString()] = this.primitive_groups.length - 1;
+//       this.refresh_layout();
+//       this.reset_action();
+//       this.draw();
+//     }
+
+
+//     remove_primitive_group(point_index) {
+//       var primitive_index = this.primitive_dict[point_index.toString()];
+//       this.primitive_groups = List.remove_at_index(primitive_index, this.primitive_groups);
+//       this.display_order = List.remove_element(primitive_index, this.display_order);
+//       this.primitive_dict = MyObject.removeEntries([point_index.toString()], this.primitive_dict);
+//       this.elements_dict = MyObject.removeEntries([primitive_index.toString()], this.elements_dict);
+//       var keys = Object.keys(this.primitive_dict);
+//       for (let key of keys) {
+//         if (this.primitive_dict[key] > primitive_index) {
+//           this.primitive_dict[key]--;
+//         }
+//       }
+//       for (let i=0; i<this.display_order.length; i++) {
+//         if (this.display_order[i] > primitive_index) {
+//           this.display_order[i]--;
+//         }
+//       }
+//       var elements_entries = Object.entries(this.elements_dict);
+//       for (let i=0; i<elements_entries.length; i++) {
+//         if (Number(elements_entries[i][0]) > primitive_index) {
+//           elements_entries[i][0] = (Number(elements_entries[i][0]) - 1).toString();
+//         }
+//       }
+//       this.elements_dict = Object.fromEntries(elements_entries);
+//       this.reset_action();
+//       this.draw();
+//     }
+
+
+//     setAllInteractionsToOff() {
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         this.primitive_groups[i].interaction_ON = false;
+//       }
+//     }
+
+
+//     manage_mouse_interactions(selected_primitive:number):void {
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         if (i == selected_primitive) {
+//           this.primitive_groups[i].interaction_ON = true;
+//         } else {
+//           this.primitive_groups[i].interaction_ON = false;
+//         }
+//       }
+//     }
+
+
+//     get_selected_primitive(mouse2X, mouse2Y) {
+//       var selected_index = -1;
+//       for (let index of this.display_order) {
+//         let prim = this.primitive_groups[index];
+//         if (Shape.isInRect(mouse2X, mouse2Y, prim.X, prim.Y, prim.width, prim.height)) {
+//           selected_index = index;
+//         }
+//       }
+//       return selected_index;
+//     }
+
+
+//     draw_layout_axis() {
+//       if (this.primitive_groups.length !== 0) {
+//         if (this.layout_mode == 'one_axis') {
+//           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
+//               this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x,
+//               this.decalage_axis_y, this.X, this.Y, this.width);
+//         } else if (this.layout_mode == 'two_axis') {
+//           this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
+//             this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
+
+//           this.layout_axis.draw_sc_vertical_axis(this.context, this.originY, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
+//             this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.height);
+
+//         }
+//       }
+//     }
+
+
+//     regular_layout():void {
+//       var big_coord = 'X';
+//       var small_coord = 'Y';
+//       var big_length = 'width';
+//       var small_length = 'height';
+//       if (this.width < this.height) {
+//         [big_coord, small_coord, big_length, small_length] = [small_coord, big_coord, small_length, big_length];
+//       }
+//       var sorted_list = this.getSortedList();
+//       var nb_primitives = this.primitive_groups.length;
+//       let small_length_nb_objects = Math.min(Math.ceil(nb_primitives/2), Math.floor(Math.sqrt(nb_primitives)));
+//       let big_length_nb_objects = Math.ceil(nb_primitives/small_length_nb_objects);
+//       let big_length_step = this[big_length]/big_length_nb_objects;
+//       let small_length_step = this[small_length]/small_length_nb_objects;
+//       for (let i=0; i<big_length_nb_objects - 1; i++) {
+//         for (let j=0; j<small_length_nb_objects; j++) {
+//           var current_index = i*small_length_nb_objects + j; //current_index in sorted_list
+//           this.primitive_groups[sorted_list[current_index]][big_coord] = i*big_length_step + this[big_coord];
+//           this.primitive_groups[sorted_list[current_index]][small_coord] = j*small_length_step + this[small_coord];
+//           this.primitive_groups[sorted_list[current_index]][big_length] = big_length_step;
+//           this.primitive_groups[sorted_list[current_index]][small_length] = small_length_step;
+//         }
+//       }
+//       let last_index = current_index + 1;
+//       let remaining_obj = nb_primitives - last_index;
+//       let last_small_length_step = this[small_length]/remaining_obj;
+//       for (let j=0; j<remaining_obj; j++) {
+//         this.primitive_groups[sorted_list[last_index + j]][big_coord] = (big_length_nb_objects - 1)*big_length_step + this[big_coord];
+//         this.primitive_groups[sorted_list[last_index + j]][small_coord] = j*last_small_length_step + this[small_coord];
+//         this.primitive_groups[sorted_list[last_index + j]][big_length] = big_length_step;
+//         this.primitive_groups[sorted_list[last_index + j]][small_length] = last_small_length_step;
+//       }
+//       this.resetAllObjects();
+//       this.draw();
+//     }
+
+
+//     getSortedList() {
+//       var big_coord = 'X';
+//       var small_coord = 'Y';
+//       if (this.width < this.height) {[big_coord, small_coord] = [small_coord, big_coord];}
+//       var sort = new Sort();
+//       var sortedObjectList = sort.sortObjsByAttribute(this.primitive_groups, big_coord);
+//       var sorted_list = [];
+//       var nb_primitives = this.primitive_groups.length;
+//       for (let i=0; i<nb_primitives; i++) {
+//         let sorted_index = List.get_index_of_element(sortedObjectList[i], this.primitive_groups);
+//         sorted_list.push(sorted_index);
+//       }
+//       var sortedDisplayedObjectList = [];
+//       for (let i=0; i<sorted_list.length; i++) {
+//         sortedDisplayedObjectList.push(this.primitive_groups[sorted_list[i]]);
+//       }
+//       var j = 0;
+//       while (j<sorted_list.length - 1) {
+//         if (sortedDisplayedObjectList[j+1][small_coord] < sortedDisplayedObjectList[j][small_coord]) {
+//           List.switchElements(sorted_list, j, j+1);
+//         }
+//         j = j+2;
+//       }
+//       return sorted_list;
+//     }
+
+//     initialize_list(attribute:Attribute) {
+//       var elements_dict_values = Object.values(this.elements_dict);
+//       var value = [];
+//       var name = attribute.name;
+//       let type_ = attribute.type_;
+//       if (type_ == 'float') {
+//         let min = elements_dict_values[0][name];
+//         let max = elements_dict_values[0][name];
+//         for (let j=0; j<elements_dict_values.length; j++) {
+//           let elt = elements_dict_values[j][name];
+//           if (elt>max) {
+//             max = elt;
+//           }
+//           if (elt<min) {
+//             min = elt;
+//           }
+//         }
+//         if (min === max) {
+//           if (min < 0) return [2*min, 0];
+//           else if (min === 0) return [-1, 1];
+//           else return [0, 2*min];
+//         }
+//         return [min, max];
+//       } else if (type_ == 'color') {
+//         var list = []
+//         for (let j=0; j<elements_dict_values.length; j++) {
+//           let elt_color = rgb_to_string(elements_dict_values[j][name]);
+//           if (!List.is_include(elt_color, value)) {
+//             value.push(elt_color);
+//           }
+//         }
+//         return value;
+//       } else {
+//         for (let j=0; j<elements_dict_values.length; j++) {
+//           let elt = elements_dict_values[j][name].toString();
+//           if (!List.is_include(elt, value)) {
+//             value.push(elt);
+//           }
+//         }
+//         return value;
+//       }
+//     }
+
+//     is_element_dict_empty() {
+//       return Object.keys(this.elements_dict).length === 0;
+//     }
+
+//     multiplot_one_axis_layout(attribute:Attribute) {
+//       this.refresh_one_axis_layout_list(attribute);
+//       this.one_axis_layout();
+//     }
+
+//     refresh_one_axis_layout_list(attribute:Attribute) {
+//       this.layout_mode = 'one_axis';
+//       if (!this.is_element_dict_empty()) {
+//         attribute.list = this.initialize_list(attribute);
+//       }
+//       this.layout_attributes = [attribute];
+//     }
+
+
+//     one_axis_layout() {
+//       var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
+//       var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
+//       var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
+//       this.layout_axis = Axis.deserialize(serialized_axis);
+//       var nb_primitive_groups = this.primitive_groups.length;
+//       var name = this.layout_attributes[0].name;
+//       var type_ = this.layout_attributes[0].type_;
+//       this.scaleX = 1; this.scaleY = 1;
+//       this.originX = 0; this.originY = 0;
+//       if (type_ !== 'float') {
+//         var real_xs = [];
+//         var y_incs = Array(nb_primitive_groups).fill(0);
+//       }
+//       for (let i=0; i<nb_primitive_groups; i++) {
+//         this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
+//         this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
+//         if (this.layout_attributes[0].type_ == 'float') {
+//           var real_x = this.elements_dict[i.toString()][name];
+//         } else if (this.layout_attributes[0].type_ == 'color') {
+//           real_x = List.get_index_of_element(rgb_to_string(this.elements_dict[i.toString()][name]), this.layout_attributes[0].list);
+//           if (List.is_include(real_x, real_xs)) { y_incs[i] += - this.primitive_groups[i].height; } else {real_xs.push(real_x);}
+
+//         } else {
+//           real_x = List.get_index_of_element(this.elements_dict[i.toString()][name], this.layout_attributes[0].list);
+//           if (List.is_include(real_x, real_xs)) {y_incs[i] += - this.primitive_groups[i].height;} else {real_xs.push(real_x);}
+//         }
+//         var center_x = this.scaleX*real_x + this.originX;
+//         this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
+//         this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
+//         if (type_ !== 'float') this.primitive_groups[i].Y += y_incs[i];
+//       }
+//       if (this.primitive_groups.length >= 1) this.reset_scales();
+//       this.resetAllObjects();
+//       this.draw();
+//     }
+
+//     refresh_two_axis_layout_list(attributes:Attribute[]) {
+//       this.layout_mode = 'two_axis';
+//       if (!this.is_element_dict_empty()) {
+//         attributes[0].list = this.initialize_list(attributes[0]);
+//         attributes[1].list = this.initialize_list(attributes[1]);
+//       }
+//       this.layout_attributes = attributes;
+//     }
+
+//     multiplot_two_axis_layout(attributes:Attribute[]) {
+//       this.refresh_two_axis_layout_list(attributes);
+//       this.two_axis_layout();
+//     }
+
+
+//     two_axis_layout() {
+//       var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
+//       var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
+//       var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
+//       this.layout_axis = Axis.deserialize(serialized_axis);
+//       var nb_primitive_groups = this.primitive_groups.length;
+//       this.scaleX = 1; this.scaleY = 1;
+//       this.originX = 0; this.originY = 0;
+//       for (let i=0; i<nb_primitive_groups; i++) {
+//         this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
+//         this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
+//         if (this.layout_attributes[0].type_ == 'float') {
+//           var real_x = this.elements_dict[i.toString()][this.layout_attributes[0].name];
+//         } else if (this.layout_attributes[0].type_ == 'color') {
+//           let value = rgb_to_string(this.elements_dict[i.toString()][this.layout_attributes[0].name]);
+//           real_x = List.get_index_of_element(value, this.layout_attributes[0].list);
+//         } else {
+//           real_x = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[0].name], this.layout_attributes[0].list);
+//         }
+//         var center_x = this.scaleX*real_x + this.originX;
+//         this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
+
+//         if (this.layout_attributes[1].type_ == 'float') {
+//           var real_y = this.elements_dict[i.toString()][this.layout_attributes[1].name];
+//         } else if (this.layout_attributes[1].type_ == 'color') {
+//           let value = rgb_to_string(this.elements_dict[i.toString()][this.layout_attributes[1].name]);
+//           real_y = List.get_index_of_element(value, this.layout_attributes[1].list);
+//         } else {
+//           real_y = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[1].name], this.layout_attributes[1].list);
+//         }
+//         var center_y = -this.scaleX*real_y + this.originY;
+//         this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height/2;
+//       }
+//       if (this.primitive_groups.length >= 2) this.reset_scales();
+//       this.resetAllObjects();
+//       this.draw();
+//     }
+
+//     translatePrimitive(index, tx, ty) {
+//       this.primitive_groups[index].X = this.primitive_groups[index].X + tx;
+//       this.primitive_groups[index].Y = this.primitive_groups[index].Y + ty;
+//     }
+
+//     translateAllPrimitives(tx, ty) {
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         this.translatePrimitive(i, tx, ty);
+//       }
+//       this.originX = this.originX + tx;
+//       this.originY = this.originY + ty;
+//     }
+
+
+//     resetAllObjects() {
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         this.primitive_groups[i].reset_scales();
+//       }
+//     }
+
+//     zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
+//       if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
+//         this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
+//           this.x_zoom_elements(event);
+//       } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.X, this.Y, this.decalage_axis_x,
+//         this.height - this.decalage_axis_y))) {
+//           this.y_zoom_elements(event);
+//       } else {
+//         this.regular_zoom_elements(mouse3X, mouse3Y, event);
+//       }
+//     }
+
+//     regular_zoom_elements(mouse3X, mouse3Y, event) {
+//       if (event > 0) {
+//         var zoom_coeff = 1.1;
+//       } else {
+//         var zoom_coeff = 1/1.1;
+//       }
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         this.primitive_groups[i].X = mouse3X + zoom_coeff*(this.primitive_groups[i].X - mouse3X);
+//         this.primitive_groups[i].Y = mouse3Y + zoom_coeff*(this.primitive_groups[i].Y - mouse3Y);
+//         this.primitive_groups[i].width = this.primitive_groups[i].width*zoom_coeff;
+//         this.primitive_groups[i].height = this.primitive_groups[i].height*zoom_coeff;
+//       }
+//       this.resetAllObjects();
+//       this.scaleX = this.scaleX*zoom_coeff; this.scaleY = this.scaleY*zoom_coeff;
+//       this.originX = mouse3X - this.X + zoom_coeff * (this.originX - mouse3X + this.X);
+//       this.originY = mouse3Y - this.Y + zoom_coeff * (this.originY - mouse3Y + this.Y);
+//       this.draw();
+//     }
+
+//     x_zoom_elements(event) {
+//       if (event > 0) {
+//         var zoom_coeff = 1.1;
+//       } else {
+//         zoom_coeff = 1/1.1;
+//       }
+//       var container_center_x = this.X + this.width/2;
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         let primitive_center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
+//         primitive_center_x = container_center_x + zoom_coeff*(primitive_center_x - container_center_x);
+//         this.primitive_groups[i].X = primitive_center_x - this.primitive_groups[i].width/2;
+//       }
+//       this.resetAllObjects();
+//       this.scaleX = this.scaleX*zoom_coeff;
+//       this.originX = this.width/2 + zoom_coeff * (this.originX - this.width/2);
+//       this.draw();
+//     }
+
+//     y_zoom_elements(event) {
+//       if (event > 0) {
+//         var zoom_coeff = 1.1;
+//       } else {
+//         zoom_coeff = 1/1.1;
+//       }
+//       var container_center_y = this.Y + this.height/2;
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         let primitive_center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
+//         primitive_center_y = container_center_y + zoom_coeff*(primitive_center_y - container_center_y);
+//         this.primitive_groups[i].Y = primitive_center_y - this.primitive_groups[i].height/2;
+//       }
+//       this.resetAllObjects();
+//       this.scaleY = this.scaleY*zoom_coeff;
+//       this.originY = this.height/2 + zoom_coeff * (this.originY - this.height/2);
+//       this.draw();
+//     }
+
+//     manage_scroll(mouse3X, mouse3Y, event) {
+//       if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
+//         this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
+//           this.scroll_x = this.scroll_x + event;
+//       } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.X, this.Y, this.decalage_axis_x,
+//         this.height - this.decalage_axis_y))) {
+//           this.scroll_y = this.scroll_y + event;
+//       } else {
+//         this.scroll_x = this.scroll_x + event;
+//         this.scroll_y = this.scroll_y + event;
+//       }
+//       if (isNaN(this.scroll_x)) this.scroll_x = 0;
+//       if (isNaN(this.scroll_y)) this.scroll_y = 0;
+//     }
+
+//     delete_unwanted_vertex(vertex_infos) {
+//       var i = 0;
+//       while (i < vertex_infos.length) {
+//         let to_delete = false;
+//         if (this.clickedPlotIndex != vertex_infos[i].index) {
+//           let j = 0;
+//           let cpi_vertex = false;
+//           while (j<vertex_infos.length) {
+//             if ((vertex_infos[j].index == this.clickedPlotIndex)) {
+//               cpi_vertex = true;
+//               break;
+//             }
+//             j++;
+//           }
+//           to_delete = !cpi_vertex;
+//         }
+//         if (to_delete) {
+//           vertex_infos = List.remove_at_index(i, vertex_infos);
+//         } else {
+//           i++;
+//         }
+//       }
+//       return vertex_infos;
+//     }
+
+//     initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] {
+//       var thickness = 15;
+//       var vertex_infos = [];
+//       for (let i=0; i<this.primitive_groups.length; i++) {
+//         let obj:PlotData = this.primitive_groups[this.display_order[i]];
+//         let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, obj.width + thickness*2/3, thickness);
+//         let down = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
+//         let left = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+//         let right = Shape.isInRect(mouse1X, mouse1Y, obj.X + obj.width - thickness*2/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+//         var clickOnVertex_i = up || down || left || right;
+//         if (clickOnVertex_i) {
+//           vertex_infos.push({'index': this.display_order[i], 'up': up, 'down': down, 'left':left, 'right': right});
+//         }
+//       }
+//       vertex_infos = this.delete_unwanted_vertex(vertex_infos);
+//       var clickOnVertex = !(vertex_infos.length == 0);
+//       return [clickOnVertex, vertex_infos];
+//     }
+
+//     resizeObject(vertex_infos, deltaX, deltaY):void {
+//       var widthSizeLimit = 100;
+//       var heightSizeLimit = 100;
+//       for (let i=0; i<vertex_infos.length; i++) {
+//         let vertex_object_index = vertex_infos[i].index;
+//         if (vertex_infos[i].up === true) {
+//           if (this.primitive_groups[vertex_object_index].height - deltaY > heightSizeLimit) {
+//             this.primitive_groups[vertex_object_index].Y = this.primitive_groups[vertex_object_index].Y + deltaY;
+//             this.primitive_groups[vertex_object_index].height = this.primitive_groups[vertex_object_index].height - deltaY;
+//           } else {
+//             this.primitive_groups[vertex_object_index].height = heightSizeLimit;
+//           }
+//         }
+//         if (vertex_infos[i].down === true) {
+//           if (this.primitive_groups[vertex_object_index].height + deltaY > heightSizeLimit) {
+//             this.primitive_groups[vertex_object_index].height = this.primitive_groups[vertex_object_index].height + deltaY;
+//           } else {
+//             this.primitive_groups[vertex_object_index].height = heightSizeLimit;
+//           }
+//         }
+//         if (vertex_infos[i].left === true) {
+//           if (this.primitive_groups[vertex_object_index].width - deltaX > widthSizeLimit) {
+//             this.primitive_groups[vertex_object_index].X = this.primitive_groups[vertex_object_index].X + deltaX;
+//             this.primitive_groups[vertex_object_index].width = this.primitive_groups[vertex_object_index].width - deltaX;
+//           } else {
+//             this.primitive_groups[vertex_object_index].width = widthSizeLimit;
+//           }
+//         }
+//         if (vertex_infos[i].right === true) {
+//           if (this.primitive_groups[vertex_object_index].width + deltaX > widthSizeLimit) {
+//             this.primitive_groups[vertex_object_index].width = this.primitive_groups[vertex_object_index].width + deltaX;
+//           } else {
+//             this.primitive_groups[vertex_object_index].width = widthSizeLimit;
+//           }
+//         }
+//       }
+//       this.draw();
+//     }
+
+//     reorder_resize_style(resize_style) {
+//       var resize_dict = ['n', 'ns', 'ne', 'nwse', 'nw', 'e', 'ew', 's', 'se', 'sw', 'w'];
+//       for (let i=0; i<resize_dict.length; i++) {
+//         if (resize_style.split('').sort().join() === resize_dict[i].split('').sort().join()) {
+//           resize_style = resize_dict[i];
+//           break;
+//         }
+//       }
+//       return resize_style;
+//     }
+
+//     setCursorStyle(mouse2X, mouse2Y, canvas, selected_primitive):void {
+//       if (selected_primitive != -1) {
+//         var thickness = 15;
+//         var resize_style:any = '';
+//         for (let i=0; i<this.primitive_groups.length; i++) {
+//           let obj:PlotData = this.primitive_groups[i];
+//           let up = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, obj.width + thickness*2/3, thickness);
+//           let down = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
+//           let left = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+//           let right = Shape.isInRect(mouse2X, mouse2Y, obj.X + obj.width - thickness*2/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
+//           if (up && !resize_style.includes('n')) {resize_style = resize_style + 'n';}
+//           if (down && !resize_style.includes('s')) {resize_style = resize_style + 's';}
+//           if (left && !resize_style.includes('w')) {resize_style = resize_style + 'w';}
+//           if (right && !resize_style.includes('e')) {resize_style = resize_style + 'e';}
+//         }
+//         if (resize_style == '') {
+//           canvas.style.cursor = 'default';
+//         } else {
+//           resize_style = this.reorder_resize_style(resize_style);
+//           canvas.style.cursor = resize_style + '-resize';
+//         }
+//       } else {
+//         canvas.style.cursor = 'default';
+//       }
+//       this.draw();
+//     }
+
+
+//     mouse_interaction() {
+//       var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
+//       var nbObjects:number = this.primitive_groups.length;
+//       var canvas = document.getElementById(this.canvas_id);
+//       // var selected_primitive:number = -1;
+//       var last_selected_primitive = -1;
+//       var isDrawing = false;
+//       var vertex_infos:Object;
+//       var clickOnVertex:boolean = false;
+
+//       for (let i=0; i<nbObjects; i++) {
+//         this.primitive_groups[i].mouse_interaction(this.primitive_groups[i].isParallelPlot);
+//       }
+//       this.setAllInteractionsToOff();
+
+//       canvas.addEventListener('mousedown', e => {
+//         isDrawing = true;
+//         if (this.interaction_ON) {
+//           mouse1X = e.offsetX; mouse1Y = e.offsetY;
+//           this.click_on_button_check(mouse1X, mouse1Y);
+//           this.clickedPlotIndex = this.get_selected_primitive(mouse1X, mouse1Y);
+//           if (this.manipulation_bool) {
+//             if (this.clickedPlotIndex != -1) {
+//               [clickOnVertex, vertex_infos] = this.initialize_clickOnVertex(mouse1X, mouse1Y);
+//             } else {
+//               clickOnVertex = false;
+//             }
+//           }
+//         }
+//       });
+
+//       canvas.addEventListener('mousemove', e => {
+//         if (this.interaction_ON) {
+//           var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
+//           mouse2X = e.offsetX, mouse2Y = e.offsetY;
+//           this.selected_primitive = this.get_selected_primitive(mouse2X, mouse2Y);
+//           if (this.manipulation_bool) {
+//             if (isDrawing) {
+//               if ((this.clickedPlotIndex == -1) || (this.layout_mode !== 'regular')) {
+//                 this.translateAllPrimitives(mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
+//                 this.draw();
+//               } else {
+//                 if (clickOnVertex) {
+//                   this.resizeObject(vertex_infos, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
+//                 } else {
+//                   this.translatePrimitive(this.clickedPlotIndex, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
+//                   this.draw();
+//                 }
+//               }
+//             } else {
+//               if (this.layout_mode === 'regular') {
+//                 this.setCursorStyle(mouse2X, mouse2Y, canvas, this.selected_primitive);
+//               }
+//             }
+//           } else {
+//             if (this.selected_primitive !== last_selected_primitive) {
+//               this.manage_mouse_interactions(this.selected_primitive);
+//             }
+//             last_selected_primitive = this.selected_primitive;
+//           }
+//         } else {
+//           isDrawing = false;
+//         }
+//       });
+
+//       canvas.addEventListener('mouseup', e => {
+//         if (this.interaction_ON) {
+//           isDrawing = false;
+//           this.draw();
+//         }
+//       });
+
+//       canvas.addEventListener('wheel', e => {
+//         if (this.interaction_ON) {
+//           e.preventDefault();
+//           mouse3X = e.offsetX; mouse3Y = e.offsetY;
+//           if (this.manipulation_bool) {
+//             var event = -e.deltaY/Math.abs(e.deltaY);
+//             this.manage_scroll(mouse3X, mouse3Y, event);
+//             this.zoom_elements(mouse3X, mouse3Y, event);
+//           }
+//         }
+//       });
+
+//       canvas.addEventListener('mouseleave', e => {
+//         this.clickedPlotIndex = -1;
+//         this.selected_primitive = -1;
+//         this.setAllInteractionsToOff();
+//       })
+//     }
+// }
+export const PG_CONTAINER_PLOT = {
+  "name": "",
+  "primitives": [
+    {
+      "name": "",
+      "comment": "PrimitiveGroupContainer is not supported anymore in plot_data 0.19.0 and further versions.",
+      "text_style": {
+        "object_class": "plot_data.core.TextStyle",
+        "name": "",
+        "text_color": "rgb(100, 100, 100)",
+        "font_size": 16,
+        "text_align_x": "center",
+        "text_align_y": "middle"
+      },
+      "position_x": 50.0,
+      "position_y": 100,
+      "text_scaling": false,
+      "max_width": 250,
+      "multi_lines": true,
+      "type_": "text"
     }
+  ],
+  "type_": "primitivegroup"
+};
 
-    draw() {
-      this.draw_from_context(true);
-      this.draw_from_context(false);
-    }
-
-    draw_from_context(hidden) {
-      this.define_context(hidden);
-      this.context.save();
-      this.draw_empty_canvas(this.context);
-      if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
-      this.context.beginPath();
-      this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
-      this.context.clip();
-      this.context.closePath();
-      for (let i=0; i<this.plot_datas.length; i++) {
-        let d = this.plot_datas[i];
-        this.draw_primitivegroup(hidden, this.originX, this.originY, this.scaleX, this.scaleY, d);
-      }
-
-      if (this.dep_mouse_over) {
-        this.draw_mouse_over_rect();
-      } else if (this.multiplot_manipulation) {
-        this.draw_manipulable_rect();
-      }
-
-      if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
-        this.draw_zoom_rectangle();
-      }
-      this.context.restore();
-
-      if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
-
-        this.refresh_buttons_coords();
-        //Drawing the zooming button
-        Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
-
-        //Drawing the button for zooming window selection
-        Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
-
-        //Drawing the reset button
-        Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
-      }
-    }
+export function computeCanvasSize(buttonContainerName: string): [number, number] {
+  const buttonsContainer = document.querySelector(buttonContainerName);
+  return [0.95 * window.innerWidth, 0.95 * window.innerHeight - buttonsContainer.scrollHeight]
 }
 
-
-
-/** A class that inherits from PlotData and is specific for drawing ScatterPlots and Graph2Ds
- */
-export class PlotScatter extends PlotData {
-    public constructor(public data:any,
-      public width: number,
-      public height: number,
-      public buttons_ON: boolean,
-      public X: number,
-      public Y: number,
-      public canvas_id: string,
-      public is_in_multiplot = false) {
-        super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-        if (this.buttons_ON) {
-          this.refresh_buttons_coords();
-        }
-        this.log_scale_x = data['log_scale_x'];
-        this.log_scale_y = data['log_scale_y'];
-        if (data['type_'] == 'graph2d') {
-          this.type_ = 'graph2d';
-          this.graph_ON = true;
-          this.axis_ON = true;
-          this.plotObject = Graph2D.deserialize(data);
-          this.plot_datas['value'] = this.plotObject.graphs;
-          for (let i=0; i<this.plotObject.graphs.length; i++) {
-            let graph = this.plotObject.graphs[i];
-            this.graph_colorlist.push(graph.point_list[0].point_style.color_fill);
-            this.graph_to_display.push(true);
-            this.graph_name_list.push(graph.name);
-            graph.id = i;
-            this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
-            this.refresh_MinMax(graph.point_list, true);
-          }
-          this.nb_graph = this.plotObject.graphs.length;
-        } else if (data['type_'] == 'scatterplot') {
-          this.type_ = 'scatterplot';
-          this.axis_ON = true;
-          this.mergeON = true;
-          this.plotObject = Scatter.deserialize(data);
-          this.plot_datas['value'] = [this.plotObject];
-          this.pointLength = this.plotObject.point_list[0].size;
-          this.scatter_init_points = this.plotObject.point_list;
-          this.refresh_MinMax(this.plotObject.point_list);
-          this.heatmap_view = data["heatmap_view"] || false;
-          if (data["heatmap"]) {this.heatmap = Heatmap.deserialize(data["heatmap"])} else {this.heatmap = new Heatmap();}
-          this.selected_areas = [];
-          for (let i=0; i<this.heatmap.size[0]; i++) {
-            let temp = [];
-            for (let j=0; j<this.heatmap.size[1]; j++) {
-              temp.push(0);
-            }
-            this.selected_areas.push(temp);
-          }
-        }
-
-        this.isParallelPlot = false;
-        if (this.mergeON && alert_count === 0) {
-          // merge_alert();
-        }
-    }
-
-    draw() {
-      this.draw_from_context(false);
-      this.draw_from_context(true);
-    }
-
-    draw_from_context(hidden) {
-      this.define_context(hidden);
-      this.context.save();
-      this.draw_empty_canvas(this.context);
-      if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
-      this.context.beginPath();
-      this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2);
-      this.context.clip();
-      this.context.closePath();
-      this.draw_graph2D(this.plotObject, hidden, this.originX, this.originY);
-      if (this.heatmap_view) {
-        this.draw_heatmap(hidden);
-      } else {
-        this.draw_scatterplot(this.plotObject, hidden, this.originX, this.originY);
-        if (this.permanent_window) {
-          this.draw_selection_rectangle();
-        }
-        if (this.zw_bool || (this.isSelecting && !this.permanent_window)) {
-          this.draw_zoom_rectangle();
-        }
-      }
-
-      if ((this.buttons_ON) && (this.button_w > 20) && (this.button_h > 10)) {
-        this.refresh_buttons_coords();
-
-        //Drawing the zooming button
-        Buttons.zoom_button(this.button_x, this.zoom_rect_y, this.button_w, this.button_h, this);
-
-        //Drawing the button for zooming window selection
-        Buttons.zoom_window_button(this.button_x,this.zw_y,this.button_w,this.button_h, this);
-
-        //Drawing the reset button
-        Buttons.reset_button(this.button_x, this.reset_rect_y, this.button_w, this.button_h, this);
-
-        //Drawing the selection button
-        Buttons.selection_button(this.button_x, this.select_y, this.button_w, this.button_h, this);
-
-        //Drawing the enable/disable graph button
-        Buttons.graph_buttons(this.graph1_button_y, this.graph1_button_w, this.graph1_button_h, '10px Arial', this);
-
-        if (this.plotObject.type_ == 'scatterplot') {
-          Buttons.merge_button(this.button_x, this.merge_y, this.button_w, this.button_h, '10px Arial', this);
-          // Draw Heatmap button
-          Buttons.heatmap_button(this.button_x, this.heatmap_button_y, this.button_w, this.button_h, "10px Arial", this);
-        } else if (this.plotObject.type_ === "graph2d") {
-          Buttons.csv_button(this.button_x, this.csv_button_y, this.button_w, this.button_h, "12px Arial", this);
-        }
-
-        //draw permanent window button
-        Buttons.perm_window_button(this.button_x, this.perm_button_y, this.button_w, this.button_h, '10px Arial', this);
-
-        //draw clear point button
-        Buttons.clear_point_button(this.button_x, this.clear_point_button_y, this.button_w, this.button_h, '10px Arial', this);
-
-        // Draw log scale buttons
-        Buttons.log_scale_buttons(this.button_x, this.xlog_button_y, this.ylog_button_y, this.button_w, this.button_h,
-          "10px Arial", this);
-
-      }
-      if (this.multiplot_manipulation) {
-        this.draw_manipulable_rect();
-      }
-      this.context.restore();
-    }
-}
-
-
-/** A class that inherits from PlotData and is specific for drawing realToAxiss  */
-export class ParallelPlot extends PlotData {
-
-    constructor(public data, public width, public height, public buttons_ON, X, Y, public canvas_id: string,
-                public is_in_multiplot = false) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.type_ = 'parallelplot';
-      if (this.buttons_ON) {
-        this.disp_x = this.width - 35;
-        this.disp_y = this.height - 25;
-        this.disp_w = 30;
-        this.disp_h = 20;
-      }
-      let default_edge_style = {color_stroke:string_to_rgb('black'), dashline:[], line_width:0.5, name:''};
-      let default_dict_ = {edge_style:default_edge_style, disposition: 'vertical', rgbs:[[192, 11, 11], [14, 192, 11], [11, 11, 192]]};
-      data = set_default_values(data, default_dict_);
-      this.elements = data['elements'];
-      this.edge_style = EdgeStyle.deserialize(data['edge_style']);
-      var attribute_names = data['attribute_names'];
-      this.vertical = data['disposition'] == 'vertical' ? true : false;
-      this.initialize_all_attributes();
-      this.initialize_attributes_list();
-      this.add_to_axis_list(attribute_names);
-      this.initialize_data_lists();
-      var nb_axis = this.axis_list.length;
-      if (nb_axis<=1) {throw new Error('At least 2 axis are required')};
-      this.refresh_to_display_list(this.elements);
-      this.refresh_all_attributes();
-      this.refresh_attribute_booleans();
-      this.refresh_axis_bounds(nb_axis);
-      this.refresh_axis_coords();
-      this.isParallelPlot = true;
-      this.rgbs = data['rgbs'];
-      this.interpolation_colors = get_interpolation_colors(this.rgbs, this.to_display_list.length);
-      this.initialize_hexs();
-      this.initialize_display_list_to_elements_dict();
-      this.refresh_pp_selected();
-    }
-
-    refresh_pp_buttons_coords() {
-      this.disp_x = this.width - 35;
-      this.disp_y = this.height - 25;
-      this.disp_w = 30;
-      this.disp_h = 20;
-    }
-
-    initialize_display_list_to_elements_dict() {
-      this.display_list_to_elements_dict = {};
-      for (let i=0; i<this.elements.length; i++) {
-        this.display_list_to_elements_dict[i.toString()] = i;
-      }
-    }
-
-    initialize_all_attributes() {
-      var attribute_names = Object.getOwnPropertyNames(this.elements[0]);
-      var exceptions = ['name', 'object_class'];
-      for (let i=0; i<attribute_names.length; i++) {
-        if (!(List.is_include(attribute_names[i], exceptions))) {
-          let name = attribute_names[i];
-          let type_ = TypeOf(this.elements[0][name]);
-          this.all_attributes.push(new Attribute(name, type_));
-        }
-      }
-    }
-
-    initialize_attributes_list() { //Initialize 'list' and 'alias' of all_attributes's elements'
-      for (var i=0; i<this.all_attributes.length; i++) {
-        var attribute_name = this.all_attributes[i]['name'];
-        this.all_attributes[i]['alias'] = this.all_attributes[i]['name'];
-        var type_ = this.all_attributes[i]['type_'];
-        if (type_ == 'float') {
-          var min = this.elements[0][attribute_name];
-          var max = this.elements[0][attribute_name];
-          for (var j=0; j<this.elements.length; j++) {
-            var elt = this.elements[j][attribute_name];
-            if (elt<min) {
-              min = elt;
-            }
-            if (elt>max) {
-              max = elt;
-            }
-          }
-          this.all_attributes[i]['list'] = [min, max];
-        } else { //ie string
-          var list = [];
-          for (var j=0; j<this.elements.length; j++) {
-            if (type_ == 'color') {
-              var elt:any = rgb_to_string(this.elements[j][attribute_name]);
-            } else {
-              var elt = this.elements[j][attribute_name];
-            }
-            if (!List.is_include(elt, list)) {
-              list.push(elt);
-            }
-          }
-          this.all_attributes[i]['list'] = list;
-        }
-      }
-    }
-
-    draw_initial() {
-      this.init_scale = 1;
-      this.originX = 0;
-      this.draw();
-    }
-
-    draw() {
-      this.refresh_axis_bounds(this.axis_list.length);
-      this.context = this.context_show;
-      this.context.save();
-      this.draw_empty_canvas(this.context);
-      if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
-      this.context.beginPath();
-      this.context.rect(this.X-1, this.Y-1, this.width+2, this.height + 2);
-      this.context.clip();
-      this.context.closePath();
-      this.draw_rubber_bands(this.originX);
-      var nb_axis = this.axis_list.length;
-      this.draw_parallel_coord_lines();
-      this.draw_parallel_axis(nb_axis, this.originX);
-      if (this.buttons_ON) {
-        this.refresh_pp_buttons_coords();
-        Buttons.disp_button(this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h, '10px Arial', this);
-      }
-      if (this.multiplot_manipulation) {
-        this.draw_manipulable_rect();
-      }
-      this.context.restore();
-    }
-
-
-    draw_from_context(hidden) {};
-
-
-    initialize_data_lists() {
-      for (let i=0; i<this.axis_list.length; i++) {
-        this.inverted_axis_list.push(false);
-        this.rubber_bands.push(new RubberBand(this.axis_list[i].name, 0, 0, this.vertical));
-      }
-    }
-
-    initialize_hexs() {
-      this.hexs = [];
-      this.interpolation_colors.forEach(rgb => {
-        this.hexs.push(colorHex(rgb));
-      });
-    }
-
-    getObjectsInRubberBands(rubberBands: RubberBand[]): number[] {
-      let selectedIndices = [];
-      this.data["elements"].forEach((sample, elementIndex) => {
-        var inRubberBand = 0;
-        if (rubberBands.length !==0 ) {
-          rubberBands.forEach((rubberBand, rubberIndex) => {
-            inRubberBand += Number(rubberBand.includesValue(sample[rubberBand.attributeName], this.axis_list[rubberIndex]))
-          })
-          if (inRubberBand == rubberBands.length) {
-            selectedIndices.push(elementIndex)
-          }
-        }
-      })
-      this.selected_point_index = selectedIndices;
-      return selectedIndices
-    }
-
-    refresh_pp_selected() {
-      this.pp_selected_index = this.getObjectsInRubberBands(this.rubber_bands);
-      if (this.pp_selected_index.length === 0 && List.isListOfEmptyList(this.rubber_bands)) {
-        this.reset_pp_selected();
-      }
-    }
-
-    reset_pp_selected() {
-      this.clicked_point_index = [];
-      this.pp_selected_index = Array.from(Array(this.to_display_list.length).keys());
-    }
-
-    mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e) {
-      var mouseX = e.offsetX;
-      var mouseY = e.offsetY;
-      var click_on_disp = Shape.isInRect(mouseX, mouseY, this.disp_x + this.X, this.disp_y + this.Y, this.disp_w, this.disp_h);
-      if (click_on_axis && !mouse_moving) {
-        this.select_axis_action(selected_axis_index, click_on_band, click_on_border);
-      } else if (click_on_name && mouse_moving) {
-        [mouse3X, mouse3Y, click_on_axis] = Interactions.mouse_up_axis_interversion(mouse1X, mouse1Y, e, this);
-      } else if (click_on_name && !mouse_moving) {
-        Interactions.select_title_action(selected_name_index, this);
-      } else if (this.is_drawing_rubber_band || is_resizing) {
-        this.draw()
-        is_resizing = false;
-      }
-      if (click_on_disp) {
-        Interactions.change_disposition_action(this);
-      }
-      this.refresh_pp_selected();
-      this.is_drawing_rubber_band = false;
-      mouse_moving = false;
-      isDrawing = false;
-      this.originX = 0;
-      return [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing];
-    }
-
-    mouse_interaction() {
-      if (this.interaction_ON === true) {
-        var isDrawing = false;
-        var mouse_moving = false;
-        var mouse1X = 0; var mouse1Y = 0; var mouse2X = 0; var mouse2Y = 0; var mouse3X = 0; var mouse3Y = 0;
-        var click_on_axis:boolean=false;
-        var selected_axis_index:number = -1;
-        var click_on_name:boolean = false;
-        var selected_name_index:number = -1;
-        var click_on_band:boolean = false;
-        var click_on_border:boolean = false;
-        var selected_band_index:number = -1;
-        var selected_border:number[]=[];
-        var is_resizing:boolean=false;
-        var click_on_selectw_border:boolean = false;
-        var up:boolean = false; var down:boolean = false; var left:boolean = false; var right:boolean = false;
-        var canvas = document.getElementById(this.canvas_id);
-
-        canvas.addEventListener('mousedown', e => {
-          if (this.interaction_ON) {
-            [mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, click_on_selectw_border, up, down, left, right] = this.mouse_down_interaction(mouse1X, mouse1Y, mouse2X, mouse2Y, isDrawing, e);
-            [click_on_axis, selected_axis_index] = Interactions.initialize_click_on_axis(this.axis_list.length, mouse1X, mouse1Y, click_on_axis, this);
-            [click_on_name, selected_name_index] = Interactions.initialize_click_on_name(this.axis_list.length, mouse1X, mouse1Y, this);
-            [click_on_band, click_on_border, selected_band_index, selected_border] = Interactions.initialize_click_on_bands(mouse1X, mouse1Y, this);
-          }
-        });
-
-        canvas.addEventListener('mousemove', e => {
-          if (this.interaction_ON) {
-            this.isSelectingppAxis = false;
-            if (isDrawing) {
-              mouse_moving = true;
-              if (click_on_name) {
-                [mouse2X, mouse2Y, isDrawing, mouse_moving] = Interactions.mouse_move_axis_inversion(isDrawing, e, selected_name_index, this);
-              } else if (click_on_axis && !click_on_band && !click_on_border) {
-                [mouse2X, mouse2Y] = Interactions.create_rubber_band(mouse1X, mouse1Y, selected_axis_index, e, this);
-              } else if (click_on_band) {
-                [mouse2X, mouse2Y] = Interactions.rubber_band_translation(mouse1X, mouse1Y, selected_band_index, e, this);
-              } else if (click_on_border) {
-                [selected_border[1], mouse2X, mouse2Y, is_resizing] = Interactions.rubber_band_resize(mouse1X, mouse1Y, selected_border, e, this);
-              }
-              this.refresh_pp_selected();
-            }
-          }
-        });
-
-        canvas.addEventListener('mouseup', e => {
-          if (this.interaction_ON) {
-            [mouse3X, mouse3Y, click_on_axis, isDrawing, mouse_moving, is_resizing] = this.mouse_up_interaction_pp(click_on_axis, selected_axis_index, click_on_name, click_on_band, click_on_border, is_resizing, selected_name_index, mouse_moving, isDrawing, mouse1X, mouse1Y, mouse3X, mouse3Y, e);
-          }
-        })
-
-        canvas.addEventListener('mouseleave', e => {
-          isDrawing = false;
-          mouse_moving = false;
-        });
-
-
-        canvas.addEventListener("click", e => {
-          if (this.interaction_ON) {
-            if (e.ctrlKey) {
-              this.reset_pp_selected();
-              this.reset_rubberbands();
-              this.draw();
-            }
-          }
-        });
-      }
-    }
-
-    public select_axis_action(selected_axis_index, click_on_band, click_on_border) {
-      this.isSelectingppAxis = true;
-      if (this.rubber_bands[selected_axis_index].length == 0) {
-        var attribute_name = this.axis_list[selected_axis_index]['name'];
-        if (attribute_name == this.selected_axis_name) {
-          this.selected_axis_name = '';
-        } else {
-          this.selected_axis_name = attribute_name;
-          this.sort_to_display_list(); // à modifier pour trier vertical et horizontal axis coords
-          this.refresh_axis_coords();
-        }
-      } else if ((this.rubber_bands[selected_axis_index].length != 0) && !click_on_band && !click_on_border) {
-        this.rubber_bands[selected_axis_index].reset();
-        this.refresh_pp_selected();
-      }
-      this.draw();
-    }
-}
-
-
-/** A class that inherits from PlotData and is specific for drawing PrimitiveGroupContainers.  */
-export class PrimitiveGroupContainer extends PlotData {
-    primitive_groups:PlotContour[]=[];
-    layout_mode:string='regular';
-    layout_axis:Axis;
-    layout_attributes:Attribute[]=[];
-    selected_primitive:number=-1;
-    custom_sizes:boolean=false;
-
-    constructor(public data:any,
-                public width: number,
-                public height: number,
-                public buttons_ON: boolean,
-                public X: number,
-                public Y: number,
-                public canvas_id: string,
-                public is_in_multiplot: boolean = false) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.type_ = 'primitivegroupcontainer';
-      var serialized = data['primitive_groups'];
-      var initial_coords = data['coords'] || Array(serialized.length).fill([0,0]);
-      if (data['sizes']) {
-        this.custom_sizes = true;
-      }
-      var initial_sizes = data['sizes'] || Array(serialized.length).fill([560, 300]);
-      for (let i=0; i<serialized.length; i++) { // Warning: is_in_multiplot is set to true for primitive groups
-        this.primitive_groups.push(new PlotContour(serialized[i], initial_sizes[i][0], initial_sizes[i][1], buttons_ON, X+initial_coords[i][0], Y+initial_coords[i][1], canvas_id, true));
-        this.display_order.push(i);
-      }
-    }
-
-
-    define_canvas(canvas_id) {
-      super.define_canvas(canvas_id);
-      this.initialize_primitive_groups_contexts();
-    }
-
-    initialize_primitive_groups_contexts() {
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        this.primitive_groups[i].context_hidden = this.context_hidden;
-        this.primitive_groups[i].context_show = this.context_show;
-      }
-    }
-
-    reinitialize_all() {
-      this.elements_dict = {};
-      this.primitive_dict = {};
-      this.primitive_groups = [];
-      this.display_order = [];
-    }
-
-    refresh_buttons_coords() {
-      this.button_w = 40;
-      this.button_h = 20;
-      this.button_y = this.height - 5 - this.button_h + this.Y;
-      this.manip_button_x = 5 + this.X;
-      this.reset_button_x = this.manip_button_x + this.button_w + 5;
-    }
-
-    draw_buttons() {
-      this.refresh_buttons_coords();
-      this.draw_manipulation_button();
-      this.draw_reset_button();
-    }
-
-
-    draw_manipulation_button() {
-      if (this.manipulation_bool) {
-        Shape.createButton(this.manip_button_x, this.button_y, this.button_w, this.button_h, this.context, 'ON', '10px sans-serif');
-      } else {
-        Shape.createButton(this.manip_button_x, this.button_y, this.button_w, this.button_h, this.context, 'OFF', '10px sans-serif');
-      }
-    }
-
-    draw_reset_button() {
-      Shape.createButton(this.reset_button_x, this.button_y, this.button_w, this.button_h, this.context, 'reset', '10px sans-serif');
-    }
-
-    click_on_button_check(mouse1X, mouse1Y) {
-      if (Shape.isInRect(mouse1X, mouse1Y, this.manip_button_x, this.button_y, this.button_w, this.button_h)) {
-        this.click_on_manipulation_action();
-      } else if (Shape.isInRect(mouse1X, mouse1Y, this.reset_button_x, this.button_y, this.button_w, this.button_h)) {
-        this.reset_action();
-      }
-    }
-
-    click_on_manipulation_action() {
-      this.manipulation_bool = !this.manipulation_bool;
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        this.primitive_groups[i].multiplot_manipulation = this.manipulation_bool;
-      }
-      if (this.manipulation_bool) {
-        this.setAllInteractionsToOff();
-      }
-    }
-
-    reset_action() {
-      if (this.primitive_groups.length !== 0) {
-        if (this.layout_mode == 'regular') {
-          this.regular_layout();
-        } else {
-          if (this.primitive_groups.length >= 1) this.reset_scales();
-        }
-      }
-    }
-
-    reset_sizes() {
-      var nb_primitives = this.primitive_groups.length;
-      if (!this.custom_sizes) {
-        if (nb_primitives === 1) {
-          var primitive_width = this.width/3;
-          var primitive_height = this.height/3;
-        } else {
-          primitive_width = this.width/nb_primitives;
-          primitive_height = this.height/nb_primitives;
-        }
-      }
-      for (let i=0; i<nb_primitives; i++) {
-        let center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
-        let center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
-        if (this.custom_sizes) {
-          this.primitive_groups[i].width = Math.min(this.data['sizes'][i][0], this.width);
-          this.primitive_groups[i].height = Math.min(this.data['sizes'][i][1], this.height);
-        } else {
-          this.primitive_groups[i].width = primitive_width;
-          this.primitive_groups[i].height = primitive_height;
-        }
-        this.primitive_groups[i].X = center_x - this.primitive_groups[i].width/2;
-        this.primitive_groups[i].Y = center_y - this.primitive_groups[i].height/2;
-      }
-    }
-
-    refresh_MinMax() {
-      this.minX = Infinity; this.maxX = -Infinity; this.minY = Infinity; this.maxY = -Infinity;
-      for (let primitive of this.primitive_groups) {
-        this.minX = Math.min(this.minX, primitive.X);
-        this.maxX = Math.max(this.maxX, primitive.X + primitive.width);
-        this.minY = Math.min(this.minY, primitive.Y);
-        this.maxY = Math.max(this.maxY, primitive.Y + primitive.height);
-      }
-    }
-
-    refresh_spacing() {
-      var zoom_coeff_x = (this.width - this.decalage_axis_x)/(this.maxX - this.minX);
-      var container_center_x = this.X + this.width/2;
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        let primitive_center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
-        primitive_center_x = container_center_x + zoom_coeff_x*(primitive_center_x - container_center_x);
-        this.primitive_groups[i].X = primitive_center_x - this.primitive_groups[i].width/2;
-      }
-      this.scaleX = this.scaleX*zoom_coeff_x;
-      this.originX = this.width/2 + zoom_coeff_x * (this.originX - this.width/2);
-      this.scroll_x = 0;
-      this.refresh_MinMax();
-
-      if (this.layout_mode === 'two_axis') { // Then the algo does the same with the y-axis
-        let zoom_coeff_y = (this.height - this.decalage_axis_y)/(this.maxY - this.minY);
-        var container_center_y = this.Y + this.height/2;
-        for (let i=0; i<this.primitive_groups.length; i++) {
-          let primitive_center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
-          primitive_center_y = container_center_y + zoom_coeff_y*(primitive_center_y - container_center_y);
-          this.primitive_groups[i].Y = primitive_center_y - this.primitive_groups[i].height/2;
-        }
-        this.scaleY = this.scaleY*zoom_coeff_y;
-        this.originY = this.height/2 + zoom_coeff_y * (this.originY - this.height/2);
-        this.scroll_y = 0;
-      }
-
-      this.resetAllObjects();
-    }
-
-    translate_inside_canvas() {
-      if (this.layout_mode == 'one_axis') {
-        this.translateAllPrimitives(-this.minX + this.X, this.height/2 - this.minY + this.Y);
-      } else if (this.layout_mode == 'two_axis') {
-        this.translateAllPrimitives(this.decalage_axis_x - this.minX + this.X, -this.minY + this.Y);
-      }
-      this.draw();
-    }
-
-    reset_scales() {
-      this.reset_sizes();
-      if (this.primitive_groups.length >= 2) {
-        this.refresh_MinMax();
-        for (let i=0; i<10; i++) {
-          this.refresh_spacing();
-        }
-      }
-      else if (this.primitive_groups.length === 1) Interactions.click_on_reset_action(this.primitive_groups[0]);
-      this.refresh_MinMax();
-      this.translate_inside_canvas();
-    }
-
-    draw_initial() {
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        this.primitive_groups[i].draw_initial();
-      }
-    }
-
-    draw() {
-      if (this.clickedPlotIndex != -1) {
-        let old_index = List.get_index_of_element(this.clickedPlotIndex, this.display_order);
-        this.display_order = List.move_elements(old_index, this.display_order.length - 1, this.display_order);
-      }
-      this.context = this.context_show;
-      this.context.save();
-      this.draw_empty_canvas(this.context);
-      if (this.settings_on) {this.draw_settings_rect();} else {this.draw_rect();}
-      this.context.clip(this.context.rect(this.X-1, this.Y-1, this.width+2, this.height+2));
-      if (this.width > 100 && this.height > 100) {
-        this.draw_layout_axis();
-        if (this.layout_mode !== 'regular') {
-          this.draw_coordinate_lines();
-        }
-        for (let index of this.display_order) {
-          if (this.primitive_groups[index].selected) {
-            this.primitive_groups[index].draw();
-          }
-        }
-      }
-
-      if (this.multiplot_manipulation) {
-        this.draw_manipulable_rect();
-      } else {
-        this.context.strokeStyle = this.initial_rect_color_stroke;
-        this.context.lineWidth = this.initial_rect_line_width;
-        this.context.strokeRect(this.X, this.Y, this.width, this.height);
-      }
-      if (this.buttons_ON) { this.draw_buttons(); }
-      this.context.restore();
-    }
-
-
-    draw_from_context(hidden) {}
-
-
-    reset_selection() {
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        this.primitive_groups[i].selected = true;
-      }
-    }
-
-
-    select_primitive_groups() {
-      let reverse_primitive_dict = Object.fromEntries(Object.entries(this.primitive_dict).map(val => [val[1], val[0]]));
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        let index = Number(reverse_primitive_dict[i]);
-        this.primitive_groups[i].selected = List.is_include(index, this.selected_point_index);
-      }
-    }
-
-
-    redraw_object() {
-      this.store_datas();
-      this.draw_empty_canvas(this.context);
-      for (let display_index of this.display_order) {
-        let obj = this.primitive_groups[display_index];
-        if (display_index == this.clickedPlotIndex) {
-          this.primitive_groups[display_index].draw();
-        } else {
-           this.context_show.putImageData(this.shown_datas[display_index], obj.X, obj.Y);
-           this.context_hidden.putImageData(this.hidden_datas[display_index], obj.X, obj.Y);
-        }
-      }
-      if (this.buttons_ON) { this.draw_buttons(); }
-    }
-
-    store_datas() {
-      this.shown_datas = []; this.hidden_datas = [];
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        let obj = this.primitive_groups[i];
-        this.shown_datas.push(this.context_show.getImageData(obj.X, obj.Y, obj.width, obj.height));
-        this.hidden_datas.push(this.context_hidden.getImageData(obj.X, obj.Y, obj.width, obj.height));
-      }
-    }
-
-    draw_coordinate_lines() {
-      this.context.lineWidth = 0.5;
-      this.context.setLineDash([5,5]);
-      this.context.strokeStyle = string_to_hex('grey');
-      if (this.layout_mode == 'one_axis') {
-        for (let primitive of this.primitive_groups) {
-          if (!primitive.selected) continue;
-          let x = primitive.X + primitive.width/2;
-          let y = primitive.Y + primitive.height;
-          Shape.drawLine(this.context, [[x,y], [x, this.height - this.decalage_axis_y + this.Y]]);
-        }
-      } else if (this.layout_mode == 'two_axis') {
-        for (let primitive of this.primitive_groups) {
-          if (!primitive.selected) continue;
-          let x = primitive.X + primitive.width/2;
-          let y = primitive.Y + primitive.height/2;
-          Shape.drawLine(this.context, [[this.decalage_axis_x + this.X, y], [x, y], [x, this.height - this.decalage_axis_y + this.Y]]);
-        }
-      }
-      this.context.stroke();
-      this.context.setLineDash([]);
-    }
-
-
-    /**
-     * Calls the layout function of a PrimitiveGroupContainer whose layout_mode and axis are already set.
-     */
-    refresh_layout() {
-      if (this.layout_mode === 'one_axis') {
-        this.multiplot_one_axis_layout(this.layout_attributes[0]);
-      } else if (this.layout_mode === 'two_axis') {
-        this.multiplot_two_axis_layout(this.layout_attributes);
-      }
-    }
-
-
-    add_primitive_group(serialized, point_index) {
-      var new_plot_data = new PlotContour(serialized, 560, 300, this.buttons_ON, this.X, this.Y, this.canvas_id);
-      new_plot_data.context_hidden = this.context_hidden;
-      new_plot_data.context_show = this.context_show;
-      this.primitive_groups.push(new_plot_data);
-      this.display_order.push(this.primitive_groups.length - 1);
-      new_plot_data.draw_initial();
-      new_plot_data.mouse_interaction(new_plot_data.isParallelPlot);
-      new_plot_data.interaction_ON = false;
-      this.primitive_dict[point_index.toString()] = this.primitive_groups.length - 1;
-      this.refresh_layout();
-      this.reset_action();
-      this.draw();
-    }
-
-
-    remove_primitive_group(point_index) {
-      var primitive_index = this.primitive_dict[point_index.toString()];
-      this.primitive_groups = List.remove_at_index(primitive_index, this.primitive_groups);
-      this.display_order = List.remove_element(primitive_index, this.display_order);
-      this.primitive_dict = MyObject.removeEntries([point_index.toString()], this.primitive_dict);
-      this.elements_dict = MyObject.removeEntries([primitive_index.toString()], this.elements_dict);
-      var keys = Object.keys(this.primitive_dict);
-      for (let key of keys) {
-        if (this.primitive_dict[key] > primitive_index) {
-          this.primitive_dict[key]--;
-        }
-      }
-      for (let i=0; i<this.display_order.length; i++) {
-        if (this.display_order[i] > primitive_index) {
-          this.display_order[i]--;
-        }
-      }
-      var elements_entries = Object.entries(this.elements_dict);
-      for (let i=0; i<elements_entries.length; i++) {
-        if (Number(elements_entries[i][0]) > primitive_index) {
-          elements_entries[i][0] = (Number(elements_entries[i][0]) - 1).toString();
-        }
-      }
-      this.elements_dict = Object.fromEntries(elements_entries);
-      this.reset_action();
-      this.draw();
-    }
-
-
-    setAllInteractionsToOff() {
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        this.primitive_groups[i].interaction_ON = false;
-      }
-    }
-
-
-    manage_mouse_interactions(selected_primitive:number):void {
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        if (i == selected_primitive) {
-          this.primitive_groups[i].interaction_ON = true;
-        } else {
-          this.primitive_groups[i].interaction_ON = false;
-        }
-      }
-    }
-
-
-    get_selected_primitive(mouse2X, mouse2Y) {
-      var selected_index = -1;
-      for (let index of this.display_order) {
-        let prim = this.primitive_groups[index];
-        if (Shape.isInRect(mouse2X, mouse2Y, prim.X, prim.Y, prim.width, prim.height)) {
-          selected_index = index;
-        }
-      }
-      return selected_index;
-    }
-
-
-    draw_layout_axis() {
-      if (this.primitive_groups.length !== 0) {
-        if (this.layout_mode == 'one_axis') {
-          this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
-              this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x,
-              this.decalage_axis_y, this.X, this.Y, this.width);
-        } else if (this.layout_mode == 'two_axis') {
-          this.layout_axis.draw_sc_horizontal_axis(this.context, this.originX, this.scaleX, this.width, this.height,
-            this.init_scaleX, this.layout_attributes[0].list, this.layout_attributes[0], this.scroll_x, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.width);
-
-          this.layout_axis.draw_sc_vertical_axis(this.context, this.originY, this.scaleY, this.width, this.height, this.init_scaleY, this.layout_attributes[1].list,
-            this.layout_attributes[1], this.scroll_y, this.decalage_axis_x, this.decalage_axis_y, this.X, this.Y, this.height);
-
-        }
-      }
-    }
-
-
-    regular_layout():void {
-      var big_coord = 'X';
-      var small_coord = 'Y';
-      var big_length = 'width';
-      var small_length = 'height';
-      if (this.width < this.height) {
-        [big_coord, small_coord, big_length, small_length] = [small_coord, big_coord, small_length, big_length];
-      }
-      var sorted_list = this.getSortedList();
-      var nb_primitives = this.primitive_groups.length;
-      let small_length_nb_objects = Math.min(Math.ceil(nb_primitives/2), Math.floor(Math.sqrt(nb_primitives)));
-      let big_length_nb_objects = Math.ceil(nb_primitives/small_length_nb_objects);
-      let big_length_step = this[big_length]/big_length_nb_objects;
-      let small_length_step = this[small_length]/small_length_nb_objects;
-      for (let i=0; i<big_length_nb_objects - 1; i++) {
-        for (let j=0; j<small_length_nb_objects; j++) {
-          var current_index = i*small_length_nb_objects + j; //current_index in sorted_list
-          this.primitive_groups[sorted_list[current_index]][big_coord] = i*big_length_step + this[big_coord];
-          this.primitive_groups[sorted_list[current_index]][small_coord] = j*small_length_step + this[small_coord];
-          this.primitive_groups[sorted_list[current_index]][big_length] = big_length_step;
-          this.primitive_groups[sorted_list[current_index]][small_length] = small_length_step;
-        }
-      }
-      let last_index = current_index + 1;
-      let remaining_obj = nb_primitives - last_index;
-      let last_small_length_step = this[small_length]/remaining_obj;
-      for (let j=0; j<remaining_obj; j++) {
-        this.primitive_groups[sorted_list[last_index + j]][big_coord] = (big_length_nb_objects - 1)*big_length_step + this[big_coord];
-        this.primitive_groups[sorted_list[last_index + j]][small_coord] = j*last_small_length_step + this[small_coord];
-        this.primitive_groups[sorted_list[last_index + j]][big_length] = big_length_step;
-        this.primitive_groups[sorted_list[last_index + j]][small_length] = last_small_length_step;
-      }
-      this.resetAllObjects();
-      this.draw();
-    }
-
-
-    getSortedList() {
-      var big_coord = 'X';
-      var small_coord = 'Y';
-      if (this.width < this.height) {[big_coord, small_coord] = [small_coord, big_coord];}
-      var sort = new Sort();
-      var sortedObjectList = sort.sortObjsByAttribute(this.primitive_groups, big_coord);
-      var sorted_list = [];
-      var nb_primitives = this.primitive_groups.length;
-      for (let i=0; i<nb_primitives; i++) {
-        let sorted_index = List.get_index_of_element(sortedObjectList[i], this.primitive_groups);
-        sorted_list.push(sorted_index);
-      }
-      var sortedDisplayedObjectList = [];
-      for (let i=0; i<sorted_list.length; i++) {
-        sortedDisplayedObjectList.push(this.primitive_groups[sorted_list[i]]);
-      }
-      var j = 0;
-      while (j<sorted_list.length - 1) {
-        if (sortedDisplayedObjectList[j+1][small_coord] < sortedDisplayedObjectList[j][small_coord]) {
-          List.switchElements(sorted_list, j, j+1);
-        }
-        j = j+2;
-      }
-      return sorted_list;
-    }
-
-    initialize_list(attribute:Attribute) {
-      var elements_dict_values = Object.values(this.elements_dict);
-      var value = [];
-      var name = attribute.name;
-      let type_ = attribute.type_;
-      if (type_ == 'float') {
-        let min = elements_dict_values[0][name];
-        let max = elements_dict_values[0][name];
-        for (let j=0; j<elements_dict_values.length; j++) {
-          let elt = elements_dict_values[j][name];
-          if (elt>max) {
-            max = elt;
-          }
-          if (elt<min) {
-            min = elt;
-          }
-        }
-        if (min === max) {
-          if (min < 0) return [2*min, 0];
-          else if (min === 0) return [-1, 1];
-          else return [0, 2*min];
-        }
-        return [min, max];
-      } else if (type_ == 'color') {
-        var list = []
-        for (let j=0; j<elements_dict_values.length; j++) {
-          let elt_color = rgb_to_string(elements_dict_values[j][name]);
-          if (!List.is_include(elt_color, value)) {
-            value.push(elt_color);
-          }
-        }
-        return value;
-      } else {
-        for (let j=0; j<elements_dict_values.length; j++) {
-          let elt = elements_dict_values[j][name].toString();
-          if (!List.is_include(elt, value)) {
-            value.push(elt);
-          }
-        }
-        return value;
-      }
-    }
-
-    is_element_dict_empty() {
-      return Object.keys(this.elements_dict).length === 0;
-    }
-
-    multiplot_one_axis_layout(attribute:Attribute) {
-      this.refresh_one_axis_layout_list(attribute);
-      this.one_axis_layout();
-    }
-
-    refresh_one_axis_layout_list(attribute:Attribute) {
-      this.layout_mode = 'one_axis';
-      if (!this.is_element_dict_empty()) {
-        attribute.list = this.initialize_list(attribute);
-      }
-      this.layout_attributes = [attribute];
-    }
-
-
-    one_axis_layout() {
-      var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
-      var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
-      var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
-      this.layout_axis = Axis.deserialize(serialized_axis);
-      var nb_primitive_groups = this.primitive_groups.length;
-      var name = this.layout_attributes[0].name;
-      var type_ = this.layout_attributes[0].type_;
-      this.scaleX = 1; this.scaleY = 1;
-      this.originX = 0; this.originY = 0;
-      if (type_ !== 'float') {
-        var real_xs = [];
-        var y_incs = Array(nb_primitive_groups).fill(0);
-      }
-      for (let i=0; i<nb_primitive_groups; i++) {
-        this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
-        this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
-        if (this.layout_attributes[0].type_ == 'float') {
-          var real_x = this.elements_dict[i.toString()][name];
-        } else if (this.layout_attributes[0].type_ == 'color') {
-          real_x = List.get_index_of_element(rgb_to_string(this.elements_dict[i.toString()][name]), this.layout_attributes[0].list);
-          if (List.is_include(real_x, real_xs)) { y_incs[i] += - this.primitive_groups[i].height; } else {real_xs.push(real_x);}
-
-        } else {
-          real_x = List.get_index_of_element(this.elements_dict[i.toString()][name], this.layout_attributes[0].list);
-          if (List.is_include(real_x, real_xs)) {y_incs[i] += - this.primitive_groups[i].height;} else {real_xs.push(real_x);}
-        }
-        var center_x = this.scaleX*real_x + this.originX;
-        this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
-        this.primitive_groups[i].Y = this.Y + this.height/2 - this.primitive_groups[i].height/2;
-        if (type_ !== 'float') this.primitive_groups[i].Y += y_incs[i];
-      }
-      if (this.primitive_groups.length >= 1) this.reset_scales();
-      this.resetAllObjects();
-      this.draw();
-    }
-
-    refresh_two_axis_layout_list(attributes:Attribute[]) {
-      this.layout_mode = 'two_axis';
-      if (!this.is_element_dict_empty()) {
-        attributes[0].list = this.initialize_list(attributes[0]);
-        attributes[1].list = this.initialize_list(attributes[1]);
-      }
-      this.layout_attributes = attributes;
-    }
-
-    multiplot_two_axis_layout(attributes:Attribute[]) {
-      this.refresh_two_axis_layout_list(attributes);
-      this.two_axis_layout();
-    }
-
-
-    two_axis_layout() {
-      var graduation_style = new TextStyle(string_to_rgb('grey'), 12, 'sans-serif', 'center', 'alphabetic');
-      var axis_style = new EdgeStyle(0.5, string_to_rgb('lightgrey'), [], '');
-      var serialized_axis = {graduation_style: graduation_style, axis_style: axis_style, grid_on: false};
-      this.layout_axis = Axis.deserialize(serialized_axis);
-      var nb_primitive_groups = this.primitive_groups.length;
-      this.scaleX = 1; this.scaleY = 1;
-      this.originX = 0; this.originY = 0;
-      for (let i=0; i<nb_primitive_groups; i++) {
-        this.primitive_groups[i].width = this.width/(1.2*nb_primitive_groups);
-        this.primitive_groups[i].height = this.height/(1.2*nb_primitive_groups);
-        if (this.layout_attributes[0].type_ == 'float') {
-          var real_x = this.elements_dict[i.toString()][this.layout_attributes[0].name];
-        } else if (this.layout_attributes[0].type_ == 'color') {
-          let value = rgb_to_string(this.elements_dict[i.toString()][this.layout_attributes[0].name]);
-          real_x = List.get_index_of_element(value, this.layout_attributes[0].list);
-        } else {
-          real_x = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[0].name], this.layout_attributes[0].list);
-        }
-        var center_x = this.scaleX*real_x + this.originX;
-        this.primitive_groups[i].X = this.X + center_x - this.primitive_groups[i].width/2;
-
-        if (this.layout_attributes[1].type_ == 'float') {
-          var real_y = this.elements_dict[i.toString()][this.layout_attributes[1].name];
-        } else if (this.layout_attributes[1].type_ == 'color') {
-          let value = rgb_to_string(this.elements_dict[i.toString()][this.layout_attributes[1].name]);
-          real_y = List.get_index_of_element(value, this.layout_attributes[1].list);
-        } else {
-          real_y = List.get_index_of_element(this.elements_dict[i.toString()][this.layout_attributes[1].name], this.layout_attributes[1].list);
-        }
-        var center_y = -this.scaleX*real_y + this.originY;
-        this.primitive_groups[i].Y = this.Y + center_y - this.primitive_groups[i].height/2;
-      }
-      if (this.primitive_groups.length >= 2) this.reset_scales();
-      this.resetAllObjects();
-      this.draw();
-    }
-
-    translatePrimitive(index, tx, ty) {
-      this.primitive_groups[index].X = this.primitive_groups[index].X + tx;
-      this.primitive_groups[index].Y = this.primitive_groups[index].Y + ty;
-    }
-
-    translateAllPrimitives(tx, ty) {
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        this.translatePrimitive(i, tx, ty);
-      }
-      this.originX = this.originX + tx;
-      this.originY = this.originY + ty;
-    }
-
-
-    resetAllObjects() {
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        this.primitive_groups[i].reset_scales();
-      }
-    }
-
-    zoom_elements(mouse3X:number, mouse3Y:number, event:number) {
-      if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
-        this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
-          this.x_zoom_elements(event);
-      } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.X, this.Y, this.decalage_axis_x,
-        this.height - this.decalage_axis_y))) {
-          this.y_zoom_elements(event);
-      } else {
-        this.regular_zoom_elements(mouse3X, mouse3Y, event);
-      }
-    }
-
-    regular_zoom_elements(mouse3X, mouse3Y, event) {
-      if (event > 0) {
-        var zoom_coeff = 1.1;
-      } else {
-        var zoom_coeff = 1/1.1;
-      }
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        this.primitive_groups[i].X = mouse3X + zoom_coeff*(this.primitive_groups[i].X - mouse3X);
-        this.primitive_groups[i].Y = mouse3Y + zoom_coeff*(this.primitive_groups[i].Y - mouse3Y);
-        this.primitive_groups[i].width = this.primitive_groups[i].width*zoom_coeff;
-        this.primitive_groups[i].height = this.primitive_groups[i].height*zoom_coeff;
-      }
-      this.resetAllObjects();
-      this.scaleX = this.scaleX*zoom_coeff; this.scaleY = this.scaleY*zoom_coeff;
-      this.originX = mouse3X - this.X + zoom_coeff * (this.originX - mouse3X + this.X);
-      this.originY = mouse3Y - this.Y + zoom_coeff * (this.originY - mouse3Y + this.Y);
-      this.draw();
-    }
-
-    x_zoom_elements(event) {
-      if (event > 0) {
-        var zoom_coeff = 1.1;
-      } else {
-        zoom_coeff = 1/1.1;
-      }
-      var container_center_x = this.X + this.width/2;
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        let primitive_center_x = this.primitive_groups[i].X + this.primitive_groups[i].width/2;
-        primitive_center_x = container_center_x + zoom_coeff*(primitive_center_x - container_center_x);
-        this.primitive_groups[i].X = primitive_center_x - this.primitive_groups[i].width/2;
-      }
-      this.resetAllObjects();
-      this.scaleX = this.scaleX*zoom_coeff;
-      this.originX = this.width/2 + zoom_coeff * (this.originX - this.width/2);
-      this.draw();
-    }
-
-    y_zoom_elements(event) {
-      if (event > 0) {
-        var zoom_coeff = 1.1;
-      } else {
-        zoom_coeff = 1/1.1;
-      }
-      var container_center_y = this.Y + this.height/2;
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        let primitive_center_y = this.primitive_groups[i].Y + this.primitive_groups[i].height/2;
-        primitive_center_y = container_center_y + zoom_coeff*(primitive_center_y - container_center_y);
-        this.primitive_groups[i].Y = primitive_center_y - this.primitive_groups[i].height/2;
-      }
-      this.resetAllObjects();
-      this.scaleY = this.scaleY*zoom_coeff;
-      this.originY = this.height/2 + zoom_coeff * (this.originY - this.height/2);
-      this.draw();
-    }
-
-    manage_scroll(mouse3X, mouse3Y, event) {
-      if ((this.layout_mode !== 'regular') && (Shape.isInRect(mouse3X, mouse3Y, this.X + this.decalage_axis_x,
-        this.height - this.decalage_axis_y + this.Y, this.width - this.decalage_axis_x, this.height - this.decalage_axis_y))) {
-          this.scroll_x = this.scroll_x + event;
-      } else if ((this.layout_mode == 'two_axis') && (Shape.isInRect(mouse3X, mouse3Y, this.X, this.Y, this.decalage_axis_x,
-        this.height - this.decalage_axis_y))) {
-          this.scroll_y = this.scroll_y + event;
-      } else {
-        this.scroll_x = this.scroll_x + event;
-        this.scroll_y = this.scroll_y + event;
-      }
-      if (isNaN(this.scroll_x)) this.scroll_x = 0;
-      if (isNaN(this.scroll_y)) this.scroll_y = 0;
-    }
-
-    delete_unwanted_vertex(vertex_infos) {
-      var i = 0;
-      while (i < vertex_infos.length) {
-        let to_delete = false;
-        if (this.clickedPlotIndex != vertex_infos[i].index) {
-          let j = 0;
-          let cpi_vertex = false;
-          while (j<vertex_infos.length) {
-            if ((vertex_infos[j].index == this.clickedPlotIndex)) {
-              cpi_vertex = true;
-              break;
-            }
-            j++;
-          }
-          to_delete = !cpi_vertex;
-        }
-        if (to_delete) {
-          vertex_infos = List.remove_at_index(i, vertex_infos);
-        } else {
-          i++;
-        }
-      }
-      return vertex_infos;
-    }
-
-    initialize_clickOnVertex(mouse1X, mouse1Y):[boolean, Object] {
-      var thickness = 15;
-      var vertex_infos = [];
-      for (let i=0; i<this.primitive_groups.length; i++) {
-        let obj:PlotData = this.primitive_groups[this.display_order[i]];
-        let up = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, obj.width + thickness*2/3, thickness);
-        let down = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
-        let left = Shape.isInRect(mouse1X, mouse1Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
-        let right = Shape.isInRect(mouse1X, mouse1Y, obj.X + obj.width - thickness*2/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
-        var clickOnVertex_i = up || down || left || right;
-        if (clickOnVertex_i) {
-          vertex_infos.push({'index': this.display_order[i], 'up': up, 'down': down, 'left':left, 'right': right});
-        }
-      }
-      vertex_infos = this.delete_unwanted_vertex(vertex_infos);
-      var clickOnVertex = !(vertex_infos.length == 0);
-      return [clickOnVertex, vertex_infos];
-    }
-
-    resizeObject(vertex_infos, deltaX, deltaY):void {
-      var widthSizeLimit = 100;
-      var heightSizeLimit = 100;
-      for (let i=0; i<vertex_infos.length; i++) {
-        let vertex_object_index = vertex_infos[i].index;
-        if (vertex_infos[i].up === true) {
-          if (this.primitive_groups[vertex_object_index].height - deltaY > heightSizeLimit) {
-            this.primitive_groups[vertex_object_index].Y = this.primitive_groups[vertex_object_index].Y + deltaY;
-            this.primitive_groups[vertex_object_index].height = this.primitive_groups[vertex_object_index].height - deltaY;
-          } else {
-            this.primitive_groups[vertex_object_index].height = heightSizeLimit;
-          }
-        }
-        if (vertex_infos[i].down === true) {
-          if (this.primitive_groups[vertex_object_index].height + deltaY > heightSizeLimit) {
-            this.primitive_groups[vertex_object_index].height = this.primitive_groups[vertex_object_index].height + deltaY;
-          } else {
-            this.primitive_groups[vertex_object_index].height = heightSizeLimit;
-          }
-        }
-        if (vertex_infos[i].left === true) {
-          if (this.primitive_groups[vertex_object_index].width - deltaX > widthSizeLimit) {
-            this.primitive_groups[vertex_object_index].X = this.primitive_groups[vertex_object_index].X + deltaX;
-            this.primitive_groups[vertex_object_index].width = this.primitive_groups[vertex_object_index].width - deltaX;
-          } else {
-            this.primitive_groups[vertex_object_index].width = widthSizeLimit;
-          }
-        }
-        if (vertex_infos[i].right === true) {
-          if (this.primitive_groups[vertex_object_index].width + deltaX > widthSizeLimit) {
-            this.primitive_groups[vertex_object_index].width = this.primitive_groups[vertex_object_index].width + deltaX;
-          } else {
-            this.primitive_groups[vertex_object_index].width = widthSizeLimit;
-          }
-        }
-      }
-      this.draw();
-    }
-
-    reorder_resize_style(resize_style) {
-      var resize_dict = ['n', 'ns', 'ne', 'nwse', 'nw', 'e', 'ew', 's', 'se', 'sw', 'w'];
-      for (let i=0; i<resize_dict.length; i++) {
-        if (resize_style.split('').sort().join() === resize_dict[i].split('').sort().join()) {
-          resize_style = resize_dict[i];
-          break;
-        }
-      }
-      return resize_style;
-    }
-
-    setCursorStyle(mouse2X, mouse2Y, canvas, selected_primitive):void {
-      if (selected_primitive != -1) {
-        var thickness = 15;
-        var resize_style:any = '';
-        for (let i=0; i<this.primitive_groups.length; i++) {
-          let obj:PlotData = this.primitive_groups[i];
-          let up = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, obj.width + thickness*2/3, thickness);
-          let down = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y + obj.height - thickness*2/3, obj.width + thickness*2/3, thickness);
-          let left = Shape.isInRect(mouse2X, mouse2Y, obj.X - thickness*1/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
-          let right = Shape.isInRect(mouse2X, mouse2Y, obj.X + obj.width - thickness*2/3, obj.Y - thickness*1/3, thickness, obj.height + thickness*2/3);
-          if (up && !resize_style.includes('n')) {resize_style = resize_style + 'n';}
-          if (down && !resize_style.includes('s')) {resize_style = resize_style + 's';}
-          if (left && !resize_style.includes('w')) {resize_style = resize_style + 'w';}
-          if (right && !resize_style.includes('e')) {resize_style = resize_style + 'e';}
-        }
-        if (resize_style == '') {
-          canvas.style.cursor = 'default';
-        } else {
-          resize_style = this.reorder_resize_style(resize_style);
-          canvas.style.cursor = resize_style + '-resize';
-        }
-      } else {
-        canvas.style.cursor = 'default';
-      }
-      this.draw();
-    }
-
-    mouse_interaction() {
-      var mouse1X=0; var mouse1Y=0; var mouse2X=0; var mouse2Y=0; var mouse3X=0; var mouse3Y=0;
-      var nbObjects:number = this.primitive_groups.length;
-      var canvas = document.getElementById(this.canvas_id);
-      // var selected_primitive:number = -1;
-      var last_selected_primitive = -1;
-      var isDrawing = false;
-      var vertex_infos:Object;
-      var clickOnVertex:boolean = false;
-
-      for (let i=0; i<nbObjects; i++) {
-        this.primitive_groups[i].mouse_interaction(this.primitive_groups[i].isParallelPlot);
-      }
-      this.setAllInteractionsToOff();
-
-      canvas.addEventListener('mousedown', e => {
-        isDrawing = true;
-        if (this.interaction_ON) {
-          mouse1X = e.offsetX; mouse1Y = e.offsetY;
-          this.click_on_button_check(mouse1X, mouse1Y);
-          this.clickedPlotIndex = this.get_selected_primitive(mouse1X, mouse1Y);
-          if (this.manipulation_bool) {
-            if (this.clickedPlotIndex != -1) {
-              [clickOnVertex, vertex_infos] = this.initialize_clickOnVertex(mouse1X, mouse1Y);
-            } else {
-              clickOnVertex = false;
-            }
-          }
-        }
-      });
-
-      canvas.addEventListener('mousemove', e => {
-        if (this.interaction_ON) {
-          var old_mouse2X = mouse2X; var old_mouse2Y = mouse2Y;
-          mouse2X = e.offsetX, mouse2Y = e.offsetY;
-          this.selected_primitive = this.get_selected_primitive(mouse2X, mouse2Y);
-          if (this.manipulation_bool) {
-            if (isDrawing) {
-              if ((this.clickedPlotIndex == -1) || (this.layout_mode !== 'regular')) {
-                this.translateAllPrimitives(mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
-                this.draw();
-              } else {
-                if (clickOnVertex) {
-                  this.resizeObject(vertex_infos, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
-                } else {
-                  this.translatePrimitive(this.clickedPlotIndex, mouse2X - old_mouse2X, mouse2Y - old_mouse2Y);
-                  this.draw();
-                }
-              }
-            } else {
-              if (this.layout_mode === 'regular') {
-                this.setCursorStyle(mouse2X, mouse2Y, canvas, this.selected_primitive);
-              }
-            }
-          } else {
-            if (this.selected_primitive !== last_selected_primitive) {
-              this.manage_mouse_interactions(this.selected_primitive);
-            }
-            last_selected_primitive = this.selected_primitive;
-          }
-        } else {
-          isDrawing = false;
-        }
-      });
-
-      canvas.addEventListener('mouseup', e => {
-        if (this.interaction_ON) {
-          isDrawing = false;
-          this.draw();
-        }
-      });
-
-      canvas.addEventListener('wheel', e => {
-        if (this.interaction_ON) {
-          e.preventDefault();
-          mouse3X = e.offsetX; mouse3Y = e.offsetY;
-          if (this.manipulation_bool) {
-            var event = -e.deltaY/Math.abs(e.deltaY);
-            this.manage_scroll(mouse3X, mouse3Y, event);
-            this.zoom_elements(mouse3X, mouse3Y, event);
-          }
-        }
-      });
-
-      canvas.addEventListener('mouseleave', e => {
-        this.clickedPlotIndex = -1;
-        this.selected_primitive = -1;
-        this.setAllInteractionsToOff();
-      })
-    }
-}
-
-
+const BLANK_SPACE = 3;
 const MIN_FONTSIZE: number = 6;
 const MIN_OFFSET: number = 33;
-export class Figure extends PlotData {
+const ZOOM_FACTOR: number = 1.2;
+export class Figure {
+  public context: CanvasRenderingContext2D;
   public axes: newAxis[] = [];
   public drawOrigin: Vertex;
   public drawEnd: Vertex;
@@ -1477,13 +1350,16 @@ export class Figure extends PlotData {
   public selectedIndices: number[];
 
   public nSamples: number;
-  public pointSets: number[];
-  public pointSetColors: string[] = [];
+  public pointSets: PointSet[];
   public pointStyles: newPointStyle[] = null;
 
+  public lineWidth: number = 1;
+
+  public isHovered: boolean = false;
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
   public isZooming: boolean = false;
+  public zoomBox = new SelectionBox();
 
   public viewPoint: Vertex = new Vertex(0, 0);
   public fixedObjects: ShapeCollection;
@@ -1499,30 +1375,35 @@ export class Figure extends PlotData {
   protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
-  readonly features: Map<string, any[]>;
+  public features: Map<string, any[]>;
+  public featureNames: string[];
   readonly MAX_PRINTED_NUMBERS = 6;
   readonly TRL_THRESHOLD = 20;
+
+  // TODO: refactor these legacy attribute
+  public scaleX: number = 1;
+  public scaleY: number = 1;
+  public is_drawing_rubber_band: boolean = false;
+
   constructor(
     data: any,
     public width: number,
     public height: number,
-    public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
-    public canvas_id: string,
+    X: number,
+    Y: number,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
       this.unpackAxisStyle(data);
-      this.origin = new Vertex(0, 0);
+      this.origin = new Vertex(X, Y);
       this.size = new Vertex(width - X, height - Y);
       this.features = this.unpackData(data);
+      this.featureNames = Array.from(this.features.keys());
       this.nSamples = this.features.entries().next().value[1].length;
       this.initSelectors();
       this.scaleX = this.scaleY = 1;
       this.TRL_THRESHOLD /= Math.min(Math.abs(this.initScale.x), Math.abs(this.initScale.y));
-      this.refresh_MinMax();
-      this.pointSets = new Array(this.nSamples).fill(-1);
+      this.buildPointSets(data);
       this.drawnFeatures = this.setFeatures(data);
       this.axes = this.setAxes();
       this.fixedObjects = new ShapeCollection(this.axes);
@@ -1530,12 +1411,7 @@ export class Figure extends PlotData {
       this.absoluteObjects = new GroupCollection();
     }
 
-  refresh_MinMax(): void {
-    this.minX = this.origin.x;
-    this.maxX = this.origin.x + this.size.x;
-    this.minY = this.origin.y;
-    this.maxY = this.origin.y + this.size.y;
-  }
+  get className(): string { return "Figure" }
 
   get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
 
@@ -1543,13 +1419,13 @@ export class Figure extends PlotData {
 
   get axisStyle(): Map<string, any> { return this._axisStyle }
 
-  get canvasMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
+  get canvasMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]) }
 
-  get relativeMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, this.origin.x, this.origin.y]) }
+  get relativeMatrix(): DOMMatrix { return new DOMMatrix([this.initScale.x, 0, 0, this.initScale.y, 0, 0]) }
 
   get falseIndicesArray(): boolean[] { return new Array(this.nSamples).fill(false) }
 
-  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.07) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.027, 0.035) }
 
   set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
@@ -1557,8 +1433,17 @@ export class Figure extends PlotData {
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
-  private isInCanvas(vertex: Vertex): boolean {
-    return vertex.x >= this.X && vertex.x <= this.X + this.size.x && vertex.y >= this.Y && vertex.y <= this.Y + this.size.y
+  public static fromMultiplot(data: any, width: number, height: number, canvasID: string): Figure {
+    if (data.type_ == "histogram") return new Histogram(data, width, height, 0, 0, canvasID, true);
+    else if (data.type_ == "parallelplot")return new ParallelPlot(data, width, height, 0, 0, canvasID, true);
+    else if (data.type_ == "draw") return new Draw(data, width, height, 0, 0, canvasID, true);
+    else if (data.type_ == "graph2d") return new Graph2D(data, width, height, 0, 0, canvasID, true);
+    else if (data.type_ == "primitivegroupcontainer") return new PrimitiveGroupContainer(data, width, height, false, 0, 0, canvasID, true);
+    else if (data.type_ == "scatterplot") return new Scatter(data, width, height, 0, 0, canvasID, true);
+  }
+
+  public isInCanvas(vertex: Vertex): boolean {
+    return vertex.x >= this.origin.x && vertex.x <= this.origin.x + this.size.x && vertex.y >= this.origin.y && vertex.y <= this.origin.y + this.size.y
   }
 
   protected unpackAxisStyle(data:any): void {
@@ -1568,8 +1453,38 @@ export class Figure extends PlotData {
     if (data.axis?.graduation_style?.font_size) this.axisStyle.set("ticksFontsize", data.axis.graduation_style.font_size);
   }
 
-  protected unpackData(data: any): Map<string, any[]> {
+  protected unpackPointsSets(data: any): void {
+    data.points_sets.forEach((pointSet, index) => {
+      this.pointSets.push(new PointSet(pointSet.point_index, colorHsl(pointSet.color), pointSet.name ?? `Point set ${index}`));
+    });
+  }
+
+  protected unpackData(data: any): Map<string, any[]> { return Figure.deserializeData(data) }
+
+  public serializeFeatures(): any {
+    const elements = [];
+    for (let i=0; i < this.nSamples; i++) {
+      const newSample = {};
+      this.featureNames.forEach(feature => newSample[feature] = this.features.get(feature)[i]);
+      elements.push(newSample);
+    }
+    return elements
+  }
+
+  protected buildPointSets(data: any): void {
+    this.pointSets = [];
+    if (data.points_sets) this.unpackPointsSets(data);
+  }
+
+  public getSetColorOfIndex(index: number): string {
+    for (let set of this.pointSets) { if (set.indices.includes(index)) return set.color }
+    return null
+  }
+
+  public static deserializeData(data: any): Map<string, any[]> {
     const unpackedData = new Map<string, any[]>();
+    if (data.x_variable) unpackedData.set(data.x_variable, []);
+    if (data.y_variable) unpackedData.set(data.y_variable, []);
     if (!data.elements) return unpackedData;
     const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
     featureKeys.push("name");
@@ -1577,14 +1492,23 @@ export class Figure extends PlotData {
     return unpackedData
   }
 
+  public drawBorders() {
+    const rect = new newRect(this.origin, this.size);
+    rect.lineWidth = 0.5;
+    rect.strokeStyle = "hsl(0, 0%, 83%)";
+    rect.isFilled = false;
+    rect.draw(this.context);
+  }
+
   private drawCanvas(): void {
-    this.context = this.context_show;
-    this.draw_empty_canvas(this.context_show);
-    if (this.settings_on) this.draw_settings_rect()
-    else this.draw_rect();
-    this.context_show.beginPath();
-    this.context_show.rect(this.X, this.Y, this.width, this.height);
-    this.context_show.closePath();
+    this.context.clearRect(this.origin.x - 1, this.origin.y - 1, this.width + 2, this.height + 2);
+  }
+
+  public setCanvas(canvasID: string):void {
+    const canvas = document.getElementById(canvasID) as HTMLCanvasElement;
+    canvas.width = this.width;
+		canvas.height = this.height;
+    this.context = canvas.getContext("2d");
   }
 
   public updateAxes(): void {
@@ -1596,11 +1520,20 @@ export class Figure extends PlotData {
     this.updateSelection(axesSelections);
   }
 
+  public changeAxisFeature(name: string, index: number): void {
+    this.drawnFeatures[index] = name;
+    this.axes[index] = this.setAxis(name, this.axes[index].boundingBox, this.axes[index].origin, this.axes[index].end, this.axes[index].nTicks);
+    this.resetScales();
+    this.draw();
+  }
+
   protected setFeatures(data: any): string[] { return data.attribute_names ?? Array.from(this.features.keys()) }
 
+  protected computeNaturalOffset(): Vertex { return new Vertex(this.width * this.offsetFactor.x, this.height * this.offsetFactor.y) }
+
   protected computeOffset(): Vertex {
-    const naturalOffset = new Vertex(this.width * this.offsetFactor.x, this.height * this.offsetFactor.y);
-    return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET), Math.max(naturalOffset.y, MIN_FONTSIZE));
+    const naturalOffset = this.computeNaturalOffset();
+    return new Vertex(Math.max(naturalOffset.x, MIN_OFFSET) + BLANK_SPACE, Math.max(naturalOffset.y, MIN_FONTSIZE));
   }
 
   protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
@@ -1612,10 +1545,10 @@ export class Figure extends PlotData {
   }
 
   protected computeBounds(): Vertex {
-    const canvasOrigin = new Vertex(this.X, this.Y).scale(this.initScale);
+    const canvasOrigin = this.origin.scale(this.initScale);
     this.drawOrigin = this.offset.add(canvasOrigin);
     this.drawEnd = canvasOrigin.add(this.size.subtract(this.margin));
-    const freeSpace = new Vertex(Math.abs(this.drawOrigin.x - this.X), Math.abs(this.drawOrigin.y - this.Y));
+    const freeSpace = new Vertex(Math.abs(this.drawOrigin.x - this.origin.x), Math.abs(this.drawOrigin.y - this.origin.y));
     if (this.canvasMatrix.a < 0) this.swapDimension("x", this.drawOrigin, this.drawEnd, freeSpace);
     if (this.canvasMatrix.d < 0) this.swapDimension("y", this.drawOrigin, this.drawEnd, freeSpace);
     return freeSpace
@@ -1624,7 +1557,7 @@ export class Figure extends PlotData {
   protected swapDimension(dimension: string, origin: Vertex, end: Vertex, freeSpace: Vertex): void {
     origin[dimension] = origin[dimension] - this.size[dimension];
     end[dimension] = end[dimension] - this.size[dimension];
-    freeSpace[dimension] = Math.abs(new Vertex(this.X, this.Y)[dimension] - origin[dimension] * this.initScale[dimension] + this.size[dimension]);
+    freeSpace[dimension] = Math.abs(this.origin[dimension] - origin[dimension] * this.initScale[dimension] + this.size[dimension]);
   }
 
   protected setAxes(): newAxis[] {
@@ -1646,6 +1579,8 @@ export class Figure extends PlotData {
     axis.updateStyle(this.axisStyle);
     return axis
   }
+
+  protected setAxesTitleWidth(): void {}
 
   private relocateAxes(): void {
     const freeSpace = this.computeBounds();
@@ -1669,29 +1604,70 @@ export class Figure extends PlotData {
       }
       if (inAllArrays) arraysIntersection.push(value);
     })
-    return newAxis.uniqueValues(arraysIntersection)
+    return uniqueValues(arraysIntersection)
   }
 
   protected updateSize(): void { this.size = new Vertex(this.width, this.height) }
 
   protected resetAxes(): void { this.axes.forEach(axis => axis.reset()) }
 
-  public reset_scales(): void { // TODO: merge with resetView
+  public updateDimensions(): void {
     this.updateSize();
     this.computeOffset();
     this.relocateAxes();
+    this.setAxesTitleWidth();
+  }
+
+  public resetScales(): void {
+    this.updateDimensions();
     this.axes.forEach(axis => axis.resetScale());
   }
 
   public resetView(): void {
-    this.reset_scales();
+    this.resetScales();
     this.draw();
+  }
+
+  public resize(): void {
+    this.updateDimensions();
+    this.axes.forEach(axis => axis.updateTicks());
+  }
+
+  public resizeUpdate(): void {
+    this.resize();
+    this.draw();
+  }
+
+  public multiplotInstantiation(origin: Vertex, width: number, height: number): void {
+    this.origin = origin;
+    this.width = width;
+    this.height = height;
+  }
+
+  public multiplotDraw(origin: Vertex, width: number, height: number): void {
+    this.multiplotInstantiation(origin, width, height);
+    this.resetView();
+  }
+
+  public multiplotResize(origin: Vertex, width: number, height: number): void {
+    this.multiplotInstantiation(origin, width, height);
+    this.resizeUpdate();
+  }
+
+  public static createFromMultiplot(data: any, features: Map<string, any>, context: CanvasRenderingContext2D, canvasID: string): Figure {
+    const plot = Figure.fromMultiplot(data, 500, 500, canvasID);
+    plot.features = features;
+    plot.context = context;
+    return plot
   }
 
   public initSelectors(): void {
     this.hoveredIndices = [];
     this.clickedIndices = [];
     this.selectedIndices = [];
+    this.fixedObjects?.resetShapeStates();
+    this.absoluteObjects?.resetShapeStates();
+    this.relativeObjects?.resetShapeStates();
   }
 
   protected resetSelectors(): void {
@@ -1699,20 +1675,25 @@ export class Figure extends PlotData {
     this.initSelectors();
   }
 
-  protected reset(): void {
+  public reset(): void {
     this.resetAxes();
     this.resetSelectors();
   }
 
   protected resetSelection(): void {
-    this.axes.forEach(axis => axis.rubberBand.reset());
+    this.resetRubberBands();
     this.resetSelectors();
+  }
+
+  public resetRubberBands(): void {
+    this.axes.forEach(axis => axis.rubberBand.reset());
+    this.selectedIndices = [];
   }
 
   public updateSelected(axis: newAxis): number[] {
     const selection = [];
     const vector = axis.stringsToValues(this.features.get(axis.name));
-    vector.forEach((value, index) => { if (axis.isInRubberBand(value)) selection.push(index) });
+    vector.forEach((value, index) => axis.isInRubberBand(value) ? selection.push(index) : {});
     return selection
   }
 
@@ -1726,10 +1707,10 @@ export class Figure extends PlotData {
     const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
     this.updateDrawnObjects(context);
     this.updateCuttingZone(context);
-    const cutDraw = context.getImageData(this.X, this.Y, this.size.x, this.size.y);
+    const cutDraw = context.getImageData(this.origin.x, this.origin.y, this.size.x, this.size.y);
     context.globalCompositeOperation = "source-over";
     context.putImageData(previousCanvas, 0, 0);
-    context.putImageData(cutDraw, this.X, this.Y);
+    context.putImageData(cutDraw, this.origin.x, this.origin.y);
   }
 
   protected updateDrawnObjects(context: CanvasRenderingContext2D): void {}
@@ -1748,9 +1729,15 @@ export class Figure extends PlotData {
 
   protected drawFixedObjects(context: CanvasRenderingContext2D): void { this.fixedObjects.draw(context) }
 
-  private drawZoneRectangle(context: CanvasRenderingContext2D): void {
-    // TODO: change with newRect
-    Shape.rect(this.X, this.Y, this.width, this.height, context, "hsl(203, 90%, 88%)", "hsl(0, 0%, 0%)", 1, 0.3, [15, 15]);
+  public drawZoneRectangle(context: CanvasRenderingContext2D): SelectionBox {
+    const zoneRect = new SelectionBox(this.origin, this.size);
+    zoneRect.fillStyle = "hsl(203, 90%, 88%)";
+    zoneRect.hoverStyle = zoneRect.clickedStyle = zoneRect.strokeStyle = "hsl(203, 90%, 73%)";
+    zoneRect.alpha = 0.3;
+    zoneRect.lineWidth = 1;
+    zoneRect.dashLine = [7, 7];
+    zoneRect.draw(context);
+    return zoneRect
   }
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.relativeObjects = new GroupCollection([]) }
@@ -1760,46 +1747,45 @@ export class Figure extends PlotData {
   protected computeRelativeObjects() {}
 
   public draw(): void {
-    this.context_show.save();
+    this.context.save();
     this.drawCanvas();
-    this.context_show.setTransform(this.canvasMatrix);
+    this.context.setTransform(this.canvasMatrix);
 
     this.updateAxes();
     this.computeRelativeObjects();
 
-    this.context_show.setTransform(this.relativeMatrix);
-    this.drawRelativeObjects(this.context_show);
+    this.context.setTransform(this.relativeMatrix);
+    this.drawRelativeObjects(this.context);
 
-    this.context_show.resetTransform();
-    this.drawAbsoluteObjects(this.context_show);
+    this.context.resetTransform();
+    this.drawAbsoluteObjects(this.context);
 
-    this.context_show.setTransform(this.relativeMatrix);
-    this.drawSelectionBox(this.context_show);
+    this.context.setTransform(this.relativeMatrix);
+    this.drawSelectionBox(this.context);
+    this.drawZoomBox(this.context);
 
-    this.context_show.setTransform(this.canvasMatrix);
-    this.drawFixedObjects(this.context_show);
+    this.context.setTransform(this.canvasMatrix);
+    this.drawFixedObjects(this.context);
     this.drawTooltips();
 
-    this.context_show.resetTransform();
-    if (this.multiplot_manipulation) this.drawZoneRectangle(this.context_show);
-    this.context_show.restore();
+    this.context.resetTransform();
+    this.drawBorders();
+    this.context.restore();
   }
-
-  public draw_initial(): void { this.draw() }
-
-  public draw_from_context(hidden: any) {}
 
   public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() }
 
   public switchMerge(): void {}
 
-  public switchZoom(): void { this.isZooming = !this.isZooming }
+  public switchZoom(): void {}
+
+  public switchOrientation(): void {}
 
   public togglePoints(): void {}
 
   protected updateSelectionBox(frameDown: Vertex, frameMouse: Vertex): void { this.selectionBox.update(frameDown, frameMouse) }
 
-  public get drawingZone(): [Vertex, Vertex] { return [new Vertex(this.X, this.Y), this.size] }
+  public get drawingZone(): [Vertex, Vertex] { return [this.origin, this.size] }
 
   protected drawSelectionBox(context: CanvasRenderingContext2D) {
     if ((this.isSelecting || this.is_drawing_rubber_band) && this.selectionBox.isDefined) {
@@ -1816,17 +1802,17 @@ export class Figure extends PlotData {
     }
   }
 
-  private drawZoomBox(zoomBox: SelectionBox, frameDown: Vertex, frameMouse: Vertex, context: CanvasRenderingContext2D): void {
-    zoomBox.update(frameDown, frameMouse);
-    zoomBox.buildRectangle(
-      new Vertex(this.axes[0].minValue, this.axes[1].minValue),
-      new Vertex(this.axes[0].interval, this.axes[1].interval)
-    );
-    context.save();
-    context.setTransform(this.relativeMatrix);
-    zoomBox.draw(context);
-    context.restore();
+  private drawZoomBox(context: CanvasRenderingContext2D): void {
+    if (this.isZooming && this.zoomBox.isDefined) {
+      this.zoomBox.buildRectangle(
+        new Vertex(this.axes[0].minValue, this.axes[1].minValue),
+        new Vertex(this.axes[0].interval, this.axes[1].interval)
+      );
+      this.zoomBox.draw(context);
+    }
   }
+
+  public updateZoomBox(frameDown: Vertex, frameMouse: Vertex): void {}
 
   protected zoomBoxUpdateAxes(zoomBox: SelectionBox): void { // TODO: will not work for a 3+ axes plot
     this.axes[0].minValue = Math.min(zoomBox.minVertex.x, zoomBox.maxVertex.x);
@@ -1838,8 +1824,8 @@ export class Figure extends PlotData {
   }
 
   protected drawTooltips(): void {
-    this.relativeObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
-    this.absoluteObjects.drawTooltips(new Vertex(this.X, this.Y), this.size, this.context_show, this.is_in_multiplot);
+    this.relativeObjects.drawTooltips(this.origin, this.size, this.context, this.is_in_multiplot);
+    this.absoluteObjects.drawTooltips(this.origin, this.size, this.context, this.is_in_multiplot);
   }
 
   public mouseTranslate(currentMouse: Vertex, mouseDown: Vertex): Vertex {
@@ -1847,9 +1833,9 @@ export class Figure extends PlotData {
   }
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
-    this.fixedObjects.mouseMove(this.context_show, canvasMouse);
-    this.absoluteObjects.mouseMove(this.context_show, absoluteMouse);
-    this.relativeObjects.mouseMove(this.context_show, frameMouse);
+    this.fixedObjects.mouseMove(this.context, canvasMouse);
+    this.absoluteObjects.mouseMove(this.context, absoluteMouse);
+    this.relativeObjects.mouseMove(this.context, frameMouse);
   }
 
   public projectMouse(e: MouseEvent): [Vertex, Vertex, Vertex] {
@@ -1857,30 +1843,133 @@ export class Figure extends PlotData {
     return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.relativeMatrix.inverse()), mouseCoords]
   }
 
-  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
+  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape] {
     const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
     const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
     const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);
-    const clickedObject = fixedClickedObject ? fixedClickedObject : absoluteClickedObject ? absoluteClickedObject : relativeClickedObject ? relativeClickedObject : null
+    const clickedObject = fixedClickedObject ?? relativeClickedObject ?? absoluteClickedObject ?? null;
     return [canvasMouse, frameMouse, clickedObject]
   }
 
   public mouseUp(ctrlKey: boolean): void {
-    if (this.interaction_ON) {
-      if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
-        this.absoluteObjects.mouseUp(ctrlKey);
-        this.relativeObjects.mouseUp(ctrlKey);
-      }
-      this.fixedObjects.mouseUp(ctrlKey);
+    if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
+      this.absoluteObjects.mouseUp(ctrlKey);
+      this.relativeObjects.mouseUp(ctrlKey);
     }
+    this.fixedObjects.mouseUp(ctrlKey);
   }
+
+  public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: newShape): [Vertex, Vertex, Vertex] {
+    const [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
+    this.isHovered = this.isInCanvas(absoluteMouse);
+    this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
+    if (canvasDown) {
+      const translation = this.mouseTranslate(canvasMouse, canvasDown);
+      if (!(clickedObject instanceof newAxis)) {
+        if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
+      }
+      if (this.isSelecting) {
+        if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
+        else this.updateSelectionBox(frameDown, frameMouse);
+      }
+      this.updateZoomBox(frameDown, frameMouse);
+    }
+    if (this.isZooming || this.isSelecting) canvas.style.cursor = 'crosshair';
+    return [canvasMouse, frameMouse, absoluteMouse]
+  }
+
+  public mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape]  {
+    const [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+    if (!(clickedObject instanceof newAxis)) this.is_drawing_rubber_band = this.isSelecting;
+    return [canvasDown, frameDown, clickedObject]
+  }
+
+  public mouseUpDrawer(ctrlKey: boolean): [newShape, Vertex] {
+    if (this.isZooming) {
+      if (this.zoomBox.area != 0) this.zoomBoxUpdateAxes(this.zoomBox);
+      this.zoomBox.update(new Vertex(0, 0), new Vertex(0, 0));
+    }
+    this.mouseUp(ctrlKey);
+    this.draw();
+    return this.resetMouseEvents()
+  }
+
+  public mouseWheelDrawer(e: WheelEvent): void {
+    this.wheelFromEvent(e);
+    this.updateWithScale();
+  }
+
+  public mouseLeaveDrawer(canvas: HTMLElement, shiftKey: boolean): [boolean, Vertex] {
+    const isZooming = this.isZooming; // TODO: get rid of this with a mousehandler refactor
+    this.mouseUpDrawer(true);
+    this.isZooming = isZooming;
+    this.axes.forEach(axis => {
+      axis.saveLocation();
+      axis.isClicked = axis.isHovered = false;
+    });
+    this.translation = new Vertex(0, 0);
+    if (!shiftKey) canvas.style.cursor = 'default';
+    return [false, null]
+  }
+
+  public keyDownDrawer(canvas: HTMLElement, keyString: string, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
+    if (keyString == "Control") {
+      ctrlKey = true;
+      if (spaceKey && this.isHovered) this.resetView();
+    }
+    if (keyString == "Shift") {
+      shiftKey = true;
+      if (!ctrlKey) this.shiftOnAction(canvas);
+    }
+    if (keyString == " ") {
+      spaceKey = true;
+      if (ctrlKey && this.isHovered) this.resetView();
+    }
+    return [ctrlKey, shiftKey, spaceKey]
+  }
+
+  public keyUpDrawer(canvas: HTMLElement, keyString: string, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
+    if (keyString == "Control") ctrlKey = false;
+    if (keyString == " ") spaceKey = false;
+    if (keyString == "Shift") {
+      shiftKey = false;
+      this.shiftOffAction(canvas);
+    }
+    return [ctrlKey, shiftKey, spaceKey]
+  }
+
+  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+    this.axes.forEach(axis => axis.sendRubberBand(multiplotRubberBands));
+  }
+
+  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+    this.axes.forEach(axis => axis.sendRubberBandRange(multiplotRubberBands));
+  }
+
+  public sendRubberBandsMultiplot(figures: Figure[]): void {
+    figures.forEach(figure => figure.receiveRubberBandFromFigure(this));
+  }
+
+  protected sendRubberBandsInFigure(figure: Figure): void {
+    figure.axes.forEach(otherAxis => {
+      this.axes.forEach(thisAxis => {
+        if (thisAxis.name == otherAxis.name && thisAxis.name != "number") {
+          otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
+          otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
+          otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
+        }
+      })
+    })
+  }
+
+  protected receiveRubberBandFromFigure(figure: Figure): void { figure.sendRubberBandsInFigure(this) }
 
   public translate(canvas: HTMLElement, translation: Vertex): void {
     canvas.style.cursor = 'move';
     this.translation = translation;
   }
 
-  protected activateSelection(emittedRubberBand: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
+  public activateSelection(emittedRubberBand: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
 
   public shiftOnAction(canvas: HTMLElement): void {
     this.isSelecting = true;
@@ -1895,110 +1984,62 @@ export class Figure extends PlotData {
     this.draw();
   }
 
-  public mouse_interaction(isParallelPlot: boolean): void {
-    if (this.interaction_ON === true) {
-      let clickedObject: any = null;
-      let isDrawing = false;
-      let canvasMouse = new Vertex(0, 0); let canvasDown = new Vertex(0, 0);
-      let frameMouse = new Vertex(0, 0); let frameDown = new Vertex(0, 0);
-      let absoluteMouse = new Vertex(0, 0);
-      const canvas = document.getElementById(this.canvas_id);
-      let ctrlKey = false; let shiftKey = false; let spaceKey = false;
-      const zoomBox = new SelectionBox();
+  public axisChangeUpdate(e: newAxis): void {}
 
-      this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
+  public mouseListener(): void {
+    // TODO: mouseListener generally suffers from a bad initial design that should be totally rethink in a specific refactor development
+    let clickedObject: newShape = null;
+    let canvasMouse: Vertex = null; let canvasDown: Vertex = null;
+    let frameMouse: Vertex = null; let frameDown: Vertex = null;
+    let absoluteMouse: Vertex = null;
+    const canvas = document.getElementById(this.canvasID) as HTMLCanvasElement;
+    let ctrlKey = false; let shiftKey = false; let spaceKey = false;
 
-      window.addEventListener('keydown', e => {
-        if (e.key == "Control") {
-          ctrlKey = true;
-          if (spaceKey && this.isInCanvas(absoluteMouse)) this.resetView();
-        }
-        if (e.key == "Shift") {
-          shiftKey = true;
-          if (!ctrlKey) this.shiftOnAction(canvas);
-        }
-        if (e.key == " ") {
-          e.preventDefault();
-          spaceKey = true;
-          if (ctrlKey && this.isInCanvas(absoluteMouse)) this.resetView();
-        }
-      });
+    this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
 
-      window.addEventListener('keyup', e => {
-        e.preventDefault();
-        if (e.key == "Control") ctrlKey = false;
-        if (e.key == " ") spaceKey = false;
-        if (e.key == "Shift") {
-          shiftKey = false;
-          this.shiftOffAction(canvas);
-        };
-      });
+    this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 
-      canvas.addEventListener('mousemove', e => {
-        e.preventDefault();
-        [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
-        this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
-        if (this.isZooming || this.isSelecting) canvas.style.cursor = 'crosshair';
-        if (this.interaction_ON) {
-          if (isDrawing) {
-            const translation = this.mouseTranslate(canvasMouse, canvasDown);
-            if (!(clickedObject instanceof newAxis)) {
-              if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
-            }
-            if (this.isSelecting) {
-              if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
-              else this.updateSelectionBox(frameDown, frameMouse);
-            }
-          }
-        }
-        this.draw();
-        if (this.isZooming && isDrawing) this.drawZoomBox(zoomBox, frameDown, frameMouse, this.context_show);
-        const mouseInCanvas = (e.offsetX >= this.X) && (e.offsetX <= this.width + this.X) && (e.offsetY >= this.Y) && (e.offsetY <= this.height + this.Y);
-        if (!mouseInCanvas) isDrawing = false;
-      });
+    window.addEventListener('keydown', e => {
+      if (e.key == " ") e.preventDefault();
+      [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
+    });
 
-      canvas.addEventListener('mousedown', () => {
-        [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
-        if (!(clickedObject instanceof newAxis)) this.is_drawing_rubber_band = this.isSelecting;
-        if (ctrlKey && shiftKey) this.reset();
-        isDrawing = true;
-      });
+    window.addEventListener('keyup', e => {
+      [ctrlKey, shiftKey, spaceKey] = this.keyUpDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
+    });
 
-      canvas.addEventListener('mouseup', () => {
-        if (this.isZooming) {
-          this.switchZoom();
-          this.zoomBoxUpdateAxes(zoomBox);
-        }
-        this.mouseUp(ctrlKey);
-        this.draw();
-        if (!shiftKey) canvas.style.cursor = 'default';
-        [clickedObject, isDrawing] = this.resetMouseEvents();
-      })
+    canvas.addEventListener('mousemove', e => {
+      e.preventDefault();
+      [canvasMouse, frameMouse, absoluteMouse] = this.mouseMoveDrawer(canvas, e, canvasDown, frameDown, clickedObject);
+      this.draw();
+      if (!this.isInCanvas(absoluteMouse)) canvasDown = null;
+    });
 
-      canvas.addEventListener('wheel', e => {
-        e.preventDefault();
-        if (this.interaction_ON) {
-          this.wheelFromEvent(e);
-          this.updateWithScale();
-          this.draw();
-        }
-      });
+    canvas.addEventListener('mousedown', () => {
+      [canvasDown, frameDown, clickedObject] = this.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
+      if (ctrlKey && shiftKey) this.reset();
+    });
 
-      canvas.addEventListener('mouseleave', () => {
-        isDrawing = false;
-        ctrlKey = false;
-        this.axes.forEach(axis => axis.saveLocation());
-        this.translation = new Vertex(0, 0);
-        canvas.style.cursor = 'default';
-      });
-    }
+    canvas.addEventListener('mouseup', () => {
+      if (canvasDown) [clickedObject, canvasDown] = this.mouseUpDrawer(ctrlKey);
+      if (!shiftKey) canvas.style.cursor = 'default';
+    })
+
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+      this.mouseWheelDrawer(e);
+      this.draw();
+    });
+
+    canvas.addEventListener('mouseleave', () => [ctrlKey, canvasDown] = this.mouseLeaveDrawer(canvas, shiftKey));
   }
 
-  protected resetMouseEvents(): [any, boolean] {
-    if (!this.is_in_multiplot) this.is_drawing_rubber_band = false;
+  protected resetMouseEvents(): [newShape, Vertex] {
+    this.is_drawing_rubber_band = false;
+    this.isZooming = false;
     this.axes.forEach(axis => axis.saveLocation());
     this.translation = new Vertex(0, 0);
-    return [null, false]
+    return [null, null]
   }
 
   protected regulateScale(): void {}
@@ -2011,33 +2052,25 @@ export class Figure extends PlotData {
     this.viewPoint = new Vertex(0, 0);
   }
 
-  public zoomIn(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), 342) }
+  public zoomIn(): void { this.zoom(new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2), 342) }
 
-  public zoomOut(): void { this.zoom(new Vertex(this.X + this.size.x / 2, this.Y + this.size.y / 2), -342) }
+  public zoomOut(): void { this.zoom(new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y / 2), -342) }
 
   private zoom(center: Vertex, zFactor: number): void {
-    this.mouseWheel(center.x, center.y, zFactor);
+    this.mouseWheel(center, zFactor);
     this.updateWithScale();
     this.draw();
   }
 
-  public wheelFromEvent(e: WheelEvent): void { this.mouseWheel(e.offsetX, e.offsetY, -Math.sign(e.deltaY)) }
+  public wheelFromEvent(e: WheelEvent): void { this.mouseWheel(new Vertex(e.offsetX, e.offsetY), -Math.sign(e.deltaY)) }
 
-  public mouseWheel(mouse3X: number, mouse3Y: number, deltaY: number): void { //TODO: This is still not a refactor
-    this.fusion_coeff = 1.2;
-    const zoomFactor = deltaY > 0 ? this.fusion_coeff : 1 / this.fusion_coeff;
-    this.scaleX = this.scaleX * zoomFactor;
-    this.scaleY = this.scaleY * zoomFactor;
-    this.scroll_x = this.scroll_x + deltaY;
-    this.scroll_y = this.scroll_y + deltaY;
-    this.originX = mouse3X - this.X + zoomFactor * (this.originX - mouse3X + this.X);
-    this.originY = mouse3Y - this.Y + zoomFactor * (this.originY - mouse3Y + this.Y);
-    if (isNaN(this.scroll_x)) this.scroll_x = 0;
-    if (isNaN(this.scroll_y)) this.scroll_y = 0;
-    this.viewPoint = new Vertex(mouse3X, mouse3Y).scale(this.initScale);
+  public mouseWheel(mouseCoords: Vertex, deltaY: number): void {
+    const zoomFactor = deltaY > 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+    this.scaleX *= zoomFactor;
+    this.scaleY *= zoomFactor;
+    this.viewPoint = new Vertex(mouseCoords.x, mouseCoords.y).scale(this.initScale);
   }
 }
-
 
 export class Frame extends Figure {
   public xFeature: string;
@@ -2049,14 +2082,13 @@ export class Frame extends Figure {
     data: any,
     public width: number,
     public height: number,
-    public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
-    public canvas_id: string,
+    X: number,
+    Y: number,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
-      this.type_ = "frame";
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
+      this.setAxesTitleWidth();
     }
 
   get frameMatrix(): DOMMatrix {
@@ -2065,6 +2097,8 @@ export class Frame extends Figure {
     relativeMatrix.f = this.axes[1].transformMatrix.f;
     return relativeMatrix
   }
+
+  get className(): string { return "Frame" }
 
   get relativeMatrix(): DOMMatrix { return this.canvasMatrix.multiply(this.frameMatrix) }
 
@@ -2088,6 +2122,10 @@ export class Frame extends Figure {
 
   protected get axesEnd() { return new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix) }
 
+  protected setAxesTitleWidth(): void {
+    this.axes.forEach(axis => axis.titleWidth = this.drawingZone[1].x - 5);
+  }
+
   protected unpackAxisStyle(data: any): void {
     super.unpackAxisStyle(data);
     this.nXTicks = data.axis?.nb_points_x ?? this.nXTicks;
@@ -2096,12 +2134,12 @@ export class Frame extends Figure {
 
   public mouseMove(canvasMouse: Vertex, absoluteMouse: Vertex, frameMouse: Vertex): void {
     super.mouseMove(canvasMouse, absoluteMouse, frameMouse);
-    this.hoveredIndices = this.sampleDrawings.updateSampleStates('isHovered');
+    this.hoveredIndices = this.sampleDrawings.updateShapeStates('isHovered');
   }
 
   public mouseUp(ctrlKey: boolean): void {
     super.mouseUp(ctrlKey);
-    this.clickedIndices = this.sampleDrawings.updateSampleStates('isClicked');
+    this.clickedIndices = this.sampleDrawings.updateShapeStates('isClicked');
   }
 
   protected setFeatures(data: any): [string, string] {
@@ -2119,6 +2157,12 @@ export class Frame extends Figure {
       }
     }
     return [this.xFeature, this.yFeature]
+  }
+
+  public changeAxisFeature(name: string, index: number): void {
+    if (index == 0) this.xFeature = name
+    else this.yFeature = name;
+    super.changeAxisFeature(name, index);
   }
 
   protected transformAxes(axisBoundingBoxes: newRect[]): void {
@@ -2142,7 +2186,7 @@ export class Frame extends Figure {
     );
     const yBoundingBox = new newRect(
       new Vertex(this.drawOrigin.x - freeSpace.x, this.drawOrigin.y),
-      new Vertex(freeSpace.x, this.drawEnd.y - this.drawOrigin.y)
+      new Vertex(freeSpace.x - BLANK_SPACE, this.drawEnd.y - this.drawOrigin.y)
     );
     return [xBoundingBox, yBoundingBox]
   }
@@ -2160,11 +2204,17 @@ export class Frame extends Figure {
     super.updateSelectionBox(...this.rubberBandsCorners);
   }
 
+  public switchZoom(): void { this.isZooming = !this.isZooming }
+
+  public updateZoomBox(frameDown: Vertex, frameMouse: Vertex): void {
+    if (this.isZooming) this.zoomBox.update(frameDown, frameMouse);
+  }
+
   public get rubberBandsCorners(): [Vertex, Vertex] {
     return [new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue), new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue)]
   }
 
-  protected activateSelection(emittedRubberBand: RubberBand, index: number): void {
+  public activateSelection(emittedRubberBand: RubberBand, index: number): void {
     super.activateSelection(emittedRubberBand, index)
     this.selectionBox.rubberBandUpdate(emittedRubberBand, ["x", "y"][index]);
   }
@@ -2177,7 +2227,7 @@ export class Frame extends Figure {
       } else if (axis.tickPrecision < 1) {
         if (this.scaleX < 1) this.scaleX = 1;
         if (this.scaleY < 1) this.scaleY = 1;
-      } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+      } else if (axis.isDiscrete && axis.ticks.length > uniqueValues(axis.labels).length + 2) {
         if (this.scaleX < 1) this.scaleX = 1;
         if (this.scaleY < 1) this.scaleY = 1;
       }
@@ -2190,22 +2240,22 @@ export class Histogram extends Frame {
 
   public fillStyle: string = 'hsl(203, 90%, 85%)';
   public strokeStyle: string = null;
-  public lineWidth: number = 1;
   public dashLine: number[] = [];
 
   constructor(
     data: any,
     public width: number,
     public height: number,
-    public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
-    public canvas_id: string,
+    X: number,
+    Y: number,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
       this.unpackBarStyle(data);
     }
+
+  get className(): string { return "Histogram" }
 
   get nXTicks() {return this._nXTicks ? this._nXTicks : 20}
 
@@ -2227,7 +2277,7 @@ export class Histogram extends Frame {
     if (data.edge_style?.dashline) this.dashLine = data.edge_style.dashline;
   }
 
-  protected reset(): void {
+  public reset(): void {
     super.reset();
     this.bars = [];
   }
@@ -2253,9 +2303,14 @@ export class Histogram extends Frame {
     return fakeTicks
   }
 
+  private fakeFeatures(): void {
+    if (!this.features.has(this.xFeature)) this.features.set(this.xFeature, []);
+  }
+
   private computeBars(vector: number[]): Bar[] {
+    this.fakeFeatures();
     const baseAxis = this.axes[0] ?? this.setAxis(this.xFeature, new newRect(), new Vertex(), new Vertex(), this.nXTicks);
-    const numericVector = baseAxis.stringsToValues(vector);
+    const numericVector = baseAxis.stringsToValues(vector ?? []);
     let fakeTicks = this.boundedTicks(baseAxis);
     let bars = Array.from(Array(fakeTicks.length - 1), () => new Bar([]));
     let barValues = Array.from(Array(fakeTicks.length - 1), () => []);
@@ -2281,8 +2336,19 @@ export class Histogram extends Frame {
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D): void {
     super.drawRelativeObjects(context);
-    this.bars.forEach(bar => bar.draw(this.context_show));
+    this.bars.forEach(bar => bar.draw(this.context));
     this.relativeObjects.shapes = [...this.bars, ...this.relativeObjects.shapes];
+  }
+
+  private getBarSetColor(bar: Bar): string {
+    const setMaps = new Map<number, number>();
+    bar.values.forEach(pointIndex => {
+      this.pointSets.forEach((pointSet, index) => {
+        if (pointSet.includes(pointIndex)) setMaps.set(index, setMaps.get(index) ? setMaps.get(index) + 1 : 1);
+      })
+    })
+    const pointsSetIndex = mapMax(setMaps)[0];
+    if (pointsSetIndex !== null) return colorHsl(this.pointSets[pointsSetIndex].color);
   }
 
   private getBarsDrawing(): void {
@@ -2292,10 +2358,11 @@ export class Histogram extends Frame {
       let origin = new Vertex(fullTicks[index], minY);
       let size = new Vertex(fullTicks[index + 1] - fullTicks[index], bar.length > minY ? bar.length - minY : 0);
       if (this.axes[0].isDiscrete) origin.x = origin.x - (fullTicks[2] - fullTicks[1]) / 2;
+      const color = this.getBarSetColor(bar) ?? this.fillStyle;
       bar.updateStyle(
         origin, size,
         this.hoveredIndices, this.clickedIndices, this.selectedIndices,
-        this.fillStyle, this.strokeStyle, this.dashLine, this.lineWidth
+        color, this.strokeStyle, this.dashLine, this.lineWidth
       );
     })
   }
@@ -2324,22 +2391,39 @@ export class Histogram extends Frame {
         if (this.scaleX > 1) this.scaleX = 1;
       } else if (axis.tickPrecision < 1) {
         if (this.scaleX < 1) this.scaleX = 1;
-      } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+      } else if (axis.isDiscrete && axis.ticks.length > uniqueValues(axis.labels).length + 2) {
         if (this.scaleX < 1) this.scaleX = 1;
       }
     }
   }
+
+  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+    this.axes[0].sendRubberBand(multiplotRubberBands);
+  }
+
+  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+    this.axes[0].sendRubberBandRange(multiplotRubberBands);
+  }
+
+  protected sendRubberBandsInFigure(figure: Figure): void {
+    figure.axes.forEach(otherAxis => {
+      if (this.axes[0].name == otherAxis.name) {
+        otherAxis.rubberBand.minValue = this.axes[0].rubberBand.minValue;
+        otherAxis.rubberBand.maxValue = this.axes[0].rubberBand.maxValue;
+        otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
+      }
+    })
+  }
 }
 
 const DEFAULT_POINT_COLOR: string = 'hsl(203, 90%, 85%)';
-export class newScatter extends Frame {
+export class Scatter extends Frame {
   public points: ScatterPoint[] = [];
 
   public fillStyle: string = DEFAULT_POINT_COLOR;
   public strokeStyle: string = null;
   public marker: string = 'circle';
   public pointSize: number = 8;
-  public lineWidth: number = 1;
 
   public tooltipAttributes: string[];
   public isMerged: boolean = false;
@@ -2349,19 +2433,20 @@ export class newScatter extends Frame {
     data: any,
     public width: number,
     public height: number,
-    public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
-    public canvas_id: string,
+    X: number,
+    Y: number,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
       if (this.nSamples > 0) {
         this.tooltipAttributes = data.tooltip ? data.tooltip.attribute : Array.from(this.features.keys());
         this.unpackPointStyle(data);
         this.computePoints();
       }
     }
+
+  get className(): string { return "Scatter" }
 
   get sampleDrawings(): ShapeCollection { return this.absoluteObjects }
 
@@ -2372,25 +2457,27 @@ export class newScatter extends Frame {
     if (data.point_style?.stroke_width) this.lineWidth = data.point_style.stroke_width;
     if (data.point_style?.size) this.pointSize = data.point_style.size;
     if (data.tooltip) this.tooltipAttributes = data.tooltip.attributes;
-    if (data.points_sets) this.unpackPointsSets(data);
   }
 
-  private unpackPointsSets(data: any): void {
-    data.points_sets.forEach((pointSet, setIndex) => {
-      pointSet.point_index.forEach(pointIndex => this.pointSets[pointIndex] = setIndex);
-      this.pointSetColors.push(pointSet.color);
-    })
-  }
-
-  public reset_scales(): void {
-    super.reset_scales();
+  public resetScales(): void {
+    super.resetScales();
     this.computePoints();
   }
 
-  protected reset(): void {
+  public multiplotResize(origin: Vertex, width: number, height: number): void {
+    super.multiplotResize(origin, width, height);
+    this.computePoints();
+  }
+
+  public reset(): void {
     super.reset();
     this.computePoints();
     this.resetClusters();
+  }
+
+  public resize(): void {
+    super.resize();
+    this.computePoints();
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
@@ -2416,10 +2503,8 @@ export class newScatter extends Frame {
         if (this.selectedIndices.includes(index)) point.isSelected = true;
       });
       if (colors.size != 0) color = mapMax(colors)[0]
-      else {
-        const pointsSetIndex = this.getPointSet(point);
-        if (pointsSetIndex != -1) color = colorHsl(this.pointSetColors[pointsSetIndex]);
-      };
+      else color = this.getPointSetColor(point) ?? color;
+
       point.lineWidth = this.lineWidth;
       point.setColors(color);
       if (this.pointStyles) {
@@ -2434,14 +2519,15 @@ export class newScatter extends Frame {
     })
   }
 
-  private getPointSet(point: ScatterPoint): number {
-    const pointSets = new Map<number, number>();
+  private getPointSetColor(point: ScatterPoint): string {
+    const setMaps = new Map<number, number>();
     point.values.forEach(pointIndex => {
-      const currentPoint = this.pointSets[pointIndex];
-      pointSets.set(currentPoint, pointSets.get(currentPoint) ? pointSets.get(currentPoint) + 1 : 1);
+      this.pointSets.forEach((pointSet, index) => {
+        if (pointSet.includes(pointIndex)) setMaps.set(index, setMaps.get(index) ? setMaps.get(index) + 1 : 1);
+      })
     })
-    if (pointSets.size > 1) pointSets.delete(-1);
-    return mapMax(pointSets)[0]
+    const pointsSetIndex = mapMax(setMaps)[0];
+    if (pointsSetIndex !== null) return colorHsl(this.pointSets[pointsSetIndex].color);
   }
 
   public switchMerge(): void {
@@ -2505,7 +2591,13 @@ export class newScatter extends Frame {
     return mergedPoints
   }
 
+  private fakeFeatures(): void {
+    if (!this.features.has(this.xFeature)) this.features.set(this.xFeature, []);
+    if (!this.features.has(this.yFeature)) this.features.set(this.yFeature, []);
+  }
+
   private projectPoints(): [number[], number[], number[], number[]] {
+    this.fakeFeatures();
     const xValues = this.axes[0].stringsToValues(this.features.get(this.xFeature));
     const yValues = this.axes[1].stringsToValues(this.features.get(this.yFeature));
     const xCoords = [];
@@ -2623,7 +2715,7 @@ export class newScatter extends Frame {
   }
 }
 
-export class newGraph2D extends newScatter {
+export class Graph2D extends Scatter {
   public curves: LineSequence[];
   private curvesIndices: number[][];
   public showPoints: boolean = false;
@@ -2631,13 +2723,12 @@ export class newGraph2D extends newScatter {
     data: any,
     public width: number,
     public height: number,
-    public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
-    public canvas_id: string,
+    X: number,
+    Y: number,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
     }
 
   protected unpackData(data: any): Map<string, any[]> {
@@ -2657,8 +2748,10 @@ export class newGraph2D extends newScatter {
         }
       })
     }
-    return super.unpackData({"elements": graphSamples})
+    return Figure.deserializeData({"elements": graphSamples})
   }
+
+  get className(): string { return "Graph2D" }
 
   public updateSelection(axesSelections: number[][]): void {
     const inMultiplot = this.is_in_multiplot;
@@ -2674,6 +2767,8 @@ export class newGraph2D extends newScatter {
     })
   }
 
+  protected buildPointSets(data: any): void { this.pointSets = []; }
+
   protected get cuttingZone(): newRect {
     const axesOrigin = this.axes[0].origin.transform(this.canvasMatrix);
     const axesEnd = new Vertex(this.axes[0].end.x, this.axes[1].end.y).transform(this.canvasMatrix);
@@ -2684,13 +2779,13 @@ export class newGraph2D extends newScatter {
     this.drawInZone(context);
     if (this.showPoints) {
       super.drawAbsoluteObjects(context);
-      this.absoluteObjects.shapes = [...this.curves, ...this.absoluteObjects.shapes];
+      this.absoluteObjects.shapes = [...this.absoluteObjects.shapes, ...this.curves];
     } else {
       this.absoluteObjects = new GroupCollection([...this.curves]);
     }
   }
 
-  public reset_scales(): void {
+  public resetScales(): void {
     const scale = new Vertex(this.frameMatrix.a, this.frameMatrix.d).scale(this.initScale);
     const translation = new Vertex(this.axes[0].maxValue - this.axes[0].initMaxValue, this.axes[1].maxValue - this.axes[1].initMaxValue).scale(scale);
     this.curves.forEach(curve => {
@@ -2699,7 +2794,7 @@ export class newGraph2D extends newScatter {
         curve.mouseClick = curve.previousMouseClick.copy();
       }
     });
-    super.reset_scales();
+    super.resetScales();
   }
 
   public switchMerge(): void { this.isMerged = false }
@@ -2718,10 +2813,18 @@ export class newGraph2D extends newScatter {
     super.mouseUp(ctrlKey);
     this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
   }
+
+  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+
+  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+
+  public sendRubberBandsMultiplot(figures: Figure[]): void {}
+
+  protected receiveRubberBandFromFigure(figure: Figure): void {}
 }
 
 const FREE_SPACE_FACTOR = 0.95;
-export class newParallelPlot extends Figure {
+export class ParallelPlot extends Figure {
   public axes: ParallelAxis[];
   public curves: LineSequence[];
   public curveColor: string = 'hsl(203, 90%, 85%)';
@@ -2731,130 +2834,133 @@ export class newParallelPlot extends Figure {
     data: any,
     public width: number,
     public height: number,
-    public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
-    public canvas_id: string,
+    X: number,
+    Y: number,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
       this.computeCurves();
     }
+
+  get className(): string { return "ParallelPlot" }
 
   get isVertical(): boolean { return this._isVertical ?? true }
 
   set isVertical(value: boolean) { this._isVertical = value }
 
-  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.035, 0.05) }
+  get offsetFactor(): Vertex { return this._offsetFactor ?? new Vertex(0.005, 0.015) }
 
   set offsetFactor(value: Vertex) { this._offsetFactor = value }
 
-  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.0035, 0.0025) }
+  get marginFactor(): Vertex { return this._marginFactor ?? new Vertex(0.005, 0.0025) }
 
   set marginFactor(value: Vertex) { this._marginFactor = value }
 
   public shiftOnAction(canvas: HTMLElement): void {}
 
-  protected computeOffset(): Vertex {
-    const standardOffset = super.computeOffset();
-    if (this.isVertical) return new Vertex(Math.max(standardOffset.x, MIN_OFFSET), Math.max(standardOffset.y / 3, MIN_FONTSIZE));
-    return new Vertex(standardOffset.x / 3, Math.max(standardOffset.y * 1.5, MIN_OFFSET));
-  }
+  protected computeOffset(): Vertex { return this.computeNaturalOffset() }
 
-  protected get marginOffset(): Vertex { return new Vertex(this.isVertical ? 0 : SIZE_END, this.isVertical ? SIZE_END : SIZE_END * 4) }
+  protected get marginOffset(): Vertex { return new Vertex(SIZE_END, SIZE_END) }
 
-  public reset_scales(): void { // TODO: merge with resetView
-    super.reset_scales();
+  public updateDimensions(): void {
+    super.updateDimensions();
     this.updateAxesLocation();
   }
 
   public switchOrientation(): void {
     this.isVertical = !this.isVertical;
     this.updateAxesLocation();
+    this.draw();
   }
 
   private updateAxesLocation(): void {
     const freeSpace = this.setBounds();
     const axisBoundingBoxes = this.buildAxisBoundingBoxes(freeSpace);
-    const step = this.computeAxesStep();
+    const axesEnds = this.getAxesLocations();
     this.axes.forEach((axis, index) => {
-      const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
-      axis.updateLocation(axisOrigin, axisEnd, axisBoundingBoxes[index], index, this.drawnFeatures.length);
+      axis.updateLocation(...axesEnds[index], axisBoundingBoxes[index], index, this.drawnFeatures.length);
     });
     this.computeCurves();
-    this.draw();
-  }
-
-  private computeAxesStep(): number {
-    if (this.isVertical) return (this.drawEnd.x - this.drawOrigin.x - Math.abs(this.offset.x) - Math.abs(this.margin.x)) / (this.drawnFeatures.length - 1)
-    return (this.drawEnd.y - this.drawOrigin.y - Math.abs(this.margin.y)) / (this.drawnFeatures.length - 1)
-  }
-
-  protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
-    const step = this.computeAxesStep();
-    const boundingBoxes: newRect[] = [];
-    this.drawnFeatures.forEach((drawnFeature, index) => {
-      const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
-      if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(axisOrigin, axisEnd.y - axisOrigin.y, step, index));
-      else boundingBoxes.push(this.horizontalAxisBoundingBox(axisOrigin, axisEnd.x - axisOrigin.x, step, index));
-    });
-    return boundingBoxes
-  }
-
-  private horizontalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const boundingBox = new newRect(axisOrigin.copy());
-    const relativeY = Math.abs(axisOrigin.y) - this.Y;
-    boundingBox.size = new Vertex(axisSize, step * FREE_SPACE_FACTOR);
-    if (index == this.drawnFeatures.length - 1) {
-      if (this.initScale.y < 0) boundingBox.size.y = (this.size.y - relativeY) * FREE_SPACE_FACTOR
-      else boundingBox.size.y = relativeY * FREE_SPACE_FACTOR
-    }
-    boundingBox.origin.y -= boundingBox.size.y;
-    return boundingBox
-  }
-
-  private verticalAxisBoundingBox(axisOrigin: Vertex, axisSize: number, step: number, index: number): newRect {
-    const boundingBox = new newRect(axisOrigin.copy());
-    const relativeX = axisOrigin.x - this.X;
-    boundingBox.size = new Vertex(step * FREE_SPACE_FACTOR, axisSize);
-    if (index == 0) {
-      if (this.initScale.x < 0) {
-        boundingBox.origin.x -= (this.size.x + relativeX) * FREE_SPACE_FACTOR;
-        boundingBox.size.x = (step / 2 + this.width + relativeX) * FREE_SPACE_FACTOR;
-      } else {
-        boundingBox.origin.x -= relativeX * FREE_SPACE_FACTOR;
-        boundingBox.size.x = (step / 2 + relativeX) * FREE_SPACE_FACTOR;
-      }
-    } else if (index == this.drawnFeatures.length - 1) {
-      boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
-      if (this.initScale.x < 0) {
-        boundingBox.size.x = (step / 2 - relativeX) * FREE_SPACE_FACTOR;
-      } else {
-        boundingBox.size.x = (this.size.x - boundingBox.origin.x + this.X) * FREE_SPACE_FACTOR;
-      }
-    } else boundingBox.origin.x -= step / 2 * FREE_SPACE_FACTOR;
-    return boundingBox
-  }
-
-  private getAxisLocation(step: number, axisIndex: number): [Vertex, Vertex] {
-    const verticalX = this.drawOrigin.x + axisIndex * step;
-    const horizontalY = this.drawOrigin.y + (this.drawnFeatures.length - 1 - axisIndex) * step + this.margin.y;
-    if (this.isVertical) return [new Vertex(verticalX, this.drawOrigin.y), new Vertex(verticalX, this.drawEnd.y)]
-    return [new Vertex(this.drawOrigin.x, horizontalY), new Vertex(this.drawEnd.x, horizontalY)]
   }
 
   protected buildAxes(axisBoundingBoxes: newRect[]): ParallelAxis[] {
     super.buildAxes(axisBoundingBoxes);
-    const step = this.computeAxesStep();
+    const axesEnds = this.getAxesLocations();
     const axes: ParallelAxis[] = [];
     this.drawnFeatures.forEach((featureName, index) => {
-      const [axisOrigin, axisEnd] = this.getAxisLocation(step, index);
-      const axis = new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], axisOrigin, axisEnd, featureName, this.initScale);
+      const axis = new ParallelAxis(this.features.get(featureName), axisBoundingBoxes[index], ...axesEnds[index], featureName, this.initScale);
       axis.updateStyle(this.axisStyle);
       axis.computeTitle(index, this.drawnFeatures.length);
       axes.push(axis);
     })
     return axes
+  }
+
+  private computeBoxesSize(): number {
+    if (this.isVertical) return (this.drawEnd.x - this.drawOrigin.x) / this.drawnFeatures.length
+    return (this.drawEnd.y - this.drawOrigin.y) / this.drawnFeatures.length
+  }
+
+  protected buildAxisBoundingBoxes(freeSpace: Vertex): newRect[] {
+    const size = this.computeBoxesSize();
+    const boundingBoxes: newRect[] = [];
+    this.drawnFeatures.forEach((_, index) => {
+      if (this.isVertical) boundingBoxes.push(this.verticalAxisBoundingBox(this.drawOrigin, this.drawEnd.y - this.drawOrigin.y, size, index));
+      else boundingBoxes.push(this.horizontalAxisBoundingBox(this.drawOrigin, this.drawEnd.x - this.drawOrigin.x, size, index));
+    });
+    return boundingBoxes
+  }
+
+  private horizontalAxisBoundingBox(drawOrigin: Vertex, axisSize: number, size: number, index: number): newRect {
+    const boundingBox = new newRect(drawOrigin.copy(), new Vertex(axisSize, size * FREE_SPACE_FACTOR));
+    boundingBox.origin.y += (this.drawnFeatures.length - 1 - index) * size;
+    return boundingBox
+  }
+
+  private verticalAxisBoundingBox(drawOrigin: Vertex, axisSize: number, size: number, index: number): newRect {
+    const freeSpaceOffset = size * (1 - FREE_SPACE_FACTOR) / 2;
+    const boundingBox = new newRect(new Vertex(drawOrigin.x + freeSpaceOffset, drawOrigin.y), new Vertex(size - freeSpaceOffset, axisSize));
+    boundingBox.origin.x += size * index;
+    return boundingBox
+  }
+
+  private getAxesLocations(): [Vertex, Vertex][] {
+    return this.isVertical ? this.verticalAxesLocation() : this.horizontalAxesLocation()
+  }
+
+  private verticalAxesLocation(): [Vertex, Vertex][] {
+    const boxSize = (this.drawEnd.x - this.drawOrigin.x) / this.drawnFeatures.length;
+    const freeSpace = (this.drawEnd.x - this.drawOrigin.x) / this.drawnFeatures.length * (1 - FREE_SPACE_FACTOR) / 4;
+    const axesEnds: [Vertex, Vertex][] = [];
+    this.drawnFeatures.forEach((_, index) => {
+      const verticalX = this.drawOrigin.x + (index + 0.5) * boxSize + freeSpace;
+      axesEnds.push([new Vertex(verticalX, this.drawOrigin.y), new Vertex(verticalX, this.drawEnd.y)])
+    })
+    return axesEnds
+  }
+
+  private horizontalAxesLocation(): [Vertex, Vertex][] {
+    const drawHeight = this.drawEnd.y - this.drawOrigin.y;
+    const LOCAL_MIN_OFFSET = drawHeight - MIN_OFFSET * 1.2;
+    const firstEnds: [Vertex, Vertex] = [
+      new Vertex(this.drawOrigin.x, this.drawEnd.y - 0.015 * drawHeight),
+      new Vertex(this.drawEnd.x, this.drawEnd.y - 0.015 * drawHeight)
+    ];
+    const lastEnds: [Vertex, Vertex] = [
+      new Vertex(this.drawOrigin.x, this.drawEnd.y - Math.min(0.9 * drawHeight, LOCAL_MIN_OFFSET)),
+      new Vertex(this.drawEnd.x, this.drawEnd.y - Math.min(0.9 * drawHeight, LOCAL_MIN_OFFSET))
+    ];
+    const yStep = (lastEnds[0].y - firstEnds[0].y) / (this.drawnFeatures.length - 1);
+    const axesEnds: [Vertex, Vertex][] = [firstEnds];
+    this.drawnFeatures.slice(1, this.drawnFeatures.length - 1).forEach((_, index) => {
+      axesEnds.push([
+        new Vertex(firstEnds[0].x, firstEnds[0].y + (index + 1) * yStep),
+        new Vertex(firstEnds[1].x, firstEnds[1].y + (index + 1) * yStep)
+      ]);
+    });
+    axesEnds.push(lastEnds);
+    return axesEnds
   }
 
   public computePoint(axis: newAxis, featureValue: number): newPoint2D {
@@ -2884,15 +2990,20 @@ export class newParallelPlot extends Figure {
       curve.isHovered = this.hoveredIndices.includes(i) && !this.isSelecting && !this.is_drawing_rubber_band;
       curve.isClicked = this.clickedIndices.includes(i);
       curve.isSelected = this.selectedIndices.includes(i);
-      curve.strokeStyle = this.curveColor;
+      curve.lineWidth = this.lineWidth;
+      curve.strokeStyle = this.getSetColorOfIndex(i) ?? this.curveColor;
     })
   }
 
   protected drawSelectionBox(context: CanvasRenderingContext2D): void {}
 
+  public switchZoom(): void {}
+
   private drawCurves(context: CanvasRenderingContext2D): void {
-    const unpickedIndices = newParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
-    [unpickedIndices, this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
+    const unpickedIndices = ParallelPlot.arraySetDiff(Array.from(Array(this.nSamples).keys()), [...this.hoveredIndices, ...this.clickedIndices, ...this.selectedIndices]);
+    unpickedIndices.forEach(i => this.curves[i].draw(context));
+    this.pointSets.forEach(pointSet => pointSet.indices.forEach(i => this.curves[i].draw(context)));
+    [this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
   }
 
   public static arraySetDiff(A: any[], B: any[]): any[] {
@@ -2913,13 +3024,13 @@ export class newParallelPlot extends Figure {
   protected drawTooltips(): void {}
 
   public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
-    this.fixedObjects.mouseMove(this.context_show, canvasMouse);
+    this.fixedObjects.mouseMove(this.context, canvasMouse);
     if (!this.is_drawing_rubber_band) {
-      this.absoluteObjects.mouseMove(this.context_show, absoluteMouse);
-      this.relativeObjects.mouseMove(this.context_show, frameMouse);
+      this.absoluteObjects.mouseMove(this.context, absoluteMouse);
+      this.relativeObjects.mouseMove(this.context, frameMouse);
     };
     this.changeDisplayOrder();
-    this.hoveredIndices = this.absoluteObjects.updateSampleStates('isHovered');
+    this.hoveredIndices = this.absoluteObjects.updateShapeStates('isHovered');
   }
 
   private changeDisplayOrder(): void {
@@ -2934,7 +3045,7 @@ export class newParallelPlot extends Figure {
   public mouseUp(ctrlKey: boolean): void {
     if (this.changedAxes.length != 0) this.updateAxesLocation();
     super.mouseUp(ctrlKey);
-    if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateSampleStates('isClicked');
+    if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateShapeStates('isClicked');
   }
 
   protected regulateScale(): void {
@@ -2946,7 +3057,7 @@ export class newParallelPlot extends Figure {
         } else if (axis.tickPrecision < 1) {
           if (this.scaleX < 1) this.scaleX = 1;
           if (this.scaleY < 1) this.scaleY = 1;
-        } else if (axis.isDiscrete && axis.ticks.length > newAxis.uniqueValues(axis.labels).length + 2) {
+        } else if (axis.isDiscrete && axis.ticks.length > uniqueValues(axis.labels).length + 2) {
           if (this.scaleX < 1) this.scaleX = 1;
           if (this.scaleY < 1) this.scaleY = 1;
         }
@@ -2968,12 +3079,9 @@ export class newParallelPlot extends Figure {
     this.updateSelection(axesSelections);
   }
 
-  public mouse_interaction(isParallelPlot: boolean): void {
-    this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => {if (!this.changedAxes.includes(e)) this.changedAxes.push(e)}));
-    super.mouse_interaction(isParallelPlot);
-  }
+  public axisChangeUpdate(e: ParallelAxis) { if (!this.changedAxes.includes(e)) this.changedAxes.push(e); }
 
-  protected resetMouseEvents(): [any, boolean] {
+  protected resetMouseEvents(): [newShape, Vertex] {
     this.changedAxes = [];
     return super.resetMouseEvents()
   }
@@ -2985,26 +3093,40 @@ export class Draw extends Frame {
     data: any,
     public width: number,
     public height: number,
-    public buttons_ON: boolean,
-    public X: number,
-    public Y: number,
-    public canvas_id: string,
+    X: number,
+    Y: number,
+    public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
-      super(data, width, height, buttons_ON, X, Y, canvas_id, is_in_multiplot);
+      super(data, width, height, X, Y, canvasID, is_in_multiplot);
+      this.is_in_multiplot = false;
       this.relativeObjects = ShapeCollection.fromPrimitives(data.primitives, this.scale);
     }
 
+  get className(): string { return "Draw" }
+
   public shiftOnAction(canvas: HTMLElement): void {}
 
-  public define_canvas(canvas_id: string):void {
-    super.define_canvas(canvas_id);
-    this.computeTextBorders(this.context_show);
+  public setCanvas(canvasID: string):void {
+    super.setCanvas(canvasID);
+    this.computeTextBorders(this.context);
   }
 
-  public reset_scales(): void { // TODO: merge with resetView
-    super.reset_scales();
+  public resetScales(): void {
+    super.resetScales();
     this.updateBounds();
+  }
+
+  public reset(): void {
+    super.reset();
+    this.updateBounds();
+    this.draw();
+  }
+
+  public resize(): void {
+    super.resize();
+    this.updateBounds();
+    this.axisEqual();
   }
 
   protected unpackData(data: any): Map<string, any[]> {
@@ -3055,9 +3177,32 @@ export class Draw extends Frame {
     this.axes.forEach(axis => axis.saveLocation());
     this.updateAxes();
   }
+
+  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+
+  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+
+  public sendRubberBandsMultiplot(figures: Figure[]): void {}
+
+  protected receiveRubberBandFromFigure(figure: Figure): void {}
 }
 
-function range(start: number, end: number, step: number = 1): number[] {
+export class PrimitiveGroupContainer extends Draw {
+  constructor(
+    data: any,
+    public width: number,
+    public height: number,
+    public buttons_ON: boolean,
+    X: number,
+    Y: number,
+    public canvasID: string,
+    public is_in_multiplot: boolean = false
+    ) {
+      super(PG_CONTAINER_PLOT, width, height, X, Y, canvasID, is_in_multiplot);
+    }
+}
+
+export function range(start: number, end: number, step: number = 1): number[] {
   let array = [];
   for (let i = start; i < end; i = i + step) array.push(i);
   return array
@@ -3124,7 +3269,7 @@ function mapMin(map: Map<any, number>): [any, number] {
 
 function mapMax(map: Map<any, number>): [any, number] {
   let max = Number.NEGATIVE_INFINITY;
-  let keyMax: string;
+  let keyMax: string = null;
   map.forEach((value, key) => {
     if (value >= max) {
       max = value;

@@ -47,10 +47,10 @@
 
             var data = $data;
 
-            var plot_data = new PlotData.Histogram(data, width, height, true, 0, 0, $canvas_id.id);
-            plot_data.define_canvas($canvas_id.id);
-            plot_data.draw_initial();
-            plot_data.mouse_interaction();
+            var plot_data = new PlotData.Histogram(data, width, height, 0, 0, $canvas_id.id);
+            plot_data.setCanvas($canvas_id.id);
+            plot_data.draw();
+            plot_data.mouseListener();
         </script>
     </div>
 </html>

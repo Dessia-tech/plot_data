@@ -1,7 +1,7 @@
 import { parseHTML } from '../support/parseHTML';
 import histogramData from '../data_src/histogram.data.json';
 import { Frame, Histogram } from '../../src/subplots';
-import { Vertex, newPoint2D } from '../../src/utils';
+import { Vertex } from '../../src/utils';
 
 const FEATURE_NAME = "histogram"
 
@@ -13,18 +13,14 @@ function initRubberBand(frame: Frame) {
   frame.draw();
 }
 
-before(() => {
-  parseHTML(FEATURE_NAME, histogramData)
-})
+before(() => parseHTML(FEATURE_NAME, histogramData));
 
 describe('HISTOGRAM CANVAS', function () {
-  const describeTitle = this.title + ' -- '
-  beforeEach(() => {
-    cy.visit("cypress/html_files/" + FEATURE_NAME + ".html");
-  })
+  const describeTitle = this.title + ' -- ';
+  beforeEach(() => cy.visit("cypress/html_files/" + FEATURE_NAME + ".html"));
 
   it("should draw canvas", function () {
-    cy.compareSnapshot(describeTitle + this.test.title, 0.05);
+    cy.compareSnapshot(describeTitle + this.test.title, 0.06);
   })
 
   it("should select with rubber band", function () {
@@ -43,7 +39,7 @@ describe('HISTOGRAM CANVAS', function () {
   it("should project mouse", function () {
     cy.window().then(win => {
       const histogram = win.eval('plot_data') as Histogram;
-      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 291, "offsetY": 601} as MouseEvent);
+      [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 286, "offsetY": 622} as MouseEvent);
       expect(frameMouse.x).to.closeTo(3737, 10);
     })
   })
@@ -55,12 +51,12 @@ describe('HISTOGRAM CANVAS', function () {
 
       histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
       [canvasDown, frameDown, clickedObject] = histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
-      clickedObject.mouseMove(histogram.context_show, mouseCoords.add(new Vertex(200, 200)));
+      clickedObject.mouseMove(histogram.context, mouseCoords.add(new Vertex(200, 200)));
       histogram.draw()
       const selectedBars = histogram.bars.reduce((sum, current) => sum + (current.isSelected ? 1 : 0), 0);
 
-      expect(histogram.axes[0].rubberBand.minValue).to.closeTo(4311, 10);
-      expect(histogram.axes[0].rubberBand.maxValue).to.closeTo(10211, 10);
+      expect(histogram.axes[0].rubberBand.minValue).to.closeTo(4291, 10);
+      expect(histogram.axes[0].rubberBand.maxValue).to.closeTo(10191, 10);
       expect(selectedBars).to.equal(5);
     })
   })

@@ -40,10 +40,14 @@ describe('SIMPLE SHAPES CANVAS', function () {
     })
   })
 
-  it("should be hovered near line", function () {
+  it("should hover line even if mouse is not exactly on line", function () {
     cy.window().then((win) => {
       const draw = win.eval('plot_data');
-      const [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 804, "offsetY": 204} as MouseEvent);
+      let [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 814, "offsetY": 196} as MouseEvent);
+      draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
+      expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
+
+      [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 822, "offsetY": 196} as MouseEvent);
       draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
       expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
     })

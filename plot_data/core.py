@@ -50,6 +50,7 @@ class PlotDataObject(DessiaObject):
     """ Abstract interface for DessiaObject implementation in module. """
 
     _plot_commands = "EMPTY_TEMPLATE"
+    _plot_buttons = "EMPTY_BUTTONS"
 
     def __init__(self, type_: str, name: str = '', **kwargs):
         self.type_ = type_
@@ -94,7 +95,7 @@ class Figure(PlotDataObject):
     @property
     def template(self):
         """ Get html template of current Figure object. """
-        return templates.get_html_string(command_name=self._plot_commands)
+        return templates.get_html_string(command_name=self._plot_commands, button_name=self._plot_buttons)
         # return getattr(templates, self._plot_commands)
 
     def _export_formats(self) -> List[ExportFormat]:
@@ -833,6 +834,7 @@ class Graph2D(Figure):
     """
 
     _plot_commands = "GRAPH_COMMANDS"
+    _plot_buttons = "EMPTY_BUTTONS"
 
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str, axis: Axis = None,
                  log_scale_x: bool = None, log_scale_y: bool = None, width: int = 750, height: int = 400,
@@ -1007,6 +1009,7 @@ class Scatter(Figure):
     """
 
     _plot_commands = "SCATTER_COMMANDS"
+    _plot_buttons = "EMPTY_BUTTONS"
 
     def __init__(self, x_variable: str = None, y_variable: str = None, tooltip: Tooltip = None,
                  point_style: PointStyle = None, elements: List[Sample] = None, points_sets: List[PointFamily] = None,
@@ -1045,6 +1048,7 @@ class ScatterMatrix(Figure):
     """ ScatterMatrix of a list of Samples. """
 
     _plot_commands = "MULTIPLOT_COMMANDS"
+    _plot_buttons = "MULTIPLOT_BUTTONS"
 
     def __init__(self, elements: List[Sample] = None, axes: List[str] = None, point_style: PointStyle = None,
                  surface_style: SurfaceStyle = None, width: int = 750, height: int = 400, name: str = ""):
@@ -1254,12 +1258,13 @@ class PrimitiveGroup(Figure):
     """
 
     _plot_commands = "CONTOUR_COMMANDS"
+    _plot_buttons = "EMPTY_BUTTONS"
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, Circle2D,
                                               Line2D, MultipleLabels, Wire, Point2D]], width: int = 750,
                  height: int = 400, name: str = ''):
         self.primitives = primitives
-        super().__init__(width=width, height=height, type_='primitivegroup', name=name)
+        super().__init__(width=width, height=height, type_='draw', name=name)
 
     def mpl_plot(self, ax=None, equal_aspect=True, **kwargs):
         """ Plots using matplotlib. """
@@ -1313,6 +1318,7 @@ class PrimitiveGroupsContainer(Figure):
     """
 
     _plot_commands = "PRIMITIVE_GROUP_CONTAINER_COMMANDS"
+    _plot_buttons = "EMPTY_BUTTONS"
 
     def __init__(self, primitive_groups: List[PrimitiveGroup], sizes: List[Tuple[float, float]] = None,
                  coords: List[Tuple[float, float]] = None, associated_elements: List[int] = None,
@@ -1351,6 +1357,7 @@ class ParallelPlot(Figure):
     """
 
     _plot_commands = "PARALLELPLOT_COMMANDS"
+    _plot_buttons = "EMPTY_BUTTONS"
 
     def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, disposition: str = None,
                  axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, width: int = 750, height: int = 400,
@@ -1397,6 +1404,7 @@ class Histogram(Figure):
     """
 
     _plot_commands = "HISTOGRAM_COMMANDS"
+    _plot_buttons = "EMPTY_BUTTONS"
 
     def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, width: int = 750, height: int = 400,
@@ -1420,7 +1428,7 @@ class Histogram(Figure):
         self.graduation_nb = graduation_nb
         self.edge_style = edge_style
         self.surface_style = surface_style
-        super().__init__(width=width, height=height, type_='frame', name=name)
+        super().__init__(width=width, height=height, type_='histogram', name=name)
 
 
 class MultiplePlots(Figure):
@@ -1436,6 +1444,7 @@ class MultiplePlots(Figure):
     """
 
     _plot_commands = "MULTIPLOT_COMMANDS"
+    _plot_buttons = "MULTIPLOT_BUTTONS"
 
     def __init__(self, plots: List[PlotDataObject], sizes: List[Window] = None, elements: List[Sample] = None,
                  coords: List[Tuple[float, float]] = None, point_families: List[PointFamily] = None,
@@ -1457,7 +1466,7 @@ class MultiplePlots(Figure):
         self.plots = plots
         self.sizes = sizes
         self.coords = coords
-        self.point_families = point_families
+        self.points_sets = point_families
         self.initial_view_on = initial_view_on
         super().__init__(width=width, height=height, type_='multiplot', name=name)
 

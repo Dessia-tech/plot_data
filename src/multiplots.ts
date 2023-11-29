@@ -1,6 +1,5 @@
-import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals, PointSet, arrayDiff, uniqueValues } from './utils';
+import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals, PointSet, arrayDiff, arrayIntersection } from './utils';
 import { Scatter, Figure, Graph2D, Draw, range, ParallelPlot } from './subplots';
-import { List } from './toolbox';
 
 const EMPTY_MULTIPLOT = {
   "name": "",
@@ -317,7 +316,7 @@ export class Multiplot {
           if (axis.rubberBand.length != 0 && axis.name != "number") {
             isSelecting = true;
             const selectedIndices = figure.updateSelected(axis);
-            this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
+            this.selectedIndices = arrayIntersection(this.selectedIndices, selectedIndices);
           }
         }
       })
@@ -537,5 +536,3 @@ export class Multiplot {
     return false
   }
 }
-
-// All the following rows are purely deleted.

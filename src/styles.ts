@@ -33,15 +33,17 @@ export class PointStyle implements PointStyleInterface {
 }
 
 export class Hatching {
-  constructor(public name: string,
-              public lineWidth: number = 0,
-              public step: number = 0) {}
+  constructor(
+    public name: string,
+    public lineWidth: number = 0,
+    public step: number = 0
+  ) {}
 
   public static deserialize(serialized) {
-      return new Hatching(serialized['name'], serialized['stroke_width'], serialized['hatch_spacing']);
+    return new Hatching(serialized['name'], serialized['stroke_width'], serialized['hatch_spacing']);
   }
 
-  generate_canvas(fillStyle: string) { // TODO: Study this
+  public buildTexture(fillStyle: string) {
     const nLines = this.lineWidth == 0 ? 0 : 20;
     const maxSize = nLines * this.step;
     const hatchCanvas = document.createElement("canvas");

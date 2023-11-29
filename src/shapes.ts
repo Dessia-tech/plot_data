@@ -1,803 +1,10 @@
-import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, DEFAULT_SHAPE_COLOR,
-  HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED_SHAPE_COLOR, STROKE_STYLE_OFFSET,
-  TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE, TOOLTIP_TEXT_OFFSET, INFINITE_LINE_FACTOR,
-  CIRCLES, MARKERS, TRIANGLES, SQUARES, CROSSES, HALF_LINES, LEGEND_MARGIN } from "./constants";
-import { hslToArray, colorHsl } from "./colors";
-import { Hatching, PointStyle } from "./styles";
-
-// TODO: There is some problem of circular imports. Shapes should be divided in two or three subclasses to get light files
-
-export class Vertex {
-  constructor(public x: number = 0, public y: number = 0) { }
-
-  get coordinates(): [number, number] { return [this.x, this.y] }
-
-  public copy(): Vertex { return new Vertex(this.x, this.y) }
-
-  public add(other: Vertex): Vertex {
-    let copy = this.copy();
-    copy.x = this.x + other.x;
-    copy.y = this.y + other.y;
-    return copy
-  }
-
-  public divide(value: number): Vertex {
-    let copy = this.copy();
-    copy.x = this.x / value;
-    copy.y = this.y / value;
-    return copy
-  }
-
-  public distance(other: Vertex): number { return Math.sqrt((this.x - other.x) ** 2 + (this.y - other.y) ** 2) }
-
-  public multiply(value: number): Vertex {
-    let copy = this.copy();
-    copy.x = this.x * value;
-    copy.y = this.y * value;
-    return copy
-  }
-
-  public get normL1(): number { return Math.abs(this.x) + Math.abs(this.y) }
-
-  public get norm(): number { return (this.x ** 2 + this.y ** 2) ** 0.5 }
-
-  public scale(scale: Vertex): Vertex {
-    let copy = this.copy();
-    copy.x = this.x * scale.x;
-    copy.y = this.y * scale.y;
-    return copy
-  }
-
-  public translate(translation: Vertex): Vertex { return this.add(translation) }
-
-  public translateSelf(translation: Vertex): void {
-    this.x += translation.x;
-    this.y += translation.y;
-  }
-
-  public subtract(other: Vertex): Vertex {
-    let copy = this.copy();
-    copy.x = this.x - other.x;
-    copy.y = this.y - other.y;
-    return copy
-  }
-
-  public transform(matrix: DOMMatrix): Vertex {
-    let copy = this.copy();
-    copy.x = matrix.a * this.x + matrix.c * this.y + matrix.e;
-    copy.y = matrix.b * this.x + matrix.d * this.y + matrix.f;
-    return copy
-  }
-
-  public transformSelf(matrix: DOMMatrix): void {
-    this.x = matrix.a * this.x + matrix.c * this.y + matrix.e;
-    this.y = matrix.b * this.x + matrix.d * this.y + matrix.f;
-  }
-}
-
-export class Shape {
-  public path: Path2D = new Path2D();
-  public scaledPath: Path2D = new Path2D();
-  public inStrokeScale: Vertex = new Vertex(1, 1);
-
-  public lineWidth: number = 1;
-  public dashLine: number[] = [];
-  public hatching: Hatching;
-  public strokeStyle: string = null;
-  public fillStyle: string = DEFAULT_SHAPE_COLOR;
-  public hoverStyle: string = HOVERED_SHAPE_COLOR;
-  public clickedStyle: string = CLICKED_SHAPE_COLOR;
-  public selectedStyle: string = SELECTED_SHAPE_COLOR;
-  public alpha: number = 1;
-
-  public mouseClick: Vertex = null;
-  public isHovered: boolean = false;
-  public isClicked: boolean = false;
-  public isSelected: boolean = false;
-  public isScaled: boolean = true;
-  public isFilled: boolean = true;
-  public inFrame: boolean = true;
-
-  public tooltipOrigin: Vertex;
-  protected _tooltipMap = new Map<string, any>();
-  public hasTooltip: boolean = true;
-  constructor() { };
-
-  get tooltipMap(): Map<string, any> { return this._tooltipMap };
-
-  set tooltipMap(value: Map<string, any>) { this._tooltipMap = value };
-
-  public TooltipMap(): void { this._tooltipMap = new Map<string, any>() };
-
-  public get drawingStyle(): { [key: string]: any } {
-    const style = {};
-    style["lineWidth"] = this.lineWidth;
-    style["dashLine"] = this.dashLine;
-    style["hatching"] = this.hatching;
-    style["strokeStyle"] = this.strokeStyle;
-    style["fillStyle"] = this.fillStyle;
-    style["alpha"] = this.alpha;
-    return style
-  }
-
-  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): LineSegment | Rect | Point {
-    if (!this.isFilled) return new LineSegment(legendOrigin.copy(), legendOrigin.add(legendSize))
-    return new Rect(legendOrigin.copy(), legendSize);
-  }
-
-  public static deserialize(data: { [key: string]: any }, scale: Vertex): Shape {
-    let shape: Shape;
-    if (data.type_ == "circle") shape = Circle.deserialize(data, scale)
-    else if (data.type_ == "contour") shape = Contour.deserialize(data, scale);
-    else if (data.type_ == "line2d") shape = Line.deserialize(data, scale);
-    else if (data.type_ == "linesegment2d") shape = LineSegment.deserialize(data, scale);
-    else if (data.type_ == "wire") shape = LineSequence.deserialize(data, scale);
-    else if (data.type_ == "point") shape = Point.deserialize(data, scale);
-    else if (data.type_ == "arc") shape = Arc.deserialize(data, scale);
-    else if (data.type_ == "text") return Text.deserialize(data, scale);
-    else if (data.type_ == "label") shape = Label.deserialize(data, scale);
-    else if (data.type_ == "rectangle") shape = Rect.deserialize(data, scale);
-    else if (data.type_ == "roundrectangle") shape = RoundRect.deserialize(data, scale);
-    else throw new Error(`${data.type_} deserialization is not implemented.`);
-    shape.deserializeStyle(data)
-    return shape
-  }
-
-  public deserializeStyle(data: any): void {
-    this.deserializeEdgeStyle(data);
-    this.deserializeSurfaceStyle(data);
-    this.deserializeTooltip(data);
-  }
-
-  public deserializeEdgeStyle(data: any): void {
-    this.lineWidth = data.edge_style?.line_width ?? this.lineWidth;
-    this.dashLine = data.edge_style?.dashline ?? this.dashLine;
-    this.strokeStyle = data.edge_style?.color_stroke ? colorHsl(data.edge_style.color_stroke) : null;
-  }
-
-  public deserializeSurfaceStyle(data: any): void {
-    this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
-    this.alpha = data.surface_style?.opacity ?? this.alpha;
-    this.hatching = data.surface_style?.hatching ? new Hatching("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
-  }
-
-  protected deserializeTooltip(data: any): void { if (data.tooltip) this.tooltipMap.set(data.tooltip, "") }
-
-  public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
-
-  protected updateTooltipOrigin(matrix: DOMMatrix): void {
-    if (this.mouseClick) this.tooltipOrigin = this.mouseClick.transform(matrix);
-  }
-
-  public draw(context: CanvasRenderingContext2D): void {
-    context.save();
-    const scaledPath = new Path2D();
-    const contextMatrix = context.getTransform();
-    this.updateTooltipOrigin(contextMatrix);
-    if (this.isScaled) {
-      scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
-      context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
-      this.inStrokeScale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
-    } else scaledPath.addPath(this.buildUnscaledPath(context));
-    this.setDrawingProperties(context);
-    if (this.isFilled) context.fill(scaledPath);
-    context.stroke(scaledPath);
-    this.scaledPath = scaledPath;
-    context.restore();
-  }
-
-  protected buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {
-    context.resetTransform();
-    const path = new Path2D();
-    path.addPath(this.path);
-    return path
-  }
-
-  public setStrokeStyle(fillStyle: string): string {
-    const [h, s, l] = hslToArray(colorHsl(fillStyle));
-    const lValue = l <= STROKE_STYLE_OFFSET ? l + STROKE_STYLE_OFFSET : l - STROKE_STYLE_OFFSET;
-    return `hsl(${h}, ${s}%, ${lValue}%)`;
-  }
-
-  public setDrawingProperties(context: CanvasRenderingContext2D) {
-    context.lineWidth = this.lineWidth;
-    context.setLineDash(this.dashLine);
-    if (this.alpha == 0) this.isFilled = false
-    else if (this.alpha != 1) context.globalAlpha = this.alpha;
-    if (this.isFilled) {
-      context.fillStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.fillStyle;
-      context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected) ? this.setStrokeStyle(context.fillStyle) : this.strokeStyle ? colorHsl(this.strokeStyle) : this.setStrokeStyle(context.fillStyle);
-      if (this.hatching) context.fillStyle = context.createPattern(this.hatching.generate_canvas(context.fillStyle), 'repeat');
-    } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle ? colorHsl(this.strokeStyle) : 'hsl(0, 0%, 0%)';
-  }
-
-  public initTooltip(context: CanvasRenderingContext2D): Tooltip { return new Tooltip(this.tooltipOrigin, this.tooltipMap, context) }
-
-  public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
-    if (this.isClicked && this.tooltipMap.size != 0) {
-      const tooltip = this.initTooltip(context);
-      tooltip.draw(plotOrigin, plotSize, context);
-    }
-  }
-
-  public buildPath(): void { }
-
-  public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
-    return this.isPointInStroke(context, point)
-  }
-
-  protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    let isHovered: boolean
-    context.save();
-    context.resetTransform();
-    context.lineWidth = 10;
-    if (this.isScaled) {
-      context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
-      isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
-    } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
-    context.restore();
-    return isHovered
-  }
-
-  public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
-
-  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void { this.isHovered = this.isPointInShape(context, mouseCoords) }
-
-  public mouseUp(keepState: boolean): void {
-    this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
-  }
-}
-
-export class Arc extends Shape {
-  constructor(
-    public center: Vertex,
-    public radius: number,
-    public startAngle: number,
-    public endAngle: number,
-    public clockWise: boolean = true
-  ) {
-    super();
-    this.isFilled = false;
-    this.buildPath();
-  }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    this.drawInContour(this.path);
-  }
-
-  public drawInContour(path: Path2D): void {
-    path.arc(this.center.x, this.center.y, this.radius, this.startAngle, this.endAngle, this.clockWise);
-  }
-
-  public static deserialize(data: any, scale: Vertex): Arc {
-    const arc = new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle, data.clockwise ?? true);
-    arc.deserializeEdgeStyle(data);
-    return arc
-  }
-
-  public getBounds(): [Vertex, Vertex] {
-    return [
-      new Vertex(this.center.x - this.radius, this.center.y - this.radius),
-      new Vertex(this.center.x + this.radius, this.center.y + this.radius)
-    ]
-  }
-}
-
-export class Circle extends Arc {
-  constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public radius: number = 1
-  ) {
-    super(center, radius, 0, 2 * Math.PI);
-    this.isFilled = true;
-  }
-
-  public static deserialize(data: any, scale: Vertex): Circle {
-    const circle = new Circle(new Vertex(data.cx, data.cy), data.r);
-    circle.deserializeEdgeStyle(data);
-    circle.deserializeSurfaceStyle(data);
-    return circle
-  }
-}
-
-export class Rect extends Shape {
-  constructor(
-    public origin: Vertex = new Vertex(0, 0),
-    public size: Vertex = new Vertex(0, 0)
-  ) {
-    super();
-    this.buildPath();
-  }
-
-  get area(): number { return this.size.x * this.size.y }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    this.path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
-  }
-
-  public static deserialize(data: any, scale: Vertex): Rect {
-    const rectangle = new Rect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height));
-    return rectangle
-  }
-
-  public deserializeStyle
-
-  public translate(translation: Vertex): void {
-    this.origin = this.origin.add(translation);
-    this.buildPath();
-  }
-
-  public get center(): Vertex { return this.origin.add(this.size).scale(new Vertex(0.5, 0.5)) }
-
-  public getBounds(): [Vertex, Vertex] { return [this.origin, this.origin.add(new Vertex(Math.abs(this.size.x), Math.abs(this.size.y)))] }
-}
-
-export class RoundRect extends Rect {
-  constructor(
-    public origin: Vertex = new Vertex(0, 0),
-    public size: Vertex = new Vertex(0, 0),
-    public radius: number = 2
-  ) {
-    super();
-    this.buildPath();
-  }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    const hLength = this.origin.x + this.size.x;
-    const vLength = this.origin.y + this.size.y;
-    this.path.moveTo(this.origin.x + this.radius, this.origin.y);
-    this.path.lineTo(hLength - this.radius, this.origin.y);
-    this.path.quadraticCurveTo(hLength, this.origin.y, hLength, this.origin.y + this.radius);
-    this.path.lineTo(hLength, this.origin.y + this.size.y - this.radius);
-    this.path.quadraticCurveTo(hLength, vLength, hLength - this.radius, vLength);
-    this.path.lineTo(this.origin.x + this.radius, vLength);
-    this.path.quadraticCurveTo(this.origin.x, vLength, this.origin.x, vLength - this.radius);
-    this.path.lineTo(this.origin.x, this.origin.y + this.radius);
-    this.path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
-  }
-
-  public static deserialize(data: any, scale: Vertex): Rect {
-    const roundRectangle = new RoundRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height), data.radius);
-    return roundRectangle
-  }
-}
-
-export class Mark extends Shape {
-  constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public size: number = 1
-  ) {
-    super();
-    this.isFilled = false;
-    this.buildPath();
-  }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x - halfSize, this.center.y);
-    this.path.lineTo(this.center.x + halfSize, this.center.y);
-    this.path.moveTo(this.center.x, this.center.y - halfSize);
-    this.path.lineTo(this.center.x, this.center.y + halfSize);
-  }
-
-  public getBounds(): [Vertex, Vertex] {
-    const halfSize = this.size / 2;
-    const halfSizeVertex = new Vertex(halfSize, halfSize);
-    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-  }
-}
-
-export abstract class AbstractHalfLine extends Shape {
-  constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public size: number = 1,
-    public orientation: string = 'up'
-  ) {
-    super();
-    this.isFilled = false;
-    this.buildPath();
-  }
-
-  public get drawingStyle(): { [key: string]: any } {
-    return { ...super.drawingStyle, "orientation": this.orientation }
-  }
-
-  public getBounds(): [Vertex, Vertex] {
-    const halfSize = this.size / 2;
-    const halfSizeVertex = new Vertex(halfSize, halfSize);
-    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-  }
-}
-
-export class UpHalfLine extends AbstractHalfLine {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x, this.center.y);
-    this.path.lineTo(this.center.x, this.center.y + halfSize);
-  }
-}
-
-export class DownHalfLine extends AbstractHalfLine {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x, this.center.y);
-    this.path.lineTo(this.center.x, this.center.y - halfSize);
-  }
-}
-
-export class LeftHalfLine extends AbstractHalfLine {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x, this.center.y);
-    this.path.lineTo(this.center.x - halfSize, this.center.y);
-  }
-}
-
-export class RightHalfLine extends AbstractHalfLine {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x, this.center.y);
-    this.path.lineTo(this.center.x + halfSize, this.center.y);
-  }
-}
-
-export class HalfLine extends AbstractHalfLine {
-  constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public size: number = 1,
-    public orientation: string = 'up'
-  ) {
-    super(center, size, orientation);
-    this.buildPath();
-  }
-
-  public buildPath(): void {
-    if (this.orientation == 'up') this.path = new UpHalfLine(this.center, this.size).path;
-    if (this.orientation == 'down') this.path = new DownHalfLine(this.center, this.size).path;
-    if (this.orientation == 'left') this.path = new LeftHalfLine(this.center, this.size).path;
-    if (this.orientation == 'right') this.path = new RightHalfLine(this.center, this.size).path;
-    if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation halfline ${this.orientation} is unknown.`);
-  }
-}
-
-export class Line extends Shape {
-  constructor(
-    public origin: Vertex = new Vertex(0, 0),
-    public end: Vertex = new Vertex(0, 0)
-  ) {
-    super();
-    this.isFilled = false;
-    this.buildPath();
-  }
-
-  private computeSlope(): number {
-    return (this.end.y - this.origin.y) / (this.end.x - this.origin.x);
-  }
-
-  private computeAffinity(slope: number): number {
-    return this.origin.y - slope * this.origin.x
-  }
-
-  public getEquation(): [number, number] {
-    const slope = this.computeSlope();
-    const affinity = this.computeAffinity(slope);
-    return [slope, affinity]
-  }
-
-  public static deserialize(data: any, scale: Vertex): Line { // TODO: Don't know how to factor this and the LineSegment one
-    const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    return line
-  }
-
-  public buildPath(): void {
-    const [slope, affinity] = this.getEquation();
-    if (this.end.x == this.origin.x) {
-      this.path = new LineSegment(new Vertex(this.origin.x, -this.end.y * INFINITE_LINE_FACTOR), new Vertex(this.origin.x, this.end.y * INFINITE_LINE_FACTOR)).path;
-    } else {
-      const fakeOrigin = new Vertex(-INFINITE_LINE_FACTOR, 0);
-      const fakeEnd = new Vertex(INFINITE_LINE_FACTOR, 0);
-      if (this.origin.x != 0) {
-        fakeOrigin.x *= this.origin.x;
-        fakeEnd.x *= this.origin.x;
-      }
-      fakeOrigin.y = fakeOrigin.x * slope + affinity;
-      fakeEnd.y = fakeEnd.x * slope + affinity;
-      this.path = new LineSegment(fakeOrigin, fakeEnd).path;
-    }
-  }
-
-  public getBounds(): [Vertex, Vertex] {
-    const minX = Math.min(this.origin.x, this.end.x);
-    const minY = Math.min(this.origin.y, this.end.y);
-    const maxX = Math.max(this.origin.x, this.end.x);
-    const maxY = Math.max(this.origin.y, this.end.y);
-    return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
-  }
-}
-
-export class LineSegment extends Line {
-  constructor(
-    public origin: Vertex = new Vertex(0, 0),
-    public end: Vertex = new Vertex(0, 0)
-  ) {
-    super(origin, end);
-  }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    this.path.moveTo(this.origin.x, this.origin.y);
-    this.drawInContour(this.path);
-  }
-
-  public static deserialize(data: any, scale: Vertex): LineSegment {
-    const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    line.deserializeEdgeStyle(data);
-    return line
-  }
-
-  public drawInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
-}
-
-export abstract class AbstractLinePoint extends Shape {
-  constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public size: number = 1,
-    public orientation: string = 'up'
-  ) {
-    super();
-    this.isFilled = false;
-    this.buildPath();
-  }
-
-  public get drawingStyle(): { [key: string]: any } {
-    return { ...super.drawingStyle, "orientation": this.orientation }
-  }
-
-  public getBounds(): [Vertex, Vertex] {
-    const halfSize = this.size / 2;
-    const halfSizeVertex = new Vertex(halfSize, halfSize);
-    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-  }
-}
-
-export class VerticalLinePoint extends AbstractLinePoint {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x, this.center.y - halfSize);
-    this.path.lineTo(this.center.x, this.center.y + halfSize);
-  }
-}
-
-export class HorizontalLinePoint extends AbstractLinePoint {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x - halfSize, this.center.y);
-    this.path.lineTo(this.center.x + halfSize, this.center.y);
-  }
-}
-
-export class PositiveLinePoint extends AbstractLinePoint {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-    this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-  }
-}
-
-export class NegativeLinePoint extends AbstractLinePoint {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
-    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
-  }
-}
-
-export class LinePoint extends AbstractLinePoint {
-  constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public size: number = 1,
-    public orientation: string = 'vertical'
-  ) {
-    super(center, size, orientation);
-    this.buildPath();
-  }
-
-  public buildPath(): void {
-    if (this.orientation == 'vertical') this.path = new VerticalLinePoint(this.center, this.size).path;
-    if (this.orientation == 'horizontal') this.path = new HorizontalLinePoint(this.center, this.size).path;
-    if (['slash', 'positive'].includes(this.orientation)) this.path = new PositiveLinePoint(this.center, this.size).path;
-    if (['backslash', 'negative'].includes(this.orientation)) this.path = new NegativeLinePoint(this.center, this.size).path;
-    if (!['vertical', 'horizontal', 'slash', 'backslash', 'positive', 'negative'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
-  }
-}
-
-export class Cross extends Shape {
-  constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public size: number = 1
-  ) {
-    super();
-    this.isFilled = false;
-    this.buildPath();
-  }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-    this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-    this.path.moveTo(this.center.x - halfSize, this.center.y + halfSize);
-    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
-  }
-
-  public getBounds(): [Vertex, Vertex] {
-    const halfSize = this.size / 2;
-    const halfSizeVertex = new Vertex(halfSize, halfSize);
-    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-  }
-}
-
-export abstract class AbstractTriangle extends Shape {
-  constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public size: number = 1,
-    public orientation: string = 'up'
-  ) {
-    super();
-    this.buildPath();
-  }
-
-  public get drawingStyle(): { [key: string]: any } {
-    return { ...super.drawingStyle, "orientation": this.orientation }
-  }
-
-  public abstract buildPath(): void;
-
-  public getBounds(): [Vertex, Vertex] {
-    const halfSize = this.size / 2;
-    const halfSizeVertex = new Vertex(halfSize, halfSize);
-    return [this.center.subtract(halfSizeVertex), this.center.add(halfSizeVertex)]
-  }
-}
-
-export class UpTriangle extends AbstractTriangle {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-    this.path.lineTo(this.center.x + halfSize, this.center.y - halfSize);
-    this.path.lineTo(this.center.x, this.center.y + halfSize);
-    this.path.closePath();
-  }
-}
-
-export class DownTriangle extends AbstractTriangle {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x + halfSize, this.center.y + halfSize);
-    this.path.lineTo(this.center.x, this.center.y - halfSize);
-    this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-    this.path.closePath();
-  }
-}
-
-export class LeftTriangle extends AbstractTriangle {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x + halfSize, this.center.y - halfSize);
-    this.path.lineTo(this.center.x - halfSize, this.center.y);
-    this.path.lineTo(this.center.x + halfSize, this.center.y + halfSize);
-    this.path.closePath();
-  }
-}
-
-export class RightTriangle extends AbstractTriangle {
-  public buildPath(): void {
-    this.path = new Path2D();
-    const halfSize = this.size / 2;
-    this.path.moveTo(this.center.x - halfSize, this.center.y - halfSize);
-    this.path.lineTo(this.center.x + halfSize, this.center.y);
-    this.path.lineTo(this.center.x - halfSize, this.center.y + halfSize);
-    this.path.closePath();
-  }
-}
-
-export class Triangle extends AbstractTriangle {
-  constructor(
-    public center: Vertex = new Vertex(0, 0),
-    public size: number = 1,
-    public orientation: string = 'up'
-  ) {
-    super();
-    this.buildPath();
-  }
-
-  public buildPath(): void {
-    if (this.orientation == 'up') this.path = new UpTriangle(this.center, this.size).path
-    if (this.orientation == 'down') this.path = new DownTriangle(this.center, this.size).path
-    if (this.orientation == 'right') this.path = new RightTriangle(this.center, this.size).path
-    if (this.orientation == 'left') this.path = new LeftTriangle(this.center, this.size).path
-    if (!['up', 'down', 'left', 'right'].includes(this.orientation)) throw new Error(`Orientation ${this.orientation} is unknown.`);
-  }
-}
-
-export class Contour extends Shape {
-  constructor(
-    public lines: (Arc | LineSegment)[] = [],
-    public isFilled: boolean = false
-  ) {
-    super();
-    this.buildPath();
-  }
-
-  public static deserialize(data: any, scale: Vertex): Contour {
-    const lines = data.plot_data_primitives.map(primitive => Shape.deserialize(primitive, scale));
-    const contour = new Contour(lines, data.is_filled ?? false);
-    contour.deserializeEdgeStyle(data);
-    if (contour.isFilled) contour.deserializeSurfaceStyle(data);
-    return contour
-  }
-
-  public setDrawingProperties(context: CanvasRenderingContext2D) {
-    super.setDrawingProperties(context);
-    context.strokeStyle = "hsla(0, 0%, 100%, 0)";
-  }
-
-  private setLineStyle(context: CanvasRenderingContext2D, line: Shape): void {
-    line.dashLine = line.dashLine.length != 0 ? line.dashLine : this.dashLine;
-    line.strokeStyle = line.strokeStyle ?? this.strokeStyle;
-    line.lineWidth = line.lineWidth != 1 ? line.lineWidth : this.lineWidth;
-    line.isHovered = this.isHovered;
-    line.isClicked = this.isClicked;
-    line.isSelected = this.isSelected;
-  }
-
-  public draw(context: CanvasRenderingContext2D): void {
-    super.draw(context);
-    context.save();
-    super.setDrawingProperties(context);
-    this.lines.forEach(line => {
-      this.setLineStyle(context, line);
-      line.draw(context)
-    });
-    context.restore();
-  }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    if (this.lines[0] instanceof LineSegment) this.path.moveTo(this.lines[0].origin.x, this.lines[0].origin.y);
-    this.lines.forEach(line => line.drawInContour(this.path));
-    if (this.isFilled) this.path.closePath();
-  }
-
-  public getBounds(): [Vertex, Vertex] {
-    let minimum = new Vertex(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
-    let maximum = new Vertex(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
-    this.lines.forEach(line => {
-      const [shapeMin, shapeMax] = line.getBounds();
-      if (shapeMin.x <= minimum.x) minimum.x = shapeMin.x;
-      if (shapeMin.y <= minimum.y) minimum.y = shapeMin.y;
-      if (shapeMax.x >= maximum.x) maximum.x = shapeMax.x;
-      if (shapeMax.y >= maximum.y) maximum.y = shapeMax.y;
-    })
-    return [minimum, maximum]
-  }
-}
+import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE,
+  TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, SMALL_RUBBERBAND_SIZE } from "./constants"
+import { PointStyle } from "./styles"
+import { Vertex, Shape } from "./baseShape"
+import { styleToLegend } from "./shapeFunctions"
+import { Rect, RoundRect, Triangle, LineSegment, Point } from "./primitives"
+import { Axis } from "./axes"
 
 export interface TextParams {
   width?: number,
@@ -1152,255 +359,9 @@ export class Text extends Shape {
   }
 }
 
-export class Point extends Shape {
-  public path: Path2D;
-  public center: Vertex;
-
-  constructor(
-    x: number = 0,
-    y: number = 0,
-    protected _size: number = 12,
-    protected _marker: string = 'circle',
-    protected _markerOrientation: string = 'up',
-    fillStyle: string = null,
-    strokeStyle: string = null
-  ) {
-    super();
-    this.center = new Vertex(x, y);
-    this.buildPath();
-    this.fillStyle = fillStyle || this.fillStyle;
-    this.strokeStyle = strokeStyle || this.setStrokeStyle(this.fillStyle);
-    this.lineWidth = 1;
-  };
-
-  public get drawingStyle(): { [key: string]: any } {
-    const style = super.drawingStyle;
-    style["markerOrientation"] = this.markerOrientation;
-    style["marker"] = this.marker;
-    style["size"] = this.size;
-    return style
-  }
-
-  public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf Text)
-    const factor = 0.025;
-    const minX = this.center.x != 0 ? this.center.x - Math.abs(this.center.x) * factor : -1;
-    const minY = this.center.y != 0 ? this.center.y - Math.abs(this.center.y) * factor : -1;
-    const maxX = this.center.x != 0 ? this.center.x + Math.abs(this.center.x) * factor : 1;
-    const maxY = this.center.y != 0 ? this.center.y + Math.abs(this.center.y) * factor : 1;
-    return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
-  }
-
-  public static deserialize(data: any, scale: Vertex): Point {
-    const point = new Point(data.cx, data.cy);
-    point.isScaled = false;
-    return point
-  }
-
-  public deserializeStyle(data: any): void {
-    this.deserializeTooltip(data);
-    this.deserializePointStyle(data.point_style ?? {});
-  }
-
-  protected deserializePointStyle(data: any): void {
-    this.size = data.size ?? this.size;
-    this.fillStyle = data.color_fill ?? this.fillStyle;
-    this.strokeStyle = data.color_stroke ?? this.strokeStyle;
-    this.lineWidth = data.stroke_width ?? this.lineWidth;
-    this.marker = data.shape ?? this.marker;
-    this.markerOrientation = data.orientation ?? this.markerOrientation;
-  }
-
-  public updateStyle(style: PointStyle): void {
-    this.size = style.size ?? this.size;
-    this.fillStyle = style.fillStyle ?? this.fillStyle;
-    this.strokeStyle = style.strokeStyle ?? this.strokeStyle;
-    this.lineWidth = style.lineWidth ?? this.lineWidth;
-    this.marker = style.marker ?? this.marker;
-    this.markerOrientation = style.orientation ?? this.markerOrientation;
-  }
-
-  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): Point {
-    const legend = new Point(legendOrigin.x, legendOrigin.y);
-    legend.size = legendSize.y * 0.9;
-    legend.marker = this.marker;
-    legend.markerOrientation = this.markerOrientation;
-    return legend
-  }
-
-  public copy(): Point {
-    const copy = new Point();
-    copy.center = this.center.copy();
-    copy.size = this.size;
-    copy.marker = this.marker;
-    copy.markerOrientation = this.markerOrientation;
-    copy.fillStyle = this.fillStyle;
-    copy.strokeStyle = this.strokeStyle;
-    copy.lineWidth = this.lineWidth;
-    return copy
-  }
-
-  public update() { this.buildPath() }
-
-  public scale(scale: Vertex): Point {
-    this.center = this.center.scale(scale);
-    this.buildPath();
-    return this
-  }
-
-  public setColors(color: string) {
-    this.fillStyle = this.isFilled ? color : null;
-    this.strokeStyle = this.isFilled ? this.setStrokeStyle(this.fillStyle) : color;
-  }
-
-  get drawnShape(): Shape {
-    let marker = new Shape();
-    if (CIRCLES.includes(this.marker)) marker = new Circle(this.center, this.size / 2);
-    if (MARKERS.includes(this.marker)) marker = new Mark(this.center, this.size);
-    if (CROSSES.includes(this.marker)) marker = new Cross(this.center, this.size);
-    if (SQUARES.includes(this.marker)) {
-      const halfSize = this.size * 0.5;
-      const origin = new Vertex(this.center.x - halfSize, this.center.y - halfSize);
-      marker = new Rect(origin, new Vertex(this.size, this.size));
-    };
-    if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center, this.size, this.markerOrientation);
-    if (HALF_LINES.includes(this.marker)) marker = new HalfLine(this.center, this.size, this.markerOrientation);
-    if (this.marker == 'line') marker = new LinePoint(this.center, this.size, this.markerOrientation);
-    marker.lineWidth = this.lineWidth;
-    this.isFilled = marker.isFilled;
-    return marker
-  }
-
-  protected updateTooltipOrigin(matrix: DOMMatrix): void { this.tooltipOrigin = this.center.copy() }
-
-  public initTooltip(context: CanvasRenderingContext2D): Tooltip {
-    const tooltip = super.initTooltip(context);
-    tooltip.isFlipper = true;
-    return tooltip
-  }
-
-  get markerOrientation(): string { return this._markerOrientation };
-
-  set markerOrientation(value: string) { this._markerOrientation = value };
-
-  get size(): number { return this._size };
-
-  set size(value: number) { this._size = value };
-
-  get marker(): string { return this._marker };
-
-  set marker(value: string) { this._marker = value };
-
-  public buildPath(): void { this.path = this.drawnShape.path }
-
-  protected buildUnscaledPath(context: CanvasRenderingContext2D) {
-    const matrix = context.getTransform();
-    context.resetTransform();
-    const center = new Vertex(matrix.e, matrix.f).add(this.center.scale(new Vertex(matrix.a, matrix.d))).subtract(this.center);
-    const path = new Path2D();
-    path.addPath(this.drawnShape.path, new DOMMatrix([1, 0, 0, 1, center.x, center.y]));
-    this.path = new Path2D();
-    this.path.addPath(path, matrix.inverse());
-    return path
-  }
-
-  public isInFrame(origin: Vertex, end: Vertex, scale: Vertex): boolean {
-    const inCanvasX = this.center.x * scale.x < end.x && this.center.x * scale.x > origin.x;
-    const inCanvasY = this.center.y * scale.y < end.y && this.center.y * scale.y > origin.y;
-    this.inFrame = inCanvasX && inCanvasY;
-    return this.inFrame
-  }
-
-  protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    this.setContextPointInStroke(context);
-    const isHovered = context.isPointInStroke(this.path, point.x, point.y);
-    context.restore();
-    return isHovered
-  }
-
-  protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
-    context.save();
-    context.resetTransform();
-  }
-}
-
-export class LineSequence extends Shape {
-  public previousMouseClick: Vertex;
-  public hoveredThickener: number = 2;
-  public clickedThickener: number = 2;
-  public selectedThickener: number = 2;
-  constructor(
-    public points: Point[] = [],
-    public name: string = ""
-  ) {
-    super();
-    this.isScaled = false;
-    this.isFilled = false;
-    this.updateTooltipMap();
-  }
-
-  public static deserialize(data: { [key: string]: any }, scale: Vertex): LineSequence {
-    const points = [];
-    data.lines.forEach(line => points.push(new Point(line[0], line[1])));
-    const line = new LineSequence(points, data.name ?? "");
-    line.deserializeEdgeStyle(data);
-    line.isScaled = true;
-    line.buildPath();
-    return line
-  }
-
-  public initTooltip(context: CanvasRenderingContext2D): Tooltip {
-    if (!this.tooltipOrigin) this.tooltipOrigin = this.points[Math.floor(this.points.length / 2)].center;
-    return super.initTooltip(context);
-  }
-
-  public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf Text)
-    let minX = Number.POSITIVE_INFINITY;
-    let minY = Number.POSITIVE_INFINITY;
-    let maxX = Number.NEGATIVE_INFINITY;
-    let maxY = Number.NEGATIVE_INFINITY;
-    this.points.forEach(point => {
-      if (point.center.x < minX) minX = point.center.x;
-      if (point.center.y < minY) minY = point.center.y;
-      if (point.center.x > maxX) maxX = point.center.x;
-      if (point.center.y > maxY) maxY = point.center.y;
-    })
-    return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
-  }
-
-  public mouseDown(mouseDown: Vertex) {
-    super.mouseDown(mouseDown);
-    if (this.isHovered) this.previousMouseClick = mouseDown.copy();
-  }
-
-  public updateTooltipMap() { this._tooltipMap = new Map<string, any>(this.name ? [["Name", this.name]] : []) }
-
-  public static unpackGraphProperties(graph: { [key: string]: any }): LineSequence {
-    const emptyLineSequence = new LineSequence([], graph.name);
-    emptyLineSequence.deserializeEdgeStyle(graph);
-    return emptyLineSequence
-  }
-
-  public setDrawingProperties(context: CanvasRenderingContext2D) {
-    super.setDrawingProperties(context);
-    const thickener = this.isSelected ? this.selectedThickener : this.isClicked ? this.clickedThickener : this.isHovered ? this.hoveredThickener : 0;
-    context.lineWidth = this.lineWidth + thickener;
-  }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    this.path.moveTo(this.points[0].center.x, this.points[0].center.y);
-    this.points.slice(1).forEach(point => this.path.lineTo(point.center.x, point.center.y));
-  }
-
-  public update(points: Point[]): void {
-    this.points = points;
-    this.buildPath();
-  }
-}
-
 export class Label extends Shape {
   public shapeSize: Vertex = new Vertex(30, MAX_LABEL_HEIGHT);
-  public legend: Rect | LineSegment | Point;
+  public legend: Shape;
   public maxWidth: number = 150;
   public readonly textOffset = 5;
   constructor(
@@ -1423,7 +384,6 @@ export class Label extends Shape {
   protected buildUnscaledPath(context: CanvasRenderingContext2D) {
     const matrix = context.getTransform();
     context.resetTransform();
-    const origin = this.origin.transform(matrix);
     this.buildPath();
     const path = new Path2D();
     path.addPath(this.path);
@@ -1445,7 +405,7 @@ export class Label extends Shape {
   }
 
   public getShapeStyle(shape: Shape, origin: Vertex): void {
-    this.legend = shape.styleToLegend(origin, this.shapeSize);
+    this.legend = styleToLegend(shape, origin, this.shapeSize);
     Object.entries(shape.drawingStyle).map(([key, value]) => this[key] = value);
   }
 
@@ -1456,18 +416,17 @@ export class Label extends Shape {
     this.shapeSize.y = height;
     if (this.legend instanceof Rect) this.legend.size.y = height
     else if (this.legend instanceof LineSegment) this.legend.end.y = this.legend.origin.y + height
-    else this.legend.size = height;
+    else if (this.legend instanceof Point) this.legend.size = height;
     this.text.fontsize = height;
   }
 
   public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): Label {
     const textParams = Text.deserializeTextParams(data);
-    const shape = data.shape ? Shape.deserialize(data.shape, scale) : new Rect();
     const text = new Text(data.title, new Vertex(0, 0), textParams);
     text.isScaled = false;
     text.baseline = "middle";
     text.align = "start";
-    return new Label(shape, text)
+    return new Label(new Rect(), text)
   }
 
   public deserializeStyle(data): void {
@@ -1643,5 +602,378 @@ export class Tooltip {// TODO: make it a Shape
     context.stroke(scaledPath);
     this.writeText(textOrigin, context);
     context.restore()
+  }
+
+  public setFlip(shape: Shape): void { this.isFlipper = shape.tooltipFlip }
+}
+
+export class ScatterPoint extends Point {
+  public mean = new Vertex();
+  constructor(
+    public values: number[],
+    x: number = 0,
+    y: number = 0,
+    protected _size: number = 12,
+    protected _marker: string = 'circle',
+    protected _markerOrientation: string = 'up',
+    fillStyle: string = null,
+    strokeStyle: string = null
+  ) {
+    super(x, y, _size, _marker, _markerOrientation, fillStyle, strokeStyle);
+    this.isScaled = false;
+  }
+
+  public static fromPlottedValues(indices: number[], pointsData: { [key: string]: number[] }, pointSize: number, marker: string,
+    thresholdDist: number, tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[],
+    xName: string, yName: string): ScatterPoint {
+    const newPoint = new ScatterPoint(indices, 0, 0, pointSize, marker);
+    newPoint.computeValues(pointsData, thresholdDist);
+    newPoint.updateTooltip(tooltipAttributes, features, axes, xName, yName);
+    newPoint.update();
+    return newPoint
+  }
+
+  protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
+    context.save();
+    context.resetTransform();
+    context.lineWidth = 10;
+  }
+
+  public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
+
+  public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[], xName: string, yName: string) {
+    this.updateTooltipMap();
+    if (this.values.length == 1) {
+      this.newTooltipMap();
+      tooltipAttributes.forEach(attr => this.tooltipMap.set(attr, features.get(attr)[this.values[0]]));
+      return;
+    }
+    this.tooltipMap.set(`Average ${xName}`, axes[0].isDiscrete ? axes[0].labels[Math.round(this.mean.x)] : this.mean.x);
+    this.tooltipMap.set(`Average ${yName}`, axes[1].isDiscrete ? axes[1].labels[Math.round(this.mean.y)] : this.mean.y);
+    this.tooltipMap.delete('X mean');
+    this.tooltipMap.delete('Y mean');
+  }
+
+  public updateStyle(style: PointStyle): void {
+    super.updateStyle(style);
+    this.marker = this.values.length > 1 ? this.marker : style.marker ?? this.marker;
+  }
+
+  public computeValues(pointsData: { [key: string]: number[] }, thresholdDist: number): void {
+    let centerX = 0;
+    let centerY = 0;
+    let meanX = 0;
+    let meanY = 0;
+    this.values.forEach(index => {
+      centerX += pointsData.xCoords[index];
+      centerY += pointsData.yCoords[index];
+      meanX += pointsData.xValues[index];
+      meanY += pointsData.yValues[index];
+    });
+    this.center.x = centerX / this.values.length;
+    this.center.y = centerY / this.values.length;
+    this.size = Math.min(this.size * 1.15 ** (this.values.length - 1), thresholdDist);
+    this.mean.x = meanX / this.values.length;
+    this.mean.y = meanY / this.values.length;
+  }
+}
+
+export class Bar extends Rect {
+  public min: number;
+  public max: number;
+  public mean: number;
+  constructor(
+    public values: any[] = [],
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0)
+  ) {
+    super(origin, size);
+  }
+
+  get length(): number { return this.values.length };
+
+  get tooltipMap(): Map<string, any> {
+    return new Map<string, any>([["Number", this.length], ["Min", this.min], ["Max", this.max], ["Mean", this.mean]])
+  }
+
+  protected computeTooltipOrigin(contextMatrix: DOMMatrix): Vertex {
+    return new Vertex(this.origin.x + this.size.x / 2, this.origin.y + this.size.y).transform(contextMatrix)
+  }
+
+  get tooltipFlip(): boolean { return false }
+
+  public setGeometry(origin: Vertex, size: Vertex): void {
+    this.origin = origin;
+    this.size = size;
+  }
+
+  public draw(context: CanvasRenderingContext2D): void {
+    if (this.size.x != 0 && this.size.y != 0) {
+      super.draw(context);
+      this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
+    }
+  }
+
+  public computeStats(values: number[]): void {
+    this.min = Math.min(...values);
+    this.max = Math.max(...values);
+    this.mean = values.reduce((a, b) => a + b, 0) / values.length;
+  }
+
+  public updateStyle(origin: Vertex, size: Vertex, hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[],
+    fillStyle: string, strokeStyle: string, dashLine: number[], lineWidth: number): void {
+    this.setGeometry(origin, size);
+    this.fillStyle = fillStyle;
+    this.strokeStyle = strokeStyle;
+    this.dashLine = dashLine;
+    this.lineWidth = lineWidth;
+    if (this.values.some(valIdx => hoveredIndices.includes(valIdx))) this.isHovered = true;
+    if (this.values.some(valIdx => clickedIndices.includes(valIdx))) this.isClicked = true;
+    if (this.values.some(valIdx => selectedIndices.includes(valIdx))) this.isSelected = true;
+    this.buildPath();
+  }
+}
+
+// TODO: make rubberband a Shape ?
+export class RubberBand {
+  public canvasMin: number = 0;
+  public canvasMax: number = 0;
+
+  public isHovered: boolean = false;
+  public isClicked: boolean = false;
+  public isSelected: boolean = false;
+
+  public path: Path2D;
+  public isInverted: boolean = false;
+
+  public minUpdate: boolean = false;
+  public maxUpdate: boolean = false;
+  public lastValues: Vertex = new Vertex(null, null);
+  constructor(
+    public attributeName: string,
+    private _minValue: number,
+    private _maxValue: number,
+    public isVertical: boolean) { }
+
+  public get canvasLength() { return Math.abs(this.canvasMax - this.canvasMin) }
+
+  public get length() { return Math.abs(this.maxValue - this.minValue) }
+
+  public set minValue(value: number) { this._minValue = value }
+
+  public get minValue() { return this._minValue }
+
+  public set maxValue(value: number) { this._maxValue = value }
+
+  public get maxValue() { return this._maxValue }
+
+  public selfSend(rubberBands: Map<string, RubberBand>) { rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical)) }
+
+  public selfSendRange(rubberBands: Map<string, RubberBand>) {
+    rubberBands.get(this.attributeName).minValue = this.minValue;
+    rubberBands.get(this.attributeName).maxValue = this.maxValue;
+  }
+
+  public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
+    let rectOrigin: Vertex;
+    let rectSize: Vertex;
+    if (this.isVertical) {
+      rectOrigin = new Vertex(origin - SMALL_RUBBERBAND_SIZE / 2, this.canvasMin);
+      rectSize = new Vertex(SMALL_RUBBERBAND_SIZE, this.canvasLength);
+    } else {
+      rectOrigin = new Vertex(this.canvasMin, origin - SMALL_RUBBERBAND_SIZE / 2);
+      rectSize = new Vertex(this.canvasLength, SMALL_RUBBERBAND_SIZE)
+    }
+    const draw = new Rect(rectOrigin, rectSize);
+    draw.lineWidth = lineWidth;
+    draw.fillStyle = colorFill;
+    draw.strokeStyle = colorStroke;
+    draw.alpha = alpha;
+    draw.draw(context);
+  }
+
+  public reset() {
+    this.minValue = 0;
+    this.maxValue = 0;
+    this.canvasMin = 0;
+    this.canvasMax = 0;
+  }
+
+  public flipMinMax() {
+    if (this.minValue >= this.maxValue) {
+      [this.minValue, this.maxValue] = [this.maxValue, this.minValue];
+      [this.minUpdate, this.maxUpdate] = [this.maxUpdate, this.minUpdate];
+    }
+  }
+
+  private get borderSize() { return Math.min(PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
+
+  public mouseDown(mouseAxis: number) {
+    this.isClicked = true;
+    if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.isInverted ? this.maxUpdate = true : this.minUpdate = true
+    else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.isInverted ? this.minUpdate = true : this.maxUpdate = true
+    else this.lastValues = new Vertex(this.minValue, this.maxValue);
+  }
+
+  public mouseMove(downValue: number, currentValue: number) {
+    if (this.isClicked) {
+      if (this.minUpdate) this.minValue = currentValue
+      else if (this.maxUpdate) this.maxValue = currentValue
+      else {
+        const translation = currentValue - downValue;
+        this.minValue = this.lastValues.x + translation;
+        this.maxValue = this.lastValues.y + translation;
+      }
+      this.flipMinMax();
+    }
+  }
+
+  public mouseUp() {
+    this.minUpdate = false;
+    this.maxUpdate = false;
+    this.isClicked = false;
+  }
+}
+
+export class SelectionBox extends Rect {
+  public minVertex: Vertex = null;
+  public maxVertex: Vertex = null;
+  private _previousMin: Vertex;
+  private _previousMax: Vertex;
+  private _scale: Vertex = new Vertex(1, 1);
+
+  public leftUpdate: boolean = false;
+  public rightUpdate: boolean = false;
+  public upUpdate: boolean = false;
+  public downUpdate: boolean = false;
+  constructor(
+    public origin: Vertex = new Vertex(0, 0),
+    public size: Vertex = new Vertex(0, 0)
+  ) {
+    super(origin, size);
+    this.mouseClick = this.origin.copy();
+    this.initBoundariesVertex();
+    this.dashLine = DASH_SELECTION_WINDOW;
+    this.selectedStyle = this.clickedStyle = this.hoverStyle = this.fillStyle = "hsla(0, 0%, 100%, 0)";
+    this.lineWidth = 0.5
+  }
+
+  get isDefined(): boolean { return (this.minVertex != null && this.maxVertex != null) }
+
+  public setDrawingProperties(context: CanvasRenderingContext2D): void {
+    super.setDrawingProperties(context);
+    context.lineWidth = (this.isHovered || this.isClicked) ? this.lineWidth * 2 : this.lineWidth;
+  }
+
+  private initBoundariesVertex(): void {
+    this.minVertex = this.origin.copy();
+    this.maxVertex = this.origin.add(this.size);
+    this.saveState();
+  }
+
+  public update(minVertex: Vertex, maxVertex: Vertex): void {
+    this.minVertex = minVertex;
+    this.maxVertex = maxVertex;
+  }
+
+  public updateRectangle(origin: Vertex, size: Vertex): void {
+    this.origin = origin;
+    this.size = size;
+    this.initBoundariesVertex();
+    this.buildPath();
+  }
+
+  public rubberBandUpdate(rubberBand: RubberBand, coordName: string): void {
+    if (this.isDefined) {
+      if (rubberBand.minValue != rubberBand.maxValue) {
+        this.minVertex[coordName] = rubberBand.minValue;
+        this.maxVertex[coordName] = rubberBand.maxValue;
+      } else this.minVertex = this.maxVertex = null;
+    }
+  }
+
+  public buildRectangle(frameOrigin: Vertex, frameSize: Vertex): void {
+    this.origin = this.minVertex.copy();
+    this.size = this.maxVertex.subtract(this.origin);
+    this.insideCanvas(frameOrigin, frameSize);
+    this.buildPath();
+  }
+
+  private insideCanvas(drawOrigin: Vertex, drawSize: Vertex): void {
+    const downLeftCorner = this.origin;
+    const upRightCorner = downLeftCorner.add(this.size);
+    const upRightDiff = drawOrigin.add(drawSize).subtract(upRightCorner);
+    const downLeftDiff = downLeftCorner.subtract(drawOrigin);
+
+    if (upRightDiff.x < 0) this.size.x += upRightDiff.x
+    else if (upRightDiff.x > drawSize.x) this.size.x += upRightDiff.x - drawSize.x;
+
+    if (upRightDiff.y < 0) this.size.y += upRightDiff.y
+    else if (upRightDiff.y > drawSize.y) this.size.y += upRightDiff.y - drawSize.y;
+
+    if (downLeftDiff.x < 0) {
+      this.origin.x -= downLeftDiff.x;
+      this.size.x += downLeftDiff.x;
+    } else if (downLeftDiff.x > drawSize.x) {
+      this.origin.x -= downLeftDiff.x - drawSize.x;
+      this.size.x += downLeftDiff.x - drawSize.x;
+    }
+    if (downLeftDiff.y < 0) {
+      this.origin.y -= downLeftDiff.y;
+      this.size.y += downLeftDiff.y;
+    } else if (downLeftDiff.y > drawSize.y) {
+      this.origin.y -= downLeftDiff.y - drawSize.y;
+      this.size.y += downLeftDiff.y - drawSize.y;
+    }
+  }
+
+  private get borderSizeX() { return Math.min(PICKABLE_BORDER_SIZE / Math.abs(this._scale.x), Math.abs(this.size.x) / 3) }
+
+  private get borderSizeY() { return Math.min(PICKABLE_BORDER_SIZE / Math.abs(this._scale.y), Math.abs(this.size.y) / 3) }
+
+  private saveState() {
+    this._previousMin = this.minVertex.copy();
+    this._previousMax = this.maxVertex.copy();
+  }
+
+  public updateScale(scaleX: number, scaleY: number): void {
+    this._scale.x = scaleX;
+    this._scale.y = scaleY;
+  }
+
+  public mouseDown(mouseDown: Vertex): void {
+    super.mouseDown(mouseDown);
+    if (this.isHovered) {
+      this.isClicked = true;
+      this.saveState();
+      this.leftUpdate = Math.abs(this.mouseClick.x - this.minVertex.x) <= this.borderSizeX;
+      this.rightUpdate = Math.abs(this.mouseClick.x - this.maxVertex.x) <= this.borderSizeX;
+      this.downUpdate = Math.abs(this.mouseClick.y - this.minVertex.y) <= this.borderSizeY;
+      this.upUpdate = Math.abs(this.mouseClick.y - this.maxVertex.y) <= this.borderSizeY;
+    }
+  }
+
+  mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
+    super.mouseMove(context, mouseCoords);
+    if (!(this.leftUpdate || this.rightUpdate || this.downUpdate || this.upUpdate) && this.isClicked) {
+      const translation = mouseCoords.subtract(this.mouseClick);
+      this.minVertex = this._previousMin.add(translation);
+      this.maxVertex = this._previousMax.add(translation);
+    }
+    if (this.leftUpdate) this.minVertex.x = Math.min(this._previousMax.x, mouseCoords.x);
+    if (this.rightUpdate) this.maxVertex.x = Math.max(this._previousMin.x, mouseCoords.x);
+    if (this.downUpdate) this.minVertex.y = Math.min(this._previousMax.y, mouseCoords.y);
+    if (this.upUpdate) this.maxVertex.y = Math.max(this._previousMin.y, mouseCoords.y);
+    if (this.isClicked) {
+      if (this.minVertex.x == this._previousMax.x) this.maxVertex.x = mouseCoords.x;
+      if (this.maxVertex.x == this._previousMin.x) this.minVertex.x = mouseCoords.x;
+      if (this.minVertex.y == this._previousMax.y) this.maxVertex.y = mouseCoords.y;
+      if (this.maxVertex.y == this._previousMin.y) this.minVertex.y = mouseCoords.y;
+    }
+  }
+
+  public mouseUp(keepState: boolean) {
+    super.mouseUp(keepState);
+    this.isClicked = this.leftUpdate = this.rightUpdate = this.upUpdate = this.downUpdate = false;
   }
 }

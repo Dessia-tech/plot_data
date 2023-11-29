@@ -1,7 +1,7 @@
 import { parseHTML } from '../support/parseHTML';
 import histogramData from '../data_src/histogram.data.json';
 import { Frame, Histogram } from '../../src/figures';
-import { Vertex } from '../../src/shapes';
+import { Vertex } from '../../src/baseShape';
 
 const FEATURE_NAME = "histogram"
 

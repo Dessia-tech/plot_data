@@ -1,30 +1,10 @@
-import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals, PointSet, arrayDiff, arrayIntersection } from './utils';
-import { Scatter, Figure, Graph2D, Draw, range, ParallelPlot } from './subplots';
-
-const EMPTY_MULTIPLOT = {
-  "name": "",
-  "primitives": [
-    {
-      "name": "",
-      "comment": "No plot defined in multiplot so there is nothing to draw.",
-      "text_style": {
-        "object_class": "plot_data.core.TextStyle",
-        "name": "",
-        "text_color": "rgb(100, 100, 100)",
-        "font_size": 20,
-        "text_align_x": "left"
-      },
-      "position_x": 50.0,
-      "position_y": 100,
-      "text_scaling": false,
-      "max_width": 400,
-      "multi_lines": true,
-      "type_": "text"
-    }
-  ],
-  "type_": "primitivegroup"
-};
-const BLANK_SPACE = 4;
+import { FIGURES_BLANK_SPACE, EMPTY_MULTIPLOT } from "./constants"
+import { equals, arrayDiff, arrayIntersection, range } from './functions';
+import { Vertex, newShape } from "./shapes"
+import { SelectionBox } from "./shapedObjects"
+import { SelectionBoxCollection, PointSet } from "./collections"
+import { RubberBand } from "./axes"
+import { Scatter, Figure, Graph2D, Draw, ParallelPlot } from './figures';
 
 export class Multiplot {
   public context: CanvasRenderingContext2D;
@@ -122,7 +102,7 @@ export class Multiplot {
       const xCoord = j * width;
       for (let i=0; i < nRows; i++) {
         const yCoord = i * height;
-        this.figures[k].multiplotDraw(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE * 2, height - BLANK_SPACE * 2);
+        this.figures[k].multiplotDraw(new Vertex(xCoord + FIGURES_BLANK_SPACE, yCoord + FIGURES_BLANK_SPACE), width - FIGURES_BLANK_SPACE * 2, height - FIGURES_BLANK_SPACE * 2);
         k++;
         if (k == this.figures.length) break;
       }

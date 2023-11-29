@@ -1,6 +1,6 @@
 import { parseHTML } from '../support/parseHTML';
 import simpleshapesData from '../data_src/simpleshapes.data.json';
-import { Draw } from '../../src/subplots';
+import { Draw } from '../../src/figures';
 
 const FEATURE_NAME = "simpleshapes"
 

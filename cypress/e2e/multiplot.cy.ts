@@ -1,6 +1,5 @@
 import { parseHTML } from '../support/parseHTML';
 import multiplotData from '../data_src/multiplot.data.json';
-import primitiveGroupContainerData from '../data_src/primitivegroupcontainer.data.json';
 
 const FEATURE_NAME = "multiplot"
 

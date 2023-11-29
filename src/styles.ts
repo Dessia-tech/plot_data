@@ -7,7 +7,7 @@ export interface PointStyleInterface {
   orientation?: string,
 }
 
-export class newPointStyle implements PointStyleInterface {
+export class PointStyle implements PointStyleInterface {
   public size: number;
   public fillStyle: string;
   public strokeStyle: string;
@@ -32,13 +32,13 @@ export class newPointStyle implements PointStyleInterface {
   }
 }
 
-export class HatchingSet {
+export class Hatching {
   constructor(public name: string,
               public lineWidth: number = 0,
               public step: number = 0) {}
 
   public static deserialize(serialized) {
-      return new HatchingSet(serialized['name'], serialized['stroke_width'], serialized['hatch_spacing']);
+      return new Hatching(serialized['name'], serialized['stroke_width'], serialized['hatch_spacing']);
   }
 
   generate_canvas(fillStyle: string) { // TODO: Study this

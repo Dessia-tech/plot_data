@@ -1,6 +1,6 @@
 import { MAX_LABEL_HEIGHT } from "./constants"
 import { colorHsl } from "./colors";
-import { Vertex, newShape, newRect, newText, LineSequence, newLabel } from "./shapes";
+import { Vertex, Shape, Rect, Text, LineSequence, Label } from "./shapes";
 import { SelectionBox } from "./shapedObjects";
 
 export class PointSet {
@@ -22,17 +22,17 @@ export class ShapeCollection {
     public minimum: Vertex;
     public maximum: Vertex;
     constructor(
-      public shapes: newShape[] = [],
+      public shapes: Shape[] = [],
     ) {
       [this.minimum, this.maximum] = this.getBounds();
     }
 
     public get length(): number { return this.shapes.length }
 
-    public includes(shape: newShape) { return this.shapes.includes(shape) }
+    public includes(shape: Shape) { return this.shapes.includes(shape) }
 
     public static fromPrimitives(primitives: { [key: string]: any }, scale: Vertex = new Vertex(1, 1)): ShapeCollection {
-      return new ShapeCollection(primitives.map(primitive => newShape.deserialize(primitive, scale)))
+      return new ShapeCollection(primitives.map(primitive => Shape.deserialize(primitive, scale)))
     }
 
     public getBounds(): [Vertex, Vertex] {
@@ -56,8 +56,8 @@ export class ShapeCollection {
       this.shapes.forEach(shape => shape.mouseMove(context, mouseCoords));
     }
 
-    public mouseDown(mouseCoords: Vertex): newShape {
-      let clickedObject: newShape = null;
+    public mouseDown(mouseCoords: Vertex): Shape {
+      let clickedObject: Shape = null;
       this.shapes.forEach(shape => {
         shape.mouseDown(mouseCoords);
         if (shape.isHovered) clickedObject = shape; //TODO: still insane ?
@@ -76,7 +76,7 @@ export class ShapeCollection {
 
     public updateBounds(context: CanvasRenderingContext2D): void {
       this.shapes.forEach(shape => {
-        if (shape instanceof newText) {
+        if (shape instanceof Text) {
           shape.format(context);
           shape.updateBoundingBox(context);
           const [textMin, textMax] = shape.getBounds();
@@ -93,23 +93,23 @@ export class ShapeCollection {
     }
 
     public updateShapeStates(stateName: string): number[] {
-      const newShapeStates = [];
+      const newStates = [];
       this.shapes.forEach((shape, index) => {
-        if (shape[stateName] && !(shape instanceof SelectionBox)) newShapeStates.push(index);
+        if (shape[stateName] && !(shape instanceof SelectionBox)) newStates.push(index);
       });
-      return newShapeStates
+      return newStates
     }
 
     public resetShapeStates(): void {
       this.shapes.forEach(shape => shape.isHovered = shape.isClicked = shape.isSelected = false);
     }
 
-    public locateLabels(drawingZone: newRect, initScale: Vertex): void {
+    public locateLabels(drawingZone: Rect, initScale: Vertex): void {
       const nLabels = 0.5 * initScale.y;
-      const labels: newLabel[] = [];
+      const labels: Label[] = [];
       const others = [];
       this.shapes.forEach(shape => {
-        if (shape instanceof newLabel) labels.push(shape)
+        if (shape instanceof Label) labels.push(shape)
         else others.push(shape);
       })
       if (labels.length != 0) {
@@ -142,14 +142,14 @@ export class ShapeCollection {
     }
 
     public updateShapeStates(stateName: string): number[] {
-      const newShapeStates = [];
+      const ShapeStates = [];
       this.shapes.forEach((shape, index) => {
         if (shape.values) {
-          if (shape[stateName]) shape.values.forEach(sample => newShapeStates.push(sample));
+          if (shape[stateName]) shape.values.forEach(sample => ShapeStates.push(sample));
         } else {
-          if (shape[stateName] && !(shape instanceof SelectionBox)) newShapeStates.push(index);
+          if (shape[stateName] && !(shape instanceof SelectionBox)) ShapeStates.push(index);
         }
       });
-      return newShapeStates
+      return ShapeStates
     }
   }

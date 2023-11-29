@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 - Remove ill code
 - Files organization 1
+- Change names of classes and functions (e.g. remove 'new' prefix)
 
 ## [0.18.0]
 ### Add

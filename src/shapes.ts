@@ -3,7 +3,7 @@ import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, DEFAULT_SHAPE_COLO
   TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE, TOOLTIP_TEXT_OFFSET, INFINITE_LINE_FACTOR,
   CIRCLES, MARKERS, TRIANGLES, SQUARES, CROSSES, HALF_LINES, LEGEND_MARGIN } from "./constants";
 import { hslToArray, colorHsl } from "./colors";
-import { HatchingSet, newPointStyle } from "./styles";
+import { Hatching, PointStyle } from "./styles";
 
 // TODO: There is some problem of circular imports. Shapes should be divided in two or three subclasses to get light files
 
@@ -75,14 +75,14 @@ export class Vertex {
   }
 }
 
-export class newShape {
+export class Shape {
   public path: Path2D = new Path2D();
   public scaledPath: Path2D = new Path2D();
   public inStrokeScale: Vertex = new Vertex(1, 1);
 
   public lineWidth: number = 1;
   public dashLine: number[] = [];
-  public hatching: HatchingSet;
+  public hatching: Hatching;
   public strokeStyle: string = null;
   public fillStyle: string = DEFAULT_SHAPE_COLOR;
   public hoverStyle: string = HOVERED_SHAPE_COLOR;
@@ -107,7 +107,7 @@ export class newShape {
 
   set tooltipMap(value: Map<string, any>) { this._tooltipMap = value };
 
-  public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
+  public TooltipMap(): void { this._tooltipMap = new Map<string, any>() };
 
   public get drawingStyle(): { [key: string]: any } {
     const style = {};
@@ -120,24 +120,24 @@ export class newShape {
     return style
   }
 
-  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): LineSegment | newRect | newPoint2D {
+  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): LineSegment | Rect | Point {
     if (!this.isFilled) return new LineSegment(legendOrigin.copy(), legendOrigin.add(legendSize))
-    return new newRect(legendOrigin.copy(), legendSize);
+    return new Rect(legendOrigin.copy(), legendSize);
   }
 
-  public static deserialize(data: { [key: string]: any }, scale: Vertex): newShape {
-    let shape: newShape;
-    if (data.type_ == "circle") shape = newCircle.deserialize(data, scale)
+  public static deserialize(data: { [key: string]: any }, scale: Vertex): Shape {
+    let shape: Shape;
+    if (data.type_ == "circle") shape = Circle.deserialize(data, scale)
     else if (data.type_ == "contour") shape = Contour.deserialize(data, scale);
     else if (data.type_ == "line2d") shape = Line.deserialize(data, scale);
     else if (data.type_ == "linesegment2d") shape = LineSegment.deserialize(data, scale);
     else if (data.type_ == "wire") shape = LineSequence.deserialize(data, scale);
-    else if (data.type_ == "point") shape = newPoint2D.deserialize(data, scale);
+    else if (data.type_ == "point") shape = Point.deserialize(data, scale);
     else if (data.type_ == "arc") shape = Arc.deserialize(data, scale);
-    else if (data.type_ == "text") return newText.deserialize(data, scale);
-    else if (data.type_ == "label") shape = newLabel.deserialize(data, scale);
-    else if (data.type_ == "rectangle") shape = newRect.deserialize(data, scale);
-    else if (data.type_ == "roundrectangle") shape = newRoundRect.deserialize(data, scale);
+    else if (data.type_ == "text") return Text.deserialize(data, scale);
+    else if (data.type_ == "label") shape = Label.deserialize(data, scale);
+    else if (data.type_ == "rectangle") shape = Rect.deserialize(data, scale);
+    else if (data.type_ == "roundrectangle") shape = RoundRect.deserialize(data, scale);
     else throw new Error(`${data.type_} deserialization is not implemented.`);
     shape.deserializeStyle(data)
     return shape
@@ -158,7 +158,7 @@ export class newShape {
   public deserializeSurfaceStyle(data: any): void {
     this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
     this.alpha = data.surface_style?.opacity ?? this.alpha;
-    this.hatching = data.surface_style?.hatching ? new HatchingSet("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
+    this.hatching = data.surface_style?.hatching ? new Hatching("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
   }
 
   protected deserializeTooltip(data: any): void { if (data.tooltip) this.tooltipMap.set(data.tooltip, "") }
@@ -211,7 +211,7 @@ export class newShape {
     } else context.strokeStyle = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.isSelected ? this.selectedStyle : this.strokeStyle ? colorHsl(this.strokeStyle) : 'hsl(0, 0%, 0%)';
   }
 
-  public initTooltip(context: CanvasRenderingContext2D): newTooltip { return new newTooltip(this.tooltipOrigin, this.tooltipMap, context) }
+  public initTooltip(context: CanvasRenderingContext2D): Tooltip { return new Tooltip(this.tooltipOrigin, this.tooltipMap, context) }
 
   public drawTooltip(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
     if (this.isClicked && this.tooltipMap.size != 0) {
@@ -249,7 +249,7 @@ export class newShape {
   }
 }
 
-export class Arc extends newShape {
+export class Arc extends Shape {
   constructor(
     public center: Vertex,
     public radius: number,
@@ -285,7 +285,7 @@ export class Arc extends newShape {
   }
 }
 
-export class newCircle extends Arc {
+export class Circle extends Arc {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public radius: number = 1
@@ -294,15 +294,15 @@ export class newCircle extends Arc {
     this.isFilled = true;
   }
 
-  public static deserialize(data: any, scale: Vertex): newCircle {
-    const circle = new newCircle(new Vertex(data.cx, data.cy), data.r);
+  public static deserialize(data: any, scale: Vertex): Circle {
+    const circle = new Circle(new Vertex(data.cx, data.cy), data.r);
     circle.deserializeEdgeStyle(data);
     circle.deserializeSurfaceStyle(data);
     return circle
   }
 }
 
-export class newRect extends newShape {
+export class Rect extends Shape {
   constructor(
     public origin: Vertex = new Vertex(0, 0),
     public size: Vertex = new Vertex(0, 0)
@@ -318,8 +318,8 @@ export class newRect extends newShape {
     this.path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
   }
 
-  public static deserialize(data: any, scale: Vertex): newRect {
-    const rectangle = new newRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height));
+  public static deserialize(data: any, scale: Vertex): Rect {
+    const rectangle = new Rect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height));
     return rectangle
   }
 
@@ -335,7 +335,7 @@ export class newRect extends newShape {
   public getBounds(): [Vertex, Vertex] { return [this.origin, this.origin.add(new Vertex(Math.abs(this.size.x), Math.abs(this.size.y)))] }
 }
 
-export class newRoundRect extends newRect {
+export class RoundRect extends Rect {
   constructor(
     public origin: Vertex = new Vertex(0, 0),
     public size: Vertex = new Vertex(0, 0),
@@ -360,13 +360,13 @@ export class newRoundRect extends newRect {
     this.path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
   }
 
-  public static deserialize(data: any, scale: Vertex): newRect {
-    const roundRectangle = new newRoundRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height), data.radius);
+  public static deserialize(data: any, scale: Vertex): Rect {
+    const roundRectangle = new RoundRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height), data.radius);
     return roundRectangle
   }
 }
 
-export class Mark extends newShape {
+export class Mark extends Shape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1
@@ -392,7 +392,7 @@ export class Mark extends newShape {
   }
 }
 
-export abstract class AbstractHalfLine extends newShape {
+export abstract class AbstractHalfLine extends Shape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
@@ -469,7 +469,7 @@ export class HalfLine extends AbstractHalfLine {
   }
 }
 
-export class Line extends newShape {
+export class Line extends Shape {
   constructor(
     public origin: Vertex = new Vertex(0, 0),
     public end: Vertex = new Vertex(0, 0)
@@ -547,7 +547,7 @@ export class LineSegment extends Line {
   public drawInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
 }
 
-export abstract class AbstractLinePoint extends newShape {
+export abstract class AbstractLinePoint extends Shape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
@@ -624,7 +624,7 @@ export class LinePoint extends AbstractLinePoint {
   }
 }
 
-export class Cross extends newShape {
+export class Cross extends Shape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1
@@ -650,7 +650,7 @@ export class Cross extends newShape {
   }
 }
 
-export abstract class AbstractTriangle extends newShape {
+export abstract class AbstractTriangle extends Shape {
   constructor(
     public center: Vertex = new Vertex(0, 0),
     public size: number = 1,
@@ -736,7 +736,7 @@ export class Triangle extends AbstractTriangle {
   }
 }
 
-export class Contour extends newShape {
+export class Contour extends Shape {
   constructor(
     public lines: (Arc | LineSegment)[] = [],
     public isFilled: boolean = false
@@ -746,7 +746,7 @@ export class Contour extends newShape {
   }
 
   public static deserialize(data: any, scale: Vertex): Contour {
-    const lines = data.plot_data_primitives.map(primitive => newShape.deserialize(primitive, scale));
+    const lines = data.plot_data_primitives.map(primitive => Shape.deserialize(primitive, scale));
     const contour = new Contour(lines, data.is_filled ?? false);
     contour.deserializeEdgeStyle(data);
     if (contour.isFilled) contour.deserializeSurfaceStyle(data);
@@ -758,7 +758,7 @@ export class Contour extends newShape {
     context.strokeStyle = "hsla(0, 0%, 100%, 0)";
   }
 
-  private setLineStyle(context: CanvasRenderingContext2D, line: newShape): void {
+  private setLineStyle(context: CanvasRenderingContext2D, line: Shape): void {
     line.dashLine = line.dashLine.length != 0 ? line.dashLine : this.dashLine;
     line.strokeStyle = line.strokeStyle ?? this.strokeStyle;
     line.lineWidth = line.lineWidth != 1 ? line.lineWidth : this.lineWidth;
@@ -814,7 +814,7 @@ export interface TextParams {
   scale?: Vertex
 }
 
-export class newText extends newShape {
+export class Text extends Shape {
   public scale: Vertex = new Vertex(1, 1);
   public fillStyle: string = 'hsl(0, 0%, 0%)';
   public width: number;
@@ -827,7 +827,7 @@ export class newText extends newShape {
   public orientation: number;
   public multiLine: boolean;
   public rowIndices: number[] = [];
-  public boundingBox: newRect;
+  public boundingBox: Rect;
   public offset: number = 0;
   private words: string[];
   constructor(
@@ -847,7 +847,7 @@ export class newText extends newShape {
       scale = new Vertex(1, 1)
     }: TextParams = {}) {
     super();
-    this.boundingBox = new newRect(origin, new Vertex(width, height));
+    this.boundingBox = new Rect(origin, new Vertex(width, height));
     this.boundingBox.fillStyle = backgroundColor;
     this.boundingBox.strokeStyle = backgroundColor;
     this.boundingBox.lineWidth = 1e-6; //TODO: this is a HOT FIX
@@ -881,15 +881,15 @@ export class newText extends newShape {
     } as TextParams
   }
 
-  public static deserialize(data: any, scale: Vertex): newText {
-    const textParams = newText.deserializeTextParams(data);
-    const text = new newText(data.comment, new Vertex(data.position_x, data.position_y), textParams);
+  public static deserialize(data: any, scale: Vertex): Text {
+    const textParams = Text.deserializeTextParams(data);
+    const text = new Text(data.comment, new Vertex(data.position_x, data.position_y), textParams);
     text.isScaled = data.text_scaling ?? false;
     text.scale = new Vertex(scale.x, scale.y);
     return text
   }
 
-  get fullFont(): string { return newText.buildFont(this.style, this.fontsize, this.font) }
+  get fullFont(): string { return Text.buildFont(this.style, this.fontsize, this.font) }
 
   private getCornersUnscaled(): [Vertex, Vertex] {
     const firstCorner = this.origin.copy();
@@ -937,7 +937,7 @@ export class newText extends newShape {
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let fontsize = Math.min(this.boundingBox.size.y ?? Number.POSITIVE_INFINITY, this.fontsize ?? Number.POSITIVE_INFINITY);
     if (fontsize == Number.POSITIVE_INFINITY) fontsize = DEFAULT_FONTSIZE;
-    context.font = newText.buildFont(this.style, fontsize, this.font);
+    context.font = Text.buildFont(this.style, fontsize, this.font);
     if (context.measureText(this.text).width >= this.boundingBox.size.x) fontsize = fontsize * this.boundingBox.size.x / context.measureText(this.text).width;
     return fontsize
   }
@@ -960,7 +960,7 @@ export class newText extends newShape {
 
   public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
 
-  public capitalizeSelf(): void { this.text = newText.capitalize(this.text) }
+  public capitalizeSelf(): void { this.text = Text.capitalize(this.text) }
 
   public updateBoundingBox(context: CanvasRenderingContext2D): void {
     const matrix = context.getTransform();
@@ -970,7 +970,7 @@ export class newText extends newShape {
     this.boundingBox.size.x = this.width;
     this.boundingBox.size.y = this.height;
     if (!this.isScaled) {
-      const boundingBox = new newRect(this.boundingBox.origin.copy(), this.boundingBox.size.scale(new Vertex(Math.abs(1 / matrix.a), Math.abs(1 / matrix.d))));
+      const boundingBox = new Rect(this.boundingBox.origin.copy(), this.boundingBox.size.scale(new Vertex(Math.abs(1 / matrix.a), Math.abs(1 / matrix.d))));
       boundingBox.buildPath();
       this.boundingBox.path = boundingBox.path;
     } else this.boundingBox.buildPath();
@@ -1028,10 +1028,10 @@ export class newText extends newShape {
     const nRows = writtenText.length - 1;
     const middleFactor = this.baseline == "middle" ? 2 : 1;
     if (nRows != 0) writtenText.forEach((row, index) => {
-      if (["top", "hanging"].includes(this.baseline)) context.fillText(index == 0 ? newText.capitalize(row) : row, 0, index * this.fontsize + this.offset)
-      else context.fillText(index == 0 ? newText.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset);
+      if (["top", "hanging"].includes(this.baseline)) context.fillText(index == 0 ? Text.capitalize(row) : row, 0, index * this.fontsize + this.offset)
+      else context.fillText(index == 0 ? Text.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset);
     })
-    else context.fillText(newText.capitalize(writtenText[0]), 0, this.offset / middleFactor);
+    else context.fillText(Text.capitalize(writtenText[0]), 0, this.offset / middleFactor);
   }
 
   public removeEndZeros(): void {
@@ -1068,7 +1068,7 @@ export class newText extends newShape {
       else fontsize = this.automaticFontSize(context);
     } else if (this.boundingBox.size.y) fontsize = this.fontsize ?? this.boundingBox.size.y;
     this.fontsize = Math.abs(fontsize);
-    context.font = newText.buildFont(this.style, this.fontsize, this.font);
+    context.font = Text.buildFont(this.style, this.fontsize, this.font);
     this.height = writtenText.length * this.fontsize;
     this.width = this.getLongestRow(context, writtenText);
     this.rowIndices = [0];
@@ -1077,7 +1077,7 @@ export class newText extends newShape {
   }
 
   public multiLineSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
-    context.font = newText.buildFont(this.style, fontsize, this.font);
+    context.font = Text.buildFont(this.style, fontsize, this.font);
     const oneRowLength = context.measureText(this.text).width;
     if (oneRowLength < this.boundingBox.size.x) {
       return [[this.text.trimStart()], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y ?? fontsize : fontsize];
@@ -1141,7 +1141,7 @@ export class newText extends newShape {
     let rows = [];
     let criterion = Number.POSITIVE_INFINITY;
     while (criterion > this.boundingBox.size.y && fontsize > 1) {
-      context.font = newText.buildFont(this.style, fontsize, this.font);
+      context.font = Text.buildFont(this.style, fontsize, this.font);
       if (this.checkWordsLength(context)) {
         rows = this.fixedFontSplit(context);
         criterion = fontsize * rows.length;
@@ -1152,7 +1152,7 @@ export class newText extends newShape {
   }
 }
 
-export class newPoint2D extends newShape {
+export class Point extends Shape {
   public path: Path2D;
   public center: Vertex;
 
@@ -1181,7 +1181,7 @@ export class newPoint2D extends newShape {
     return style
   }
 
-  public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf newText)
+  public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf Text)
     const factor = 0.025;
     const minX = this.center.x != 0 ? this.center.x - Math.abs(this.center.x) * factor : -1;
     const minY = this.center.y != 0 ? this.center.y - Math.abs(this.center.y) * factor : -1;
@@ -1190,8 +1190,8 @@ export class newPoint2D extends newShape {
     return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
   }
 
-  public static deserialize(data: any, scale: Vertex): newPoint2D {
-    const point = new newPoint2D(data.cx, data.cy);
+  public static deserialize(data: any, scale: Vertex): Point {
+    const point = new Point(data.cx, data.cy);
     point.isScaled = false;
     return point
   }
@@ -1210,7 +1210,7 @@ export class newPoint2D extends newShape {
     this.markerOrientation = data.orientation ?? this.markerOrientation;
   }
 
-  public updateStyle(style: newPointStyle): void {
+  public updateStyle(style: PointStyle): void {
     this.size = style.size ?? this.size;
     this.fillStyle = style.fillStyle ?? this.fillStyle;
     this.strokeStyle = style.strokeStyle ?? this.strokeStyle;
@@ -1219,16 +1219,16 @@ export class newPoint2D extends newShape {
     this.markerOrientation = style.orientation ?? this.markerOrientation;
   }
 
-  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): newPoint2D {
-    const legend = new newPoint2D(legendOrigin.x, legendOrigin.y);
+  public styleToLegend(legendOrigin: Vertex, legendSize: Vertex): Point {
+    const legend = new Point(legendOrigin.x, legendOrigin.y);
     legend.size = legendSize.y * 0.9;
     legend.marker = this.marker;
     legend.markerOrientation = this.markerOrientation;
     return legend
   }
 
-  public copy(): newPoint2D {
-    const copy = new newPoint2D();
+  public copy(): Point {
+    const copy = new Point();
     copy.center = this.center.copy();
     copy.size = this.size;
     copy.marker = this.marker;
@@ -1241,7 +1241,7 @@ export class newPoint2D extends newShape {
 
   public update() { this.buildPath() }
 
-  public scale(scale: Vertex): newPoint2D {
+  public scale(scale: Vertex): Point {
     this.center = this.center.scale(scale);
     this.buildPath();
     return this
@@ -1252,15 +1252,15 @@ export class newPoint2D extends newShape {
     this.strokeStyle = this.isFilled ? this.setStrokeStyle(this.fillStyle) : color;
   }
 
-  get drawnShape(): newShape {
-    let marker = new newShape();
-    if (CIRCLES.includes(this.marker)) marker = new newCircle(this.center, this.size / 2);
+  get drawnShape(): Shape {
+    let marker = new Shape();
+    if (CIRCLES.includes(this.marker)) marker = new Circle(this.center, this.size / 2);
     if (MARKERS.includes(this.marker)) marker = new Mark(this.center, this.size);
     if (CROSSES.includes(this.marker)) marker = new Cross(this.center, this.size);
     if (SQUARES.includes(this.marker)) {
       const halfSize = this.size * 0.5;
       const origin = new Vertex(this.center.x - halfSize, this.center.y - halfSize);
-      marker = new newRect(origin, new Vertex(this.size, this.size));
+      marker = new Rect(origin, new Vertex(this.size, this.size));
     };
     if (TRIANGLES.includes(this.marker)) marker = new Triangle(this.center, this.size, this.markerOrientation);
     if (HALF_LINES.includes(this.marker)) marker = new HalfLine(this.center, this.size, this.markerOrientation);
@@ -1272,7 +1272,7 @@ export class newPoint2D extends newShape {
 
   protected updateTooltipOrigin(matrix: DOMMatrix): void { this.tooltipOrigin = this.center.copy() }
 
-  public initTooltip(context: CanvasRenderingContext2D): newTooltip {
+  public initTooltip(context: CanvasRenderingContext2D): Tooltip {
     const tooltip = super.initTooltip(context);
     tooltip.isFlipper = true;
     return tooltip
@@ -1323,13 +1323,13 @@ export class newPoint2D extends newShape {
   }
 }
 
-export class LineSequence extends newShape {
+export class LineSequence extends Shape {
   public previousMouseClick: Vertex;
   public hoveredThickener: number = 2;
   public clickedThickener: number = 2;
   public selectedThickener: number = 2;
   constructor(
-    public points: newPoint2D[] = [],
+    public points: Point[] = [],
     public name: string = ""
   ) {
     super();
@@ -1340,7 +1340,7 @@ export class LineSequence extends newShape {
 
   public static deserialize(data: { [key: string]: any }, scale: Vertex): LineSequence {
     const points = [];
-    data.lines.forEach(line => points.push(new newPoint2D(line[0], line[1])));
+    data.lines.forEach(line => points.push(new Point(line[0], line[1])));
     const line = new LineSequence(points, data.name ?? "");
     line.deserializeEdgeStyle(data);
     line.isScaled = true;
@@ -1348,12 +1348,12 @@ export class LineSequence extends newShape {
     return line
   }
 
-  public initTooltip(context: CanvasRenderingContext2D): newTooltip {
+  public initTooltip(context: CanvasRenderingContext2D): Tooltip {
     if (!this.tooltipOrigin) this.tooltipOrigin = this.points[Math.floor(this.points.length / 2)].center;
     return super.initTooltip(context);
   }
 
-  public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf newText)
+  public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf Text)
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
     let maxX = Number.NEGATIVE_INFINITY;
@@ -1392,20 +1392,20 @@ export class LineSequence extends newShape {
     this.points.slice(1).forEach(point => this.path.lineTo(point.center.x, point.center.y));
   }
 
-  public update(points: newPoint2D[]): void {
+  public update(points: Point[]): void {
     this.points = points;
     this.buildPath();
   }
 }
 
-export class newLabel extends newShape {
+export class Label extends Shape {
   public shapeSize: Vertex = new Vertex(30, MAX_LABEL_HEIGHT);
-  public legend: newRect | LineSegment | newPoint2D;
+  public legend: Rect | LineSegment | Point;
   public maxWidth: number = 150;
   public readonly textOffset = 5;
   constructor(
-    shape: newShape,
-    public text: newText,
+    shape: Shape,
+    public text: Text,
     public origin: Vertex = new Vertex(0, 0)
   ) {
     super();
@@ -1440,11 +1440,11 @@ export class newLabel extends newShape {
       this.legend.end.x = this.origin.x + this.shapeSize.x;
       this.legend.end.y = this.origin.y + this.shapeSize.y - LEGEND_MARGIN;
     }
-    else if (this.legend instanceof newPoint2D) this.legend.center = this.origin.add(this.shapeSize.divide(2));
-    else this.legend = new newRect(this.origin, this.shapeSize);
+    else if (this.legend instanceof Point) this.legend.center = this.origin.add(this.shapeSize.divide(2));
+    else this.legend = new Rect(this.origin, this.shapeSize);
   }
 
-  public getShapeStyle(shape: newShape, origin: Vertex): void {
+  public getShapeStyle(shape: Shape, origin: Vertex): void {
     this.legend = shape.styleToLegend(origin, this.shapeSize);
     Object.entries(shape.drawingStyle).map(([key, value]) => this[key] = value);
   }
@@ -1454,20 +1454,20 @@ export class newLabel extends newShape {
     this.shapeSize.x *= heightRatio;
     this.maxWidth *= heightRatio;
     this.shapeSize.y = height;
-    if (this.legend instanceof newRect) this.legend.size.y = height
+    if (this.legend instanceof Rect) this.legend.size.y = height
     else if (this.legend instanceof LineSegment) this.legend.end.y = this.legend.origin.y + height
     else this.legend.size = height;
     this.text.fontsize = height;
   }
 
-  public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): newLabel {
-    const textParams = newText.deserializeTextParams(data);
-    const shape = data.shape ? newShape.deserialize(data.shape, scale) : new newRect();
-    const text = new newText(data.title, new Vertex(0, 0), textParams);
+  public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): Label {
+    const textParams = Text.deserializeTextParams(data);
+    const shape = data.shape ? Shape.deserialize(data.shape, scale) : new Rect();
+    const text = new Text(data.title, new Vertex(0, 0), textParams);
     text.isScaled = false;
     text.baseline = "middle";
     text.align = "start";
-    return new newLabel(shape, text)
+    return new Label(shape, text)
   }
 
   public deserializeStyle(data): void {
@@ -1481,7 +1481,7 @@ export class newLabel extends newShape {
     }
   }
 
-  public updateOrigin(drawingZone: newRect, initScale: Vertex, nLabels: number): void {
+  public updateOrigin(drawingZone: Rect, initScale: Vertex, nLabels: number): void {
     this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
     this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.75 * initScale.y;
     this.updateLegendGeometry();
@@ -1501,7 +1501,7 @@ export class newLabel extends newShape {
   }
 }
 
-export class newTooltip {// TODO: make it a newShape
+export class Tooltip {// TODO: make it a Shape
   public path: Path2D;
 
   public lineWidth: number = 1;
@@ -1559,7 +1559,7 @@ export class newTooltip {// TODO: make it a newShape
     const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
     const triangleCenter = this.origin;
     triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2 * (this.isUp ? 1 : -1);
-    this.path.addPath(new newRoundRect(rectOrigin, this.size, this.radius).path);
+    this.path.addPath(new RoundRect(rectOrigin, this.size, this.radius).path);
     this.path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, this.isUp ? 'down' : 'up').path);
   }
 
@@ -1574,7 +1574,7 @@ export class newTooltip {// TODO: make it a newShape
     const regexSamples: RegExp = /^[0-9]+\ssamples/;
     this.printedRows.forEach((row, index) => {
       textOrigin.y += index == 0 ? 0 : this.fontsize;
-      const text = new newText(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: regexSamples.test(row) ? 'bold' : '' });
+      const text = new Text(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: regexSamples.test(row) ? 'bold' : '' });
       text.fillStyle = this.textColor;
       text.draw(context)
     })

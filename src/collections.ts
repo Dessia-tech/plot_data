@@ -69,7 +69,7 @@ export class ShapeCollection {
 
   public mouseUp(keepState: boolean): void { this.shapes.forEach(shape => shape.mouseUp(keepState)) }
 
-  public draw(context: CanvasRenderingContext2D): void { this.shapes.forEach(shape => { if (shape.isDrawn) shape.draw(context) }) }
+  public draw(context: CanvasRenderingContext2D): void { this.shapes.forEach(shape => shape.draw(context)) }
 
   public removeShape(index: number): void {
     this.shapes.splice(index, 1);

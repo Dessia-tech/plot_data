@@ -145,7 +145,7 @@ export class Shape {
     if (this.mouseClick) this.tooltipOrigin = this.mouseClick.transform(matrix);
   }
 
-  public draw(context: CanvasRenderingContext2D): void {
+  public drawWhenIsDrawn(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
     context.save();
     const scaledPath = new Path2D();
     const contextMatrix = context.getTransform();
@@ -160,6 +160,10 @@ export class Shape {
     context.stroke(scaledPath);
     this.scaledPath = scaledPath;
     context.restore();
+  }
+
+  public draw(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
+    if (this.isDrawn) this.drawWhenIsDrawn(context);
   }
 
   protected buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {

@@ -151,6 +151,13 @@ export class Multiplot {
     this.draw();
   }
 
+  public toggleAxes(index: number): void {
+    this.figures[index].toggleAxes();
+    this.draw();
+  }
+
+  public htmlToggleAxes(): void { this.toggleAxes(this.clickedFigureIndex ?? this.hoveredFigureIndex) }
+
   public resetLayout(): void {
     this.computeTable();
     if (this.figureZones.shapes.length != 0) {

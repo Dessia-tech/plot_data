@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.20.0]
 ### Add
 - Tests for most of important features
+- Toggle Axes
+- Customable axes names of Draw
 
 ## [0.19.0]
 ### Fixes

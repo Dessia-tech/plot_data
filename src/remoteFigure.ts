@@ -419,6 +419,13 @@ export class RemoteFigure {
 
   public togglePoints(): void {}
 
+  public toggleAxes(): void {
+    this.axes.forEach(axis => axis.toggleView());
+    this.draw();
+  }
+
+  public htmlToggleAxes(): void { this.toggleAxes() }
+
   public simpleCluster(inputValue: number): void {}
 
   public resetClusters(): void {}

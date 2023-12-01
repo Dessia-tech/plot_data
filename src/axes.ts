@@ -144,6 +144,8 @@ export class Axis extends Shape {
 
   protected computeEnds(): void { }
 
+  public toggleView(): void { this.isDrawn = !this.isDrawn }
+
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
       if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
@@ -301,6 +303,8 @@ export class Axis extends Shape {
     context.save();
     this.drawPath = this.buildDrawPath();
     this.buildPath();
+    this.computeTextBoxes(context);
+
     const canvasHTMatrix = context.getTransform();
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     const color = this.drawingColor;
@@ -312,7 +316,6 @@ export class Axis extends Shape {
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
     context.resetTransform();
-    this.computeTextBoxes(context);
 
     context.setTransform(pointHTMatrix);
     const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);

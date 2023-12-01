@@ -1116,8 +1116,11 @@ export class Draw extends Frame {
   protected unpackData(data: DataInterface): Map<string, any[]> {
     const drawing = ShapeCollection.fromPrimitives(data.primitives);
     const [minX, minY, maxX, maxY] = Draw.boundsDilatation(...drawing.getBounds());
-    return new Map<string, any[]>([["x", [minX, maxX]], ["y", [minY, maxY]], ["shapes", drawing.shapes]])
+    const [xName, yName] = Draw.unpackAxesNames(data);
+    return new Map<string, any[]>([[xName, [minX, maxX]], [yName, [minY, maxY]], ["shapes", drawing.shapes]])
   }
+
+  private static unpackAxesNames(data: DataInterface): string[] { return data.attribute_names ?? ["x", "y"] }
 
   private static boundsDilatation(minimum: Vertex, maximum: Vertex): [number, number, number, number] {
     const minX = minimum.x * (1 - Math.sign(minimum.x) * DRAW_MARGIN_FACTOR);
@@ -1134,10 +1137,10 @@ export class Draw extends Frame {
 
   public updateBounds(): void {
     const [minX, minY, maxX, maxY] = Draw.boundsDilatation(this.relativeObjects.minimum, this.relativeObjects.maximum);
-    this.axes[0].minValue = this.features.get("x")[0] = Math.min(this.features.get("x")[0], minX);
-    this.axes[1].minValue = this.features.get("y")[0] = Math.min(this.features.get("y")[0], minY);
-    this.axes[0].maxValue = this.features.get("x")[1] = Math.max(this.features.get("x")[1], maxX);
-    this.axes[1].maxValue = this.features.get("y")[1] = Math.max(this.features.get("y")[1], maxY);
+    this.axes[0].minValue = this.features.get(this.drawnFeatures[0])[0] = Math.min(this.features.get(this.drawnFeatures[0])[0], minX);
+    this.axes[1].minValue = this.features.get(this.drawnFeatures[1])[0] = Math.min(this.features.get(this.drawnFeatures[1])[1], minY);
+    this.axes[0].maxValue = this.features.get(this.drawnFeatures[0])[1] = Math.max(this.features.get(this.drawnFeatures[0])[0], maxX);
+    this.axes[1].maxValue = this.features.get(this.drawnFeatures[1])[1] = Math.max(this.features.get(this.drawnFeatures[1])[1], maxY);
     this.axes.forEach(axis => axis.saveLocation());
     this.axisEqual();
   }

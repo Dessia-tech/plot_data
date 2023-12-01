@@ -49,6 +49,8 @@ HTML_TEMPLATE = Template('''
         onclick="plot_data.togglePoints()"> Show points </button>
         <button name="switchOrientation" value="OK" type="button"
         onclick="plot_data.switchOrientation()"> Change Disposition </button>
+        <button name="toogleAxes" value="OK" type="button"
+        onclick="plot_data.htmlToggleAxes()"> Show / Hide Axes </button>
         $specific_buttons
     <hr style="border-top: 2px;">
     </div>

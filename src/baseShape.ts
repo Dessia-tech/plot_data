@@ -92,6 +92,7 @@ export class Shape {
   public isSelected: boolean = false;
   public isScaled: boolean = true;
   public isFilled: boolean = true;
+  public isDrawn: boolean = true;
   public inFrame: boolean = true;
 
   public tooltipOrigin: Vertex;

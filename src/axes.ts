@@ -313,7 +313,7 @@ export class Axis extends Shape {
     this.drawPath = this.buildDrawPath();
     this.buildPath();
     this.computeTextBoxes(context);
-    
+
     const canvasHTMatrix = context.getTransform();
     const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
     const color = this.drawingColor;

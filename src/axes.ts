@@ -308,7 +308,7 @@ export class Axis extends Shape {
     return ticks
   }
 
-  public draw(context: CanvasRenderingContext2D): void {
+  public drawWhenIsDrawn(context: CanvasRenderingContext2D): void {
     context.save();
     this.drawPath = this.buildDrawPath();
     this.buildPath();

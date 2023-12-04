@@ -725,7 +725,6 @@ export class LineSequence extends Shape {
     public name: string = ""
   ) {
     super();
-    this.isScaled = false;
     this.isFilled = false;
     this.updateTooltipMap();
   }

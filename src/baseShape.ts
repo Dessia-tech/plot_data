@@ -1,6 +1,7 @@
 import { DEFAULT_SHAPE_COLOR, HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED_SHAPE_COLOR, STROKE_STYLE_OFFSET } from "./constants"
 import { hslToArray, colorHsl } from "./colors"
 import { Hatching } from "./styles"
+import { DataInterface } from "./dataInterfaces"
 
 export class Vertex {
   constructor(public x: number = 0, public y: number = 0) { }
@@ -117,25 +118,25 @@ export class Shape {
     return style
   }
 
-  public deserializeStyle(data: any): void {
+  public deserializeStyle(data: DataInterface): void {
     this.deserializeEdgeStyle(data);
     this.deserializeSurfaceStyle(data);
     this.deserializeTooltip(data);
   }
 
-  public deserializeEdgeStyle(data: any): void {
+  public deserializeEdgeStyle(data: DataInterface): void {
     this.lineWidth = data.edge_style?.line_width ?? this.lineWidth;
     this.dashLine = data.edge_style?.dashline ?? this.dashLine;
     this.strokeStyle = data.edge_style?.color_stroke ? colorHsl(data.edge_style.color_stroke) : null;
   }
 
-  public deserializeSurfaceStyle(data: any): void {
+  public deserializeSurfaceStyle(data: DataInterface): void {
     this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
     this.alpha = data.surface_style?.opacity ?? this.alpha;
     this.hatching = data.surface_style?.hatching ? new Hatching("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
   }
 
-  protected deserializeTooltip(data: any): void { if (data.tooltip) this.tooltipMap.set(data.tooltip, "") }
+  protected deserializeTooltip(data: DataInterface): void { if (data.tooltip) this.tooltipMap.set(data.tooltip, "") }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
 

@@ -183,7 +183,7 @@ export class Text extends Shape {
     } else this.boundingBox.buildPath();
   }
 
-  public drawWhenIsDrawn(context: CanvasRenderingContext2D): void {
+  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
     if (this.text) {
       const contextMatrix = context.getTransform();
       const origin = this.origin.transform(contextMatrix);
@@ -448,8 +448,8 @@ export class Label extends Shape {
     this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + this.textOffset, this.shapeSize.y / 2));
   }
 
-  public drawWhenIsDrawn(context: CanvasRenderingContext2D): void {
-    super.drawWhenIsDrawn(context);
+  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
+    super.drawWhenIsVisible(context);
     context.save();
     context.resetTransform();
     this.text.draw(context);
@@ -708,9 +708,9 @@ export class Bar extends Rect {
     this.size = size;
   }
 
-  public drawWhenIsDrawn(context: CanvasRenderingContext2D): void {
+  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
     if (this.size.x != 0 && this.size.y != 0) {
-      super.drawWhenIsDrawn(context);
+      super.drawWhenIsVisible(context);
       this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
     }
   }

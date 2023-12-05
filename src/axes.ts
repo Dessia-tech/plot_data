@@ -153,7 +153,7 @@ export class Axis extends Shape {
 
   protected computeEnds(): void { }
 
-  public toggleView(): void { this.isDrawn = !this.isDrawn }
+  public toggleView(): void { this.visible = !this.visible }
 
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
@@ -308,7 +308,7 @@ export class Axis extends Shape {
     return ticks
   }
 
-  public drawWhenIsDrawn(context: CanvasRenderingContext2D): void {
+  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
     context.save();
     this.drawPath = this.buildDrawPath();
     this.buildPath();

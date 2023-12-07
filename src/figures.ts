@@ -750,7 +750,7 @@ export class Graph2D extends Scatter {
     this.is_in_multiplot = inMultiplot;
   }
 
-  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
+  protected updateVisibleObjects(context: CanvasRenderingContext2D): void {
     this.curves.forEach((curve, curveIndex) => {
       curve.update(this.curvesIndices[curveIndex].map(index => { return this.points[index] }));
       curve.draw(context);
@@ -1001,7 +1001,7 @@ export class ParallelPlot extends Figure {
     [this.selectedIndices, this.clickedIndices, this.hoveredIndices].forEach(indices => { for (let i of indices) this.curves[i].draw(context) });
   }
 
-  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
+  protected updateVisibleObjects(context: CanvasRenderingContext2D): void {
     this.updateCurves();
     this.drawCurves(context);
   }
@@ -1147,7 +1147,7 @@ export class Draw extends Frame {
 
   protected drawRelativeObjects(context: CanvasRenderingContext2D) { this.drawInZone(context) }
 
-  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {
+  protected updateVisibleObjects(context: CanvasRenderingContext2D): void {
     this.relativeObjects.locateLabels(super.cuttingZone, this.initScale);
     this.relativeObjects.draw(context);
   }

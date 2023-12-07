@@ -1,5 +1,5 @@
 import { SIZE_AXIS_END, AXIS_TAIL_SIZE, RUBBERBAND_SMALL_SIZE, DEFAULT_FONTSIZE } from "./constants"
-import { uniqueValues } from "./functions"
+import { uniqueValues, isIntegerArray } from "./functions"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
@@ -23,6 +23,7 @@ export class Axis extends Shape {
   public tickPrecision: number;
   public ticksFontsize: number = 12;
   public isDiscrete: boolean = true;
+  public isInteger: boolean = false;
 
   public drawPath: Path2D;
   public path: Path2D;
@@ -83,6 +84,7 @@ export class Axis extends Shape {
     this.updateOffsetTicks();
     this.offsetTitle = 0;
     this.title = new Text(this.titleText, new Vertex(0, 0), {});
+    console.log(this.isInteger)
   };
 
   public get drawLength(): number {
@@ -149,7 +151,8 @@ export class Axis extends Shape {
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
       if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
-      if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"];
+      if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"]
+      else this.isInteger = isIntegerArray(vector);
     } else {
       this.isDiscrete = true;
       this.labels = ["0", "1"];

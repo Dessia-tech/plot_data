@@ -13,7 +13,7 @@ for i in range(50):
     random_color = COLORS[random.randint(0, len(COLORS) - 1)]
     elements.append({'long middle_attribute name ' * 15: random.uniform(0, 20),
                      'mass'*30: random.uniform(0, 0.05),
-                     'length': random.uniform(0, 100),
+                     'length': random.randint(0, 10),
                      'shape': random_shape,
                      'color': random_color,
                      'long middle_attribute name ' * 10: random.uniform(-1000, -20),

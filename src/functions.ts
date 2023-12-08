@@ -46,6 +46,10 @@ export function isIntegerArray(array: number[]): boolean {
   return true
 }
 
+export function getTenPower(value: number): number {
+  return value != 0 ? Math.floor(Math.log10(Math.abs(value))) : 0
+}
+
 export function uniqueValues<T>(vector: T[]): T[] {
   return vector.filter((value, index, array) => array.indexOf(value) === index)
 }

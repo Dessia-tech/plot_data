@@ -1,5 +1,5 @@
 import { SIZE_AXIS_END, AXIS_TAIL_SIZE, RUBBERBAND_SMALL_SIZE, DEFAULT_FONTSIZE } from "./constants"
-import { uniqueValues, isIntegerArray } from "./functions"
+import { uniqueValues, isIntegerArray, getTenPower } from "./functions"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
@@ -299,14 +299,22 @@ export class Axis extends Shape {
   }
 
   private getTicksTenPower(ticks: number[]): number {
-    const tenPower = Math.max(...ticks.map(tick => { return tick != 0 ? Math.ceil(Math.log10(Math.abs(tick))) : 1}));
+    const tenPower = Math.max(...ticks.map(tick => { return getTenPower(tick) }));
     return tenPower > 0 ? tenPower : 0
+  }
+
+  private getIncrementPrecision(increment: number, ticks: number[]): number {
+    const tickTenPower = getTenPower(ticks[ticks.length - 1] - ticks[0]);
+    const incrementTenPower = getTenPower(increment);
+    const unitIncrement = increment / 10 ** incrementTenPower;
+    const splitUnitIncrement = unitIncrement.toString().split('.');
+    return tickTenPower - incrementTenPower + (splitUnitIncrement.length > 1 ? 2 : 1)
   }
 
   private updateTickPrecision(increment: number, ticks: number[]): number {
     const splitNumber = increment.toString().split('.');
     const tickTenPower = splitNumber.length > 1 ? this.getTicksTenPower(ticks) : 0;
-    this.tickPrecision = tickTenPower + (splitNumber.length > 1 ? splitNumber[1].length + 1 : 1);
+    this.tickPrecision = tickTenPower + (splitNumber.length > 1 ? splitNumber[1].length + 1 : this.getIncrementPrecision(increment, ticks));
     for (let index = 0; index < ticks.length - 1; index++) {
       const rightTick = ticks[index + 1];
       const leftTick = ticks[index];

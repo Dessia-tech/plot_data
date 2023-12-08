@@ -1,4 +1,5 @@
 import random
+import datetime as dt
 
 import plot_data
 from plot_data.colors import BLUE, GREEN, ORANGE, RED, VIOLET, YELLOW
@@ -11,20 +12,23 @@ COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
 for i in range(50):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(COLORS) - 1)]
+    date = dt.datetime(year=2000 + i, month=random.randint(1, 12), day=random.randint(1, 27),
+                       hour=random.randint(0, 23), minute=random.randint(0, 59), second=random.randint(0, 59))
     elements.append({'long middle_attribute name ' * 15: random.uniform(0, 20),
                      'mass'*30: random.uniform(0, 0.05),
                      'length': random.uniform(0, 100),
                      'shape': random_shape,
                      'color': random_color,
                      'long middle_attribute name ' * 10: random.uniform(-1000, -20),
-                     'long right attribute name ' * 7: random.uniform(0, 35)
+                     'long right attribute name ' * 7: random.uniform(0, 35),
+                     "date": date
                      })
     if i==3:
         elements[-1]['length'] = None
 
 plot_data_object = plot_data.ParallelPlot(elements=elements,
                                           axes=['long middle_attribute name ' * 15, 'mass' * 30, 'color', 'length', 'shape',
-                                                'long middle_attribute name ' * 10, 'long right attribute name ' * 7])
+                                                'long middle_attribute name ' * 10, 'long right attribute name ' * 7, "date"])
 
 # The line above shows the minimum requirements for creating a
 # parallel plot. However, many options are available for further customization.

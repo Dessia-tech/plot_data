@@ -291,19 +291,28 @@ export class Axis extends Shape {
     }
   }
 
-  private getTickIncrement(): number {
-    const rawIncrement = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
-    const logExponent = Math.floor(Math.log10(rawIncrement));
+  private integerTickIncrement(rawIncrement: number, logExponent: number): number {
+    return rawIncrement >= 1 ? Math.floor(rawIncrement / 10 ** logExponent) * 10 ** logExponent : 1;
+  }
+
+  private floatTickIncrement(rawIncrement: number, logExponent: number): number {
     const tenPower = logExponent > 0 ? 1 : 15;
     return Math.round(rawIncrement * 10 ** tenPower) / 10 ** tenPower;
   }
 
-  private getTicksTenPower(ticks: number[]): number {
+  private getTickIncrement(): number {
+    const rawIncrement = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+    const logExponent = Math.floor(Math.log10(rawIncrement));
+    if (this.isInteger) return this.integerTickIncrement(rawIncrement, logExponent);
+    return this.floatTickIncrement(rawIncrement, logExponent);
+  }
+
+  private ticksTenPower(ticks: number[]): number {
     const tenPower = Math.max(...ticks.map(tick => { return getTenPower(tick) }));
     return tenPower > 0 ? tenPower : 0
   }
 
-  private getIncrementPrecision(increment: number, ticks: number[]): number {
+  private incrementPrecision(increment: number, ticks: number[]): number {
     const tickTenPower = getTenPower(ticks[ticks.length - 1] - ticks[0]);
     const incrementTenPower = getTenPower(increment);
     const unitIncrement = increment / 10 ** incrementTenPower;
@@ -311,18 +320,19 @@ export class Axis extends Shape {
     return tickTenPower - incrementTenPower + (splitUnitIncrement.length > 1 ? 2 : 1)
   }
 
-  private updateTickPrecision(increment: number, ticks: number[]): number {
+  private updateTickPrecision(increment: number, ticks: number[]): void {
     const splitNumber = increment.toString().split('.');
-    const tickTenPower = splitNumber.length > 1 ? this.getTicksTenPower(ticks) : 0;
-    this.tickPrecision = tickTenPower + (splitNumber.length > 1 ? splitNumber[1].length + 1 : this.getIncrementPrecision(increment, ticks));
-    for (let index = 0; index < ticks.length - 1; index++) {
-      const rightTick = ticks[index + 1];
-      const leftTick = ticks[index];
-      while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
-        this.tickPrecision++;
-      };
-    }
-    return
+    const tickTenPower = splitNumber.length > 1 ? this.ticksTenPower(ticks) : 0;
+    this.tickPrecision = tickTenPower + (splitNumber.length > 1 ? splitNumber[1].length + 1 : this.incrementPrecision(increment, ticks));
+    if (ticks.length > 1) {
+      for (let index = 0; index < ticks.length - 1; index++) {
+        const rightTick = ticks[index + 1];
+        const leftTick = ticks[index];
+        while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
+          this.tickPrecision++;
+        };
+      }
+    } else if (this.isInteger && ticks.length > 0) this.tickPrecision = ticks[0].toString().length;
   };
 
   protected computeTicks(): number[] {

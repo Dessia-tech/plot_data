@@ -1,3 +1,4 @@
+import { isIntegerArray } from "../../instrumented/functions";
 import { Vertex } from "../../instrumented/baseShape";
 import { Rect } from "../../instrumented/primitives";
 import { Axis, ParallelAxis } from "../../instrumented/axes";
@@ -40,8 +41,19 @@ describe('Axis', function() {
   });
 
   it('should be well created without only one feature', function() {
-    const axis = new Axis([1], boundingBox, origin, end, name, initScale, nTicks);
-    expect(axis.ticks.length, `length ticks`).to.equal(7);
+    const axis = new Axis([1.2], boundingBox, origin, end, name, initScale, nTicks);
+    expect(axis.ticks.length, `length ticks`).to.equal(5);
+  });
+
+  it('should be only show integer ticks', function() {
+    const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
+    expect(isIntegerArray(axis.ticks), `integer ticks`).to.be.true;
+    axis.updateScale(new Vertex(20, 20), new Vertex(2, 0.5), new Vertex());
+    expect(isIntegerArray(axis.ticks), `integer ticks`).to.be.true;
+    axis.updateScale(new Vertex(20, 20), new Vertex(-2, -0.5), new Vertex());
+    expect(isIntegerArray(axis.ticks), `integer ticks`).to.be.true;
+    axis.updateScale(new Vertex(20, 20), new Vertex(10, 0.5), new Vertex());
+    expect(isIntegerArray(axis.ticks), `integer ticks`).to.be.true;
   });
 
   it("should scale axis with another one", function() {

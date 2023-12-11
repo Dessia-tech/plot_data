@@ -51,7 +51,7 @@ export class RemoteFigure {
 
   public features: Map<string, any[]>;
   public featureNames: string[];
-  readonly MAX_PRINTED_NUMBERS = 6;
+  readonly MAX_PRINTED_NUMBERS = 10;
   readonly TRL_THRESHOLD = 20;
 
   // TODO: refactor these legacy attribute
@@ -80,7 +80,6 @@ export class RemoteFigure {
       this.buildPointSets(data);
       this.drawnFeatures = this.setFeatures(data);
       this.axes = this.setAxes();
-      if (this.features.has("date")) this.features.set("date", this.features.get("date").map(date => { return Number(date.split("gmt+")[0]) }));
       this.fixedObjects = new ShapeCollection(this.axes);
       this.relativeObjects = new GroupCollection();
       this.absoluteObjects = new GroupCollection();
@@ -152,8 +151,15 @@ export class RemoteFigure {
     };
     const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
     featureKeys.push("name");
-    featureKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
+    featureKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => RemoteFigure.deserializeValue(element[feature]))));
     return unpackedData
+  }
+
+  private static deserializeValue(value: any): any {
+    if (typeof value == "string") {
+      if (value.includes("gmt+")) return new Date(Number(value.split("gmt+")[0]))
+    }
+    return value
   }
 
   public drawBorders() {

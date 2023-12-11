@@ -151,10 +151,8 @@ export class Axis extends Shape {
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
       if (vector.length != 0) {
-        if (typeof vector[0] == 'string') {
-          this.isDate = vector[0].includes("gmt+");
-          this.isDiscrete = !this.isDate;
-        } else this.isDiscrete = false;
+        this.isDate = vector[0] instanceof Date;
+        this.isDiscrete = !this.isDate && typeof vector[0] == 'string';
       }
       if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"]
       else this.isInteger = isIntegerArray(vector) && !this.isDate;
@@ -263,7 +261,6 @@ export class Axis extends Shape {
   private computeMinMax(vector: any[]): number[] {
     if (!vector?.length) return [0, 1];
     if (this.isDiscrete) return [0, this.labels.length - 1];
-    if (this.isDate) vector = vector.map(element => Number(element.split("gmt+")[0]));
     const min = Math.min(...vector);
     const max = Math.max(...vector);
     return min != max ? [min, max] : min != 0 ? [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)] : [-1, 1]

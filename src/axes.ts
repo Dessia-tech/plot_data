@@ -1,5 +1,5 @@
 import { SIZE_AXIS_END, AXIS_TAIL_SIZE, RUBBERBAND_SMALL_SIZE, DEFAULT_FONTSIZE } from "./constants"
-import { uniqueValues, isIntegerArray, getTenPower } from "./functions"
+import { uniqueValues, isIntegerArray, getTenPower, range } from "./functions"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
@@ -149,7 +149,10 @@ export class Axis extends Shape {
 
   public toggleView(): void { this.visible = !this.visible }
 
-  public switchLogScale(): void { this.logScale = !this.logScale }
+  public switchLogScale(): void {
+    this.logScale = !this.logScale;
+    this.resetScale();
+  }
 
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
@@ -311,6 +314,7 @@ export class Axis extends Shape {
     const rawIncrement = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const logExponent = Math.floor(Math.log10(rawIncrement));
     if (this.isInteger) return this.integerTickIncrement(rawIncrement, logExponent);
+    if (this.logScale) return 1;
     return this.floatTickIncrement(rawIncrement, logExponent);
   }
 
@@ -342,8 +346,16 @@ export class Axis extends Shape {
     } else if (this.isInteger && ticks.length > 0) this.tickPrecision = ticks[0].toString().length;
   };
 
+
+  private logScaleTicks(): number[] {
+    const powArray = range(0, Math.ceil(Math.log(this.maxValue)), 1);
+    return powArray.map(pow => 10 ** pow)
+  }
+
+
   protected computeTicks(): number[] {
     const increment = this.getTickIncrement();
+    if (this.logScale) return this.logScaleTicks();
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) ticks.push(ticks.slice(-1)[0] + increment);
@@ -457,8 +469,7 @@ export class Axis extends Shape {
         if (count == tick && this.labels[count]) {
           text = this.labels[count];
           count++;
-        }
-        else text = '';
+        } else text = '';
       }
       ticksText.push(this.computeTickText(context, text, tickTextParams, point, pointHTMatrix));
     })

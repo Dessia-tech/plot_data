@@ -149,6 +149,8 @@ export class Axis extends Shape {
 
   public toggleView(): void { this.visible = !this.visible }
 
+  public switchLogScale(): void { this.logScale = !this.logScale }
+
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
       if (vector.length != 0) {

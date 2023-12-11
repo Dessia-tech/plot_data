@@ -80,6 +80,7 @@ export class RemoteFigure {
       this.buildPointSets(data);
       this.drawnFeatures = this.setFeatures(data);
       this.axes = this.setAxes();
+      if (this.features.has("date")) this.features.set("date", this.features.get("date").map(date => { return Number(date.split("gmt+")[0]) * 1000 }));
       this.fixedObjects = new ShapeCollection(this.axes);
       this.relativeObjects = new GroupCollection();
       this.absoluteObjects = new GroupCollection();

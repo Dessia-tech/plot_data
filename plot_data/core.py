@@ -49,7 +49,7 @@ def delete_none_from_dict(dict1):
 def serialize_dates_in_list(list_: List[Any]) -> List[Any]:
     for i, element in enumerate(list_):
         if isinstance(element, datetime.datetime):
-            list_[i] = element.timestamp()
+            list_[i] = f"{element.timestamp()}gmt+"
         if isinstance(element, list):
             list_[i] = serialize_dates_in_list(element)
         if isinstance(element, dict):
@@ -59,7 +59,7 @@ def serialize_dates_in_list(list_: List[Any]) -> List[Any]:
 def serialize_dates_in_dict(dict_: Dict[str, Any]) -> Dict[str, Any]:
     for (key, value) in dict_.items():
         if isinstance(value, datetime.datetime):
-            dict_[key] = value.timestamp()
+            dict_[key] =  f"{value.timestamp()}gmt+"
         if isinstance(value, list):
             dict_[key] = serialize_dates_in_list(value)
         if isinstance(value, dict):

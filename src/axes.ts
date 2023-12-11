@@ -24,6 +24,7 @@ export class Axis extends Shape {
   public ticksFontsize: number = 12;
   public isDiscrete: boolean = true;
   public isInteger: boolean = false;
+  public isDate: boolean = false;
 
   public drawPath: Path2D;
   public path: Path2D;
@@ -149,9 +150,15 @@ export class Axis extends Shape {
 
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
-      if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
+      if (vector.length != 0) {
+        if (typeof vector[0] == 'string') {
+          this.isDate = vector[0].includes("gmt+");
+          this.isDiscrete = !this.isDate;
+        }
+        else this.isDiscrete = false;
+      }
       if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"]
-      else this.isInteger = isIntegerArray(vector);
+      else this.isInteger = isIntegerArray(vector) || this.isDate;
     } else {
       this.isDiscrete = true;
       this.labels = ["0", "1"];
@@ -257,6 +264,7 @@ export class Axis extends Shape {
   private computeMinMax(vector: any[]): number[] {
     if (!vector?.length) return [0, 1];
     if (this.isDiscrete) return [0, this.labels.length - 1];
+    if (this.isDate) vector = vector.map(element => Number(element.split("gmt+")[0] * 1000));
     const min = Math.min(...vector);
     const max = Math.max(...vector);
     return min != max ? [min, max] : min != 0 ? [min * (min < 0 ? 1.3 : 0.7), max * (max < 0 ? 0.7 : 1.3)] : [-1, 1]
@@ -599,7 +607,8 @@ export class Axis extends Shape {
   }
 
   public numericLabels(): string[] {
-    return this.ticks.map(tick => tick.toPrecision(this.tickPrecision))
+    if (!this.isDate) return this.ticks.map(tick => tick.toPrecision(this.tickPrecision));
+    return this.ticks.map(tick => { return new Date(tick).toString() })
   }
 
   public saveLocation(): void {

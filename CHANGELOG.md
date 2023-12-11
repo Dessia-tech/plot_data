@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.23.0]
 ### Add
 - Integer axes only show integer ticks
+- Handle date as continuous value on axes
 
 ## [0.21.0]
 ### Add

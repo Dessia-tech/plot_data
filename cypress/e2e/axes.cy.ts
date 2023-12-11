@@ -30,7 +30,7 @@ describe('Axis', function() {
     const ticks = [-1, 0, 1, 2]
     expect(axis.ticks).to.deep.equal(ticks);
     expect(axis.isDiscrete, `isDiscrete`).to.be.true;
-});
+  });
 
   it('should be well created with empty vector features', function() {
     const axis = new Axis([], boundingBox, origin, end, name, initScale, nTicks);
@@ -40,8 +40,8 @@ describe('Axis', function() {
   });
 
   it('should be well created without only one feature', function() {
-    const axis = new Axis([1], boundingBox, origin, end, name, initScale, nTicks);
-    expect(axis.ticks.length, `length ticks`).to.equal(7);
+    const axis = new Axis([1.2], boundingBox, origin, end, name, initScale, nTicks);
+    expect(axis.ticks.length, `length ticks`).to.equal(5);
   });
 
   it("should scale axis with another one", function() {
@@ -112,7 +112,25 @@ describe('Axis', function() {
 
     numericStringVector.forEach((value, index) => expect(stringAxis.labels[value], `string value ${index}`).to.equal(stringVector[index]));
     numericNumberVector.forEach((value, index) => expect(value, `number value ${index}`).to.equal(numberVector[index]));
-  })
+  });
+
+  it("should be drawn with date labels", function() {
+    const dateVector = [new Date(234242524), new Date(123456789), new Date(326472910), new Date(564927592), new Date(675829471)];
+    const dateAxis = new Axis(dateVector, boundingBox, origin, end, name, initScale, nTicks);
+    const controlLabels = [
+      "Fri Jan 02 1970 04:46:40 ",
+      "Sat Jan 03 1970 08:33:20 ",
+      "Sun Jan 04 1970 12:20:00 ",
+      "Mon Jan 05 1970 16:06:40 ",
+      "Tue Jan 06 1970 19:53:20 ",
+      "Wed Jan 07 1970 23:40:00 ",
+      "Fri Jan 09 1970 03:26:40 "
+    ];
+    const controlTicks = [100000000, 200000000, 300000000, 400000000, 500000000, 600000000, 700000000];
+    expect(dateAxis.labels, "labels").to.deep.equal(controlLabels);
+    expect(dateAxis.ticks, "labels").to.deep.equal(controlTicks);
+    
+  });
 });
 
 describe("RubberBand", function() {

@@ -366,7 +366,7 @@ export class Axis extends Shape {
     context.lineWidth = this.lineWidth;
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
-    
+
     context.resetTransform();
     const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
     this.ticksPoints = ticksPoints;

@@ -129,7 +129,7 @@ describe('Axis', function() {
     const controlTicks = [100000000, 200000000, 300000000, 400000000, 500000000, 600000000, 700000000];
     expect(dateAxis.labels, "labels").to.deep.equal(controlLabels);
     expect(dateAxis.ticks, "labels").to.deep.equal(controlTicks);
-    
+
   });
 });
 

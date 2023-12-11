@@ -25,6 +25,7 @@ export class Axis extends Shape {
   public isDiscrete: boolean = true;
   public isInteger: boolean = false;
   public logScale: boolean = false;
+  public isDate: boolean = false;
 
   public drawPath: Path2D;
   public path: Path2D;
@@ -150,9 +151,12 @@ export class Axis extends Shape {
 
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
-      if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
+      if (vector.length != 0) {
+        this.isDate = vector[0] instanceof Date;
+        this.isDiscrete = !this.isDate && typeof vector[0] == 'string';
+      }
       if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"]
-      else this.isInteger = isIntegerArray(vector);
+      else this.isInteger = isIntegerArray(vector) && !this.isDate;
     } else {
       this.isDiscrete = true;
       this.labels = ["0", "1"];
@@ -363,13 +367,10 @@ export class Axis extends Shape {
     context.lineWidth = this.lineWidth;
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
-    context.resetTransform();
 
-    context.setTransform(pointHTMatrix);
+    context.resetTransform();
     const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
     this.ticksPoints = ticksPoints;
-
-    context.resetTransform();
     this.drawTickTexts(ticksTexts, color, context);
     this.drawTitle(context, canvasHTMatrix, color);
 
@@ -493,7 +494,8 @@ export class Axis extends Shape {
   }
 
   protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): Point {
-    const point = new Point(tick * Number(!vertical), tick * Number(vertical), SIZE_AXIS_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
+    const center = new Vertex(tick * Number(!vertical), tick * Number(vertical)).transform(HTMatrix);
+    const point = new Point(center.x, center.y, SIZE_AXIS_END, this.tickMarker, this.tickOrientation, color);
     point.draw(context);
     return point
   }
@@ -600,7 +602,8 @@ export class Axis extends Shape {
   }
 
   public numericLabels(): string[] {
-    return this.ticks.map(tick => tick.toPrecision(this.tickPrecision))
+    if (!this.isDate) return this.ticks.map(tick => tick.toPrecision(this.tickPrecision));
+    return this.ticks.map(tick => new Date(tick).toString().split("GMT")[0]);
   }
 
   public saveLocation(): void {
@@ -625,7 +628,7 @@ export class Axis extends Shape {
   }
 
   private tickTextPositions(point: Point, HTMatrix: DOMMatrix): Vertex {
-    const origin = point.center.transform(HTMatrix);
+    const origin = point.center;
     const inversionFactor = this.isInverted ? 1 : -1
     if (this.isVertical) origin.x += inversionFactor * Math.sign(HTMatrix.a) * this.offsetTicks
     else origin.y += inversionFactor * Math.sign(HTMatrix.d) * this.offsetTicks;

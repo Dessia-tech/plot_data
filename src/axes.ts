@@ -24,6 +24,7 @@ export class Axis extends Shape {
   public ticksFontsize: number = 12;
   public isDiscrete: boolean = true;
   public isInteger: boolean = false;
+  public logScale: boolean = false;
 
   public drawPath: Path2D;
   public path: Path2D;

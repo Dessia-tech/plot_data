@@ -238,18 +238,6 @@ export class Frame extends Figure {
     super.activateSelection(emittedRubberBand, index)
     this.selectionBox.rubberBandUpdate(emittedRubberBand, ["x", "y"][index]);
   }
-
-  protected regulateScale(): void {
-    this.axes.forEach(axis => {
-      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
-        if (this.scaleX > 1) this.scaleX = 1;
-        if (this.scaleY > 1) this.scaleY = 1;
-      } else if (axis.areAllLabelsDisplayed || axis.tickPrecision < 1) {
-        if (this.scaleX < 1) this.scaleX = 1;
-        if (this.scaleY < 1) this.scaleY = 1;
-      }
-    })
-  }
 }
 
 export class Histogram extends Frame {
@@ -400,15 +388,19 @@ export class Histogram extends Frame {
     return new Vertex(this.axes[0].isDiscrete ? 0 : translation.x, 0)
   }
 
-  protected regulateScale(): void {
-    this.scaleY = 1;
-    this.axes.forEach(axis => {
+  protected regulateAxisScale(axis: Axis): void {
+    if (!axis.isDate) {
       if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
         if (this.scaleX > 1) this.scaleX = 1;
       } else if (axis.tickPrecision < 1 || axis.areAllLabelsDisplayed) {
         if (this.scaleX < 1) this.scaleX = 1;
       }
-    })
+    }
+  }
+
+  protected regulateScale(): void {
+    this.scaleY = 1;
+    super.regulateScale();
   }
 
   public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
@@ -1041,13 +1033,7 @@ export class ParallelPlot extends Figure {
   protected regulateScale(): void {
     for (const axis of this.axes) {
       if (axis.boundingBox.isHovered) {
-        if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
-          if (this.scaleX > 1) this.scaleX = 1;
-          if (this.scaleY > 1) this.scaleY = 1;
-        } else if (axis.areAllLabelsDisplayed || axis.tickPrecision < 1) {
-          if (this.scaleX < 1) this.scaleX = 1;
-          if (this.scaleY < 1) this.scaleY = 1;
-        }
+        this.regulateAxisScale(axis);
         axis.update(this.axisStyle, this.viewPoint, new Vertex(this.scaleX, this.scaleY), this.translation);
         axis.saveLocation();
         break;

@@ -678,7 +678,21 @@ export class RemoteFigure {
     return [null, null]
   }
 
-  protected regulateScale(): void {}
+  protected regulateAxisScale(axis: Axis): void {
+    if (!axis.isDate) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > 1) this.scaleX = 1;
+        if (this.scaleY > 1) this.scaleY = 1;
+      } else if (axis.areAllLabelsDisplayed || axis.tickPrecision < 1) {
+        if (this.scaleX < 1) this.scaleX = 1;
+        if (this.scaleY < 1) this.scaleY = 1;
+      }
+    }
+  }
+
+  protected regulateScale(): void {
+    this.axes.forEach(axis => this.regulateAxisScale(axis));
+  }
 
   protected updateWithScale(): void {
     this.regulateScale();

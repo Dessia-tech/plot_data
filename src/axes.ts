@@ -608,7 +608,7 @@ export class Axis extends Shape {
 
   public numericLabels(): string[] {
     if (!this.isDate) return this.ticks.map(tick => tick.toPrecision(this.tickPrecision));
-    return this.ticks.map(tick => { return new Date(tick).toString() })
+    return this.ticks.map(tick => new Date(tick).toString().split("GMT")[0]);
   }
 
   public saveLocation(): void {

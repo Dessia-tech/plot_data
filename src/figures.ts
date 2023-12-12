@@ -595,7 +595,10 @@ export class Scatter extends Frame {
   }
 
   private projectPoint(xCoord: number, yCoord: number): [number, number] {
-    return [xCoord * this.relativeMatrix.a + this.relativeMatrix.e, yCoord * this.relativeMatrix.d + this.relativeMatrix.f]
+    return [
+      this.axes[0].relativeToAbsolute(xCoord) * this.canvasMatrix.a + this.canvasMatrix.e,
+      this.axes[1].relativeToAbsolute(yCoord) * this.canvasMatrix.d + this.canvasMatrix.f
+    ]
   }
 
   private distanceMatrix(xCoords: number[], yCoords: number[]): number[][] {

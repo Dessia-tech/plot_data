@@ -150,8 +150,8 @@ export class Axis extends Shape {
   public toggleView(): void { this.visible = !this.visible }
 
   public switchLogScale(): void {
-    this.logScale = !this.logScale;
-    this.resetScale();
+    this.logScale = !this.logScale && !this.isDiscrete;
+    this.updateTicks();
   }
 
   private discretePropertiesFromVector(vector: any[]): void {
@@ -188,8 +188,8 @@ export class Axis extends Shape {
   public resetScale(): void {
     this.minValue = this.initMinValue;
     this.maxValue = this.initMaxValue;
-    this._previousMin = this.initMinValue;
-    this._previousMax = this.initMaxValue;
+    this._previousMin = this.minValue;
+    this._previousMax = this.maxValue;
     this.updateTicks();
   }
 
@@ -253,12 +253,14 @@ export class Axis extends Shape {
   }
 
   public absoluteToRelative(value: string | number): number {
-    const numberedValue = this.stringToValue(value);
+    let numberedValue = this.stringToValue(value);
+    if (this.logScale) numberedValue = 10 ** numberedValue;
     return this.isVertical ? (numberedValue - this.transformMatrix.f) / this.transformMatrix.d : (numberedValue - this.transformMatrix.e) / this.transformMatrix.a
   }
 
   public relativeToAbsolute(value: string | number): number {
-    const numberedValue = this.stringToValue(value);
+    let numberedValue = this.stringToValue(value);
+    if (this.logScale) numberedValue = Math.log10(numberedValue);
     return this.isVertical ? numberedValue * this.transformMatrix.d + this.transformMatrix.f : numberedValue * this.transformMatrix.a + this.transformMatrix.e
   }
 
@@ -311,10 +313,10 @@ export class Axis extends Shape {
   }
 
   private getTickIncrement(): number {
+    if (this.logScale) return 1;
     const rawIncrement = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const logExponent = Math.floor(Math.log10(rawIncrement));
     if (this.isInteger) return this.integerTickIncrement(rawIncrement, logExponent);
-    if (this.logScale) return 1;
     return this.floatTickIncrement(rawIncrement, logExponent);
   }
 
@@ -346,12 +348,13 @@ export class Axis extends Shape {
     } else if (this.isInteger && ticks.length > 0) this.tickPrecision = ticks[0].toString().length;
   };
 
-
   private logScaleTicks(): number[] {
-    const powArray = range(0, Math.ceil(Math.log(this.maxValue)), 1);
-    return powArray.map(pow => 10 ** pow)
+    const minValueTenPower = Math.floor(Math.log10(Math.abs(this.minValue)));
+    const maxValueTenPower = Math.ceil(Math.log10(Math.abs(this.maxValue)));
+    const increment = (maxValueTenPower - minValueTenPower) / this.nTicks;
+    const tenPowers = range(minValueTenPower, maxValueTenPower, increment);
+    return tenPowers.map(pow => 10 ** pow)
   }
-
 
   protected computeTicks(): number[] {
     const increment = this.getTickIncrement();
@@ -507,7 +510,9 @@ export class Axis extends Shape {
   }
 
   protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): Point {
-    const center = new Vertex(tick * Number(!vertical), tick * Number(vertical)).transform(HTMatrix);
+    const center = this.logScale ? 
+      new Vertex(Math.log10(tick) * Number(!vertical), Math.log10(tick) * Number(vertical)).transform(HTMatrix) :
+      new Vertex(tick * Number(!vertical), tick * Number(vertical)).transform(HTMatrix);
     const point = new Point(center.x, center.y, SIZE_AXIS_END, this.tickMarker, this.tickOrientation, color);
     point.draw(context);
     return point
@@ -522,7 +527,7 @@ export class Axis extends Shape {
   }
 
   private getValueToDrawMatrix(): DOMMatrix {
-    const scale = this.drawLength / this.interval;
+    let scale = this.drawLength / (this.logScale ? Math.log10(this.interval) : this.interval);
     if (this.isInverted) {
       return new DOMMatrix([
         -scale, 0, 0, -scale,
@@ -650,11 +655,11 @@ export class Axis extends Shape {
 
   public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {
     const HTMatrix = this.transformMatrix;
-    let center = (viewPoint.x - HTMatrix.e) / HTMatrix.a;
+    let center = this.absoluteToRelative(viewPoint.x);
     let offset = translation.x;
     let scale = scaling.x;
     if (this.isVertical) {
-      center = (viewPoint.y - HTMatrix.f) / HTMatrix.d;
+      center = this.absoluteToRelative(viewPoint.y);
       offset = translation.y;
       scale = scaling.y;
     }

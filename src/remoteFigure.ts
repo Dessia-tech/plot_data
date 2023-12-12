@@ -426,6 +426,7 @@ export class RemoteFigure {
 
   public switchLogScale(): void {
     this.axes.forEach(axis => axis.switchLogScale());
+    this.resetScales();
     this.draw();
   }
 

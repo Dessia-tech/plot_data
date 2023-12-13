@@ -149,12 +149,23 @@ export class Axis extends Shape {
 
   public toggleView(): void { this.visible = !this.visible }
 
-  public switchLogScale(): void {
+  private getLogBoundaries(vector: number[]): [number, number] {
+    const positiveVector = vector.filter(value => value > 0);
+    const min = Math.min(...positiveVector);
+    const max = Math.max(...positiveVector);
+    if (this.logScale) {
+      return [
+        this.initMinValue > 0 ? Math.log10(this.initMinValue) : Math.log10(min),
+        this.initMaxValue > 0 ? Math.log10(this.initMaxValue) : Math.log10(max)
+      ]
+    } else return [10 ** this.initMinValue, 10 ** this.initMaxValue]
+  }
+
+  public switchLogScale(vector: number[]): void {
     if (!this.isDiscrete) {
       this.logScale = !this.logScale;
+      [this.initMinValue, this.initMaxValue] = this.getLogBoundaries(vector);
       this.updateTicks();
-      this.initMinValue = this.logScale ? (this.initMinValue > 0 ? Math.log10(this.initMinValue) : -1) : 10 ** this.initMinValue;
-      this.initMaxValue = this.logScale ? (this.initMaxValue > 0 ? Math.log10(this.initMaxValue) : -1) : 10 ** this.initMaxValue;    
     }    
   }
 
@@ -321,7 +332,7 @@ export class Axis extends Shape {
   private getTickIncrement(): number {
     const rawIncrement = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const logExponent = Math.floor(Math.log10(rawIncrement));
-    if (this.isInteger) return this.integerTickIncrement(rawIncrement, logExponent);
+    if (this.isInteger && !this.logScale) return this.integerTickIncrement(rawIncrement, logExponent);
     return this.floatTickIncrement(rawIncrement, logExponent);
   }
 
@@ -353,17 +364,8 @@ export class Axis extends Shape {
     } else if (this.isInteger && ticks.length > 0) this.tickPrecision = ticks[0].toString().length;
   };
 
-  private logScaleTicks(): number[] {
-    const minValueTenPower = Math.floor(this.minValue);
-    const maxValueTenPower = Math.ceil(this.maxValue);
-    const increment = (maxValueTenPower - minValueTenPower) / this.nTicks;
-    const tenPowers = range(minValueTenPower, maxValueTenPower, increment);
-    return tenPowers.map(pow => 10 ** pow)
-  }
-
   protected computeTicks(): number[] {
     const increment = this.getTickIncrement();
-    // if (this.logScale) return this.logScaleTicks();
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) ticks.push(ticks.slice(-1)[0] + increment);

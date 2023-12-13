@@ -13,8 +13,8 @@ COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
 for i in range(500):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
-    elements.append({'mass': random.uniform(-20, 10),
-                     'length': random.uniform(0, 10),
+    elements.append({'mass': random.uniform(0, 50),
+                     'length': random.uniform(0, 100),
                      'shape': random_shape,
                      'color': random_color})
 

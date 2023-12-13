@@ -150,8 +150,12 @@ export class Axis extends Shape {
   public toggleView(): void { this.visible = !this.visible }
 
   public switchLogScale(): void {
-    this.logScale = !this.logScale && !this.isDiscrete;
-    this.updateTicks();
+    if (!this.isDiscrete) {
+      this.logScale = !this.logScale;
+      this.updateTicks();
+      this.initMinValue = this.logScale ? (this.initMinValue > 0 ? Math.log10(this.initMinValue) : -1) : 10 ** this.initMinValue;
+      this.initMaxValue = this.logScale ? (this.initMaxValue > 0 ? Math.log10(this.initMaxValue) : -1) : 10 ** this.initMaxValue;    
+    }    
   }
 
   private discretePropertiesFromVector(vector: any[]): void {
@@ -254,8 +258,10 @@ export class Axis extends Shape {
 
   public absoluteToRelative(value: string | number): number {
     let numberedValue = this.stringToValue(value);
-    if (this.logScale) numberedValue = 10 ** numberedValue;
-    return this.isVertical ? (numberedValue - this.transformMatrix.f) / this.transformMatrix.d : (numberedValue - this.transformMatrix.e) / this.transformMatrix.a
+    const projectedValue = this.isVertical ?
+      (numberedValue - this.transformMatrix.f) / this.transformMatrix.a :
+      (numberedValue - this.transformMatrix.e) / this.transformMatrix.a;
+    return projectedValue
   }
 
   public relativeToAbsolute(value: string | number): number {
@@ -313,7 +319,6 @@ export class Axis extends Shape {
   }
 
   private getTickIncrement(): number {
-    if (this.logScale) return 1;
     const rawIncrement = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const logExponent = Math.floor(Math.log10(rawIncrement));
     if (this.isInteger) return this.integerTickIncrement(rawIncrement, logExponent);
@@ -349,8 +354,8 @@ export class Axis extends Shape {
   };
 
   private logScaleTicks(): number[] {
-    const minValueTenPower = Math.floor(Math.log10(Math.abs(this.minValue)));
-    const maxValueTenPower = Math.ceil(Math.log10(Math.abs(this.maxValue)));
+    const minValueTenPower = Math.floor(this.minValue);
+    const maxValueTenPower = Math.ceil(this.maxValue);
     const increment = (maxValueTenPower - minValueTenPower) / this.nTicks;
     const tenPowers = range(minValueTenPower, maxValueTenPower, increment);
     return tenPowers.map(pow => 10 ** pow)
@@ -358,14 +363,14 @@ export class Axis extends Shape {
 
   protected computeTicks(): number[] {
     const increment = this.getTickIncrement();
-    if (this.logScale) return this.logScaleTicks();
+    // if (this.logScale) return this.logScaleTicks();
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) ticks.push(ticks.slice(-1)[0] + increment);
     if (ticks.slice(0)[0] < this.minValue) ticks.splice(0, 1);
     if (ticks.slice(-1)[0] >= this.maxValue) ticks.splice(-1, 1);
     this.updateTickPrecision(increment, ticks);
-    return ticks
+    return this.logScale ? ticks.map(tick => 10 ** tick) : ticks
   }
 
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
@@ -527,7 +532,7 @@ export class Axis extends Shape {
   }
 
   private getValueToDrawMatrix(): DOMMatrix {
-    let scale = this.drawLength / (this.logScale ? Math.log10(this.interval) : this.interval);
+    let scale = this.drawLength / this.interval;
     if (this.isInverted) {
       return new DOMMatrix([
         -scale, 0, 0, -scale,
@@ -655,16 +660,17 @@ export class Axis extends Shape {
 
   public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {
     const HTMatrix = this.transformMatrix;
-    let center = this.absoluteToRelative(viewPoint.x);
+    let center = (viewPoint.x - HTMatrix.e) / HTMatrix.a;;
     let offset = translation.x;
-    let scale = scaling.x;
+    let scale = this.logScale ? 10 ** (scaling.x - 1) : scaling.x;
     if (this.isVertical) {
-      center = this.absoluteToRelative(viewPoint.y);
+      center = (viewPoint.y - HTMatrix.f) / HTMatrix.d;
       offset = translation.y;
-      scale = scaling.y;
+      scale = this.logScale ? 10 ** (scaling.y - 1) : scaling.y;
     }
     this.minValue = (this._previousMin - center) / scale + center - offset / HTMatrix.a;
     this.maxValue = (this._previousMax - center) / scale + center - offset / HTMatrix.a;
+    console.log(this.minValue, this.maxValue)
     this.updateTicks();
   }
 

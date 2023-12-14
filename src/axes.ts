@@ -153,6 +153,10 @@ export class Axis extends Shape {
     const positiveVector = vector.filter(value => value > 0);
     const min = Math.min(...positiveVector);
     const max = Math.max(...positiveVector);
+    if (max <= 0) {
+      this.logScale = false;
+      return [this.initMinValue, this.initMaxValue]
+    }
     if (this.logScale) {
       return [
         this.initMinValue > 0 ? Math.log10(this.initMinValue) : Math.log10(min),

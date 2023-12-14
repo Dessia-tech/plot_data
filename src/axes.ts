@@ -676,7 +676,6 @@ export class Axis extends Shape {
     }
     this.minValue = (this._previousMin - center) / scale + center - offset / HTMatrix.a;
     this.maxValue = (this._previousMax - center) / scale + center - offset / HTMatrix.a;
-    console.log(this.minValue, this.maxValue)
     this.updateTicks();
   }
 

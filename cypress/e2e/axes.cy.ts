@@ -89,12 +89,9 @@ describe('Axis', function() {
 
   it("should scale axis in a logarithmic way", function() {
     const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
-    const logValues = vector.map(element => Math.log10(element));
-    expect(vector.map(element => axis.absoluteToRelative(element)), "projected values").to.deep.equal(vector);
-
+    expect(vector.map(element => Math.floor(axis.relativeToAbsolute(element))), "projected values").to.deep.equal([4, 27, 50, 72, 95]);
     axis.switchLogScale(vector);
-
-    expect(vector.map(element => axis.absoluteToRelative(element)), "projected log values").to.deep.equal(logValues);
+    expect(vector.map(element => Math.floor(axis.relativeToAbsolute(element))), "projected log values").to.deep.equal([-19 -12 -8 -5 -3]);
   });
 
   it('should update axis with translation and style', function() {

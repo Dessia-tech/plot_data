@@ -139,24 +139,24 @@ describe('Axis', function() {
     const dateAxis = new Axis(dateVector, boundingBox, origin, end, name, initScale, nTicks);
     const controlLabels = timeZoneOffSet == 0 ? 
       [
-        "Sat Mar 03 1973 11:46:40 ", 
-        "Mon May 03 1976 22:33:20 ", 
-        "Thu Jul 05 1979 08:20:00 ", 
-        "Sat Sep 04 1982 18:06:40 ", 
-        "Tue Nov 05 1985 02:53:20 ", 
-        "Thu Jan 05 1989 12:40:00 ", 
-        "Sat Mar 07 1992 22:26:40 "
+        "07/03/1973 - 11:46:40",
+        "02/05/1976 - 22:33:20",
+        "05/07/1979 - 08:20:00",
+        "07/09/1982 - 18:06:40",
+        "03/11/1985 - 02:53:20",
+        "05/01/1989 - 12:40:00",
+        "07/03/1992 - 22:26:40" 
       ] 
       : 
       [
-        "Sat Mar 03 1973 10:46:40 ", 
-        "Mon May 03 1976 21:33:20 ", 
-        "Thu Jul 05 1979 07:20:00 ", 
-        "Sat Sep 04 1982 17:06:40 ", 
-        "Tue Nov 05 1985 01:53:20 ", 
-        "Thu Jan 05 1989 11:40:00 ", 
-        "Sat Mar 07 1992 21:26:40 "
-      ];  
+        "07/03/1973 - 10:46:40",
+        "02/05/1976 - 21:33:20",
+        "05/07/1979 - 07:20:00",
+        "07/09/1982 - 17:06:40",
+        "03/11/1985 - 01:53:20",
+        "05/01/1989 - 11:40:00",
+        "07/03/1992 - 21:26:40" 
+      ];
     const controlTicks = [100000000000, 200000000000, 300000000000, 400000000000, 500000000000, 600000000000, 700000000000];
     expect(dateAxis.labels, "labels").to.deep.equal(controlLabels);
     expect(dateAxis.ticks, "labels").to.deep.equal(controlTicks);

@@ -54,6 +54,56 @@ export function uniqueValues<T>(vector: T[]): T[] {
   return vector.filter((value, index, array) => array.indexOf(value) === index)
 }
 
+export function addInitZero(value: string | number): string {
+  const str = typeof value == "number" ? value.toString() : value;
+  return str.length == 1 ? `0${str}` : str
+}
+
+export function datesInMilliseconds(dateTicks: number[]): string[] {
+  return dateTicks.map(tick => {
+    const date = new Date(tick);
+    return `${date.getMilliseconds()} ms`
+  });
+}
+
+export function datesInSeconds(dateTicks: number[]): string[] {
+  return dateTicks.map(tick => {
+    const date = new Date(tick);
+    return `${date.getSeconds()}.${date.getMilliseconds()} s`
+  });
+}
+
+export function datesInMinutes(dateTicks: number[]): string[] {
+  return dateTicks.map(tick => {
+    const date = new Date(tick);
+    return `${date.getMinutes()}:${date.getSeconds()} min`
+  });
+}
+
+export function datesInHours(dateTicks: number[]): string[] {
+  return dateTicks.map(tick => {
+    const date = new Date(tick);
+    return `${addInitZero(date.getHours())}:${addInitZero(date.getMinutes())}:${addInitZero(date.getSeconds())}`
+  });
+}
+
+export function datesInDays(dateTicks: number[]): string[] {
+  return dateTicks.map(tick => {
+    const date = new Date(tick);
+    return `${addInitZero(date.getDay() + 1)}/${addInitZero(date.getMonth() + 1)}/${date.getFullYear()} - ${addInitZero(date.getHours())}:${addInitZero(date.getMinutes())}:${addInitZero(date.getSeconds())}`
+  })
+}
+
+export function formatDateTicks(dateTicks: number[]): string[] {
+  const min = Math.min(...dateTicks);
+  const interval = Math.max(...dateTicks) - min;
+  if (interval <= 1000) return datesInMilliseconds(dateTicks);
+  if (interval <= 60000) return datesInSeconds(dateTicks);
+  if (interval <= 360000) return datesInMinutes(dateTicks);
+  if (interval <= 8640000) return datesInHours(dateTicks);
+  return datesInDays(dateTicks)
+}
+
 export function arrayDiff<T>(a: T[], b: T[]): T[] {
   if (b.length == 0) return a;
   return a.filter(value => !b.includes(value));

@@ -91,7 +91,7 @@ describe('Axis', function() {
     const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
     const logValues = vector.map(element => Math.log10(element));
     expect(vector.map(element => axis.absoluteToRelative(element)), "projected values").to.deep.equal(vector);
-    
+
     axis.switchLogScale(vector);
 
     expect(vector.map(element => axis.absoluteToRelative(element)), "projected log values").to.deep.equal(logValues);

@@ -170,7 +170,7 @@ export class Axis extends Shape {
       this.logScale = !this.logScale;
       [this.initMinValue, this.initMaxValue] = this.getLogBoundaries(vector);
       this.updateTicks();
-    }    
+    }
   }
 
   private discretePropertiesFromVector(vector: any[]): void {
@@ -521,7 +521,7 @@ export class Axis extends Shape {
   }
 
   protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): Point {
-    const center = this.logScale ? 
+    const center = this.logScale ?
       new Vertex(Math.log10(tick) * Number(!vertical), Math.log10(tick) * Number(vertical)).transform(HTMatrix) :
       new Vertex(tick * Number(!vertical), tick * Number(vertical)).transform(HTMatrix);
     const point = new Point(center.x, center.y, SIZE_AXIS_END, this.tickMarker, this.tickOrientation, color);

@@ -87,6 +87,16 @@ describe('Axis', function() {
     expect(axis.maxValue, "maxValue").to.be.closeTo(8.7, 0.05);
   });
 
+  it("should scale axis in a logarithmic way", function() {
+    const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
+    const logValues = vector.map(element => Math.log10(element));
+    expect(vector.map(element => axis.absoluteToRelative(element)), "projected values").to.deep.equal(vector);
+    
+    axis.switchLogScale(vector);
+
+    expect(vector.map(element => axis.absoluteToRelative(element)), "projected log values").to.deep.equal(logValues);
+  });
+
   it('should update axis with translation and style', function() {
     const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
     const viewPoint = new Vertex(0, 0);

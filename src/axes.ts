@@ -1,5 +1,5 @@
 import { SIZE_AXIS_END, AXIS_TAIL_SIZE, RUBBERBAND_SMALL_SIZE, DEFAULT_FONTSIZE } from "./constants"
-import { uniqueValues, isIntegerArray, getTenPower, range } from "./functions"
+import { uniqueValues, isIntegerArray, getTenPower, formatDateTicks } from "./functions"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
@@ -631,8 +631,9 @@ export class Axis extends Shape {
   }
 
   public numericLabels(): string[] {
-    if (!this.isDate) return this.ticks.map(tick => tick.toPrecision(this.tickPrecision));
-    return this.ticks.map(tick => new Date(tick).toString().split("GMT")[0]);
+    return this.isDate 
+      ? formatDateTicks(this.ticks)
+      : this.ticks.map(tick => tick.toPrecision(this.tickPrecision));
   }
 
   public saveLocation(): void {

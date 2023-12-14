@@ -2,6 +2,7 @@ import { isIntegerArray } from "../../instrumented/functions";
 import { Vertex } from "../../instrumented/baseShape";
 import { Rect } from "../../instrumented/primitives";
 import { Axis, ParallelAxis } from "../../instrumented/axes";
+import { time } from "console";
 
 const vector = [1, 2, 3, 4, 5];
 const boundingBox = new Rect(new Vertex(0, 0), new Vertex(500, 500));
@@ -134,18 +135,36 @@ describe('Axis', function() {
   });
 
   it("should be drawn with date labels", function() {
-    const dateVector = [new Date(234242524), new Date(123456789), new Date(326472910), new Date(564927592), new Date(675829471)];
-    const dateAxis = new Axis(dateVector, boundingBox, origin, end, name, initScale, nTicks);
-    const controlLabels = [
-      "Fri Jan 02 1970 04:46:40 ",
-      "Sat Jan 03 1970 08:33:20 ",
-      "Sun Jan 04 1970 12:20:00 ",
-      "Mon Jan 05 1970 16:06:40 ",
-      "Tue Jan 06 1970 19:53:20 ",
-      "Wed Jan 07 1970 23:40:00 ",
-      "Fri Jan 09 1970 03:26:40 "
+    const timeZoneOffSet = new Date().getTimezoneOffset() * 60;
+    const dateVector = [
+      new Date((123456789 - timeZoneOffSet) * 1000),
+      new Date((234242524 - timeZoneOffSet) * 1000),
+      new Date((326472910 - timeZoneOffSet) * 1000),
+      new Date((564927592 - timeZoneOffSet) * 1000),
+      new Date((675829471 - timeZoneOffSet) * 1000)
     ];
-    const controlTicks = [100000000, 200000000, 300000000, 400000000, 500000000, 600000000, 700000000];
+    const dateAxis = new Axis(dateVector, boundingBox, origin, end, name, initScale, nTicks);
+    const controlLabels = timeZoneOffSet == 0 ? 
+      [
+        "07/03/1973 - 11:46:40",
+        "02/05/1976 - 22:33:20",
+        "05/07/1979 - 08:20:00",
+        "07/09/1982 - 18:06:40",
+        "03/11/1985 - 02:53:20",
+        "05/01/1989 - 12:40:00",
+        "07/03/1992 - 22:26:40" 
+      ] 
+      : 
+      [
+        "07/03/1973 - 10:46:40",
+        "02/05/1976 - 21:33:20",
+        "05/07/1979 - 07:20:00",
+        "07/09/1982 - 17:06:40",
+        "03/11/1985 - 01:53:20",
+        "05/01/1989 - 11:40:00",
+        "07/03/1992 - 21:26:40" 
+      ];
+    const controlTicks = [100000000000, 200000000000, 300000000000, 400000000000, 500000000000, 600000000000, 700000000000];
     expect(dateAxis.labels, "labels").to.deep.equal(controlLabels);
     expect(dateAxis.ticks, "labels").to.deep.equal(controlTicks);
 

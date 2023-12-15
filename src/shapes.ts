@@ -448,12 +448,16 @@ export class Label extends Shape {
     this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + this.textOffset, this.shapeSize.y / 2));
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    super.drawWhenIsVisible(context);
-    context.save();
+  private drawText(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
     context.resetTransform();
     this.text.draw(context);
-    context.restore();
+    context.setTransform(contextMatrix);
+  }
+
+  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
+    super.drawWhenIsVisible(context);
+    this.drawText(context);
   }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {

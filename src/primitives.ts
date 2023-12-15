@@ -526,13 +526,13 @@ export class Contour extends Shape {
 
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
     super.drawWhenIsVisible(context);
-    context.save();
-    super.setDrawingProperties(context);
+    // context.save();
+    // super.setDrawingProperties(context);
     this.lines.forEach(line => {
         this.setLineStyle(line);
         line.draw(context);
     });
-    context.restore();
+    // context.restore();
   }
 
   public buildPath(): void {

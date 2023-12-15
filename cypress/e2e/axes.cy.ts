@@ -91,7 +91,7 @@ describe('Axis', function() {
     const axis = new Axis(vector, boundingBox, origin, end, name, initScale, nTicks);
     expect(vector.map(element => Math.floor(axis.relativeToAbsolute(element))), "projected values").to.deep.equal([4, 27, 50, 72, 95]);
     axis.switchLogScale(vector);
-    expect(vector.map(element => Math.floor(axis.relativeToAbsolute(element))), "projected log values").to.deep.equal([-19 -12 -8 -5 -3]);
+    expect(vector.map(element => Math.floor(axis.relativeToAbsolute(element))), "projected log values").to.deep.equal([-19, -12, -8, -5, -3]);
   });
 
   it('should update axis with translation and style', function() {

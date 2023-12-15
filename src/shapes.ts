@@ -37,6 +37,7 @@ export class Text extends Shape {
   public boundingBox: Rect;
   public offset: number = 0;
   private words: string[];
+  private writtenText: string[];
   constructor(
     public text: string,
     public origin: Vertex,
@@ -183,28 +184,36 @@ export class Text extends Shape {
     } else this.boundingBox.buildPath();
   }
 
+  public setDrawingProperties(context: CanvasRenderingContext2D): void {
+    context.font = this.fullFont;
+    context.textAlign = this.align as CanvasTextAlign;
+    context.textBaseline = this.baseline as CanvasTextBaseline;
+    context.fillStyle = this.fillStyle;
+    context.globalAlpha = this.alpha;
+  }
+
+  protected buildDrawPath(context: CanvasRenderingContext2D, contextMatrix: DOMMatrix): void {
+    this.setBoundingBoxState();
+    this.updateBoundingBox(context);
+    this.buildPath();
+    this.boundingBox.draw(context);
+  }
+
+  protected drawPath(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
+    const origin = this.origin.transform(contextMatrix);
+    context.resetTransform();
+    context.translate(origin.x, origin.y);
+    context.rotate(Math.PI / 180 * this.orientation);
+    if (this.isScaled) context.scale(Math.abs(contextMatrix.a), Math.abs(contextMatrix.d));
+    this.write(this.writtenText, context);
+  }
+
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
     if (this.text) {
-      const contextMatrix = context.getTransform();
-      const origin = this.origin.transform(contextMatrix);
       context.save();
-      this.setBoundingBoxState();
-      const writtenText = this.cleanStartAllRows(this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows());
-      this.updateBoundingBox(context);
-      this.buildPath();
-      this.boundingBox.draw(context);
-
-      context.font = this.fullFont;
-      context.textAlign = this.align as CanvasTextAlign;
-      context.textBaseline = this.baseline as CanvasTextBaseline;
-      context.fillStyle = this.fillStyle;
-      context.globalAlpha = this.alpha;
-
-      context.resetTransform();
-      context.translate(origin.x, origin.y);
-      context.rotate(Math.PI / 180 * this.orientation);
-      if (this.isScaled) context.scale(Math.abs(contextMatrix.a), Math.abs(contextMatrix.d));
-      this.write(writtenText, context);
+      this.writtenText = this.cleanStartAllRows(this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows());
+      super.drawWhenIsVisible(context);
       context.restore();
     }
   }
@@ -737,7 +746,7 @@ export class Bar extends Rect {
   }
 
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    if (this.size.x != 0 && this.size.y != 0) {
+    if (this.length != 0) {
       super.drawWhenIsVisible(context);
       this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
     }

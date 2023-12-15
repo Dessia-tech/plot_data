@@ -71,79 +71,28 @@ export class Vertex {
   }
 }
 
-export class Shape {
+export class InteractiveObject {
   public path: Path2D = new Path2D();
   public scaledPath: Path2D = new Path2D();
   public inStrokeScale: Vertex = new Vertex(1, 1);
-
-  public lineWidth: number = 1;
-  public dashLine: number[] = [];
-  public hatching: Hatching = null;
-  public strokeStyle: string = null;
-  public fillStyle: string = DEFAULT_SHAPE_COLOR;
-  public hoverStyle: string = HOVERED_SHAPE_COLOR;
-  public clickedStyle: string = CLICKED_SHAPE_COLOR;
-  public selectedStyle: string = SELECTED_SHAPE_COLOR;
-  public alpha: number = 1;
-
+  
   public mouseClick: Vertex = null;
+  
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
   public isScaled: boolean = true;
   public isFilled: boolean = true;
   public visible: boolean = true;
-  public inFrame: boolean = true;
+  public inFrame: boolean = true; // TODO: remove it
 
-  public tooltipOrigin: Vertex = null;
-  protected _tooltipMap = new Map<string, any>();
-  public hasTooltip: boolean = true;
   constructor() { };
-
-  get tooltipMap(): Map<string, any> { return this._tooltipMap }
-
-  set tooltipMap(value: Map<string, any>) { this._tooltipMap = value }
-
-  get tooltipFlip(): boolean { return false }
-
-  get drawingStyle(): { [key: string]: any } {
-    const style = {};
-    style["lineWidth"] = this.lineWidth;
-    style["dashLine"] = this.dashLine;
-    style["hatching"] = this.hatching;
-    style["strokeStyle"] = this.strokeStyle;
-    style["fillStyle"] = this.fillStyle;
-    style["alpha"] = this.alpha;
-    return style
-  }
-
-  public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() }
-
-  public deserializeStyle(data: DataInterface): void {
-    this.deserializeEdgeStyle(data);
-    this.deserializeSurfaceStyle(data);
-    this.deserializeTooltip(data);
-  }
-
-  public deserializeEdgeStyle(data: DataInterface): void {
-    this.lineWidth = data.edge_style?.line_width ?? this.lineWidth;
-    this.dashLine = data.edge_style?.dashline ?? this.dashLine;
-    this.strokeStyle = data.edge_style?.color_stroke ? colorHsl(data.edge_style.color_stroke) : null;
-  }
-
-  public deserializeSurfaceStyle(data: DataInterface): void {
-    this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
-    this.alpha = data.surface_style?.opacity ?? this.alpha;
-    this.hatching = data.surface_style?.hatching ? new Hatching("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
-  }
-
-  protected deserializeTooltip(data: DataInterface): void { if (data.tooltip) this.tooltipMap.set(data.tooltip, "") }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
 
-  protected updateTooltipOrigin(matrix: DOMMatrix): void {
-    if (this.mouseClick) this.tooltipOrigin = this.mouseClick.transform(matrix);
-  }
+  protected updateTooltipOrigin(matrix: DOMMatrix): void { }
+
+  public setDrawingProperties(context: CanvasRenderingContext2D) { }
 
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
     context.save();
@@ -171,6 +120,98 @@ export class Shape {
     const path = new Path2D();
     path.addPath(this.path);
     return path
+  }
+
+  public buildPath(): void { }
+
+  public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
+    return this.isPointInStroke(context, point)
+  }
+
+  protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    let isHovered: boolean;
+    context.save();
+    context.resetTransform();
+    context.lineWidth = 10;
+    if (this.isScaled) {
+      context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
+      isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
+    } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
+    context.restore();
+    return isHovered
+  }
+
+  public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
+
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void { this.isHovered = this.isPointInShape(context, mouseCoords) }
+
+  public mouseUp(keepState: boolean): void {
+    this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
+  }
+}
+
+
+export class Shape extends InteractiveObject {
+  public lineWidth: number = 1;
+  public dashLine: number[] = [];
+  public hatching: Hatching = null;
+  public strokeStyle: string = null;
+  public fillStyle: string = DEFAULT_SHAPE_COLOR;
+  public hoverStyle: string = HOVERED_SHAPE_COLOR;
+  public clickedStyle: string = CLICKED_SHAPE_COLOR;
+  public selectedStyle: string = SELECTED_SHAPE_COLOR;
+  public alpha: number = 1;
+
+  public tooltipOrigin: Vertex = null;
+  protected _tooltipMap = new Map<string, any>();
+  public hasTooltip: boolean = true;
+
+  constructor() { super() };
+
+  get tooltipMap(): Map<string, any> { return this._tooltipMap }
+
+  set tooltipMap(value: Map<string, any>) { this._tooltipMap = value }
+
+  get tooltipFlip(): boolean { return false }
+
+  get drawingStyle(): { [key: string]: any } {
+    const style = {};
+    style["lineWidth"] = this.lineWidth;
+    style["dashLine"] = this.dashLine;
+    style["hatching"] = this.hatching;
+    style["strokeStyle"] = this.strokeStyle;
+    style["fillStyle"] = this.fillStyle;
+    style["alpha"] = this.alpha;
+    return style
+  }
+
+  public deserializeStyle(data: DataInterface): void {
+    this.deserializeEdgeStyle(data);
+    this.deserializeSurfaceStyle(data);
+    this.deserializeTooltip(data);
+  }
+
+  public deserializeEdgeStyle(data: DataInterface): void {
+    this.lineWidth = data.edge_style?.line_width ?? this.lineWidth;
+    this.dashLine = data.edge_style?.dashline ?? this.dashLine;
+    this.strokeStyle = data.edge_style?.color_stroke ? colorHsl(data.edge_style.color_stroke) : null;
+  }
+
+  public deserializeSurfaceStyle(data: DataInterface): void {
+    this.fillStyle = colorHsl(data.surface_style?.color_fill ?? this.fillStyle);
+    this.alpha = data.surface_style?.opacity ?? this.alpha;
+    this.hatching = data.surface_style?.hatching ? new Hatching("", data.surface_style.hatching.stroke_width, data.surface_style.hatching.hatch_spacing) : null;
+  }
+
+  protected deserializeTooltip(data: DataInterface): void { if (data.tooltip) this.tooltipMap.set(data.tooltip, "") }
+
+  public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() }
+
+  public initTooltipOrigin(): void { }
+
+  protected updateTooltipOrigin(matrix: DOMMatrix): void {
+    if (this.mouseClick) this.tooltipOrigin = this.mouseClick.transform(matrix);
   }
 
   public setStrokeStyle(fillStyle: string): string {
@@ -235,35 +276,5 @@ export class Shape {
     context.setLineDash(this.dashLine);
     this.alphaConfiguration(context);
     this.setStyle(context);
-  }
-
-  public initTooltipOrigin(): void { }
-
-  public buildPath(): void { }
-
-  public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
-    return this.isPointInStroke(context, point)
-  }
-
-  protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    let isHovered: boolean;
-    context.save();
-    context.resetTransform();
-    context.lineWidth = 10;
-    if (this.isScaled) {
-      context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
-      isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
-    } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
-    context.restore();
-    return isHovered
-  }
-
-  public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
-
-  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void { this.isHovered = this.isPointInShape(context, mouseCoords) }
-
-  public mouseUp(keepState: boolean): void {
-    this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
   }
 }

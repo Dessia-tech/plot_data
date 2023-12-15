@@ -139,13 +139,14 @@ export class InteractiveObject {
   protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
     let isHovered: boolean;
     const contextMatrix = context.getTransform();
-    context.resetTransform();
+    const contextLineWidth = context.lineWidth;
     context.lineWidth = 10;
     if (this.isScaled) {
       context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
       isHovered = context.isPointInStroke(this.drawnPath, point.x, point.y);
     } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
     context.setTransform(contextMatrix);
+    context.lineWidth = contextLineWidth;
     return isHovered
   }
 

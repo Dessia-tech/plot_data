@@ -79,5 +79,5 @@ plot_data_object = plot_data.MultiplePlots(plots=plots2, elements=elements, init
                                                            plot_data.PointFamily('rgb(146, 178, 78)', [11,21,31,41,25,26,27])])
 
 # Display
-plot_data_object.plot(debug_mode=True, canvas_id='canvas')
+plot_data_object.plot(local=True, canvas_id='canvas')
 # plot_data.plot_canvas(plot_data_object=multiplot, debug_mode=True)

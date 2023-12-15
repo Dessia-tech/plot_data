@@ -2,7 +2,6 @@ import { isIntegerArray } from "../../instrumented/functions";
 import { Vertex } from "../../instrumented/baseShape";
 import { Rect } from "../../instrumented/primitives";
 import { Axis, ParallelAxis } from "../../instrumented/axes";
-import { time } from "console";
 
 const vector = [1, 2, 3, 4, 5];
 const boundingBox = new Rect(new Vertex(0, 0), new Vertex(500, 500));
@@ -137,11 +136,11 @@ describe('Axis', function() {
   it("should be drawn with date labels", function() {
     const timeZoneOffSet = new Date().getTimezoneOffset() * 60;
     const dateVector = [
-      new Date((123456789 - timeZoneOffSet) * 1000),
-      new Date((234242524 - timeZoneOffSet) * 1000),
-      new Date((326472910 - timeZoneOffSet) * 1000),
-      new Date((564927592 - timeZoneOffSet) * 1000),
-      new Date((675829471 - timeZoneOffSet) * 1000)
+      new Date((123456789 + timeZoneOffSet) * 1000),
+      new Date((234242524 + timeZoneOffSet) * 1000),
+      new Date((326472910 + timeZoneOffSet) * 1000),
+      new Date((564927592 + timeZoneOffSet) * 1000),
+      new Date((675829471 + timeZoneOffSet) * 1000)
     ];
     const dateAxis = new Axis(dateVector, boundingBox, origin, end, name, initScale, nTicks);
     const controlLabels = timeZoneOffSet == 0 ? 
@@ -164,6 +163,7 @@ describe('Axis', function() {
         "05/01/1989 - 11:40:00",
         "07/03/1992 - 21:26:40" 
       ];
+    console.log(dateVector, dateAxis.labels, timeZoneOffSet)
     const controlTicks = [100000000000, 200000000000, 300000000000, 400000000000, 500000000000, 600000000000, 700000000000];
     expect(dateAxis.labels, "labels").to.deep.equal(controlLabels);
     expect(dateAxis.ticks, "labels").to.deep.equal(controlTicks);

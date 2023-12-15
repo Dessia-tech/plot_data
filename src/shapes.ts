@@ -587,11 +587,11 @@ export class Tooltip {// TODO: make it a Shape
     const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
     this.insideCanvas(plotOrigin, plotSize, scaling);
     const textOrigin = this.computeTextOrigin(scaling);
-    const scaledPath = new Path2D();
+    const drawnPath = new Path2D();
     this.squareOrigin = this.squareOrigin.scale(scaling);
     this.origin = this.origin.scale(scaling);
     this.buildPath();
-    scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+    drawnPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
 
     context.save();
     context.scale(scaling.x, scaling.y);
@@ -599,8 +599,8 @@ export class Tooltip {// TODO: make it a Shape
     context.strokeStyle = this.strokeStyle;
     context.fillStyle = this.fillStyle;
     context.globalAlpha = this.alpha;
-    context.fill(scaledPath);
-    context.stroke(scaledPath);
+    context.fill(drawnPath);
+    context.stroke(drawnPath);
     this.writeText(textOrigin, context);
     context.restore()
   }

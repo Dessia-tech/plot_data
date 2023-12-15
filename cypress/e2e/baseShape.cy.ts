@@ -153,7 +153,7 @@ describe('Shape', function() {
   it('should initialize Shape without any arguments', function() {
     const shape = new Shape();
     expect(shape.path instanceof Path2D, "path").to.be.true;
-    expect(shape.scaledPath instanceof Path2D, "scaledPath").to.be.true;
+    expect(shape.drawnPath instanceof Path2D, "drawnPath").to.be.true;
     expect(shape.inStrokeScale.y, "inStrokeScale").to.equal(1);
     expect(shape.lineWidth, "lineWidth").to.equal(1);
     expect(shape.dashLine.length, "dashLine").to.equal(0);
@@ -187,8 +187,8 @@ describe('Shape', function() {
 
     shape.draw(context);
 
-    cy.wrap(context.fill).should('have.been.calledWith', shape.scaledPath);
-    cy.wrap(context.stroke).should('have.been.calledWith', shape.scaledPath);
+    cy.wrap(context.fill).should('have.been.calledWith', shape.drawnPath);
+    cy.wrap(context.stroke).should('have.been.calledWith', shape.drawnPath);
   });
 
   // Shape can be hovered over

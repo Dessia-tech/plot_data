@@ -27,7 +27,6 @@ export class Axis extends Shape {
   public logScale: boolean = false;
   public isDate: boolean = false;
 
-  public drawPath: Path2D;
   public path: Path2D;
   public lineWidth: number = 1;
   public strokeStyle: string = 'hsl(0, 0%, 0%)';
@@ -80,7 +79,7 @@ export class Axis extends Shape {
     if (!this.isDiscrete) this.labels = this.numericLabels();
     this.computeEnds();
     this.adjustBoundingBox();
-    this.drawPath = this.buildDrawPath();
+    this.drawnPath = this.buildDrawPath();
     this.buildPath();
     this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
     this.updateOffsetTicks();
@@ -199,7 +198,7 @@ export class Axis extends Shape {
     this.origin = newOrigin.copy();
     this.end = newEnd.copy();
     this.rubberBand.isVertical = this.isVertical;
-    this.drawPath = this.buildDrawPath();
+    this.drawnPath = this.buildDrawPath();
     this.buildPath();
     this.emitter.emit("axisStateChange", this);
   }
@@ -383,7 +382,7 @@ export class Axis extends Shape {
 
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
     context.save();
-    this.drawPath = this.buildDrawPath();
+    this.drawnPath = this.buildDrawPath();
     this.buildPath();
     this.computeTextBoxes(context);
 
@@ -395,8 +394,8 @@ export class Axis extends Shape {
     context.setLineDash([]);
     context.fillStyle = color;
     context.lineWidth = this.lineWidth;
-    context.stroke(this.drawPath);
-    context.fill(this.drawPath);
+    context.stroke(this.drawnPath);
+    context.fill(this.drawnPath);
 
     context.resetTransform();
     const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
@@ -815,7 +814,7 @@ export class ParallelAxis extends Axis {
     this.computeEnds();
     this.adjustBoundingBox();
     this.updateEnds();
-    this.drawPath = this.buildDrawPath();
+    this.drawnPath = this.buildDrawPath();
     this.buildPath();
     this.computeTitle(index, nAxis);
   }

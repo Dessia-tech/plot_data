@@ -73,7 +73,7 @@ export class Vertex {
 
 export class InteractiveObject {
   public path: Path2D = new Path2D();
-  public scaledPath: Path2D = new Path2D();
+  public drawnPath: Path2D = new Path2D();
   public inStrokeScale: Vertex = new Vertex(1, 1);
   
   public mouseClick: Vertex = null;
@@ -94,32 +94,40 @@ export class InteractiveObject {
 
   public setDrawingProperties(context: CanvasRenderingContext2D) { }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
-    context.save();
-    const scaledPath = new Path2D();
+  protected buildScaledPath(context: CanvasRenderingContext2D, contextMatrix: DOMMatrix): void {
+    this.drawnPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+    context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
+    this.inStrokeScale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
+  }
+
+  protected buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {
+    context.resetTransform();
+    return this.path
+  }
+
+  protected buildDrawPath(context: CanvasRenderingContext2D): void {
+    this.drawnPath = new Path2D();
     const contextMatrix = context.getTransform();
     this.updateTooltipOrigin(contextMatrix);
-    if (this.isScaled) {
-      scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
-      context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
-      this.inStrokeScale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
-    } else scaledPath.addPath(this.buildUnscaledPath(context));
+    if (this.isScaled) this.buildScaledPath(context, contextMatrix)
+    else this.drawnPath.addPath(this.buildUnscaledPath(context));
+  }
+
+  protected drawPath(context: CanvasRenderingContext2D): void {
+    if (this.isFilled) context.fill(this.drawnPath);
+    context.stroke(this.drawnPath);
+  }
+
+  public drawWhenIsVisible(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
+    context.save();
+    this.buildDrawPath(context);
     this.setDrawingProperties(context);
-    if (this.isFilled) context.fill(scaledPath);
-    context.stroke(scaledPath);
-    this.scaledPath = scaledPath;
+    this.drawPath(context);
     context.restore();
   }
 
   public draw(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
     if (this.visible) this.drawWhenIsVisible(context);
-  }
-
-  protected buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {
-    context.resetTransform();
-    const path = new Path2D();
-    path.addPath(this.path);
-    return path
   }
 
   public buildPath(): void { }
@@ -136,7 +144,7 @@ export class InteractiveObject {
     context.lineWidth = 10;
     if (this.isScaled) {
       context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
-      isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
+      isHovered = context.isPointInStroke(this.drawnPath, point.x, point.y);
     } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
     context.restore();
     return isHovered

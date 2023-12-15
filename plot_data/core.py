@@ -1382,7 +1382,6 @@ class MultiplePlots(Figure):
         self.elements = sampled_elements
         self.plots = plots
         self.sizes = sizes
-        self.coords = coords
         self.point_families = point_families
         self.initial_view_on = True
         super().__init__(width=width, height=height, type_='multiplot', name=name)

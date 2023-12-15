@@ -703,16 +703,14 @@ export class Point extends Shape {
   }
 
   protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    const contextMatrix = context.getTransform();
     this.setContextPointInStroke(context);
     const isHovered = context.isPointInStroke(this.path, point.x, point.y);
-    context.restore();
+    context.setTransform(contextMatrix);
     return isHovered
   }
 
-  protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
-    context.save();
-    context.resetTransform();
-  }
+  protected setContextPointInStroke(context: CanvasRenderingContext2D): void { context.resetTransform() }
 }
 
 export class LineSequence extends Shape {

@@ -94,6 +94,8 @@ export class InteractiveObject {
 
   public setDrawingProperties(context: CanvasRenderingContext2D) { }
 
+  public buildPath(): void { }
+  
   protected buildScaledPath(context: CanvasRenderingContext2D, contextMatrix: DOMMatrix): void {
     this.drawnPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
@@ -105,9 +107,8 @@ export class InteractiveObject {
     return this.path
   }
 
-  protected buildDrawPath(context: CanvasRenderingContext2D): void {
+  protected buildDrawPath(context: CanvasRenderingContext2D, contextMatrix: DOMMatrix): void {
     this.drawnPath = new Path2D();
-    const contextMatrix = context.getTransform();
     this.updateTooltipOrigin(contextMatrix);
     if (this.isScaled) this.buildScaledPath(context, contextMatrix)
     else this.drawnPath.addPath(this.buildUnscaledPath(context));
@@ -119,18 +120,16 @@ export class InteractiveObject {
   }
 
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
-    context.save();
-    this.buildDrawPath(context);
+    const contextMatrix = context.getTransform();
+    this.buildDrawPath(context, contextMatrix);
     this.setDrawingProperties(context);
     this.drawPath(context);
-    context.restore();
+    context.setTransform(contextMatrix);
   }
 
   public draw(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
     if (this.visible) this.drawWhenIsVisible(context);
   }
-
-  public buildPath(): void { }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
@@ -139,14 +138,14 @@ export class InteractiveObject {
 
   protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
     let isHovered: boolean;
-    context.save();
+    const contextMatrix = context.getTransform();
     context.resetTransform();
     context.lineWidth = 10;
     if (this.isScaled) {
       context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
       isHovered = context.isPointInStroke(this.drawnPath, point.x, point.y);
     } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
-    context.restore();
+    context.setTransform(contextMatrix);
     return isHovered
   }
 

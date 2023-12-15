@@ -635,8 +635,7 @@ export class ScatterPoint extends Point {
   }
 
   protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
-    context.save();
-    context.resetTransform();
+    super.setContextPointInStroke(context);
     context.lineWidth = 10;
   }
 

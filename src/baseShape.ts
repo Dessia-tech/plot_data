@@ -179,36 +179,62 @@ export class Shape {
     return `hsl(${h}, ${s}%, ${lValue}%)`;
   }
 
-  public setDrawingProperties(context: CanvasRenderingContext2D) {
-    context.lineWidth = this.lineWidth;
-    context.setLineDash(this.dashLine);
-    if (this.alpha == 0) this.isFilled = false
-    else if (this.alpha != 1) context.globalAlpha = this.alpha;
-    if (this.isFilled) {
-      context.fillStyle = this.isHovered
+  private setContextFillStyle(context: CanvasRenderingContext2D): void {
+    context.fillStyle = this.isHovered
         ? this.hoverStyle
         : this.isClicked
           ? this.clickedStyle
           : this.isSelected
             ? this.selectedStyle
             : this.fillStyle;
-      context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected)
-        ? this.setStrokeStyle(context.fillStyle)
+  }
+
+  private setContextFilledStrokeStyle(context: CanvasRenderingContext2D): void {
+    const fillStyle = context.fillStyle.toString();
+    context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected)
+    ? this.setStrokeStyle(fillStyle)
+    : this.strokeStyle
+      ? colorHsl(this.strokeStyle)
+      : this.setStrokeStyle(fillStyle);
+  }
+
+  private setEmptyStrokeStyle(context: CanvasRenderingContext2D): void {
+    context.strokeStyle = this.isHovered
+    ? this.hoverStyle
+    : this.isClicked
+      ? this.clickedStyle
+      : this.isSelected
+        ? this.selectedStyle
         : this.strokeStyle
           ? colorHsl(this.strokeStyle)
-          : this.setStrokeStyle(context.fillStyle);
-      if (this.hatching) context.fillStyle = context.createPattern(this.hatching.buildTexture(context.fillStyle), 'repeat');
-    } else {
-      context.strokeStyle = this.isHovered
-        ? this.hoverStyle
-        : this.isClicked
-          ? this.clickedStyle
-          : this.isSelected
-            ? this.selectedStyle
-            : this.strokeStyle
-              ? colorHsl(this.strokeStyle)
-              : 'hsl(0, 0%, 0%)';
-    }
+          : 'hsl(0, 0%, 0%)';
+  }
+
+  private setContextHatch(context: CanvasRenderingContext2D): void {
+    if (this.hatching) context.fillStyle = context.createPattern(this.hatching.buildTexture(context.fillStyle.toString()), 'repeat');
+  }
+
+  private setFilledStyle(context: CanvasRenderingContext2D): void {
+    this.setContextFillStyle(context);
+    this.setContextFilledStrokeStyle(context);
+    this.setContextHatch(context);
+  }
+
+  private setStyle(context: CanvasRenderingContext2D): void {
+    if (this.isFilled) this.setFilledStyle(context)
+    else this.setEmptyStrokeStyle(context);
+  }
+
+  private alphaConfiguration(context: CanvasRenderingContext2D): void {
+    if (this.alpha == 0) this.isFilled = false
+    else if (this.alpha != 1) context.globalAlpha = this.alpha;
+  }
+
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
+    context.lineWidth = this.lineWidth;
+    context.setLineDash(this.dashLine);
+    this.alphaConfiguration(context);
+    this.setStyle(context);
   }
 
   public initTooltipOrigin(): void { }

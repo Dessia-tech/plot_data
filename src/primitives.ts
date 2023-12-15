@@ -530,7 +530,7 @@ export class Contour extends Shape {
     super.setDrawingProperties(context);
     this.lines.forEach(line => {
         this.setLineStyle(line);
-        line.draw(context)
+        line.draw(context);
     });
     context.restore();
   }

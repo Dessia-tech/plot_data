@@ -779,8 +779,7 @@ export class Bar extends Rect {
   }
 }
 
-// TODO: make rubberband a Shape ?
-export class RubberBand {
+export class RubberBand extends Rect {
   public canvasMin: number = 0;
   public canvasMax: number = 0;
 
@@ -798,7 +797,7 @@ export class RubberBand {
     public attributeName: string,
     private _minValue: number,
     private _maxValue: number,
-    public isVertical: boolean) { }
+    public isVertical: boolean) { super() }
 
   public get canvasLength() { return Math.abs(this.canvasMax - this.canvasMin) }
 
@@ -821,22 +820,32 @@ export class RubberBand {
     rubberBands.get(this.attributeName).maxValue = this.maxValue;
   }
 
-  public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
-    let rectOrigin: Vertex;
-    let rectSize: Vertex;
-    if (this.isVertical) {
-      rectOrigin = new Vertex(origin - RUBBERBAND_SMALL_SIZE / 2, this.canvasMin);
-      rectSize = new Vertex(RUBBERBAND_SMALL_SIZE, this.canvasLength);
-    } else {
-      rectOrigin = new Vertex(this.canvasMin, origin - RUBBERBAND_SMALL_SIZE / 2);
-      rectSize = new Vertex(this.canvasLength, RUBBERBAND_SMALL_SIZE)
-    }
-    const draw = new Rect(rectOrigin, rectSize);
-    draw.lineWidth = lineWidth;
-    draw.fillStyle = colorFill;
-    draw.strokeStyle = colorStroke;
-    draw.alpha = alpha;
-    draw.draw(context);
+  public updateCoords(canvasCoords: Vertex, axisOrigin: Vertex, axisEnd: Vertex): void {
+    const coord = this.isVertical ? "y" : "x";
+    this.canvasMin = Math.max(canvasCoords.min, axisOrigin[coord]);
+    this.canvasMax = Math.min(canvasCoords.max, axisEnd[coord]);
+    this.canvasMin = Math.min(this.canvasMin, this.canvasMax);
+    this.canvasMax = Math.max(this.canvasMin, this.canvasMax);
+    [this.origin, this.size] = this.computeRectProperties(axisOrigin);
+    this.buildPath();
+  }
+
+  private getVerticalRectProperties(axisOrigin: Vertex): [Vertex, Vertex] {
+    return [
+      new Vertex(axisOrigin.x - RUBBERBAND_SMALL_SIZE / 2, this.canvasMin),
+      new Vertex(RUBBERBAND_SMALL_SIZE, this.canvasLength)
+    ]
+  }
+
+  private getHorizontalRectProperties(axisOrigin: Vertex): [Vertex, Vertex] {
+    return [
+      new Vertex(this.canvasMin, axisOrigin.y - RUBBERBAND_SMALL_SIZE / 2),
+      new Vertex(this.canvasLength, RUBBERBAND_SMALL_SIZE)
+    ]
+  }
+
+  public computeRectProperties(axisOrigin: Vertex): [Vertex, Vertex] {
+    return this.isVertical ? this.getVerticalRectProperties(axisOrigin) : this.getHorizontalRectProperties(axisOrigin)
   }
 
   public reset() {
@@ -855,14 +864,24 @@ export class RubberBand {
 
   private get borderSize() { return Math.min(PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
 
-  public mouseDown(mouseAxis: number) {
+  // public mouseDown2(mouseAxis: number) {
+  //   this.isClicked = true;
+  //   if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.isInverted ? this.maxUpdate = true : this.minUpdate = true
+  //   else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.isInverted ? this.minUpdate = true : this.maxUpdate = true
+  //   else this.lastValues = new Vertex(this.minValue, this.maxValue);
+  // }
+
+  public mouseDown(mouseDown: Vertex) {
+    super.mouseDown(mouseDown);
+    const mouseAxis = this.isVertical ? mouseDown.y : mouseDown.x
     this.isClicked = true;
     if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.isInverted ? this.maxUpdate = true : this.minUpdate = true
     else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.isInverted ? this.minUpdate = true : this.maxUpdate = true
     else this.lastValues = new Vertex(this.minValue, this.maxValue);
+
   }
 
-  public mouseMove(downValue: number, currentValue: number) {
+  public mouseMove2(downValue: number, currentValue: number) {
     if (this.isClicked) {
       if (this.minUpdate) this.minValue = currentValue
       else if (this.maxUpdate) this.maxValue = currentValue
@@ -874,6 +893,22 @@ export class RubberBand {
       this.flipMinMax();
     }
   }
+
+  // public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex) {
+  //   super.mouseMove(context, mouseCoords);
+  //   const currentValue = this.isVertical ? mouseCoords.y : mouseCoords.x;
+  //   if (this.isClicked) {
+  //     const downValue = this.isVertical ? this.mouseClick.y : this.mouseClick.x;
+  //     if (this.minUpdate) this.minValue = currentValue
+  //     else if (this.maxUpdate) this.maxValue = currentValue
+  //     else {
+  //       const translation = currentValue - downValue;
+  //       this.minValue = this.lastValues.x + translation;
+  //       this.maxValue = this.lastValues.y + translation;
+  //     }
+  //     this.flipMinMax();
+  //   }
+  // }
 
   public mouseUp() {
     this.minUpdate = false;

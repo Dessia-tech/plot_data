@@ -582,20 +582,37 @@ export class Axis extends Shape {
       maxValue + valueRange * this.marginRatio];
   }
 
+  private updateRubberBand(): void {
+    const canvasCoords = new Vertex(
+      this.relativeToAbsolute(this.rubberBand.minValue),
+      this.relativeToAbsolute(this.rubberBand.maxValue)
+    );
+    this.rubberBand.updateCoords(canvasCoords, this.origin, this.end);
+    this.rubberBand.lineWidth = 0.1;
+    this.rubberBand.fillStyle = this.rubberColor;
+    this.rubberBand.strokeStyle = this.rubberColor;
+    this.rubberBand.alpha = this.rubberAlpha;
+  }
+
   public drawRubberBand(context: CanvasRenderingContext2D, canvasMatrix: DOMMatrix): void {
+    this.updateRubberBand();
     context.setTransform(canvasMatrix);
-    const canvasMin = this.relativeToAbsolute(this.rubberBand.minValue);
-    const canvasMax = this.relativeToAbsolute(this.rubberBand.maxValue);
-    const coord = this.isVertical ? "y" : "x";
-    this.rubberBand.canvasMin = Math.max(Math.min(canvasMin, canvasMax), this.origin[coord]);
-    this.rubberBand.canvasMax = Math.min(Math.max(canvasMin, canvasMax), this.end[coord]);
-    this.rubberBand.canvasMin = Math.min(this.rubberBand.canvasMin, this.rubberBand.canvasMax);
-    this.rubberBand.canvasMax = Math.max(this.rubberBand.canvasMin, this.rubberBand.canvasMax);
-    this.rubberBand.draw(this.isVertical ? this.origin.x : this.origin.y, context, this.rubberColor, this.rubberColor, 0.1, this.rubberAlpha);
+    this.rubberBand.draw(context);
     if (this.rubberBand.isClicked) this.emitter.emit("rubberBandChange", this.rubberBand);
   }
 
   protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void { }
+
+  // public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
+  //   super.mouseMove(context, mouseCoords);
+  //   this.boundingBox.mouseMove(context, mouseCoords);
+  //   this.rubberBand.mouseMove(context, mouseCoords);
+  //   this.title.mouseMove(context, mouseCoords.scale(this.initScale));
+  //   if (this.isClicked) {
+  //     if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords)
+  //     else this.mouseMoveClickedArrow(context, mouseCoords);
+  //   }
+  // }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
     super.mouseMove(context, mouseCoords);
@@ -612,14 +629,28 @@ export class Axis extends Shape {
     return [downValue, downValue - this.rubberBand.lastValues.x]
   }
 
+  // public mouseMoveClickedArrow(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
+  //   const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
+  //   const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
+  //   if (!this.rubberBand.isClicked) {
+  //     this.rubberBand.minValue = Math.min(downValue, currentValue);
+  //     this.rubberBand.maxValue = Math.max(downValue, currentValue);
+  //   } else {
+  //     const [downRestricted, currentRestricted] = this.restrictRubberBandTranslation(downValue, currentValue);
+  //     if (this.isVertical) this.rubberBand.mouseMove(context, new Vertex(mouseCoords.x, currentRestricted))
+  //     else this.rubberBand.mouseMove(context, new Vertex(currentRestricted, mouseCoords.y))
+  //   }
+  // }
+
   public mouseMoveClickedArrow(mouseCoords: Vertex): void {
     const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
     const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
     if (!this.rubberBand.isClicked) {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
-    } else this.rubberBand.mouseMove(...this.restrictRubberBandTranslation(downValue, currentValue));
+    } else this.rubberBand.mouseMove2(...this.restrictRubberBandTranslation(downValue, currentValue));
   }
+
 
   public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
 
@@ -632,13 +663,30 @@ export class Axis extends Shape {
         this.is_drawing_rubberband = true; // OLD
         const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
         if (!this.isInRubberBand(this.absoluteToRelative(mouseUniCoord))) this.rubberBand.reset()
-        else this.rubberBand.mouseDown(mouseUniCoord);
+        else this.rubberBand.mouseDown(mouseDown);
         this.emitter.emit("rubberBandChange", this.rubberBand);
       }
     }
     if (this.boundingBox.isHovered) this.boundingBox.isClicked = true;
     this.saveLocation();
   }
+
+  // public mouseDown(mouseDown: Vertex): void {
+  //   super.mouseDown(mouseDown);
+  //   if (this.isHovered) {
+  //     this.isClicked = true;
+  //     if (this.title.isHovered) this.clickOnTitle(mouseDown)
+  //     else {
+  //       this.is_drawing_rubberband = true; // OLD
+  //       const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
+  //       if (!this.isInRubberBand(this.absoluteToRelative(mouseUniCoord))) this.rubberBand.reset()
+  //       else this.rubberBand.mouseDown2(mouseUniCoord);
+  //       this.emitter.emit("rubberBandChange", this.rubberBand);
+  //     }
+  //   }
+  //   if (this.boundingBox.isHovered) this.boundingBox.isClicked = true;
+  //   this.saveLocation();
+  // }
 
   public mouseUp(keepState: boolean): void {
     super.mouseUp(keepState);

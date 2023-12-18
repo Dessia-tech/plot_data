@@ -12,6 +12,10 @@ export class Vertex {
 
   get norm(): number { return (this.x ** 2 + this.y ** 2) ** 0.5 }
 
+  get min(): number { return Math.min(this.x, this.y)}
+
+  get max(): number { return Math.max(this.x, this.y)}
+
   public copy(): Vertex { return new Vertex(this.x, this.y) }
 
   public add(other: Vertex): Vertex {

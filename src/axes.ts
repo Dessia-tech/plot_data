@@ -420,10 +420,8 @@ export class Axis extends Shape {
     this.drawTitle(context, canvasMatrix, this.drawingColor);
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
+  protected drawMembers(context: CanvasRenderingContext2D): void {
     context.save();
-    super.drawWhenIsVisible(context);
-
     const canvasMatrix = context.getTransform();
     this.drawTexts(context, canvasMatrix);
     this.drawRubberBand(context, canvasMatrix);

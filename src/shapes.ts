@@ -212,13 +212,8 @@ export class Text extends Shape {
     this.write(this.writtenText, context);
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    if (this.text) {
-      context.save();
-      this.writtenText = this.cleanStartAllRows(this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows());
-      super.drawWhenIsVisible(context);
-      context.restore();
-    }
+  protected computeContextualAttributes(context: CanvasRenderingContext2D): void {
+    this.writtenText = this.cleanStartAllRows(this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows());
   }
 
   private setBoundingBoxState(): void {
@@ -467,10 +462,7 @@ export class Label extends Shape {
     context.setTransform(contextMatrix);
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    super.drawWhenIsVisible(context);
-    this.drawText(context);
-  }
+  protected drawMembers(context: CanvasRenderingContext2D): void { this.drawText(context) }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
     return this.legend.isFilled
@@ -750,11 +742,12 @@ export class Bar extends Rect {
     this.size = size;
   }
 
+  protected computeContextualAttributes(context: CanvasRenderingContext2D): void {
+    this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
+  }
+
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    if (this.length != 0) {
-      super.drawWhenIsVisible(context);
-      this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
-    }
+    if (this.length != 0) super.drawWhenIsVisible(context);
   }
 
   public computeStats(values: number[]): void {

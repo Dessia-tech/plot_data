@@ -120,12 +120,18 @@ export class InteractiveObject {
     context.stroke(this.drawnPath);
   }
 
+  protected drawMembers(context: CanvasRenderingContext2D): void { }
+
+  protected computeContextualAttributes(context: CanvasRenderingContext2D): void { }
+
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
     context.save();
+    this.computeContextualAttributes(context);
     this.buildDrawPath(context);
     this.setDrawingProperties(context);
     this.drawPath(context);
     context.restore();
+    this.drawMembers(context);
   }
 
   public draw(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children

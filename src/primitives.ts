@@ -513,6 +513,7 @@ export class Contour extends Shape {
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     super.setDrawingProperties(context);
     context.strokeStyle = "hsla(0, 0%, 100%, 0)";
+    this.lines.forEach(line => this.setLineStyle(line));
   }
 
   private setLineStyle(line: Shape): void {
@@ -524,13 +525,11 @@ export class Contour extends Shape {
     line.isSelected = this.isSelected;
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    super.drawWhenIsVisible(context);
-    this.lines.forEach(line => {
-        this.setLineStyle(line);
-        line.draw(context);
-    });
+  private drawLines(context: CanvasRenderingContext2D): void {
+    this.lines.forEach(line => line.draw(context));
   }
+
+  protected drawMembers(context: CanvasRenderingContext2D): void { this.drawLines(context) }
 
   public buildPath(): void {
     this.path = new Path2D();

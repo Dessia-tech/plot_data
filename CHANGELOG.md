@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.17.3]
 ### Fixes
 - Remove space preventDefault
+- Multiplot : Remove coords from serialization to fix inital_view_on = False issue
 
 ## [0.17.0]
 ### Fixes

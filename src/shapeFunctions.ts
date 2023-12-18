@@ -11,11 +11,11 @@ export function deserialize(data: { [key: string]: any }, scale: Vertex): Shape 
   else if (data.type_ == "wire") shape = LineSequence.deserialize(data, scale);
   else if (data.type_ == "point") shape = Point.deserialize(data, scale);
   else if (data.type_ == "arc") shape = Arc.deserialize(data, scale);
-  else if (data.type_ == "text") return Text.deserialize(data, scale);
+  else if (data.type_ == "text") return Text.deserialize(data, scale); //TODO: remove return
   else if (data.type_ == "label") {
     const labelShape = data.shape ? deserialize(data.shape, scale) : new Rect();
     const fakeLegend = Label.deserialize(data, scale);
-    shape = new Label(labelShape, fakeLegend.text);
+    shape = new Label(labelShape, fakeLegend.text); //TODO: method in label
   }
   else if (data.type_ == "rectangle") shape = Rect.deserialize(data, scale);
   else if (data.type_ == "roundrectangle") shape = RoundRect.deserialize(data, scale);
@@ -24,17 +24,20 @@ export function deserialize(data: { [key: string]: any }, scale: Vertex): Shape 
   return shape
 }
 
-export function initializeTooltip(shape: Shape, context: CanvasRenderingContext2D): Tooltip {
+export function initializeTooltip(shape: Shape, plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): Tooltip {
+  const contextMatrix = context.getTransform();
+  const scale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d)
   shape.initTooltipOrigin();
   const tooltip = new Tooltip(shape.tooltipOrigin, shape.tooltipMap, context);
   tooltip.setFlip(shape);
+  tooltip.insideCanvas(plotOrigin, plotSize, scale);
   return tooltip
 }
 
 export function drawTooltip(shape: Shape, plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
   if (shape.isClicked && shape.tooltipMap.size != 0) {
-    const tooltip = initializeTooltip(shape, context);
-    tooltip.draw(plotOrigin, plotSize, context);
+    const tooltip = initializeTooltip(shape, plotOrigin, plotSize, context);
+    tooltip.draw(context);
   }
 }
 

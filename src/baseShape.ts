@@ -92,8 +92,6 @@ export class InteractiveObject {
 
   protected updateTooltipOrigin(matrix: DOMMatrix): void { }
 
-  public setDrawingProperties(context: CanvasRenderingContext2D) { }
-
   public buildPath(): void { }
   
   protected buildScaledPath(context: CanvasRenderingContext2D, contextMatrix: DOMMatrix): void {
@@ -123,6 +121,8 @@ export class InteractiveObject {
   protected drawMembers(context: CanvasRenderingContext2D): void { }
 
   protected computeContextualAttributes(context: CanvasRenderingContext2D): void { }
+
+  public setDrawingProperties(context: CanvasRenderingContext2D) { }
 
   public draw(context: CanvasRenderingContext2D): void {
     if (this.visible) {

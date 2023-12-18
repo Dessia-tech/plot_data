@@ -471,7 +471,7 @@ export class Label extends Shape {
   }
 }
 
-export class Tooltip {// TODO: make it a Shape
+export class Tooltip extends Shape {
   public path: Path2D;
 
   public lineWidth: number = 1;
@@ -484,14 +484,18 @@ export class Tooltip {// TODO: make it a Shape
 
   private printedRows: string[];
   private squareOrigin: Vertex;
+  private textOrigin: Vertex;
   private size: Vertex;
+
   private isUp = true;
   public isFlipper = true;
+
   constructor(
     public origin,
     public dataToPrint: Map<string, any>,
     context: CanvasRenderingContext2D
   ) {
+    super();
     [this.printedRows, this.size] = this.buildText(context);
     this.squareOrigin = new Vertex(this.origin.x, this.origin.y);
   }
@@ -546,8 +550,8 @@ export class Tooltip {// TODO: make it a Shape
       textOrigin.y += index == 0 ? 0 : this.fontsize;
       const text = new Text(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: regexSamples.test(row) ? 'bold' : '' });
       text.fillStyle = this.textColor;
-      text.draw(context)
-    })
+      text.draw(context);
+    });
   }
 
   public insideCanvas(plotOrigin: Vertex, plotSize: Vertex, scaling: Vertex): void {
@@ -592,27 +596,32 @@ export class Tooltip {// TODO: make it a Shape
 
   public flip(): void { this.isUp = !this.isUp }
 
-  public draw(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
+  protected computeContextualAttributes(context: CanvasRenderingContext2D): void {
     const contextMatrix = context.getTransform();
-    const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
-    this.insideCanvas(plotOrigin, plotSize, scaling);
-    const textOrigin = this.computeTextOrigin(scaling);
-    const drawnPath = new Path2D();
-    this.squareOrigin = this.squareOrigin.scale(scaling);
-    this.origin = this.origin.scale(scaling);
-    this.buildPath();
-    drawnPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+    this.inStrokeScale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
+    this.textOrigin = this.computeTextOrigin(this.inStrokeScale);
+    this.squareOrigin = this.squareOrigin.scale(this.inStrokeScale);
+    this.origin = this.origin.scale(this.inStrokeScale);
+  }
 
-    context.save();
-    context.scale(scaling.x, scaling.y);
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
     context.fillStyle = this.fillStyle;
     context.globalAlpha = this.alpha;
-    context.fill(drawnPath);
-    context.stroke(drawnPath);
-    this.writeText(textOrigin, context);
-    context.restore()
+  }
+
+  protected buildDrawPath(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
+    this.drawnPath = new Path2D();
+    this.buildPath();
+    this.drawnPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+  }
+
+  protected drawPath(context: CanvasRenderingContext2D): void {
+    context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
+    super.drawPath(context);
+    this.writeText(this.textOrigin, context);
   }
 
   public setFlip(shape: Shape): void { this.isFlipper = shape.tooltipFlip }

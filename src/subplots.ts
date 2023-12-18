@@ -1881,14 +1881,12 @@ export class Figure extends PlotData {
           if (!ctrlKey) { this.isSelecting = true; canvas.style.cursor = 'crosshair'; this.draw() };
         }
         if (e.key == " ") {
-          e.preventDefault();
           spaceKey = true;
           if (ctrlKey && this.isInCanvas(absoluteMouse)) this.resetView();
         }
       });
 
       window.addEventListener('keyup', e => {
-        e.preventDefault();
         if (e.key == "Control") ctrlKey = false;
         if (e.key == " ") spaceKey = false;
         if (e.key == "Shift") { shiftKey = false; this.isSelecting = false; this.is_drawing_rubber_band = false; canvas.style.cursor = 'default'; this.draw() };

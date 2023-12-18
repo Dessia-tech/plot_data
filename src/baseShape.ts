@@ -124,7 +124,7 @@ export class InteractiveObject {
 
   protected computeContextualAttributes(context: CanvasRenderingContext2D): void { }
 
-  public draw(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
+  public draw(context: CanvasRenderingContext2D): void {
     if (this.visible) {
       context.save();
       this.computeContextualAttributes(context);

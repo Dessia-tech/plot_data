@@ -107,7 +107,8 @@ export class InteractiveObject {
     return this.path
   }
 
-  protected buildDrawPath(context: CanvasRenderingContext2D, contextMatrix: DOMMatrix): void {
+  protected buildDrawPath(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
     this.drawnPath = new Path2D();
     this.updateTooltipOrigin(contextMatrix);
     if (this.isScaled) this.buildScaledPath(context, contextMatrix)
@@ -120,11 +121,11 @@ export class InteractiveObject {
   }
 
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
-    const contextMatrix = context.getTransform();
-    this.buildDrawPath(context, contextMatrix);
+    context.save();
+    this.buildDrawPath(context);
     this.setDrawingProperties(context);
     this.drawPath(context);
-    context.setTransform(contextMatrix);
+    context.restore();
   }
 
   public draw(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children

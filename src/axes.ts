@@ -79,7 +79,7 @@ export class Axis extends Shape {
     if (!this.isDiscrete) this.labels = this.numericLabels();
     this.computeEnds();
     this.adjustBoundingBox();
-    this.drawnPath = this.buildDrawPath();
+    this.drawnPath = this.buildArrowPath();
     this.buildPath();
     this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
     this.updateOffsetTicks();
@@ -198,7 +198,7 @@ export class Axis extends Shape {
     this.origin = newOrigin.copy();
     this.end = newEnd.copy();
     this.rubberBand.isVertical = this.isVertical;
-    this.drawnPath = this.buildDrawPath();
+    this.drawnPath = this.buildArrowPath();
     this.buildPath();
     this.emitter.emit("axisStateChange", this);
   }
@@ -244,30 +244,6 @@ export class Axis extends Shape {
       this.boundingBox.size.y += SIZE_AXIS_END / 2;
     }
     this.boundingBox.buildPath();
-  }
-
-  protected buildDrawPath(): Path2D {
-    const verticalIdx = Number(this.isVertical);
-    const horizontalIdx = Number(!this.isVertical);
-    const path = new Path2D();
-    let endArrow: Point;
-    if (this.isInverted) {
-      endArrow = new Point(this.origin.x - SIZE_AXIS_END / 2 * horizontalIdx, this.origin.y - SIZE_AXIS_END / 2 * verticalIdx, SIZE_AXIS_END, 'triangle', ['left', 'down'][verticalIdx]);
-    } else {
-      endArrow = new Point(this.end.x + SIZE_AXIS_END / 2 * horizontalIdx, this.end.y + SIZE_AXIS_END / 2 * verticalIdx, SIZE_AXIS_END, 'triangle', ['right', 'up'][verticalIdx]);
-    }
-    path.moveTo(this.origin.x - AXIS_TAIL_SIZE * horizontalIdx, this.origin.y - AXIS_TAIL_SIZE * verticalIdx);
-    path.lineTo(this.end.x, this.end.y);
-    path.addPath(endArrow.path);
-    return path
-  }
-
-  public buildPath(): void {
-    this.path = new Path2D();
-    const offset = new Vertex(RUBBERBAND_SMALL_SIZE * Number(this.isVertical), RUBBERBAND_SMALL_SIZE * Number(!this.isVertical));
-    const origin = new Vertex(this.origin.x, this.origin.y).subtract(offset.multiply(2));
-    const size = this.end.subtract(origin).add(offset);
-    this.path.rect(origin.x, origin.y, size.x, size.y);
   }
 
   public absoluteToRelative(value: string | number): number {
@@ -380,31 +356,77 @@ export class Axis extends Shape {
     return this.logScale ? ticks.map(tick => 10 ** tick) : ticks
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    context.save();
-    this.drawnPath = this.buildDrawPath();
+  private buildEndPoint(isVerticalBin: number, isHorizontalBin: number): Point {
+    if (this.isInverted) {
+      return new Point(
+        this.origin.x - SIZE_AXIS_END / 2 * isHorizontalBin,
+        this.origin.y - SIZE_AXIS_END / 2 * isVerticalBin,
+        SIZE_AXIS_END,
+        'triangle',
+        ['left', 'down'][isVerticalBin]
+      )
+    }
+    return new Point(
+      this.end.x + SIZE_AXIS_END / 2 * isHorizontalBin,
+      this.end.y + SIZE_AXIS_END / 2 * isVerticalBin,
+      SIZE_AXIS_END,
+      'triangle',
+      ['right', 'up'][isVerticalBin]
+    )
+  }
+
+  protected buildArrowPath(): Path2D {
+    const isVerticalBin = Number(this.isVertical);
+    const isHorizontalBin = Number(!this.isVertical);
+    const path = new Path2D();
+    const endArrow = this.buildEndPoint(isVerticalBin, isHorizontalBin);
+    path.moveTo(this.origin.x - AXIS_TAIL_SIZE * isHorizontalBin, this.origin.y - AXIS_TAIL_SIZE * isVerticalBin);
+    path.lineTo(this.end.x, this.end.y);
+    path.addPath(endArrow.path);
+    return path
+  }
+
+  public buildPath(): void {
+    this.path = new Path2D();
+    const offset = new Vertex(RUBBERBAND_SMALL_SIZE * Number(this.isVertical), RUBBERBAND_SMALL_SIZE * Number(!this.isVertical));
+    const origin = new Vertex(this.origin.x, this.origin.y).subtract(offset.multiply(2));
+    const size = this.end.subtract(origin).add(offset);
+    this.path.rect(origin.x, origin.y, size.x, size.y);
+  }
+
+  protected buildDrawPath(context: CanvasRenderingContext2D): void {
+    this.drawnPath = this.buildArrowPath();
     this.buildPath();
     this.computeTextBoxes(context);
+  }
 
-    const canvasHTMatrix = context.getTransform();
-    const pointHTMatrix = canvasHTMatrix.multiply(this.transformMatrix);
-    const color = this.drawingColor;
-
-    context.strokeStyle = color;
+  public setDrawingProperties(context: CanvasRenderingContext2D): void {
+    context.strokeStyle = this.drawingColor;
     context.setLineDash([]);
-    context.fillStyle = color;
+    context.fillStyle = this.drawingColor;
     context.lineWidth = this.lineWidth;
-    context.stroke(this.drawnPath);
-    context.fill(this.drawnPath);
+  }
 
-    context.resetTransform();
-    const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
+  private drawTicks(context: CanvasRenderingContext2D, canvasMatrix: DOMMatrix): void {
+    const pointHTMatrix = canvasMatrix.multiply(this.transformMatrix);
+    const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, this.drawingColor);
     this.ticksPoints = ticksPoints;
-    this.drawTickTexts(ticksTexts, color, context);
-    this.drawTitle(context, canvasHTMatrix, color);
+    this.drawTickTexts(ticksTexts, this.drawingColor, context);
+  }
 
-    context.setTransform(canvasHTMatrix);
-    this.drawRubberBand(context);
+  private drawTexts(context: CanvasRenderingContext2D, canvasMatrix: DOMMatrix): void {
+    context.resetTransform();
+    this.drawTicks(context, canvasMatrix)
+    this.drawTitle(context, canvasMatrix, this.drawingColor);
+  }
+
+  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
+    context.save();
+    super.drawWhenIsVisible(context);
+
+    const canvasMatrix = context.getTransform();
+    this.drawTexts(context, canvasMatrix);
+    this.drawRubberBand(context, canvasMatrix);
     context.restore();
   }
 
@@ -562,7 +584,8 @@ export class Axis extends Shape {
       maxValue + valueRange * this.marginRatio];
   }
 
-  public drawRubberBand(context: CanvasRenderingContext2D): void {
+  public drawRubberBand(context: CanvasRenderingContext2D, canvasMatrix: DOMMatrix): void {
+    context.setTransform(canvasMatrix);
     const canvasMin = this.relativeToAbsolute(this.rubberBand.minValue);
     const canvasMax = this.relativeToAbsolute(this.rubberBand.maxValue);
     const coord = this.isVertical ? "y" : "x";
@@ -814,7 +837,7 @@ export class ParallelAxis extends Axis {
     this.computeEnds();
     this.adjustBoundingBox();
     this.updateEnds();
-    this.drawnPath = this.buildDrawPath();
+    this.drawnPath = this.buildArrowPath();
     this.buildPath();
     this.computeTitle(index, nAxis);
   }

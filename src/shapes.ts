@@ -171,14 +171,17 @@ export class Text extends Shape {
   public capitalizeSelf(): void { this.text = Text.capitalize(this.text) }
 
   public updateBoundingBox(context: CanvasRenderingContext2D): void {
-    const matrix = context.getTransform();
+    const contextMatrix = context.getTransform();
     this.boundingBox.origin = this.origin.copy();
-    this.boundingBox.origin.x += this.setRectOffsetX() / (this.isScaled ? Math.sign(this.scale.x) : matrix.a);
-    this.boundingBox.origin.y += this.setRectOffsetY() / (this.isScaled ? Math.sign(this.scale.y) : matrix.d);
+    this.boundingBox.origin.x += this.setRectOffsetX() / (this.isScaled ? Math.sign(this.scale.x) : contextMatrix.a);
+    this.boundingBox.origin.y += this.setRectOffsetY() / (this.isScaled ? Math.sign(this.scale.y) : contextMatrix.d);
     this.boundingBox.size.x = this.width;
     this.boundingBox.size.y = this.height;
     if (!this.isScaled) {
-      const boundingBox = new Rect(this.boundingBox.origin.copy(), this.boundingBox.size.scale(new Vertex(Math.abs(1 / matrix.a), Math.abs(1 / matrix.d))));
+      const boundingBox = new Rect(
+        this.boundingBox.origin.copy(),
+        this.boundingBox.size.scale(new Vertex(Math.abs(1 / contextMatrix.a), Math.abs(1 / contextMatrix.d)))
+      );
       boundingBox.buildPath();
       this.boundingBox.path = boundingBox.path;
     } else this.boundingBox.buildPath();
@@ -192,7 +195,7 @@ export class Text extends Shape {
     context.globalAlpha = this.alpha;
   }
 
-  protected buildDrawPath(context: CanvasRenderingContext2D, contextMatrix: DOMMatrix): void {
+  protected buildDrawPath(context: CanvasRenderingContext2D): void {
     this.setBoundingBoxState();
     this.updateBoundingBox(context);
     this.buildPath();
@@ -470,7 +473,9 @@ export class Label extends Shape {
   }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    return this.legend.isFilled ? context.isPointInPath(this.path, point.x, point.y) : (context.isPointInPath(this.path, point.x, point.y) || context.isPointInStroke(this.path, point.x, point.y))
+    return this.legend.isFilled
+      ? context.isPointInPath(this.path, point.x, point.y)
+      : (context.isPointInPath(this.path, point.x, point.y) || context.isPointInStroke(this.path, point.x, point.y));
   }
 }
 

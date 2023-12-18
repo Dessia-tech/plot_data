@@ -124,18 +124,16 @@ export class InteractiveObject {
 
   protected computeContextualAttributes(context: CanvasRenderingContext2D): void { }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
-    context.save();
-    this.computeContextualAttributes(context);
-    this.buildDrawPath(context);
-    this.setDrawingProperties(context);
-    this.drawPath(context);
-    context.restore();
-    this.drawMembers(context);
-  }
-
   public draw(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
-    if (this.visible) this.drawWhenIsVisible(context);
+    if (this.visible) {
+      context.save();
+      this.computeContextualAttributes(context);
+      this.buildDrawPath(context);
+      this.setDrawingProperties(context);
+      this.drawPath(context);
+      context.restore();
+      this.drawMembers(context);
+    }
   }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {

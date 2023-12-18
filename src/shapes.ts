@@ -746,8 +746,8 @@ export class Bar extends Rect {
     this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    if (this.length != 0) super.drawWhenIsVisible(context);
+  public draw(context: CanvasRenderingContext2D): void {
+    if (this.length != 0) super.draw(context);
   }
 
   public computeStats(values: number[]): void {

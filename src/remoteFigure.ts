@@ -635,7 +635,6 @@ export class RemoteFigure {
     this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 
     window.addEventListener('keydown', e => {
-      if (e.key == " ") e.preventDefault();
       [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
     });
 

@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests for most of important features
 - Toggle Axes
 - Customable axes names of Draw
+## [0.19.1]
+
+### Build
+
+- Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
+
 
 ## [0.19.0]
 ### Fixes
@@ -38,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Handle empty elements in Scatter
 - Offset & Margin in ParallelPlot
 - Performance for curves drawing in ParallelPlot
-- Events on window outside canvas are disabled
+- Events on window outside canvas are disabled for sure
 
 ### Add
 - Parallel plot feature with:

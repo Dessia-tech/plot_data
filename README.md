@@ -1,12 +1,12 @@
-# Plot Data: Plot and draw your Python data on your web browser 
+# Plot Data: Plot and draw your Python data on your web browser
 [![npm (scoped)](https://img.shields.io/npm/v/plot-data.svg)](https://www.npmjs.com/package/plot-data)
 [![npm bundle size (minified)](https://img.shields.io/bundlephobia/min/plot-data.svg)](https://www.npmjs.com/package/plot-data)
 ![npm](https://img.shields.io/npm/dt/plot-data)
 ![GitHub last commit](https://img.shields.io/github/last-commit/Dessia-tech/plot_data)
 
 ## Introduction
-Plot Data is a Python library that allows to plot and draw interactive figures on your web browser. 
-With Plot Data you will be able to draw: 
+Plot Data is a Python library that allows to plot and draw interactive figures on your web browser.
+With Plot Data you will be able to draw:
 - Scatters:
   ![image](https://github.com/Dessia-tech/plot_data/assets/106539650/1fb8af76-f6eb-46e6-9fe6-d0535a9d7034)
 

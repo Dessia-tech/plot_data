@@ -638,7 +638,7 @@ export class Axis extends Shape {
   }
 
   public numericLabels(): string[] {
-    return this.isDate 
+    return this.isDate
       ? formatDateTicks(this.ticks)
       : this.ticks.map(tick => tick.toPrecision(this.tickPrecision));
   }

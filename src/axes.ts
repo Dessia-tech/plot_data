@@ -273,16 +273,18 @@ export class Axis extends Shape {
 
   public absoluteToRelative(value: string | number): number {
     let numberedValue = this.stringToValue(value);
-    const projectedValue = this.isVertical ?
-      (numberedValue - this.transformMatrix.f) / this.transformMatrix.a :
-      (numberedValue - this.transformMatrix.e) / this.transformMatrix.a;
-    return projectedValue
+    const projectedValue = this.isVertical
+      ? (numberedValue - this.transformMatrix.f) / this.transformMatrix.a
+      : (numberedValue - this.transformMatrix.e) / this.transformMatrix.a;
+    return this.logScale ? 10 ** projectedValue : projectedValue;
   }
 
   public relativeToAbsolute(value: string | number): number {
     let numberedValue = this.stringToValue(value);
     if (this.logScale) numberedValue = Math.log10(numberedValue);
-    return this.isVertical ? numberedValue * this.transformMatrix.d + this.transformMatrix.f : numberedValue * this.transformMatrix.a + this.transformMatrix.e
+    return this.isVertical
+      ? numberedValue * this.transformMatrix.d + this.transformMatrix.f
+      : numberedValue * this.transformMatrix.a + this.transformMatrix.e;
   }
 
   public normedValue(value: number): number { return value / this.interval }
@@ -585,13 +587,18 @@ export class Axis extends Shape {
     }
   }
 
+  private restrictRubberBandTranslation(downValue: number, currentValue: number): [number, number] {
+    if (!this.logScale || this.rubberBand.lastValues.x + currentValue - downValue > 0 || !this.rubberBand.isTranslating) return [downValue, currentValue]
+    return [downValue, downValue - this.rubberBand.lastValues.x]
+  }
+
   public mouseMoveClickedArrow(mouseCoords: Vertex): void {
     const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
     const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
     if (!this.rubberBand.isClicked) {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
-    } else this.rubberBand.mouseMove(downValue, currentValue);
+    } else this.rubberBand.mouseMove(...this.restrictRubberBandTranslation(downValue, currentValue));
   }
 
   public mouseMoveClickedTitle(mouseCoords: Vertex): void { }

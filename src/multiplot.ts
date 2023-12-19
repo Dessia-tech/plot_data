@@ -151,6 +151,13 @@ export class Multiplot {
     this.draw();
   }
 
+  public toggleAxes(index: number): void {
+    this.figures[index].toggleAxes();
+    this.draw();
+  }
+
+  public htmlToggleAxes(): void { this.toggleAxes(this.clickedFigureIndex ?? this.hoveredFigureIndex) }
+
   public resetLayout(): void {
     this.computeTable();
     if (this.figureZones.shapes.length != 0) {
@@ -343,7 +350,6 @@ export class Multiplot {
       }
     }
     if (e.key == " ") {
-      e.preventDefault();
       spaceKey = true;
     }
     this.figures[this.hoveredFigureIndex].keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey);
@@ -351,7 +357,6 @@ export class Multiplot {
   }
 
   private keyUpDrawer(e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
-    e.preventDefault();
     if (e.key == "Shift") {
       shiftKey = false;
       this.isSelecting = false;

@@ -92,6 +92,7 @@ export class Shape {
   public isSelected: boolean = false;
   public isScaled: boolean = true;
   public isFilled: boolean = true;
+  public visible: boolean = true;
   public inFrame: boolean = true;
 
   public tooltipOrigin: Vertex;
@@ -144,7 +145,7 @@ export class Shape {
     if (this.mouseClick) this.tooltipOrigin = this.mouseClick.transform(matrix);
   }
 
-  public draw(context: CanvasRenderingContext2D): void {
+  public drawWhenIsVisible(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
     context.save();
     const scaledPath = new Path2D();
     const contextMatrix = context.getTransform();
@@ -159,6 +160,10 @@ export class Shape {
     context.stroke(scaledPath);
     this.scaledPath = scaledPath;
     context.restore();
+  }
+
+  public draw(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
+    if (this.visible) this.drawWhenIsVisible(context);
   }
 
   protected buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {

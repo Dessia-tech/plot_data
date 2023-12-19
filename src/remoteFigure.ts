@@ -346,7 +346,7 @@ export class RemoteFigure {
 
   public drawInZone(context: CanvasRenderingContext2D): void {
     const previousCanvas = context.getImageData(0, 0, context.canvas.width, context.canvas.height);
-    this.updateDrawnObjects(context);
+    this.updateVisibleObjects(context);
     this.updateCuttingZone(context);
     const cutDraw = context.getImageData(this.origin.x, this.origin.y, this.size.x, this.size.y);
     context.globalCompositeOperation = "source-over";
@@ -354,7 +354,7 @@ export class RemoteFigure {
     context.putImageData(cutDraw, this.origin.x, this.origin.y);
   }
 
-  protected updateDrawnObjects(context: CanvasRenderingContext2D): void {}
+  protected updateVisibleObjects(context: CanvasRenderingContext2D): void {}
 
   protected updateCuttingZone(context: CanvasRenderingContext2D): void {
     context.globalCompositeOperation = "destination-in";
@@ -423,6 +423,13 @@ export class RemoteFigure {
   public switchOrientation(): void {}
 
   public togglePoints(): void {}
+
+  public toggleAxes(): void {
+    this.axes.forEach(axis => axis.toggleView());
+    this.draw();
+  }
+
+  public htmlToggleAxes(): void { this.toggleAxes() }
 
   public simpleCluster(inputValue: number): void {}
 
@@ -619,7 +626,6 @@ export class RemoteFigure {
     this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 
     window.addEventListener('keydown', e => {
-      if (e.key == " ") e.preventDefault();
       [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(canvas, e.key, ctrlKey, shiftKey, spaceKey);
     });
 

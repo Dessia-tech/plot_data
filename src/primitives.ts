@@ -524,8 +524,8 @@ export class Contour extends Shape {
     line.isSelected = this.isSelected;
   }
 
-  public draw(context: CanvasRenderingContext2D): void {
-    super.draw(context);
+  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
+    super.drawWhenIsVisible(context);
     context.save();
     super.setDrawingProperties(context);
     this.lines.forEach(line => {

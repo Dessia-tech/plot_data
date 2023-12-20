@@ -156,7 +156,6 @@ describe('Axis', function() {
         "05/01/1989 - 11:40:00",
         "07/03/1992 - 21:26:40"
       ];
-    console.log(dateVector, dateAxis.labels, timeZoneOffSet)
     const controlTicks = [100000000000, 200000000000, 300000000000, 400000000000, 500000000000, 600000000000, 700000000000];
     expect(dateAxis.labels, "labels").to.deep.equal(controlLabels);
     expect(dateAxis.ticks, "labels").to.deep.equal(controlTicks);

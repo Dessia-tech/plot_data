@@ -36,6 +36,8 @@ export const SQUARES = ['square'];
 export const TRIANGLES = ['^', 'triangle', 'tri'];
 export const HALF_LINES = ['halfLine', 'halfline'];
 
+export const LABEL_TEXT_OFFSET = 5;
+
 export const PG_CONTAINER_PLOT = {
     "name": "",
     "primitives": [

@@ -256,7 +256,7 @@ export class Shape extends InteractiveObject {
       : this.setStrokeStyle(fillStyle);
   }
 
-  private setEmptyStrokeStyle(context: CanvasRenderingContext2D): void {
+  private setContextEmptyStyle(context: CanvasRenderingContext2D): void {
     context.strokeStyle = this.isHovered
     ? this.hoverStyle
     : this.isClicked
@@ -272,15 +272,15 @@ export class Shape extends InteractiveObject {
     if (this.hatching) context.fillStyle = context.createPattern(this.hatching.buildTexture(context.fillStyle.toString()), 'repeat');
   }
 
-  private setFilledStyle(context: CanvasRenderingContext2D): void {
+  private setContextFilledStyle(context: CanvasRenderingContext2D): void {
     this.setContextFillStyle(context);
     this.setContextFilledStrokeStyle(context);
     this.setContextHatch(context);
   }
 
-  private setStyle(context: CanvasRenderingContext2D): void {
-    if (this.isFilled) this.setFilledStyle(context)
-    else this.setEmptyStrokeStyle(context);
+  private setContextStyle(context: CanvasRenderingContext2D): void {
+    if (this.isFilled) this.setContextFilledStyle(context)
+    else this.setContextEmptyStyle(context);
   }
 
   private alphaConfiguration(context: CanvasRenderingContext2D): void {
@@ -292,6 +292,6 @@ export class Shape extends InteractiveObject {
     context.lineWidth = this.lineWidth;
     context.setLineDash(this.dashLine);
     this.alphaConfiguration(context);
-    this.setStyle(context);
+    this.setContextStyle(context);
   }
 }

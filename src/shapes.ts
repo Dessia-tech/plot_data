@@ -1,5 +1,6 @@
 import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE,
-  TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, RUBBERBAND_SMALL_SIZE } from "./constants"
+  TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, RUBBERBAND_SMALL_SIZE,
+  LABEL_TEXT_OFFSET } from "./constants"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { styleToLegend } from "./shapeFunctions"
@@ -21,11 +22,29 @@ export interface TextParams {
   scale?: Vertex
 }
 
+const TEXT_PARAMS: TextParams = {
+  width: null,
+  height: null,
+  fontsize: null,
+  multiLine: false,
+  font: 'sans-serif',
+  align: 'left',
+  baseline: 'top',
+  style: '',
+  orientation: 0,
+  color: "hsl(0, 0%, 0%)",
+  backgroundColor: "hsla(0, 0%, 100%, 0)",
+  scale: new Vertex(1, 1)
+}
+
 export class Text extends Shape {
   public scale: Vertex = new Vertex(1, 1);
-  public fillStyle: string = 'hsl(0, 0%, 0%)';
   public width: number;
   public height: number;
+
+  private words: string[];
+  private writtenText: string[];
+
   public fontsize: number;
   public font: string;
   public align: string;
@@ -33,11 +52,11 @@ export class Text extends Shape {
   public style: string;
   public orientation: number;
   public multiLine: boolean;
+
   public rowIndices: number[] = [];
   public boundingBox: Rect;
   public offset: number = 0;
-  private words: string[];
-  private writtenText: string[];
+  
   constructor(
     public text: string,
     public origin: Vertex,
@@ -55,20 +74,9 @@ export class Text extends Shape {
       scale = new Vertex(1, 1)
     }: TextParams = {}) {
     super();
-    this.boundingBox = new Rect(origin, new Vertex(width, height));
-    this.boundingBox.fillStyle = backgroundColor;
-    this.boundingBox.strokeStyle = backgroundColor;
-    this.boundingBox.lineWidth = 1e-6; //TODO: this is a HOT FIX
-    this.fontsize = fontsize;
-    this.multiLine = multiLine;
-    this.font = font;
-    this.style = style;
-    this.orientation = orientation;
-    this.fillStyle = color;
+    this.initializeBoundingBox(origin, width, height, backgroundColor);
+    this.initializeTextStyle(fontsize, multiLine, font, style, orientation, color, align, baseline, scale);
     this.words = this.getWords();
-    this.align = align;
-    this.baseline = baseline;
-    this.scale = scale;
   }
 
   private static buildFont(style: string, fontsize: number, font: string): string { return `${style} ${fontsize}px ${font}` }
@@ -98,6 +106,27 @@ export class Text extends Shape {
   }
 
   get fullFont(): string { return Text.buildFont(this.style, this.fontsize, this.font) }
+
+  private initializeBoundingBox(origin: Vertex, width: number, height: number, backgroundColor: string): void {
+    this.boundingBox = new Rect(origin, new Vertex(width, height));
+    this.boundingBox.fillStyle = backgroundColor;
+    this.boundingBox.strokeStyle = backgroundColor;
+    this.boundingBox.lineWidth = 1e-6;
+  }
+
+  private initializeTextStyle(
+    fontsize: number, multiLine: boolean, font: string, style: string,
+    orientation: number, color: string, align: string, baseline: string, scale: Vertex): void {
+      this.fontsize = fontsize;
+      this.multiLine = multiLine;
+      this.font = font;
+      this.style = style;
+      this.orientation = orientation;
+      this.fillStyle = color;
+      this.align = align;
+      this.baseline = baseline;
+      this.scale = scale;
+  }
 
   private getCornersUnscaled(): [Vertex, Vertex] {
     const firstCorner = this.origin.copy();
@@ -213,7 +242,7 @@ export class Text extends Shape {
   }
 
   protected computeContextualAttributes(context: CanvasRenderingContext2D): void {
-    this.writtenText = this.cleanStartAllRows(this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows());
+    this.writtenText = this.cleanStartAllRows(this.rowIndices.length == 0 ? this.format(context) : this.formatTextRows());
   }
 
   private setBoundingBoxState(): void {
@@ -239,13 +268,18 @@ export class Text extends Shape {
 
   private write(writtenText: string[], context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle;
-    const nRows = writtenText.length - 1;
     const middleFactor = this.baseline == "middle" ? 2 : 1;
-    if (nRows != 0) writtenText.forEach((row, index) => {
-      if (["top", "hanging"].includes(this.baseline)) context.fillText(index == 0 ? Text.capitalize(row) : row, 0, index * this.fontsize + this.offset)
-      else context.fillText(index == 0 ? Text.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset);
-    })
+    if (writtenText.length > 1) this.multiLineWrite(writtenText, middleFactor, context);
     else context.fillText(Text.capitalize(writtenText[0]), 0, this.offset / middleFactor);
+  }
+
+  private multiLineWrite(writtenText: string[], middleFactor: number, context: CanvasRenderingContext2D): void {
+    const nRows = writtenText.length - 1;
+    writtenText.forEach((row, index) => {
+      ["top", "hanging"].includes(this.baseline)
+        ? context.fillText(index == 0 ? Text.capitalize(row) : row, 0, index * this.fontsize + this.offset)
+        : context.fillText(index == 0 ? Text.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset);
+    });
   }
 
   public removeEndZeros(): void {
@@ -263,10 +297,11 @@ export class Text extends Shape {
   }
 
   private getLongestRow(context: CanvasRenderingContext2D, writtenText: string[]): number {
+    context.font = Text.buildFont(this.style, this.fontsize, this.font);
     return Math.max(...writtenText.map(row => context.measureText(row).width))
   }
 
-  public formattedTextRows(): string[] {
+  public formatTextRows(): string[] {
     const writtenText = []
     this.rowIndices.slice(0, this.rowIndices.length - 1).forEach((_, rowIndex) => {
       writtenText.push(this.text.slice(this.rowIndices[rowIndex], this.rowIndices[rowIndex + 1]));
@@ -274,19 +309,30 @@ export class Text extends Shape {
     return writtenText
   }
 
+  private computeRowIndices(writtenText: string[]): number[] {
+    const rowIndices = [0];
+    writtenText.forEach((row, index) => rowIndices.push(rowIndices[index] + row.length));
+    return rowIndices
+  }
+
+  private formatWithLength(writtenText: string[], fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
+    if (this.multiLine) return this.multiLineSplit(fontsize, context);
+    return [writtenText, this.automaticFontSize(context)]
+  }
+
+  private formatInBoundingBox(context: CanvasRenderingContext2D): [string[], number] {
+    const fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
+    if (this.boundingBox.size.x) return this.formatWithLength([this.text], fontsize, context)
+    else if (this.boundingBox.size.y) return [[this.text], this.fontsize ?? this.boundingBox.size.y];
+    return [[this.text], fontsize]
+  }
+
   public format(context: CanvasRenderingContext2D): string[] {
-    let writtenText = [this.text];
-    let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
-    if (this.boundingBox.size.x) {
-      if (this.multiLine) [writtenText, fontsize] = this.multiLineSplit(fontsize, context)
-      else fontsize = this.automaticFontSize(context);
-    } else if (this.boundingBox.size.y) fontsize = this.fontsize ?? this.boundingBox.size.y;
+    const [writtenText, fontsize] = this.formatInBoundingBox(context);
     this.fontsize = Math.abs(fontsize);
-    context.font = Text.buildFont(this.style, this.fontsize, this.font);
     this.height = writtenText.length * this.fontsize;
     this.width = this.getLongestRow(context, writtenText);
-    this.rowIndices = [0];
-    writtenText.forEach((row, index) => this.rowIndices.push(this.rowIndices[index] + row.length));
+    this.rowIndices = this.computeRowIndices(writtenText);
     return writtenText
   }
 
@@ -371,7 +417,6 @@ export class Label extends Shape {
   public shapeSize: Vertex = new Vertex(30, MAX_LABEL_HEIGHT);
   public legend: Shape;
   public maxWidth: number = 150;
-  public readonly textOffset = 5;
   constructor(
     shape: Shape,
     public text: Text,
@@ -452,7 +497,7 @@ export class Label extends Shape {
     this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
     this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.75 * initScale.y;
     this.updateLegendGeometry();
-    this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + this.textOffset, this.shapeSize.y / 2));
+    this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + LABEL_TEXT_OFFSET, this.shapeSize.y / 2));
   }
 
   private drawText(context: CanvasRenderingContext2D): void {
@@ -472,13 +517,7 @@ export class Label extends Shape {
 }
 
 export class Tooltip extends Shape {
-  public path: Path2D;
-
-  public lineWidth: number = 1;
-  public strokeStyle: string = "hsl(210, 90%, 20%)";
   public textColor: string = "hsl(0, 0%, 100%)";
-  public fillStyle: string = "hsl(210, 90%, 20%)";
-  public alpha: number = 0.8;
   public fontsize: number = 10;
   public radius: number = 10;
 
@@ -496,8 +535,15 @@ export class Tooltip extends Shape {
     context: CanvasRenderingContext2D
   ) {
     super();
+    this.setStyle();
     [this.printedRows, this.size] = this.buildText(context);
     this.squareOrigin = new Vertex(this.origin.x, this.origin.y);
+  }
+
+  private setStyle(): void {
+    this.strokeStyle = "hsl(210, 90%, 20%)";
+    this.fillStyle = "hsl(210, 90%, 20%)";
+    this.alpha = 0.8;
   }
 
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
@@ -783,15 +829,10 @@ export class RubberBand extends Rect {
   public canvasMin: number = 0;
   public canvasMax: number = 0;
 
-  public isHovered: boolean = false;
-  public isClicked: boolean = false;
-  public isSelected: boolean = false;
-
-  public path: Path2D;
   public isInverted: boolean = false;
-
   public minUpdate: boolean = false;
   public maxUpdate: boolean = false;
+
   public lastValues: Vertex = new Vertex(null, null);
   constructor(
     public attributeName: string,

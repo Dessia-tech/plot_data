@@ -46,25 +46,24 @@ def delete_none_from_dict(dict1):
                 dict2[key] = value
     return dict2
 
-def serialize_dates_in_list(list_: List[Any]) -> List[Any]:
+def serialize_dates_in_list(list_):
     for i, element in enumerate(list_):
-        if isinstance(element, datetime.datetime):
-            list_[i] = f"{element.timestamp() * 1000}gmt+"
-        if isinstance(element, list):
-            list_[i] = serialize_dates_in_list(element)
-        if isinstance(element, dict):
-            list_[i] = serialize_dates_in_dict(element)
+        list_[i] = serialize_dates(element)
     return list_
 
-def serialize_dates_in_dict(dict_: Dict[str, Any]) -> Dict[str, Any]:
+def serialize_dates_in_dict(dict_):
     for (key, value) in dict_.items():
-        if isinstance(value, datetime.datetime):
-            dict_[key] =  f"{value.timestamp() * 1000}gmt+"
-        if isinstance(value, list):
-            dict_[key] = serialize_dates_in_list(value)
-        if isinstance(value, dict):
-            dict_[key] = serialize_dates_in_dict(value)
+        dict_[key] = serialize_dates(value)
     return dict_
+
+def serialize_dates(serializable):
+    if isinstance(serializable, list):
+        serializable = serialize_dates_in_list(serializable)
+    if isinstance(serializable, dict):
+        serializable = serialize_dates_in_dict(serializable)
+    if isinstance(serializable, datetime.datetime):
+        serializable = f"{serializable.timestamp() * 1000}gmt+"
+    return serializable
 
 class PlotDataObject(DessiaObject):
     """ Abstract interface for DessiaObject implementation in module. """

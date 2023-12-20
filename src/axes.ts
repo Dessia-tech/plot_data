@@ -81,7 +81,7 @@ export class Axis extends Shape {
     this.adjustBoundingBox();
     this.drawnPath = this.buildArrowPath();
     this.buildPath();
-    this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
+    this.buildRubberBand();
     this.updateOffsetTicks();
     this.offsetTitle = 0;
     this.title = new Text(this.titleText, new Vertex(0, 0), {});
@@ -226,6 +226,18 @@ export class Axis extends Shape {
   }
 
   public updateStyle(axisStyle: Map<string, any>) { axisStyle.forEach((value, key) => this[key] = value) }
+
+  private buildRubberBand(): void {
+    this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
+    this.defaultRubberBandStyle();
+  }
+
+  private defaultRubberBandStyle(): void {
+    this.rubberBand.lineWidth = 0.1;
+    this.rubberBand.fillStyle = this.rubberColor;
+    this.rubberBand.strokeStyle = this.rubberColor;
+    this.rubberBand.alpha = this.rubberAlpha;
+  }
 
   public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }
 
@@ -554,8 +566,6 @@ export class Axis extends Shape {
     return point
   }
 
-  
-
   private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: Point, HTMatrix: DOMMatrix): Text {
     const textOrigin = this.tickTextPositions(point, HTMatrix);
     const tickText = new Text(Text.capitalize(text), textOrigin, tickTextParams);
@@ -594,10 +604,8 @@ export class Axis extends Shape {
       this.relativeToAbsolute(this.rubberBand.maxValue)
     );
     this.rubberBand.updateCoords(canvasCoords, this.origin, this.end);
-    this.rubberBand.lineWidth = 0.1;
-    this.rubberBand.fillStyle = this.rubberColor;
-    this.rubberBand.strokeStyle = this.rubberColor;
-    this.rubberBand.alpha = this.rubberAlpha;
+    [this.rubberBand.origin, this.rubberBand.size] = this.rubberBand.computeRectProperties(this.origin);
+    this.rubberBand.buildPath();
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D, canvasMatrix: DOMMatrix): void {
@@ -609,90 +617,45 @@ export class Axis extends Shape {
 
   protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void { }
 
-  // public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
-  //   super.mouseMove(context, mouseCoords);
-  //   this.boundingBox.mouseMove(context, mouseCoords);
-  //   this.rubberBand.mouseMove(context, mouseCoords);
-  //   this.title.mouseMove(context, mouseCoords.scale(this.initScale));
-  //   if (this.isClicked) {
-  //     if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords)
-  //     else this.mouseMoveClickedArrow(context, mouseCoords);
-  //   }
-  // }
+  public mouseMoveClickedArrow(mouseCoords: Vertex): void {
+    const mouseDownCoord = this.isVertical ? this.mouseClick.y : this.mouseClick.x;
+    const mouseCurrentCoord = this.isVertical ? mouseCoords.y : mouseCoords.x;
+    if (!this.rubberBand.isClicked) this.rubberBand.updateCoords(new Vertex(mouseDownCoord, mouseCurrentCoord), this.origin, this.end);
+    this.rubberBand.minValue = this.absoluteToRelative(this.rubberBand.canvasMin);
+    this.rubberBand.maxValue = this.absoluteToRelative(this.rubberBand.canvasMax);
+    this.rubberBand.flipMinMax();
+  }
+
+  public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
+
+  private clickOnArrow(mouseDown: Vertex): void {
+    this.is_drawing_rubberband = true; // OLD
+    this.rubberBand.isHovered ? this.rubberBand.mouseDown(mouseDown) : this.rubberBand.reset();
+    this.emitter.emit("rubberBandChange", this.rubberBand);
+  }
+
+  private clickOnDrawnPath(mouseDown: Vertex): void {
+    this.isClicked = true;
+    this.title.isHovered ? this.clickOnTitle(mouseDown) : this.clickOnArrow(mouseDown);
+  }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
     super.mouseMove(context, mouseCoords);
     this.boundingBox.mouseMove(context, mouseCoords);
     this.title.mouseMove(context, mouseCoords.scale(this.initScale));
+    this.rubberBand.mouseMove(context, mouseCoords);
     if (this.isClicked) {
       if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords)
       else this.mouseMoveClickedArrow(mouseCoords);
     }
   }
 
-  private restrictRubberBandTranslation(downValue: number, currentValue: number): [number, number] {
-    if (!this.logScale || this.rubberBand.lastValues.x + currentValue - downValue > 0 || !this.rubberBand.isTranslating) return [downValue, currentValue]
-    return [downValue, downValue - this.rubberBand.lastValues.x]
-  }
-
-  // public mouseMoveClickedArrow(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
-  //   const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
-  //   const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
-  //   if (!this.rubberBand.isClicked) {
-  //     this.rubberBand.minValue = Math.min(downValue, currentValue);
-  //     this.rubberBand.maxValue = Math.max(downValue, currentValue);
-  //   } else {
-  //     const [downRestricted, currentRestricted] = this.restrictRubberBandTranslation(downValue, currentValue);
-  //     if (this.isVertical) this.rubberBand.mouseMove(context, new Vertex(mouseCoords.x, currentRestricted))
-  //     else this.rubberBand.mouseMove(context, new Vertex(currentRestricted, mouseCoords.y))
-  //   }
-  // }
-
-  public mouseMoveClickedArrow(mouseCoords: Vertex): void {
-    const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
-    const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
-    if (!this.rubberBand.isClicked) {
-      this.rubberBand.minValue = Math.min(downValue, currentValue);
-      this.rubberBand.maxValue = Math.max(downValue, currentValue);
-    } else this.rubberBand.mouseMove2(...this.restrictRubberBandTranslation(downValue, currentValue));
-  }
-
-
-  public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
-
   public mouseDown(mouseDown: Vertex): void {
     super.mouseDown(mouseDown);
-    if (this.isHovered) {
-      this.isClicked = true;
-      if (this.title.isHovered) this.clickOnTitle(mouseDown)
-      else {
-        this.is_drawing_rubberband = true; // OLD
-        const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
-        if (!this.isInRubberBand(this.absoluteToRelative(mouseUniCoord))) this.rubberBand.reset()
-        else this.rubberBand.mouseDown(mouseDown);
-        this.emitter.emit("rubberBandChange", this.rubberBand);
-      }
-    }
+    if (this.isHovered) this.clickOnDrawnPath(mouseDown);
     if (this.boundingBox.isHovered) this.boundingBox.isClicked = true;
     this.saveLocation();
   }
-
-  // public mouseDown(mouseDown: Vertex): void {
-  //   super.mouseDown(mouseDown);
-  //   if (this.isHovered) {
-  //     this.isClicked = true;
-  //     if (this.title.isHovered) this.clickOnTitle(mouseDown)
-  //     else {
-  //       this.is_drawing_rubberband = true; // OLD
-  //       const mouseUniCoord = this.isVertical ? mouseDown.y : mouseDown.x;
-  //       if (!this.isInRubberBand(this.absoluteToRelative(mouseUniCoord))) this.rubberBand.reset()
-  //       else this.rubberBand.mouseDown2(mouseUniCoord);
-  //       this.emitter.emit("rubberBandChange", this.rubberBand);
-  //     }
-  //   }
-  //   if (this.boundingBox.isHovered) this.boundingBox.isClicked = true;
-  //   this.saveLocation();
-  // }
 
   public mouseUp(keepState: boolean): void {
     super.mouseUp(keepState);
@@ -700,7 +663,7 @@ export class Axis extends Shape {
     this.boundingBox.isClicked = false;
     this.title.mouseUp(false);
     this.title.isClicked = false;
-    this.rubberBand.mouseUp();
+    this.rubberBand.mouseUp(keepState);
     if (this.is_drawing_rubberband) this.emitter.emit("rubberBandChange", this.rubberBand);
     this.is_drawing_rubberband = false;
   }

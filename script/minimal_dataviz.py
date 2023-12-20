@@ -7,6 +7,7 @@ Created on Thu Feb 11 07:38:30 2021
 """
 
 import random
+import plot_data
 
 random.seed(7)
 
@@ -37,4 +38,4 @@ plots = [parallel_plot, scatter1, scatter2]
 multipleplots = plot_data.MultiplePlots(elements=elements, plots=plots,
                                         initial_view_on=True)
 
-plot_data.plot_canvas(plot_data_object=multipleplots, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=multipleplots, local=True)

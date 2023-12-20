@@ -14,10 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tests for most of important features
 - Toggle Axes
 - Customable axes names of Draw
+
 ## [0.19.1]
-
 ### Build
-
 - Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
 
 

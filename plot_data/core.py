@@ -391,7 +391,7 @@ class PointFamily(PlotDataObject):
 
     def __init__(self, point_color: str, point_index: List[int], name: str = ''):
         self.color = point_color
-        self.point_index = point_index
+        self.indices = point_index
         PlotDataObject.__init__(self, type_=None, name=name)
 
 
@@ -1262,8 +1262,9 @@ class PrimitiveGroup(Figure):
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, Circle2D,
                                               Line2D, MultipleLabels, Wire, Point2D]], width: int = 750,
-                 height: int = 400, name: str = ''):
+                 height: int = 400, attribute_names: List[str] = None, name: str = ''):
         self.primitives = primitives
+        self.attribute_names = attribute_names
         super().__init__(width=width, height=height, type_='draw', name=name)
 
     def mpl_plot(self, ax=None, equal_aspect=True, **kwargs):

@@ -5,16 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0]
+### Add
+- Toggle Axes
+- Customable axes names of Draw
+
 ## [0.19.1]
-
 ### Build
-
 - Use pip install instead of setuptools install in order to avoid .egg being generating and preventing PyPI upload
 
 
 ## [0.19.0]
 ### Fixes
-- Multiplot Drawing
+- Multiplot Drawing + its review
+
+### Refactor
+- Remove ill code
+- Files organization 1
+- Change names of classes and functions (e.g. remove 'new' prefix)
+- Files organization 2
 
 ## [0.18.0]
 ### Add

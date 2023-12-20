@@ -1,9 +1,14 @@
-export * from "./multiplots";
-export * from './subplots';
-
-// Temporary imports below
-// This document is used as a barrel file for instance as no solution has been found yet to use multiple js files.
-export * from "./color_conversion";
-export * from "./style";
-export * from "./toolbox";
-export * from "./utils";
+export * from './axes';
+export * from "./baseShape";
+export * from "./collections";
+export * from "./colors";
+export * from "./constants";
+export * from './figures';
+export * from "./shapeFunctions";
+export * from "./functions";
+export * from "./multiplot";
+export * from "./primitives";
+export * from './remoteFigure';
+export * from "./shapes";
+export * from "./styles";
+export * from "./old";

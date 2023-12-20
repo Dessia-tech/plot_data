@@ -12,7 +12,7 @@ for i in range(50):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(COLORS) - 1)]
     elements.append({'long middle_attribute name ' * 15: random.uniform(0, 20),
-                     'mass '*30: random.uniform(0, 0.05),
+                     'mass'*30: random.uniform(0, 0.05),
                      'length': random.uniform(0, 100),
                      'shape': random_shape,
                      'color': random_color,
@@ -23,7 +23,7 @@ for i in range(50):
         elements[-1]['length'] = None
 
 plot_data_object = plot_data.ParallelPlot(elements=elements,
-                                          axes=['long middle_attribute name ' * 15, 'mass '*30, 'color', 'length', 'shape',
+                                          axes=['long middle_attribute name ' * 15, 'mass' * 30, 'color', 'length', 'shape',
                                                 'long middle_attribute name ' * 10, 'long right attribute name ' * 7])
 
 # The line above shows the minimum requirements for creating a

@@ -1,31 +1,10 @@
-import { RubberBand, Vertex, newShape, SelectionBox, SelectionBoxCollection, equals, PointSet, arrayDiff, uniqueValues } from './utils';
-import { Scatter, Figure, Graph2D, Draw, range, ParallelPlot } from './subplots';
-import { List } from './toolbox';
-
-const EMPTY_MULTIPLOT = {
-  "name": "",
-  "primitives": [
-    {
-      "name": "",
-      "comment": "No plot defined in multiplot so there is nothing to draw.",
-      "text_style": {
-        "object_class": "plot_data.core.TextStyle",
-        "name": "",
-        "text_color": "rgb(100, 100, 100)",
-        "font_size": 20,
-        "text_align_x": "left"
-      },
-      "position_x": 50.0,
-      "position_y": 100,
-      "text_scaling": false,
-      "max_width": 400,
-      "multi_lines": true,
-      "type_": "text"
-    }
-  ],
-  "type_": "primitivegroup"
-};
-const BLANK_SPACE = 4;
+import { FIGURES_BLANK_SPACE, EMPTY_MULTIPLOT } from "./constants"
+import { equals, arrayDiff, range } from './functions'
+import { Vertex, Shape } from "./baseShape"
+import { RubberBand, SelectionBox } from "./shapes"
+import { SelectionBoxCollection, PointSet } from "./collections"
+import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
+import { DataInterface, MultiplotDataInterface } from "./dataInterfaces"
 
 export class Multiplot {
   public context: CanvasRenderingContext2D;
@@ -41,9 +20,9 @@ export class Multiplot {
   public isSelecting: boolean = false;
   public isZooming: boolean = false;
   public isResizing: boolean = false;
-  public hoveredIndex: number = 0;
-  public clickedIndex: number = null;
-  public hiddenIndices: number[] = [];
+  public hoveredFigureIndex: number = 0;
+  public clickedFigureIndex: number = null;
+  public hiddenFigureIndices: number[] = [];
 
   public clickedIndices: number[] = [];
   public hoveredIndices: number[] = [];
@@ -52,7 +31,7 @@ export class Multiplot {
   public pointSets: PointSet[];
 
   constructor(
-    data: any,
+    data: MultiplotDataInterface,
     public width: number,
     public height: number,
     public canvasID: string
@@ -67,9 +46,7 @@ export class Multiplot {
     this.mouseListener();
   }
 
-  get className(): string { return "Multiplot" }
-
-  private unpackData(data: any): [Map<string, any[]>, Figure[]] {
+  private unpackData(data: MultiplotDataInterface): [Map<string, any[]>, Figure[]] {
     const features = Figure.deserializeData(data);
     const figures: Figure[] = [];
     if (data.plots.length == 0) figures.push(this.newEmptyPlot(EMPTY_MULTIPLOT));
@@ -97,7 +74,7 @@ export class Multiplot {
     return elements
   }
 
-  private newEmptyPlot(data: any): Draw {
+  private newEmptyPlot(data: DataInterface): Draw {
     const figure = new Draw(data, this.width, this.height, 0, 0, this.canvasID);
     figure.context = this.context;
     return figure
@@ -123,7 +100,7 @@ export class Multiplot {
       const xCoord = j * width;
       for (let i=0; i < nRows; i++) {
         const yCoord = i * height;
-        this.figures[k].multiplotDraw(new Vertex(xCoord + BLANK_SPACE, yCoord + BLANK_SPACE), width - BLANK_SPACE * 2, height - BLANK_SPACE * 2);
+        this.figures[k].multiplotDraw(new Vertex(xCoord + FIGURES_BLANK_SPACE, yCoord + FIGURES_BLANK_SPACE), width - FIGURES_BLANK_SPACE * 2, height - FIGURES_BLANK_SPACE * 2);
         k++;
         if (k == this.figures.length) break;
       }
@@ -133,13 +110,9 @@ export class Multiplot {
   public draw(): void {
     this.context.clearRect(0, 0, this.width, this.height);
     this.figures.forEach((figure, index) => {
-      if (!(figure instanceof Graph2D) && !(figure instanceof Draw)) {
-        figure.selectedIndices = this.selectedIndices;
-        figure.clickedIndices = [...this.clickedIndices];
-        figure.hoveredIndices = [...this.hoveredIndices];
-      }
-      if (!(figure instanceof Graph2D)) figure.pointSets = this.pointSets;
-      if (!this.hiddenIndices.includes(index)) figure.draw();
+      figure.receiveMultiplotMouseIndices(this.hoveredIndices, this.clickedIndices, this.selectedIndices);
+      figure.receivePointSets(this.pointSets);
+      if (!this.hiddenFigureIndices.includes(index)) figure.draw();
     });
     this.drawZoneRectangles();
   }
@@ -167,16 +140,23 @@ export class Multiplot {
     this.resetLayout();
   }
 
-  public hideFigure(index: number): void { this.hiddenIndices.push(index) }
+  public hideFigure(index: number): void { this.hiddenFigureIndices.push(index) }
 
-  public showFigure(index: number): void { this.hiddenIndices.splice(this.hiddenIndices.indexOf(index), 1) }
+  public showFigure(index: number): void { this.hiddenFigureIndices.splice(this.hiddenFigureIndices.indexOf(index), 1) }
 
-  public switchFigureVisibility(index: number): void {
-    this.hiddenIndices.includes(index)
+  public toggleFigure(index: number): void {
+    this.hiddenFigureIndices.includes(index)
       ? this.showFigure(index)
       : this.hideFigure(index);
     this.draw();
   }
+
+  public toggleAxes(index: number): void {
+    this.figures[index].toggleAxes();
+    this.draw();
+  }
+
+  public htmlToggleAxes(): void { this.toggleAxes(this.clickedFigureIndex ?? this.hoveredFigureIndex) }
 
   public resetLayout(): void {
     this.computeTable();
@@ -251,13 +231,13 @@ export class Multiplot {
     this.isZooming ? this.zoomOff() : this.zoomOn();
   }
 
-  public zoomIn(): void { (this.figures[this.clickedIndex ?? this.hoveredIndex]).zoomIn() }
+  public zoomIn(): void { (this.figures[this.clickedFigureIndex ?? this.hoveredFigureIndex]).zoomIn() }
 
-  public zoomOut(): void { (this.figures[this.clickedIndex ?? this.hoveredIndex]).zoomOut() }
+  public zoomOut(): void { (this.figures[this.clickedFigureIndex ?? this.hoveredFigureIndex]).zoomOut() }
 
-  public simpleCluster(inputValue: number): void { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.simpleCluster(inputValue) })};
+  public simpleCluster(inputValue: number): void { this.figures.forEach(figure => figure.simpleCluster(inputValue)) };
 
-  public resetClusters(): void { this.figures.forEach(figure => { if (figure instanceof Scatter) figure.resetClusters() })};
+  public resetClusters(): void { this.figures.forEach(figure => figure.resetClusters()) };
 
   public resetView(): void {
     this.figures.forEach(figure => figure.resetView());
@@ -311,17 +291,7 @@ export class Multiplot {
     const previousIndices = [...this.selectedIndices];
     this.selectedIndices = range(0, this.nSamples);
     let isSelecting = false;
-    for (let figure of this.figures) {
-      figure.axes.forEach(axis => {
-        if (!(figure instanceof Graph2D || figure instanceof Draw)) {
-          if (axis.rubberBand.length != 0 && axis.name != "number") {
-            isSelecting = true;
-            const selectedIndices = figure.updateSelected(axis);
-            this.selectedIndices = List.listIntersection(this.selectedIndices, selectedIndices);
-          }
-        }
-      })
-    }
+    this.figures.forEach(figure => [this.selectedIndices, isSelecting] = figure.multiplotSelectedIntersection(this.selectedIndices, isSelecting));
     if (this.selectedIndices.length == this.nSamples && !isSelecting) this.selectedIndices = [];
     if (!equals(previousIndices, this.selectedIndices)) this.emitSelectionChange();
   }
@@ -330,10 +300,7 @@ export class Multiplot {
     this.canvas.dispatchEvent(new CustomEvent('selectionchange', { detail: { 'selectedIndices': this.selectedIndices } }));
   }
 
-  public updateHoveredIndices(figure: Figure): void {
-    if (!(figure instanceof Graph2D || figure instanceof Draw)) this.hoveredIndices = figure.hoveredIndices;
-    else this.hoveredIndices = [];
-  }
+  public updateHoveredIndices(figure: Figure): void { this.hoveredIndices = figure.sendHoveredIndicesMultiplot() }
 
   public initRubberBands(): void {
     this.rubberBands = new Map<string, RubberBand>();
@@ -383,15 +350,13 @@ export class Multiplot {
       }
     }
     if (e.key == " ") {
-      e.preventDefault();
       spaceKey = true;
     }
-    this.figures[this.hoveredIndex].keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey);
+    this.figures[this.hoveredFigureIndex].keyDownDrawer(this.canvas, e.key, ctrlKey, shiftKey, spaceKey);
     return [ctrlKey, shiftKey, spaceKey]
   }
 
   private keyUpDrawer(e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
-    e.preventDefault();
     if (e.key == "Shift") {
       shiftKey = false;
       this.isSelecting = false;
@@ -411,7 +376,7 @@ export class Multiplot {
   private getHoveredIndex(mouseCoords: Vertex): void {
     for (const [index, figure] of this.figures.entries()) {
       if (figure.isInCanvas(mouseCoords)) {
-        this.hoveredIndex = index;
+        this.hoveredFigureIndex = index;
         break
       }
     }
@@ -424,50 +389,50 @@ export class Multiplot {
 
   private zoneToFigure(mouseCoords: Vertex, clickedZone: SelectionBox): void {
     for (let [i, figureZone] of this.figureZones.shapes.entries()) {
-      if (figureZone === clickedZone) this.clickedIndex = i;
+      if (figureZone === clickedZone) this.clickedFigureIndex = i;
     }
     clickedZone.mouseMove(this.context, mouseCoords);
     clickedZone.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
-    this.figures[this.clickedIndex].multiplotResize(clickedZone.origin, clickedZone.size.x, clickedZone.size.y);
+    this.figures[this.clickedFigureIndex].multiplotResize(clickedZone.origin, clickedZone.size.x, clickedZone.size.y);
   }
 
-  private resizeWithMouse(mouseCoords: Vertex, clickedObject: newShape): void {
+  private resizeWithMouse(mouseCoords: Vertex, clickedObject: Shape): void {
     if (clickedObject instanceof SelectionBox) this.zoneToFigure(mouseCoords, clickedObject)
     else this.figureZones.mouseMove(this.context, mouseCoords);
   }
 
   private mouseMoveDrawer(e: MouseEvent, hasLeftFigure: boolean, canvasMouse: Vertex, frameMouse: Vertex,
-    canvasDown: Vertex, frameDown: Vertex, clickedObject: newShape, shiftKey: boolean): [Vertex, Vertex, Vertex, Vertex, boolean] { // TODO: ill conditioned method
+    canvasDown: Vertex, frameDown: Vertex, clickedObject: Shape, shiftKey: boolean): [Vertex, Vertex, Vertex, Vertex, boolean] { // TODO: ill conditioned method
       e.preventDefault();
       let absoluteMouse = new Vertex(e.offsetX, e.offsetY);
       this.getHoveredIndex(absoluteMouse);
 
       if (!this.isResizing) {
-        if (this.clickedIndex != null && canvasDown) {
-          if (!this.figures[this.clickedIndex].isInCanvas(absoluteMouse)) [canvasDown, hasLeftFigure] = this.mouseLeaveFigure(this.figures[this.clickedIndex], shiftKey);
+        if (this.clickedFigureIndex != null && canvasDown) {
+          if (!this.figures[this.clickedFigureIndex].isInCanvas(absoluteMouse)) [canvasDown, hasLeftFigure] = this.mouseLeaveFigure(this.figures[this.clickedFigureIndex], shiftKey);
         }
-        if (!hasLeftFigure) [canvasMouse, frameMouse, absoluteMouse] = this.figures[this.hoveredIndex].mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
+        if (!hasLeftFigure) [canvasMouse, frameMouse, absoluteMouse] = this.figures[this.hoveredFigureIndex].mouseMoveDrawer(this.canvas, e, canvasDown, frameDown, clickedObject);
       } else this.resizeWithMouse(absoluteMouse, clickedObject);
 
-      this.updateHoveredIndices(this.figures[this.hoveredIndex]);
-      this.updateRubberBands(this.figures[this.hoveredIndex]);
+      this.updateHoveredIndices(this.figures[this.hoveredFigureIndex]);
+      this.updateRubberBands(this.figures[this.hoveredFigureIndex]);
       this.updateSelectedIndices();
       return [canvasMouse, frameMouse, absoluteMouse, canvasDown, hasLeftFigure]
     }
 
-  private mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, newShape] {
-    this.clickedIndex = this.hoveredIndex;
+  private mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape] {
+    this.clickedFigureIndex = this.hoveredFigureIndex;
     if (this.isResizing) return [null, null, this.figureZones.mouseDown(absoluteMouse.copy())];
-    return this.figures[this.hoveredIndex].mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
+    return this.figures[this.hoveredFigureIndex].mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
   }
 
-  private mouseUpDrawer(canvasDown: Vertex, clickedObject: newShape, ctrlKey: boolean, shiftKey: boolean, hasLeftFigure: boolean): [Vertex, newShape, boolean] {
+  private mouseUpDrawer(canvasDown: Vertex, clickedObject: Shape, ctrlKey: boolean, shiftKey: boolean, hasLeftFigure: boolean): [Vertex, Shape, boolean] {
     if (this.isResizing && clickedObject instanceof SelectionBox) clickedObject.mouseUp(ctrlKey);
-    if (!hasLeftFigure && !this.isResizing) [clickedObject, canvasDown] = this.figures[this.hoveredIndex].mouseUpDrawer(ctrlKey);
-    if (!(this.figures[this.hoveredIndex] instanceof Graph2D || this.figures[this.hoveredIndex] instanceof Draw)) {
-      this.clickedIndices = this.figures[this.hoveredIndex].clickedIndices;
+    if (!hasLeftFigure && !this.isResizing) [clickedObject, canvasDown] = this.figures[this.hoveredFigureIndex].mouseUpDrawer(ctrlKey);
+    if (!(this.figures[this.hoveredFigureIndex] instanceof Graph2D || this.figures[this.hoveredFigureIndex] instanceof Draw)) {
+      this.clickedIndices = this.figures[this.hoveredFigureIndex].clickedIndices;
     }
-    this.updateRubberBands(this.figures[this.hoveredIndex]);
+    this.updateRubberBands(this.figures[this.hoveredFigureIndex]);
     hasLeftFigure = this.resetStateAttributes(shiftKey, ctrlKey);
     clickedObject = null;
     this.updateSelectedIndices();
@@ -476,7 +441,7 @@ export class Multiplot {
 
   private mouseWheelDrawer(e: WheelEvent): void {
     e.preventDefault();
-    this.figures[this.hoveredIndex].mouseWheelDrawer(e);
+    this.figures[this.hoveredFigureIndex].mouseWheelDrawer(e);
   }
 
   private mouseLeaveDrawer(): [Vertex, boolean] {
@@ -491,7 +456,7 @@ export class Multiplot {
     let ctrlKey = false;
     let shiftKey = false;
     let spaceKey = false;
-    let clickedObject: newShape = null;
+    let clickedObject: Shape = null;
     let canvasMouse: Vertex = null;
     let frameMouse: Vertex = null;
     let absoluteMouse: Vertex = null;
@@ -537,5 +502,3 @@ export class Multiplot {
     return false
   }
 }
-
-// All the following rows are purely deleted.

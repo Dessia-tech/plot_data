@@ -2,7 +2,6 @@ node_modules/
 lib/
 libdev/
 
-
 # CAD files
 *.fcstd
 *.fcstd1
@@ -60,6 +59,12 @@ coverage.xml
 *.cover
 .hypothesis/
 .pytest_cache/
+instrumented/
+coverage/
+libtest/
+.nycrc
+.nyc_output
+.vscode
 
 # Translations
 *.mo

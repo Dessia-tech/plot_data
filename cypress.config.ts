@@ -2,6 +2,7 @@ import { defineConfig } from "cypress";
 import getCompareSnapshotsPlugin from "cypress-visual-regression/dist/plugin";
 import fs from 'fs'
 import path from 'path'
+import registerCodeCoverageTasks from '@cypress/code-coverage/task'
 
 const HEIGHT: number = 710;
 const WIDTH: number = 1270;
@@ -26,8 +27,11 @@ export default defineConfig({
     type: 'actual' //'base',
   },
   e2e: {
+    specPattern: 'cypress/e2e/*',
     experimentalStudio : true,
     setupNodeEvents(on, config) {
+      registerCodeCoverageTasks(on, config);
+
       getCompareSnapshotsPlugin(on, config);
 
       on('before:browser:launch', (browser, launchOptions) => {
@@ -59,6 +63,8 @@ export default defineConfig({
           })
         })
       });
+
+      return config
     },
   }
 });

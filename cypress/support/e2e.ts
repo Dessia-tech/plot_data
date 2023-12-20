@@ -17,6 +17,7 @@
 import './commands'
 import addContext from 'mochawesome/addContext';
 import 'cypress-real-events/support'
+import '@cypress/code-coverage/support'
 
 Cypress.on('test:after:run', (test, runnable) => {
     if (test.state === 'failed') {

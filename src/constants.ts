@@ -1,6 +1,7 @@
 export const PICKABLE_BORDER_SIZE = 20;
-export const SMALL_RUBBERBAND_SIZE = 10;
+export const RUBBERBAND_SMALL_SIZE = 10;
 export const DASH_SELECTION_WINDOW = [7, 3];
+export const AXIS_TAIL_SIZE = 0;
 
 export const INFINITE_LINE_FACTOR = 1e3;
 export const SIZE_AXIS_END = 7;
@@ -10,9 +11,9 @@ export const FIGURES_BLANK_SPACE = 4;
 export const LEGEND_MARGIN = 2;
 export const ZOOM_FACTOR = 1.2;
 
+export const MIN_OFFSET_X = 33;
 export const MIN_OFFSET_Y = 6;
 export const DEFAULT_FONTSIZE = 12;
-export const MIN_OFFSET_X = 33;
 export const FREE_SPACE_FACTOR = 0.95;
 export const DRAW_MARGIN_FACTOR = 0.025;
 

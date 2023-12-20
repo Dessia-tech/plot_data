@@ -66,23 +66,29 @@ export function intersectArrays<T>(arrays: T[][]): T[] {
 }
 
 export function computeCanvasSize(buttonContainerName: string): [number, number] {
-  const buttonsContainer = document.querySelector(buttonContainerName);
-  return [0.95 * window.innerWidth, 0.95 * window.innerHeight - buttonsContainer.scrollHeight]
+  const buttonsContainer = document.querySelector(buttonContainerName) ?? document.getElementById(buttonContainerName);
+  if (buttonsContainer) return [0.95 * window.innerWidth, 0.95 * window.innerHeight - buttonsContainer.scrollHeight]
+  return [0.95 * window.innerWidth, 0.95 * window.innerHeight]
 }
 
 export function range(start: number, end: number, step: number = 1): number[] {
   let array = [];
-  for (let i = start; i < end; i = i + step) array.push(i);
+  if (start < end) for (let i = start; i < end; i = i + step) array.push(i);
+  if (start > end) for (let i = start; i > end; i = i + step) array.push(i);
   return array
 }
 
 export function mean(array: number[]): number {
+  if (!array) return 0
+  if (array.length == 0) return 0
   let sum = 0;
   array.forEach(value => sum += value);
   return sum / array.length
 }
 
 export function standardDeviation(array: number[]): [number, number] {
+  if (!array) return [0, 0]
+  if (array.length == 0) return [0, 0]
   const arrayMean = mean(array);
   let sum = 0;
   array.forEach(value => sum += (value - arrayMean)**2);
@@ -90,8 +96,9 @@ export function standardDeviation(array: number[]): [number, number] {
 }
 
 export function scaleArray(array: number[]): number[] {
+  if (!array) return array
   const [std, mean] = standardDeviation(array);
-  return Array.from(array, x => (x - mean) / std)
+  return Array.from(array, x => (x - mean) / (std == 0 ? 1 : std))
 }
 
 export function normalizeArray(array: number[]): number[] {
@@ -124,10 +131,10 @@ export function argMax(array: number[]): [number, number] {
 }
 
 export function mapMin(map: Map<any, number>): [any, number] {
-  let min = Number.NEGATIVE_INFINITY;
-  let keyMin: string;
+  let min = Number.POSITIVE_INFINITY;
+  let keyMin: string = null;
   map.forEach((value, key) => {
-    if (value >= min) {
+    if (value <= min) {
       min = value;
       keyMin = key;
     }

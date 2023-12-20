@@ -1,13 +1,12 @@
 // Generated using webpack-cli https://github.com/webpack/webpack-cli
 
 const path = require("path");
-
-const isProduction = process.env.NODE_ENV == "production";
-
+const isCoverage = process.env.NODE_ENV != "development";
 const config = {
-  entry: "./src/core.ts",
+  mode:"development",
+  entry: isCoverage ? "./instrumented/core.ts" : "./src/core.ts",
   output: {
-    path: path.resolve(__dirname, "libdev"),
+    path: path.resolve(__dirname, isCoverage ? "libtest" : "libdev"),
     filename: "plot-data.js",
     library: {
       name: "PlotData",
@@ -40,11 +39,4 @@ const config = {
   },
 };
 
-module.exports = () => {
-  if (isProduction) {
-    config.mode = "production";
-  } else {
-    config.mode = "development";
-  }
-  return config;
-};
+module.exports = () => { return config };

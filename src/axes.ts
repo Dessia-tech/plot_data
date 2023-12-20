@@ -111,7 +111,11 @@ export class Axis extends Shape {
 
   get tickMarker(): string { return "halfLine" }
 
-  get tickOrientation(): string { return this.isVertical ? 'right' : 'up' }
+  get tickOrientation(): string {
+    return this.isVertical
+      ? this.initScale.x > 0 ? 'right' : 'left'
+      : this.initScale.y > 0 ? 'up' : 'down'
+    }
 
   get minValue(): number { return this._minValue }
 
@@ -549,6 +553,8 @@ export class Axis extends Shape {
     point.draw(context);
     return point
   }
+
+  
 
   private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: Point, HTMatrix: DOMMatrix): Text {
     const textOrigin = this.tickTextPositions(point, HTMatrix);

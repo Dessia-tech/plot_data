@@ -42,8 +42,7 @@ export function isInteger(value: number): boolean {
 }
 
 export function isIntegerArray(array: number[]): boolean {
-  for (let value of array) { if (!isInteger(value) && value != null) return false };
-  return true
+  return !array.some(value => !isInteger(value) && value != null)
 }
 
 export function getTenPower(value: number): number {

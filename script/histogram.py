@@ -22,4 +22,4 @@ plot_data_object = plot_data.Histogram(x_variable='mass', elements=elements, gra
                                        surface_style=plot_data.SurfaceStyle("rgb(50, 50, 220)"),
                                        edge_style=plot_data.EdgeStyle(1, "rgb(0, 255, 0)", [5, 3]))
 
-plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=plot_data_object, local=True)

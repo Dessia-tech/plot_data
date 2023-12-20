@@ -121,4 +121,4 @@ texts.append(plot_data.Text(comment="Middle center ; (0,0) ; multiline ; scale ;
 
 ff = primitives + texts
 plot_data_object = plot_data.PrimitiveGroup(primitives=ff)
-plot_data.plot_canvas(plot_data_object, debug_mode=True)
+plot_data.plot_canvas(plot_data_object, local=True)

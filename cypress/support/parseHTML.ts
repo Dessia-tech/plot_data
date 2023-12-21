@@ -1,6 +1,6 @@
 import { htmlWriter } from "./HtmlWriter";
 
-const corePath = 'http://localhost:3030/libdev/plot-data.js';
+const corePath = 'http://localhost:3030/libtest/plot-data.js';
 
 export function parseHTML(fileName: string, data: any) {
   cy.readFile('./cypress/templates/' + fileName + '.template.html').then((str) => {

@@ -1,5 +1,5 @@
 import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE,
-  TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, SMALL_RUBBERBAND_SIZE } from "./constants"
+  TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, RUBBERBAND_SMALL_SIZE } from "./constants"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { styleToLegend } from "./shapeFunctions"
@@ -640,6 +640,31 @@ export class ScatterPoint extends Point {
     context.lineWidth = 10;
   }
 
+  public updateMouseState(clusterColors: string[], hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[]): Map<string, number> {
+    const colors = new Map<string, number>();
+    this.isHovered = this.isClicked = this.isSelected = false;
+    this.values.forEach(index => {
+      if (clusterColors) {
+        const currentColorCounter = clusterColors[index];
+        colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
+      }
+      if (hoveredIndices.includes(index)) this.isHovered = true;
+      if (clickedIndices.includes(index)) this.isClicked = true;
+      if (selectedIndices.includes(index)) this.isSelected = true;
+    });
+    return colors
+  }
+
+  public updateDrawProperties(pointStyles: PointStyle[], clusterColors: string[], color: string, lineWidth: number, marker: string): void {
+    this.lineWidth = lineWidth;
+    this.setColors(color);
+    if (pointStyles) {
+      const clusterPointStyle = clusterColors ? Object.assign({}, pointStyles[this.values[0]], { strokeStyle: null }) : pointStyles[this.values[0]];
+      this.updateStyle(clusterPointStyle);
+    } else this.marker = marker;
+    this.update();
+  }
+
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
 
   public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[], xName: string, yName: string) {
@@ -779,11 +804,11 @@ export class RubberBand {
     let rectOrigin: Vertex;
     let rectSize: Vertex;
     if (this.isVertical) {
-      rectOrigin = new Vertex(origin - SMALL_RUBBERBAND_SIZE / 2, this.canvasMin);
-      rectSize = new Vertex(SMALL_RUBBERBAND_SIZE, this.canvasLength);
+      rectOrigin = new Vertex(origin - RUBBERBAND_SMALL_SIZE / 2, this.canvasMin);
+      rectSize = new Vertex(RUBBERBAND_SMALL_SIZE, this.canvasLength);
     } else {
-      rectOrigin = new Vertex(this.canvasMin, origin - SMALL_RUBBERBAND_SIZE / 2);
-      rectSize = new Vertex(this.canvasLength, SMALL_RUBBERBAND_SIZE)
+      rectOrigin = new Vertex(this.canvasMin, origin - RUBBERBAND_SMALL_SIZE / 2);
+      rectSize = new Vertex(this.canvasLength, RUBBERBAND_SMALL_SIZE)
     }
     const draw = new Rect(rectOrigin, rectSize);
     draw.lineWidth = lineWidth;

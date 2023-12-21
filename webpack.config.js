@@ -5,16 +5,13 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-
 export default {
   mode: "production",
   entry: "./src/core.ts",
   output: {
     filename: "core.js",
     path: path.resolve(__dirname, "lib"),
-    library: {
-      type: "module"
-    },
+    library: { type: "module" },
     clean: true
   },
   experiments: {
@@ -39,7 +36,6 @@ export default {
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
     alias : {
-
     }
   }
 }

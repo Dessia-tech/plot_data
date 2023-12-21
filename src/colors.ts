@@ -68,7 +68,7 @@ export function rgbToArray(rgbColor: string): [number, number, number] {
   return [Number(r.split('rgb(')[1]), Number(g), Number(b.split(")")[0])]
 }
 
-function componentToHex(component: number): string {
+export function componentToHex(component: number): string {
   // Get hexadecimal code of a rgb component.
   // RGB and HEX theory: https://www.rapidtables.com/convert/color/hex-to-rgb.html
   var hex = component.toString(16);

@@ -66,6 +66,8 @@ export class Rect extends Shape {
 
   get area(): number { return this.size.x * this.size.y }
 
+  get center(): Vertex { return this.origin.add(this.size.divide(2)) }
+
   public buildPath(): void {
     this.path = new Path2D();
     this.path.rect(this.origin.x, this.origin.y, this.size.x, this.size.y);
@@ -80,8 +82,6 @@ export class Rect extends Shape {
     this.origin = this.origin.add(translation);
     this.buildPath();
   }
-
-  public get center(): Vertex { return this.origin.add(this.size).scale(new Vertex(0.5, 0.5)) }
 
   public getBounds(): [Vertex, Vertex] { return [this.origin, this.origin.add(new Vertex(Math.abs(this.size.x), Math.abs(this.size.y)))] }
 }

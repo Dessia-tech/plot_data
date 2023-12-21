@@ -1,9 +1,11 @@
 “files”: [“lib/**/*”]
 /cypress
 /build
+/instrumented
 /doc
 /lib/cypress
 /libdev
+/libtest
 /plot_data
 /plot_data.egg-info
 /script

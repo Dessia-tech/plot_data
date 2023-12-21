@@ -8,6 +8,10 @@ export class Vertex {
 
   get coordinates(): [number, number] { return [this.x, this.y] }
 
+  get normL1(): number { return Math.abs(this.x) + Math.abs(this.y) }
+
+  get norm(): number { return (this.x ** 2 + this.y ** 2) ** 0.5 }
+
   public copy(): Vertex { return new Vertex(this.x, this.y) }
 
   public add(other: Vertex): Vertex {
@@ -24,8 +28,6 @@ export class Vertex {
     return copy
   }
 
-  public distance(other: Vertex): number { return Math.sqrt((this.x - other.x) ** 2 + (this.y - other.y) ** 2) }
-
   public multiply(value: number): Vertex {
     let copy = this.copy();
     copy.x = this.x * value;
@@ -33,9 +35,7 @@ export class Vertex {
     return copy
   }
 
-  public get normL1(): number { return Math.abs(this.x) + Math.abs(this.y) }
-
-  public get norm(): number { return (this.x ** 2 + this.y ** 2) ** 0.5 }
+  public distance(other: Vertex): number { return Math.sqrt((this.x - other.x) ** 2 + (this.y - other.y) ** 2) }
 
   public scale(scale: Vertex): Vertex {
     let copy = this.copy();
@@ -78,7 +78,7 @@ export class Shape {
 
   public lineWidth: number = 1;
   public dashLine: number[] = [];
-  public hatching: Hatching;
+  public hatching: Hatching = null;
   public strokeStyle: string = null;
   public fillStyle: string = DEFAULT_SHAPE_COLOR;
   public hoverStyle: string = HOVERED_SHAPE_COLOR;
@@ -95,20 +95,18 @@ export class Shape {
   public visible: boolean = true;
   public inFrame: boolean = true;
 
-  public tooltipOrigin: Vertex;
+  public tooltipOrigin: Vertex = null;
   protected _tooltipMap = new Map<string, any>();
   public hasTooltip: boolean = true;
   constructor() { };
 
-  get tooltipMap(): Map<string, any> { return this._tooltipMap };
+  get tooltipMap(): Map<string, any> { return this._tooltipMap }
 
-  set tooltipMap(value: Map<string, any>) { this._tooltipMap = value };
+  set tooltipMap(value: Map<string, any>) { this._tooltipMap = value }
 
   get tooltipFlip(): boolean { return false }
 
-  public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() };
-
-  public get drawingStyle(): { [key: string]: any } {
+  get drawingStyle(): { [key: string]: any } {
     const style = {};
     style["lineWidth"] = this.lineWidth;
     style["dashLine"] = this.dashLine;
@@ -118,6 +116,8 @@ export class Shape {
     style["alpha"] = this.alpha;
     return style
   }
+
+  public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() }
 
   public deserializeStyle(data: DataInterface): void {
     this.deserializeEdgeStyle(data);
@@ -211,7 +211,7 @@ export class Shape {
     }
   }
 
-  public initTooltipOrigin(): void {}
+  public initTooltipOrigin(): void { }
 
   public buildPath(): void { }
 
@@ -221,7 +221,7 @@ export class Shape {
   }
 
   protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    let isHovered: boolean
+    let isHovered: boolean;
     context.save();
     context.resetTransform();
     context.lineWidth = 10;

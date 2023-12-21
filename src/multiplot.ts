@@ -123,7 +123,7 @@ export class Multiplot {
   }
 
   public addScatter(xFeature: string, yFeature: string): void {
-    const data = {type_: "scatterplot", x_variable: xFeature, y_variable: yFeature, elements: this.serializeFeatures()};
+    const data = {type_: "scatterplot", attribute_names: [xFeature, yFeature], elements: this.serializeFeatures()};
     this.addFigure(Scatter.createFromMultiplot(data, this.features, this.context, this.canvasID));
   }
 
@@ -264,7 +264,7 @@ export class Multiplot {
     const widthRatio = width / this.width;
     const heightRatio = height / this.height;
     this.figures.forEach((figure, index) => {
-      figure.multiplotResize(figure.origin.scale(new Vertex(widthRatio, heightRatio)), figure.size.x * widthRatio, figure.size.y * heightRatio);
+      figure.boundingBoxResize(figure.origin.scale(new Vertex(widthRatio, heightRatio)), figure.size.x * widthRatio, figure.size.y * heightRatio);
       if (this.figureZones.shapes.length != 0) this.figureZones.shapes[index].updateRectangle(figure.origin, figure.size);
     })
     this.canvas.width = width;
@@ -393,7 +393,7 @@ export class Multiplot {
     }
     clickedZone.mouseMove(this.context, mouseCoords);
     clickedZone.buildRectangle(new Vertex(0, 0), new Vertex(this.width, this.height));
-    this.figures[this.clickedFigureIndex].multiplotResize(clickedZone.origin, clickedZone.size.x, clickedZone.size.y);
+    this.figures[this.clickedFigureIndex].boundingBoxResize(clickedZone.origin, clickedZone.size.x, clickedZone.size.y);
   }
 
   private resizeWithMouse(mouseCoords: Vertex, clickedObject: Shape): void {

@@ -38,6 +38,8 @@ export const HALF_LINES = ['halfLine', 'halfline'];
 
 export const LABEL_TEXT_OFFSET = 5;
 
+export const REGEX_SAMPLES: RegExp = /^[0-9]+\ssamples/;
+
 export const PG_CONTAINER_PLOT = {
     "name": "",
     "primitives": [

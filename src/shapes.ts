@@ -1,6 +1,6 @@
 import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE,
   TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, RUBBERBAND_SMALL_SIZE,
-  LABEL_TEXT_OFFSET } from "./constants"
+  LABEL_TEXT_OFFSET, REGEX_SAMPLES } from "./constants"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { styleToLegend } from "./shapeFunctions"
@@ -563,25 +563,28 @@ export class Tooltip extends Shape {
     this.alpha = 0.8;
   }
 
-  private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
-    context.save();
-    context.font = `${this.fontsize}px sans-serif`;
+  private featureValueToTextRow(featureValue: any, featureKey: string): string {
+    if (featureKey == "Number" && featureValue != 1) return `${featureValue} samples`;
+    if (featureKey != "name") return featureValue != '' ? `${featureKey}: ${this.formatValue(featureValue)}` : featureKey
+    return null
+  }
+
+  private dataToText(context: CanvasRenderingContext2D): [string[], number] {
     const printedRows = [];
     let textLength = 0;
     this.dataToPrint.forEach((value, key) => {
-      let text: string = null;
-      if (key == "Number") {
-        if (value != 1) text = `${value} samples`;
-      } else {
-        if (key != "name") {
-          if (value != '') text = `${key}: ${this.formatValue(value)}`
-          else text = key;
-        }
-      };
+      const text = this.featureValueToTextRow(value, key);
       const textWidth = context.measureText(text).width;
       if (textWidth > textLength) textLength = textWidth;
       if (text) printedRows.push(text);
     })
+    return [printedRows, textLength]
+  }
+
+  private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
+    context.save();
+    context.font = `${this.fontsize}px sans-serif`;
+    const [printedRows, textLength] = this.dataToText(context);
     context.restore();
     return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
   }
@@ -607,14 +610,15 @@ export class Tooltip extends Shape {
     return textOrigin.add(new Vertex(textOffsetX, textOffsetY));
   }
 
+  private writeRow(textOrigin: Vertex, row: string, rowIndex: number, context: CanvasRenderingContext2D): void {
+    textOrigin.y += rowIndex == 0 ? 0 : this.fontsize;
+    const text = new Text(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: REGEX_SAMPLES.test(row) ? 'bold' : '' });
+    text.fillStyle = this.textColor;
+    text.draw(context);
+  }
+
   private writeText(textOrigin: Vertex, context: CanvasRenderingContext2D): void {
-    const regexSamples: RegExp = /^[0-9]+\ssamples/;
-    this.printedRows.forEach((row, index) => {
-      textOrigin.y += index == 0 ? 0 : this.fontsize;
-      const text = new Text(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: regexSamples.test(row) ? 'bold' : '' });
-      text.fillStyle = this.textColor;
-      text.draw(context);
-    });
+    this.printedRows.forEach((row, index) => this.writeRow(textOrigin, row, index, context));
   }
 
   public insideCanvas(plotOrigin: Vertex, plotSize: Vertex, scaling: Vertex): void {

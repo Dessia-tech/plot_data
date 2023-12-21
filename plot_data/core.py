@@ -12,7 +12,7 @@ import datetime
 import tempfile
 import warnings
 import webbrowser
-from typing import Dict, List, Tuple, Union, Any
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Circle, Arc

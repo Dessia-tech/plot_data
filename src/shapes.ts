@@ -1093,16 +1093,22 @@ export class SelectionBox extends Rect {
       this.minVertex = this._previousMin.add(translation);
       this.maxVertex = this._previousMax.add(translation);
     }
+    this.updateWithMouse(mouseCoords);
+  }
+
+  private updateWithMouse(mouseCoords: Vertex): void {
     if (this.leftUpdate) this.minVertex.x = Math.min(this._previousMax.x, mouseCoords.x);
     if (this.rightUpdate) this.maxVertex.x = Math.max(this._previousMin.x, mouseCoords.x);
     if (this.downUpdate) this.minVertex.y = Math.min(this._previousMax.y, mouseCoords.y);
     if (this.upUpdate) this.maxVertex.y = Math.max(this._previousMin.y, mouseCoords.y);
-    if (this.isClicked) {
-      if (this.minVertex.x == this._previousMax.x) this.maxVertex.x = mouseCoords.x;
-      if (this.maxVertex.x == this._previousMin.x) this.minVertex.x = mouseCoords.x;
-      if (this.minVertex.y == this._previousMax.y) this.maxVertex.y = mouseCoords.y;
-      if (this.maxVertex.y == this._previousMin.y) this.minVertex.y = mouseCoords.y;
-    }
+    if (this.isClicked) this.flipWithMouse(mouseCoords);
+  }
+
+  private flipWithMouse(mouseCoords: Vertex): void {
+    if (this.minVertex.x == this._previousMax.x) this.maxVertex.x = mouseCoords.x;
+    if (this.maxVertex.x == this._previousMin.x) this.minVertex.x = mouseCoords.x;
+    if (this.minVertex.y == this._previousMax.y) this.maxVertex.y = mouseCoords.y;
+    if (this.maxVertex.y == this._previousMin.y) this.minVertex.y = mouseCoords.y;
   }
 
   public mouseUp(keepState: boolean) {

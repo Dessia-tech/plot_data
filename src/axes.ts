@@ -1,5 +1,5 @@
 import { SIZE_AXIS_END, AXIS_TAIL_SIZE, RUBBERBAND_SMALL_SIZE, DEFAULT_FONTSIZE } from "./constants"
-import { uniqueValues } from "./functions"
+import { uniqueValues, isIntegerArray, getTenPower } from "./functions"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
@@ -23,6 +23,7 @@ export class Axis extends Shape {
   public tickPrecision: number;
   public ticksFontsize: number = 12;
   public isDiscrete: boolean = true;
+  public isInteger: boolean = false;
 
   public drawPath: Path2D;
   public path: Path2D;
@@ -149,7 +150,8 @@ export class Axis extends Shape {
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
       if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
-      if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"];
+      if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"]
+      else this.isInteger = isIntegerArray(vector);
     } else {
       this.isDiscrete = true;
       this.labels = ["0", "1"];
@@ -289,13 +291,58 @@ export class Axis extends Shape {
     }
   }
 
+  private integerTickIncrement(rawIncrement: number, logExponent: number): number {
+    return rawIncrement >= 1 ? Math.floor(rawIncrement / 10 ** logExponent) * 10 ** logExponent : 1;
+  }
+
+  private floatTickIncrement(rawIncrement: number, logExponent: number): number {
+    const tenPower = logExponent > 0 ? 1 : 15;
+    return Math.round(rawIncrement * 10 ** tenPower) / 10 ** tenPower;
+  }
+
+  private getTickIncrement(): number {
+    const rawIncrement = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+    const logExponent = Math.floor(Math.log10(rawIncrement));
+    if (this.isInteger) return this.integerTickIncrement(rawIncrement, logExponent);
+    return this.floatTickIncrement(rawIncrement, logExponent);
+  }
+
+  private ticksTenPower(ticks: number[]): number {
+    const tenPower = Math.max(...ticks.map(tick => { return getTenPower(tick) }));
+    return tenPower > 0 ? tenPower : 0
+  }
+
+  private incrementPrecision(increment: number, ticks: number[]): number {
+    const tickTenPower = getTenPower(ticks[ticks.length - 1] - ticks[0]);
+    const incrementTenPower = getTenPower(increment);
+    const unitIncrement = increment / 10 ** incrementTenPower;
+    const splitUnitIncrement = unitIncrement.toString().split('.');
+    return tickTenPower - incrementTenPower + (splitUnitIncrement.length > 1 ? 2 : 1)
+  }
+
+  private updateTickPrecision(increment: number, ticks: number[]): void {
+    const splitNumber = increment.toString().split('.');
+    const tickTenPower = splitNumber.length > 1 ? this.ticksTenPower(ticks) : 0;
+    this.tickPrecision = tickTenPower + (splitNumber.length > 1 ? splitNumber[1].length + 1 : this.incrementPrecision(increment, ticks));
+    if (ticks.length > 1) {
+      for (let index = 0; index < ticks.length - 1; index++) {
+        const rightTick = ticks[index + 1];
+        const leftTick = ticks[index];
+        while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
+          this.tickPrecision++;
+        };
+      }
+    } else if (this.isInteger && ticks.length > 0) this.tickPrecision = ticks[0].toString().length;
+  };
+
   protected computeTicks(): number[] {
-    const increment = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+    const increment = this.getTickIncrement();
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) ticks.push(ticks.slice(-1)[0] + increment);
     if (ticks.slice(0)[0] < this.minValue) ticks.splice(0, 1);
     if (ticks.slice(-1)[0] >= this.maxValue) ticks.splice(-1, 1);
+    this.updateTickPrecision(increment, ticks);
     return ticks
   }
 
@@ -552,7 +599,6 @@ export class Axis extends Shape {
   }
 
   public numericLabels(): string[] {
-    this.updateTickPrecision();
     return this.ticks.map(tick => tick.toPrecision(this.tickPrecision))
   }
 
@@ -599,18 +645,6 @@ export class Axis extends Shape {
     this.maxValue = (this._previousMax - center) / scale + center - offset / HTMatrix.a;
     this.updateTicks();
   }
-
-  private updateTickPrecision(): number {
-    this.tickPrecision = 1;
-    for (let index = 0; index < this.ticks.length - 1; index++) {
-      const rightTick = this.ticks[index + 1];
-      const leftTick = this.ticks[index];
-      while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
-        this.tickPrecision++;
-      };
-    }
-    return
-  };
 
   public updateTicks(): void {
     this.ticks = this.computeTicks();

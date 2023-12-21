@@ -37,6 +37,19 @@ export function equals(a, b) {
   return a !== a && b !== b;
 }
 
+export function isInteger(value: number): boolean {
+  return Math.floor(value) == value
+}
+
+export function isIntegerArray(array: number[]): boolean {
+  for (let value of array) { if (!isInteger(value) && value != null) return false };
+  return true
+}
+
+export function getTenPower(value: number): number {
+  return value != 0 ? Math.floor(Math.log10(Math.abs(value))) : 0
+}
+
 export function uniqueValues<T>(vector: T[]): T[] {
   return vector.filter((value, index, array) => array.indexOf(value) === index)
 }

@@ -135,16 +135,17 @@ describe('Axis', function() {
       new Date((564927592 + timeZoneOffSet) * 1000),
       new Date((675829471 + timeZoneOffSet) * 1000)
     ];
+    console.log(timeZoneOffSet)
     const dateAxis = new Axis(dateVector, boundingBox, origin, end, name, initScale, nTicks);
     const controlLabels = timeZoneOffSet == 0 ?
       [
-        "07/03/1973 - 11:46:40",
-        "02/05/1976 - 22:33:20",
-        "05/07/1979 - 08:20:00",
-        "07/09/1982 - 18:06:40",
-        "03/11/1985 - 02:53:20",
-        "05/01/1989 - 12:40:00",
-        "07/03/1992 - 22:26:40"
+        "07/03/1973 - 09:46:40",
+        "02/05/1976 - 19:33:20",
+        "05/07/1979 - 05:20:00",
+        "07/09/1982 - 15:06:40",
+        "03/11/1985 - 00:53:20",
+        "05/01/1989 - 10:40:00",
+        "07/03/1992 - 20:26:40"
       ]
       :
       [

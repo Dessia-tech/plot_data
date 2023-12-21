@@ -12,7 +12,7 @@ import datetime
 import tempfile
 import warnings
 import webbrowser
-from typing import Dict, List, Tuple, Union, Any
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Circle, Arc
@@ -58,11 +58,11 @@ def serialize_dates_in_dict(dict_):
 
 def serialize_dates(serializable):
     if isinstance(serializable, list):
-        serializable = serialize_dates_in_list(serializable)
+        return serialize_dates_in_list(serializable)
     if isinstance(serializable, dict):
-        serializable = serialize_dates_in_dict(serializable)
+        return serialize_dates_in_dict(serializable)
     if isinstance(serializable, datetime.datetime):
-        serializable = f"{serializable.timestamp() * 1000}gmt+"
+        return f"{serializable.timestamp() * 1000}gmt+"
     return serializable
 
 class PlotDataObject(DessiaObject):

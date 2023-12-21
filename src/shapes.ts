@@ -771,7 +771,7 @@ export class ScatterPoint extends Point {
     this.marker = this.values.length > 1 ? this.marker : style.marker ?? this.marker;
   }
 
-  public computeValues(pointsData: { [key: string]: number[] }, thresholdDist: number): void {
+  private sumCoordsAndValues(pointsData: { [key: string]: number[] }): [number, number, number, number] {
     let centerX = 0;
     let centerY = 0;
     let meanX = 0;
@@ -782,6 +782,11 @@ export class ScatterPoint extends Point {
       meanX += pointsData.xValues[index];
       meanY += pointsData.yValues[index];
     });
+    return [centerX, centerY, meanX, meanY]
+  }
+
+  public computeValues(pointsData: { [key: string]: number[] }, thresholdDist: number): void {
+    const [centerX, centerY, meanX, meanY] = this.sumCoordsAndValues(pointsData);
     this.center.x = centerX / this.values.length;
     this.center.y = centerY / this.values.length;
     this.size = Math.min(this.size * 1.15 ** (this.values.length - 1), thresholdDist);
@@ -855,7 +860,7 @@ export class RubberBand extends Rect {
   public minUpdate: boolean = false;
   public maxUpdate: boolean = false;
 
-  public lastValues: Vertex = new Vertex(null, null);
+  public lastCanvasValues: Vertex = new Vertex(null, null);
   constructor(
     public attributeName: string,
     private _minValue: number,
@@ -927,30 +932,32 @@ export class RubberBand extends Rect {
 
   private get borderSize(): number { return Math.min(PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
 
+  private translateOnAxis(translation: number): void {
+    this.canvasMin = this.lastCanvasValues.x + translation;
+    this.canvasMax = this.lastCanvasValues.y + translation;
+  }
+
   public mouseDown(mouseDown: Vertex): void {
     super.mouseDown(mouseDown);
     const mouseAxis = this.isVertical ? mouseDown.y : mouseDown.x
     this.isClicked = true;
     if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.isInverted ? this.maxUpdate = true : this.minUpdate = true
     else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.isInverted ? this.minUpdate = true : this.maxUpdate = true
-    else this.lastValues = new Vertex(this.canvasMin, this.canvasMax);
+    else this.lastCanvasValues = new Vertex(this.canvasMin, this.canvasMax);
+  }
 
+  private mouseMoveWhileClicked(mouseCoords: Vertex): void {
+    const currentCoord = this.isVertical ? mouseCoords.y : mouseCoords.x;
+    const downCoord = this.isVertical ? this.mouseClick.y : this.mouseClick.x;
+    if (this.minUpdate) this.canvasMin = currentCoord
+    else if (this.maxUpdate) this.canvasMax = currentCoord
+    else this.translateOnAxis(currentCoord - downCoord);
+    this.flipMinMax();
   }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex) {
     super.mouseMove(context, mouseCoords);
-    const currentValue = this.isVertical ? mouseCoords.y : mouseCoords.x;
-    if (this.isClicked) {
-      const downValue = this.isVertical ? this.mouseClick.y : this.mouseClick.x;
-      if (this.minUpdate) this.canvasMin = currentValue
-      else if (this.maxUpdate) this.canvasMax = currentValue
-      else {
-        const translation = currentValue - downValue;
-        this.canvasMin = this.lastValues.x + translation;
-        this.canvasMax = this.lastValues.y + translation;
-      }
-      this.flipMinMax();
-    }
+    if (this.isClicked) this.mouseMoveWhileClicked(mouseCoords);
   }
 
   public mouseUp(keepState: boolean): void {

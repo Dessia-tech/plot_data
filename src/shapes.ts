@@ -124,8 +124,8 @@ export class Text extends Shape {
 
   private getYCornersUnscaled(yFirstCorner: number, ySecondCorner: number, yMinMaxFactor: number): [number, number] {
     if (this.baseline == "middle") return [yFirstCorner * 0.99, ySecondCorner * 1.01];
-    if (["bottom", "alphabetic"].includes(this.baseline)) return [yFirstCorner, ySecondCorner != 0 ? ySecondCorner * (1 + yMinMaxFactor) : Math.sign(this.scale.y)];
-    if (["top", "hanging"].includes(this.baseline)) return [yFirstCorner, ySecondCorner != 0 ? ySecondCorner * (1 - yMinMaxFactor) : -Math.sign(this.scale.y)];
+    if (["bottom", "alphabetic"].includes(this.baseline)) return [yFirstCorner, ySecondCorner != 0 ? ySecondCorner * (1 - yMinMaxFactor) : -Math.sign(this.scale.y)];
+    if (["top", "hanging"].includes(this.baseline)) return [yFirstCorner, ySecondCorner != 0 ? ySecondCorner * (1 + yMinMaxFactor) : Math.sign(this.scale.y)];
   }
 
   private getCornersUnscaled(): [Vertex, Vertex] {

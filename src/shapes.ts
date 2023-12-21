@@ -455,15 +455,23 @@ export class Label extends Shape {
     return path
   }
 
-  private updateLegendGeometry(): void {
-    if (this.legend instanceof LineSegment) {
-      this.legend.origin.x = this.origin.x;
-      this.legend.origin.y = this.origin.y + LEGEND_MARGIN;
-      this.legend.end.x = this.origin.x + this.shapeSize.x;
-      this.legend.end.y = this.origin.y + this.shapeSize.y - LEGEND_MARGIN;
-    }
-    else if (this.legend instanceof Point) this.legend.center = this.origin.add(this.shapeSize.divide(2));
-    else this.legend = new Rect(this.origin, this.shapeSize);
+  private setLineSegmentLegendGeometry(legend: LineSegment): LineSegment {
+    legend.origin.x = this.origin.x;
+    legend.origin.y = this.origin.y + LEGEND_MARGIN;
+    legend.end.x = this.origin.x + this.shapeSize.x;
+    legend.end.y = this.origin.y + this.shapeSize.y - LEGEND_MARGIN;
+    return legend
+  }
+
+  private setPointLegendGeometry(legend: Point): Point {
+    legend.center = this.origin.add(this.shapeSize.divide(2));
+    return legend
+  }
+
+  private updateLegendGeometry(): LineSegment | Point | Rect {
+    if (this.legend instanceof LineSegment) return this.setLineSegmentLegendGeometry(this.legend)
+    if (this.legend instanceof Point) return this.setPointLegendGeometry(this.legend)
+    return new Rect(this.origin, this.shapeSize);
   }
 
   public getShapeStyle(shape: Shape, origin: Vertex): void {
@@ -505,7 +513,7 @@ export class Label extends Shape {
   public updateOrigin(drawingZone: Rect, initScale: Vertex, nLabels: number): void {
     this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
     this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.75 * initScale.y;
-    this.updateLegendGeometry();
+    this.legend = this.updateLegendGeometry();
     this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + LABEL_TEXT_OFFSET, this.shapeSize.y / 2));
   }
 

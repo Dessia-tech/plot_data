@@ -351,8 +351,7 @@ export class Text extends Shape {
     return [word, pickedChars]
   }
 
-  private splitInWords(): string[] {
-    if (this.text.length == 0) return [""]
+  private buildWords(): string[] {
     const words = [];
     let pickedChars = 0;
     while (pickedChars < this.text.length) {
@@ -364,20 +363,33 @@ export class Text extends Shape {
     return words.length > 1 ? words : this.text.split("")
   }
 
-  private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
-    const rows: string[] = [];
-    let pickedWords = 0;
-    while (pickedWords < this.words.length) {
-      let newRow = '';
-      while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
-        if (context.measureText(newRow + this.words[pickedWords]).width > this.boundingBox.size.x && newRow != '') break
-        else {
-          newRow += this.words[pickedWords];
-          pickedWords++;
-        }
-      }
-      if (newRow.length != 0) rows.push(newRow);
+  private splitInWords(): string[] {
+    if (this.text.length == 0) return [""];
+    return this.buildWords();
+  }
+
+  private isTextTooWide(context: CanvasRenderingContext2D, text: string): boolean {
+    return context.measureText(text).width > this.boundingBox.size.x
+  }
+
+  private addPickedWordToRow(row: string, pickedWords: number): [string, number] {
+    return [row + this.words[pickedWords], pickedWords + 1]
+  }
+
+  private computeNewRow(context: CanvasRenderingContext2D, pickedWords: number, rows: string[]): [string[], number] {
+    let newRow = '';
+    while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
+      if (this.isTextTooWide(context, newRow + this.words[pickedWords]) && newRow != '') break
+      else [newRow, pickedWords] = this.addPickedWordToRow(newRow, pickedWords);
     }
+    if (newRow.length != 0) rows.push(newRow);
+    return [rows, pickedWords]
+  }
+
+  private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
+    let rows: string[] = [];
+    let pickedWords = 0;
+    while (pickedWords < this.words.length) [rows, pickedWords] = this.computeNewRow(context, pickedWords, rows);
     return rows
   }
 
@@ -390,16 +402,21 @@ export class Text extends Shape {
     return true
   }
 
+  private computeTextHeight(fontsize: number, textHeight: number, rows: string[], context: CanvasRenderingContext2D): [string[], number] {
+    if (this.checkWordsLength(context)) {
+      rows = this.fixedFontSplit(context);
+      textHeight = fontsize * rows.length;
+    }
+    return [rows, textHeight]
+  }
+
   private autoFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     let rows = [];
-    let criterion = Number.POSITIVE_INFINITY;
-    while (criterion > this.boundingBox.size.y && fontsize > 1) {
+    let textHeight = Number.POSITIVE_INFINITY;
+    while (textHeight > this.boundingBox.size.y && fontsize > 1) {
       context.font = Text.buildFont(this.style, fontsize, this.font);
-      if (this.checkWordsLength(context)) {
-        rows = this.fixedFontSplit(context);
-        criterion = fontsize * rows.length;
-      }
-      fontsize--;
+      [rows, textHeight] = this.computeTextHeight(fontsize, textHeight, rows, context);
+      fontsize--; // TODO: this is weird but it is working. Should be investigated in further devs.
     }
     return [rows, fontsize + 1]
   }

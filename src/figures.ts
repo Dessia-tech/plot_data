@@ -496,7 +496,7 @@ export class Scatter extends Frame {
   }
 
   private drawPoint(point: ScatterPoint, axesOrigin: Vertex, axesEnd: Vertex, context: CanvasRenderingContext2D): void {
-    const colors = point.updateMouseState(this.clusterColors, this.hoveredIndices, this.clickedIndices, this.selectedIndices);
+    const colors = point.updateDrawingState(this.clusterColors, this.hoveredIndices, this.clickedIndices, this.selectedIndices);
     const color = colors.size != 0 ? mapMax(colors)[0] : (this.getPointSetColor(point) ?? this.fillStyle);
     point.updateDrawProperties(this.pointStyles, this.clusterColors, color, this.lineWidth, this.marker);
     if (point.isInFrame(axesOrigin, axesEnd, this.initScale)) point.draw(context);
@@ -648,6 +648,7 @@ export class Scatter extends Frame {
     }
     return clusters
   }
+
 
   public simpleCluster(inputValue: number): void {
     this.computeClusterColors(inputValue);

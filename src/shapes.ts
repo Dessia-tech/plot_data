@@ -621,44 +621,39 @@ export class Tooltip extends Shape {
     this.printedRows.forEach((row, index) => this.writeRow(textOrigin, row, index, context));
   }
 
+  private updateSquareXOrigin(upRightDiff: Vertex, downLeftDiff: Vertex, plotSize: Vertex): number {
+    if (upRightDiff.x < 0) return upRightDiff.x;
+    if (upRightDiff.x > plotSize.x) return upRightDiff.x - plotSize.x;
+    if (downLeftDiff.x < 0) return -downLeftDiff.x
+    if (downLeftDiff.x > plotSize.x) return plotSize.x - downLeftDiff.x;
+    return 0
+  }
+
+  private computeYOffset(upRightDiff: Vertex, downLeftDiff: Vertex, plotSize: Vertex): [number, number] {
+    if (upRightDiff.y < 0) {
+      if (!this.isFlipper) return [upRightDiff.y, upRightDiff.y]
+      this.flip();
+      return [0, -this.size.y - TOOLTIP_TRIANGLE_SIZE * 2];
+    }
+    if (upRightDiff.y > plotSize.y) {
+      if (!this.isFlipper) return [upRightDiff.y - plotSize.y, upRightDiff.y - plotSize.y]
+      this.flip();
+      return [0, this.size.y + TOOLTIP_TRIANGLE_SIZE * 2]
+    }
+    if (downLeftDiff.y < 0) return [-downLeftDiff.y, -downLeftDiff.y]
+    if (downLeftDiff.y > plotSize.y) return [downLeftDiff.y - plotSize.y, downLeftDiff.y - plotSize.y]
+    return [0, 0]
+  }
+
   public insideCanvas(plotOrigin: Vertex, plotSize: Vertex, scaling: Vertex): void {
     const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE).scale(scaling));
     const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
     const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
     const downLeftDiff = downLeftCorner.subtract(plotOrigin);
-
-    if (upRightDiff.x < 0) this.squareOrigin.x += upRightDiff.x
-    else if (upRightDiff.x > plotSize.x) this.squareOrigin.x += upRightDiff.x - plotSize.x;
-
-    if (upRightDiff.y < 0) {
-      if (this.isFlipper) {
-        this.squareOrigin.y += -this.size.y - TOOLTIP_TRIANGLE_SIZE * 2;
-        this.flip();
-      } else {
-        this.squareOrigin.y += upRightDiff.y;
-        this.origin.y += upRightDiff.y;
-      }
-
-    } else if (upRightDiff.y > plotSize.y) {
-      if (this.isFlipper) {
-        this.squareOrigin.y += this.size.y + TOOLTIP_TRIANGLE_SIZE * 2;
-        this.flip();
-      } else {
-        this.squareOrigin.y += upRightDiff.y - plotSize.y;
-        this.origin.y += upRightDiff.y - plotSize.y;
-      }
-    }
-
-    if (downLeftDiff.x < 0) this.squareOrigin.x -= downLeftDiff.x
-    else if (downLeftDiff.x > plotSize.x) this.squareOrigin.x -= downLeftDiff.x - plotSize.x;
-
-    if (downLeftDiff.y < 0) { // Maybe wrong, did not meet the case
-      this.squareOrigin.y -= downLeftDiff.y;
-      this.origin.y -= downLeftDiff.y;
-    } else if (downLeftDiff.y > plotSize.y) {
-      this.squareOrigin.y += downLeftDiff.y - plotSize.y;
-      this.origin.y += downLeftDiff.y - plotSize.y;
-    }
+    const [offsetOrigin, offsetSquareOrigin] = this.computeYOffset(upRightDiff, downLeftDiff, plotSize)
+    this.squareOrigin.x += this.updateSquareXOrigin(upRightDiff, downLeftDiff, plotSize);
+    this.origin.y += offsetOrigin;
+    this.squareOrigin.y += offsetSquareOrigin;
   }
 
   public flip(): void { this.isUp = !this.isUp }
@@ -725,17 +720,23 @@ export class ScatterPoint extends Point {
     context.lineWidth = 10;
   }
 
-  public updateMouseState(clusterColors: string[], hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[]): Map<string, number> {
+  private mapClusterColor(index: number, clusterColors: string[], colors: Map<string, number>): void {
+    const currentColorCounter = clusterColors[index];
+    colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
+  }
+
+  private updateMouseState(index: number, hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[]): void {
+    if (hoveredIndices.includes(index)) this.isHovered = true;
+    if (clickedIndices.includes(index)) this.isClicked = true;
+    if (selectedIndices.includes(index)) this.isSelected = true;
+  }
+
+  public updateDrawingState(clusterColors: string[], hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[]): Map<string, number> {
     const colors = new Map<string, number>();
     this.isHovered = this.isClicked = this.isSelected = false;
     this.values.forEach(index => {
-      if (clusterColors) {
-        const currentColorCounter = clusterColors[index];
-        colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
-      }
-      if (hoveredIndices.includes(index)) this.isHovered = true;
-      if (clickedIndices.includes(index)) this.isClicked = true;
-      if (selectedIndices.includes(index)) this.isSelected = true;
+      if (clusterColors) this.mapClusterColor(index, clusterColors, colors);
+      this.updateMouseState(index, hoveredIndices, clickedIndices, selectedIndices);
     });
     return colors
   }

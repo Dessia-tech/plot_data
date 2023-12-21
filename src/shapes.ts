@@ -116,31 +116,25 @@ export class Text extends Shape {
       this.scale = scale;
   }
 
+  private getXCornersUnscaled(xFirstCorner: number, xSecondCorner: number, xMinMaxFactor: number): [number, number] {
+    if (this.align == "center") return [xFirstCorner * 0.99, xSecondCorner * 1.01];
+    if (["right", "end"].includes(this.align)) return [xFirstCorner, xSecondCorner != 0 ? xSecondCorner * (1 - xMinMaxFactor) : -Math.sign(this.scale.x)];
+    if (["left", "start"].includes(this.align)) return [xFirstCorner, xSecondCorner != 0 ? xSecondCorner * (1 + xMinMaxFactor) : Math.sign(this.scale.x)];
+  }
+
+  private getYCornersUnscaled(yFirstCorner: number, ySecondCorner: number, yMinMaxFactor: number): [number, number] {
+    if (this.baseline == "middle") return [yFirstCorner * 0.99, ySecondCorner * 1.01];
+    if (["bottom", "alphabetic"].includes(this.baseline)) return [yFirstCorner, ySecondCorner != 0 ? ySecondCorner * (1 + yMinMaxFactor) : Math.sign(this.scale.y)];
+    if (["top", "hanging"].includes(this.baseline)) return [yFirstCorner, ySecondCorner != 0 ? ySecondCorner * (1 - yMinMaxFactor) : -Math.sign(this.scale.y)];
+  }
+
   private getCornersUnscaled(): [Vertex, Vertex] {
     const firstCorner = this.origin.copy();
     const secondCorner = firstCorner.copy();
     const xMinMaxFactor = Math.sign(secondCorner.x) * 0.01 * Math.sign(this.scale.x);
     const yMinMaxFactor = Math.sign(secondCorner.y) * 0.01 * Math.sign(this.scale.y);
-    if (this.align == "center") {
-      firstCorner.x *= 0.99;
-      secondCorner.x *= 1.01;
-    } else if (["right", "end"].includes(this.align)) {
-      if (secondCorner.x != 0) secondCorner.x *= 1 - xMinMaxFactor;
-      else secondCorner.x = -Math.sign(this.scale.x);
-    } else if (["left", "start"].includes(this.align)) {
-      if (secondCorner.x != 0) secondCorner.x *= 1 + xMinMaxFactor;
-      else secondCorner.x = Math.sign(this.scale.x);
-    }
-    if (this.baseline == "middle") {
-      firstCorner.y *= 0.99;
-      secondCorner.y *= 1.01;
-    } else if (["top", "hanging"].includes(this.baseline)) {
-      if (secondCorner.y != 0) secondCorner.y *= 1 + yMinMaxFactor;
-      else secondCorner.y = Math.sign(this.scale.y);
-    } else if (["bottom", "alphabetic"].includes(this.baseline)) {
-      if (secondCorner.y != 0) secondCorner.y *= 1 - yMinMaxFactor;
-      else secondCorner.y = -Math.sign(this.scale.y);
-    }
+    [firstCorner.x, secondCorner.x] = this.getXCornersUnscaled(firstCorner.x, secondCorner.x, xMinMaxFactor);
+    [firstCorner.y, secondCorner.y] = this.getYCornersUnscaled(firstCorner.y, secondCorner.y, yMinMaxFactor);
     return [firstCorner, secondCorner]
   }
 

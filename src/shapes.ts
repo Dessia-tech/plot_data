@@ -19,6 +19,7 @@ export interface TextParams {
   orientation?: number,
   backgroundColor?: string,
   color?: string,
+  isScaled?: boolean,
   scale?: Vertex
 }
 
@@ -56,11 +57,12 @@ export class Text extends Shape {
       orientation = 0,
       color = "hsl(0, 0%, 0%)",
       backgroundColor = "hsla(0, 0%, 100%, 0)",
+      isScaled = false,
       scale = new Vertex(1, 1)
     }: TextParams = {}) {
     super();
     this.initializeBoundingBox(origin, width, height, backgroundColor);
-    this.initializeTextStyle(fontsize, multiLine, font, style, orientation, color, align, baseline, scale);
+    this.initializeTextStyle(fontsize, multiLine, font, style, orientation, color, align, baseline, isScaled, scale);
     this.words = this.getWords();
   }
 
@@ -78,14 +80,14 @@ export class Text extends Shape {
       baseline: data.text_style?.text_align_y,
       style: style,
       orientation: data.text_style?.angle,
-      color: data.text_style?.text_color
+      color: data.text_style?.text_color,
+      isScaled: data.text_scaling
     } as TextParams
   }
 
   public static deserialize(data: any, scale: Vertex): Text {
     const textParams = Text.deserializeTextParams(data);
     const text = new Text(data.comment, new Vertex(data.position_x, data.position_y), textParams);
-    text.isScaled = data.text_scaling ?? false;
     text.scale = new Vertex(scale.x, scale.y);
     return text
   }
@@ -100,8 +102,8 @@ export class Text extends Shape {
   }
 
   private initializeTextStyle(
-    fontsize: number, multiLine: boolean, font: string, style: string,
-    orientation: number, color: string, align: string, baseline: string, scale: Vertex): void {
+    fontsize: number, multiLine: boolean, font: string, style: string, orientation: number,
+    color: string, align: string, baseline: string, isScaled: boolean, scale: Vertex): void {
       this.fontsize = fontsize;
       this.multiLine = multiLine;
       this.font = font;
@@ -110,6 +112,7 @@ export class Text extends Shape {
       this.fillStyle = color;
       this.align = align;
       this.baseline = baseline;
+      this.isScaled = isScaled;
       this.scale = scale;
   }
 

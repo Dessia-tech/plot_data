@@ -175,28 +175,34 @@ export class Text extends Shape {
     return 0;
   }
 
-  public buildPath(): void { this.path = this.boundingBox.path }
-
-  public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
-
-  public capitalizeSelf(): void { this.text = Text.capitalize(this.text) }
-
-  public updateBoundingBox(context: CanvasRenderingContext2D): void {
-    const contextMatrix = context.getTransform();
+  private setBoundingBoxGeometry(contextMatrix: DOMMatrix): void {
     this.boundingBox.origin = this.origin.copy();
     this.boundingBox.origin.x += this.setRectOffsetX() / (this.isScaled ? Math.sign(this.scale.x) : contextMatrix.a);
     this.boundingBox.origin.y += this.setRectOffsetY() / (this.isScaled ? Math.sign(this.scale.y) : contextMatrix.d);
     this.boundingBox.size.x = this.width;
     this.boundingBox.size.y = this.height;
-    if (!this.isScaled) {
-      const boundingBox = new Rect(
-        this.boundingBox.origin.copy(),
-        this.boundingBox.size.scale(new Vertex(Math.abs(1 / contextMatrix.a), Math.abs(1 / contextMatrix.d)))
-      );
-      boundingBox.buildPath();
-      this.boundingBox.path = boundingBox.path;
-    } else this.boundingBox.buildPath();
   }
+
+  private descaleBoundingBox(contextMatrix: DOMMatrix): void {
+    const boundingBox = new Rect(
+      this.boundingBox.origin.copy(),
+      this.boundingBox.size.scale(new Vertex(Math.abs(1 / contextMatrix.a), Math.abs(1 / contextMatrix.d)))
+    );
+    boundingBox.buildPath();
+    this.boundingBox.path = boundingBox.path;
+  }
+
+  public updateBoundingBox(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
+    this.setBoundingBoxGeometry(contextMatrix);    
+    this.isScaled ? this.boundingBox.buildPath() : this.descaleBoundingBox(contextMatrix);
+  }
+
+  public buildPath(): void { this.path = this.boundingBox.path }
+
+  public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
+
+  public capitalizeSelf(): void { this.text = Text.capitalize(this.text) }
 
   public setDrawingProperties(context: CanvasRenderingContext2D): void {
     context.font = this.fullFont;
@@ -304,8 +310,8 @@ export class Text extends Shape {
 
   private formatInBoundingBox(context: CanvasRenderingContext2D): [string[], number] {
     const fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
-    if (this.boundingBox.size.x) return this.formatWithLength([this.text], fontsize, context)
-    else if (this.boundingBox.size.y) return [[this.text], this.fontsize ?? this.boundingBox.size.y];
+    if (this.boundingBox.size.x) return this.formatWithLength([this.text], fontsize, context);
+    if (this.boundingBox.size.y) return [[this.text], this.fontsize ?? this.boundingBox.size.y];
     return [[this.text], fontsize]
   }
 
@@ -333,22 +339,26 @@ export class Text extends Shape {
     return this.splitInWords();
   }
 
+  private pushSeparatorInWords(pickedChars: number): [string, number] {
+    return [this.text[pickedChars], pickedChars + 1]
+  }
+
+  private buildWord(pickedChars: number, word: string): [string, number] {
+    while (!TEXT_SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length) {
+      word += this.text[pickedChars];
+      pickedChars++;
+    }
+    return [word, pickedChars]
+  }
+
   private splitInWords(): string[] {
     if (this.text.length == 0) return [""]
     const words = [];
     let pickedChars = 0;
     while (pickedChars < this.text.length) {
       let word = "";
-      if (TEXT_SEPARATORS.includes(this.text[pickedChars])) {
-        word = this.text[pickedChars];
-        pickedChars++;
-      }
-      else {
-        while (!TEXT_SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length) {
-          word += this.text[pickedChars];
-          pickedChars++;
-        }
-      }
+      if (TEXT_SEPARATORS.includes(this.text[pickedChars])) [word, pickedChars] = this.pushSeparatorInWords(pickedChars)
+      else [word, pickedChars] = this.buildWord(pickedChars, word);
       words.push(word);
     }
     return words.length > 1 ? words : this.text.split("")

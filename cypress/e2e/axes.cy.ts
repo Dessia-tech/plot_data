@@ -135,7 +135,6 @@ describe('Axis', function() {
       new Date((564927592 + timeZoneOffSet) * 1000),
       new Date((675829471 + timeZoneOffSet) * 1000)
     ];
-    console.log(timeZoneOffSet)
     const dateAxis = new Axis(dateVector, boundingBox, origin, end, name, initScale, nTicks);
     const controlLabels = timeZoneOffSet == 0 ?
       [

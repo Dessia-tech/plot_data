@@ -22,21 +22,6 @@ export interface TextParams {
   scale?: Vertex
 }
 
-const TEXT_PARAMS: TextParams = {
-  width: null,
-  height: null,
-  fontsize: null,
-  multiLine: false,
-  font: 'sans-serif',
-  align: 'left',
-  baseline: 'top',
-  style: '',
-  orientation: 0,
-  color: "hsl(0, 0%, 0%)",
-  backgroundColor: "hsla(0, 0%, 100%, 0)",
-  scale: new Vertex(1, 1)
-}
-
 export class Text extends Shape {
   public scale: Vertex = new Vertex(1, 1);
   public width: number;
@@ -56,7 +41,7 @@ export class Text extends Shape {
   public rowIndices: number[] = [];
   public boundingBox: Rect;
   public offset: number = 0;
-  
+
   constructor(
     public text: string,
     public origin: Vertex,

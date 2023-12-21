@@ -79,9 +79,9 @@ export class InteractiveObject {
   public path: Path2D = new Path2D();
   public drawnPath: Path2D = new Path2D();
   public inStrokeScale: Vertex = new Vertex(1, 1);
-  
+
   public mouseClick: Vertex = null;
-  
+
   public isHovered: boolean = false;
   public isClicked: boolean = false;
   public isSelected: boolean = false;
@@ -97,7 +97,7 @@ export class InteractiveObject {
   protected updateTooltipOrigin(matrix: DOMMatrix): void { }
 
   public buildPath(): void { }
-  
+
   protected buildScaledPath(context: CanvasRenderingContext2D, contextMatrix: DOMMatrix): void {
     this.drawnPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
     context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);

@@ -1,6 +1,4 @@
-import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE,
-  TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, RUBBERBAND_SMALL_SIZE,
-  LABEL_TEXT_OFFSET, REGEX_SAMPLES } from "./constants"
+import * as C from './constants';
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { styleToLegend } from "./shapeFunctions"
@@ -155,7 +153,7 @@ export class Text extends Shape {
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let fontsize = Math.min(this.boundingBox.size.y ?? Number.POSITIVE_INFINITY, this.fontsize ?? Number.POSITIVE_INFINITY);
-    if (fontsize == Number.POSITIVE_INFINITY) fontsize = DEFAULT_FONTSIZE;
+    if (fontsize == Number.POSITIVE_INFINITY) fontsize = C.DEFAULT_FONTSIZE;
     context.font = Text.buildFont(this.style, fontsize, this.font);
     if (context.measureText(this.text).width >= this.boundingBox.size.x) fontsize = fontsize * this.boundingBox.size.x / context.measureText(this.text).width;
     return fontsize
@@ -309,7 +307,7 @@ export class Text extends Shape {
   }
 
   private formatInBoundingBox(context: CanvasRenderingContext2D): [string[], number] {
-    const fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
+    const fontsize = this.fontsize ?? C.DEFAULT_FONTSIZE;
     if (this.boundingBox.size.x) return this.formatWithLength([this.text], fontsize, context);
     if (this.boundingBox.size.y) return [[this.text], this.fontsize ?? this.boundingBox.size.y];
     return [[this.text], fontsize]
@@ -344,7 +342,7 @@ export class Text extends Shape {
   }
 
   private buildWord(pickedChars: number, word: string): [string, number] {
-    while (!TEXT_SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length) {
+    while (!C.TEXT_SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length) {
       word += this.text[pickedChars];
       pickedChars++;
     }
@@ -356,7 +354,7 @@ export class Text extends Shape {
     let pickedChars = 0;
     while (pickedChars < this.text.length) {
       let word = "";
-      if (TEXT_SEPARATORS.includes(this.text[pickedChars])) [word, pickedChars] = this.pushSeparatorInWords(pickedChars)
+      if (C.TEXT_SEPARATORS.includes(this.text[pickedChars])) [word, pickedChars] = this.pushSeparatorInWords(pickedChars)
       else [word, pickedChars] = this.buildWord(pickedChars, word);
       words.push(word);
     }
@@ -423,7 +421,7 @@ export class Text extends Shape {
 }
 
 export class Label extends Shape {
-  public shapeSize: Vertex = new Vertex(30, MAX_LABEL_HEIGHT);
+  public shapeSize: Vertex = new Vertex(30, C.MAX_LABEL_HEIGHT);
   public legend: Shape;
   public maxWidth: number = 150;
   constructor(
@@ -457,9 +455,9 @@ export class Label extends Shape {
 
   private setLineSegmentLegendGeometry(legend: LineSegment): LineSegment {
     legend.origin.x = this.origin.x;
-    legend.origin.y = this.origin.y + LEGEND_MARGIN;
+    legend.origin.y = this.origin.y + C.LEGEND_MARGIN;
     legend.end.x = this.origin.x + this.shapeSize.x;
-    legend.end.y = this.origin.y + this.shapeSize.y - LEGEND_MARGIN;
+    legend.end.y = this.origin.y + this.shapeSize.y - C.LEGEND_MARGIN;
     return legend
   }
 
@@ -514,7 +512,7 @@ export class Label extends Shape {
     this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
     this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.75 * initScale.y;
     this.legend = this.updateLegendGeometry();
-    this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + LABEL_TEXT_OFFSET, this.shapeSize.y / 2));
+    this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + C.LABEL_TEXT_OFFSET, this.shapeSize.y / 2));
   }
 
   private drawText(context: CanvasRenderingContext2D): void {
@@ -586,33 +584,33 @@ export class Tooltip extends Shape {
     context.font = `${this.fontsize}px sans-serif`;
     const [printedRows, textLength] = this.dataToText(context);
     context.restore();
-    return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
+    return [printedRows, new Vertex(textLength + C.TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
   }
 
   private formatValue(value: number | string): number | string {
-    if (typeof value == "number") return Math.round(value * TOOLTIP_PRECISION) / TOOLTIP_PRECISION;
+    if (typeof value == "number") return Math.round(value * C.TOOLTIP_PRECISION) / C.TOOLTIP_PRECISION;
     return value
   };
 
   public buildPath(): void {
     this.path = new Path2D();
-    const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
+    const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, C.TOOLTIP_TRIANGLE_SIZE));
     const triangleCenter = this.origin;
-    triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2 * (this.isUp ? 1 : -1);
+    triangleCenter.y += C.TOOLTIP_TRIANGLE_SIZE / 2 * (this.isUp ? 1 : -1);
     this.path.addPath(new RoundRect(rectOrigin, this.size, this.radius).path);
-    this.path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, this.isUp ? 'down' : 'up').path);
+    this.path.addPath(new Triangle(triangleCenter, C.TOOLTIP_TRIANGLE_SIZE, this.isUp ? 'down' : 'up').path);
   }
 
   private computeTextOrigin(scaling: Vertex): Vertex {
     let textOrigin = this.squareOrigin;
-    let textOffsetX = -this.size.x / 2 + TOOLTIP_TEXT_OFFSET;
-    let textOffsetY = (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25;
+    let textOffsetX = -this.size.x / 2 + C.TOOLTIP_TEXT_OFFSET;
+    let textOffsetY = (scaling.y < 0 ? -this.size.y - C.TOOLTIP_TRIANGLE_SIZE : C.TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25;
     return textOrigin.add(new Vertex(textOffsetX, textOffsetY));
   }
 
   private writeRow(textOrigin: Vertex, row: string, rowIndex: number, context: CanvasRenderingContext2D): void {
     textOrigin.y += rowIndex == 0 ? 0 : this.fontsize;
-    const text = new Text(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: REGEX_SAMPLES.test(row) ? 'bold' : '' });
+    const text = new Text(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: C.REGEX_SAMPLES.test(row) ? 'bold' : '' });
     text.fillStyle = this.textColor;
     text.draw(context);
   }
@@ -633,12 +631,12 @@ export class Tooltip extends Shape {
     if (upRightDiff.y < 0) {
       if (!this.isFlipper) return [upRightDiff.y, upRightDiff.y]
       this.flip();
-      return [0, -this.size.y - TOOLTIP_TRIANGLE_SIZE * 2];
+      return [0, -this.size.y - C.TOOLTIP_TRIANGLE_SIZE * 2];
     }
     if (upRightDiff.y > plotSize.y) {
       if (!this.isFlipper) return [upRightDiff.y - plotSize.y, upRightDiff.y - plotSize.y]
       this.flip();
-      return [0, this.size.y + TOOLTIP_TRIANGLE_SIZE * 2]
+      return [0, this.size.y + C.TOOLTIP_TRIANGLE_SIZE * 2]
     }
     if (downLeftDiff.y < 0) return [-downLeftDiff.y, -downLeftDiff.y]
     if (downLeftDiff.y > plotSize.y) return [downLeftDiff.y - plotSize.y, downLeftDiff.y - plotSize.y]
@@ -646,7 +644,7 @@ export class Tooltip extends Shape {
   }
 
   public insideCanvas(plotOrigin: Vertex, plotSize: Vertex, scaling: Vertex): void {
-    const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE).scale(scaling));
+    const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, C.TOOLTIP_TRIANGLE_SIZE).scale(scaling));
     const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
     const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
     const downLeftDiff = downLeftCorner.subtract(plotOrigin);
@@ -883,6 +881,13 @@ export class RubberBand extends Rect {
 
   public selfSend(rubberBands: Map<string, RubberBand>): void { rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical)) }
 
+  public defaultStyle(): void {
+    this.lineWidth = 0.1;
+    this.fillStyle = C.RUBBERBAND_COLOR;
+    this.strokeStyle = C.RUBBERBAND_COLOR;
+    this.alpha = C.RUBBERBAND_ALPHA;
+  }
+
   public selfSendRange(rubberBands: Map<string, RubberBand>): void {
     rubberBands.get(this.attributeName).minValue = this.minValue;
     rubberBands.get(this.attributeName).maxValue = this.maxValue;
@@ -900,15 +905,15 @@ export class RubberBand extends Rect {
 
   private getVerticalRectProperties(axisOrigin: Vertex): [Vertex, Vertex] {
     return [
-      new Vertex(axisOrigin.x - RUBBERBAND_SMALL_SIZE / 2, this.canvasMin),
-      new Vertex(RUBBERBAND_SMALL_SIZE, this.canvasLength)
+      new Vertex(axisOrigin.x - C.RUBBERBAND_SMALL_SIZE / 2, this.canvasMin),
+      new Vertex(C.RUBBERBAND_SMALL_SIZE, this.canvasLength)
     ]
   }
 
   private getHorizontalRectProperties(axisOrigin: Vertex): [Vertex, Vertex] {
     return [
-      new Vertex(this.canvasMin, axisOrigin.y - RUBBERBAND_SMALL_SIZE / 2),
-      new Vertex(this.canvasLength, RUBBERBAND_SMALL_SIZE)
+      new Vertex(this.canvasMin, axisOrigin.y - C.RUBBERBAND_SMALL_SIZE / 2),
+      new Vertex(this.canvasLength, C.RUBBERBAND_SMALL_SIZE)
     ]
   }
 
@@ -930,7 +935,7 @@ export class RubberBand extends Rect {
     }
   }
 
-  private get borderSize(): number { return Math.min(PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
+  private get borderSize(): number { return Math.min(C.PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
 
   private translateOnAxis(translation: number): void {
     this.canvasMin = this.lastCanvasValues.x + translation;
@@ -986,7 +991,7 @@ export class SelectionBox extends Rect {
     super(origin, size);
     this.mouseClick = this.origin.copy();
     this.initBoundariesVertex();
-    this.dashLine = DASH_SELECTION_WINDOW;
+    this.dashLine = C.DASH_SELECTION_WINDOW;
     this.selectedStyle = this.clickedStyle = this.hoverStyle = this.fillStyle = "hsla(0, 0%, 100%, 0)";
     this.lineWidth = 0.5
   }
@@ -1060,9 +1065,9 @@ export class SelectionBox extends Rect {
     }
   }
 
-  private get borderSizeX(): number { return Math.min(PICKABLE_BORDER_SIZE / Math.abs(this._scale.x), Math.abs(this.size.x) / 3) }
+  private get borderSizeX(): number { return Math.min(C.PICKABLE_BORDER_SIZE / Math.abs(this._scale.x), Math.abs(this.size.x) / 3) }
 
-  private get borderSizeY(): number { return Math.min(PICKABLE_BORDER_SIZE / Math.abs(this._scale.y), Math.abs(this.size.y) / 3) }
+  private get borderSizeY(): number { return Math.min(C.PICKABLE_BORDER_SIZE / Math.abs(this._scale.y), Math.abs(this.size.y) / 3) }
 
   private saveMinMaxVertices(): void {
     this._previousMin = this.minVertex.copy();

@@ -42,8 +42,6 @@ export class Axis extends Shape {
   public isInverted: boolean = false;
 
   public rubberBand: RubberBand;
-  public rubberColor: string = 'hsl(200, 95%, 50%)';
-  public rubberAlpha: number = 0.5;
   public mouseStyleON: boolean = false;
 
   public title: Text;
@@ -223,14 +221,7 @@ export class Axis extends Shape {
 
   private buildRubberBand(): void {
     this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
-    this.defaultRubberBandStyle();
-  }
-
-  private defaultRubberBandStyle(): void {
-    this.rubberBand.lineWidth = 0.1;
-    this.rubberBand.fillStyle = this.rubberColor;
-    this.rubberBand.strokeStyle = this.rubberColor;
-    this.rubberBand.alpha = this.rubberAlpha;
+    this.rubberBand.defaultStyle();
   }
 
   public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }

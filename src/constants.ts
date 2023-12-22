@@ -1,5 +1,8 @@
 export const PICKABLE_BORDER_SIZE = 20;
 export const RUBBERBAND_SMALL_SIZE = 10;
+export const RUBBERBAND_COLOR = 'hsl(200, 95%, 50%)';
+export const RUBBERBAND_ALPHA = 0.5;
+
 export const DASH_SELECTION_WINDOW = [7, 3];
 export const AXIS_TAIL_SIZE = 0;
 

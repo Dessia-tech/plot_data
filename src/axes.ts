@@ -15,49 +15,43 @@ export class TitleSettings {
 }
 
 export class Axis extends Shape {
-  public ticksPoints: Point[];
-  public rubberBand: RubberBand;
-
-  public labels: string[];
-  protected _ticks: number[];
-  public tickPrecision: number;
-  public ticksFontsize: number = 12;
-  public isDiscrete: boolean = true;
-  public isInteger: boolean = false;
-  public logScale: boolean = false;
-  public isDate: boolean = false;
-
   public path: Path2D;
-  public lineWidth: number = 1;
-  public strokeStyle: string = 'hsl(0, 0%, 0%)';
-  public hoverStyle: string = 'hsl(0, 100%, 48%)';
-  public clickedStyle: string = 'hsl(126, 67%, 72%)';
-  public rubberColor: string = 'hsl(200, 95%, 50%)';
-  public rubberAlpha: number = 0.5;
-  public mouseStyleON: boolean = false;
-
-  public isHovered: boolean = false;
-  public isClicked: boolean = false;
-  public isInverted: boolean = false;
-  public title: Text;
-  public centeredTitle: boolean = false;
-  public titleSettings: TitleSettings = new TitleSettings();
-  public titleWidth: number;
-  public font: string = 'sans-serif';
-
   public emitter: EventEmitter = new EventEmitter();
+
   public initMinValue: number;
   public initMaxValue: number;
   private _previousMin: number;
   private _previousMax: number;
   private _minValue: number;
   private _maxValue: number;
-
   private _marginRatio: number = 0.05;
+
+  public labels: string[];
+  public ticksPoints: Point[];
+  protected _ticks: number[];
+  public tickPrecision: number;
+  public ticksFontsize: number = 12;
   protected offsetTicks: number;
-  public offsetTitle: number;
   protected maxTickWidth: number;
   protected maxTickHeight: number;
+  
+  public isDiscrete: boolean = true;
+  public isInteger: boolean = false;
+  public logScale: boolean = false;
+  public isDate: boolean = false;
+  public isInverted: boolean = false;
+
+  public rubberBand: RubberBand;
+  public rubberColor: string = 'hsl(200, 95%, 50%)';
+  public rubberAlpha: number = 0.5;
+  public mouseStyleON: boolean = false;
+
+  public title: Text;
+  public centeredTitle: boolean = false;
+  public titleSettings: TitleSettings = new TitleSettings();
+  public titleWidth: number;
+  public font: string = 'sans-serif';
+  public offsetTitle: number;
 
   // OLD
   public is_drawing_rubberband: boolean = false;

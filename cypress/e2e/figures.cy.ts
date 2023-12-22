@@ -122,15 +122,20 @@ describe("Figure", function() {
         ]);
         scatter.initRubberBandMultiplot(multiplotRubberBands);
 
-        expect(multiplotRubberBands, "empty multiplotRubberBands").to.deep.equal(referenceRubberBands);
+        scatter.axes.forEach(axis => {
+            expect(multiplotRubberBands.get(axis.name).minValue, `empty rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).minValue);
+            expect(multiplotRubberBands.get(axis.name).maxValue, `empty rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).maxValue);
+        });
 
         scatter.axes[0].rubberBand.minValue = 1;
         scatter.axes[0].rubberBand.maxValue = 4;
         scatter.axes[1].rubberBand.minValue = 2;
         scatter.axes[1].rubberBand.maxValue = 5;
         scatter.updateRubberBandMultiplot(multiplotRubberBands);
-
-        expect(multiplotRubberBands, "edited multiplotRubberBands").to.deep.equal(referenceRubberBands);
+        scatter.axes.forEach(axis => {
+            expect(multiplotRubberBands.get(axis.name).minValue, `edited rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).minValue);
+            expect(multiplotRubberBands.get(axis.name).maxValue, `edited rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).maxValue);
+        });
     });
 });
 

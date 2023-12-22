@@ -9,14 +9,12 @@ import { Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
 import { DataInterface } from "./dataInterfaces"
 
-export class RemoteFigure {
+export class RemoteFigure extends Rect {
   public context: CanvasRenderingContext2D;
   public axes: Axis[] = [];
   public drawOrigin: Vertex;
   public drawEnd: Vertex;
   public drawnFeatures: string[];
-  public origin: Vertex;
-  public size: Vertex;
   public translation: Vertex = new Vertex(0, 0);
 
   public hoveredIndices: number[];
@@ -27,9 +25,6 @@ export class RemoteFigure {
   public pointSets: PointSet[] = [];
   public pointStyles: PointStyle[] = null;
 
-  public lineWidth: number = 1;
-
-  public isHovered: boolean = false;
   public isSelecting: boolean = false;
   public selectionBox = new SelectionBox();
   public isZooming: boolean = false;
@@ -68,6 +63,7 @@ export class RemoteFigure {
     public canvasID: string,
     public is_in_multiplot: boolean = false
     ) {
+      super(new Vertex(X, Y), new Vertex(width, height));
       this.unpackAxisStyle(data);
       this.origin = new Vertex(X, Y);
       this.size = new Vertex(width - X, height - Y);
@@ -492,7 +488,7 @@ export class RemoteFigure {
     return currentMouse.subtract(mouseDown)
   }
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
+  public broadcastMouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
     this.fixedObjects.mouseMove(this.context, canvasMouse);
     this.absoluteObjects.mouseMove(this.context, absoluteMouse);
     this.relativeObjects.mouseMove(this.context, frameMouse);
@@ -503,7 +499,7 @@ export class RemoteFigure {
     return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.relativeMatrix.inverse()), mouseCoords]
   }
 
-  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape] {
+  public broadcastMouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape] {
     const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
     const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
     const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);
@@ -511,7 +507,7 @@ export class RemoteFigure {
     return [canvasMouse, frameMouse, clickedObject]
   }
 
-  public mouseUp(ctrlKey: boolean): void {
+  public broadcastMouseUp(ctrlKey: boolean): void {
     if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
       this.absoluteObjects.mouseUp(ctrlKey);
       this.relativeObjects.mouseUp(ctrlKey);
@@ -522,11 +518,11 @@ export class RemoteFigure {
   public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: Shape): [Vertex, Vertex, Vertex] {
     const [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
     this.isHovered = this.isInCanvas(absoluteMouse);
-    this.mouseMove(canvasMouse, frameMouse, absoluteMouse);
+    this.broadcastMouseMove(canvasMouse, frameMouse, absoluteMouse);
     if (canvasDown) {
       const translation = this.mouseTranslate(canvasMouse, canvasDown);
       if (!(clickedObject instanceof Axis)) {
-        if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.translate(canvas, translation);
+        if ((!clickedObject || translation.normL1 >= 10) && (!this.isSelecting && !this.isZooming)) this.setTranslation(canvas, translation);
       }
       if (this.isSelecting) {
         if (clickedObject instanceof SelectionBox) this.updateSelectionBox(clickedObject.minVertex, clickedObject.maxVertex)
@@ -539,7 +535,7 @@ export class RemoteFigure {
   }
 
   public mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape]  {
-    const [canvasDown, frameDown, clickedObject] = this.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+    const [canvasDown, frameDown, clickedObject] = this.broadcastMouseDown(canvasMouse, frameMouse, absoluteMouse);
     if (!(clickedObject instanceof Axis)) this.is_drawing_rubber_band = this.isSelecting;
     return [canvasDown, frameDown, clickedObject]
   }
@@ -549,7 +545,7 @@ export class RemoteFigure {
       if (this.zoomBox.area != 0) this.zoomBoxUpdateAxes(this.zoomBox);
       this.zoomBox.update(new Vertex(0, 0), new Vertex(0, 0));
     }
-    this.mouseUp(ctrlKey);
+    this.broadcastMouseUp(ctrlKey);
     this.draw();
     return this.resetMouseEvents()
   }
@@ -612,7 +608,7 @@ export class RemoteFigure {
     return [ctrlKey, shiftKey, spaceKey]
   }
 
-  public translate(canvas: HTMLElement, translation: Vertex): void {
+  public setTranslation(canvas: HTMLElement, translation: Vertex): void {
     canvas.style.cursor = 'move';
     this.translation = translation;
   }

@@ -152,13 +152,13 @@ export class Frame extends Figure {
     this.nYTicks = data.axis?.nb_points_y ?? this.nYTicks;
   }
 
-  public mouseMove(canvasMouse: Vertex, absoluteMouse: Vertex, frameMouse: Vertex): void {
-    super.mouseMove(canvasMouse, absoluteMouse, frameMouse);
+  public broadcastMouseMove(canvasMouse: Vertex, absoluteMouse: Vertex, frameMouse: Vertex): void {
+    super.broadcastMouseMove(canvasMouse, absoluteMouse, frameMouse);
     this.hoveredIndices = this.sampleDrawings.updateShapeStates('isHovered');
   }
 
-  public mouseUp(ctrlKey: boolean): void {
-    super.mouseUp(ctrlKey);
+  public broadcastMouseUp(ctrlKey: boolean): void {
+    super.broadcastMouseUp(ctrlKey);
     this.clickedIndices = this.sampleDrawings.updateShapeStates('isClicked');
   }
 
@@ -677,8 +677,8 @@ export class Scatter extends Frame {
     })
   }
 
-  public translate(canvas: HTMLElement, translation: Vertex): void {
-    super.translate(canvas, translation);
+  public setTranslation(canvas: HTMLElement, translation: Vertex): void {
+    super.setTranslation(canvas, translation);
     const pointTRL = new Vertex(translation.x * this.initScale.x, translation.y * this.initScale.y);
     this.points.forEach((point, index) => {
       point.center = this.previousCoords[index].add(pointTRL);
@@ -686,14 +686,14 @@ export class Scatter extends Frame {
     })
   }
 
-  public mouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
-    let [superCanvasMouse, superFrameMouse, clickedObject] = super.mouseDown(canvasMouse, frameMouse, absoluteMouse);
+  public broadcastMouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, any] {
+    let [superCanvasMouse, superFrameMouse, clickedObject] = super.broadcastMouseDown(canvasMouse, frameMouse, absoluteMouse);
     this.previousCoords = this.points.map(p => p.center);
     return [superCanvasMouse, superFrameMouse, clickedObject]
   }
 
-  public mouseUp(ctrlKey: boolean): void {
-    super.mouseUp(ctrlKey);
+  public broadcastMouseUp(ctrlKey: boolean): void {
+    super.broadcastMouseUp(ctrlKey);
     this.previousCoords = [];
   }
 
@@ -790,13 +790,13 @@ export class Graph2D extends Scatter {
     this.draw();
   }
 
-  public translate(canvas: HTMLElement, translation: Vertex): void {
-    super.translate(canvas, translation);
+  public setTranslation(canvas: HTMLElement, translation: Vertex): void {
+    super.setTranslation(canvas, translation);
     this.curves.forEach(curve => { if (curve.mouseClick) curve.mouseClick = curve.previousMouseClick.add(translation.scale(this.initScale)) });
   }
 
-  public mouseUp(ctrlKey: boolean): void {
-    super.mouseUp(ctrlKey);
+  public broadcastMouseUp(ctrlKey: boolean): void {
+    super.broadcastMouseUp(ctrlKey);
     this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
   }
   //TODO: Code duplicate, there is a middle class here between Scatter, Frame, Draw and Graph2D. Not so obvious.
@@ -1009,7 +1009,7 @@ export class ParallelPlot extends Figure {
 
   protected drawTooltips(): void {}
 
-  public mouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
+  public broadcastMouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
     this.fixedObjects.mouseMove(this.context, canvasMouse);
     if (!this.is_drawing_rubber_band) {
       this.absoluteObjects.mouseMove(this.context, absoluteMouse);
@@ -1028,9 +1028,9 @@ export class ParallelPlot extends Figure {
     });
   }
 
-  public mouseUp(ctrlKey: boolean): void {
+  public broadcastMouseUp(ctrlKey: boolean): void {
     if (this.changedAxes.length != 0) this.updateAxesLocation();
-    super.mouseUp(ctrlKey);
+    super.broadcastMouseUp(ctrlKey);
     if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateShapeStates('isClicked');
   }
 

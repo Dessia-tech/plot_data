@@ -238,12 +238,12 @@ describe("Histogram", function() {
 
     it("should hover/click on bar", function () {
         const [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 350, "offsetY": 420} as MouseEvent);
-        histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
+        histogram.broadcastMouseMove(canvasMouse, frameMouse, mouseCoords);
         expect(histogram.hoveredIndices[1], "hoveredIndices[1]").to.equal(7);
         expect(histogram.hoveredIndices.length, "hoveredIndices.length").to.equal(3);
 
-        histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
-        histogram.mouseUp(false)
+        histogram.broadcastMouseDown(canvasMouse, frameMouse, mouseCoords);
+        histogram.broadcastMouseUp(false)
         expect(histogram.clickedIndices[2], "clickedIndices[2]").to.equal(8);
         expect(histogram.clickedIndices[0], "clickedIndices[0]").to.equal(6);
     });

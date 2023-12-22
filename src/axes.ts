@@ -84,9 +84,9 @@ export class Axis extends Shape {
   }
 
   private get drawingColor(): string {
-    let color = this.strokeStyle;
-    if (this.mouseStyleON) { color = this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle };
-    return color
+    return this.mouseStyleON
+      ? this.isHovered ? this.hoverStyle : this.isClicked ? this.clickedStyle : this.strokeStyle
+      : this.strokeStyle
   }
 
   get interval(): number { return Math.abs(this.maxValue - this.minValue) };
@@ -119,10 +119,7 @@ export class Axis extends Shape {
 
   set nTicks(value: number) { this._nTicks = value };
 
-  get nTicks(): number {
-    if (this.isDiscrete) return this.labels.length + 1
-    return this._nTicks
-  }
+  get nTicks(): number { return this.isDiscrete ? this.labels.length + 1 : this._nTicks }
 
   get ticks(): number[] { return this._ticks }
 
@@ -168,18 +165,31 @@ export class Axis extends Shape {
     }
   }
 
-  private discretePropertiesFromVector(vector: any[]): void {
-    if (vector) {
-      if (vector.length != 0) {
-        this.isDate = vector[0] instanceof Date;
-        this.isDiscrete = !this.isDate && typeof vector[0] == 'string';
-      }
-      if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"]
-      else this.isInteger = isIntegerArray(vector) && !this.isDate;
-    } else {
-      this.isDiscrete = true;
-      this.labels = ["0", "1"];
+  private emptyVectorTypeAndLabels(): void {
+    this.isDiscrete = true;
+    this.labels = ["0", "1"];
+  }
+
+  private getDiscreteLabels(vector: string[]): void {
+    this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"];
+  }
+
+  private getVectorType(vector: any[]): void {
+    if (vector.length != 0) {
+      this.isDate = vector[0] instanceof Date;
+      this.isDiscrete = !this.isDate && typeof vector[0] == 'string';
     }
+    this.isInteger = isIntegerArray(vector) && !this.isDate && !this.isDiscrete;
+  }
+
+  private filledVectorTypeAndLabels(vector: any[]): void {
+    this.getVectorType(vector);
+    if (this.isDiscrete) this.getDiscreteLabels(vector);
+  }
+
+  private discretePropertiesFromVector(vector: any[]): void {
+    if (vector) this.filledVectorTypeAndLabels(vector)
+    else this.emptyVectorTypeAndLabels();
   }
 
   public otherAxisScaling(otherAxis: Axis): void {
@@ -331,19 +341,23 @@ export class Axis extends Shape {
     return tickTenPower - incrementTenPower + (splitUnitIncrement.length > 1 ? 2 : 1)
   }
 
+  private getTicksPrecisionFromTickGaps(ticks: number[]): void {
+    for (let index = 0; index < ticks.length - 1; index++) {
+      const rightTick = ticks[index + 1];
+      const leftTick = ticks[index];
+      while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
+        this.tickPrecision++;
+      };
+    }
+  }
+
   private updateTickPrecision(increment: number, ticks: number[]): void {
     const splitNumber = increment.toString().split('.');
     const tickTenPower = splitNumber.length > 1 ? this.ticksTenPower(ticks) : 0;
-    this.tickPrecision = tickTenPower + (splitNumber.length > 1 ? splitNumber[1].length + 1 : this.incrementPrecision(increment, ticks));
-    if (ticks.length > 1) {
-      for (let index = 0; index < ticks.length - 1; index++) {
-        const rightTick = ticks[index + 1];
-        const leftTick = ticks[index];
-        while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
-          this.tickPrecision++;
-        };
-      }
-    } else if (this.isInteger && ticks.length > 0) this.tickPrecision = ticks[0].toString().length;
+    const decimalLength = splitNumber.length > 1 ? splitNumber[1].length + 1 : this.incrementPrecision(increment, ticks)
+    this.tickPrecision = tickTenPower + decimalLength;
+    if (ticks.length > 1) this.getTicksPrecisionFromTickGaps(ticks);
+    else if (this.isInteger && ticks.length > 0) this.tickPrecision = ticks[0].toString().length;
   };
 
   protected computeTicks(): number[] {
@@ -491,22 +505,33 @@ export class Axis extends Shape {
     this.titleSettings.orientation = 0;
   }
 
-  private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string): [Point[], Text[]] {
-    const ticksPoints = [];
-    const ticksText: Text[] = [];
-    const tickTextParams = this.computeTickTextParams();
+  private getFirstNonEmptyLabel(): number {
     let count = Math.max(0, this.ticks[0]);
     while (this.labels[count] == '') count++;
+    return count;
+  }
+
+  private getDiscreteTickText(count: number, tick: number): [string, number] {
+    return count === tick && this.labels[count]
+      ? [this.labels[count], count + 1]
+      : ['', count];
+  }
+
+  private getTickText(tickIndex: number, count: number, tick: number): [string, number] {
+    if (this.isDiscrete) return this.getDiscreteTickText(count, tick);
+    return [this.labels[tickIndex], count];
+  }
+
+  private drawTicksPoints(context: CanvasRenderingContext2D, pointHTMatrix: DOMMatrix, color: string): [Point[], Text[]] {
+    const ticksPoints: Point[] = [];
+    const ticksText: Text[] = [];
+    const tickTextParams = this.computeTickTextParams();
+    let count = this.getFirstNonEmptyLabel();
+    let text: string;
     this.ticks.forEach((tick, idx) => {
-      let point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, color);
-      let text = this.labels[idx];
+      const point = this.drawTickPoint(context, tick, this.isVertical, pointHTMatrix, color);
       ticksPoints.push(point);
-      if (this.isDiscrete) {
-        if (count == tick && this.labels[count]) {
-          text = this.labels[count];
-          count++;
-        } else text = '';
-      }
+      [text, count] = this.getTickText(idx, count, tick);
       ticksText.push(this.computeTickText(context, text, tickTextParams, point, pointHTMatrix));
     })
     return [ticksPoints, ticksText]

@@ -949,6 +949,7 @@ export class RubberBand extends Rect {
     if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.isInverted ? this.maxUpdate = true : this.minUpdate = true
     else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.isInverted ? this.minUpdate = true : this.maxUpdate = true
     else this.lastCanvasValues = new Vertex(this.canvasMin, this.canvasMax);
+    console.log(this.minUpdate, this.maxUpdate, this.lastCanvasValues)
   }
 
   private mouseMoveWhileClicked(mouseCoords: Vertex): void {

@@ -46,7 +46,7 @@ export class RemoteFigure {
   protected margin: Vertex;
   protected _offsetFactor: Vertex;
   protected _marginFactor: Vertex;
-  protected initScale: Vertex = new Vertex(-1, 1);
+  protected initScale: Vertex = new Vertex(1, -1);
   private _axisStyle = new Map<string, any>([['strokeStyle', 'hsl(0, 0%, 30%)']]);
 
   public features: Map<string, any[]>;

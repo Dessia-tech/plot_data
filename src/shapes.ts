@@ -508,9 +508,9 @@ export class Label extends Shape {
     }
   }
 
-  public updateOrigin(drawingZone: Rect, initScale: Vertex, nLabels: number): void {
+  public updateOrigin(drawingZone: Rect, initScale: Vertex, offsetLabels: number): void {
     this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
-    this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.75 * initScale.y;
+    this.origin.y = drawingZone.origin.y + drawingZone.size.y - offsetLabels * this.shapeSize.y * 1.75 * initScale.y;
     this.legend = this.updateLegendGeometry();
     this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + C.LABEL_TEXT_OFFSET, this.shapeSize.y / 2));
   }
@@ -954,18 +954,18 @@ export class RubberBand extends Rect {
 
   public mouseDown(mouseDown: Vertex): void {
     super.mouseDown(mouseDown);
-    const mouseAxis = this.isVertical ? mouseDown.y : mouseDown.x
+    const mouseAxis = this.isVertical ? mouseDown.y : mouseDown.x;
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.minUpdate = true
-    else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.maxUpdate = true
+    if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.minUpdate = true;
+    else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.maxUpdate = true;
     else this.lastCanvasValues = new Vertex(this.canvasMin, this.canvasMax);
   }
 
   private mouseMoveWhileClicked(mouseCoords: Vertex): void {
     const currentCoord = this.isVertical ? mouseCoords.y : mouseCoords.x;
     const downCoord = this.isVertical ? this.mouseClick.y : this.mouseClick.x;
-    if (this.minUpdate) this.canvasMin = currentCoord
-    else if (this.maxUpdate) this.canvasMax = currentCoord
+    if (this.minUpdate) this.canvasMin = currentCoord;
+    else if (this.maxUpdate) this.canvasMax = currentCoord;
     else this.translateOnAxis(currentCoord - downCoord);
   }
 

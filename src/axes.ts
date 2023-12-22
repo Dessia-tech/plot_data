@@ -17,6 +17,8 @@ export class TitleSettings {
 export class Axis extends Shape {
   public path: Path2D;
   public emitter: EventEmitter = new EventEmitter();
+  public rubberBand: RubberBand;
+  public mouseStyleON: boolean = false;
 
   public initMinValue: number;
   public initMaxValue: number;
@@ -40,9 +42,6 @@ export class Axis extends Shape {
   public logScale: boolean = false;
   public isDate: boolean = false;
   public isInverted: boolean = false;
-
-  public rubberBand: RubberBand;
-  public mouseStyleON: boolean = false;
 
   public title: Text;
   public centeredTitle: boolean = false;
@@ -106,7 +105,7 @@ export class Axis extends Shape {
   get tickOrientation(): string {
     return this.isVertical
       ? this.initScale.x > 0 ? 'right' : 'left'
-      : this.initScale.y > 0 ? 'up' : 'down'
+      : this.initScale.y > 0 ? 'up' : 'down';
     }
 
   get minValue(): number { return this._minValue }

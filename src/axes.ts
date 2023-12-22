@@ -630,10 +630,9 @@ export class Axis extends Shape {
   public mouseMoveClickedArrow(mouseCoords: Vertex): void {
     const mouseDownCoord = this.isVertical ? this.mouseClick.y : this.mouseClick.x;
     const mouseCurrentCoord = this.isVertical ? mouseCoords.y : mouseCoords.x;
-    if (!this.rubberBand.isClicked) this.rubberBand.updateCoords(new Vertex(mouseDownCoord, mouseCurrentCoord), this.origin, this.end);
-    this.rubberBand.minValue = this.absoluteToRelative(this.rubberBand.canvasMin);
-    this.rubberBand.maxValue = this.absoluteToRelative(this.rubberBand.canvasMax);
-    this.rubberBand.flipMinMax();
+    if (!this.rubberBand.isClicked) {
+      this.rubberBand.updateCoords(new Vertex(mouseDownCoord, mouseCurrentCoord), this.origin, this.end);
+    }
   }
 
   public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
@@ -658,6 +657,10 @@ export class Axis extends Shape {
       if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords)
       else this.mouseMoveClickedArrow(mouseCoords);
     }
+    this.rubberBand.updateMinMaxValueOnMouseMove(
+      this.absoluteToRelative(this.rubberBand.canvasMin),
+      this.absoluteToRelative(this.rubberBand.canvasMax)
+    );
   }
 
   public mouseDown(mouseDown: Vertex): void {
@@ -852,7 +855,7 @@ export class ParallelAxis extends Axis {
 
   protected flip(): void {
     this.isInverted = !this.isInverted;
-    this.rubberBand.isInverted = this.isInverted;
+    this.rubberBand.flip(this.isInverted);
     this.emitter.emit("axisStateChange", this);
   }
 

@@ -918,7 +918,7 @@ export class RubberBand extends Rect {
   }
 
   public computeRectProperties(axisOrigin: Vertex): [Vertex, Vertex] {
-    return this.isVertical ? this.getVerticalRectProperties(axisOrigin) : this.getHorizontalRectProperties(axisOrigin)
+    return this.isVertical ? this.getVerticalRectProperties(axisOrigin) : this.getHorizontalRectProperties(axisOrigin);
   }
 
   public reset(): void {
@@ -928,11 +928,21 @@ export class RubberBand extends Rect {
     this.canvasMax = 0;
   }
 
+  public flip(axisInverted: boolean): void {
+    this.isInverted = axisInverted;
+  }
+
   public flipMinMax(): void {
     if (this.minValue >= this.maxValue) {
       [this.minValue, this.maxValue] = [this.maxValue, this.minValue];
       [this.minUpdate, this.maxUpdate] = [this.maxUpdate, this.minUpdate];
     }
+  }
+
+  public updateMinMaxValueOnMouseMove(relativeCanvasMin: number, relativeCanvasMax: number): void {
+    this.minValue = this.isInverted ? relativeCanvasMax : relativeCanvasMin;
+    this.maxValue = this.isInverted ? relativeCanvasMin : relativeCanvasMax;
+    this.flipMinMax();
   }
 
   private get borderSize(): number { return Math.min(C.PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
@@ -946,10 +956,9 @@ export class RubberBand extends Rect {
     super.mouseDown(mouseDown);
     const mouseAxis = this.isVertical ? mouseDown.y : mouseDown.x
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.isInverted ? this.maxUpdate = true : this.minUpdate = true
-    else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.isInverted ? this.minUpdate = true : this.maxUpdate = true
+    if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.minUpdate = true
+    else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.maxUpdate = true
     else this.lastCanvasValues = new Vertex(this.canvasMin, this.canvasMax);
-    console.log(this.minUpdate, this.maxUpdate, this.lastCanvasValues)
   }
 
   private mouseMoveWhileClicked(mouseCoords: Vertex): void {
@@ -958,7 +967,6 @@ export class RubberBand extends Rect {
     if (this.minUpdate) this.canvasMin = currentCoord
     else if (this.maxUpdate) this.canvasMax = currentCoord
     else this.translateOnAxis(currentCoord - downCoord);
-    this.flipMinMax();
   }
 
   public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex) {

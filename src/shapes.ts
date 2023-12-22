@@ -751,17 +751,22 @@ export class ScatterPoint extends Point {
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
 
-  public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[], xName: string, yName: string) {
-    this.updateTooltipMap();
-    if (this.values.length == 1) {
-      this.newTooltipMap();
-      tooltipAttributes.forEach(attr => this.tooltipMap.set(attr, features.get(attr)[this.values[0]]));
-      return;
-    }
+  private monoValueTooltip(tooltipAttributes: string[], features: Map<string, number[]>): void {
+    this.newTooltipMap();
+    tooltipAttributes.forEach(attr => this.tooltipMap.set(attr, features.get(attr)[this.values[0]]));
+  }
+
+  private multiValueTooltip(axes: Axis[], xName: string, yName: string): void {
     this.tooltipMap.set(`Average ${xName}`, axes[0].isDiscrete ? axes[0].labels[Math.round(this.mean.x)] : this.mean.x);
     this.tooltipMap.set(`Average ${yName}`, axes[1].isDiscrete ? axes[1].labels[Math.round(this.mean.y)] : this.mean.y);
     this.tooltipMap.delete('X mean');
     this.tooltipMap.delete('Y mean');
+  }
+
+  public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[], xName: string, yName: string) {
+    this.updateTooltipMap();
+    if (this.values.length == 1) this.monoValueTooltip(tooltipAttributes, features);
+    else this.multiValueTooltip(axes, xName, yName);
   }
 
   public updateStyle(style: PointStyle): void {

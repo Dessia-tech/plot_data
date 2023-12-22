@@ -1112,7 +1112,6 @@ class Arc2D(PlotDataObject):
         self.r = r
         self.start_angle = start_angle
         self.end_angle = end_angle
-        self.anticlockwise = not clockwise
         self.clockwise = clockwise
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='arc', name=name)

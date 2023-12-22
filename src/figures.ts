@@ -931,7 +931,7 @@ export class ParallelPlot extends Figure {
     return axesEnds
   }
 
-  private horizontalAxesLocation(): [Vertex, Vertex][] { //TODO: lighten this
+  private horizontalAxesLocation(): [Vertex, Vertex][] {
     const drawHeight = this.drawEnd.y - this.drawOrigin.y;
     const LOCAL_MIN_OFFSET_X = drawHeight - MIN_OFFSET_X * 1.2;
     const firstEnds: [Vertex, Vertex] = [

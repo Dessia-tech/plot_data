@@ -414,7 +414,7 @@ export class Text extends Shape {
     while (textHeight > this.boundingBox.size.y && fontsize > 1) {
       context.font = Text.buildFont(this.style, fontsize, this.font);
       [rows, textHeight] = this.computeTextHeight(fontsize, textHeight, rows, context);
-      fontsize--; // TODO: this is weird but it is working. Should be investigated in further devs.
+      fontsize--; // TODO: weird, algorithm has to be re-thought. But working with no infinite loop
     }
     return [rows, fontsize + 1]
   }

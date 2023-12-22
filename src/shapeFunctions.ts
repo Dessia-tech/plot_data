@@ -11,11 +11,11 @@ export function deserialize(data: { [key: string]: any }, scale: Vertex): Shape 
   else if (data.type_ == "wire") shape = LineSequence.deserialize(data, scale);
   else if (data.type_ == "point") shape = Point.deserialize(data, scale);
   else if (data.type_ == "arc") shape = Arc.deserialize(data, scale);
-  else if (data.type_ == "text") return Text.deserialize(data, scale); //TODO: remove return
+  else if (data.type_ == "text") return Text.deserialize(data, scale);
   else if (data.type_ == "label") {
     const labelShape = data.shape ? deserialize(data.shape, scale) : new Rect();
     const fakeLegend = Label.deserialize(data, scale);
-    shape = new Label(labelShape, fakeLegend.text); //TODO: method in label
+    shape = new Label(labelShape, fakeLegend.text);
   }
   else if (data.type_ == "rectangle") shape = Rect.deserialize(data, scale);
   else if (data.type_ == "roundrectangle") shape = RoundRect.deserialize(data, scale);

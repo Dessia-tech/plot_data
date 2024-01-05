@@ -63,8 +63,7 @@ class PlotDataObject(DessiaObject):
         dict_ = DessiaObject.to_dict(self, use_pointers=False, **kwargs)
         del dict_['object_class']
 
-        new_dict_ = delete_none_from_dict(dict_)
-        return new_dict_
+        return delete_none_from_dict(dict_)
 
     # @classmethod
     # def dict_to_object(cls, dict_: JsonSerializable, force_generic: bool = False, global_dict=None,
@@ -1166,12 +1165,13 @@ class Contour2D(PlotDataObject):
     """
 
     def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]], edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#", name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.tooltip = tooltip
         self.is_filled = surface_style is not None
+        self.reference_path = reference_path
         PlotDataObject.__init__(self, type_='contour', name=name)
 
     def bounding_box(self):

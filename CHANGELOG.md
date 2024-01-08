@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Add
 - Integer axes only show integer ticks
 
+### Fix
+- Add reference_path to all Primitive / Elementary drawing Objects
+
 ## [0.21.0]
 ### Add
 - Tests of typescript app

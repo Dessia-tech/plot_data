@@ -192,7 +192,7 @@ export class Text extends Shape {
 
   public updateBoundingBox(context: CanvasRenderingContext2D): void {
     const contextMatrix = context.getTransform();
-    this.setBoundingBoxGeometry(contextMatrix);    
+    this.setBoundingBoxGeometry(contextMatrix);
     this.isScaled ? this.boundingBox.buildPath() : this.descaleBoundingBox(contextMatrix);
   }
 

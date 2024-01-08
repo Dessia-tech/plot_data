@@ -36,7 +36,7 @@ export class Axis extends Shape {
   protected offsetTicks: number;
   protected maxTickWidth: number;
   protected maxTickHeight: number;
-  
+
   public isDiscrete: boolean = true;
   public isInteger: boolean = false;
   public logScale: boolean = false;

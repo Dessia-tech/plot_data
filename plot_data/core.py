@@ -1110,9 +1110,8 @@ class Arc2D(ReferencedObject):
     BSPline method. This argument is useless unless the arc2D is part of\
      a Contour2D. In such case, the arc must be instantiated by volmdlr.
     :type data: List[dict]
-    :param anticlockwise: True if you want the arc the be drawn \
-    anticlockwise, False otherwise
-    :type anticlockwise: bool
+    :param clockwise: True if you want the arc the be drawn clockwise, False otherwise
+    :type clockwise: bool
     :param edge_style: for customization
     :type edge_style: EdgeStyle
     """

@@ -488,7 +488,7 @@ export class RemoteFigure extends Rect {
     return currentMouse.subtract(mouseDown)
   }
 
-  public broadcastMouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
+  public castMouseMove(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): void {
     this.fixedObjects.mouseMove(this.context, canvasMouse);
     this.absoluteObjects.mouseMove(this.context, absoluteMouse);
     this.relativeObjects.mouseMove(this.context, frameMouse);
@@ -499,7 +499,7 @@ export class RemoteFigure extends Rect {
     return [mouseCoords.scale(this.initScale), mouseCoords.transform(this.relativeMatrix.inverse()), mouseCoords]
   }
 
-  public broadcastMouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape] {
+  public castMouseDown(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape] {
     const fixedClickedObject = this.fixedObjects.mouseDown(canvasMouse);
     const absoluteClickedObject = this.absoluteObjects.mouseDown(absoluteMouse);
     const relativeClickedObject = this.relativeObjects.mouseDown(frameMouse);
@@ -507,7 +507,7 @@ export class RemoteFigure extends Rect {
     return [canvasMouse, frameMouse, clickedObject]
   }
 
-  public broadcastMouseUp(ctrlKey: boolean): void {
+  public castMouseUp(ctrlKey: boolean): void {
     if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
       this.absoluteObjects.mouseUp(ctrlKey);
       this.relativeObjects.mouseUp(ctrlKey);
@@ -518,7 +518,7 @@ export class RemoteFigure extends Rect {
   public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: Shape): [Vertex, Vertex, Vertex] {
     const [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
     this.isHovered = this.isInCanvas(absoluteMouse);
-    this.broadcastMouseMove(canvasMouse, frameMouse, absoluteMouse);
+    this.castMouseMove(canvasMouse, frameMouse, absoluteMouse);
     if (canvasDown) {
       const translation = this.mouseTranslate(canvasMouse, canvasDown);
       if (!(clickedObject instanceof Axis)) {
@@ -535,7 +535,7 @@ export class RemoteFigure extends Rect {
   }
 
   public mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape]  {
-    const [canvasDown, frameDown, clickedObject] = this.broadcastMouseDown(canvasMouse, frameMouse, absoluteMouse);
+    const [canvasDown, frameDown, clickedObject] = this.castMouseDown(canvasMouse, frameMouse, absoluteMouse);
     if (!(clickedObject instanceof Axis)) this.is_drawing_rubber_band = this.isSelecting;
     return [canvasDown, frameDown, clickedObject]
   }
@@ -545,7 +545,7 @@ export class RemoteFigure extends Rect {
       if (this.zoomBox.area != 0) this.zoomBoxUpdateAxes(this.zoomBox);
       this.zoomBox.update(new Vertex(0, 0), new Vertex(0, 0));
     }
-    this.broadcastMouseUp(ctrlKey);
+    this.castMouseUp(ctrlKey);
     this.draw();
     return this.resetMouseEvents()
   }

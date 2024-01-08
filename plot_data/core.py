@@ -129,13 +129,21 @@ class Figure(PlotDataObject):
         webbrowser.open('file://' + os.path.realpath(filepath))
 
 
-class Sample(PlotDataObject):
+class ReferencedObject(PlotDataObject):
+    """ PlotData object with reference_path. """
+
+    def __init__(self, type_: str, reference_path: str = "#", name: str = ""):
+        self.reference_path = reference_path
+        super().__init__(type_=type_, name=name)
+
+
+class Sample(ReferencedObject):
     """ Graph Point. """
 
     def __init__(self, values, reference_path: str = "#", name: str = ""):
         self.values = values
         self.reference_path = reference_path
-        super().__init__(type_="sample", name=name)
+        super().__init__(type_="sample", reference_path=reference_path, name=name)
 
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#', id_method=True,
                 id_memo=None) -> JsonSerializable:

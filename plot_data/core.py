@@ -1116,8 +1116,8 @@ class Arc2D(ReferencedObject):
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, data=None,
-                 clockwise: bool = None, edge_style: EdgeStyle = None, reference_path: str = "#", name: str = ''):
+    def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, clockwise: bool = None,
+                 edge_style: EdgeStyle = None, reference_path: str = "#", name: str = ''):
         self.cx = cx
         self.cy = cy
         self.r = r

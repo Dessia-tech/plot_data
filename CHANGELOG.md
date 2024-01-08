@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fix
 - Add reference_path to all Primitive / Elementary drawing Objects
+- Remove data attr from class Arc in Python
 - Light improvement of class Arc in Python
 
 ## [0.21.0]

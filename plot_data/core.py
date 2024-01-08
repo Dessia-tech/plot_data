@@ -1123,8 +1123,6 @@ class Arc2D(ReferencedObject):
         self.r = r
         self.start_angle = start_angle
         self.end_angle = end_angle
-        self.data = data
-        self.anticlockwise = not clockwise
         self.clockwise = clockwise
         self.edge_style = edge_style
         super().__init__(type_='arc', reference_path=reference_path, name=name)

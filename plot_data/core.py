@@ -1104,15 +1104,13 @@ class Arc2D(PlotDataObject):
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, data=None,
-                 clockwise: bool = None, edge_style: EdgeStyle = None, name: str = ''):
+    def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, clockwise: bool = None,
+                 edge_style: EdgeStyle = None, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.r = r
         self.start_angle = start_angle
         self.end_angle = end_angle
-        self.data = data
-        self.anticlockwise = not clockwise
         self.clockwise = clockwise
         self.edge_style = edge_style
         PlotDataObject.__init__(self, type_='arc', name=name)

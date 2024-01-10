@@ -424,6 +424,12 @@ export class RemoteFigure {
 
   public switchOrientation(): void {}
 
+  public switchLogScale(): void {
+    this.axes.forEach(axis => axis.switchLogScale(this.features.get(axis.name) as number[]));
+    this.resetScales();
+    this.draw();
+  }
+
   public togglePoints(): void {}
 
   public toggleAxes(): void {

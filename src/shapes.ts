@@ -793,6 +793,8 @@ export class RubberBand {
 
   public get maxValue() { return this._maxValue }
 
+  public get isTranslating(): boolean { return !this.minUpdate && !this.maxUpdate && this.isClicked}
+
   public selfSend(rubberBands: Map<string, RubberBand>) { rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical)) }
 
   public selfSendRange(rubberBands: Map<string, RubberBand>) {

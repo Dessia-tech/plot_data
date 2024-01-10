@@ -24,6 +24,7 @@ export class Axis extends Shape {
   public ticksFontsize: number = 12;
   public isDiscrete: boolean = true;
   public isInteger: boolean = false;
+  public logScale: boolean = false;
   public isDate: boolean = false;
 
   public drawPath: Path2D;
@@ -152,6 +153,30 @@ export class Axis extends Shape {
 
   public toggleView(): void { this.visible = !this.visible }
 
+  private getLogBoundaries(vector: number[]): [number, number] {
+    const positiveVector = vector.filter(value => value > 0);
+    const min = Math.min(...positiveVector);
+    const max = Math.max(...positiveVector);
+    if (max <= 0) {
+      this.logScale = false;
+      return [this.initMinValue, this.initMaxValue]
+    }
+    if (this.logScale) {
+      return [
+        this.initMinValue > 0 ? Math.log10(this.initMinValue) : Math.log10(min),
+        this.initMaxValue > 0 ? Math.log10(this.initMaxValue) : Math.log10(max)
+      ]
+    } else return [10 ** this.initMinValue, 10 ** this.initMaxValue]
+  }
+
+  public switchLogScale(vector: number[]): void {
+    if (!this.isDiscrete) {
+      this.logScale = !this.logScale;
+      [this.initMinValue, this.initMaxValue] = this.getLogBoundaries(vector);
+      this.updateTicks();
+    }
+  }
+
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
       if (vector.length != 0) {
@@ -186,8 +211,8 @@ export class Axis extends Shape {
   public resetScale(): void {
     this.minValue = this.initMinValue;
     this.maxValue = this.initMaxValue;
-    this._previousMin = this.initMinValue;
-    this._previousMax = this.initMaxValue;
+    this._previousMin = this.minValue;
+    this._previousMax = this.maxValue;
     this.updateTicks();
   }
 
@@ -251,13 +276,19 @@ export class Axis extends Shape {
   }
 
   public absoluteToRelative(value: string | number): number {
-    const numberedValue = this.stringToValue(value);
-    return this.isVertical ? (numberedValue - this.transformMatrix.f) / this.transformMatrix.d : (numberedValue - this.transformMatrix.e) / this.transformMatrix.a
+    let numberedValue = this.stringToValue(value);
+    const projectedValue = this.isVertical
+      ? (numberedValue - this.transformMatrix.f) / this.transformMatrix.a
+      : (numberedValue - this.transformMatrix.e) / this.transformMatrix.a;
+    return this.logScale ? 10 ** projectedValue : projectedValue;
   }
 
   public relativeToAbsolute(value: string | number): number {
-    const numberedValue = this.stringToValue(value);
-    return this.isVertical ? numberedValue * this.transformMatrix.d + this.transformMatrix.f : numberedValue * this.transformMatrix.a + this.transformMatrix.e
+    let numberedValue = this.stringToValue(value);
+    if (this.logScale) numberedValue = Math.log10(numberedValue);
+    return this.isVertical
+      ? numberedValue * this.transformMatrix.d + this.transformMatrix.f
+      : numberedValue * this.transformMatrix.a + this.transformMatrix.e;
   }
 
   public normedValue(value: number): number { return value / this.interval }
@@ -311,7 +342,7 @@ export class Axis extends Shape {
   private getTickIncrement(): number {
     const rawIncrement = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
     const logExponent = Math.floor(Math.log10(rawIncrement));
-    if (this.isInteger) return this.integerTickIncrement(rawIncrement, logExponent);
+    if (this.isInteger && !this.logScale) return this.integerTickIncrement(rawIncrement, logExponent);
     return this.floatTickIncrement(rawIncrement, logExponent);
   }
 
@@ -351,7 +382,7 @@ export class Axis extends Shape {
     if (ticks.slice(0)[0] < this.minValue) ticks.splice(0, 1);
     if (ticks.slice(-1)[0] >= this.maxValue) ticks.splice(-1, 1);
     this.updateTickPrecision(increment, ticks);
-    return ticks
+    return this.logScale ? ticks.map(tick => 10 ** tick) : ticks
   }
 
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
@@ -458,8 +489,7 @@ export class Axis extends Shape {
         if (count == tick && this.labels[count]) {
           text = this.labels[count];
           count++;
-        }
-        else text = '';
+        } else text = '';
       }
       ticksText.push(this.computeTickText(context, text, tickTextParams, point, pointHTMatrix));
     })
@@ -497,7 +527,9 @@ export class Axis extends Shape {
   }
 
   protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): Point {
-    const center = new Vertex(tick * Number(!vertical), tick * Number(vertical)).transform(HTMatrix);
+    const center = this.logScale ?
+      new Vertex(Math.log10(tick) * Number(!vertical), Math.log10(tick) * Number(vertical)).transform(HTMatrix) :
+      new Vertex(tick * Number(!vertical), tick * Number(vertical)).transform(HTMatrix);
     const point = new Point(center.x, center.y, SIZE_AXIS_END, this.tickMarker, this.tickOrientation, color);
     point.draw(context);
     return point
@@ -514,7 +546,7 @@ export class Axis extends Shape {
   }
 
   private getValueToDrawMatrix(): DOMMatrix {
-    const scale = this.drawLength / this.interval;
+    let scale = this.drawLength / this.interval;
     if (this.isInverted) {
       return new DOMMatrix([
         -scale, 0, 0, -scale,
@@ -561,13 +593,18 @@ export class Axis extends Shape {
     }
   }
 
+  private restrictRubberBandTranslation(downValue: number, currentValue: number): [number, number] {
+    if (!this.logScale || this.rubberBand.lastValues.x + currentValue - downValue > 0 || !this.rubberBand.isTranslating) return [downValue, currentValue]
+    return [downValue, downValue - this.rubberBand.lastValues.x]
+  }
+
   public mouseMoveClickedArrow(mouseCoords: Vertex): void {
     const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
     const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
     if (!this.rubberBand.isClicked) {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
-    } else this.rubberBand.mouseMove(downValue, currentValue);
+    } else this.rubberBand.mouseMove(...this.restrictRubberBandTranslation(downValue, currentValue));
   }
 
   public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
@@ -643,13 +680,13 @@ export class Axis extends Shape {
 
   public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {
     const HTMatrix = this.transformMatrix;
-    let center = (viewPoint.x - HTMatrix.e) / HTMatrix.a;
+    let center = (viewPoint.x - HTMatrix.e) / HTMatrix.a;;
     let offset = translation.x;
-    let scale = scaling.x;
+    let scale = this.logScale ? 10 ** (scaling.x - 1) : scaling.x;
     if (this.isVertical) {
       center = (viewPoint.y - HTMatrix.f) / HTMatrix.d;
       offset = translation.y;
-      scale = scaling.y;
+      scale = this.logScale ? 10 ** (scaling.y - 1) : scaling.y;
     }
     this.minValue = (this._previousMin - center) / scale + center - offset / HTMatrix.a;
     this.maxValue = (this._previousMax - center) / scale + center - offset / HTMatrix.a;

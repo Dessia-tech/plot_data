@@ -8,10 +8,11 @@ import json
 import math
 import os
 import sys
+import datetime
 import tempfile
 import warnings
 import webbrowser
-from typing import Dict, List, Tuple, Union  # , Any
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Circle, Arc
@@ -46,6 +47,28 @@ def delete_none_from_dict(dict1):
     return dict2
 
 
+def serialize_dates_in_list(list_):
+    for i, element in enumerate(list_):
+        list_[i] = serialize_dates(element)
+    return list_
+
+
+def serialize_dates_in_dict(dict_):
+    for (key, value) in dict_.items():
+        dict_[key] = serialize_dates(value)
+    return dict_
+
+
+def serialize_dates(serializable):
+    if isinstance(serializable, list):
+        return serialize_dates_in_list(serializable)
+    if isinstance(serializable, dict):
+        return serialize_dates_in_dict(serializable)
+    if isinstance(serializable, datetime.datetime):
+        return f"{serializable.timestamp() * 1000}gmt+"
+    return serializable
+
+
 class PlotDataObject(DessiaObject):
     """ Abstract interface for DessiaObject implementation in module. """
 
@@ -62,7 +85,7 @@ class PlotDataObject(DessiaObject):
             kwargs.pop('use_pointers')
         dict_ = DessiaObject.to_dict(self, use_pointers=False, **kwargs)
         del dict_['object_class']
-
+        dict_ = serialize_dates_in_dict(dict_)
         new_dict_ = delete_none_from_dict(dict_)
         return new_dict_
 
@@ -154,6 +177,7 @@ class Sample(ReferencedObject):
         """
         dict_ = PlotDataObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path, id_method=id_method,
                                        id_memo=id_memo)
+        dict_ = serialize_dates_in_dict(dict_)
         dict_.update({"reference_path": self.reference_path, "name": self.name})
         dict_.update(serialize(self.values))
         # TODO Keeping values at dict_ level before refactor, should be removed after and use dict_["values"] instead

@@ -1,5 +1,5 @@
 import { SIZE_AXIS_END, AXIS_TAIL_SIZE, RUBBERBAND_SMALL_SIZE, DEFAULT_FONTSIZE } from "./constants"
-import { uniqueValues, isIntegerArray, getTenPower } from "./functions"
+import { uniqueValues, isIntegerArray, getTenPower, formatDateTicks } from "./functions"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
@@ -24,6 +24,7 @@ export class Axis extends Shape {
   public ticksFontsize: number = 12;
   public isDiscrete: boolean = true;
   public isInteger: boolean = false;
+  public isDate: boolean = false;
 
   public drawPath: Path2D;
   public path: Path2D;
@@ -110,7 +111,11 @@ export class Axis extends Shape {
 
   get tickMarker(): string { return "halfLine" }
 
-  get tickOrientation(): string { return this.isVertical ? 'right' : 'up' }
+  get tickOrientation(): string {
+    return this.isVertical
+      ? this.initScale.x > 0 ? 'right' : 'left'
+      : this.initScale.y > 0 ? 'up' : 'down'
+    }
 
   get minValue(): number { return this._minValue }
 
@@ -149,9 +154,12 @@ export class Axis extends Shape {
 
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
-      if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
+      if (vector.length != 0) {
+        this.isDate = vector[0] instanceof Date;
+        this.isDiscrete = !this.isDate && typeof vector[0] == 'string';
+      }
       if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"]
-      else this.isInteger = isIntegerArray(vector);
+      else this.isInteger = isIntegerArray(vector) && !this.isDate;
     } else {
       this.isDiscrete = true;
       this.labels = ["0", "1"];
@@ -362,13 +370,10 @@ export class Axis extends Shape {
     context.lineWidth = this.lineWidth;
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
-    context.resetTransform();
 
-    context.setTransform(pointHTMatrix);
+    context.resetTransform();
     const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
     this.ticksPoints = ticksPoints;
-
-    context.resetTransform();
     this.drawTickTexts(ticksTexts, color, context);
     this.drawTitle(context, canvasHTMatrix, color);
 
@@ -492,10 +497,13 @@ export class Axis extends Shape {
   }
 
   protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): Point {
-    const point = new Point(tick * Number(!vertical), tick * Number(vertical), SIZE_AXIS_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
+    const center = new Vertex(tick * Number(!vertical), tick * Number(vertical)).transform(HTMatrix);
+    const point = new Point(center.x, center.y, SIZE_AXIS_END, this.tickMarker, this.tickOrientation, color);
     point.draw(context);
     return point
   }
+
+
 
   private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: Point, HTMatrix: DOMMatrix): Text {
     const textOrigin = this.tickTextPositions(point, HTMatrix);
@@ -599,7 +607,9 @@ export class Axis extends Shape {
   }
 
   public numericLabels(): string[] {
-    return this.ticks.map(tick => tick.toPrecision(this.tickPrecision))
+    return this.isDate
+      ? formatDateTicks(this.ticks)
+      : this.ticks.map(tick => tick.toPrecision(this.tickPrecision));
   }
 
   public saveLocation(): void {
@@ -624,7 +634,7 @@ export class Axis extends Shape {
   }
 
   private tickTextPositions(point: Point, HTMatrix: DOMMatrix): Vertex {
-    const origin = point.center.transform(HTMatrix);
+    const origin = point.center;
     const inversionFactor = this.isInverted ? 1 : -1
     if (this.isVertical) origin.x += inversionFactor * Math.sign(HTMatrix.a) * this.offsetTicks
     else origin.y += inversionFactor * Math.sign(HTMatrix.d) * this.offsetTicks;

@@ -31,7 +31,7 @@ describe('Axis', function() {
     const ticks = [-1, 0, 1, 2]
     expect(axis.ticks).to.deep.equal(ticks);
     expect(axis.isDiscrete, `isDiscrete`).to.be.true;
-});
+  });
 
   it('should be well created with empty vector features', function() {
     const axis = new Axis([], boundingBox, origin, end, name, initScale, nTicks);
@@ -124,7 +124,43 @@ describe('Axis', function() {
 
     numericStringVector.forEach((value, index) => expect(stringAxis.labels[value], `string value ${index}`).to.equal(stringVector[index]));
     numericNumberVector.forEach((value, index) => expect(value, `number value ${index}`).to.equal(numberVector[index]));
-  })
+  });
+
+  it("should be drawn with date labels", function() {
+    const timeZoneOffSet = new Date().getTimezoneOffset() * 60;
+    const dateVector = [
+      new Date((123456789 + timeZoneOffSet) * 1000),
+      new Date((234242524 + timeZoneOffSet) * 1000),
+      new Date((326472910 + timeZoneOffSet) * 1000),
+      new Date((564927592 + timeZoneOffSet) * 1000),
+      new Date((675829471 + timeZoneOffSet) * 1000)
+    ];
+    const dateAxis = new Axis(dateVector, boundingBox, origin, end, name, initScale, nTicks);
+    const controlLabels = timeZoneOffSet == 0 ?
+      [
+        "07/03/1973 - 09:46:40",
+        "02/05/1976 - 19:33:20",
+        "05/07/1979 - 05:20:00",
+        "07/09/1982 - 15:06:40",
+        "03/11/1985 - 00:53:20",
+        "05/01/1989 - 10:40:00",
+        "07/03/1992 - 20:26:40"
+      ]
+      :
+      [
+        "07/03/1973 - 10:46:40",
+        "02/05/1976 - 21:33:20",
+        "05/07/1979 - 07:20:00",
+        "07/09/1982 - 17:06:40",
+        "03/11/1985 - 01:53:20",
+        "05/01/1989 - 11:40:00",
+        "07/03/1992 - 21:26:40"
+      ];
+    const controlTicks = [100000000000, 200000000000, 300000000000, 400000000000, 500000000000, 600000000000, 700000000000];
+    expect(dateAxis.labels, "labels").to.deep.equal(controlLabels);
+    expect(dateAxis.ticks, "labels").to.deep.equal(controlTicks);
+
+  });
 });
 
 describe("RubberBand", function() {

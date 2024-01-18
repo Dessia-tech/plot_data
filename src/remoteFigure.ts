@@ -51,7 +51,7 @@ export class RemoteFigure {
 
   public features: Map<string, any[]>;
   public featureNames: string[];
-  readonly MAX_PRINTED_NUMBERS = 6;
+  readonly MAX_PRINTED_NUMBERS = 10;
   readonly TRL_THRESHOLD = 20;
 
   // TODO: refactor these legacy attribute
@@ -151,8 +151,15 @@ export class RemoteFigure {
     };
     const featureKeys = data.elements.length ? Array.from(Object.keys(data.elements[0].values)) : [];
     featureKeys.push("name");
-    featureKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => element[feature])));
+    featureKeys.forEach(feature => unpackedData.set(feature, data.elements.map(element => RemoteFigure.deserializeValue(element[feature]))));
     return unpackedData
+  }
+
+  private static deserializeValue(value: any): any {
+    if (typeof value == "string") {
+      if (value.includes("gmt+")) return new Date(Number(value.split("gmt+")[0]))
+    }
+    return value
   }
 
   public drawBorders() {
@@ -417,6 +424,12 @@ export class RemoteFigure {
 
   public switchOrientation(): void {}
 
+  public switchLogScale(): void {
+    this.axes.forEach(axis => axis.switchLogScale(this.features.get(axis.name) as number[]));
+    this.resetScales();
+    this.draw();
+  }
+
   public togglePoints(): void {}
 
   public toggleAxes(): void {
@@ -676,7 +689,21 @@ export class RemoteFigure {
     return [null, null]
   }
 
-  protected regulateScale(): void {}
+  protected regulateAxisScale(axis: Axis): void {
+    if (!axis.isDate) {
+      if (axis.tickPrecision >= this.MAX_PRINTED_NUMBERS) {
+        if (this.scaleX > 1) this.scaleX = 1;
+        if (this.scaleY > 1) this.scaleY = 1;
+      } else if (axis.areAllLabelsDisplayed || axis.tickPrecision < 1) {
+        if (this.scaleX < 1) this.scaleX = 1;
+        if (this.scaleY < 1) this.scaleY = 1;
+      }
+    }
+  }
+
+  protected regulateScale(): void {
+    this.axes.forEach(axis => this.regulateAxisScale(axis));
+  }
 
   protected updateWithScale(): void {
     this.regulateScale();

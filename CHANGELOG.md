@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0]
+### Add
+- Integer axes only show integer ticks
+- Handle date as continuous value on axes
+- Allow to log scale axes
+
+### Fix
+- Add reference_path to all Primitive / Elementary drawing Objects
+- Remove data attr from class Arc in Python
+- Light improvement of class Arc in Python
+
 ## [0.21.0]
 ### Add
 - Tests of typescript app

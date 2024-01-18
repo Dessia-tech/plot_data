@@ -1,5 +1,5 @@
 import { SIZE_AXIS_END, AXIS_TAIL_SIZE, RUBBERBAND_SMALL_SIZE, DEFAULT_FONTSIZE } from "./constants"
-import { uniqueValues } from "./functions"
+import { uniqueValues, isIntegerArray, getTenPower, formatDateTicks } from "./functions"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
@@ -23,6 +23,9 @@ export class Axis extends Shape {
   public tickPrecision: number;
   public ticksFontsize: number = 12;
   public isDiscrete: boolean = true;
+  public isInteger: boolean = false;
+  public logScale: boolean = false;
+  public isDate: boolean = false;
 
   public drawPath: Path2D;
   public path: Path2D;
@@ -109,7 +112,11 @@ export class Axis extends Shape {
 
   get tickMarker(): string { return "halfLine" }
 
-  get tickOrientation(): string { return this.isVertical ? 'right' : 'up' }
+  get tickOrientation(): string {
+    return this.isVertical
+      ? this.initScale.x > 0 ? 'right' : 'left'
+      : this.initScale.y > 0 ? 'up' : 'down'
+    }
 
   get minValue(): number { return this._minValue }
 
@@ -146,10 +153,38 @@ export class Axis extends Shape {
 
   public toggleView(): void { this.visible = !this.visible }
 
+  private getLogBoundaries(vector: number[]): [number, number] {
+    const positiveVector = vector.filter(value => value > 0);
+    const min = Math.min(...positiveVector);
+    const max = Math.max(...positiveVector);
+    if (max <= 0) {
+      this.logScale = false;
+      return [this.initMinValue, this.initMaxValue]
+    }
+    if (this.logScale) {
+      return [
+        this.initMinValue > 0 ? Math.log10(this.initMinValue) : Math.log10(min),
+        this.initMaxValue > 0 ? Math.log10(this.initMaxValue) : Math.log10(max)
+      ]
+    } else return [10 ** this.initMinValue, 10 ** this.initMaxValue]
+  }
+
+  public switchLogScale(vector: number[]): void {
+    if (!this.isDiscrete) {
+      this.logScale = !this.logScale;
+      [this.initMinValue, this.initMaxValue] = this.getLogBoundaries(vector);
+      this.updateTicks();
+    }
+  }
+
   private discretePropertiesFromVector(vector: any[]): void {
     if (vector) {
-      if (vector.length != 0) this.isDiscrete = typeof vector[0] == 'string';
-      if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"];
+      if (vector.length != 0) {
+        this.isDate = vector[0] instanceof Date;
+        this.isDiscrete = !this.isDate && typeof vector[0] == 'string';
+      }
+      if (this.isDiscrete) this.labels = vector.length != 0 ? uniqueValues(vector) : ["0", "1"]
+      else this.isInteger = isIntegerArray(vector) && !this.isDate;
     } else {
       this.isDiscrete = true;
       this.labels = ["0", "1"];
@@ -176,8 +211,8 @@ export class Axis extends Shape {
   public resetScale(): void {
     this.minValue = this.initMinValue;
     this.maxValue = this.initMaxValue;
-    this._previousMin = this.initMinValue;
-    this._previousMax = this.initMaxValue;
+    this._previousMin = this.minValue;
+    this._previousMax = this.maxValue;
     this.updateTicks();
   }
 
@@ -241,13 +276,19 @@ export class Axis extends Shape {
   }
 
   public absoluteToRelative(value: string | number): number {
-    const numberedValue = this.stringToValue(value);
-    return this.isVertical ? (numberedValue - this.transformMatrix.f) / this.transformMatrix.d : (numberedValue - this.transformMatrix.e) / this.transformMatrix.a
+    let numberedValue = this.stringToValue(value);
+    const projectedValue = this.isVertical
+      ? (numberedValue - this.transformMatrix.f) / this.transformMatrix.a
+      : (numberedValue - this.transformMatrix.e) / this.transformMatrix.a;
+    return this.logScale ? 10 ** projectedValue : projectedValue;
   }
 
   public relativeToAbsolute(value: string | number): number {
-    const numberedValue = this.stringToValue(value);
-    return this.isVertical ? numberedValue * this.transformMatrix.d + this.transformMatrix.f : numberedValue * this.transformMatrix.a + this.transformMatrix.e
+    let numberedValue = this.stringToValue(value);
+    if (this.logScale) numberedValue = Math.log10(numberedValue);
+    return this.isVertical
+      ? numberedValue * this.transformMatrix.d + this.transformMatrix.f
+      : numberedValue * this.transformMatrix.a + this.transformMatrix.e;
   }
 
   public normedValue(value: number): number { return value / this.interval }
@@ -289,14 +330,59 @@ export class Axis extends Shape {
     }
   }
 
+  private integerTickIncrement(rawIncrement: number, logExponent: number): number {
+    return rawIncrement >= 1 ? Math.floor(rawIncrement / 10 ** logExponent) * 10 ** logExponent : 1;
+  }
+
+  private floatTickIncrement(rawIncrement: number, logExponent: number): number {
+    const tenPower = logExponent > 0 ? 1 : 15;
+    return Math.round(rawIncrement * 10 ** tenPower) / 10 ** tenPower;
+  }
+
+  private getTickIncrement(): number {
+    const rawIncrement = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+    const logExponent = Math.floor(Math.log10(rawIncrement));
+    if (this.isInteger && !this.logScale) return this.integerTickIncrement(rawIncrement, logExponent);
+    return this.floatTickIncrement(rawIncrement, logExponent);
+  }
+
+  private ticksTenPower(ticks: number[]): number {
+    const tenPower = Math.max(...ticks.map(tick => { return getTenPower(tick) }));
+    return tenPower > 0 ? tenPower : 0
+  }
+
+  private incrementPrecision(increment: number, ticks: number[]): number {
+    const tickTenPower = getTenPower(ticks[ticks.length - 1] - ticks[0]);
+    const incrementTenPower = getTenPower(increment);
+    const unitIncrement = increment / 10 ** incrementTenPower;
+    const splitUnitIncrement = unitIncrement.toString().split('.');
+    return tickTenPower - incrementTenPower + (splitUnitIncrement.length > 1 ? 2 : 1)
+  }
+
+  private updateTickPrecision(increment: number, ticks: number[]): void {
+    const splitNumber = increment.toString().split('.');
+    const tickTenPower = splitNumber.length > 1 ? this.ticksTenPower(ticks) : 0;
+    this.tickPrecision = tickTenPower + (splitNumber.length > 1 ? splitNumber[1].length + 1 : this.incrementPrecision(increment, ticks));
+    if (ticks.length > 1) {
+      for (let index = 0; index < ticks.length - 1; index++) {
+        const rightTick = ticks[index + 1];
+        const leftTick = ticks[index];
+        while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
+          this.tickPrecision++;
+        };
+      }
+    } else if (this.isInteger && ticks.length > 0) this.tickPrecision = ticks[0].toString().length;
+  };
+
   protected computeTicks(): number[] {
-    const increment = this.isDiscrete ? 1 : Axis.nearestFive((this.maxValue - this.minValue) / this.nTicks);
+    const increment = this.getTickIncrement();
     const remainder = this.minValue % increment;
     let ticks = [this.minValue - remainder];
     while (ticks.slice(-1)[0] <= this.maxValue) ticks.push(ticks.slice(-1)[0] + increment);
     if (ticks.slice(0)[0] < this.minValue) ticks.splice(0, 1);
     if (ticks.slice(-1)[0] >= this.maxValue) ticks.splice(-1, 1);
-    return ticks
+    this.updateTickPrecision(increment, ticks);
+    return this.logScale ? ticks.map(tick => 10 ** tick) : ticks
   }
 
   public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
@@ -315,13 +401,10 @@ export class Axis extends Shape {
     context.lineWidth = this.lineWidth;
     context.stroke(this.drawPath);
     context.fill(this.drawPath);
-    context.resetTransform();
 
-    context.setTransform(pointHTMatrix);
+    context.resetTransform();
     const [ticksPoints, ticksTexts] = this.drawTicksPoints(context, pointHTMatrix, color);
     this.ticksPoints = ticksPoints;
-
-    context.resetTransform();
     this.drawTickTexts(ticksTexts, color, context);
     this.drawTitle(context, canvasHTMatrix, color);
 
@@ -406,8 +489,7 @@ export class Axis extends Shape {
         if (count == tick && this.labels[count]) {
           text = this.labels[count];
           count++;
-        }
-        else text = '';
+        } else text = '';
       }
       ticksText.push(this.computeTickText(context, text, tickTextParams, point, pointHTMatrix));
     })
@@ -445,10 +527,15 @@ export class Axis extends Shape {
   }
 
   protected drawTickPoint(context: CanvasRenderingContext2D, tick: number, vertical: boolean, HTMatrix: DOMMatrix, color: string): Point {
-    const point = new Point(tick * Number(!vertical), tick * Number(vertical), SIZE_AXIS_END / Math.abs(HTMatrix.a), this.tickMarker, this.tickOrientation, color);
+    const center = this.logScale ?
+      new Vertex(Math.log10(tick) * Number(!vertical), Math.log10(tick) * Number(vertical)).transform(HTMatrix) :
+      new Vertex(tick * Number(!vertical), tick * Number(vertical)).transform(HTMatrix);
+    const point = new Point(center.x, center.y, SIZE_AXIS_END, this.tickMarker, this.tickOrientation, color);
     point.draw(context);
     return point
   }
+
+
 
   private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: Point, HTMatrix: DOMMatrix): Text {
     const textOrigin = this.tickTextPositions(point, HTMatrix);
@@ -459,7 +546,7 @@ export class Axis extends Shape {
   }
 
   private getValueToDrawMatrix(): DOMMatrix {
-    const scale = this.drawLength / this.interval;
+    let scale = this.drawLength / this.interval;
     if (this.isInverted) {
       return new DOMMatrix([
         -scale, 0, 0, -scale,
@@ -506,13 +593,18 @@ export class Axis extends Shape {
     }
   }
 
+  private restrictRubberBandTranslation(downValue: number, currentValue: number): [number, number] {
+    if (!this.logScale || this.rubberBand.lastValues.x + currentValue - downValue > 0 || !this.rubberBand.isTranslating) return [downValue, currentValue]
+    return [downValue, downValue - this.rubberBand.lastValues.x]
+  }
+
   public mouseMoveClickedArrow(mouseCoords: Vertex): void {
     const downValue = this.absoluteToRelative(this.isVertical ? this.mouseClick.y : this.mouseClick.x);
     const currentValue = this.absoluteToRelative(this.isVertical ? mouseCoords.y : mouseCoords.x);
     if (!this.rubberBand.isClicked) {
       this.rubberBand.minValue = Math.min(downValue, currentValue);
       this.rubberBand.maxValue = Math.max(downValue, currentValue);
-    } else this.rubberBand.mouseMove(downValue, currentValue);
+    } else this.rubberBand.mouseMove(...this.restrictRubberBandTranslation(downValue, currentValue));
   }
 
   public mouseMoveClickedTitle(mouseCoords: Vertex): void { }
@@ -552,8 +644,9 @@ export class Axis extends Shape {
   }
 
   public numericLabels(): string[] {
-    this.updateTickPrecision();
-    return this.ticks.map(tick => tick.toPrecision(this.tickPrecision))
+    return this.isDate
+      ? formatDateTicks(this.ticks)
+      : this.ticks.map(tick => tick.toPrecision(this.tickPrecision));
   }
 
   public saveLocation(): void {
@@ -578,7 +671,7 @@ export class Axis extends Shape {
   }
 
   private tickTextPositions(point: Point, HTMatrix: DOMMatrix): Vertex {
-    const origin = point.center.transform(HTMatrix);
+    const origin = point.center;
     const inversionFactor = this.isInverted ? 1 : -1
     if (this.isVertical) origin.x += inversionFactor * Math.sign(HTMatrix.a) * this.offsetTicks
     else origin.y += inversionFactor * Math.sign(HTMatrix.d) * this.offsetTicks;
@@ -587,30 +680,18 @@ export class Axis extends Shape {
 
   public updateScale(viewPoint: Vertex, scaling: Vertex, translation: Vertex): void {
     const HTMatrix = this.transformMatrix;
-    let center = (viewPoint.x - HTMatrix.e) / HTMatrix.a;
+    let center = (viewPoint.x - HTMatrix.e) / HTMatrix.a;;
     let offset = translation.x;
-    let scale = scaling.x;
+    let scale = this.logScale ? 10 ** (scaling.x - 1) : scaling.x;
     if (this.isVertical) {
       center = (viewPoint.y - HTMatrix.f) / HTMatrix.d;
       offset = translation.y;
-      scale = scaling.y;
+      scale = this.logScale ? 10 ** (scaling.y - 1) : scaling.y;
     }
     this.minValue = (this._previousMin - center) / scale + center - offset / HTMatrix.a;
     this.maxValue = (this._previousMax - center) / scale + center - offset / HTMatrix.a;
     this.updateTicks();
   }
-
-  private updateTickPrecision(): number {
-    this.tickPrecision = 1;
-    for (let index = 0; index < this.ticks.length - 1; index++) {
-      const rightTick = this.ticks[index + 1];
-      const leftTick = this.ticks[index];
-      while (Number(rightTick.toPrecision(this.tickPrecision)) / Number(leftTick.toPrecision(this.tickPrecision)) == 1) {
-        this.tickPrecision++;
-      };
-    }
-    return
-  };
 
   public updateTicks(): void {
     this.ticks = this.computeTicks();

@@ -1171,13 +1171,15 @@ export class Draw extends Frame {
 
   protected receiveRubberBandFromFigure(figure: Figure): void {}
 
-  public highlightFromReferencePath(referencePath: string) {
-    const shapes = this.getShapesFromPath(referencePath);
+  public highlightFromReferencePath(highlightData) {
+    const highlight = highlightData.highlight;
+    const shapes = this.getShapesFromPath(highlightData.referencePath);
     shapes.forEach((shape) => {
-      shape.isHovered = true;
-  });
-  this.draw();
-    // this.updateVisibleObjects(this.context);
+      highlightData.select ?
+        shape.isClicked = highlight : 
+        shape.isHovered = highlight;
+    });
+    this.draw();
   }
 
   private getShapesFromPath(referencePath: string): Shape[] {

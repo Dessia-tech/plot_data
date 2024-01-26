@@ -1169,6 +1169,19 @@ export class Draw extends Frame {
   public sendRubberBandsMultiplot(figures: Figure[]): void {}
 
   protected receiveRubberBandFromFigure(figure: Figure): void {}
+
+  public highlightFromReferencePath(referencePath: string) {
+    const shapes = this.getShapesFromPath(referencePath);
+    shapes.forEach((shape) => {
+      shape.isHovered = true;
+  });
+  this.draw();
+    // this.updateVisibleObjects(this.context);
+  }
+
+  private getShapesFromPath(referencePath: string): Shape[] {
+    return this.relativeObjects.shapes.filter((s) => s.referencePath === referencePath);
+  }
 }
 
 export class PrimitiveGroupContainer extends Draw {

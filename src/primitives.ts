@@ -26,6 +26,7 @@ export class Arc extends Shape {
 
   public static deserialize(data: any, scale: Vertex): Arc {
     const arc = new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle, data.clockwise ?? true);
+    arc.referencePath = data.reference_path ?? "#";
     arc.deserializeEdgeStyle(data);
     return arc
   }
@@ -49,6 +50,7 @@ export class Circle extends Arc {
 
   public static deserialize(data: any, scale: Vertex): Circle {
     const circle = new Circle(new Vertex(data.cx, data.cy), data.r);
+    circle.referencePath = data.reference_path ?? "#";
     circle.deserializeEdgeStyle(data);
     circle.deserializeSurfaceStyle(data);
     return circle
@@ -75,6 +77,7 @@ export class Rect extends Shape {
 
   public static deserialize(data: any, scale: Vertex): Rect {
     const rectangle = new Rect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height));
+    rectangle.referencePath = data.reference_path ?? "#";
     return rectangle
   }
 
@@ -113,6 +116,7 @@ export class RoundRect extends Rect {
 
   public static deserialize(data: any, scale: Vertex): Rect {
     const roundRectangle = new RoundRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height), data.radius);
+    roundRectangle.referencePath = data.reference_path ?? "#";
     return roundRectangle
   }
 }
@@ -246,6 +250,7 @@ export class Line extends Shape {
 
   public static deserialize(data: any, scale: Vertex): Line { // TODO: Don't know how to factor this and the LineSegment one
     const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    line.referencePath = data.reference_path ?? "#";
     return line
   }
 
@@ -291,6 +296,7 @@ export class LineSegment extends Line {
 
   public static deserialize(data: any, scale: Vertex): LineSegment {
     const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
+    line.referencePath = data.reference_path ?? "#";
     line.deserializeEdgeStyle(data);
     return line
   }
@@ -505,6 +511,7 @@ export class Contour extends Shape {
       throw new Error(`Type ${primitive.type_} is unknown in Contour.`)
     });
     const contour = new Contour(lines, data.is_filled ?? false);
+    contour.referencePath = data.reference_path ?? "#";
     contour.deserializeEdgeStyle(data);
     if (contour.isFilled) contour.deserializeSurfaceStyle(data);
     return contour
@@ -598,6 +605,7 @@ export class Point extends Shape {
 
   public static deserialize(data: any, scale: Vertex): Point {
     const point = new Point(data.cx, data.cy);
+    point.referencePath = data.reference_path ?? "#";
     point.isScaled = false;
     return point
   }
@@ -733,6 +741,7 @@ export class LineSequence extends Shape {
     const points = [];
     data.lines.forEach(line => points.push(new Point(line[0], line[1])));
     const line = new LineSequence(points, data.name ?? "");
+    line.referencePath = data.reference_path ?? "#";
     line.deserializeEdgeStyle(data);
     line.isScaled = true;
     line.buildPath();

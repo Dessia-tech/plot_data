@@ -95,6 +95,8 @@ export class Shape {
   public visible: boolean = true;
   public inFrame: boolean = true;
 
+  public referencePath: string = "#";
+
   public tooltipOrigin: Vertex = null;
   protected _tooltipMap = new Map<string, any>();
   public hasTooltip: boolean = true;

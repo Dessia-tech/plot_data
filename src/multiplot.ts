@@ -6,6 +6,10 @@ import { SelectionBoxCollection, PointSet } from "./collections"
 import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
 import { DataInterface, MultiplotDataInterface } from "./dataInterfaces"
 
+/*
+TODO: Does this inherit from RemoteFigure or the opposite or does this
+inherit from InteractiveObject or from nothing ?
+*/
 export class Multiplot {
   public context: CanvasRenderingContext2D;
   public canvas: HTMLCanvasElement;

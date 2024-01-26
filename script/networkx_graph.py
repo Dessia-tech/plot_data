@@ -18,4 +18,4 @@ plotdata_nx_graph = plot_data.PrimitiveGroup(plot_data.graph.NetworkxGraph(graph
                                                                                                                                 text_align_x='center',
                                                                                                                                 text_align_y='middle')))
 
-plot_data.plot_canvas(plotdata_nx_graph, debug_mode=True)
+plot_data.plot_canvas(plotdata_nx_graph, local=True)

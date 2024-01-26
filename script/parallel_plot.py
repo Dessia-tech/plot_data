@@ -55,5 +55,5 @@ customized_parallelplot = plot_data.ParallelPlot(elements=elements,
                                                  disposition=disposition,
                                                  rgbs=rgbs)
 
-# if debug_mode == True, set it to False
-plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
+# if local == True, set it to False
+plot_data.plot_canvas(plot_data_object=plot_data_object, local=True)

@@ -1,5 +1,8 @@
 export const PICKABLE_BORDER_SIZE = 20;
 export const RUBBERBAND_SMALL_SIZE = 10;
+export const RUBBERBAND_COLOR = 'hsl(200, 95%, 50%)';
+export const RUBBERBAND_ALPHA = 0.5;
+
 export const DASH_SELECTION_WINDOW = [7, 3];
 export const AXIS_TAIL_SIZE = 0;
 
@@ -35,6 +38,10 @@ export const CROSSES = ['x', 'cross', 'oblique'];
 export const SQUARES = ['square'];
 export const TRIANGLES = ['^', 'triangle', 'tri'];
 export const HALF_LINES = ['halfLine', 'halfline'];
+
+export const LABEL_TEXT_OFFSET = 5;
+
+export const REGEX_SAMPLES: RegExp = /^[0-9]+\ssamples/;
 
 export const PG_CONTAINER_PLOT = {
     "name": "",

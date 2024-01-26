@@ -22,8 +22,8 @@ describe('Axis', function() {
 
     axis.draw(context);
 
-    cy.wrap(context.fill).should('have.been.calledWith', axis.drawPath);
-    cy.wrap(context.stroke).should('have.been.calledWith', axis.drawPath);
+    cy.wrap(context.fill).should('have.been.calledWith', axis.drawnPath);
+    cy.wrap(context.stroke).should('have.been.calledWith', axis.drawnPath);
   });
 
   it('should be well created without vector features', function() {

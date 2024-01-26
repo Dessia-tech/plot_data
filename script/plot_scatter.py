@@ -73,5 +73,5 @@ plot_data_object = plot_data.Scatter(x_variable='mass', y_variable='length',
                                      tooltip=tooltip,
                                      heatmap=heatmap)
 
-# if debug_mode is True, set it to False
-plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
+# if local is True, set it to False
+plot_data.plot_canvas(plot_data_object=plot_data_object, local=True)

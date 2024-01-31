@@ -66,12 +66,12 @@ heatmap = plot_data.Heatmap([4, 2], colors=[YELLOW, ORANGE, RED])
 
 # Now, here is the new scatterplot
 plot_data_object = plot_data.Scatter(x_variable='mass', y_variable='length',
-                                           point_style=point_style,
-                                           elements=elements,
-                                           points_sets=points_sets,
-                                           axis=axis,
-                                           tooltip=tooltip,
-                                           heatmap=heatmap)
+                                    point_style=point_style,
+                                    elements=elements,
+                                    points_sets=points_sets,
+                                    axis=axis,
+                                    tooltip=tooltip,
+                                    heatmap=heatmap)
 
 # if local is True, set it to False
 plot_data.plot_canvas(plot_data_object=plot_data_object, local=True)

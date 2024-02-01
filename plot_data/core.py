@@ -117,7 +117,7 @@ class Figure(PlotDataObject):
     def to_html(self, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
         """ Export current Figure to an HTML file given by the filepath. """
         filepath = make_filepath(filepath=filepath)
-        with open(filepath, 'w') as file:
+        with open(filepath, 'w', encoding="utf-8") as file:
             self.to_html_stream(file, debug_mode=debug_mode, canvas_id=canvas_id, version=version)
         return filepath
 

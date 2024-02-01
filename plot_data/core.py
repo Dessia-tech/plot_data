@@ -112,12 +112,12 @@ class Figure(PlotDataObject):
     def to_html_stream(self, stream, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
         """ Export current Figure to its equivalent html stream file. """
         html = self._to_html(debug_mode=debug_mode, canvas_id=canvas_id, version=version)
-        stream.write(html.encode('utf-8'))
+        stream.write(html)
 
     def to_html(self, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
         """ Export current Figure to an HTML file given by the filepath. """
         filepath = make_filepath(filepath=filepath)
-        with open(filepath, 'wb') as file:
+        with open(filepath, 'w') as file:
             self.to_html_stream(file, debug_mode=debug_mode, canvas_id=canvas_id, version=version)
         return filepath
 

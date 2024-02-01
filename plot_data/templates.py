@@ -51,6 +51,8 @@ HTML_TEMPLATE = Template('''
         onclick="plot_data.switchOrientation()"> Change Disposition </button>
         <button name="toogleAxes" value="OK" type="button"
         onclick="plot_data.htmlToggleAxes()"> Show / Hide Axes </button>
+        <button name="logScale" value="OK" type="button"
+        onclick="plot_data.switchLogScale()"> Log Scale</button>
         $specific_buttons
     <hr style="border-top: 2px;">
     </div>

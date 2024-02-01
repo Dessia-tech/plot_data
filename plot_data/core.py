@@ -8,10 +8,11 @@ import json
 import math
 import os
 import sys
+import datetime
 import tempfile
 import warnings
 import webbrowser
-from typing import Dict, List, Tuple, Union  # , Any
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Circle, Arc
@@ -46,6 +47,28 @@ def delete_none_from_dict(dict1):
     return dict2
 
 
+def serialize_dates_in_list(list_):
+    for i, element in enumerate(list_):
+        list_[i] = serialize_dates(element)
+    return list_
+
+
+def serialize_dates_in_dict(dict_):
+    for (key, value) in dict_.items():
+        dict_[key] = serialize_dates(value)
+    return dict_
+
+
+def serialize_dates(serializable):
+    if isinstance(serializable, list):
+        return serialize_dates_in_list(serializable)
+    if isinstance(serializable, dict):
+        return serialize_dates_in_dict(serializable)
+    if isinstance(serializable, datetime.datetime):
+        return f"{serializable.timestamp() * 1000}gmt+"
+    return serializable
+
+
 class PlotDataObject(DessiaObject):
     """ Abstract interface for DessiaObject implementation in module. """
 
@@ -62,7 +85,7 @@ class PlotDataObject(DessiaObject):
             kwargs.pop('use_pointers')
         dict_ = DessiaObject.to_dict(self, use_pointers=False, **kwargs)
         del dict_['object_class']
-
+        dict_ = serialize_dates_in_dict(dict_)
         new_dict_ = delete_none_from_dict(dict_)
         return new_dict_
 
@@ -129,13 +152,21 @@ class Figure(PlotDataObject):
         webbrowser.open('file://' + os.path.realpath(filepath))
 
 
-class Sample(PlotDataObject):
+class ReferencedObject(PlotDataObject):
+    """ PlotData object with reference_path. """
+
+    def __init__(self, type_: str, reference_path: str = "#", name: str = ""):
+        self.reference_path = reference_path
+        super().__init__(type_=type_, name=name)
+
+
+class Sample(ReferencedObject):
     """ Graph Point. """
 
     def __init__(self, values, reference_path: str = "#", name: str = ""):
         self.values = values
         self.reference_path = reference_path
-        super().__init__(type_="sample", name=name)
+        super().__init__(type_="sample", reference_path=reference_path, name=name)
 
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#', id_method=True,
                 id_memo=None) -> JsonSerializable:
@@ -146,6 +177,7 @@ class Sample(PlotDataObject):
         """
         dict_ = PlotDataObject.to_dict(self, use_pointers=use_pointers, memo=memo, path=path, id_method=id_method,
                                        id_memo=id_memo)
+        dict_ = serialize_dates_in_dict(dict_)
         dict_.update({"reference_path": self.reference_path, "name": self.name})
         dict_.update(serialize(self.values))
         # TODO Keeping values at dict_ level before refactor, should be removed after and use dict_["values"] instead
@@ -395,7 +427,7 @@ class PointFamily(PlotDataObject):
         PlotDataObject.__init__(self, type_=None, name=name)
 
 
-class Text(PlotDataObject):
+class Text(ReferencedObject):
     """
     A class for displaying texts on canvas. Text is a primitive and can be instantiated by PrimitiveGroup.
 
@@ -419,7 +451,7 @@ class Text(PlotDataObject):
 
     def __init__(self, comment: str, position_x: float, position_y: float, text_style: TextStyle = None,
                  text_scaling: bool = None, max_width: float = None, height: float = None, multi_lines: bool = True,
-                 name: str = ''):
+                 reference_path: str = "#", name: str = ''):
         self.comment = comment
         self.text_style = text_style
         self.position_x = position_x
@@ -428,7 +460,7 @@ class Text(PlotDataObject):
         self.max_width = max_width
         self.height = height
         self.multi_lines = multi_lines
-        PlotDataObject.__init__(self, type_='text', name=name)
+        super().__init__(type_='text', reference_path=reference_path, name=name)
 
     def mpl_plot(self, ax=None, color='k', alpha=1., **kwargs):
         """ Plots using Matplotlib. """
@@ -438,7 +470,7 @@ class Text(PlotDataObject):
         return ax
 
 
-class Line2D(PlotDataObject):
+class Line2D(ReferencedObject):
     """
     An infinite line. Line2D is a primitive and can be instantiated by PrimitiveGroups.
 
@@ -450,12 +482,13 @@ class Line2D(PlotDataObject):
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None, name: str = ''):
+    def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None,
+                 reference_path: str = "#", name: str = ''):
         self.data = point1 + point2  # Retrocompatibility
         self.point1 = point1
         self.point2 = point2
         self.edge_style = edge_style
-        PlotDataObject.__init__(self, type_='line2d', name=name)
+        super().__init__(type_='line2d', reference_path=reference_path, name=name)
 
     def mpl_plot(self, ax=None, edge_style=None, **kwargs):
         """ Plots using matplotlib. """
@@ -473,7 +506,7 @@ class Line2D(PlotDataObject):
         return ax
 
 
-class LineSegment2D(PlotDataObject):
+class LineSegment2D(ReferencedObject):
     """
     A line segment. This is a primitive that can be called by PrimitiveGroup.
 
@@ -485,7 +518,8 @@ class LineSegment2D(PlotDataObject):
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None, name: str = ''):
+    def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None,
+                 reference_path: str = "#", name: str = ''):
         # Data is used in typescript
         self.data = point1 + point2
         self.point1 = point1
@@ -495,7 +529,7 @@ class LineSegment2D(PlotDataObject):
             self.edge_style = EdgeStyle()
         else:
             self.edge_style = edge_style
-        PlotDataObject.__init__(self, type_='linesegment2d', name=name)
+        super().__init__(type_='linesegment2d', reference_path=reference_path, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current LineSegment2D. """
@@ -523,7 +557,7 @@ class LineSegment2D(PlotDataObject):
         return ax
 
 
-class Wire(PlotDataObject):
+class Wire(ReferencedObject):
     """
     A set of connected lines. It also provides highlighting feature.
 
@@ -536,11 +570,11 @@ class Wire(PlotDataObject):
     """
 
     def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None, tooltip: str = None,
-                 name: str = ""):
+                 reference_path: str = "#", name: str = ""):
         self.lines = lines
         self.edge_style = edge_style
         self.tooltip = tooltip
-        PlotDataObject.__init__(self, type_="wire", name=name)
+        super().__init__(type_="wire", reference_path=reference_path, name=name)
 
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
@@ -555,7 +589,7 @@ class Wire(PlotDataObject):
         return ax
 
 
-class Circle2D(PlotDataObject):
+class Circle2D(ReferencedObject):
     """
     A circle. It is a primitive and can be instantiated by PrimitiveGroup.
 
@@ -574,14 +608,14 @@ class Circle2D(PlotDataObject):
     """
 
     def __init__(self, cx: float, cy: float, r: float, edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#", name: str = ''):
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.r = r
         self.cx = cx
         self.cy = cy
         self.tooltip = tooltip
-        PlotDataObject.__init__(self, type_='circle', name=name)
+        super().__init__(type_='circle', reference_path=reference_path, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -611,11 +645,11 @@ class Circle2D(PlotDataObject):
         return ax
 
 
-class Rectangle(PlotDataObject):
+class Rectangle(ReferencedObject):
     """ Class to draw a rectangle. """
 
     def __init__(self, x_coord: float, y_coord: float, width: float, height: float, edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#", name: str = ''):
         self.x_coord = x_coord
         self.y_coord = y_coord
         self.width = width
@@ -623,7 +657,7 @@ class Rectangle(PlotDataObject):
         self.surface_style = surface_style
         self.edge_style = edge_style
         self.tooltip = tooltip
-        PlotDataObject.__init__(self, type_='rectangle', name=name)
+        super().__init__(type_='rectangle', reference_path=reference_path, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -657,13 +691,15 @@ class RoundRectangle(Rectangle):
     """ Class to draw a round rectangle. """
 
     def __init__(self, x_coord: float, y_coord: float, width: float, height: float, radius: float = 2,
-                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
-        super().__init__(x_coord, y_coord, width, height, edge_style, surface_style, tooltip, name=name)
+                 edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, tooltip: str = None,
+                 reference_path: str = "#", name: str = ''):
+        super().__init__(x_coord, y_coord, width, height, edge_style, surface_style, tooltip,
+                         reference_path=reference_path, name=name)
         self.type_ = "roundrectangle"
         self.radius = radius
 
 
-class Point2D(PlotDataObject):
+class Point2D(ReferencedObject):
     """
     A class for instantiating a point.
 
@@ -675,11 +711,11 @@ class Point2D(PlotDataObject):
     :type point_style: PointStyle
     """
 
-    def __init__(self, cx: float, cy: float, point_style: PointStyle = None, name: str = ''):
+    def __init__(self, cx: float, cy: float, point_style: PointStyle = None, reference_path: str = "#", name: str = ''):
         self.cx = cx
         self.cy = cy
         self.point_style = point_style
-        PlotDataObject.__init__(self, type_='point', name=name)
+        super().__init__(type_='point', reference_path=reference_path, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -1079,7 +1115,7 @@ class ScatterMatrix(Figure):
                 for row in sample_attributes for col in sample_attributes]
 
 
-class Arc2D(PlotDataObject):
+class Arc2D(ReferencedObject):
     """
     A class for drawing arcs. Arc2D is a primitive and can be instantiated by PrimitiveGroup. By default,
     the arc is drawn anticlockwise.
@@ -1098,25 +1134,22 @@ class Arc2D(PlotDataObject):
     BSPline method. This argument is useless unless the arc2D is part of\
      a Contour2D. In such case, the arc must be instantiated by volmdlr.
     :type data: List[dict]
-    :param anticlockwise: True if you want the arc the be drawn \
-    anticlockwise, False otherwise
-    :type anticlockwise: bool
+    :param clockwise: True if you want the arc the be drawn clockwise, False otherwise
+    :type clockwise: bool
     :param edge_style: for customization
     :type edge_style: EdgeStyle
     """
 
-    def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, data=None,
-                 clockwise: bool = None, edge_style: EdgeStyle = None, name: str = ''):
+    def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, clockwise: bool = None,
+                 edge_style: EdgeStyle = None, reference_path: str = "#", name: str = ''):
         self.cx = cx
         self.cy = cy
         self.r = r
         self.start_angle = start_angle
         self.end_angle = end_angle
-        self.data = data
-        self.anticlockwise = not clockwise
         self.clockwise = clockwise
         self.edge_style = edge_style
-        PlotDataObject.__init__(self, type_='arc', name=name)
+        super().__init__(type_='arc', reference_path=reference_path, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -1150,7 +1183,7 @@ class Arc2D(PlotDataObject):
         return ax
 
 
-class Contour2D(PlotDataObject):
+class Contour2D(ReferencedObject):
     """
     A Contour2D is a closed polygon that is formed by multiple primitives.
 
@@ -1166,13 +1199,13 @@ class Contour2D(PlotDataObject):
     """
 
     def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]], edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, tooltip: str = None, name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#", name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.tooltip = tooltip
         self.is_filled = surface_style is not None
-        PlotDataObject.__init__(self, type_='contour', name=name)
+        super().__init__(type_='contour', reference_path=reference_path, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Contour2D. """

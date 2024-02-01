@@ -10,7 +10,7 @@ random.seed(2)
 elements = []
 SHAPES = ['1-2-3-4-5-6-7-8-9round', 'square', 'triangle', 'ellipse']
 COLORS = [RED, BLUE, GREEN, YELLOW, ORANGE, VIOLET]
-for i in range(1000):
+for i in range(500):
     random_shape = SHAPES[random.randint(0, len(SHAPES) - 1)]
     random_color = COLORS[random.randint(0, len(SHAPES) - 1)]
     elements.append({'mass': random.uniform(0, 50),
@@ -18,10 +18,10 @@ for i in range(1000):
                      'shape': random_shape,
                      'color': random_color})
 
-points_sets = [plot_data.PointFamily(plot_data.colors.RED, [0,1,2,3,4,5,6,7,8,9]),
-               plot_data.PointFamily(plot_data.colors.YELLOW, [10,11,12,13,14,15,16,17,18,19]),
-               plot_data.PointFamily(plot_data.colors.GREEN, [20,21,22,23,24,25,26,27,28,29]),
-               plot_data.PointFamily(plot_data.colors.PINK, [30,31,32,33,34,35,36,37,38,39])]
+points_sets = [plot_data.PointFamily(plot_data.colors.RED, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+               plot_data.PointFamily(plot_data.colors.YELLOW, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+               plot_data.PointFamily(plot_data.colors.GREEN, [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]),
+               plot_data.PointFamily(plot_data.colors.PINK, [30, 31, 32, 33, 34, 35, 36, 37, 38, 39])]
 
 plot_data_object = plot_data.Scatter(elements=elements, points_sets=points_sets,
                                      x_variable='mass', y_variable='length')
@@ -66,12 +66,12 @@ heatmap = plot_data.Heatmap([4, 2], colors=[YELLOW, ORANGE, RED])
 
 # Now, here is the new scatterplot
 plot_data_object = plot_data.Scatter(x_variable='mass', y_variable='length',
-                                           point_style=point_style,
-                                           elements=elements,
-                                           points_sets=points_sets,
-                                           axis=axis,
-                                           tooltip=tooltip,
-                                           heatmap=heatmap)
+                                     point_style=point_style,
+                                     elements=elements,
+                                     points_sets=points_sets,
+                                     axis=axis,
+                                     tooltip=tooltip,
+                                     heatmap=heatmap)
 
 # if debug_mode is True, set it to False
 plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)

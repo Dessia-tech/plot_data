@@ -86,7 +86,7 @@ export class InteractiveObject {
 
   private _isHovered: boolean = false;
   public get isHovered(): boolean{
-    return this._isHovered
+    return this._isHovered;
   };
   set isHovered(hovered: boolean) {
     if (hovered !== this._isHovered && this.referencePath !== "#") {
@@ -101,7 +101,23 @@ export class InteractiveObject {
     }
     this._isHovered = hovered;
   }
-  public isClicked: boolean = false;
+
+  private _isClicked: boolean = false;
+  public get isClicked(): boolean {
+    return this._isClicked;
+  }
+  set isClicked(clicked: boolean) {
+    if (clicked != this._isClicked && this.referencePath !== "#") {
+      // Same than isHovered
+      const highlightData = {
+        referencePath: this.referencePath,
+        highlight: clicked,
+        select: true
+      }
+      highlightShape.next(highlightData);
+    }
+    this._isClicked = clicked;
+  }
   public isSelected: boolean = false;
   public isScaled: boolean = true;
   public isFilled: boolean = true;

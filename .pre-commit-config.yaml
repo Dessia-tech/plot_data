@@ -4,9 +4,9 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.2.0
-    exclude: libdev/
     hooks:
       - id: trailing-whitespace
+        exclude: libdev/
       - id: check-docstring-first
       - id: check-json
       - id: check-added-large-files

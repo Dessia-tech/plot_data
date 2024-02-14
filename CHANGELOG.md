@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow to log scale axes
 - Offline mode
 
+### Fix
+- Add reference_path to all Primitive / Elementary drawing Objects
+- Remove data attr from class Arc in Python
+- Light improvement of class Arc in Python
+- Html stream method
+
 ## [0.21.0]
 ### Add
 - Tests of typescript app

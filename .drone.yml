@@ -167,7 +167,6 @@ steps:
 
 - name: check code complexity, docs & code quality pre-commit
   image: python:3.9
-  ignore: failure
   commands:
   - pip install pylint==2.16.2 pre-commit
   - python code_pylint.py

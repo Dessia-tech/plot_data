@@ -18,7 +18,7 @@ for i in range(50):
                      'color': random_color
                      })
 
-plot_data_object = plot_data.Histogram(x_variable='mass', elements=elements, graduation_nb = 20,
+plot_data_object = plot_data.Histogram(x_variable='mass', elements=elements, graduation_nb=20,
                                        surface_style=plot_data.SurfaceStyle("rgb(50, 50, 220)"),
                                        edge_style=plot_data.EdgeStyle(1, "rgb(0, 255, 0)", [5, 3]))
 

@@ -128,4 +128,4 @@ label_custo_2 = plot_data.Label(title='Extra Label 2', shape=contour_empty)
 # labels = plot_data.MultipleLabels(labels=[label_custo_1, label_custo_2])
 primitives += [label_custo_1, label_custo_2]
 primitive_group = plot_data.PrimitiveGroup(primitives=primitives)
-# plot_data.plot_canvas(primitive_group, debug_mode=True)
+# plot_data.plot_canvas(primitive_group, local=True)

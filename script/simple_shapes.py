@@ -16,4 +16,4 @@ import plot_data
 # plot_data_object.mpl_plot()
 
 plot_data_object.save_to_image('primitive_group.png')
-plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
+plot_data.plot_canvas(plot_data_object=plot_data_object, local=True)

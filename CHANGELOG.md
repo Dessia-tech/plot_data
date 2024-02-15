@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Integer axes only show integer ticks
 - Handle date as continuous value on axes
 - Allow to log scale axes
+- Offline mode
 
 ### Fix
 - Add reference_path to all Primitive / Elementary drawing Objects

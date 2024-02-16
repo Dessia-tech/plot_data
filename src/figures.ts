@@ -10,6 +10,7 @@ import { Axis, ParallelAxis } from "./axes"
 import { ShapeCollection, GroupCollection, PointSet } from "./collections"
 import { RemoteFigure } from "./remoteFigure"
 import { DataInterface } from "./dataInterfaces"
+import { HighlightData } from "./interactions"
 
 export class Figure extends RemoteFigure {
   constructor(
@@ -1171,7 +1172,7 @@ export class Draw extends Frame {
 
   protected receiveRubberBandFromFigure(figure: Figure): void {}
 
-  public highlightFromReferencePath(highlightData) {
+  public highlightFromReferencePath(highlightData: HighlightData) {
     const highlight = highlightData.highlight;
     const shapes = this.getShapesFromPath(highlightData.referencePath);
     shapes.forEach((shape) => {

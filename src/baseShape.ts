@@ -85,6 +85,17 @@ export class InteractiveObject {
   public mouseClick: Vertex = null;
 
   private _isHovered: boolean = false;
+  private _isClicked: boolean = false;
+  public isSelected: boolean = false;
+  public isScaled: boolean = true;
+  public isFilled: boolean = true;
+  public visible: boolean = true;
+  public inFrame: boolean = true; // TODO: remove it
+
+  public referencePath: string = "#";
+
+  constructor() { };
+
   public get isHovered(): boolean{
     return this._isHovered;
   };
@@ -102,7 +113,6 @@ export class InteractiveObject {
     this._isHovered = hovered;
   }
 
-  private _isClicked: boolean = false;
   public get isClicked(): boolean {
     return this._isClicked;
   }
@@ -118,15 +128,6 @@ export class InteractiveObject {
     }
     this._isClicked = clicked;
   }
-  public isSelected: boolean = false;
-  public isScaled: boolean = true;
-  public isFilled: boolean = true;
-  public visible: boolean = true;
-  public inFrame: boolean = true; // TODO: remove it
-
-  public referencePath: string = "#";
-
-  constructor() { };
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
 

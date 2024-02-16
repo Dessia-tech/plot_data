@@ -1,5 +1,4 @@
-import { MAX_LABEL_HEIGHT, TEXT_SEPARATORS, DEFAULT_FONTSIZE, TOOLTIP_PRECISION, TOOLTIP_TRIANGLE_SIZE,
-  TOOLTIP_TEXT_OFFSET, LEGEND_MARGIN, DASH_SELECTION_WINDOW, PICKABLE_BORDER_SIZE, RUBBERBAND_SMALL_SIZE } from "./constants"
+import * as C from './constants';
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { styleToLegend } from "./shapeFunctions"
@@ -18,14 +17,18 @@ export interface TextParams {
   orientation?: number,
   backgroundColor?: string,
   color?: string,
+  isScaled?: boolean,
   scale?: Vertex
 }
 
 export class Text extends Shape {
   public scale: Vertex = new Vertex(1, 1);
-  public fillStyle: string = 'hsl(0, 0%, 0%)';
   public width: number;
   public height: number;
+
+  private words: string[];
+  private writtenText: string[];
+
   public fontsize: number;
   public font: string;
   public align: string;
@@ -33,10 +36,11 @@ export class Text extends Shape {
   public style: string;
   public orientation: number;
   public multiLine: boolean;
+
   public rowIndices: number[] = [];
   public boundingBox: Rect;
   public offset: number = 0;
-  private words: string[];
+
   constructor(
     public text: string,
     public origin: Vertex,
@@ -51,23 +55,13 @@ export class Text extends Shape {
       orientation = 0,
       color = "hsl(0, 0%, 0%)",
       backgroundColor = "hsla(0, 0%, 100%, 0)",
+      isScaled = false,
       scale = new Vertex(1, 1)
     }: TextParams = {}) {
     super();
-    this.boundingBox = new Rect(origin, new Vertex(width, height));
-    this.boundingBox.fillStyle = backgroundColor;
-    this.boundingBox.strokeStyle = backgroundColor;
-    this.boundingBox.lineWidth = 1e-6; //TODO: this is a HOT FIX
-    this.fontsize = fontsize;
-    this.multiLine = multiLine;
-    this.font = font;
-    this.style = style;
-    this.orientation = orientation;
-    this.fillStyle = color;
+    this.initializeBoundingBox(origin, width, height, backgroundColor);
+    this.initializeTextStyle(fontsize, multiLine, font, style, orientation, color, align, baseline, isScaled, scale);
     this.words = this.getWords();
-    this.align = align;
-    this.baseline = baseline;
-    this.scale = scale;
   }
 
   private static buildFont(style: string, fontsize: number, font: string): string { return `${style} ${fontsize}px ${font}` }
@@ -84,45 +78,61 @@ export class Text extends Shape {
       baseline: data.text_style?.text_align_y,
       style: style,
       orientation: data.text_style?.angle,
-      color: data.text_style?.text_color
+      color: data.text_style?.text_color,
+      isScaled: data.text_scaling
     } as TextParams
   }
 
   public static deserialize(data: any, scale: Vertex): Text {
     const textParams = Text.deserializeTextParams(data);
     const text = new Text(data.comment, new Vertex(data.position_x, data.position_y), textParams);
-    text.isScaled = data.text_scaling ?? false;
     text.scale = new Vertex(scale.x, scale.y);
     return text
   }
 
   get fullFont(): string { return Text.buildFont(this.style, this.fontsize, this.font) }
 
+  private initializeBoundingBox(origin: Vertex, width: number, height: number, backgroundColor: string): void {
+    this.boundingBox = new Rect(origin, new Vertex(width, height));
+    this.boundingBox.fillStyle = backgroundColor;
+    this.boundingBox.strokeStyle = backgroundColor;
+    this.boundingBox.lineWidth = 1e-6;
+  }
+
+  private initializeTextStyle(
+    fontsize: number, multiLine: boolean, font: string, style: string, orientation: number,
+    color: string, align: string, baseline: string, isScaled: boolean, scale: Vertex): void {
+      this.fontsize = fontsize;
+      this.multiLine = multiLine;
+      this.font = font;
+      this.style = style;
+      this.orientation = orientation;
+      this.fillStyle = color;
+      this.align = align;
+      this.baseline = baseline;
+      this.isScaled = isScaled;
+      this.scale = scale;
+  }
+
+  private getXCornersUnscaled(xFirstCorner: number, xSecondCorner: number, xMinMaxFactor: number): [number, number] {
+    if (this.align == "center") return [xFirstCorner * 0.99, xSecondCorner * 1.01];
+    if (["right", "end"].includes(this.align)) return [xFirstCorner, xSecondCorner != 0 ? xSecondCorner * (1 - xMinMaxFactor) : -Math.sign(this.scale.x)];
+    if (["left", "start"].includes(this.align)) return [xFirstCorner, xSecondCorner != 0 ? xSecondCorner * (1 + xMinMaxFactor) : Math.sign(this.scale.x)];
+  }
+
+  private getYCornersUnscaled(yFirstCorner: number, ySecondCorner: number, yMinMaxFactor: number): [number, number] {
+    if (this.baseline == "middle") return [yFirstCorner * 0.99, ySecondCorner * 1.01];
+    if (["bottom", "alphabetic"].includes(this.baseline)) return [yFirstCorner, ySecondCorner != 0 ? ySecondCorner * (1 - yMinMaxFactor) : -Math.sign(this.scale.y)];
+    if (["top", "hanging"].includes(this.baseline)) return [yFirstCorner, ySecondCorner != 0 ? ySecondCorner * (1 + yMinMaxFactor) : Math.sign(this.scale.y)];
+  }
+
   private getCornersUnscaled(): [Vertex, Vertex] {
     const firstCorner = this.origin.copy();
     const secondCorner = firstCorner.copy();
     const xMinMaxFactor = Math.sign(secondCorner.x) * 0.01 * Math.sign(this.scale.x);
     const yMinMaxFactor = Math.sign(secondCorner.y) * 0.01 * Math.sign(this.scale.y);
-    if (this.align == "center") {
-      firstCorner.x *= 0.99;
-      secondCorner.x *= 1.01;
-    } else if (["right", "end"].includes(this.align)) {
-      if (secondCorner.x != 0) secondCorner.x *= 1 - xMinMaxFactor;
-      else secondCorner.x = -Math.sign(this.scale.x);
-    } else if (["left", "start"].includes(this.align)) {
-      if (secondCorner.x != 0) secondCorner.x *= 1 + xMinMaxFactor;
-      else secondCorner.x = Math.sign(this.scale.x);
-    }
-    if (this.baseline == "middle") {
-      firstCorner.y *= 0.99;
-      secondCorner.y *= 1.01;
-    } else if (["top", "hanging"].includes(this.baseline)) {
-      if (secondCorner.y != 0) secondCorner.y *= 1 + yMinMaxFactor;
-      else secondCorner.y = Math.sign(this.scale.y);
-    } else if (["bottom", "alphabetic"].includes(this.baseline)) {
-      if (secondCorner.y != 0) secondCorner.y *= 1 - yMinMaxFactor;
-      else secondCorner.y = -Math.sign(this.scale.y);
-    }
+    [firstCorner.x, secondCorner.x] = this.getXCornersUnscaled(firstCorner.x, secondCorner.x, xMinMaxFactor);
+    [firstCorner.y, secondCorner.y] = this.getYCornersUnscaled(firstCorner.y, secondCorner.y, yMinMaxFactor);
     return [firstCorner, secondCorner]
   }
 
@@ -143,7 +153,7 @@ export class Text extends Shape {
 
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let fontsize = Math.min(this.boundingBox.size.y ?? Number.POSITIVE_INFINITY, this.fontsize ?? Number.POSITIVE_INFINITY);
-    if (fontsize == Number.POSITIVE_INFINITY) fontsize = DEFAULT_FONTSIZE;
+    if (fontsize == Number.POSITIVE_INFINITY) fontsize = C.DEFAULT_FONTSIZE;
     context.font = Text.buildFont(this.style, fontsize, this.font);
     if (context.measureText(this.text).width >= this.boundingBox.size.x) fontsize = fontsize * this.boundingBox.size.x / context.measureText(this.text).width;
     return fontsize
@@ -163,50 +173,62 @@ export class Text extends Shape {
     return 0;
   }
 
+  private setBoundingBoxGeometry(contextMatrix: DOMMatrix): void {
+    this.boundingBox.origin = this.origin.copy();
+    this.boundingBox.origin.x += this.setRectOffsetX() / (this.isScaled ? Math.sign(this.scale.x) : contextMatrix.a);
+    this.boundingBox.origin.y += this.setRectOffsetY() / (this.isScaled ? Math.sign(this.scale.y) : contextMatrix.d);
+    this.boundingBox.size.x = this.width;
+    this.boundingBox.size.y = this.height;
+  }
+
+  private descaleBoundingBox(contextMatrix: DOMMatrix): void {
+    const boundingBox = new Rect(
+      this.boundingBox.origin.copy(),
+      this.boundingBox.size.scale(new Vertex(Math.abs(1 / contextMatrix.a), Math.abs(1 / contextMatrix.d)))
+    );
+    boundingBox.buildPath();
+    this.boundingBox.path = boundingBox.path;
+  }
+
+  public updateBoundingBox(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
+    this.setBoundingBoxGeometry(contextMatrix);
+    this.isScaled ? this.boundingBox.buildPath() : this.descaleBoundingBox(contextMatrix);
+  }
+
   public buildPath(): void { this.path = this.boundingBox.path }
 
   public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
 
   public capitalizeSelf(): void { this.text = Text.capitalize(this.text) }
 
-  public updateBoundingBox(context: CanvasRenderingContext2D): void {
-    const matrix = context.getTransform();
-    this.boundingBox.origin = this.origin.copy();
-    this.boundingBox.origin.x += this.setRectOffsetX() / (this.isScaled ? Math.sign(this.scale.x) : matrix.a);
-    this.boundingBox.origin.y += this.setRectOffsetY() / (this.isScaled ? Math.sign(this.scale.y) : matrix.d);
-    this.boundingBox.size.x = this.width;
-    this.boundingBox.size.y = this.height;
-    if (!this.isScaled) {
-      const boundingBox = new Rect(this.boundingBox.origin.copy(), this.boundingBox.size.scale(new Vertex(Math.abs(1 / matrix.a), Math.abs(1 / matrix.d))));
-      boundingBox.buildPath();
-      this.boundingBox.path = boundingBox.path;
-    } else this.boundingBox.buildPath();
+  public setDrawingProperties(context: CanvasRenderingContext2D): void {
+    context.font = this.fullFont;
+    context.textAlign = this.align as CanvasTextAlign;
+    context.textBaseline = this.baseline as CanvasTextBaseline;
+    context.fillStyle = this.fillStyle;
+    context.globalAlpha = this.alpha;
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    if (this.text) {
-      const contextMatrix = context.getTransform();
-      const origin = this.origin.transform(contextMatrix);
-      context.save();
-      this.setBoundingBoxState();
-      const writtenText = this.cleanStartAllRows(this.rowIndices.length == 0 ? this.format(context) : this.formattedTextRows());
-      this.updateBoundingBox(context);
-      this.buildPath();
-      this.boundingBox.draw(context);
+  protected buildDrawPath(context: CanvasRenderingContext2D): void {
+    this.setBoundingBoxState();
+    this.updateBoundingBox(context);
+    this.buildPath();
+    this.boundingBox.draw(context);
+  }
 
-      context.font = this.fullFont;
-      context.textAlign = this.align as CanvasTextAlign;
-      context.textBaseline = this.baseline as CanvasTextBaseline;
-      context.fillStyle = this.fillStyle;
-      context.globalAlpha = this.alpha;
+  protected drawPath(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
+    const origin = this.origin.transform(contextMatrix);
+    context.resetTransform();
+    context.translate(origin.x, origin.y);
+    context.rotate(Math.PI / 180 * this.orientation);
+    if (this.isScaled) context.scale(Math.abs(contextMatrix.a), Math.abs(contextMatrix.d));
+    this.write(this.writtenText, context);
+  }
 
-      context.resetTransform();
-      context.translate(origin.x, origin.y);
-      context.rotate(Math.PI / 180 * this.orientation);
-      if (this.isScaled) context.scale(Math.abs(contextMatrix.a), Math.abs(contextMatrix.d));
-      this.write(writtenText, context);
-      context.restore();
-    }
+  protected computeContextualAttributes(context: CanvasRenderingContext2D): void {
+    this.writtenText = this.cleanStartAllRows(this.rowIndices.length == 0 ? this.format(context) : this.formatTextRows());
   }
 
   private setBoundingBoxState(): void {
@@ -232,13 +254,18 @@ export class Text extends Shape {
 
   private write(writtenText: string[], context: CanvasRenderingContext2D): void {
     context.fillStyle = this.fillStyle;
-    const nRows = writtenText.length - 1;
     const middleFactor = this.baseline == "middle" ? 2 : 1;
-    if (nRows != 0) writtenText.forEach((row, index) => {
-      if (["top", "hanging"].includes(this.baseline)) context.fillText(index == 0 ? Text.capitalize(row) : row, 0, index * this.fontsize + this.offset)
-      else context.fillText(index == 0 ? Text.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset);
-    })
+    if (writtenText.length > 1) this.multiLineWrite(writtenText, middleFactor, context);
     else context.fillText(Text.capitalize(writtenText[0]), 0, this.offset / middleFactor);
+  }
+
+  private multiLineWrite(writtenText: string[], middleFactor: number, context: CanvasRenderingContext2D): void {
+    const nRows = writtenText.length - 1;
+    writtenText.forEach((row, index) => {
+      ["top", "hanging"].includes(this.baseline)
+        ? context.fillText(index == 0 ? Text.capitalize(row) : row, 0, index * this.fontsize + this.offset)
+        : context.fillText(index == 0 ? Text.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset);
+    });
   }
 
   public removeEndZeros(): void {
@@ -256,10 +283,11 @@ export class Text extends Shape {
   }
 
   private getLongestRow(context: CanvasRenderingContext2D, writtenText: string[]): number {
+    context.font = Text.buildFont(this.style, this.fontsize, this.font);
     return Math.max(...writtenText.map(row => context.measureText(row).width))
   }
 
-  public formattedTextRows(): string[] {
+  public formatTextRows(): string[] {
     const writtenText = []
     this.rowIndices.slice(0, this.rowIndices.length - 1).forEach((_, rowIndex) => {
       writtenText.push(this.text.slice(this.rowIndices[rowIndex], this.rowIndices[rowIndex + 1]));
@@ -267,19 +295,30 @@ export class Text extends Shape {
     return writtenText
   }
 
+  private computeRowIndices(writtenText: string[]): number[] {
+    const rowIndices = [0];
+    writtenText.forEach((row, index) => rowIndices.push(rowIndices[index] + row.length));
+    return rowIndices
+  }
+
+  private formatWithLength(writtenText: string[], fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
+    if (this.multiLine) return this.multiLineSplit(fontsize, context);
+    return [writtenText, this.automaticFontSize(context)]
+  }
+
+  private formatInBoundingBox(context: CanvasRenderingContext2D): [string[], number] {
+    const fontsize = this.fontsize ?? C.DEFAULT_FONTSIZE;
+    if (this.boundingBox.size.x) return this.formatWithLength([this.text], fontsize, context);
+    if (this.boundingBox.size.y) return [[this.text], this.fontsize ?? this.boundingBox.size.y];
+    return [[this.text], fontsize]
+  }
+
   public format(context: CanvasRenderingContext2D): string[] {
-    let writtenText = [this.text];
-    let fontsize = this.fontsize ?? DEFAULT_FONTSIZE;
-    if (this.boundingBox.size.x) {
-      if (this.multiLine) [writtenText, fontsize] = this.multiLineSplit(fontsize, context)
-      else fontsize = this.automaticFontSize(context);
-    } else if (this.boundingBox.size.y) fontsize = this.fontsize ?? this.boundingBox.size.y;
+    const [writtenText, fontsize] = this.formatInBoundingBox(context);
     this.fontsize = Math.abs(fontsize);
-    context.font = Text.buildFont(this.style, this.fontsize, this.font);
     this.height = writtenText.length * this.fontsize;
     this.width = this.getLongestRow(context, writtenText);
-    this.rowIndices = [0];
-    writtenText.forEach((row, index) => this.rowIndices.push(this.rowIndices[index] + row.length));
+    this.rowIndices = this.computeRowIndices(writtenText);
     return writtenText
   }
 
@@ -298,41 +337,57 @@ export class Text extends Shape {
     return this.splitInWords();
   }
 
-  private splitInWords(): string[] {
-    if (this.text.length == 0) return [""]
+  private pushSeparatorInWords(pickedChars: number): [string, number] {
+    return [this.text[pickedChars], pickedChars + 1]
+  }
+
+  private buildWord(pickedChars: number, word: string): [string, number] {
+    while (!C.TEXT_SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length) {
+      word += this.text[pickedChars];
+      pickedChars++;
+    }
+    return [word, pickedChars]
+  }
+
+  private buildWords(): string[] {
     const words = [];
     let pickedChars = 0;
     while (pickedChars < this.text.length) {
       let word = "";
-      if (TEXT_SEPARATORS.includes(this.text[pickedChars])) {
-        word = this.text[pickedChars];
-        pickedChars++;
-      }
-      else {
-        while (!TEXT_SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length) {
-          word += this.text[pickedChars];
-          pickedChars++;
-        }
-      }
+      if (C.TEXT_SEPARATORS.includes(this.text[pickedChars])) [word, pickedChars] = this.pushSeparatorInWords(pickedChars)
+      else [word, pickedChars] = this.buildWord(pickedChars, word);
       words.push(word);
     }
     return words.length > 1 ? words : this.text.split("")
   }
 
-  private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
-    const rows: string[] = [];
-    let pickedWords = 0;
-    while (pickedWords < this.words.length) {
-      let newRow = '';
-      while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
-        if (context.measureText(newRow + this.words[pickedWords]).width > this.boundingBox.size.x && newRow != '') break
-        else {
-          newRow += this.words[pickedWords];
-          pickedWords++;
-        }
-      }
-      if (newRow.length != 0) rows.push(newRow);
+  private splitInWords(): string[] {
+    if (this.text.length == 0) return [""];
+    return this.buildWords();
+  }
+
+  private isTextTooWide(context: CanvasRenderingContext2D, text: string): boolean {
+    return context.measureText(text).width > this.boundingBox.size.x
+  }
+
+  private addPickedWordToRow(row: string, pickedWords: number): [string, number] {
+    return [row + this.words[pickedWords], pickedWords + 1]
+  }
+
+  private computeNewRow(context: CanvasRenderingContext2D, pickedWords: number, rows: string[]): [string[], number] {
+    let newRow = '';
+    while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
+      if (this.isTextTooWide(context, newRow + this.words[pickedWords]) && newRow != '') break
+      else [newRow, pickedWords] = this.addPickedWordToRow(newRow, pickedWords);
     }
+    if (newRow.length != 0) rows.push(newRow);
+    return [rows, pickedWords]
+  }
+
+  private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
+    let rows: string[] = [];
+    let pickedWords = 0;
+    while (pickedWords < this.words.length) [rows, pickedWords] = this.computeNewRow(context, pickedWords, rows);
     return rows
   }
 
@@ -345,26 +400,30 @@ export class Text extends Shape {
     return true
   }
 
+  private computeTextHeight(fontsize: number, textHeight: number, rows: string[], context: CanvasRenderingContext2D): [string[], number] {
+    if (this.checkWordsLength(context)) {
+      rows = this.fixedFontSplit(context);
+      textHeight = fontsize * rows.length;
+    }
+    return [rows, textHeight]
+  }
+
   private autoFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     let rows = [];
-    let criterion = Number.POSITIVE_INFINITY;
-    while (criterion > this.boundingBox.size.y && fontsize > 1) {
+    let textHeight = Number.POSITIVE_INFINITY;
+    while (textHeight > this.boundingBox.size.y && fontsize > 1) {
       context.font = Text.buildFont(this.style, fontsize, this.font);
-      if (this.checkWordsLength(context)) {
-        rows = this.fixedFontSplit(context);
-        criterion = fontsize * rows.length;
-      }
-      fontsize--;
+      [rows, textHeight] = this.computeTextHeight(fontsize, textHeight, rows, context);
+      fontsize--; // TODO: weird, algorithm has to be re-thought. But working with no infinite loop
     }
     return [rows, fontsize + 1]
   }
 }
 
 export class Label extends Shape {
-  public shapeSize: Vertex = new Vertex(30, MAX_LABEL_HEIGHT);
+  public shapeSize: Vertex = new Vertex(30, C.MAX_LABEL_HEIGHT);
   public legend: Shape;
   public maxWidth: number = 150;
-  public readonly textOffset = 5;
   constructor(
     shape: Shape,
     public text: Text,
@@ -394,15 +453,23 @@ export class Label extends Shape {
     return path
   }
 
-  private updateLegendGeometry(): void {
-    if (this.legend instanceof LineSegment) {
-      this.legend.origin.x = this.origin.x;
-      this.legend.origin.y = this.origin.y + LEGEND_MARGIN;
-      this.legend.end.x = this.origin.x + this.shapeSize.x;
-      this.legend.end.y = this.origin.y + this.shapeSize.y - LEGEND_MARGIN;
-    }
-    else if (this.legend instanceof Point) this.legend.center = this.origin.add(this.shapeSize.divide(2));
-    else this.legend = new Rect(this.origin, this.shapeSize);
+  private setLineSegmentLegendGeometry(legend: LineSegment): LineSegment {
+    legend.origin.x = this.origin.x;
+    legend.origin.y = this.origin.y + C.LEGEND_MARGIN;
+    legend.end.x = this.origin.x + this.shapeSize.x;
+    legend.end.y = this.origin.y + this.shapeSize.y - C.LEGEND_MARGIN;
+    return legend
+  }
+
+  private setPointLegendGeometry(legend: Point): Point {
+    legend.center = this.origin.add(this.shapeSize.divide(2));
+    return legend
+  }
+
+  private updateLegendGeometry(): LineSegment | Point | Rect {
+    if (this.legend instanceof LineSegment) return this.setLineSegmentLegendGeometry(this.legend)
+    if (this.legend instanceof Point) return this.setPointLegendGeometry(this.legend)
+    return new Rect(this.origin, this.shapeSize);
   }
 
   public getShapeStyle(shape: Shape, origin: Vertex): void {
@@ -441,168 +508,180 @@ export class Label extends Shape {
     }
   }
 
-  public updateOrigin(drawingZone: Rect, initScale: Vertex, nLabels: number): void {
+  public updateOrigin(drawingZone: Rect, initScale: Vertex, offsetLabels: number): void {
     this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
-    this.origin.y = drawingZone.origin.y + drawingZone.size.y - nLabels * this.shapeSize.y * 1.75 * initScale.y;
-    this.updateLegendGeometry();
-    this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + this.textOffset, this.shapeSize.y / 2));
+    this.origin.y = drawingZone.origin.y + drawingZone.size.y - offsetLabels * this.shapeSize.y * 1.75 * initScale.y;
+    this.legend = this.updateLegendGeometry();
+    this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + C.LABEL_TEXT_OFFSET, this.shapeSize.y / 2));
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    super.drawWhenIsVisible(context);
-    context.save();
+  private drawText(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
     context.resetTransform();
     this.text.draw(context);
-    context.restore();
+    context.setTransform(contextMatrix);
   }
 
+  protected drawMembers(context: CanvasRenderingContext2D): void { this.drawText(context) }
+
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    return this.legend.isFilled ? context.isPointInPath(this.path, point.x, point.y) : (context.isPointInPath(this.path, point.x, point.y) || context.isPointInStroke(this.path, point.x, point.y))
+    return this.legend.isFilled
+      ? context.isPointInPath(this.path, point.x, point.y)
+      : (context.isPointInPath(this.path, point.x, point.y) || context.isPointInStroke(this.path, point.x, point.y));
   }
 }
 
-export class Tooltip {// TODO: make it a Shape
-  public path: Path2D;
-
-  public lineWidth: number = 1;
-  public strokeStyle: string = "hsl(210, 90%, 20%)";
+export class Tooltip extends Shape {
   public textColor: string = "hsl(0, 0%, 100%)";
-  public fillStyle: string = "hsl(210, 90%, 20%)";
-  public alpha: number = 0.8;
   public fontsize: number = 10;
   public radius: number = 10;
 
   private printedRows: string[];
   private squareOrigin: Vertex;
+  private textOrigin: Vertex;
   private size: Vertex;
+
   private isUp = true;
   public isFlipper = true;
+
   constructor(
     public origin,
     public dataToPrint: Map<string, any>,
     context: CanvasRenderingContext2D
   ) {
+    super();
+    this.setStyle();
     [this.printedRows, this.size] = this.buildText(context);
     this.squareOrigin = new Vertex(this.origin.x, this.origin.y);
+  }
+
+  private setStyle(): void {
+    this.strokeStyle = "hsl(210, 90%, 20%)";
+    this.fillStyle = "hsl(210, 90%, 20%)";
+    this.alpha = 0.8;
+  }
+
+  private featureValueToTextRow(featureValue: any, featureKey: string): string {
+    if (featureKey == "Number" && featureValue != 1) return `${featureValue} samples`;
+    if (featureKey != "name") return featureValue != '' ? `${featureKey}: ${this.formatValue(featureValue)}` : featureKey
+    return null
+  }
+
+  private dataToText(context: CanvasRenderingContext2D): [string[], number] {
+    const printedRows = [];
+    let textLength = 0;
+    this.dataToPrint.forEach((value, key) => {
+      const text = this.featureValueToTextRow(value, key);
+      const textWidth = context.measureText(text).width;
+      if (textWidth > textLength) textLength = textWidth;
+      if (text) printedRows.push(text);
+    })
+    return [printedRows, textLength]
   }
 
   private buildText(context: CanvasRenderingContext2D): [string[], Vertex] {
     context.save();
     context.font = `${this.fontsize}px sans-serif`;
-    const printedRows = [];
-    let textLength = 0;
-    this.dataToPrint.forEach((value, key) => {
-      let text: string = null;
-      if (key == "Number") {
-        if (value != 1) text = `${value} samples`;
-      } else {
-        if (key != "name") {
-          if (value != '') text = `${key}: ${this.formatValue(value)}`
-          else text = key;
-        }
-      };
-      const textWidth = context.measureText(text).width;
-      if (textWidth > textLength) textLength = textWidth;
-      if (text) printedRows.push(text);
-    })
+    const [printedRows, textLength] = this.dataToText(context);
     context.restore();
-    return [printedRows, new Vertex(textLength + TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
+    return [printedRows, new Vertex(textLength + C.TOOLTIP_TEXT_OFFSET * 2, (printedRows.length + 1.5) * this.fontsize)]
   }
 
   private formatValue(value: number | string): number | string {
-    if (typeof value == "number") return Math.round(value * TOOLTIP_PRECISION) / TOOLTIP_PRECISION;
+    if (typeof value == "number") return Math.round(value * C.TOOLTIP_PRECISION) / C.TOOLTIP_PRECISION;
     return value
   };
 
   public buildPath(): void {
     this.path = new Path2D();
-    const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE));
+    const rectOrigin = this.squareOrigin.add(new Vertex(-this.size.x / 2, C.TOOLTIP_TRIANGLE_SIZE));
     const triangleCenter = this.origin;
-    triangleCenter.y += TOOLTIP_TRIANGLE_SIZE / 2 * (this.isUp ? 1 : -1);
+    triangleCenter.y += C.TOOLTIP_TRIANGLE_SIZE / 2 * (this.isUp ? 1 : -1);
     this.path.addPath(new RoundRect(rectOrigin, this.size, this.radius).path);
-    this.path.addPath(new Triangle(triangleCenter, TOOLTIP_TRIANGLE_SIZE, this.isUp ? 'down' : 'up').path);
+    this.path.addPath(new Triangle(triangleCenter, C.TOOLTIP_TRIANGLE_SIZE, this.isUp ? 'down' : 'up').path);
   }
 
   private computeTextOrigin(scaling: Vertex): Vertex {
     let textOrigin = this.squareOrigin;
-    let textOffsetX = -this.size.x / 2 + TOOLTIP_TEXT_OFFSET;
-    let textOffsetY = (scaling.y < 0 ? -this.size.y - TOOLTIP_TRIANGLE_SIZE : TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25;
+    let textOffsetX = -this.size.x / 2 + C.TOOLTIP_TEXT_OFFSET;
+    let textOffsetY = (scaling.y < 0 ? -this.size.y - C.TOOLTIP_TRIANGLE_SIZE : C.TOOLTIP_TRIANGLE_SIZE) + this.fontsize * 1.25;
     return textOrigin.add(new Vertex(textOffsetX, textOffsetY));
   }
 
+  private writeRow(textOrigin: Vertex, row: string, rowIndex: number, context: CanvasRenderingContext2D): void {
+    textOrigin.y += rowIndex == 0 ? 0 : this.fontsize;
+    const text = new Text(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: C.REGEX_SAMPLES.test(row) ? 'bold' : '' });
+    text.fillStyle = this.textColor;
+    text.draw(context);
+  }
+
   private writeText(textOrigin: Vertex, context: CanvasRenderingContext2D): void {
-    const regexSamples: RegExp = /^[0-9]+\ssamples/;
-    this.printedRows.forEach((row, index) => {
-      textOrigin.y += index == 0 ? 0 : this.fontsize;
-      const text = new Text(row, textOrigin, { fontsize: this.fontsize, baseline: "middle", style: regexSamples.test(row) ? 'bold' : '' });
-      text.fillStyle = this.textColor;
-      text.draw(context)
-    })
+    this.printedRows.forEach((row, index) => this.writeRow(textOrigin, row, index, context));
+  }
+
+  private updateSquareXOrigin(upRightDiff: Vertex, downLeftDiff: Vertex, plotSize: Vertex): number {
+    if (upRightDiff.x < 0) return upRightDiff.x;
+    if (upRightDiff.x > plotSize.x) return upRightDiff.x - plotSize.x;
+    if (downLeftDiff.x < 0) return -downLeftDiff.x
+    if (downLeftDiff.x > plotSize.x) return plotSize.x - downLeftDiff.x;
+    return 0
+  }
+
+  private computeYOffset(upRightDiff: Vertex, downLeftDiff: Vertex, plotSize: Vertex): [number, number] {
+    if (upRightDiff.y < 0) {
+      if (!this.isFlipper) return [upRightDiff.y, upRightDiff.y]
+      this.flip();
+      return [0, -this.size.y - C.TOOLTIP_TRIANGLE_SIZE * 2];
+    }
+    if (upRightDiff.y > plotSize.y) {
+      if (!this.isFlipper) return [upRightDiff.y - plotSize.y, upRightDiff.y - plotSize.y]
+      this.flip();
+      return [0, this.size.y + C.TOOLTIP_TRIANGLE_SIZE * 2]
+    }
+    if (downLeftDiff.y < 0) return [-downLeftDiff.y, -downLeftDiff.y]
+    if (downLeftDiff.y > plotSize.y) return [downLeftDiff.y - plotSize.y, downLeftDiff.y - plotSize.y]
+    return [0, 0]
   }
 
   public insideCanvas(plotOrigin: Vertex, plotSize: Vertex, scaling: Vertex): void {
-    const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, TOOLTIP_TRIANGLE_SIZE).scale(scaling));
+    const downLeftCorner = this.squareOrigin.add(new Vertex(-this.size.x / 2, C.TOOLTIP_TRIANGLE_SIZE).scale(scaling));
     const upRightCorner = downLeftCorner.add(this.size.scale(scaling));
     const upRightDiff = plotOrigin.add(plotSize).subtract(upRightCorner);
     const downLeftDiff = downLeftCorner.subtract(plotOrigin);
-
-    if (upRightDiff.x < 0) this.squareOrigin.x += upRightDiff.x
-    else if (upRightDiff.x > plotSize.x) this.squareOrigin.x += upRightDiff.x - plotSize.x;
-
-    if (upRightDiff.y < 0) {
-      if (this.isFlipper) {
-        this.squareOrigin.y += -this.size.y - TOOLTIP_TRIANGLE_SIZE * 2;
-        this.flip();
-      } else {
-        this.squareOrigin.y += upRightDiff.y;
-        this.origin.y += upRightDiff.y;
-      }
-
-    } else if (upRightDiff.y > plotSize.y) {
-      if (this.isFlipper) {
-        this.squareOrigin.y += this.size.y + TOOLTIP_TRIANGLE_SIZE * 2;
-        this.flip();
-      } else {
-        this.squareOrigin.y += upRightDiff.y - plotSize.y;
-        this.origin.y += upRightDiff.y - plotSize.y;
-      }
-    }
-
-    if (downLeftDiff.x < 0) this.squareOrigin.x -= downLeftDiff.x
-    else if (downLeftDiff.x > plotSize.x) this.squareOrigin.x -= downLeftDiff.x - plotSize.x;
-
-    if (downLeftDiff.y < 0) { // Maybe wrong, did not meet the case
-      this.squareOrigin.y -= downLeftDiff.y;
-      this.origin.y -= downLeftDiff.y;
-    } else if (downLeftDiff.y > plotSize.y) {
-      this.squareOrigin.y += downLeftDiff.y - plotSize.y;
-      this.origin.y += downLeftDiff.y - plotSize.y;
-    }
+    const [offsetOrigin, offsetSquareOrigin] = this.computeYOffset(upRightDiff, downLeftDiff, plotSize)
+    this.squareOrigin.x += this.updateSquareXOrigin(upRightDiff, downLeftDiff, plotSize);
+    this.origin.y += offsetOrigin;
+    this.squareOrigin.y += offsetSquareOrigin;
   }
 
   public flip(): void { this.isUp = !this.isUp }
 
-  public draw(plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
+  protected computeContextualAttributes(context: CanvasRenderingContext2D): void {
     const contextMatrix = context.getTransform();
-    const scaling = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
-    this.insideCanvas(plotOrigin, plotSize, scaling);
-    const textOrigin = this.computeTextOrigin(scaling);
-    const scaledPath = new Path2D();
-    this.squareOrigin = this.squareOrigin.scale(scaling);
-    this.origin = this.origin.scale(scaling);
-    this.buildPath();
-    scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+    this.inStrokeScale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
+    this.textOrigin = this.computeTextOrigin(this.inStrokeScale);
+    this.squareOrigin = this.squareOrigin.scale(this.inStrokeScale);
+    this.origin = this.origin.scale(this.inStrokeScale);
+  }
 
-    context.save();
-    context.scale(scaling.x, scaling.y);
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
     context.lineWidth = this.lineWidth;
     context.strokeStyle = this.strokeStyle;
     context.fillStyle = this.fillStyle;
     context.globalAlpha = this.alpha;
-    context.fill(scaledPath);
-    context.stroke(scaledPath);
-    this.writeText(textOrigin, context);
-    context.restore()
+  }
+
+  protected buildDrawPath(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
+    this.drawnPath = new Path2D();
+    this.buildPath();
+    this.drawnPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+  }
+
+  protected drawPath(context: CanvasRenderingContext2D): void {
+    context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
+    super.drawPath(context);
+    this.writeText(this.textOrigin, context);
   }
 
   public setFlip(shape: Shape): void { this.isFlipper = shape.tooltipFlip }
@@ -635,22 +714,27 @@ export class ScatterPoint extends Point {
   }
 
   protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
-    context.save();
-    context.resetTransform();
+    super.setContextPointInStroke(context);
     context.lineWidth = 10;
   }
 
-  public updateMouseState(clusterColors: string[], hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[]): Map<string, number> {
+  private mapClusterColor(index: number, clusterColors: string[], colors: Map<string, number>): void {
+    const currentColorCounter = clusterColors[index];
+    colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
+  }
+
+  private updateMouseState(index: number, hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[]): void {
+    if (hoveredIndices.includes(index)) this.isHovered = true;
+    if (clickedIndices.includes(index)) this.isClicked = true;
+    if (selectedIndices.includes(index)) this.isSelected = true;
+  }
+
+  public updateDrawingState(clusterColors: string[], hoveredIndices: number[], clickedIndices: number[], selectedIndices: number[]): Map<string, number> {
     const colors = new Map<string, number>();
     this.isHovered = this.isClicked = this.isSelected = false;
     this.values.forEach(index => {
-      if (clusterColors) {
-        const currentColorCounter = clusterColors[index];
-        colors.set(currentColorCounter, colors.get(currentColorCounter) ? colors.get(currentColorCounter) + 1 : 1);
-      }
-      if (hoveredIndices.includes(index)) this.isHovered = true;
-      if (clickedIndices.includes(index)) this.isClicked = true;
-      if (selectedIndices.includes(index)) this.isSelected = true;
+      if (clusterColors) this.mapClusterColor(index, clusterColors, colors);
+      this.updateMouseState(index, hoveredIndices, clickedIndices, selectedIndices);
     });
     return colors
   }
@@ -667,17 +751,22 @@ export class ScatterPoint extends Point {
 
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
 
-  public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[], xName: string, yName: string) {
-    this.updateTooltipMap();
-    if (this.values.length == 1) {
-      this.newTooltipMap();
-      tooltipAttributes.forEach(attr => this.tooltipMap.set(attr, features.get(attr)[this.values[0]]));
-      return;
-    }
+  private monoValueTooltip(tooltipAttributes: string[], features: Map<string, number[]>): void {
+    this.newTooltipMap();
+    tooltipAttributes.forEach(attr => this.tooltipMap.set(attr, features.get(attr)[this.values[0]]));
+  }
+
+  private multiValueTooltip(axes: Axis[], xName: string, yName: string): void {
     this.tooltipMap.set(`Average ${xName}`, axes[0].isDiscrete ? axes[0].labels[Math.round(this.mean.x)] : this.mean.x);
     this.tooltipMap.set(`Average ${yName}`, axes[1].isDiscrete ? axes[1].labels[Math.round(this.mean.y)] : this.mean.y);
     this.tooltipMap.delete('X mean');
     this.tooltipMap.delete('Y mean');
+  }
+
+  public updateTooltip(tooltipAttributes: string[], features: Map<string, number[]>, axes: Axis[], xName: string, yName: string) {
+    this.updateTooltipMap();
+    if (this.values.length == 1) this.monoValueTooltip(tooltipAttributes, features);
+    else this.multiValueTooltip(axes, xName, yName);
   }
 
   public updateStyle(style: PointStyle): void {
@@ -685,7 +774,7 @@ export class ScatterPoint extends Point {
     this.marker = this.values.length > 1 ? this.marker : style.marker ?? this.marker;
   }
 
-  public computeValues(pointsData: { [key: string]: number[] }, thresholdDist: number): void {
+  private sumCoordsAndValues(pointsData: { [key: string]: number[] }): [number, number, number, number] {
     let centerX = 0;
     let centerY = 0;
     let meanX = 0;
@@ -696,6 +785,11 @@ export class ScatterPoint extends Point {
       meanX += pointsData.xValues[index];
       meanY += pointsData.yValues[index];
     });
+    return [centerX, centerY, meanX, meanY]
+  }
+
+  public computeValues(pointsData: { [key: string]: number[] }, thresholdDist: number): void {
+    const [centerX, centerY, meanX, meanY] = this.sumCoordsAndValues(pointsData);
     this.center.x = centerX / this.values.length;
     this.center.y = centerY / this.values.length;
     this.size = Math.min(this.size * 1.15 ** (this.values.length - 1), thresholdDist);
@@ -733,11 +827,12 @@ export class Bar extends Rect {
     this.size = size;
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    if (this.size.x != 0 && this.size.y != 0) {
-      super.drawWhenIsVisible(context);
-      this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
-    }
+  protected computeContextualAttributes(context: CanvasRenderingContext2D): void {
+    this.tooltipOrigin = this.computeTooltipOrigin(context.getTransform());
+  }
+
+  public draw(context: CanvasRenderingContext2D): void {
+    if (this.length != 0) super.draw(context);
   }
 
   public computeStats(values: number[]): void {
@@ -760,103 +855,132 @@ export class Bar extends Rect {
   }
 }
 
-// TODO: make rubberband a Shape ?
-export class RubberBand {
+export class RubberBand extends Rect {
   public canvasMin: number = 0;
   public canvasMax: number = 0;
 
-  public isHovered: boolean = false;
-  public isClicked: boolean = false;
-  public isSelected: boolean = false;
-
-  public path: Path2D;
   public isInverted: boolean = false;
-
   public minUpdate: boolean = false;
   public maxUpdate: boolean = false;
-  public lastValues: Vertex = new Vertex(null, null);
+
+  public lastCanvasValues: Vertex = new Vertex(null, null);
   constructor(
     public attributeName: string,
     private _minValue: number,
     private _maxValue: number,
-    public isVertical: boolean) { }
+    public isVertical: boolean) { super() }
 
-  public get canvasLength() { return Math.abs(this.canvasMax - this.canvasMin) }
+  public get canvasLength(): number { return Math.abs(this.canvasMax - this.canvasMin) }
 
-  public get length() { return Math.abs(this.maxValue - this.minValue) }
+  public get length(): number { return Math.abs(this.maxValue - this.minValue) }
 
   public set minValue(value: number) { this._minValue = value }
 
-  public get minValue() { return this._minValue }
+  public get minValue(): number { return this._minValue }
 
   public set maxValue(value: number) { this._maxValue = value }
 
-  public get maxValue() { return this._maxValue }
+  public get maxValue(): number { return this._maxValue }
 
   public get isTranslating(): boolean { return !this.minUpdate && !this.maxUpdate && this.isClicked}
 
-  public selfSend(rubberBands: Map<string, RubberBand>) { rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical)) }
+  public selfSend(rubberBands: Map<string, RubberBand>): void { rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical)) }
 
-  public selfSendRange(rubberBands: Map<string, RubberBand>) {
+  public defaultStyle(): void {
+    this.lineWidth = 0.1;
+    this.fillStyle = C.RUBBERBAND_COLOR;
+    this.strokeStyle = C.RUBBERBAND_COLOR;
+    this.alpha = C.RUBBERBAND_ALPHA;
+  }
+
+  public selfSendRange(rubberBands: Map<string, RubberBand>): void {
     rubberBands.get(this.attributeName).minValue = this.minValue;
     rubberBands.get(this.attributeName).maxValue = this.maxValue;
   }
 
-  public draw(origin: number, context: CanvasRenderingContext2D, colorFill: string, colorStroke: string, lineWidth: number, alpha: number) {
-    let rectOrigin: Vertex;
-    let rectSize: Vertex;
-    if (this.isVertical) {
-      rectOrigin = new Vertex(origin - RUBBERBAND_SMALL_SIZE / 2, this.canvasMin);
-      rectSize = new Vertex(RUBBERBAND_SMALL_SIZE, this.canvasLength);
-    } else {
-      rectOrigin = new Vertex(this.canvasMin, origin - RUBBERBAND_SMALL_SIZE / 2);
-      rectSize = new Vertex(this.canvasLength, RUBBERBAND_SMALL_SIZE)
-    }
-    const draw = new Rect(rectOrigin, rectSize);
-    draw.lineWidth = lineWidth;
-    draw.fillStyle = colorFill;
-    draw.strokeStyle = colorStroke;
-    draw.alpha = alpha;
-    draw.draw(context);
+  public updateCoords(canvasCoords: Vertex, axisOrigin: Vertex, axisEnd: Vertex): void {
+    const coord = this.isVertical ? "y" : "x";
+    this.canvasMin = Math.max(canvasCoords.min, axisOrigin[coord]);
+    this.canvasMax = Math.min(canvasCoords.max, axisEnd[coord]);
+    this.canvasMin = Math.min(this.canvasMin, this.canvasMax);
+    this.canvasMax = Math.max(this.canvasMin, this.canvasMax);
+    [this.origin, this.size] = this.computeRectProperties(axisOrigin);
+    this.buildPath();
   }
 
-  public reset() {
+  private getVerticalRectProperties(axisOrigin: Vertex): [Vertex, Vertex] {
+    return [
+      new Vertex(axisOrigin.x - C.RUBBERBAND_SMALL_SIZE / 2, this.canvasMin),
+      new Vertex(C.RUBBERBAND_SMALL_SIZE, this.canvasLength)
+    ]
+  }
+
+  private getHorizontalRectProperties(axisOrigin: Vertex): [Vertex, Vertex] {
+    return [
+      new Vertex(this.canvasMin, axisOrigin.y - C.RUBBERBAND_SMALL_SIZE / 2),
+      new Vertex(this.canvasLength, C.RUBBERBAND_SMALL_SIZE)
+    ]
+  }
+
+  public computeRectProperties(axisOrigin: Vertex): [Vertex, Vertex] {
+    return this.isVertical ? this.getVerticalRectProperties(axisOrigin) : this.getHorizontalRectProperties(axisOrigin);
+  }
+
+  public reset(): void {
     this.minValue = 0;
     this.maxValue = 0;
     this.canvasMin = 0;
     this.canvasMax = 0;
   }
 
-  public flipMinMax() {
+  public flip(axisInverted: boolean): void {
+    this.isInverted = axisInverted;
+  }
+
+  public flipMinMax(): void {
     if (this.minValue >= this.maxValue) {
       [this.minValue, this.maxValue] = [this.maxValue, this.minValue];
       [this.minUpdate, this.maxUpdate] = [this.maxUpdate, this.minUpdate];
     }
   }
 
-  private get borderSize() { return Math.min(PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
+  public updateMinMaxValueOnMouseMove(relativeCanvasMin: number, relativeCanvasMax: number): void {
+    this.minValue = this.isInverted ? relativeCanvasMax : relativeCanvasMin;
+    this.maxValue = this.isInverted ? relativeCanvasMin : relativeCanvasMax;
+    this.flipMinMax();
+  }
 
-  public mouseDown(mouseAxis: number) {
+  private get borderSize(): number { return Math.min(C.PICKABLE_BORDER_SIZE, this.canvasLength / 3) }
+
+  private translateOnAxis(translation: number): void {
+    this.canvasMin = this.lastCanvasValues.x + translation;
+    this.canvasMax = this.lastCanvasValues.y + translation;
+  }
+
+  public mouseDown(mouseDown: Vertex): void {
+    super.mouseDown(mouseDown);
+    const mouseAxis = this.isVertical ? mouseDown.y : mouseDown.x;
     this.isClicked = true;
-    if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.isInverted ? this.maxUpdate = true : this.minUpdate = true
-    else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.isInverted ? this.minUpdate = true : this.maxUpdate = true
-    else this.lastValues = new Vertex(this.minValue, this.maxValue);
+    if (Math.abs(mouseAxis - this.canvasMin) <= this.borderSize) this.minUpdate = true;
+    else if (Math.abs(mouseAxis - this.canvasMax) <= this.borderSize) this.maxUpdate = true;
+    else this.lastCanvasValues = new Vertex(this.canvasMin, this.canvasMax);
   }
 
-  public mouseMove(downValue: number, currentValue: number) {
-    if (this.isClicked) {
-      if (this.minUpdate) this.minValue = currentValue
-      else if (this.maxUpdate) this.maxValue = currentValue
-      else {
-        const translation = currentValue - downValue;
-        this.minValue = this.lastValues.x + translation;
-        this.maxValue = this.lastValues.y + translation;
-      }
-      this.flipMinMax();
-    }
+  private mouseMoveWhileClicked(mouseCoords: Vertex): void {
+    const currentCoord = this.isVertical ? mouseCoords.y : mouseCoords.x;
+    const downCoord = this.isVertical ? this.mouseClick.y : this.mouseClick.x;
+    if (this.minUpdate) this.canvasMin = currentCoord;
+    else if (this.maxUpdate) this.canvasMax = currentCoord;
+    else this.translateOnAxis(currentCoord - downCoord);
   }
 
-  public mouseUp() {
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex) {
+    super.mouseMove(context, mouseCoords);
+    if (this.isClicked) this.mouseMoveWhileClicked(mouseCoords);
+  }
+
+  public mouseUp(keepState: boolean): void {
+    super.mouseUp(false);
     this.minUpdate = false;
     this.maxUpdate = false;
     this.isClicked = false;
@@ -881,7 +1005,7 @@ export class SelectionBox extends Rect {
     super(origin, size);
     this.mouseClick = this.origin.copy();
     this.initBoundariesVertex();
-    this.dashLine = DASH_SELECTION_WINDOW;
+    this.dashLine = C.DASH_SELECTION_WINDOW;
     this.selectedStyle = this.clickedStyle = this.hoverStyle = this.fillStyle = "hsla(0, 0%, 100%, 0)";
     this.lineWidth = 0.5
   }
@@ -896,7 +1020,7 @@ export class SelectionBox extends Rect {
   private initBoundariesVertex(): void {
     this.minVertex = this.origin.copy();
     this.maxVertex = this.origin.add(this.size);
-    this.saveState();
+    this.saveMinMaxVertices();
   }
 
   public update(minVertex: Vertex, maxVertex: Vertex): void {
@@ -955,11 +1079,11 @@ export class SelectionBox extends Rect {
     }
   }
 
-  private get borderSizeX() { return Math.min(PICKABLE_BORDER_SIZE / Math.abs(this._scale.x), Math.abs(this.size.x) / 3) }
+  private get borderSizeX(): number { return Math.min(C.PICKABLE_BORDER_SIZE / Math.abs(this._scale.x), Math.abs(this.size.x) / 3) }
 
-  private get borderSizeY() { return Math.min(PICKABLE_BORDER_SIZE / Math.abs(this._scale.y), Math.abs(this.size.y) / 3) }
+  private get borderSizeY(): number { return Math.min(C.PICKABLE_BORDER_SIZE / Math.abs(this._scale.y), Math.abs(this.size.y) / 3) }
 
-  private saveState() {
+  private saveMinMaxVertices(): void {
     this._previousMin = this.minVertex.copy();
     this._previousMax = this.maxVertex.copy();
   }
@@ -969,35 +1093,45 @@ export class SelectionBox extends Rect {
     this._scale.y = scaleY;
   }
 
+  private setUpdateState(): void {
+    this.isClicked = true;
+    this.leftUpdate = Math.abs(this.mouseClick.x - this.minVertex.x) <= this.borderSizeX;
+    this.rightUpdate = Math.abs(this.mouseClick.x - this.maxVertex.x) <= this.borderSizeX;
+    this.downUpdate = Math.abs(this.mouseClick.y - this.minVertex.y) <= this.borderSizeY;
+    this.upUpdate = Math.abs(this.mouseClick.y - this.maxVertex.y) <= this.borderSizeY;
+  }
+
   public mouseDown(mouseDown: Vertex): void {
     super.mouseDown(mouseDown);
     if (this.isHovered) {
-      this.isClicked = true;
-      this.saveState();
-      this.leftUpdate = Math.abs(this.mouseClick.x - this.minVertex.x) <= this.borderSizeX;
-      this.rightUpdate = Math.abs(this.mouseClick.x - this.maxVertex.x) <= this.borderSizeX;
-      this.downUpdate = Math.abs(this.mouseClick.y - this.minVertex.y) <= this.borderSizeY;
-      this.upUpdate = Math.abs(this.mouseClick.y - this.maxVertex.y) <= this.borderSizeY;
+      this.saveMinMaxVertices();
+      this.setUpdateState();
     }
   }
 
-  mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
     super.mouseMove(context, mouseCoords);
     if (!(this.leftUpdate || this.rightUpdate || this.downUpdate || this.upUpdate) && this.isClicked) {
       const translation = mouseCoords.subtract(this.mouseClick);
       this.minVertex = this._previousMin.add(translation);
       this.maxVertex = this._previousMax.add(translation);
     }
+    this.mouseUpdate(mouseCoords);
+  }
+
+  private mouseUpdate(mouseCoords: Vertex): void {
     if (this.leftUpdate) this.minVertex.x = Math.min(this._previousMax.x, mouseCoords.x);
     if (this.rightUpdate) this.maxVertex.x = Math.max(this._previousMin.x, mouseCoords.x);
     if (this.downUpdate) this.minVertex.y = Math.min(this._previousMax.y, mouseCoords.y);
     if (this.upUpdate) this.maxVertex.y = Math.max(this._previousMin.y, mouseCoords.y);
-    if (this.isClicked) {
-      if (this.minVertex.x == this._previousMax.x) this.maxVertex.x = mouseCoords.x;
-      if (this.maxVertex.x == this._previousMin.x) this.minVertex.x = mouseCoords.x;
-      if (this.minVertex.y == this._previousMax.y) this.maxVertex.y = mouseCoords.y;
-      if (this.maxVertex.y == this._previousMin.y) this.minVertex.y = mouseCoords.y;
-    }
+    if (this.isClicked) this.mouseFlip(mouseCoords);
+  }
+
+  private mouseFlip(mouseCoords: Vertex): void {
+    if (this.minVertex.x == this._previousMax.x) this.maxVertex.x = mouseCoords.x;
+    if (this.maxVertex.x == this._previousMin.x) this.minVertex.x = mouseCoords.x;
+    if (this.minVertex.y == this._previousMax.y) this.maxVertex.y = mouseCoords.y;
+    if (this.maxVertex.y == this._previousMin.y) this.minVertex.y = mouseCoords.y;
   }
 
   public mouseUp(keepState: boolean) {

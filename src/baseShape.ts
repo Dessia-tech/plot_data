@@ -12,6 +12,10 @@ export class Vertex {
 
   get norm(): number { return (this.x ** 2 + this.y ** 2) ** 0.5 }
 
+  get min(): number { return Math.min(this.x, this.y)}
+
+  get max(): number { return Math.max(this.x, this.y)}
+
   public copy(): Vertex { return new Vertex(this.x, this.y) }
 
   public add(other: Vertex): Vertex {
@@ -71,11 +75,101 @@ export class Vertex {
   }
 }
 
-export class Shape {
+export class InteractiveObject {
   public path: Path2D = new Path2D();
-  public scaledPath: Path2D = new Path2D();
+  public drawnPath: Path2D = new Path2D();
   public inStrokeScale: Vertex = new Vertex(1, 1);
 
+  public mouseClick: Vertex = null;
+
+  public isHovered: boolean = false;
+  public isClicked: boolean = false;
+  public isSelected: boolean = false;
+  public isScaled: boolean = true;
+  public isFilled: boolean = true;
+  public visible: boolean = true;
+  public inFrame: boolean = true; // TODO: remove it
+
+  constructor() { };
+
+  public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
+
+  protected updateTooltipOrigin(matrix: DOMMatrix): void { }
+
+  public buildPath(): void { }
+
+  protected buildScaledPath(context: CanvasRenderingContext2D, contextMatrix: DOMMatrix): void {
+    this.drawnPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
+    context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
+    this.inStrokeScale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
+  }
+
+  protected buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {
+    context.resetTransform();
+    return this.path
+  }
+
+  protected buildDrawPath(context: CanvasRenderingContext2D): void {
+    const contextMatrix = context.getTransform();
+    this.drawnPath = new Path2D();
+    this.updateTooltipOrigin(contextMatrix);
+    if (this.isScaled) this.buildScaledPath(context, contextMatrix)
+    else this.drawnPath.addPath(this.buildUnscaledPath(context));
+  }
+
+  protected drawPath(context: CanvasRenderingContext2D): void {
+    if (this.isFilled) context.fill(this.drawnPath);
+    context.stroke(this.drawnPath);
+  }
+
+  protected drawMembers(context: CanvasRenderingContext2D): void { }
+
+  protected computeContextualAttributes(context: CanvasRenderingContext2D): void { }
+
+  public setDrawingProperties(context: CanvasRenderingContext2D) { }
+
+  public draw(context: CanvasRenderingContext2D): void {
+    if (this.visible) {
+      context.save();
+      this.computeContextualAttributes(context);
+      this.buildDrawPath(context);
+      this.setDrawingProperties(context);
+      this.drawPath(context);
+      context.restore();
+      this.drawMembers(context);
+    }
+  }
+
+  public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
+    return this.isPointInStroke(context, point)
+  }
+
+  protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    let isHovered: boolean;
+    const contextMatrix = context.getTransform();
+    const contextLineWidth = context.lineWidth;
+    context.lineWidth = 10;
+    if (this.isScaled) {
+      context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
+      isHovered = context.isPointInStroke(this.drawnPath, point.x, point.y);
+    } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
+    context.setTransform(contextMatrix);
+    context.lineWidth = contextLineWidth;
+    return isHovered
+  }
+
+  public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
+
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void { this.isHovered = this.isPointInShape(context, mouseCoords) }
+
+  public mouseUp(keepState: boolean): void {
+    this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
+  }
+}
+
+
+export class Shape extends InteractiveObject {
   public lineWidth: number = 1;
   public dashLine: number[] = [];
   public hatching: Hatching = null;
@@ -86,19 +180,11 @@ export class Shape {
   public selectedStyle: string = SELECTED_SHAPE_COLOR;
   public alpha: number = 1;
 
-  public mouseClick: Vertex = null;
-  public isHovered: boolean = false;
-  public isClicked: boolean = false;
-  public isSelected: boolean = false;
-  public isScaled: boolean = true;
-  public isFilled: boolean = true;
-  public visible: boolean = true;
-  public inFrame: boolean = true;
-
   public tooltipOrigin: Vertex = null;
   protected _tooltipMap = new Map<string, any>();
   public hasTooltip: boolean = true;
-  constructor() { };
+
+  constructor() { super() };
 
   get tooltipMap(): Map<string, any> { return this._tooltipMap }
 
@@ -116,8 +202,6 @@ export class Shape {
     style["alpha"] = this.alpha;
     return style
   }
-
-  public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() }
 
   public deserializeStyle(data: DataInterface): void {
     this.deserializeEdgeStyle(data);
@@ -139,38 +223,12 @@ export class Shape {
 
   protected deserializeTooltip(data: DataInterface): void { if (data.tooltip) this.tooltipMap.set(data.tooltip, "") }
 
-  public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
+  public newTooltipMap(): void { this._tooltipMap = new Map<string, any>() }
+
+  public initTooltipOrigin(): void { }
 
   protected updateTooltipOrigin(matrix: DOMMatrix): void {
     if (this.mouseClick) this.tooltipOrigin = this.mouseClick.transform(matrix);
-  }
-
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
-    context.save();
-    const scaledPath = new Path2D();
-    const contextMatrix = context.getTransform();
-    this.updateTooltipOrigin(contextMatrix);
-    if (this.isScaled) {
-      scaledPath.addPath(this.path, new DOMMatrix().scale(contextMatrix.a, contextMatrix.d));
-      context.scale(1 / contextMatrix.a, 1 / contextMatrix.d);
-      this.inStrokeScale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d);
-    } else scaledPath.addPath(this.buildUnscaledPath(context));
-    this.setDrawingProperties(context);
-    if (this.isFilled) context.fill(scaledPath);
-    context.stroke(scaledPath);
-    this.scaledPath = scaledPath;
-    context.restore();
-  }
-
-  public draw(context: CanvasRenderingContext2D): void { // TODO: refactor all Shapes so that draw method uses super() in all Shapes' children
-    if (this.visible) this.drawWhenIsVisible(context);
-  }
-
-  protected buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {
-    context.resetTransform();
-    const path = new Path2D();
-    path.addPath(this.path);
-    return path
   }
 
   public setStrokeStyle(fillStyle: string): string {
@@ -179,65 +237,61 @@ export class Shape {
     return `hsl(${h}, ${s}%, ${lValue}%)`;
   }
 
-  public setDrawingProperties(context: CanvasRenderingContext2D) {
-    context.lineWidth = this.lineWidth;
-    context.setLineDash(this.dashLine);
-    if (this.alpha == 0) this.isFilled = false
-    else if (this.alpha != 1) context.globalAlpha = this.alpha;
-    if (this.isFilled) {
-      context.fillStyle = this.isHovered
+  private setContextFillStyle(context: CanvasRenderingContext2D): void {
+    context.fillStyle = this.isHovered
         ? this.hoverStyle
         : this.isClicked
           ? this.clickedStyle
           : this.isSelected
             ? this.selectedStyle
             : this.fillStyle;
-      context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected)
-        ? this.setStrokeStyle(context.fillStyle)
+  }
+
+  private setContextFilledStrokeStyle(context: CanvasRenderingContext2D): void {
+    const fillStyle = context.fillStyle.toString();
+    context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected)
+    ? this.setStrokeStyle(fillStyle)
+    : this.strokeStyle
+      ? colorHsl(this.strokeStyle)
+      : this.setStrokeStyle(fillStyle);
+  }
+
+  private setContextEmptyStyle(context: CanvasRenderingContext2D): void {
+    context.strokeStyle = this.isHovered
+    ? this.hoverStyle
+    : this.isClicked
+      ? this.clickedStyle
+      : this.isSelected
+        ? this.selectedStyle
         : this.strokeStyle
           ? colorHsl(this.strokeStyle)
-          : this.setStrokeStyle(context.fillStyle);
-      if (this.hatching) context.fillStyle = context.createPattern(this.hatching.buildTexture(context.fillStyle), 'repeat');
-    } else {
-      context.strokeStyle = this.isHovered
-        ? this.hoverStyle
-        : this.isClicked
-          ? this.clickedStyle
-          : this.isSelected
-            ? this.selectedStyle
-            : this.strokeStyle
-              ? colorHsl(this.strokeStyle)
-              : 'hsl(0, 0%, 0%)';
-    }
+          : 'hsl(0, 0%, 0%)';
   }
 
-  public initTooltipOrigin(): void { }
-
-  public buildPath(): void { }
-
-  public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    if (this.isFilled) return context.isPointInPath(this.path, point.x, point.y);
-    return this.isPointInStroke(context, point)
+  private setContextHatch(context: CanvasRenderingContext2D): void {
+    if (this.hatching) context.fillStyle = context.createPattern(this.hatching.buildTexture(context.fillStyle.toString()), 'repeat');
   }
 
-  protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    let isHovered: boolean;
-    context.save();
-    context.resetTransform();
-    context.lineWidth = 10;
-    if (this.isScaled) {
-      context.scale(this.inStrokeScale.x, this.inStrokeScale.y);
-      isHovered = context.isPointInStroke(this.scaledPath, point.x, point.y);
-    } else isHovered = context.isPointInStroke(this.path, point.x, point.y);
-    context.restore();
-    return isHovered
+  private setContextFilledStyle(context: CanvasRenderingContext2D): void {
+    this.setContextFillStyle(context);
+    this.setContextFilledStrokeStyle(context);
+    this.setContextHatch(context);
   }
 
-  public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
+  private setContextStyle(context: CanvasRenderingContext2D): void {
+    if (this.isFilled) this.setContextFilledStyle(context)
+    else this.setContextEmptyStyle(context);
+  }
 
-  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void { this.isHovered = this.isPointInShape(context, mouseCoords) }
+  private alphaConfiguration(context: CanvasRenderingContext2D): void {
+    if (this.alpha == 0) this.isFilled = false
+    else if (this.alpha != 1) context.globalAlpha = this.alpha;
+  }
 
-  public mouseUp(keepState: boolean): void {
-    this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
+  public setDrawingProperties(context: CanvasRenderingContext2D) {
+    context.lineWidth = this.lineWidth;
+    context.setLineDash(this.dashLine);
+    this.alphaConfiguration(context);
+    this.setContextStyle(context);
   }
 }

@@ -6,7 +6,6 @@ repos:
     rev: v3.2.0
     hooks:
       - id: trailing-whitespace
-        exclude: libdev/
       - id: check-docstring-first
       - id: check-json
       - id: check-added-large-files
@@ -15,4 +14,3 @@ repos:
       - id: requirements-txt-fixer
       - id: check-merge-conflict
       - id: end-of-file-fixer
-        exclude: libdev/

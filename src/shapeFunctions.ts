@@ -24,17 +24,20 @@ export function deserialize(data: { [key: string]: any }, scale: Vertex): Shape 
   return shape
 }
 
-export function initializeTooltip(shape: Shape, context: CanvasRenderingContext2D): Tooltip {
+export function initializeTooltip(shape: Shape, plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): Tooltip {
+  const contextMatrix = context.getTransform();
+  const scale = new Vertex(1 / contextMatrix.a, 1 / contextMatrix.d)
   shape.initTooltipOrigin();
   const tooltip = new Tooltip(shape.tooltipOrigin, shape.tooltipMap, context);
   tooltip.setFlip(shape);
+  tooltip.insideCanvas(plotOrigin, plotSize, scale);
   return tooltip
 }
 
 export function drawTooltip(shape: Shape, plotOrigin: Vertex, plotSize: Vertex, context: CanvasRenderingContext2D): void {
   if (shape.isClicked && shape.tooltipMap.size != 0) {
-    const tooltip = initializeTooltip(shape, context);
-    tooltip.draw(plotOrigin, plotSize, context);
+    const tooltip = initializeTooltip(shape, plotOrigin, plotSize, context);
+    tooltip.draw(context);
   }
 }
 

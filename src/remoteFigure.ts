@@ -660,7 +660,6 @@ export class RemoteFigure extends Rect {
 
     canvas.addEventListener('mousedown', () => {
       [canvasDown, frameDown, clickedObject] = this.mouseDownDrawer(canvasMouse, frameMouse, absoluteMouse);
-      console.log(absoluteMouse)
       if (ctrlKey && shiftKey) this.reset();
     });
 

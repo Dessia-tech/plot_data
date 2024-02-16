@@ -22,6 +22,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+libdev/
 lib64/
 node_modules/
 parts/

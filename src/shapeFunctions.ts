@@ -20,7 +20,8 @@ export function deserialize(data: { [key: string]: any }, scale: Vertex): Shape 
   else if (data.type_ == "rectangle") shape = Rect.deserialize(data, scale);
   else if (data.type_ == "roundrectangle") shape = RoundRect.deserialize(data, scale);
   else throw new Error(`${data.type_} deserialization is not implemented.`);
-  shape.deserializeStyle(data)
+  shape.deserializeStyle(data);
+  shape.referencePath = data?.reference_path ?? "#";
   return shape
 }
 

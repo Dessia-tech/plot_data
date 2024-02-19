@@ -2,6 +2,8 @@ import { DEFAULT_SHAPE_COLOR, HOVERED_SHAPE_COLOR, CLICKED_SHAPE_COLOR, SELECTED
 import { hslToArray, colorHsl } from "./colors"
 import { Hatching } from "./styles"
 import { DataInterface } from "./dataInterfaces"
+import { highlightShape } from "./interactions"
+
 
 export class Vertex {
   constructor(public x: number = 0, public y: number = 0) { }
@@ -82,15 +84,50 @@ export class InteractiveObject {
 
   public mouseClick: Vertex = null;
 
-  public isHovered: boolean = false;
-  public isClicked: boolean = false;
+  private _isHovered: boolean = false;
+  private _isClicked: boolean = false;
   public isSelected: boolean = false;
   public isScaled: boolean = true;
   public isFilled: boolean = true;
   public visible: boolean = true;
   public inFrame: boolean = true; // TODO: remove it
 
+  public referencePath: string = "#";
+
   constructor() { };
+
+  public get isHovered(): boolean{
+    return this._isHovered;
+  };
+  set isHovered(hovered: boolean) {
+    if (hovered !== this._isHovered && this.referencePath !== "#") {
+      // The first check is important, otherwise we fire the event every mouse move.
+      // The second is for dev purpose, should we keep it ?
+      const highlightData = {
+        referencePath: this.referencePath,
+        highlight: hovered,
+        select: false
+      }
+      highlightShape.next(highlightData);
+    }
+    this._isHovered = hovered;
+  }
+
+  public get isClicked(): boolean {
+    return this._isClicked;
+  }
+  set isClicked(clicked: boolean) {
+    if (clicked != this._isClicked && this.referencePath !== "#") {
+      // Same than isHovered
+      const highlightData = {
+        referencePath: this.referencePath,
+        highlight: clicked,
+        select: true
+      }
+      highlightShape.next(highlightData);
+    }
+    this._isClicked = clicked;
+  }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
 
@@ -161,7 +198,9 @@ export class InteractiveObject {
 
   public mouseDown(mouseDown: Vertex) { if (this.isHovered) this.mouseClick = mouseDown.copy() }
 
-  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void { this.isHovered = this.isPointInShape(context, mouseCoords) }
+  public mouseMove(context: CanvasRenderingContext2D, mouseCoords: Vertex): void {
+    this.isHovered = this.isPointInShape(context, mouseCoords);
+  }
 
   public mouseUp(keepState: boolean): void {
     this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);

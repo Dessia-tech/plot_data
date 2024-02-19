@@ -10,6 +10,7 @@ import { Axis, ParallelAxis } from "./axes"
 import { ShapeCollection, GroupCollection, PointSet } from "./collections"
 import { RemoteFigure } from "./remoteFigure"
 import { DataInterface } from "./dataInterfaces"
+import { HighlightData } from "./interactions"
 
 export class Figure extends RemoteFigure {
   constructor(
@@ -1170,6 +1171,21 @@ export class Draw extends Frame {
   public sendRubberBandsMultiplot(figures: Figure[]): void {}
 
   protected receiveRubberBandFromFigure(figure: Figure): void {}
+
+  public highlightFromReferencePath(highlightData: HighlightData) {
+    const highlight = highlightData.highlight;
+    const shapes = this.getShapesFromPath(highlightData.referencePath);
+    shapes.forEach((shape) => {
+      highlightData.select ?
+        shape.isClicked = highlight :
+        shape.isHovered = highlight;
+    });
+    this.draw();
+  }
+
+  private getShapesFromPath(referencePath: string): Shape[] {
+    return this.relativeObjects.shapes.filter((s) => s.referencePath === referencePath);
+  }
 }
 
 export class PrimitiveGroupContainer extends Draw {

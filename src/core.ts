@@ -6,6 +6,7 @@ export * from "./constants";
 export * from './figures';
 export * from "./shapeFunctions";
 export * from "./functions";
+export * from "./interactions";
 export * from "./multiplot";
 export * from "./primitives";
 export * from './remoteFigure';

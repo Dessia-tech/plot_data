@@ -1177,7 +1177,7 @@ export class Draw extends Frame {
     const shapes = this.getShapesFromPath(highlightData.referencePath);
     shapes.forEach((shape) => {
       highlightData.select ?
-        shape.isClicked = highlight : 
+        shape.isClicked = highlight :
         shape.isHovered = highlight;
     });
     this.draw();

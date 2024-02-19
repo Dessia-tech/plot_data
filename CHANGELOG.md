@@ -5,11 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0]
+
+### Feat
+- Add events (Subject) to emit shape hovering and clicking
+- Highlight shapes when corresponding function is called from wrapper software
+
+### Fix
+- Remove offline mode
+
+### Refactor
+- Implements InteractiveObject for handling all mouse objects in one class
+
 ## [0.22.0]
 ### Add
 - Integer axes only show integer ticks
 - Handle date as continuous value on axes
 - Allow to log scale axes
+- Offline mode
 
 ### Fix
 - Add reference_path to all Primitive / Elementary drawing Objects

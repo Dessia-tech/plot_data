@@ -30,5 +30,5 @@ primitive_groups = [primitive_group1, primitive_group2, primitive_group3, primit
 
 plot_data_object = plot_data.PrimitiveGroupsContainer(primitive_groups=primitive_groups)
 
-# if debug_mode is True, set it to False
-plot_data.plot_canvas(plot_data_object=plot_data_object, debug_mode=True)
+# if local is True, set it to False
+plot_data.plot_canvas(plot_data_object=plot_data_object, local=True)

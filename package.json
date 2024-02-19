@@ -9,19 +9,15 @@
     "build": "npm run instrument && NODE_ENV=production webpack --config webpack.config.js",
     "dev": "npm run instrument && NODE_ENV=development webpack --config webpack-dev.config.cjs",
     "cov": "npm run instrument && NODE_ENV=coverage webpack --config webpack-dev.config.cjs",
-
     "format": "prettier --write \"src/**/*.ts\"",
     "lint": "tslint -p tsconfig.json",
     "start": "http-server -a localhost -p 3030",
-
     "merge_reports": "mochawesome-merge cypress/results/*.json > cypress/results/full_report.json",
     "generate_mochawesome_report": "marge cypress/results/full_report.json --reportDir cypress/results",
-
     "cy:run-base": "cypress run --env type=base --browser firefox",
     "cy:run-actual": "node ./cypress_run_report.cjs",
     "cy:run-open": "cypress open --env type=actual",
     "cy:open": "npm run cov & start-server-and-test start http-get://localhost:3030 cy:run-open",
-
     "test": "npm run cov && start-server-and-test start http-get://localhost:3030 cy:run-actual",
     "base-test": "npm run cov && start-server-and-test start http-get://localhost:3030 cy:run-base"
   },
@@ -78,6 +74,7 @@
     "fs": "^0.0.1-security",
     "html-webpack-plugin": "^5.5.0",
     "ignore-errors": "^2.0.0",
+    "rxjs": "^7.8.1",
     "ts-loader": "^9.2.6",
     "typedoc": "^0.23.28",
     "webpack": "^5.75.0"

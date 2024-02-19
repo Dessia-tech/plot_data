@@ -62,7 +62,7 @@ export class ShapeCollection {
     let clickedObject: Shape = null;
     this.shapes.forEach(shape => {
       shape.mouseDown(mouseCoords);
-      if (shape.isHovered) clickedObject = shape; //TODO: still insane ?
+      if (shape.isHovered) clickedObject = shape;
     });
     return clickedObject
   }
@@ -76,22 +76,29 @@ export class ShapeCollection {
     [this.minimum, this.maximum] = this.getBounds();
   }
 
-  public updateBounds(context: CanvasRenderingContext2D): void {
-    this.shapes.forEach(shape => {
-      if (shape instanceof Text) {
-        shape.format(context);
-        shape.updateBoundingBox(context);
-        const [textMin, textMax] = shape.getBounds();
-        this.minimum.x = Math.min(this.minimum.x, textMin.x);
-        this.minimum.y = Math.min(this.minimum.y, textMin.y);
-        this.maximum.x = Math.max(this.maximum.x, textMax.x);
-        this.maximum.y = Math.max(this.maximum.y, textMax.y);
-      }
-    })
+  private updateBoundsWithText(text: Text, context: CanvasRenderingContext2D): void {
+    text.format(context);
+    text.updateBoundingBox(context);
+    this.updateBoundsWithNewBounds(...text.getBounds());
+  }
+
+  private updateBoundsWithNewBounds(minBound: Vertex, maxBound: Vertex): void {
+    this.minimum.x = Math.min(this.minimum.x, minBound.x);
+    this.minimum.y = Math.min(this.minimum.y, minBound.y);
+    this.maximum.x = Math.max(this.maximum.x, maxBound.x);
+    this.maximum.y = Math.max(this.maximum.y, maxBound.y);
+  }
+
+  private handleNanBounds(): void {
     if (Number.isNaN(this.minimum.x)) this.minimum.x = this.maximum.x - 1;
     if (Number.isNaN(this.minimum.y)) this.minimum.y = this.maximum.y - 1;
     if (Number.isNaN(this.maximum.x)) this.maximum.x = this.maximum.x + 1;
     if (Number.isNaN(this.maximum.y)) this.maximum.y = this.maximum.y + 1;
+  }
+
+  public updateBounds(context: CanvasRenderingContext2D): void {
+    this.shapes.forEach(shape => { if (shape instanceof Text) this.updateBoundsWithText(shape, context) })
+    this.handleNanBounds();
   }
 
   public updateShapeStates(stateName: string): number[] {
@@ -106,21 +113,28 @@ export class ShapeCollection {
     this.shapes.forEach(shape => shape.isHovered = shape.isClicked = shape.isSelected = false);
   }
 
-  public locateLabels(drawingZone: Rect, initScale: Vertex): void {
-    const nLabels = 0.5 * initScale.y;
+  private extractLabelsFromShapes(): [Shape[], Label[]] {
     const labels: Label[] = [];
     const others = [];
     this.shapes.forEach(shape => {
       if (shape instanceof Label) labels.push(shape)
       else others.push(shape);
-    })
-    if (labels.length != 0) {
-      const labelHeight = Math.min(Math.abs(drawingZone.size.y) / (labels.length * 1.75 + 1), MAX_LABEL_HEIGHT);
-      labels.forEach((label, index) => {
-        label.updateHeight(labelHeight);
-        label.updateOrigin(drawingZone, initScale, index - nLabels);
-      });
-    }
+    });
+    return [others, labels]
+  }
+
+  private updateLabelsGeometry(labels: Label[], drawingZone: Rect, initScale: Vertex): void {
+    const offsetLabels = 0.5 * initScale.y;
+    const labelHeight = Math.min(Math.abs(drawingZone.size.y) / (labels.length * 1.75 + 1), MAX_LABEL_HEIGHT);
+    labels.forEach((label, index) => {
+      label.updateHeight(labelHeight);
+      label.updateOrigin(drawingZone, initScale, index - offsetLabels);
+    });
+  }
+
+  public locateLabels(drawingZone: Rect, initScale: Vertex): void {
+    const [others, labels] = this.extractLabelsFromShapes();
+    if (labels.length != 0) this.updateLabelsGeometry(labels, drawingZone, initScale);
     this.shapes = [...others, ...labels];
   }
 }

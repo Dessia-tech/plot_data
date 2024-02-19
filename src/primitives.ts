@@ -25,9 +25,7 @@ export class Arc extends Shape {
   }
 
   public static deserialize(data: any, scale: Vertex): Arc {
-    const arc = new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle, data.clockwise ?? true);
-    arc.deserializeEdgeStyle(data);
-    return arc
+    return new Arc(new Vertex(data.cx, data.cy), data.r, data.start_angle, data.end_angle, data.clockwise ?? true);
   }
 
   public getBounds(): [Vertex, Vertex] {
@@ -48,10 +46,7 @@ export class Circle extends Arc {
   }
 
   public static deserialize(data: any, scale: Vertex): Circle {
-    const circle = new Circle(new Vertex(data.cx, data.cy), data.r);
-    circle.deserializeEdgeStyle(data);
-    circle.deserializeSurfaceStyle(data);
-    return circle
+    return new Circle(new Vertex(data.cx, data.cy), data.r);
   }
 }
 
@@ -74,8 +69,7 @@ export class Rect extends Shape {
   }
 
   public static deserialize(data: any, scale: Vertex): Rect {
-    const rectangle = new Rect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height));
-    return rectangle
+    return new Rect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height));
   }
 
   public translate(translation: Vertex): void {
@@ -111,9 +105,8 @@ export class RoundRect extends Rect {
     this.path.quadraticCurveTo(this.origin.x, this.origin.y, this.origin.x + this.radius, this.origin.y);
   }
 
-  public static deserialize(data: any, scale: Vertex): Rect {
-    const roundRectangle = new RoundRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height), data.radius);
-    return roundRectangle
+  public static deserialize(data: any, scale: Vertex): RoundRect {
+    return new RoundRect(new Vertex(data.x_coord, data.y_coord), new Vertex(data.width, data.height), data.radius);
   }
 }
 
@@ -244,9 +237,8 @@ export class Line extends Shape {
     return [slope, affinity]
   }
 
-  public static deserialize(data: any, scale: Vertex): Line { // TODO: Don't know how to factor this and the LineSegment one
-    const line = new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    return line
+  public static deserialize(data: any, scale: Vertex): Line {
+    return new Line(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
   }
 
   public buildPath(): void {
@@ -290,9 +282,7 @@ export class LineSegment extends Line {
   }
 
   public static deserialize(data: any, scale: Vertex): LineSegment {
-    const line = new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
-    line.deserializeEdgeStyle(data);
-    return line
+    return new LineSegment(new Vertex(data.point1[0], data.point1[1]), new Vertex(data.point2[0], data.point2[1]));
   }
 
   public drawInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
@@ -504,15 +494,13 @@ export class Contour extends Shape {
       if (primitive.type_ == "line2d") return Line.deserialize(primitive, scale);
       throw new Error(`Type ${primitive.type_} is unknown in Contour.`)
     });
-    const contour = new Contour(lines, data.is_filled ?? false);
-    contour.deserializeEdgeStyle(data);
-    if (contour.isFilled) contour.deserializeSurfaceStyle(data);
-    return contour
+    return new Contour(lines, data.is_filled ?? false);
   }
 
   public setDrawingProperties(context: CanvasRenderingContext2D) {
     super.setDrawingProperties(context);
     context.strokeStyle = "hsla(0, 0%, 100%, 0)";
+    this.lines.forEach(line => this.setLineStyle(line));
   }
 
   private setLineStyle(line: Shape): void {
@@ -524,16 +512,11 @@ export class Contour extends Shape {
     line.isSelected = this.isSelected;
   }
 
-  public drawWhenIsVisible(context: CanvasRenderingContext2D): void {
-    super.drawWhenIsVisible(context);
-    context.save();
-    super.setDrawingProperties(context);
-    this.lines.forEach(line => {
-        this.setLineStyle(line);
-        line.draw(context)
-    });
-    context.restore();
+  private drawLines(context: CanvasRenderingContext2D): void {
+    this.lines.forEach(line => line.draw(context));
   }
+
+  protected drawMembers(context: CanvasRenderingContext2D): void { this.drawLines(context) }
 
   public buildPath(): void {
     this.path = new Path2D();
@@ -570,6 +553,7 @@ export class Point extends Shape {
     strokeStyle: string = null
   ) {
     super();
+    this.isScaled = false;
     this.center = new Vertex(x, y);
     this.buildPath();
     this.fillStyle = fillStyle || this.fillStyle;
@@ -597,9 +581,7 @@ export class Point extends Shape {
   }
 
   public static deserialize(data: any, scale: Vertex): Point {
-    const point = new Point(data.cx, data.cy);
-    point.isScaled = false;
-    return point
+    return new Point(data.cx, data.cy);
   }
 
   public deserializeStyle(data: any): void {
@@ -703,16 +685,14 @@ export class Point extends Shape {
   }
 
   protected isPointInStroke(context: CanvasRenderingContext2D, point: Vertex): boolean {
+    const contextMatrix = context.getTransform();
     this.setContextPointInStroke(context);
     const isHovered = context.isPointInStroke(this.path, point.x, point.y);
-    context.restore();
+    context.setTransform(contextMatrix);
     return isHovered
   }
 
-  protected setContextPointInStroke(context: CanvasRenderingContext2D): void {
-    context.save();
-    context.resetTransform();
-  }
+  protected setContextPointInStroke(context: CanvasRenderingContext2D): void { context.resetTransform() }
 }
 
 export class LineSequence extends Shape {
@@ -726,17 +706,14 @@ export class LineSequence extends Shape {
   ) {
     super();
     this.isFilled = false;
+    this.isScaled = true;
     this.updateTooltipMap();
+    this.buildPath();
   }
 
   public static deserialize(data: { [key: string]: any }, scale: Vertex): LineSequence {
-    const points = [];
-    data.lines.forEach(line => points.push(new Point(line[0], line[1])));
-    const line = new LineSequence(points, data.name ?? "");
-    line.deserializeEdgeStyle(data);
-    line.isScaled = true;
-    line.buildPath();
-    return line
+    const points = data.lines.map(line => new Point(line[0], line[1]));
+    return new LineSequence(points, data.name ?? "");
   }
 
   public initTooltipOrigin(): void {
@@ -777,9 +754,11 @@ export class LineSequence extends Shape {
   }
 
   public buildPath(): void {
-    this.path = new Path2D();
-    this.path.moveTo(this.points[0].center.x, this.points[0].center.y);
-    this.points.slice(1).forEach(point => this.path.lineTo(point.center.x, point.center.y));
+    if (this.points.length > 0) {
+      this.path = new Path2D();
+      this.path.moveTo(this.points[0].center.x, this.points[0].center.y);
+      this.points.slice(1).forEach(point => this.path.lineTo(point.center.x, point.center.y));
+    }
   }
 
   public update(points: Point[]): void {

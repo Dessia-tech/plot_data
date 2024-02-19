@@ -127,21 +127,21 @@ class Figure(PlotDataObject):
         formats.append(ExportFormat(selector="html", extension="html", method_name="to_html_stream", text=False))
         return formats
 
-    def _to_html(self, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
-        lib_path = plot_data_path(debug_mode=debug_mode, version=version)
+    def _to_html(self, local: bool = False, canvas_id: str = 'canvas', version: str = None):
+        lib_path = plot_data_path(local=local, version=version)
         return self.template.substitute(data=json.dumps(self.to_dict()), core_path=lib_path, canvas_id=canvas_id,
                                         width=self.width, height=self.height)
 
-    def to_html_stream(self, stream, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
+    def to_html_stream(self, stream, local: bool = False, canvas_id: str = 'canvas', version: str = None):
         """ Export current Figure to its equivalent html stream file. """
-        html = self._to_html(debug_mode=debug_mode, canvas_id=canvas_id, version=version)
+        html = self._to_html(local=local, canvas_id=canvas_id, version=version)
         stream.write(html)
 
-    def to_html(self, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas', version: str = None):
+    def to_html(self, filepath: str = None, local: bool = False, canvas_id: str = 'canvas', version: str = None):
         """ Export current Figure to an HTML file given by the filepath. """
         filepath = make_filepath(filepath=filepath)
         with open(filepath, 'w', encoding="utf-8") as file:
-            self.to_html_stream(file, debug_mode=debug_mode, canvas_id=canvas_id, version=version)
+            self.to_html_stream(file, local=local, canvas_id=canvas_id, version=version)
         return filepath
 
     def plot_data(self, **kwargs):
@@ -165,7 +165,6 @@ class Sample(ReferencedObject):
 
     def __init__(self, values, reference_path: str = "#", name: str = ""):
         self.values = values
-        self.reference_path = reference_path
         super().__init__(type_="sample", reference_path=reference_path, name=name)
 
     def to_dict(self, use_pointers: bool = True, memo=None, path: str = '#', id_method=True,
@@ -1505,10 +1504,10 @@ class MultiplePlots(Figure):
         super().__init__(width=width, height=height, type_='multiplot', name=name)
 
 
-def plot_data_path(debug_mode: bool = False, version: str = None):
+def plot_data_path(local: bool = False, version: str = None):
     """ Get path of plot_data package to write it in html file of Figure to draw. """
     version, folder, filename = get_current_link(version=version)
-    if debug_mode:
+    if local:
         core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
         if os.path.isfile(core_path):
             return core_path.replace(" ", "%20")
@@ -1526,7 +1525,7 @@ def make_filepath(filepath: str = None):
     return filepath
 
 
-def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool = False, canvas_id: str = 'canvas',
+def plot_canvas(plot_data_object: Figure, filepath: str = None, local: bool = False, canvas_id: str = 'canvas',
                 force_version: str = None, width: float = None, height: float = None):
     """
     Creates a html file and plots input data in web browser.
@@ -1534,9 +1533,9 @@ def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool
     :param plot_data_object: a PlotDataObject(ie Scatter, ParallelPlot,\
       MultiplePlots, Graph2D, PrimitiveGroup or PrimitiveGroupContainer)
     :type plot_data_object: PlotDataObject
-    :param debug_mode: uses local library if True, uses typescript \
+    :param local: uses local library if True, uses typescript \
     library from cdn if False
-    :type debug_mode: bool
+    :type local: bool
     :param canvas_id: set canvas' id, ie name
     :type canvas_id: str
     :param width: set the canvas' width:
@@ -1550,7 +1549,7 @@ def plot_canvas(plot_data_object: Figure, filepath: str = None, debug_mode: bool
         plot_data_object.width = width
     if height:
         plot_data_object.height = height
-    plot_data_object.plot(filepath=filepath, debug_mode=debug_mode, canvas_id=canvas_id, version=force_version)
+    plot_data_object.plot(filepath=filepath, local=local, canvas_id=canvas_id, version=force_version)
 
 
 def write_json_for_tests(plot_data_object: PlotDataObject, json_path: str):

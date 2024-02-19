@@ -66,9 +66,9 @@ FIGURES_DATA.forEach(figureData => {
                 cy.window().then((win) => {
                     const draw = win.eval('plot_data');
                     const [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 746, "offsetY": 176} as MouseEvent);
-                    draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
-                    draw.mouseDown(canvasMouse, frameMouse, mouseCoords);
-                    draw.mouseUp(false);
+                    draw.castMouseMove(canvasMouse, frameMouse, mouseCoords);
+                    draw.castMouseDown(canvasMouse, frameMouse, mouseCoords);
+                    draw.castMouseUp(false);
                     draw.draw();
                     cy.compareSnapshot(describeTitle + this.test.title, 0.05);
                 });
@@ -78,11 +78,11 @@ FIGURES_DATA.forEach(figureData => {
                 cy.window().then((win) => {
                     const draw = win.eval('plot_data');
                     let [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 814, "offsetY": 196} as MouseEvent);
-                    draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
+                    draw.castMouseMove(canvasMouse, frameMouse, mouseCoords);
                     expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
 
                     [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 822, "offsetY": 196} as MouseEvent);
-                    draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
+                    draw.castMouseMove(canvasMouse, frameMouse, mouseCoords);
                     expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
                 });
             });

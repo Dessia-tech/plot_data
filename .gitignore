@@ -1,7 +1,3 @@
-node_modules/
-lib/
-libdev/
-
 # CAD files
 *.fcstd
 *.fcstd1
@@ -26,7 +22,9 @@ downloads/
 eggs/
 .eggs/
 lib/
+libdev/
 lib64/
+node_modules/
 parts/
 sdist/
 var/

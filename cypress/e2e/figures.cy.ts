@@ -122,15 +122,20 @@ describe("Figure", function() {
         ]);
         scatter.initRubberBandMultiplot(multiplotRubberBands);
 
-        expect(multiplotRubberBands, "empty multiplotRubberBands").to.deep.equal(referenceRubberBands);
+        scatter.axes.forEach(axis => {
+            expect(multiplotRubberBands.get(axis.name).minValue, `empty rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).minValue);
+            expect(multiplotRubberBands.get(axis.name).maxValue, `empty rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).maxValue);
+        });
 
         scatter.axes[0].rubberBand.minValue = 1;
         scatter.axes[0].rubberBand.maxValue = 4;
         scatter.axes[1].rubberBand.minValue = 2;
         scatter.axes[1].rubberBand.maxValue = 5;
         scatter.updateRubberBandMultiplot(multiplotRubberBands);
-
-        expect(multiplotRubberBands, "edited multiplotRubberBands").to.deep.equal(referenceRubberBands);
+        scatter.axes.forEach(axis => {
+            expect(multiplotRubberBands.get(axis.name).minValue, `edited rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).minValue);
+            expect(multiplotRubberBands.get(axis.name).maxValue, `edited rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).maxValue);
+        });
     });
 });
 
@@ -233,12 +238,12 @@ describe("Histogram", function() {
 
     it("should hover/click on bar", function () {
         const [canvasMouse, frameMouse, mouseCoords] = histogram.projectMouse({"offsetX": 350, "offsetY": 420} as MouseEvent);
-        histogram.mouseMove(canvasMouse, frameMouse, mouseCoords);
+        histogram.castMouseMove(canvasMouse, frameMouse, mouseCoords);
         expect(histogram.hoveredIndices[1], "hoveredIndices[1]").to.equal(7);
         expect(histogram.hoveredIndices.length, "hoveredIndices.length").to.equal(3);
 
-        histogram.mouseDown(canvasMouse, frameMouse, mouseCoords);
-        histogram.mouseUp(false)
+        histogram.castMouseDown(canvasMouse, frameMouse, mouseCoords);
+        histogram.castMouseUp(false)
         expect(histogram.clickedIndices[2], "clickedIndices[2]").to.equal(8);
         expect(histogram.clickedIndices[0], "clickedIndices[0]").to.equal(6);
     });

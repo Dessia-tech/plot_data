@@ -518,11 +518,12 @@ class LineSegment2D(ReferencedObject):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None,
-                 reference_path: str = "#", name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, name: str = ''):
         # Data is used in typescript
         self.data = point1 + point2
         self.point1 = point1
         self.point2 = point2
+        self.tooltip = tooltip
 
         if edge_style is None:
             self.edge_style = EdgeStyle()

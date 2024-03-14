@@ -1506,7 +1506,7 @@ def plot_data_path(debug_mode: bool = False, version: str = None):
     """ Get path of plot_data package to write it in html file of Figure to draw. """
     version, folder, filename = get_current_link(version=version)
     if debug_mode:
-        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
+        core_path = os.sep.join(__file__.split(os.sep)[:-2] + [folder, filename])
         if os.path.isfile(core_path):
             return core_path.replace(" ", "%20")
         print(f'Local compiled {core_path} not found, fall back to CDN')

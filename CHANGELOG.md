@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.22.2]
 ### Fix
 - Local import
+- Add tooltip on any shape with Python with Shape object
 
 ## [0.22.0]
 ### Add

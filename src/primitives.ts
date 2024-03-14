@@ -668,7 +668,7 @@ export class Point extends Shape {
     return marker
   }
 
-  protected updateTooltipOrigin(matrix: DOMMatrix): void { this.tooltipOrigin = this.center.copy() }
+  // protected updateTooltipOrigin(matrix: DOMMatrix): void { this.tooltipOrigin = this.center.copy() }
 
   get markerOrientation(): string { return this._markerOrientation };
 

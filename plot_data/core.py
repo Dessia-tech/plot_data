@@ -155,10 +155,17 @@ class Figure(PlotDataObject):
 class ReferencedObject(PlotDataObject):
     """ PlotData object with reference_path. """
 
-    def __init__(self, type_: str, reference_path: str = "#", tooltip: str = None, name: str = ""):
+    def __init__(self, type_: str, reference_path: str = "#", name: str = ""):
         self.reference_path = reference_path
-        self.tooltip = tooltip
         super().__init__(type_=type_, name=name)
+
+
+class Shape(ReferencedObject):
+    """ Shape object. """
+
+    def __init__(self, type_: str, reference_path: str = "#", tooltip: str = None, name: str = ""):
+        self.tooltip = tooltip
+        super().__init__(type_=type_, reference_path=reference_path, name=name)
 
 
 class Sample(ReferencedObject):
@@ -428,7 +435,7 @@ class PointFamily(PlotDataObject):
         PlotDataObject.__init__(self, type_=None, name=name)
 
 
-class Text(ReferencedObject):
+class Text(Shape):
     """
     A class for displaying texts on canvas. Text is a primitive and can be instantiated by PrimitiveGroup.
 
@@ -471,7 +478,7 @@ class Text(ReferencedObject):
         return ax
 
 
-class Line2D(ReferencedObject):
+class Line2D(Shape):
     """
     An infinite line. Line2D is a primitive and can be instantiated by PrimitiveGroups.
 
@@ -507,7 +514,7 @@ class Line2D(ReferencedObject):
         return ax
 
 
-class LineSegment2D(ReferencedObject):
+class LineSegment2D(Shape):
     """
     A line segment. This is a primitive that can be called by PrimitiveGroup.
 
@@ -558,7 +565,7 @@ class LineSegment2D(ReferencedObject):
         return ax
 
 
-class Wire(ReferencedObject):
+class Wire(Shape):
     """
     A set of connected lines. It also provides highlighting feature.
 
@@ -589,7 +596,7 @@ class Wire(ReferencedObject):
         return ax
 
 
-class Circle2D(ReferencedObject):
+class Circle2D(Shape):
     """
     A circle. It is a primitive and can be instantiated by PrimitiveGroup.
 
@@ -644,7 +651,7 @@ class Circle2D(ReferencedObject):
         return ax
 
 
-class Rectangle(ReferencedObject):
+class Rectangle(Shape):
     """ Class to draw a rectangle. """
 
     def __init__(self, x_coord: float, y_coord: float, width: float, height: float, edge_style: EdgeStyle = None,
@@ -697,7 +704,7 @@ class RoundRectangle(Rectangle):
         self.radius = radius
 
 
-class Point2D(ReferencedObject):
+class Point2D(Shape):
     """
     A class for instantiating a point.
 
@@ -709,11 +716,12 @@ class Point2D(ReferencedObject):
     :type point_style: PointStyle
     """
 
-    def __init__(self, cx: float, cy: float, point_style: PointStyle = None, reference_path: str = "#", name: str = ''):
+    def __init__(self, cx: float, cy: float, point_style: PointStyle = None, reference_path: str = "#",
+                 tooltip: str = None, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.point_style = point_style
-        super().__init__(type_='point', reference_path=reference_path, name=name)
+        super().__init__(type_='point', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -1113,7 +1121,7 @@ class ScatterMatrix(Figure):
                 for row in sample_attributes for col in sample_attributes]
 
 
-class Arc2D(ReferencedObject):
+class Arc2D(Shape):
     """
     A class for drawing arcs. Arc2D is a primitive and can be instantiated by PrimitiveGroup. By default,
     the arc is drawn anticlockwise.
@@ -1181,7 +1189,7 @@ class Arc2D(ReferencedObject):
         return ax
 
 
-class Contour2D(ReferencedObject):
+class Contour2D(Shape):
     """
     A Contour2D is a closed polygon that is formed by multiple primitives.
 

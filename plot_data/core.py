@@ -155,8 +155,9 @@ class Figure(PlotDataObject):
 class ReferencedObject(PlotDataObject):
     """ PlotData object with reference_path. """
 
-    def __init__(self, type_: str, reference_path: str = "#", name: str = ""):
+    def __init__(self, type_: str, reference_path: str = "#", tooltip: str = None, name: str = ""):
         self.reference_path = reference_path
+        self.tooltip = tooltip
         super().__init__(type_=type_, name=name)
 
 
@@ -451,7 +452,7 @@ class Text(ReferencedObject):
 
     def __init__(self, comment: str, position_x: float, position_y: float, text_style: TextStyle = None,
                  text_scaling: bool = None, max_width: float = None, height: float = None, multi_lines: bool = True,
-                 reference_path: str = "#", name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, name: str = ''):
         self.comment = comment
         self.text_style = text_style
         self.position_x = position_x
@@ -460,7 +461,7 @@ class Text(ReferencedObject):
         self.max_width = max_width
         self.height = height
         self.multi_lines = multi_lines
-        super().__init__(type_='text', reference_path=reference_path, name=name)
+        super().__init__(type_='text', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def mpl_plot(self, ax=None, color='k', alpha=1., **kwargs):
         """ Plots using Matplotlib. """
@@ -483,12 +484,12 @@ class Line2D(ReferencedObject):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None,
-                 reference_path: str = "#", name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, name: str = ''):
         self.data = point1 + point2  # Retrocompatibility
         self.point1 = point1
         self.point2 = point2
         self.edge_style = edge_style
-        super().__init__(type_='line2d', reference_path=reference_path, name=name)
+        super().__init__(type_='line2d', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def mpl_plot(self, ax=None, edge_style=None, **kwargs):
         """ Plots using matplotlib. """
@@ -519,7 +520,7 @@ class LineSegment2D(ReferencedObject):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None,
-                 reference_path: str = "#", name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, name: str = ''):
         # Data is used in typescript
         self.data = point1 + point2
         self.point1 = point1
@@ -529,7 +530,7 @@ class LineSegment2D(ReferencedObject):
             self.edge_style = EdgeStyle()
         else:
             self.edge_style = edge_style
-        super().__init__(type_='linesegment2d', reference_path=reference_path, name=name)
+        super().__init__(type_='linesegment2d', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current LineSegment2D. """
@@ -573,8 +574,7 @@ class Wire(ReferencedObject):
                  reference_path: str = "#", name: str = ""):
         self.lines = lines
         self.edge_style = edge_style
-        self.tooltip = tooltip
-        super().__init__(type_="wire", reference_path=reference_path, name=name)
+        super().__init__(type_="wire", reference_path=reference_path, tooltip=tooltip, name=name)
 
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
@@ -614,8 +614,7 @@ class Circle2D(ReferencedObject):
         self.r = r
         self.cx = cx
         self.cy = cy
-        self.tooltip = tooltip
-        super().__init__(type_='circle', reference_path=reference_path, name=name)
+        super().__init__(type_='circle', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -656,8 +655,7 @@ class Rectangle(ReferencedObject):
         self.height = height
         self.surface_style = surface_style
         self.edge_style = edge_style
-        self.tooltip = tooltip
-        super().__init__(type_='rectangle', reference_path=reference_path, name=name)
+        super().__init__(type_='rectangle', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -1141,7 +1139,7 @@ class Arc2D(ReferencedObject):
     """
 
     def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, clockwise: bool = None,
-                 edge_style: EdgeStyle = None, reference_path: str = "#", name: str = ''):
+                 edge_style: EdgeStyle = None, reference_path: str = "#", tooltip: str = None, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.r = r
@@ -1149,7 +1147,7 @@ class Arc2D(ReferencedObject):
         self.end_angle = end_angle
         self.clockwise = clockwise
         self.edge_style = edge_style
-        super().__init__(type_='arc', reference_path=reference_path, name=name)
+        super().__init__(type_='arc', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -1203,9 +1201,8 @@ class Contour2D(ReferencedObject):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
-        self.tooltip = tooltip
         self.is_filled = surface_style is not None
-        super().__init__(type_='contour', reference_path=reference_path, name=name)
+        super().__init__(type_='contour', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Contour2D. """
@@ -1509,7 +1506,7 @@ def plot_data_path(local: bool = False, version: str = None):
     """ Get path of plot_data package to write it in html file of Figure to draw. """
     version, folder, filename = get_current_link(version=version)
     if local:
-        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
+        core_path = os.sep.join(__file__.split(os.sep)[:-2] + [folder, filename])
         if os.path.isfile(core_path):
             return core_path.replace(" ", "%20")
         print(f'Local compiled {core_path} not found, fall back to CDN')

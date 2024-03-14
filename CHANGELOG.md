@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 - Implements InteractiveObject for handling all mouse objects in one class
 
+## [0.22.2]
+### Fix
+- Local import
+
 ## [0.22.0]
 ### Add
 - Integer axes only show integer ticks

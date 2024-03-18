@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.22.4]
 ### Fix
 - Fix bug on tooltip origin when mouse leaving while hovering a shape
+- Remove unused code
 
 ## [0.22.2]
 ### Fix

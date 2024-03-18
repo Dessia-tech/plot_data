@@ -65,7 +65,8 @@ export const PG_CONTAINER_PLOT = {
         "type_": "text"
       }
     ],
-    "type_": "primitivegroup"
+    "type_": "primitivegroup",
+    "axis_on": false
 };
 
 export const EMPTY_MULTIPLOT = {

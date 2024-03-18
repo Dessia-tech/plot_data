@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.22.4]
 ### Add
 - Allow to directly specify if axes are on or off in Python
+
 ### Fix
 - Fix bug on tooltip origin when mouse leaving while hovering a shape
 - Remove unused code
+- Remove name from add plot feature
 
 ## [0.22.2]
 ### Fix

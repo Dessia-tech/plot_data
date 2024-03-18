@@ -518,6 +518,14 @@ export class RemoteFigure {
     }
     this.fixedObjects.mouseUp(ctrlKey);
   }
+  
+  public mouseLeave(): void {
+    if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
+      this.absoluteObjects.mouseLeave();
+      this.relativeObjects.mouseLeave();
+    }
+    this.fixedObjects.mouseLeave();
+  }
 
   public mouseMoveDrawer(canvas: HTMLElement, e: MouseEvent, canvasDown: Vertex, frameDown: Vertex, clickedObject: Shape): [Vertex, Vertex, Vertex] {
     const [canvasMouse, frameMouse, absoluteMouse] = this.projectMouse(e);
@@ -544,14 +552,22 @@ export class RemoteFigure {
     return [canvasDown, frameDown, clickedObject]
   }
 
-  public mouseUpDrawer(ctrlKey: boolean): [Shape, Vertex] {
+  private updateWithZoomBox(): void {
     if (this.isZooming) {
       if (this.zoomBox.area != 0) this.zoomBoxUpdateAxes(this.zoomBox);
       this.zoomBox.update(new Vertex(0, 0), new Vertex(0, 0));
     }
-    this.mouseUp(ctrlKey);
+  }
+
+  private mouseDropRedraw(): [Shape, Vertex] {
+    this.updateWithZoomBox();
     this.draw();
     return this.resetMouseEvents()
+  }
+
+  public mouseUpDrawer(ctrlKey: boolean): [Shape, Vertex] {
+    this.mouseUp(ctrlKey);
+    return this.mouseDropRedraw();
   }
 
   public mouseWheelDrawer(e: WheelEvent): void {
@@ -561,7 +577,8 @@ export class RemoteFigure {
 
   public mouseLeaveDrawer(canvas: HTMLElement, shiftKey: boolean): [boolean, Vertex] {
     const isZooming = this.isZooming; // TODO: get rid of this with a mousehandler refactor
-    this.mouseUpDrawer(true);
+    this.mouseLeave();
+    this.mouseDropRedraw();
     this.isZooming = isZooming;
     this.axes.forEach(axis => {
       axis.saveLocation();

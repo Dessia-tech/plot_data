@@ -240,4 +240,6 @@ export class Shape {
   public mouseUp(keepState: boolean): void {
     this.isClicked = this.isHovered ? !this.isClicked : (keepState ? this.isClicked : false);
   }
+
+  public mouseLeave(): void { this.isHovered = false }
 }

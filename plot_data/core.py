@@ -110,9 +110,10 @@ class Figure(PlotDataObject):
 
     _standalone_in_db = True
 
-    def __init__(self, type_: str, width: int = 750, height: int = 400, name: str = '', **kwargs):
+    def __init__(self, type_: str, width: int = 750, height: int = 400, axis_on: bool = True, name: str = '', **kwargs):
         self.width = width
         self.height = height
+        self.axis_on = axis_on
         PlotDataObject.__init__(self, type_=type_, name=name, **kwargs)
 
     @property
@@ -880,7 +881,7 @@ class Graph2D(Figure):
 
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str, axis: Axis = None,
                  log_scale_x: bool = None, log_scale_y: bool = None, width: int = 750, height: int = 400,
-                 name: str = ''):
+                 axis_on: bool = True, name: str = ''):
         self.graphs = graphs
         self.attribute_names = [x_variable, y_variable]
         if axis is None:
@@ -889,7 +890,7 @@ class Graph2D(Figure):
             self.axis = axis
         self.log_scale_x = log_scale_x
         self.log_scale_y = log_scale_y
-        super().__init__(width=width, height=height, type_='graph2d', name=name)
+        super().__init__(width=width, height=height, type_='graph2d', axis_on=axis_on, name=name)
 
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
@@ -1056,7 +1057,7 @@ class Scatter(Figure):
     def __init__(self, x_variable: str = None, y_variable: str = None, tooltip: Tooltip = None,
                  point_style: PointStyle = None, elements: List[Sample] = None, points_sets: List[PointFamily] = None,
                  axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None, heatmap: Heatmap = None,
-                 heatmap_view: bool = None, width: int = 750, height: int = 400, name: str = ''):
+                 heatmap_view: bool = None, width: int = 750, height: int = 400, axis_on: bool = True, name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style
@@ -1083,7 +1084,7 @@ class Scatter(Figure):
         self.heatmap = heatmap
         self.heatmap_view = heatmap_view
         self.points_sets = points_sets
-        super().__init__(width=width, height=height, type_='scatterplot', name=name)
+        super().__init__(width=width, height=height, type_='scatterplot', axis_on=axis_on, name=name)
 
 
 class ScatterMatrix(Figure):
@@ -1093,7 +1094,8 @@ class ScatterMatrix(Figure):
     _plot_buttons = "MULTIPLOT_BUTTONS"
 
     def __init__(self, elements: List[Sample] = None, axes: List[str] = None, point_style: PointStyle = None,
-                 surface_style: SurfaceStyle = None, width: int = 750, height: int = 400, name: str = ""):
+                 surface_style: SurfaceStyle = None, width: int = 750, height: int = 400, axis_on: bool = True,
+                 name: str = ""):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1113,7 +1115,7 @@ class ScatterMatrix(Figure):
         self.surface_style = surface_style
         self.plots = self._build_multiplot()
         self.initial_view_on = True
-        super().__init__(width=width, height=height, type_="multiplot", name=name)
+        super().__init__(width=width, height=height, type_="multiplot", axis_on=axis_on, name=name)
 
     def _build_multiplot(self):
         sample_attributes = self.elements[0].values.keys()
@@ -1300,10 +1302,10 @@ class PrimitiveGroup(Figure):
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, Circle2D,
                                               Line2D, MultipleLabels, Wire, Point2D]], width: int = 750,
-                 height: int = 400, attribute_names: List[str] = None, name: str = ''):
+                 height: int = 400, attribute_names: List[str] = None, axis_on: bool = False, name: str = ''):
         self.primitives = primitives
         self.attribute_names = attribute_names
-        super().__init__(width=width, height=height, type_='draw', name=name)
+        super().__init__(width=width, height=height, type_='draw', axis_on=axis_on, name=name)
 
     def mpl_plot(self, ax=None, equal_aspect=True, **kwargs):
         """ Plots using matplotlib. """
@@ -1361,7 +1363,8 @@ class PrimitiveGroupsContainer(Figure):
 
     def __init__(self, primitive_groups: List[PrimitiveGroup], sizes: List[Tuple[float, float]] = None,
                  coords: List[Tuple[float, float]] = None, associated_elements: List[int] = None,
-                 x_variable: str = None, y_variable: str = None, width: int = 750, height: int = 400, name: str = ''):
+                 x_variable: str = None, y_variable: str = None, width: int = 750, height: int = 400,
+                 axis_on: bool = True, name: str = ''):
         for i, value in enumerate(primitive_groups):
             if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
@@ -1379,7 +1382,7 @@ class PrimitiveGroupsContainer(Figure):
                 if y_variable:
                     attribute_names.append(y_variable)
                 self.association['attribute_names'] = attribute_names
-        super().__init__(width=width, height=height, type_='primitivegroupcontainer', name=name)
+        super().__init__(width=width, height=height, type_='primitivegroupcontainer', axis_on=axis_on, name=name)
 
 
 class ParallelPlot(Figure):
@@ -1400,7 +1403,7 @@ class ParallelPlot(Figure):
 
     def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, disposition: str = None,
                  axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, width: int = 750, height: int = 400,
-                 name: str = ''):
+                 axis_on: bool = True, name: str = ''):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1419,7 +1422,7 @@ class ParallelPlot(Figure):
         self.disposition = disposition
         self.attribute_names = axes
         self.rgbs = rgbs
-        super().__init__(width=width, height=height, type_='parallelplot', name=name)
+        super().__init__(width=width, height=height, type_='parallelplot', axis_on=axis_on, name=name)
 
 
 class Histogram(Figure):
@@ -1447,7 +1450,7 @@ class Histogram(Figure):
 
     def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, width: int = 750, height: int = 400,
-                 name: str = ''):
+                 axis_on: bool = True, name: str = ''):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1467,7 +1470,7 @@ class Histogram(Figure):
         self.graduation_nb = graduation_nb
         self.edge_style = edge_style
         self.surface_style = surface_style
-        super().__init__(width=width, height=height, type_='histogram', name=name)
+        super().__init__(width=width, height=height, type_='histogram', axis_on=axis_on, name=name)
 
 
 class MultiplePlots(Figure):
@@ -1487,7 +1490,8 @@ class MultiplePlots(Figure):
 
     def __init__(self, plots: List[PlotDataObject], sizes: List[Window] = None, elements: List[Sample] = None,
                  coords: List[Tuple[float, float]] = None, point_families: List[PointFamily] = None,
-                 initial_view_on: bool = None, width: int = 750, height: int = 400, name: str = ''):
+                 initial_view_on: bool = None, width: int = 750, height: int = 400, axis_on: bool = True,
+                 name: str = ''):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1507,7 +1511,7 @@ class MultiplePlots(Figure):
         self.coords = coords
         self.points_sets = point_families
         self.initial_view_on = initial_view_on
-        super().__init__(width=width, height=height, type_='multiplot', name=name)
+        super().__init__(width=width, height=height, type_='multiplot', axis_on=axis_on, name=name)
 
 
 def plot_data_path(debug_mode: bool = False, version: str = None):

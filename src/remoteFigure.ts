@@ -83,6 +83,7 @@ export class RemoteFigure {
       this.fixedObjects = new ShapeCollection(this.axes);
       this.relativeObjects = new GroupCollection();
       this.absoluteObjects = new GroupCollection();
+      this.setAxisVisibility(data);
     }
 
   get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
@@ -120,6 +121,8 @@ export class RemoteFigure {
   }
 
   protected unpackData(data: any): Map<string, any[]> { return RemoteFigure.deserializeData(data) }
+
+  protected setAxisVisibility(data: DataInterface): void { if (!data.axis_on) this.toggleAxesVisibility() }
 
   public serializeFeatures(): any {
     const elements = [];
@@ -432,8 +435,10 @@ export class RemoteFigure {
 
   public togglePoints(): void {}
 
+  private toggleAxesVisibility(): void { this.axes.forEach(axis => axis.toggleView()) }
+
   public toggleAxes(): void {
-    this.axes.forEach(axis => axis.toggleView());
+    this.toggleAxesVisibility();
     this.draw();
   }
 

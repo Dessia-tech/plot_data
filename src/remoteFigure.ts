@@ -518,7 +518,7 @@ export class RemoteFigure {
     }
     this.fixedObjects.mouseUp(ctrlKey);
   }
-  
+
   public mouseLeave(): void {
     if (!this.isSelecting && !this.is_drawing_rubber_band && this.translation.normL1 < 10) {
       this.absoluteObjects.mouseLeave();

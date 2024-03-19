@@ -494,7 +494,6 @@ class Line2D(ReferencedObject):
         if ax is None:
             _, ax = plt.subplots()
 
-        style = self.edge_style
         if edge_style:
             style = edge_style
             color = style.color_stroke.rgb
@@ -525,9 +524,8 @@ class LineSegment2D(ReferencedObject):
         self.point2 = point2
 
         if edge_style is None:
-            self.edge_style = EdgeStyle()
-        else:
-            self.edge_style = edge_style
+            edge_style = EdgeStyle()
+        self.edge_style = edge_style
         super().__init__(type_='linesegment2d', reference_path=reference_path, name=name)
 
     def bounding_box(self):
@@ -546,10 +544,11 @@ class LineSegment2D(ReferencedObject):
         if not ax:
             _, ax = plt.subplots()
 
-        if edge_style:
-            edge_style = self.edge_style
-        else:
-            edge_style = DEFAULT_EDGESTYLE
+        if edge_style is None:
+            if self.edge_style:
+                edge_style = self.edge_style
+            else:
+                edge_style = DEFAULT_EDGESTYLE
 
         ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]], **edge_style.mpl_arguments(),
                 **kwargs)
@@ -628,7 +627,6 @@ class Circle2D(ReferencedObject):
             edge_style = self.edge_style
         else:
             edge_style = DEFAULT_EDGESTYLE
-            # dashes = DEFAULT_EDGESTYLE.dashline
         args = edge_style.mpl_arguments(surface=True)
         if 'dashes' in args:
             args.pop("dashes")
@@ -670,7 +668,6 @@ class Rectangle(ReferencedObject):
             edge_style = self.edge_style
         else:
             edge_style = DEFAULT_EDGESTYLE
-            # dashes = DEFAULT_EDGESTYLE.dashline
         args = edge_style.mpl_arguments(surface=True)
         if 'dashes' in args:
             args.pop("dashes")

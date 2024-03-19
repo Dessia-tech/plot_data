@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.1]
+
+### Fix
+
+- LineSegment2D : If it is overloaded, MPL Plot now show the right edge_style instead of generating of random one 
+
 ## [0.23.0]
 
 ### Feat

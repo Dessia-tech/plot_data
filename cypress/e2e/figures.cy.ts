@@ -35,7 +35,8 @@ describe("Figure", function() {
             { "name": "", "cx": 3, "cy": 3, "type_": "point" },
             { "name": "", "cx": 8, "cy": 3, "type_": "point" },
             { "name": "", "data": [66, 11.5, 73, 11.5], "point1": [66, 11.5], "point2": [73, 11.5], "type_": "linesegment2d" }
-        ]
+        ],
+        "axis_on": true
     };
 
     it('should create a new instance of Figure from multiplot data with valid arguments', function() {
@@ -204,7 +205,8 @@ describe("Histogram", function() {
             { "name": "", "values": { "x": 3, "y": 2 }, "x": 3, "y": 2 },
             { "name": "", "values": { "x": 4, "y": 3 }, "x": 4, "y": 3 }
         ],
-        "type_": "histogram"
+        "type_": "histogram",
+        "axis_on": true
     };
     const histogram = new Histogram(data, canvas.width, canvas.height, 0, 0, canvasID, false);
     histogram.setCanvas(canvas.id);
@@ -265,7 +267,8 @@ describe("Scatter", function() {
             { "name": "", "values": { "x": 3, "y": 2 }, "x": 3, "y": 2 },
             { "name": "", "values": { "x": 4, "y": 3 }, "x": 4, "y": 3 }
         ],
-        "type_": "scatterplot"
+        "type_": "scatterplot",
+        "axis_on": true
     }
     const scatter = new Scatter(data, canvas.width, canvas.height, 0, 0, canvasID, false);
     const frameMatrix = new DOMMatrix([
@@ -329,7 +332,8 @@ describe("Graph2D", function() {
                 ]
             },
         ],
-        "type_": "graph2d"
+        "type_": "graph2d",
+        "axis_on": true
     }
     const graph = new Graph2D(data, canvas.width, canvas.height, 0, 0, canvasID, false);
 
@@ -361,7 +365,8 @@ describe("ParallelPlot", function() {
             { "name": "", "values": { "x": 3, "y": 2, "z": 2 }, "x": 3, "y": 2, "z": 2 },
             { "name": "", "values": { "x": 4, "y": 3, "z": 5 }, "x": 4, "y": 3, "z": 5 }
         ],
-        "type_": "parallelplot"
+        "type_": "parallelplot",
+        "axis_on": true
     }
     const parallelplot = new ParallelPlot(data, canvas.width, canvas.height, 0, 0, canvasID, false);
     parallelplot.setCanvas(canvas.id);

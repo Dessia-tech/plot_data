@@ -14,7 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add events (Subject) to emit shape hovering and clicking
 - Highlight shapes when corresponding function is called from wrapper software
 
-## [0.22.4]
 ### Fix
 - Remove offline mode
 

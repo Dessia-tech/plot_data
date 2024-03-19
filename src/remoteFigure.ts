@@ -124,18 +124,18 @@ export class RemoteFigure {
 
   protected setAxisVisibility(data: DataInterface): void { this.axes.forEach(axis => axis.visible = data.axis_on) }
 
-  // public serializeFeatures(): any {
-  //   const elements = [];
-  //   for (let i=0; i < this.nSamples; i++) {
-  //     const newSample = { "values": {} };
-  //     this.featureNames.forEach(feature => {
-  //       newSample[feature] = this.features.get(feature)[i];
-  //       if (feature != "name") newSample["values"][feature] = newSample[feature];
-  //     });
-  //     elements.push(newSample);
-  //   }
-  //   return elements
-  // }
+  public serializeFeatures(): any {
+    const elements = [];
+    for (let i=0; i < this.nSamples; i++) {
+      const newSample = { "values": {} };
+      this.featureNames.forEach(feature => {
+        newSample[feature] = this.features.get(feature)[i];
+        if (feature != "name") newSample["values"][feature] = newSample[feature];
+      });
+      elements.push(newSample);
+    }
+    return elements
+  }
 
   protected buildPointSets(data: any): void { this.unpackPointsSets(data) }
 

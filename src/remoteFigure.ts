@@ -122,7 +122,7 @@ export class RemoteFigure {
 
   protected unpackData(data: any): Map<string, any[]> { return RemoteFigure.deserializeData(data) }
 
-  protected setAxisVisibility(data: DataInterface): void { if (!data.axis_on) this.toggleAxesVisibility() }
+  protected setAxisVisibility(data: DataInterface): void { this.axes.forEach(axis => axis.visible = data.axis_on) }
 
   public serializeFeatures(): any {
     const elements = [];

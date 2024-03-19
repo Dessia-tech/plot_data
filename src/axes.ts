@@ -535,8 +535,6 @@ export class Axis extends Shape {
     return point
   }
 
-
-
   private computeTickText(context: CanvasRenderingContext2D, text: string, tickTextParams: TextParams, point: Point, HTMatrix: DOMMatrix): Text {
     const textOrigin = this.tickTextPositions(point, HTMatrix);
     const tickText = new Text(Text.capitalize(text), textOrigin, tickTextParams);

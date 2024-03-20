@@ -71,9 +71,7 @@ export class Multiplot {
     const elements = [];
     for (let i=0; i < this.nSamples; i++) {
       const newSample = {};
-      this.featureNames.forEach(feature => {
-        if (feature != "name") newSample[feature] = this.features.get(feature)[i];
-      });
+      this.featureNames.forEach(feature =>  newSample[feature] = this.features.get(feature)[i]);
       newSample["values"] = {...newSample};
       elements.push(newSample);
     }

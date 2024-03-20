@@ -62,7 +62,7 @@ HTML_TEMPLATE = Template('''
         </div>
         <div id="sub_button">
             Cluster: <input type="range" class="slider" min="0" max="2500" value="1250"
-            onclick="plot_data.simpleCluster(value / 10000)">
+            onclick="plot_data.simpleCluster(value / 10000)"/>
             <button name="resetClusters" value="OK" type="button"
             onclick="plot_data.resetClusters()"> Reset clusters </button>
         </div>
@@ -80,7 +80,7 @@ HTML_TEMPLATE = Template('''
         </div>
         $specific_buttons
     </div>
-    <hr style="border-top: 2px;">
+    <hr style="border-top: 2px;"/>
     <div id="app">
         <canvas id="$canvas_id" style="border: 1px solid black; margin: auto;"></canvas>
 

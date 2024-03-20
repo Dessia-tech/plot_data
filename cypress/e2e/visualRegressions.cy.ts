@@ -80,7 +80,7 @@ FIGURES_DATA.forEach(figureData => {
                     let [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 809, "offsetY": 196} as MouseEvent);
                     draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
                     expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
-        
+
                     [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 816, "offsetY": 196} as MouseEvent);
                     draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
                     expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;

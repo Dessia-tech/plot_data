@@ -31,7 +31,8 @@ HTML_TEMPLATE = Template('''
 
     #buttons {
       display: flex;
-      gap: 3rem;
+      column-gap: 3rem;
+      row-gap: 0.5em;
       flex-wrap: wrap;
       margin-bottom: 0.5rem;
       margin-top: 1rem;

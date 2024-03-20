@@ -77,11 +77,11 @@ FIGURES_DATA.forEach(figureData => {
             it("should hover line even if mouse is not exactly on line", function () {
                 cy.window().then((win) => {
                     const draw = win.eval('plot_data');
-                    let [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 814, "offsetY": 196} as MouseEvent);
+                    let [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 809, "offsetY": 196} as MouseEvent);
                     draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
                     expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
-
-                    [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 822, "offsetY": 196} as MouseEvent);
+        
+                    [canvasMouse, frameMouse, mouseCoords] = draw.projectMouse({"offsetX": 816, "offsetY": 196} as MouseEvent);
                     draw.mouseMove(canvasMouse, frameMouse, mouseCoords);
                     expect(draw.relativeObjects.shapes[23].isHovered).to.be.true;
                 });

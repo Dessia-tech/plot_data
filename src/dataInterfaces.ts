@@ -74,7 +74,8 @@ export interface DataInterface {
     primitives?: any, //for now, needs a specific interface
     tooltip?: any, //for now: tooltip can be Tooltip Object or string,
     graduation_nb?: number,
-    type_?: string
+    type_?: string,
+    axis_on?: boolean
 }
 
 export interface MultiplotDataInterface {

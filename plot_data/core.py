@@ -1178,11 +1178,14 @@ class Arc2D(Shape):
             kwargs.pop("edge_style")
         else:
             edgecolor = plot_data.colors.BLACK.rgb
+        theta1, theta2 = self.start_angle, self.end_angle
+        if self.clockwise:
+            theta1, theta2 = self.end_angle, self.start_angle
 
         ax.add_patch(
             Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
-                theta1=self.start_angle * 0.5 / math.pi * 360,
-                theta2=self.end_angle * 0.5 / math.pi * 360,
+                theta1=theta1 * 0.5 / math.pi * 360,
+                theta2=theta2 * 0.5 / math.pi * 360,
                 edgecolor=edgecolor), **kwargs)
 
         return ax

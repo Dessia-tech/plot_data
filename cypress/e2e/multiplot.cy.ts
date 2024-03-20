@@ -22,13 +22,11 @@ describe('Multiplot.figures', function () {
 
     for (let i of [0, 2, 25, 345, 14, 64, 85, 123, 465, 51, 212, 326]) {
       const sample = serializedFeatures[i];
-      expect(Object.keys(sample).length, "as many features").to.be.equal(multiplot.featureNames.length);
+      expect(Object.keys(sample).length, "as many features").to.be.equal(multiplot.featureNames.length + 1);
 
       multiplot.featureNames.forEach(feature => {
-        if (feature != "name") {
-          expect(sample[feature], `same ${feature}`).to.be.equal(multiplotData.elements[i][feature]);
-          expect(sample["values"][feature], `same sample.values.${feature}`).to.be.equal(sample[feature]);
-        }
+        expect(sample[feature], `same ${feature}`).to.be.equal(multiplotData.elements[i][feature]);
+        expect(sample["values"][feature], `same sample.values.${feature}`).to.be.equal(sample[feature]);
       });
     }
   });

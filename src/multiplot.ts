@@ -38,7 +38,7 @@ export class Multiplot {
   ) {
     this.buildCanvas(canvasID);
     [this.features, this.figures] = this.unpackData(data);
-    this.featureNames = Array.from(this.features.keys());
+    this.featureNames = this.getFeaturesNames();
     this.nSamples = this.features.entries().next().value[1].length;
     this.computeTable();
     this.draw();
@@ -61,6 +61,10 @@ export class Multiplot {
       })
     }
     return [features, figures]
+  }
+
+  private getFeaturesNames(): string[] {
+    return Array.from(this.features.keys()).filter(feature => feature != "name");
   }
 
   public serializeFeatures(): any {

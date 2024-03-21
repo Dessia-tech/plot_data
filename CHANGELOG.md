@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fix bug on tooltip origin when mouse leaving while hovering a shape
 - Remove unused code
 - Fix html for prettier to work
+- Remove name from add plot feature
 
 ## [0.22.2]
 ### Fix

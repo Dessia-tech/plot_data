@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Allow to directly specify if axes are on or off in Python
 
 ### Fix
-- LineSegment2D : If it is overloaded, MPL Plot now show the right edge_style instead of generating of random one 
+- LineSegment2D : If it is overloaded, MPL Plot now show the right edge_style instead of generating of random one
 
 
 ## [0.23.0]

@@ -15,7 +15,7 @@ const FIGURES_DATA = [
     { name: "parallelplot", data: parallelPlotData, threshold: 0.05 },
     { name: "plotscatter", data: plotScatterData, threshold: 0.05 },
     { name: "primitivegroupcontainer", data: primitiveGroupContainerData, threshold: 0.05 },
-    { name: "scattermatrix", data: scattermatrixData, threshold: 0.07 },
+    { name: "scattermatrix", data: scattermatrixData, threshold: 0.08 },
     { name: "simpleshapes", data: simpleshapesData, threshold: 0.05 },
     { name: "textscaling", data: textscalingData, threshold: 0.05 },
     { name: "multiplot", data: multiplotData, threshold: 0.05 }

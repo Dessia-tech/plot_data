@@ -24,6 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Refactor
 - Implements InteractiveObject for handling all mouse objects in one class
 
+## [0.22.4]
+### Fix
+- Fix bug on tooltip origin when mouse leaving while hovering a shape
+- Remove unused code
+- Fix html for prettier to work
+- Remove name from add plot feature
+
 ## [0.22.2]
 ### Fix
 - Local import

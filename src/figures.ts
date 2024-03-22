@@ -698,6 +698,11 @@ export class Scatter extends Frame {
     this.previousCoords = [];
   }
 
+  public mouseLeave(): void {
+    super.mouseLeave();
+    this.previousCoords = [];
+  }
+
   protected updateWithScale(): void {
     super.updateWithScale();
     if (this.nSamples > 0) this.computePoints();
@@ -800,6 +805,12 @@ export class Graph2D extends Scatter {
     super.castMouseUp(ctrlKey);
     this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
   }
+
+  public mouseLeave(): void {
+    super.mouseLeave();
+    this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
+  }
+
   //TODO: Code duplicate, there is a middle class here between Scatter, Frame, Draw and Graph2D. Not so obvious.
   public sendHoveredIndicesMultiplot(): number[] { return [] }
 
@@ -1032,6 +1043,12 @@ export class ParallelPlot extends Figure {
   public castMouseUp(ctrlKey: boolean): void {
     if (this.changedAxes.length != 0) this.updateAxesLocation();
     super.castMouseUp(ctrlKey);
+    if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateShapeStates('isClicked');
+  }
+
+  public mouseLeave(): void {
+    if (this.changedAxes.length != 0) this.updateAxesLocation();
+    super.mouseLeave();
     if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateShapeStates('isClicked');
   }
 

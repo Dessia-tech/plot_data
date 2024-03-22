@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fix
 - LineSegment2D : If it is overloaded, MPL Plot now show the right edge_style instead of generating of random one
+- Arc2D: mpl_plot
 
 ## [0.23.0]
 ### Feat
@@ -19,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fix
 - Remove offline mode
-- Arc2D: mpl_plot
 
 ### Refactor
 - Implements InteractiveObject for handling all mouse objects in one class

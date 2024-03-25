@@ -69,6 +69,8 @@ export class ShapeCollection {
 
   public mouseUp(keepState: boolean): void { this.shapes.forEach(shape => shape.mouseUp(keepState)) }
 
+  public mouseLeave(): void { this.shapes.forEach(shape => shape.mouseLeave()) }
+
   public draw(context: CanvasRenderingContext2D): void { this.shapes.forEach(shape => shape.draw(context)) }
 
   public removeShape(index: number): void {

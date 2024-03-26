@@ -165,7 +165,7 @@ export class Text extends Shape {
 
   public buildPath(): void { this.path = this.boundingBox.path }
 
-  public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) }
+  public static capitalize(value: string): string { return value.charAt(0).toUpperCase() + value.slice(1) ?? "" }
 
   public capitalizeSelf(): void { this.text = Text.capitalize(this.text) }
 

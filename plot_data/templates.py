@@ -78,7 +78,7 @@ HTML_TEMPLATE = Template('''
             <button name="logScale" value="OK" type="button"
             onclick="plot_data.switchLogScale()"> Log Scale</button>
             <button name="resize" value="OK" type="button"
-            onclick="plot_data.resize(...PlotData.computeCanvasSize('#buttons'))"> Resize </button>
+            onclick="plot_data.resizeWindow(...PlotData.computeCanvasSize('#buttons'))"> Resize </button>
         </div>
         $specific_buttons
     </div>

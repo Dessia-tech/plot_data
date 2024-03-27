@@ -77,6 +77,8 @@ HTML_TEMPLATE = Template('''
             onclick="plot_data.htmlToggleAxes()"> Show / Hide Axes </button>
             <button name="logScale" value="OK" type="button"
             onclick="plot_data.switchLogScale()"> Log Scale</button>
+            <button name="resize" value="OK" type="button"
+            onclick="plot_data.resize(...PlotData.computeCanvasSize('#buttons'))"> Resize </button>
         </div>
         $specific_buttons
     </div>

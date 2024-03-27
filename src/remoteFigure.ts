@@ -289,6 +289,17 @@ export class RemoteFigure {
     this.height = height;
   }
 
+  public changeCanvasSize(width: number, height: number): void {
+    const canvas = document.getElementById(this.canvasID) as HTMLCanvasElement;
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+  public resizeWindow(width: number, height: number): void {
+    this.changeCanvasSize(width, height);
+    this.boundingBoxResize(this.origin, width, height);
+  }
+
   public boundingBoxResize(origin: Vertex, width: number, height: number): void {
     this.changeLocationInCanvas(origin, width, height);
     this.resizeUpdate();

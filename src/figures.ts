@@ -467,20 +467,16 @@ export class Scatter extends Frame {
     this.computePoints();
   }
 
-  public boundingBoxResize(origin: Vertex, width: number, height: number): void {
-    super.boundingBoxResize(origin, width, height);
-    this.computePoints();
-  }
-
   public reset(): void {
     super.reset();
     this.computePoints();
     this.resetClusters();
   }
 
-  public resize(): void {
-    super.resize();
+  public resizeUpdate(): void {
+    this.resize();
     this.computePoints();
+    this.draw();
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
@@ -1113,10 +1109,10 @@ export class Draw extends Frame {
     this.draw();
   }
 
-  public resize(): void {
-    super.resize();
-    this.updateBounds();
+  public resizeUpdate(): void {
+    this.resize();
     this.axisEqual();
+    this.draw();
   }
 
   protected unpackData(data: DataInterface): Map<string, any[]> {

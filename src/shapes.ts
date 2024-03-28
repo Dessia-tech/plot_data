@@ -749,6 +749,8 @@ export class ScatterPoint extends Point {
     this.update();
   }
 
+  protected updateTooltipOrigin(matrix: DOMMatrix): void { this.tooltipOrigin = this.center.copy() }
+
   public updateTooltipMap() { this._tooltipMap = new Map<string, any>([["Number", this.values.length], ["X mean", this.mean.x], ["Y mean", this.mean.y],]) };
 
   private monoValueTooltip(tooltipAttributes: string[], features: Map<string, number[]>): void {

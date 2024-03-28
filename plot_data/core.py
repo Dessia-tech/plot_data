@@ -110,9 +110,10 @@ class Figure(PlotDataObject):
 
     _standalone_in_db = True
 
-    def __init__(self, type_: str, width: int = 750, height: int = 400, name: str = '', **kwargs):
+    def __init__(self, type_: str, width: int = 750, height: int = 400, axis_on: bool = True, name: str = '', **kwargs):
         self.width = width
         self.height = height
+        self.axis_on = axis_on
         PlotDataObject.__init__(self, type_=type_, name=name, **kwargs)
 
     @property
@@ -158,6 +159,14 @@ class ReferencedObject(PlotDataObject):
     def __init__(self, type_: str, reference_path: str = "#", name: str = ""):
         self.reference_path = reference_path
         super().__init__(type_=type_, name=name)
+
+
+class Shape(ReferencedObject):
+    """ Shape object. """
+
+    def __init__(self, type_: str, reference_path: str = "#", tooltip: str = None, name: str = ""):
+        self.tooltip = tooltip
+        super().__init__(type_=type_, reference_path=reference_path, name=name)
 
 
 class Sample(ReferencedObject):
@@ -426,7 +435,7 @@ class PointFamily(PlotDataObject):
         PlotDataObject.__init__(self, type_=None, name=name)
 
 
-class Text(ReferencedObject):
+class Text(Shape):
     """
     A class for displaying texts on canvas. Text is a primitive and can be instantiated by PrimitiveGroup.
 
@@ -450,7 +459,7 @@ class Text(ReferencedObject):
 
     def __init__(self, comment: str, position_x: float, position_y: float, text_style: TextStyle = None,
                  text_scaling: bool = None, max_width: float = None, height: float = None, multi_lines: bool = True,
-                 reference_path: str = "#", name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, name: str = ''):
         self.comment = comment
         self.text_style = text_style
         self.position_x = position_x
@@ -459,7 +468,7 @@ class Text(ReferencedObject):
         self.max_width = max_width
         self.height = height
         self.multi_lines = multi_lines
-        super().__init__(type_='text', reference_path=reference_path, name=name)
+        super().__init__(type_='text', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def mpl_plot(self, ax=None, color='k', alpha=1., **kwargs):
         """ Plots using Matplotlib. """
@@ -469,7 +478,7 @@ class Text(ReferencedObject):
         return ax
 
 
-class Line2D(ReferencedObject):
+class Line2D(Shape):
     """
     An infinite line. Line2D is a primitive and can be instantiated by PrimitiveGroups.
 
@@ -482,19 +491,18 @@ class Line2D(ReferencedObject):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None,
-                 reference_path: str = "#", name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, name: str = ''):
         self.data = point1 + point2  # Retrocompatibility
         self.point1 = point1
         self.point2 = point2
         self.edge_style = edge_style
-        super().__init__(type_='line2d', reference_path=reference_path, name=name)
+        super().__init__(type_='line2d', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def mpl_plot(self, ax=None, edge_style=None, **kwargs):
         """ Plots using matplotlib. """
         if ax is None:
             _, ax = plt.subplots()
 
-        style = self.edge_style
         if edge_style:
             style = edge_style
             color = style.color_stroke.rgb
@@ -505,7 +513,7 @@ class Line2D(ReferencedObject):
         return ax
 
 
-class LineSegment2D(ReferencedObject):
+class LineSegment2D(Shape):
     """
     A line segment. This is a primitive that can be called by PrimitiveGroup.
 
@@ -518,17 +526,16 @@ class LineSegment2D(ReferencedObject):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None,
-                 reference_path: str = "#", name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, name: str = ''):
         # Data is used in typescript
         self.data = point1 + point2
         self.point1 = point1
         self.point2 = point2
 
         if edge_style is None:
-            self.edge_style = EdgeStyle()
-        else:
-            self.edge_style = edge_style
-        super().__init__(type_='linesegment2d', reference_path=reference_path, name=name)
+            edge_style = EdgeStyle()
+        self.edge_style = edge_style
+        super().__init__(type_='linesegment2d', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current LineSegment2D. """
@@ -546,17 +553,18 @@ class LineSegment2D(ReferencedObject):
         if not ax:
             _, ax = plt.subplots()
 
-        if edge_style:
-            edge_style = self.edge_style
-        else:
-            edge_style = DEFAULT_EDGESTYLE
+        if edge_style is None:
+            if self.edge_style:
+                edge_style = self.edge_style
+            else:
+                edge_style = DEFAULT_EDGESTYLE
 
         ax.plot([self.point1[0], self.point2[0]], [self.point1[1], self.point2[1]], **edge_style.mpl_arguments(),
                 **kwargs)
         return ax
 
 
-class Wire(ReferencedObject):
+class Wire(Shape):
     """
     A set of connected lines. It also provides highlighting feature.
 
@@ -572,8 +580,7 @@ class Wire(ReferencedObject):
                  reference_path: str = "#", name: str = ""):
         self.lines = lines
         self.edge_style = edge_style
-        self.tooltip = tooltip
-        super().__init__(type_="wire", reference_path=reference_path, name=name)
+        super().__init__(type_="wire", reference_path=reference_path, tooltip=tooltip, name=name)
 
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
@@ -588,7 +595,7 @@ class Wire(ReferencedObject):
         return ax
 
 
-class Circle2D(ReferencedObject):
+class Circle2D(Shape):
     """
     A circle. It is a primitive and can be instantiated by PrimitiveGroup.
 
@@ -613,8 +620,7 @@ class Circle2D(ReferencedObject):
         self.r = r
         self.cx = cx
         self.cy = cy
-        self.tooltip = tooltip
-        super().__init__(type_='circle', reference_path=reference_path, name=name)
+        super().__init__(type_='circle', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -628,7 +634,6 @@ class Circle2D(ReferencedObject):
             edge_style = self.edge_style
         else:
             edge_style = DEFAULT_EDGESTYLE
-            # dashes = DEFAULT_EDGESTYLE.dashline
         args = edge_style.mpl_arguments(surface=True)
         if 'dashes' in args:
             args.pop("dashes")
@@ -644,7 +649,7 @@ class Circle2D(ReferencedObject):
         return ax
 
 
-class Rectangle(ReferencedObject):
+class Rectangle(Shape):
     """ Class to draw a rectangle. """
 
     def __init__(self, x_coord: float, y_coord: float, width: float, height: float, edge_style: EdgeStyle = None,
@@ -655,8 +660,7 @@ class Rectangle(ReferencedObject):
         self.height = height
         self.surface_style = surface_style
         self.edge_style = edge_style
-        self.tooltip = tooltip
-        super().__init__(type_='rectangle', reference_path=reference_path, name=name)
+        super().__init__(type_='rectangle', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -670,7 +674,6 @@ class Rectangle(ReferencedObject):
             edge_style = self.edge_style
         else:
             edge_style = DEFAULT_EDGESTYLE
-            # dashes = DEFAULT_EDGESTYLE.dashline
         args = edge_style.mpl_arguments(surface=True)
         if 'dashes' in args:
             args.pop("dashes")
@@ -698,7 +701,7 @@ class RoundRectangle(Rectangle):
         self.radius = radius
 
 
-class Point2D(ReferencedObject):
+class Point2D(Shape):
     """
     A class for instantiating a point.
 
@@ -710,11 +713,12 @@ class Point2D(ReferencedObject):
     :type point_style: PointStyle
     """
 
-    def __init__(self, cx: float, cy: float, point_style: PointStyle = None, reference_path: str = "#", name: str = ''):
+    def __init__(self, cx: float, cy: float, point_style: PointStyle = None, reference_path: str = "#",
+                 tooltip: str = None, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.point_style = point_style
-        super().__init__(type_='point', reference_path=reference_path, name=name)
+        super().__init__(type_='point', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -873,7 +877,7 @@ class Graph2D(Figure):
 
     def __init__(self, graphs: List[Dataset], x_variable: str, y_variable: str, axis: Axis = None,
                  log_scale_x: bool = None, log_scale_y: bool = None, width: int = 750, height: int = 400,
-                 name: str = ''):
+                 axis_on: bool = True, name: str = ''):
         self.graphs = graphs
         self.attribute_names = [x_variable, y_variable]
         if axis is None:
@@ -882,7 +886,7 @@ class Graph2D(Figure):
             self.axis = axis
         self.log_scale_x = log_scale_x
         self.log_scale_y = log_scale_y
-        super().__init__(width=width, height=height, type_='graph2d', name=name)
+        super().__init__(width=width, height=height, type_='graph2d', axis_on=axis_on, name=name)
 
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
@@ -1049,7 +1053,7 @@ class Scatter(Figure):
     def __init__(self, x_variable: str = None, y_variable: str = None, tooltip: Tooltip = None,
                  point_style: PointStyle = None, elements: List[Sample] = None, points_sets: List[PointFamily] = None,
                  axis: Axis = None, log_scale_x: bool = None, log_scale_y: bool = None, heatmap: Heatmap = None,
-                 heatmap_view: bool = None, width: int = 750, height: int = 400, name: str = ''):
+                 heatmap_view: bool = None, width: int = 750, height: int = 400, axis_on: bool = True, name: str = ''):
         self.tooltip = tooltip
         self.attribute_names = [x_variable, y_variable]
         self.point_style = point_style
@@ -1076,7 +1080,7 @@ class Scatter(Figure):
         self.heatmap = heatmap
         self.heatmap_view = heatmap_view
         self.points_sets = points_sets
-        super().__init__(width=width, height=height, type_='scatterplot', name=name)
+        super().__init__(width=width, height=height, type_='scatterplot', axis_on=axis_on, name=name)
 
 
 class ScatterMatrix(Figure):
@@ -1086,7 +1090,8 @@ class ScatterMatrix(Figure):
     _plot_buttons = "MULTIPLOT_BUTTONS"
 
     def __init__(self, elements: List[Sample] = None, axes: List[str] = None, point_style: PointStyle = None,
-                 surface_style: SurfaceStyle = None, width: int = 750, height: int = 400, name: str = ""):
+                 surface_style: SurfaceStyle = None, width: int = 750, height: int = 400, axis_on: bool = True,
+                 name: str = ""):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1106,7 +1111,7 @@ class ScatterMatrix(Figure):
         self.surface_style = surface_style
         self.plots = self._build_multiplot()
         self.initial_view_on = True
-        super().__init__(width=width, height=height, type_="multiplot", name=name)
+        super().__init__(width=width, height=height, type_="multiplot", axis_on=axis_on, name=name)
 
     def _build_multiplot(self):
         sample_attributes = self.elements[0].values.keys()
@@ -1114,7 +1119,7 @@ class ScatterMatrix(Figure):
                 for row in sample_attributes for col in sample_attributes]
 
 
-class Arc2D(ReferencedObject):
+class Arc2D(Shape):
     """
     A class for drawing arcs. Arc2D is a primitive and can be instantiated by PrimitiveGroup. By default,
     the arc is drawn anticlockwise.
@@ -1140,7 +1145,7 @@ class Arc2D(ReferencedObject):
     """
 
     def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, clockwise: bool = None,
-                 edge_style: EdgeStyle = None, reference_path: str = "#", name: str = ''):
+                 edge_style: EdgeStyle = None, reference_path: str = "#", tooltip: str = None, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.r = r
@@ -1148,7 +1153,7 @@ class Arc2D(ReferencedObject):
         self.end_angle = end_angle
         self.clockwise = clockwise
         self.edge_style = edge_style
-        super().__init__(type_='arc', reference_path=reference_path, name=name)
+        super().__init__(type_='arc', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -1172,17 +1177,20 @@ class Arc2D(ReferencedObject):
             kwargs.pop("edge_style")
         else:
             edgecolor = plot_data.colors.BLACK.rgb
+        theta1, theta2 = self.start_angle, self.end_angle
+        if self.clockwise:
+            theta1, theta2 = self.end_angle, self.start_angle
 
         ax.add_patch(
             Arc((self.cx, self.cy), 2 * self.r, 2 * self.r, angle=0,
-                theta1=self.start_angle * 0.5 / math.pi * 360,
-                theta2=self.end_angle * 0.5 / math.pi * 360,
+                theta1=theta1 * 0.5 / math.pi * 360,
+                theta2=theta2 * 0.5 / math.pi * 360,
                 edgecolor=edgecolor), **kwargs)
 
         return ax
 
 
-class Contour2D(ReferencedObject):
+class Contour2D(Shape):
     """
     A Contour2D is a closed polygon that is formed by multiple primitives.
 
@@ -1202,9 +1210,8 @@ class Contour2D(ReferencedObject):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
-        self.tooltip = tooltip
         self.is_filled = surface_style is not None
-        super().__init__(type_='contour', reference_path=reference_path, name=name)
+        super().__init__(type_='contour', reference_path=reference_path, tooltip=tooltip, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Contour2D. """
@@ -1294,10 +1301,10 @@ class PrimitiveGroup(Figure):
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, Circle2D,
                                               Line2D, MultipleLabels, Wire, Point2D]], width: int = 750,
-                 height: int = 400, attribute_names: List[str] = None, name: str = ''):
+                 height: int = 400, attribute_names: List[str] = None, axis_on: bool = False, name: str = ''):
         self.primitives = primitives
         self.attribute_names = attribute_names
-        super().__init__(width=width, height=height, type_='draw', name=name)
+        super().__init__(width=width, height=height, type_='draw', axis_on=axis_on, name=name)
 
     def mpl_plot(self, ax=None, equal_aspect=True, **kwargs):
         """ Plots using matplotlib. """
@@ -1355,7 +1362,8 @@ class PrimitiveGroupsContainer(Figure):
 
     def __init__(self, primitive_groups: List[PrimitiveGroup], sizes: List[Tuple[float, float]] = None,
                  coords: List[Tuple[float, float]] = None, associated_elements: List[int] = None,
-                 x_variable: str = None, y_variable: str = None, width: int = 750, height: int = 400, name: str = ''):
+                 x_variable: str = None, y_variable: str = None, width: int = 750, height: int = 400,
+                 axis_on: bool = True, name: str = ''):
         for i, value in enumerate(primitive_groups):
             if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
@@ -1373,7 +1381,7 @@ class PrimitiveGroupsContainer(Figure):
                 if y_variable:
                     attribute_names.append(y_variable)
                 self.association['attribute_names'] = attribute_names
-        super().__init__(width=width, height=height, type_='primitivegroupcontainer', name=name)
+        super().__init__(width=width, height=height, type_='primitivegroupcontainer', axis_on=axis_on, name=name)
 
 
 class ParallelPlot(Figure):
@@ -1394,7 +1402,7 @@ class ParallelPlot(Figure):
 
     def __init__(self, elements: List[Sample] = None, edge_style: EdgeStyle = None, disposition: str = None,
                  axes: List[str] = None, rgbs: List[Tuple[int, int, int]] = None, width: int = 750, height: int = 400,
-                 name: str = ''):
+                 axis_on: bool = True, name: str = ''):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1413,7 +1421,7 @@ class ParallelPlot(Figure):
         self.disposition = disposition
         self.attribute_names = axes
         self.rgbs = rgbs
-        super().__init__(width=width, height=height, type_='parallelplot', name=name)
+        super().__init__(width=width, height=height, type_='parallelplot', axis_on=axis_on, name=name)
 
 
 class Histogram(Figure):
@@ -1441,7 +1449,7 @@ class Histogram(Figure):
 
     def __init__(self, x_variable: str, elements=None, axis: Axis = None, graduation_nb: float = None,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, width: int = 750, height: int = 400,
-                 name: str = ''):
+                 axis_on: bool = True, name: str = ''):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1461,7 +1469,7 @@ class Histogram(Figure):
         self.graduation_nb = graduation_nb
         self.edge_style = edge_style
         self.surface_style = surface_style
-        super().__init__(width=width, height=height, type_='histogram', name=name)
+        super().__init__(width=width, height=height, type_='histogram', axis_on=axis_on, name=name)
 
 
 class MultiplePlots(Figure):
@@ -1481,7 +1489,8 @@ class MultiplePlots(Figure):
 
     def __init__(self, plots: List[PlotDataObject], sizes: List[Window] = None, elements: List[Sample] = None,
                  coords: List[Tuple[float, float]] = None, point_families: List[PointFamily] = None,
-                 initial_view_on: bool = None, width: int = 750, height: int = 400, name: str = ''):
+                 initial_view_on: bool = None, width: int = 750, height: int = 400, axis_on: bool = True,
+                 name: str = ''):
         if elements is None:
             elements = []
         sampled_elements = []
@@ -1501,14 +1510,14 @@ class MultiplePlots(Figure):
         self.coords = coords
         self.points_sets = point_families
         self.initial_view_on = initial_view_on
-        super().__init__(width=width, height=height, type_='multiplot', name=name)
+        super().__init__(width=width, height=height, type_='multiplot', axis_on=axis_on, name=name)
 
 
 def plot_data_path(local: bool = False, version: str = None):
     """ Get path of plot_data package to write it in html file of Figure to draw. """
     version, folder, filename = get_current_link(version=version)
     if local:
-        core_path = os.sep.join(os.getcwd().split(os.sep)[:-1] + [folder, filename])
+        core_path = os.sep.join(__file__.split(os.sep)[:-2] + [folder, filename])
         if os.path.isfile(core_path):
             return core_path.replace(" ", "%20")
         print(f'Local compiled {core_path} not found, fall back to CDN')

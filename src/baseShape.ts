@@ -333,4 +333,6 @@ export class Shape extends InteractiveObject {
     this.alphaConfiguration(context);
     this.setContextStyle(context);
   }
+
+  public mouseLeave(): void { this.isHovered = false }
 }

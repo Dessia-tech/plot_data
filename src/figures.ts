@@ -468,20 +468,16 @@ export class Scatter extends Frame {
     this.computePoints();
   }
 
-  public boundingBoxResize(origin: Vertex, width: number, height: number): void {
-    super.boundingBoxResize(origin, width, height);
-    this.computePoints();
-  }
-
   public reset(): void {
     super.reset();
     this.computePoints();
     this.resetClusters();
   }
 
-  public resize(): void {
-    super.resize();
+  public resizeUpdate(): void {
+    this.resize();
     this.computePoints();
+    this.draw();
   }
 
   protected drawAbsoluteObjects(context: CanvasRenderingContext2D): void {
@@ -698,6 +694,11 @@ export class Scatter extends Frame {
     this.previousCoords = [];
   }
 
+  public mouseLeave(): void {
+    super.mouseLeave();
+    this.previousCoords = [];
+  }
+
   protected updateWithScale(): void {
     super.updateWithScale();
     if (this.nSamples > 0) this.computePoints();
@@ -800,6 +801,12 @@ export class Graph2D extends Scatter {
     super.castMouseUp(ctrlKey);
     this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
   }
+
+  public mouseLeave(): void {
+    super.mouseLeave();
+    this.curves.forEach(curve => { if (curve.mouseClick) curve.previousMouseClick = curve.mouseClick.copy() });
+  }
+
   //TODO: Code duplicate, there is a middle class here between Scatter, Frame, Draw and Graph2D. Not so obvious.
   public sendHoveredIndicesMultiplot(): number[] { return [] }
 
@@ -1035,6 +1042,12 @@ export class ParallelPlot extends Figure {
     if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateShapeStates('isClicked');
   }
 
+  public mouseLeave(): void {
+    if (this.changedAxes.length != 0) this.updateAxesLocation();
+    super.mouseLeave();
+    if (this.changedAxes.length == 0) this.clickedIndices = this.absoluteObjects.updateShapeStates('isClicked');
+  }
+
   protected regulateScale(): void {
     for (const axis of this.axes) {
       if (axis.boundingBox.isHovered) {
@@ -1098,10 +1111,10 @@ export class Draw extends Frame {
     this.draw();
   }
 
-  public resize(): void {
-    super.resize();
-    this.updateBounds();
+  public resizeUpdate(): void {
+    this.resize();
     this.axisEqual();
+    this.draw();
   }
 
   protected unpackData(data: DataInterface): Map<string, any[]> {

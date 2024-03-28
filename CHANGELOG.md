@@ -5,8 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.23.0]
+## [0.24.0]
+### Add
+- Allow to directly specify if axes are on or off in Python
 
+### Fix
+- LineSegment2D : If it is overloaded, MPL Plot now show the right edge_style instead of generating of random one
+- Arc2D: mpl_plot
+
+## [0.23.0]
 ### Feat
 - Add events (Subject) to emit shape hovering and clicking
 - Highlight shapes when corresponding function is called from wrapper software
@@ -16,6 +23,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Implements InteractiveObject for handling all mouse objects in one class
+## [0.22.5]
+### Fix
+- Fix global bug on RemoteFigure.resize methods, fixing a browser crasher bug
+
+## [0.22.4]
+### Fix
+- Fix bug on tooltip origin when mouse leaving while hovering a shape
+- Remove unused code
+- Fix html for prettier to work
+- Remove name from add plot feature
+
+## [0.22.2]
+### Fix
+- Local import
+- Add tooltip on any shape with Python with Shape object
 
 ## [0.22.0]
 ### Add

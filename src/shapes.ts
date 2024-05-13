@@ -344,14 +344,11 @@ export class Text extends Shape {
     return this.splitInWords();
   }
 
-  private pushSeparatorInWords(pickedChars: number): [string, number] {
-    return [this.text[pickedChars], pickedChars + 1]
-  }
-
   private buildWord(pickedChars: number, word: string): [string, number] {
-    while (!C.TEXT_SEPARATORS.includes(this.text[pickedChars]) && pickedChars < this.text.length) {
+    while (pickedChars < this.text.length) {
       word += this.text[pickedChars];
       pickedChars++;
+      if (C.TEXT_SEPARATORS.includes(word[word.length - 1])) break;
     }
     return [word, pickedChars]
   }
@@ -361,8 +358,7 @@ export class Text extends Shape {
     let pickedChars = 0;
     while (pickedChars < this.text.length) {
       let word = "";
-      if (C.TEXT_SEPARATORS.includes(this.text[pickedChars])) [word, pickedChars] = this.pushSeparatorInWords(pickedChars)
-      else [word, pickedChars] = this.buildWord(pickedChars, word);
+      [word, pickedChars] = this.buildWord(pickedChars, word);
       words.push(word);
     }
     return words.length > 1 ? words : this.text.split("")

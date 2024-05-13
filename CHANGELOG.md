@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Refactor
 - Implements InteractiveObject for handling all mouse objects in one class
+## [0.22.5]
+### Fix
+- Fix global bug on RemoteFigure.resize methods, fixing a browser crasher bug
 
 ## [0.22.4]
 ### Fix

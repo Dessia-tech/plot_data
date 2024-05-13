@@ -152,7 +152,11 @@ export class Text extends Shape {
   }
 
   private computeFontSize(text: string, defaultFontSize: number, context: CanvasRenderingContext2D): number {
-    const defaultTextWidth = context.measureText(text).width;
+    let defaultTextWidth = 0;
+    if (defaultFontSize < 1) {
+      context.font = Text.buildFont(this.style, 1, this.font);
+      defaultTextWidth = context.measureText(text).width * defaultFontSize;
+    } else defaultTextWidth = context.measureText(text).width;
     if (defaultTextWidth >= this.boundingBox.size.x) return defaultFontSize * this.boundingBox.size.x / defaultTextWidth;
     return defaultFontSize
   }
@@ -386,12 +390,9 @@ export class Text extends Shape {
     let newRow = '';
     while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
       if (this.isTextTooWide(context, newRow + this.words[pickedWords])) {
-        if (newRow != '') break
-        else {
-          fontsize = this.computeFontSize(newRow + this.words[pickedWords], fontsize, context);
-          context.font = Text.buildFont(this.style, fontsize, this.font);
-        }
-      } else [newRow, pickedWords] = this.addPickedWordToRow(newRow, pickedWords);
+         if (newRow != '') break
+      }
+      [newRow, pickedWords] = this.addPickedWordToRow(newRow, pickedWords);
     }
     if (newRow.length != 0) rows.push(newRow);
     return [rows, pickedWords, fontsize]
@@ -400,7 +401,13 @@ export class Text extends Shape {
   private fixedFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     let rows: string[] = [];
     let pickedWords = 0;
-    while (pickedWords < this.words.length) [rows, pickedWords, fontsize] = this.computeNewRow(context, pickedWords, rows, fontsize);
+    while (pickedWords < this.words.length) {
+      [rows, pickedWords, fontsize] = this.computeNewRow(context, pickedWords, rows, fontsize);
+      if (this.isTextTooWide(context, rows[rows.length - 1])) {
+        fontsize = this.computeFontSize(rows[rows.length - 1], fontsize, context);
+        context.font = Text.buildFont(this.style, fontsize, this.font);
+      }
+    }
     return [rows, fontsize]
   }
   private cleanStartAllRows(rows: string[]): string[] { return rows.map(row => row.trimStart()) }

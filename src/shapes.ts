@@ -155,7 +155,8 @@ export class Text extends Shape {
     let fontsize = Math.min(this.boundingBox.size.y ?? Number.POSITIVE_INFINITY, this.fontsize ?? Number.POSITIVE_INFINITY);
     if (fontsize == Number.POSITIVE_INFINITY) fontsize = C.DEFAULT_FONTSIZE;
     context.font = Text.buildFont(this.style, fontsize, this.font);
-    if (context.measureText(this.text).width >= this.boundingBox.size.x) fontsize = fontsize * this.boundingBox.size.x / context.measureText(this.text).width;
+    const defaultTextWidth = context.measureText(this.text).width;
+    if (defaultTextWidth >= this.boundingBox.size.x) fontsize = fontsize * this.boundingBox.size.x / defaultTextWidth;
     return fontsize
   }
 
@@ -223,7 +224,13 @@ export class Text extends Shape {
     context.resetTransform();
     context.translate(origin.x, origin.y);
     context.rotate(Math.PI / 180 * this.orientation);
-    if (this.isScaled) context.scale(Math.abs(contextMatrix.a), Math.abs(contextMatrix.d));
+    if (this.isScaled) {
+      if (this.fontsize < 1) {
+        context.scale(Math.abs(contextMatrix.a * this.fontsize), Math.abs(contextMatrix.d * this.fontsize));
+        context.font = Text.buildFont(this.style, 1, this.font);
+      }
+      else context.scale(Math.abs(contextMatrix.a), Math.abs(contextMatrix.d));
+    }
     this.write(this.writtenText, context);
   }
 

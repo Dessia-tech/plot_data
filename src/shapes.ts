@@ -333,7 +333,7 @@ export class Text extends Shape {
     const [writtenText, fontsize] = this.formatInBoundingBox(context);
     this.fontsize = Math.abs(fontsize);
     this.height = writtenText.length * this.fontsize;
-    this.width = this.getLongestRow(context, writtenText);
+    this.width = this.fontsize > 1 ? this.getLongestRow(context, writtenText) : this.boundingBox.size.x ?? this.getLongestRow(context, writtenText);
     this.rowIndices = this.computeRowIndices(writtenText);
     return writtenText
   }

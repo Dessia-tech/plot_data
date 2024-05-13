@@ -151,13 +151,17 @@ export class Text extends Shape {
     ]
   }
 
+  private computeFontSize(text: string, defaultFontSize: number, context: CanvasRenderingContext2D): number {
+    const defaultTextWidth = context.measureText(text).width;
+    if (defaultTextWidth >= this.boundingBox.size.x) return defaultFontSize * this.boundingBox.size.x / defaultTextWidth;
+    return defaultFontSize
+  }
+
   private automaticFontSize(context: CanvasRenderingContext2D): number {
     let fontsize = Math.min(this.boundingBox.size.y ?? Number.POSITIVE_INFINITY, this.fontsize ?? Number.POSITIVE_INFINITY);
     if (fontsize == Number.POSITIVE_INFINITY) fontsize = C.DEFAULT_FONTSIZE;
     context.font = Text.buildFont(this.style, fontsize, this.font);
-    const defaultTextWidth = context.measureText(this.text).width;
-    if (defaultTextWidth >= this.boundingBox.size.x) fontsize = fontsize * this.boundingBox.size.x / defaultTextWidth;
-    return fontsize
+    return this.computeFontSize(this.text, fontsize, context)
   }
 
   private setRectOffsetX(): number {
@@ -268,10 +272,11 @@ export class Text extends Shape {
 
   private multiLineWrite(writtenText: string[], middleFactor: number, context: CanvasRenderingContext2D): void {
     const nRows = writtenText.length - 1;
+    const fontsize = Math.max(this.fontsize, 1);
     writtenText.forEach((row, index) => {
       ["top", "hanging"].includes(this.baseline)
-        ? context.fillText(index == 0 ? Text.capitalize(row) : row, 0, index * this.fontsize + this.offset)
-        : context.fillText(index == 0 ? Text.capitalize(row) : row, 0, (index - nRows / middleFactor) * this.fontsize + this.offset);
+        ? context.fillText(index == 0 ? Text.capitalize(row) : row, 0, index * fontsize + this.offset)
+        : context.fillText(index == 0 ? Text.capitalize(row) : row, 0, (index - nRows / middleFactor) * fontsize + this.offset);
     });
   }
 
@@ -335,7 +340,7 @@ export class Text extends Shape {
     if (oneRowLength < this.boundingBox.size.x) {
       return [[this.text.trimStart()], fontsize > this.boundingBox.size.y ? this.boundingBox.size.y ?? fontsize : fontsize];
     }
-    if (!this.boundingBox.size.y) return [this.fixedFontSplit(context), fontsize];
+    if (!this.boundingBox.size.y) return this.fixedFontSplit(fontsize, context)
     return this.autoFontSplit(fontsize, context);
   }
 
@@ -377,23 +382,27 @@ export class Text extends Shape {
     return [row + this.words[pickedWords], pickedWords + 1]
   }
 
-  private computeNewRow(context: CanvasRenderingContext2D, pickedWords: number, rows: string[]): [string[], number] {
+  private computeNewRow(context: CanvasRenderingContext2D, pickedWords: number, rows: string[], fontsize: number): [string[], number, number] {
     let newRow = '';
     while (context.measureText(newRow).width < this.boundingBox.size.x && pickedWords < this.words.length) {
-      if (this.isTextTooWide(context, newRow + this.words[pickedWords]) && newRow != '') break
-      else [newRow, pickedWords] = this.addPickedWordToRow(newRow, pickedWords);
+      if (this.isTextTooWide(context, newRow + this.words[pickedWords])) {
+        if (newRow != '') break
+        else {
+          fontsize = this.computeFontSize(newRow + this.words[pickedWords], fontsize, context);
+          context.font = Text.buildFont(this.style, fontsize, this.font);
+        }
+      } else [newRow, pickedWords] = this.addPickedWordToRow(newRow, pickedWords);
     }
     if (newRow.length != 0) rows.push(newRow);
-    return [rows, pickedWords]
+    return [rows, pickedWords, fontsize]
   }
 
-  private fixedFontSplit(context: CanvasRenderingContext2D): string[] {
+  private fixedFontSplit(fontsize: number, context: CanvasRenderingContext2D): [string[], number] {
     let rows: string[] = [];
     let pickedWords = 0;
-    while (pickedWords < this.words.length) [rows, pickedWords] = this.computeNewRow(context, pickedWords, rows);
-    return rows
+    while (pickedWords < this.words.length) [rows, pickedWords, fontsize] = this.computeNewRow(context, pickedWords, rows, fontsize);
+    return [rows, fontsize]
   }
-
   private cleanStartAllRows(rows: string[]): string[] { return rows.map(row => row.trimStart()) }
 
   private checkWordsLength(context: CanvasRenderingContext2D): boolean {
@@ -405,7 +414,7 @@ export class Text extends Shape {
 
   private computeTextHeight(fontsize: number, textHeight: number, rows: string[], context: CanvasRenderingContext2D): [string[], number] {
     if (this.checkWordsLength(context)) {
-      rows = this.fixedFontSplit(context);
+      rows = this.fixedFontSplit(fontsize, context)[0];
       textHeight = fontsize * rows.length;
     }
     return [rows, textHeight]

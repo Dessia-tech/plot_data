@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.25.0]
+### Add
+- Shapes: all shapes can now be set as not interacting with mouse
+- 
 ### Fix
 - Text: Fix text drawing when font is less than 1
 

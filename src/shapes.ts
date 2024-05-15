@@ -87,6 +87,7 @@ export class Text extends Shape {
     const textParams = Text.deserializeTextParams(data);
     const text = new Text(data.comment, new Vertex(data.position_x, data.position_y), textParams);
     text.scale = new Vertex(scale.x, scale.y);
+    text.isInteractive = data.interactive;
     return text
   }
 
@@ -223,6 +224,7 @@ export class Text extends Shape {
     this.setBoundingBoxState();
     this.updateBoundingBox(context);
     this.buildPath();
+    this.boundingBox.isInteractive = this.isInteractive;
     this.boundingBox.draw(context);
   }
 

@@ -164,8 +164,10 @@ class ReferencedObject(PlotDataObject):
 class Shape(ReferencedObject):
     """ Shape object. """
 
-    def __init__(self, type_: str, reference_path: str = "#", tooltip: str = None, name: str = ""):
+    def __init__(self, type_: str, reference_path: str = "#", tooltip: str = None, interactive: bool = True,
+                 name: str = ""):
         self.tooltip = tooltip
+        self.interactive = interactive
         super().__init__(type_=type_, reference_path=reference_path, name=name)
 
 
@@ -459,7 +461,7 @@ class Text(Shape):
 
     def __init__(self, comment: str, position_x: float, position_y: float, text_style: TextStyle = None,
                  text_scaling: bool = None, max_width: float = None, height: float = None, multi_lines: bool = True,
-                 reference_path: str = "#", tooltip: str = None, name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, interactive: bool = False, name: str = ''):
         self.comment = comment
         self.text_style = text_style
         self.position_x = position_x
@@ -468,7 +470,8 @@ class Text(Shape):
         self.max_width = max_width
         self.height = height
         self.multi_lines = multi_lines
-        super().__init__(type_='text', reference_path=reference_path, tooltip=tooltip, name=name)
+        super().__init__(type_='text', reference_path=reference_path, tooltip=tooltip, interactive=interactive,
+                         name=name)
 
     def mpl_plot(self, ax=None, color='k', alpha=1., **kwargs):
         """ Plots using Matplotlib. """
@@ -491,12 +494,13 @@ class Line2D(Shape):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None,
-                 reference_path: str = "#", tooltip: str = None, name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, interactive: bool = True, name: str = ''):
         self.data = point1 + point2  # Retrocompatibility
         self.point1 = point1
         self.point2 = point2
         self.edge_style = edge_style
-        super().__init__(type_='line2d', reference_path=reference_path, tooltip=tooltip, name=name)
+        super().__init__(type_='line2d', reference_path=reference_path, tooltip=tooltip, interactive=interactive,
+                         name=name)
 
     def mpl_plot(self, ax=None, edge_style=None, **kwargs):
         """ Plots using matplotlib. """
@@ -526,7 +530,7 @@ class LineSegment2D(Shape):
     """
 
     def __init__(self, point1: List[float], point2: List[float], edge_style: EdgeStyle = None,
-                 reference_path: str = "#", tooltip: str = None, name: str = ''):
+                 reference_path: str = "#", tooltip: str = None, interactive: bool = True, name: str = ''):
         # Data is used in typescript
         self.data = point1 + point2
         self.point1 = point1
@@ -535,7 +539,8 @@ class LineSegment2D(Shape):
         if edge_style is None:
             edge_style = EdgeStyle()
         self.edge_style = edge_style
-        super().__init__(type_='linesegment2d', reference_path=reference_path, tooltip=tooltip, name=name)
+        super().__init__(type_='linesegment2d', reference_path=reference_path, tooltip=tooltip, interactive=interactive,
+                         name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current LineSegment2D. """
@@ -577,10 +582,11 @@ class Wire(Shape):
     """
 
     def __init__(self, lines: List[Tuple[float, float]], edge_style: EdgeStyle = None, tooltip: str = None,
-                 reference_path: str = "#", name: str = ""):
+                 reference_path: str = "#", interactive: bool = True, name: str = ""):
         self.lines = lines
         self.edge_style = edge_style
-        super().__init__(type_="wire", reference_path=reference_path, tooltip=tooltip, name=name)
+        super().__init__(type_="wire", reference_path=reference_path, tooltip=tooltip, interactive=interactive,
+                         name=name)
 
     def mpl_plot(self, ax=None, **kwargs):
         """ Plots using matplotlib. """
@@ -614,13 +620,15 @@ class Circle2D(Shape):
     """
 
     def __init__(self, cx: float, cy: float, r: float, edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#", name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#",
+                 interactive: bool = True, name: str = ''):
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.r = r
         self.cx = cx
         self.cy = cy
-        super().__init__(type_='circle', reference_path=reference_path, tooltip=tooltip, name=name)
+        super().__init__(type_='circle', reference_path=reference_path, tooltip=tooltip, interactive=interactive,
+                         name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -653,14 +661,16 @@ class Rectangle(Shape):
     """ Class to draw a rectangle. """
 
     def __init__(self, x_coord: float, y_coord: float, width: float, height: float, edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#", name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#",
+                 interactive: bool = True, name: str = ''):
         self.x_coord = x_coord
         self.y_coord = y_coord
         self.width = width
         self.height = height
         self.surface_style = surface_style
         self.edge_style = edge_style
-        super().__init__(type_='rectangle', reference_path=reference_path, tooltip=tooltip, name=name)
+        super().__init__(type_='rectangle', reference_path=reference_path, tooltip=tooltip, interactive=interactive,
+                         name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -694,9 +704,9 @@ class RoundRectangle(Rectangle):
 
     def __init__(self, x_coord: float, y_coord: float, width: float, height: float, radius: float = 2,
                  edge_style: EdgeStyle = None, surface_style: SurfaceStyle = None, tooltip: str = None,
-                 reference_path: str = "#", name: str = ''):
+                 reference_path: str = "#", interactive: bool = True, name: str = ''):
         super().__init__(x_coord, y_coord, width, height, edge_style, surface_style, tooltip,
-                         reference_path=reference_path, name=name)
+                         reference_path=reference_path, interactive=interactive, name=name)
         self.type_ = "roundrectangle"
         self.radius = radius
 
@@ -714,11 +724,12 @@ class Point2D(Shape):
     """
 
     def __init__(self, cx: float, cy: float, point_style: PointStyle = None, reference_path: str = "#",
-                 tooltip: str = None, name: str = ''):
+                 tooltip: str = None, interactive: bool = True, name: str = ''):
         self.cx = cx
         self.cy = cy
         self.point_style = point_style
-        super().__init__(type_='point', reference_path=reference_path, tooltip=tooltip, name=name)
+        super().__init__(type_='point', reference_path=reference_path, tooltip=tooltip,
+                         interactive=interactive, name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -1145,7 +1156,8 @@ class Arc2D(Shape):
     """
 
     def __init__(self, cx: float, cy: float, r: float, start_angle: float, end_angle: float, clockwise: bool = None,
-                 edge_style: EdgeStyle = None, reference_path: str = "#", tooltip: str = None, name: str = ''):
+                 edge_style: EdgeStyle = None, reference_path: str = "#", tooltip: str = None, interactive: bool = True,
+                 name: str = ''):
         self.cx = cx
         self.cy = cy
         self.r = r
@@ -1153,7 +1165,8 @@ class Arc2D(Shape):
         self.end_angle = end_angle
         self.clockwise = clockwise
         self.edge_style = edge_style
-        super().__init__(type_='arc', reference_path=reference_path, tooltip=tooltip, name=name)
+        super().__init__(type_='arc', reference_path=reference_path, tooltip=tooltip, interactive=interactive,
+                         name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Circle2D. """
@@ -1206,12 +1219,14 @@ class Contour2D(Shape):
     """
 
     def __init__(self, plot_data_primitives: List[Union[Arc2D, LineSegment2D]], edge_style: EdgeStyle = None,
-                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#", name: str = ''):
+                 surface_style: SurfaceStyle = None, tooltip: str = None, reference_path: str = "#",
+                 interactive: bool = True, name: str = ''):
         self.plot_data_primitives = plot_data_primitives
         self.edge_style = edge_style
         self.surface_style = surface_style
         self.is_filled = surface_style is not None
-        super().__init__(type_='contour', reference_path=reference_path, tooltip=tooltip, name=name)
+        super().__init__(type_='contour', reference_path=reference_path, tooltip=tooltip, interactive=interactive,
+                         name=name)
 
     def bounding_box(self):
         """ Get 2D bounding box of current Contour2D. """
@@ -1264,13 +1279,14 @@ class Label(PlotDataObject):
     """
 
     def __init__(self, title: str, text_style: TextStyle = None, rectangle_surface_style: SurfaceStyle = None,
-                 rectangle_edge_style: EdgeStyle = None, shape: PlotDataObject = None, name: str = ''):
+                 rectangle_edge_style: EdgeStyle = None, shape: PlotDataObject = None, interactive: bool = False,
+                 name: str = ''):
         self.title = title
         self.text_style = text_style
         self.rectangle_surface_style = rectangle_surface_style
         self.rectangle_edge_style = rectangle_edge_style
         self.shape = shape
-        PlotDataObject.__init__(self, type_='label', name=name)
+        PlotDataObject.__init__(self, type_='label', interactive=interactive, name=name)
 
 
 class MultipleLabels(PlotDataObject):
@@ -1281,9 +1297,9 @@ class MultipleLabels(PlotDataObject):
     :type labels: List[Label]
     """
 
-    def __init__(self, labels: List[Label], name: str = ''):
+    def __init__(self, labels: List[Label], interactive: bool = False, name: str = ''):
         self.labels = labels
-        PlotDataObject.__init__(self, type_='multiplelabels', name=name)
+        PlotDataObject.__init__(self, type_='multiplelabels', interactive=interactive, name=name)
 
 
 class PrimitiveGroup(Figure):
@@ -1301,10 +1317,11 @@ class PrimitiveGroup(Figure):
 
     def __init__(self, primitives: List[Union[Contour2D, Arc2D, LineSegment2D, Circle2D,
                                               Line2D, MultipleLabels, Wire, Point2D]], width: int = 750,
-                 height: int = 400, attribute_names: List[str] = None, axis_on: bool = False, name: str = ''):
+                 height: int = 400, attribute_names: List[str] = None, axis_on: bool = False, interactive: bool = True,
+                 name: str = ''):
         self.primitives = primitives
         self.attribute_names = attribute_names
-        super().__init__(width=width, height=height, type_='draw', axis_on=axis_on, name=name)
+        super().__init__(width=width, height=height, type_='draw', axis_on=axis_on, interactive=interactive, name=name)
 
     def mpl_plot(self, ax=None, equal_aspect=True, **kwargs):
         """ Plots using matplotlib. """
@@ -1363,7 +1380,7 @@ class PrimitiveGroupsContainer(Figure):
     def __init__(self, primitive_groups: List[PrimitiveGroup], sizes: List[Tuple[float, float]] = None,
                  coords: List[Tuple[float, float]] = None, associated_elements: List[int] = None,
                  x_variable: str = None, y_variable: str = None, width: int = 750, height: int = 400,
-                 axis_on: bool = True, name: str = ''):
+                 axis_on: bool = True, interactive: bool = True, name: str = ''):
         for i, value in enumerate(primitive_groups):
             if not isinstance(value, PrimitiveGroup):
                 primitive_groups[i] = PrimitiveGroup(primitives=value)
@@ -1381,7 +1398,8 @@ class PrimitiveGroupsContainer(Figure):
                 if y_variable:
                     attribute_names.append(y_variable)
                 self.association['attribute_names'] = attribute_names
-        super().__init__(width=width, height=height, type_='primitivegroupcontainer', axis_on=axis_on, name=name)
+        super().__init__(width=width, height=height, type_='primitivegroupcontainer', axis_on=axis_on,
+                         interactive=interactive, name=name)
 
 
 class ParallelPlot(Figure):

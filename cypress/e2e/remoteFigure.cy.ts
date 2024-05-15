@@ -147,6 +147,16 @@ describe("RemoteFigure.resizeUpdate", function() {
     });
 });
 
+describe("RemoteFigure.resizeWindow", function() {
+    it("should resize figure with new window size", function() {
+        const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
+        figure.setCanvas(canvas.id);
+        figure.resizeWindow(700, 500);
+        expect(figure.size.x, "size.x").to.be.equal(700);
+        expect(figure.size.y, "size.y").to.be.equal(500);
+    });
+});
+
 describe("RemoteFigure.reset", function() {
     it("should reset scales and selectors", function() {
         const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);

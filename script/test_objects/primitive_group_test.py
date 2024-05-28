@@ -61,12 +61,12 @@ round_rect_shapes = plot_data.RoundRectangle(24, 0, 60, 37, 1, edge_style=edge_s
 points_text_shapes = plot_data.Text(comment="Shapes: ", text_scaling=True, position_x=24, position_y=37.2, text_style=title_style)
 
 # Arcs
-circle = plot_data.Circle2D(cx=31, cy=10.5, r=5, edge_style=edge_style_red, surface_style=surface_style_yellow, tooltip="It's a circle")
+circle = plot_data.Circle2D(cx=31, cy=10.5, r=5, edge_style=edge_style_red, surface_style=surface_style_yellow, tooltip="It's a circle", interactive=False)
 arc = plot_data.Arc2D(cx=43, cy=10.5, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_red, clockwise=True, tooltip="arc2d")
 arc_anti = plot_data.Arc2D(cx=43, cy=10.5, r=5, start_angle=math.pi/4, end_angle=2*math.pi/3, edge_style=edge_style_blue, clockwise=False, tooltip="arc2d_anticlockwise")
-line_segment_1 = plot_data.LineSegment2D(point1=[50, 1], point2=[53, 20], edge_style=edge_style_black, tooltip="linesegment")
+line_segment_1 = plot_data.LineSegment2D(point1=[50, 1], point2=[53, 20], edge_style=edge_style_black, tooltip="linesegment", interactive=False)
 line_segment_2 = plot_data.LineSegment2D(point1=[75, 20], point2=[78, 1], edge_style=edge_style_black, tooltip="linesegment")
-rectangle = plot_data.Rectangle(57, 26, 25, 9, surface_style=surface_style_green, edge_style=edge_style_red, tooltip="rectangle")
+rectangle = plot_data.Rectangle(57, 26, 25, 9, surface_style=surface_style_green, edge_style=edge_style_red, tooltip="rectangle", interactive=False)
 
 # Contours
 star_lines_closed = [plot_data.LineSegment2D([57, 1.5], [60, 8.5]),
@@ -87,7 +87,8 @@ polygon_lines_open = [plot_data.LineSegment2D([51, 26], [47, 33]),
 
 contour_filled = plot_data.Contour2D(plot_data_primitives=star_lines_closed, edge_style=edge_style_blue,
                                      surface_style=surface_style_green,
-                                     tooltip="It looks like a green star but it is a contour.")
+                                     tooltip="It looks like a green star but it is a contour.",
+                                     interactive=False)
 contour_empty = plot_data.Contour2D(plot_data_primitives=polygon_lines_open, edge_style=edge_style_purple_plain,
                                      tooltip="It is a Contour with no filling.")
 

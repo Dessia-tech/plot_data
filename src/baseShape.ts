@@ -84,6 +84,7 @@ export class InteractiveObject {
 
   public mouseClick: Vertex = null;
 
+  public isInteractive: boolean = true;
   private _isHovered: boolean = false;
   private _isClicked: boolean = false;
   public isSelected: boolean = false;
@@ -99,6 +100,7 @@ export class InteractiveObject {
   public get isHovered(): boolean{
     return this._isHovered;
   };
+
   set isHovered(hovered: boolean) {
     if (hovered !== this._isHovered && this.referencePath !== "#") {
       // The first check is important, otherwise we fire the event every mouse move.
@@ -116,6 +118,7 @@ export class InteractiveObject {
   public get isClicked(): boolean {
     return this._isClicked;
   }
+
   set isClicked(clicked: boolean) {
     if (clicked != this._isClicked && this.referencePath !== "#") {
       // Same than isHovered
@@ -127,6 +130,10 @@ export class InteractiveObject {
       highlightShape.next(highlightData);
     }
     this._isClicked = clicked;
+  }
+
+  protected setInteractive(data: DataInterface): void {
+    this.isInteractive = data.interactive;
   }
 
   public getBounds(): [Vertex, Vertex] { return [new Vertex(0, 1), new Vertex(0, 1)] }
@@ -243,6 +250,7 @@ export class Shape extends InteractiveObject {
   }
 
   public deserializeStyle(data: DataInterface): void {
+    this.setInteractive(data);
     this.deserializeEdgeStyle(data);
     this.deserializeSurfaceStyle(data);
     this.deserializeTooltip(data);
@@ -277,34 +285,37 @@ export class Shape extends InteractiveObject {
   }
 
   private setContextFillStyle(context: CanvasRenderingContext2D): void {
-    context.fillStyle = this.isHovered
+    context.fillStyle = this.isInteractive
+      ? this.isHovered
         ? this.hoverStyle
         : this.isClicked
           ? this.clickedStyle
           : this.isSelected
             ? this.selectedStyle
-            : this.fillStyle;
+            : this.fillStyle
+      : this.fillStyle;
   }
 
   private setContextFilledStrokeStyle(context: CanvasRenderingContext2D): void {
     const fillStyle = context.fillStyle.toString();
-    context.strokeStyle = (this.isHovered || this.isClicked || this.isSelected)
-    ? this.setStrokeStyle(fillStyle)
-    : this.strokeStyle
-      ? colorHsl(this.strokeStyle)
-      : this.setStrokeStyle(fillStyle);
+    if (this.isInteractive) {
+      if (this.isHovered || this.isClicked || this.isSelected) context.strokeStyle = this.setStrokeStyle(fillStyle);
+      else context.strokeStyle = this.strokeStyle ? colorHsl(this.strokeStyle) : this.setStrokeStyle(fillStyle);
+    } else context.strokeStyle = this.strokeStyle ? colorHsl(this.strokeStyle) : this.setStrokeStyle(fillStyle);
+  }
+
+  private setDefaultStrokeStyle(context: CanvasRenderingContext2D): void {
+    context.strokeStyle = this.strokeStyle ? colorHsl(this.strokeStyle) : 'hsl(0, 0%, 0%)';
   }
 
   private setContextEmptyStyle(context: CanvasRenderingContext2D): void {
-    context.strokeStyle = this.isHovered
-    ? this.hoverStyle
-    : this.isClicked
-      ? this.clickedStyle
-      : this.isSelected
-        ? this.selectedStyle
-        : this.strokeStyle
-          ? colorHsl(this.strokeStyle)
-          : 'hsl(0, 0%, 0%)';
+    if (!this.isInteractive) this.setDefaultStrokeStyle(context);
+    else {
+      if (this.isHovered) context.strokeStyle = this.hoverStyle;
+      else if (this.isClicked) context.strokeStyle = this.clickedStyle;
+      else if (this.isSelected) context.strokeStyle = this.selectedStyle;
+      else this.setDefaultStrokeStyle(context);
+    }
   }
 
   private setContextHatch(context: CanvasRenderingContext2D): void {

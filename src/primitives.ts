@@ -510,6 +510,7 @@ export class Contour extends Shape {
     line.isHovered = this.isHovered;
     line.isClicked = this.isClicked;
     line.isSelected = this.isSelected;
+    line.isInteractive = this.isInteractive;
   }
 
   private drawLines(context: CanvasRenderingContext2D): void {

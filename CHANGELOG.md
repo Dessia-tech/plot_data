@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.25.0]
 ### Add
 - Shapes: all shapes can now be set as not interacting with mouse
-- 
+-
 ### Fix
 - Text: Fix text drawing when font is less than 1
 

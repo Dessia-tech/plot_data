@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fix
 - Text: Fix text drawing when font is less than 1
 
+### Doc
+- Changing doc link in readme
+
 ## [0.24.0]
 ### Add
 - Allow to directly specify if axes are on or off in Python

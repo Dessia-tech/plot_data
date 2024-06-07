@@ -46,8 +46,7 @@ npm run dev
 
 ## Documentation
 
-Python: https://documentation.dessia.tech/plot_data/python/ <br>
-Typescript: https://documentation.dessia.tech/plot_data/typescript/
+https://documentation.dessia.io/tutorials/tutorial-4/ <br>
 
 ## Changelog
 

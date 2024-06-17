@@ -80,6 +80,14 @@ HTML_TEMPLATE = Template('''
             <button name="resize" value="OK" type="button"
             onclick="plot_data.resizeWindow(...PlotData.computeCanvasSize('#buttons'))"> Resize </button>
         </div>
+        <div id="sub_button">
+            <input type="string" id="feature" placeholder="Enter feature"/>
+            <input type="string" id="number1" placeholder="Enter min value"/>
+            <input type="string" id="number2" placeholder="Enter max value"/>
+            <input class="styled" type="button" value="Apply on rubberband"
+            onclick="plot_data.setFeatureFilter(document.getElementById('feature').value,
+            document.getElementById('number1').value, document.getElementById('number2').value)"/>
+        </div>
         $specific_buttons
     </div>
     <hr style="border-top: 2px;"/>

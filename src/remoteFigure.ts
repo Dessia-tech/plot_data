@@ -189,6 +189,11 @@ export class RemoteFigure extends Rect {
     this.updateSelection(axesSelections);
   }
 
+  public setFeatureFilter(feature: string, minValue: string, maxValue: string): void {
+    for (const axe of this.axes) { if (axe.name == feature) axe.setRubberbandRange(minValue, maxValue) };
+    this.draw();
+  }
+
   public changeAxisFeature(name: string, index: number): void {
     this.drawnFeatures[index] = name;
     this.axes[index] = this.setAxis(name, this.axes[index].boundingBox, this.axes[index].origin, this.axes[index].end, this.axes[index].nTicks);

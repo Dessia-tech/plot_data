@@ -560,7 +560,6 @@ export class RemoteFigure extends Rect {
 
   public mouseDownDrawer(canvasMouse: Vertex, frameMouse: Vertex, absoluteMouse: Vertex): [Vertex, Vertex, Shape]  {
     const [canvasDown, frameDown, clickedObject] = this.castMouseDown(canvasMouse, frameMouse, absoluteMouse);
-    console.log(canvasDown)
     if (!(clickedObject instanceof Axis)) this.is_drawing_rubber_band = this.isSelecting;
     return [canvasDown, frameDown, clickedObject]
   }

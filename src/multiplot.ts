@@ -328,6 +328,21 @@ export class Multiplot {
     this.figures.forEach(figure => figure.resetRubberBands());
   }
 
+  public setFeatureFilter(feature: string, minValue: string, maxValue: string): void {
+    if (!this.rubberBands) this.initRubberBands();
+    const featureName = feature.toLowerCase();
+    for (const figure of this.figures) {
+      for (const axe of figure.axes) {
+        if (axe.name.toLowerCase() == featureName) {
+          figure.setFeatureFilter(featureName, minValue, maxValue);
+          break;
+        }
+      }
+    }
+    this.updateSelectedIndices();
+    this.draw();
+  }
+
   private listenAxisStateChange(): void {
     this.figures.forEach(figure => figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e))));
   }

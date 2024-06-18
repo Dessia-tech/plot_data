@@ -608,8 +608,10 @@ export class Axis extends Shape {
   }
 
   public setRubberbandRange(minValue: string, maxValue: string): void {
-    this.rubberBand.minValue = this.isDiscrete ? this.stringToValue(minValue) : Number(minValue);
-    this.rubberBand.maxValue = this.isDiscrete ? this.stringToValue(maxValue) : Number(maxValue);
+    if (!this.isDiscrete) {
+      this.rubberBand.minValue = Math.min(Number(minValue), Number(maxValue));
+      this.rubberBand.maxValue = Math.max(Number(minValue), Number(maxValue));
+    }    
   }
 
   private updateRubberBand(): void {

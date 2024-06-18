@@ -190,7 +190,8 @@ export class RemoteFigure extends Rect {
   }
 
   public setFeatureFilter(feature: string, minValue: string, maxValue: string): void {
-    for (const axe of this.axes) { if (axe.name == feature) axe.setRubberbandRange(minValue, maxValue) };
+    const featureName = feature.toLowerCase();
+    for (const axe of this.axes) { if (axe.name.toLowerCase() == featureName) axe.setRubberbandRange(minValue, maxValue) };
     this.draw();
   }
 

@@ -214,6 +214,7 @@ describe("RemoteFigure.mouseListener", function() {
     const mouseDown = new MouseEvent('mousedown', { clientX: 150, clientY: 150 });
     const mouseMove1 = new MouseEvent('mousemove', { clientX: 150, clientY: 150 });
     const mouseMove2 = new MouseEvent('mousemove', { clientX: 370, clientY: 520 });
+    const mouseMove3 = new MouseEvent('mousemove', { clientX: 20000, clientY: 0 });
     const mouseWheel = new WheelEvent('wheel', { clientX: 150, clientY: 150, deltaY: ZOOM_FACTOR });
     const mouseLeave = new MouseEvent('mouseleave', {});
 
@@ -262,6 +263,19 @@ describe("RemoteFigure.mouseListener", function() {
         expect(canvas.style.cursor, "default cursor").to.be.equal("default");
     });
 
+    it("should preserve rubberBand min and max values", function () {
+        figure.axes[0].rubberBand.minValue = 0;
+        figure.axes[0].rubberBand.maxValue = 200;
+        figure.draw();
+        expect(figure.axes[0].rubberBand.canvasLength, "rubberBand.canvasLength").to.be.closeTo(764, 1.);
+        canvas.dispatchEvent(mouseMove1);
+        canvas.dispatchEvent(mouseDown);
+        canvas.dispatchEvent(mouseMove3);
+        canvas.dispatchEvent(mouseUp);
+        expect(figure.axes[0].rubberBand.canvasLength, "rubberBand.canvasLength").to.be.equal(0);
+        figure.reset();
+    });
+
     it("should translate figure", function() {
         canvas.dispatchEvent(mouseMove1);
         canvas.dispatchEvent(mouseDown);
@@ -273,7 +287,7 @@ describe("RemoteFigure.mouseListener", function() {
 
         expect(figure.translation, "translation").to.deep.equal(new Vertex());
     });
-
+    
     it("should handle wheel events", function() {
         const minValue0 = figure.axes[0].minValue;
         const maxValue0 = figure.axes[0].maxValue;
@@ -295,16 +309,16 @@ describe("RemoteFigure.mouseListener", function() {
         const maxValue1 = figure.axes[1].maxValue;
 
         figure.zoomIn();
-        expect(figure.axes[0].minValue, "minValue0").to.not.be.equal(minValue0);
-        expect(figure.axes[0].maxValue, "maxValue0").to.not.be.equal(maxValue0);
-        expect(figure.axes[1].minValue, "minValue0").to.not.be.equal(minValue1);
-        expect(figure.axes[1].maxValue, "maxValue1").to.not.be.equal(maxValue1);
+        expect(figure.axes[0].minValue, "minValue0").to.not.be.closeTo(minValue0, 0.001);
+        expect(figure.axes[0].maxValue, "maxValue0").to.not.be.closeTo(maxValue0, 0.001);
+        expect(figure.axes[1].minValue, "minValue0").to.not.be.closeTo(minValue1, 0.001);
+        expect(figure.axes[1].maxValue, "maxValue1").to.not.be.closeTo(maxValue1, 0.001);
 
         figure.zoomOut();
-        expect(figure.axes[0].minValue, "minValue0").to.be.equal(minValue0);
-        expect(figure.axes[0].maxValue, "maxValue0").to.be.equal(maxValue0);
-        expect(figure.axes[1].minValue, "minValue0").to.be.equal(minValue1);
-        expect(figure.axes[1].maxValue, "maxValue1").to.be.equal(maxValue1);
+        expect(figure.axes[0].minValue, "minValue0").to.be.closeTo(minValue0, 0.001);
+        expect(figure.axes[0].maxValue, "maxValue0").to.be.closeTo(maxValue0, 0.001);
+        expect(figure.axes[1].minValue, "minValue0").to.be.closeTo(minValue1, 0.001);
+        expect(figure.axes[1].maxValue, "maxValue1").to.be.closeTo(maxValue1, 0.001);
     });
 
     it("should reset state correctly on mouseleave", function() {

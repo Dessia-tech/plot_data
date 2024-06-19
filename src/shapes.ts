@@ -116,11 +116,8 @@ export class Text extends Shape {
   }
 
   public setBoundingBox(newWidth: number, newHeight: number): void {
-    this.width = newWidth;
-    this.height = newHeight;
-    this.boundingBox.size.x = newWidth;
+    this.boundingBox.size.x = newWidth ? newWidth : this.boundingBox.size.x;
     this.boundingBox.size.y = newHeight;
-    if (this.rowIndices.length) this.fontsize = newHeight / (this.rowIndices.length - 1);
   }
 
   private getXCornersUnscaled(xFirstCorner: number, xSecondCorner: number, xMinMaxFactor: number): [number, number] {
@@ -460,7 +457,6 @@ export class Label extends Shape {
   ) {
     super();
     this.isScaled = false;
-    this.text.boundingBox.size.x = this.maxWidth - this.shapeSize.x;
     this.getShapeStyle(shape, this.origin);
     this.buildPath();
   }
@@ -514,7 +510,7 @@ export class Label extends Shape {
     if (this.legend instanceof Rect) this.legend.size.y = height
     else if (this.legend instanceof LineSegment) this.legend.end.y = this.legend.origin.y + height
     else if (this.legend instanceof Point) this.legend.size = height;
-    this.text.setBoundingBox(this.maxWidth - this.shapeSize.x, height);
+    this.text.setBoundingBox(this.maxWidth - this.shapeSize.x - C.LABEL_TEXT_OFFSET, height);
   }
 
   public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): Label {
@@ -539,7 +535,7 @@ export class Label extends Shape {
   }
 
   public updateOrigin(drawingZone: Rect, initScale: Vertex, offsetLabels: number): void {
-    this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth * 1.05);
+    this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
     this.origin.y = drawingZone.origin.y + drawingZone.size.y - offsetLabels * this.shapeSize.y * 1.75 * initScale.y;
     this.legend = this.updateLegendGeometry();
     this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + C.LABEL_TEXT_OFFSET, this.shapeSize.y / 2));

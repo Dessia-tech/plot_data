@@ -8,6 +8,7 @@ import { RubberBand, SelectionBox } from "./shapes"
 import { Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
 import { DataInterface } from "./dataInterfaces"
+import { onAxisSelection } from "./interactions"
 
 export class RemoteFigure extends Rect {
   public context: CanvasRenderingContext2D;
@@ -80,6 +81,8 @@ export class RemoteFigure extends Rect {
       this.relativeObjects = new GroupCollection();
       this.absoluteObjects = new GroupCollection();
       this.setAxisVisibility(data);
+
+      onAxisSelection.subscribe(([axis, rubberBand]) => this.activateSelection(axis, rubberBand))
     }
 
   get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
@@ -651,7 +654,15 @@ export class RemoteFigure extends Rect {
     this.translation = translation;
   }
 
-  public activateSelection(emittedRubberBand: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
+  public activateSelection(axis: Axis, rubberBand: RubberBand): void {
+    console.log(this, axis.name, rubberBand.attributeName)
+    if (this.getAxisIndex(axis) > -1) this.is_drawing_rubber_band = true
+  }
+
+  protected getAxisIndex(axis): number {
+    const axisNames = this.axes.map((a) => a.name)
+    return axisNames.indexOf(axis.name);
+  }
 
   public shiftOnAction(canvas: HTMLElement): void {
     this.isSelecting = true;
@@ -677,7 +688,10 @@ export class RemoteFigure extends Rect {
     const canvas = document.getElementById(this.canvasID) as HTMLCanvasElement;
     let ctrlKey = false; let shiftKey = false; let spaceKey = false;
 
-    this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
+    // onAxisSelection.subscribe(([axis, rubberBand]) => {
+    //   console.log("Mouse Listener Remote Figure")
+    //   this.activateSelection(axis, rubberBand)
+    // });
 
     this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 

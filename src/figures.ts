@@ -10,7 +10,7 @@ import { Axis, ParallelAxis } from "./axes"
 import { ShapeCollection, GroupCollection, PointSet } from "./collections"
 import { RemoteFigure } from "./remoteFigure"
 import { DataInterface } from "./dataInterfaces"
-import { HighlightData } from "./interactions"
+import { HighlightData, rubberbandChange } from "./interactions"
 
 export class Figure extends RemoteFigure {
   constructor(
@@ -86,7 +86,7 @@ export class Figure extends RemoteFigure {
         if (thisAxis.name == otherAxis.name && thisAxis.name != "number") {
           otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
           otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
-          otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
+          rubberbandChange.next(otherAxis.rubberBand);
         }
       })
     })
@@ -235,9 +235,9 @@ export class Frame extends Figure {
     return [new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue), new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue)]
   }
 
-  public activateSelection(emittedRubberBand: RubberBand, index: number): void {
-    super.activateSelection(emittedRubberBand, index)
-    this.selectionBox.rubberBandUpdate(emittedRubberBand, ["x", "y"][index]);
+  public activateSelection(axis: Axis, rubberBand: RubberBand): void {
+    super.activateSelection(axis, rubberBand)
+    this.selectionBox.rubberBandUpdate(rubberBand, ["x", "y"][this.getAxisIndex(axis)]);
   }
 }
 
@@ -417,7 +417,7 @@ export class Histogram extends Frame {
       if (this.axes[0].name == otherAxis.name) {
         otherAxis.rubberBand.minValue = this.axes[0].rubberBand.minValue;
         otherAxis.rubberBand.maxValue = this.axes[0].rubberBand.maxValue;
-        otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
+        rubberbandChange.next(otherAxis.rubberBand);
       }
     })
   }

@@ -544,7 +544,11 @@ export class Label extends Shape {
   private drawText(context: CanvasRenderingContext2D): void {
     const contextMatrix = context.getTransform();
     context.resetTransform();
-    this.text.draw(context);
+    this.text.fontsize = null;
+    this.text.rowIndices = [];
+    try { 
+      this.text.draw(context);
+    } catch (TypeError) {}
     context.setTransform(contextMatrix);
   }
 

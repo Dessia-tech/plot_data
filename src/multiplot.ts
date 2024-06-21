@@ -34,6 +34,10 @@ export class Filter {
     })
     return indices
   }
+
+  public static fromRubberBand(rubberBand: RubberBand): Filter {
+    return new Filter(rubberBand.attributeName, rubberBand.minValue, rubberBand.maxValue)
+  }
 }
 
 
@@ -330,7 +334,9 @@ export class Multiplot {
 
   private updateSelectedIndices(): void {
     const previousIndices = [...this.selectedIndices];
-    this.selectedIndices = arrayIntersection(range(0, this.nSamples), this.getFilteredIndices());
+    const filteredIndices = this.getFilteredIndices();
+    this.selectedIndices = range(0, this.nSamples);
+    if (filteredIndices.length != 0) this.selectedIndices = arrayIntersection(this.selectedIndices, this.getFilteredIndices());
     let isSelecting = false;
     this.figures.forEach(figure => [this.selectedIndices, isSelecting] = figure.multiplotSelectedIntersection(this.selectedIndices, isSelecting));
     if (this.selectedIndices.length == this.nSamples && !isSelecting) this.selectedIndices = [];
@@ -385,6 +391,10 @@ export class Multiplot {
     }
   }
 
+  private setFiltersFromRubberBands(rubberBand: RubberBand): void {
+    this.filters.set(rubberBand.attributeName, Filter.fromRubberBand(rubberBand));
+  }
+
   private listenAxisStateChange(): void {
     this.figures.forEach(figure => figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e))));
   }
@@ -395,6 +405,7 @@ export class Multiplot {
         axis.emitter.on('rubberBandChange', e => {
           figure.activateSelection(e, index);
           this.isSelecting = true;
+          this.setFiltersFromRubberBands(axis.rubberBand);
         })
       })
     })

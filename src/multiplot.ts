@@ -1,10 +1,41 @@
 import { FIGURES_BLANK_SPACE, EMPTY_MULTIPLOT } from "./constants"
-import { equals, arrayDiff, range } from './functions'
+import { equals, arrayDiff, intersectArrays, arrayIntersection, range } from './functions'
 import { Vertex, Shape } from "./baseShape"
 import { RubberBand, SelectionBox } from "./shapes"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
 import { DataInterface, MultiplotDataInterface } from "./dataInterfaces"
+
+
+export class Filter {
+  constructor(
+    public attribute: string,
+    public minValue: number = null,
+    public maxValue: number = null
+  ) {}
+
+  get isDefined(): boolean {
+    return Boolean(this.minValue - this.maxValue)
+  }
+
+  public updateValues(minValue: number, maxValue: number): void {
+    this.minValue = minValue;
+    this.maxValue = maxValue;
+  }
+
+  public getFilteredValues(filteredArray: number[]): number[] {
+    return filteredArray.filter(value => value >= this.minValue && value <= this.maxValue)
+  }
+
+  public getFilteredIndices(filteredArray: number[]): number[] {
+    const indices = [];
+    filteredArray.forEach((value, index) => {
+      if (value >= this.minValue && value <= this.maxValue) indices.push(index);
+    })
+    return indices
+  }
+}
+
 
 /*
 TODO: Does this inherit from RemoteFigure or the opposite or does this
@@ -19,6 +50,7 @@ export class Multiplot {
   public nSamples: number;
   public figures: Figure[];
   public rubberBands: Map<string, RubberBand>;
+  public filters: Map<string, Filter>;
   public figureZones = new SelectionBoxCollection([]);
 
   public isSelecting: boolean = false;
@@ -43,6 +75,7 @@ export class Multiplot {
     this.buildCanvas(canvasID);
     [this.features, this.figures] = this.unpackData(data);
     this.featureNames = this.getFeaturesNames();
+    this.filters = new Map(this.featureNames.map(feature => [feature, new Filter(feature)]));
     this.nSamples = this.features.entries().next().value[1].length;
     this.computeTable();
     this.draw();
@@ -297,7 +330,7 @@ export class Multiplot {
 
   private updateSelectedIndices(): void {
     const previousIndices = [...this.selectedIndices];
-    this.selectedIndices = range(0, this.nSamples);
+    this.selectedIndices = arrayIntersection(range(0, this.nSamples), this.getFilteredIndices());
     let isSelecting = false;
     this.figures.forEach(figure => [this.selectedIndices, isSelecting] = figure.multiplotSelectedIntersection(this.selectedIndices, isSelecting));
     if (this.selectedIndices.length == this.nSamples && !isSelecting) this.selectedIndices = [];
@@ -329,18 +362,27 @@ export class Multiplot {
   }
 
   public setFeatureFilter(feature: string, minValue: string, maxValue: string): void {
-    if (!this.rubberBands) this.initRubberBands();
-    const featureName = feature.toLowerCase();
-    for (const figure of this.figures) {
-      for (const axe of figure.axes) {
-        if (axe.name.toLowerCase() == featureName) {
-          figure.setFeatureFilter(featureName, minValue, maxValue);
-          break;
-        }
-      }
-    }
+    const loweredFeatureName = feature.toLowerCase();
+    const filter = new Filter(loweredFeatureName, Number(minValue), Number(maxValue));
+    if (this.filters.has(loweredFeatureName)) this.filters.set(feature, filter);
+    this.setRubberBandsFromFilters(loweredFeatureName, minValue, maxValue);
     this.updateSelectedIndices();
     this.draw();
+  }
+
+  private getFilteredIndices(): number[] {
+    const filteredIndices = [];
+    this.filters.forEach(filter => {
+      if (filter.isDefined) filteredIndices.push(filter.getFilteredIndices(this.features.get(filter.attribute)));
+    })
+    return intersectArrays(filteredIndices)
+  }
+
+  private setRubberBandsFromFilters(feature: string, minValue: string, maxValue: string): void {
+    if (!this.rubberBands) this.initRubberBands();
+    for (const figure of this.figures) {
+      if (figure.setFeatureFilter(feature, minValue, maxValue)) break;
+    }
   }
 
   private listenAxisStateChange(): void {

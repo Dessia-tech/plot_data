@@ -9,6 +9,7 @@ import { Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
 import { DataInterface } from "./dataInterfaces"
 
+
 export class RemoteFigure extends Rect {
   public context: CanvasRenderingContext2D;
   public axes: Axis[] = [];
@@ -189,10 +190,15 @@ export class RemoteFigure extends Rect {
     this.updateSelection(axesSelections);
   }
 
-  public setFeatureFilter(feature: string, minValue: string, maxValue: string): void {
-    const featureName = feature.toLowerCase();
-    for (const axe of this.axes) { if (axe.name.toLowerCase() == featureName) axe.setRubberbandRange(minValue, maxValue) };
-    this.draw();
+  public setFeatureFilter(feature: string, minValue: string, maxValue: string): boolean {
+    for (const axe of this.axes) { 
+      if (axe.name.toLowerCase() == feature.toLowerCase()) {
+        axe.setRubberbandRange(minValue, maxValue);
+        this.draw();
+        return true
+      }
+    }
+    return false
   }
 
   public changeAxisFeature(name: string, index: number): void {

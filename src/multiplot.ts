@@ -176,12 +176,6 @@ export class Multiplot {
 
   private activateAxisEvents(figure: Figure): void {
     figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e)));
-    // figure.axes.forEach((axis, index) => {
-    //   axis.emitter.on('rubberBandChange', e => {
-    //     figure.activateSelection(e, index);
-    //     this.isSelecting = true;
-    //   })
-    // })
   }
 
   public selectionOn(): void {
@@ -332,17 +326,6 @@ export class Multiplot {
     this.figures.forEach(figure => figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e))));
   }
 
-  // private listenRubberBandChange(): void {
-  //   this.figures.forEach(figure => {
-  //     figure.axes.forEach((axis, index) => {
-  //       axis.emitter.on('rubberBandChange', e => {
-  //         figure.activateSelection(e, index);
-  //         this.isSelecting = true;
-  //       })
-  //     })
-  //   })
-  // }
-
   private keyDownDrawer(e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
     if (e.key == "Control") {
       ctrlKey = true;
@@ -473,8 +456,6 @@ export class Multiplot {
     let hasLeftFigure = false;
 
     this.listenAxisStateChange();
-
-    // this.listenRubberBandChange();
 
     window.addEventListener('keydown', e => [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(e, ctrlKey, shiftKey, spaceKey));
 

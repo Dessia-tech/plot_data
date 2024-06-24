@@ -4,7 +4,7 @@ import { colorHsl } from "./colors"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { Rect } from "./primitives"
-import { RubberBand, SelectionBox } from "./shapes"
+import { SelectionBox } from "./shapes"
 import { Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
 import { DataInterface } from "./dataInterfaces"
@@ -82,7 +82,7 @@ export class RemoteFigure extends Rect {
       this.absoluteObjects = new GroupCollection();
       this.setAxisVisibility(data);
 
-      onAxisSelection.subscribe(([axis, rubberBand]) => this.activateSelection(axis, rubberBand))
+      onAxisSelection.subscribe((axis) => this.activateSelection(axis))
     }
 
   get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
@@ -654,8 +654,7 @@ export class RemoteFigure extends Rect {
     this.translation = translation;
   }
 
-  public activateSelection(axis: Axis, rubberBand: RubberBand): void {
-    console.log(this, axis.name, rubberBand.attributeName)
+  public activateSelection(axis: Axis): void {
     if (this.getAxisIndex(axis) > -1) this.is_drawing_rubber_band = true
   }
 
@@ -687,11 +686,6 @@ export class RemoteFigure extends Rect {
     let absoluteMouse: Vertex = null;
     const canvas = document.getElementById(this.canvasID) as HTMLCanvasElement;
     let ctrlKey = false; let shiftKey = false; let spaceKey = false;
-
-    // onAxisSelection.subscribe(([axis, rubberBand]) => {
-    //   console.log("Mouse Listener Remote Figure")
-    //   this.activateSelection(axis, rubberBand)
-    // });
 
     this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 

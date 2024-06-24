@@ -907,21 +907,12 @@ export class RubberBand extends Rect {
 
   public get isTranslating(): boolean { return !this.minUpdate && !this.maxUpdate && this.isClicked}
 
-  // public selfSend(rubberBands: Map<string, RubberBand>): void {
-  //   rubberBands.set(this.attributeName, new RubberBand(this.attributeName, 0, 0, this.isVertical))
-  // }
-
   public defaultStyle(): void {
     this.lineWidth = 0.1;
     this.fillStyle = C.RUBBERBAND_COLOR;
     this.strokeStyle = C.RUBBERBAND_COLOR;
     this.alpha = C.RUBBERBAND_ALPHA;
   }
-
-  // public selfSendRange(rubberBands: Map<string, RubberBand>): void {
-  //   rubberBands.get(this.attributeName).minValue = this.minValue;
-  //   rubberBands.get(this.attributeName).maxValue = this.maxValue;
-  // }
 
   public updateCoords(canvasCoords: Vertex, axisOrigin: Vertex, axisEnd: Vertex): void {
     const coord = this.isVertical ? "y" : "x";

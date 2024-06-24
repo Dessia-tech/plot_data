@@ -11,4 +11,4 @@ export interface HighlightData {
 export const highlightShape: Subject<HighlightData> = new Subject();
 
 export const onAxisSelection: Subject<Axis> = new Subject();
-export const rubberbandsChange: BehaviorSubject<Map<String, RubberBand>> = new BehaviorSubject(new Map<String, RubberBand>());
+export const rubberbandsChange: Subject<Map<String, RubberBand>> = new Subject();

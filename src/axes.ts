@@ -5,7 +5,7 @@ import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
 import { EventEmitter } from "events"
 import { onAxisSelection, rubberbandsChange } from "./interactions"
-import { combineLatest, combineLatestWith, withLatestFrom } from "rxjs"
+import { filter, withLatestFrom } from "rxjs"
 
 export class TitleSettings {
   constructor(
@@ -79,13 +79,20 @@ export class Axis extends Shape {
     this.offsetTitle = 0;
     this.title = new Text(this.titleText, new Vertex(0, 0), {});
 
-    onAxisSelection.pipe(withLatestFrom(rubberbandsChange))
-      .subscribe(([axis, rubberbands]) => {
-      console.log(axis, rubberbands);
-      const rubberband = rubberbands.get(this.name);
-      if (!rubberband || this.name == "number") return
-      this.rubberBand.minValue = rubberband.minValue;
-      this.rubberBand.maxValue = rubberband.maxValue;
+    onAxisSelection.pipe(
+      filter((axis) => this.name !== "number" && this.name === axis.name),
+      withLatestFrom(rubberbandsChange)
+    ).subscribe(([axis, rubberbands]) => {
+        let rubberband = rubberbands.get(this.name);
+        if (!rubberband) {
+          rubberband = new RubberBand(axis.name, axis.rubberBand.minValue, axis.rubberBand.maxValue, this.isVertical)
+        } else {
+          rubberband.minValue = axis.rubberBand.minValue;
+          rubberband.maxValue = axis.rubberBand.maxValue;  
+        }
+        rubberbands.set(axis.name, rubberband)
+        this.rubberBand.minValue = rubberband.minValue;
+        this.rubberBand.maxValue = rubberband.maxValue;
     })
   };
 
@@ -243,10 +250,6 @@ export class Axis extends Shape {
     this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
     this.rubberBand.defaultStyle();
   }
-
-  // public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }
-
-  // public sendRubberBandRange(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSendRange(rubberBands) }
 
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));

@@ -180,6 +180,7 @@ export class Multiplot {
   }
 
   public selectionOn(): void {
+    // Never called. Is this useful ?
     this.isSelecting = true;
     this.figures.forEach(figure => figure.isSelecting = true);
     this.canvas.style.cursor = 'crosshair';
@@ -306,22 +307,6 @@ export class Multiplot {
 
   public updateHoveredIndices(figure: Figure): void { this.hoveredIndices = figure.sendHoveredIndicesMultiplot() }
 
-  // public initRubberBands(): void {
-  //   this.rubberBands = new Map<string, RubberBand>();
-  //   this.figures.forEach(figure => figure.initRubberBandMultiplot(this.rubberBands));
-  // }
-
-  public updateRubberBands(currentFigure: Figure): void {
-    console.log(this.isSelecting)
-    // if (this.isSelecting) {
-      // if (!this.rubberBands) this.initRubberBands();
-      rubberbandsChange.next(this.rubberBands)
-      // currentFigure.sendRubberBandsMultiplot(this.figures);
-
-      // this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
-    // }
-  }
-
   public resetRubberBands(): void {
     this.rubberBands.forEach(rubberBand => rubberBand.reset());
     this.figures.forEach(figure => figure.resetRubberBands());
@@ -411,7 +396,7 @@ export class Multiplot {
       } else this.resizeWithMouse(absoluteMouse, clickedObject);
 
       this.updateHoveredIndices(this.figures[this.hoveredFigureIndex]);
-      this.updateRubberBands(this.figures[this.hoveredFigureIndex]);
+      rubberbandsChange.next(this.rubberBands);
       this.updateSelectedIndices();
       return [canvasMouse, frameMouse, absoluteMouse, canvasDown, hasLeftFigure]
     }
@@ -428,7 +413,7 @@ export class Multiplot {
     if (!(this.figures[this.hoveredFigureIndex] instanceof Graph2D || this.figures[this.hoveredFigureIndex] instanceof Draw)) {
       this.clickedIndices = this.figures[this.hoveredFigureIndex].clickedIndices;
     }
-    this.updateRubberBands(this.figures[this.hoveredFigureIndex]);
+    rubberbandsChange.next(this.rubberBands);
     hasLeftFigure = this.resetStateAttributes(shiftKey, ctrlKey);
     clickedObject = null;
     this.updateSelectedIndices();

@@ -7,7 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.26.0]
 ### Add
-- 
+- RemoteFigure.setFeatureFilter to directly edit rubberbands' value from external requests
+- Multiplot.setFeatureFilter to directly edit rubberbands' value from external requests
 
 ### Fix
 - Labels: 

@@ -322,4 +322,9 @@ describe("Multiplot.diverse", function() {
       expect(figure.isZooming, `figure[${i}].isZooming`).to.be.false;
     });
   });
+
+  it('should write values in axes[0].rubberBand', function() {
+      multiplot.setFeatureFilter("x", "-1", "25");
+      expect(multiplot.selectedIndices.length, "multiplot.selectedIndices.length").to.be.equal(52);
+  });
 });

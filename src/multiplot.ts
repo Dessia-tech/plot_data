@@ -47,7 +47,6 @@ export class Multiplot {
     this.nSamples = this.features.entries().next().value[1].length;
     this.computeTable();
     this.draw();
-    // this.initRubberBands();
     this.mouseListener();
   }
 

@@ -5,7 +5,7 @@ import { colorHsl } from "./colors"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point, LineSequence } from "./primitives"
-import { ScatterPoint, Bar, RubberBand, SelectionBox } from "./shapes"
+import { ScatterPoint, Bar, SelectionBox } from "./shapes"
 import { Axis, ParallelAxis } from "./axes"
 import { ShapeCollection, GroupCollection, PointSet } from "./collections"
 import { RemoteFigure } from "./remoteFigure"
@@ -196,6 +196,8 @@ export class Frame extends Figure {
     this.axes[1].rubberBand.minValue = Math.min(frameDown.y, frameMouse.y);
     this.axes[0].rubberBand.maxValue = Math.max(frameDown.x, frameMouse.x);
     this.axes[1].rubberBand.maxValue = Math.max(frameDown.y, frameMouse.y);
+    onAxisSelection.next(this.axes[0]);
+    onAxisSelection.next(this.axes[1]);
     super.updateSelectionBox(...this.rubberBandsCorners);
   }
 

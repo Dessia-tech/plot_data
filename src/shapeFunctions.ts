@@ -42,7 +42,7 @@ export function drawTooltip(shape: Shape, plotOrigin: Vertex, plotSize: Vertex, 
   }
 }
 
-export function styleToLegend(shape: Shape, legendOrigin: Vertex, legendSize: Vertex): Shape {
+export function styleToLegend(shape: Shape, legendOrigin: Vertex, legendSize: Vertex): LineSegment | Point | Rect {
   if (!shape) return new Rect();
   if (shape instanceof Point) {
     const legend = new Point(legendOrigin.x, legendOrigin.y);

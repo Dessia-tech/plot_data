@@ -93,7 +93,7 @@ describe("Figure", function() {
         data["type_"] = "parallelplot";
         const parallelPlot = Figure.fromMultiplot(data, canvas.width, canvas.height, canvasID);
 
-        scatter.sendRubberBandsMultiplot([scatter2, parallelPlot]);
+        // scatter.sendRubberBandsMultiplot([scatter2, parallelPlot]);
 
         expect(scatter2.axes[0].rubberBand, "scatter2.axes[0].rubberBand").to.not.deep.equal(scatter.axes[1].rubberBand);
         expect(scatter2.axes[1].rubberBand, "scatter2.axes[1].rubberBand").to.not.deep.equal(scatter.axes[0].rubberBand);
@@ -121,7 +121,7 @@ describe("Figure", function() {
             [scatter.axes[0].name, scatter.axes[0].rubberBand],
             [scatter.axes[1].name, scatter.axes[1].rubberBand]
         ]);
-        scatter.initRubberBandMultiplot(multiplotRubberBands);
+        // scatter.initRubberBandMultiplot(multiplotRubberBands);
 
         scatter.axes.forEach(axis => {
             expect(multiplotRubberBands.get(axis.name).minValue, `empty rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).minValue);
@@ -132,7 +132,7 @@ describe("Figure", function() {
         scatter.axes[0].rubberBand.maxValue = 4;
         scatter.axes[1].rubberBand.minValue = 2;
         scatter.axes[1].rubberBand.maxValue = 5;
-        scatter.updateRubberBandMultiplot(multiplotRubberBands);
+        // scatter.updateRubberBandMultiplot(multiplotRubberBands);
         scatter.axes.forEach(axis => {
             expect(multiplotRubberBands.get(axis.name).minValue, `edited rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).minValue);
             expect(multiplotRubberBands.get(axis.name).maxValue, `edited rubberband ${axis.name}.minValue`).to.deep.equal(referenceRubberBands.get(axis.name).maxValue);

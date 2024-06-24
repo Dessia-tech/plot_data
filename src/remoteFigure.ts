@@ -429,7 +429,7 @@ export class RemoteFigure extends Rect {
     this.context.restore();
   }
 
-  public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() }
+  public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() } // Never called. Is this useful ?
 
   public switchMerge(): void {}
 

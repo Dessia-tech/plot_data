@@ -4,7 +4,8 @@ import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
 import { EventEmitter } from "events"
-import { onAxisSelection } from "./interactions"
+import { onAxisSelection, rubberbandsChange } from "./interactions"
+import { combineLatest, combineLatestWith, withLatestFrom } from "rxjs"
 
 export class TitleSettings {
   constructor(
@@ -77,6 +78,15 @@ export class Axis extends Shape {
     this.updateOffsetTicks();
     this.offsetTitle = 0;
     this.title = new Text(this.titleText, new Vertex(0, 0), {});
+
+    onAxisSelection.pipe(withLatestFrom(rubberbandsChange))
+      .subscribe(([axis, rubberbands]) => {
+      console.log(axis, rubberbands);
+      const rubberband = rubberbands.get(this.name);
+      if (!rubberband || this.name == "number") return
+      this.rubberBand.minValue = rubberband.minValue;
+      this.rubberBand.maxValue = rubberband.maxValue;
+    })
   };
 
   public get drawLength(): number {
@@ -234,9 +244,9 @@ export class Axis extends Shape {
     this.rubberBand.defaultStyle();
   }
 
-  public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }
+  // public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }
 
-  public sendRubberBandRange(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSendRange(rubberBands) }
+  // public sendRubberBandRange(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSendRange(rubberBands) }
 
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));

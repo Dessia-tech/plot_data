@@ -68,31 +68,31 @@ export class Figure extends RemoteFigure {
 
   public receivePointSets(pointSets: PointSet[]): void { this.pointSets = pointSets }
 
-  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
-    this.axes.forEach(axis => axis.sendRubberBand(multiplotRubberBands));
-  }
+  // public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+  //   this.axes.forEach(axis => axis.sendRubberBand(multiplotRubberBands));
+  // }
 
-  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
-    this.axes.forEach(axis => axis.sendRubberBandRange(multiplotRubberBands));
-  }
+  // public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+  //   this.axes.forEach(axis => axis.sendRubberBandRange(multiplotRubberBands));
+  // }
 
-  public sendRubberBandsMultiplot(figures: Figure[]): void {
-    figures.forEach(figure => figure.receiveRubberBandFromFigure(this));
-  }
+  // public sendRubberBandsMultiplot(figures: Figure[]): void {
+  //   figures.forEach(figure => figure.receiveRubberBandFromFigure(this));
+  // }
 
-  protected sendRubberBandsInFigure(figure: Figure): void {
-    figure.axes.forEach(otherAxis => {
-      this.axes.forEach(thisAxis => {
-        if (thisAxis.name == otherAxis.name && thisAxis.name != "number") {
-          otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
-          otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
-          onAxisSelection.next(otherAxis);
-        }
-      })
-    })
-  }
+  // protected sendRubberBandsInFigure(figure: Figure): void {
+  //   figure.axes.forEach(otherAxis => {
+  //     this.axes.forEach(thisAxis => {
+  //       if (thisAxis.name == otherAxis.name && thisAxis.name != "number") {
+  //         otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
+  //         otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
+  //         onAxisSelection.next(otherAxis);
+  //       }
+  //     })
+  //   })
+  // }
 
-  protected receiveRubberBandFromFigure(figure: Figure): void { figure.sendRubberBandsInFigure(this) }
+  // protected receiveRubberBandFromFigure(figure: Figure): void { figure.sendRubberBandsInFigure(this) }
 }
 
 export class Frame extends Figure {
@@ -404,23 +404,23 @@ export class Histogram extends Frame {
     super.regulateScale();
   }
 
-  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
-    this.axes[0].sendRubberBand(multiplotRubberBands);
-  }
+  // public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+  //   this.axes[0].sendRubberBand(multiplotRubberBands);
+  // }
 
-  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
-    this.axes[0].sendRubberBandRange(multiplotRubberBands);
-  }
+  // public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
+  //   this.axes[0].sendRubberBandRange(multiplotRubberBands);
+  // }
 
-  protected sendRubberBandsInFigure(figure: Figure): void {
-    figure.axes.forEach(otherAxis => {
-      if (this.axes[0].name == otherAxis.name) {
-        otherAxis.rubberBand.minValue = this.axes[0].rubberBand.minValue;
-        otherAxis.rubberBand.maxValue = this.axes[0].rubberBand.maxValue;
-        onAxisSelection.next(otherAxis);
-      }
-    })
-  }
+//   protected sendRubberBandsInFigure(figure: Figure): void {
+//     figure.axes.forEach(otherAxis => {
+//       if (this.axes[0].name == otherAxis.name) {
+//         otherAxis.rubberBand.minValue = this.axes[0].rubberBand.minValue;
+//         otherAxis.rubberBand.maxValue = this.axes[0].rubberBand.maxValue;
+//         onAxisSelection.next(otherAxis);
+//       }
+//     })
+//   }
 }
 
 export class Scatter extends Frame {
@@ -816,13 +816,13 @@ export class Graph2D extends Scatter {
 
   public receivePointSets(pointSets: PointSet[]): void {}
 
-  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+  // public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
 
   public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
 
-  public sendRubberBandsMultiplot(figures: Figure[]): void {}
+  // public sendRubberBandsMultiplot(figures: Figure[]): void {}
 
-  protected receiveRubberBandFromFigure(figure: Figure): void {}
+  // protected receiveRubberBandFromFigure(figure: Figure): void {}/
 }
 
 export class ParallelPlot extends Figure {
@@ -1177,13 +1177,13 @@ export class Draw extends Frame {
 
   public receivePointSets(pointSets: PointSet[]): void {}
 
-  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
+  // public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
 
   public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
 
-  public sendRubberBandsMultiplot(figures: Figure[]): void {}
+  // public sendRubberBandsMultiplot(figures: Figure[]): void {}
 
-  protected receiveRubberBandFromFigure(figure: Figure): void {}
+  // protected receiveRubberBandFromFigure(figure: Figure): void {}
 
   public highlightFromReferencePath(highlightData: HighlightData) {
     const highlight = highlightData.highlight;

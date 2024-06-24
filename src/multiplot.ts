@@ -5,6 +5,7 @@ import { RubberBand, SelectionBox } from "./shapes"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
 import { DataInterface, MultiplotDataInterface } from "./dataInterfaces"
+import { rubberbandsChange } from "./interactions"
 
 /*
 TODO: Does this inherit from RemoteFigure or the opposite or does this
@@ -18,7 +19,7 @@ export class Multiplot {
   public featureNames: string[];
   public nSamples: number;
   public figures: Figure[];
-  public rubberBands: Map<string, RubberBand>;
+  public rubberBands: Map<string, RubberBand> = new Map<string, RubberBand>();
   public figureZones = new SelectionBoxCollection([]);
 
   public isSelecting: boolean = false;
@@ -46,7 +47,7 @@ export class Multiplot {
     this.nSamples = this.features.entries().next().value[1].length;
     this.computeTable();
     this.draw();
-    this.initRubberBands();
+    // this.initRubberBands();
     this.mouseListener();
   }
 
@@ -194,6 +195,7 @@ export class Multiplot {
   }
 
   public switchSelection(): void {
+    // Never called. Is this useful ?
     this.isSelecting ? this.selectionOff() : this.selectionOn();
   }
 
@@ -304,17 +306,20 @@ export class Multiplot {
 
   public updateHoveredIndices(figure: Figure): void { this.hoveredIndices = figure.sendHoveredIndicesMultiplot() }
 
-  public initRubberBands(): void {
-    this.rubberBands = new Map<string, RubberBand>();
-    this.figures.forEach(figure => figure.initRubberBandMultiplot(this.rubberBands));
-  }
+  // public initRubberBands(): void {
+  //   this.rubberBands = new Map<string, RubberBand>();
+  //   this.figures.forEach(figure => figure.initRubberBandMultiplot(this.rubberBands));
+  // }
 
   public updateRubberBands(currentFigure: Figure): void {
-    if (this.isSelecting) {
-      if (!this.rubberBands) this.initRubberBands();
-      currentFigure.sendRubberBandsMultiplot(this.figures);
-      this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
-    }
+    console.log(this.isSelecting)
+    // if (this.isSelecting) {
+      // if (!this.rubberBands) this.initRubberBands();
+      rubberbandsChange.next(this.rubberBands)
+      // currentFigure.sendRubberBandsMultiplot(this.figures);
+
+      // this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
+    // }
   }
 
   public resetRubberBands(): void {

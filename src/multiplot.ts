@@ -5,6 +5,7 @@ import { RubberBand, SelectionBox } from "./shapes"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
 import { DataInterface, MultiplotDataInterface } from "./dataInterfaces"
+import { rubberbandsChange } from "./interactions"
 
 /*
 TODO: Does this inherit from RemoteFigure or the opposite or does this
@@ -18,7 +19,7 @@ export class Multiplot {
   public featureNames: string[];
   public nSamples: number;
   public figures: Figure[];
-  public rubberBands: Map<string, RubberBand>;
+  public rubberBands: Map<string, RubberBand> = new Map<string, RubberBand>();
   public figureZones = new SelectionBoxCollection([]);
 
   public isSelecting: boolean = false;
@@ -46,7 +47,6 @@ export class Multiplot {
     this.nSamples = this.features.entries().next().value[1].length;
     this.computeTable();
     this.draw();
-    this.initRubberBands();
     this.mouseListener();
   }
 
@@ -176,15 +176,10 @@ export class Multiplot {
 
   private activateAxisEvents(figure: Figure): void {
     figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e)));
-    figure.axes.forEach((axis, index) => {
-      axis.emitter.on('rubberBandChange', e => {
-        figure.activateSelection(e, index);
-        this.isSelecting = true;
-      })
-    })
   }
 
   public selectionOn(): void {
+    // Never called. Is this useful ?
     this.isSelecting = true;
     this.figures.forEach(figure => figure.isSelecting = true);
     this.canvas.style.cursor = 'crosshair';
@@ -200,6 +195,7 @@ export class Multiplot {
   }
 
   public switchSelection(): void {
+    // Never called. Is this useful ?
     this.isSelecting ? this.selectionOff() : this.selectionOn();
   }
 
@@ -310,19 +306,6 @@ export class Multiplot {
 
   public updateHoveredIndices(figure: Figure): void { this.hoveredIndices = figure.sendHoveredIndicesMultiplot() }
 
-  public initRubberBands(): void {
-    this.rubberBands = new Map<string, RubberBand>();
-    this.figures.forEach(figure => figure.initRubberBandMultiplot(this.rubberBands));
-  }
-
-  public updateRubberBands(currentFigure: Figure): void {
-    if (this.isSelecting) {
-      if (!this.rubberBands) this.initRubberBands();
-      currentFigure.sendRubberBandsMultiplot(this.figures);
-      this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
-    }
-  }
-
   public resetRubberBands(): void {
     this.rubberBands.forEach(rubberBand => rubberBand.reset());
     this.figures.forEach(figure => figure.resetRubberBands());
@@ -330,17 +313,6 @@ export class Multiplot {
 
   private listenAxisStateChange(): void {
     this.figures.forEach(figure => figure.axes.forEach(axis => axis.emitter.on('axisStateChange', e => figure.axisChangeUpdate(e))));
-  }
-
-  private listenRubberBandChange(): void {
-    this.figures.forEach(figure => {
-      figure.axes.forEach((axis, index) => {
-        axis.emitter.on('rubberBandChange', e => {
-          figure.activateSelection(e, index);
-          this.isSelecting = true;
-        })
-      })
-    })
   }
 
   private keyDownDrawer(e: KeyboardEvent, ctrlKey: boolean, shiftKey: boolean, spaceKey: boolean): [boolean, boolean, boolean] {
@@ -423,7 +395,7 @@ export class Multiplot {
       } else this.resizeWithMouse(absoluteMouse, clickedObject);
 
       this.updateHoveredIndices(this.figures[this.hoveredFigureIndex]);
-      this.updateRubberBands(this.figures[this.hoveredFigureIndex]);
+      rubberbandsChange.next(this.rubberBands);
       this.updateSelectedIndices();
       return [canvasMouse, frameMouse, absoluteMouse, canvasDown, hasLeftFigure]
     }
@@ -440,7 +412,7 @@ export class Multiplot {
     if (!(this.figures[this.hoveredFigureIndex] instanceof Graph2D || this.figures[this.hoveredFigureIndex] instanceof Draw)) {
       this.clickedIndices = this.figures[this.hoveredFigureIndex].clickedIndices;
     }
-    this.updateRubberBands(this.figures[this.hoveredFigureIndex]);
+    rubberbandsChange.next(this.rubberBands);
     hasLeftFigure = this.resetStateAttributes(shiftKey, ctrlKey);
     clickedObject = null;
     this.updateSelectedIndices();
@@ -473,8 +445,6 @@ export class Multiplot {
     let hasLeftFigure = false;
 
     this.listenAxisStateChange();
-
-    this.listenRubberBandChange();
 
     window.addEventListener('keydown', e => [ctrlKey, shiftKey, spaceKey] = this.keyDownDrawer(e, ctrlKey, shiftKey, spaceKey));
 

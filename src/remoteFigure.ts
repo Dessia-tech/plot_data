@@ -4,10 +4,11 @@ import { colorHsl } from "./colors"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { Rect } from "./primitives"
-import { RubberBand, SelectionBox } from "./shapes"
+import { SelectionBox } from "./shapes"
 import { Axis } from "./axes"
 import { PointSet, ShapeCollection, GroupCollection } from "./collections"
 import { DataInterface } from "./dataInterfaces"
+import { onAxisSelection } from "./interactions"
 
 export class RemoteFigure extends Rect {
   public context: CanvasRenderingContext2D;
@@ -80,6 +81,8 @@ export class RemoteFigure extends Rect {
       this.relativeObjects = new GroupCollection();
       this.absoluteObjects = new GroupCollection();
       this.setAxisVisibility(data);
+
+      onAxisSelection.subscribe((axis) => this.activateSelection(axis))
     }
 
   get scale(): Vertex { return new Vertex(this.relativeMatrix.a, this.relativeMatrix.d)}
@@ -426,7 +429,7 @@ export class RemoteFigure extends Rect {
     this.context.restore();
   }
 
-  public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() }
+  public switchSelection(): void { this.isSelecting = !this.isSelecting; this.draw() } // Never called. Is this useful ?
 
   public switchMerge(): void {}
 
@@ -651,7 +654,14 @@ export class RemoteFigure extends Rect {
     this.translation = translation;
   }
 
-  public activateSelection(emittedRubberBand: RubberBand, index: number): void { this.is_drawing_rubber_band = true }
+  public activateSelection(axis: Axis): void {
+    if (this.getAxisIndex(axis) > -1) this.is_drawing_rubber_band = true
+  }
+
+  protected getAxisIndex(axis): number {
+    const axisNames = this.axes.map((a) => a.name)
+    return axisNames.indexOf(axis.name);
+  }
 
   public shiftOnAction(canvas: HTMLElement): void {
     this.isSelecting = true;
@@ -676,8 +686,6 @@ export class RemoteFigure extends Rect {
     let absoluteMouse: Vertex = null;
     const canvas = document.getElementById(this.canvasID) as HTMLCanvasElement;
     let ctrlKey = false; let shiftKey = false; let spaceKey = false;
-
-    this.axes.forEach((axis, index) => axis.emitter.on('rubberBandChange', e => this.activateSelection(e, index)));
 
     this.axes.forEach(axis => axis.emitter.on('axisStateChange', e => this.axisChangeUpdate(e)));
 

@@ -5,12 +5,12 @@ import { colorHsl } from "./colors"
 import { PointStyle } from "./styles"
 import { Vertex, Shape } from "./baseShape"
 import { Rect, Point, LineSequence } from "./primitives"
-import { ScatterPoint, Bar, RubberBand, SelectionBox } from "./shapes"
+import { ScatterPoint, Bar, SelectionBox } from "./shapes"
 import { Axis, ParallelAxis } from "./axes"
 import { ShapeCollection, GroupCollection, PointSet } from "./collections"
 import { RemoteFigure } from "./remoteFigure"
 import { DataInterface } from "./dataInterfaces"
-import { HighlightData } from "./interactions"
+import { HighlightData, onAxisSelection } from "./interactions"
 
 export class Figure extends RemoteFigure {
   constructor(
@@ -67,32 +67,6 @@ export class Figure extends RemoteFigure {
   }
 
   public receivePointSets(pointSets: PointSet[]): void { this.pointSets = pointSets }
-
-  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
-    this.axes.forEach(axis => axis.sendRubberBand(multiplotRubberBands));
-  }
-
-  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
-    this.axes.forEach(axis => axis.sendRubberBandRange(multiplotRubberBands));
-  }
-
-  public sendRubberBandsMultiplot(figures: Figure[]): void {
-    figures.forEach(figure => figure.receiveRubberBandFromFigure(this));
-  }
-
-  protected sendRubberBandsInFigure(figure: Figure): void {
-    figure.axes.forEach(otherAxis => {
-      this.axes.forEach(thisAxis => {
-        if (thisAxis.name == otherAxis.name && thisAxis.name != "number") {
-          otherAxis.rubberBand.minValue = thisAxis.rubberBand.minValue;
-          otherAxis.rubberBand.maxValue = thisAxis.rubberBand.maxValue;
-          otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
-        }
-      })
-    })
-  }
-
-  protected receiveRubberBandFromFigure(figure: Figure): void { figure.sendRubberBandsInFigure(this) }
 }
 
 export class Frame extends Figure {
@@ -222,6 +196,8 @@ export class Frame extends Figure {
     this.axes[1].rubberBand.minValue = Math.min(frameDown.y, frameMouse.y);
     this.axes[0].rubberBand.maxValue = Math.max(frameDown.x, frameMouse.x);
     this.axes[1].rubberBand.maxValue = Math.max(frameDown.y, frameMouse.y);
+    onAxisSelection.next(this.axes[0]);
+    onAxisSelection.next(this.axes[1]);
     super.updateSelectionBox(...this.rubberBandsCorners);
   }
 
@@ -235,9 +211,9 @@ export class Frame extends Figure {
     return [new Vertex(this.axes[0].rubberBand.minValue, this.axes[1].rubberBand.minValue), new Vertex(this.axes[0].rubberBand.maxValue, this.axes[1].rubberBand.maxValue)]
   }
 
-  public activateSelection(emittedRubberBand: RubberBand, index: number): void {
-    super.activateSelection(emittedRubberBand, index)
-    this.selectionBox.rubberBandUpdate(emittedRubberBand, ["x", "y"][index]);
+  public activateSelection(axis: Axis): void {
+    super.activateSelection(axis)
+    this.selectionBox.rubberBandUpdate(axis.rubberBand, ["x", "y"][this.getAxisIndex(axis)]);
   }
 }
 
@@ -402,24 +378,6 @@ export class Histogram extends Frame {
   protected regulateScale(): void {
     this.scaleY = 1;
     super.regulateScale();
-  }
-
-  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
-    this.axes[0].sendRubberBand(multiplotRubberBands);
-  }
-
-  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {
-    this.axes[0].sendRubberBandRange(multiplotRubberBands);
-  }
-
-  protected sendRubberBandsInFigure(figure: Figure): void {
-    figure.axes.forEach(otherAxis => {
-      if (this.axes[0].name == otherAxis.name) {
-        otherAxis.rubberBand.minValue = this.axes[0].rubberBand.minValue;
-        otherAxis.rubberBand.maxValue = this.axes[0].rubberBand.maxValue;
-        otherAxis.emitter.emit("rubberBandChange", otherAxis.rubberBand);
-      }
-    })
   }
 }
 
@@ -815,14 +773,6 @@ export class Graph2D extends Scatter {
   public multiplotSelectedIntersection(multiplotSelected: number[], isSelecting: boolean): [number[], boolean] { return [multiplotSelected, isSelecting] }
 
   public receivePointSets(pointSets: PointSet[]): void {}
-
-  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
-
-  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
-
-  public sendRubberBandsMultiplot(figures: Figure[]): void {}
-
-  protected receiveRubberBandFromFigure(figure: Figure): void {}
 }
 
 export class ParallelPlot extends Figure {
@@ -1176,14 +1126,6 @@ export class Draw extends Frame {
   public multiplotSelectedIntersection(multiplotSelected: number[], isSelecting: boolean): [number[], boolean] { return [multiplotSelected, isSelecting] }
 
   public receivePointSets(pointSets: PointSet[]): void {}
-
-  public initRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
-
-  public updateRubberBandMultiplot(multiplotRubberBands: Map<string, RubberBand>): void {}
-
-  public sendRubberBandsMultiplot(figures: Figure[]): void {}
-
-  protected receiveRubberBandFromFigure(figure: Figure): void {}
 
   public highlightFromReferencePath(highlightData: HighlightData) {
     const highlight = highlightData.highlight;

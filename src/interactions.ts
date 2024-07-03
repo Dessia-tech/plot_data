@@ -1,4 +1,5 @@
 import { Subject } from "rxjs"
+import { RubberBand } from "./shapes";
 
 export interface HighlightData {
   referencePath: string,
@@ -7,3 +8,4 @@ export interface HighlightData {
 }
 
 export const highlightShape: Subject<HighlightData> = new Subject();
+export const filterUpdate: Subject<Map<string, RubberBand>> = new Subject();

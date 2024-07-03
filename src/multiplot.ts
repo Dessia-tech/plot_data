@@ -5,6 +5,7 @@ import { RubberBand, SelectionBox } from "./shapes"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
 import { DataInterface, MultiplotDataInterface } from "./dataInterfaces"
+import { filterUpdate } from "./interactions"
 
 /*
 TODO: Does this inherit from RemoteFigure or the opposite or does this
@@ -318,6 +319,7 @@ export class Multiplot {
   public updateRubberBands(currentFigure: Figure): void {
     if (this.isSelecting) {
       if (!this.rubberBands) this.initRubberBands();
+      filterUpdate.next(this.rubberBands);
       currentFigure.sendRubberBandsMultiplot(this.figures);
       this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
     }

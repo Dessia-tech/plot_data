@@ -115,6 +115,14 @@ export class Text extends Shape {
       this.scale = scale;
   }
 
+  public setBoundingBox(newWidth: number, newHeight: number): void {
+    this.width = newWidth;
+    this.height = newHeight;
+    this.boundingBox.size.x = newWidth;
+    this.boundingBox.size.y = newHeight;
+    if (this.rowIndices.length) this.fontsize = newHeight / (this.rowIndices.length - 1);
+  }
+
   private getXCornersUnscaled(xFirstCorner: number, xSecondCorner: number, xMinMaxFactor: number): [number, number] {
     if (this.align == "center") return [xFirstCorner * 0.99, xSecondCorner * 1.01];
     if (["right", "end"].includes(this.align)) return [xFirstCorner, xSecondCorner != 0 ? xSecondCorner * (1 - xMinMaxFactor) : -Math.sign(this.scale.x)];
@@ -443,7 +451,7 @@ export class Text extends Shape {
 
 export class Label extends Shape {
   public shapeSize: Vertex = new Vertex(30, C.MAX_LABEL_HEIGHT);
-  public legend: Shape;
+  public legend: LineSegment | Point | Rect;
   public maxWidth: number = 150;
   constructor(
     shape: Shape,
@@ -452,7 +460,7 @@ export class Label extends Shape {
   ) {
     super();
     this.isScaled = false;
-    this.text.width = this.maxWidth - this.shapeSize.x;
+    this.text.boundingBox.size.x = this.maxWidth - this.shapeSize.x;
     this.getShapeStyle(shape, this.origin);
     this.buildPath();
   }
@@ -462,7 +470,7 @@ export class Label extends Shape {
     this.path = this.legend.path;
   }
 
-  protected buildUnscaledPath(context: CanvasRenderingContext2D) {
+  public buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {
     const matrix = context.getTransform();
     context.resetTransform();
     this.buildPath();
@@ -506,7 +514,7 @@ export class Label extends Shape {
     if (this.legend instanceof Rect) this.legend.size.y = height
     else if (this.legend instanceof LineSegment) this.legend.end.y = this.legend.origin.y + height
     else if (this.legend instanceof Point) this.legend.size = height;
-    this.text.fontsize = height;
+    this.text.setBoundingBox(this.maxWidth - this.shapeSize.x, height);
   }
 
   public static deserialize(data: any, scale: Vertex = new Vertex(1, 1)): Label {
@@ -515,6 +523,7 @@ export class Label extends Shape {
     text.isScaled = false;
     text.baseline = "middle";
     text.align = "start";
+    text.multiLine = true;
     return new Label(new Rect(), text)
   }
 
@@ -530,7 +539,7 @@ export class Label extends Shape {
   }
 
   public updateOrigin(drawingZone: Rect, initScale: Vertex, offsetLabels: number): void {
-    this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth);
+    this.origin.x = drawingZone.origin.x + drawingZone.size.x - (initScale.x < 0 ? 0 : this.maxWidth * 1.05);
     this.origin.y = drawingZone.origin.y + drawingZone.size.y - offsetLabels * this.shapeSize.y * 1.75 * initScale.y;
     this.legend = this.updateLegendGeometry();
     this.text.origin = this.origin.add(new Vertex(this.shapeSize.x + C.LABEL_TEXT_OFFSET, this.shapeSize.y / 2));
@@ -546,9 +555,7 @@ export class Label extends Shape {
   protected drawMembers(context: CanvasRenderingContext2D): void { this.drawText(context) }
 
   public isPointInShape(context: CanvasRenderingContext2D, point: Vertex): boolean {
-    return this.legend.isFilled
-      ? context.isPointInPath(this.path, point.x, point.y)
-      : (context.isPointInPath(this.path, point.x, point.y) || context.isPointInStroke(this.path, point.x, point.y));
+    return context.isPointInPath(this.path, point.x, point.y)  // TODO: fix this to include legend shape
   }
 }
 

@@ -607,6 +607,13 @@ export class Axis extends Shape {
       maxValue + valueRange * this.marginRatio];
   }
 
+  public setRubberbandRange(minValue: string, maxValue: string): void {
+    if (!this.isDiscrete) {
+      this.rubberBand.minValue = Math.min(Number(minValue), Number(maxValue));
+      this.rubberBand.maxValue = Math.max(Number(minValue), Number(maxValue));
+    }    
+  }
+
   private updateRubberBand(): void {
     const canvasCoords = new Vertex(
       this.relativeToAbsolute(this.rubberBand.minValue),

@@ -466,6 +466,8 @@ export class Label extends Shape {
     this.path = this.legend.path;
   }
 
+  public getBounds(): [Vertex, Vertex] { return [null, null] }
+
   public buildUnscaledPath(context: CanvasRenderingContext2D): Path2D {
     const matrix = context.getTransform();
     context.resetTransform();

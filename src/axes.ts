@@ -4,6 +4,8 @@ import { Vertex, Shape } from "./baseShape"
 import { Rect, Point } from "./primitives"
 import { TextParams, Text, RubberBand } from "./shapes"
 import { EventEmitter } from "events"
+import { onAxisSelection, rubberbandsChange } from "./interactions"
+import { filter, withLatestFrom } from "rxjs"
 
 export class TitleSettings {
   constructor(
@@ -76,6 +78,22 @@ export class Axis extends Shape {
     this.updateOffsetTicks();
     this.offsetTitle = 0;
     this.title = new Text(this.titleText, new Vertex(0, 0), {});
+
+    onAxisSelection.pipe(
+      filter((axis) => this.name !== "number" && this.name === axis.name),
+      withLatestFrom(rubberbandsChange)
+    ).subscribe(([axis, rubberbands]) => {
+        let rubberband = rubberbands.get(this.name);
+        if (!rubberband) {
+          rubberband = new RubberBand(axis.name, axis.rubberBand.minValue, axis.rubberBand.maxValue, this.isVertical)
+        } else {
+          rubberband.minValue = axis.rubberBand.minValue;
+          rubberband.maxValue = axis.rubberBand.maxValue;  
+        }
+        rubberbands.set(axis.name, rubberband)
+        this.rubberBand.minValue = rubberband.minValue;
+        this.rubberBand.maxValue = rubberband.maxValue;
+    })
   };
 
   public get drawLength(): number {
@@ -232,10 +250,6 @@ export class Axis extends Shape {
     this.rubberBand = new RubberBand(this.name, 0, 0, this.isVertical);
     this.rubberBand.defaultStyle();
   }
-
-  public sendRubberBand(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSend(rubberBands) }
-
-  public sendRubberBandRange(rubberBands: Map<string, RubberBand>) { this.rubberBand.selfSendRange(rubberBands) }
 
   private static nearestFive(value: number): number {
     const tenPower = Math.floor(Math.log10(Math.abs(value)));
@@ -619,7 +633,7 @@ export class Axis extends Shape {
     this.updateRubberBand();
     context.setTransform(canvasMatrix);
     this.rubberBand.draw(context);
-    if (this.rubberBand.isClicked) this.emitter.emit("rubberBandChange", this.rubberBand);
+    if (this.rubberBand.isClicked) onAxisSelection.next(this);
   }
 
   protected mouseTranslate(mouseDown: Vertex, mouseCoords: Vertex): void { }
@@ -637,7 +651,7 @@ export class Axis extends Shape {
   private clickOnArrow(mouseDown: Vertex): void {
     this.is_drawing_rubberband = true; // OLD
     this.rubberBand.isHovered ? this.rubberBand.mouseDown(mouseDown) : this.rubberBand.reset();
-    this.emitter.emit("rubberBandChange", this.rubberBand);
+    onAxisSelection.next(this);
   }
 
   private clickOnDrawnPath(mouseDown: Vertex): void {
@@ -674,7 +688,7 @@ export class Axis extends Shape {
     this.title.mouseUp(false);
     this.title.isClicked = false;
     this.rubberBand.mouseUp(keepState);
-    if (this.is_drawing_rubberband) this.emitter.emit("rubberBandChange", this.rubberBand);
+    if (this.is_drawing_rubberband) onAxisSelection.next(this);
     this.is_drawing_rubberband = false;
   }
 

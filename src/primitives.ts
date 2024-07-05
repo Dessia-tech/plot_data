@@ -258,13 +258,7 @@ export class Line extends Shape {
     }
   }
 
-  public getBounds(): [Vertex, Vertex] {
-    const minX = Math.min(this.origin.x, this.end.x);
-    const minY = Math.min(this.origin.y, this.end.y);
-    const maxX = Math.max(this.origin.x, this.end.x);
-    const maxY = Math.max(this.origin.y, this.end.y);
-    return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
-  }
+  public getBounds(): [Vertex, Vertex] { return [null, null] }
 }
 
 export class LineSegment extends Line {
@@ -286,6 +280,14 @@ export class LineSegment extends Line {
   }
 
   public drawInContour(path: Path2D): void { path.lineTo(this.end.x, this.end.y) }
+
+  public getBounds(): [Vertex, Vertex] {
+    const minX = Math.min(this.origin.x, this.end.x);
+    const minY = Math.min(this.origin.y, this.end.y);
+    const maxX = Math.max(this.origin.x, this.end.x);
+    const maxY = Math.max(this.origin.y, this.end.y);
+    return [new Vertex(minX, minY), new Vertex(maxX, maxY)]
+  }
 }
 
 export abstract class AbstractLinePoint extends Shape {
@@ -527,6 +529,7 @@ export class Contour extends Shape {
   }
 
   public getBounds(): [Vertex, Vertex] {
+    // TODO: this seems like a collection method. Are Contour a collection ?
     let minimum = new Vertex(Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY);
     let maximum = new Vertex(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
     this.lines.forEach(line => {
@@ -720,6 +723,7 @@ export class LineSequence extends Shape {
   }
 
   public getBounds(): [Vertex, Vertex] { //TODO: not perfect when distance is large between points, should use point size, which is not so easy to get unscaled here (cf Text)
+    // TODO: is this also a Collection ?
     let minX = Number.POSITIVE_INFINITY;
     let minY = Number.POSITIVE_INFINITY;
     let maxX = Number.NEGATIVE_INFINITY;

@@ -607,7 +607,7 @@ export class Axis extends Shape {
       maxValue + valueRange * this.marginRatio];
   }
 
-  public setRubberbandRange(minValue: string, maxValue: string): void {
+  public setRubberbandRange(minValue: string | number, maxValue: string | number): void {
     if (!this.isDiscrete) {
       this.rubberBand.minValue = Math.min(Number(minValue), Number(maxValue));
       this.rubberBand.maxValue = Math.max(Number(minValue), Number(maxValue));

@@ -358,7 +358,7 @@ export class Multiplot {
   public updateRubberBands(currentFigure: Figure): void {
     if (this.isSelecting) {
       if (!this.rubberBands) this.initRubberBands();
-      filterUpdate.next(this.rubberBands);
+      filterUpdate.next({id: this.canvasID, rubberbands: this.rubberBands});
       currentFigure.sendRubberBandsMultiplot(this.figures);
       this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
     }

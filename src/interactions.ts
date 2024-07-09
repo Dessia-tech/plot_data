@@ -7,5 +7,10 @@ export interface HighlightData {
   select: boolean
 }
 
+export interface FilterUpdate {
+  id: string,
+  rubberbands: Map<string, RubberBand>
+}
+
 export const highlightShape: Subject<HighlightData> = new Subject();
-export const filterUpdate: Subject<Map<string, RubberBand>> = new Subject();
+export const filterUpdate: Subject<FilterUpdate> = new Subject();

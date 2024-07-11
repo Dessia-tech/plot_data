@@ -550,7 +550,7 @@ export class Label extends Shape {
     this.text.rowIndices = [];
     try { 
       this.text.draw(context);
-    } catch (TypeError) {}
+    } catch (TypeError) {}  // This is to avoid a bug when sizes of Label's objects is too small
     context.setTransform(contextMatrix);
   }
 

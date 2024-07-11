@@ -387,12 +387,7 @@ export class Multiplot {
   private setRubberBandsFromFilters(feature: string, minValue: number, maxValue: number): void {
     if (!this.rubberBands) this.initRubberBands();
     for (const figure of this.figures) {
-      if (figure.setFeatureFilter(feature, minValue, maxValue)) {
-        this.isSelecting = true;
-        this.updateRubberBands(figure);
-        this.isSelecting = false;
-        break;
-      }
+      if (figure.setFeatureFilter(feature, minValue, maxValue)) break;
     }
   }
 

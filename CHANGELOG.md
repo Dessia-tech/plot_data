@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - remove shape hovering
 - RubberBand: fix rubberband deletion when putting it outside view point
 
-
 ## [0.25.0]
 ### Add
 - Shapes: all shapes can now be set as not interacting with mouse

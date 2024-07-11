@@ -1114,6 +1114,7 @@ export class Draw extends Frame {
   public resizeUpdate(): void {
     this.resize();
     this.axisEqual();
+    this.resetScales();
     this.draw();
   }
 

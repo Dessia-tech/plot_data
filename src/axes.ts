@@ -622,8 +622,6 @@ export class Axis extends Shape {
       this.relativeToAbsolute(this.rubberBand.maxValue)
     );
     this.rubberBand.updateCoords(canvasCoords, this.origin, this.end);
-    [this.rubberBand.origin, this.rubberBand.size] = this.rubberBand.computeRectProperties(this.origin);
-    this.rubberBand.buildPath();
   }
 
   public drawRubberBand(context: CanvasRenderingContext2D, canvasMatrix: DOMMatrix): void {
@@ -664,11 +662,11 @@ export class Axis extends Shape {
     if (this.isClicked) {
       if (this.title.isClicked) this.mouseMoveClickedTitle(mouseCoords)
       else this.mouseMoveClickedArrow(mouseCoords);
+      this.rubberBand.updateMinMaxValueOnMouseMove(
+        this.absoluteToRelative(this.rubberBand.canvasMin),
+        this.absoluteToRelative(this.rubberBand.canvasMax)
+      );
     }
-    this.rubberBand.updateMinMaxValueOnMouseMove(
-      this.absoluteToRelative(this.rubberBand.canvasMin),
-      this.absoluteToRelative(this.rubberBand.canvasMax)
-    );
   }
 
   public mouseDown(mouseDown: Vertex): void {

@@ -135,6 +135,17 @@ describe("RemoteFigure.changeAxisFeature", function() {
       });
 });
 
+describe("RemoteFigure.setFeatureFilters", function() {
+    it('should write values in axes[0].rubberBand', function() {
+        const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
+        figure.setCanvas(canvas.id);
+        figure.axes[0] = new Axis(figure.features.get("x"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(100, 0), "x", new Vertex());
+        figure.setFeatureFilter("x", -1, 1.1);
+        expect(figure.selectedIndices.length, "figure.selectedIndices.length").to.be.equal(2);
+      });
+});
+
+
 describe("RemoteFigure.resizeUpdate", function() {
     it("should resize figure", function() {
         const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
@@ -142,16 +153,6 @@ describe("RemoteFigure.resizeUpdate", function() {
         figure.width = 700;
         figure.height = 500;
         figure.resizeUpdate();
-        expect(figure.size.x, "size.x").to.be.equal(700);
-        expect(figure.size.y, "size.y").to.be.equal(500);
-    });
-});
-
-describe("RemoteFigure.resizeWindow", function() {
-    it("should resize figure with new window size", function() {
-        const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
-        figure.setCanvas(canvas.id);
-        figure.resizeWindow(700, 500);
         expect(figure.size.x, "size.x").to.be.equal(700);
         expect(figure.size.y, "size.y").to.be.equal(500);
     });

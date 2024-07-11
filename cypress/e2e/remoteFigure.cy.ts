@@ -140,7 +140,7 @@ describe("RemoteFigure.setFeatureFilters", function() {
         const figure = new RemoteFigure(data, canvas.width, canvas.height, 100, 100, canvas.id);
         figure.setCanvas(canvas.id);
         figure.axes[0] = new Axis(figure.features.get("x"), new Rect(new Vertex(), new Vertex(100, 100)), new Vertex(), new Vertex(100, 0), "x", new Vertex());
-        figure.setFeatureFilter("x", "-1", "1.1");
+        figure.setFeatureFilter("x", -1, 1.1);
         expect(figure.selectedIndices.length, "figure.selectedIndices.length").to.be.equal(2);
       });
 });

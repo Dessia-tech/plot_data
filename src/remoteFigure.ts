@@ -190,7 +190,7 @@ export class RemoteFigure extends Rect {
     this.updateSelection(axesSelections);
   }
 
-  public setFeatureFilter(feature: string, minValue: string, maxValue: string): boolean {
+  public setFeatureFilter(feature: string, minValue: number, maxValue: number): boolean {
     for (const axe of this.axes) { 
       if (axe.name.toLowerCase() == feature.toLowerCase()) {
         axe.setRubberbandRange(minValue, maxValue);
@@ -199,6 +199,10 @@ export class RemoteFigure extends Rect {
       }
     }
     return false
+  }
+
+  public setFeatureFilterDebug(feature: string, minValue: number, maxValue: number): boolean {
+    return this.setFeatureFilter(feature, Number(minValue), Number(maxValue))
   }
 
   public changeAxisFeature(name: string, index: number): void {

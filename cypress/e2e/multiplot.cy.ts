@@ -324,7 +324,7 @@ describe("Multiplot.diverse", function() {
   });
 
   it('should write values in axes[0].rubberBand', function() {
-      multiplot.setFeatureFilter("x", "-1", "25");
+      multiplot.setFeatureFilter("x", -1, 25);
       expect(multiplot.selectedIndices.length, "multiplot.selectedIndices.length").to.be.equal(52);
   });
 });

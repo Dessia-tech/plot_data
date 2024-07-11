@@ -85,7 +85,7 @@ HTML_TEMPLATE = Template('''
             <input type="string" id="number1" placeholder="Enter min value"/>
             <input type="string" id="number2" placeholder="Enter max value"/>
             <input class="styled" type="button" value="Apply on rubberband"
-            onclick="plot_data.setFeatureFilter(document.getElementById('feature').value,
+            onclick="plot_data.setFeatureFilterDebug(document.getElementById('feature').value,
             document.getElementById('number1').value, document.getElementById('number2').value)"/>
         </div>
         $specific_buttons

@@ -367,7 +367,7 @@ export class Multiplot {
     this.figures.forEach(figure => figure.resetRubberBands());
   }
 
-  public setFeatureFilter(feature: string, minValue: string, maxValue: string): void {
+  public setFeatureFilter(feature: string, minValue: number, maxValue: number): void {
     const loweredFeatureName = feature.toLowerCase();
     const filter = new Filter(loweredFeatureName, Number(minValue), Number(maxValue));
     if (this.filters.has(loweredFeatureName)) this.filters.set(feature, filter);
@@ -384,11 +384,20 @@ export class Multiplot {
     return intersectArrays(filteredIndices)
   }
 
-  private setRubberBandsFromFilters(feature: string, minValue: string, maxValue: string): void {
+  private setRubberBandsFromFilters(feature: string, minValue: number, maxValue: number): void {
     if (!this.rubberBands) this.initRubberBands();
     for (const figure of this.figures) {
-      if (figure.setFeatureFilter(feature, minValue, maxValue)) break;
+      if (figure.setFeatureFilter(feature, minValue, maxValue)) {
+        this.isSelecting = true;
+        this.updateRubberBands(figure);
+        this.isSelecting = false;
+        break;
+      }
     }
+  }
+
+  public setFeatureFilterDebug(feature: string, minValue: string, maxValue: string): void {
+    this.setFeatureFilter(feature, Number(minValue), Number(maxValue));
   }
 
   private setFiltersFromRubberBands(rubberBand: RubberBand): void {

@@ -5,6 +5,7 @@ import { RubberBand, SelectionBox } from "./shapes"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
 import { DataInterface, MultiplotDataInterface } from "./dataInterfaces"
+import { filterUpdate } from "./interactions"
 
 
 export class Filter {
@@ -357,6 +358,7 @@ export class Multiplot {
   public updateRubberBands(currentFigure: Figure): void {
     if (this.isSelecting) {
       if (!this.rubberBands) this.initRubberBands();
+      filterUpdate.next({id: this.canvasID, rubberbands: this.rubberBands});
       currentFigure.sendRubberBandsMultiplot(this.figures);
       this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
     }

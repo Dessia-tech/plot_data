@@ -4,6 +4,7 @@ import { PointSet } from "../../instrumented/collections";
 import { Scatter, Graph2D, Draw, ParallelPlot } from "../../instrumented/figures";
 import { Multiplot } from "../../instrumented/multiplot";
 import multiplotData from '../data_src/multiplot.data.json';
+import { filterUpdate } from "../../instrumented/interactions";
 
 const MOUSE_OFFSET = new Vertex(8, 8); // TODO: I f****** don't understand why this add (8, 8) is required for mouse to be as specified
 const canvasID = "canvas";
@@ -150,6 +151,7 @@ describe("Multiplot.mouseListener", function() {
   });
 
   it("should draw a SelectionBox on .figures[1] and rubberBand on other rubberBanded axes", function () {
+    cy.spy(filterUpdate, 'next');
     window.dispatchEvent(shiftKeyDown);
     canvas.dispatchEvent(mouseMove2);
     canvas.dispatchEvent(mouseDown2);
@@ -164,6 +166,8 @@ describe("Multiplot.mouseListener", function() {
 
     expect(multiplot.rubberBands.get(scatter2.axes[0].name).length, "multiplot rubberBand[0] updated").to.be.closeTo(25.4, 0.1);
     expect(multiplot.rubberBands.get(scatter2.axes[1].name).length, "multiplot rubberBand[1] updated").to.be.closeTo(1.02, 0.01);
+
+    expect(filterUpdate.next).to.have.been.calledWith({id: multiplot.canvasID, rubberbands: multiplot.rubberBands});
 
     const rubberBandName0 = scatter2.axes[0].name;
     const rubberBandName1 = scatter2.axes[1].name;
@@ -324,7 +328,7 @@ describe("Multiplot.diverse", function() {
   });
 
   it('should write values in axes[0].rubberBand', function() {
-      multiplot.setFeatureFilter("x", "-1", "25");
+      multiplot.setFeatureFilter("x", -1, 25);
       expect(multiplot.selectedIndices.length, "multiplot.selectedIndices.length").to.be.equal(52);
   });
 });

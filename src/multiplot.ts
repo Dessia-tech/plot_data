@@ -28,14 +28,6 @@ export class Filter {
     return filteredArray.filter(value => value >= this.minValue && value <= this.maxValue)
   }
 
-  public getFilteredIndices(filteredArray: number[]): number[] {
-    const indices = [];
-    filteredArray.forEach((value, index) => {
-      if (value >= this.minValue && value <= this.maxValue) indices.push(index);
-    })
-    return indices
-  }
-
   public static fromRubberBand(rubberBand: RubberBand): Filter {
     return new Filter(rubberBand.attributeName, rubberBand.minValue, rubberBand.maxValue)
   }
@@ -335,9 +327,7 @@ export class Multiplot {
 
   private updateSelectedIndices(): void {
     const previousIndices = [...this.selectedIndices];
-    const filteredIndices = this.getFilteredIndices();
     this.selectedIndices = range(0, this.nSamples);
-    if (filteredIndices.length != 0) this.selectedIndices = arrayIntersection(this.selectedIndices, this.getFilteredIndices());
     let isSelecting = false;
     this.figures.forEach(figure => [this.selectedIndices, isSelecting] = figure.multiplotSelectedIntersection(this.selectedIndices, isSelecting));
     if (this.selectedIndices.length == this.nSamples && !isSelecting) this.selectedIndices = [];
@@ -378,18 +368,15 @@ export class Multiplot {
     this.draw();
   }
 
-  private getFilteredIndices(): number[] {
-    const filteredIndices = [];
-    this.filters.forEach(filter => {
-      if (filter.isDefined) filteredIndices.push(filter.getFilteredIndices(this.features.get(filter.attribute)));
-    })
-    return intersectArrays(filteredIndices)
-  }
-
   private setRubberBandsFromFilters(feature: string, minValue: number, maxValue: number): void {
     if (!this.rubberBands) this.initRubberBands();
     for (const figure of this.figures) {
-      if (figure.setFeatureFilter(feature, minValue, maxValue)) break;
+      if (figure.setFeatureFilter(feature, minValue, maxValue))  {
+        this.isSelecting = true;
+        this.updateRubberBands(figure);
+        this.isSelecting = false;
+        break;
+      }
     }
   }
 

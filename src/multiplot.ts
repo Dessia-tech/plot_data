@@ -1,10 +1,38 @@
 import { FIGURES_BLANK_SPACE, EMPTY_MULTIPLOT } from "./constants"
-import { equals, arrayDiff, range } from './functions'
+import { equals, arrayDiff, intersectArrays, arrayIntersection, range } from './functions'
 import { Vertex, Shape } from "./baseShape"
 import { RubberBand, SelectionBox } from "./shapes"
 import { SelectionBoxCollection, PointSet } from "./collections"
 import { Figure, Scatter, Graph2D, ParallelPlot, Draw } from './figures'
 import { DataInterface, MultiplotDataInterface } from "./dataInterfaces"
+import { filterUpdate } from "./interactions"
+
+
+export class Filter {
+  constructor(
+    public attribute: string,
+    public minValue: number = null,
+    public maxValue: number = null
+  ) {}
+
+  get isDefined(): boolean {
+    return Boolean(this.minValue - this.maxValue)
+  }
+
+  public updateValues(minValue: number, maxValue: number): void {
+    this.minValue = minValue;
+    this.maxValue = maxValue;
+  }
+
+  public getFilteredValues(filteredArray: number[]): number[] {
+    return filteredArray.filter(value => value >= this.minValue && value <= this.maxValue)
+  }
+
+  public static fromRubberBand(rubberBand: RubberBand): Filter {
+    return new Filter(rubberBand.attributeName, rubberBand.minValue, rubberBand.maxValue)
+  }
+}
+
 
 /*
 TODO: Does this inherit from RemoteFigure or the opposite or does this
@@ -19,6 +47,7 @@ export class Multiplot {
   public nSamples: number;
   public figures: Figure[];
   public rubberBands: Map<string, RubberBand>;
+  public filters: Map<string, Filter>;
   public figureZones = new SelectionBoxCollection([]);
 
   public isSelecting: boolean = false;
@@ -43,6 +72,7 @@ export class Multiplot {
     this.buildCanvas(canvasID);
     [this.features, this.figures] = this.unpackData(data);
     this.featureNames = this.getFeaturesNames();
+    this.filters = new Map(this.featureNames.map(feature => [feature, new Filter(feature)]));
     this.nSamples = this.features.entries().next().value[1].length;
     this.computeTable();
     this.draw();
@@ -318,6 +348,7 @@ export class Multiplot {
   public updateRubberBands(currentFigure: Figure): void {
     if (this.isSelecting) {
       if (!this.rubberBands) this.initRubberBands();
+      filterUpdate.next({id: this.canvasID, rubberbands: this.rubberBands});
       currentFigure.sendRubberBandsMultiplot(this.figures);
       this.figures.forEach(figure => figure.updateRubberBandMultiplot(this.rubberBands));
     }
@@ -326,6 +357,35 @@ export class Multiplot {
   public resetRubberBands(): void {
     this.rubberBands.forEach(rubberBand => rubberBand.reset());
     this.figures.forEach(figure => figure.resetRubberBands());
+  }
+
+  public setFeatureFilter(feature: string, minValue: number, maxValue: number): void {
+    const loweredFeatureName = feature.toLowerCase();
+    const filter = new Filter(loweredFeatureName, Number(minValue), Number(maxValue));
+    if (this.filters.has(loweredFeatureName)) this.filters.set(feature, filter);
+    this.setRubberBandsFromFilters(loweredFeatureName, minValue, maxValue);
+    this.updateSelectedIndices();
+    this.draw();
+  }
+
+  private setRubberBandsFromFilters(feature: string, minValue: number, maxValue: number): void {
+    if (!this.rubberBands) this.initRubberBands();
+    for (const figure of this.figures) {
+      if (figure.setFeatureFilter(feature, minValue, maxValue))  {
+        this.isSelecting = true;
+        this.updateRubberBands(figure);
+        this.isSelecting = false;
+        break;
+      }
+    }
+  }
+
+  public setFeatureFilterDebug(feature: string, minValue: string, maxValue: string): void {
+    this.setFeatureFilter(feature, Number(minValue), Number(maxValue));
+  }
+
+  private setFiltersFromRubberBands(rubberBand: RubberBand): void {
+    this.filters.set(rubberBand.attributeName, Filter.fromRubberBand(rubberBand));
   }
 
   private listenAxisStateChange(): void {
@@ -338,6 +398,7 @@ export class Multiplot {
         axis.emitter.on('rubberBandChange', e => {
           figure.activateSelection(e, index);
           this.isSelecting = true;
+          this.setFiltersFromRubberBands(axis.rubberBand);
         })
       })
     })

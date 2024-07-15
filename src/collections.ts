@@ -42,11 +42,19 @@ export class ShapeCollection {
     let maximum = new Vertex(Number.NEGATIVE_INFINITY, Number.NEGATIVE_INFINITY);
     this.shapes.forEach(shape => {
       const [shapeMin, shapeMax] = shape.getBounds();
-      if (shapeMin.x <= minimum.x) minimum.x = shapeMin.x; //for NaN reasons, must change
-      if (shapeMin.y <= minimum.y) minimum.y = shapeMin.y;
-      if (shapeMax.x >= maximum.x) maximum.x = shapeMax.x;
-      if (shapeMax.y >= maximum.y) maximum.y = shapeMax.y;
-    })
+      if (shapeMin) {
+        if (shapeMin.x <= minimum.x) minimum.x = shapeMin.x;
+        if (shapeMin.y <= minimum.y) minimum.y = shapeMin.y;
+      }
+      if (shapeMax) {
+        if (shapeMax.x >= maximum.x) maximum.x = shapeMax.x;
+        if (shapeMax.y >= maximum.y) maximum.y = shapeMax.y;
+      }
+    });
+    if (minimum.x == Number.POSITIVE_INFINITY) minimum.x = 0;
+    if (minimum.y == Number.POSITIVE_INFINITY) minimum.y = 0;
+    if (maximum.x == Number.NEGATIVE_INFINITY) maximum.x = 1;
+    if (maximum.y == Number.NEGATIVE_INFINITY) maximum.y = 1;
     return [minimum, maximum]
   }
 

@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.0]
+### Add
+- RemoteFigure.setFeatureFilter to directly edit rubberbands' value from external requests
+- Multiplot.setFeatureFilter to directly edit rubberbands' value from external requests
+- Emit rubberband changes
+
+### Fix
+- Labels: 
+    - fix wide text
+    - remove shape hovering
+- RubberBand: fix rubberband deletion when putting it outside view point
+- Fixing tests on dev
+
 ## [0.25.1]
 ### Doc
 - Changing doc link in readme

@@ -1,112 +1,61 @@
-.. plot data documentation master file, created by
-   sphinx-quickstart on Wed Feb 17 14:40:42 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Plot_data python API documentation
-==================================
-
-plot data is a language to draw in a web browser some awesome plots and graphs. Its rendering engine is written in typescript. This doc is for the python package to create the data structure to give to typescript lib for rendering.
-
-For the typescript doc see: https://documentation.dessia.tech/plot_data/typescript
+######################
+PlotData Documentation
+######################
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
+   :hidden:
 
-.. autofunction:: plot_data.delete_none_from_dict
-
-.. autoclass:: plot_data.PlotDataObject
-  :members:
-
-.. autoclass:: plot_data.HatchingSet
-  :members:
-
-.. autoclass:: plot_data.EdgeStyle
-  :members:
-
-.. autoclass:: plot_data.PointStyle
-  :members:
-
-.. autoclass:: plot_data.TextStyle
-  :members:
-
-.. autoclass:: plot_data.SurfaceStyle
-  :members:
-
-.. autoclass:: plot_data.Text
-  :members:
-
-.. autoclass:: plot_data.Line2D
-  :members:
-
-.. autoclass:: plot_data.LineSegment2D
-  :members:
-
-.. autoclass:: plot_data.Circle2D
-  :members:
-
-.. autoclass:: plot_data.Point2D
-  :members:
-
-.. autoclass:: plot_data.Axis
-  :members:
-
-.. autoclass:: plot_data.Tooltip
-  :members:
-
-.. autoclass:: plot_data.Dataset
-  :members:
-
-.. autoclass:: plot_data.Graph2D
-  :members:
-
-.. autoclass:: plot_data.Scatter
-  :members:
-
-.. autoclass:: plot_data.Arc2D
-  :members:
-
-.. autoclass:: plot_data.Contour2D
-  :members:
-
-.. autoclass:: plot_data.Label
-  :members:
-
-.. autoclass:: plot_data.MultipleLabels
-  :members:
-
-.. autoclass:: plot_data.PrimitiveGroup
-  :members:
-
-.. autoclass:: plot_data.PrimitiveGroupsContainer
-  :members:
-
-.. autoclass:: plot_data.ParallelPlot
-  :members:
-
-.. autoclass:: plot_data.Attribute
-  :members:
-
-.. autoclass:: plot_data.PointFamily
-  :members:
-
-.. autoclass:: plot_data.MultiplePlots
-  :members:
-
-.. autofunction:: plot_data.plot_canvas
-
-.. autofunction:: plot_data.get_csv_vectors
-
-.. autofunction:: plot_data.bounding_box
-
-.. autoclass:: plot_data.colors.Color
-  :members:
+   About Dessia <about_dessia>
+   Authors <authors>
+   About the Package <about_the_package>
+   Roadmap <road_map_and_current_limitations>
+   Tutorials <tutorials>
 
 
-Indices and tables
-==================
+PlotData is a Python web library that allows to draw data with several kinds of layouts such as scatters, histograms, graphs,…
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+This tutorial teaches how to use it for working with Dessia framework, to draw insightful figures to take well informed decisions.
+
+In this tutorial, all available features are explained and presented in simple examples, exhibited both on standalone mode and in Dessia Platform context:
+
+- If the reader is interested in how to use PlotData in Python IDE, please refer to 2 - Draw data with PlotData.
+- If the reader is interested in how to post treat workflow results in Dessia platform, please refer to 3 - PlotData on Dessia’s Platform.
+
+
+
+.. grid:: 2
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/draw_with_plotdata.svg
+
+        Getting Started
+        ^^^^^^^^^^^^^^^
+
+        New to PlotData? Learn here about drawing graph.
+
+        +++
+
+        .. button-ref:: draw_with_plotdata
+            :expand:
+            :color: primary
+            :click-parent:
+
+            Start drawing graphs
+
+    .. grid-item-card::
+        :img-top: ../source/_static/index-images/platform.svg
+
+        Using PlotData with Dessia's platform
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+        Integrate your PlotData drawings to the platform.
+
+        +++
+
+        .. button-ref:: platform
+            :expand:
+            :color: primary
+            :click-parent:
+
+            To platform integration

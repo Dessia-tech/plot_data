@@ -24,7 +24,6 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
         radius = 0.04
         primitives = []
         pos = nx.kamada_kawai_layout(self.graph)
-        print(dict(nx.shortest_path_length(self.graph)))
 
         for edge in self.graph.edges:
             node1, node2 = edge[0], edge[1]
@@ -59,18 +58,10 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
             primitives.append(primitive)
 
             if text_style is None:
-                text_style = plot_data.TextStyle(
-                    font_size=2 * radius,
-                    text_color='rgb(0,0,0)',
-                                                 text_align_x='center',
-                                                 text_align_y='middle')
+                text_style = plot_data.TextStyle(text_color='rgb(0,0,0)', text_align_x='center', text_align_y='middle')
 
-            text = plot_data.Text(name, x_coord, y_coord,
-                                  text_style=text_style,
-                                  text_scaling=True,
-                                  max_width=2 * radius,
-                                  multi_lines=False
-                                  )
+            text = plot_data.Text(name, x_coord, y_coord, text_style=text_style, text_scaling=True,
+                                  max_width=2 * radius, multi_lines=False)
             primitives.append(text)
 
         return primitives

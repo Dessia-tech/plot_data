@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+  <style>
+    .slider {
+      -webkit-appearance: none;
+      height: 10px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: 0.2s;
+      transition: opacity 0.2s;
+    }
+
+    .slider:hover {
+      opacity: 1;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 25px;
+      height: 10px;
+      background: #04aa6d;
+      cursor: pointer;
+    }
+  </style>
+  <head>
+    <script src="https://cdn.dessia.tech/js/plot-data/v0.22.3/plot-data.js"></script>
+  </head>
+  <div id="buttons">
+    <button
+      name="mergeON"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchMerge()"
+    >
+      Switch Point Merge
+    </button>
+    &nbsp;&nbsp;
+    <button
+      name="Zoom"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchZoom()"
+    >
+      Zoom Box
+    </button>
+    <button name="Zoom+" value="OK" type="button" onclick="plot_data.zoomIn()">
+      Zoom+
+    </button>
+    <button name="Zoom-" value="OK" type="button" onclick="plot_data.zoomOut()">
+      Zoom-
+    </button>
+    &nbsp;&nbsp; Cluster:&nbsp;
+    <input
+      type="range"
+      class="slider"
+      min="0"
+      max="2500"
+      value="1250"
+      onclick="plot_data.simpleCluster(value / 10000)"
+    />
+    <button
+      name="resetClusters"
+      value="OK"
+      type="button"
+      onclick="plot_data.resetClusters()"
+    >
+      Reset clusters
+    </button>
+    &nbsp;&nbsp;
+    <button
+      name="resetView"
+      value="OK"
+      type="button"
+      onclick="plot_data.resetView()"
+    >
+      Reset view
+    </button>
+    &nbsp;&nbsp;
+    <button
+      name="showPoints"
+      value="OK"
+      type="button"
+      onclick="plot_data.togglePoints()"
+    >
+      Show points
+    </button>
+    <button
+      name="switchOrientation"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchOrientation()"
+    >
+      Change Disposition
+    </button>
+    <button
+      name="toogleAxes"
+      value="OK"
+      type="button"
+      onclick="plot_data.htmlToggleAxes()"
+    >
+      Show / Hide Axes
+    </button>
+    <button
+      name="logScale"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchLogScale()"
+    >
+      Log Scale
+    </button>
+
+    <hr style="border-top: 2px" />
+  </div>
+  <div id="app">
+    <canvas id="canvas" style="border: 1px solid black"></canvas>
+
+    <script type="text/javascript">
+      const [width, height] = PlotData.computeCanvasSize('#buttons')
+      const data = {
+        name: '',
+        primitives: [
+          {
+            name: '',
+            cx: 1,
+            cy: 12,
+            point_style: {
+              object_class: 'plot_data.core.PointStyle',
+              name: '',
+              color_fill: 'rgb(255,135,0)',
+              color_stroke: 'rgb(0,0,0)',
+              stroke_width: 2,
+              size: 20,
+              shape: 'circle',
+            },
+            tooltip: 'Circle point',
+            reference_path: '#',
+            type_: 'point',
+          },
+          {
+            name: '',
+            data: [0, 0, 20, 16],
+            point1: [0, 0],
+            point2: [20, 16],
+            edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              line_width: 3,
+              color_stroke: 'rgb(0,19,254)',
+              dashline: [5, 2],
+            },
+            tooltip: 'LineSegment2D',
+            reference_path: '#',
+            type_: 'linesegment2d',
+          },
+          {
+            name: '',
+            data: [-10, 24.5, 22, 24.5],
+            point1: [-10, 24.5],
+            point2: [22, 24.5],
+            edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              line_width: 3,
+              color_stroke: 'rgb(0,19,254)',
+              dashline: [5, 2],
+            },
+            tooltip: 'Line2D',
+            reference_path: '#',
+            type_: 'line2d',
+          },
+          {
+            name: '',
+            x_coord: -6,
+            y_coord: 16,
+            width: 15,
+            height: 10,
+            surface_style: {
+              object_class: 'plot_data.core.SurfaceStyle',
+              name: '',
+              color_fill: 'rgb(137,232,146)',
+              opacity: 0.8,
+              hatching: {
+                object_class: 'plot_data.core.HatchingSet',
+                name: '',
+                stroke_width: 1,
+                hatch_spacing: 10,
+              },
+            },
+            edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              line_width: 3,
+              color_stroke: 'rgb(0,19,254)',
+              dashline: [5, 2],
+            },
+            tooltip: 'rectangle',
+            reference_path: '#',
+            type_: 'rectangle',
+          },
+          {
+            name: '',
+            x_coord: 24,
+            y_coord: 0,
+            width: 60,
+            height: 20,
+            surface_style: {
+              object_class: 'plot_data.core.SurfaceStyle',
+              name: '',
+              color_fill: 'rgb(137,232,146)',
+              opacity: 0.8,
+              hatching: {
+                object_class: 'plot_data.core.HatchingSet',
+                name: '',
+                stroke_width: 1,
+                hatch_spacing: 10,
+              },
+            },
+            edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              line_width: 3,
+              color_stroke: 'rgb(0,19,254)',
+              dashline: [5, 2],
+            },
+            tooltip: 'round_rectangle',
+            reference_path: '#',
+            type_: 'roundrectangle',
+            radius: 1,
+          },
+          {
+            name: '',
+            edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              line_width: 3,
+              color_stroke: 'rgb(0,19,254)',
+              dashline: [5, 2],
+            },
+            surface_style: {
+              object_class: 'plot_data.core.SurfaceStyle',
+              name: '',
+              color_fill: 'rgb(137,232,146)',
+              opacity: 0.8,
+              hatching: {
+                object_class: 'plot_data.core.HatchingSet',
+                name: '',
+                stroke_width: 1,
+                hatch_spacing: 10,
+              },
+            },
+            r: 5,
+            cx: 15,
+            cy: 35,
+            tooltip: 'Circle',
+            reference_path: '#',
+            type_: 'circle',
+          },
+          {
+            name: '',
+            cx: 0,
+            cy: 30,
+            r: 5,
+            start_angle: 0.7853981633974483,
+            end_angle: 2.0943951023931953,
+            clockwise: false,
+            edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              line_width: 3,
+              color_stroke: 'rgb(0,19,254)',
+              dashline: [5, 2],
+            },
+            tooltip: 'arc2d_anticlockwise',
+            reference_path: '#',
+            type_: 'arc',
+          },
+          {
+            name: '',
+            lines: [
+              [25, 35],
+              [28, 26],
+              [29, 30],
+              [30, 26],
+              [33, 35],
+              [34, 35],
+              [34, 26],
+              [35, 26],
+              [35, 35],
+              [40, 35],
+              [35, 30],
+              [40, 26],
+              [44, 26],
+              [41, 26],
+              [41, 30.5],
+              [43, 30.5],
+              [41, 30.5],
+              [41, 35],
+              [44, 35],
+            ],
+            edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              line_width: 3,
+              color_stroke: 'rgb(0,19,254)',
+              dashline: [5, 2],
+            },
+            tooltip: 'Wire',
+            reference_path: '#',
+            type_: 'wire',
+          },
+          {
+            name: '',
+            plot_data_primitives: [
+              {
+                name: '',
+                data: [51, 26, 47, 33],
+                point1: [51, 26],
+                point2: [47, 33],
+                edge_style: {
+                  object_class: 'plot_data.core.EdgeStyle',
+                  name: '',
+                },
+                reference_path: '#',
+                type_: 'linesegment2d',
+              },
+              {
+                name: '',
+                cx: 49,
+                cy: 33,
+                r: 2,
+                start_angle: 3.141592653589793,
+                end_angle: 0,
+                clockwise: true,
+                reference_path: '#',
+                type_: 'arc',
+              },
+              {
+                name: '',
+                cx: 53,
+                cy: 33,
+                r: 2,
+                start_angle: 3.141592653589793,
+                end_angle: 0,
+                clockwise: true,
+                reference_path: '#',
+                type_: 'arc',
+              },
+              {
+                name: '',
+                data: [55, 33, 51, 26],
+                point1: [55, 33],
+                point2: [51, 26],
+                edge_style: {
+                  object_class: 'plot_data.core.EdgeStyle',
+                  name: '',
+                },
+                reference_path: '#',
+                type_: 'linesegment2d',
+              },
+            ],
+            edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              line_width: 2,
+              color_stroke: 'rgb(150,99,123)',
+            },
+            surface_style: {
+              object_class: 'plot_data.core.SurfaceStyle',
+              name: '',
+              color_fill: 'rgb(247,0,0)',
+              opacity: 1.0,
+            },
+            is_filled: true,
+            tooltip: 'Heart shaped contour.',
+            reference_path: '#',
+            type_: 'contour',
+          },
+          {
+            name: '',
+            comment:
+              'This text never changes its size because text_scaling is False.',
+            text_style: {
+              object_class: 'plot_data.core.TextStyle',
+              name: '',
+              font_size: 16,
+              text_align_x: 'center',
+              text_align_y: 'top',
+            },
+            position_x: 70,
+            position_y: 32,
+            text_scaling: false,
+            max_width: 120,
+            multi_lines: true,
+            reference_path: '#',
+            type_: 'text',
+          },
+          {
+            name: '',
+            comment: 'Dessia',
+            text_style: {
+              object_class: 'plot_data.core.TextStyle',
+              name: '',
+              text_color: 'rgb(0,19,254)',
+              font_size: 8,
+              text_align_x: 'right',
+              text_align_y: 'bottom',
+              bold: true,
+            },
+            position_x: 70,
+            position_y: 35,
+            text_scaling: true,
+            multi_lines: false,
+            reference_path: '#',
+            type_: 'text',
+          },
+          {
+            name: '',
+            title: 'Extra Label 1',
+            text_style: {
+              object_class: 'plot_data.core.TextStyle',
+              name: '',
+              text_color: 'rgb(255,135,0)',
+              font_size: 14,
+              bold: true,
+              italic: true,
+            },
+            rectangle_surface_style: {
+              object_class: 'plot_data.core.SurfaceStyle',
+              name: '',
+              color_fill: 'rgb(137,232,146)',
+              opacity: 0.8,
+              hatching: {
+                object_class: 'plot_data.core.HatchingSet',
+                name: '',
+                stroke_width: 1,
+                hatch_spacing: 10,
+              },
+            },
+            rectangle_edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              line_width: 1,
+              color_stroke: 'rgb(0,19,254)',
+              dashline: [5, 5],
+            },
+            type_: 'label',
+          },
+          {
+            name: '',
+            title: 'Point2D',
+            shape: {
+              name: '',
+              cx: 1,
+              cy: 12,
+              point_style: {
+                object_class: 'plot_data.core.PointStyle',
+                name: '',
+                color_fill: 'rgb(255,135,0)',
+                color_stroke: 'rgb(0,0,0)',
+                stroke_width: 2,
+                size: 20,
+                shape: 'circle',
+              },
+              tooltip: 'Circle point',
+              reference_path: '#',
+              type_: 'point',
+            },
+            type_: 'label',
+          },
+          {
+            name: '',
+            title: 'LineSegment2D',
+            shape: {
+              name: '',
+              data: [0, 0, 20, 16],
+              point1: [0, 0],
+              point2: [20, 16],
+              edge_style: {
+                object_class: 'plot_data.core.EdgeStyle',
+                name: '',
+                line_width: 3,
+                color_stroke: 'rgb(0,19,254)',
+                dashline: [5, 2],
+              },
+              tooltip: 'LineSegment2D',
+              reference_path: '#',
+              type_: 'linesegment2d',
+            },
+            type_: 'label',
+          },
+          {
+            name: '',
+            title: 'Line2D',
+            shape: {
+              name: '',
+              data: [-10, 24.5, 22, 24.5],
+              point1: [-10, 24.5],
+              point2: [22, 24.5],
+              edge_style: {
+                object_class: 'plot_data.core.EdgeStyle',
+                name: '',
+                line_width: 3,
+                color_stroke: 'rgb(0,19,254)',
+                dashline: [5, 2],
+              },
+              tooltip: 'Line2D',
+              reference_path: '#',
+              type_: 'line2d',
+            },
+            type_: 'label',
+          },
+          {
+            name: '',
+            title: 'Rectangle',
+            shape: {
+              name: '',
+              x_coord: -6,
+              y_coord: 16,
+              width: 15,
+              height: 10,
+              surface_style: {
+                object_class: 'plot_data.core.SurfaceStyle',
+                name: '',
+                color_fill: 'rgb(137,232,146)',
+                opacity: 0.8,
+                hatching: {
+                  object_class: 'plot_data.core.HatchingSet',
+                  name: '',
+                  stroke_width: 1,
+                  hatch_spacing: 10,
+                },
+              },
+              edge_style: {
+                object_class: 'plot_data.core.EdgeStyle',
+                name: '',
+                line_width: 3,
+                color_stroke: 'rgb(0,19,254)',
+                dashline: [5, 2],
+              },
+              tooltip: 'rectangle',
+              reference_path: '#',
+              type_: 'rectangle',
+            },
+            type_: 'label',
+          },
+          {
+            name: '',
+            title: 'RoundRectangle',
+            shape: {
+              name: '',
+              x_coord: 24,
+              y_coord: 0,
+              width: 60,
+              height: 20,
+              surface_style: {
+                object_class: 'plot_data.core.SurfaceStyle',
+                name: '',
+                color_fill: 'rgb(137,232,146)',
+                opacity: 0.8,
+                hatching: {
+                  object_class: 'plot_data.core.HatchingSet',
+                  name: '',
+                  stroke_width: 1,
+                  hatch_spacing: 10,
+                },
+              },
+              edge_style: {
+                object_class: 'plot_data.core.EdgeStyle',
+                name: '',
+                line_width: 3,
+                color_stroke: 'rgb(0,19,254)',
+                dashline: [5, 2],
+              },
+              tooltip: 'round_rectangle',
+              reference_path: '#',
+              type_: 'roundrectangle',
+              radius: 1,
+            },
+            type_: 'label',
+          },
+          {
+            name: '',
+            title: 'Circle2D',
+            shape: {
+              name: '',
+              edge_style: {
+                object_class: 'plot_data.core.EdgeStyle',
+                name: '',
+                line_width: 3,
+                color_stroke: 'rgb(0,19,254)',
+                dashline: [5, 2],
+              },
+              surface_style: {
+                object_class: 'plot_data.core.SurfaceStyle',
+                name: '',
+                color_fill: 'rgb(137,232,146)',
+                opacity: 0.8,
+                hatching: {
+                  object_class: 'plot_data.core.HatchingSet',
+                  name: '',
+                  stroke_width: 1,
+                  hatch_spacing: 10,
+                },
+              },
+              r: 5,
+              cx: 15,
+              cy: 35,
+              tooltip: 'Circle',
+              reference_path: '#',
+              type_: 'circle',
+            },
+            type_: 'label',
+          },
+          {
+            name: '',
+            title: 'Arc2D',
+            shape: {
+              name: '',
+              cx: 0,
+              cy: 30,
+              r: 5,
+              start_angle: 0.7853981633974483,
+              end_angle: 2.0943951023931953,
+              clockwise: false,
+              edge_style: {
+                object_class: 'plot_data.core.EdgeStyle',
+                name: '',
+                line_width: 3,
+                color_stroke: 'rgb(0,19,254)',
+                dashline: [5, 2],
+              },
+              tooltip: 'arc2d_anticlockwise',
+              reference_path: '#',
+              type_: 'arc',
+            },
+            type_: 'label',
+          },
+          {
+            name: '',
+            title: 'Wire',
+            shape: {
+              name: '',
+              lines: [
+                [25, 35],
+                [28, 26],
+                [29, 30],
+                [30, 26],
+                [33, 35],
+                [34, 35],
+                [34, 26],
+                [35, 26],
+                [35, 35],
+                [40, 35],
+                [35, 30],
+                [40, 26],
+                [44, 26],
+                [41, 26],
+                [41, 30.5],
+                [43, 30.5],
+                [41, 30.5],
+                [41, 35],
+                [44, 35],
+              ],
+              edge_style: {
+                object_class: 'plot_data.core.EdgeStyle',
+                name: '',
+                line_width: 3,
+                color_stroke: 'rgb(0,19,254)',
+                dashline: [5, 2],
+              },
+              tooltip: 'Wire',
+              reference_path: '#',
+              type_: 'wire',
+            },
+            type_: 'label',
+          },
+          {
+            name: '',
+            title: 'Contour2D',
+            shape: {
+              name: '',
+              plot_data_primitives: [
+                {
+                  name: '',
+                  data: [51, 26, 47, 33],
+                  point1: [51, 26],
+                  point2: [47, 33],
+                  edge_style: {
+                    object_class: 'plot_data.core.EdgeStyle',
+                    name: '',
+                  },
+                  reference_path: '#',
+                  type_: 'linesegment2d',
+                },
+                {
+                  name: '',
+                  cx: 49,
+                  cy: 33,
+                  r: 2,
+                  start_angle: 3.141592653589793,
+                  end_angle: 0,
+                  clockwise: true,
+                  reference_path: '#',
+                  type_: 'arc',
+                },
+                {
+                  name: '',
+                  cx: 53,
+                  cy: 33,
+                  r: 2,
+                  start_angle: 3.141592653589793,
+                  end_angle: 0,
+                  clockwise: true,
+                  reference_path: '#',
+                  type_: 'arc',
+                },
+                {
+                  name: '',
+                  data: [55, 33, 51, 26],
+                  point1: [55, 33],
+                  point2: [51, 26],
+                  edge_style: {
+                    object_class: 'plot_data.core.EdgeStyle',
+                    name: '',
+                  },
+                  reference_path: '#',
+                  type_: 'linesegment2d',
+                },
+              ],
+              edge_style: {
+                object_class: 'plot_data.core.EdgeStyle',
+                name: '',
+                line_width: 2,
+                color_stroke: 'rgb(150,99,123)',
+              },
+              surface_style: {
+                object_class: 'plot_data.core.SurfaceStyle',
+                name: '',
+                color_fill: 'rgb(247,0,0)',
+                opacity: 1.0,
+              },
+              is_filled: true,
+              tooltip: 'Heart shaped contour.',
+              reference_path: '#',
+              type_: 'contour',
+            },
+            type_: 'label',
+          },
+        ],
+        width: 750,
+        height: 400,
+        type_: 'draw',
+      }
+
+      const plot_data = new PlotData.Draw(data, width, height, 0, 0, canvas.id)
+      plot_data.setCanvas(canvas.id)
+      plot_data.draw()
+      plot_data.mouseListener()
+    </script>
+  </div>
+</html>

@@ -52,7 +52,8 @@ Once done, the figure can be displayed with the following command line :
     pld.plot_canvas(plot_data_object=parallel_plot, canvas_id='my_parallel_plot')
 
 .. raw:: html
-   :file: htmls/section2_4_1_rand_parallelplot.html
+
+    <iframe src="_static/htmls/section2_4_1_rand_parallelplot.html" height="345px" width="100%"></iframe>
 
 Parallel Plot Features
 ----------------------
@@ -105,4 +106,5 @@ And draw the Parallel Plot with the function `plot_canvas` :
     pld.plot_canvas(plot_data_object=parallel_plot, filepath="section2_4_2_parallel_plotod")
 
 .. raw:: html
-   :file: htmls/section2_4_2_parallel_plot.html
+
+    <iframe src="_static/htmls/section2_4_2_parallel_plot.html" height="345px" width="100%"></iframe>

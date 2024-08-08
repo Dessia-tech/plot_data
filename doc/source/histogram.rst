@@ -55,7 +55,9 @@ Once done, the figure can be displayed with the following command line:
     pld.plot_canvas(plot_data_object=histogram, canvas_id='my_histogram')
 
 .. raw:: html
-   :file: htmls/section2_5_1_rand_histogram.html
+
+    <iframe src="_static/htmls/section2_5_1_rand_histogram.html" height="345px" width="100%"></iframe>
+
 
 Histogram Features
 ------------------
@@ -103,4 +105,5 @@ And draw the Histogram with the function `plot_canvas`:
     pld.plot_canvas(plot_data_object=histogram, filepath="section_2_5_2_histogram")
 
 .. raw:: html
-   :file: htmls/section2_5_2_histogram.html
+
+    <iframe src="_static/htmls/section2_5_2_histogram.html" height="345px" width="100%"></iframe>

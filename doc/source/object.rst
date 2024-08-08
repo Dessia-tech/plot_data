@@ -255,7 +255,8 @@ Once done, the figure can be displayed with the following command line:
     pld.plot_canvas(plot_data_object=draw, filepath="section2_6_2_draw")
 
 .. raw:: html
-   :file: htmls/section2_6_2_draw.html
+
+    <iframe src="_static/htmls/section2_6_2_draw.html" height="345px" width="100%"></iframe>
 
 
 How to add a 2D representation to a DessiaObject ?
@@ -303,4 +304,5 @@ Once done, the figure can be displayed with the following command line:
     pld.plot_canvas(plot_data_object=pendulum.draw(), canvas_id='my_draw', filepath="section2_6_3_draw")
 
 .. raw:: html
-   :file: htmls/section2_6_3_draw.html
+
+    <iframe src="_static/htmls/section2_6_3_draw.html" height="345px" width="100%"></iframe>

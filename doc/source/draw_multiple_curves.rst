@@ -71,7 +71,8 @@ In order to do it, a function that takes a pendulum as argument and draws a Grap
     pendulum_draw_x_y_vs_time(pendulum)
 
 .. raw:: html
-   :file: htmls/section2_2_1_x_and_y.html
+
+   <iframe src="_static/htmls/section2_2_1_x_and_y.html" height="345px" width="100%"></iframe>
 
 How to design a class for getting a Graph2D with several curves ?
 -----------------------------------------------------------------
@@ -175,7 +176,9 @@ Once done, the DOE can be generated and the pendulum behavior curves can be disp
     pld.plot_canvas(plot_data_object=y_vs_x_curves, canvas_id='my_graph2d')
 
 .. raw:: html
-   :file: htmls/section2_2_2_y_vs_time.html
+
+    <iframe src="_static/htmls/section2_2_2_y_vs_time.html" height="345px" width="100%"></iframe>
 
 .. raw:: html
-   :file: htmls/section2_2_2_y_vs_x.html
+
+    <iframe src="_static/htmls/section2_2_2_y_vs_x.html" height="345px" width="100%"></iframe>

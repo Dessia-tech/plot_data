@@ -103,7 +103,8 @@ Once done, the figure can be displayed with the following command line :
     pld.plot_canvas(plot_data_object=scatter, canvas_id='my_scatter')
 
 .. raw:: html
-   :file: htmls/section2_3_1_rand_scatter.html
+
+    <iframe src="_static/htmls/section2_3_1_rand_scatter.html" height="345px" width="100%"></iframe>
 
 Scatter features
 ----------------
@@ -181,7 +182,8 @@ With such plot the user can pick the best solutions considering its performances
     pld.plot_canvas(plot_data_object=scatter, filepath="section_2_3_speed_period")
 
 .. raw:: html
-   :file: htmls/section2_3_2_speed_period.html
+
+    <iframe src="_static/htmls/section2_3_2_speed_period.html" height="345px" width="100%"></iframe>
 
 How to add a method to draw a Scatter within a DessiaObject ?
 -------------------------------------------------------------
@@ -207,4 +209,5 @@ To draw this scatter in a web browser, run the following code lines:
     pld.plot_canvas(plot_data_object=scatter_self, canvas_id='my_scatter')
 
 .. raw:: html
-   :file: htmls/section2_3_3_speed_period_self.html
+
+    <iframe src="_static/htmls/section2_3_3_speed_period_self.html" height="345px" width="100%"></iframe>

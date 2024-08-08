@@ -75,7 +75,8 @@ Once done, the figure can be displayed with the following command line :
     pld.plot_canvas(plot_data_object=multiplot, canvas_id='my_mulitplot')
 
 .. raw:: html
-   :file: htmls/section2_7_1_multiplot.html
+
+    <iframe src="_static/htmls/section2_7_1_multiplot.html" height="345px" width="100%"></iframe>
 
 Multiplot Features
 ------------------
@@ -168,4 +169,5 @@ Once done, the figure can be displayed with the following command line :
     pld.plot_canvas(plot_data_object=multiplot, canvas_id='my_multiplot')
 
 .. raw:: html
-   :file: htmls/section2_4_1_rand_parallelplot.html
+
+    <iframe src="_static/htmls/section2_4_1_rand_parallelplot.html" height="345px" width="100%"></iframe>

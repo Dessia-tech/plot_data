@@ -119,7 +119,8 @@ Once done, the figure can be displayed with the following command line :
     pld.plot_canvas(plot_data_object=graph2d, canvas_id='my_graph2d')
 
 .. raw:: html
-   :file: htmls/section2_1_plot_graph.html
+
+    <iframe src="_static/htmls/section2_1_plot_graph.html" height="345px" width="100%"></iframe>
 
 
 Graph2D features
@@ -260,13 +261,17 @@ The results of graph drawings are available on the next 4 html pages in the pres
     pld.plot_canvas(plot_data_object=pendulum.y_vs_x(), canvas_id='my_graph2d', filepath="section2_1_2_x_y")
 
 .. raw:: html
-   :file: htmls/section2_1_2_angle_time.html
+
+    <iframe src="_static/htmls/section2_1_2_angle_time.html" height="345px" width="100%"></iframe>
 
 .. raw:: html
-   :file: htmls/section2_1_2_x_time.html
+
+    <iframe src="_static/htmls/section2_1_2_x_time.html" height="345px" width="100%"></iframe>
 
 .. raw:: html
-   :file: htmls/section2_1_2_y_time.html
+
+    <iframe src="_static/htmls/section2_1_2_y_time.html" height="345px" width="100%"></iframe>
 
 .. raw:: html
-   :file: htmls/section2_1_2_x_y.html
+
+    <iframe src="_static/htmls/section2_1_2_x_y.html" height="345px" width="100%"></iframe>

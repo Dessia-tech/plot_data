@@ -1,5 +1,5 @@
 PlotData Modules
----------------
+----------------
 
 .. toctree::
     :maxdepth: 1

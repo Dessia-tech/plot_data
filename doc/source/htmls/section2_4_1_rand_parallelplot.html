@@ -25,7 +25,7 @@
   <head>
     <script src="https://cdn.dessia.tech/js/plot-data/v0.22.3/plot-data.js"></script>
   </head>
-  <div id="buttons">
+  <div id="buttons1">
     <button
       name="mergeON"
       value="OK"
@@ -112,11 +112,11 @@
     <hr style="border-top: 2px" />
   </div>
   <div id="app">
-    <canvas id="canvas" style="border: 1px solid black"></canvas>
+    <canvas id="canvas1" style="border: 1px solid black"></canvas>
 
     <script type="text/javascript">
-      const [width, height] = PlotData.computeCanvasSize('#buttons')
-      const data = {
+      const [width1, height1] = PlotData.computeCanvasSize('#buttons1')
+      const data1 = {
         name: '',
         elements: [
           {
@@ -8633,14 +8633,14 @@
       }
 
       const plot_data = new PlotData.ParallelPlot(
-        data,
-        width,
-        height,
+        data1,
+        width1,
+        height1,
         0,
         0,
-        canvas.id
+        canvas1.id
       )
-      plot_data.setCanvas(canvas.id)
+      plot_data.setCanvas(canvas1.id)
       plot_data.draw()
       plot_data.mouseListener()
     </script>

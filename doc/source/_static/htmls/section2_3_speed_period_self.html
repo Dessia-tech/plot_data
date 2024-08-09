@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="en">
+  <style>
+    .slider {
+      -webkit-appearance: none;
+      height: 10px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: 0.2s;
+      transition: opacity 0.2s;
+    }
+
+    .slider:hover {
+      opacity: 1;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 25px;
+      height: 10px;
+      background: #04aa6d;
+      cursor: pointer;
+    }
+  </style>
+  <head>
+    <script src="https://cdn.dessia.tech/js/plot-data/v0.22.1/plot-data.js"></script>
+  </head>
+  <div id="buttons">
+    <button
+      name="mergeON"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchMerge()"
+    >
+      Switch Point Merge
+    </button>
+    &nbsp;&nbsp;
+    <button
+      name="Zoom"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchZoom()"
+    >
+      Zoom Box
+    </button>
+    <button name="Zoom+" value="OK" type="button" onclick="plot_data.zoomIn()">
+      Zoom+
+    </button>
+    <button name="Zoom-" value="OK" type="button" onclick="plot_data.zoomOut()">
+      Zoom-
+    </button>
+    &nbsp;&nbsp; Cluster:&nbsp;
+    <input
+      type="range"
+      class="slider"
+      min="0"
+      max="2500"
+      value="1250"
+      onclick="plot_data.simpleCluster(value / 10000)"
+    />
+    <button
+      name="resetClusters"
+      value="OK"
+      type="button"
+      onclick="plot_data.resetClusters()"
+    >
+      Reset clusters
+    </button>
+    &nbsp;&nbsp;
+    <button
+      name="resetView"
+      value="OK"
+      type="button"
+      onclick="plot_data.resetView()"
+    >
+      Reset view
+    </button>
+    &nbsp;&nbsp;
+    <button
+      name="showPoints"
+      value="OK"
+      type="button"
+      onclick="plot_data.togglePoints()"
+    >
+      Show points
+    </button>
+    <button
+      name="switchOrientation"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchOrientation()"
+    >
+      Change Disposition
+    </button>
+    <button
+      name="toogleAxes"
+      value="OK"
+      type="button"
+      onclick="plot_data.htmlToggleAxes()"
+    >
+      Show / Hide Axes
+    </button>
+    <button
+      name="logScale"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchLogScale()"
+    >
+      Log Scale
+    </button>
+
+    <hr style="border-top: 2px" />
+  </div>
+  <div id="app">
+    <canvas id="my_graph2d" style="border: 1px solid black"></canvas>
+
+    <script type="text/javascript">
+      const [width, height] = PlotData.computeCanvasSize('#buttons')
+      const data = {
+        name: '',
+        tooltip: {
+          name: '',
+          attributes: ['length', 'g'],
+          surface_style: {
+            object_class: 'plot_data.core.SurfaceStyle',
+            name: '',
+            color_fill: 'rgb(195,230,252)',
+            opacity: 0.75,
+          },
+          text_style: {
+            object_class: 'plot_data.core.TextStyle',
+            name: '',
+            text_color: 'rgb(0,0,0)',
+            font_size: 10,
+          },
+          type_: 'tooltip',
+        },
+        attribute_names: ['period', 'speed'],
+        elements: [
+          {
+            name: '',
+            values: {
+              period: 3.1622776601683795,
+              speed: 0.33042381716436703,
+              length: 0.1,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.1622776601683795,
+            speed: 0.33042381716436703,
+            length: 0.1,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 4.594682917363407,
+              speed: 0.4789428873050406,
+              length: 0.1,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 4.594682917363407,
+            speed: 0.4789428873050406,
+            length: 0.1,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 5.676462121975467,
+              speed: 0.5902807425179527,
+              length: 0.1,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 5.676462121975467,
+            speed: 0.5902807425179527,
+            length: 0.1,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 6.582805886043833,
+              speed: 0.6828805537110134,
+              length: 0.1,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 6.582805886043833,
+            speed: 0.6828805537110134,
+            length: 0.1,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 7.378647873726218,
+              speed: 0.7635991756899597,
+              length: 0.1,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 7.378647873726218,
+            speed: 0.7635991756899597,
+            length: 0.1,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 8.096638534327411,
+              speed: 0.8358726623281801,
+              length: 0.1,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 8.096638534327411,
+            speed: 0.8358726623281801,
+            length: 0.1,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 8.755950357709132,
+              speed: 0.9017518629910943,
+              length: 0.1,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 8.755950357709132,
+            speed: 0.9017518629910943,
+            length: 0.1,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 9.368979548370131,
+              speed: 0.9625892568251174,
+              length: 0.1,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 9.368979548370131,
+            speed: 0.9625892568251174,
+            length: 0.1,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 9.944289260117532,
+              speed: 1.019262987395202,
+              length: 0.1,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 9.944289260117532,
+            speed: 1.019262987395202,
+            length: 0.1,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 10.488088481701515,
+              speed: 1.0667109893829239,
+              length: 0.1,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 10.488088481701515,
+            speed: 1.0667109893829239,
+            length: 0.1,
+            g: 11.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.5389675281277313,
+              speed: 0.6800877947859542,
+              length: 0.42222222222222217,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.5389675281277313,
+            speed: 0.6800877947859542,
+            length: 0.42222222222222217,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.23606797749979,
+              speed: 0.9875860573934145,
+              length: 0.42222222222222217,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.23606797749979,
+            speed: 0.9875860573934145,
+            length: 0.42222222222222217,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.7625312572654126,
+              speed: 1.2193420026088782,
+              length: 0.42222222222222217,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.7625312572654126,
+            speed: 1.2193420026088782,
+            length: 0.42222222222222217,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 3.2036163775859374,
+              speed: 1.4133054913241911,
+              length: 0.42222222222222217,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.2036163775859374,
+            speed: 1.4133054913241911,
+            length: 0.42222222222222217,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 3.5909242322980397,
+              speed: 1.582005095205772,
+              length: 0.42222222222222217,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.5909242322980397,
+            speed: 1.582005095205772,
+            length: 0.42222222222222217,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 3.9403446282620616,
+              speed: 1.7363262156053483,
+              length: 0.42222222222222217,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.9403446282620616,
+            speed: 1.7363262156053483,
+            length: 0.42222222222222217,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 4.2612081311339525,
+              speed: 1.8764498517343333,
+              length: 0.42222222222222217,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 4.2612081311339525,
+            speed: 1.8764498517343333,
+            length: 0.42222222222222217,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 4.5595475306449575,
+              speed: 2.0068509396042695,
+              length: 0.42222222222222217,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 4.5595475306449575,
+            speed: 2.0068509396042695,
+            length: 0.42222222222222217,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 4.839530207734936,
+              speed: 2.128899008407329,
+              length: 0.42222222222222217,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 4.839530207734936,
+            speed: 2.128899008407329,
+            length: 0.42222222222222217,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 5.104177855340405,
+              speed: 2.2440338976281096,
+              length: 0.42222222222222217,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 5.104177855340405,
+            speed: 2.2440338976281096,
+            length: 0.42222222222222217,
+            g: 11.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.1590011139293837,
+              speed: 0.9032681691294439,
+              length: 0.7444444444444444,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.1590011139293837,
+            speed: 0.9032681691294439,
+            length: 0.7444444444444444,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.6839895770230848,
+              speed: 1.3119553558530324,
+              length: 0.7444444444444444,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.6839895770230848,
+            speed: 1.3119553558530324,
+            length: 0.7444444444444444,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.0804706700540683,
+              speed: 1.620362237510822,
+              length: 0.7444444444444444,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.0804706700540683,
+            speed: 1.620362237510822,
+            length: 0.7444444444444444,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.412653212210172,
+              speed: 1.8780254893823267,
+              length: 0.7444444444444444,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.412653212210172,
+            speed: 1.8780254893823267,
+            length: 0.7444444444444444,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.7043359325018956,
+              speed: 2.1048814077100544,
+              length: 0.7444444444444444,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.7043359325018956,
+            speed: 2.1048814077100544,
+            length: 0.7444444444444444,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.9674854926778886,
+              speed: 2.3088981093756424,
+              length: 0.7444444444444444,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.9674854926778886,
+            speed: 2.3088981093756424,
+            length: 0.7444444444444444,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 3.20912877003815,
+              speed: 2.496135203207499,
+              length: 0.7444444444444444,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.20912877003815,
+            speed: 2.496135203207499,
+            length: 0.7444444444444444,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 3.4338090768298994,
+              speed: 2.670009862153005,
+              length: 0.7444444444444444,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.4338090768298994,
+            speed: 2.670009862153005,
+            length: 0.7444444444444444,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 3.6446648802807977,
+              speed: 2.833030539576985,
+              length: 0.7444444444444444,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.6446648802807977,
+            speed: 2.833030539576985,
+            length: 0.7444444444444444,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 3.843971826507717,
+              speed: 2.987024055023124,
+              length: 0.7444444444444444,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.843971826507717,
+            speed: 2.987024055023124,
+            length: 0.7444444444444444,
+            g: 11.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.9682458365518543,
+              speed: 1.0813159143558693,
+              length: 1.0666666666666667,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.9682458365518543,
+            speed: 1.0813159143558693,
+            length: 1.0666666666666667,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.4068285846778443,
+              speed: 1.5706701471113707,
+              length: 1.0666666666666667,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.4068285846778443,
+            speed: 1.5706701471113707,
+            length: 1.0666666666666667,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.7380544678845176,
+              speed: 1.9401398989077145,
+              length: 1.0666666666666667,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.7380544678845176,
+            speed: 1.9401398989077145,
+            length: 1.0666666666666667,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.0155644370746377,
+              speed: 2.2493862536458566,
+              length: 1.0666666666666667,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.0155644370746377,
+            speed: 2.2493862536458566,
+            length: 1.0666666666666667,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.25924028528766,
+              speed: 2.5207730138231663,
+              length: 1.0666666666666667,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.25924028528766,
+            speed: 2.5207730138231663,
+            length: 1.0666666666666667,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.4790791301072526,
+              speed: 2.7652187370503056,
+              length: 1.0666666666666667,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.4790791301072526,
+            speed: 2.7652187370503056,
+            length: 1.0666666666666667,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.680951323690902,
+              speed: 2.9899220539452056,
+              length: 1.0666666666666667,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.680951323690902,
+            speed: 2.9899220539452056,
+            length: 1.0666666666666667,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.8686524130097513,
+              speed: 3.198528004548605,
+              length: 1.0666666666666667,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.8686524130097513,
+            speed: 3.198528004548605,
+            length: 1.0666666666666667,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 3.044804317740852,
+              speed: 3.3942048692310554,
+              length: 1.0666666666666667,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.044804317740852,
+            speed: 3.3942048692310554,
+            length: 1.0666666666666667,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 3.2113081446662823,
+              speed: 3.578985267032202,
+              length: 1.0666666666666667,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 3.2113081446662823,
+            speed: 3.578985267032202,
+            length: 1.0666666666666667,
+            g: 11.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.848528137423857,
+              speed: 1.2337798836592242,
+              length: 1.3888888888888888,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.848528137423857,
+            speed: 1.2337798836592242,
+            length: 1.3888888888888888,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.2328828005937953,
+              speed: 1.792559116530534,
+              length: 1.3888888888888888,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.2328828005937953,
+            speed: 1.792559116530534,
+            length: 1.3888888888888888,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.5231546211727818,
+              speed: 2.2141226119674373,
+              length: 1.3888888888888888,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.5231546211727818,
+            speed: 2.2141226119674373,
+            length: 1.3888888888888888,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.7663521732655696,
+              speed: 2.5673056076824374,
+              length: 1.3888888888888888,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.7663521732655696,
+            speed: 2.5673056076824374,
+            length: 1.3888888888888888,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.9798989873223332,
+              speed: 2.877158273068138,
+              length: 1.3888888888888888,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.9798989873223332,
+            speed: 2.877158273068138,
+            length: 1.3888888888888888,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.172556098240043,
+              speed: 3.156571226341397,
+              length: 1.3888888888888888,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.172556098240043,
+            speed: 3.156571226341397,
+            length: 1.3888888888888888,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.349468024894146,
+              speed: 3.412809828925797,
+              length: 1.3888888888888888,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.349468024894146,
+            speed: 3.412809828925797,
+            length: 1.3888888888888888,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.513961017995307,
+              speed: 3.6513671494436086,
+              length: 1.3888888888888888,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.513961017995307,
+            speed: 3.6513671494436086,
+            length: 1.3888888888888888,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.6683328128252666,
+              speed: 3.874903060183386,
+              length: 1.3888888888888888,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.6683328128252666,
+            speed: 3.874903060183386,
+            length: 1.3888888888888888,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.814249455894058,
+              speed: 4.086086451709769,
+              length: 1.3888888888888888,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.814249455894058,
+            speed: 4.086086451709769,
+            length: 1.3888888888888888,
+            g: 11.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.7644707871564383,
+              speed: 1.369612248794369,
+              length: 1.711111111111111,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.7644707871564383,
+            speed: 1.369612248794369,
+            length: 1.711111111111111,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.1107503021679688,
+              speed: 1.989764659805597,
+              length: 1.711111111111111,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.1107503021679688,
+            speed: 1.989764659805597,
+            length: 1.711111111111111,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.3722670596924211,
+              speed: 2.4579089388001476,
+              length: 1.711111111111111,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.3722670596924211,
+            speed: 2.4579089388001476,
+            length: 1.711111111111111,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.5913728452086684,
+              speed: 2.8496904888336005,
+              length: 1.711111111111111,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.5913728452086684,
+            speed: 2.8496904888336005,
+            length: 1.711111111111111,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.7837651700316894,
+              speed: 3.194056919009111,
+              length: 1.711111111111111,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.7837651700316894,
+            speed: 3.194056919009111,
+            length: 1.711111111111111,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.957337178712148,
+              speed: 3.5043270720330355,
+              length: 1.711111111111111,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.957337178712148,
+            speed: 3.5043270720330355,
+            length: 1.711111111111111,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.1167237610324787,
+              speed: 3.7891748865088135,
+              length: 1.711111111111111,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.1167237610324787,
+            speed: 3.7891748865088135,
+            length: 1.711111111111111,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.2649216608682363,
+              speed: 4.053751576634056,
+              length: 1.711111111111111,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.2649216608682363,
+            speed: 4.053751576634056,
+            length: 1.711111111111111,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.4040009940141,
+              speed: 4.302213685242793,
+              length: 1.711111111111111,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.4040009940141,
+            speed: 4.302213685242793,
+            length: 1.711111111111111,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.53546276418555,
+              speed: 4.536843812962154,
+              length: 1.711111111111111,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.53546276418555,
+            speed: 4.536843812962154,
+            length: 1.711111111111111,
+            g: 11.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.7012868733182767,
+              speed: 1.4930803670425454,
+              length: 2.033333333333333,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.7012868733182767,
+            speed: 1.4930803670425454,
+            length: 2.033333333333333,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.0189462037419927,
+              speed: 2.169151938675294,
+              length: 2.033333333333333,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.0189462037419927,
+            speed: 2.169151938675294,
+            length: 2.033333333333333,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.258848463299659,
+              speed: 2.679343969570163,
+              length: 2.033333333333333,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.258848463299659,
+            speed: 2.679343969570163,
+            length: 2.033333333333333,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.4598450400585699,
+              speed: 3.107000995712368,
+              length: 2.033333333333333,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.4598450400585699,
+            speed: 3.107000995712368,
+            length: 2.033333333333333,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.6363360377426457,
+              speed: 3.482107402760613,
+              length: 2.033333333333333,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.6363360377426457,
+            speed: 3.482107402760613,
+            length: 2.033333333333333,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.795562228341584,
+              speed: 3.820603111190986,
+              length: 2.033333333333333,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.795562228341584,
+            speed: 3.820603111190986,
+            length: 2.033333333333333,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.9417754255522672,
+              speed: 4.13119697021977,
+              length: 2.033333333333333,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.9417754255522672,
+            speed: 4.13119697021977,
+            length: 2.033333333333333,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.0777246907880706,
+              speed: 4.419835805993114,
+              length: 2.033333333333333,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.0777246907880706,
+            speed: 4.419835805993114,
+            length: 2.033333333333333,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.2053090436811975,
+              speed: 4.6896291188146275,
+              length: 2.033333333333333,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.2053090436811975,
+            speed: 4.6896291188146275,
+            length: 2.033333333333333,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.3259054291982233,
+              speed: 4.94670750630695,
+              length: 2.033333333333333,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.3259054291982233,
+            speed: 4.94670750630695,
+            length: 2.033333333333333,
+            g: 11.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.651558364144604,
+              speed: 1.6070517377057991,
+              length: 2.3555555555555556,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.651558364144604,
+            speed: 1.6070517377057991,
+            length: 2.3555555555555556,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.946692355041668,
+              speed: 2.334771473339413,
+              length: 2.3555555555555556,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.946692355041668,
+            speed: 2.334771473339413,
+            length: 2.3555555555555556,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.1695830574618833,
+              speed: 2.884152828890344,
+              length: 2.3555555555555556,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.1695830574618833,
+            speed: 2.884152828890344,
+            length: 2.3555555555555556,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.3563268933075958,
+              speed: 3.344350048437142,
+              length: 2.3555555555555556,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.3563268933075958,
+            speed: 3.344350048437142,
+            length: 2.3555555555555556,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.5203028496707427,
+              speed: 3.748044671604287,
+              length: 2.3555555555555556,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.5203028496707427,
+            speed: 3.748044671604287,
+            length: 2.3555555555555556,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.6682382527458504,
+              speed: 4.112596578263255,
+              length: 2.3555555555555556,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.6682382527458504,
+            speed: 4.112596578263255,
+            length: 2.3555555555555556,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.8040834185624774,
+              speed: 4.446980765741296,
+              length: 2.3555555555555556,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.8040834185624774,
+            speed: 4.446980765741296,
+            length: 2.3555555555555556,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.9303924715817826,
+              speed: 4.757867614377396,
+              length: 2.3555555555555556,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.9303924715817826,
+            speed: 4.757867614377396,
+            length: 2.3555555555555556,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.0489297712579537,
+              speed: 5.048841626645265,
+              length: 2.3555555555555556,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.0489297712579537,
+            speed: 5.048841626645265,
+            length: 2.3555555555555556,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.1609746228854045,
+              speed: 5.325069259333555,
+              length: 2.3555555555555556,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.1609746228854045,
+            speed: 5.325069259333555,
+            length: 2.3555555555555556,
+            g: 11.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.6111006327950329,
+              speed: 1.7134789651901583,
+              length: 2.6777777777777776,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.6111006327950329,
+            speed: 1.7134789651901583,
+            length: 2.6777777777777776,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.887908634229102,
+              speed: 2.48937711882127,
+              length: 2.6777777777777776,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.887908634229102,
+            speed: 2.48937711882127,
+            length: 2.6777777777777776,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.0969592071151457,
+              speed: 3.0751540058982867,
+              length: 2.6777777777777776,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.0969592071151457,
+            speed: 3.0751540058982867,
+            length: 2.6777777777777776,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.2721074095416585,
+              speed: 3.565932418071981,
+              length: 2.6777777777777776,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.2721074095416585,
+            speed: 3.565932418071981,
+            length: 2.6777777777777776,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.4259014765217435,
+              speed: 3.9962406688024044,
+              length: 2.6777777777777776,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.4259014765217435,
+            speed: 3.9962406688024044,
+            length: 2.6777777777777776,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.5646510090377943,
+              speed: 4.385157327554345,
+              length: 2.6777777777777776,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.5646510090377943,
+            speed: 4.385157327554345,
+            length: 2.6777777777777776,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.6920610330065189,
+              speed: 4.741773230699102,
+              length: 2.6777777777777776,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.6920610330065189,
+            speed: 4.741773230699102,
+            length: 2.6777777777777776,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.810527077608945,
+              speed: 5.073350560233272,
+              length: 2.6777777777777776,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.810527077608945,
+            speed: 5.073350560233272,
+            length: 2.6777777777777776,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.921703946525397,
+              speed: 5.384323986367276,
+              length: 2.6777777777777776,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.921703946525397,
+            speed: 5.384323986367276,
+            length: 2.6777777777777776,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 2.0267915081298784,
+              speed: 5.678357571918291,
+              length: 2.6777777777777776,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 2.0267915081298784,
+            speed: 5.678357571918291,
+            length: 2.6777777777777776,
+            g: 11.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.5773502691896257,
+              speed: 1.8136617381991722,
+              length: 3.0,
+              g: 1.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.5773502691896257,
+            speed: 1.8136617381991722,
+            length: 3.0,
+            g: 1.0,
+          },
+          {
+            name: '',
+            values: {
+              period: 0.8388704928078611,
+              speed: 2.6349786755631186,
+              length: 3.0,
+              g: 2.111111111111111,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 0.8388704928078611,
+            speed: 2.6349786755631186,
+            length: 3.0,
+            g: 2.111111111111111,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.0363754503432017,
+              speed: 3.255086685627531,
+              length: 3.0,
+              g: 3.2222222222222223,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.0363754503432017,
+            speed: 3.255086685627531,
+            length: 3.0,
+            g: 3.2222222222222223,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.2018504251546631,
+              speed: 3.7744888809442116,
+              length: 3.0,
+              g: 4.333333333333334,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.2018504251546631,
+            speed: 3.7744888809442116,
+            length: 3.0,
+            g: 4.333333333333334,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.3471506281091268,
+              speed: 4.230423061399136,
+              length: 3.0,
+              g: 5.444444444444445,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.3471506281091268,
+            speed: 4.230423061399136,
+            length: 3.0,
+            g: 5.444444444444445,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.4782371884055634,
+              speed: 4.641136949908023,
+              length: 3.0,
+              g: 6.555555555555555,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.4782371884055634,
+            speed: 4.641136949908023,
+            length: 3.0,
+            g: 6.555555555555555,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.5986105077709065,
+              speed: 5.019315475340667,
+              length: 3.0,
+              g: 7.666666666666667,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.5986105077709065,
+            speed: 5.019315475340667,
+            length: 3.0,
+            g: 7.666666666666667,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.7105338131489614,
+              speed: 5.370290393431661,
+              length: 3.0,
+              g: 8.777777777777779,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.7105338131489614,
+            speed: 5.370290393431661,
+            length: 3.0,
+            g: 8.777777777777779,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.8155705153742436,
+              speed: 5.699671814277158,
+              length: 3.0,
+              g: 9.88888888888889,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.8155705153742436,
+            speed: 5.699671814277158,
+            length: 3.0,
+            g: 9.88888888888889,
+          },
+          {
+            name: '',
+            values: {
+              period: 1.9148542155126762,
+              speed: 6.010854536840052,
+              length: 3.0,
+              g: 11.0,
+            },
+            reference_path: '#',
+            type_: 'sample',
+            period: 1.9148542155126762,
+            speed: 6.010854536840052,
+            length: 3.0,
+            g: 11.0,
+          },
+        ],
+        axis: { name: '', arrow_on: false, grid_on: true, type_: 'axis' },
+        width: 750,
+        height: 400,
+        type_: 'scatterplot',
+      }
+
+      const plot_data = new PlotData.Scatter(
+        data,
+        width,
+        height,
+        0,
+        0,
+        my_graph2d.id
+      )
+      plot_data.setCanvas(my_graph2d.id)
+      plot_data.draw()
+      plot_data.mouseListener()
+    </script>
+  </div>
+</html>

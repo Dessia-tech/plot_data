@@ -45,8 +45,7 @@ steps:
   image: python:3.9
   commands:
   - git fetch --tags
-  - pip install .
-  - pip install coverage sphinx sphinx-rtd-theme
+  - pip install .[doc,test]
   - cd ./script
   - coverage run --source plot_data ci_tests.py --path="/drone/src/cypress/data_src"
   - coverage report

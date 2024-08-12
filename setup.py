@@ -117,4 +117,8 @@ setup(name='plot_data',
       package_dir={},
       include_package_data=True,
       install_requires=['matplotlib', 'dessia_common'],
+      extras_require={"test": ["coverage"],
+                      "doc": ["sphinx", "nbsphinx", "pydata_sphinx_theme", "nbformat", "nbconvert",
+                              "sphinx_copybutton", "sphinx_design"]},
+
       classifiers=['Topic :: Scientific/Engineering :: Visualization', 'Development Status :: 3 - Alpha'])

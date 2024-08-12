@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+  <style>
+    .slider {
+      -webkit-appearance: none;
+      height: 10px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.7;
+      -webkit-transition: 0.2s;
+      transition: opacity 0.2s;
+    }
+
+    .slider:hover {
+      opacity: 1;
+    }
+
+    .slider::-moz-range-thumb {
+      width: 25px;
+      height: 10px;
+      background: #04aa6d;
+      cursor: pointer;
+    }
+  </style>
+  <head>
+    <script src="https://cdn.dessia.tech/js/plot-data/v0.22.3/plot-data.js"></script>
+  </head>
+  <div id="buttons">
+    <button
+      name="mergeON"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchMerge()"
+    >
+      Switch Point Merge
+    </button>
+    &nbsp;&nbsp;
+    <button
+      name="Zoom"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchZoom()"
+    >
+      Zoom Box
+    </button>
+    <button name="Zoom+" value="OK" type="button" onclick="plot_data.zoomIn()">
+      Zoom+
+    </button>
+    <button name="Zoom-" value="OK" type="button" onclick="plot_data.zoomOut()">
+      Zoom-
+    </button>
+    &nbsp;&nbsp; Cluster:&nbsp;
+    <input
+      type="range"
+      class="slider"
+      min="0"
+      max="2500"
+      value="1250"
+      onclick="plot_data.simpleCluster(value / 10000)"
+    />
+    <button
+      name="resetClusters"
+      value="OK"
+      type="button"
+      onclick="plot_data.resetClusters()"
+    >
+      Reset clusters
+    </button>
+    &nbsp;&nbsp;
+    <button
+      name="resetView"
+      value="OK"
+      type="button"
+      onclick="plot_data.resetView()"
+    >
+      Reset view
+    </button>
+    &nbsp;&nbsp;
+    <button
+      name="showPoints"
+      value="OK"
+      type="button"
+      onclick="plot_data.togglePoints()"
+    >
+      Show points
+    </button>
+    <button
+      name="switchOrientation"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchOrientation()"
+    >
+      Change Disposition
+    </button>
+    <button
+      name="toogleAxes"
+      value="OK"
+      type="button"
+      onclick="plot_data.htmlToggleAxes()"
+    >
+      Show / Hide Axes
+    </button>
+    <button
+      name="logScale"
+      value="OK"
+      type="button"
+      onclick="plot_data.switchLogScale()"
+    >
+      Log Scale
+    </button>
+
+    <hr style="border-top: 2px" />
+  </div>
+  <div id="app">
+    <canvas id="my_graph2d" style="border: 1px solid black"></canvas>
+
+    <script type="text/javascript">
+      const [width, height] = PlotData.computeCanvasSize('#buttons')
+      const data = {
+        name: '',
+        graphs: [
+          {
+            name: 'y = A.sin(x)',
+            edge_style: {
+              object_class: 'plot_data.core.EdgeStyle',
+              name: '',
+              color_stroke: 'rgb(0,19,254)',
+              dashline: [10, 5],
+            },
+            tooltip: {
+              name: '',
+              attributes: ['angle', 'amplitude'],
+              surface_style: {
+                object_class: 'plot_data.core.SurfaceStyle',
+                name: '',
+                color_fill: 'rgb(195,230,252)',
+                opacity: 0.75,
+              },
+              text_style: {
+                object_class: 'plot_data.core.TextStyle',
+                name: '',
+                text_color: 'rgb(0,0,0)',
+                font_size: 10,
+              },
+              type_: 'tooltip',
+            },
+            point_style: {
+              object_class: 'plot_data.core.PointStyle',
+              name: '',
+              color_fill: 'rgb(247,0,0)',
+              color_stroke: 'rgb(0,0,0)',
+            },
+            elements: [
+              {
+                name: '',
+                values: { angle: 0.0, amplitude: 0.0 },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 0.0,
+                amplitude: 0.0,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 0.15915494309189535,
+                  amplitude: 0.31696777318320973,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 0.15915494309189535,
+                amplitude: 0.31696777318320973,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 0.3183098861837907,
+                  amplitude: 0.6259235924155733,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 0.3183098861837907,
+                amplitude: 0.6259235924155733,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 0.477464829275686,
+                  amplitude: 0.919058020883762,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 0.477464829275686,
+                amplitude: 0.919058020883762,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 0.6366197723675814,
+                  amplitude: 1.1889615370496442,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 0.6366197723675814,
+                amplitude: 1.1889615370496442,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 0.7957747154594768,
+                  amplitude: 1.428811824180589,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 0.7957747154594768,
+                amplitude: 1.428811824180589,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 0.954929658551372,
+                  amplitude: 1.6325462171788427,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 0.954929658551372,
+                amplitude: 1.6325462171788427,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 1.1140846016432675,
+                  amplitude: 1.7950149477934803,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 1.1140846016432675,
+                amplitude: 1.7950149477934803,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 1.2732395447351628,
+                  amplitude: 1.912111314655259,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 1.2732395447351628,
+                amplitude: 1.912111314655259,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 1.432394487827058,
+                  amplitude: 1.98087548784303,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 1.432394487827058,
+                amplitude: 1.98087548784303,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 1.5915494309189535,
+                  amplitude: 1.9995693241269126,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 1.5915494309189535,
+                amplitude: 1.9995693241269126,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 1.7507043740108488,
+                  amplitude: 1.9677203017928955,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 1.7507043740108488,
+                amplitude: 1.9677203017928955,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 1.909859317102744,
+                  amplitude: 1.8861334645138947,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 1.909859317102744,
+                amplitude: 1.8861334645138947,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 2.0690142601946393,
+                  amplitude: 1.7568710723635768,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 2.0690142601946393,
+                amplitude: 1.7568710723635768,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 2.228169203286535,
+                  amplitude: 1.5832004743316626,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 2.228169203286535,
+                amplitude: 1.5832004743316626,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 2.3873241463784303,
+                  amplitude: 1.3695115199605024,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 2.3873241463784303,
+                amplitude: 1.3695115199605024,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 2.5464790894703255,
+                  amplitude: 1.121205597678428,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 2.5464790894703255,
+                amplitude: 1.121205597678428,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 2.705634032562221,
+                  amplitude: 0.8445591045937875,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 2.705634032562221,
+                amplitude: 0.8445591045937875,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 2.864788975654116,
+                  amplitude: 0.5465647988062375,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 2.864788975654116,
+                amplitude: 0.5465647988062375,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 3.0239439187460113,
+                  amplitude: 0.23475504435268715,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 3.0239439187460113,
+                amplitude: 0.23475504435268715,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 3.183098861837907,
+                  amplitude: -0.0829885833971738,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 3.183098861837907,
+                amplitude: -0.0829885833971738,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 3.3422538049298023,
+                  amplitude: -0.3986345193156318,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 3.3422538049298023,
+                amplitude: -0.3986345193156318,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 3.5014087480216975,
+                  amplitude: -0.7042042213636878,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 3.5014087480216975,
+                amplitude: -0.7042042213636878,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 3.660563691113593,
+                  amplitude: -0.9919738431799398,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 3.660563691113593,
+                amplitude: -0.9919738431799398,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 3.819718634205488,
+                  amplitude: -1.2546694687593318,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 3.819718634205488,
+                amplitude: -1.2546694687593318,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 3.9788735772973833,
+                  amplitude: -1.485650974299706,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 3.9788735772973833,
+                amplitude: -1.485650974299706,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 4.138028520389279,
+                  amplitude: -1.6790798697637268,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 4.138028520389279,
+                amplitude: -1.6790798697637268,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 4.297183463481174,
+                  amplitude: -1.830066877646438,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 4.297183463481174,
+                amplitude: -1.830066877646438,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 4.45633840657307,
+                  amplitude: -1.9347955186187784,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 4.45633840657307,
+                amplitude: -1.9347955186187784,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 4.615493349664965,
+                  amplitude: -1.9906185801885161,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 4.615493349664965,
+                amplitude: -1.9906185801885161,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 4.7746482927568605,
+                  amplitude: -1.9961250299525775,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 4.7746482927568605,
+                amplitude: -1.9961250299525775,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 4.933803235848756,
+                  amplitude: -1.9511756820830173,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 4.933803235848756,
+                amplitude: -1.9511756820830173,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 5.092958178940651,
+                  amplitude: -1.8569067155094312,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 5.092958178940651,
+                amplitude: -1.8569067155094312,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 5.252113122032546,
+                  amplitude: -1.7157009548691515,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 5.252113122032546,
+                amplitude: -1.7157009548691515,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 5.411268065124442,
+                  amplitude: -1.5311276401529903,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 5.411268065124442,
+                amplitude: -1.5311276401529903,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 5.570423008216337,
+                  amplitude: -1.307852207481503,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 5.570423008216337,
+                amplitude: -1.307852207481503,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 5.729577951308232,
+                  amplitude: -1.0515183614715793,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 5.729577951308232,
+                amplitude: -1.0515183614715793,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 5.888732894400127,
+                  amplitude: -0.768605420035099,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 5.888732894400127,
+                amplitude: -0.768605420035099,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 6.047887837492023,
+                  amplitude: -0.46626453748697566,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 6.047887837492023,
+                amplitude: -0.46626453748697566,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 6.207042780583918,
+                  amplitude: -0.15213794573017828,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 6.207042780583918,
+                amplitude: -0.15213794573017828,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 6.366197723675814,
+                  amplitude: 0.1658342174647683,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 6.366197723675814,
+                amplitude: 0.1658342174647683,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 6.525352666767709,
+                  amplitude: 0.47961461030886937,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 6.525352666767709,
+                amplitude: 0.47961461030886937,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 6.684507609859605,
+                  amplitude: 0.7812718458573338,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 6.684507609859605,
+                amplitude: 0.7812718458573338,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 6.8436625529515,
+                  amplitude: 1.0631809726651549,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 6.8436625529515,
+                amplitude: 1.0631809726651549,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 7.002817496043395,
+                  amplitude: 1.3182162097116796,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 7.002817496043395,
+                amplitude: 1.3182162097116796,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 7.16197243913529,
+                  amplitude: 1.5399310638580652,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 7.16197243913529,
+                amplitude: 1.5399310638580652,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 7.321127382227186,
+                  amplitude: 1.7227212770316376,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 7.321127382227186,
+                amplitude: 1.7227212770316376,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 7.480282325319081,
+                  amplitude: 1.8619664843419717,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 7.480282325319081,
+                amplitude: 1.8619664843419717,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 7.639437268410976,
+                  amplitude: 1.9541470024545675,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 7.639437268410976,
+                amplitude: 1.9541470024545675,
+              },
+              {
+                name: '',
+                values: {
+                  angle: 7.798592211502871,
+                  amplitude: 1.9969327961773098,
+                },
+                reference_path: '#',
+                type_: 'sample',
+                angle: 7.798592211502871,
+                amplitude: 1.9969327961773098,
+              },
+            ],
+            display_step: 1,
+            type_: 'dataset',
+          },
+        ],
+        attribute_names: ['angle', 'amplitude'],
+        axis: {
+          name: '',
+          nb_points_x: 7,
+          nb_points_y: 5,
+          graduation_style: {
+            object_class: 'plot_data.core.TextStyle',
+            name: '',
+            text_color: 'rgb(0,19,254)',
+            font_size: 10,
+            font_style: 'Arial',
+          },
+          axis_style: {
+            object_class: 'plot_data.core.EdgeStyle',
+            name: '',
+            line_width: 0.5,
+            color_stroke: 'rgb(48,86,121)',
+            dashline: [],
+          },
+          arrow_on: false,
+          grid_on: true,
+          type_: 'axis',
+        },
+        width: 750,
+        height: 400,
+        type_: 'graph2d',
+      }
+
+      const plot_data = new PlotData.Graph2D(
+        data,
+        width,
+        height,
+        0,
+        0,
+        my_graph2d.id
+      )
+      plot_data.setCanvas(my_graph2d.id)
+      plot_data.draw()
+      plot_data.mouseListener()
+    </script>
+  </div>
+</html>

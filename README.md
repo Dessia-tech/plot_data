@@ -46,7 +46,7 @@ npm run dev
 
 ## Documentation
 
-https://documentation.dessia.io/tutorials/tutorial-4/ <br>
+https://documentation.dessia.io/plot_data <br>
 
 ## Changelog
 

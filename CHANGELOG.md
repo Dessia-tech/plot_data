@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.1]
+
+### Fix
+
+- Remove interactive attributes from super calls that relied on DessiaObject's kwargs to pass them,
+  after it has been removed
+
+
 ## [0.26.0]
 ### Add
 - RemoteFigure.setFeatureFilter to directly edit rubberbands' value from external requests

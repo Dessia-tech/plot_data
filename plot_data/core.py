@@ -75,9 +75,9 @@ class PlotDataObject(DessiaObject):
     _plot_commands = "EMPTY_TEMPLATE"
     _plot_buttons = "EMPTY_BUTTONS"
 
-    def __init__(self, type_: str, name: str = '', **kwargs):
+    def __init__(self, type_: str, name: str = ''):
         self.type_ = type_
-        DessiaObject.__init__(self, name=name, **kwargs)
+        DessiaObject.__init__(self, name=name)
 
     def to_dict(self, **kwargs) -> JsonSerializable:
         """ Redefines DessiaObject's to_dict() in order not to use pointers and remove keys where value is None. """
@@ -1286,7 +1286,8 @@ class Label(PlotDataObject):
         self.rectangle_surface_style = rectangle_surface_style
         self.rectangle_edge_style = rectangle_edge_style
         self.shape = shape
-        PlotDataObject.__init__(self, type_='label', interactive=interactive, name=name)
+        self.interactive = interactive
+        PlotDataObject.__init__(self, type_='label', name=name)
 
 
 class MultipleLabels(PlotDataObject):
@@ -1299,7 +1300,8 @@ class MultipleLabels(PlotDataObject):
 
     def __init__(self, labels: List[Label], interactive: bool = False, name: str = ''):
         self.labels = labels
-        PlotDataObject.__init__(self, type_='multiplelabels', interactive=interactive, name=name)
+        self.interactive = interactive
+        PlotDataObject.__init__(self, type_='multiplelabels', name=name)
 
 
 class PrimitiveGroup(Figure):
@@ -1321,7 +1323,8 @@ class PrimitiveGroup(Figure):
                  name: str = ''):
         self.primitives = primitives
         self.attribute_names = attribute_names
-        super().__init__(width=width, height=height, type_='draw', axis_on=axis_on, interactive=interactive, name=name)
+        self.interactive = interactive
+        super().__init__(width=width, height=height, type_='draw', axis_on=axis_on, name=name)
 
     def mpl_plot(self, ax=None, equal_aspect=True, **kwargs):
         """ Plots using matplotlib. """
@@ -1398,8 +1401,8 @@ class PrimitiveGroupsContainer(Figure):
                 if y_variable:
                     attribute_names.append(y_variable)
                 self.association['attribute_names'] = attribute_names
-        super().__init__(width=width, height=height, type_='primitivegroupcontainer', axis_on=axis_on,
-                         interactive=interactive, name=name)
+        self.interactive = interactive
+        super().__init__(width=width, height=height, type_='primitivegroupcontainer', axis_on=axis_on, name=name)
 
 
 class ParallelPlot(Figure):

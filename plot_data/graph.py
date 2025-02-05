@@ -21,7 +21,7 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
         plot_data.PrimitiveGroup.__init__(self, primitives=primitives, name=name)
 
     def _to_primitives(self, text_style: plot_data.TextStyle = None):
-        radius = 0.04
+        radius = 0.02
         primitives = []
         pos = nx.kamada_kawai_layout(self.graph)
 
@@ -40,10 +40,32 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
             if shape == '.':
                 point_style = plot_data.PointStyle(color_fill=color, color_stroke=color, size=4)
                 primitive = plot_data.Point2D(x_coord, y_coord, point_style=point_style)
+                primitives.append(primitive)
+
+                if text_style is None:
+                    text_style = plot_data.TextStyle(text_color='rgb(0,0,0)',
+                                                     text_align_x='center',
+                                                     text_align_y='middle')
+
+                text = plot_data.Text(name, x_coord, y_coord,
+                                      text_style=text_style, text_scaling=True,
+                                      max_width=2 * radius, multi_lines=False)
+                primitives.append(text)
 
             elif shape == 'o':
-                primitive = plot_data.Circle2D(x_coord, y_coord, radius, edge_style=edge_style,
+                primitive = plot_data.Circle2D(x_coord, y_coord, radius/2, edge_style=edge_style,
                                                surface_style=surface_style)
+                primitives.append(primitive)
+
+                if text_style is None:
+                    text_style = plot_data.TextStyle(text_color='rgb(0,0,0)',
+                                                     text_align_x='center',
+                                                     text_align_y='middle')
+
+                text = plot_data.Text(name, x_coord, y_coord,
+                                      text_style=text_style, text_scaling=True,
+                                      max_width=radius, multi_lines=False)
+                primitives.append(text)
 
             elif shape == 's':
                 x_left, x_right, y_down, y_up = x_coord - radius, x_coord + radius, y_coord - radius, y_coord + radius
@@ -52,18 +74,19 @@ class NetworkxGraph(plot_data.PrimitiveGroup):
                 l3 = plot_data.LineSegment2D([x_right, y_up], [x_left, y_up])
                 l4 = plot_data.LineSegment2D([x_left, y_up], [x_left, y_down])
                 primitive = plot_data.Contour2D([l1, l2, l3, l4], edge_style=edge_style, surface_style=surface_style)
+                primitives.append(primitive)
 
+                if text_style is None:
+                    text_style = plot_data.TextStyle(text_color='rgb(0,0,0)',
+                                                     text_align_x='center',
+                                                     text_align_y='middle')
+
+                text = plot_data.Text(name, x_coord, y_coord,
+                                      text_style=text_style, text_scaling=True,
+                                      max_width=2 * radius, multi_lines=False)
+                primitives.append(text)
             else:
                 raise NotImplementedError
-            primitives.append(primitive)
-
-            if text_style is None:
-                text_style = plot_data.TextStyle(text_color='rgb(0,0,0)', text_align_x='center', text_align_y='middle')
-
-            text = plot_data.Text(name, x_coord, y_coord, text_style=text_style, text_scaling=True,
-                                  max_width=2 * radius, multi_lines=False)
-            primitives.append(text)
-
         return primitives
 
     def to_plot_data(self):
